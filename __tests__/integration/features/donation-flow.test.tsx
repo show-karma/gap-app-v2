@@ -18,28 +18,24 @@
  * - Error boundary recovery
  */
 
-import { renderHook, act, waitFor } from "@testing-library/react";
-import { useDonationCart } from "@/store/donationCart";
-import { useDonationCheckout } from "@/hooks/donation/useDonationCheckout";
-import { useDonationTransfer } from "@/hooks/useDonationTransfer";
-import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances";
-import type { DonationPayment } from "@/store/donationCart";
-import type { Address } from "viem";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import toast from "react-hot-toast";
+import type { Address } from "viem";
+import { useDonationTransfer } from "@/hooks/useDonationTransfer";
+import type { DonationPayment } from "@/store/donationCart";
+import { useDonationCart } from "@/store/donationCart";
 import {
-  setupDefaultMocks,
-  setupApprovalNeededMocks,
   clearDonationMocks,
-  createMockPayment,
-  createMockToken,
   createMockNativeToken,
-  mockTokenBalance,
-  createPayoutAddressGetter,
+  createMockPayment,
   createMockSwitchChain,
-  createMockGetFreshWalletClient,
+  createMockToken,
+  createPayoutAddressGetter,
+  mockTokenBalance,
+  setupApprovalNeededMocks,
+  setupDefaultMocks,
   setupLocalStorageMock,
   setupMockPublicClient,
-  setupMockWalletClient,
 } from "../test-utils";
 
 // Mock dependencies
@@ -61,7 +57,7 @@ jest.mock("viem", () => {
     parseUnits: jest.fn((value: string, decimals: number) => {
       // Handle decimal values by converting to smallest unit
       const numValue = parseFloat(value);
-      const multiplier = Math.pow(10, decimals);
+      const multiplier = 10 ** decimals;
       return BigInt(Math.floor(numValue * multiplier));
     }),
     formatUnits: jest.fn((value: bigint, decimals: number) =>
@@ -135,7 +131,7 @@ describe("Integration: Donation Flow", () => {
     // Setup default toast mocks - track calls instead of silencing them
     (toast.error as jest.Mock).mockImplementation((message: string) => {
       // Store error messages for verification in tests
-      const errorCalls = (toast.error as jest.Mock).mock.calls;
+      const _errorCalls = (toast.error as jest.Mock).mock.calls;
       return `toast-error:${message}`;
     });
     (toast.success as jest.Mock).mockImplementation((message: string) => {
@@ -170,7 +166,7 @@ describe("Integration: Donation Flow", () => {
       expect(cartHook.result.current.items).toHaveLength(1);
 
       // Setup balances (sufficient balance)
-      const balances = mockTokenBalance("USDC", 10, "1000");
+      const _balances = mockTokenBalance("USDC", 10, "1000");
 
       // Setup approval not needed
       const { checkTokenAllowances } = require("@/utilities/erc20");
@@ -216,7 +212,7 @@ describe("Integration: Donation Flow", () => {
       const transferHook = renderHook(() => useDonationTransfer());
 
       // Setup balances for all tokens
-      const balances = {
+      const _balances = {
         ...mockTokenBalance("USDC", 10, "1000"),
         ...mockTokenBalance("DAI", 10, "500"),
         ...mockTokenBalance("ETH", 10, "10"),
@@ -243,9 +239,9 @@ describe("Integration: Donation Flow", () => {
       // Assert: All 3 transfers succeeded
       await waitFor(() => {
         expect(transferHook.result.current.transfers).toHaveLength(3);
-        expect(
-          transferHook.result.current.transfers.every((t) => t.status === "success")
-        ).toBe(true);
+        expect(transferHook.result.current.transfers.every((t) => t.status === "success")).toBe(
+          true
+        );
       });
     });
   });
@@ -302,10 +298,7 @@ describe("Integration: Donation Flow", () => {
       const balances = mockTokenBalance("USDC", 10, "100"); // Only 100 USDC
 
       // Act: Validate payment
-      const validation = await transferHook.result.current.validatePayments(
-        [payment],
-        balances
-      );
+      const validation = await transferHook.result.current.validatePayments([payment], balances);
 
       // Assert: Validation fails
       expect(validation.valid).toBe(false);
@@ -321,10 +314,7 @@ describe("Integration: Donation Flow", () => {
       const balances = mockTokenBalance("USDC", 10, "100");
 
       // Act: Validate payment
-      const validation = await transferHook.result.current.validatePayments(
-        [payment],
-        balances
-      );
+      const validation = await transferHook.result.current.validatePayments([payment], balances);
 
       // Assert: Validation shows error
       expect(validation.valid).toBe(false);
@@ -338,17 +328,11 @@ describe("Integration: Donation Flow", () => {
       const payment = createMockPayment();
 
       // Setup approval needed
-      setupApprovalNeededMocks(
-        payment.token.address,
-        payment.token.symbol,
-        BigInt("100000000")
-      );
+      setupApprovalNeededMocks(payment.token.address, payment.token.symbol, BigInt("100000000"));
 
       // User rejects approval
       const { executeApprovals } = require("@/utilities/erc20");
-      executeApprovals.mockRejectedValueOnce(
-        new Error("User rejected the request")
-      );
+      executeApprovals.mockRejectedValueOnce(new Error("User rejected the request"));
 
       const transferHook = renderHook(() => useDonationTransfer());
 
@@ -409,11 +393,11 @@ describe("Integration: Donation Flow", () => {
       const wagmi = require("wagmi");
       (wagmi.useChainId as jest.Mock).mockReturnValue(1); // User on Ethereum
 
-      const payment = createMockPayment({ chainId: 10 }); // Payment on Optimism
-      const mockSwitchChain = createMockSwitchChain(true);
-      const balances = mockTokenBalance("USDC", 10, "1000");
+      const _payment = createMockPayment({ chainId: 10 }); // Payment on Optimism
+      const _mockSwitchChain = createMockSwitchChain(true);
+      const _balances = mockTokenBalance("USDC", 10, "1000");
 
-      const transferHook = renderHook(() => useDonationTransfer());
+      const _transferHook = renderHook(() => useDonationTransfer());
 
       // The hook should detect the chain mismatch
       // In a real scenario, the beforeTransfer callback would handle this
@@ -514,10 +498,7 @@ describe("Integration: Donation Flow", () => {
       // Act & Assert: Should throw error
       await expect(
         act(async () => {
-          await transferHook.result.current.executeDonations(
-            [payment],
-            getInvalidRecipient
-          );
+          await transferHook.result.current.executeDonations([payment], getInvalidRecipient);
         })
       ).rejects.toThrow("Missing payout address");
 
@@ -547,10 +528,7 @@ describe("Integration: Donation Flow", () => {
       // Act & Assert: Should throw error
       await expect(
         act(async () => {
-          await transferHook.result.current.executeDonations(
-            [payment],
-            getInvalidRecipient
-          );
+          await transferHook.result.current.executeDonations([payment], getInvalidRecipient);
         })
       ).rejects.toThrow();
 
@@ -569,10 +547,7 @@ describe("Integration: Donation Flow", () => {
 
       // Simulate timeout (takes longer than expected)
       mockFetchBalances.mockImplementation(
-        () =>
-          new Promise((resolve) =>
-            setTimeout(() => resolve({ "USDC-10": "1000" }), 15000)
-          )
+        () => new Promise((resolve) => setTimeout(() => resolve({ "USDC-10": "1000" }), 15000))
       );
 
       // Act: Attempt to fetch with timeout
@@ -618,11 +593,7 @@ describe("Integration: Donation Flow", () => {
       const payment = createMockPayment({ chainId: 10 });
 
       // Setup approval needed
-      setupApprovalNeededMocks(
-        payment.token.address,
-        payment.token.symbol,
-        BigInt("100000000")
-      );
+      setupApprovalNeededMocks(payment.token.address, payment.token.symbol, BigInt("100000000"));
 
       const { executeApprovals } = require("@/utilities/erc20");
       executeApprovals.mockResolvedValue([
@@ -638,10 +609,7 @@ describe("Integration: Donation Flow", () => {
       const balances = mockTokenBalance("USDC", 10, "1000");
 
       // Step 1: Validate payments
-      const validation = await transferHook.result.current.validatePayments(
-        [payment],
-        balances
-      );
+      const validation = await transferHook.result.current.validatePayments([payment], balances);
       expect(validation.valid).toBe(true);
 
       // Step 2: Check approvals

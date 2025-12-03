@@ -1,6 +1,6 @@
 /**
  * Test utilities for funders page tests
- * 
+ *
  * This file provides reusable testing utilities including:
  * - Custom render function with providers
  * - Mock factories for various hooks and stores
@@ -11,10 +11,10 @@
 // Import funders setup to ensure mocks are loaded
 import "../setup";
 
-import React from "react";
-import { render, RenderResult, RenderOptions } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { mockAuthState, mockThemeState, mockChosenCommunities } from "../setup";
+import { type RenderOptions, type RenderResult, render } from "@testing-library/react";
+import type React from "react";
+import { mockAuthState, mockChosenCommunities, mockThemeState } from "../setup";
 
 // ============================================================================
 // Types
@@ -88,9 +88,7 @@ export function renderWithProviders(
   }
 
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 
   return render(ui, { wrapper: Wrapper, ...renderOptions });
@@ -103,7 +101,9 @@ export function renderWithProviders(
 /**
  * Creates a mock useAuth hook return value
  */
-export function createMockUseAuth(overrides: Partial<ReturnType<typeof mockAuthState.current>> = {}) {
+export function createMockUseAuth(
+  overrides: Partial<ReturnType<typeof mockAuthState.current>> = {}
+) {
   return {
     ready: true,
     authenticated: false,
@@ -118,7 +118,9 @@ export function createMockUseAuth(overrides: Partial<ReturnType<typeof mockAuthS
  * Creates a mock useTheme hook return value
  */
 export function createMockUseTheme(
-  themeOrOptions: string | { theme?: string; setTheme?: jest.Mock; resolvedTheme?: string } = "light"
+  themeOrOptions:
+    | string
+    | { theme?: string; setTheme?: jest.Mock; resolvedTheme?: string } = "light"
 ) {
   if (typeof themeOrOptions === "string") {
     return {
@@ -180,7 +182,7 @@ export function setViewportSize(width: number, height: number) {
 
   // Update matchMedia to reflect viewport
   window.matchMedia = jest.fn().mockImplementation((query: string) => ({
-    matches: query.includes(`${width}px`) || query.includes("min-width") && width >= 768,
+    matches: query.includes(`${width}px`) || (query.includes("min-width") && width >= 768),
     media: query,
     onchange: null,
     addListener: jest.fn(),
@@ -259,4 +261,3 @@ export function resetAllMocks() {
   mockChosenCommunities.mockReset();
   jest.clearAllMocks();
 }
-

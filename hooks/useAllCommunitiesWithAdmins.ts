@@ -1,9 +1,9 @@
+import type { Community } from "@show-karma/karma-gap-sdk";
 import { useQuery } from "@tanstack/react-query";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks/useGap";
 import fetchData from "@/utilities/fetchData";
-import { errorManager } from "@/components/Utilities/errorManager";
 import { INDEXER } from "@/utilities/indexer";
-import { Community } from "@show-karma/karma-gap-sdk";
 
 interface CommunityAdmin {
   id: string;
@@ -15,9 +15,7 @@ interface AllCommunitiesWithAdminsData {
   communityAdmins: CommunityAdmin[];
 }
 
-const fetchAllCommunitiesWithAdmins = async (
-  gap: any
-): Promise<AllCommunitiesWithAdminsData> => {
+const fetchAllCommunitiesWithAdmins = async (gap: any): Promise<AllCommunitiesWithAdminsData> => {
   if (!gap) throw new Error("Gap not initialized");
 
   const result = await gap.fetch.communities();

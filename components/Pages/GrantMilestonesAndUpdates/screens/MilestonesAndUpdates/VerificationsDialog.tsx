@@ -1,30 +1,24 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, useEffect, useMemo, useState } from "react";
+
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-
-import { Hex } from "viem";
-import { useENS } from "@/store/ens";
-import { useProjectStore } from "@/store/project";
-import { formatDate } from "@/utilities/formatDate";
-import {
-  ICommunityAdminsResponse,
+import type {
   IGrantUpdateStatus,
   IMilestoneCompleted,
   IProjectImpactStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { Tabs, TabContent, TabTrigger } from "@/components/Utilities/Tabs";
-import { useGrant } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { useAccount } from "wagmi";
+import { type FC, Fragment, useEffect, useMemo, useState } from "react";
+import type { Hex } from "viem";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import { useGrant } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
+import { TabContent, Tabs, TabTrigger } from "@/components/Utilities/Tabs";
+import { useENS } from "@/store/ens";
+import { useProjectStore } from "@/store/project";
+import { formatDate } from "@/utilities/formatDate";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 interface VerificationsDialogProps {
-  verifications: (
-    | IMilestoneCompleted
-    | IGrantUpdateStatus
-    | IProjectImpactStatus
-  )[];
+  verifications: (IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus)[];
   isOpen: boolean;
   closeDialog: () => void;
   title: string;
@@ -40,7 +34,7 @@ const VerificationItem = ({ verification }: VerificationsItemProps) => {
 
   useEffect(() => {
     populateEns([verification.attester]);
-  }, [verification.attester]);
+  }, [verification.attester, populateEns]);
 
   return (
     <div className="flex flex-col items-start gap-1.5 p-4">
@@ -69,7 +63,7 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   closeDialog,
   title,
 }) => {
-  const project = useProjectStore((state) => state.project);
+  const _project = useProjectStore((state) => state.project);
   const grant = useGrant();
 
   const communityUid = useMemo(() => grant?.data.communityUID, [grant]);
@@ -78,16 +72,14 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   const { populateEns } = useENS();
   useEffect(() => {
     populateEns(verifications.map((v) => v.attester as string));
-  }, [verifications]);
+  }, [verifications, populateEns]);
 
   useEffect(() => {
     if (communityUid) {
       gapIndexerApi
         .communityAdmins(communityUid)
         .then((data) => {
-          setCommunityAdmins(
-            data.data.admins.map((admin) => admin.user.id.toLowerCase())
-          );
+          setCommunityAdmins(data.data.admins.map((admin) => admin.user.id.toLowerCase()));
         })
         .catch(() => null);
     }
@@ -101,9 +93,7 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   );
 
   const defaultTab =
-    adminVerifications.length === 0 && memberVerifications.length > 0
-      ? "members"
-      : "admins";
+    adminVerifications.length === 0 && memberVerifications.length > 0 ? "members" : "admins";
 
   return (
     <Transition appear show={isOpen} as={Fragment}>

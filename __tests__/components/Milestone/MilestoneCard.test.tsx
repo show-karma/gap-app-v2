@@ -1,22 +1,24 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MilestoneCard } from '@/components/Milestone/MilestoneCard';
-import { UnifiedMilestone } from '@/types/roadmap';
+import { render, screen } from "@testing-library/react";
+import { MilestoneCard } from "@/components/Milestone/MilestoneCard";
+import type { UnifiedMilestone } from "@/types/roadmap";
 
 // Mock Next.js dynamic imports
-jest.mock('next/dynamic', () => ({
+jest.mock("next/dynamic", () => ({
   __esModule: true,
-  default: (fn: any) => {
+  default: (_fn: any) => {
     const Component = (props: any) => {
-      const MockedComponent = () => <div data-testid="mocked-dynamic-component">{props.children}</div>;
+      const MockedComponent = () => (
+        <div data-testid="mocked-dynamic-component">{props.children}</div>
+      );
       return <MockedComponent />;
     };
-    Component.displayName = 'DynamicComponent';
+    Component.displayName = "DynamicComponent";
     return Component;
   },
 }));
 
 // Mock Next.js Image component
-jest.mock('next/image', () => ({
+jest.mock("next/image", () => ({
   __esModule: true,
   default: ({ src, alt, width, height }: any) => (
     <img src={src} alt={alt} width={width} height={height} />
@@ -24,7 +26,7 @@ jest.mock('next/image', () => ({
 }));
 
 // Mock ENS components
-jest.mock('@/components/EthereumAddressToENSAvatar', () => ({
+jest.mock("@/components/EthereumAddressToENSAvatar", () => ({
   __esModule: true,
   default: ({ address, className }: any) => (
     <div data-testid="ens-avatar" className={className}>
@@ -33,15 +35,13 @@ jest.mock('@/components/EthereumAddressToENSAvatar', () => ({
   ),
 }));
 
-jest.mock('@/components/EthereumAddressToENSName', () => ({
+jest.mock("@/components/EthereumAddressToENSName", () => ({
   __esModule: true,
-  default: ({ address }: any) => (
-    <span data-testid="ens-name">{address}</span>
-  ),
+  default: ({ address }: any) => <span data-testid="ens-name">{address}</span>,
 }));
 
 // Mock ReadMore utility
-jest.mock('@/utilities/ReadMore', () => ({
+jest.mock("@/utilities/ReadMore", () => ({
   ReadMore: ({ children, side }: any) => (
     <div data-testid="read-more" data-side={side}>
       {children}
@@ -50,7 +50,7 @@ jest.mock('@/utilities/ReadMore', () => ({
 }));
 
 // Mock ExternalLink component
-jest.mock('@/components/Utilities/ExternalLink', () => ({
+jest.mock("@/components/Utilities/ExternalLink", () => ({
   ExternalLink: ({ href, children, className }: any) => (
     <a href={href} className={className} target="_blank" rel="noopener noreferrer">
       {children}
@@ -59,7 +59,7 @@ jest.mock('@/components/Utilities/ExternalLink', () => ({
 }));
 
 // Mock useMilestoneImpactAnswers hook
-jest.mock('@/hooks/useMilestoneImpactAnswers', () => ({
+jest.mock("@/hooks/useMilestoneImpactAnswers", () => ({
   useMilestoneImpactAnswers: jest.fn(() => ({
     data: null,
     isLoading: false,
@@ -68,18 +68,18 @@ jest.mock('@/hooks/useMilestoneImpactAnswers', () => ({
 }));
 
 // Mock formatDate utility
-jest.mock('@/utilities/formatDate', () => ({
+jest.mock("@/utilities/formatDate", () => ({
   formatDate: jest.fn((timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
+    return new Date(timestamp).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   }),
 }));
 
 // Mock PAGES utility
-jest.mock('@/utilities/pages', () => ({
+jest.mock("@/utilities/pages", () => ({
   PAGES: {
     COMMUNITY: {
       ALL_GRANTS: (slug: string, programId: string) => `/community/${slug}/grants/${programId}`,
@@ -87,19 +87,19 @@ jest.mock('@/utilities/pages', () => ({
   },
 }));
 
-describe('MilestoneCard', () => {
+describe("MilestoneCard", () => {
   const mockProjectMilestone = {
-    uid: 'milestone-123',
-    title: 'Test Project Milestone',
-    description: 'This is a test milestone description',
+    uid: "milestone-123",
+    title: "Test Project Milestone",
+    description: "This is a test milestone description",
     completed: false,
-    type: 'project',
+    type: "project",
     createdAt: 1704067200000,
     endsAt: null,
     source: {
       projectMilestone: {
-        uid: 'pm-123',
-        attester: '0x1234567890123456789012345678901234567890',
+        uid: "pm-123",
+        attester: "0x1234567890123456789012345678901234567890",
         completed: null,
       },
       grantMilestone: null,
@@ -112,12 +112,12 @@ describe('MilestoneCard', () => {
     completed: true,
     source: {
       projectMilestone: {
-        uid: 'pm-123',
-        attester: '0x1234567890123456789012345678901234567890',
+        uid: "pm-123",
+        attester: "0x1234567890123456789012345678901234567890",
         completed: {
           data: {
-            reason: 'Milestone completed successfully',
-            proofOfWork: 'https://github.com/proof',
+            reason: "Milestone completed successfully",
+            proofOfWork: "https://github.com/proof",
           },
         },
       },
@@ -126,35 +126,35 @@ describe('MilestoneCard', () => {
   } as unknown as UnifiedMilestone;
 
   const mockGrantMilestone = {
-    uid: 'gm-456',
-    title: 'Test Grant Milestone',
-    description: 'This is a grant milestone',
+    uid: "gm-456",
+    title: "Test Grant Milestone",
+    description: "This is a grant milestone",
     completed: false,
-    type: 'grant',
+    type: "grant",
     createdAt: 1704067200000,
     endsAt: 1735689600,
     source: {
       projectMilestone: null,
       grantMilestone: {
         milestone: {
-          uid: 'gm-456',
-          attester: '0x1234567890123456789012345678901234567890',
+          uid: "gm-456",
+          attester: "0x1234567890123456789012345678901234567890",
           completed: null,
         },
         grant: {
-          uid: 'grant-123',
+          uid: "grant-123",
           details: {
             data: {
-              title: 'Test Grant Program',
-              programId: 'program-123',
+              title: "Test Grant Program",
+              programId: "program-123",
             },
           },
           community: {
             details: {
               data: {
-                name: 'Test Community',
-                slug: 'test-community',
-                imageURL: 'https://example.com/community.jpg',
+                name: "Test Community",
+                slug: "test-community",
+                imageURL: "https://example.com/community.jpg",
               },
             },
           },
@@ -168,160 +168,160 @@ describe('MilestoneCard', () => {
     jest.clearAllMocks();
   });
 
-  describe('Rendering - Basic Elements', () => {
-    it('should render milestone card with title', () => {
+  describe("Rendering - Basic Elements", () => {
+    it("should render milestone card with title", () => {
       render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} />);
 
-      expect(screen.getByText('Test Project Milestone')).toBeInTheDocument();
+      expect(screen.getByText("Test Project Milestone")).toBeInTheDocument();
     });
 
-    it('should render milestone description', () => {
+    it("should render milestone description", () => {
       render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} />);
 
-      const description = screen.getByTestId('read-more');
-      expect(description).toHaveTextContent('This is a test milestone description');
+      const description = screen.getByTestId("read-more");
+      expect(description).toHaveTextContent("This is a test milestone description");
     });
 
-    it('should render milestone badge', () => {
+    it("should render milestone badge", () => {
       render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} />);
 
-      expect(screen.getByText('Milestone')).toBeInTheDocument();
-      expect(screen.getByAltText('Milestone')).toBeInTheDocument();
+      expect(screen.getByText("Milestone")).toBeInTheDocument();
+      expect(screen.getByAltText("Milestone")).toBeInTheDocument();
     });
 
-    it('should render creation date and attester', () => {
+    it("should render creation date and attester", () => {
       render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} />);
 
       expect(screen.getByText(/Created on/i)).toBeInTheDocument();
       expect(screen.getByText(/by$/i)).toBeInTheDocument();
-      expect(screen.getByTestId('ens-avatar')).toBeInTheDocument();
-      expect(screen.getByTestId('ens-name')).toBeInTheDocument();
+      expect(screen.getByTestId("ens-avatar")).toBeInTheDocument();
+      expect(screen.getByTestId("ens-name")).toBeInTheDocument();
     });
   });
 
-  describe('Status Rendering', () => {
+  describe("Status Rendering", () => {
     it('should display "Pending" status for incomplete milestone', () => {
       render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} />);
 
-      expect(screen.getByText('Pending')).toBeInTheDocument();
+      expect(screen.getByText("Pending")).toBeInTheDocument();
     });
 
     it('should display "Completed" status for complete milestone', () => {
       render(<MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} />);
 
-      expect(screen.getByText('Completed')).toBeInTheDocument();
+      expect(screen.getByText("Completed")).toBeInTheDocument();
     });
 
-    it('should apply correct styling for pending status', () => {
+    it("should apply correct styling for pending status", () => {
       render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} />);
 
-      const statusBadge = screen.getByText('Pending');
-      expect(statusBadge.className).toContain('bg-[#FFFAEB]');
-      expect(statusBadge.className).toContain('text-[#B54708]');
+      const statusBadge = screen.getByText("Pending");
+      expect(statusBadge.className).toContain("bg-[#FFFAEB]");
+      expect(statusBadge.className).toContain("text-[#B54708]");
     });
 
-    it('should apply correct styling for completed status', () => {
+    it("should apply correct styling for completed status", () => {
       render(<MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} />);
 
-      const statusBadge = screen.getByText('Completed');
-      expect(statusBadge.className).toContain('bg-brand-blue');
-      expect(statusBadge.className).toContain('text-white');
+      const statusBadge = screen.getByText("Completed");
+      expect(statusBadge.className).toContain("bg-brand-blue");
+      expect(statusBadge.className).toContain("text-white");
     });
 
-    it('should have correct border color for completed milestone', () => {
+    it("should have correct border color for completed milestone", () => {
       const { container } = render(
         <MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} />
       );
 
       const card = container.firstChild as HTMLElement;
-      expect(card.className).toContain('border-brand-blue');
+      expect(card.className).toContain("border-brand-blue");
     });
 
-    it('should have correct border color for pending milestone', () => {
+    it("should have correct border color for pending milestone", () => {
       const { container } = render(
         <MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} />
       );
 
       const card = container.firstChild as HTMLElement;
-      expect(card.className).toContain('border-gray-300');
-      expect(card.className).toContain('dark:border-zinc-400');
+      expect(card.className).toContain("border-gray-300");
+      expect(card.className).toContain("dark:border-zinc-400");
     });
   });
 
-  describe('Grant Milestone Specifics', () => {
-    it('should display due date for grant milestones', () => {
+  describe("Grant Milestone Specifics", () => {
+    it("should display due date for grant milestones", () => {
       render(<MilestoneCard milestone={mockGrantMilestone} isAuthorized={false} />);
 
       expect(screen.getByText(/Due by/i)).toBeInTheDocument();
     });
 
-    it('should not display due date for project milestones', () => {
+    it("should not display due date for project milestones", () => {
       render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} />);
 
       expect(screen.queryByText(/Due by/i)).not.toBeInTheDocument();
     });
 
-    it('should display grant program link for grant milestones', () => {
+    it("should display grant program link for grant milestones", () => {
       render(<MilestoneCard milestone={mockGrantMilestone} isAuthorized={false} />);
 
-      expect(screen.getByText('Test Grant Program')).toBeInTheDocument();
-      const link = screen.getByText('Test Grant Program').closest('a');
-      expect(link).toHaveAttribute('href', '/community/test-community/grants/program-123');
+      expect(screen.getByText("Test Grant Program")).toBeInTheDocument();
+      const link = screen.getByText("Test Grant Program").closest("a");
+      expect(link).toHaveAttribute("href", "/community/test-community/grants/program-123");
     });
 
-    it('should display community image for grant milestones', () => {
+    it("should display community image for grant milestones", () => {
       render(<MilestoneCard milestone={mockGrantMilestone} isAuthorized={false} />);
 
-      const communityImage = screen.getByAltText('Test Community');
+      const communityImage = screen.getByAltText("Test Community");
       expect(communityImage).toBeInTheDocument();
-      expect(communityImage).toHaveAttribute('src', 'https://example.com/community.jpg');
+      expect(communityImage).toHaveAttribute("src", "https://example.com/community.jpg");
     });
   });
 
-  describe('Merged Grants Display', () => {
-    it('should display multiple merged grants', () => {
+  describe("Merged Grants Display", () => {
+    it("should display multiple merged grants", () => {
       const milestoneWithMergedGrants = {
         ...mockGrantMilestone,
         mergedGrants: [
           {
-            grantUID: 'grant-1',
-            grantTitle: 'Grant Alpha',
-            programId: 'program-1',
-            communityName: 'Community A',
-            communityImage: 'https://example.com/a.jpg',
+            grantUID: "grant-1",
+            grantTitle: "Grant Alpha",
+            programId: "program-1",
+            communityName: "Community A",
+            communityImage: "https://example.com/a.jpg",
           },
           {
-            grantUID: 'grant-2',
-            grantTitle: 'Grant Beta',
-            programId: 'program-2',
-            communityName: 'Community B',
-            communityImage: 'https://example.com/b.jpg',
+            grantUID: "grant-2",
+            grantTitle: "Grant Beta",
+            programId: "program-2",
+            communityName: "Community B",
+            communityImage: "https://example.com/b.jpg",
           },
         ],
       } as unknown as UnifiedMilestone;
 
       render(<MilestoneCard milestone={milestoneWithMergedGrants} isAuthorized={false} />);
 
-      expect(screen.getByText('Grant Alpha')).toBeInTheDocument();
-      expect(screen.getByText('Grant Beta')).toBeInTheDocument();
+      expect(screen.getByText("Grant Alpha")).toBeInTheDocument();
+      expect(screen.getByText("Grant Beta")).toBeInTheDocument();
     });
 
-    it('should sort merged grants alphabetically', () => {
+    it("should sort merged grants alphabetically", () => {
       const milestoneWithUnsortedGrants = {
         ...mockGrantMilestone,
         mergedGrants: [
           {
-            grantUID: 'grant-1',
-            grantTitle: 'Zebra Grant',
-            programId: 'program-1',
-            communityName: 'Community A',
+            grantUID: "grant-1",
+            grantTitle: "Zebra Grant",
+            programId: "program-1",
+            communityName: "Community A",
             communityImage: null,
           },
           {
-            grantUID: 'grant-2',
-            grantTitle: 'Alpha Grant',
-            programId: 'program-2',
-            communityName: 'Community B',
+            grantUID: "grant-2",
+            grantTitle: "Alpha Grant",
+            programId: "program-2",
+            communityName: "Community B",
             communityImage: null,
           },
         ],
@@ -332,55 +332,55 @@ describe('MilestoneCard', () => {
       );
 
       const grants = screen.getAllByText(/Grant$/);
-      expect(grants[0]).toHaveTextContent('Alpha Grant');
-      expect(grants[1]).toHaveTextContent('Zebra Grant');
+      expect(grants[0]).toHaveTextContent("Alpha Grant");
+      expect(grants[1]).toHaveTextContent("Zebra Grant");
     });
   });
 
-  describe('Completion Information', () => {
-    it('should display completion reason when milestone is completed', () => {
+  describe("Completion Information", () => {
+    it("should display completion reason when milestone is completed", () => {
       render(<MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} />);
 
-      expect(screen.getByText('Milestone completed successfully')).toBeInTheDocument();
+      expect(screen.getByText("Milestone completed successfully")).toBeInTheDocument();
     });
 
-    it('should display proof of work link when available', () => {
+    it("should display proof of work link when available", () => {
       render(<MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} />);
 
-      expect(screen.getByText('Proof of Work')).toBeInTheDocument();
-      const proofLink = screen.getByText('https://github.com/proof');
-      expect(proofLink).toHaveAttribute('href', 'https://github.com/proof');
-      expect(proofLink).toHaveAttribute('target', '_blank');
+      expect(screen.getByText("Proof of Work")).toBeInTheDocument();
+      const proofLink = screen.getByText("https://github.com/proof");
+      expect(proofLink).toHaveAttribute("href", "https://github.com/proof");
+      expect(proofLink).toHaveAttribute("target", "_blank");
     });
 
-    it('should not display completion info for incomplete milestones', () => {
+    it("should not display completion info for incomplete milestones", () => {
       render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} />);
 
       expect(screen.queryByText(/Proof of Work/i)).not.toBeInTheDocument();
     });
 
-    it('should handle milestone with deliverables data structure', () => {
+    it("should handle milestone with deliverables data structure", () => {
       const milestoneWithDeliverables = {
         ...mockCompletedMilestone,
         completed: true,
         source: {
           projectMilestone: {
-            uid: 'pm-123',
-            attester: '0x1234567890123456789012345678901234567890',
+            uid: "pm-123",
+            attester: "0x1234567890123456789012345678901234567890",
             completed: {
               data: {
-                reason: 'Milestone completed',
-                proofOfWork: '',
+                reason: "Milestone completed",
+                proofOfWork: "",
                 deliverables: [
                   {
-                    name: 'Deliverable 1',
-                    description: 'First deliverable',
-                    proof: 'https://proof1.com',
+                    name: "Deliverable 1",
+                    description: "First deliverable",
+                    proof: "https://proof1.com",
                   },
                   {
-                    name: 'Deliverable 2',
-                    description: 'Second deliverable',
-                    proof: 'https://proof2.com',
+                    name: "Deliverable 2",
+                    description: "Second deliverable",
+                    proof: "https://proof2.com",
                   },
                 ],
               },
@@ -394,53 +394,53 @@ describe('MilestoneCard', () => {
       render(<MilestoneCard milestone={milestoneWithDeliverables} isAuthorized={false} />);
 
       // Verify the milestone renders successfully
-      expect(screen.getByText('Test Project Milestone')).toBeInTheDocument();
-      expect(screen.getByText('Milestone completed')).toBeInTheDocument();
+      expect(screen.getByText("Test Project Milestone")).toBeInTheDocument();
+      expect(screen.getByText("Milestone completed")).toBeInTheDocument();
     });
   });
 
-  describe('Authorization and Options Menu', () => {
-    it('should not display options menu when not authorized', () => {
+  describe("Authorization and Options Menu", () => {
+    it("should not display options menu when not authorized", () => {
       render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} />);
 
       // The dynamic component mock would be rendered if options menu is shown
-      expect(screen.queryByTestId('mocked-dynamic-component')).not.toBeInTheDocument();
+      expect(screen.queryByTestId("mocked-dynamic-component")).not.toBeInTheDocument();
     });
 
-    it('should render for project milestone with authorization', () => {
+    it("should render for project milestone with authorization", () => {
       render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={true} />);
 
       // Component should render without errors
-      expect(screen.getByText('Test Project Milestone')).toBeInTheDocument();
+      expect(screen.getByText("Test Project Milestone")).toBeInTheDocument();
     });
 
-    it('should render for grant milestone with authorization', () => {
+    it("should render for grant milestone with authorization", () => {
       render(<MilestoneCard milestone={mockGrantMilestone} isAuthorized={true} />);
 
       // Component should render without errors
-      expect(screen.getByText('Test Grant Milestone')).toBeInTheDocument();
+      expect(screen.getByText("Test Grant Milestone")).toBeInTheDocument();
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should handle milestone without description', () => {
+  describe("Edge Cases", () => {
+    it("should handle milestone without description", () => {
       const milestoneWithoutDescription = {
         ...mockProjectMilestone,
-        description: '',
+        description: "",
       } as unknown as UnifiedMilestone;
 
       render(<MilestoneCard milestone={milestoneWithoutDescription} isAuthorized={false} />);
 
-      expect(screen.queryByTestId('read-more')).not.toBeInTheDocument();
+      expect(screen.queryByTestId("read-more")).not.toBeInTheDocument();
     });
 
-    it('should handle milestone without attester', () => {
+    it("should handle milestone without attester", () => {
       const milestoneWithoutAttester = {
         ...mockProjectMilestone,
         source: {
           projectMilestone: {
-            uid: 'pm-123',
-            attester: '',
+            uid: "pm-123",
+            attester: "",
             completed: null,
           },
           grantMilestone: null,
@@ -449,10 +449,10 @@ describe('MilestoneCard', () => {
 
       render(<MilestoneCard milestone={milestoneWithoutAttester} isAuthorized={false} />);
 
-      expect(screen.getByTestId('ens-avatar')).toBeInTheDocument();
+      expect(screen.getByTestId("ens-avatar")).toBeInTheDocument();
     });
 
-    it('should handle grant milestone without community image', () => {
+    it("should handle grant milestone without community image", () => {
       const milestoneWithoutImage = {
         ...mockGrantMilestone,
         source: {
@@ -464,8 +464,8 @@ describe('MilestoneCard', () => {
               community: {
                 details: {
                   data: {
-                    name: 'Test Community',
-                    slug: 'test-community',
+                    name: "Test Community",
+                    slug: "test-community",
                     imageURL: null,
                   },
                 },
@@ -477,10 +477,10 @@ describe('MilestoneCard', () => {
 
       render(<MilestoneCard milestone={milestoneWithoutImage} isAuthorized={false} />);
 
-      expect(screen.getByText('Test Grant Program')).toBeInTheDocument();
+      expect(screen.getByText("Test Grant Program")).toBeInTheDocument();
     });
 
-    it('should handle grant milestone without title', () => {
+    it("should handle grant milestone without title", () => {
       const milestoneWithoutGrantTitle = {
         ...mockGrantMilestone,
         source: {
@@ -491,8 +491,8 @@ describe('MilestoneCard', () => {
               ...(mockGrantMilestone.source as any).grantMilestone.grant,
               details: {
                 data: {
-                  title: '',
-                  programId: 'program-123',
+                  title: "",
+                  programId: "program-123",
                 },
               },
             },
@@ -503,52 +503,52 @@ describe('MilestoneCard', () => {
       render(<MilestoneCard milestone={milestoneWithoutGrantTitle} isAuthorized={false} />);
 
       // Should not render empty grant link
-      expect(screen.queryByText('Test Grant Program')).not.toBeInTheDocument();
+      expect(screen.queryByText("Test Grant Program")).not.toBeInTheDocument();
     });
   });
 
-  describe('Accessibility', () => {
-    it('should have proper semantic structure', () => {
+  describe("Accessibility", () => {
+    it("should have proper semantic structure", () => {
       const { container } = render(
         <MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} />
       );
 
       const card = container.firstChild as HTMLElement;
       expect(card).toBeInTheDocument();
-      expect(card.tagName).toBe('DIV');
+      expect(card.tagName).toBe("DIV");
     });
 
-    it('should have external links with proper security attributes', () => {
+    it("should have external links with proper security attributes", () => {
       render(<MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} />);
 
-      const proofLink = screen.getByText('https://github.com/proof');
-      expect(proofLink).toHaveAttribute('target', '_blank');
-      expect(proofLink).toHaveAttribute('rel', 'noopener noreferrer');
+      const proofLink = screen.getByText("https://github.com/proof");
+      expect(proofLink).toHaveAttribute("target", "_blank");
+      expect(proofLink).toHaveAttribute("rel", "noopener noreferrer");
     });
 
-    it('should have alt text for milestone icon', () => {
+    it("should have alt text for milestone icon", () => {
       render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} />);
 
-      const icon = screen.getByAltText('Milestone');
+      const icon = screen.getByAltText("Milestone");
       expect(icon).toBeInTheDocument();
     });
   });
 
-  describe('Dark Mode Support', () => {
-    it('should have dark mode classes for card', () => {
+  describe("Dark Mode Support", () => {
+    it("should have dark mode classes for card", () => {
       const { container } = render(
         <MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} />
       );
 
       const card = container.firstChild as HTMLElement;
-      expect(card.className).toContain('dark:bg-zinc-800');
+      expect(card.className).toContain("dark:bg-zinc-800");
     });
 
-    it('should have dark mode classes for text elements', () => {
+    it("should have dark mode classes for text elements", () => {
       render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} />);
 
-      const title = screen.getByText('Test Project Milestone');
-      expect(title.className).toContain('dark:text-zinc-100');
+      const title = screen.getByText("Test Project Milestone");
+      expect(title.className).toContain("dark:text-zinc-100");
     });
   });
 });

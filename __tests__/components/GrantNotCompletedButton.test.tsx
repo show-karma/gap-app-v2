@@ -1,4 +1,3 @@
-import React from "react";
 import { render, screen } from "@testing-library/react";
 import { GrantNotCompletedButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton/GrantNotCompletedButton";
 import "@testing-library/jest-dom";
@@ -45,46 +44,26 @@ describe("GrantNotCompletedButton", () => {
 
   describe("Rendering", () => {
     it("should render Link component", () => {
-      render(
-        <GrantNotCompletedButton
-          project={mockProject}
-          grantUID={grantUID}
-        />
-      );
+      render(<GrantNotCompletedButton project={mockProject} grantUID={grantUID} />);
 
       const link = screen.getByRole("link");
       expect(link).toBeInTheDocument();
     });
 
     it("should show default 'Mark as Complete' text", () => {
-      render(
-        <GrantNotCompletedButton
-          project={mockProject}
-          grantUID={grantUID}
-        />
-      );
+      render(<GrantNotCompletedButton project={mockProject} grantUID={grantUID} />);
 
       expect(screen.getByText("Mark as Complete")).toBeInTheDocument();
     });
 
     it("should show CheckCircleIcon", () => {
-      render(
-        <GrantNotCompletedButton
-          project={mockProject}
-          grantUID={grantUID}
-        />
-      );
+      render(<GrantNotCompletedButton project={mockProject} grantUID={grantUID} />);
 
       expect(screen.getByTestId("check-circle-icon")).toBeInTheDocument();
     });
 
     it("should apply correct CSS classes", () => {
-      render(
-        <GrantNotCompletedButton
-          project={mockProject}
-          grantUID={grantUID}
-        />
-      );
+      render(<GrantNotCompletedButton project={mockProject} grantUID={grantUID} />);
 
       const link = screen.getByRole("link");
       expect(link).toHaveClass(
@@ -108,12 +87,7 @@ describe("GrantNotCompletedButton", () => {
 
   describe("Link href", () => {
     it("should generate correct href using PAGES.PROJECT.SCREENS.SELECTED_SCREEN", () => {
-      render(
-        <GrantNotCompletedButton
-          project={mockProject}
-          grantUID={grantUID}
-        />
-      );
+      render(<GrantNotCompletedButton project={mockProject} grantUID={grantUID} />);
 
       const link = screen.getByRole("link");
       expect(link).toHaveAttribute(
@@ -132,12 +106,7 @@ describe("GrantNotCompletedButton", () => {
         },
       };
 
-      render(
-        <GrantNotCompletedButton
-          project={projectWithSlug}
-          grantUID={grantUID}
-        />
-      );
+      render(<GrantNotCompletedButton project={projectWithSlug} grantUID={grantUID} />);
 
       const link = screen.getByRole("link");
       expect(link).toHaveAttribute(
@@ -154,18 +123,10 @@ describe("GrantNotCompletedButton", () => {
         },
       } as any;
 
-      render(
-        <GrantNotCompletedButton
-          project={projectWithoutSlug}
-          grantUID={grantUID}
-        />
-      );
+      render(<GrantNotCompletedButton project={projectWithoutSlug} grantUID={grantUID} />);
 
       const link = screen.getByRole("link");
-      expect(link).toHaveAttribute(
-        "href",
-        "/project/project-789/funding/grant-123/complete-grant"
-      );
+      expect(link).toHaveAttribute("href", "/project/project-789/funding/grant-123/complete-grant");
     });
 
     it("should fall back to project.uid when details.data is missing", () => {
@@ -173,41 +134,23 @@ describe("GrantNotCompletedButton", () => {
         uid: "project-999",
       } as any;
 
-      render(
-        <GrantNotCompletedButton
-          project={projectWithoutDetails}
-          grantUID={grantUID}
-        />
-      );
+      render(<GrantNotCompletedButton project={projectWithoutDetails} grantUID={grantUID} />);
 
       const link = screen.getByRole("link");
-      expect(link).toHaveAttribute(
-        "href",
-        "/project/project-999/funding/grant-123/complete-grant"
-      );
+      expect(link).toHaveAttribute("href", "/project/project-999/funding/grant-123/complete-grant");
     });
 
     it("should include grantUID in href", () => {
       const customGrantUID = "custom-grant-456";
 
-      render(
-        <GrantNotCompletedButton
-          project={mockProject}
-          grantUID={customGrantUID}
-        />
-      );
+      render(<GrantNotCompletedButton project={mockProject} grantUID={customGrantUID} />);
 
       const link = screen.getByRole("link");
       expect(link.getAttribute("href")).toContain(customGrantUID);
     });
 
     it("should include 'complete-grant' screen in href", () => {
-      render(
-        <GrantNotCompletedButton
-          project={mockProject}
-          grantUID={grantUID}
-        />
-      );
+      render(<GrantNotCompletedButton project={mockProject} grantUID={grantUID} />);
 
       const link = screen.getByRole("link");
       expect(link.getAttribute("href")).toContain("complete-grant");
@@ -219,11 +162,7 @@ describe("GrantNotCompletedButton", () => {
       const customText = "Complete This Grant";
 
       render(
-        <GrantNotCompletedButton
-          project={mockProject}
-          grantUID={grantUID}
-          text={customText}
-        />
+        <GrantNotCompletedButton project={mockProject} grantUID={grantUID} text={customText} />
       );
 
       expect(screen.getByText(customText)).toBeInTheDocument();
@@ -232,24 +171,14 @@ describe("GrantNotCompletedButton", () => {
 
     it("should use default text when text prop is undefined", () => {
       render(
-        <GrantNotCompletedButton
-          project={mockProject}
-          grantUID={grantUID}
-          text={undefined}
-        />
+        <GrantNotCompletedButton project={mockProject} grantUID={grantUID} text={undefined} />
       );
 
       expect(screen.getByText("Mark as Complete")).toBeInTheDocument();
     });
 
     it("should handle empty string text", () => {
-      render(
-        <GrantNotCompletedButton
-          project={mockProject}
-          grantUID={grantUID}
-          text=""
-        />
-      );
+      render(<GrantNotCompletedButton project={mockProject} grantUID={grantUID} text="" />);
 
       const link = screen.getByRole("link");
       expect(link.textContent).toBe("");
@@ -257,21 +186,13 @@ describe("GrantNotCompletedButton", () => {
 
     it("should handle various text values", () => {
       const { rerender } = render(
-        <GrantNotCompletedButton
-          project={mockProject}
-          grantUID={grantUID}
-          text="First Text"
-        />
+        <GrantNotCompletedButton project={mockProject} grantUID={grantUID} text="First Text" />
       );
 
       expect(screen.getByText("First Text")).toBeInTheDocument();
 
       rerender(
-        <GrantNotCompletedButton
-          project={mockProject}
-          grantUID={grantUID}
-          text="Second Text"
-        />
+        <GrantNotCompletedButton project={mockProject} grantUID={grantUID} text="Second Text" />
       );
 
       expect(screen.getByText("Second Text")).toBeInTheDocument();
@@ -281,12 +202,7 @@ describe("GrantNotCompletedButton", () => {
 
   describe("Icon Rendering", () => {
     it("should render CheckCircleIcon with correct className", () => {
-      render(
-        <GrantNotCompletedButton
-          project={mockProject}
-          grantUID={grantUID}
-        />
-      );
+      render(<GrantNotCompletedButton project={mockProject} grantUID={grantUID} />);
 
       const icon = screen.getByTestId("check-circle-icon");
       expect(icon).toHaveClass("h-5", "w-5");
@@ -294,10 +210,7 @@ describe("GrantNotCompletedButton", () => {
 
     it("should render icon inside a div with h-5 w-5", () => {
       const { container } = render(
-        <GrantNotCompletedButton
-          project={mockProject}
-          grantUID={grantUID}
-        />
+        <GrantNotCompletedButton project={mockProject} grantUID={grantUID} />
       );
 
       const iconContainer = container.querySelector(".h-5.w-5");
@@ -334,4 +247,3 @@ describe("GrantNotCompletedButton", () => {
     });
   });
 });
-

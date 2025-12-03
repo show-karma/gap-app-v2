@@ -1,22 +1,22 @@
 "use client";
+import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
+import { CommunityImpactCharts } from "@/components/Pages/Communities/Impact/ImpactCharts";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
 import { zeroUID } from "@/utilities/commons";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useAccount } from "wagmi";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
-import { useStaff } from "@/hooks/useStaff";
-import { useEffect, useState } from "react";
 import { OutputMetrics } from "./OutputMetrics";
-import { CommunityImpactCharts } from "@/components/Pages/Communities/Impact/ImpactCharts";
 
 type Tab = "metrics" | "impact";
 
@@ -26,27 +26,23 @@ export default function ProgramImpactPage() {
   const params = useParams();
   const communityId = params.communityId as string;
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
-  const [community, setCommunity] = useState<ICommunityResponse | undefined>(
-    undefined
-  ); // Data returned from the API
+  const [community, setCommunity] = useState<ICommunityResponse | undefined>(undefined); // Data returned from the API
   const [activeTab, setActiveTab] = useState<Tab>("metrics");
 
   // Check if user is admin of this community
-  const { isCommunityAdmin: isAdmin, isLoading: adminLoading } =
-    useIsCommunityAdmin(community?.uid, address);
+  const { isCommunityAdmin: isAdmin, isLoading: adminLoading } = useIsCommunityAdmin(
+    community?.uid,
+    address
+  );
   const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   useEffect(() => {
     const fetchDetails = async () => {
       if (!communityId) return;
       setLoading(true);
-      console.log("Fetching community data");
       try {
-        const { data: result } = await gapIndexerApi.communityBySlug(
-          communityId
-        );
-        if (!result || result.uid === zeroUID)
-          throw new Error("Community not found");
+        const { data: result } = await gapIndexerApi.communityBySlug(communityId);
+        if (!result || result.uid === zeroUID) throw new Error("Community not found");
         setCommunity(result);
 
         setLoading(false);
@@ -56,10 +52,7 @@ export default function ProgramImpactPage() {
           community: communityId,
         });
         console.error("Error fetching data:", error);
-        if (
-          error.message === "Community not found" ||
-          error.message.includes("422")
-        ) {
+        if (error.message === "Community not found" || error.message.includes("422")) {
           router.push(PAGES.NOT_FOUND);
         }
       } finally {
@@ -68,7 +61,7 @@ export default function ProgramImpactPage() {
     };
 
     fetchDetails();
-  }, [communityId]);
+  }, [communityId, router]);
 
   const tabs = [
     { id: "metrics", label: "Output Metrics" },
@@ -85,9 +78,7 @@ export default function ProgramImpactPage() {
         <div className="flex w-full flex-1 flex-col items-center gap-8">
           <div className="w-full flex flex-row items-center justify-between max-w-4xl">
             <Link
-              href={PAGES.ADMIN.ROOT(
-                community?.details?.data?.slug || (community?.uid as string)
-              )}
+              href={PAGES.ADMIN.ROOT(community?.details?.data?.slug || (community?.uid as string))}
             >
               <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
                 <ChevronLeftIcon className="h-5 w-5" />
@@ -125,9 +116,7 @@ export default function ProgramImpactPage() {
 
             <div className="mt-6">
               {activeTab === "metrics" && (
-                <OutputMetrics
-                  communitySlug={community?.details?.data?.slug || ""}
-                />
+                <OutputMetrics communitySlug={community?.details?.data?.slug || ""} />
               )}
               {activeTab === "impact" && <CommunityImpactCharts />}
             </div>

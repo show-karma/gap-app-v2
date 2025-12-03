@@ -1,19 +1,29 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import CommunityStats from '@/components/CommunityStats';
-import fetchData from '@/utilities/fetchData';
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import CommunityStats from "@/components/CommunityStats";
+import fetchData from "@/utilities/fetchData";
 
 // Mock fetchData
-jest.mock('@/utilities/fetchData');
+jest.mock("@/utilities/fetchData");
 
 // Mock Headless UI Dialog
-jest.mock('@headlessui/react', () => {
-  const React = require('react');
+jest.mock("@headlessui/react", () => {
+  const React = require("react");
 
   // List of Headless UI Transition props that should be filtered
   const TRANSITION_PROPS = [
-    'appear', 'show', 'enter', 'enterFrom', 'enterTo',
-    'leave', 'leaveFrom', 'leaveTo', 'entered', 'beforeEnter',
-    'afterEnter', 'beforeLeave', 'afterLeave'
+    "appear",
+    "show",
+    "enter",
+    "enterFrom",
+    "enterTo",
+    "leave",
+    "leaveFrom",
+    "leaveTo",
+    "entered",
+    "beforeEnter",
+    "afterEnter",
+    "beforeLeave",
+    "afterLeave",
   ];
 
   const MockDialog = ({ children, onClose, ...props }: any) => (
@@ -38,7 +48,7 @@ jest.mock('@headlessui/react', () => {
       return acc;
     }, {} as any);
 
-    const Component = as || 'div';
+    const Component = as || "div";
     return <Component {...filteredProps}>{children}</Component>;
   };
 
@@ -51,7 +61,7 @@ jest.mock('@headlessui/react', () => {
       return acc;
     }, {} as any);
 
-    const Component = as || 'div';
+    const Component = as || "div";
     return <Component {...filteredProps}>{children}</Component>;
   };
 
@@ -66,17 +76,15 @@ jest.mock('@headlessui/react', () => {
 });
 
 // Mock Heroicons
-jest.mock('@heroicons/react/24/solid', () => ({
-  ArrowPathIcon: (props: any) => (
-    <svg {...props} data-testid="refresh-icon" aria-label="Refresh" />
-  ),
+jest.mock("@heroicons/react/24/solid", () => ({
+  ArrowPathIcon: (props: any) => <svg {...props} data-testid="refresh-icon" aria-label="Refresh" />,
   ChartBarSquareIcon: (props: any) => (
     <svg {...props} data-testid="chart-icon" aria-label="Chart" />
   ),
 }));
 
 // Mock Button
-jest.mock('@/components/Utilities/Button', () => ({
+jest.mock("@/components/Utilities/Button", () => ({
   Button: ({ onClick, children, className }: any) => (
     <button onClick={onClick} className={className}>
       {children}
@@ -85,12 +93,12 @@ jest.mock('@/components/Utilities/Button', () => ({
 }));
 
 // Mock errorManager
-jest.mock('@/components/Utilities/errorManager', () => ({
+jest.mock("@/components/Utilities/errorManager", () => ({
   errorManager: jest.fn(),
 }));
 
-describe('CommunityStats', () => {
-  const mockCommunityId = 'community-123';
+describe("CommunityStats", () => {
+  const mockCommunityId = "community-123";
   const mockStatsData = {
     projects: 50,
     ProjectEdits: 120,
@@ -113,177 +121,172 @@ describe('CommunityStats', () => {
     (fetchData as jest.Mock).mockResolvedValue([mockStatsData, null]);
   });
 
-  describe('Rendering', () => {
-    it('should render Stats button', () => {
+  describe("Rendering", () => {
+    it("should render Stats button", () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      expect(screen.getByText('Stats')).toBeInTheDocument();
+      expect(screen.getByText("Stats")).toBeInTheDocument();
     });
 
-    it('should render chart icon on Stats button', () => {
+    it("should render chart icon on Stats button", () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      expect(screen.getByTestId('chart-icon')).toBeInTheDocument();
+      expect(screen.getByTestId("chart-icon")).toBeInTheDocument();
     });
 
-    it('should not show modal initially', () => {
+    it("should not show modal initially", () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      expect(screen.queryByTestId('dialog')).not.toBeInTheDocument();
+      expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
     });
 
-    it('should have proper styling on Stats button', () => {
+    it("should have proper styling on Stats button", () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const button = screen.getByText('Stats').closest('button');
-      expect(button?.className).toContain('text-fuchsia-600');
-      expect(button?.className).toContain('border-fuchsia-200');
+      const button = screen.getByText("Stats").closest("button");
+      expect(button?.className).toContain("text-fuchsia-600");
+      expect(button?.className).toContain("border-fuchsia-200");
     });
   });
 
-  describe('Modal Opening', () => {
-    it('should open modal when Stats button is clicked', async () => {
+  describe("Modal Opening", () => {
+    it("should open modal when Stats button is clicked", async () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.getByTestId('dialog')).toBeInTheDocument();
+        expect(screen.getByTestId("dialog")).toBeInTheDocument();
       });
     });
 
-    it('should fetch stats when modal is opened', async () => {
+    it("should fetch stats when modal is opened", async () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(fetchData).toHaveBeenCalledWith(
-          expect.stringContaining(mockCommunityId)
-        );
+        expect(fetchData).toHaveBeenCalledWith(expect.stringContaining(mockCommunityId));
       });
     });
 
-    it('should show loading state when fetching stats', async () => {
+    it("should show loading state when fetching stats", async () => {
       (fetchData as jest.Mock).mockImplementation(
-        () =>
-          new Promise((resolve) =>
-            setTimeout(() => resolve([mockStatsData, null]), 100)
-          )
+        () => new Promise((resolve) => setTimeout(() => resolve([mockStatsData, null]), 100))
       );
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Loading stats...')).toBeInTheDocument();
+        expect(screen.getByText("Loading stats...")).toBeInTheDocument();
       });
     });
   });
 
-  describe('Stats Display', () => {
-    it('should display Community Stats title', async () => {
+  describe("Stats Display", () => {
+    it("should display Community Stats title", async () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Community Stats')).toBeInTheDocument();
+        expect(screen.getByText("Community Stats")).toBeInTheDocument();
       });
     });
 
-    it('should display all stats after loading', async () => {
+    it("should display all stats after loading", async () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.getByText('No. of Projects')).toBeInTheDocument();
-        expect(screen.getByText('50')).toBeInTheDocument();
+        expect(screen.getByText("No. of Projects")).toBeInTheDocument();
+        expect(screen.getByText("50")).toBeInTheDocument();
       });
     });
 
-    it('should display calculated total attestations', async () => {
+    it("should display calculated total attestations", async () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Total Attestations')).toBeInTheDocument();
+        expect(screen.getByText("Total Attestations")).toBeInTheDocument();
       });
 
       // Total = 50 + 25 + 90 + 15 + 80 + 200 + 35 + 100 + 75 + 60 + 60 + 70 + 45 + 120 = 1025
-      const totalValue = screen.getByText('1025');
+      const totalValue = screen.getByText("1025");
       expect(totalValue).toBeInTheDocument();
     });
 
-    it('should display grants stats', async () => {
+    it("should display grants stats", async () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.getByText('No. of Grants')).toBeInTheDocument();
-        expect(screen.getByText('25')).toBeInTheDocument();
+        expect(screen.getByText("No. of Grants")).toBeInTheDocument();
+        expect(screen.getByText("25")).toBeInTheDocument();
       });
     });
 
-    it('should display milestone stats', async () => {
+    it("should display milestone stats", async () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.getByText('No. of Milestones')).toBeInTheDocument();
-        expect(screen.getByText('100')).toBeInTheDocument();
+        expect(screen.getByText("No. of Milestones")).toBeInTheDocument();
+        expect(screen.getByText("100")).toBeInTheDocument();
       });
     });
 
-    it('should display completed milestones', async () => {
+    it("should display completed milestones", async () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.getByText('No. of Milestones Completed')).toBeInTheDocument();
-        expect(screen.getByText('75')).toBeInTheDocument();
+        expect(screen.getByText("No. of Milestones Completed")).toBeInTheDocument();
+        expect(screen.getByText("75")).toBeInTheDocument();
       });
     });
   });
 
-  describe('Refresh Functionality', () => {
-    it('should render refresh button', async () => {
+  describe("Refresh Functionality", () => {
+    it("should render refresh button", async () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.getByTestId('refresh-icon')).toBeInTheDocument();
+        expect(screen.getByTestId("refresh-icon")).toBeInTheDocument();
       });
     });
 
-    it('should refetch stats when refresh button is clicked', async () => {
+    it("should refetch stats when refresh button is clicked", async () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.getByTestId('refresh-icon')).toBeInTheDocument();
+        expect(screen.getByTestId("refresh-icon")).toBeInTheDocument();
       });
 
-      const refreshButton = screen.getByTestId('refresh-icon').closest('button');
+      const refreshButton = screen.getByTestId("refresh-icon").closest("button");
       if (refreshButton) fireEvent.click(refreshButton);
 
       await waitFor(() => {
@@ -292,14 +295,14 @@ describe('CommunityStats', () => {
     });
   });
 
-  describe('Error Handling', () => {
-    it('should display error message when fetch fails', async () => {
-      const errorMessage = 'Failed to fetch stats';
+  describe("Error Handling", () => {
+    it("should display error message when fetch fails", async () => {
+      const errorMessage = "Failed to fetch stats";
       (fetchData as jest.Mock).mockResolvedValue([null, errorMessage]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
@@ -307,12 +310,12 @@ describe('CommunityStats', () => {
       });
     });
 
-    it('should display error when no stats found', async () => {
+    it("should display error when no stats found", async () => {
       (fetchData as jest.Mock).mockResolvedValue([{}, null]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
@@ -320,12 +323,12 @@ describe('CommunityStats', () => {
       });
     });
 
-    it('should display error when projects data is missing', async () => {
+    it("should display error when projects data is missing", async () => {
       (fetchData as jest.Mock).mockResolvedValue([{ grants: 10 }, null]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
@@ -333,14 +336,14 @@ describe('CommunityStats', () => {
       });
     });
 
-    it('should call errorManager on fetch error', async () => {
-      const { errorManager } = require('@/components/Utilities/errorManager');
-      const error = new Error('Network error');
+    it("should call errorManager on fetch error", async () => {
+      const { errorManager } = require("@/components/Utilities/errorManager");
+      const error = new Error("Network error");
       (fetchData as jest.Mock).mockRejectedValue(error);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
@@ -349,112 +352,112 @@ describe('CommunityStats', () => {
     });
   });
 
-  describe('Stats Format', () => {
-    it('should display stats in key-value pairs', async () => {
+  describe("Stats Format", () => {
+    it("should display stats in key-value pairs", async () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        const statsContainer = screen.getByText('No. of Projects').parentElement;
+        const statsContainer = screen.getByText("No. of Projects").parentElement;
         expect(statsContainer).toBeInTheDocument();
       });
     });
 
-    it('should style stat values in blue', async () => {
+    it("should style stat values in blue", async () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        const value = screen.getByText('50');
-        expect(value.className).toContain('text-blue-500');
+        const value = screen.getByText("50");
+        expect(value.className).toContain("text-blue-500");
       });
     });
 
-    it('should display stats with proper labels', async () => {
+    it("should display stats with proper labels", async () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.getByText('No. of Project Edits')).toBeInTheDocument();
-        expect(screen.getByText('No. of Grant Updates')).toBeInTheDocument();
-        expect(screen.getByText('No. of Members Added')).toBeInTheDocument();
-      });
-    });
-  });
-
-  describe('Styling', () => {
-    it('should have dark mode classes on dialog panel', async () => {
-      render(<CommunityStats communityId={mockCommunityId} />);
-
-      const statsButton = screen.getByText('Stats');
-      fireEvent.click(statsButton);
-
-      await waitFor(() => {
-        const panel = screen.getByTestId('dialog-panel');
-        expect(panel.className).toContain('dark:bg-zinc-800');
-      });
-    });
-
-    it('should have rounded corners on modal', async () => {
-      render(<CommunityStats communityId={mockCommunityId} />);
-
-      const statsButton = screen.getByText('Stats');
-      fireEvent.click(statsButton);
-
-      await waitFor(() => {
-        const panel = screen.getByTestId('dialog-panel');
-        expect(panel.className).toContain('rounded-2xl');
-      });
-    });
-
-    it('should have border on header', async () => {
-      render(<CommunityStats communityId={mockCommunityId} />);
-
-      const statsButton = screen.getByText('Stats');
-      fireEvent.click(statsButton);
-
-      await waitFor(() => {
-        const header = screen.getByText('Community Stats').parentElement;
-        expect(header?.className).toContain('border-b-2');
+        expect(screen.getByText("No. of Project Edits")).toBeInTheDocument();
+        expect(screen.getByText("No. of Grant Updates")).toBeInTheDocument();
+        expect(screen.getByText("No. of Members Added")).toBeInTheDocument();
       });
     });
   });
 
-  describe('Accessibility', () => {
-    it('should have heading for modal title', async () => {
+  describe("Styling", () => {
+    it("should have dark mode classes on dialog panel", async () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        const title = screen.getByText('Community Stats');
-        expect(title.tagName).toBe('H1');
+        const panel = screen.getByTestId("dialog-panel");
+        expect(panel.className).toContain("dark:bg-zinc-800");
       });
     });
 
-    it('should have proper font styling for title', async () => {
+    it("should have rounded corners on modal", async () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        const title = screen.getByText('Community Stats');
-        expect(title.className).toContain('font-bold');
-        expect(title.className).toContain('text-xl');
+        const panel = screen.getByTestId("dialog-panel");
+        expect(panel.className).toContain("rounded-2xl");
+      });
+    });
+
+    it("should have border on header", async () => {
+      render(<CommunityStats communityId={mockCommunityId} />);
+
+      const statsButton = screen.getByText("Stats");
+      fireEvent.click(statsButton);
+
+      await waitFor(() => {
+        const header = screen.getByText("Community Stats").parentElement;
+        expect(header?.className).toContain("border-b-2");
       });
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should handle zero values in stats', async () => {
+  describe("Accessibility", () => {
+    it("should have heading for modal title", async () => {
+      render(<CommunityStats communityId={mockCommunityId} />);
+
+      const statsButton = screen.getByText("Stats");
+      fireEvent.click(statsButton);
+
+      await waitFor(() => {
+        const title = screen.getByText("Community Stats");
+        expect(title.tagName).toBe("H1");
+      });
+    });
+
+    it("should have proper font styling for title", async () => {
+      render(<CommunityStats communityId={mockCommunityId} />);
+
+      const statsButton = screen.getByText("Stats");
+      fireEvent.click(statsButton);
+
+      await waitFor(() => {
+        const title = screen.getByText("Community Stats");
+        expect(title.className).toContain("font-bold");
+        expect(title.className).toContain("text-xl");
+      });
+    });
+  });
+
+  describe("Edge Cases", () => {
+    it("should handle zero values in stats", async () => {
       const zeroStats = {
         ...mockStatsData,
         projects: 1, // Must have at least 1 project for data validation
@@ -466,17 +469,17 @@ describe('CommunityStats', () => {
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.getByText('No. of Grants')).toBeInTheDocument();
-        const zeroValues = screen.getAllByText('0');
+        expect(screen.getByText("No. of Grants")).toBeInTheDocument();
+        const zeroValues = screen.getAllByText("0");
         expect(zeroValues.length).toBeGreaterThan(0);
       });
     });
 
-    it('should handle very large numbers', async () => {
+    it("should handle very large numbers", async () => {
       const largeStats = {
         ...mockStatsData,
         projects: 999999,
@@ -485,15 +488,15 @@ describe('CommunityStats', () => {
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.getByText('999999')).toBeInTheDocument();
+        expect(screen.getByText("999999")).toBeInTheDocument();
       });
     });
 
-    it('should handle missing optional stats fields', async () => {
+    it("should handle missing optional stats fields", async () => {
       const partialStats = {
         projects: 10,
         grants: 5,
@@ -502,18 +505,18 @@ describe('CommunityStats', () => {
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.getByText('No. of Projects')).toBeInTheDocument();
+        expect(screen.getByText("No. of Projects")).toBeInTheDocument();
       });
     });
 
-    it('should handle empty communityId gracefully', async () => {
+    it("should handle empty communityId gracefully", async () => {
       render(<CommunityStats communityId="" />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
@@ -522,49 +525,49 @@ describe('CommunityStats', () => {
     });
   });
 
-  describe('Loading States', () => {
-    it('should show loading initially after opening modal', async () => {
+  describe("Loading States", () => {
+    it("should show loading initially after opening modal", async () => {
       (fetchData as jest.Mock).mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve([mockStatsData, null]), 500))
       );
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
-      expect(await screen.findByText('Loading stats...')).toBeInTheDocument();
+      expect(await screen.findByText("Loading stats...")).toBeInTheDocument();
     });
 
-    it('should hide loading after stats are fetched', async () => {
+    it("should hide loading after stats are fetched", async () => {
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.queryByText('Loading stats...')).not.toBeInTheDocument();
+        expect(screen.queryByText("Loading stats...")).not.toBeInTheDocument();
       });
     });
 
-    it('should show loading when refreshing stats', async () => {
+    it("should show loading when refreshing stats", async () => {
       (fetchData as jest.Mock).mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve([mockStatsData, null]), 100))
       );
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
-      const statsButton = screen.getByText('Stats');
+      const statsButton = screen.getByText("Stats");
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(screen.getByTestId('refresh-icon')).toBeInTheDocument();
+        expect(screen.getByTestId("refresh-icon")).toBeInTheDocument();
       });
 
-      const refreshButton = screen.getByTestId('refresh-icon').closest('button');
+      const refreshButton = screen.getByTestId("refresh-icon").closest("button");
       if (refreshButton) fireEvent.click(refreshButton);
 
-      expect(await screen.findByText('Loading stats...')).toBeInTheDocument();
+      expect(await screen.findByText("Loading stats...")).toBeInTheDocument();
     });
   });
 });

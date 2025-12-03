@@ -1,12 +1,12 @@
-import React from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import type React from "react";
+import { useProjectStore } from "@/store";
+import { PAGES } from "@/utilities/pages";
 import { StepBlock } from "../StepBlock";
 import { useGrantFormStore } from "../store";
-import { useRouter } from "next/navigation";
-import { PAGES } from "@/utilities/pages";
-import { useProjectStore } from "@/store";
-import Image from "next/image";
-import { NextButton } from "./buttons/NextButton";
 import { CancelButton } from "./buttons/CancelButton";
+import { NextButton } from "./buttons/NextButton";
 
 interface TypeOption {
   icon: string;
@@ -16,8 +16,7 @@ interface TypeOption {
 }
 
 export const TypeSelectionScreen: React.FC = () => {
-  const { setCurrentStep, setFlowType, flowType, updateFormData } =
-    useGrantFormStore();
+  const { setCurrentStep, setFlowType, flowType, updateFormData } = useGrantFormStore();
   const selectedProject = useProjectStore((state) => state.project);
   const router = useRouter();
 
@@ -53,11 +52,7 @@ export const TypeSelectionScreen: React.FC = () => {
 
   const handleCancel = () => {
     if (!selectedProject) return;
-    router.push(
-      PAGES.PROJECT.GRANTS(
-        selectedProject.details?.data?.slug || selectedProject?.uid
-      )
-    );
+    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.data?.slug || selectedProject?.uid));
   };
 
   return (
@@ -69,7 +64,8 @@ export const TypeSelectionScreen: React.FC = () => {
 
         <div className="flex flex-row gap-6 w-full mb-10 max-md:flex-col">
           {options.map((option) => (
-            <div
+            <button
+              type="button"
               key={option.type}
               onClick={() => handleOptionSelect(option.type)}
               className={`flex flex-col p-12 gap-6 border-2 rounded-lg cursor-pointer flex-1 transition-all ${
@@ -79,12 +75,7 @@ export const TypeSelectionScreen: React.FC = () => {
               }`}
             >
               <div className="flex items-center justify-center ">
-                <Image
-                  src={option.icon}
-                  alt={option.title}
-                  width={44}
-                  height={44}
-                />
+                <Image src={option.icon} alt={option.title} width={44} height={44} />
               </div>
               <div className="flex flex-col items-center">
                 <h4 className="text-xl text-brand-darkblue dark:text-zinc-100 text-center font-bold">
@@ -94,7 +85,7 @@ export const TypeSelectionScreen: React.FC = () => {
                   {option.description}
                 </p>
               </div>
-            </div>
+            </button>
           ))}
         </div>
 

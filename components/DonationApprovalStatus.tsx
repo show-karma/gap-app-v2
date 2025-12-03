@@ -1,5 +1,5 @@
 "use client";
-import { DonationExecutionState } from "@/hooks/useDonationTransfer";
+import type { DonationExecutionState } from "@/hooks/useDonationTransfer";
 
 interface DonationApprovalStatusProps {
   executionState: DonationExecutionState;
@@ -68,13 +68,15 @@ export function DonationApprovalStatus({ executionState }: DonationApprovalStatu
                   <span className="text-blue-800 dark:text-blue-200">
                     {approval.tokenSymbol} approval
                   </span>
-                  <span className={`font-medium ${
-                    approval.status === "confirmed"
-                      ? "text-green-600 dark:text-green-400"
-                      : approval.status === "failed"
-                      ? "text-red-600 dark:text-red-400"
-                      : "text-blue-600 dark:text-blue-400"
-                  }`}>
+                  <span
+                    className={`font-medium ${
+                      approval.status === "confirmed"
+                        ? "text-green-600 dark:text-green-400"
+                        : approval.status === "failed"
+                          ? "text-red-600 dark:text-red-400"
+                          : "text-blue-600 dark:text-blue-400"
+                    }`}
+                  >
                     {approval.status === "confirmed" && "✅ Confirmed"}
                     {approval.status === "failed" && "❌ Failed"}
                     {approval.status === "pending" && "⏳ Pending"}

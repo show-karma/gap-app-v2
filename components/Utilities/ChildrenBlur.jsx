@@ -17,8 +17,8 @@ export const ChildrenBlur = ({ children, onBlur, ...props }) => {
   );
 
   return (
-    <div {...props} onBlur={handleBlur}>
+    <fieldset {...props} onBlur={handleBlur}>
       {children}
-    </div>
+    </fieldset>
   );
 };

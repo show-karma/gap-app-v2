@@ -34,13 +34,14 @@ export function BalanceDisplay({
   const tokenBalance = balanceByTokenKey[balanceKey];
 
   // Show error state if balance fetch failed for this specific chain
-  if (balanceError && balanceError.chainIds.includes(selectedToken.chainId)) {
+  if (balanceError?.chainIds.includes(selectedToken.chainId)) {
     return (
       <div className="mt-1 text-right text-xs">
         <div className="flex items-center justify-end gap-1">
           <span className="text-red-600 dark:text-red-400">Balance unavailable</span>
           {canRetry && onRetry && (
             <button
+              type="button"
               onClick={onRetry}
               className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
             >

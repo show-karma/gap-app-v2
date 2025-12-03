@@ -1,11 +1,11 @@
-import { FC, useState, useEffect } from "react";
-import { VerifiedBadge } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
-import { VerifyMilestoneUpdateDialog } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifyMilestoneUpdateDialog";
-import {
+import type {
   IMilestoneCompleted,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { UnifiedMilestone } from "@/types/roadmap";
+import { type FC, useEffect, useState } from "react";
+import { VerifiedBadge } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
+import { VerifyMilestoneUpdateDialog } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifyMilestoneUpdateDialog";
+import type { UnifiedMilestone } from "@/types/roadmap";
 
 interface MilestoneVerificationSectionProps {
   milestone: IMilestoneResponse | UnifiedMilestone;
@@ -14,17 +14,13 @@ interface MilestoneVerificationSectionProps {
   onVerificationAdded?: (newVerified: IMilestoneCompleted) => void;
 }
 
-export const MilestoneVerificationSection: FC<
-  MilestoneVerificationSectionProps
-> = ({
+export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps> = ({
   milestone,
   title,
   verifiedMilestones: initialVerifiedMilestones,
   onVerificationAdded,
 }) => {
-  const [verifiedMilestones, setVerifiedMilestones] = useState<
-    IMilestoneCompleted[]
-  >([]);
+  const [verifiedMilestones, setVerifiedMilestones] = useState<IMilestoneCompleted[]>([]);
 
   // Handle different milestone types
   const getVerifiedMilestones = () => {
@@ -55,7 +51,7 @@ export const MilestoneVerificationSection: FC<
 
   useEffect(() => {
     setVerifiedMilestones(getVerifiedMilestones());
-  }, [milestone, initialVerifiedMilestones]);
+  }, [getVerifiedMilestones]);
 
   // Convert UnifiedMilestone to IMilestoneResponse format for VerifyMilestoneUpdateDialog
   const getMilestoneForDialog = (): IMilestoneResponse | null => {

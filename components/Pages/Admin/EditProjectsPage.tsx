@@ -1,30 +1,31 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { useCommunityDetails } from "@/hooks/useCommunityDetails";
-import { useCommunityProjectsV2 } from "@/hooks/useCommunityProjectsV2";
-import { useCommunityGrants } from "@/hooks/useCommunityGrants";
-import { ProjectV2 } from "@/types/community";
-import { useAuth } from "@/hooks/useAuth";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { defaultMetadata } from "@/utilities/meta";
-import { PAGES } from "@/utilities/pages";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
-import { useStaff } from "@/hooks/useStaff";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { RegionCreationDialog } from "./RegionCreationDialog";
-import { ProgramFilter } from "./ProgramFilter";
-import { useCommunityRegions } from "@/hooks/useCommunityRegions";
-import { MESSAGES } from "@/utilities/messages";
-import TablePagination from "@/components/Utilities/TablePagination";
 import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { Spinner } from "@/components/Utilities/Spinner";
+import TablePagination from "@/components/Utilities/TablePagination";
+import { useAuth } from "@/hooks/useAuth";
+import { useCommunityDetails } from "@/hooks/useCommunityDetails";
+import { useCommunityGrants } from "@/hooks/useCommunityGrants";
+import { useCommunityProjectsV2 } from "@/hooks/useCommunityProjectsV2";
+import { useCommunityRegions } from "@/hooks/useCommunityRegions";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
+import type { ProjectV2 } from "@/types/community";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { defaultMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
+import { ProgramFilter } from "./ProgramFilter";
+import { RegionCreationDialog } from "./RegionCreationDialog";
+
 export const metadata = defaultMetadata;
 
 interface ProjectsTableProps {
@@ -85,16 +86,18 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({
 
             // Find the region ID from the name
             const currentRegionId = currentRegionName
-              ? regions.find(r => r.name === currentRegionName)?.id || ""
+              ? regions.find((r) => r.name === currentRegionName)?.id || ""
               : "";
 
             // Use optimistic update if available, otherwise use current region
-            const displayRegionId = optimisticRegion !== undefined ? optimisticRegion : currentRegionId;
+            const displayRegionId =
+              optimisticRegion !== undefined ? optimisticRegion : currentRegionId;
 
             // Get the display name for current region (considering optimistic updates)
-            const displayRegionName = optimisticRegion !== undefined
-              ? (regions.find(r => r.id === optimisticRegion)?.name || "None")
-              : (currentRegionName || "None");
+            const displayRegionName =
+              optimisticRegion !== undefined
+                ? regions.find((r) => r.id === optimisticRegion)?.name || "None"
+                : currentRegionName || "None";
 
             return (
               <tr key={project.uid} className="dark:text-zinc-300 text-gray-900 px-4 py-4">
@@ -114,15 +117,11 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({
                   </div>
                 </td>
                 <td className="px-4 py-2">
-                  <div className="max-w-[200px] line-clamp-2">
-                    {project.details.description}
-                  </div>
+                  <div className="max-w-[200px] line-clamp-2">{project.details.description}</div>
                 </td>
                 <td className="px-4 py-2">
                   {/* Display the current region with optimistic updates */}
-                  <span className="text-sm">
-                    {displayRegionName}
-                  </span>
+                  <span className="text-sm">{displayRegionName}</span>
                 </td>
                 <td className="px-4 py-2">
                   <SearchWithValueDropdown
@@ -131,7 +130,7 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({
                       ...regions.map((region) => ({
                         value: region.id,
                         title: region.name,
-                      }))
+                      })),
                     ]}
                     onSelectFunction={(value) => {
                       onRegionChange(project.uid, value);
@@ -168,12 +167,8 @@ export default function EditProjectsPage() {
   const { authenticated: isAuth } = useAuth();
   const params = useParams();
   const communityId = params.communityId as string;
-  const [selectedRegions, setSelectedRegions] = useState<
-    Record<string, string>
-  >({});
-  const [optimisticRegions, setOptimisticRegions] = useState<
-    Record<string, string>
-  >({});
+  const [selectedRegions, _setSelectedRegions] = useState<Record<string, string>>({});
+  const [optimisticRegions, setOptimisticRegions] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
   const {
@@ -187,7 +182,7 @@ export default function EditProjectsPage() {
     community?.uid,
     address
   );
-  const { isStaff } = useStaff();
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   useEffect(() => {
     if (
@@ -196,7 +191,7 @@ export default function EditProjectsPage() {
     ) {
       router.push(PAGES.NOT_FOUND);
     }
-  }, [communityError]);
+  }, [communityError, router]);
 
   // Simple state management for pagination since we're using the v2 endpoint
   const [currentPage, setCurrentPage] = useState(1);
@@ -214,10 +209,7 @@ export default function EditProjectsPage() {
   });
 
   // Fetch all grants for the filter dropdown
-  const { data: grants = [] } = useCommunityGrants(
-    community?.details?.data?.slug || communityId
-  );
-
+  const { data: grants = [] } = useCommunityGrants(community?.details?.data?.slug || communityId);
 
   const projects = projectsData?.payload || [];
   const totalItems = projectsData?.pagination?.totalCount || 0;
@@ -231,13 +223,14 @@ export default function EditProjectsPage() {
     setCurrentPage(1); // Reset to first page when filter changes
   };
 
-  const { data: regionsOptions = [], refetch: refreshRegions } =
-    useCommunityRegions(community?.uid || "");
+  const { data: regionsOptions = [], refetch: refreshRegions } = useCommunityRegions(
+    community?.uid || ""
+  );
 
   const handleRegionChange = async (uid: string, newRegion: string) => {
     // Store the previous region for rollback if needed
-    const previousRegion = optimisticRegions[uid] ||
-      projects?.find(p => p.uid === uid)?.regions?.[0] || "";
+    const previousRegion =
+      optimisticRegions[uid] || projects?.find((p) => p.uid === uid)?.regions?.[0] || "";
 
     // Optimistic update - immediately update the UI
     setOptimisticRegions((prev) => ({
@@ -297,7 +290,7 @@ export default function EditProjectsPage() {
 
   // Auto-save implemented in handleRegionChange, no need for separate save function
 
-  if (loading || isLoadingProjects) {
+  if (loading || isStaffLoading || isLoadingProjects) {
     return (
       <div className="flex w-full items-center justify-center">
         <Spinner />
@@ -318,9 +311,7 @@ export default function EditProjectsPage() {
       <div className="w-full flex flex-col gap-8">
         <div className="w-full flex flex-row items-center justify-between">
           <Link
-            href={PAGES.ADMIN.ROOT(
-              community?.details?.data?.slug || (community?.uid as string)
-            )}
+            href={PAGES.ADMIN.ROOT(community?.details?.data?.slug || (community?.uid as string))}
           >
             <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
               <ChevronLeftIcon className="h-5 w-5" />
@@ -328,11 +319,13 @@ export default function EditProjectsPage() {
             </Button>
           </Link>
           <div className="flex items-center gap-4">
-            {grants.length > 0 ? <ProgramFilter
-              programs={grants}
-              selectedProgramId={selectedProgramId}
-              onChange={handleProgramChange}
-            /> : null}
+            {grants.length > 0 ? (
+              <ProgramFilter
+                programs={grants}
+                selectedProgramId={selectedProgramId}
+                onChange={handleProgramChange}
+              />
+            ) : null}
             <RegionCreationDialog
               refreshRegions={async () => {
                 refreshRegions();

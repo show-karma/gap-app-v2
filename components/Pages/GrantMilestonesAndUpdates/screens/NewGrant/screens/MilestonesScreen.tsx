@@ -1,38 +1,30 @@
-import { StepBlock } from "../StepBlock";
-import { Button } from "@/components/Utilities/Button";
-import { useGrantFormStore } from "../store";
-import { usePathname, useRouter } from "next/navigation";
-import { PAGES } from "@/utilities/pages";
-import { useProjectStore } from "@/store";
-import { Milestone } from "../Milestone";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { useAuth } from "@/hooks/useAuth";
-import { useAccount } from "wagmi";
-import { useStepper } from "@/store/modals/txStepper";
+import { Grant, GrantDetails, Milestone as MilestoneSDK, nullRef } from "@show-karma/karma-gap-sdk";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePathname, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import type { Hex } from "viem";
+import { useAccount } from "wagmi";
+import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
-import { sanitizeObject } from "@/utilities/sanitize";
-import {
-  Grant,
-  GrantDetails,
-  Milestone as MilestoneSDK,
-  nullRef,
-} from "@show-karma/karma-gap-sdk";
-import { Hex } from "viem";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { getGapClient } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
+import { useProjectStore } from "@/store";
+import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { INDEXER } from "@/utilities/indexer";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { Milestone } from "../Milestone";
+import { StepBlock } from "../StepBlock";
+import { useGrantFormStore } from "../store";
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
-import { useWallet } from "@/hooks/useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
-import { useQueryClient } from "@tanstack/react-query";
-import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 export const MilestonesScreen: React.FC = () => {
   const {
@@ -72,17 +64,11 @@ export const MilestonesScreen: React.FC = () => {
 
   const handleCancel = () => {
     if (!selectedProject) return;
-    router.push(
-      PAGES.PROJECT.GRANTS(
-        selectedProject.details?.data?.slug || selectedProject?.uid
-      )
-    );
+    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.data?.slug || selectedProject?.uid));
   };
 
   // Check if all milestones are valid
-  const allMilestonesValidated = milestonesForms.every(
-    (milestone) => milestone.isValid === true
-  );
+  const allMilestonesValidated = milestonesForms.every((milestone) => milestone.isValid === true);
 
   const saveAllMilestones = () => {
     milestonesForms.forEach((milestone, index) => {
@@ -102,7 +88,11 @@ export const MilestonesScreen: React.FC = () => {
 
       // Check if we need to switch chains
       const chainId = await connector?.getChainId();
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: communityNetworkId,
         currentChainId: chainId,
         switchChainAsync,
@@ -129,9 +119,7 @@ export const MilestonesScreen: React.FC = () => {
         milestones: milestonesData,
         community: formData.community || "",
         recipient: formData.recipient || address,
-        startDate: formData.startDate
-          ? formData.startDate.getTime() / 1000
-          : undefined,
+        startDate: formData.startDate ? formData.startDate.getTime() / 1000 : undefined,
         programId: formData.programId,
         questions: formData.questions || [],
         selectedTrackIds: formData.selectedTrackIds || [],
@@ -175,28 +163,26 @@ export const MilestonesScreen: React.FC = () => {
       grant.milestones =
         newGrantData.milestones.length > 0
           ? newGrantData.milestones.map((milestone) => {
-            const sanitizedMilestone = sanitizeObject({
-              title: milestone.title,
-              description: milestone.description,
-              endsAt: milestone.endsAt,
-              startsAt: milestone.startsAt,
-              priority: milestone.priority,
-            });
+              const sanitizedMilestone = sanitizeObject({
+                title: milestone.title,
+                description: milestone.description,
+                endsAt: milestone.endsAt,
+                startsAt: milestone.startsAt,
+                priority: milestone.priority,
+              });
 
-            return new MilestoneSDK({
-              data: sanitizedMilestone,
-              refUID: grant.uid,
-              schema: gapClient.findSchema("Milestone"),
-              recipient: grant.recipient,
-              uid: nullRef,
-            });
-          })
+              return new MilestoneSDK({
+                data: sanitizedMilestone,
+                refUID: grant.uid,
+                schema: gapClient.findSchema("Milestone"),
+                recipient: grant.recipient,
+                uid: nullRef,
+              });
+            })
           : [];
 
       // Get wallet client
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
@@ -215,11 +201,7 @@ export const MilestonesScreen: React.FC = () => {
           const txHash = res?.tx[0]?.hash;
 
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID),
-              "POST",
-              {}
-            );
+            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID), "POST", {});
           }
 
           while (retries > 0) {
@@ -227,11 +209,7 @@ export const MilestonesScreen: React.FC = () => {
               .projectById(selectedProject.uid as Hex)
               .catch(() => null);
 
-            if (
-              fetchedProject?.grants?.find(
-                (oldGrant) => oldGrant.uid === grant.uid
-              )
-            ) {
+            if (fetchedProject?.grants?.find((oldGrant) => oldGrant.uid === grant.uid)) {
               clearMilestonesForms();
               retries = 0;
               toast.success(
@@ -265,24 +243,15 @@ export const MilestonesScreen: React.FC = () => {
                 try {
                   const programIdParts = newGrantData.programId.split("_");
                   const programId = programIdParts[0];
-                  const chainID = parseInt(
-                    programIdParts[1] || communityNetworkId.toString()
-                  );
+                  const _chainID = parseInt(programIdParts[1] || communityNetworkId.toString(), 10);
 
-                  await fetchData(
-                    INDEXER.PROJECTS.TRACKS(selectedProject.uid),
-                    "POST",
-                    {
-                      communityUID: newGrantData.community,
-                      trackIds: newGrantData.selectedTrackIds,
-                      programId,
-                    }
-                  );
+                  await fetchData(INDEXER.PROJECTS.TRACKS(selectedProject.uid), "POST", {
+                    communityUID: newGrantData.community,
+                    trackIds: newGrantData.selectedTrackIds,
+                    programId,
+                  });
                 } catch (trackError) {
-                  console.error(
-                    "Error assigning tracks to project:",
-                    trackError
-                  );
+                  console.error("Error assigning tracks to project:", trackError);
                 }
               }
 
@@ -344,19 +313,14 @@ export const MilestonesScreen: React.FC = () => {
           {milestonesForms.length === 0 ? (
             <div className="text-center py-8 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
               <p className="text-gray-500 dark:text-gray-400 text-center">
-                Set your goals by adding milestones you plan to accomplish.
-                There&apos;s no limit—add as many as you need to track your
-                progress effectively!
+                Set your goals by adding milestones you plan to accomplish. There&apos;s no
+                limit—add as many as you need to track your progress effectively!
               </p>
             </div>
           ) : (
             <div className="flex w-full flex-col items-center justify-center gap-8">
               {milestonesForms.map((milestone, index) => (
-                <Milestone
-                  currentMilestone={milestone.data}
-                  key={index}
-                  index={index}
-                />
+                <Milestone currentMilestone={milestone.data} key={index} index={index} />
               ))}
             </div>
           )}
@@ -378,13 +342,7 @@ export const MilestonesScreen: React.FC = () => {
             <NextButton
               onClick={createNewGrant}
               disabled={!allMilestonesValidated}
-              text={
-                flowType === "grant"
-                  ? isEditing
-                    ? "Update grant"
-                    : "Create grant"
-                  : "Apply"
-              }
+              text={flowType === "grant" ? (isEditing ? "Update grant" : "Create grant") : "Apply"}
               className="max-md:px-5 max-md:items-center max-md:justify-center max-md:flex-col max-md:w-full"
             />
           </div>

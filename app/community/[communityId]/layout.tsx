@@ -1,22 +1,18 @@
+import type { Metadata } from "next";
+import CommunityHeader from "@/components/Community/Header";
+import { CommunityNotFound } from "@/components/Pages/Communities/CommunityNotFound";
+import { PROJECT_NAME } from "@/constants/brand";
+import { layoutTheme } from "@/src/helper/theme";
 import { envVars } from "@/utilities/enviromentVars";
 import { defaultMetadata } from "@/utilities/meta";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { getCommunityDetailsV2 } from "@/utilities/queries/getCommunityDataV2";
-import { Metadata } from "next";
-import CommunityHeader from "@/components/Community/Header";
-import { layoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
-import { CommunityNotFound } from "@/components/Pages/Communities/CommunityNotFound";
-import { PROJECT_NAME } from "@/constants/brand";
 
 type Params = Promise<{
   communityId: string;
 }>;
-export async function generateMetadata({
-  params,
-}: {
-  params: Params;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { communityId } = await params;
 
   const community = await getCommunityDetailsV2(communityId);
@@ -28,8 +24,8 @@ export async function generateMetadata({
   };
 
   if (!community) {
-    dynamicMetadata.title = `Launch ${communityName} community!`,
-      dynamicMetadata.description = `Looks like no one’s started this community. Create it now to launch programs, fund projects, and track progress, all in one place.`;
+    dynamicMetadata.title = `Launch ${communityName} community!`;
+    dynamicMetadata.description = `Looks like no one's started this community. Create it now to launch programs, fund projects, and track progress, all in one place.`;
   }
 
   return {
@@ -59,10 +55,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function Layout(props: {
-  children: React.ReactNode;
-  params: Promise<Params>;
-}) {
+export default async function Layout(props: { children: React.ReactNode; params: Params }) {
   const { communityId } = await props.params;
 
   const { children } = props;
@@ -80,9 +73,7 @@ export default async function Layout(props: {
   return (
     <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
       <CommunityHeader community={community} />
-      <div className={cn(layoutTheme.padding, "w-full max-w-full")}>
-        {children}
-      </div>
+      <div className={cn(layoutTheme.padding, "w-full max-w-full")}>{children}</div>
     </div>
   );
 }

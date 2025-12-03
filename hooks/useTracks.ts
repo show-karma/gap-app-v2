@@ -1,28 +1,23 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchTrackById, fetchProjectsByTrack } from "@/utilities/sdk/tracks";
-import { trackService, Track } from "@/services/tracks";
 import toast from "react-hot-toast";
+import { trackService } from "@/services/tracks";
+import { fetchProjectsByTrack, fetchTrackById } from "@/utilities/sdk/tracks";
 
 // Query keys
 export const TRACK_QUERY_KEYS = {
   all: ["tracks"] as const,
   community: (communityUID: string) =>
     [...TRACK_QUERY_KEYS.all, "community", communityUID] as const,
-  program: (programId: string) =>
-    [...TRACK_QUERY_KEYS.all, "program", programId] as const,
-  project: (projectId: string) =>
-    [...TRACK_QUERY_KEYS.all, "project", projectId] as const,
+  program: (programId: string) => [...TRACK_QUERY_KEYS.all, "program", programId] as const,
+  project: (projectId: string) => [...TRACK_QUERY_KEYS.all, "project", projectId] as const,
 };
 
 /**
  * Hook to fetch tracks for a community
  */
-export const useTracksForCommunity = (
-  communityUID: string,
-  includeArchived: boolean = false
-) => {
+export const useTracksForCommunity = (communityUID: string, includeArchived: boolean = false) => {
   return useQuery({
     queryKey: TRACK_QUERY_KEYS.community(communityUID),
     queryFn: () => trackService.getAllTracks(communityUID, includeArchived),
@@ -77,15 +72,8 @@ export const useUpdateTrack = (communityUID: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      name,
-      description,
-    }: {
-      id: string;
-      name: string;
-      description?: string;
-    }) => trackService.updateTrack(id, name, description, communityUID),
+    mutationFn: ({ id, name, description }: { id: string; name: string; description?: string }) =>
+      trackService.updateTrack(id, name, description, communityUID),
     onSuccess: () => {
       toast.success("Track updated successfully");
       queryClient.invalidateQueries({
@@ -105,8 +93,7 @@ export const useArchiveTrack = (communityUID: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (trackId: string) =>
-      trackService.archiveTrack(trackId, communityUID),
+    mutationFn: (trackId: string) => trackService.archiveTrack(trackId, communityUID),
     onSuccess: () => {
       toast.success("Track archived successfully");
       queryClient.invalidateQueries({
@@ -134,10 +121,7 @@ export const useTracksForProgram = (programId: string) => {
 /**
  * Hook to assign tracks to a program
  */
-export const useAssignTracksToProgram = (
-  programId: string,
-  communityUID: string
-) => {
+export const useAssignTracksToProgram = (programId: string, communityUID: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -158,10 +142,7 @@ export const useAssignTracksToProgram = (
 /**
  * Hook to remove a track from a program
  */
-export const useRemoveTrackFromProgram = (
-  programId: string,
-  communityUID: string
-) => {
+export const useRemoveTrackFromProgram = (programId: string, communityUID: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -182,19 +163,12 @@ export const useRemoveTrackFromProgram = (
 /**
  * Hook to remove multiple tracks from a program in batch
  */
-export const useRemoveTracksFromProgramBatch = (
-  programId: string,
-  communityUID: string
-) => {
+export const useRemoveTracksFromProgramBatch = (programId: string, communityUID: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (trackIds: string[]) =>
-      trackService.removeTracksFromProgramBatch(
-        programId,
-        trackIds,
-        communityUID
-      ),
+      trackService.removeTracksFromProgramBatch(programId, trackIds, communityUID),
     onSuccess: () => {
       toast.success("Tracks removed from program successfully");
       queryClient.invalidateQueries({
@@ -210,10 +184,7 @@ export const useRemoveTracksFromProgramBatch = (
 /**
  * Hook to fetch tracks for a project
  */
-export const useTracksForProject = (
-  projectId: string,
-  communityUID: string
-) => {
+export const useTracksForProject = (projectId: string, _communityUID: string) => {
   return useQuery({
     queryKey: TRACK_QUERY_KEYS.project(projectId),
     queryFn: () => trackService.getProjectTracks(projectId),
@@ -225,10 +196,7 @@ export const useTracksForProject = (
 /**
  * Hook to assign tracks to a project
  */
-export const useAssignTracksToProject = (
-  projectId: string,
-  communityUID: string
-) => {
+export const useAssignTracksToProject = (projectId: string, communityUID: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -239,13 +207,7 @@ export const useAssignTracksToProject = (
       trackIds: string[];
       programId: string;
       communityUID: string;
-    }) =>
-      trackService.assignTracksToProject(
-        projectId,
-        trackIds,
-        programId,
-        communityUID
-      ),
+    }) => trackService.assignTracksToProject(projectId, trackIds, programId, communityUID),
     onSuccess: () => {
       toast.success("Tracks assigned to project successfully");
       queryClient.invalidateQueries({
@@ -265,18 +227,10 @@ export const useUnassignTracksFromProject = (projectId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      trackIds,
-      programId,
-    }: {
-      trackIds: string[];
-      programId: string;
-    }) => {
+    mutationFn: ({ trackIds, programId }: { trackIds: string[]; programId: string }) => {
       // Since we don't have a direct method for this, we'll use a noop function
       // The API doesn't expose this functionality yet
-      console.warn(
-        "Unassign tracks from project not yet implemented in the service"
-      );
+      console.warn("Unassign tracks from project not yet implemented in the service");
       return Promise.resolve();
     },
     onSuccess: () => {
@@ -293,11 +247,7 @@ export const useUnassignTracksFromProject = (projectId: string) => {
 /**
  * Hook to fetch projects by track
  */
-export const useProjectsByTrack = (
-  communityId: string,
-  programId: string,
-  trackId?: string
-) => {
+export const useProjectsByTrack = (communityId: string, programId: string, trackId?: string) => {
   return useQuery({
     queryKey: ["projects-by-track", communityId, programId, trackId],
     queryFn: () => fetchProjectsByTrack(communityId, programId, trackId),

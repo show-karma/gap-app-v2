@@ -3,21 +3,18 @@
  * Tests all navigation patterns including dropdowns, external links, anchors, and modals
  */
 
-import { screen, waitFor, within, fireEvent } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { NavbarDesktopNavigation } from "@/src/components/navbar/navbar-desktop-navigation";
-import { NavbarMobileMenu } from "@/src/components/navbar/navbar-mobile-menu";
+import { getAuthFixture } from "../fixtures/auth-fixtures";
 import {
-  renderWithProviders,
-  createMockUsePrivy,
+  cleanupAfterEach,
   createMockPermissions,
   createMockRouter,
-  updateMocks,
-  cleanupAfterEach
+  createMockUsePrivy,
+  renderWithProviders,
 } from "../utils/test-helpers";
-
-import { getAuthFixture } from "../fixtures/auth-fixtures";
 
 describe("Navigation Flow Integration Tests", () => {
   afterEach(() => {
@@ -183,7 +180,8 @@ describe("Navigation Flow Integration Tests", () => {
       const drawer = screen.getByRole("dialog");
       expect(within(drawer).getByText("For Builders")).toBeInTheDocument();
       expect(within(drawer).getByText("For Funders")).toBeInTheDocument();
-      expect(within(drawer).getByText("Explore")).toBeInTheDocument();
+      // Explore section renders as subsections
+      expect(within(drawer).getByText("Explore Projects")).toBeInTheDocument();
     });
 
     it("should navigate from mobile drawer item", async () => {
@@ -229,10 +227,11 @@ describe("Navigation Flow Integration Tests", () => {
 
       const drawer = screen.getByRole("dialog");
 
-      // Verify all sections including Resources
+      // Verify all sections including Resources (only visible when logged out)
       expect(within(drawer).getByText("For Builders")).toBeInTheDocument();
       expect(within(drawer).getByText("For Funders")).toBeInTheDocument();
-      expect(within(drawer).getByText("Explore")).toBeInTheDocument();
+      // Explore renders as subsections
+      expect(within(drawer).getByText("Explore Projects")).toBeInTheDocument();
       expect(within(drawer).getByText("Resources")).toBeInTheDocument();
     });
 
@@ -298,8 +297,12 @@ describe("Navigation Flow Integration Tests", () => {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
       });
 
-      const contactSalesLink = screen.getByText("Contact sales");
-      const linkElement = contactSalesLink.closest("a");
+      // Contact sales buttons - find all of them (mobile and desktop)
+      const contactSalesLinks = screen.getAllByText("Contact sales");
+      expect(contactSalesLinks.length).toBeGreaterThan(0);
+
+      // Check the first link element
+      const linkElement = contactSalesLinks[0].closest("a");
 
       if (linkElement) {
         expect(linkElement).toHaveAttribute("target", "_blank");
@@ -684,4 +687,3 @@ describe("Navigation Flow Integration Tests", () => {
     });
   });
 });
-

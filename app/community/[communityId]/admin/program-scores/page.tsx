@@ -1,16 +1,16 @@
 "use client";
 
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
-import { useCommunityPrograms } from "@/hooks/usePrograms";
-import { useCommunityDetails } from "@/hooks/useCommunityDetails";
-import { useOwnerStore } from "@/store";
-import { useStaff } from "@/hooks/useStaff";
 import { ProgramScoresUpload } from "@/components/Pages/Admin/ProgramScoresUpload";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useCommunityDetails } from "@/hooks/useCommunityDetails";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useCommunityPrograms } from "@/hooks/usePrograms";
+import { useStaff } from "@/hooks/useStaff";
+import { useOwnerStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
-import Link from "next/link";
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 export default function ProgramScoresPage() {
   const { communityId } = useParams() as { communityId: string };

@@ -1,9 +1,8 @@
 "use client";
 
-import { useBlockedAddresses } from "@/hooks/useFaucetAdmin";
 import { useState } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
-import {useChains} from "@/hooks/useFaucetAdmin";
+import { useBlockedAddresses, useChains } from "@/hooks/useFaucetAdmin";
 
 export function BlocklistManager() {
   const { addresses, isLoading, blockAddress, unblockAddress } = useBlockedAddresses();
@@ -18,10 +17,10 @@ export function BlocklistManager() {
   const handleBlock = (e: React.FormEvent) => {
     e.preventDefault();
     blockAddress({
-        address: formData.address,
-        chainId: formData.chainId ? parseInt(formData.chainId) : undefined,
-        expiresAt: formData.expiresAt || undefined,
-        reason: formData.reason,
+      address: formData.address,
+      chainId: formData.chainId ? parseInt(formData.chainId, 10) : undefined,
+      expiresAt: formData.expiresAt || undefined,
+      reason: formData.reason,
     });
     setFormData({
       address: "",
@@ -34,7 +33,7 @@ export function BlocklistManager() {
 
   const getChainName = (chainId?: number) => {
     if (!chainId) return "All Chains";
-    return chains?.find(n => n.chainId === chainId)?.name || `Chain ${chainId}`;
+    return chains?.find((n) => n.chainId === chainId)?.name || `Chain ${chainId}`;
   };
 
   if (isLoading) {
@@ -48,10 +47,9 @@ export function BlocklistManager() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Blocked Addresses
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Blocked Addresses</h2>
         <button
+          type="button"
           onClick={() => setShowAddForm(true)}
           className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
         >
@@ -65,10 +63,14 @@ export function BlocklistManager() {
           <form onSubmit={handleBlock} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="blocklist-address"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Wallet Address
                 </label>
                 <input
+                  id="blocklist-address"
                   type="text"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -79,10 +81,14 @@ export function BlocklistManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="blocklist-chain"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Chain (optional - leave empty for all chains)
                 </label>
                 <select
+                  id="blocklist-chain"
                   value={formData.chainId}
                   onChange={(e) => setFormData({ ...formData, chainId: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-white"
@@ -97,10 +103,14 @@ export function BlocklistManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="blocklist-reason"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Reason
                 </label>
                 <input
+                  id="blocklist-reason"
                   type="text"
                   value={formData.reason}
                   onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
@@ -110,10 +120,14 @@ export function BlocklistManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="blocklist-expires"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Expires At (optional)
                 </label>
                 <input
+                  id="blocklist-expires"
                   type="datetime-local"
                   value={formData.expiresAt}
                   onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
@@ -175,17 +189,16 @@ export function BlocklistManager() {
                   {blocked.reason}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                  {blocked.expiresAt 
-                    ? new Date(blocked.expiresAt).toLocaleDateString()
-                    : "Never"}
+                  {blocked.expiresAt ? new Date(blocked.expiresAt).toLocaleDateString() : "Never"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                   <button
+                    type="button"
                     onClick={() => {
                       if (confirm("Are you sure you want to unblock this address?")) {
-                        unblockAddress({ 
-                          address: blocked.address, 
-                          chainId: blocked.chainId 
+                        unblockAddress({
+                          address: blocked.address,
+                          chainId: blocked.chainId,
                         });
                       }
                     }}

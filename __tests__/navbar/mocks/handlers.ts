@@ -3,10 +3,10 @@
  * Provides realistic API mocking for search and other endpoints
  */
 
-import { http, HttpResponse, delay } from "msw";
+import { delay, HttpResponse, http } from "msw";
 import {
-  searchFixtures,
   getResultsByQuery,
+  searchFixtures,
   searchResponseScenarios,
 } from "../fixtures/search-fixtures";
 
@@ -45,10 +45,9 @@ export const createSearchHandler = (scenario: keyof typeof searchResponseScenari
     await delay(searchFixtures.searchTiming.apiResponseTime);
 
     if ("error" in scenarioData) {
-      return new HttpResponse(
-        JSON.stringify({ error: scenarioData.error }),
-        { status: scenarioData.status }
-      );
+      return new HttpResponse(JSON.stringify({ error: scenarioData.error }), {
+        status: scenarioData.status,
+      });
     }
 
     // Return data directly, not wrapped in { data: ... }
@@ -60,13 +59,10 @@ export const createSearchHandler = (scenario: keyof typeof searchResponseScenari
 /**
  * Search handler with timeout simulation
  */
-export const searchHandlerWithTimeout = http.get(
-  `${GAP_INDEXER_URL}/search`,
-  async () => {
-    await delay(searchFixtures.searchTiming.networkTimeout + 1000);
-    return new HttpResponse(null, { status: 408 });
-  }
-);
+export const searchHandlerWithTimeout = http.get(`${GAP_INDEXER_URL}/search`, async () => {
+  await delay(searchFixtures.searchTiming.networkTimeout + 1000);
+  return new HttpResponse(null, { status: 408 });
+});
 
 /**
  * Search handler with error
@@ -74,10 +70,9 @@ export const searchHandlerWithTimeout = http.get(
 export const searchHandlerWithError = (statusCode: number = 500) => {
   return http.get(`${GAP_INDEXER_URL}/search`, async () => {
     await delay(100);
-    return new HttpResponse(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: statusCode }
-    );
+    return new HttpResponse(JSON.stringify({ error: "Internal server error" }), {
+      status: statusCode,
+    });
   });
 };
 
@@ -204,10 +199,7 @@ export const createCustomSearchHandler = (response: any, delayMs: number = 100) 
 export const createFailingHandler = (endpoint: string, statusCode: number = 500) => {
   return http.get(`${GAP_INDEXER_URL}${endpoint}`, async () => {
     await delay(100);
-    return new HttpResponse(
-      JSON.stringify({ error: "Request failed" }),
-      { status: statusCode }
-    );
+    return new HttpResponse(JSON.stringify({ error: "Request failed" }), { status: statusCode });
   });
 };
 
@@ -225,4 +217,3 @@ export const createDelayedHandler = (endpoint: string, delayMs: number) => {
  * Export MSW server setup for tests
  */
 export { http, HttpResponse, delay };
-

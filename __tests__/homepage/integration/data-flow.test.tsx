@@ -1,21 +1,16 @@
 /**
  * Homepage Data Flow Integration Tests
  * Tests API integration and data display throughout homepage
- * 
+ *
  * Target: 10 tests
  * - API Integration (5)
  * - Data Display (5)
  */
 
 import HomePage from "@/app/page";
-import {
-  renderWithProviders,
-  screen,
-  waitFor,
-} from "../utils/test-helpers";
+import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 import { mockFundingOpportunities } from "../fixtures/funding-opportunities";
-import { mockCommunities } from "../fixtures/communities";
 
 // Mock the service functions
 const mockGetLiveFundingOpportunities = jest.fn();
@@ -35,7 +30,7 @@ jest.mock("@/utilities/chosenCommunities", () => {
 describe("Homepage Data Flow", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Set up default mock implementations
     mockGetLiveFundingOpportunities.mockResolvedValue(mockFundingOpportunities);
   });
@@ -83,10 +78,13 @@ describe("Homepage Data Flow", () => {
       renderWithProviders(await HomePage());
 
       // Wait for LiveFundingOpportunities to load
-      await waitFor(() => {
-        const fundingSection = screen.getByText(/Live funding opportunities/i);
-        expect(fundingSection).toBeInTheDocument();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          const fundingSection = screen.getByText(/Live funding opportunities/i);
+          expect(fundingSection).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
     });
   });
 
@@ -98,9 +96,12 @@ describe("Homepage Data Flow", () => {
       renderWithProviders(await HomePage());
 
       // Verify funding section renders (programs are fetched server-side)
-      await waitFor(() => {
-        expect(screen.getByText(/Live funding opportunities/i)).toBeInTheDocument();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(screen.getByText(/Live funding opportunities/i)).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
     });
 
     it("should display community logos in Hero carousel", async () => {
@@ -127,7 +128,7 @@ describe("Homepage Data Flow", () => {
 
     it("should handle multiple data sources simultaneously", async () => {
       const testPrograms = mockFundingOpportunities.slice(0, 3);
-      
+
       mockGetLiveFundingOpportunities.mockResolvedValue(testPrograms);
 
       renderWithProviders(await HomePage());
@@ -155,4 +156,3 @@ describe("Homepage Data Flow", () => {
     });
   });
 });
-

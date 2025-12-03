@@ -1,7 +1,8 @@
 "use client";
 
-import React, { Component, ReactNode } from 'react';
-import { ExclamationTriangleIcon } from '@heroicons/react/24/solid';
+import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import type React from "react";
+import { Component, type ReactNode } from "react";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -24,7 +25,7 @@ class FormBuilderErrorBoundary extends Component<ErrorBoundaryProps, ErrorBounda
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('FormBuilder Error:', error, errorInfo);
+    console.error("FormBuilder Error:", error, errorInfo);
   }
 
   handleReset = () => {
@@ -48,19 +49,21 @@ class FormBuilderErrorBoundary extends Component<ErrorBoundaryProps, ErrorBounda
           </p>
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={this.handleReset}
               className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
             >
               Try Again
             </button>
             <button
+              type="button"
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition"
             >
               Refresh Page
             </button>
           </div>
-          {process.env.NODE_ENV === 'development' && this.state.error && (
+          {process.env.NODE_ENV === "development" && this.state.error && (
             <details className="mt-4 w-full max-w-2xl">
               <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
                 Error details (development only)

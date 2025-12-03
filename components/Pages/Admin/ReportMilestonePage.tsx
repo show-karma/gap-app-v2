@@ -1,12 +1,8 @@
 "use client";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
-import {
-  ChevronDownIcon,
-  ChevronUpDownIcon,
-  ChevronUpIcon,
-} from "@heroicons/react/24/solid";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { ChevronDownIcon, ChevronUpDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -14,7 +10,7 @@ import { useQueryState } from "nuqs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -92,16 +88,16 @@ const fetchReports = async (
   pageLimit: number,
   sortBy = "totalMilestones",
   sortOrder = "desc",
-  selectedProgramIds: string[] = [],
+  selectedProgramIds: string[] = []
 ) => {
   const queryProgramIds = selectedProgramIds.join(",");
   const encodedProgramIds = encodeURIComponent(queryProgramIds);
   const [data]: any = await fetchData(
     `${INDEXER.COMMUNITY.REPORT.GET(
-      communityId as string,
+      communityId as string
     )}?limit=${pageLimit}&page=${page}&sort=${sortBy}&sortOrder=${sortOrder}${
       queryProgramIds ? `&programIds=${encodedProgramIds}` : ""
-    }`,
+    }`
   );
   return data || [];
 };
@@ -115,18 +111,12 @@ interface ReportMilestonePageProps {
   grantPrograms: GrantProgram[];
 }
 
-export const ReportMilestonePage = ({
-  community,
-  grantPrograms,
-}: ReportMilestonePageProps) => {
+export const ReportMilestonePage = ({ community, grantPrograms }: ReportMilestonePageProps) => {
   const params = useParams();
   const communityId = params.communityId as string;
   const { address, isConnected } = useAccount();
   const { authenticated: isAuth } = useAuth();
-  const { isCommunityAdmin: isAdmin } = useIsCommunityAdmin(
-    community?.uid,
-    address,
-  );
+  const { isCommunityAdmin: isAdmin } = useIsCommunityAdmin(community?.uid, address);
   const { isStaff } = useStaff();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
 
@@ -158,7 +148,7 @@ export const ReportMilestonePage = ({
       return false;
     }
 
-    // Admins and contract owners have full access
+    // Admins, staff and contract owners have full access
     if (isAdmin || isContractOwner || isStaff) {
       return true;
     }
@@ -170,14 +160,11 @@ export const ReportMilestonePage = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("totalMilestones");
   const [sortOrder, setSortOrder] = useState("desc");
-  const [selectedProgramIds, setSelectedProgramIds] = useQueryState(
-    "programIds",
-    {
-      defaultValue: [] as string[],
-      serialize: (value) => value?.join(","),
-      parse: (value) => (value ? value.split(",") : null),
-    },
-  );
+  const [selectedProgramIds, setSelectedProgramIds] = useQueryState("programIds", {
+    defaultValue: [] as string[],
+    serialize: (value) => value?.join(","),
+    parse: (value) => (value ? value.split(",") : null),
+  });
 
   const programOptions = useMemo(() => {
     const allPrograms = grantPrograms
@@ -235,10 +222,9 @@ export const ReportMilestonePage = ({
     if (ids.length > 0) {
       const validation = validateProgramIdentifiers(ids);
       if (validation.errors.length > 0) {
-        toast.error(
-          `Invalid program IDs detected and filtered out. Please check the URL.`,
-          { duration: 5000 }
-        );
+        toast.error(`Invalid program IDs detected and filtered out. Please check the URL.`, {
+          duration: 5000,
+        });
       }
     }
   }, [selectedProgramIds]);
@@ -247,10 +233,7 @@ export const ReportMilestonePage = ({
     return normalizedProgramIds.map((id) => valueToLabelMap.get(id) ?? id);
   }, [normalizedProgramIds, valueToLabelMap]);
 
-  const programLabels = useMemo(
-    () => programOptions.map(({ label }) => label),
-    [programOptions],
-  );
+  const programLabels = useMemo(() => programOptions.map(({ label }) => label), [programOptions]);
 
   const { data, isLoading } = useQuery<ReportAPIResponse>({
     queryKey: [
@@ -262,14 +245,7 @@ export const ReportMilestonePage = ({
       normalizedProgramIds,
     ],
     queryFn: async () =>
-      fetchReports(
-        communityId,
-        currentPage,
-        itemsPerPage,
-        sortBy,
-        sortOrder,
-        normalizedProgramIds,
-      ),
+      fetchReports(communityId, currentPage, itemsPerPage, sortBy, sortOrder, normalizedProgramIds),
     enabled: Boolean(communityId) && isAuthorized,
   });
 
@@ -278,7 +254,7 @@ export const ReportMilestonePage = ({
 
   const totalItems: any = pageInfo?.totalItems || 0;
 
-  const signer = useSigner();
+  const _signer = useSigner();
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -299,9 +275,9 @@ export const ReportMilestonePage = ({
       report.totalMilestones > 0 &&
       report.pendingMilestones === 0 &&
       report.completedMilestones === report.totalMilestones;
-    
+
     const grantCompleted = report.isGrantCompleted === true;
-    
+
     return allMilestonesComplete || grantCompleted;
   }, []);
 
@@ -313,12 +289,8 @@ export const ReportMilestonePage = ({
   function StatCard({ title, value }: StatCardProps) {
     return (
       <div className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow">
-        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-          {title}
-        </h3>
-        <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400">
-          {value}
-        </p>
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{title}</h3>
+        <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400">{value}</p>
       </div>
     );
   }
@@ -346,9 +318,7 @@ export const ReportMilestonePage = ({
                       communityId,
                       sortBy,
                       selectedProgramIds:
-                        normalizedProgramIds.length > 0
-                          ? normalizedProgramIds
-                          : undefined,
+                        normalizedProgramIds.length > 0 ? normalizedProgramIds : undefined,
                     });
                   }}
                   className="flex items-center gap-2 py-3"
@@ -362,9 +332,7 @@ export const ReportMilestonePage = ({
                     setSelectedProgramIds((previous) => {
                       setCurrentPage(1);
                       const programId = labelToValueMap.get(label) ?? label;
-                      const current = Array.isArray(previous)
-                        ? [...previous]
-                        : [];
+                      const current = Array.isArray(previous) ? [...previous] : [];
                       if (current.includes(programId)) {
                         return current.filter((item) => item !== programId);
                       }
@@ -384,39 +352,24 @@ export const ReportMilestonePage = ({
             </div>
             <div className="mb-2 grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 w-full">
               {isLoading ? (
-                <>
-                  {[...Array(8)].map((_, index) => (
-                    <div
-                      key={index}
-                      className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow"
-                    >
-                      <Skeleton className="h-4 w-3/4 mb-2" />
-                      <Skeleton className="h-6 w-1/2" />
-                    </div>
-                  ))}
-                </>
+                [...Array(8)].map((_, index) => (
+                  <div key={index} className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow">
+                    <Skeleton className="h-4 w-3/4 mb-2" />
+                    <Skeleton className="h-6 w-1/2" />
+                  </div>
+                ))
               ) : (
                 <>
-                  <StatCard
-                    title="Total Grants"
-                    value={`${data?.stats?.totalGrants}`}
-                  />
+                  <StatCard title="Total Grants" value={`${data?.stats?.totalGrants}`} />
                   <StatCard
                     title="Total projects with Milestones"
                     value={`${data?.stats?.totalProjectsWithMilestones}`}
                   />
                   <StatCard
                     title="% of project who added Milestones"
-                    value={`${
-                      data?.stats?.percentageProjectsWithMilestones?.toFixed(
-                        2,
-                      ) || 0
-                    }%`}
+                    value={`${data?.stats?.percentageProjectsWithMilestones?.toFixed(2) || 0}%`}
                   />
-                  <StatCard
-                    title="Total Milestones"
-                    value={`${data?.stats?.totalMilestones}`}
-                  />
+                  <StatCard title="Total Milestones" value={`${data?.stats?.totalMilestones}`} />
                   <StatCard
                     title="Total Completed Milestones"
                     value={`${data?.stats?.totalCompletedMilestones}`}
@@ -427,16 +380,11 @@ export const ReportMilestonePage = ({
                   />
                   <StatCard
                     title="Milestones Completion %"
-                    value={`${
-                      data?.stats?.percentageCompletedMilestones?.toFixed(2) ||
-                      0
-                    }%`}
+                    value={`${data?.stats?.percentageCompletedMilestones?.toFixed(2) || 0}%`}
                   />
                   <StatCard
                     title="Milestones Pending %"
-                    value={`${
-                      data?.stats?.percentagePendingMilestones?.toFixed(2) || 0
-                    }%`}
+                    value={`${data?.stats?.percentagePendingMilestones?.toFixed(2) || 0}%`}
                   />
                 </>
               )}
@@ -447,10 +395,7 @@ export const ReportMilestonePage = ({
             <table className="pt-3 min-w-full divide-y dark:bg-zinc-900 divide-gray-300 dark:divide-zinc-800 dark:text-white">
               <thead>
                 <tr className="border-b transition-colors text-gray-500 dark:text-gray-200 hover:bg-muted/50 data-[state=selected]:bg-muted">
-                  <th
-                    scope="col"
-                    className="h-12 px-4 text-left align-middle font-medium"
-                  >
+                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
                     <button
                       className="flex flex-row gap-2 items-center p-0 bg-transparent text-zinc-700 dark:text-zinc-200"
                       onClick={() => handleSort("grantTitle")}
@@ -467,10 +412,7 @@ export const ReportMilestonePage = ({
                       )}
                     </button>
                   </th>
-                  <th
-                    scope="col"
-                    className="h-12 px-4 text-left align-middle font-medium"
-                  >
+                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
                     <button
                       className="flex flex-row gap-2 items-center p-0 bg-transparent text-zinc-700 dark:text-zinc-200"
                       onClick={() => handleSort("projectTitle")}
@@ -487,10 +429,7 @@ export const ReportMilestonePage = ({
                       )}
                     </button>
                   </th>
-                  <th
-                    scope="col"
-                    className="h-12 px-4 text-left align-middle font-medium"
-                  >
+                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
                     <button
                       className="flex flex-row gap-2 items-center p-0 bg-transparent text-zinc-700 dark:text-zinc-200"
                       onClick={() => handleSort("totalMilestones")}
@@ -507,10 +446,7 @@ export const ReportMilestonePage = ({
                       )}
                     </button>
                   </th>
-                  <th
-                    scope="col"
-                    className="h-12 px-4 text-left align-middle font-medium"
-                  >
+                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
                     <button
                       className="flex flex-row gap-2 items-center p-0 bg-transparent text-zinc-700 dark:text-zinc-200"
                       onClick={() => handleSort("pendingMilestones")}
@@ -527,10 +463,7 @@ export const ReportMilestonePage = ({
                       )}
                     </button>
                   </th>
-                  <th
-                    scope="col"
-                    className="h-12 px-4 text-left align-middle font-medium"
-                  >
+                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
                     <button
                       className="flex flex-row gap-2 items-center p-0 bg-transparent text-zinc-700 dark:text-zinc-200"
                       onClick={() => handleSort("completedMilestones")}
@@ -547,10 +480,7 @@ export const ReportMilestonePage = ({
                       )}
                     </button>
                   </th>
-                  <th
-                    scope="col"
-                    className="h-12 px-4 text-left align-middle font-medium"
-                  >
+                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
                     Actions
                   </th>
                 </tr>
@@ -593,10 +523,7 @@ export const ReportMilestonePage = ({
                         >
                           <td className="px-4 py-2 font-medium h-16 max-w-[220px]">
                             <ExternalLink
-                              href={PAGES.PROJECT.GRANT(
-                                report.projectSlug,
-                                report.grantUid,
-                              )}
+                              href={PAGES.PROJECT.GRANT(report.projectSlug, report.grantUid)}
                               className="max-w-max w-full line-clamp-2 underline"
                             >
                               {report.grantTitle}
@@ -614,7 +541,7 @@ export const ReportMilestonePage = ({
                             <Link
                               href={`${PAGES.PROJECT.GRANT(
                                 report.projectUid,
-                                report.grantUid,
+                                report.grantUid
                               )}/milestones-and-updates#all`}
                               className="text-blue-600 hover:text-blue-800 underline"
                               target="_blank"
@@ -627,7 +554,7 @@ export const ReportMilestonePage = ({
                             <Link
                               href={`${PAGES.PROJECT.GRANT(
                                 report.projectUid,
-                                report.grantUid,
+                                report.grantUid
                               )}/milestones-and-updates#pending`}
                               className="text-blue-600 hover:text-blue-800 underline"
                               target="_blank"
@@ -640,7 +567,7 @@ export const ReportMilestonePage = ({
                             <Link
                               href={`${PAGES.PROJECT.GRANT(
                                 report.projectSlug,
-                                report.grantUid,
+                                report.grantUid
                               )}/milestones-and-updates#completed`}
                               className="text-blue-600 hover:text-blue-800 underline"
                               target="_blank"
@@ -655,14 +582,12 @@ export const ReportMilestonePage = ({
                                 href={PAGES.ADMIN.PROJECT_MILESTONES(
                                   communityId,
                                   report.projectUid,
-                                  report.programId,
+                                  report.programId
                                 )}
                                 target="_blank"
                                 rel="noopener noreferrer"
                               >
-                                <Button className="py-2 px-4 text-sm">
-                                  Review
-                                </Button>
+                                <Button className="py-2 px-4 text-sm">Review</Button>
                               </Link>
                             )}
                           </td>
@@ -686,9 +611,7 @@ export const ReportMilestonePage = ({
       ) : (
         <div className="flex w-full items-center justify-center">
           <p>
-            {MESSAGES.ADMIN.NOT_AUTHORIZED(
-              community?.details?.data?.name || communityId || "",
-            )}
+            {MESSAGES.ADMIN.NOT_AUTHORIZED(community?.details?.data?.name || communityId || "")}
           </p>
         </div>
       )}

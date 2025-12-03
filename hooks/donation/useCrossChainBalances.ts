@@ -1,11 +1,10 @@
-import { useMemo } from "react";
-import { useAccount } from "wagmi";
 import { useQuery } from "@tanstack/react-query";
-import { getTokensByChain } from "@/constants/supportedTokens";
-import type { SupportedToken } from "@/constants/supportedTokens";
-import { getRPCClient } from "@/utilities/rpcClient";
 import { formatUnits } from "viem";
+import { useAccount } from "wagmi";
+import type { SupportedToken } from "@/constants/supportedTokens";
+import { getTokensByChain } from "@/constants/supportedTokens";
 import { getTokenBalanceKey } from "@/utilities/donations/helpers";
+import { getRPCClient } from "@/utilities/rpcClient";
 
 interface TokenBalance {
   token: SupportedToken;
@@ -34,10 +33,7 @@ export const BALANCE_QUERY_KEYS = {
 /**
  * Fetches token balances for a single chain using batched multicall
  */
-async function fetchChainBalances(
-  chainId: number,
-  address: string
-): Promise<TokenBalance[]> {
+async function fetchChainBalances(chainId: number, address: string): Promise<TokenBalance[]> {
   const publicClient = await getRPCClient(chainId);
   const tokensForChain = getTokensByChain(chainId);
   const balances: TokenBalance[] = [];
@@ -147,10 +143,7 @@ async function fetchMultiChainBalances(
   return balanceMap;
 }
 
-export function useCrossChainBalances(
-  currentChainId: number | null,
-  chainIds: number[]
-) {
+export function useCrossChainBalances(_currentChainId: number | null, chainIds: number[]) {
   const { address, isConnected } = useAccount();
 
   // Use react-query for caching, automatic refetching, and state management

@@ -1,11 +1,6 @@
-import {
-  InformationCircleIcon,
-  QuestionMarkCircleIcon,
-} from "@heroicons/react/24/outline";
-
 import * as Tooltip from "@radix-ui/react-tooltip";
+import type { ReactNode } from "react";
 import { cn } from "@/utilities/tailwind";
-import { ReactNode } from "react";
 
 interface InfoTooltipProps {
   content: ReactNode;
@@ -31,9 +26,10 @@ export const InfoTooltip = ({
   arrowClassName,
 }: InfoTooltipProps) => {
   const defaultTrigger = (
-    <div
+    <button
+      type="button"
       className={cn(
-        "rounded-full p-1 hover:bg-gray-100 dark:hover:bg-zinc-800",
+        "rounded-full p-1 hover:bg-gray-100 dark:hover:bg-zinc-800 border-none bg-transparent",
         className
       )}
       aria-label="More information"
@@ -54,7 +50,7 @@ export const InfoTooltip = ({
         <path d="M12 16v-4" />
         <path d="M12 8h.01" />
       </svg>
-    </div>
+    </button>
   );
 
   return (
@@ -74,9 +70,7 @@ export const InfoTooltip = ({
             align={align}
           >
             {content}
-            <Tooltip.Arrow
-              className={cn("fill-white dark:fill-zinc-800", arrowClassName)}
-            />
+            <Tooltip.Arrow className={cn("fill-white dark:fill-zinc-800", arrowClassName)} />
           </Tooltip.Content>
         </Tooltip.Portal>
       </Tooltip.Root>

@@ -1,27 +1,19 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
-
-import type {
-  IAttestationStatsNames,
-  StatChartData,
-  StatPeriod,
-} from "@/types";
-
-import { LineChart } from "./LineChart";
-import { WeeklyActiveUsersChart } from "./WeeklyActiveUsersChart";
-import { GlobalCount } from "./GlobalCount";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { getGAPStats } from "@/utilities/indexer/stats";
-import { fillDateRangeWithValues } from "@/utilities/fillDateRangeWithValues";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
-import { formatDate } from "@/utilities/formatDate";
-import { cn } from "@/utilities/tailwind";
+import { useQuery } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { PROJECT_NAME } from "@/constants/brand";
-
+import { Fragment } from "react";
+import { Spinner } from "@/components/Utilities/Spinner";
+import type { IAttestationStatsNames, StatChartData, StatPeriod } from "@/types";
+import { fillDateRangeWithValues } from "@/utilities/fillDateRangeWithValues";
+import { formatDate } from "@/utilities/formatDate";
+import { getGAPStats } from "@/utilities/indexer/stats";
+import { cn } from "@/utilities/tailwind";
+import { GlobalCount } from "./GlobalCount";
+import { LineChart } from "./LineChart";
+import { WeeklyActiveUsersChart } from "./WeeklyActiveUsersChart";
 
 type DictionaryValue = {
   title: string;
@@ -59,60 +51,48 @@ const dataNameDictionary: Record<IAttestationStatsNames, DictionaryValue> = {
 
 const allPeriods: StatPeriod[] = ["Days", "Weeks", "Months", "Years"];
 
-export const Stats = () => {
-  const [data, setData] = useState<StatChartData[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+const fetchGAPStats = async (): Promise<StatChartData[]> => {
+  const fetchedStats = await getGAPStats();
+  if (!fetchedStats) {
+    throw new Error("No stats fetched");
+  }
 
+  const cleanStats = fetchedStats.filter(
+    (item: { name: IAttestationStatsNames; data: any }) =>
+      item.name !== "communities" && dataNameDictionary[item.name]
+  );
+
+  const filledStats = cleanStats.map((item) => ({
+    name: item.name,
+    data: fillDateRangeWithValues(item.data),
+  }));
+
+  return filledStats.map((item) => {
+    const dataMap = item.data
+      .map((dataItem) => ({
+        Date: formatDate(dataItem.date, "UTC"),
+        [dataNameDictionary[item.name].hint]: dataItem.value,
+      }))
+      .sort((a, b) => new Date(a.Date).getTime() - new Date(b.Date).getTime());
+
+    return {
+      name: item.name,
+      data: dataMap,
+    };
+  });
+};
+
+export const Stats = () => {
   const [period, setPeriod] = useQueryState("period", {
     shallow: false,
     defaultValue: "Days",
   });
 
-  const getData = async () => {
-    setIsLoading(true);
-    try {
-      const fetchedStats = await getGAPStats();
-      if (!fetchedStats) {
-        throw new Error("No stats fetched");
-      }
-      const cleanStats = fetchedStats.filter(
-        (item: { name: IAttestationStatsNames; data: any }) =>
-          item.name !== "communities" && dataNameDictionary[item.name]
-      );
-      const filledStats = cleanStats.map((item) => {
-        return {
-          name: item.name,
-          data: fillDateRangeWithValues(item.data),
-        };
-      });
-      const stats = filledStats.map((item) => {
-        const dataMap = item.data
-          .map((dataItem) => {
-            return {
-              Date: formatDate(dataItem.date, "UTC"),
-              [dataNameDictionary[item.name].hint]: dataItem.value,
-            };
-          })
-          .sort(
-            (a, b) => new Date(a.Date).getTime() - new Date(b.Date).getTime()
-          );
-        return {
-          name: item.name,
-          data: dataMap,
-        };
-      });
-      setData(stats);
-    } catch (error: any) {
-      console.log(error);
-      errorManager(`Error fetching ${PROJECT_NAME} stats`, error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    getData();
-  }, []);
+  const { data = [], isLoading } = useQuery({
+    queryKey: ["gap-stats"],
+    queryFn: fetchGAPStats,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
   return (
     <div className="mb-10 mt-4  flex w-full flex-col items-center justify-center px-12 max-xl:px-12 max-md:px-4">
@@ -125,7 +105,7 @@ export const Stats = () => {
         ) : (
           <>
             <div className="flex flex-row items-center gap-4">
-              <h3 className="text-xl text-black">Select a period</h3>
+              <h3 className="text-xl">Select a period</h3>
               <Listbox
                 value={period}
                 onChange={(value) => {
@@ -136,14 +116,9 @@ export const Stats = () => {
                   <div className="flex items-center gap-x-2  max-sm:w-full max-sm:justify-between">
                     <div className="relative flex-1 w-32">
                       <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 text-gray-900  ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
-                        <span className="block truncate">
-                          {period}
-                        </span>
+                        <span className="block truncate">{period}</span>
                         <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                          <ChevronUpDownIcon
-                            className="h-5 w-5 text-gray-400"
-                            aria-hidden="true"
-                          />
+                          <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
                         </span>
                       </Listbox.Button>
 
@@ -172,9 +147,7 @@ export const Stats = () => {
                                 <>
                                   <span
                                     className={cn(
-                                      selected
-                                        ? "font-semibold"
-                                        : "font-normal",
+                                      selected ? "font-semibold" : "font-normal",
                                       "block truncate"
                                     )}
                                   >
@@ -188,10 +161,7 @@ export const Stats = () => {
                                         "absolute inset-y-0 right-0 flex items-center pr-4"
                                       )}
                                     >
-                                      <CheckIcon
-                                        className="h-5 w-5"
-                                        aria-hidden="true"
-                                      />
+                                      <CheckIcon className="h-5 w-5" aria-hidden="true" />
                                     </span>
                                   ) : null}
                                 </>
@@ -211,8 +181,7 @@ export const Stats = () => {
                 <LineChart
                   divStyle="flex-3 flex w-full max-h-80"
                   key={item.name}
-                  title={`${dataNameDictionary[item.name].title
-                    } ${period.toLowerCase()}`}
+                  title={`${dataNameDictionary[item.name].title} ${period.toLowerCase()}`}
                   titleProps={{
                     className: "flex flex-row gap-2 flex-wrap items-center",
                   }}

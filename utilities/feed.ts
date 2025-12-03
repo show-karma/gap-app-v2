@@ -10,10 +10,7 @@ const feedIcons = {
   community: "/icons/newIcons/icon_added.svg",
 };
 
-export const feedIconDictionary = (
-  event: Feed["event"],
-  type: Feed["type"]
-) => {
+export const feedIconDictionary = (event: Feed["event"], type: Feed["type"]) => {
   if (event === "revoked") {
     return "/icons/revoked.svg";
   }
@@ -43,12 +40,9 @@ export const feedIconDictionary = (
 };
 
 export const getFeedHref = (item: Feed) => {
-  if (item.type === "project")
-    return PAGES.PROJECT.OVERVIEW(item.projectUID || item.uid);
-  if (item.type === "member" && item.projectUID)
-    return PAGES.PROJECT.TEAM(item.projectUID);
-  if (item.type === "grant")
-    return PAGES.PROJECT.GRANT(item.projectUID as string, item.uid);
+  if (item.type === "project") return PAGES.PROJECT.OVERVIEW(item.projectUID || item.uid);
+  if (item.type === "member" && item.projectUID) return PAGES.PROJECT.TEAM(item.projectUID);
+  if (item.type === "grant") return PAGES.PROJECT.GRANT(item.projectUID as string, item.uid);
   if (item.type === "milestone" && item.projectUID && item.grantUID) {
     return PAGES.PROJECT.GRANT(item.projectUID, item.grantUID);
   }

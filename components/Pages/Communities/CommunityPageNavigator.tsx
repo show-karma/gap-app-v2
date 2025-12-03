@@ -1,14 +1,13 @@
 "use client";
-import { FolderIcon } from "@/components/Icons/Folder";
-import { Target2Icon } from "@/components/Icons/Target2";
-import { SparklesIcon } from "@/components/Icons/Sparkles";
-import { BanknotesIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
-import { getCommunityBySlug } from "@/utilities/gapIndexerApi/getCommunityBySlug";
-import { PAGES } from "@/utilities/pages";
-import { cn } from "@/utilities/tailwind";
+import { ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
+import { FolderIcon } from "@/components/Icons/Folder";
+import { Target2Icon } from "@/components/Icons/Target2";
+import { getCommunityBySlug } from "@/utilities/gapIndexerApi/getCommunityBySlug";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
 
 const activeLinkStyle =
   "text-brand-darkblue dark:text-white font-bold border-b border-b-4 border-b-brand-blue dark:border-b-brand-blue";
@@ -36,8 +35,7 @@ type NavigationItem = {
 const NAVIGATION_ITEMS: readonly NavigationItem[] = [
   {
     path: (communityId: string) => PAGES.COMMUNITY.ALL_GRANTS(communityId),
-    title: (communityName: string) =>
-      `View all ${communityName} Community Projects`,
+    title: (communityName: string) => `View all ${communityName} Community Projects`,
     Icon: FolderIcon,
     isActive: (pathname: string) =>
       !pathname.includes("/impact") &&
@@ -90,10 +88,7 @@ export const CommunityPageNavigator = () => {
         <Link
           key={path(communityId)}
           href={getPathWithProgramId(programId, path(communityId))}
-          className={cn(
-            baseLinkStyle,
-            isActive(pathname) ? activeLinkStyle : inactiveLinkStyle
-          )}
+          className={cn(baseLinkStyle, isActive(pathname) ? activeLinkStyle : inactiveLinkStyle)}
         >
           <Icon
             className={cn(

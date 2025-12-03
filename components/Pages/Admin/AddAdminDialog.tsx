@@ -1,38 +1,30 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, ReactNode, useState } from "react";
+
 import { Dialog, Transition } from "@headlessui/react";
-import {
-  ChevronRightIcon,
-  PlusIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/solid";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { ChevronRightIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAccount } from "wagmi";
 import { GAP } from "@show-karma/karma-gap-sdk";
-import { Button } from "../../Utilities/Button";
-import { MESSAGES } from "@/utilities/messages";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { cn } from "@/utilities/tailwind";
+import { type FC, Fragment, type ReactNode, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { isAddress } from "viem";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useWallet } from "@/hooks/useWallet";
 
 import { useStepper } from "@/store/modals/txStepper";
-import toast from "react-hot-toast";
-import { privyConfig as config } from "@/utilities/wagmi/privy-config";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-
-import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeInput } from "@/utilities/sanitize";
-import { isAddress } from "viem";
+import { cn } from "@/utilities/tailwind";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useWallet } from "@/hooks/useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { Button } from "../../ui/button";
 
-const inputStyle =
-  "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
-const labelStyle =
-  "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
+const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
+const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 const schema = z.object({
   address: z
@@ -64,7 +56,7 @@ type AddAdminDialogProps = {
 
 export const AddAdmin: FC<AddAdminDialogProps> = ({
   buttonElement = {
-    icon: <PlusIcon className="h-4 w-4 text-brand-blue" />,
+    icon: <PlusIcon className="h-4 w-4" />,
     iconSide: "left",
     text: "Add Admin",
     styleClass: "",
@@ -130,11 +122,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
       const { hash } = communityResponse;
       await communityResponse.wait().then(async () => {
         if (hash) {
-          await fetchData(
-            INDEXER.ATTESTATION_LISTENER(hash, chainid),
-            "POST",
-            {}
-          );
+          await fetchData(INDEXER.ATTESTATION_LISTENER(hash, chainid), "POST", {});
         }
         changeStepperStep("indexing");
         let retries = 1000;
@@ -154,8 +142,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
             }
 
             addressAdded = response.admins.some(
-              (admin: any) =>
-                admin.user.id.toLowerCase() === data.address.toLowerCase()
+              (admin: any) => admin.user.id.toLowerCase() === data.address.toLowerCase()
             );
 
             if (addressAdded) {
@@ -165,9 +152,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
               closeModal(); // Close the dialog upon successful submission
               break;
             }
-          } catch (error: any) {
-            console.log("Retrying...");
-          }
+          } catch (_error: any) {}
 
           retries -= 1;
           // eslint-disable-next-line no-await-in-loop
@@ -175,15 +160,10 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
         }
       });
     } catch (error: any) {
-      errorManager(
-        `Error adding admin ${data.address} to community ${UUID}`,
-        error,
-        {
-          community: UUID,
-          address: data.address,
-        }
-      );
-      console.log(error);
+      errorManager(`Error adding admin ${data.address} to community ${UUID}`, error, {
+        community: UUID,
+        address: data.address,
+      });
     } finally {
       setIsStepper(false);
       setIsLoading(false);
@@ -192,17 +172,17 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
 
   return (
     <>
-      <button
+      <Button
         onClick={openModal}
         className={cn(
-          "flex justify-center min-w-max items-center gap-x-1 rounded-md px-3 py-2 text-sm font-semibold text-brand-blue dark:text-zinc-100 hover:opacity-75 dark:hover:bg-primary-900",
+          "flex justify-center min-w-max items-center gap-x-1 rounded-md px-3 py-2 text-sm font-semibold hover:opacity-75",
           buttonElement.styleClass
         )}
       >
         {buttonElement.iconSide === "left" && buttonElement.icon}
         {buttonElement.text}
         {buttonElement.iconSide === "right" && buttonElement.icon}
-      </button>
+      </Button>
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
           <Transition.Child
@@ -263,9 +243,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
                           placeholder='e.g. "0x5cd3g343..."'
                           {...register("address")}
                         />
-                        <p className="text-red-500 text-sm">
-                          {errors.address?.message}
-                        </p>
+                        <p className="text-red-500 text-sm">{errors.address?.message}</p>
                       </div>
                     </div>
 
@@ -279,11 +257,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
                         Cancel
                       </button>
 
-                      <Button
-                        type={"submit"}
-                        className="flex flex-row gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                        isLoading={isLoading}
-                      >
+                      <Button type={"submit"} isLoading={isLoading}>
                         Add Admin
                         <ChevronRightIcon className="w-4 h-4" />
                       </Button>

@@ -1,8 +1,8 @@
 "use client";
-import { INDEXER } from "@/utilities/indexer";
-import fetchData from "@/utilities/fetchData";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { getCommunityDetailsV2 } from "@/utilities/queries/getCommunityDataV2";
 
 export interface AggregatedIndicator {

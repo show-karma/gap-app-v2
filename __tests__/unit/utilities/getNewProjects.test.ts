@@ -1,6 +1,6 @@
-import { getNewProjects } from "@/utilities/indexer/getNewProjects";
-import fetchData from "@/utilities/fetchData";
 import { errorManager } from "@/components/Utilities/errorManager";
+import fetchData from "@/utilities/fetchData";
+import { getNewProjects } from "@/utilities/indexer/getNewProjects";
 import "@testing-library/jest-dom";
 
 jest.mock("@/utilities/fetchData");
@@ -32,11 +32,7 @@ describe("getNewProjects", () => {
   });
 
   it("should handle errors when fetching projects", async () => {
-    (fetchData as jest.Mock).mockResolvedValue([
-      null,
-      new Error("Fetch error"),
-      null,
-    ]);
+    (fetchData as jest.Mock).mockResolvedValue([null, new Error("Fetch error"), null]);
 
     const result = await getNewProjects(10, 0, "createdAt", "desc");
 

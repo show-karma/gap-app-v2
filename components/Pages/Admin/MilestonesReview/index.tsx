@@ -1,24 +1,24 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
-import { PAGES } from "@/utilities/pages";
 import { ArrowLeftIcon, ChevronLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
-import { useState, useMemo, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { Button } from "@/components/Utilities/Button";
+import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
+import { useIsReviewer, useReviewerPrograms } from "@/hooks/usePermissions";
+import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
+import { useStaff } from "@/hooks/useStaff";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { updateMilestoneVerification } from "@/services/milestones";
-import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
-import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
-import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
-import toast from "react-hot-toast";
-import { CommentsAndActivity } from "./CommentsAndActivity";
-import { MilestoneCard } from "./MilestoneCard";
-import { GrantCompleteButtonForReviewer } from "./GrantCompleteButtonForReviewer";
-import { useAccount } from "wagmi";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
-import { useIsReviewer, useReviewerPrograms } from "@/hooks/usePermissions";
-import { useStaff } from "@/hooks/useStaff";
 import { useOwnerStore } from "@/store";
+import { PAGES } from "@/utilities/pages";
+import { CommentsAndActivity } from "./CommentsAndActivity";
+import { GrantCompleteButtonForReviewer } from "./GrantCompleteButtonForReviewer";
+import { MilestoneCard } from "./MilestoneCard";
 
 interface MilestonesReviewPageProps {
   communityId: string;
@@ -38,9 +38,7 @@ export function MilestonesReviewPage({
   const [verificationComment, setVerificationComment] = useState("");
 
   const { address } = useAccount();
-  const { isCommunityAdmin, isLoading: isLoadingCommunityAdmin } = useIsCommunityAdmin(
-    communityId
-  );
+  const { isCommunityAdmin, isLoading: isLoadingCommunityAdmin } = useIsCommunityAdmin(communityId);
   const { isStaff, isLoading: isStaffLoading } = useStaff();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
@@ -74,7 +72,7 @@ export function MilestonesReviewPage({
   // Determine if user can verify milestones (must be before early returns)
   // Only milestone reviewers, admins, contract owners, and staff can verify/complete/sync
   const canVerifyMilestones = useMemo(
-    () => isCommunityAdmin || isContractOwner || isStaff || (isMilestoneReviewer || false),
+    () => isCommunityAdmin || isContractOwner || isStaff || isMilestoneReviewer || false,
     [isCommunityAdmin, isContractOwner, isStaff, isMilestoneReviewer]
   );
 
@@ -93,7 +91,7 @@ export function MilestonesReviewPage({
   // Get grant name from first milestone's programId (must be before any returns)
   const grantName = useMemo(() => {
     return data?.grantMilestones[0]?.programId
-      ? `Program ${data.grantMilestones[0].programId.split('_')[0]}`
+      ? `Program ${data.grantMilestones[0].programId.split("_")[0]}`
       : `Program ${programId}`;
   }, [data?.grantMilestones, programId]);
 
@@ -101,11 +99,18 @@ export function MilestonesReviewPage({
   const backButtonConfig = useMemo(() => {
     // Only show back to application if came from application page
     if (referrer === "application" && referenceNumber) {
-      const appUrl = (isCommunityAdmin || isContractOwner || isStaff)
-        ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
-        : isReviewer && parsedChainId
-          ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, parsedChainId, referenceNumber)
-          : null;
+      const appUrl =
+        isCommunityAdmin || isContractOwner || isStaff
+          ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) +
+            `/${referenceNumber}`
+          : isReviewer && parsedChainId
+            ? PAGES.REVIEWER.APPLICATION_DETAIL(
+                communityId,
+                parsedProgramId,
+                parsedChainId,
+                referenceNumber
+              )
+            : null;
 
       if (appUrl) {
         return { url: appUrl, label: "Back to Application" };
@@ -117,21 +122,50 @@ export function MilestonesReviewPage({
       url: PAGES.ADMIN.MILESTONES(communityId),
       label: "Back to Milestones Report",
     };
-  }, [referrer, referenceNumber, isCommunityAdmin, isContractOwner, isStaff, isReviewer, communityId, programId, parsedProgramId, parsedChainId]);
+  }, [
+    referrer,
+    referenceNumber,
+    isCommunityAdmin,
+    isContractOwner,
+    isStaff,
+    isReviewer,
+    communityId,
+    programId,
+    parsedProgramId,
+    parsedChainId,
+  ]);
 
   // Memoized milestone review URL - only returns URL if application is approved
   const milestoneReviewUrl = useMemo(() => {
     if (fundingApplication?.status?.toLowerCase() === "approved" && referenceNumber) {
-      const appUrl = (isCommunityAdmin || isContractOwner || isStaff)
-        ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
-        : isReviewer && parsedChainId
-          ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, parsedChainId, referenceNumber)
-          : null;
+      const appUrl =
+        isCommunityAdmin || isContractOwner || isStaff
+          ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) +
+            `/${referenceNumber}`
+          : isReviewer && parsedChainId
+            ? PAGES.REVIEWER.APPLICATION_DETAIL(
+                communityId,
+                parsedProgramId,
+                parsedChainId,
+                referenceNumber
+              )
+            : null;
 
       return appUrl;
     }
     return null;
-  }, [fundingApplication?.status, referenceNumber, isCommunityAdmin, isContractOwner, isStaff, isReviewer, communityId, programId, parsedProgramId, parsedChainId]);
+  }, [
+    fundingApplication?.status,
+    referenceNumber,
+    isCommunityAdmin,
+    isContractOwner,
+    isStaff,
+    isReviewer,
+    communityId,
+    programId,
+    parsedProgramId,
+    parsedChainId,
+  ]);
 
   const { verifyMilestone, isVerifying } = useMilestoneCompletionVerification({
     projectId,
@@ -155,41 +189,42 @@ export function MilestonesReviewPage({
     setVerificationComment("");
   }, []);
 
-  const handleSubmitVerification = useCallback(async (milestone: GrantMilestoneWithCompletion) => {
-    if (!data) return;
-    // Pass isMilestoneReviewer flag instead of generic isReviewer
-    await verifyMilestone(
-      milestone,
-      isMilestoneReviewer || false,
-      data,
-      verificationComment
-    );
-  }, [data, verifyMilestone, isMilestoneReviewer, verificationComment]);
+  const handleSubmitVerification = useCallback(
+    async (milestone: GrantMilestoneWithCompletion) => {
+      if (!data) return;
+      // Pass isMilestoneReviewer flag instead of generic isReviewer
+      await verifyMilestone(milestone, isMilestoneReviewer || false, data, verificationComment);
+    },
+    [data, verifyMilestone, isMilestoneReviewer, verificationComment]
+  );
 
-  const handleSyncVerification = useCallback(async (milestone: GrantMilestoneWithCompletion) => {
-    if (!milestone.fundingApplicationCompletion || !milestone.verificationDetails) return;
+  const handleSyncVerification = useCallback(
+    async (milestone: GrantMilestoneWithCompletion) => {
+      if (!milestone.fundingApplicationCompletion || !milestone.verificationDetails) return;
 
-    setIsSyncing(true);
-    try {
-      // Extract verification comment from verificationDetails description
-      const verificationComment = milestone.verificationDetails.description || "";
+      setIsSyncing(true);
+      try {
+        // Extract verification comment from verificationDetails description
+        const verificationComment = milestone.verificationDetails.description || "";
 
-      await updateMilestoneVerification(
-        milestone.fundingApplicationCompletion.referenceNumber,
-        milestone.fundingApplicationCompletion.milestoneFieldLabel,
-        milestone.fundingApplicationCompletion.milestoneTitle,
-        verificationComment
-      );
+        await updateMilestoneVerification(
+          milestone.fundingApplicationCompletion.referenceNumber,
+          milestone.fundingApplicationCompletion.milestoneFieldLabel,
+          milestone.fundingApplicationCompletion.milestoneTitle,
+          verificationComment
+        );
 
-      toast.success("Verification synced successfully to off-chain database!");
-      await refetch();
-    } catch (error) {
-      console.error("Error syncing verification:", error);
-      toast.error("Failed to sync verification to database");
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [refetch]);
+        toast.success("Verification synced successfully to off-chain database!");
+        await refetch();
+      } catch (error) {
+        console.error("Error syncing verification:", error);
+        toast.error("Failed to sync verification to database");
+      } finally {
+        setIsSyncing(false);
+      }
+    },
+    [refetch]
+  );
 
   // Show loading while checking authorization
   if (isLoading || isLoadingCommunityAdmin || isOwnerLoading || isLoadingReviewer || isStaffLoading) {
@@ -268,10 +303,7 @@ export function MilestonesReviewPage({
         <div className="px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-4 max-sm:gap-1 max-sm:flex-col max-sm:items-start">
             <Link href={backButtonConfig.url}>
-              <Button
-                variant="secondary"
-                className="flex items-center"
-              >
+              <Button variant="secondary" className="flex items-center">
                 <ArrowLeftIcon className="w-4 h-4 mr-2" />
                 {backButtonConfig.label}
               </Button>
@@ -284,19 +316,19 @@ export function MilestonesReviewPage({
                 {grantName} - Review project milestones
               </p>
             </div>
-                 {/* Grant Complete Button for Milestone Reviewers */}
-                 {grant && canVerifyMilestones && (
-                   <div className="max-sm:w-full">
-                     <GrantCompleteButtonForReviewer
-                       project={projectForButton}
-                       grant={grant}
-                       onComplete={() => {
-                         // Refetch data to update the grant completion status
-                         refetch();
-                       }}
-                     />
-                   </div>
-                 )}
+            {/* Grant Complete Button for Milestone Reviewers */}
+            {grant && canVerifyMilestones && (
+              <div className="max-sm:w-full">
+                <GrantCompleteButtonForReviewer
+                  project={projectForButton}
+                  grant={grant}
+                  onComplete={() => {
+                    // Refetch data to update the grant completion status
+                    refetch();
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -365,10 +397,13 @@ export function MilestonesReviewPage({
             <div className="lg:col-span-2">
               <CommentsAndActivity
                 referenceNumber={referenceNumber}
-                statusHistory={(fundingApplication?.statusHistory || []).map(item => ({
+                statusHistory={(fundingApplication?.statusHistory || []).map((item) => ({
                   status: item.status,
-                  timestamp: typeof item.timestamp === 'string' ? item.timestamp : item.timestamp.toISOString(),
-                  reason: item.reason
+                  timestamp:
+                    typeof item.timestamp === "string"
+                      ? item.timestamp
+                      : item.timestamp.toISOString(),
+                  reason: item.reason,
                 }))}
                 communityId={communityId}
                 currentUserAddress={address}

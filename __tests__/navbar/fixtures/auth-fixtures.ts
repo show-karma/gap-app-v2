@@ -3,7 +3,7 @@
  * Provides all permission combinations for comprehensive testing
  */
 
-import { FundingProgram } from "@/services/fundingPlatformService";
+import type { FundingProgram } from "@/services/fundingPlatformService";
 
 export interface MockAuthState {
   ready: boolean;
@@ -27,14 +27,14 @@ export interface MockPermissionsState {
       imageURL: string;
     };
   }>;
-  
+
   // Reviewer Programs
   reviewerPrograms: FundingProgram[];
-  
+
   // Staff & Owner
   isStaff: boolean;
   isOwner: boolean;
-  
+
   // Registry
   isPoolManager: boolean;
   isRegistryAdmin: boolean;
@@ -255,9 +255,18 @@ export const authFixtures: AuthFixture[] = [
     permissions: {
       communities: [],
       reviewerPrograms: [
-        createMockProgram({ uid: "program-1", metadata: { title: "Program 1", description: "Desc 1" } }),
-        createMockProgram({ uid: "program-2", metadata: { title: "Program 2", description: "Desc 2" } }),
-        createMockProgram({ uid: "program-3", metadata: { title: "Program 3", description: "Desc 3" } }),
+        createMockProgram({
+          uid: "program-1",
+          metadata: { title: "Program 1", description: "Desc 1" },
+        }),
+        createMockProgram({
+          uid: "program-2",
+          metadata: { title: "Program 2", description: "Desc 2" },
+        }),
+        createMockProgram({
+          uid: "program-3",
+          metadata: { title: "Program 3", description: "Desc 3" },
+        }),
       ],
       isStaff: false,
       isOwner: false,
@@ -517,6 +526,7 @@ export const authFixtures: AuthFixture[] = [
   },
 
   // 15. Loading State
+  // Note: Even during loading, mobile menu shows Sign in/Contact sales because authenticated=false
   {
     name: "loading",
     description: "Authentication is loading (ready = false)",
@@ -534,9 +544,9 @@ export const authFixtures: AuthFixture[] = [
       isRegistryAdmin: false,
     },
     expectedElements: {
-      signIn: false,
-      contactSales: false,
-      resources: false,
+      signIn: true, // Mobile menu shows these even during loading
+      contactSales: true,
+      resources: true,
       userMenu: false,
       myProjects: false,
       review: false,
@@ -550,7 +560,7 @@ export const authFixtures: AuthFixture[] = [
  * Get a specific fixture by name
  */
 export const getAuthFixture = (name: string): AuthFixture => {
-  const fixture = authFixtures.find(f => f.name === name);
+  const fixture = authFixtures.find((f) => f.name === name);
   if (!fixture) {
     throw new Error(`Auth fixture "${name}" not found`);
   }
@@ -568,13 +578,12 @@ export const getAuthFixturesBy = (predicate: (fixture: AuthFixture) => boolean):
  * Helper: Get authenticated fixtures
  */
 export const getAuthenticatedFixtures = (): AuthFixture[] => {
-  return getAuthFixturesBy(f => f.authState.authenticated);
+  return getAuthFixturesBy((f) => f.authState.authenticated);
 };
 
 /**
  * Helper: Get unauthenticated fixtures
  */
 export const getUnauthenticatedFixtures = (): AuthFixture[] => {
-  return getAuthFixturesBy(f => !f.authState.authenticated);
+  return getAuthFixturesBy((f) => !f.authState.authenticated);
 };
-

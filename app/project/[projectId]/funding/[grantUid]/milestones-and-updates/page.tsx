@@ -1,26 +1,22 @@
-import { zeroUID } from "@/utilities/commons";
-import { defaultMetadata } from "@/utilities/meta";
-import MilestonesAndUpdates from "@/components/Pages/Grants/MilestonesAndUpdates";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { Suspense } from "react";
+import MilestonesAndUpdates from "@/components/Pages/Grants/MilestonesAndUpdates";
 import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Project/Loading/Grants/MilestonesAndUpdate";
-import { envVars } from "@/utilities/enviromentVars";
-import { cleanMarkdownForPlainText } from "@/utilities/markdown";
-import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import { PROJECT_NAME } from "@/constants/brand";
+import { zeroUID } from "@/utilities/commons";
+import { envVars } from "@/utilities/enviromentVars";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { cleanMarkdownForPlainText } from "@/utilities/markdown";
+import { defaultMetadata } from "@/utilities/meta";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 
 type Params = Promise<{
   projectId: string;
   grantUid: string;
 }>;
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Params;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { projectId, grantUid } = await params;
 
   const projectInfo = await getProjectCachedData(projectId);
@@ -49,8 +45,7 @@ export async function generateMetadata({
       metadata = {
         ...metadata,
         title: pageMetadata?.title || pageMetadata?.title || "",
-        description:
-          pageMetadata?.description || pageMetadata?.description || "",
+        description: pageMetadata?.description || pageMetadata?.description || "",
       };
     }
   } else {
@@ -58,10 +53,7 @@ export async function generateMetadata({
       ...metadata,
       title: `${projectInfo?.details?.data?.title} | ${PROJECT_NAME}`,
       description:
-        cleanMarkdownForPlainText(
-          projectInfo?.details?.data?.description || "",
-          80
-        ) || "",
+        cleanMarkdownForPlainText(projectInfo?.details?.data?.description || "", 80) || "",
     };
   }
 

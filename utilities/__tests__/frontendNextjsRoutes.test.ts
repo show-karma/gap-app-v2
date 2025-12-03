@@ -31,12 +31,7 @@ describe("frontendNextjsRoutes", () => {
     });
 
     it("should contain all expected prefix path matches", () => {
-      const prefixPaths = [
-        "/dao/",
-        "/case-study/",
-        "/profile/",
-        "/dynamic-nft/",
-      ];
+      const prefixPaths = ["/dao/", "/case-study/", "/profile/", "/dynamic-nft/"];
 
       prefixPaths.forEach((path) => {
         expect(FRONTEND_NEXTJS_ROUTES).toContain(path);
@@ -89,17 +84,10 @@ describe("frontendNextjsRoutes", () => {
 
     describe("route naming conventions", () => {
       it("prefix routes should end with /", () => {
-        const prefixRoutes = FRONTEND_NEXTJS_ROUTES.filter((route) =>
-          route.endsWith("/")
-        );
+        const prefixRoutes = FRONTEND_NEXTJS_ROUTES.filter((route) => route.endsWith("/"));
 
         // We expect these prefix routes
-        const expectedPrefixes = [
-          "/dao/",
-          "/case-study/",
-          "/profile/",
-          "/dynamic-nft/",
-        ];
+        const expectedPrefixes = ["/dao/", "/case-study/", "/profile/", "/dynamic-nft/"];
 
         prefixRoutes.forEach((route) => {
           expect(expectedPrefixes).toContain(route);
@@ -107,9 +95,7 @@ describe("frontendNextjsRoutes", () => {
       });
 
       it("exact match routes should NOT end with /", () => {
-        const exactRoutes = FRONTEND_NEXTJS_ROUTES.filter(
-          (route) => !route.endsWith("/")
-        );
+        const exactRoutes = FRONTEND_NEXTJS_ROUTES.filter((route) => !route.endsWith("/"));
 
         exactRoutes.forEach((route) => {
           expect(route).not.toMatch(/\/$/);
@@ -124,16 +110,12 @@ describe("frontendNextjsRoutes", () => {
       });
 
       it("should have 14 exact match routes", () => {
-        const exactRoutes = FRONTEND_NEXTJS_ROUTES.filter(
-          (route) => !route.endsWith("/")
-        );
+        const exactRoutes = FRONTEND_NEXTJS_ROUTES.filter((route) => !route.endsWith("/"));
         expect(exactRoutes.length).toBe(14);
       });
 
       it("should have 4 prefix match routes", () => {
-        const prefixRoutes = FRONTEND_NEXTJS_ROUTES.filter((route) =>
-          route.endsWith("/")
-        );
+        const prefixRoutes = FRONTEND_NEXTJS_ROUTES.filter((route) => route.endsWith("/"));
         expect(prefixRoutes.length).toBe(4);
       });
     });
@@ -143,11 +125,7 @@ describe("frontendNextjsRoutes", () => {
         // 'as const' provides type-level immutability in TypeScript
         // It creates literal types instead of string[] type
         // This test verifies the array structure is correct
-        expect(FRONTEND_NEXTJS_ROUTES).toEqual(
-          expect.arrayContaining([
-            expect.any(String),
-          ])
-        );
+        expect(FRONTEND_NEXTJS_ROUTES).toEqual(expect.arrayContaining([expect.any(String)]));
 
         // Verify the first route is a string (compile-time this is a literal type)
         expect(typeof FRONTEND_NEXTJS_ROUTES[0]).toBe("string");
@@ -162,7 +140,7 @@ describe("frontendNextjsRoutes", () => {
         expect(route).not.toMatch(/\s/);
 
         // Should not contain special characters except / and -
-        expect(route).toMatch(/^\/[\w\-\/]*\/?$/);
+        expect(route).toMatch(/^\/[\w\-/]*\/?$/);
       });
     });
 
@@ -212,10 +190,7 @@ describe("frontendNextjsRoutes", () => {
         "/app/badge-template",
       ];
 
-      const allDocumentedRoutes = [
-        ...documentedExactRoutes,
-        ...documentedPrefixRoutes,
-      ];
+      const allDocumentedRoutes = [...documentedExactRoutes, ...documentedPrefixRoutes];
 
       allDocumentedRoutes.forEach((route) => {
         expect(FRONTEND_NEXTJS_ROUTES).toContain(route);

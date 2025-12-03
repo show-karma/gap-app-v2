@@ -3,15 +3,11 @@
  * Ensures all fixtures, helpers, and mocks work correctly
  */
 
-import { renderWithProviders, screen } from "../utils/test-helpers";
 import { authFixtures, getAuthFixture } from "../fixtures/auth-fixtures";
-import {
-  searchFixtures,
-  getResultsByQuery,
-  searchQueries,
-} from "../fixtures/search-fixtures";
-import { server } from "../setup";
+import { getResultsByQuery, searchFixtures, searchQueries } from "../fixtures/search-fixtures";
 import { scenarioHandlers } from "../mocks/handlers";
+import { server } from "../setup";
+import { renderWithProviders, screen } from "../utils/test-helpers";
 
 describe("Test Infrastructure Verification", () => {
   describe("Auth Fixtures", () => {
@@ -82,24 +78,18 @@ describe("Test Infrastructure Verification", () => {
     });
 
     it("should have projects only results", () => {
-      expect(searchFixtures.projectsOnlyResults.projects.length).toBeGreaterThan(
-        0
-      );
+      expect(searchFixtures.projectsOnlyResults.projects.length).toBeGreaterThan(0);
       expect(searchFixtures.projectsOnlyResults.communities.length).toBe(0);
     });
 
     it("should have communities only results", () => {
       expect(searchFixtures.communitiesOnlyResults.projects.length).toBe(0);
-      expect(
-        searchFixtures.communitiesOnlyResults.communities.length
-      ).toBeGreaterThan(0);
+      expect(searchFixtures.communitiesOnlyResults.communities.length).toBeGreaterThan(0);
     });
 
     it("should have mixed results", () => {
       expect(searchFixtures.mixedResults.projects.length).toBeGreaterThan(0);
-      expect(searchFixtures.mixedResults.communities.length).toBeGreaterThan(
-        0
-      );
+      expect(searchFixtures.mixedResults.communities.length).toBeGreaterThan(0);
     });
 
     it("should have large result set", () => {
@@ -193,9 +183,7 @@ describe("Test Infrastructure Verification", () => {
       const fixture = getAuthFixture("reviewer-single");
       expect(fixture.permissions.reviewerPrograms).toHaveLength(1);
       expect(fixture.permissions.reviewerPrograms[0]).toHaveProperty("uid");
-      expect(fixture.permissions.reviewerPrograms[0]).toHaveProperty(
-        "metadata"
-      );
+      expect(fixture.permissions.reviewerPrograms[0]).toHaveProperty("metadata");
     });
 
     it("should create mock projects", () => {
@@ -282,8 +270,8 @@ describe("Test Infrastructure Verification", () => {
       const fixture = getAuthFixture("loading");
       expect(fixture.authState.ready).toBe(false);
       expect(fixture.expectedElements.userMenu).toBe(false);
-      expect(fixture.expectedElements.signIn).toBe(false);
+      // Sign in is shown in mobile menu even during loading (authenticated=false)
+      expect(fixture.expectedElements.signIn).toBe(true);
     });
   });
 });
-

@@ -1,11 +1,11 @@
-import { useCallback, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
+import type { InvalidInfo } from "@/components/Pages/Project/ContractAddressItem";
+import type { NetworkAddressPair } from "@/components/Pages/Project/types";
+import { getContractKey } from "@/utilities/contractKey";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
-import { NetworkAddressPair } from "@/components/Pages/Project/types";
-import { InvalidInfo } from "@/components/Pages/Project/ContractAddressItem";
-import { getContractKey } from "@/utilities/contractKey";
 
 export interface ContractAddressValidationResult {
   isAvailable: boolean;
@@ -61,42 +61,36 @@ interface UseContractAddressValidationProps {
  * Includes both single validation and batch validation with error state management
  */
 export const useContractAddressValidation = ({ projectUid }: UseContractAddressValidationProps) => {
-  const [invalidContracts, setInvalidContracts] = useState<Map<string, InvalidInfo>>(
-    new Map()
-  );
+  const [invalidContracts, setInvalidContracts] = useState<Map<string, InvalidInfo>>(new Map());
 
   const mutation = useMutation({
     mutationFn: validateContractAddress,
     mutationKey: QUERY_KEYS.CONTRACTS.VALIDATION.ALL,
   });
 
-  const clearError = useCallback(
-    (pair: NetworkAddressPair) => {
-      if (pair.network && pair.address) {
-        const contractKey = getContractKey(pair.network, pair.address);
-        setInvalidContracts((prev) => {
-          const newMap = new Map(prev);
-          newMap.delete(contractKey);
-          return newMap;
-        });
-      }
-    },
-    []
-  );
+  const clearError = useCallback((pair: NetworkAddressPair) => {
+    if (pair.network && pair.address) {
+      const contractKey = getContractKey(pair.network, pair.address);
+      setInvalidContracts((prev) => {
+        const newMap = new Map(prev);
+        newMap.delete(contractKey);
+        return newMap;
+      });
+    }
+  }, []);
 
   const validateAll = useCallback(
-    async (
-      pairs: NetworkAddressPair[],
-    ): Promise<Map<string, InvalidInfo>> => {
+    async (pairs: NetworkAddressPair[]): Promise<Map<string, InvalidInfo>> => {
       // Create validation promises for all pairs in parallel
       const validationPromises = pairs.map((pair) =>
-        mutation.mutateAsync({
-          address: pair.address,
-          network: pair.network,
-          excludeProjectId: projectUid,
-        })
+        mutation
+          .mutateAsync({
+            address: pair.address,
+            network: pair.network,
+            excludeProjectId: projectUid,
+          })
           .then((result) => ({ pair, result, error: null }))
-          .catch((error) => ({ pair, result: null, error })),
+          .catch((error) => ({ pair, result: null, error }))
       );
 
       // Wait for all validations to complete
@@ -129,7 +123,7 @@ export const useContractAddressValidation = ({ projectUid }: UseContractAddressV
       setInvalidContracts(validationResults);
       return validationResults;
     },
-    [mutation, projectUid],
+    [mutation, projectUid]
   );
 
   return {

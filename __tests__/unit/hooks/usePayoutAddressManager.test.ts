@@ -4,9 +4,9 @@
  */
 
 import { renderHook, waitFor } from "@testing-library/react";
-import { usePayoutAddressManager } from "@/hooks/donation/usePayoutAddressManager";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
+import { usePayoutAddressManager } from "@/hooks/donation/usePayoutAddressManager";
 
 // Mock dependencies
 jest.mock("react-hot-toast");
@@ -66,9 +66,7 @@ describe("usePayoutAddressManager", () => {
 
   describe("initialization", () => {
     it("should initialize with empty state", () => {
-      const { result } = renderHook(() =>
-        usePayoutAddressManager([], undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager([], undefined));
 
       expect(result.current.payoutAddresses).toEqual({});
       expect(result.current.missingPayouts).toEqual([]);
@@ -89,9 +87,7 @@ describe("usePayoutAddressManager", () => {
       const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
       gapIndexerApi.projectBySlug.mockResolvedValue(mockProjectResponse);
 
-      const { result } = renderHook(() =>
-        usePayoutAddressManager(mockItems, undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager(mockItems, undefined));
 
       expect(result.current.isFetchingPayouts).toBe(true);
 
@@ -121,9 +117,7 @@ describe("usePayoutAddressManager", () => {
       const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
       gapIndexerApi.projectBySlug.mockResolvedValue(mockProjectResponse);
 
-      const { result } = renderHook(() =>
-        usePayoutAddressManager(mockItems, undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager(mockItems, undefined));
 
       await waitFor(() => {
         expect(result.current.payoutAddresses["project-1"]).toBe(mockValidAddress);
@@ -134,9 +128,7 @@ describe("usePayoutAddressManager", () => {
       const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
       gapIndexerApi.projectBySlug.mockRejectedValue(new Error("Network error"));
 
-      const { result } = renderHook(() =>
-        usePayoutAddressManager(mockItems, undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager(mockItems, undefined));
 
       await waitFor(() => {
         expect(result.current.isFetchingPayouts).toBe(false);
@@ -158,9 +150,7 @@ describe("usePayoutAddressManager", () => {
         },
       });
 
-      const { result } = renderHook(() =>
-        usePayoutAddressManager([mockItems[0]], undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
 
       await waitFor(() => {
         expect(result.current.payoutAddresses["project-1"]).toBe(mockValidAddress);
@@ -182,9 +172,7 @@ describe("usePayoutAddressManager", () => {
       const mockIsAddress = isAddress as unknown as jest.Mock;
       mockIsAddress.mockReturnValue(true);
 
-      const { result } = renderHook(() =>
-        usePayoutAddressManager([mockItems[0]], "community-1")
-      );
+      const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], "community-1"));
 
       await waitFor(() => {
         expect(result.current.payoutAddresses["project-1"]).toBe(mockValidAddress);
@@ -207,9 +195,7 @@ describe("usePayoutAddressManager", () => {
       const mockIsAddress = isAddress as unknown as jest.Mock;
       mockIsAddress.mockReturnValue(true);
 
-      const { result } = renderHook(() =>
-        usePayoutAddressManager([mockItems[0]], undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
 
       await waitFor(() => {
         // Should get first valid address from object
@@ -235,9 +221,7 @@ describe("usePayoutAddressManager", () => {
         },
       });
 
-      const { result } = renderHook(() =>
-        usePayoutAddressManager([mockItems[0]], undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
 
       await waitFor(() => {
         expect(result.current.payoutAddresses["project-1"]).toBe(mockValidAddress);
@@ -255,9 +239,7 @@ describe("usePayoutAddressManager", () => {
         },
       });
 
-      const { result } = renderHook(() =>
-        usePayoutAddressManager([mockItems[0]], undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
 
       await waitFor(() => {
         expect(result.current.payoutAddresses["project-1"]).toBe(mockValidAddress);
@@ -276,9 +258,7 @@ describe("usePayoutAddressManager", () => {
       const mockIsAddress = isAddress as unknown as jest.Mock;
       mockIsAddress.mockReturnValue(false);
 
-      const { result } = renderHook(() =>
-        usePayoutAddressManager([mockItems[0]], undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
 
       await waitFor(() => {
         expect(result.current.payoutAddresses["project-1"]).toBeUndefined();
@@ -297,9 +277,7 @@ describe("usePayoutAddressManager", () => {
         },
       });
 
-      const { result } = renderHook(() =>
-        usePayoutAddressManager([mockItems[0]], undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
 
       await waitFor(() => {
         expect(result.current.payoutAddresses["project-1"]).toBeUndefined();
@@ -317,12 +295,15 @@ describe("usePayoutAddressManager", () => {
           data: { ...mockProjectResponse.data, payoutAddress: mockValidAddress },
         })
         .mockResolvedValueOnce({
-          data: { ...mockProjectResponse.data, payoutAddress: undefined, recipient: undefined, grants: [] },
+          data: {
+            ...mockProjectResponse.data,
+            payoutAddress: undefined,
+            recipient: undefined,
+            grants: [],
+          },
         });
 
-      const { result } = renderHook(() =>
-        usePayoutAddressManager(mockItems, undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager(mockItems, undefined));
 
       await waitFor(() => {
         expect(result.current.missingPayouts).toEqual(["project-2"]);
@@ -332,7 +313,12 @@ describe("usePayoutAddressManager", () => {
     it("should clear missing payouts when items change", async () => {
       const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
       gapIndexerApi.projectBySlug.mockResolvedValue({
-        data: { ...mockProjectResponse.data, payoutAddress: undefined, recipient: undefined, grants: [] },
+        data: {
+          ...mockProjectResponse.data,
+          payoutAddress: undefined,
+          recipient: undefined,
+          grants: [],
+        },
       });
 
       const { result, rerender } = renderHook(
@@ -361,9 +347,7 @@ describe("usePayoutAddressManager", () => {
       const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
       gapIndexerApi.projectBySlug.mockResolvedValue(mockProjectResponse);
 
-      const { result } = renderHook(() =>
-        usePayoutAddressManager(mockItems, undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager(mockItems, undefined));
 
       await waitFor(() => {
         expect(result.current.payoutStatusByProject["project-1"]).toBeDefined();
@@ -379,9 +363,7 @@ describe("usePayoutAddressManager", () => {
         () => new Promise((resolve) => setTimeout(() => resolve(mockProjectResponse), 1000))
       );
 
-      const { result } = renderHook(() =>
-        usePayoutAddressManager(mockItems, undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager(mockItems, undefined));
 
       expect(result.current.payoutStatusByProject["project-1"].isLoading).toBe(true);
     });
@@ -389,12 +371,15 @@ describe("usePayoutAddressManager", () => {
     it("should mark status as missing when payout address not found", async () => {
       const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
       gapIndexerApi.projectBySlug.mockResolvedValue({
-        data: { ...mockProjectResponse.data, payoutAddress: undefined, recipient: undefined, grants: [] },
+        data: {
+          ...mockProjectResponse.data,
+          payoutAddress: undefined,
+          recipient: undefined,
+          grants: [],
+        },
       });
 
-      const { result } = renderHook(() =>
-        usePayoutAddressManager([mockItems[0]], undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
 
       await waitFor(() => {
         expect(result.current.payoutStatusByProject["project-1"].isMissing).toBe(true);
@@ -404,9 +389,7 @@ describe("usePayoutAddressManager", () => {
 
   describe("formatAddress", () => {
     it("should format valid address", () => {
-      const { result } = renderHook(() =>
-        usePayoutAddressManager([], undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager([], undefined));
 
       const formatted = result.current.formatAddress(mockValidAddress);
 
@@ -414,9 +397,7 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should return 'Not configured' for undefined address", () => {
-      const { result } = renderHook(() =>
-        usePayoutAddressManager([], undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager([], undefined));
 
       const formatted = result.current.formatAddress(undefined);
 
@@ -424,9 +405,7 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should return 'Not configured' for empty string", () => {
-      const { result } = renderHook(() =>
-        usePayoutAddressManager([], undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager([], undefined));
 
       const formatted = result.current.formatAddress("");
 
@@ -445,9 +424,7 @@ describe("usePayoutAddressManager", () => {
 
       gapIndexerApi.projectBySlug.mockReturnValue(promise);
 
-      const { result, unmount } = renderHook(() =>
-        usePayoutAddressManager(mockItems, undefined)
-      );
+      const { result, unmount } = renderHook(() => usePayoutAddressManager(mockItems, undefined));
 
       // Unmount before promise resolves
       unmount();
@@ -465,9 +442,7 @@ describe("usePayoutAddressManager", () => {
 
   describe("setMissingPayouts", () => {
     it("should expose setMissingPayouts function", () => {
-      const { result } = renderHook(() =>
-        usePayoutAddressManager([], undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager([], undefined));
 
       expect(typeof result.current.setMissingPayouts).toBe("function");
     });
@@ -487,9 +462,7 @@ describe("usePayoutAddressManager", () => {
       renderHook(() => usePayoutAddressManager([specialItem], undefined));
 
       await waitFor(() => {
-        expect(gapIndexerApi.projectBySlug).toHaveBeenCalledWith(
-          "project-with-special-chars-!@#$"
-        );
+        expect(gapIndexerApi.projectBySlug).toHaveBeenCalledWith("project-with-special-chars-!@#$");
       });
     });
 
@@ -502,9 +475,7 @@ describe("usePayoutAddressManager", () => {
         },
       });
 
-      const { result } = renderHook(() =>
-        usePayoutAddressManager([mockItems[0]], undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
 
       await waitFor(() => {
         expect(result.current.missingPayouts).toContain("project-1");
@@ -524,9 +495,7 @@ describe("usePayoutAddressManager", () => {
         },
       });
 
-      const { result } = renderHook(() =>
-        usePayoutAddressManager([mockItems[0]], undefined)
-      );
+      const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
 
       await waitFor(() => {
         expect(result.current.missingPayouts).toContain("project-1");
@@ -537,10 +506,9 @@ describe("usePayoutAddressManager", () => {
       const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
       gapIndexerApi.projectBySlug.mockResolvedValue(mockProjectResponse);
 
-      const { rerender } = renderHook(
-        ({ items }) => usePayoutAddressManager(items, undefined),
-        { initialProps: { items: [mockItems[0]] } }
-      );
+      const { rerender } = renderHook(({ items }) => usePayoutAddressManager(items, undefined), {
+        initialProps: { items: [mockItems[0]] },
+      });
 
       // Quickly update items before first fetch completes
       rerender({ items: mockItems });

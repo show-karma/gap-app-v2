@@ -1,12 +1,11 @@
 "use client";
+import { useSearchParams } from "next/navigation";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
-import { useSearchParams } from "next/navigation";
-import { CategoryRow } from "./CategoryRow";
+import type { ProgramImpactDataResponse } from "@/types/programs";
 import { formatDate } from "@/utilities/formatDate";
-import pluralize from "pluralize";
+import { CategoryRow } from "./CategoryRow";
 import { ProgramBanner } from "./ProgramBanner";
-import { ProgramImpactDataResponse } from "@/types/programs";
 
 export const prepareChartData = (
   values: number[],

@@ -1,7 +1,7 @@
 "use client";
 
 import type { CardProps, LineChartProps, TitleProps } from "@tremor/react";
-import { Card, LineChart as TremorLineChart, Title } from "@tremor/react";
+import { Card, Title, LineChart as TremorLineChart } from "@tremor/react";
 import { endOfWeek, format, startOfMonth, startOfYear } from "date-fns";
 import _groupBy from "lodash.groupby";
 import { type FC, useMemo, useState } from "react";
@@ -19,10 +19,7 @@ interface StatChartProps {
   period: StatPeriod;
 }
 
-const groupByPeriod = (
-  data: StatChartData["data"],
-  periodToGroup: StatPeriod
-) => {
+const groupByPeriod = (data: StatChartData["data"], periodToGroup: StatPeriod) => {
   const groupedData = _groupBy(data, (item: any) => {
     const date = new Date(item.Date);
     if (periodToGroup === "Weeks") {
@@ -39,17 +36,15 @@ const groupByPeriod = (
 
   const groupedDataArray = Object.entries(groupedData).map(([key, value]) => {
     let valueKey = "";
-    const values = (value as any).map(
-      (item: { Date: any; [key: string]: number }) => {
-        const keys = Object.keys(item);
-        const rightKey = keys.filter((keyItem) => keyItem !== "Date")[0];
-        if (!rightKey) return 0;
-        valueKey = rightKey;
-        let counter = 0;
-        counter += item[rightKey] as number;
-        return counter;
-      }
-    );
+    const values = (value as any).map((item: { Date: any; [key: string]: number }) => {
+      const keys = Object.keys(item);
+      const rightKey = keys.filter((keyItem) => keyItem !== "Date")[0];
+      if (!rightKey) return 0;
+      valueKey = rightKey;
+      let counter = 0;
+      counter += item[rightKey] as number;
+      return counter;
+    });
     const sum = values.reduce((acc: number, curr: number) => acc + curr, 0);
     return {
       [valueKey]: sum,

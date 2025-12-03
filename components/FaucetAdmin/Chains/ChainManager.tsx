@@ -1,16 +1,10 @@
 "use client";
 
+import { PencilIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
+import { Spinner } from "@/components/Utilities/Spinner";
 import { useChains } from "@/hooks/useFaucetAdmin";
 import { ChainForm } from "./ChainForm";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { 
-  PlusIcon, 
-  PencilIcon, 
-  TrashIcon,
-  CheckCircleIcon,
-  XCircleIcon
-} from "@heroicons/react/24/outline";
 
 export function ChainManager() {
   const { chains, isLoading, createChain, updateChain, deleteChain, isUpdating } = useChains();
@@ -40,7 +34,11 @@ export function ChainManager() {
   };
 
   const handleDeleteChain = async (chainId: number) => {
-    if (confirm("Are you sure you want to delete this chain configuration? This action cannot be undone.")) {
+    if (
+      confirm(
+        "Are you sure you want to delete this chain configuration? This action cannot be undone."
+      )
+    ) {
       deleteChain(chainId);
     }
   };
@@ -115,10 +113,7 @@ export function ChainManager() {
       {filteredChains.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {filteredChains.map((chain: any) => (
-            <div
-              key={chain.chainId}
-              className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-6"
-            >
+            <div key={chain.chainId} className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-6">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <div className="flex items-center space-x-2">
@@ -151,9 +146,7 @@ export function ChainManager() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-400">Symbol:</span>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {chain.symbol}
-                  </span>
+                  <span className="font-medium text-gray-900 dark:text-white">{chain.symbol}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-400">Decimals:</span>
@@ -164,7 +157,10 @@ export function ChainManager() {
                 {chain.rpcUrl && (
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">RPC:</span>
-                    <span className="font-medium text-gray-900 dark:text-white truncate max-w-[200px]" title={chain.rpcUrl}>
+                    <span
+                      className="font-medium text-gray-900 dark:text-white truncate max-w-[200px]"
+                      title={chain.rpcUrl}
+                    >
                       {chain.rpcUrl}
                     </span>
                   </div>
@@ -198,9 +194,7 @@ export function ChainManager() {
       ) : (
         <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-8 text-center">
           <p className="text-gray-500 dark:text-gray-400">
-            {searchTerm
-              ? "No chains found matching your search"
-              : "No chain configurations yet"}
+            {searchTerm ? "No chains found matching your search" : "No chain configurations yet"}
           </p>
           {!searchTerm && !showAddForm && (
             <button

@@ -1,6 +1,6 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import { INDEXER } from "@/utilities/indexer";
 import { envVars } from "@/utilities/enviromentVars";
+import { INDEXER } from "@/utilities/indexer";
 
 interface DownloadReportOptions {
   communityId: string;
@@ -15,9 +15,7 @@ interface DownloadReportOptions {
  * Utility function to download community reports
  * @param options DownloadReportOptions containing communityId and optional filtering parameters
  */
-export const downloadCommunityReport = (
-  options: DownloadReportOptions
-): void => {
+export const downloadCommunityReport = (options: DownloadReportOptions): void => {
   const {
     communityId,
     sortBy = "totalMilestones",
@@ -27,9 +25,7 @@ export const downloadCommunityReport = (
     status = "all",
   } = options;
 
-  const programFilter = selectedProgramIds
-    .filter((value) => Boolean(value))
-    .join(",");
+  const programFilter = selectedProgramIds.filter((value) => Boolean(value)).join(",");
 
   try {
     const path = INDEXER.COMMUNITY.GRANTS(communityId, {

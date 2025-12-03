@@ -1,6 +1,6 @@
 import { getWalletClient } from "@wagmi/core";
-import { privyConfig as config } from "./wagmi/privy-config";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { privyConfig as config } from "./wagmi/privy-config";
 
 /**
  * Safely gets a wallet client with error handling for common issues
@@ -11,7 +11,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
  */
 export const safeGetWalletClient = async (
   chainId: number,
-  showToast: boolean = false,
+  _showToast: boolean = false,
   setLoadingState?: (state: boolean) => void
 ) => {
   try {
@@ -24,11 +24,11 @@ export const safeGetWalletClient = async (
     }
 
     return { walletClient, error: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Use errorManager to track the error
     errorManager("Wallet client error", error, { chainId });
 
-    let errorMsg = "Failed to connect to wallet. Please try again.";
+    const errorMsg = "Failed to connect to wallet. Please try again.";
 
     if (setLoadingState) {
       setLoadingState(false);

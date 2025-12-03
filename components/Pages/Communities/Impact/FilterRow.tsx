@@ -6,7 +6,7 @@ import { ProjectFilter } from "./ProjectFilter";
 export const CommunityImpactFilterRow = () => {
   const pathname = usePathname();
   const isProjectDiscovery = pathname?.includes("project-discovery");
-  
+
   if (isProjectDiscovery) return null;
 
   return (

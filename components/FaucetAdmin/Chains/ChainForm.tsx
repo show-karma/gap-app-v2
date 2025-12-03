@@ -1,8 +1,8 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 const chainSchema = z.object({
@@ -63,59 +63,69 @@ export function ChainForm({ chain, onSave, onCancel, isLoading }: ChainFormProps
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Chain ID */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="chain-form-chainId"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
             Chain ID <span className="text-red-500">*</span>
           </label>
           <input
+            id="chain-form-chainId"
             type="number"
             {...register("chainId", { valueAsNumber: true })}
             disabled={!!chain}
             className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
             placeholder="1"
           />
-          {errors.chainId && (
-            <p className="mt-1 text-sm text-red-600">{errors.chainId.message}</p>
-          )}
+          {errors.chainId && <p className="mt-1 text-sm text-red-600">{errors.chainId.message}</p>}
         </div>
 
         {/* Name */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="chain-form-name"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
             Chain Name <span className="text-red-500">*</span>
           </label>
           <input
+            id="chain-form-name"
             type="text"
             {...register("name")}
             className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
             placeholder="Ethereum"
           />
-          {errors.name && (
-            <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-          )}
+          {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
         </div>
 
         {/* Symbol */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="chain-form-symbol"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
             Native Token Symbol <span className="text-red-500">*</span>
           </label>
           <input
+            id="chain-form-symbol"
             type="text"
             {...register("symbol")}
             className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
             placeholder="ETH"
           />
-          {errors.symbol && (
-            <p className="mt-1 text-sm text-red-600">{errors.symbol.message}</p>
-          )}
+          {errors.symbol && <p className="mt-1 text-sm text-red-600">{errors.symbol.message}</p>}
         </div>
 
         {/* Decimals */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="chain-form-decimals"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
             Decimals <span className="text-red-500">*</span>
           </label>
           <input
+            id="chain-form-decimals"
             type="number"
             {...register("decimals", { valueAsNumber: true })}
             min={0}
@@ -130,26 +140,32 @@ export function ChainForm({ chain, onSave, onCancel, isLoading }: ChainFormProps
 
         {/* RPC URL */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="chain-form-rpcUrl"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
             RPC URL (Optional)
           </label>
           <input
+            id="chain-form-rpcUrl"
             type="url"
             {...register("rpcUrl")}
             className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
             placeholder="https://mainnet.infura.io/v3/..."
           />
-          {errors.rpcUrl && (
-            <p className="mt-1 text-sm text-red-600">{errors.rpcUrl.message}</p>
-          )}
+          {errors.rpcUrl && <p className="mt-1 text-sm text-red-600">{errors.rpcUrl.message}</p>}
         </div>
 
         {/* Explorer URL */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="chain-form-explorerUrl"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
             Explorer URL (Optional)
           </label>
           <input
+            id="chain-form-explorerUrl"
             type="url"
             {...register("explorerUrl")}
             className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"

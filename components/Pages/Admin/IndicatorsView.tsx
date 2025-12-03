@@ -1,30 +1,20 @@
-import { Button } from "@/components/Utilities/Button";
-import {
-  Category,
-  ImpactIndicator,
-  ImpactIndicatorWithData,
-} from "@/types/impactMeasurement";
-import {
-  TrashIcon,
-  PlusIcon,
-  ChevronDownIcon,
-} from "@heroicons/react/24/outline";
-import { useState, Fragment, useRef, useEffect } from "react";
-import Image from "next/image";
 import { Dialog, Transition } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
+import { Fragment, useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { DeleteDialog } from "@/components/DeleteDialog";
+import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
 import { IndicatorForm } from "@/components/Forms/IndicatorForm";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
-import { DeleteDialog } from "@/components/DeleteDialog";
-import toast from "react-hot-toast";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
+import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGroupedIndicators } from "@/hooks/useGroupedIndicators";
-import { ProgramCard } from "./ProgramCard";
+import type { Category, ImpactIndicator, ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { useAccount } from "wagmi";
-import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
 
 // Custom Dropdown Menu Component - copied from CategoryView.tsx
 const DropdownMenu = ({
@@ -42,10 +32,7 @@ const DropdownMenu = ({
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -67,9 +54,7 @@ const DropdownMenu = ({
       >
         <span>{selectedOption?.label || "Select option"}</span>
         <ChevronDownIcon
-          className={`ml-2 h-4 w-4 transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`ml-2 h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 
@@ -105,15 +90,9 @@ interface IndicatorsViewProps {
   communityId?: string;
 }
 
-export const IndicatorsView = ({
-  categories,
-  onRefresh,
-  communityId,
-}: IndicatorsViewProps) => {
+export const IndicatorsView = ({ categories, onRefresh, communityId }: IndicatorsViewProps) => {
   const { address } = useAccount();
-  const [indicatorViewType, setIndicatorViewType] = useState<
-    "all" | "automated" | "manual"
-  >("all");
+  const [indicatorViewType, setIndicatorViewType] = useState<"all" | "automated" | "manual">("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [selectedAutosynced, setSelectedAutosynced] = useState<string>("");
@@ -168,7 +147,7 @@ export const IndicatorsView = ({
   };
 
   // Handle indicator creation success
-  const handleIndicatorCreated = (indicator: ImpactIndicatorWithData) => {
+  const handleIndicatorCreated = (_indicator: ImpactIndicatorWithData) => {
     refetchIndicators(); // Use the hook's refetch method
 
     if (onRefresh) {
@@ -182,10 +161,7 @@ export const IndicatorsView = ({
   const handleDeleteIndicator = async (id: string) => {
     try {
       setIsDeletingId(id);
-      const [, error] = await fetchData(
-        INDEXER.INDICATORS.DELETE(id),
-        "DELETE"
-      );
+      const [, error] = await fetchData(INDEXER.INDICATORS.DELETE(id), "DELETE");
       if (error) throw error;
 
       // Refresh indicators using the hook's refetch method
@@ -214,9 +190,11 @@ export const IndicatorsView = ({
 
   // Total indicators count
   const getTotalIndicatorsCount = () => {
-    return groupedIndicators.communityAdminCreated.length + 
-           groupedIndicators.projectOwnerCreated.length + 
-           newIndicators.length;
+    return (
+      groupedIndicators.communityAdminCreated.length +
+      groupedIndicators.projectOwnerCreated.length +
+      newIndicators.length
+    );
   };
 
   // Check if an indicator is autosynced
@@ -231,19 +209,14 @@ export const IndicatorsView = ({
     if (indicatorViewType === "automated") {
       filteredIndicators = filteredIndicators.filter((ind) => isAutosyncedIndicator(ind));
     } else if (indicatorViewType === "manual") {
-      filteredIndicators = filteredIndicators.filter(
-        (ind) => !isAutosyncedIndicator(ind)
-      );
+      filteredIndicators = filteredIndicators.filter((ind) => !isAutosyncedIndicator(ind));
     }
 
     if (searchQuery) {
       filteredIndicators = filteredIndicators.filter(
         (indicator) =>
           indicator.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (indicator.description &&
-            indicator.description
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase()))
+          indicator.description?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -252,11 +225,16 @@ export const IndicatorsView = ({
     );
   };
 
-  const filteredCommunityAdminIndicators = getFilteredIndicators(groupedIndicators.communityAdminCreated);
-  const filteredProjectOwnerIndicators = getFilteredIndicators(groupedIndicators.projectOwnerCreated);
+  const filteredCommunityAdminIndicators = getFilteredIndicators(
+    groupedIndicators.communityAdminCreated
+  );
+  const filteredProjectOwnerIndicators = getFilteredIndicators(
+    groupedIndicators.projectOwnerCreated
+  );
 
   const hasIndicators = getTotalIndicatorsCount() > 0;
-  const hasFilteredIndicators = filteredCommunityAdminIndicators.length > 0 || filteredProjectOwnerIndicators.length > 0;
+  const hasFilteredIndicators =
+    filteredCommunityAdminIndicators.length > 0 || filteredProjectOwnerIndicators.length > 0;
   const isFiltering = searchQuery || indicatorViewType !== "all";
 
   const renderIndicatorsList = (
@@ -276,10 +254,7 @@ export const IndicatorsView = ({
         {indicators.length > 0 ? (
           <div className="grid grid-cols-1 gap-0 rounded border border-gray-300 dark:border-zinc-700 divide-y divide-gray-300 dark:divide-zinc-700">
             {indicators.map((indicator) => (
-              <div
-                key={indicator.id}
-                className="p-5 flex justify-between items-start"
-              >
+              <div key={indicator.id} className="p-5 flex justify-between items-start">
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                     {indicator.name}
@@ -293,9 +268,7 @@ export const IndicatorsView = ({
                     <span className="text-xs bg-white dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-zinc-700 inline-block">
                       {indicator.unitOfMeasure || "N/A"}
                     </span>
-                    {autosyncedIndicators.find(
-                      (i) => i.name === indicator.name
-                    ) && (
+                    {autosyncedIndicators.find((i) => i.name === indicator.name) && (
                       <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full inline-block">
                         Autosynced
                       </span>
@@ -343,9 +316,7 @@ export const IndicatorsView = ({
               className="text-[#8098F9]"
             />
           </div>
-          <h1 className="text-2xl font-bold">
-            Indicators ({getTotalIndicatorsCount()})
-          </h1>
+          <h1 className="text-2xl font-bold">Indicators ({getTotalIndicatorsCount()})</h1>
         </div>
         <Button
           className="flex items-center gap-1 text-white"
@@ -372,9 +343,7 @@ export const IndicatorsView = ({
                 />
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  View
-                </span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">View</span>
                 <div className="w-36">
                   <DropdownMenu
                     value={indicatorViewType}
@@ -401,8 +370,7 @@ export const IndicatorsView = ({
               </div>
               <h3 className="text-lg font-semibold mb-2">No indicators yet</h3>
               <p className="text-gray-500 dark:text-gray-400 mb-4 max-w-lg">
-                Get started by creating your first indicator to track impact
-                measurements.
+                Get started by creating your first indicator to track impact measurements.
               </p>
               <Button
                 className="flex items-center gap-1 text-white"
@@ -430,27 +398,18 @@ export const IndicatorsView = ({
                 {searchQuery ? (
                   <>No indicators match your search term. Try a different search.</>
                 ) : indicatorViewType !== "all" ? (
-                  <>
-                    No {indicatorViewType} indicators found. Try a different filter.
-                  </>
+                  <>No {indicatorViewType} indicators found. Try a different filter.</>
                 ) : (
                   <>No indicators match your current filters.</>
                 )}
               </p>
               {searchQuery && (
-                <Button
-                  variant="secondary"
-                  className="mb-2"
-                  onClick={() => setSearchQuery("")}
-                >
+                <Button variant="secondary" className="mb-2" onClick={() => setSearchQuery("")}>
                   Clear Search
                 </Button>
               )}
               {indicatorViewType !== "all" && (
-                <Button
-                  variant="secondary"
-                  onClick={() => setIndicatorViewType("all")}
-                >
+                <Button variant="secondary" onClick={() => setIndicatorViewType("all")}>
                   Show All Indicators
                 </Button>
               )}
@@ -460,7 +419,11 @@ export const IndicatorsView = ({
           {hasFilteredIndicators && (
             <div>
               {renderIndicatorsList(filteredCommunityAdminIndicators, "Community Admin Indicators")}
-              {renderIndicatorsList(filteredProjectOwnerIndicators, "Project Owner Indicators", false)}
+              {renderIndicatorsList(
+                filteredProjectOwnerIndicators,
+                "Project Owner Indicators",
+                false
+              )}
             </div>
           )}
         </>
@@ -533,10 +496,14 @@ export const IndicatorsView = ({
 
                   {/* Add autosynced indicator selector */}
                   <div className="mb-4">
-                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                    <label
+                      htmlFor="indicators-view-autosynced"
+                      className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
+                    >
                       Select Autosynced Indicator (Optional)
                     </label>
                     <select
+                      id="indicators-view-autosynced"
                       value={selectedAutosynced}
                       onChange={(e) => handleAutosyncedSelect(e.target.value)}
                       className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"

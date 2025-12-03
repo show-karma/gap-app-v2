@@ -1,10 +1,10 @@
 "use client";
-import { Fragment } from "react";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import { Fragment } from "react";
+import type { MaturityStageOptions } from "@/types";
 import { cn } from "@/utilities/tailwind";
-import { MaturityStageOptions } from "@/types";
 
 const maturityStages: Record<MaturityStageOptions, string> = {
   all: "All Stages",
@@ -20,10 +20,7 @@ interface MaturityStageFilterProps {
   onChange: (stage: MaturityStageOptions) => void;
 }
 
-export function MaturityStageFilter({
-  selectedMaturityStage,
-  onChange,
-}: MaturityStageFilterProps) {
+export function MaturityStageFilter({ selectedMaturityStage, onChange }: MaturityStageFilterProps) {
   return (
     <Listbox value={selectedMaturityStage} onChange={onChange}>
       {({ open }) => (
@@ -33,14 +30,9 @@ export function MaturityStageFilter({
               id="maturity-stage-button"
               className="cursor-pointer items-center relative w-full rounded-md pr-8 text-left sm:text-sm sm:leading-6 text-black dark:text-white text-base font-normal"
             >
-              <span className="flex flex-row gap-1">
-                {maturityStages[selectedMaturityStage]}
-              </span>
+              <span className="flex flex-row gap-1">{maturityStages[selectedMaturityStage]}</span>
               <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                <ChevronDownIcon
-                  className="h-4 w-4 text-gray-400"
-                  aria-hidden="true"
-                />
+                <ChevronDownIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
               </span>
             </Listbox.Button>
 

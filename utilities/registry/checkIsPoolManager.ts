@@ -5,7 +5,7 @@ import { INDEXER } from "../indexer";
 export const checkIsPoolManager = async (address: string) => {
   try {
     const isPoolManager = await fetchData(
-      INDEXER.REGISTRY.GET_ALL + `?isValid=all&owners=${address.toLowerCase()}`
+      `${INDEXER.REGISTRY.GET_ALL}?isValid=all&owners=${address.toLowerCase()}`
     ).then(([res, error]) => {
       if (!error && res) {
         return res.count > 0;

@@ -1,11 +1,16 @@
 "use client";
 
-import { FC } from "react";
-import { Button } from "@/components/Utilities/Button";
 import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import type { FC } from "react";
+import { Button } from "@/components/Utilities/Button";
 
 // Define the possible application statuses
-type ApplicationStatus = "pending" | "under_review" | "revision_requested" | "approved" | "rejected";
+type ApplicationStatus =
+  | "pending"
+  | "under_review"
+  | "revision_requested"
+  | "approved"
+  | "rejected";
 
 // Define status transition configuration for table view
 interface TableStatusTransition {
@@ -21,37 +26,42 @@ const TABLE_STATUS_TRANSITIONS: Record<ApplicationStatus, TableStatusTransition[
     {
       targetStatus: "under_review",
       label: "Review",
-      className: "px-2 py-1 text-sm border bg-transparent text-purple-600 font-medium border-purple-200 dark:border-purple-700 dark:text-purple-400"
-    }
+      className:
+        "px-2 py-1 text-sm border bg-transparent text-purple-600 font-medium border-purple-200 dark:border-purple-700 dark:text-purple-400",
+    },
   ],
   under_review: [
     {
       targetStatus: "revision_requested",
       label: "Request Revision",
-      className: "px-2 py-1 text-sm dark:text-white border bg-transparent border-gray-200 font-medium dark:border-gray-700"
+      className:
+        "px-2 py-1 text-sm dark:text-white border bg-transparent border-gray-200 font-medium dark:border-gray-700",
     },
     {
       targetStatus: "approved",
       label: "Approve",
       icon: CheckIcon,
-      className: "px-2 py-1 text-sm border bg-transparent text-green-600 font-medium border-green-200 dark:border-green-700 dark:text-green-400 flex items-center gap-1"
+      className:
+        "px-2 py-1 text-sm border bg-transparent text-green-600 font-medium border-green-200 dark:border-green-700 dark:text-green-400 flex items-center gap-1",
     },
     {
       targetStatus: "rejected",
       label: "Reject",
       icon: XMarkIcon,
-      className: "px-2 py-1 text-sm border bg-transparent text-red-600 font-medium border-red-200 dark:border-red-700 dark:text-red-400 flex items-center gap-1"
-    }
+      className:
+        "px-2 py-1 text-sm border bg-transparent text-red-600 font-medium border-red-200 dark:border-red-700 dark:text-red-400 flex items-center gap-1",
+    },
   ],
   revision_requested: [
     {
       targetStatus: "under_review",
       label: "Review",
-      className: "px-2 py-1 text-sm border bg-transparent text-purple-600 font-medium border-purple-200 dark:border-purple-700 dark:text-purple-400"
-    }
+      className:
+        "px-2 py-1 text-sm border bg-transparent text-purple-600 font-medium border-purple-200 dark:border-purple-700 dark:text-purple-400",
+    },
   ],
   approved: [],
-  rejected: []
+  rejected: [],
 };
 
 interface TableStatusActionButtonProps {
@@ -66,7 +76,7 @@ const TableStatusActionButton: FC<TableStatusActionButtonProps> = ({
   transition,
   applicationId,
   onStatusChange,
-  disabled = false
+  disabled = false,
 }) => {
   const Icon = transition.icon;
 
@@ -95,7 +105,7 @@ export const TableStatusActionButtons: FC<TableStatusActionButtonsProps> = ({
   applicationId,
   currentStatus,
   onStatusChange,
-  isUpdating = false
+  isUpdating = false,
 }) => {
   const availableTransitions = TABLE_STATUS_TRANSITIONS[currentStatus] || [];
 
