@@ -17,6 +17,7 @@ import pluralize from "pluralize";
 import { type FC, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { Badge } from "@/components/ui/badge";
 import type {
   ApplicationComment,
   FundingApplicationStatusV2,
@@ -279,19 +280,22 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
         label: "Applicant",
         icon: UserIcon,
         color: "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300",
-        badgeColor: "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
+        badgeVariant: "secondary" as const,
+        badgeClassName: "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
       },
       admin: {
         label: "Admin",
         icon: ShieldCheckIcon,
         color: "bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300",
-        badgeColor: "bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300",
+        badgeVariant: "secondary" as const,
+        badgeClassName: "bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300",
       },
       reviewer: {
         label: "Reviewer",
         icon: EyeIcon,
         color: "bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300",
-        badgeColor: "bg-gray-50 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300",
+        badgeVariant: "secondary" as const,
+        badgeClassName: "bg-gray-50 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300",
       },
     };
 
@@ -324,11 +328,9 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
                   {isInitialVersion ? "Initial application submitted" : "Application edited"}
                 </p>
                 {editType && config && (
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${config.badgeColor}`}
-                  >
+                  <Badge variant={config.badgeVariant} className={config.badgeClassName}>
                     {config.label}
-                  </span>
+                  </Badge>
                 )}
               </div>
               {version.submittedBy && (
