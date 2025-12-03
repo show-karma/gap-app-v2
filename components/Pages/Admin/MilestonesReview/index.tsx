@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
+import { useDeleteMilestone } from "@/hooks/useDeleteMilestone";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
@@ -36,6 +37,7 @@ export function MilestonesReviewPage({
   const { data, isLoading, error, refetch } = useProjectGrantMilestones(projectId, programId);
   const [verifyingMilestoneId, setVerifyingMilestoneId] = useState<string | null>(null);
   const [verificationComment, setVerificationComment] = useState("");
+  const [deletingMilestoneId, setDeletingMilestoneId] = useState<string | null>(null);
 
   const { address } = useAccount();
   const { isCommunityAdmin, isLoading: isLoadingCommunityAdmin } = useIsCommunityAdmin(communityId);
@@ -75,6 +77,22 @@ export function MilestonesReviewPage({
     () => isCommunityAdmin || isContractOwner || isStaff || isMilestoneReviewer || false,
     [isCommunityAdmin, isContractOwner, isStaff, isMilestoneReviewer]
   );
+
+  // Determine if user can delete milestones
+  // Contract owners, community admins, staff, and milestone reviewers can delete milestones
+  const canDeleteMilestones = useMemo(
+    () => isCommunityAdmin || isContractOwner || isStaff || isMilestoneReviewer || false,
+    [isCommunityAdmin, isContractOwner, isStaff, isMilestoneReviewer]
+  );
+
+  // Delete milestone hook with proper React Query mutation/query relationship
+  const { deleteMilestoneAsync, isDeleting } = useDeleteMilestone({
+    projectId,
+    programId,
+    onSuccess: async () => {
+      await refetch();
+    },
+  });
 
   // Get the actual project UID from the data (projectId might be a slug)
   const projectUID = data?.project?.uid;
@@ -226,8 +244,32 @@ export function MilestonesReviewPage({
     [refetch]
   );
 
+  const handleDeleteMilestone = useCallback(
+    async (milestone: GrantMilestoneWithCompletion) => {
+      const milestoneId = milestone.uid;
+      setDeletingMilestoneId(milestoneId);
+
+      try {
+        await deleteMilestoneAsync(milestone);
+      } catch (error) {
+        // Error is already handled in the hook (toast + errorManager)
+        // Re-throw so DeleteDialog can handle it (it will log and keep modal open)
+        throw error;
+      } finally {
+        setDeletingMilestoneId(null);
+      }
+    },
+    [deleteMilestoneAsync]
+  );
+
   // Show loading while checking authorization
-  if (isLoading || isLoadingCommunityAdmin || isOwnerLoading || isLoadingReviewer || isStaffLoading) {
+  if (
+    isLoading ||
+    isLoadingCommunityAdmin ||
+    isOwnerLoading ||
+    isLoadingReviewer ||
+    isStaffLoading
+  ) {
     return (
       <div className="min-h-screen">
         <div className="px-4 sm:px-6 lg:px-8 py-6">
@@ -380,11 +422,14 @@ export function MilestonesReviewPage({
                       isVerifying={isVerifying}
                       isSyncing={isSyncing}
                       canVerifyMilestones={canVerifyMilestones}
+                      canDeleteMilestones={canDeleteMilestones}
                       onVerifyClick={handleVerifyClick}
                       onCancelVerification={handleCancelVerification}
                       onVerificationCommentChange={setVerificationComment}
                       onSubmitVerification={handleSubmitVerification}
                       onSyncVerification={handleSyncVerification}
+                      onDeleteMilestone={handleDeleteMilestone}
+                      isDeleting={isDeleting && deletingMilestoneId === milestone.uid}
                     />
                   ))
                 )}

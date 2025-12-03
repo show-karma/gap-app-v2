@@ -111,7 +111,8 @@ export default function CommunitiesToAdminPage() {
     return [];
   }, [allCommunities, isStaffOrOwner, hasAdminCommunities, userAdminCommunities]);
 
-  const isLoadingData = isLoading || isStaffLoading || (!isStaffOrOwner && isLoadingUserCommunities);
+  const isLoadingData =
+    isLoading || isStaffLoading || (!isStaffOrOwner && isLoadingUserCommunities);
 
   const handleRefetch = useCallback(async () => {
     try {
