@@ -1,13 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type FC, useCallback, useEffect, useState } from "react";
+import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
-import type { IFormSchema } from "@/types/funding-platform";
+import type { IFormField, IFormSchema } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
 
 interface IApplicationSubmissionProps {
@@ -19,11 +19,72 @@ interface IApplicationSubmissionProps {
   isLoading?: boolean;
   initialData?: Record<string, any>;
   isEditMode?: boolean;
+  onMatchingDiagnostics?: (
+    diagnostics: {
+      matched: Array<{ fieldLabel: string; originalKey: string; fieldId: string }>;
+      unmatched: Array<{ originalKey: string; value: any }>;
+      matchRate: number;
+    } | null
+  ) => void;
 }
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder:text-zinc-300";
+
+/**
+ * Finds the original key in initialData that matches the given field.
+ * Uses multiple matching strategies to handle different key formats.
+ */
+function findOriginalKey(field: IFormField, initialData: Record<string, any>): string | undefined {
+  const fieldName = field.label.toLowerCase().replace(/\s+/g, "_");
+
+  // Strategy 1: Match with field.id (if available) - most reliable
+  if (field.id && field.id in initialData) {
+    return field.id;
+  }
+
+  // Strategy 2: Exact match with fieldName
+  if (fieldName in initialData) {
+    return fieldName;
+  }
+
+  // Strategy 3: Case-insensitive match with fieldName
+  const caseInsensitiveMatch = Object.keys(initialData).find(
+    (key) => key.toLowerCase() === fieldName
+  );
+  if (caseInsensitiveMatch) {
+    return caseInsensitiveMatch;
+  }
+
+  // Strategy 4: Match with original field label (case-insensitive)
+  const labelMatch = Object.keys(initialData).find(
+    (key) => key.toLowerCase() === field.label.toLowerCase()
+  );
+  if (labelMatch) {
+    return labelMatch;
+  }
+
+  // Strategy 5: Normalized match (remove special chars, extra spaces)
+  const normalizedFieldLabel = field.label
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[^\w\s]/g, "");
+  const normalizedMatch = Object.keys(initialData).find((key) => {
+    const normalizedKey = key
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, " ")
+      .replace(/[^\w\s]/g, "");
+    return normalizedKey === normalizedFieldLabel;
+  });
+  if (normalizedMatch) {
+    return normalizedMatch;
+  }
+
+  return undefined;
+}
 
 const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   programId,
@@ -34,6 +95,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   isLoading = false,
   initialData,
   isEditMode = false,
+  onMatchingDiagnostics,
 }) => {
   const { address } = useAccount();
   const [submitting, setSubmitting] = useState(false);
@@ -262,74 +324,166 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   // Count validation errors
   const errorCount = Object.keys(errors).length;
 
+  // Create mapping from field IDs to labels (for submission)
+  const fieldIdToLabelMapping = useMemo(() => {
+    const mapping: Record<string, string> = {};
+    formSchema.fields.forEach((field) => {
+      const fieldKey = field.id || field.label.toLowerCase().replace(/\s+/g, "_");
+      mapping[fieldKey] = field.label;
+    });
+    return mapping;
+  }, [formSchema.fields]);
+
+  // Create key mapping from form field keys to original keys in initialData
+  // This preserves the original key format when submitting edits
+  const keyMapping = useMemo(() => {
+    if (!isEditMode || !initialData) return null;
+
+    const mapping: Record<string, string> = {};
+    formSchema.fields.forEach((field) => {
+      const fieldKey = field.id || field.label.toLowerCase().replace(/\s+/g, "_");
+      const originalKey = findOriginalKey(field, initialData);
+
+      if (originalKey) {
+        mapping[fieldKey] = originalKey;
+      }
+    });
+
+    return mapping;
+  }, [isEditMode, initialData, formSchema.fields]);
+
+  // Track matching diagnostics to identify fields that matched vs didn't match
+  const matchingDiagnostics = useMemo(() => {
+    if (!isEditMode || !initialData || !formSchema.fields.length) return null;
+
+    const diagnostics = {
+      matched: [] as Array<{ fieldLabel: string; originalKey: string; fieldId: string }>,
+      unmatched: [] as Array<{ originalKey: string; value: any }>,
+      matchRate: 0,
+    };
+
+    // Track which fields matched
+    formSchema.fields.forEach((field) => {
+      const fieldKey = field.id || field.label.toLowerCase().replace(/\s+/g, "_");
+      const originalKey = findOriginalKey(field, initialData);
+
+      if (originalKey) {
+        diagnostics.matched.push({
+          fieldLabel: field.label,
+          originalKey,
+          fieldId: fieldKey,
+        });
+      }
+    });
+
+    // Track keys in initialData that don't match any field
+    const matchedKeys = new Set(diagnostics.matched.map((m) => m.originalKey));
+    Object.entries(initialData).forEach(([key, value]) => {
+      if (!matchedKeys.has(key)) {
+        diagnostics.unmatched.push({
+          originalKey: key,
+          value,
+        });
+      }
+    });
+
+    const totalFields = formSchema.fields.length;
+    const matchedCount = diagnostics.matched.length;
+    diagnostics.matchRate = totalFields > 0 ? matchedCount / totalFields : 1;
+
+    return diagnostics;
+  }, [isEditMode, initialData, formSchema.fields]);
+
+  // Log warnings for low match rate
+  useEffect(() => {
+    if (matchingDiagnostics) {
+      if (matchingDiagnostics.matchRate < 0.5) {
+        console.error(
+          `🚨 Critical: Low field matching rate: ${(matchingDiagnostics.matchRate * 100).toFixed(0)}%`,
+          {
+            matched: matchingDiagnostics.matched.length,
+            unmatched: matchingDiagnostics.unmatched.length,
+            unmatchedFields: matchingDiagnostics.unmatched.map((f) => f.originalKey),
+            totalFields: matchingDiagnostics.matched.length + matchingDiagnostics.unmatched.length,
+          }
+        );
+      } else if (matchingDiagnostics.matchRate < 0.7) {
+        console.warn(
+          `⚠️ Low field matching rate: ${(matchingDiagnostics.matchRate * 100).toFixed(0)}%`,
+          {
+            matched: matchingDiagnostics.matched.length,
+            unmatched: matchingDiagnostics.unmatched.length,
+            unmatchedFields: matchingDiagnostics.unmatched.map((f) => f.originalKey),
+          }
+        );
+      }
+    }
+  }, [matchingDiagnostics]);
+
+  // Expose diagnostics to parent component
+  useEffect(() => {
+    onMatchingDiagnostics?.(matchingDiagnostics);
+  }, [matchingDiagnostics, onMatchingDiagnostics]);
+
   // Pre-fill form when initialData is provided (edit mode)
   useEffect(() => {
     if (initialData && formSchema.fields.length > 0 && isEditMode) {
-      const formData: Record<string, any> = {};
+      try {
+        const formData: Record<string, any> = {};
 
-      formSchema.fields.forEach((field) => {
-        const fieldName = field.label.toLowerCase().replace(/\s+/g, "_");
-        // Use field.id if available, otherwise fall back to fieldName (consistent with validation schema)
-        const fieldKey = field.id || fieldName;
+        formSchema.fields.forEach((field) => {
+          const fieldName = field.label.toLowerCase().replace(/\s+/g, "_");
+          // Use field.id if available, otherwise fall back to fieldName (consistent with validation schema)
+          const fieldKey = field.id || fieldName;
 
-        // Try to find matching key in initialData
-        // Strategy 1: Match with field.id (if available)
-        let matchingKey: string | undefined;
-        if (field.id) {
-          matchingKey = field.id in initialData ? field.id : undefined;
-        }
-        if (matchingKey === undefined) {
-          // Strategy 2: Exact match with fieldName
-          matchingKey = fieldName in initialData ? fieldName : undefined;
-        }
-        if (matchingKey === undefined) {
-          // Strategy 3: Case-insensitive match with fieldName
-          matchingKey = Object.keys(initialData).find((key) => key.toLowerCase() === fieldName);
-        }
-        if (matchingKey === undefined) {
-          // Strategy 4: Match with original field label (case-insensitive)
-          matchingKey = Object.keys(initialData).find(
-            (key) => key.toLowerCase() === field.label.toLowerCase()
-          );
-        }
+          // Use the extracted function to find matching key
+          const matchingKey = findOriginalKey(field, initialData);
 
-        if (matchingKey !== undefined && matchingKey in initialData) {
-          const value = initialData[matchingKey];
+          if (matchingKey !== undefined && matchingKey in initialData) {
+            const value = initialData[matchingKey];
 
-          // Handle checkbox fields (arrays)
-          if (field.type === "checkbox") {
-            formData[fieldKey] = Array.isArray(value) ? value : [value];
-          } else {
-            // Convert all other values to strings
-            if (Array.isArray(value)) {
-              formData[fieldKey] = value.join(", ");
-            } else if (value === null || value === undefined) {
-              formData[fieldKey] = "";
-            } else if (Number.isNaN(value)) {
-              // Handle NaN specifically (NaN !== NaN, so we need explicit check)
-              formData[fieldKey] = "NaN";
-            } else if (value === Infinity || value === -Infinity) {
-              // Handle Infinity specifically
-              formData[fieldKey] = String(value);
+            // Handle checkbox fields (arrays)
+            if (field.type === "checkbox") {
+              formData[fieldKey] = Array.isArray(value) ? value : [value];
             } else {
-              formData[fieldKey] = String(value);
+              // Convert all other values to strings
+              if (Array.isArray(value)) {
+                formData[fieldKey] = value.join(", ");
+              } else if (value === null || value === undefined) {
+                formData[fieldKey] = "";
+              } else if (Number.isNaN(value)) {
+                // Handle NaN specifically (NaN !== NaN, so we need explicit check)
+                formData[fieldKey] = "NaN";
+              } else if (value === Infinity || value === -Infinity) {
+                // Handle Infinity specifically
+                formData[fieldKey] = String(value);
+              } else {
+                formData[fieldKey] = String(value);
+              }
+            }
+          } else {
+            // Set default values for unmatched fields
+            if (field.type === "checkbox") {
+              formData[fieldKey] = [];
+            } else {
+              formData[fieldKey] = "";
             }
           }
-        } else {
-          // Set default values for unmatched fields
-          if (field.type === "checkbox") {
-            formData[fieldKey] = [];
-          } else {
-            formData[fieldKey] = "";
-          }
-        }
-      });
+        });
 
-      reset(formData);
-      // Trigger validation after reset
-      setTimeout(() => {
-        trigger();
-      }, 0);
+        reset(formData);
+        // Trigger validation after reset
+        setTimeout(() => {
+          trigger();
+        }, 0);
+      } catch (error) {
+        console.error("Error pre-filling form:", error);
+        toast.error(
+          "Some fields could not be loaded. Please check all fields carefully before submitting."
+        );
+        // Still reset form with empty defaults to prevent crash
+        reset({});
+      }
     }
   }, [initialData, formSchema.fields, reset, trigger, isEditMode]);
 
@@ -341,7 +495,34 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
 
     setSubmitting(true);
     try {
-      await onSubmit?.(data);
+      // Always transform form data to use labels as keys (not field IDs)
+      // This ensures payload always uses human-readable keys like "Project Name"
+      // regardless of what the original key format was
+      const transformedData: Record<string, any> = {};
+
+      // Map all form field IDs to their current labels
+      Object.entries(data).forEach(([formKey, value]) => {
+        const label = fieldIdToLabelMapping[formKey] || formKey;
+        transformedData[label] = value;
+      });
+
+      // When editing, preserve unmatched fields from initialData
+      if (isEditMode && initialData && keyMapping) {
+        const matchedKeys = new Set(Object.values(keyMapping));
+        const formLabels = new Set(Object.values(fieldIdToLabelMapping));
+
+        Object.entries(initialData).forEach(([key, value]) => {
+          // Only preserve if:
+          // 1. Not matched to any form field (truly unmatched)
+          // 2. Not already in transformedData (not overwritten by form)
+          // 3. Not a label that exists in current form (avoid duplicates)
+          if (!matchedKeys.has(key) && !(key in transformedData) && !formLabels.has(key)) {
+            transformedData[key] = value;
+          }
+        });
+      }
+
+      await onSubmit?.(transformedData);
       if (!isEditMode) {
         toast.success("Application submitted successfully!");
         reset();

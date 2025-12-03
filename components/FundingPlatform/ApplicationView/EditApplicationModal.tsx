@@ -1,5 +1,6 @@
 "use client";
 
+import { AlertTriangle } from "lucide-react";
 import { type FC, useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -32,6 +33,11 @@ const EditApplicationModal: FC<EditApplicationModalProps> = ({
   const [formSchema, setFormSchema] = useState<IFormSchema | null>(propFormSchema || null);
   const [isLoadingFormSchema, setIsLoadingFormSchema] = useState(false);
   const [formSchemaError, setFormSchemaError] = useState<string | null>(null);
+  const [matchingDiagnostics, setMatchingDiagnostics] = useState<{
+    matched: Array<{ fieldLabel: string; originalKey: string; fieldId: string }>;
+    unmatched: Array<{ originalKey: string; value: any }>;
+    matchRate: number;
+  } | null>(null);
 
   // Fetch formconfig from API when modal opens (if not provided as prop)
   const fetchFormConfig = useCallback(async () => {
@@ -101,6 +107,36 @@ const EditApplicationModal: FC<EditApplicationModalProps> = ({
           <DialogTitle>Edit Application</DialogTitle>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto mt-4">
+          {/* Warning banner for low match rate */}
+          {matchingDiagnostics && matchingDiagnostics.matchRate < 0.7 && (
+            <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-semibold text-yellow-800 dark:text-yellow-200 mb-1">
+                    Some fields could not be matched
+                  </p>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-2">
+                    {matchingDiagnostics.unmatched.length} field(s) from the original submission
+                    could not be matched to the current form schema. These fields may appear empty
+                    even if they had values originally. Unmatched data will be preserved on save.
+                  </p>
+                  {matchingDiagnostics.unmatched.length > 0 && (
+                    <details className="mt-2">
+                      <summary className="text-sm text-yellow-800 dark:text-yellow-200 cursor-pointer hover:underline">
+                        View unmatched fields ({matchingDiagnostics.unmatched.length})
+                      </summary>
+                      <ul className="mt-2 text-sm text-yellow-700 dark:text-yellow-300 list-disc list-inside space-y-1">
+                        {matchingDiagnostics.unmatched.map(({ originalKey }) => (
+                          <li key={originalKey}>{originalKey}</li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           {isLoadingFormSchema ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Spinner className="h-8 w-8" />
@@ -127,6 +163,7 @@ const EditApplicationModal: FC<EditApplicationModalProps> = ({
               isLoading={isUpdating}
               initialData={application.applicationData}
               isEditMode={true}
+              onMatchingDiagnostics={setMatchingDiagnostics}
             />
           ) : (
             <div className="flex items-center justify-center py-12">

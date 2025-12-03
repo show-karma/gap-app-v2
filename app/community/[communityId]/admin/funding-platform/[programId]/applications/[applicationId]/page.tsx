@@ -82,6 +82,7 @@ export default function ApplicationDetailPage() {
     createCommentAsync,
     editCommentAsync,
     deleteCommentAsync,
+    refetch: refetchComments,
   } = useApplicationComments(applicationId, hasAccess);
 
   // Use the delete application hook
@@ -91,7 +92,7 @@ export default function ApplicationDetailPage() {
   const applicationIdentifier = application?.referenceNumber || application?.id || applicationId;
 
   // Fetch versions using React Query
-  const { versions } = useApplicationVersions(applicationIdentifier);
+  const { versions, refetch: refetchVersions } = useApplicationVersions(applicationIdentifier);
 
   // Get version selection from store
   const { selectVersion } = useApplicationVersionsStore();
@@ -159,8 +160,11 @@ export default function ApplicationDetailPage() {
     setIsEditModalOpen(false);
   };
 
-  const handleEditSuccess = () => {
-    refetchApplication();
+  const handleEditSuccess = async () => {
+    // Refetch application data
+    await refetchApplication();
+    // Refetch Activity Timeline (versions and comments)
+    await Promise.all([refetchVersions(), refetchComments()]);
   };
 
   const handleVersionClick = (versionId: string) => {
