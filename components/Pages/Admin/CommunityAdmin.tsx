@@ -61,11 +61,20 @@ export default function CommunitiesToAdminPage() {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
   const [communityAdmins, setCommunityAdmins] = useState<CommunityAdmin[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [selectedNetwork, setSelectedNetwork] = useState<string>("all");
   const [expandedAdmins, setExpandedAdmins] = useState<Set<string>>(new Set());
 
+  // Debounce search query by 300ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const { gap } = useGap();
-  const { address } = useAccount();
+  useAccount();
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isStaff, isLoading: isStaffLoading } = useStaff();
   const { communities: userAdminCommunities, isLoading: isLoadingUserCommunities } =
@@ -148,9 +157,9 @@ export default function CommunitiesToAdminPage() {
       filtered = filtered.filter((c) => c.chainID === Number(selectedNetwork));
     }
 
-    // Filter by search query (community name only)
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
+    // Filter by search query (community name only) - uses debounced value
+    if (debouncedSearchQuery.trim()) {
+      const query = debouncedSearchQuery.toLowerCase().trim();
       filtered = filtered.filter((c) => {
         const name = c.details?.name?.toLowerCase() || "";
         return name.includes(query);
@@ -158,7 +167,7 @@ export default function CommunitiesToAdminPage() {
     }
 
     return filtered;
-  }, [baseCommunities, searchQuery, selectedNetwork]);
+  }, [baseCommunities, debouncedSearchQuery, selectedNetwork]);
 
   const toggleAdminExpansion = useCallback((communityUid: string) => {
     setExpandedAdmins((prev) => {
@@ -309,7 +318,7 @@ export default function CommunitiesToAdminPage() {
                 placeholder="Search by community name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-9"
+                className="pl-9 pr-9  shadow"
               />
               {searchQuery && (
                 <button
@@ -325,9 +334,9 @@ export default function CommunitiesToAdminPage() {
 
             {/* Network Filter */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground whitespace-nowrap">Network:</span>
+              <span className="text-sm text-muted-foreground whitespace-nowrap">Network</span>
               <Select value={selectedNetwork} onValueChange={setSelectedNetwork}>
-                <SelectTrigger className="w-[180px]" aria-label="Select network">
+                <SelectTrigger className="w-[180px] shadow" aria-label="Select network">
                   <SelectValue placeholder="Select network" />
                 </SelectTrigger>
                 <SelectContent>
