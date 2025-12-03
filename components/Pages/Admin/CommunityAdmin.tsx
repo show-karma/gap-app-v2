@@ -11,7 +11,7 @@ import type { Community } from "@show-karma/karma-gap-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { blo } from "blo";
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { isAddress } from "viem";
 import { useAccount } from "wagmi";
 import CommunityStats from "@/components/CommunityStats";
@@ -169,6 +169,15 @@ export default function CommunitiesToAdminPage() {
       return next;
     });
   }, []);
+
+  // Clean up expanded state when displayed communities change to prevent memory leak
+  useEffect(() => {
+    const displayedUids = new Set(displayedCommunities.map((c) => c.uid as string));
+    setExpandedAdmins((prev) => {
+      const filtered = new Set([...prev].filter((uid) => displayedUids.has(uid)));
+      return filtered.size !== prev.size ? filtered : prev;
+    });
+  }, [displayedCommunities]);
 
   const isLoadingData =
     isLoading || isStaffLoading || (!isStaffOrOwner && isLoadingUserCommunities);
@@ -339,8 +348,8 @@ export default function CommunitiesToAdminPage() {
                   const matchingCommunityAdmin = communityAdmins.find(
                     (admin) => admin.id === community.uid
                   );
-                  // TypeScript workaround for the 0x string format
-                  const communityId = community.uid as unknown as `0x${string}`;
+                  // Safely format community UID as hex address
+                  const communityId = formatAdminAddress(community.uid);
 
                   // Check if user is admin of this specific community
                   const isAdminOfThisCommunity = userAdminCommunities.some(
@@ -467,6 +476,7 @@ export default function CommunitiesToAdminPage() {
                                   type="button"
                                   onClick={() => toggleAdminExpansion(community.uid)}
                                   aria-expanded={expandedAdmins.has(community.uid)}
+                                  aria-label={`${expandedAdmins.has(community.uid) ? "Collapse" : "Expand"} admin list for ${community.details?.name || community.uid}`}
                                   className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 mt-1"
                                 >
                                   {expandedAdmins.has(community.uid) ? (
