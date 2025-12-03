@@ -332,6 +332,7 @@ export default function ApplicationDetailPage() {
               onCommentDelete={handleCommentDelete}
               onVersionClick={handleVersionClick}
               isLoading={isLoadingComments}
+              formSchema={config?.formSchema}
             />
           </div>
         </div>

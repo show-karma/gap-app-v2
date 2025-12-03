@@ -22,6 +22,7 @@ import type {
   ApplicationComment,
   FundingApplicationStatusV2,
   IApplicationVersion,
+  IFormSchema,
   IFundingApplication,
   IStatusHistoryEntry,
 } from "@/types/funding-platform";
@@ -43,6 +44,7 @@ interface CommentsTimelineProps {
   onCommentDelete?: (commentId: string) => Promise<void>;
   onVersionClick?: (versionId: string) => void;
   isLoading?: boolean;
+  formSchema?: IFormSchema; // Optional: for mapping field IDs to labels
 }
 
 type TimelineItem = {
@@ -91,19 +93,33 @@ const getEditType = (
   version: IApplicationVersion,
   application?: IFundingApplication
 ): "applicant" | "admin" | "reviewer" => {
-  if (!version.submittedBy || !application?.ownerAddress) {
-    return "applicant"; // Default fallback
+  // If no submittedBy address, can't determine - default to applicant
+  if (!version.submittedBy) {
+    return "applicant";
   }
 
-  const submittedByLower = version.submittedBy.toLowerCase();
-  const ownerAddressLower = application.ownerAddress.toLowerCase();
+  // If no ownerAddress in application, can't compare - default to applicant
+  if (!application?.ownerAddress) {
+    // Log warning for debugging
+    console.warn("Cannot determine edit type: application.ownerAddress is missing", {
+      versionId: version.id,
+      submittedBy: version.submittedBy,
+    });
+    return "applicant";
+  }
 
+  const submittedByLower = version.submittedBy.toLowerCase().trim();
+  const ownerAddressLower = application.ownerAddress.toLowerCase().trim();
+
+  // If addresses match, it's an applicant edit
   if (submittedByLower === ownerAddressLower) {
     return "applicant";
   }
 
+  // If addresses don't match, it's an admin or reviewer edit
   // Note: We can't distinguish admin vs reviewer from just the address
-  // For now, we'll show as 'admin' - backend could add editedByRole field later
+  // Backend should ideally add an editedByRole field to IApplicationVersion
+  // For now, we'll show as 'admin' for any non-applicant edit
   return "admin";
 };
 
@@ -121,8 +137,50 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
   onCommentDelete,
   onVersionClick,
   isLoading = false,
+  formSchema,
 }: CommentsTimelineProps) => {
   const [isAddingComment, setIsAddingComment] = useState(false);
+
+  // Create field labels mapping from form schema
+  const fieldLabels = useMemo(() => {
+    const labels: Record<string, string> = {};
+    if (formSchema?.fields) {
+      formSchema.fields.forEach((field) => {
+        // Map field.id to field.label
+        if (field.id && field.label) {
+          labels[field.id] = field.label;
+        }
+        // Also map normalized field name (label.toLowerCase().replace(/\s+/g, "_"))
+        const normalizedName = field.label.toLowerCase().replace(/\s+/g, "_");
+        if (normalizedName) {
+          labels[normalizedName] = field.label;
+        }
+      });
+    }
+    return labels;
+  }, [formSchema]);
+
+  // Helper function to get human-readable field label
+  const getFieldLabel = (fieldKey: string): string => {
+    // First try exact match with field ID
+    if (fieldLabels[fieldKey]) {
+      return fieldLabels[fieldKey];
+    }
+    // Try case-insensitive match
+    const lowerKey = fieldKey.toLowerCase();
+    const matchedKey = Object.keys(fieldLabels).find((key) => key.toLowerCase() === lowerKey);
+    if (matchedKey) {
+      return fieldLabels[matchedKey];
+    }
+    // Fallback: format the key to be more readable
+    // Remove "field_" prefix if present and format the rest
+    const cleanedKey = fieldKey.replace(/^field_/, "").replace(/_/g, " ");
+    // Capitalize first letter of each word
+    return cleanedKey
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
 
   // Combine comments, status history, and version history into a unified timeline
   const timelineItems = useMemo(() => {
@@ -366,7 +424,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
                     (
                     {version.diffFromPrevious.changedFields
                       .slice(0, 2)
-                      .map((f) => f.fieldLabel)
+                      .map((f) => getFieldLabel(f.fieldLabel))
                       .join(", ")}
                     {version.diffFromPrevious.changedFields.length > 2 &&
                       `, +${version.diffFromPrevious.changedFields.length - 2} more`}

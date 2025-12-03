@@ -62,7 +62,7 @@ export default function ReviewerApplicationDetailPage() {
   } = useApplication(applicationId);
 
   // Fetch program config
-  const { data: program } = useProgramConfig(programId, parsedChainId);
+  const { data: program, config } = useProgramConfig(programId, parsedChainId);
 
   // Use the application status hook (reviewers won't use this but needed for component)
   // Using the hook even though reviewers don't change status to avoid breaking component expectations
@@ -266,6 +266,7 @@ export default function ReviewerApplicationDetailPage() {
               onCommentDelete={handleCommentDelete}
               onVersionClick={handleVersionClick}
               isLoading={isLoadingComments}
+              formSchema={config?.formSchema}
             />
           </div>
         </div>
