@@ -1,8 +1,7 @@
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import toast from "react-hot-toast";
 import fetchData from "../fetchData";
 import { INDEXER } from "../indexer";
 import { MESSAGES } from "../messages";
-import toast from "react-hot-toast";
 
 /**
  * Sends impact indicator data for a project

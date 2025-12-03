@@ -96,8 +96,7 @@ export const MESSAGES = {
       DELETE: {
         LOADING: "Deleting milestone completion...",
         SUCCESS: "Milestone completion deleted successfully",
-        ERROR:
-          "There was an error deleting the milestone completion. Please try again",
+        ERROR: "There was an error deleting the milestone completion. Please try again",
       },
     },
     EDIT: {
@@ -122,11 +121,9 @@ export const MESSAGES = {
   CATEGORIES: {
     OUTPUTS: {
       EMPTY: `Please assign outputs to grants.`,
-      SUCCESS: (categoryName: string) =>
-        `Outputs assigned successfully to ${categoryName}.`,
+      SUCCESS: (categoryName: string) => `Outputs assigned successfully to ${categoryName}.`,
       ERROR: {
-        GENERIC: (categoryName: string) =>
-          `Outputs could not be assigned to ${categoryName}.`,
+        GENERIC: (categoryName: string) => `Outputs could not be assigned to ${categoryName}.`,
       },
     },
   },
@@ -166,6 +163,11 @@ export const MESSAGES = {
     MARK_AS_COMPLETE: {
       SUCCESS: "Grant completed successfully",
       ERROR: "There was an error doing the grant completion.",
+      UNDO: {
+        SUCCESS: "Grant completion revoked successfully",
+        LOADING: "Revoking grant completion...",
+        ERROR: "There was an error revoking grant completion.",
+      },
     },
     CREATE: {
       SUCCESS: "Your grant was created successfully!",
@@ -248,8 +250,7 @@ export const MESSAGES = {
     },
     CREATE: {
       SUCCESS: "Milestone was successfully added to the grant.",
-      ERROR: (title: string) =>
-        `There was an error creating ${title} milestone.`,
+      ERROR: (title: string) => `There was an error creating ${title} milestone.`,
     },
     VERIFY: {
       SUCCESS: "You have successfully verified the milestone.",
@@ -270,9 +271,7 @@ export const MESSAGES = {
   },
   ADMIN: {
     NOT_AUTHORIZED: (uid: string) =>
-      `You must be Admin of this Community${
-        uid ? `(${uid})` : ""
-      } to see this page.`,
+      `You must be Admin of this Community${uid ? `(${uid})` : ""} to see this page.`,
     NO_COMMUNITIES: "You are not an admin of any community.",
   },
   MY_PROJECTS: {
@@ -294,8 +293,7 @@ export const MESSAGES = {
         MAX: "Name must be less than 50 characters",
       },
       EMAIL: "E-mail must be at least 3 characters",
-      ERROR: (projectName: string) =>
-        `Something went wrong while subscribing to ${projectName}.`,
+      ERROR: (projectName: string) => `Something went wrong while subscribing to ${projectName}.`,
     },
     LINK_CONTRACT_ADDRESSES: {
       SUCCESS: "Contract addresses updated successfully",
@@ -389,8 +387,7 @@ export const MESSAGES = {
       AMOUNT_DISTRIBUTED: "You need to specify an amount distributed to date",
       GRANT_SIZE: "You need to specify a grant size",
       BOUNTIES: "You need to specify at least one bounty",
-      HOW_MANY_APPLICANTS:
-        "You need to specify how many applicants through the site",
+      HOW_MANY_APPLICANTS: "You need to specify how many applicants through the site",
       HOW_MANY_GRANTS_ISSUE: "You need to specify how many grants issued",
       LINKS_TO_DETAILS: "You need to specify links to details",
       START_DATE: "You need to specify a start date",

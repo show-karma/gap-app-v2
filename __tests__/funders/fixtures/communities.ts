@@ -83,4 +83,3 @@ export function createMockCommunity(overrides: Partial<ChosenCommunity> = {}): C
 export function getCarouselCommunities(count: number = 6): ChosenCommunity[] {
   return mockCommunities.slice(0, count);
 }
-

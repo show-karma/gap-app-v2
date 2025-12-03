@@ -1,16 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
-import { Button } from "@/components/Utilities/Button";
 import {
   BookOpenIcon,
   ChatBubbleBottomCenterTextIcon,
-  DocumentMagnifyingGlassIcon,
-  ShieldCheckIcon,
   CheckCircleIcon,
-  XMarkIcon,
+  DocumentMagnifyingGlassIcon,
   InformationCircleIcon,
+  ShieldCheckIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
+import type React from "react";
+import { useState } from "react";
+import { Button } from "@/components/Utilities/Button";
 import { cn } from "@/utilities/tailwind";
 
 interface OnboardingStep {
@@ -52,22 +53,24 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
         <div className="space-y-4">
           <p className="text-gray-700 dark:text-gray-300">
             {programName ? (
-              <>You&apos;ve been assigned as a reviewer for <strong>{programName}</strong>.</>
+              <>
+                You&apos;ve been assigned as a reviewer for <strong>{programName}</strong>.
+              </>
             ) : (
               <>You&apos;ve been assigned as a reviewer for this funding program.</>
             )}
           </p>
           <p className="text-gray-700 dark:text-gray-300">
-            As a reviewer, you play a crucial role in evaluating grant applications
-            and providing valuable feedback to help make funding decisions.
+            As a reviewer, you play a crucial role in evaluating grant applications and providing
+            valuable feedback to help make funding decisions.
           </p>
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
             <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
               Your Impact
             </h4>
             <p className="text-sm text-blue-800 dark:text-blue-200">
-              Your reviews help ensure fair and thorough evaluation of applications,
-              contributing to the success of the grant program and its recipients.
+              Your reviews help ensure fair and thorough evaluation of applications, contributing to
+              the success of the grant program and its recipients.
             </p>
           </div>
         </div>
@@ -138,7 +141,9 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
             <li className="flex items-start">
               <XMarkIcon className="h-5 w-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
               <div>
-                <strong className="text-gray-900 dark:text-gray-100">Cannot Edit Applications</strong>
+                <strong className="text-gray-900 dark:text-gray-100">
+                  Cannot Edit Applications
+                </strong>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   You can only view and comment, not modify application content
                 </p>
@@ -147,7 +152,9 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
             <li className="flex items-start">
               <XMarkIcon className="h-5 w-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
               <div>
-                <strong className="text-gray-900 dark:text-gray-100">Cannot Make Final Decisions</strong>
+                <strong className="text-gray-900 dark:text-gray-100">
+                  Cannot Make Final Decisions
+                </strong>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Final funding decisions are made by program administrators
                 </p>
@@ -156,7 +163,9 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
             <li className="flex items-start">
               <XMarkIcon className="h-5 w-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
               <div>
-                <strong className="text-gray-900 dark:text-gray-100">Cannot Manage Program Settings</strong>
+                <strong className="text-gray-900 dark:text-gray-100">
+                  Cannot Manage Program Settings
+                </strong>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Program configuration and settings are restricted to admins
                 </p>
@@ -165,7 +174,9 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
             <li className="flex items-start">
               <XMarkIcon className="h-5 w-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
               <div>
-                <strong className="text-gray-900 dark:text-gray-100">Cannot Add Other Reviewers</strong>
+                <strong className="text-gray-900 dark:text-gray-100">
+                  Cannot Add Other Reviewers
+                </strong>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Only administrators can assign reviewer roles
                 </p>
@@ -174,8 +185,8 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
           </ul>
           <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              <strong>Note:</strong> If you need additional permissions or have questions
-              about your role, please contact the program administrator.
+              <strong>Note:</strong> If you need additional permissions or have questions about your
+              role, please contact the program administrator.
             </p>
           </div>
         </div>
@@ -199,7 +210,9 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
               </p>
             </div>
             <div className="border-l-4 border-green-500 pl-4">
-              <h4 className="font-medium text-gray-900 dark:text-gray-100">Provide Constructive Feedback</h4>
+              <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                Provide Constructive Feedback
+              </h4>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Offer specific, actionable feedback that helps applicants improve
               </p>
@@ -211,7 +224,9 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
               </p>
             </div>
             <div className="border-l-4 border-orange-500 pl-4">
-              <h4 className="font-medium text-gray-900 dark:text-gray-100">Maintain Confidentiality</h4>
+              <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                Maintain Confidentiality
+              </h4>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Keep application details and review discussions confidential
               </p>
@@ -286,8 +301,8 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
           </div>
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
             <p className="text-sm text-blue-800 dark:text-blue-200">
-              <strong>Remember:</strong> Your comments may be shared with applicants
-              as feedback, so ensure they are constructive and professional.
+              <strong>Remember:</strong> Your comments may be shared with applicants as feedback, so
+              ensure they are constructive and professional.
             </p>
           </div>
         </div>
@@ -297,7 +312,7 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
 
   const handleNext = () => {
     const currentStepId = steps[currentStep].id;
-    setCompletedSteps(prev => new Set(prev).add(currentStepId));
+    setCompletedSteps((prev) => new Set(prev).add(currentStepId));
 
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
@@ -320,10 +335,7 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
 
   return (
     <div
-      className={cn(
-        "bg-white dark:bg-gray-900 rounded-lg shadow-lg",
-        className
-      )}
+      className={cn("bg-white dark:bg-gray-900 rounded-lg shadow-lg", className)}
       role="dialog"
       aria-labelledby="onboarding-title"
       aria-describedby="onboarding-description"
@@ -334,7 +346,10 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
           <div className="flex items-center space-x-3">
             <CurrentIcon className="h-6 w-6 text-blue-500" aria-hidden="true" />
             <div>
-              <h2 id="onboarding-title" className="text-lg font-medium text-gray-900 dark:text-gray-100">
+              <h2
+                id="onboarding-title"
+                className="text-lg font-medium text-gray-900 dark:text-gray-100"
+              >
                 {steps[currentStep].title}
               </h2>
               <p id="onboarding-description" className="text-sm text-gray-500 dark:text-gray-400">
@@ -400,9 +415,7 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
       </div>
 
       {/* Content */}
-      <div className="px-6 py-6 max-h-[60vh] overflow-y-auto">
-        {steps[currentStep].content}
-      </div>
+      <div className="px-6 py-6 max-h-[60vh] overflow-y-auto">{steps[currentStep].content}</div>
 
       {/* Footer */}
       <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
@@ -414,17 +427,10 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
             Skip tutorial
           </button>
           <div className="flex items-center space-x-3">
-            <Button
-              variant="secondary"
-              onClick={handlePrevious}
-              disabled={currentStep === 0}
-            >
+            <Button variant="secondary" onClick={handlePrevious} disabled={currentStep === 0}>
               Previous
             </Button>
-            <Button
-              variant="primary"
-              onClick={handleNext}
-            >
+            <Button variant="primary" onClick={handleNext}>
               {currentStep === steps.length - 1 ? "Get Started" : "Next"}
             </Button>
           </div>

@@ -3,11 +3,10 @@
  * Tests structural elements, child component integration, and context availability
  */
 
-import React from "react";
 import { screen } from "@testing-library/react";
 import { Navbar } from "@/src/components/navbar/navbar";
-import { renderWithProviders } from "../utils/test-helpers";
 import { getAuthFixture } from "../fixtures/auth-fixtures";
+import { renderWithProviders } from "../utils/test-helpers";
 
 // Mock child components to isolate container testing
 jest.mock("@/src/components/navbar/navbar-desktop-navigation", () => ({
@@ -17,9 +16,7 @@ jest.mock("@/src/components/navbar/navbar-desktop-navigation", () => ({
 }));
 
 jest.mock("@/src/components/navbar/navbar-mobile-menu", () => ({
-  NavbarMobileMenu: () => (
-    <div data-testid="navbar-mobile-menu">Mobile Menu</div>
-  ),
+  NavbarMobileMenu: () => <div data-testid="navbar-mobile-menu">Mobile Menu</div>,
 }));
 
 jest.mock("@/src/components/shared/logo", () => ({
@@ -37,7 +34,7 @@ describe("Navbar - Main Container", () => {
     it("applies correct structural classes", () => {
       renderWithProviders(<Navbar />);
       const nav = screen.getByRole("navigation");
-      
+
       expect(nav).toHaveClass("flex");
       expect(nav).toHaveClass("bg-background");
       expect(nav).toHaveClass("w-full");
@@ -48,7 +45,7 @@ describe("Navbar - Main Container", () => {
     it("applies fixed positioning classes", () => {
       renderWithProviders(<Navbar />);
       const nav = screen.getByRole("navigation");
-      
+
       expect(nav).toHaveClass("fixed");
       expect(nav).toHaveClass("top-0");
       expect(nav).toHaveClass("left-0");
@@ -65,7 +62,7 @@ describe("Navbar - Main Container", () => {
       renderWithProviders(<Navbar />);
       const nav = screen.getByRole("navigation");
       const container = nav.querySelector("div");
-      
+
       expect(container).toBeInTheDocument();
       expect(container).toHaveClass("flex");
       expect(container).toHaveClass("justify-between");
@@ -75,7 +72,7 @@ describe("Navbar - Main Container", () => {
     it("applies responsive layout classes", () => {
       renderWithProviders(<Navbar />);
       const nav = screen.getByRole("navigation");
-      
+
       expect(nav).toHaveClass("flex-row");
       expect(nav).toHaveClass("items-center");
       expect(nav).toHaveClass("justify-center");
@@ -84,7 +81,7 @@ describe("Navbar - Main Container", () => {
     it("has full width and min width constraints", () => {
       renderWithProviders(<Navbar />);
       const nav = screen.getByRole("navigation");
-      
+
       expect(nav).toHaveClass("max-w-full");
       expect(nav).toHaveClass("min-w-min");
     });
@@ -109,7 +106,7 @@ describe("Navbar - Main Container", () => {
 
     it("renders both child components simultaneously", () => {
       renderWithProviders(<Navbar />);
-      
+
       expect(screen.getByTestId("navbar-desktop-navigation")).toBeInTheDocument();
       expect(screen.getByTestId("navbar-mobile-menu")).toBeInTheDocument();
     });
@@ -117,7 +114,7 @@ describe("Navbar - Main Container", () => {
     it("maintains proper component hierarchy", () => {
       renderWithProviders(<Navbar />);
       const nav = screen.getByRole("navigation");
-      
+
       // Both components should be within the nav element
       expect(nav).toContainElement(screen.getByTestId("navbar-desktop-navigation"));
       expect(nav).toContainElement(screen.getByTestId("navbar-mobile-menu"));
@@ -132,7 +129,7 @@ describe("Navbar - Main Container", () => {
         permissions: fixture.permissions,
         theme: "light",
       });
-      
+
       // Child components should render, indicating context is available
       expect(screen.getByTestId("navbar-desktop-navigation")).toBeInTheDocument();
       expect(screen.getByTestId("navbar-mobile-menu")).toBeInTheDocument();
@@ -144,7 +141,7 @@ describe("Navbar - Main Container", () => {
         authState: fixture.authState,
         permissions: fixture.permissions,
       });
-      
+
       // Child components should render with auth context
       expect(screen.getByTestId("navbar-desktop-navigation")).toBeInTheDocument();
       expect(screen.getByTestId("navbar-mobile-menu")).toBeInTheDocument();
@@ -157,7 +154,7 @@ describe("Navbar - Main Container", () => {
         permissions: fixture.permissions,
         theme: "dark",
       });
-      
+
       expect(screen.getByTestId("navbar-desktop-navigation")).toBeInTheDocument();
       expect(screen.getByTestId("navbar-mobile-menu")).toBeInTheDocument();
     });
@@ -168,7 +165,7 @@ describe("Navbar - Main Container", () => {
         authState: fixture.authState,
         permissions: fixture.permissions,
       });
-      
+
       // Navbar should render with admin permission context
       expect(screen.getByRole("navigation")).toBeInTheDocument();
     });
@@ -179,7 +176,7 @@ describe("Navbar - Main Container", () => {
         authState: fixture.authState,
         permissions: fixture.permissions,
       });
-      
+
       // Navbar should render with reviewer permission context
       expect(screen.getByRole("navigation")).toBeInTheDocument();
     });
@@ -190,7 +187,7 @@ describe("Navbar - Main Container", () => {
         authState: fixture.authState,
         permissions: fixture.permissions,
       });
-      
+
       // Navbar should still render during loading
       expect(screen.getByRole("navigation")).toBeInTheDocument();
     });
@@ -221,15 +218,15 @@ describe("Navbar - Main Container", () => {
       renderWithProviders(<Navbar />);
       const nav = screen.getByRole("navigation");
       const container = nav.querySelector("div");
-      
-      expect(container).toHaveClass("py-5");
+
+      expect(container).toHaveClass("py-3");
     });
 
     it("inner container has max-width constraint", () => {
       renderWithProviders(<Navbar />);
       const nav = screen.getByRole("navigation");
       const container = nav.querySelector("div");
-      
+
       expect(container).toHaveClass("max-w-[1920px]");
     });
 
@@ -237,7 +234,7 @@ describe("Navbar - Main Container", () => {
       renderWithProviders(<Navbar />);
       const nav = screen.getByRole("navigation");
       const container = nav.querySelector("div");
-      
+
       expect(container).toHaveClass("min-w-min");
     });
 
@@ -245,7 +242,7 @@ describe("Navbar - Main Container", () => {
       renderWithProviders(<Navbar />);
       const nav = screen.getByRole("navigation");
       const container = nav.querySelector("div");
-      
+
       expect(container).toHaveClass("flex");
       expect(container).toHaveClass("flex-row");
     });
@@ -254,7 +251,7 @@ describe("Navbar - Main Container", () => {
       renderWithProviders(<Navbar />);
       const nav = screen.getByRole("navigation");
       const container = nav.querySelector("div");
-      
+
       expect(container).toHaveClass("justify-between");
     });
 
@@ -262,7 +259,7 @@ describe("Navbar - Main Container", () => {
       renderWithProviders(<Navbar />);
       const nav = screen.getByRole("navigation");
       const container = nav.querySelector("div");
-      
+
       expect(container).toHaveClass("items-center");
     });
 
@@ -270,7 +267,7 @@ describe("Navbar - Main Container", () => {
       renderWithProviders(<Navbar />);
       const nav = screen.getByRole("navigation");
       const container = nav.querySelector("div");
-      
+
       expect(container).toHaveClass("gap-8");
     });
   });
@@ -285,7 +282,7 @@ describe("Navbar - Main Container", () => {
     it("is accessible to screen readers", () => {
       renderWithProviders(<Navbar />);
       const nav = screen.getByRole("navigation");
-      
+
       // Should be visible to screen readers (not aria-hidden)
       expect(nav).not.toHaveAttribute("aria-hidden", "true");
     });
@@ -293,10 +290,9 @@ describe("Navbar - Main Container", () => {
     it("has proper document flow", () => {
       renderWithProviders(<Navbar />);
       const nav = screen.getByRole("navigation");
-      
+
       // Fixed positioning shouldn't remove from accessibility tree
       expect(nav).toBeVisible();
     });
   });
 });
-

@@ -1,23 +1,15 @@
 "use client";
-import {
-  ProgressModalScreen,
-  useProgressModalStore,
-} from "@/store/modals/progress";
-import {
-  ArrowLeftCircleIcon,
-  ArrowLeftIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/solid";
+import { Dialog, Transition } from "@headlessui/react";
+import { ArrowLeftIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
-import { FC, Fragment, ReactNode, useState } from "react";
+import { type FC, Fragment, type ReactNode, useState } from "react";
+import { type ProgressModalScreen, useProgressModalStore } from "@/store/modals/progress";
+import { cn } from "@/utilities/tailwind";
 import { Button } from "../../Utilities/Button";
-import { GrantUpdateScreen } from "./GrantUpdateScreen";
-import { Transition, Dialog } from "@headlessui/react";
-import { ProjectUpdateScreen } from "./ProjectUpdateScreen";
 import { MilestoneScreen } from "./MilestoneScreen";
 import { MilestoneUpdateScreen } from "./MilestoneUpdateScreen";
+import { ProjectUpdateScreen } from "./ProjectUpdateScreen";
 import { UnifiedMilestoneScreen } from "./UnifiedMilestoneScreen";
-import { cn } from "@/utilities/tailwind";
 
 const Box = ({
   icon,
@@ -34,6 +26,7 @@ const Box = ({
 }) => {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={cn(
         "flex flex-1 group flex-col gap-4 items-center justify-center w-full border hover:border-blue-800 hover:bg-slate-50 dark:hover:bg-slate-900 p-2 rounded-lg bg-white dark:bg-zinc-800 border-gray-200 dark:border-gray-700 transition-all ease-in-out duration-200",
@@ -43,19 +36,11 @@ const Box = ({
       )}
     >
       <div className="flex flex-col items-center justify-center gap-4">
-        <Image
-          src={icon}
-          width={40}
-          height={40}
-          alt=""
-          className="object-contain h-10 w-10"
-        />
+        <Image src={icon} width={40} height={40} alt="" className="object-contain h-10 w-10" />
         <h3
           className={cn(
             `text-lg font-bold`,
-            isSelected
-              ? "text-gray-900 dark:text-zinc-200"
-              : "text-gray-900 dark:text-zinc-200"
+            isSelected ? "text-gray-900 dark:text-zinc-200" : "text-gray-900 dark:text-zinc-200"
           )}
         >
           {title}
@@ -63,9 +48,7 @@ const Box = ({
         <p
           className={cn(
             `text-center text-base font-normal`,
-            isSelected
-              ? "text-gray-900 dark:text-zinc-200"
-              : "text-gray-900 dark:text-zinc-200"
+            isSelected ? "text-gray-900 dark:text-zinc-200" : "text-gray-900 dark:text-zinc-200"
           )}
         >
           {description}
@@ -102,8 +85,7 @@ const Footer: FC<FooterProps> = ({ selectFn, selectedScreen }) => {
 };
 
 const Menu = () => {
-  const [selectedScreen, setSelectedScreen] =
-    useState<ProgressModalScreen>("menu");
+  const [selectedScreen, setSelectedScreen] = useState<ProgressModalScreen>("menu");
   const select = (screen: ProgressModalScreen) => {
     if (screen === selectedScreen) {
       setSelectedScreen("menu");
@@ -224,7 +206,7 @@ export const ProgressDialog = () => {
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-row gap-2 px-4 pt-4 items-center">
                       {progressModalScreen !== "menu" ? (
-                        <button onClick={() => setProgressModalScreen("menu")}>
+                        <button type="button" onClick={() => setProgressModalScreen("menu")}>
                           <ArrowLeftIcon className="w-6 h-6" />
                         </button>
                       ) : null}
@@ -234,6 +216,7 @@ export const ProgressDialog = () => {
                       </h2>
 
                       <button
+                        type="button"
                         className="p-2 text-black dark:text-white"
                         onClick={() => closeModal()}
                       >
@@ -241,10 +224,7 @@ export const ProgressDialog = () => {
                       </button>
                     </div>
                     <h3 className="text-zinc-600 dark:text-zinc-300 w-full text-center">
-                      {
-                        screenTitleAndDescription[progressModalScreen]
-                          .description
-                      }
+                      {screenTitleAndDescription[progressModalScreen].description}
                     </h3>
                   </div>
                   {screenToShow[progressModalScreen]}

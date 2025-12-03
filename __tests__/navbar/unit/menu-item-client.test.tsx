@@ -5,11 +5,10 @@
  * @developer Developer 2
  */
 
-import React from "react";
-import { screen, fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { UserPlus } from "lucide-react";
 import { MenuItemClient } from "@/src/components/navbar/menu-item-client";
 import { renderWithProviders } from "../utils/test-helpers";
-import { UserPlus } from "lucide-react";
 
 // Mock next/navigation
 const mockPush = jest.fn();
@@ -40,9 +39,7 @@ describe("MenuItemClient Component", () => {
     });
 
     it("should render without description", () => {
-      renderWithProviders(
-        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" />
-      );
+      renderWithProviders(<MenuItemClient href="/test" icon={UserPlus} title="Test Title" />);
 
       expect(screen.getByText("Test Title")).toBeInTheDocument();
       expect(screen.queryByText("Test Description")).not.toBeInTheDocument();
@@ -50,12 +47,7 @@ describe("MenuItemClient Component", () => {
 
     it("should render arrow when showArrow is true", () => {
       const { container } = renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-          showArrow={true}
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" showArrow={true} />
       );
 
       // Check for ArrowUpRight icon
@@ -65,12 +57,7 @@ describe("MenuItemClient Component", () => {
 
     it("should not render arrow when showArrow is false", () => {
       const { container } = renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-          showArrow={false}
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" showArrow={false} />
       );
 
       const arrowIcon = container.querySelector('[class*="lucide-arrow-up-right"]');
@@ -81,12 +68,7 @@ describe("MenuItemClient Component", () => {
   describe("Desktop Variant Styling", () => {
     it("should apply desktop styling classes", () => {
       const { container } = renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-          variant="desktop"
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" variant="desktop" />
       );
 
       const contentDiv = container.querySelector(".hover\\:bg-accent");
@@ -99,12 +81,7 @@ describe("MenuItemClient Component", () => {
 
     it("should render as Link by default for desktop", () => {
       const { container } = renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-          variant="desktop"
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" variant="desktop" />
       );
 
       const link = container.querySelector('a[href="/test"]');
@@ -115,15 +92,10 @@ describe("MenuItemClient Component", () => {
   describe("Mobile Variant Styling", () => {
     it("should apply mobile styling classes", () => {
       const { container } = renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-          variant="mobile"
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" variant="mobile" />
       );
 
-      const link = container.querySelector('a');
+      const link = container.querySelector("a");
       expect(link).toHaveClass("flex");
       expect(link).toHaveClass("flex-col");
       expect(link).toHaveClass("px-0");
@@ -151,12 +123,7 @@ describe("MenuItemClient Component", () => {
     it("should call onClick callback when clicked", () => {
       const onClickMock = jest.fn();
       renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-          onClick={onClickMock}
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" onClick={onClickMock} />
       );
 
       const title = screen.getByText("Test Title");
@@ -244,12 +211,7 @@ describe("MenuItemClient Component", () => {
       document.body.appendChild(mockButton);
 
       renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-          openModal={true}
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" openModal={true} />
       );
 
       const title = screen.getByText("Test Title");
@@ -263,12 +225,7 @@ describe("MenuItemClient Component", () => {
 
     it("should navigate and retry if button doesn't exist", async () => {
       renderWithProviders(
-        <MenuItemClient
-          href="/my-projects"
-          icon={UserPlus}
-          title="Test Title"
-          openModal={true}
-        />
+        <MenuItemClient href="/my-projects" icon={UserPlus} title="Test Title" openModal={true} />
       );
 
       const title = screen.getByText("Test Title");
@@ -284,12 +241,7 @@ describe("MenuItemClient Component", () => {
       document.body.appendChild(mockButton);
 
       renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-          openModal={true}
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" openModal={true} />
       );
 
       const title = screen.getByText("Test Title");
@@ -320,12 +272,7 @@ describe("MenuItemClient Component", () => {
 
     it("should append anchor to href", () => {
       const { container } = renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-          anchor="test-section"
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" anchor="test-section" />
       );
 
       const link = container.querySelector('a[href="/test#test-section"]');
@@ -347,12 +294,7 @@ describe("MenuItemClient Component", () => {
       document.body.appendChild(mockElement);
 
       renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-          anchor="test-anchor"
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" anchor="test-anchor" />
       );
 
       const title = screen.getByText("Test Title");
@@ -380,12 +322,7 @@ describe("MenuItemClient Component", () => {
       });
 
       renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-          anchor="test-anchor"
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" anchor="test-anchor" />
       );
 
       const title = screen.getByText("Test Title");
@@ -403,12 +340,7 @@ describe("MenuItemClient Component", () => {
       });
 
       renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-          anchor="test-anchor"
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" anchor="test-anchor" />
       );
 
       const title = screen.getByText("Test Title");
@@ -424,12 +356,7 @@ describe("MenuItemClient Component", () => {
   describe("Interaction Tests", () => {
     it("should handle hover states", () => {
       const { container } = renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-          variant="desktop"
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" variant="desktop" />
       );
 
       const hoverElement = container.querySelector(".hover\\:bg-accent");
@@ -440,12 +367,7 @@ describe("MenuItemClient Component", () => {
       const onClickMock = jest.fn();
 
       renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-          onClick={onClickMock}
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" onClick={onClickMock} />
       );
 
       const title = screen.getByText("Test Title");
@@ -483,11 +405,7 @@ describe("MenuItemClient Component", () => {
   describe("Accessibility Tests", () => {
     it("should have proper role for links", () => {
       const { container } = renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" />
       );
 
       const link = container.querySelector('a[href="/test"]');
@@ -498,16 +416,11 @@ describe("MenuItemClient Component", () => {
       const onClickMock = jest.fn();
 
       renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-          onClick={onClickMock}
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" onClick={onClickMock} />
       );
 
       const title = screen.getByText("Test Title");
-      
+
       // Simulate Enter key press
       fireEvent.keyDown(title, { key: "Enter", code: "Enter" });
       fireEvent.click(title);
@@ -532,12 +445,7 @@ describe("MenuItemClient Component", () => {
 
     it("should have cursor pointer for interactive elements", () => {
       const { container } = renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-          variant="desktop"
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" variant="desktop" />
       );
 
       const cursorElement = container.querySelector(".cursor-pointer");
@@ -548,11 +456,7 @@ describe("MenuItemClient Component", () => {
   describe("Icon Styling", () => {
     it("should apply correct icon classes", () => {
       const { container } = renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-        />
+        <MenuItemClient href="/test" icon={UserPlus} title="Test Title" />
       );
 
       const iconContainer = container.querySelector('[class*="lucide-user-plus"]');
@@ -565,13 +469,7 @@ describe("MenuItemClient Component", () => {
 
   describe("Text Styling", () => {
     it("should apply correct title classes", () => {
-      renderWithProviders(
-        <MenuItemClient
-          href="/test"
-          icon={UserPlus}
-          title="Test Title"
-        />
-      );
+      renderWithProviders(<MenuItemClient href="/test" icon={UserPlus} title="Test Title" />);
 
       const title = screen.getByText("Test Title");
       expect(title).toHaveClass("text-foreground");
@@ -637,18 +535,9 @@ describe("MenuItemClient Component", () => {
     });
 
     it("should handle empty string href", () => {
-      renderWithProviders(
-        <MenuItemClient
-          href=""
-          icon={UserPlus}
-          title="Test Title"
-        />
-      );
+      renderWithProviders(<MenuItemClient href="" icon={UserPlus} title="Test Title" />);
 
       expect(screen.getByText("Test Title")).toBeInTheDocument();
     });
   });
 });
-
-
-

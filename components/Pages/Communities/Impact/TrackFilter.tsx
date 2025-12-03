@@ -1,15 +1,13 @@
-import React, { useEffect, useState } from "react";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import { useParams, useSearchParams } from "next/navigation";
-import { useTracksForCommunity, useTracksForProgram } from "@/hooks/useTracks";
-import { Track } from "@/services/tracks";
-import { FunnelIcon } from "@heroicons/react/24/outline";
-import { cn } from "@/utilities/tailwind";
-import pluralize from "pluralize";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import { CheckIcon } from "@heroicons/react/20/solid";
-import { Fragment } from "react";
 import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import { useSearchParams } from "next/navigation";
+import pluralize from "pluralize";
+import type React from "react";
+import { Fragment, useEffect, useState } from "react";
+import { useTracksForProgram } from "@/hooks/useTracks";
+import type { Track } from "@/services/tracks";
+import { cn } from "@/utilities/tailwind";
 
 interface TrackFilterProps {
   onChange: (trackIds: string[] | null) => void;
@@ -17,18 +15,11 @@ interface TrackFilterProps {
   communityUid: string;
 }
 
-export const TrackFilter: React.FC<TrackFilterProps> = ({
-  onChange,
-  selectedTrackIds = [],
-}) => {
+export const TrackFilter: React.FC<TrackFilterProps> = ({ onChange, selectedTrackIds = [] }) => {
   const [initialLoad, setInitialLoad] = useState(true);
   const params = useSearchParams();
   const programIdParam = params.get("programId");
-  const {
-    data: tracks = [],
-    isLoading,
-    isError,
-  } = useTracksForProgram(programIdParam as string);
+  const { data: tracks = [], isLoading, isError } = useTracksForProgram(programIdParam as string);
 
   useEffect(() => {
     // Skip the initial change trigger to avoid overriding URL params
@@ -58,18 +49,14 @@ export const TrackFilter: React.FC<TrackFilterProps> = ({
               <div className="flex items-center gap-2">
                 {selectedTrackIds.length > 0 ? (
                   <p className="flex flex-row gap-1">
-                    {selectedTrackIds.length}{" "}
-                    {pluralize("track", selectedTrackIds.length)} selected
+                    {selectedTrackIds.length} {pluralize("track", selectedTrackIds.length)} selected
                   </p>
                 ) : (
                   <p>All Tracks</p>
                 )}
               </div>
               <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                <ChevronDownIcon
-                  className="h-4 w-4 text-gray-400"
-                  aria-hidden="true"
-                />
+                <ChevronDownIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
               </span>
             </Listbox.Button>
 
@@ -119,10 +106,7 @@ export const TrackFilter: React.FC<TrackFilterProps> = ({
                                 "absolute inset-y-0 right-0 flex items-center pr-4"
                               )}
                             >
-                              <CheckIcon
-                                className="h-5 w-5"
-                                aria-hidden="true"
-                              />
+                              <CheckIcon className="h-5 w-5" aria-hidden="true" />
                             </span>
                           ) : null}
                         </>

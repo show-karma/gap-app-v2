@@ -1,12 +1,13 @@
 "use client";
-import { Skeleton } from "@/components/Utilities/Skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { useParams, usePathname, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
 import { useCommunityStore } from "@/store/community";
 import formatCurrency from "@/utilities/formatCurrency";
 import { getCommunityStatsV2 } from "@/utilities/queries/getCommunityDataV2";
-import { useQuery } from "@tanstack/react-query";
-import { useParams, usePathname } from "next/navigation";
 
 export const ImpactStatCards = () => {
   const { data, isLoading } = useImpactMeasurement();
@@ -31,8 +32,7 @@ export const ImpactStatCards = () => {
     {
       title: "Total Funding Allocated (with available data)",
       value:
-        data?.stats.totalFundingAllocated &&
-          data?.stats.totalFundingAllocated !== "NaN"
+        data?.stats.totalFundingAllocated && data?.stats.totalFundingAllocated !== "NaN"
           ? data?.stats.totalFundingAllocated
           : "-",
       color: "#A6EF67",
@@ -70,12 +70,14 @@ export const ImpactStatCards = () => {
 
 export const CommunityStatCards = () => {
   const params = useParams();
+  const searchParams = useSearchParams();
   const communityId = params.communityId as string;
+  const programId = searchParams.get("programId");
   const {
     totalProjects: filteredProjectsCount,
     totalGrants: filteredGrantsCount,
     totalMilestones: filteredMilestonesCount,
-    isLoadingFilters
+    isLoadingFilters,
   } = useCommunityStore();
   const { data, isLoading } = useQuery({
     queryKey: ["community-stats", communityId],
@@ -113,33 +115,52 @@ export const CommunityStatCards = () => {
           </div>
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Project Milestones</span>
-            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.projectMilestones)}</span>
+            <span className="font-medium">
+              {formatCurrency(data.projectUpdatesBreakdown.projectMilestones)}
+            </span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Project Milestone Completions</span>
-            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.projectCompletedMilestones)}</span>
+            <span className="font-medium">
+              {formatCurrency(data.projectUpdatesBreakdown.projectCompletedMilestones)}
+            </span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Project Updates</span>
-            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.projectUpdates)}</span>
+            <span className="font-medium">
+              {formatCurrency(data.projectUpdatesBreakdown.projectUpdates)}
+            </span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Grant Milestones</span>
-            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.grantMilestones)}</span>
+            <span className="font-medium">
+              {formatCurrency(data.projectUpdatesBreakdown.grantMilestones)}
+            </span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Grant Milestone Completions</span>
-            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.grantCompletedMilestones)}</span>
+            <span className="font-medium">
+              {formatCurrency(data.projectUpdatesBreakdown.grantCompletedMilestones)}
+            </span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Grant Updates</span>
-            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.grantUpdates)}</span>
+            <span className="font-medium">
+              {formatCurrency(data.projectUpdatesBreakdown.grantUpdates)}
+            </span>
           </div>
         </div>
       ) : null,
     },
   ];
-  return stats.map((item) => (
+
+  // Filter out "Total Grants" card when programId is present
+  const filteredStats = useMemo(
+    () => (programId ? stats.filter((stat) => stat.title !== "Total Grants") : stats),
+    [programId, stats]
+  );
+
+  return filteredStats.map((item) => (
     <div
       key={item.title}
       className="flex flex-1 rounded-lg border border-gray-300 dark:border-zinc-600"
@@ -158,7 +179,7 @@ export const CommunityStatCards = () => {
             {item.title}
           </h3>
           {item.tooltip && (
-            <InfoTooltip 
+            <InfoTooltip
               content={item.tooltip}
               side="top"
               align="start"

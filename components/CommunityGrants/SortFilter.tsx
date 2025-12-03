@@ -1,10 +1,10 @@
 "use client";
-import { Fragment } from "react";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import { Fragment } from "react";
+import type { SortByOptions } from "@/types";
 import { cn } from "@/utilities/tailwind";
-import { SortByOptions } from "@/types";
 
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
@@ -28,14 +28,9 @@ export function SortFilter({ selectedSort, onChange }: SortFilterProps) {
               id="sort-by-button"
               className="cursor-pointer items-center relative w-full rounded-md pr-8 text-left sm:text-sm sm:leading-6 text-black dark:text-white text-base font-normal"
             >
-              <span className="flex flex-row gap-1">
-                Sort by {sortOptions[selectedSort]}
-              </span>
+              <span className="flex flex-row gap-1">Sort by {sortOptions[selectedSort]}</span>
               <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                <ChevronDownIcon
-                  className="h-4 w-4 text-gray-400"
-                  aria-hidden="true"
-                />
+                <ChevronDownIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
               </span>
             </Listbox.Button>
 

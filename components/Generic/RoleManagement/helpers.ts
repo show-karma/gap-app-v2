@@ -1,4 +1,4 @@
-import type { RoleMember, ReviewerRole } from "./types";
+import type { ReviewerRole, RoleMember } from "./types";
 
 /**
  * Helper utilities for role management
@@ -9,9 +9,7 @@ import type { RoleMember, ReviewerRole } from "./types";
  * @param member - The member object to extract role from
  * @returns The role if present, undefined otherwise
  */
-export function getMemberRole(
-  member: RoleMember | undefined | null,
-): ReviewerRole | undefined {
+export function getMemberRole(member: RoleMember | undefined | null): ReviewerRole | undefined {
   return member?.role;
 }
 

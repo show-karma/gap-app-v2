@@ -1,30 +1,27 @@
-import { Hex } from "viem";
+import type { Hex } from "viem";
 
 export const INDEXER = {
   ATTESTATION_LISTENER: (hash: Hex | string, chainId: number) =>
     `/attestations/index-by-transaction/${hash}/${chainId}`,
+  ATTESTATIONS: {
+    GET: (uid: string, chainId?: number) =>
+      `/attestations/${uid}${chainId ? `?chainId=${chainId}` : ""}`,
+  },
   PROFILE: {
     GET: (address: string) => `/user/${address}`,
   },
   REGISTRY: {
     GET_ALL: "/registry",
-    FIND_BY_ID: (id: string, chainId: number) =>
-      `/registry/find/${id}/${chainId}`,
+    FIND_BY_ID: (id: string, chainId: number) => `/registry/find/${id}/${chainId}`,
     GET_ALL_PENDING: "/registry/pending",
     APPROVE: "/registry/approve",
-    UPDATE: (id: string, chainId: number) =>
-      `/registry/${id}/${chainId}/updateMetadata`,
+    UPDATE: (id: string, chainId: number) => `/registry/${id}/${chainId}/updateMetadata`,
     CREATE: "/registry/offchain/create",
     MANAGERS: (profileId: string, chainId: number) =>
       `/registry/profile/${profileId}/${chainId}/members`,
   },
   PROJECTS: {
-    GET_ALL: (
-      offset: number,
-      limit: number,
-      sortField: string,
-      sortOrder: "asc" | "desc"
-    ) =>
+    GET_ALL: (offset: number, limit: number, sortField: string, sortOrder: "asc" | "desc") =>
       `/projects/list?offset=${offset}&limit=${limit}${
         sortField ? `&sortField=${sortField}` : ""
       }${sortOrder ? `&sortOrder=${sortOrder}` : ""}`,
@@ -37,39 +34,30 @@ export const INDEXER = {
       GET: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}`,
       GRANT_MILESTONES: (projectUid: string, programId: string) =>
         `/v2/projects/${projectUid}/grants/${programId}/milestones`,
-      UPDATES: (projectIdOrSlug: string) =>
-        `/v2/projects/${projectIdOrSlug}/updates`,
+      UPDATES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/updates`,
     },
     APPLICATIONS: {
-      BY_PROJECT_UID: (projectUID: string) =>
-        `/v2/funding-applications/project/${projectUID}`,
-      COMMENTS: (referenceNumber: string) =>
-        `/v2/applications/${referenceNumber}/comments`,
-      DELETE: (referenceNumber: string) =>
-        `/v2/funding-applications/${referenceNumber}`,
+      BY_PROJECT_UID: (projectUID: string) => `/v2/funding-applications/project/${projectUID}`,
+      COMMENTS: (referenceNumber: string) => `/v2/applications/${referenceNumber}/comments`,
+      DELETE: (referenceNumber: string) => `/v2/funding-applications/${referenceNumber}`,
     },
   },
   PROGRAMS: {
     TRACKS: (programId: string) => `/tracks/programs/${programId}/tracks`,
-    TRACKS_ASSIGN: (programId: string) =>
-      `/tracks/programs/${programId}/tracks`,
+    TRACKS_ASSIGN: (programId: string) => `/tracks/programs/${programId}/tracks`,
     TRACKS_REMOVE: (programId: string, trackId: string, communityUID: string) =>
       `/tracks/programs/${programId}/tracks/${trackId}?communityUID=${communityUID}`,
-    TRACKS_REMOVE_BATCH: (programId: string) =>
-      `/tracks/programs/${programId}/tracks`,
+    TRACKS_REMOVE_BATCH: (programId: string) => `/tracks/programs/${programId}/tracks`,
     GET: (programId: string) => `/programs/${programId}`,
     COMMUNITY: (communityId: string) => `/communities/${communityId}/programs`,
   },
   TRACKS: {
     ALL: (communityUID: string, includeArchived: boolean = false) =>
-      `/tracks?communityUID=${communityUID}${
-        includeArchived ? "&includeArchived=true" : ""
-      }`,
+      `/tracks?communityUID=${communityUID}${includeArchived ? "&includeArchived=true" : ""}`,
     BY_ID: (id: string) => `/tracks/${id}`,
     CREATE: () => `/tracks`,
     UPDATE: (id: string) => `/tracks/${id}`,
-    ARCHIVE: (id: string, communityUID: string) =>
-      `/tracks/${id}?communityUID=${communityUID}`,
+    ARCHIVE: (id: string, communityUID: string) => `/tracks/${id}?communityUID=${communityUID}`,
   },
   PROJECT: {
     EXTERNAL: {
@@ -77,49 +65,42 @@ export const INDEXER = {
     },
     CONTRACTS: {
       CHECK_ADDRESS: () => `/v2/projects/contracts/address-availability`,
+      DEPLOYER: (network: string, contractAddress: string) =>
+        `/v2/projects/contracts/deployer?network=${encodeURIComponent(network)}&contractAddress=${encodeURIComponent(contractAddress)}`,
+      VERIFY_MESSAGE: () => `/v2/projects/contracts/verify-message`,
+      VERIFY_SIGNATURE: () => `/v2/projects/contracts/verify-signature`,
     },
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
     GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
     FUNDEDBY: (address: string) => `/projects/fundedby/${address}`,
     GRANTS_GENIE: (projectId: string) => `/projects/${projectId}/grants-genie`,
-    REQUEST_INTRO: (projectIdOrSlug: string) =>
-      `/projects/requestintro/${projectIdOrSlug}`,
+    REQUEST_INTRO: (projectIdOrSlug: string) => `/projects/requestintro/${projectIdOrSlug}`,
     ENDORSEMENT: {
-      NOTIFY: (projectIdOrSlug: string) =>
-        `/projects/${projectIdOrSlug}/endorsements/notify`,
+      NOTIFY: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/endorsements/notify`,
     },
     ALL_REPORT: (offset: number, limit: number) =>
       `/projects/report?offset=${offset}&limit=${limit}`,
-    REVOKE_ATTESTATION: (
-      attestationUID: string | `0x${string}`,
-      chainId: number
-    ) => `/attestations/revoke/${attestationUID}/${chainId}`,
+    REVOKE_ATTESTATION: (attestationUID: string | `0x${string}`, chainId: number) =>
+      `/attestations/revoke/${attestationUID}/${chainId}`,
     INVITATION: {
-      NEW_CODE: (projectIdOrSlug: string) =>
-        `/projects/${projectIdOrSlug}/add-invite-link`,
+      NEW_CODE: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/add-invite-link`,
       REVOKE_CODE: (projectIdOrSlug: string, code: string) =>
         `/projects/${projectIdOrSlug}/revoke-invite-link/${code}`,
-      ACCEPT_LINK: (projectIdOrSlug: string) =>
-        `/projects/${projectIdOrSlug}/accept-invite-link`,
-      GET_LINKS: (projectIdOrSlug: string) =>
-        `/projects/${projectIdOrSlug}/get-invite-link`,
+      ACCEPT_LINK: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/accept-invite-link`,
+      GET_LINKS: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/get-invite-link`,
       CHECK_CODE: (projectIdOrSlug: string, hash: string) =>
         `/projects/${projectIdOrSlug}/validate-invite-link/${hash}`,
     },
     CATEGORIES: {
-      UPDATE: (projectUID: string) =>
-        `/projects/${projectUID}/update/categories`,
+      UPDATE: (projectUID: string) => `/projects/${projectUID}/update/categories`,
     },
     REGIONS: {
-      UPDATE: (projectUID: string) =>
-        `/v2/projects/${projectUID}/regions`,
-      GET: (projectUID: string) =>
-        `/projects/${projectUID}/regions`,
+      UPDATE: (projectUID: string) => `/v2/projects/${projectUID}/regions`,
+      GET: (projectUID: string) => `/projects/${projectUID}/regions`,
     },
     IMPACT_INDICATORS: {
-      GET: (projectUID: string) =>
-        `/projects/${projectUID}/indicators/data/all`,
+      GET: (projectUID: string) => `/projects/${projectUID}/indicators/data/all`,
       SEND: (projectUID: string) => `/projects/${projectUID}/indicators/data`,
     },
     PAYOUT_ADDRESS: {
@@ -133,25 +114,23 @@ export const INDEXER = {
   },
   MILESTONE: {
     IMPACT_INDICATORS: {
-      GET: (milestoneUID: string) =>
-        `/grants/milestones/${milestoneUID}/indicators/data`,
-      SEND: (milestoneUID: string) => 
-        `/grants/milestones/${milestoneUID}/indicators/data`,
+      GET: (milestoneUID: string) => `/grants/milestones/${milestoneUID}/indicators/data`,
+      SEND: (milestoneUID: string) => `/grants/milestones/${milestoneUID}/indicators/data`,
     },
   },
   CATEGORIES: {
     CREATE: (idOrSlug: string) => `/categories/create/${idOrSlug}`,
     IMPACT_SEGMENTS: {
-      CREATE_OR_UPDATE: (categoryId: string) =>
-        `/categories/${categoryId}/impact-segments`,
-      DELETE: (categoryId: string) =>
-        `/categories/${categoryId}/impact-segments`,
+      CREATE_OR_UPDATE: (categoryId: string) => `/categories/${categoryId}/impact-segments`,
+      DELETE: (categoryId: string) => `/categories/${categoryId}/impact-segments`,
     },
   },
   REGIONS: {
     CREATE: (communityId: string) => `/v2/communities/${communityId}/regions`,
-    UPDATE: (communityId: string, regionId: string) => `/v2/communities/${communityId}/regions/${regionId}`,
-    DELETE: (communityId: string, regionId: string) => `/v2/communities/${communityId}/regions/${regionId}`,
+    UPDATE: (communityId: string, regionId: string) =>
+      `/v2/communities/${communityId}/regions/${regionId}`,
+    DELETE: (communityId: string, regionId: string) =>
+      `/v2/communities/${communityId}/regions/${regionId}`,
     GET_BY_ID: (regionId: string) => `/v2/regions/${regionId}`,
   },
   INDICATORS: {
@@ -159,9 +138,7 @@ export const INDEXER = {
     DELETE: (indicatorId: string) => `/indicators/${indicatorId}`,
     UNLINKED: () => `/indicators/unlinked`,
     BY_TIMERANGE: (projectUID: string, params: Record<string, number>) =>
-      `/projects/${projectUID}/indicator-dashboard-metrics?${Object.entries(
-        params
-      )
+      `/projects/${projectUID}/indicator-dashboard-metrics?${Object.entries(params)
         .map(([key, value]) => `${key}=${value}`)
         .join("&")}`,
   },
@@ -176,17 +153,24 @@ export const INDEXER = {
       STATS: (slug: string) => `/v2/communities/${slug}/stats`,
       IMPACT_SEGMENTS: (communityUID: string) => `/v2/impact-segments/${communityUID}`,
       INDICATORS: {
-        AGGREGATED: (indicatorIds: string, communityUID: string, programId?: string, projectUID?: string, startDate?: string, endDate?: string) => {
+        AGGREGATED: (
+          indicatorIds: string,
+          communityUID: string,
+          programId?: string,
+          projectUID?: string,
+          startDate?: string,
+          endDate?: string
+        ) => {
           const params = new URLSearchParams({
             indicatorIds,
             communityUID,
           });
-          
+
           if (programId) params.append("programId", programId);
           if (projectUID) params.append("projectUID", projectUID);
           if (startDate) params.append("startDate", startDate);
           if (endDate) params.append("endDate", endDate);
-          
+
           return `/v2/indicators/aggregate?${params.toString()}`;
         },
       },
@@ -226,11 +210,9 @@ export const INDEXER = {
       BULK: `/bulk-subscription/subscribe`,
     },
     REPORT: {
-      GET: (communityIdOrSlug: string) =>
-        `/communities/${communityIdOrSlug}/report`,
+      GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/report`,
     },
-    GRANT_TITLES: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/grant-titles`,
+    GRANT_TITLES: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/grant-titles`,
     GRANT_CATEGORIES: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/grant-categories`,
     GRANT_PROGRAMS: (communityIdOrSlug: string) =>
@@ -239,8 +221,7 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/grant-programs/stats`,
     GRANT_PROGRAMS_STATS_TOTAL: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/grant-programs/stats/total`,
-    PROGRAMS: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/programs`,
+    PROGRAMS: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/programs`,
     PROGRAMS_IMPACT: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/programs/impact`,
     ALL_PROGRAMS_IMPACT_AGGREGATE: (communityIdOrSlug: string) =>
@@ -278,22 +259,18 @@ export const INDEXER = {
       }${selectedProgramId ? `&selectedProgramIds=${selectedProgramId}` : ""}${
         download ? `&download=${download}` : ""
       }${selectedTrackIds ? `&selectedTrackIds=${selectedTrackIds}` : ""}`,
-    STATS: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/stats`,
+    STATS: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/stats`,
     PAGE_HEADER_STATS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/page-header-stats`,
     GLOBAL_STATS: () => `/v2/communities/stats`,
-    ADMINS: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/admins`,
+    ADMINS: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/admins`,
     BATCH_UPDATE: (idOrSlug: string) => `/communities/${idOrSlug}/batch-update`,
     INDICATORS: {
       COMMUNITY: {
-        LIST: (communityId: string) =>
-          `/communities/${communityId}/impact-indicators`,
+        LIST: (communityId: string) => `/communities/${communityId}/impact-indicators`,
       },
       CATEGORY: {
-        LIST: (categoryId: string) =>
-          `/category/${categoryId}/impact-indicators`,
+        LIST: (categoryId: string) => `/category/${categoryId}/impact-indicators`,
       },
     },
     PROJECT_UPDATES: (communityIdOrSlug: string) =>
@@ -304,12 +281,7 @@ export const INDEXER = {
     },
   },
   GRANTS: {
-    GET_ZK_GROUP: (
-      chainID: string,
-      communityUID: string,
-      grantUID: string,
-      scope: string
-    ) =>
+    GET_ZK_GROUP: (chainID: string, communityUID: string, grantUID: string, scope: string) =>
       `/semaphores/groups/check?chainID=${chainID}&communityUID=${communityUID}&grantUID=${grantUID}&scope=${scope}`,
     BY_UID: (grantUID: string) => `/grants/${grantUID}`,
     UPDATE_EXTERNAL_ID: `/grants/external-id/update`,

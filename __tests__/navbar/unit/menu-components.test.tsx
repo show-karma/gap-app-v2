@@ -5,17 +5,21 @@
  * @developer Developer 2
  */
 
-import React from "react";
-import { screen, fireEvent } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import {
-  MenuSection,
+  ExploreContent,
   ForBuildersContent,
   ForFundersContent,
-  ExploreContent,
+  MenuSection,
   ResourcesContent,
 } from "@/src/components/navbar/menu-components";
+import {
+  exploreItems,
+  forBuildersItems,
+  forFundersItems,
+  resourcesItems,
+} from "@/src/components/navbar/menu-items";
 import { renderWithProviders } from "../utils/test-helpers";
-import { forBuildersItems, forFundersItems, exploreItems, resourcesItems } from "@/src/components/navbar/menu-items";
 
 describe("MenuSection Component", () => {
   describe("Desktop Variant", () => {
@@ -99,7 +103,7 @@ describe("ForBuildersContent Component", () => {
   describe("Desktop Variant", () => {
     it("should render all menu items", () => {
       renderWithProviders(<ForBuildersContent variant="desktop" />);
-      
+
       forBuildersItems.forEach((item) => {
         expect(screen.getByText(item.title)).toBeInTheDocument();
       });
@@ -132,7 +136,7 @@ describe("ForBuildersContent Component", () => {
 
     it("should render descriptions for items", () => {
       renderWithProviders(<ForBuildersContent variant="desktop" />);
-      
+
       forBuildersItems.forEach((item) => {
         if (item.description) {
           expect(screen.getByText(item.description)).toBeInTheDocument();
@@ -144,7 +148,7 @@ describe("ForBuildersContent Component", () => {
   describe("Mobile Variant", () => {
     it("should render all menu items", () => {
       renderWithProviders(<ForBuildersContent variant="mobile" />);
-      
+
       forBuildersItems.forEach((item) => {
         expect(screen.getByText(item.title)).toBeInTheDocument();
       });
@@ -159,16 +163,16 @@ describe("ForBuildersContent Component", () => {
     it("should call onClose when item is clicked", () => {
       const onCloseMock = jest.fn();
       renderWithProviders(<ForBuildersContent variant="mobile" onClose={onCloseMock} />);
-      
+
       const firstItem = screen.getByText(forBuildersItems[0].title);
       fireEvent.click(firstItem);
-      
+
       expect(onCloseMock).toHaveBeenCalled();
     });
 
     it("should render items with mobile styling", () => {
       renderWithProviders(<ForBuildersContent variant="mobile" />);
-      
+
       forBuildersItems.forEach((item) => {
         expect(screen.getByText(item.title)).toBeInTheDocument();
       });
@@ -192,7 +196,7 @@ describe("ForFundersContent Component", () => {
 
     it("should render all secondary items", () => {
       renderWithProviders(<ForFundersContent variant="desktop" />);
-      
+
       forFundersItems.secondary.forEach((item) => {
         expect(screen.getByText(item.title)).toBeInTheDocument();
       });
@@ -233,7 +237,7 @@ describe("ForFundersContent Component", () => {
 
     it("should render all secondary items", () => {
       renderWithProviders(<ForFundersContent variant="mobile" />);
-      
+
       forFundersItems.secondary.forEach((item) => {
         expect(screen.getByText(item.title)).toBeInTheDocument();
       });
@@ -254,10 +258,10 @@ describe("ForFundersContent Component", () => {
     it("should call onClose when any item is clicked", () => {
       const onCloseMock = jest.fn();
       renderWithProviders(<ForFundersContent variant="mobile" onClose={onCloseMock} />);
-      
+
       const mainItem = screen.getByText(forFundersItems.main.title);
       fireEvent.click(mainItem);
-      
+
       expect(onCloseMock).toHaveBeenCalled();
     });
   });
@@ -277,7 +281,7 @@ describe("ExploreContent Component", () => {
 
     it("should render all project items", () => {
       renderWithProviders(<ExploreContent variant="desktop" />);
-      
+
       exploreItems.projects.forEach((item) => {
         expect(screen.getByText(item.title)).toBeInTheDocument();
       });
@@ -285,7 +289,7 @@ describe("ExploreContent Component", () => {
 
     it("should render all community items", () => {
       renderWithProviders(<ExploreContent variant="desktop" />);
-      
+
       exploreItems.communities.forEach((item) => {
         expect(screen.getByText(item.title)).toBeInTheDocument();
       });
@@ -314,17 +318,17 @@ describe("ExploreContent Component", () => {
   describe("Mobile Variant", () => {
     it("should render Projects section title", () => {
       renderWithProviders(<ExploreContent variant="mobile" />);
-      expect(screen.getByText("Projects")).toBeInTheDocument();
+      expect(screen.getByText("Explore Projects")).toBeInTheDocument();
     });
 
     it("should render Communities section title", () => {
       renderWithProviders(<ExploreContent variant="mobile" />);
-      expect(screen.getByText("Communities")).toBeInTheDocument();
+      expect(screen.getByText("Explore Communities")).toBeInTheDocument();
     });
 
     it("should render all project items", () => {
       renderWithProviders(<ExploreContent variant="mobile" />);
-      
+
       exploreItems.projects.forEach((item) => {
         expect(screen.getByText(item.title)).toBeInTheDocument();
       });
@@ -332,7 +336,7 @@ describe("ExploreContent Component", () => {
 
     it("should render all community items", () => {
       renderWithProviders(<ExploreContent variant="mobile" />);
-      
+
       exploreItems.communities.forEach((item) => {
         expect(screen.getByText(item.title)).toBeInTheDocument();
       });
@@ -341,10 +345,10 @@ describe("ExploreContent Component", () => {
     it("should call onClose when item is clicked", () => {
       const onCloseMock = jest.fn();
       renderWithProviders(<ExploreContent variant="mobile" onClose={onCloseMock} />);
-      
+
       const firstProjectItem = screen.getByText(exploreItems.projects[0].title);
       fireEvent.click(firstProjectItem);
-      
+
       expect(onCloseMock).toHaveBeenCalled();
     });
 
@@ -360,7 +364,7 @@ describe("ResourcesContent Component", () => {
   describe("Desktop Variant", () => {
     it("should render all resource items", () => {
       renderWithProviders(<ResourcesContent variant="desktop" />);
-      
+
       resourcesItems.forEach((item) => {
         expect(screen.getByText(item.title)).toBeInTheDocument();
       });
@@ -368,7 +372,7 @@ describe("ResourcesContent Component", () => {
 
     it("should render items with arrows", () => {
       renderWithProviders(<ResourcesContent variant="desktop" />);
-      
+
       // SimpleMenuItem should handle showArrow rendering
       resourcesItems.forEach((item) => {
         expect(screen.getByText(item.title)).toBeInTheDocument();
@@ -383,7 +387,7 @@ describe("ResourcesContent Component", () => {
 
     it("should render external links correctly", () => {
       renderWithProviders(<ResourcesContent variant="desktop" />);
-      
+
       resourcesItems.forEach((item) => {
         expect(screen.getByText(item.title)).toBeInTheDocument();
       });
@@ -393,7 +397,7 @@ describe("ResourcesContent Component", () => {
   describe("Mobile Variant", () => {
     it("should render all resource items", () => {
       renderWithProviders(<ResourcesContent variant="mobile" />);
-      
+
       resourcesItems.forEach((item) => {
         expect(screen.getByText(item.title)).toBeInTheDocument();
       });
@@ -401,7 +405,7 @@ describe("ResourcesContent Component", () => {
 
     it("should display arrows for external links", () => {
       const { container } = renderWithProviders(<ResourcesContent variant="mobile" />);
-      
+
       // ArrowUpRight icons should be present
       const arrowIcons = container.querySelectorAll('[class*="lucide-arrow-up-right"]');
       expect(arrowIcons.length).toBeGreaterThan(0);
@@ -410,17 +414,17 @@ describe("ResourcesContent Component", () => {
     it("should call onClose when item is clicked", () => {
       const onCloseMock = jest.fn();
       renderWithProviders(<ResourcesContent variant="mobile" onClose={onCloseMock} />);
-      
+
       const firstItem = screen.getByText(resourcesItems[0].title);
       fireEvent.click(firstItem);
-      
+
       expect(onCloseMock).toHaveBeenCalled();
     });
 
     it("should have proper hover states", () => {
       const { container } = renderWithProviders(<ResourcesContent variant="mobile" />);
-      
-      const links = container.querySelectorAll('a');
+
+      const links = container.querySelectorAll("a");
       links.forEach((link) => {
         expect(link).toHaveClass("hover:bg-accent");
       });
@@ -428,7 +432,7 @@ describe("ResourcesContent Component", () => {
 
     it("should render icons for each item", () => {
       renderWithProviders(<ResourcesContent variant="mobile" />);
-      
+
       resourcesItems.forEach((item) => {
         expect(screen.getByText(item.title)).toBeInTheDocument();
       });
@@ -459,7 +463,7 @@ describe("Component Integration", () => {
 
   it("should handle onClose callbacks consistently", () => {
     const onCloseMock = jest.fn();
-    
+
     renderWithProviders(
       <>
         <ForBuildersContent variant="mobile" onClose={onCloseMock} />
@@ -472,10 +476,7 @@ describe("Component Integration", () => {
     // Click on first available item from ForBuilders
     const firstItem = screen.getByText(forBuildersItems[0].title);
     fireEvent.click(firstItem);
-    
+
     expect(onCloseMock).toHaveBeenCalled();
   });
 });
-
-
-

@@ -1,9 +1,9 @@
 "use client";
 
-import { cn } from "@/utilities/tailwind";
-import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import React, { useEffect, useState } from "react";
+import { cn } from "@/utilities/tailwind";
 
 type TestimonialItem = {
   quote: string;
@@ -43,7 +43,7 @@ export const InfiniteMovingCards = ({
 
   useEffect(() => {
     addAnimation();
-  }, []);
+  }, [addAnimation]);
   const [start, setStart] = useState(false);
   function addAnimation() {
     if (containerRef.current && scrollerRef.current) {
@@ -64,15 +64,9 @@ export const InfiniteMovingCards = ({
   const getDirection = () => {
     if (containerRef.current) {
       if (direction === "left") {
-        containerRef.current.style.setProperty(
-          "--animation-direction",
-          "forwards",
-        );
+        containerRef.current.style.setProperty("--animation-direction", "forwards");
       } else {
-        containerRef.current.style.setProperty(
-          "--animation-direction",
-          "reverse",
-        );
+        containerRef.current.style.setProperty("--animation-direction", "reverse");
       }
     }
   };
@@ -92,16 +86,16 @@ export const InfiniteMovingCards = ({
       ref={containerRef}
       className={cn(
         "scroller relative z-20 max-w-7xl overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_20%,black_80%,transparent)] dark:[mask-image:linear-gradient(to_right,transparent,white_20%,white_80%,transparent)]",
-        className,
+        className
       )}
     >
       <ul
         ref={scrollerRef}
         className={cn(
-          "flex w-max min-w-full shrink-0 flex-nowrap py-4",
-          variant === "card" ? "gap-8" : "gap-2",
+          "flex w-max min-w-full shrink-0 flex-nowrap py-2",
+          variant === "card" ? "gap-8" : "gap-4",
           start && "animate-scroll",
-          pauseOnHover && "hover:[animation-play-state:paused]",
+          pauseOnHover && "hover:[animation-play-state:paused]"
         )}
       >
         {items.map((item, idx) => {
@@ -128,19 +122,16 @@ export const InfiniteMovingCards = ({
             );
 
             return (
-              <li
-                key={`pill-${idx}`}
-                className="shrink-0"
-              >
+              <li key={`pill-${idx}`} className="shrink-0">
                 {pillItem.href ? (
                   <Link
                     href={pillItem.href}
-                    className="flex items-center gap-2 px-2.5 py-2 mx-2 rounded-full bg-background border border-border whitespace-nowrap text-sm font-medium text-muted-foreground hover:bg-accent transition-colors"
+                    className="flex items-center gap-2 px-2.5 py-2 rounded-full bg-background border border-border whitespace-nowrap text-sm font-medium text-muted-foreground hover:bg-accent transition-colors"
                   >
                     {content}
                   </Link>
                 ) : (
-                  <div className="flex items-center gap-2 px-2.5 py-2 mx-2 rounded-full bg-background border border-border whitespace-nowrap text-sm font-medium text-muted-foreground">
+                  <div className="flex items-center gap-2 px-2.5 py-2 rounded-full bg-background border border-border whitespace-nowrap text-sm font-medium text-muted-foreground">
                     {content}
                   </div>
                 )}

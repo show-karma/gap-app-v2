@@ -1,26 +1,27 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { useCategories } from "@/hooks/useCategories";
-import { useCommunityDetails } from "@/hooks/useCommunityDetails";
-import { SimplifiedGrant, useGrants } from "@/hooks/useGrants";
-import { useGrantsTable } from "@/hooks/useGrantsTable";
-import { useCommunityGrants } from "@/hooks/useCommunityGrants";
-import { useAuth } from "@/hooks/useAuth";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
-import { defaultMetadata } from "@/utilities/meta";
-import { PAGES } from "@/utilities/pages";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useAuth } from "@/hooks/useAuth";
+import { useCategories } from "@/hooks/useCategories";
+import { useCommunityDetails } from "@/hooks/useCommunityDetails";
+import { useCommunityGrants } from "@/hooks/useCommunityGrants";
+import { type SimplifiedGrant, useGrants } from "@/hooks/useGrants";
+import { useGrantsTable } from "@/hooks/useGrantsTable";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { defaultMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
 import { CategoryCreationDialog } from "./CategoryCreationDialog";
 import { GrantsTable } from "./GrantsTable";
 import { ProgramFilter } from "./ProgramFilter";
@@ -38,11 +39,9 @@ export default function EditCategoriesPage() {
   const { authenticated: isAuth } = useAuth();
   const params = useParams();
   const communityId = params.communityId as string;
-  const [selectedCategories, setSelectedCategories] = useState<
-    Record<string, string[]>
-  >({});
+  const [selectedCategories, setSelectedCategories] = useState<Record<string, string[]>>({});
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const signer = useSigner();
+  const _signer = useSigner();
 
   const {
     data: community,
@@ -55,6 +54,7 @@ export default function EditCategoriesPage() {
     community?.uid,
     address
   );
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   useEffect(() => {
     if (
@@ -63,14 +63,10 @@ export default function EditCategoriesPage() {
     ) {
       router.push(PAGES.NOT_FOUND);
     }
-  }, [communityError]);
+  }, [communityError, router]);
 
   // Fetch grants data
-  const {
-    data,
-    isLoading: isLoadingGrants,
-    refetch: refreshGrants,
-  } = useGrants(communityId);
+  const { data, isLoading: isLoadingGrants, refetch: refreshGrants } = useGrants(communityId);
 
   // Fetch all grants for the filter dropdown
   const { data: communityGrants = [] } = useCommunityGrants(
@@ -93,8 +89,7 @@ export default function EditCategoriesPage() {
     itemsPerPage: 12,
   });
 
-  const { data: categoriesOptions = [], refetch: refreshCategories } =
-    useCategories(communityId);
+  const { data: categoriesOptions = [], refetch: refreshCategories } = useCategories(communityId);
 
   const handleCategoryChange = (uid: string, newCategories: string[]) => {
     setSelectedCategories((prev) => ({
@@ -107,21 +102,19 @@ export default function EditCategoriesPage() {
     setIsSaving(true);
     try {
       let hasError = false;
-      const promises = Object.entries(selectedCategories).map(
-        ([uid, categories]) => {
-          return fetchData(INDEXER.PROJECT.CATEGORIES.UPDATE(uid), "PUT", {
-            categories,
-            communityUID: community?.uid,
+      const promises = Object.entries(selectedCategories).map(([uid, categories]) => {
+        return fetchData(INDEXER.PROJECT.CATEGORIES.UPDATE(uid), "PUT", {
+          categories,
+          communityUID: community?.uid,
+        })
+          .then(() => {
+            refreshGrants();
           })
-            .then(() => {
-              refreshGrants();
-            })
-            .catch((error) => {
-              console.error(error);
-              hasError = true;
-            });
-        }
-      );
+          .catch((error) => {
+            console.error(error);
+            hasError = true;
+          });
+      });
       await Promise.all(promises);
 
       if (hasError) {
@@ -140,13 +133,12 @@ export default function EditCategoriesPage() {
         },
         { error: MESSAGES.CATEGORY.UPDATE.ERROR }
       );
-      console.log(error);
     } finally {
       setIsSaving(false);
     }
   };
 
-  if (loading || isLoadingGrants) {
+  if (loading || isStaffLoading || isLoadingGrants) {
     return (
       <div className="flex w-full items-center justify-center">
         <Spinner />
@@ -154,7 +146,7 @@ export default function EditCategoriesPage() {
     );
   }
 
-  if (!isAdmin) {
+  if (!isAdmin && !isStaff) {
     return (
       <div className="flex w-full items-center justify-center">
         <p>{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}</p>
@@ -167,9 +159,7 @@ export default function EditCategoriesPage() {
       <div className="w-full flex flex-col gap-8">
         <div className="w-full flex flex-row items-center justify-between">
           <Link
-            href={PAGES.ADMIN.ROOT(
-              community?.details?.data?.slug || (community?.uid as string)
-            )}
+            href={PAGES.ADMIN.ROOT(community?.details?.data?.slug || (community?.uid as string))}
           >
             <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
               <ChevronLeftIcon className="h-5 w-5" />

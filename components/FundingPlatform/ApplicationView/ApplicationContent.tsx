@@ -1,35 +1,37 @@
 "use client";
 
-import { FC, useState, useEffect, useMemo, JSX } from "react";
-import { IFundingApplication } from "@/types/funding-platform";
-import { cn } from "@/utilities/tailwind";
-import { formatDate } from "@/utilities/formatDate";
+import {
+  ArrowPathIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  DocumentTextIcon,
+  ExclamationTriangleIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
+import { type FC, type JSX, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { useApplicationVersions } from "@/hooks/useFundingPlatform";
+import { useApplicationVersionsStore } from "@/store/applicationVersions";
+import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
+import { formatDate } from "@/utilities/formatDate";
+import { cn } from "@/utilities/tailwind";
 import { getProjectTitle } from "../helper/getProjecTitle";
 import { AIEvaluationDisplay } from "./AIEvaluation";
-import StatusChangeModal from "./StatusChangeModal";
-import { StatusActionButtons } from "./StatusActionButtons";
 import AIEvaluationButton from "./AIEvaluationButton";
 import ApplicationVersionSelector from "./ApplicationVersionSelector";
 import ApplicationVersionViewer from "./ApplicationVersionViewer";
-import { useApplicationVersionsStore } from "@/store/applicationVersions";
-import { useApplicationVersions } from "@/hooks/useFundingPlatform";
-import toast from "react-hot-toast";
-import {
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  ClockIcon,
-  XMarkIcon,
-  DocumentTextIcon,
-  ArrowPathIcon,
-} from "@heroicons/react/24/outline";
+import { InternalAIEvaluationDisplay } from "./InternalAIEvaluation";
 import PostApprovalData from "./PostApprovalData";
+import { StatusActionButtons } from "./StatusActionButtons";
+import StatusChangeModal from "./StatusChangeModal";
 
 interface ApplicationContentProps {
   application: IFundingApplication;
-  program?: any;
+  program?: ProgramWithFormSchema;
   showStatusActions?: boolean;
   showAIEvaluationButton?: boolean;
+  showInternalEvaluation?: boolean;
   onStatusChange?: (status: string, note?: string) => Promise<void>;
   viewMode?: "details" | "changes";
   onViewModeChange?: (mode: "details" | "changes") => void;
@@ -64,11 +66,23 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
   program,
   showStatusActions = false,
   showAIEvaluationButton = false,
+  showInternalEvaluation,
   onStatusChange,
   viewMode: controlledViewMode,
   onViewModeChange,
   onRefresh,
 }) => {
+  // Resolve form schema from program object (handling both FundingProgram and IFundingProgramConfig structures)
+  const formSchema = (program as any)?.applicationConfig?.formSchema || program?.formSchema;
+
+  // Show internal evaluation section if user has access (don't require config check)
+  const shouldShowInternalEvaluation = showInternalEvaluation ?? showAIEvaluationButton;
+
+  // Check if internal evaluation is configured (for button functionality)
+  const canRunInternalEvaluation = Boolean(formSchema?.aiConfig?.internalLangfusePromptId);
+  const showMissingInternalPromptWarning = showAIEvaluationButton && !canRunInternalEvaluation;
+  const internalPromptHelpText =
+    "Configure the internal Langfuse prompt under the program's AI Evaluation settings to enable manual runs.";
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string>("");
@@ -98,15 +112,15 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
   // Create field labels mapping from program schema
   const fieldLabels = useMemo(() => {
     const labels: Record<string, string> = {};
-    if (program?.formSchema?.fields) {
-      program.formSchema.fields.forEach((field: any) => {
+    if (formSchema?.fields) {
+      formSchema.fields.forEach((field: any) => {
         if (field.id && field.label) {
           labels[field.id] = field.label;
         }
       });
     }
     return labels;
-  }, [program]);
+  }, [formSchema]);
 
   const StatusIcon = statusIcons[application.status as keyof typeof statusIcons] || ClockIcon;
 
@@ -139,7 +153,9 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         await onRefresh();
       } catch (error) {
         console.error("Failed to refresh application data after AI evaluation:", error);
-        toast.error("Evaluation completed but failed to refresh the display. Please reload the page.");
+        toast.error(
+          "Evaluation completed but failed to refresh the display. Please reload the page."
+        );
       }
     }
   };
@@ -157,7 +173,8 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
   const renderFieldValue = (value: any): JSX.Element => {
     if (Array.isArray(value)) {
       // Check if it's an array of milestones
-      const isMilestoneArray = value.length > 0 && typeof value[0] === "object" && "title" in value[0];
+      const isMilestoneArray =
+        value.length > 0 && typeof value[0] === "object" && "title" in value[0];
 
       if (isMilestoneArray) {
         return (
@@ -239,9 +256,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
             <dt className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
               {fieldLabels[key] || key.replace(/_/g, " ")}
             </dt>
-            <dd className="text-sm text-gray-900 dark:text-gray-100">
-              {renderFieldValue(value)}
-            </dd>
+            <dd className="text-sm text-gray-900 dark:text-gray-100">{renderFieldValue(value)}</dd>
           </div>
         ))}
       </div>
@@ -258,7 +273,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
               className={cn(
                 "flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium",
                 statusColors[application.status as keyof typeof statusColors] ||
-                "bg-zinc-100 text-gray-800 border-gray-200"
+                  "bg-zinc-100 text-gray-800 border-gray-200"
               )}
             >
               <StatusIcon className="w-4 h-4" />
@@ -272,7 +287,6 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
                 {application.applicantEmail}
               </p>
             </div>
-
           </div>
 
           <dl className="grid grid-cols-2 gap-4">
@@ -292,16 +306,16 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
 
           {/* Status Actions */}
           {!["approved", "rejected"].includes(application.status) &&
-           showStatusActions &&
-           onStatusChange && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <StatusActionButtons
-                currentStatus={application.status as any}
-                onStatusChange={handleStatusChangeClick}
-                isUpdating={isUpdatingStatus}
-              />
-            </div>
-          )}
+            showStatusActions &&
+            onStatusChange && (
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <StatusActionButtons
+                  currentStatus={application.status as any}
+                  onStatusChange={handleStatusChangeClick}
+                  isUpdating={isUpdatingStatus}
+                />
+              </div>
+            )}
         </div>
 
         {/* Current Revision Reason */}
@@ -316,16 +330,15 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
           </div>
         )}
 
-
         {application?.postApprovalData && Object.keys(application?.postApprovalData).length > 0 && (
-          <PostApprovalData
-            postApprovalData={application?.postApprovalData}
-            program={program}
-          />
+          <PostApprovalData postApprovalData={application?.postApprovalData} program={program} />
         )}
 
         {/* Application Data Section with Toggle */}
-        <div id="application-details" className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div
+          id="application-details"
+          className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+        >
           {/* Toggle Header */}
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">
@@ -361,14 +374,10 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
             )}
           </div>
 
-
-
           {/* Content based on view mode */}
           {viewMode === "details" ? (
             /* Details Mode - Show full application data */
-            <div>
-              {renderApplicationData()}
-            </div>
+            <div>{renderApplicationData()}</div>
           ) : (
             /* Changes Mode - Show version selector and changed fields */
             <div>
@@ -383,7 +392,6 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
             </div>
           )}
         </div>
-
 
         {/* AI Evaluation */}
         <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -405,6 +413,52 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
             programName={program?.name || ""}
           />
         </div>
+
+        {/* Internal AI Evaluation */}
+        {shouldShowInternalEvaluation && (
+          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                Internal AI Evaluation
+              </h3>
+              {showAIEvaluationButton && (
+                <div
+                  className="flex-shrink-0"
+                  title={!canRunInternalEvaluation ? internalPromptHelpText : undefined}
+                >
+                  <AIEvaluationButton
+                    referenceNumber={application.referenceNumber}
+                    onEvaluationComplete={handleAIEvaluationComplete}
+                    disabled={isUpdatingStatus || !canRunInternalEvaluation}
+                    isInternal={true}
+                  />
+                </div>
+              )}
+            </div>
+
+            {showMissingInternalPromptWarning && (
+              <div className="mb-4 flex items-start gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3 dark:border-yellow-900/50 dark:bg-yellow-900/20">
+                <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                <div className="space-y-1 text-sm">
+                  <p className="font-medium text-yellow-900 dark:text-yellow-200">
+                    Internal prompt not configured
+                  </p>
+                  <p className="text-yellow-800 dark:text-yellow-200/80 text-xs leading-relaxed">
+                    Set the{" "}
+                    <span className="font-semibold">Internal AI Evaluation Prompt Name</span> in the
+                    program&apos;s AI configuration (Form Builder → AI Evaluation Configuration) to
+                    enable manual internal runs.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <InternalAIEvaluationDisplay
+              evaluation={application.internalAIEvaluation?.evaluation || null}
+              programName={program?.name || ""}
+            />
+          </div>
+        )}
       </div>
 
       {/* Status Change Modal */}

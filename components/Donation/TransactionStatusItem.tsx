@@ -27,15 +27,15 @@ export function TransactionStatusItem({
     transfer.status === "success"
       ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
       : transfer.status === "error"
-      ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200"
-      : "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200";
+        ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200"
+        : "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200";
 
   const statusLabel =
     transfer.status === "pending"
       ? "Awaiting confirmation"
       : transfer.status === "success"
-      ? "Confirmed"
-      : "Failed";
+        ? "Confirmed"
+        : "Failed";
 
   // Parse error for better messaging
   let errorInfo = null;
@@ -44,25 +44,20 @@ export function TransactionStatusItem({
   }
 
   return (
-    <div
-      className="rounded-xl border-2 border-gray-200 bg-white/70 p-4 dark:border-gray-800 dark:bg-zinc-900"
-    >
+    <div className="rounded-xl border-2 border-gray-200 bg-white/70 p-4 dark:border-gray-800 dark:bg-zinc-900">
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
             {projectTitle || transfer.projectId}
           </p>
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClasses}`}
-          >
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClasses}`}>
             {statusLabel}
           </span>
         </div>
 
         {token && (
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            {token.symbol} on{" "}
-            {SUPPORTED_NETWORKS[token.chainId]?.chainName || token.chainName}
+            {token.symbol} on {SUPPORTED_NETWORKS[token.chainId]?.chainName || token.chainName}
           </p>
         )}
 
@@ -96,9 +91,7 @@ export function TransactionStatusItem({
 
         {transfer.status === "error" && errorInfo && (
           <div className="mt-2 rounded-lg bg-red-50 p-2 dark:bg-red-900/20">
-            <p className="text-xs text-red-700 dark:text-red-300">
-              {errorInfo.message}
-            </p>
+            <p className="text-xs text-red-700 dark:text-red-300">{errorInfo.message}</p>
             {errorInfo.actionableSteps.length > 0 && (
               <div className="mt-2">
                 <p className="text-xs font-medium text-red-800 dark:text-red-200">

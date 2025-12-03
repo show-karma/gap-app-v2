@@ -1,32 +1,31 @@
-import { ReadMore } from "@/utilities/ReadMore";
-import formatCurrency from "@/utilities/formatCurrency";
-import { formatDate } from "@/utilities/formatDate";
-import Image from "next/image";
-import { FC, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { registryHelper } from "./helper";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/Icons";
-import { DiscussionIcon } from "@/components/Icons/Discussion";
-import { BlogIcon } from "@/components/Icons/Blog";
-import { OrganizationIcon } from "@/components/Icons/Organization";
-import { Button } from "@/components/Utilities/Button";
 import {
-  ColumnDef,
-  Row,
+  type ColumnDef,
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
+  type Row,
+  type SortingState,
   useReactTable,
-  SortingState,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { GrantProgram } from "./ProgramList";
-import { shortAddress } from "@/utilities/shortAddress";
-import { useAccount } from "wagmi";
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
+import { type FC, useMemo, useRef, useState } from "react";
+import { useAccount } from "wagmi";
+import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/Icons";
+import { BlogIcon } from "@/components/Icons/Blog";
+import { DiscussionIcon } from "@/components/Icons/Discussion";
+import { OrganizationIcon } from "@/components/Icons/Organization";
+import { Button } from "@/components/Utilities/Button";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { formatDate } from "@/utilities/formatDate";
+import { ReadMore } from "@/utilities/ReadMore";
+import { shortAddress } from "@/utilities/shortAddress";
+import { registryHelper } from "./helper";
+import type { GrantProgram } from "./ProgramList";
 
 interface ManageProgramListProps {
   grantPrograms: GrantProgram[];
@@ -54,7 +53,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
 
   const defaultSort = searchParams.get("sortField") || "updatedAt";
   const defaultSortOrder = searchParams.get("sortOrder") || "desc";
-  const [sortField, setSortField] = useQueryState("sortField", {
+  const [_sortField, setSortField] = useQueryState("sortField", {
     defaultValue: defaultSort,
   });
   const [sortOrder, setSortOrder] = useQueryState("sortOrder", {
@@ -209,17 +208,14 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
           const grant = info.row.original;
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-400 max-w-[240px]">
-              <div
-                className="w-[360px] max-w-[360px] text-wrap pr-8"
-                data-color-mode="light"
-              >
+              <div className="w-[360px] max-w-[360px] text-wrap pr-8" data-color-mode="light">
                 <ReadMore
                   readLessText="Show less description"
                   readMoreText="Show full description"
                   side="left"
                   words={50}
                 >
-                  {grant.metadata?.description!}
+                  {grant.metadata?.description ?? ""}
                 </ReadMore>
               </div>
             </div>
@@ -313,7 +309,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
             return null;
           return (
             <div className="w-full max-w-44 flex flex-row flex-wrap gap-1 my-2 items-center">
-              {firstNetworks?.map((network, index) => (
+              {firstNetworks?.map((network, _index) => (
                 <Tooltip.Provider key={network}>
                   <Tooltip.Root delayDuration={0.5}>
                     <Tooltip.Trigger asChild>
@@ -323,22 +319,14 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
                             <Image
                               width={20}
                               height={20}
-                              src={
-                                registryHelper.networkImages[
-                                  network.toLowerCase()
-                                ].light
-                              }
+                              src={registryHelper.networkImages[network.toLowerCase()].light}
                               alt={network}
                               className="rounded-full w-5 h-5  dark:hidden"
                             />
                             <Image
                               width={20}
                               height={20}
-                              src={
-                                registryHelper.networkImages[
-                                  network.toLowerCase()
-                                ].dark
-                              }
+                              src={registryHelper.networkImages[network.toLowerCase()].dark}
                               alt={network}
                               className="rounded-full w-5 h-5  hidden dark:block"
                             />
@@ -356,17 +344,11 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
                       >
                         <div className="flex flex-col gap-3">
                           <div className="flex flex-row gap-2 items-center">
-                            {registryHelper.networkImages[
-                              network.toLowerCase()
-                            ] ? (
+                            {registryHelper.networkImages[network.toLowerCase()] ? (
                               <Image
                                 width={16}
                                 height={16}
-                                src={
-                                  registryHelper.networkImages[
-                                    network.toLowerCase()
-                                  ].dark
-                                }
+                                src={registryHelper.networkImages[network.toLowerCase()].dark}
                                 alt={network}
                                 className="rounded-full w-4 h-4"
                               />
@@ -403,21 +385,12 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
                       >
                         <div className="flex flex-col gap-3">
                           {restNetworks.map((item) => (
-                            <div
-                              key={item}
-                              className="flex flex-row gap-2 items-center"
-                            >
-                              {registryHelper.networkImages[
-                                item.toLowerCase()
-                              ] ? (
+                            <div key={item} className="flex flex-row gap-2 items-center">
+                              {registryHelper.networkImages[item.toLowerCase()] ? (
                                 <Image
                                   width={16}
                                   height={16}
-                                  src={
-                                    registryHelper.networkImages[
-                                      item.toLowerCase()
-                                    ].dark
-                                  }
+                                  src={registryHelper.networkImages[item.toLowerCase()].dark}
                                   alt={item}
                                   className="rounded-full w-4 h-4"
                                 />
@@ -470,9 +443,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
               Date Added
             </div>
             <div className="flex flex-col items-center gap-0.5">
-              {sortOrder === "asc" && (
-                <ChevronUpIcon className="w-4 h-4 inline-block" />
-              )}
+              {sortOrder === "asc" && <ChevronUpIcon className="w-4 h-4 inline-block" />}
               {sortOrder === "desc" && <ChevronDownIcon className="w-4 h-4" />}
             </div>
           </button>
@@ -509,7 +480,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
 
           return (
             <div className="w-full flex flex-row flex-wrap gap-1">
-              {grant.metadata?.categories?.map((category, index) => (
+              {grant.metadata?.categories?.map((category, _index) => (
                 <span
                   key={`${category}${grant.programId}`}
                   className="mr-1 inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
@@ -563,9 +534,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
                 <span
                   key={index}
                   className={`mr-1 inline-flex items-center rounded-md  px-2 py-1 text-xs font-medium text-black ring-1 ring-inset ring-zinc-600/20 ${
-                    admin.toLowerCase() === address?.toLowerCase()
-                      ? "bg-blue-100"
-                      : "bg-zinc-50"
+                    admin.toLowerCase() === address?.toLowerCase() ? "bg-blue-100" : "bg-zinc-50"
                   }`}
                 >
                   {shortAddress(admin.toLowerCase())}
@@ -668,9 +637,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 w-48">
               {isAllowed ? (
-                <div className="flex flex-row flex-wrap gap-3">
-                  {statusCases()}
-                </div>
+                <div className="flex flex-row flex-wrap gap-3">{statusCases()}</div>
               ) : null}
             </div>
           );
@@ -682,7 +649,17 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
         ),
       },
     ],
-    [grantPrograms, isAllowed]
+    [
+      isAllowed,
+      address?.toLowerCase,
+      approveOrReject,
+      editFn,
+      selectProgram,
+      setSortField,
+      setSortOrder,
+      sortOrder,
+      tab,
+    ]
   );
 
   const table = useReactTable({
@@ -725,12 +702,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
                       style={{ width: header.getSize() }}
                     >
                       {header.isPlaceholder ? null : (
-                        <div>
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                        </div>
+                        <div>{flexRender(header.column.columnDef.header, header.getContext())}</div>
                       )}
                     </th>
                   );
@@ -746,18 +718,13 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
                   key={row.id}
                   style={{
                     height: `${virtualRow.size}px`,
-                    transform: `translateY(${
-                      virtualRow.start - index * virtualRow.size
-                    }px)`,
+                    transform: `translateY(${virtualRow.start - index * virtualRow.size}px)`,
                   }}
                 >
                   {row.getVisibleCells().map((cell) => {
                     return (
                       <td key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     );
                   })}

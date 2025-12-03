@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useQuery } from "@tanstack/react-query";
+import { isPast, parseISO } from "date-fns";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { GrantTitleDropdown } from "./GrantTitleDropdown";
-import { TrackSelection } from "./TrackSelection";
 import { useGrantFormStore } from "./store";
-import { usePathname } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { parseISO, isPast } from "date-fns";
+import { TrackSelection } from "./TrackSelection";
 
 interface SearchGrantProgramProps {
   grantToEdit?: IGrantResponse;
@@ -35,11 +35,8 @@ export function SearchGrantProgram({
   searchForProgram,
   canAdd = true,
 }: SearchGrantProgramProps) {
-  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
-    null
-  );
-  const [hasAttemptedAutoSelect, setHasAttemptedAutoSelect] =
-    useState<boolean>(false);
+  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(null);
+  const [hasAttemptedAutoSelect, setHasAttemptedAutoSelect] = useState<boolean>(false);
   const { formData, updateFormData, flowType } = useGrantFormStore();
   const pathname = usePathname();
   const isEditing = pathname.includes("/edit");
@@ -51,9 +48,7 @@ export function SearchGrantProgram({
       if (!communityUID) return [];
 
       try {
-        const [result, error] = await fetchData(
-          INDEXER.COMMUNITY.PROGRAMS(communityUID)
-        );
+        const [result, error] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityUID));
 
         if (error) {
           console.error("Error fetching programs:", error);
@@ -61,10 +56,7 @@ export function SearchGrantProgram({
         }
 
         const filteredResult = result.filter((program: GrantProgram) => {
-          if (
-            !program.metadata?.endsAt ||
-            flowType !== 'program'
-          ) return true;
+          if (!program.metadata?.endsAt || flowType !== "program") return true;
 
           const endsAt = parseISO(program.metadata.endsAt);
           return !isPast(endsAt);
@@ -77,9 +69,7 @@ export function SearchGrantProgram({
           programsList = filteredResult.filter((program: GrantProgram) => {
             const title = program.metadata?.title?.toLowerCase() || "";
             if (Array.isArray(searchForProgram)) {
-              return searchForProgram.some((term) =>
-                title.includes(term.toLowerCase())
-              );
+              return searchForProgram.some((term) => title.includes(term.toLowerCase()));
             }
             return title.includes(searchForProgram.toLowerCase());
           });
@@ -119,10 +109,7 @@ export function SearchGrantProgram({
 
       if (matchingProgram) {
         setSelectedProgram(matchingProgram);
-        setValue(
-          "programId",
-          `${matchingProgram.programId}_${matchingProgram.chainID}`
-        );
+        setValue("programId", `${matchingProgram.programId}_${matchingProgram.chainID}`);
         if (!formData.title) {
           setValue("title", matchingProgram.metadata?.title, {
             shouldValidate: true,
@@ -133,14 +120,7 @@ export function SearchGrantProgram({
       // Mark that we've attempted auto-selection to prevent endless loops
       setHasAttemptedAutoSelect(true);
     }
-  }, [
-    allPrograms,
-    isEditing,
-    grantToEdit,
-    hasAttemptedAutoSelect,
-    setValue,
-    formData.title,
-  ]);
+  }, [allPrograms, isEditing, grantToEdit, hasAttemptedAutoSelect, setValue, formData.title]);
 
   const programIdWatch = watch("programId");
 
@@ -172,8 +152,9 @@ export function SearchGrantProgram({
             grantToEdit={grantToEdit}
             selectedProgram={selectedProgram}
             prefixUnselected="Select"
-            buttonClassname={`w-full max-w-full ${isEditing ? "opacity-70 pointer-events-none" : ""
-              }`}
+            buttonClassname={`w-full max-w-full ${
+              isEditing ? "opacity-70 pointer-events-none" : ""
+            }`}
             canAdd={canAdd && !isEditing}
             canSearch={!isEditing}
           />

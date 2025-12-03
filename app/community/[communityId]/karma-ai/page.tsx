@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { CommunityProjectEvaluatorPage } from "@/components/Pages/Communities/CommunityProjectEvaluatorPage";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
@@ -5,8 +7,6 @@ import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultMetadata } from "@/utilities/meta";
-import { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 type Params = Promise<{
   communityId: string;
@@ -42,10 +42,8 @@ export async function generateMetadata({
   };
 
   if (programId) {
-    const [programsRes, programsError] = await fetchData(
-      INDEXER.COMMUNITY.PROGRAMS(communityId)
-    );
-    const program = programsRes?.find((p: any) => p.programId === programId)
+    const [programsRes, _programsError] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityId));
+    const program = programsRes?.find((p: Record<string, unknown>) => p.programId === programId)
       ?.metadata?.title;
     if (program) {
       dynamicMetadata = {

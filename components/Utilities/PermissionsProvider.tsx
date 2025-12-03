@@ -1,14 +1,14 @@
 "use client";
 
-import { useAuth } from "@/hooks/useAuth";
-import { useAdminCommunities } from "@/hooks/useAdminCommunities";
-import { useContractOwner } from "@/hooks/useContractOwner";
 import { useEffect } from "react";
+import { useAccount } from "wagmi";
+import { useAdminCommunities } from "@/hooks/useAdminCommunities";
+import { useAuth } from "@/hooks/useAuth";
+import { useContractOwner } from "@/hooks/useContractOwner";
 import { useRegistryStore } from "@/store/registry";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
 import { errorManager } from "./errorManager";
-import { useAccount } from "wagmi";
 
 export function PermissionsProvider() {
   const { address, isConnected } = useAuth();
@@ -35,12 +35,10 @@ export function PermissionsProvider() {
           `Error while checking if ${address} is a registry admin or pool manager`,
           error
         );
-        console.log(error);
       }
     };
     getMemberOf();
-  }, [address, isConnected, chain]);
+  }, [address, isConnected, setIsPoolManager, setIsRegistryAdmin]);
 
   return null;
 }
-

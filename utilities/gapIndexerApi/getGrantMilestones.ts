@@ -1,9 +1,9 @@
-import {
+import type {
   IGrantResponse,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { gapIndexerApi } from ".";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { gapIndexerApi } from ".";
 
 export async function getGrantMilestones(
   projectId: string

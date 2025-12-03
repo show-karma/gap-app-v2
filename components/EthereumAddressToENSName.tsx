@@ -1,15 +1,19 @@
 "use client";
+import type React from "react";
+import { useEffect } from "react";
 import { useENS } from "@/store/ens";
-import React, { useEffect, useMemo } from "react";
+import { cn } from "@/utilities/tailwind";
 
 interface Props {
   address: any;
   shouldTruncate?: boolean;
+  className?: string;
 }
 
 const EthereumAddressToENSName: React.FC<Props> = ({
   address,
   shouldTruncate = true,
+  className,
 }) => {
   const ensNames = useENS((state) => state.ensData);
   const populateEns = useENS((state) => state.populateEns);
@@ -22,11 +26,11 @@ const EthereumAddressToENSName: React.FC<Props> = ({
   }, [lowerCasedAddress, ensNames, populateEns]);
 
   const addressToDisplay = shouldTruncate
-    ? lowerCasedAddress?.slice(0, 6) + "..." + lowerCasedAddress?.slice(-6)
+    ? `${lowerCasedAddress?.slice(0, 6)}...${lowerCasedAddress?.slice(-6)}`
     : lowerCasedAddress;
 
   return (
-    <span className="font-body">
+    <span className={cn("font-body", className)}>
       {!lowerCasedAddress || !ensNames[lowerCasedAddress]?.name
         ? addressToDisplay
         : ensNames[lowerCasedAddress].name}

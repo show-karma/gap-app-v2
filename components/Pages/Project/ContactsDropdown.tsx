@@ -1,14 +1,8 @@
-import { FC, useState } from "react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "cmdk";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
-import { Contact } from "@/types/project";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
+import { type FC, useState } from "react";
+import type { Contact } from "@/types/project";
 import { cn } from "@/utilities/tailwind";
 
 interface ContactsDropdownProps {
@@ -28,8 +22,7 @@ export const ContactsDropdown: FC<ContactsDropdownProps> = ({
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger className="w-full justify-between text-black dark:text-white dark:bg-zinc-800 flex flex-row gap-2 px-4 py-2 items-center bg-gray-100 rounded-md">
         {value
-          ? contacts?.find((contact) => contact.id === value)?.name ||
-            "Add new contact"
+          ? contacts?.find((contact) => contact.id === value)?.name || "Add new contact"
           : "Select a contact"}
         <ChevronUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Popover.Trigger>

@@ -1,18 +1,16 @@
 "use client";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useState } from "react";
 import { GrantUpdateForm } from "@/components/Forms/GrantUpdate";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useState } from "react";
 import { Dropdown } from "./Dropdown";
 import { NoGrant } from "./NoGrant";
 
 export const GrantUpdateScreen = () => {
   const { project } = useProjectStore();
   const { closeProgressModal } = useProgressModalStore();
-  const [selectedGrant, setSelectedGrant] = useState<
-    IGrantResponse | undefined
-  >();
+  const [selectedGrant, setSelectedGrant] = useState<IGrantResponse | undefined>();
   const grants: IGrantResponse[] = project?.grants || [];
   if (!grants.length && project) {
     return <NoGrant />;
@@ -20,9 +18,7 @@ export const GrantUpdateScreen = () => {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-bold text-black dark:text-zinc-100">
-          Select Grant
-        </label>
+        <div className="text-sm font-bold text-black dark:text-zinc-100">Select Grant</div>
         <Dropdown
           list={grants.map((grant) => ({
             value: grant.details?.data.title || "",

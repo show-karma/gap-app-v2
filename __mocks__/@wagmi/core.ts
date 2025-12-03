@@ -5,7 +5,7 @@
 export const createConfig = jest.fn(() => ({}));
 export const http = jest.fn((url: string) => ({
   url,
-  type: 'http',
+  type: "http",
 }));
 export const getAccount = jest.fn(() => ({
   address: undefined,
@@ -15,4 +15,3 @@ export const getConnections = jest.fn(() => []);
 export const disconnect = jest.fn();
 export const watchAccount = jest.fn();
 export const reconnect = jest.fn();
-

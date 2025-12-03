@@ -3,18 +3,19 @@
  * @description Tests fetching funding applications by project UID using React Query
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderHook, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
 import * as fundingApplicationsService from "@/services/funding-applications";
-import { ReactNode } from "react";
 
 // Mock the service
 jest.mock("@/services/funding-applications");
 
-const mockFetchApplicationByProjectUID = fundingApplicationsService.fetchApplicationByProjectUID as jest.MockedFunction<
-  typeof fundingApplicationsService.fetchApplicationByProjectUID
->;
+const mockFetchApplicationByProjectUID =
+  fundingApplicationsService.fetchApplicationByProjectUID as jest.MockedFunction<
+    typeof fundingApplicationsService.fetchApplicationByProjectUID
+  >;
 
 describe("useFundingApplicationByProjectUID", () => {
   let queryClient: QueryClient;
@@ -57,10 +58,9 @@ describe("useFundingApplicationByProjectUID", () => {
 
       mockFetchApplicationByProjectUID.mockResolvedValue(mockApplication as any);
 
-      const { result } = renderHook(
-        () => useFundingApplicationByProjectUID("project-1"),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useFundingApplicationByProjectUID("project-1"), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -72,30 +72,25 @@ describe("useFundingApplicationByProjectUID", () => {
     });
 
     it("should not fetch when projectUID is empty string", () => {
-      const { result } = renderHook(
-        () => useFundingApplicationByProjectUID(""),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useFundingApplicationByProjectUID(""), { wrapper });
 
       expect(mockFetchApplicationByProjectUID).not.toHaveBeenCalled();
       expect(result.current.isLoading).toBe(false);
     });
 
     it("should not fetch when projectUID is null", () => {
-      const { result } = renderHook(
-        () => useFundingApplicationByProjectUID(null as any),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useFundingApplicationByProjectUID(null as any), {
+        wrapper,
+      });
 
       expect(mockFetchApplicationByProjectUID).not.toHaveBeenCalled();
       expect(result.current.isLoading).toBe(false);
     });
 
     it("should not fetch when projectUID is undefined", () => {
-      const { result } = renderHook(
-        () => useFundingApplicationByProjectUID(undefined as any),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useFundingApplicationByProjectUID(undefined as any), {
+        wrapper,
+      });
 
       expect(mockFetchApplicationByProjectUID).not.toHaveBeenCalled();
       expect(result.current.isLoading).toBe(false);
@@ -107,10 +102,9 @@ describe("useFundingApplicationByProjectUID", () => {
       const error = new Error("Failed to fetch application");
       mockFetchApplicationByProjectUID.mockRejectedValue(error);
 
-      const { result } = renderHook(
-        () => useFundingApplicationByProjectUID("project-1"),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useFundingApplicationByProjectUID("project-1"), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -121,14 +115,11 @@ describe("useFundingApplicationByProjectUID", () => {
     });
 
     it("should handle network errors", async () => {
-      mockFetchApplicationByProjectUID.mockRejectedValue(
-        new Error("Network error")
-      );
+      mockFetchApplicationByProjectUID.mockRejectedValue(new Error("Network error"));
 
-      const { result } = renderHook(
-        () => useFundingApplicationByProjectUID("project-1"),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useFundingApplicationByProjectUID("project-1"), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.error).toBeTruthy();
@@ -145,10 +136,9 @@ describe("useFundingApplicationByProjectUID", () => {
           )
       );
 
-      const { result } = renderHook(
-        () => useFundingApplicationByProjectUID("project-1"),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useFundingApplicationByProjectUID("project-1"), {
+        wrapper,
+      });
 
       expect(result.current.isLoading).toBe(true);
 
@@ -160,12 +150,14 @@ describe("useFundingApplicationByProjectUID", () => {
 
   describe("Refetch Functionality", () => {
     it("should expose refetch function", async () => {
-      mockFetchApplicationByProjectUID.mockResolvedValue({ id: "app-1", projectUID: "project-1" } as any);
+      mockFetchApplicationByProjectUID.mockResolvedValue({
+        id: "app-1",
+        projectUID: "project-1",
+      } as any);
 
-      const { result } = renderHook(
-        () => useFundingApplicationByProjectUID("project-1"),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useFundingApplicationByProjectUID("project-1"), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -179,10 +171,9 @@ describe("useFundingApplicationByProjectUID", () => {
         .mockResolvedValueOnce({ id: "app-1", applicationData: { title: "First" } } as any)
         .mockResolvedValueOnce({ id: "app-1", applicationData: { title: "Updated" } } as any);
 
-      const { result } = renderHook(
-        () => useFundingApplicationByProjectUID("project-1"),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useFundingApplicationByProjectUID("project-1"), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.application?.applicationData?.title).toBe("First");
@@ -200,12 +191,14 @@ describe("useFundingApplicationByProjectUID", () => {
 
   describe("Return Value Structure", () => {
     it("should return correct structure", async () => {
-      mockFetchApplicationByProjectUID.mockResolvedValue({ id: "app-1", projectUID: "project-1" } as any);
+      mockFetchApplicationByProjectUID.mockResolvedValue({
+        id: "app-1",
+        projectUID: "project-1",
+      } as any);
 
-      const { result } = renderHook(
-        () => useFundingApplicationByProjectUID("project-1"),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useFundingApplicationByProjectUID("project-1"), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -220,12 +213,14 @@ describe("useFundingApplicationByProjectUID", () => {
 
   describe("Query Key Management", () => {
     it("should use proper query keys", async () => {
-      mockFetchApplicationByProjectUID.mockResolvedValue({ id: "app-1", projectUID: "project-1" } as any);
+      mockFetchApplicationByProjectUID.mockResolvedValue({
+        id: "app-1",
+        projectUID: "project-1",
+      } as any);
 
-      const { result } = renderHook(
-        () => useFundingApplicationByProjectUID("project-1"),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useFundingApplicationByProjectUID("project-1"), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);

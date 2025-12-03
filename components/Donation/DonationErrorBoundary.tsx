@@ -1,9 +1,8 @@
 "use client";
-import React, { Component, ErrorInfo, ReactNode } from "react";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { useDonationCart } from "@/store/donationCart";
-import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
 import Link from "next/link";
+import { Component, type ErrorInfo, type ReactNode } from "react";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
 
 interface Props {
   children: ReactNode;
@@ -114,9 +113,7 @@ class DonationErrorBoundaryClass extends Component<Props, State> {
                 <h2 className="mb-2 text-sm font-semibold text-red-900 dark:text-red-200">
                   Error Details
                 </h2>
-                <p className="text-sm text-red-800 dark:text-red-300">
-                  {parsedError.message}
-                </p>
+                <p className="text-sm text-red-800 dark:text-red-300">{parsedError.message}</p>
               </div>
 
               {parsedError.actionableSteps.length > 0 && (
@@ -154,12 +151,14 @@ class DonationErrorBoundaryClass extends Component<Props, State> {
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <button
+                type="button"
                 onClick={this.handleTryAgain}
                 className="flex-1 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
               >
                 Try Again
               </button>
               <button
+                type="button"
                 onClick={this.handleClearCart}
                 className="flex-1 rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-zinc-900 dark:text-gray-300 dark:hover:bg-zinc-800"
               >

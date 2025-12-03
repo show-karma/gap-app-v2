@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import type React from "react";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
@@ -22,9 +22,10 @@ export const FundingProgramFields: React.FC<FundingProgramFieldsProps> = ({
   errors = {},
 }) => {
   const getInputStyle = (hasError: boolean) => {
-    const baseStyle = "w-full px-3 py-2 bg-white dark:bg-zinc-900 rounded-md focus:outline-none focus:ring-2 dark:text-zinc-100";
-    const borderStyle = hasError 
-      ? "border-2 border-red-500 focus:ring-red-500" 
+    const baseStyle =
+      "w-full px-3 py-2 bg-white dark:bg-zinc-900 rounded-md focus:outline-none focus:ring-2 dark:text-zinc-100";
+    const borderStyle = hasError
+      ? "border-2 border-red-500 focus:ring-red-500"
       : "border border-gray-300 dark:border-zinc-700 focus:ring-blue-500";
     return `${baseStyle} ${borderStyle}`;
   };

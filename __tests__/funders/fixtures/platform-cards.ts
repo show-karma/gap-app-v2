@@ -47,4 +47,3 @@ export function createMockPlatformCard(overrides: Partial<PlatformCard> = {}): P
     ...overrides,
   };
 }
-

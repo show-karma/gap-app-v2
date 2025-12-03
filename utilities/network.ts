@@ -1,19 +1,19 @@
+import type { TNetwork } from "@show-karma/karma-gap-sdk";
 import type { Chain } from "viem/chains";
 import {
   arbitrum,
+  base,
+  baseSepolia,
   celo,
+  lisk,
+  mainnet,
   optimism,
   optimismSepolia,
-  baseSepolia,
-  sepolia,
-  sei,
-  lisk,
-  scroll,
-  mainnet,
-  base,
   polygon,
+  scroll,
+  sei,
+  sepolia,
 } from "viem/chains";
-import type { TNetwork } from "@show-karma/karma-gap-sdk";
 
 const includeTestNetworks = process.env.NEXT_PUBLIC_ENV !== "production";
 
@@ -44,23 +44,16 @@ const nonProductionNetworks: Chain[] = [
   sepolia,
 ];
 
-const configuredNetworks = includeTestNetworks
-  ? nonProductionNetworks
-  : productionNetworks;
+const configuredNetworks = includeTestNetworks ? nonProductionNetworks : productionNetworks;
 
 export const appNetwork = configuredNetworks as [Chain, ...Chain[]];
-
 
 /**
  * Networks supported by GAP SDK for project creation.
  * Filters out chains that are available for other features (e.g., donations)
  * but cannot be used for creating projects/attestations.
  */
-const gapUnsupportedChainIds: number[] = [
-  mainnet.id,
-  base.id,
-  polygon.id
-];
+const gapUnsupportedChainIds: number[] = [mainnet.id, base.id, polygon.id];
 
 export const gapSupportedNetworks = appNetwork.filter(
   (chain) => !gapUnsupportedChainIds.includes(chain.id)
@@ -93,12 +86,12 @@ export function getChainIdByName(name: string) {
     case "mainnet":
     case "ethereum":
       return 1;
-    case "OP Mainnet":
+    case "op mainnet":
     case "optimism":
       return 10;
     case "arbitrum":
     case "arbitrum-one":
-    case "ArbitrumOne":
+    case "arbitrumone":
       return 42161;
     case "base":
       return 8453;
@@ -108,18 +101,17 @@ export function getChainIdByName(name: string) {
     case "matic":
       return 137;
     case "sei":
-    case "Seitrace":
+    case "seitrace":
       return 1329;
-    case "optimismGoerli":
-    case "Optimism Goerli":
+    case "optimismgoerli":
+    case "optimism goerli":
     case "optimism-goerli":
       return 420;
-    case "Optimism Sepolia":
+    case "optimism sepolia":
     case "optimism-sepolia":
-    case "optimismSepolia":
+    case "optimismsepolia":
       return 11155420;
     case "sepolia":
-    case "Sepolia":
       return 11155111;
     case "base-sepolia":
     case "base sepolia":

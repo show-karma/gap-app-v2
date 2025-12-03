@@ -3,7 +3,7 @@
  * @description Tests for milestone action state management hook
  */
 
-import { renderHook, act } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { useMilestoneActions } from "@/hooks/useMilestoneActions";
 
 describe("useMilestoneActions", () => {
@@ -77,6 +77,3 @@ describe("useMilestoneActions", () => {
     expect(result.current.isCompleting).toBe(true);
   });
 });
-
-
-

@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { linkName, mapLinks } from "./utils/links";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useEffect, useRef, useState } from "react";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useProjectStore } from "@/store";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { linkName, mapLinks } from "./utils/links";
 
 export interface ProjectWithExternal extends IProjectResponse {
   external?: {
@@ -13,24 +13,22 @@ export interface ProjectWithExternal extends IProjectResponse {
 
 export const GroupedLinks = ({ proofs }: { proofs: string[] }) => {
   const { project } = useProjectStore();
-  const links = mapLinks(
-    proofs,
-    (project as ProjectWithExternal)?.external?.network_addresses
-  );
-  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>(
-    {}
-  );
+  const links = mapLinks(proofs, (project as ProjectWithExternal)?.external?.network_addresses);
+  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
   const dropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Group links by their names
-  const groupedLinks = links.reduce((acc, link) => {
-    const name = linkName(link as string);
-    if (!acc[name]) {
-      acc[name] = [];
-    }
-    acc[name].push(link as string);
-    return acc;
-  }, {} as Record<string, string[]>);
+  const groupedLinks = links.reduce(
+    (acc, link) => {
+      const name = linkName(link as string);
+      if (!acc[name]) {
+        acc[name] = [];
+      }
+      acc[name].push(link as string);
+      return acc;
+    },
+    {} as Record<string, string[]>
+  );
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -57,10 +55,7 @@ export const GroupedLinks = ({ proofs }: { proofs: string[] }) => {
   return (
     <>
       {Object.entries(groupedLinks).map(([name, urls], groupIndex) => (
-        <div
-          key={groupIndex}
-          className="relative flex items-center gap-1 mr-2 mb-1"
-        >
+        <div key={groupIndex} className="relative flex items-center gap-1 mr-2 mb-1">
           {urls.length === 1 ? (
             <ExternalLink
               href={urls[0]}

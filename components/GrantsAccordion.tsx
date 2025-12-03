@@ -1,6 +1,6 @@
 "use client";
 import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
-import { FC, ReactNode, useState } from "react";
+import { type FC, type ReactNode, useState } from "react";
 
 interface GrantsAccordionProps {
   children: ReactNode;
@@ -28,9 +28,7 @@ export const GrantsAccordion: FC<GrantsAccordionProps> = ({ children }) => {
           )}
         </div>
       </button>
-      {isOpen ? (
-        <div className="mt-4 flex flex-col gap-2">{children}</div>
-      ) : null}
+      {isOpen ? <div className="mt-4 flex flex-col gap-2">{children}</div> : null}
     </div>
   );
 };

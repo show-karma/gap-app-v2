@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { useProjectStore } from "@/store";
 import { checkForDuplicateGrant } from "@/services/duplicateGrantCheck";
+import { useProjectStore } from "@/store";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 interface DuplicateCheckParams {

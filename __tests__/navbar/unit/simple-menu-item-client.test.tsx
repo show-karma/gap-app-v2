@@ -5,21 +5,16 @@
  * @developer Developer 2
  */
 
-import React from "react";
-import { screen, fireEvent } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
+import { LayoutGrid } from "lucide-react";
 import { SimpleMenuItemClient } from "@/src/components/navbar/simple-menu-item-client";
 import { renderWithProviders } from "../utils/test-helpers";
-import { LayoutGrid } from "lucide-react";
 
 describe("SimpleMenuItemClient Component", () => {
   describe("Rendering Tests", () => {
     it("should render icon and title", () => {
       renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" />
       );
 
       expect(screen.getByText("Test Title")).toBeInTheDocument();
@@ -27,11 +22,7 @@ describe("SimpleMenuItemClient Component", () => {
 
     it("should not render description (simple variant)", () => {
       renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" />
       );
 
       // SimpleMenuItem doesn't support description prop
@@ -41,12 +32,7 @@ describe("SimpleMenuItemClient Component", () => {
 
     it("should render arrow when showArrow is true", () => {
       const { container } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-          showArrow={true}
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" showArrow={true} />
       );
 
       const arrowIcon = container.querySelector('[class*="lucide-arrow-up-right"]');
@@ -55,12 +41,7 @@ describe("SimpleMenuItemClient Component", () => {
 
     it("should not render arrow when showArrow is false or undefined", () => {
       const { container } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-          showArrow={false}
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" showArrow={false} />
       );
 
       const arrowIcon = container.querySelector('[class*="lucide-arrow-up-right"]');
@@ -69,11 +50,7 @@ describe("SimpleMenuItemClient Component", () => {
 
     it("should render icon correctly", () => {
       const { container } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" />
       );
 
       const icon = container.querySelector('[class*="lucide-layout-grid"]');
@@ -84,18 +61,13 @@ describe("SimpleMenuItemClient Component", () => {
   describe("Desktop Variant Styling", () => {
     it("should apply desktop styling classes", () => {
       const { container } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-          variant="desktop"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" variant="desktop" />
       );
 
-      const link = container.querySelector('a');
+      const link = container.querySelector("a");
       expect(link).toHaveClass("block");
 
-      const innerDiv = container.querySelector('.flex.items-center.flex-row.gap-2');
+      const innerDiv = container.querySelector(".flex.items-center.flex-row.gap-2");
       expect(innerDiv).toBeInTheDocument();
       expect(innerDiv).toHaveClass("px-2");
       expect(innerDiv).toHaveClass("py-1.5");
@@ -119,15 +91,10 @@ describe("SimpleMenuItemClient Component", () => {
 
     it("should use proper gap spacing", () => {
       const { container } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-          variant="desktop"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" variant="desktop" />
       );
 
-      const flexContainer = container.querySelector('.gap-2');
+      const flexContainer = container.querySelector(".gap-2");
       expect(flexContainer).toBeInTheDocument();
     });
   });
@@ -135,15 +102,10 @@ describe("SimpleMenuItemClient Component", () => {
   describe("Mobile Variant Styling", () => {
     it("should apply mobile styling classes", () => {
       const { container } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-          variant="mobile"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" variant="mobile" />
       );
 
-      const link = container.querySelector('a');
+      const link = container.querySelector("a");
       expect(link).toHaveClass("flex");
       expect(link).toHaveClass("items-center");
       expect(link).toHaveClass("gap-2");
@@ -155,25 +117,15 @@ describe("SimpleMenuItemClient Component", () => {
 
     it("should have different padding than desktop", () => {
       const { container: desktopContainer } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Desktop"
-          variant="desktop"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Desktop" variant="desktop" />
       );
 
       const { container: mobileContainer } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Mobile"
-          variant="mobile"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Mobile" variant="mobile" />
       );
 
-      const desktopInnerDiv = desktopContainer.querySelector('.px-2.py-1\\.5');
-      const mobileLink = mobileContainer.querySelector('.px-0.py-1');
+      const desktopInnerDiv = desktopContainer.querySelector(".px-2.py-1\\.5");
+      const mobileLink = mobileContainer.querySelector(".px-0.py-1");
 
       expect(desktopInnerDiv).toBeInTheDocument();
       expect(mobileLink).toBeInTheDocument();
@@ -215,11 +167,7 @@ describe("SimpleMenuItemClient Component", () => {
 
     it("should navigate to correct href", () => {
       const { container } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/projects"
-          icon={LayoutGrid}
-          title="Projects"
-        />
+        <SimpleMenuItemClient href="/projects" icon={LayoutGrid} title="Projects" />
       );
 
       const link = container.querySelector('a[href="/projects"]');
@@ -279,12 +227,7 @@ describe("SimpleMenuItemClient Component", () => {
   describe("Interaction Tests", () => {
     it("should handle hover states", () => {
       const { container } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-          variant="desktop"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" variant="desktop" />
       );
 
       const hoverElement = container.querySelector(".hover\\:bg-accent");
@@ -322,7 +265,7 @@ describe("SimpleMenuItemClient Component", () => {
       );
 
       const title = screen.getByText("Test Title");
-      
+
       // Simulate click via keyboard
       fireEvent.click(title);
 
@@ -333,11 +276,7 @@ describe("SimpleMenuItemClient Component", () => {
   describe("Icon Styling", () => {
     it("should apply correct icon classes", () => {
       const { container } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" />
       );
 
       const icon = container.querySelector('[class*="lucide-layout-grid"]');
@@ -349,12 +288,7 @@ describe("SimpleMenuItemClient Component", () => {
 
     it("should apply arrow icon classes when showArrow is true", () => {
       const { container } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-          showArrow={true}
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" showArrow={true} />
       );
 
       const arrowIcon = container.querySelector('[class*="lucide-arrow-up-right"]');
@@ -369,11 +303,7 @@ describe("SimpleMenuItemClient Component", () => {
   describe("Text Styling", () => {
     it("should apply correct title classes", () => {
       renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" />
       );
 
       const title = screen.getByText("Test Title");
@@ -386,11 +316,7 @@ describe("SimpleMenuItemClient Component", () => {
   describe("Accessibility Tests", () => {
     it("should render as a valid link", () => {
       const { container } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" />
       );
 
       const link = container.querySelector('a[href="/test"]');
@@ -399,28 +325,20 @@ describe("SimpleMenuItemClient Component", () => {
 
     it("should be keyboard accessible", () => {
       const { container } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" />
       );
 
-      const link = container.querySelector('a');
+      const link = container.querySelector("a");
       expect(link).toBeInTheDocument();
       // Links are naturally keyboard accessible
     });
 
     it("should have proper focus behavior", () => {
       const { container } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" />
       );
 
-      const link = container.querySelector('a');
+      const link = container.querySelector("a");
       link?.focus();
       expect(document.activeElement).toBe(link);
     });
@@ -429,41 +347,28 @@ describe("SimpleMenuItemClient Component", () => {
   describe("Layout Tests", () => {
     it("should use flexbox layout", () => {
       const { container } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-          variant="desktop"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" variant="desktop" />
       );
 
-      const flexContainer = container.querySelector('.flex.items-center.flex-row');
+      const flexContainer = container.querySelector(".flex.items-center.flex-row");
       expect(flexContainer).toBeInTheDocument();
     });
 
     it("should align items correctly", () => {
       const { container } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" />
       );
 
-      const flexContainer = container.querySelector('.items-center');
+      const flexContainer = container.querySelector(".items-center");
       expect(flexContainer).toBeInTheDocument();
     });
 
     it("should have horizontal layout (flex-row)", () => {
       const { container } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" />
       );
 
-      const flexContainer = container.querySelector('.flex-row');
+      const flexContainer = container.querySelector(".flex-row");
       expect(flexContainer).toBeInTheDocument();
     });
   });
@@ -471,25 +376,15 @@ describe("SimpleMenuItemClient Component", () => {
   describe("Variant Comparison", () => {
     it("desktop should have block wrapper, mobile should not", () => {
       const { container: desktopContainer } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Desktop"
-          variant="desktop"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Desktop" variant="desktop" />
       );
 
       const { container: mobileContainer } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Mobile"
-          variant="mobile"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Mobile" variant="mobile" />
       );
 
-      const desktopBlockLink = desktopContainer.querySelector('a.block');
-      const mobileFlexLink = mobileContainer.querySelector('a.flex');
+      const desktopBlockLink = desktopContainer.querySelector("a.block");
+      const mobileFlexLink = mobileContainer.querySelector("a.flex");
 
       expect(desktopBlockLink).toBeInTheDocument();
       expect(mobileFlexLink).toBeInTheDocument();
@@ -497,23 +392,13 @@ describe("SimpleMenuItemClient Component", () => {
 
     it("should render content consistently across variants", () => {
       renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-          variant="desktop"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" variant="desktop" />
       );
 
       expect(screen.getByText("Test Title")).toBeInTheDocument();
 
       renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-          variant="mobile"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" variant="mobile" />
       );
 
       expect(screen.getAllByText("Test Title").length).toBe(2);
@@ -564,13 +449,7 @@ describe("SimpleMenuItemClient Component", () => {
     });
 
     it("should handle empty href", () => {
-      renderWithProviders(
-        <SimpleMenuItemClient
-          href=""
-          icon={LayoutGrid}
-          title="Test Title"
-        />
-      );
+      renderWithProviders(<SimpleMenuItemClient href="" icon={LayoutGrid} title="Test Title" />);
 
       expect(screen.getByText("Test Title")).toBeInTheDocument();
     });
@@ -579,11 +458,7 @@ describe("SimpleMenuItemClient Component", () => {
       const longTitle = "This is a very long title that might wrap to multiple lines";
 
       renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title={longTitle}
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title={longTitle} />
       );
 
       expect(screen.getByText(longTitle)).toBeInTheDocument();
@@ -592,13 +467,7 @@ describe("SimpleMenuItemClient Component", () => {
 
   describe("Comparison with MenuItemClient", () => {
     it("should be simpler than MenuItemClient (no description)", () => {
-      renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Simple"
-        />
-      );
+      renderWithProviders(<SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Simple" />);
 
       // Verify no description is rendered
       const container = screen.getByText("Simple").parentElement;
@@ -608,11 +477,7 @@ describe("SimpleMenuItemClient Component", () => {
 
     it("should have consistent icon and title rendering", () => {
       const { container } = renderWithProviders(
-        <SimpleMenuItemClient
-          href="/test"
-          icon={LayoutGrid}
-          title="Test Title"
-        />
+        <SimpleMenuItemClient href="/test" icon={LayoutGrid} title="Test Title" />
       );
 
       const icon = container.querySelector('[class*="lucide-layout-grid"]');
@@ -623,6 +488,3 @@ describe("SimpleMenuItemClient Component", () => {
     });
   });
 });
-
-
-

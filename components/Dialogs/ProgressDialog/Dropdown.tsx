@@ -1,17 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, useEffect, useState } from "react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "cmdk";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
+
+import { CheckIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
-import { cn } from "@/utilities/tailwind";
-import { ChevronDown } from "@/components/Icons/ChevronDown";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
 import pluralize from "pluralize";
+import { type FC, useEffect, useState } from "react";
+import { ChevronDown } from "@/components/Icons/ChevronDown";
+import { cn } from "@/utilities/tailwind";
 
 interface DropdownItem {
   value: string;
@@ -57,7 +52,7 @@ export const Dropdown: FC<DropdownProps> = ({
         })
       : list;
     setOrderedList(sortedList);
-  }, []);
+  }, [list, shouldSort]);
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -97,29 +92,26 @@ export const Dropdown: FC<DropdownProps> = ({
             <CommandGroup className="divide-y divide-y-zinc-500">
               {orderedList.map((item) => (
                 <CommandItem key={item.value}>
-                  <div
+                  <button
+                    type="button"
                     onClick={() => {
                       onSelectFunction(item.id);
                       setOpen(false);
                     }}
-                    className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
+                    className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
                   >
                     <div className="flex flex-row gap-2 items-center justify-start w-full">
                       <div className="flex flex-row gap-1  items-center justify-start  flex-1">
-                        <p className="line-clamp-2 text-sm max-w-full break-normal">
-                          {item.value}
-                        </p>
+                        <p className="line-clamp-2 text-sm max-w-full break-normal">{item.value}</p>
                       </div>
                     </div>
                     <CheckIcon
-                      className={cn(
-                        "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white"
-                      )}
+                      className={cn("mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white")}
                       style={{
                         display: selected === item.id ? "block" : "none",
                       }}
                     />
-                  </div>
+                  </button>
                 </CommandItem>
               ))}
             </CommandGroup>

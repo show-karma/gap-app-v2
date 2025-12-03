@@ -1,7 +1,8 @@
 "use client";
+import type { MarkdownPreviewProps } from "@uiw/react-markdown-preview";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { MarkdownPreviewProps } from "@uiw/react-markdown-preview";
-import React, { useEffect, useState } from "react";
 
 interface Props {
   words?: any;
@@ -31,7 +32,7 @@ export const ReadMore = ({
 
   const text = children ? children : "";
 
-  const getMinimumText = () => {
+  const getMinimumText = useCallback(() => {
     let wordsCounter = 400;
     for (let i = words || 400; i < text.length; i++) {
       const regex = /\s/;
@@ -43,7 +44,7 @@ export const ReadMore = ({
       }
     }
     return wordsCounter;
-  };
+  }, [words, text]);
 
   // Function to safely truncate markdown without breaking syntax elements
   const safelyTruncateMarkdown = (text: string, cutoffLength: number) => {
@@ -55,12 +56,12 @@ export const ReadMore = ({
     // Find all markdown link structures in the text
     const linkMatches: { start: number; end: number }[] = [];
     const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-    let match;
+    const matches = Array.from(text.matchAll(linkRegex));
 
-    while ((match = linkRegex.exec(text)) !== null) {
+    for (const match of matches) {
       linkMatches.push({
-        start: match.index,
-        end: match.index + match[0].length,
+        start: match.index ?? 0,
+        end: (match.index ?? 0) + match[0].length,
       });
     }
 
@@ -208,9 +209,7 @@ export const ReadMore = ({
             stack.push(item);
           } else if (special.closes) {
             // This is a character that can be closed
-            const matchingIndex = stack.findIndex(
-              (s) => s.char === special.closes
-            );
+            const matchingIndex = stack.findIndex((s) => s.char === special.closes);
             if (matchingIndex !== -1) {
               stack.splice(matchingIndex, 1); // Remove the matching open
             } else {
@@ -220,18 +219,13 @@ export const ReadMore = ({
             // Standalone special character
             if (special.char === "*" || special.char === "_") {
               // Check if it's a single * or a ** (already handled)
-              if (
-                i + 1 < textBeforeCut.length &&
-                textBeforeCut[i + 1] === special.char
-              ) {
+              if (i + 1 < textBeforeCut.length && textBeforeCut[i + 1] === special.char) {
                 continue; // Skip - this is part of ** or __ which is handled above
               }
 
               // Single * or _ - find matching single character
               const item = { char: special.char, position: i };
-              const matchingIndex = stack.findIndex(
-                (s) => s.char === special.char
-              );
+              const matchingIndex = stack.findIndex((s) => s.char === special.char);
               if (matchingIndex !== -1) {
                 stack.splice(matchingIndex, 1); // Remove the matching open
               } else {
@@ -255,10 +249,7 @@ export const ReadMore = ({
       const earliestPosition = stack[0].position;
 
       // Find the last space before this position
-      const lastSpaceBeforeMarkdown = textBeforeCut.lastIndexOf(
-        " ",
-        earliestPosition
-      );
+      const lastSpaceBeforeMarkdown = textBeforeCut.lastIndexOf(" ", earliestPosition);
 
       if (lastSpaceBeforeMarkdown !== -1) {
         cutPosition = Math.min(cutPosition, lastSpaceBeforeMarkdown);
@@ -284,7 +275,7 @@ export const ReadMore = ({
       setIsReadMore(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text]);
+  }, [text, getMinimumText]);
 
   return (
     <div className="w-full max-w-full">
@@ -300,19 +291,21 @@ export const ReadMore = ({
         <MarkdownPreview className={markdownClass} source={text} />
       )}
       {text.length - 1 > getMinimumText() ? (
-        <div onClick={toggleReadMore} className="read-or-hide mt-2">
+        <button
+          type="button"
+          onClick={toggleReadMore}
+          className="read-or-hide mt-2 bg-transparent border-none p-0 cursor-pointer w-full text-left block"
+        >
           {isReadMore ? (
-            <>
-              <div
-                className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex flex-row justify-between"
-                style={{
-                  flexDirection: side === "left" ? "row" : "row-reverse",
-                }}
-              >
-                <span className="cursor-pointer">{readMoreText}</span>
-                {othersideButton}
-              </div>
-            </>
+            <div
+              className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex flex-row justify-between"
+              style={{
+                flexDirection: side === "left" ? "row" : "row-reverse",
+              }}
+            >
+              <span className="cursor-pointer">{readMoreText}</span>
+              {othersideButton}
+            </div>
           ) : (
             <div
               className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex flex-row justify-between"
@@ -324,7 +317,7 @@ export const ReadMore = ({
               {othersideButton}
             </div>
           )}
-        </div>
+        </button>
       ) : othersideButton ? (
         <div
           className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex flex-row justify-between"

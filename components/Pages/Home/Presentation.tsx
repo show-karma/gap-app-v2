@@ -1,37 +1,28 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 import { CheckIcon } from "@heroicons/react/24/outline";
-import { TypedLoading } from "@/components/Pages/Home/ReactTypedWrap";
 import dynamic from "next/dynamic";
-import { Button } from "@/components/Utilities/Button";
 import Link from "next/link";
-import { PAGES } from "@/utilities/pages";
+import { TypedLoading } from "@/components/Pages/Home/ReactTypedWrap";
+import { Button } from "@/components/Utilities/Button";
 import { PROJECT_NAME } from "@/constants/brand";
+import { PAGES } from "@/utilities/pages";
+
 // import { ProjectDialog } from "@/components/Dialogs/ProjectDialog";
 
 const ReactTypedWrapper = dynamic(
-  () =>
-    import("@/components/Pages/Home/ReactTypedWrap").then(
-      (mod) => mod.ReactTypedWrapper
-    ),
+  () => import("@/components/Pages/Home/ReactTypedWrap").then((mod) => mod.ReactTypedWrapper),
   { ssr: false, loading: () => <TypedLoading /> }
 );
 
 const ProjectDialog = dynamic(
-  () =>
-    import("@/components/Dialogs/ProjectDialog/index").then(
-      (mod) => mod.ProjectDialog
-    ),
+  () => import("@/components/Dialogs/ProjectDialog/index").then((mod) => mod.ProjectDialog),
   {
     ssr: false,
     loading: () => (
       <Button className="flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-brand-darkblue dark:bg-gray-700 px-7 py-4 text-lg font-semibold leading-7 text-white hover:bg-brand-darkblue max-2xl:px-5 max-2xl:text-base max-lg:text-sm">
         Add your project
-        <img
-          className="h-6 w-6 text-white"
-          alt="Contact"
-          src="/icons/arrow-right-2.svg"
-        />
+        <img className="h-6 w-6 text-white" alt="Contact" src="/icons/arrow-right-2.svg" />
       </Button>
     ),
   }
@@ -84,15 +75,9 @@ export const Presentation = () => {
           <div className="flex w-full flex-1 flex-row flex-wrap gap-6 max-md:flex-col">
             <div className="flex  min-w-min max-w-[500px] flex-1 flex-col items-start gap-3 rounded-3xl  text-gray-900 dark:text-gray-900 bg-[#D7F8EF] px-8 py-6 max-2xl:px-6 max-lg:min-w-full">
               <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
-                <img
-                  src="/icons/coins-stacked.png"
-                  alt="Grantee"
-                  className="h-7 w-7"
-                />
+                <img src="/icons/coins-stacked.png" alt="Grantee" className="h-7 w-7" />
               </div>
-              <h2 className="text-2xl text-black font-bold max-2xl:text-xl">
-                For Grantees
-              </h2>
+              <h2 className="text-2xl text-black font-bold max-2xl:text-xl">For Grantees</h2>
               <ul className="text-gray-900">
                 <li className="flex w-full flex-row gap-4 break-words">
                   <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
@@ -102,7 +87,9 @@ export const Presentation = () => {
                 </li>
                 <li className="flex w-full flex-row gap-4 break-words">
                   <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
-                  <p className="text-base font-normal">Share project progress and build reputation onchain</p>
+                  <p className="text-base font-normal">
+                    Share project progress and build reputation onchain
+                  </p>
                 </li>
                 <li className="flex w-full flex-row gap-4 break-words">
                   <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
@@ -124,9 +111,7 @@ export const Presentation = () => {
               <ul className="text-gray-900">
                 <li className="flex w-full flex-row gap-4 break-words">
                   <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
-                  <p className="text-base font-normal ">
-                    Stay up-to-date on projects progress
-                  </p>
+                  <p className="text-base font-normal ">Stay up-to-date on projects progress</p>
                 </li>
                 <li className="flex w-full flex-row gap-4 break-words">
                   <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />

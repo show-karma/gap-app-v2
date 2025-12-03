@@ -1,4 +1,10 @@
 "use client";
+
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
+import { Suspense } from "react";
+import type { Hex } from "viem";
+import { GrantCompletionCard } from "@/components/Pages/Grants/MilestonesAndUpdates";
+import { TrackTags } from "@/components/TrackTags";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useGrantStore } from "@/store/grant";
@@ -9,20 +15,10 @@ import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
-import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
-import { Suspense, useEffect } from "react";
-import { Hex } from "viem";
 import { ProjectGrantsOverviewLoading } from "../Loading/Grants/Overview";
 import { GrantPercentage } from "./components/GrantPercentage";
-import { TrackTags } from "@/components/TrackTags";
-import { useProjectPermissions } from "@/hooks/useProjectPermissions";
-import { useProjectStore } from "@/store";
-import { useRouter } from "next/navigation";
 
-const isValidAmount = (grant?: {
-  amount?: Hex;
-  details?: { data?: { amount?: string } };
-}) => {
+const isValidAmount = (grant?: { amount?: Hex; details?: { data?: { amount?: string } } }) => {
   // First check root-level amount (Hex format)
   if (grant?.amount) {
     const formattedAmount = formatCurrency(Number(grant?.amount));
@@ -57,7 +53,7 @@ const isValidAmount = (grant?: {
 };
 export const GrantOverview = () => {
   const { grant, loading, refreshGrant } = useGrantStore();
-  const isOwner = useOwnerStore((state) => state.isOwner);
+  const _isOwner = useOwnerStore((state) => state.isOwner);
 
   const grantData: { stat?: number | string; title: string }[] = [
     {
@@ -80,16 +76,12 @@ export const GrantOverview = () => {
     // },
   ];
 
-  const selectedTrackIds = grant?.details?.data?.selectedTrackIds as
-    | string[]
-    | undefined;
+  const selectedTrackIds = grant?.details?.data?.selectedTrackIds as string[] | undefined;
   const communityId = grant?.data?.communityUID;
   const programId = grant?.details?.data?.programId;
 
   // Extract the base programId if it includes a chainId suffix (format: programId_chainId)
-  const baseProgramId = programId?.includes("_")
-    ? programId.split("_")[0]
-    : programId;
+  const _baseProgramId = programId?.includes("_") ? programId.split("_")[0] : programId;
 
   // Check if we have valid track IDs to display
   const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0;
@@ -100,6 +92,15 @@ export const GrantOverview = () => {
 
   return (
     <Suspense fallback={<ProjectGrantsOverviewLoading />}>
+      {/* Completion Summary */}
+      {grant?.completed?.data &&
+      (grant.completed.data.title ||
+        grant.completed.data.text ||
+        grant.completed.data.proofOfWork) ? (
+        <div className="mt-5">
+          <GrantCompletionCard completion={grant?.completed} grant={grant} />
+        </div>
+      ) : null}
       {/* Grant Overview Start */}
       <div className="mt-5 flex flex-row max-lg:flex-col-reverse gap-4 ">
         {grant?.details?.data?.description && (
@@ -118,9 +119,7 @@ export const GrantOverview = () => {
         <div className="w-4/12 max-lg:w-full flex flex-col gap-4">
           <div className="border border-gray-200 rounded-xl bg-white  dark:bg-zinc-900 dark:border-gray-800">
             <div className="flex items-center justify-between p-5">
-              <div className="font-semibold text-black dark:text-white">
-                Grant Overview
-              </div>
+              <div className="font-semibold text-black dark:text-white">Grant Overview</div>
               {grant && (
                 <GrantPercentage
                   grant={grant}
@@ -135,8 +134,7 @@ export const GrantOverview = () => {
                 </div>
                 <a
                   href={PAGES.COMMUNITY.ALL_GRANTS(
-                    grant?.community?.details?.data?.slug ||
-                    (grant?.community?.uid as Hex)
+                    grant?.community?.details?.data?.slug || (grant?.community?.uid as Hex)
                   )}
                 >
                   <div className="w-full inline-flex items-center gap-x-2 rounded-3xl bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
@@ -158,16 +156,12 @@ export const GrantOverview = () => {
 
                 <div className="inline-flex items-center gap-x-2 rounded-full bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
                   <img
-                    src={chainImgDictionary(
-                      grant?.community?.details?.chainID as number
-                    )}
+                    src={chainImgDictionary(grant?.community?.details?.chainID as number)}
                     alt=""
                     className="h-5 w-5 rounded-full"
                   />
                   <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm  w-full break-words whitespace-break-spaces">
-                    {chainNameDictionary(
-                      grant?.community?.details?.chainID as number
-                    )}
+                    {chainNameDictionary(grant?.community?.details?.chainID as number)}
                   </p>
                 </div>
               </div>
@@ -207,16 +201,10 @@ export const GrantOverview = () => {
                     key={data.title}
                     className="flex flex-row items-center justify-between gap-2"
                   >
-                    <h4
-                      className={
-                        "text-gray-500  font-semibold text-base dark:text-gray-300"
-                      }
-                    >
+                    <h4 className={"text-gray-500  font-semibold text-base dark:text-gray-300"}>
                       {data.title}
                     </h4>
-                    <p className={"text-base text-gray-900 dark:text-gray-100"}>
-                      {data.stat}
-                    </p>
+                    <p className={"text-base text-gray-900 dark:text-gray-100"}>{data.stat}</p>
                   </div>
                 ) : null
               )}
@@ -225,9 +213,7 @@ export const GrantOverview = () => {
           {grant?.details?.data?.fundUsage ? (
             <div className="border border-gray-200 rounded-xl bg-white  dark:bg-zinc-900 dark:border-gray-800">
               <div className="flex items-center justify-between p-5">
-                <p className="font-semibold text-black dark:text-white">
-                  Breakdown of Fund Usage
-                </p>
+                <p className="font-semibold text-black dark:text-white">Breakdown of Fund Usage</p>
               </div>
               <div
                 className="flex flex-col gap-4 px-4 py-4 border-t border-gray-200 w-full"
@@ -237,9 +223,7 @@ export const GrantOverview = () => {
                   components={{
                     // eslint-disable-next-line react/no-unstable-nested-components
                     table: ({ children }) => {
-                      return (
-                        <table className="w-full text-black">{children}</table>
-                      );
+                      return <table className="w-full text-black">{children}</table>;
                     },
                   }}
                   source={grant?.details?.data?.fundUsage}

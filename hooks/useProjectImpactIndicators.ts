@@ -30,9 +30,7 @@ export const useProjectImpactIndicators = (projectId: string, range: number = 30
   return useQuery({
     queryKey: ["project-impact-indicators", projectId, range],
     queryFn: async () => {
-      const [data, error] = await fetchData(
-        INDEXER.INDICATORS.BY_TIMERANGE(projectId, { range })
-      );
+      const [data, error] = await fetchData(INDEXER.INDICATORS.BY_TIMERANGE(projectId, { range }));
       if (error) throw error;
       return data as ProjectImpactResponse;
     },

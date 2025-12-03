@@ -3,9 +3,7 @@ import Projects from "@/app/projects/page";
 import "@testing-library/jest-dom";
 
 jest.mock("@/components/Pages/NewProjects", () => ({
-  NewProjectsPage: () => (
-    <div data-testid="new-projects-page">New Projects Page</div>
-  ),
+  NewProjectsPage: () => <div data-testid="new-projects-page">New Projects Page</div>,
 }));
 
 jest.mock("@/utilities/indexer/getNewProjects", () => ({
