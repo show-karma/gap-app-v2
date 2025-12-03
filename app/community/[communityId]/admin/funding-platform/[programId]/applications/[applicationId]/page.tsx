@@ -146,6 +146,9 @@ export default function ApplicationDetailPage() {
   };
 
   // Helper function to check if editing is allowed
+  // NOTE: This is a UI-only check. The backend API MUST enforce these same restrictions
+  // to prevent unauthorized edits. The backend should reject edit requests for applications
+  // with status 'under_review' or 'approved' regardless of client-side checks.
   const canEditApplication = (app: IFundingApplication) => {
     const restrictedStatuses = ["under_review", "approved"];
     return !restrictedStatuses.includes(app.status.toLowerCase());
@@ -161,10 +164,8 @@ export default function ApplicationDetailPage() {
   };
 
   const handleEditSuccess = async () => {
-    // Refetch application data
-    await refetchApplication();
-    // Refetch Activity Timeline (versions and comments)
-    await Promise.all([refetchVersions(), refetchComments()]);
+    // Refetch all data in parallel for better performance
+    await Promise.all([refetchApplication(), refetchVersions(), refetchComments()]);
   };
 
   const handleVersionClick = (versionId: string) => {

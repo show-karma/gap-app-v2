@@ -6,10 +6,7 @@ import {
   ClockIcon,
   DocumentTextIcon,
   ExclamationTriangleIcon,
-  EyeIcon,
   PencilSquareIcon,
-  ShieldCheckIcon,
-  UserIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
 import { format, isValid, parseISO } from "date-fns";
@@ -18,6 +15,7 @@ import { type FC, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Badge } from "@/components/ui/badge";
+import { type EditType, editTypeConfig } from "@/constants/editTypeConfig";
 import type {
   ApplicationComment,
   FundingApplicationStatusV2,
@@ -26,6 +24,7 @@ import type {
   IFundingApplication,
   IStatusHistoryEntry,
 } from "@/types/funding-platform";
+import { createFieldLabelMap, getFieldLabel } from "@/utilities/fieldLabelMapping";
 import { cn } from "@/utilities/tailwind";
 import CommentInput from "./CommentInput";
 import CommentItem from "./CommentItem";
@@ -89,10 +88,7 @@ const labelMap = {
 };
 
 // Helper function to determine edit type
-const getEditType = (
-  version: IApplicationVersion,
-  application?: IFundingApplication
-): "applicant" | "admin" | "reviewer" => {
+const getEditType = (version: IApplicationVersion, application?: IFundingApplication): EditType => {
   // If no submittedBy address, can't determine - default to applicant
   if (!version.submittedBy) {
     return "applicant";
@@ -100,11 +96,13 @@ const getEditType = (
 
   // If no ownerAddress in application, can't compare - default to applicant
   if (!application?.ownerAddress) {
-    // Log warning for debugging
-    console.warn("Cannot determine edit type: application.ownerAddress is missing", {
-      versionId: version.id,
-      submittedBy: version.submittedBy,
-    });
+    // Log warning for debugging (development only)
+    if (process.env.NODE_ENV === "development") {
+      console.warn("Cannot determine edit type: application.ownerAddress is missing", {
+        versionId: version.id,
+        submittedBy: version.submittedBy,
+      });
+    }
     return "applicant";
   }
 
@@ -141,46 +139,8 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
 }: CommentsTimelineProps) => {
   const [isAddingComment, setIsAddingComment] = useState(false);
 
-  // Create field labels mapping from form schema
-  const fieldLabels = useMemo(() => {
-    const labels: Record<string, string> = {};
-    if (formSchema?.fields) {
-      formSchema.fields.forEach((field) => {
-        // Map field.id to field.label
-        if (field.id && field.label) {
-          labels[field.id] = field.label;
-        }
-        // Also map normalized field name (label.toLowerCase().replace(/\s+/g, "_"))
-        const normalizedName = field.label.toLowerCase().replace(/\s+/g, "_");
-        if (normalizedName) {
-          labels[normalizedName] = field.label;
-        }
-      });
-    }
-    return labels;
-  }, [formSchema]);
-
-  // Helper function to get human-readable field label
-  const getFieldLabel = (fieldKey: string): string => {
-    // First try exact match with field ID
-    if (fieldLabels[fieldKey]) {
-      return fieldLabels[fieldKey];
-    }
-    // Try case-insensitive match
-    const lowerKey = fieldKey.toLowerCase();
-    const matchedKey = Object.keys(fieldLabels).find((key) => key.toLowerCase() === lowerKey);
-    if (matchedKey) {
-      return fieldLabels[matchedKey];
-    }
-    // Fallback: format the key to be more readable
-    // Remove "field_" prefix if present and format the rest
-    const cleanedKey = fieldKey.replace(/^field_/, "").replace(/_/g, " ");
-    // Capitalize first letter of each word
-    return cleanedKey
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  };
+  // Create field labels mapping from form schema using shared utility
+  const fieldLabels = useMemo(() => createFieldLabelMap(formSchema), [formSchema]);
 
   // Combine comments, status history, and version history into a unified timeline
   const timelineItems = useMemo(() => {
@@ -332,31 +292,6 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
     const isInitialVersion = version.versionNumber === 0;
     const editType = !isInitialVersion && application ? getEditType(version, application) : null;
 
-    // Edit type configuration
-    const editTypeConfig = {
-      applicant: {
-        label: "Applicant",
-        icon: UserIcon,
-        color: "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300",
-        badgeVariant: "secondary" as const,
-        badgeClassName: "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
-      },
-      admin: {
-        label: "Admin",
-        icon: ShieldCheckIcon,
-        color: "bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300",
-        badgeVariant: "secondary" as const,
-        badgeClassName: "bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300",
-      },
-      reviewer: {
-        label: "Reviewer",
-        icon: EyeIcon,
-        color: "bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300",
-        badgeVariant: "secondary" as const,
-        badgeClassName: "bg-gray-50 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300",
-      },
-    };
-
     const config = editType ? editTypeConfig[editType] : null;
     const EditIcon = config?.icon || PencilSquareIcon;
 
@@ -424,7 +359,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
                     (
                     {version.diffFromPrevious.changedFields
                       .slice(0, 2)
-                      .map((f) => getFieldLabel(f.fieldLabel))
+                      .map((f) => getFieldLabel(f.fieldLabel, fieldLabels))
                       .join(", ")}
                     {version.diffFromPrevious.changedFields.length > 2 &&
                       `, +${version.diffFromPrevious.changedFields.length - 2} more`}

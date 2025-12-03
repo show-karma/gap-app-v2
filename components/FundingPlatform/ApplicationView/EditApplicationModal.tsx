@@ -29,7 +29,7 @@ const EditApplicationModal: FC<EditApplicationModalProps> = ({
   formSchema: propFormSchema,
   onSuccess,
 }) => {
-  const { updateApplication, isUpdating } = useApplicationUpdateV2();
+  const { updateApplicationAsync, isUpdating } = useApplicationUpdateV2();
   const [formSchema, setFormSchema] = useState<IFormSchema | null>(propFormSchema || null);
   const [isLoadingFormSchema, setIsLoadingFormSchema] = useState(false);
   const [formSchemaError, setFormSchemaError] = useState<string | null>(null);
@@ -59,7 +59,10 @@ const EditApplicationModal: FC<EditApplicationModalProps> = ({
     } catch (error) {
       setFormSchemaError("Failed to load form configuration");
       setFormSchema(null);
-      console.error("Failed to fetch formconfig:", error);
+      // Only log in development to avoid console noise in production
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to fetch formconfig:", error);
+      }
     } finally {
       setIsLoadingFormSchema(false);
     }
@@ -86,7 +89,7 @@ const EditApplicationModal: FC<EditApplicationModalProps> = ({
 
   const handleSubmit = async (applicationData: Record<string, unknown>) => {
     try {
-      await updateApplication({
+      await updateApplicationAsync({
         applicationId: application.referenceNumber || application.id,
         // biome-ignore lint/suspicious/noExplicitAny: ApplicationSubmission interface uses Record<string, any>
         applicationData: applicationData as Record<string, any>,
@@ -96,7 +99,10 @@ const EditApplicationModal: FC<EditApplicationModalProps> = ({
     } catch (error) {
       // Error is handled by the hook (shows toast with specific message)
       // Modal stays open to allow user to retry or cancel
-      console.error("Failed to update application:", error);
+      // Only log in development to avoid console noise in production
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to update application:", error);
+      }
     }
   };
 

@@ -394,9 +394,9 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
     return diagnostics;
   }, [isEditMode, initialData, formSchema.fields]);
 
-  // Log warnings for low match rate
+  // Log warnings for low match rate (development only)
   useEffect(() => {
-    if (matchingDiagnostics) {
+    if (matchingDiagnostics && process.env.NODE_ENV === "development") {
       if (matchingDiagnostics.matchRate < 0.5) {
         console.error(
           `🚨 Critical: Low field matching rate: ${(matchingDiagnostics.matchRate * 100).toFixed(0)}%`,

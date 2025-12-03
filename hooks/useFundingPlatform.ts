@@ -494,6 +494,7 @@ export const useApplicationUpdateV2 = () => {
 
   return {
     updateApplication: updateMutation.mutate,
+    updateApplicationAsync: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,
     error: updateMutation.error,
   };
