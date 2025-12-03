@@ -91,7 +91,7 @@ describe("ContractVerificationDialog - User Experience", () => {
 
       render(<ContractVerificationDialog {...defaultProps} />);
 
-      expect(screen.getByText(/Step 1 of 4/)).toBeInTheDocument();
+      expect(screen.getByText(/Looking up contract deployer/)).toBeInTheDocument();
       expect(screen.getByText("Verifying...")).toBeInTheDocument();
     });
   });
