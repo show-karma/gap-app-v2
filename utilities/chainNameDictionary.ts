@@ -31,6 +31,6 @@ export const chainNameDictionary = (chainId: number) => {
     case 534352:
       return "Scroll";
     default:
-      return "";
+      return `Chain ${chainId}`;
   }
 };

@@ -5,6 +5,7 @@ import {
   ChevronUpIcon,
   LinkIcon,
   MagnifyingGlassIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/solid";
 import type { Community } from "@show-karma/karma-gap-sdk";
 import { useQuery } from "@tanstack/react-query";
@@ -154,9 +155,7 @@ export default function CommunitiesToAdminPage() {
   const toggleAdminExpansion = useCallback((communityUid: string) => {
     setExpandedAdmins((prev) => {
       const next = new Set(prev);
-      if (next.has(communityUid)) {
-        next.delete(communityUid);
-      } else {
+      if (!next.delete(communityUid)) {
         next.add(communityUid);
       }
       return next;
@@ -296,10 +295,12 @@ export default function CommunitiesToAdminPage() {
               />
               {searchQuery && (
                 <button
+                  type="button"
                   onClick={() => setSearchQuery("")}
+                  aria-label="Clear search"
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
-                  ✕
+                  <XMarkIcon className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -459,7 +460,9 @@ export default function CommunitiesToAdminPage() {
                               ))}
                               {matchingCommunityAdmin.admins.length > ADMINS_COLLAPSED_COUNT && (
                                 <button
+                                  type="button"
                                   onClick={() => toggleAdminExpansion(community.uid)}
+                                  aria-expanded={expandedAdmins.has(community.uid)}
                                   className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 mt-1"
                                 >
                                   {expandedAdmins.has(community.uid) ? (
@@ -498,6 +501,7 @@ export default function CommunitiesToAdminPage() {
                       No communities match your search
                     </p>
                     <button
+                      type="button"
                       onClick={() => {
                         setSearchQuery("");
                         setSelectedNetwork("all");
