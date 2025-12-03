@@ -19,9 +19,7 @@ import { ContractAddressList } from "./ContractAddressList";
 import { ContractVerificationDialog } from "./ContractVerificationDialog";
 import type { LinkContractAddressesButtonProps } from "./types";
 
-export const LinkContractAddressButton: FC<
-  LinkContractAddressesButtonProps
-> = ({
+export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = ({
   project,
   buttonClassName,
   "data-link-contracts-button": dataAttr,
@@ -30,9 +28,7 @@ export const LinkContractAddressButton: FC<
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
   const [isOpen, setIsOpen] = useState(false);
   const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
@@ -51,16 +47,15 @@ export const LinkContractAddressButton: FC<
   const { clearError } = useContractAddressValidation({
     projectUid: project.uid,
   });
-  const { save, isLoading, error, setError, invalidContracts } =
-    useContractAddressSave({
-      projectUid: project.uid,
-      onSuccess: () => {
-        if (buttonElement === null && onClose) {
-          setIsOpen(false);
-          onClose();
-        }
-      },
-    });
+  const { save, isLoading, error, setError, invalidContracts } = useContractAddressSave({
+    projectUid: project.uid,
+    onSuccess: () => {
+      if (buttonElement === null && onClose) {
+        setIsOpen(false);
+        onClose();
+      }
+    },
+  });
 
   useEffect(() => {
     if (buttonElement === null) {
@@ -133,9 +128,7 @@ export const LinkContractAddressButton: FC<
     });
 
     // Check if there are any new or modified pairs
-    const currentValidPairs = pairs.filter(
-      (pair) => pair.address.trim() && pair.network.trim()
-    );
+    const currentValidPairs = pairs.filter((pair) => pair.address.trim() && pair.network.trim());
 
     // If the number of valid pairs is different, there are changes
     if (currentValidPairs.length !== projectNetworkAddresses.length) {
@@ -213,18 +206,15 @@ export const LinkContractAddressButton: FC<
     const hasBackendErrors = invalidContracts.size > 0;
 
     // Check if all pairs are empty (at least one valid pair required)
-    const allPairsEmpty = pairs.every(
-      (pair) => !pair.address.trim() && !pair.network.trim()
-    );
+    const allPairsEmpty = pairs.every((pair) => !pair.address.trim() && !pair.network.trim());
 
     return hasFormatErrors || hasBackendErrors || allPairsEmpty;
   }, [pairs, invalidContracts]);
 
   // Count unverified contracts
   const unverifiedCount = useMemo(() => {
-    return pairs.filter(
-      (pair) => pair.address.trim() && pair.network.trim() && !pair.verified
-    ).length;
+    return pairs.filter((pair) => pair.address.trim() && pair.network.trim() && !pair.verified)
+      .length;
   }, [pairs]);
 
   if (!isAuthorized) {
@@ -286,9 +276,7 @@ export const LinkContractAddressButton: FC<
         <ErrorBoundary
           fallback={
             <div className="p-4 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <p className="font-medium">
-                Verification dialog encountered an error
-              </p>
+              <p className="font-medium">Verification dialog encountered an error</p>
               <p className="text-sm mt-1">Please close and try again</p>
             </div>
           }
@@ -311,11 +299,7 @@ export const LinkContractAddressButton: FC<
       )}
       {/* Unsaved Changes Warning Dialog */}
       <Transition appear show={showUnsavedWarning} as={Fragment}>
-        <Dialog
-          as="div"
-          className="relative z-50"
-          onClose={() => setShowUnsavedWarning(false)}
-        >
+        <Dialog as="div" className="relative z-50" onClose={() => setShowUnsavedWarning(false)}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -352,8 +336,8 @@ export const LinkContractAddressButton: FC<
 
                   <div className="mt-2">
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      You have unsaved changes to contract addresses. If you
-                      close now, these changes will be lost.
+                      You have unsaved changes to contract addresses. If you close now, these
+                      changes will be lost.
                     </p>
                   </div>
 

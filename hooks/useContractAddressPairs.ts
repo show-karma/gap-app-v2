@@ -116,7 +116,11 @@ export const useContractAddressPairs = ({ project }: UseContractAddressPairsProp
   }, []);
 
   const updateVerified = useCallback(
-    (network: string, address: string, verifiedData: { verified: boolean; verifiedAt?: string; verifiedBy?: string }) => {
+    (
+      network: string,
+      address: string,
+      verifiedData: { verified: boolean; verifiedAt?: string; verifiedBy?: string }
+    ) => {
       setNetworkAddressPairs((prev) => {
         const newPairs = [...prev];
         const index = newPairs.findIndex(
