@@ -14,7 +14,11 @@ interface ContractVerificationDialogProps {
   network: string;
   contractAddress: string;
   projectUid: string;
-  onSuccess?: (result: { verified: boolean; verifiedAt?: string; verifiedBy?: string }) => void | Promise<void>;
+  onSuccess?: (result: {
+    verified: boolean;
+    verifiedAt?: string;
+    verifiedBy?: string;
+  }) => void | Promise<void>;
 }
 
 export const ContractVerificationDialog: React.FC<ContractVerificationDialogProps> = ({
@@ -85,15 +89,15 @@ export const ContractVerificationDialog: React.FC<ContractVerificationDialogProp
   const getStepMessage = () => {
     switch (step) {
       case VerificationStep.LOOKING_UP_DEPLOYER:
-        return "Step 1 of 4: Looking up contract deployer...";
+        return "Looking up contract deployer...";
       case VerificationStep.CHECKING_WALLET:
-        return "Step 2 of 4: Checking wallet connection...";
+        return "Checking wallet connection...";
       case VerificationStep.GENERATING_MESSAGE:
-        return "Step 2 of 4: Generating verification message...";
+        return "Generating verification message...";
       case VerificationStep.WAITING_FOR_SIGNATURE:
-        return "Step 3 of 4: Waiting for signature...";
+        return "Waiting for signature...";
       case VerificationStep.VERIFYING_SIGNATURE:
-        return "Step 4 of 4: Verifying signature...";
+        return "Verifying signature...";
       case VerificationStep.SUCCESS:
         return "Contract verified successfully!";
       case VerificationStep.ERROR:
@@ -106,14 +110,15 @@ export const ContractVerificationDialog: React.FC<ContractVerificationDialogProp
   const getStepProgress = () => {
     switch (step) {
       case VerificationStep.LOOKING_UP_DEPLOYER:
-        return 25;
+        return 20;
       case VerificationStep.CHECKING_WALLET:
+        return 40;
       case VerificationStep.GENERATING_MESSAGE:
-        return 50;
+        return 60;
       case VerificationStep.WAITING_FOR_SIGNATURE:
-        return 75;
+        return 80;
       case VerificationStep.VERIFYING_SIGNATURE:
-        return 90;
+        return 95;
       case VerificationStep.SUCCESS:
         return 100;
       default:
@@ -183,7 +188,9 @@ export const ContractVerificationDialog: React.FC<ContractVerificationDialogProp
                       {deployerInfo && (
                         <p className="text-gray-600 dark:text-gray-300 mt-2">
                           <span className="font-medium">Deployer:</span>{" "}
-                          <span className="font-mono">{formatAddressForDisplay(deployerInfo.deployerAddress)}</span>
+                          <span className="font-mono">
+                            {formatAddressForDisplay(deployerInfo.deployerAddress)}
+                          </span>
                         </p>
                       )}
                     </div>

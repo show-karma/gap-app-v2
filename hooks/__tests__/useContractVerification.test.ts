@@ -1,21 +1,34 @@
 import { act, renderHook } from "@testing-library/react";
 import { useAccount, useSignMessage } from "wagmi";
-import fetchData from "@/utilities/fetchData";
+import { contractsService } from "@/services/contracts.service";
 import { useContractVerification, VerificationStep } from "../useContractVerification";
-import { useDeployerLookup } from "../useDeployerLookup";
 
 // Mock dependencies
-jest.mock("../useDeployerLookup");
+jest.mock("@/services/contracts.service", () => ({
+  contractsService: {
+    lookupDeployer: jest.fn(),
+    requestVerificationMessage: jest.fn(),
+    verifyContractSignature: jest.fn(),
+  },
+}));
+
 jest.mock("wagmi", () => ({
   useAccount: jest.fn(),
   useSignMessage: jest.fn(),
 }));
-jest.mock("@/utilities/fetchData");
 
-const mockUseDeployerLookup = useDeployerLookup as jest.MockedFunction<typeof useDeployerLookup>;
+const mockLookupDeployer = contractsService.lookupDeployer as jest.MockedFunction<
+  typeof contractsService.lookupDeployer
+>;
+const mockRequestVerificationMessage =
+  contractsService.requestVerificationMessage as jest.MockedFunction<
+    typeof contractsService.requestVerificationMessage
+  >;
+const mockVerifyContractSignature = contractsService.verifyContractSignature as jest.MockedFunction<
+  typeof contractsService.verifyContractSignature
+>;
 const mockUseAccount = useAccount as jest.MockedFunction<typeof useAccount>;
 const mockUseSignMessage = useSignMessage as jest.MockedFunction<typeof useSignMessage>;
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
 
 describe("useContractVerification - User Journeys", () => {
   const mockDeployerInfo = {
@@ -41,21 +54,12 @@ describe("useContractVerification - User Journeys", () => {
     },
   };
 
-  let mockLookupDeployer: jest.Mock;
   let mockSignMessageAsync: jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockLookupDeployer = jest.fn();
     mockSignMessageAsync = jest.fn();
-
-    mockUseDeployerLookup.mockReturnValue({
-      data: null,
-      loading: false,
-      error: null,
-      lookupDeployer: mockLookupDeployer,
-    });
 
     mockUseAccount.mockReturnValue({
       address: "0xDeployer123",
@@ -69,9 +73,8 @@ describe("useContractVerification - User Journeys", () => {
   describe("Happy Path: User successfully verifies their contract", () => {
     it("should complete verification when user owns the deployer wallet", async () => {
       mockLookupDeployer.mockResolvedValueOnce(mockDeployerInfo);
-      mockFetchData
-        .mockResolvedValueOnce([mockVerificationMessage, null])
-        .mockResolvedValueOnce([mockVerificationResult, null]);
+      mockRequestVerificationMessage.mockResolvedValueOnce(mockVerificationMessage);
+      mockVerifyContractSignature.mockResolvedValueOnce(mockVerificationResult);
       mockSignMessageAsync.mockResolvedValueOnce("0xSignature123");
 
       const { result } = renderHook(() => useContractVerification());
@@ -89,6 +92,21 @@ describe("useContractVerification - User Journeys", () => {
       expect(result.current.step).toBe(VerificationStep.SUCCESS);
       expect(verificationResult).toEqual(mockVerificationResult);
       expect(result.current.error).toBeNull();
+
+      // Verify service calls
+      expect(mockLookupDeployer).toHaveBeenCalledWith("ethereum", "0xContract123");
+      expect(mockRequestVerificationMessage).toHaveBeenCalledWith(
+        "ethereum",
+        "0xContract123",
+        "0xDeployer123"
+      );
+      expect(mockVerifyContractSignature).toHaveBeenCalledWith({
+        network: "ethereum",
+        contractAddress: "0xContract123",
+        signature: "0xSignature123",
+        nonce: "nonce123",
+        projectUid: "project-uid-123",
+      });
     });
   });
 
@@ -100,7 +118,7 @@ describe("useContractVerification - User Journeys", () => {
       } as any);
 
       mockLookupDeployer.mockResolvedValueOnce(mockDeployerInfo);
-      mockFetchData.mockResolvedValueOnce([mockVerificationMessage, null]);
+      mockRequestVerificationMessage.mockResolvedValueOnce(mockVerificationMessage);
 
       const { result } = renderHook(() => useContractVerification());
 
@@ -115,7 +133,7 @@ describe("useContractVerification - User Journeys", () => {
 
     it("should handle when user rejects signature in wallet (clicks cancel)", async () => {
       mockLookupDeployer.mockResolvedValueOnce(mockDeployerInfo);
-      mockFetchData.mockResolvedValueOnce([mockVerificationMessage, null]);
+      mockRequestVerificationMessage.mockResolvedValueOnce(mockVerificationMessage);
 
       // User clicks "Reject" in MetaMask/wallet
       mockSignMessageAsync.mockRejectedValueOnce({
@@ -132,23 +150,6 @@ describe("useContractVerification - User Journeys", () => {
       expect(result.current.step).toBe(VerificationStep.ERROR);
       expect(result.current.error).toContain("cancelled");
       expect(result.current.error).toContain("try again");
-    });
-
-    it("should handle when user takes too long to sign (nonce expired)", async () => {
-      mockLookupDeployer.mockResolvedValueOnce(mockDeployerInfo);
-      mockFetchData
-        .mockResolvedValueOnce([mockVerificationMessage, null])
-        .mockResolvedValueOnce([null, "Invalid or expired nonce"]);
-      mockSignMessageAsync.mockResolvedValueOnce("0xSignature123");
-
-      const { result } = renderHook(() => useContractVerification());
-
-      await act(async () => {
-        await result.current.verifyContract("ethereum", "0xContract123", "project-uid-123");
-      });
-
-      expect(result.current.error).toContain("expired");
-      expect(result.current.error).toContain("start the verification process again");
     });
 
     it("should handle when user has no wallet connected", async () => {
@@ -170,9 +171,8 @@ describe("useContractVerification - User Journeys", () => {
   });
 
   describe("Contract Issues: Problems with the contract itself", () => {
-    it("should show clear error when contract not found on blockchain", async () => {
-      // Contract doesn't exist or wrong network
-      mockLookupDeployer.mockResolvedValueOnce(null);
+    it("should show error when contract lookup fails", async () => {
+      mockLookupDeployer.mockRejectedValueOnce(new Error("Contract not found"));
 
       const { result } = renderHook(() => useContractVerification());
 
@@ -181,8 +181,41 @@ describe("useContractVerification - User Journeys", () => {
       });
 
       expect(result.current.step).toBe(VerificationStep.ERROR);
-      expect(result.current.error).toContain("Could not find deployer");
-      expect(result.current.error).toContain("0xNonExistent");
+      expect(result.current.error).toBe("Contract not found");
+    });
+  });
+
+  describe("Backend Errors: Service returns errors", () => {
+    it("should handle verification message generation errors", async () => {
+      mockLookupDeployer.mockResolvedValueOnce(mockDeployerInfo);
+      mockRequestVerificationMessage.mockRejectedValueOnce(
+        new Error("Failed to generate verification message")
+      );
+
+      const { result } = renderHook(() => useContractVerification());
+
+      await act(async () => {
+        await result.current.verifyContract("ethereum", "0xContract123", "project-uid-123");
+      });
+
+      expect(result.current.step).toBe(VerificationStep.ERROR);
+      expect(result.current.error).toBe("Failed to generate verification message");
+    });
+
+    it("should handle signature verification errors", async () => {
+      mockLookupDeployer.mockResolvedValueOnce(mockDeployerInfo);
+      mockRequestVerificationMessage.mockResolvedValueOnce(mockVerificationMessage);
+      mockSignMessageAsync.mockResolvedValueOnce("0xSignature123");
+      mockVerifyContractSignature.mockRejectedValueOnce(new Error("Signature verification failed"));
+
+      const { result } = renderHook(() => useContractVerification());
+
+      await act(async () => {
+        await result.current.verifyContract("ethereum", "0xContract123", "project-uid-123");
+      });
+
+      expect(result.current.step).toBe(VerificationStep.ERROR);
+      expect(result.current.error).toBe("Signature verification failed");
     });
   });
 
@@ -195,12 +228,11 @@ describe("useContractVerification - User Journeys", () => {
 
       // Backend returns uppercase
       mockLookupDeployer.mockResolvedValueOnce(mockDeployerInfo);
-      mockFetchData
-        .mockResolvedValueOnce([
-          { ...mockVerificationMessage, deployerAddress: "0xDEPLOYER123" },
-          null,
-        ])
-        .mockResolvedValueOnce([mockVerificationResult, null]);
+      mockRequestVerificationMessage.mockResolvedValueOnce({
+        ...mockVerificationMessage,
+        deployerAddress: "0xDEPLOYER123",
+      });
+      mockVerifyContractSignature.mockResolvedValueOnce(mockVerificationResult);
       mockSignMessageAsync.mockResolvedValueOnce("0xSignature123");
 
       const { result } = renderHook(() => useContractVerification());
@@ -223,9 +255,9 @@ describe("useContractVerification - User Journeys", () => {
       } as any);
 
       mockLookupDeployer.mockResolvedValueOnce(mockDeployerInfo);
-      mockFetchData.mockResolvedValueOnce([mockVerificationMessage, null]);
+      mockRequestVerificationMessage.mockResolvedValueOnce(mockVerificationMessage);
 
-      const { result, rerender } = renderHook(() => useContractVerification());
+      const { result } = renderHook(() => useContractVerification());
 
       await act(async () => {
         await result.current.verifyContract("ethereum", "0xContract123", "project-uid-123");
@@ -245,9 +277,8 @@ describe("useContractVerification - User Journeys", () => {
 
       // Second attempt: correct wallet
       mockLookupDeployer.mockResolvedValueOnce(mockDeployerInfo);
-      mockFetchData
-        .mockResolvedValueOnce([mockVerificationMessage, null])
-        .mockResolvedValueOnce([mockVerificationResult, null]);
+      mockRequestVerificationMessage.mockResolvedValueOnce(mockVerificationMessage);
+      mockVerifyContractSignature.mockResolvedValueOnce(mockVerificationResult);
       mockSignMessageAsync.mockResolvedValueOnce("0xSignature123");
 
       await act(async () => {
@@ -255,6 +286,44 @@ describe("useContractVerification - User Journeys", () => {
       });
 
       expect(result.current.step).toBe(VerificationStep.SUCCESS);
+    });
+  });
+
+  describe("Verification Steps", () => {
+    it("should progress through all verification steps", async () => {
+      const steps: VerificationStep[] = [];
+
+      mockLookupDeployer.mockImplementation(async () => {
+        steps.push(VerificationStep.LOOKING_UP_DEPLOYER);
+        return mockDeployerInfo;
+      });
+
+      mockRequestVerificationMessage.mockImplementation(async () => {
+        steps.push(VerificationStep.GENERATING_MESSAGE);
+        return mockVerificationMessage;
+      });
+
+      mockSignMessageAsync.mockImplementation(async () => {
+        steps.push(VerificationStep.WAITING_FOR_SIGNATURE);
+        return "0xSignature123";
+      });
+
+      mockVerifyContractSignature.mockImplementation(async () => {
+        steps.push(VerificationStep.VERIFYING_SIGNATURE);
+        return mockVerificationResult;
+      });
+
+      const { result } = renderHook(() => useContractVerification());
+
+      await act(async () => {
+        await result.current.verifyContract("ethereum", "0xContract123", "project-uid-123");
+      });
+
+      expect(result.current.step).toBe(VerificationStep.SUCCESS);
+      expect(steps).toContain(VerificationStep.LOOKING_UP_DEPLOYER);
+      expect(steps).toContain(VerificationStep.GENERATING_MESSAGE);
+      expect(steps).toContain(VerificationStep.WAITING_FOR_SIGNATURE);
+      expect(steps).toContain(VerificationStep.VERIFYING_SIGNATURE);
     });
   });
 });

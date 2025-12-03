@@ -1,25 +1,13 @@
 import { useState } from "react";
 import { useAccount, useSignMessage } from "wagmi";
-import { INDEXER } from "@/utilities/indexer";
-import fetchData from "@/utilities/fetchData";
-import { useDeployerLookup, type DeployerInfo } from "./useDeployerLookup";
+import {
+  contractsService,
+  type DeployerInfo,
+  type VerificationMessage,
+  type VerificationResult,
+} from "@/services/contracts.service";
 
-export interface VerificationMessage {
-  message: string;
-  nonce: string;
-  expiresAt: string;
-  deployerAddress: string; // Full unmasked address for comparison
-}
-
-export interface VerificationResult {
-  verified: boolean;
-  contract: {
-    network: string;
-    address: string;
-    verifiedAt: string;
-    verifiedBy: string;
-  };
-}
+export type { VerificationMessage, VerificationResult, DeployerInfo };
 
 export enum VerificationStep {
   IDLE = "idle",
@@ -53,7 +41,6 @@ export interface VerificationState {
 export const useContractVerification = () => {
   const { address: userAddress } = useAccount();
   const { signMessageAsync } = useSignMessage();
-  const { lookupDeployer } = useDeployerLookup();
 
   const [state, setState] = useState<VerificationState>({
     step: VerificationStep.IDLE,
@@ -88,14 +75,7 @@ export const useContractVerification = () => {
         error: null,
       }));
 
-      const deployerInfo = await lookupDeployer(network, contractAddress);
-
-      if (!deployerInfo) {
-        throw new Error(
-          `Could not find deployer for contract ${contractAddress} on ${network}. ` +
-          "Please ensure the contract address is correct and the network is supported."
-        );
-      }
+      const deployerInfo = await contractsService.lookupDeployer(network, contractAddress);
 
       setState((prev) => ({
         ...prev,
@@ -112,26 +92,11 @@ export const useContractVerification = () => {
         throw new Error("Please connect your wallet");
       }
 
-      const messageUrl = INDEXER.PROJECT.CONTRACTS.VERIFY_MESSAGE();
-      const [messageResponse, messageError] = await fetchData(messageUrl, "POST", {
+      const verificationMessage = await contractsService.requestVerificationMessage(
         network,
         contractAddress,
-        userAddress,
-      });
-
-      if (messageError || !messageResponse) {
-        throw new Error(
-          messageError ||
-            "Failed to generate verification message"
-        );
-      }
-
-      const verificationMessage: VerificationMessage = {
-        message: messageResponse.message,
-        nonce: messageResponse.nonce,
-        expiresAt: messageResponse.expiresAt,
-        deployerAddress: messageResponse.deployerAddress, // Full address for comparison
-      };
+        userAddress
+      );
 
       setState((prev) => ({
         ...prev,
@@ -187,44 +152,13 @@ export const useContractVerification = () => {
         step: VerificationStep.VERIFYING_SIGNATURE,
       }));
 
-      const verifyUrl = INDEXER.PROJECT.CONTRACTS.VERIFY_SIGNATURE();
-      const [verifyResponse, verifyError] = await fetchData(verifyUrl, "POST", {
+      const result = await contractsService.verifyContractSignature({
         network,
         contractAddress,
         signature,
         nonce: verificationMessage.nonce,
         projectUid,
       });
-
-      if (verifyError || !verifyResponse || !verifyResponse.verified) {
-        // Check for specific error types
-        const errorMsg = verifyError || "Signature verification failed";
-
-        if (errorMsg.includes("expired") || errorMsg.includes("Invalid or expired nonce")) {
-          throw new Error(
-            "Verification request expired. Please start the verification process again."
-          );
-        }
-
-        if (errorMsg.includes("Nonce mismatch")) {
-          throw new Error(
-            "Verification mismatch error. Please start the verification process again."
-          );
-        }
-
-        if (errorMsg.includes("Signature verification failed")) {
-          throw new Error(
-            "Could not verify signature. Please ensure you're using the deployer wallet and try again."
-          );
-        }
-
-        throw new Error(errorMsg);
-      }
-
-      const result: VerificationResult = {
-        verified: verifyResponse.verified,
-        contract: verifyResponse.contract,
-      };
 
       setState((prev) => ({
         ...prev,
@@ -235,8 +169,7 @@ export const useContractVerification = () => {
       return result;
     } catch (error: unknown) {
       const err = error as { message?: string };
-      const errorMessage =
-        err.message || "An error occurred during verification";
+      const errorMessage = err.message || "An error occurred during verification";
 
       setState((prev) => ({
         ...prev,
