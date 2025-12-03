@@ -17,13 +17,13 @@ export default function ProgramScoresPage() {
 
   const { isCommunityAdmin, isLoading: isCheckingAdmin } = useIsCommunityAdmin(communityId);
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff } = useStaff();
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   const hasAccess = isCommunityAdmin || isOwner || isStaff;
   const { data: programs, isLoading: isProgramsLoading } = useCommunityPrograms(communityId);
   const { data: community, isLoading: isCommunityLoading } = useCommunityDetails(communityId);
 
-  if (isCheckingAdmin || isProgramsLoading || isCommunityLoading) {
+  if (isCheckingAdmin || isStaffLoading || isProgramsLoading || isCommunityLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Spinner />

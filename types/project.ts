@@ -89,6 +89,13 @@ export interface ProjectV2Response {
     divvi_wallets?: any[];
     github?: any[];
     network_addresses?: any[];
+    network_addresses_verified?: Array<{
+      network: string;
+      address: string;
+      verified: boolean;
+      verifiedAt?: string;
+      verifiedBy?: string;
+    }>;
   };
   members: Array<{
     address: string;

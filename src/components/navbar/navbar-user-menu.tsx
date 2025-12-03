@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -25,6 +26,7 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar";
 import { useAuth } from "@/hooks/useAuth";
+import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { useStaff } from "@/hooks/useStaff";
 import { useOwnerStore } from "@/store";
@@ -80,24 +82,20 @@ export function NavbarUserMenu() {
     changeCurrentTheme(currentTheme === "light" ? "dark" : "light");
   };
 
+  const { profile } = useContributorProfile(address);
+
   const { openModal: openProfileModal } = useContributorProfileModalStore();
-  const account = address
-    ? {
-        address,
-        displayName: formatAddress(address),
-      }
-    : undefined;
 
   // Check admin and reviewer permissions
   const { communities } = useCommunitiesStore();
   const { programs: reviewerPrograms } = useReviewerPrograms();
-  const { isStaff } = useStaff();
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isPoolManager, isRegistryAdmin } = useRegistryStore();
 
   const isCommunityAdmin = communities.length !== 0;
   const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
-  const hasAdminAccess = isStaff || isOwner || isCommunityAdmin;
+  const hasAdminAccess = !isStaffLoading && (isStaff || isOwner || isCommunityAdmin);
   const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
 
   if (!ready) {
@@ -123,13 +121,18 @@ export function NavbarUserMenu() {
             <MenubarTrigger className="cursor-pointer p-0 rounded-full data-[state=open]:opacity-90">
               <div className="flex items-center rounded-full border border-border p-1">
                 <EthereumAddressToENSAvatar
-                  address={account?.address}
+                  address={address}
                   className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
                 />
-                {address && (
+                {profile?.data?.name ? (
                   <span className="text-sm text-muted-foreground hidden xl:inline px-2">
-                    {formatAddress(address)}
+                    {profile?.data?.name}
                   </span>
+                ) : (
+                  <EthereumAddressToENSName
+                    address={address}
+                    className="text-sm text-muted-foreground hidden xl:inline px-2"
+                  />
                 )}
               </div>
             </MenubarTrigger>
@@ -138,8 +141,8 @@ export function NavbarUserMenu() {
                 <MenubarItem className="w-full hover:bg-transparent focus:bg-transparent text-muted-foreground cursor-pointer">
                   <div className="flex flex-row items-center gap-2">
                     {address ? (
-                      <span className="text-sm text-muted-foreground font-medium hover:text-muted-foreground">
-                        {formatAddressLong(address)}
+                      <span className="text-sm break-all max-w-40 text-muted-foreground font-medium hover:text-muted-foreground">
+                        {address}
                       </span>
                     ) : (
                       <span className={menuStyles.itemText}>No wallet connected</span>

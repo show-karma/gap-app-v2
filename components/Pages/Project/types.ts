@@ -4,6 +4,9 @@ import type { ProjectV2Response } from "@/types/project";
 export interface NetworkAddressPair {
   network: string;
   address: string;
+  verified?: boolean;
+  verifiedAt?: string;
+  verifiedBy?: string;
 }
 
 export interface InvalidInfo {
@@ -28,5 +31,6 @@ export interface ContractAddressItemProps {
   onNetworkChange: (index: number, value: string) => void;
   onAddressChange: (index: number, value: string) => void;
   onRemove: (index: number) => void;
+  onVerify?: (index: number) => void;
   supportedNetworks: readonly string[];
 }

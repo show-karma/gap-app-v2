@@ -18,6 +18,8 @@ export const QUERY_KEYS = {
       ["milestone-reviewers", programId, chainID] as const,
   },
   CONTRACTS: {
+    DEPLOYER: (network: string, contractAddress: string) =>
+      ["contract-deployer", network, contractAddress] as const,
     VALIDATION: {
       ALL: ["contract-validation"] as const,
       VALIDATE: (params: { address: string; network: string; excludeProjectId?: string }) =>
