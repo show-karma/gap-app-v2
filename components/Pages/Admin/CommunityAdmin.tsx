@@ -74,7 +74,6 @@ export default function CommunitiesToAdminPage() {
   }, [searchQuery]);
 
   const { gap } = useGap();
-  useAccount();
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isStaff, isLoading: isStaffLoading } = useStaff();
   const { communities: userAdminCommunities, isLoading: isLoadingUserCommunities } =
