@@ -34,9 +34,7 @@ export const ContractAddressList: FC<ContractAddressListProps> = ({
       {pairs.map((pair, index) => {
         // Use network:address as key for filled pairs, fallback to index for empty ones
         const key =
-          pair.network && pair.address
-            ? `${pair.network}:${pair.address}`
-            : `empty-${index}`;
+          pair.network && pair.address ? `${pair.network}:${pair.address}` : `empty-${index}`;
 
         return (
           <ContractAddressItem

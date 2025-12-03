@@ -8,8 +8,15 @@ export default defineConfig({
       bundler: "webpack",
     },
   },
-  screenshotOnRunFailure: false,
-  retries: 2,
+  screenshotOnRunFailure: true,
+  video: true,
+  retries: {
+    runMode: 2, // Retry failed tests twice in CI
+    openMode: 0, // No retries in interactive mode
+  },
+  defaultCommandTimeout: 10000,
+  pageLoadTimeout: 30000,
+  requestTimeout: 10000,
   e2e: {
     env: {
       NEXT_PUBLIC_ENV: "staging",
