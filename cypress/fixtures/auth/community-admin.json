@@ -1,0 +1,9 @@
+{
+  "address": "0xCOMMUNITY0123456789012345678901234567890",
+  "projects": [],
+  "isAdmin": false,
+  "isReviewer": false,
+  "isCommunityAdmin": true,
+  "communities": ["gitcoin", "optimism"]
+}
+

@@ -93,7 +93,7 @@ export const ProjectOptionsMenu = () => {
   const { data: contactsInfo } = useContactInfo(projectId);
   const { isOwner: isContractOwner } = useOwnerStore();
   const isAuthorized = isProjectOwner || isContractOwner;
-  const { isStaff } = useStaff();
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   // Event handlers to reset state when dialogs close
   const handleLinkContractsDialogClose = () => {
@@ -255,7 +255,7 @@ export const ProjectOptionsMenu = () => {
         </>
       )}
 
-      {(isAuthorized || isStaff) && (
+      {!isStaffLoading && (isAuthorized || isStaff) && (
         <Menu as="div" className={`relative inline-block text-left z-1`}>
           <div>
             <Menu.Button className="w-max bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-2 rounded-lg">
@@ -276,7 +276,7 @@ export const ProjectOptionsMenu = () => {
               className="z-[10000] absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none"
             >
               <div className="flex flex-col gap-1 px-1 py-1 h-full max-h-96 overflow-y-auto">
-                {isAuthorized && (
+                {(isAuthorized || isStaff) && (
                   <>
                     <Menu.Item>
                       {({ active }) => (
@@ -298,12 +298,25 @@ export const ProjectOptionsMenu = () => {
                         </button>
                       )}
                     </Menu.Item>
-                    {!isStaff && (
+                    {!isStaff ? (
                       <Menu.Item>
                         {({ active }) => (
                           <button
                             type="button"
                             onClick={openTransferOwnershipModal}
+                            className={buttonClassName}
+                          >
+                            <ArrowsRightLeftIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
+                            Transfer ownership
+                          </button>
+                        )}
+                      </Menu.Item>
+                    ) : (
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            type="button"
+                            onClick={openAdminTransferOwnershipModal}
                             className={buttonClassName}
                           >
                             <ArrowsRightLeftIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
@@ -409,30 +422,6 @@ export const ProjectOptionsMenu = () => {
                         >
                           <TrashIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
                           Delete project
-                        </button>
-                      )}
-                    </Menu.Item>
-                  </>
-                )}
-                {isStaff && (
-                  <>
-                    <Menu.Item>
-                      {({ active }) => (
-                        <button type="button" onClick={openMergeModal} className={buttonClassName}>
-                          <ArrowDownOnSquareIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-                          Merge
-                        </button>
-                      )}
-                    </Menu.Item>
-                    <Menu.Item>
-                      {({ active }) => (
-                        <button
-                          type="button"
-                          onClick={openAdminTransferOwnershipModal}
-                          className={buttonClassName}
-                        >
-                          <ArrowsRightLeftIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-                          Transfer ownership
                         </button>
                       )}
                     </Menu.Item>

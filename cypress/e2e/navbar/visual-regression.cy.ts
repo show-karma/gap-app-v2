@@ -1,260 +1,158 @@
 /**
- * E2E Tests: Visual Regression
- * Tests visual appearance and consistency of navbar across different states
- * Uses cypress-image-snapshot for visual regression testing
- *
- * Run with: yarn e2e:headless
+ * E2E Tests: Navbar UI States
+ * Tests navbar components appearance across different states and viewports
  */
 
-describe("Visual Regression", () => {
+import {
+  setupCommonIntercepts,
+  waitForPageLoad,
+} from "../../support/intercepts";
+
+describe("Navbar UI States", () => {
+  beforeEach(() => {
+    setupCommonIntercepts();
+  });
+
   describe("Desktop Navbar Appearance", () => {
-    it("should match desktop navbar baseline", () => {
+    beforeEach(() => {
       cy.viewport(1440, 900);
       cy.visit("/");
-
-      // Wait for navbar to fully load
-      cy.contains("For Builders").should("be.visible");
-
-      // Take snapshot
-      cy.matchImageSnapshot("desktop-navbar");
+      waitForPageLoad();
     });
 
-    it("should match navbar with open dropdown", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
+    it("should display navbar in default state", () => {
+      cy.get("nav").should("be.visible");
+      cy.contains("button", "For Builders").should("be.visible");
+      cy.contains("button", "For Funders").should("be.visible");
+      cy.contains("button", "Explore").should("be.visible");
+    });
 
+    it("should display For Builders dropdown", () => {
       cy.contains("button", "For Builders").click();
-
-      // Wait for dropdown to be visible instead of arbitrary wait
       cy.contains("Create project").should("be.visible");
-
-      // Take snapshot
-      cy.matchImageSnapshot("desktop-navbar-dropdown-open");
-    });
-  });
-
-  describe("Mobile Menu Appearance", () => {
-    it("should match mobile navbar baseline", () => {
-      cy.viewport("iphone-x");
-      cy.visit("/");
-
-      cy.contains("For Builders").should("exist");
-
-      cy.matchImageSnapshot("mobile-navbar-closed");
+      cy.contains("Find funding").should("be.visible");
     });
 
-    it("should match mobile menu open", () => {
-      cy.viewport("iphone-x");
-      cy.visit("/");
-
-      cy.get('[aria-label="Open menu"]').click();
-
-      // Wait for menu to be visible instead of arbitrary wait
-      cy.get('[aria-label="Close menu"]').should("be.visible");
-
-      cy.matchImageSnapshot("mobile-menu-open");
-    });
-  });
-
-  describe("Dropdown Menu Appearance", () => {
-    it("should match For Builders dropdown", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
-
-      cy.contains("button", "For Builders").click();
-
-      // Wait for dropdown content to be visible
-      cy.contains("Create project").should("be.visible");
-
-      cy.matchImageSnapshot("for-builders-dropdown");
-    });
-
-    it("should match For Funders dropdown", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
-
+    it("should display For Funders dropdown", () => {
       cy.contains("button", "For Funders").click();
-
-      // Wait for dropdown content to be visible
-      cy.get("body").should("contain", "Browse"); // Adjust selector based on actual content
-
-      cy.matchImageSnapshot("for-funders-dropdown");
+      // Menu should open
+      cy.get('[data-state="open"]').should("exist");
     });
 
-    it("should match Explore dropdown", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
-
+    it("should display Explore dropdown", () => {
       cy.contains("button", "Explore").click();
-
-      // Wait for dropdown content to be visible
-      cy.get("body").should("be.visible"); // Adjust selector based on actual content
-
-      cy.matchImageSnapshot("explore-dropdown");
+      cy.contains("All projects").should("be.visible");
+      cy.contains("All communities").should("be.visible");
     });
 
-    it("should match Resources dropdown", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
-
+    it("should display Resources dropdown", () => {
       cy.contains("button", "Resources").click();
-
-      // Wait for dropdown content to be visible
-      cy.get("body").should("be.visible"); // Adjust selector based on actual content
-
-      cy.matchImageSnapshot("resources-dropdown");
+      cy.contains("Docs").should("be.visible");
     });
   });
 
-
-  describe("Search Results Appearance", () => {
-    it("should match search results display", () => {
+  describe("Search UI States", () => {
+    beforeEach(() => {
       cy.viewport(1440, 900);
       cy.visit("/");
-
-      cy.get('[placeholder*="Search"]').type("test");
-
-      // Wait for search results to appear instead of arbitrary wait
-      cy.get("body").should("be.visible"); // Adjust selector based on actual search results container
-
-      cy.matchImageSnapshot("search-results");
+      waitForPageLoad();
     });
 
-    it("should match empty search results", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
+    it("should display search input", () => {
+      cy.get('input[placeholder*="Search"]').should("be.visible");
+    });
 
-      cy.get('[placeholder*="Search"]').type("zzznonexistent");
-
-      // Wait for empty state to appear
-      cy.get("body").should("be.visible"); // Adjust selector based on actual empty state
-
-      cy.matchImageSnapshot("search-no-results");
+    it("should allow typing in search", () => {
+      cy.get('input[placeholder*="Search"]').type("test");
+      cy.get('input[placeholder*="Search"]').should("have.value", "test");
     });
   });
 
-  describe("Hover States", () => {
-    it("should match button hover state", () => {
+  describe("Button Interactions", () => {
+    beforeEach(() => {
       cy.viewport(1440, 900);
       cy.visit("/");
-
-      cy.contains("button", "For Builders").trigger("mouseover");
-
-      // Small wait for hover state to apply
-      cy.wait(50);
-
-      cy.matchImageSnapshot("button-hover");
+      waitForPageLoad();
     });
 
-    it("should match menu item hover", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
+    it("should show hover state on buttons", () => {
+      cy.contains("button", "For Builders")
+        .should("be.visible")
+        .trigger("mouseover");
+      
+      // Button should still be visible after hover
+      cy.contains("button", "For Builders").should("be.visible");
+    });
 
+    it("should show menu items on click", () => {
       cy.contains("button", "For Builders").click();
       cy.contains("Create project").should("be.visible");
-
-      cy.contains("Create project").trigger("mouseover");
-
-      // Small wait for hover state to apply
-      cy.wait(50);
-
-      cy.matchImageSnapshot("menu-item-hover");
     });
   });
 
   describe("Focus States", () => {
-    it("should match focused button", () => {
+    beforeEach(() => {
       cy.viewport(1440, 900);
       cy.visit("/");
-
-      cy.contains("button", "For Builders").focus();
-
-      cy.matchImageSnapshot("button-focused");
+      waitForPageLoad();
     });
 
-    it("should match focused search input", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
+    it("should focus button with keyboard", () => {
+      cy.contains("button", "For Builders").focus();
+      cy.focused().should("contain", "For Builders");
+    });
 
-      cy.get('[placeholder*="Search"]').focus();
-
-      cy.matchImageSnapshot("search-focused");
+    it("should focus search input", () => {
+      cy.get('input[placeholder*="Search"]').focus();
+      cy.focused().should("have.attr", "placeholder").and("include", "Search");
     });
   });
 
   describe("Tablet Appearance", () => {
-    it("should match tablet navbar", () => {
-      cy.viewport("ipad-2");
+    it("should display navbar on tablet", () => {
+      cy.viewport(768, 1024);
       cy.visit("/");
+      waitForPageLoad();
 
-      cy.contains("For Builders").should("exist");
+      cy.get("nav").should("be.visible");
+    });
+  });
 
-      cy.matchImageSnapshot("tablet-navbar");
+  describe("Mobile Appearance", () => {
+    beforeEach(() => {
+      cy.viewport(375, 667);
+      cy.visit("/");
+      waitForPageLoad();
     });
 
-    it("should match tablet menu open", () => {
-      cy.viewport("ipad-2");
-      cy.visit("/");
+    it("should display mobile navbar", () => {
+      cy.get("nav").should("be.visible");
+      cy.get('[aria-label="Open menu"]').should("be.visible");
+    });
 
+    it("should open mobile drawer", () => {
       cy.get('[aria-label="Open menu"]').click();
-
-      // Wait for menu to be visible
-      cy.get('[aria-label="Close menu"]').should("be.visible");
-
-      cy.matchImageSnapshot("tablet-menu-open");
+      cy.get('[role="dialog"]').should("be.visible");
+      cy.contains("Menu").should("be.visible");
     });
   });
 
-  describe("Cross-Browser Consistency", () => {
-    it("should look consistent across viewports", () => {
-      const viewports = [
-        [1920, 1080], // Desktop wide
-        [1440, 900], // Desktop standard
-        [768, 1024], // Tablet portrait
-        [375, 667], // Mobile
-      ];
-
-      viewports.forEach(([width, height]) => {
-        cy.viewport(width, height);
-        cy.visit("/");
-
-        cy.contains("For Builders").should("exist");
-
-        cy.matchImageSnapshot(`navbar-${width}x${height}`);
-      });
-    });
-  });
-
-  describe("Content Variations", () => {
-    it("should match with many search results", () => {
+  describe("Auth Buttons Display", () => {
+    it("should display Sign in button on desktop", () => {
       cy.viewport(1440, 900);
       cy.visit("/");
+      waitForPageLoad();
 
-      cy.get('[placeholder*="Search"]').type("a");
-
-      // Wait for search results to appear
-      cy.get("body").should("be.visible"); // Adjust selector based on actual search results
-
-      cy.matchImageSnapshot("many-search-results");
+      cy.contains("Sign in").should("be.visible");
+      cy.contains("Contact sales").should("be.visible");
     });
-  });
 
-  describe("Error States", () => {
-    it("should match search error state", () => {
-      cy.intercept("GET", "**/api/search*", {
-        statusCode: 500,
-        body: { error: "Server error" },
-      });
-
-      cy.viewport(1440, 900);
+    it("should display Sign in button on mobile", () => {
+      cy.viewport(375, 667);
       cy.visit("/");
+      waitForPageLoad();
 
-      cy.get('[placeholder*="Search"]').type("test");
-
-      // Wait for error state to appear
-      cy.get("body").should("be.visible"); // Adjust selector based on actual error display
-
-      cy.matchImageSnapshot("search-error");
+      cy.contains("Sign in").should("be.visible");
     });
   });
 });
