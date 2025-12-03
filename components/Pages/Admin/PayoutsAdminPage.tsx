@@ -19,6 +19,7 @@ import {
 } from "@/hooks/useCommunityPayouts";
 import { useGrants } from "@/hooks/useGrants";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -90,6 +91,7 @@ export default function PayoutsAdminPage() {
     community?.uid,
     address
   );
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   // Extract the actual programId from the composite value (programId_chainId)
   const actualProgramId = selectedProgramId?.split("_")[0] || null;
@@ -412,7 +414,7 @@ export default function PayoutsAdminPage() {
   }, [communityError, router]);
 
   // Loading state
-  if (loadingAdmin || isLoadingGrants || isLoadingCommunity) {
+  if (loadingAdmin || isStaffLoading || isLoadingGrants || isLoadingCommunity) {
     return (
       <div className="flex w-full items-center justify-center h-96">
         <Spinner />
@@ -421,7 +423,7 @@ export default function PayoutsAdminPage() {
   }
 
   // Not authorized state
-  if (!isAdmin) {
+  if (!isAdmin && !isStaff) {
     return (
       <div className="flex w-full items-center justify-center h-96">
         <p className="text-lg">{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}</p>

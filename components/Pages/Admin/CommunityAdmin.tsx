@@ -48,7 +48,7 @@ export default function CommunitiesToAdminPage() {
   const { gap } = useGap();
   const { address } = useAccount();
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff } = useStaff();
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
   const { communities: userAdminCommunities, isLoading: isLoadingUserCommunities } =
     useCommunitiesStore();
 
@@ -111,7 +111,8 @@ export default function CommunitiesToAdminPage() {
     return [];
   }, [allCommunities, isStaffOrOwner, hasAdminCommunities, userAdminCommunities]);
 
-  const isLoadingData = isLoading || (!isStaffOrOwner && isLoadingUserCommunities);
+  const isLoadingData =
+    isLoading || isStaffLoading || (!isStaffOrOwner && isLoadingUserCommunities);
 
   const handleRefetch = useCallback(async () => {
     try {

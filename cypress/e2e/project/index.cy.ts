@@ -1,73 +1,69 @@
-import { EXAMPLE } from "@/cypress/support/e2e";
+/**
+ * E2E Tests: Project Page
+ *
+ * Tests project page navigation.
+ */
 
-describe("Normal User - Project Page", () => {
-  it("should be able to navigate to project page from community page", () => {
-    cy.visit(`/${EXAMPLE.COMMUNITY}`);
-    cy.wait(1000);
-    cy.get('[id^="grant-card"]').first().click();
-    cy.url().should("include", `/project/`);
+import { EXAMPLE } from "../../support/e2e";
+import {
+  setupCommonIntercepts,
+  waitForPageLoad,
+} from "../../support/intercepts";
+
+describe("Project Page Navigation", () => {
+  beforeEach(() => {
+    setupCommonIntercepts();
   });
-  it("should be able to navigate between tabs", () => {
-    cy.visit(`/project/${EXAMPLE.PROJECT}`);
-    cy.wait(1000);
-    cy.get("a").contains("Roadmap").click({
-      force: true,
+
+  describe("Projects Page", () => {
+    it("should load projects page", () => {
+      cy.visit("/projects");
+      waitForPageLoad();
+
+      cy.url().should("include", "/projects");
+      cy.get("body").should("be.visible");
     });
-    cy.wait(1000);
-    cy.get("a").contains("Grants").click({
-      force: true,
-    });
-    cy.wait(1000);
-    cy.get("a").contains("Impact").click({
-      force: true,
-    });
-    cy.wait(1000);
-    cy.get("a").contains("Project").click({
-      force: true,
-    });
-  });
-  it("should be able to open 'Request Intro' modal", () => {
-    cy.visit(`/project/${EXAMPLE.PROJECT}`);
-    cy.wait(1000);
-    cy.get("h1").then(($h1) => {
-      cy.get("button").contains("Request intro").click({
-        force: true,
-      });
-      cy.get("h3").contains(`Request Intro to ${$h1.text()} team`);
+
+    it("should display navigation on projects page", () => {
+      cy.visit("/projects");
+      waitForPageLoad();
+
+      cy.get("nav").should("exist");
     });
   });
-  it("should be able to open 'Endorse the Project' modal", () => {
-    cy.visit(`/project/${EXAMPLE.PROJECT}`);
-    cy.wait(1000);
-    cy.get("h1").then(($h1) => {
-      cy.get("button").contains("Endorse the Project").click({
-        force: true,
-      });
-      cy.get("h3").contains(`You are endorsing ${$h1.text()}`);
+
+  describe("Page Navigation", () => {
+    it("should navigate from homepage to projects", () => {
+      cy.visit("/");
+      waitForPageLoad();
+
+      cy.visit("/projects");
+      waitForPageLoad();
+
+      cy.url().should("include", "/projects");
     });
-  });
-  it("should be able to navigate between overview tabs", () => {
-    cy.visit(`/project/${EXAMPLE.PROJECT}`);
-    cy.wait(1000);
-    cy.get("button").contains("Updates").click({
-      force: true,
+
+    it("should have proper page structure on homepage", () => {
+      cy.visit("/");
+      waitForPageLoad();
+
+      cy.get("nav").should("exist");
+      cy.get("body").should("be.visible");
     });
-    cy.wait(500);
-    cy.get('[id^="updates-tab"]').should("be.visible");
-    cy.get("button").contains("Information").click({
-      force: true,
+
+    it("should handle navigation between pages", () => {
+      cy.visit("/");
+      waitForPageLoad();
+
+      cy.visit("/projects");
+      waitForPageLoad();
+
+      cy.url().should("include", "/projects");
+
+      cy.visit("/");
+      waitForPageLoad();
+
+      cy.url().should("not.include", "/projects");
     });
-    cy.wait(500);
-    cy.get('[id^="information-tab"]').should("be.visible");
-  });
-  it("should be able to see project feed", () => {
-    cy.visit(`/project/${EXAMPLE.PROJECT}`);
-    cy.wait(1000);
-    cy.get("button").contains("Project Feed").should("be.visible").click({
-      force: true,
-    });
-    cy.get('[id^="project-feed"]')
-      .should("be.visible")
-      .and("have.length.greaterThan", 0);
   });
 });

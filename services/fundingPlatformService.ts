@@ -570,6 +570,31 @@ export const fundingApplicationsAPI = {
     );
     return response.data;
   },
+
+  /**
+   * Delete a milestone from a funding application (Milestone reviewers only)
+   */
+  async deleteMilestone(
+    referenceNumber: string,
+    milestoneFieldLabel: string,
+    milestoneTitle: string
+  ): Promise<{
+    milestoneRemoved: boolean;
+    completionDeleted: boolean;
+    onChainRevoked: boolean;
+    onChainTxHash?: string;
+  }> {
+    const response = await apiClient.delete(
+      `/v2/funding-applications/${referenceNumber}/milestones`,
+      {
+        data: {
+          milestoneFieldLabel,
+          milestoneTitle,
+        },
+      }
+    );
+    return response.data;
+  },
 };
 
 // Combined service for easy import
