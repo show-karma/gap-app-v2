@@ -20,6 +20,14 @@ import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog";
 import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useGap } from "@/hooks/useGap";
 import { useStaff } from "@/hooks/useStaff";
 import { layoutTheme } from "@/src/helper/theme";
@@ -283,23 +291,23 @@ export default function CommunitiesToAdminPage() {
           </div>
 
           {/* Search and Filter Bar */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             {/* Search Input */}
             <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
+              <Input
                 type="text"
                 placeholder="Search by community name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="pl-9 pr-9"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
                   aria-label="Clear search"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   <XMarkIcon className="w-4 h-4" />
                 </button>
@@ -308,25 +316,20 @@ export default function CommunitiesToAdminPage() {
 
             {/* Network Filter */}
             <div className="flex items-center gap-2">
-              <label
-                htmlFor="network-filter"
-                className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap"
-              >
-                Network:
-              </label>
-              <select
-                id="network-filter"
-                value={selectedNetwork}
-                onChange={(e) => setSelectedNetwork(e.target.value)}
-                className="px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All Networks</option>
-                {availableNetworks.map(([chainId, name]) => (
-                  <option key={chainId} value={chainId}>
-                    {name}
-                  </option>
-                ))}
-              </select>
+              <span className="text-sm text-muted-foreground whitespace-nowrap">Network:</span>
+              <Select value={selectedNetwork} onValueChange={setSelectedNetwork}>
+                <SelectTrigger className="w-[180px]" aria-label="Select network">
+                  <SelectValue placeholder="Select network" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Networks</SelectItem>
+                  {availableNetworks.map(([chainId, name]) => (
+                    <SelectItem key={chainId} value={String(chainId)}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="mt-5 w-full">
