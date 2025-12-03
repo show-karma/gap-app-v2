@@ -21,6 +21,7 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { CreateProgramModal } from "@/components/FundingPlatform/CreateProgramModal";
 import { FundingPlatformStatsCard } from "@/components/FundingPlatform/Dashboard/card";
 import { Button } from "@/components/Utilities/Button";
 import { LoadingOverlay } from "@/components/Utilities/LoadingOverlay";
@@ -370,6 +371,14 @@ export default function FundingPlatformAdminPage() {
         ))}
       </div>
 
+      {/* Create Program Button */}
+      <div className="flex justify-end">
+        <Button onClick={() => setShowCreateModal(true)} className="inline-flex items-center">
+          <PlusIcon className="w-4 h-4 mr-2" />
+          Create New Program
+        </Button>
+      </div>
+
       {/* Filters Section */}
       <div className="my-8 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
@@ -705,22 +714,15 @@ export default function FundingPlatformAdminPage() {
         </div>
       )}
 
-      {/* Create Program Modal - TODO: Implement in next task */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Create Program</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Program creation will be implemented in the next task phase.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Create Program Modal */}
+      <CreateProgramModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        communityId={communityId}
+        onSuccess={async () => {
+          await refetch();
+        }}
+      />
     </div>
   );
 }
