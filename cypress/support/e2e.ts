@@ -31,11 +31,19 @@ Cypress.on("uncaught:exception", (err) => {
   if (
     err.message.includes("locale") ||
     err.message.includes("hydration") ||
-    err.message.includes("NEXT_NOT_FOUND") ||
-    err.message.includes("ChunkLoadError")
+    err.message.includes("NEXT_NOT_FOUND")
   ) {
     return false;
   }
+
+  // Log ChunkLoadError but don't fail the test - it's often a transient network issue
+  // but we want to know when it happens for debugging purposes
+  if (err.message.includes("ChunkLoadError")) {
+    cy.log(`⚠️ ChunkLoadError detected: ${err.message}`);
+    console.warn("[E2E] ChunkLoadError detected:", err.message);
+    return false;
+  }
+
   return true;
 });
 

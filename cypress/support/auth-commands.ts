@@ -136,12 +136,17 @@ Cypress.Commands.add("logout", () => {
 Cypress.Commands.add("isAuthenticated", () => {
   return cy.window().then((win) => {
     const authState = win.localStorage.getItem("privy:auth_state");
-    if (!authState) return false;
+    if (!authState) {
+      cy.log("ℹ️ No auth state found in localStorage");
+      return false;
+    }
 
     try {
       const parsed = JSON.parse(authState);
       return parsed.authenticated === true;
-    } catch {
+    } catch (error) {
+      cy.log(`⚠️ Failed to parse auth state: ${error instanceof Error ? error.message : String(error)}`);
+      console.warn("[E2E Auth] Failed to parse auth state from localStorage:", error);
       return false;
     }
   });
