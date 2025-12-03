@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FC, useCallback, useEffect, useState } from "react";
-import { type SubmitHandler, useForm } from "react-hook-form";
+import { Controller, type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
@@ -23,7 +23,7 @@ interface IApplicationSubmissionProps {
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
-  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300";
+  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder:text-zinc-300";
 
 const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   programId,
@@ -43,47 +43,185 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
     const schemaObject: Record<string, any> = {};
 
     schema.fields.forEach((field) => {
-      let fieldSchema: any;
+      const fieldName = field.label.toLowerCase().replace(/\s+/g, "_");
+      let fieldSchema: z.ZodTypeAny;
 
       switch (field.type) {
         case "email":
-          fieldSchema = z.string().email("Please enter a valid email address");
+          if (field.required) {
+            fieldSchema = z
+              .string()
+              .email("Please enter a valid email address")
+              .min(1, `${field.label} is required`);
+          } else {
+            fieldSchema = z
+              .string()
+              .optional()
+              .or(z.literal(""))
+              .refine(
+                (val) => {
+                  if (!val || val === "") return true; // Empty is OK for optional fields
+                  return z.string().email().safeParse(val).success;
+                },
+                { message: "Please enter a valid email address" }
+              );
+          }
           break;
         case "url":
-          fieldSchema = z.string().url("Please enter a valid URL");
+          if (field.required) {
+            fieldSchema = z
+              .string()
+              .url("Please enter a valid URL")
+              .min(1, `${field.label} is required`);
+          } else {
+            fieldSchema = z
+              .string()
+              .optional()
+              .or(z.literal(""))
+              .refine(
+                (val) => {
+                  if (!val || val === "") return true; // Empty is OK for optional fields
+                  return z.string().url().safeParse(val).success;
+                },
+                { message: "Please enter a valid URL" }
+              );
+          }
           break;
-        case "number":
-          fieldSchema = z.string().refine((val) => !Number.isNaN(Number(val)), {
-            message: "Please enter a valid number",
-          });
+        case "checkbox": {
+          // Checkboxes return arrays of selected values
+          let checkboxSchema: z.ZodTypeAny = z.array(z.string());
+          if (field.validation?.min) {
+            checkboxSchema = (checkboxSchema as z.ZodArray<z.ZodString>).min(
+              field.validation.min,
+              `Please select at least ${field.validation.min} option(s)`
+            );
+          }
+          if (field.validation?.max) {
+            checkboxSchema = (checkboxSchema as z.ZodArray<z.ZodString>).max(
+              field.validation.max,
+              `Please select at most ${field.validation.max} option(s)`
+            );
+          }
+          if (field.required) {
+            checkboxSchema = (checkboxSchema as z.ZodArray<z.ZodString>).min(
+              1,
+              `${field.label} is required`
+            );
+          } else {
+            checkboxSchema = (checkboxSchema as z.ZodArray<z.ZodString>)
+              .optional()
+              .or(z.array(z.string()).length(0));
+          }
+          fieldSchema = checkboxSchema;
+          break;
+        }
+        case "radio":
+          fieldSchema = z.string();
+          break;
+        case "number": {
+          let numberSchema: z.ZodTypeAny = z.string();
+          if (field.required) {
+            numberSchema = (numberSchema as z.ZodString).min(1, `${field.label} is required`);
+          } else {
+            numberSchema = (numberSchema as z.ZodString).optional().or(z.literal(""));
+          }
+          numberSchema = (numberSchema as z.ZodString).refine(
+            (val: string) => {
+              if (!val || val === "") return !field.required;
+              return !Number.isNaN(Number(val));
+            },
+            { message: "Please enter a valid number" }
+          );
+          if (field.validation?.min !== undefined) {
+            numberSchema = (numberSchema as z.ZodEffects<any>).refine(
+              (val: string) => {
+                if (!val || val === "") return !field.required;
+                const num = Number(val);
+                return !Number.isNaN(num) && num >= field.validation!.min!;
+              },
+              { message: `Minimum value is ${field.validation.min}` }
+            );
+          }
+          if (field.validation?.max !== undefined) {
+            numberSchema = (numberSchema as z.ZodEffects<any>).refine(
+              (val: string) => {
+                if (!val || val === "") return !field.required;
+                const num = Number(val);
+                return !Number.isNaN(num) && num <= field.validation!.max!;
+              },
+              { message: `Maximum value is ${field.validation.max}` }
+            );
+          }
+          fieldSchema = numberSchema;
+          break;
+        }
+        case "text":
+        case "textarea": {
+          let textSchema: z.ZodTypeAny = z.string();
+          if (field.validation?.min && field.validation.min > 1) {
+            textSchema = (textSchema as z.ZodString).min(
+              field.validation.min,
+              `Minimum ${field.validation.min} characters required`
+            );
+          }
+          if (field.validation?.pattern) {
+            textSchema = (textSchema as z.ZodString).refine(
+              (val: string) => new RegExp(field.validation!.pattern!).test(val),
+              { message: field.validation.message || "Invalid format" }
+            );
+          }
+          if (field.required) {
+            textSchema = (textSchema as z.ZodString).min(1, `${field.label} is required`);
+          } else {
+            textSchema = (textSchema as z.ZodString).optional().or(z.literal(""));
+          }
+          fieldSchema = textSchema;
+          break;
+        }
+        case "select":
+        case "date":
+          fieldSchema = z.string();
+          break;
+        case "milestone":
+          if (field.required) {
+            if (field.validation?.minMilestones) {
+              fieldSchema = z
+                .array(z.any())
+                .min(
+                  field.validation.minMilestones,
+                  `Please add at least ${field.validation.minMilestones} milestone(s)`
+                );
+            } else {
+              fieldSchema = z.array(z.any()).min(1, `${field.label} is required`);
+            }
+            if (field.validation?.maxMilestones) {
+              fieldSchema = (fieldSchema as z.ZodArray<any>).max(
+                field.validation.maxMilestones,
+                `Maximum ${field.validation.maxMilestones} milestone(s) allowed`
+              );
+            }
+          } else {
+            fieldSchema = z.array(z.any()).optional().or(z.array(z.any()).length(0));
+          }
           break;
         default:
           fieldSchema = z.string();
           break;
       }
 
-      // Apply validation rules
-      if (field.validation?.min) {
-        fieldSchema = fieldSchema.min(
-          field.validation.min,
-          `Minimum ${field.validation.min} characters required`
-        );
-      }
-      if (field.validation?.max) {
-        fieldSchema = fieldSchema.max(
-          field.validation.max,
-          `Maximum ${field.validation.max} characters allowed`
-        );
+      // Apply required validation for select, date, and radio fields
+      if (["select", "date", "radio"].includes(field.type)) {
+        if (field.required) {
+          fieldSchema = (fieldSchema as z.ZodString).min(1, `${field.label} is required`);
+        } else {
+          fieldSchema = (fieldSchema as z.ZodString).optional().or(z.literal("")) as z.ZodTypeAny;
+        }
       }
 
-      // Apply required validation
-      if (field.required) {
-        fieldSchema = fieldSchema.min(1, `${field.label} is required`);
-      } else {
-        fieldSchema = fieldSchema.optional().or(z.literal(""));
-      }
-
-      schemaObject[field.label.toLowerCase().replace(/\s+/g, "_")] = fieldSchema;
+      // Use field.id if available, otherwise fall back to fieldName
+      // This prevents issues with duplicate field labels
+      const schemaKey = field.id || fieldName;
+      schemaObject[schemaKey] = fieldSchema;
     });
 
     return z.object(schemaObject);
@@ -92,44 +230,108 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   const validationSchema = generateValidationSchema(formSchema);
   type FormData = z.infer<typeof validationSchema>;
 
+  // Build default values for form fields
+  const getDefaultValues = useCallback((): Partial<FormData> => {
+    const defaults: Record<string, any> = {};
+    formSchema.fields.forEach((field) => {
+      const fieldName = field.label.toLowerCase().replace(/\s+/g, "_");
+      // Use field.id if available, otherwise fall back to fieldName (consistent with validation schema)
+      const fieldKey = field.id || fieldName;
+      if (field.type === "checkbox") {
+        defaults[fieldKey] = [];
+      } else {
+        defaults[fieldKey] = "";
+      }
+    });
+    return defaults as Partial<FormData>;
+  }, [formSchema.fields]);
+
   const {
     register,
     handleSubmit,
     formState: { errors, isValid },
     reset,
+    trigger,
+    control,
   } = useForm<FormData>({
     resolver: zodResolver(validationSchema),
     mode: "onChange",
+    defaultValues: getDefaultValues(),
   });
+
+  // Count validation errors
+  const errorCount = Object.keys(errors).length;
 
   // Pre-fill form when initialData is provided (edit mode)
   useEffect(() => {
-    if (initialData && formSchema.fields.length > 0) {
+    if (initialData && formSchema.fields.length > 0 && isEditMode) {
       const formData: Record<string, any> = {};
 
-      // Map applicationData keys to form field names
       formSchema.fields.forEach((field) => {
         const fieldName = field.label.toLowerCase().replace(/\s+/g, "_");
+        // Use field.id if available, otherwise fall back to fieldName (consistent with validation schema)
+        const fieldKey = field.id || fieldName;
 
         // Try to find matching key in initialData
-        // First try exact match with fieldName
-        if (initialData[fieldName] !== undefined) {
-          formData[fieldName] = initialData[fieldName];
-        } else {
-          // Try to find by field label (case-insensitive)
-          const matchingKey = Object.keys(initialData).find(
-            (key) =>
-              key.toLowerCase() === field.label.toLowerCase() || key.toLowerCase() === fieldName
+        // Strategy 1: Match with field.id (if available)
+        let matchingKey: string | undefined;
+        if (field.id) {
+          matchingKey = field.id in initialData ? field.id : undefined;
+        }
+        if (matchingKey === undefined) {
+          // Strategy 2: Exact match with fieldName
+          matchingKey = fieldName in initialData ? fieldName : undefined;
+        }
+        if (matchingKey === undefined) {
+          // Strategy 3: Case-insensitive match with fieldName
+          matchingKey = Object.keys(initialData).find((key) => key.toLowerCase() === fieldName);
+        }
+        if (matchingKey === undefined) {
+          // Strategy 4: Match with original field label (case-insensitive)
+          matchingKey = Object.keys(initialData).find(
+            (key) => key.toLowerCase() === field.label.toLowerCase()
           );
-          if (matchingKey && initialData[matchingKey] !== undefined) {
-            formData[fieldName] = initialData[matchingKey];
+        }
+
+        if (matchingKey !== undefined && matchingKey in initialData) {
+          const value = initialData[matchingKey];
+
+          // Handle checkbox fields (arrays)
+          if (field.type === "checkbox") {
+            formData[fieldKey] = Array.isArray(value) ? value : [value];
+          } else {
+            // Convert all other values to strings
+            if (Array.isArray(value)) {
+              formData[fieldKey] = value.join(", ");
+            } else if (value === null || value === undefined) {
+              formData[fieldKey] = "";
+            } else if (Number.isNaN(value)) {
+              // Handle NaN specifically (NaN !== NaN, so we need explicit check)
+              formData[fieldKey] = "NaN";
+            } else if (value === Infinity || value === -Infinity) {
+              // Handle Infinity specifically
+              formData[fieldKey] = String(value);
+            } else {
+              formData[fieldKey] = String(value);
+            }
+          }
+        } else {
+          // Set default values for unmatched fields
+          if (field.type === "checkbox") {
+            formData[fieldKey] = [];
+          } else {
+            formData[fieldKey] = "";
           }
         }
       });
 
       reset(formData);
+      // Trigger validation after reset
+      setTimeout(() => {
+        trigger();
+      }, 0);
     }
-  }, [initialData, formSchema.fields, reset]);
+  }, [initialData, formSchema.fields, reset, trigger, isEditMode]);
 
   const handleFormSubmit: SubmitHandler<FormData> = async (data) => {
     if (!address) {
@@ -144,14 +346,12 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
         toast.success("Application submitted successfully!");
         reset();
       }
-      // For edit mode, success toast is handled by the parent component
     } catch (error) {
       console.error("Error submitting application:", error);
       if (!isEditMode) {
         toast.error("Failed to submit application. Please try again.");
       }
-      // For edit mode, error toast is handled by the hook
-      throw error; // Re-throw so parent can handle
+      throw error;
     } finally {
       setSubmitting(false);
     }
@@ -159,8 +359,10 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
 
   const renderField = (field: any, index: number) => {
     const fieldName = field.label.toLowerCase().replace(/\s+/g, "_");
-    const error = errors[fieldName as keyof FormData];
-    const errorMessage = error?.message || error;
+    // Use field.id if available, otherwise fall back to fieldName (consistent with validation schema)
+    const fieldKey = (field.id || fieldName) as keyof FormData;
+    const error = errors[fieldKey];
+    const errorMessage = error?.message ? String(error.message) : error ? String(error) : "";
 
     switch (field.type) {
       case "textarea":
@@ -171,11 +373,15 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             </label>
             <textarea
               id={fieldName}
-              className={cn(inputStyle, "min-h-[100px] resize-y")}
+              className={cn(
+                inputStyle,
+                "min-h-[100px] resize-y",
+                error && "border-red-500 dark:border-red-500"
+              )}
               placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
-              {...register(fieldName as keyof FormData)}
+              {...register(fieldKey)}
             />
-            {error && <p className="text-sm text-red-400 mt-1">{String(errorMessage)}</p>}
+            {error && <p className="text-sm text-red-400 mt-1">{errorMessage}</p>}
           </div>
         );
 
@@ -187,8 +393,8 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             </label>
             <select
               id={fieldName}
-              className={cn(inputStyle)}
-              {...register(fieldName as keyof FormData)}
+              className={cn(inputStyle, error && "border-red-500 dark:border-red-500")}
+              {...register(fieldKey)}
             >
               <option value="">Select an option</option>
               {field.options?.map((option: string, optIndex: number) => (
@@ -197,7 +403,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
                 </option>
               ))}
             </select>
-            {error && <p className="text-sm text-red-400 mt-1">{String(errorMessage)}</p>}
+            {error && <p className="text-sm text-red-400 mt-1">{errorMessage}</p>}
           </div>
         );
 
@@ -207,20 +413,34 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             <div className={labelStyle}>
               {field.label} {field.required && <span className="text-red-500">*</span>}
             </div>
-            <div className="mt-2 space-y-2">
-              {field.options?.map((option: string, optIndex: number) => (
-                <label key={optIndex} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    value={option}
-                    className="mr-2 h-4 w-4 rounded border-gray-300"
-                    {...register(fieldName as keyof FormData)}
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{option}</span>
-                </label>
-              ))}
-            </div>
-            {error && <p className="text-sm text-red-400 mt-1">{String(errorMessage)}</p>}
+            <Controller
+              name={fieldKey}
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <div className="mt-2 space-y-2">
+                  {field.options?.map((option: string, optIndex: number) => (
+                    <label key={optIndex} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        value={option}
+                        checked={Array.isArray(value) && value.includes(option)}
+                        onChange={(e) => {
+                          const currentValue = Array.isArray(value) ? value : [];
+                          if (e.target.checked) {
+                            onChange([...currentValue, option]);
+                          } else {
+                            onChange(currentValue.filter((v: string) => v !== option));
+                          }
+                        }}
+                        className="mr-2 h-4 w-4 rounded border-gray-300"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{option}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            />
+            {error && <p className="text-sm text-red-400 mt-1">{errorMessage}</p>}
           </div>
         );
 
@@ -237,13 +457,13 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
                     type="radio"
                     value={option}
                     className="mr-2 h-4 w-4 border-gray-300"
-                    {...register(fieldName as keyof FormData)}
+                    {...register(fieldKey)}
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">{option}</span>
                 </label>
               ))}
             </div>
-            {error && <p className="text-sm text-red-400 mt-1">{String(errorMessage)}</p>}
+            {error && <p className="text-sm text-red-400 mt-1">{errorMessage}</p>}
           </div>
         );
 
@@ -256,13 +476,14 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             <input
               type="number"
               id={fieldName}
-              className={cn(inputStyle)}
+              className={cn(inputStyle, error && "border-red-500 dark:border-red-500")}
               placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
-              {...register(fieldName as keyof FormData)}
+              {...register(fieldKey)}
             />
-            {error && <p className="text-sm text-red-400 mt-1">{String(errorMessage)}</p>}
+            {error && <p className="text-sm text-red-400 mt-1">{errorMessage}</p>}
           </div>
         );
+
       default:
         return (
           <div key={index} className="flex w-full flex-col">
@@ -272,11 +493,11 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             <input
               type={field.type === "email" ? "email" : field.type === "url" ? "url" : "text"}
               id={fieldName}
-              className={cn(inputStyle)}
+              className={cn(inputStyle, error && "border-red-500 dark:border-red-500")}
               placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
-              {...register(fieldName as keyof FormData)}
+              {...register(fieldKey)}
             />
-            {error && <p className="text-sm text-red-400 mt-1">{String(errorMessage)}</p>}
+            {error && <p className="text-sm text-red-400 mt-1">{errorMessage}</p>}
           </div>
         );
     }
@@ -308,6 +529,43 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
       {/* Form */}
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
         {formSchema.fields.map((field, index) => renderField(field, index))}
+
+        {/* Validation Error Summary */}
+        {errorCount > 0 && (
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-red-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3 flex-1">
+                <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                  Please fix the following errors to continue
+                </h3>
+                <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                  <p>
+                    {errorCount === 1
+                      ? "There is 1 validation error in the form."
+                      : `There are ${errorCount} validation errors in the form.`}
+                  </p>
+                  <p className="mt-1">
+                    Please review the fields marked in red above and correct any issues.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">

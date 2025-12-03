@@ -347,14 +347,14 @@ export default function ApplicationDetailPage() {
       />
 
       {/* Edit Application Modal */}
-      {application && config?.formSchema && (
+      {application && (
         <EditApplicationModal
           isOpen={isEditModalOpen}
           onClose={handleEditClose}
           application={application}
           programId={programId}
           chainId={parsedChainId}
-          formSchema={config.formSchema}
+          formSchema={config?.formSchema} // Optional - modal will fetch if not provided
           onSuccess={handleEditSuccess}
         />
       )}

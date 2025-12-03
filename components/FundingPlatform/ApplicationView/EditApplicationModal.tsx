@@ -2,8 +2,9 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { type FC, Fragment } from "react";
+import { type FC, Fragment, useEffect, useState } from "react";
 import { useApplicationUpdateV2 } from "@/hooks/useFundingPlatform";
+import { fundingPlatformService } from "@/services/fundingPlatformService";
 import type { IFormSchema, IFundingApplication } from "@/types/funding-platform";
 import ApplicationSubmission from "./ApplicationSubmission";
 
@@ -13,7 +14,7 @@ interface EditApplicationModalProps {
   application: IFundingApplication;
   programId: string;
   chainId: number;
-  formSchema: IFormSchema;
+  formSchema?: IFormSchema; // Optional - modal will fetch if not provided
   onSuccess?: () => void;
 }
 
@@ -23,10 +24,52 @@ const EditApplicationModal: FC<EditApplicationModalProps> = ({
   application,
   programId,
   chainId,
-  formSchema,
+  formSchema: propFormSchema,
   onSuccess,
 }) => {
   const { updateApplication, isUpdating } = useApplicationUpdateV2();
+  const [formSchema, setFormSchema] = useState<IFormSchema | null>(propFormSchema || null);
+  const [isLoadingFormSchema, setIsLoadingFormSchema] = useState(false);
+  const [formSchemaError, setFormSchemaError] = useState<string | null>(null);
+
+  // Fetch formconfig from API when modal opens (if not provided as prop)
+  useEffect(() => {
+    if (isOpen && programId && chainId) {
+      if (propFormSchema) {
+        // Use provided formSchema if available
+        setFormSchema(propFormSchema);
+        setFormSchemaError(null);
+      } else {
+        // Fetch formconfig from API
+        fetchFormConfig();
+      }
+    }
+  }, [isOpen, programId, chainId, propFormSchema]);
+
+  const fetchFormConfig = async () => {
+    setIsLoadingFormSchema(true);
+    setFormSchemaError(null);
+    try {
+      const program = await fundingPlatformService.programs.getProgramConfiguration(
+        programId,
+        chainId
+      );
+
+      if (!program?.applicationConfig?.formSchema) {
+        setFormSchemaError("Form configuration not found");
+        setFormSchema(null);
+        return;
+      }
+
+      setFormSchema(program.applicationConfig.formSchema);
+    } catch (error) {
+      setFormSchemaError("Failed to load form configuration");
+      setFormSchema(null);
+      console.error("Failed to fetch formconfig:", error);
+    } finally {
+      setIsLoadingFormSchema(false);
+    }
+  };
 
   const handleClose = () => {
     if (!isUpdating) {
@@ -96,16 +139,41 @@ const EditApplicationModal: FC<EditApplicationModalProps> = ({
                       Edit Application
                     </Dialog.Title>
                     <div className="mt-2 max-h-[70vh] overflow-y-auto">
-                      <ApplicationSubmission
-                        programId={programId}
-                        chainId={chainId}
-                        formSchema={formSchema}
-                        onSubmit={handleSubmit}
-                        onCancel={handleClose}
-                        isLoading={isUpdating}
-                        initialData={application.applicationData}
-                        isEditMode={true}
-                      />
+                      {isLoadingFormSchema ? (
+                        <div className="flex items-center justify-center py-8">
+                          <div className="text-gray-600 dark:text-gray-400">
+                            Loading form configuration...
+                          </div>
+                        </div>
+                      ) : formSchemaError ? (
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <p className="text-red-600 dark:text-red-400 mb-4">{formSchemaError}</p>
+                          <button
+                            type="button"
+                            onClick={fetchFormConfig}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                          >
+                            Retry
+                          </button>
+                        </div>
+                      ) : formSchema ? (
+                        <ApplicationSubmission
+                          programId={programId}
+                          chainId={chainId}
+                          formSchema={formSchema}
+                          onSubmit={handleSubmit}
+                          onCancel={handleClose}
+                          isLoading={isUpdating}
+                          initialData={application.applicationData}
+                          isEditMode={true}
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center py-8">
+                          <div className="text-gray-600 dark:text-gray-400">
+                            No form configuration available
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
