@@ -8,6 +8,23 @@ import { Button } from "@/components/Utilities/Button";
 import { useContractVerification, VerificationStep } from "@/hooks/useContractVerification";
 import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 
+const STEP_CONFIG: Record<VerificationStep, { message: string; progress: number }> = {
+  [VerificationStep.IDLE]: { message: "Ready to verify contract ownership", progress: 0 },
+  [VerificationStep.LOOKING_UP_DEPLOYER]: {
+    message: "Looking up contract deployer...",
+    progress: 20,
+  },
+  [VerificationStep.CHECKING_WALLET]: { message: "Checking wallet connection...", progress: 40 },
+  [VerificationStep.GENERATING_MESSAGE]: {
+    message: "Generating verification message...",
+    progress: 60,
+  },
+  [VerificationStep.WAITING_FOR_SIGNATURE]: { message: "Waiting for signature...", progress: 80 },
+  [VerificationStep.VERIFYING_SIGNATURE]: { message: "Verifying signature...", progress: 95 },
+  [VerificationStep.SUCCESS]: { message: "Contract verified successfully!", progress: 100 },
+  [VerificationStep.ERROR]: { message: "Verification failed", progress: 0 },
+};
+
 interface ContractVerificationDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -86,46 +103,7 @@ export const ContractVerificationDialog: React.FC<ContractVerificationDialogProp
     }
   }, [step]);
 
-  const getStepMessage = () => {
-    switch (step) {
-      case VerificationStep.LOOKING_UP_DEPLOYER:
-        return "Looking up contract deployer...";
-      case VerificationStep.CHECKING_WALLET:
-        return "Checking wallet connection...";
-      case VerificationStep.GENERATING_MESSAGE:
-        return "Generating verification message...";
-      case VerificationStep.WAITING_FOR_SIGNATURE:
-        return "Waiting for signature...";
-      case VerificationStep.VERIFYING_SIGNATURE:
-        return "Verifying signature...";
-      case VerificationStep.SUCCESS:
-        return "Contract verified successfully!";
-      case VerificationStep.ERROR:
-        return "Verification failed";
-      default:
-        return "Ready to verify contract ownership";
-    }
-  };
-
-  const getStepProgress = () => {
-    switch (step) {
-      case VerificationStep.LOOKING_UP_DEPLOYER:
-        return 20;
-      case VerificationStep.CHECKING_WALLET:
-        return 40;
-      case VerificationStep.GENERATING_MESSAGE:
-        return 60;
-      case VerificationStep.WAITING_FOR_SIGNATURE:
-        return 80;
-      case VerificationStep.VERIFYING_SIGNATURE:
-        return 95;
-      case VerificationStep.SUCCESS:
-        return 100;
-      default:
-        return 0;
-    }
-  };
-
+  const stepInfo = STEP_CONFIG[step];
   const isLoading =
     step !== VerificationStep.IDLE &&
     step !== VerificationStep.SUCCESS &&
@@ -201,7 +179,7 @@ export const ContractVerificationDialog: React.FC<ContractVerificationDialogProp
                     <div className="w-full bg-gray-200 dark:bg-zinc-700 rounded-full h-2">
                       <div
                         className="bg-blue-500 h-2 rounded-full transition-all duration-500 ease-out"
-                        style={{ width: `${getStepProgress()}%` }}
+                        style={{ width: `${stepInfo.progress}%` }}
                       />
                     </div>
                   )}
@@ -215,7 +193,7 @@ export const ContractVerificationDialog: React.FC<ContractVerificationDialogProp
                     ) : isLoading ? (
                       <div className="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full" />
                     ) : null}
-                    <p className="text-sm text-gray-700 dark:text-gray-200">{getStepMessage()}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-200">{stepInfo.message}</p>
                   </div>
 
                   {/* Error Message - Don't show if it's just a wallet switch warning */}
