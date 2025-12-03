@@ -15,6 +15,7 @@ import { useCommunityGrants } from "@/hooks/useCommunityGrants";
 import { type SimplifiedGrant, useGrants } from "@/hooks/useGrants";
 import { useGrantsTable } from "@/hooks/useGrantsTable";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -53,6 +54,7 @@ export default function EditCategoriesPage() {
     community?.uid,
     address
   );
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   useEffect(() => {
     if (
@@ -61,7 +63,7 @@ export default function EditCategoriesPage() {
     ) {
       router.push(PAGES.NOT_FOUND);
     }
-  }, [communityError, router.push]);
+  }, [communityError, router]);
 
   // Fetch grants data
   const { data, isLoading: isLoadingGrants, refetch: refreshGrants } = useGrants(communityId);
@@ -136,7 +138,7 @@ export default function EditCategoriesPage() {
     }
   };
 
-  if (loading || isLoadingGrants) {
+  if (loading || isStaffLoading || isLoadingGrants) {
     return (
       <div className="flex w-full items-center justify-center">
         <Spinner />
@@ -144,7 +146,7 @@ export default function EditCategoriesPage() {
     );
   }
 
-  if (!isAdmin) {
+  if (!isAdmin && !isStaff) {
     return (
       <div className="flex w-full items-center justify-center">
         <p>{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}</p>

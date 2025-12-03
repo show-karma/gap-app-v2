@@ -4,13 +4,14 @@ import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon } from "@heroicons/reac
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
 import type { Category } from "@/types/impactMeasurement";
 import { zeroUID } from "@/utilities/commons";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
@@ -51,6 +52,7 @@ export default function ManageIndicatorsPage() {
     community?.uid,
     address
   );
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -74,7 +76,7 @@ export default function ManageIndicatorsPage() {
     };
 
     fetchDetails();
-  }, [communityId, router.push]);
+  }, [communityId, router]);
 
   const getCategories = useCallback(
     async (isSilent: boolean = false) => {
@@ -145,11 +147,11 @@ export default function ManageIndicatorsPage() {
 
   return (
     <div className="mt-4 flex gap-8 flex-row max-lg:flex-col w-full mb-10">
-      {loading || adminLoading ? (
+      {loading || adminLoading || isStaffLoading ? (
         <div className="flex w-full min-h-screen h-full items-center justify-center">
           <Spinner />
         </div>
-      ) : isAdmin ? (
+      ) : isAdmin || isStaff ? (
         <div className="flex w-full flex-1 flex-col items-center gap-8">
           <div className="w-full flex flex-row items-center justify-between max-w-full">
             <Link

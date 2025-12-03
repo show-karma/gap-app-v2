@@ -16,6 +16,7 @@ import { Button } from "@/components/Utilities/Button";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -82,6 +83,7 @@ export const CommunityAdminPage = ({
     community?.uid,
     address
   );
+  const { isStaff } = useStaff();
 
   return (
     <div className="max-w-full w-full">
@@ -91,7 +93,7 @@ export const CommunityAdminPage = ({
 
       {loading ? (
         <LoadingSkeleton />
-      ) : isAdmin ? (
+      ) : isAdmin || isStaff ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <AdminButton
             href={PAGES.ADMIN.EDIT_CATEGORIES(community?.details?.data?.slug || communityId)}

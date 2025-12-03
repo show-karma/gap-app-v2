@@ -16,6 +16,7 @@ import { useCommunityGrants } from "@/hooks/useCommunityGrants";
 import { useCommunityProjectsV2 } from "@/hooks/useCommunityProjectsV2";
 import { useCommunityRegions } from "@/hooks/useCommunityRegions";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
 import type { ProjectV2 } from "@/types/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -24,6 +25,7 @@ import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { ProgramFilter } from "./ProgramFilter";
 import { RegionCreationDialog } from "./RegionCreationDialog";
+
 export const metadata = defaultMetadata;
 
 interface ProjectsTableProps {
@@ -180,6 +182,7 @@ export default function EditProjectsPage() {
     community?.uid,
     address
   );
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   useEffect(() => {
     if (
@@ -188,7 +191,7 @@ export default function EditProjectsPage() {
     ) {
       router.push(PAGES.NOT_FOUND);
     }
-  }, [communityError, router.push]);
+  }, [communityError, router]);
 
   // Simple state management for pagination since we're using the v2 endpoint
   const [currentPage, setCurrentPage] = useState(1);
@@ -287,7 +290,7 @@ export default function EditProjectsPage() {
 
   // Auto-save implemented in handleRegionChange, no need for separate save function
 
-  if (loading || isLoadingProjects) {
+  if (loading || isStaffLoading || isLoadingProjects) {
     return (
       <div className="flex w-full items-center justify-center">
         <Spinner />
@@ -295,7 +298,7 @@ export default function EditProjectsPage() {
     );
   }
 
-  if (!isAdmin) {
+  if (!isAdmin && !isStaff) {
     return (
       <div className="flex w-full items-center justify-center">
         <p>{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}</p>

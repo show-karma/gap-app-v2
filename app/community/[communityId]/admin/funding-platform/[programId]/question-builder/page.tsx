@@ -27,7 +27,7 @@ export default function QuestionBuilderPage() {
 
   const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff } = useStaff();
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   const hasAccess = isCommunityAdmin || isOwner || isStaff;
 
@@ -61,7 +61,7 @@ export default function QuestionBuilderPage() {
     router.push(`/community/${communityId}/admin/funding-platform`);
   };
 
-  if (isLoadingAdmin || isLoadingSchema || isLoadingPostApprovalSchema) {
+  if (isLoadingAdmin || isStaffLoading || isLoadingSchema || isLoadingPostApprovalSchema) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />

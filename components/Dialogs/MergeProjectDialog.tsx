@@ -185,7 +185,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const _setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
   const { switchChainAsync } = useWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { isStaff } = useStaff();
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   const createProjectPointer = async ({ ogProjectUID }: PointerType) => {
     let gapClient = gap;
@@ -283,7 +283,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
     <>
       {buttonElement ? (
         <Button
-          disabled={!isProjectAdmin && !isStaff}
+          disabled={isStaffLoading || (!isProjectAdmin && !isStaff)}
           onClick={openModal}
           className={buttonElement.styleClass}
         >

@@ -11,6 +11,7 @@ import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
 import { useIsReviewer, useReviewerPrograms } from "@/hooks/usePermissions";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
+import { useStaff } from "@/hooks/useStaff";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { updateMilestoneVerification } from "@/services/milestones";
 import { useOwnerStore } from "@/store";
@@ -38,6 +39,7 @@ export function MilestonesReviewPage({
 
   const { address } = useAccount();
   const { isCommunityAdmin, isLoading: isLoadingCommunityAdmin } = useIsCommunityAdmin(communityId);
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
 
@@ -68,10 +70,10 @@ export function MilestonesReviewPage({
   }, [reviewerPrograms, parsedProgramId, parsedChainId]);
 
   // Determine if user can verify milestones (must be before early returns)
-  // Only milestone reviewers, admins, and contract owners can verify/complete/sync
+  // Only milestone reviewers, admins, contract owners, and staff can verify/complete/sync
   const canVerifyMilestones = useMemo(
-    () => isCommunityAdmin || isContractOwner || isMilestoneReviewer || false,
-    [isCommunityAdmin, isContractOwner, isMilestoneReviewer]
+    () => isCommunityAdmin || isContractOwner || isStaff || isMilestoneReviewer || false,
+    [isCommunityAdmin, isContractOwner, isStaff, isMilestoneReviewer]
   );
 
   // Get the actual project UID from the data (projectId might be a slug)
@@ -98,7 +100,7 @@ export function MilestonesReviewPage({
     // Only show back to application if came from application page
     if (referrer === "application" && referenceNumber) {
       const appUrl =
-        isCommunityAdmin || isContractOwner
+        isCommunityAdmin || isContractOwner || isStaff
           ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) +
             `/${referenceNumber}`
           : isReviewer && parsedChainId
@@ -125,6 +127,7 @@ export function MilestonesReviewPage({
     referenceNumber,
     isCommunityAdmin,
     isContractOwner,
+    isStaff,
     isReviewer,
     communityId,
     programId,
@@ -136,7 +139,7 @@ export function MilestonesReviewPage({
   const milestoneReviewUrl = useMemo(() => {
     if (fundingApplication?.status?.toLowerCase() === "approved" && referenceNumber) {
       const appUrl =
-        isCommunityAdmin || isContractOwner
+        isCommunityAdmin || isContractOwner || isStaff
           ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) +
             `/${referenceNumber}`
           : isReviewer && parsedChainId
@@ -156,6 +159,7 @@ export function MilestonesReviewPage({
     referenceNumber,
     isCommunityAdmin,
     isContractOwner,
+    isStaff,
     isReviewer,
     communityId,
     programId,
@@ -223,7 +227,7 @@ export function MilestonesReviewPage({
   );
 
   // Show loading while checking authorization
-  if (isLoading || isLoadingCommunityAdmin || isOwnerLoading || isLoadingReviewer) {
+  if (isLoading || isLoadingCommunityAdmin || isOwnerLoading || isLoadingReviewer || isStaffLoading) {
     return (
       <div className="min-h-screen">
         <div className="px-4 sm:px-6 lg:px-8 py-6">
@@ -237,8 +241,8 @@ export function MilestonesReviewPage({
     );
   }
 
-  // Check authorization: user must be logged in AND (community admin OR contract owner OR program reviewer)
-  const isAuthorized = address && (isCommunityAdmin || isContractOwner || isReviewer);
+  // Check authorization: user must be logged in AND (community admin OR contract owner OR program reviewer OR staff)
+  const isAuthorized = address && (isCommunityAdmin || isContractOwner || isReviewer || isStaff);
 
   if (!isAuthorized) {
     return (
@@ -254,7 +258,7 @@ export function MilestonesReviewPage({
             <p className="text-red-600 dark:text-red-400 mb-4">
               {!address
                 ? "You must be logged in to access this page."
-                : "You do not have permission to access this page. Only community administrators, contract owners, and program reviewers can review milestones."}
+                : "You do not have permission to access this page. Only community administrators, contract owners, staff, and program reviewers can review milestones."}
             </p>
             <Link href={PAGES.ADMIN.MILESTONES(communityId)}>
               <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white">

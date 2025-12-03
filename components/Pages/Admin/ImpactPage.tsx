@@ -4,10 +4,13 @@ import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/ka
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
 import { CommunityImpactCharts } from "@/components/Pages/Communities/Impact/ImpactCharts";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
 import { zeroUID } from "@/utilities/commons";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultMetadata } from "@/utilities/meta";
@@ -19,11 +22,19 @@ type Tab = "metrics" | "impact";
 
 export default function ProgramImpactPage() {
   const router = useRouter();
+  const { address } = useAccount();
   const params = useParams();
   const communityId = params.communityId as string;
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
   const [community, setCommunity] = useState<ICommunityResponse | undefined>(undefined); // Data returned from the API
   const [activeTab, setActiveTab] = useState<Tab>("metrics");
+
+  // Check if user is admin of this community
+  const { isCommunityAdmin: isAdmin, isLoading: adminLoading } = useIsCommunityAdmin(
+    community?.uid,
+    address
+  );
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -50,7 +61,7 @@ export default function ProgramImpactPage() {
     };
 
     fetchDetails();
-  }, [communityId, router.push]);
+  }, [communityId, router]);
 
   const tabs = [
     { id: "metrics", label: "Output Metrics" },
@@ -59,11 +70,11 @@ export default function ProgramImpactPage() {
 
   return (
     <div className="mt-12 flex flex-row max-lg:flex-col-reverse w-full">
-      {loading ? (
+      {loading || adminLoading || isStaffLoading ? (
         <div className="flex w-full min-h-screen h-full items-center justify-center">
           <Spinner />
         </div>
-      ) : (
+      ) : isAdmin || isStaff ? (
         <div className="flex w-full flex-1 flex-col items-center gap-8">
           <div className="w-full flex flex-row items-center justify-between max-w-4xl">
             <Link
@@ -110,6 +121,10 @@ export default function ProgramImpactPage() {
               {activeTab === "impact" && <CommunityImpactCharts />}
             </div>
           </div>
+        </div>
+      ) : (
+        <div className="flex w-full items-center justify-center min-h-screen">
+          <p className="text-red-500">You don&apos;t have permission to access this page.</p>
         </div>
       )}
     </div>

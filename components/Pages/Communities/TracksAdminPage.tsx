@@ -13,6 +13,7 @@ import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import {
   useArchiveTrack,
@@ -56,6 +57,7 @@ export const TracksAdminPage = ({
     community?.uid,
     address
   );
+  const { isStaff } = useStaff();
 
   // React Query hooks
   const {
@@ -189,7 +191,7 @@ export const TracksAdminPage = ({
     );
   }
 
-  if (!isAdmin) {
+  if (!isAdmin && !isStaff) {
     return (
       <div className="flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
         <p className="text-gray-600 dark:text-gray-300 text-center">
