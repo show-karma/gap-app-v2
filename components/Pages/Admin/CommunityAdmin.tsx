@@ -1,6 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import { LinkIcon } from "@heroicons/react/24/solid";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  LinkIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/solid";
 import type { Community } from "@show-karma/karma-gap-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { blo } from "blo";
@@ -27,6 +32,8 @@ import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 
+const ADMINS_COLLAPSED_COUNT = 3;
+
 interface CommunityAdmin {
   id: string;
   admins: Array<{
@@ -44,6 +51,9 @@ interface CommunitiesData {
 export default function CommunitiesToAdminPage() {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
   const [communityAdmins, setCommunityAdmins] = useState<CommunityAdmin[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedNetwork, setSelectedNetwork] = useState<string>("all");
+  const [expandedAdmins, setExpandedAdmins] = useState<Set<string>>(new Set());
 
   const { gap } = useGap();
   const { address } = useAccount();
@@ -99,17 +109,59 @@ export default function CommunitiesToAdminPage() {
   });
 
   // Filter communities based on user role
-  const displayedCommunities = useMemo(() => {
+  const baseCommunities = useMemo(() => {
     if (isStaffOrOwner) {
-      // Staff/Owner sees all communities
       return allCommunities;
     } else if (hasAdminCommunities) {
-      // Regular admin sees only their communities
       const userAdminUids = new Set(userAdminCommunities.map((c) => c.uid));
       return allCommunities.filter((c) => userAdminUids.has(c.uid));
     }
     return [];
   }, [allCommunities, isStaffOrOwner, hasAdminCommunities, userAdminCommunities]);
+
+  // Get unique networks from communities
+  const availableNetworks = useMemo(() => {
+    const networks = new Map<number, string>();
+    baseCommunities.forEach((c) => {
+      if (!networks.has(c.chainID)) {
+        networks.set(c.chainID, chainNameDictionary(c.chainID));
+      }
+    });
+    return Array.from(networks.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [baseCommunities]);
+
+  // Apply search and network filter
+  const displayedCommunities = useMemo(() => {
+    let filtered = baseCommunities;
+
+    // Filter by network
+    if (selectedNetwork !== "all") {
+      filtered = filtered.filter((c) => c.chainID === Number(selectedNetwork));
+    }
+
+    // Filter by search query (community name only)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((c) => {
+        const name = c.details?.name?.toLowerCase() || "";
+        return name.includes(query);
+      });
+    }
+
+    return filtered;
+  }, [baseCommunities, searchQuery, selectedNetwork]);
+
+  const toggleAdminExpansion = useCallback((communityUid: string) => {
+    setExpandedAdmins((prev) => {
+      const next = new Set(prev);
+      if (next.has(communityUid)) {
+        next.delete(communityUid);
+      } else {
+        next.add(communityUid);
+      }
+      return next;
+    });
+  }, []);
 
   const isLoadingData = isLoading || (!isStaffOrOwner && isLoadingUserCommunities);
 
@@ -216,12 +268,64 @@ export default function CommunitiesToAdminPage() {
         </div>
       ) : hasAccess ? (
         <div className="flex flex-col gap-6">
-          <div className="flex justify-between items-center">
+          {/* Header */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
             <div className="text-2xl font-bold">
               {isStaffOrOwner ? "All Communities" : "Your Communities"}{" "}
-              {displayedCommunities.length ? `(${displayedCommunities.length})` : ""}
+              <span className="text-gray-500 dark:text-gray-400">
+                ({displayedCommunities.length}
+                {baseCommunities.length !== displayedCommunities.length &&
+                  ` of ${baseCommunities.length}`}
+                )
+              </span>
             </div>
             {isStaffOrOwner && <CommunityDialog refreshCommunities={handleRefetch} />}
+          </div>
+
+          {/* Search and Filter Bar */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-md">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by community name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Network Filter */}
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="network-filter"
+                className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap"
+              >
+                Network:
+              </label>
+              <select
+                id="network-filter"
+                value={selectedNetwork}
+                onChange={(e) => setSelectedNetwork(e.target.value)}
+                className="px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Networks</option>
+                {availableNetworks.map(([chainId, name]) => (
+                  <option key={chainId} value={chainId}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="mt-5 w-full">
             {displayedCommunities.length ? (
@@ -313,7 +417,14 @@ export default function CommunitiesToAdminPage() {
                       {/* Admins */}
                       <div className="mb-4">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-xs text-gray-500 dark:text-gray-400">Admins</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Admins{" "}
+                            {matchingCommunityAdmin && matchingCommunityAdmin.admins.length > 0 && (
+                              <span className="text-gray-400">
+                                ({matchingCommunityAdmin.admins.length})
+                              </span>
+                            )}
+                          </p>
                           {canManageAdmins && (
                             <AddAdmin
                               UUID={communityId}
@@ -324,24 +435,50 @@ export default function CommunitiesToAdminPage() {
                         </div>
                         <div className="space-y-2">
                           {matchingCommunityAdmin && matchingCommunityAdmin.admins.length > 0 ? (
-                            matchingCommunityAdmin.admins.map((admin, index) => (
-                              <div
-                                className="flex items-center justify-between gap-2 p-2 bg-gray-50 dark:bg-zinc-800 rounded"
-                                key={index}
-                              >
-                                <span className="text-xs font-mono text-gray-700 dark:text-gray-300">
-                                  {shortenHex(admin.user.id)}
-                                </span>
-                                {canManageAdmins && (
-                                  <RemoveAdmin
-                                    UUID={communityId}
-                                    chainid={community.chainID}
-                                    Admin={formatAdminAddress(admin.user.id)}
-                                    fetchAdmins={handleRefetch}
-                                  />
-                                )}
-                              </div>
-                            ))
+                            <>
+                              {(expandedAdmins.has(community.uid)
+                                ? matchingCommunityAdmin.admins
+                                : matchingCommunityAdmin.admins.slice(0, ADMINS_COLLAPSED_COUNT)
+                              ).map((admin, index) => (
+                                <div
+                                  className="flex items-center justify-between gap-2 p-2 bg-gray-50 dark:bg-zinc-800 rounded"
+                                  key={index}
+                                >
+                                  <span className="text-xs font-mono text-gray-700 dark:text-gray-300">
+                                    {shortenHex(admin.user.id)}
+                                  </span>
+                                  {canManageAdmins && (
+                                    <RemoveAdmin
+                                      UUID={communityId}
+                                      chainid={community.chainID}
+                                      Admin={formatAdminAddress(admin.user.id)}
+                                      fetchAdmins={handleRefetch}
+                                    />
+                                  )}
+                                </div>
+                              ))}
+                              {matchingCommunityAdmin.admins.length > ADMINS_COLLAPSED_COUNT && (
+                                <button
+                                  onClick={() => toggleAdminExpansion(community.uid)}
+                                  className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 mt-1"
+                                >
+                                  {expandedAdmins.has(community.uid) ? (
+                                    <>
+                                      <ChevronUpIcon className="w-3 h-3" />
+                                      Show less
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ChevronDownIcon className="w-3 h-3" />
+                                      Show{" "}
+                                      {matchingCommunityAdmin.admins.length -
+                                        ADMINS_COLLAPSED_COUNT}{" "}
+                                      more
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </>
                           ) : (
                             <p className="text-xs text-gray-400 dark:text-gray-500 italic">
                               No admins yet
@@ -355,9 +492,26 @@ export default function CommunitiesToAdminPage() {
               </div>
             ) : (
               <div className="text-center py-12">
-                <p className="text-gray-500 dark:text-gray-400">
-                  {isStaffOrOwner ? "No communities found" : MESSAGES.ADMIN.NO_COMMUNITIES}
-                </p>
+                {searchQuery || selectedNetwork !== "all" ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <p className="text-gray-500 dark:text-gray-400">
+                      No communities match your search
+                    </p>
+                    <button
+                      onClick={() => {
+                        setSearchQuery("");
+                        setSelectedNetwork("all");
+                      }}
+                      className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300"
+                    >
+                      Clear filters
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400">
+                    {isStaffOrOwner ? "No communities found" : MESSAGES.ADMIN.NO_COMMUNITIES}
+                  </p>
+                )}
               </div>
             )}
           </div>
