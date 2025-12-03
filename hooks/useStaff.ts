@@ -25,7 +25,7 @@ export const useStaff = () => {
     ...defaultQueryOptions,
   });
 
-  const isStaff = data?.authorized ?? false;
+  const isStaff: boolean = data?.authorized ?? false;
 
   return { isStaff, isLoading, error };
 };
