@@ -3,11 +3,11 @@
  * @description Tests grant and milestone instance fetching utilities
  */
 
-import * as projectApiModule from "@/utilities/api/project";
+import * as projectApiModule from "@/services/project.service";
 import { fetchGrantInstance, fetchMilestoneInstance } from "@/utilities/grant-helpers";
 
 // Mock getProjectData
-jest.mock("@/utilities/api/project", () => ({
+jest.mock("@/services/project.service", () => ({
   getProjectData: jest.fn(),
 }));
 

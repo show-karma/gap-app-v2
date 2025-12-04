@@ -1,6 +1,6 @@
 import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { envVars } from "../enviromentVars";
-import { INDEXER } from "../indexer";
+import { envVars } from "@/utilities/enviromentVars";
+import { INDEXER } from "@/utilities/indexer";
 
 /**
  * Fetches grants for a project using v1 endpoint temporarily

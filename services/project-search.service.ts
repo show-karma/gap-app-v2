@@ -1,6 +1,6 @@
 import type { ProjectV2Response } from "@/types/project";
-import { envVars } from "../enviromentVars";
-import { INDEXER } from "../indexer";
+import { envVars } from "@/utilities/enviromentVars";
+import { INDEXER } from "@/utilities/indexer";
 
 /**
  * Search projects using V2 API endpoint

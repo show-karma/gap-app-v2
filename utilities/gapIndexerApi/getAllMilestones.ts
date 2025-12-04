@@ -6,6 +6,18 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import type { UnifiedMilestone } from "@/types/roadmap";
 import { getProjectObjectives } from "./getProjectObjectives";
 
+const parseCreatedAt = (createdAt: any): string => {
+  if (!createdAt) return new Date().toISOString();
+  if (typeof createdAt === "string") return createdAt;
+  if (createdAt.$timestamp?.t) {
+    return new Date(createdAt.$timestamp.t * 1000).toISOString();
+  }
+  if (createdAt.$date) {
+    return new Date(createdAt.$date).toISOString();
+  }
+  return new Date().toISOString();
+};
+
 export async function getAllMilestones(
   projectId: string,
   projectGrants: IGrantResponse[]
@@ -29,41 +41,56 @@ export async function getAllMilestones(
     });
 
     // Transform project milestones to unified format
-    const unifiedProjectMilestones: UnifiedMilestone[] = projectMilestones.map((milestone) => ({
-      uid: milestone.uid,
-      chainID: milestone.chainID,
-      refUID: milestone.refUID,
-      type: "milestone",
-      title: milestone.data.title,
-      description: milestone.data.text,
-      completed: !!milestone.completed,
-      createdAt: milestone.createdAt,
-      // Project milestones don't have endsAt, using createdAt for sorting
-      endsAt: undefined,
-      source: {
-        projectMilestone: milestone,
-      },
-    }));
+    const unifiedProjectMilestones: UnifiedMilestone[] = projectMilestones.map((milestone) => {
+      // Handle completion status - API may return empty array [] which is truthy in JS
+      // Properly check for completion: must be truthy AND not an empty array
+      const isCompleted = Array.isArray(milestone.completed)
+        ? milestone.completed.length > 0
+        : !!milestone.completed;
 
-    // Transform grant milestones to unified format
-    const unifiedGrantMilestones: UnifiedMilestone[] = grantMilestonesWithGrants.map(
-      ({ milestone, grant }) => ({
+      return {
         uid: milestone.uid,
         chainID: milestone.chainID,
         refUID: milestone.refUID,
-        type: "grant",
+        type: "milestone",
         title: milestone.data.title,
-        description: milestone.data.description,
-        completed: !!milestone.completed,
-        createdAt: milestone.createdAt,
-        endsAt: milestone.data.endsAt,
+        description: milestone.data.text,
+        completed: isCompleted,
+        createdAt: parseCreatedAt(milestone.createdAt),
+        endsAt: undefined,
         source: {
-          grantMilestone: {
-            milestone,
-            grant,
-          },
+          projectMilestone: milestone,
         },
-      })
+      };
+    });
+
+    // Transform grant milestones to unified format
+    const unifiedGrantMilestones: UnifiedMilestone[] = grantMilestonesWithGrants.map(
+      ({ milestone, grant }) => {
+        // Handle completion status - API may return empty array [] which is truthy in JS
+        // Properly check for completion: must be truthy AND not an empty array
+        const isCompleted = Array.isArray(milestone.completed)
+          ? milestone.completed.length > 0
+          : !!milestone.completed;
+
+        return {
+          uid: milestone.uid,
+          chainID: milestone.chainID,
+          refUID: milestone.refUID,
+          type: "grant",
+          title: milestone.data.title,
+          description: milestone.data.description,
+          completed: isCompleted,
+          createdAt: parseCreatedAt(milestone.createdAt),
+          endsAt: milestone.data.endsAt,
+          source: {
+            grantMilestone: {
+              milestone,
+              grant,
+            },
+          },
+        };
+      }
     );
 
     // Combine both types of milestones

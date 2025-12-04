@@ -1,8 +1,8 @@
 import type { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { QueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
+import { getProjectGrants } from "@/services/project-grants.service";
 import type { ProjectV2Response } from "@/types/project";
-import { getProjectGrants } from "@/utilities/api/projectGrants";
 import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";

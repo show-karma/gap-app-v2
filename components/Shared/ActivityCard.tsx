@@ -9,19 +9,27 @@ import type {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC } from "react";
 import { useOwnerStore, useProjectStore } from "@/store";
-import type { UnifiedMilestone } from "@/types/roadmap";
+import type { ProjectUpdate, UnifiedMilestone } from "@/types/roadmap";
 import { MilestoneCard } from "./ActivityCard/MilestoneCard";
+import { ProjectUpdateCard } from "./ActivityCard/ProjectUpdateCard";
 import { UpdateCard } from "./ActivityCard/UpdateCard";
+
+type SdkUpdateType =
+  | IProjectUpdate
+  | IGrantUpdate
+  | IMilestoneResponse
+  | IProjectImpact
+  | IProjectMilestoneResponse;
 
 type ActivityType =
   | {
+      type: "projectUpdate";
+      data: ProjectUpdate;
+      index: number;
+    }
+  | {
       type: "update";
-      data:
-        | IProjectUpdate
-        | IGrantUpdate
-        | IMilestoneResponse
-        | IProjectImpact
-        | IProjectMilestoneResponse;
+      data: SdkUpdateType;
       index: number;
     }
   | { type: "milestone"; data: UnifiedMilestone };
@@ -41,7 +49,15 @@ export const ActivityCard: FC<ActivityCardProps> = ({ activity, isAuthorized = f
 
   return (
     <div className="flex flex-col w-full">
-      {activity.type === "update" ? (
+      {activity.type === "projectUpdate" ? (
+        <div className={containerClassName}>
+          <ProjectUpdateCard
+            update={activity.data}
+            index={activity.index}
+            isAuthorized={isAuthenticatedUser}
+          />
+        </div>
+      ) : activity.type === "update" ? (
         <div className={containerClassName}>
           <UpdateCard
             update={activity.data}

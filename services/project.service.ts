@@ -1,7 +1,7 @@
 import type { ProjectV2Response } from "@/types/project";
-import { envVars } from "../enviromentVars";
-import { INDEXER } from "../indexer";
-import { getProjectGrants } from "./projectGrants";
+import { envVars } from "@/utilities/enviromentVars";
+import { INDEXER } from "@/utilities/indexer";
+import { getProjectGrants } from "./project-grants.service";
 
 export const getProjectData = async (
   projectId: string,

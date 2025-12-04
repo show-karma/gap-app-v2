@@ -3,13 +3,13 @@
  * @description Tests polling utilities for grant and milestone completion
  */
 
-import * as projectApiModule from "@/utilities/api/project";
+import * as projectApiModule from "@/services/project.service";
 import { pollForGrantCompletion, pollForMilestoneStatus } from "@/utilities/attestation-polling";
 import * as retriesModule from "@/utilities/retries";
 
 // Mock dependencies
 jest.mock("@/utilities/retries");
-jest.mock("@/utilities/api/project", () => ({
+jest.mock("@/services/project.service", () => ({
   getProjectData: jest.fn(),
 }));
 

@@ -3,11 +3,6 @@
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import type {
-  IGrantUpdate,
-  IProjectImpact,
-  IProjectUpdate,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { Fragment, useMemo } from "react";
@@ -153,9 +148,7 @@ export const MilestonesList = ({
     return Array.from(mergedMap.values());
   };
 
-  // Type guard function to check if an item is an update
   const isUpdateType = (item: UnifiedMilestone): boolean => {
-    // Consider all non-milestone types as "updates" for rendering purposes
     return (
       item.type === "update" ||
       item.type === "impact" ||
@@ -164,13 +157,15 @@ export const MilestonesList = ({
     );
   };
 
-  // Type guard function to check if an update data exists
-  const hasUpdateData = (
-    item: UnifiedMilestone
-  ): item is UnifiedMilestone & {
-    updateData: IProjectUpdate | IGrantUpdate | IProjectImpact;
-  } => {
-    return isUpdateType(item) && !!item.updateData;
+  const hasProjectUpdate = (item: UnifiedMilestone): boolean => {
+    return item.type === "activity" && !!item.projectUpdate;
+  };
+
+  const hasSdkUpdate = (item: UnifiedMilestone): boolean => {
+    return (
+      (item.type === "grant_update" && !!item.grantUpdate) ||
+      (item.type === "impact" && !!item.projectImpact)
+    );
   };
 
   // Memoize the filtered and unified milestones for better performance
@@ -308,12 +303,22 @@ export const MilestonesList = ({
         </div>
         {unifiedMilestones && unifiedMilestones.length > 0 ? (
           unifiedMilestones.map((item, index) =>
-            hasUpdateData(item) ? (
+            hasProjectUpdate(item) && item.projectUpdate ? (
               <ActivityCard
                 key={`update-${item.uid}-${index}`}
                 activity={{
+                  type: "projectUpdate",
+                  data: item.projectUpdate,
+                  index: index,
+                }}
+                isAuthorized={isAuthorized}
+              />
+            ) : hasSdkUpdate(item) ? (
+              <ActivityCard
+                key={`sdk-update-${item.uid}-${index}`}
+                activity={{
                   type: "update",
-                  data: item.updateData,
+                  data: item.grantUpdate || item.projectImpact!,
                   index: index,
                 }}
                 isAuthorized={isAuthorized}

@@ -1,7 +1,7 @@
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { ProjectRoadmap } from "@/components/Pages/Project/Roadmap";
-import { getAllMilestones } from "@/utilities/gapIndexerApi/getAllMilestones";
+import { getProjectUpdates } from "@/services/project-updates.service";
 import { generateProjectUpdatesMetadata } from "@/utilities/metadata/projectMetadata";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
@@ -39,10 +39,8 @@ export default async function RoadmapPage(props: { params: Promise<{ projectId: 
   });
 
   await queryClient.prefetchQuery({
-    queryKey: ["all-milestones", projectId],
-    queryFn: async () => {
-      return await getAllMilestones(projectId, projectInfo?.grants || []);
-    },
+    queryKey: ["project-updates", projectId],
+    queryFn: () => getProjectUpdates(projectId),
   });
 
   return (

@@ -26,6 +26,23 @@ type UpdateType =
   | IProjectImpact
   | IProjectMilestoneResponse;
 
+type UpdateWithTitle =
+  | IProjectUpdate
+  | IGrantUpdate
+  | IMilestoneResponse
+  | IProjectMilestoneResponse;
+
+const hasTitle = (update: UpdateType): update is UpdateWithTitle => {
+  return update.type !== "ProjectImpact" && update.data !== undefined && "title" in update.data;
+};
+
+const getUpdateTitle = (update: UpdateType): string | null => {
+  if (hasTitle(update)) {
+    return update.data.title;
+  }
+  return null;
+};
+
 interface UpdateCardProps {
   update: UpdateType;
   index: number;
@@ -151,14 +168,11 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
             index={index}
           />
           {/* Title */}
-          {update.type !== "ProjectImpact" &&
-            update.data &&
-            "title" in update.data &&
-            update.data.title && (
-              <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">
-                {update.data.title}
-              </p>
-            )}
+          {hasTitle(update) && update.data.title && (
+            <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">
+              {update.data.title}
+            </p>
+          )}
           {/* Date range for activities */}
           {(startDate || endDate) && (
             <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
@@ -219,7 +233,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
               activityType={update.type}
               deleteTitle={
                 <p className="font-normal">
-                  Are you sure you want to delete <b>{update.data.title}</b> update?
+                  Are you sure you want to delete <b>{getUpdateTitle(update) || "this"}</b> update?
                 </p>
               }
             />

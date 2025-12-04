@@ -1,6 +1,6 @@
 import type { GAP } from "@show-karma/karma-gap-sdk";
 import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getProjectData } from "@/utilities/api/project";
+import { getProjectData } from "@/services/project.service";
 
 interface FetchGrantInstanceParams {
   gapClient: GAP;
