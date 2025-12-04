@@ -17,7 +17,9 @@ jest.mock("@moonpay/moonpay-react", () => ({
     walletAddress,
     baseCurrencyCode,
     baseCurrencyAmount,
-    showOnlyCurrencies
+    showOnlyCurrencies,
+    externalCustomerId,
+    externalTransactionId,
   }: any) => (
     <div
       data-testid="moonpay-widget"
@@ -27,6 +29,8 @@ jest.mock("@moonpay/moonpay-react", () => ({
       data-base-currency={baseCurrencyCode}
       data-base-amount={baseCurrencyAmount}
       data-allowed-currencies={showOnlyCurrencies}
+      data-external-customer-id={externalCustomerId}
+      data-external-transaction-id={externalTransactionId}
     >
       MoonPay Widget
     </div>
@@ -45,15 +49,9 @@ jest.mock("@/components/ui/dialog", () => ({
       {children}
     </div>
   ),
-  DialogHeader: ({ children }: any) => (
-    <div data-testid="dialog-header">{children}</div>
-  ),
-  DialogTitle: ({ children }: any) => (
-    <h2 data-testid="dialog-title">{children}</h2>
-  ),
-  DialogDescription: ({ children }: any) => (
-    <div data-testid="dialog-description">{children}</div>
-  ),
+  DialogHeader: ({ children }: any) => <div data-testid="dialog-header">{children}</div>,
+  DialogTitle: ({ children }: any) => <h2 data-testid="dialog-title">{children}</h2>,
+  DialogDescription: ({ children }: any) => <div data-testid="dialog-description">{children}</div>,
 }));
 
 // Mock MoonPay utilities
@@ -81,12 +79,7 @@ describe("FiatOnrampModal", () => {
 
   it("should not render dialog content when isOpen is false", () => {
     const { container } = render(
-      <FiatOnrampModal
-        isOpen={false}
-        onClose={jest.fn()}
-        project={mockProject}
-        fiatAmount={100}
-      />
+      <FiatOnrampModal isOpen={false} onClose={jest.fn()} project={mockProject} fiatAmount={100} />
     );
 
     const dialog = container.querySelector('[data-open="false"]');
@@ -95,18 +88,11 @@ describe("FiatOnrampModal", () => {
 
   it("should render dialog when isOpen is true", () => {
     render(
-      <FiatOnrampModal
-        isOpen={true}
-        onClose={jest.fn()}
-        project={mockProject}
-        fiatAmount={100}
-      />
+      <FiatOnrampModal isOpen={true} onClose={jest.fn()} project={mockProject} fiatAmount={100} />
     );
 
     expect(screen.getByTestId("dialog")).toHaveAttribute("data-open", "true");
-    expect(screen.getByTestId("dialog-title")).toHaveTextContent(
-      "Pay with Card"
-    );
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Pay with Card");
     expect(screen.getByTestId("dialog-description")).toHaveTextContent(
       "Purchase crypto with your debit or credit card"
     );
@@ -114,12 +100,7 @@ describe("FiatOnrampModal", () => {
 
   it("should render MoonPay widget with correct props", () => {
     render(
-      <FiatOnrampModal
-        isOpen={true}
-        onClose={jest.fn()}
-        project={mockProject}
-        fiatAmount={100}
-      />
+      <FiatOnrampModal isOpen={true} onClose={jest.fn()} project={mockProject} fiatAmount={100} />
     );
 
     const widget = screen.getByTestId("moonpay-widget");
@@ -131,12 +112,7 @@ describe("FiatOnrampModal", () => {
 
   it("should convert project chainID to MoonPay network name", () => {
     render(
-      <FiatOnrampModal
-        isOpen={true}
-        onClose={jest.fn()}
-        project={mockProject}
-        fiatAmount={100}
-      />
+      <FiatOnrampModal isOpen={true} onClose={jest.fn()} project={mockProject} fiatAmount={100} />
     );
 
     expect(moonpayUtils.toMoonPayNetworkName).toHaveBeenCalledWith(8453);
@@ -144,12 +120,7 @@ describe("FiatOnrampModal", () => {
 
   it("should get correct currency code for ETH on the selected network", () => {
     render(
-      <FiatOnrampModal
-        isOpen={true}
-        onClose={jest.fn()}
-        project={mockProject}
-        fiatAmount={100}
-      />
+      <FiatOnrampModal isOpen={true} onClose={jest.fn()} project={mockProject} fiatAmount={100} />
     );
 
     expect(moonpayUtils.getMoonPayCurrencyCode).toHaveBeenCalledWith("ETH", "base");
@@ -157,12 +128,7 @@ describe("FiatOnrampModal", () => {
 
   it("should pass defaultCurrencyCode to MoonPay widget", () => {
     render(
-      <FiatOnrampModal
-        isOpen={true}
-        onClose={jest.fn()}
-        project={mockProject}
-        fiatAmount={100}
-      />
+      <FiatOnrampModal isOpen={true} onClose={jest.fn()} project={mockProject} fiatAmount={100} />
     );
 
     const widget = screen.getByTestId("moonpay-widget");
@@ -171,12 +137,7 @@ describe("FiatOnrampModal", () => {
 
   it("should pass project payoutAddress to MoonPay widget", () => {
     render(
-      <FiatOnrampModal
-        isOpen={true}
-        onClose={jest.fn()}
-        project={mockProject}
-        fiatAmount={100}
-      />
+      <FiatOnrampModal isOpen={true} onClose={jest.fn()} project={mockProject} fiatAmount={100} />
     );
 
     const widget = screen.getByTestId("moonpay-widget");
@@ -185,12 +146,7 @@ describe("FiatOnrampModal", () => {
 
   it("should pass allowed currencies from SUPPORTED_TOKENS", () => {
     render(
-      <FiatOnrampModal
-        isOpen={true}
-        onClose={jest.fn()}
-        project={mockProject}
-        fiatAmount={100}
-      />
+      <FiatOnrampModal isOpen={true} onClose={jest.fn()} project={mockProject} fiatAmount={100} />
     );
 
     expect(moonpayUtils.getAllowedMoonPayCurrencies).toHaveBeenCalled();
@@ -204,12 +160,7 @@ describe("FiatOnrampModal", () => {
 
   it("should pass fiatAmount correctly to MoonPay widget", () => {
     render(
-      <FiatOnrampModal
-        isOpen={true}
-        onClose={jest.fn()}
-        project={mockProject}
-        fiatAmount={250.5}
-      />
+      <FiatOnrampModal isOpen={true} onClose={jest.fn()} project={mockProject} fiatAmount={250.5} />
     );
 
     const widget = screen.getByTestId("moonpay-widget");
@@ -295,12 +246,7 @@ describe("FiatOnrampModal", () => {
     const mockOnClose = jest.fn();
 
     render(
-      <FiatOnrampModal
-        isOpen={true}
-        onClose={mockOnClose}
-        project={mockProject}
-        fiatAmount={100}
-      />
+      <FiatOnrampModal isOpen={true} onClose={mockOnClose} project={mockProject} fiatAmount={100} />
     );
 
     const dialog = screen.getByTestId("dialog");
@@ -317,15 +263,46 @@ describe("FiatOnrampModal", () => {
     };
 
     render(
+      <FiatOnrampModal isOpen={true} onClose={jest.fn()} project={customProject} fiatAmount={100} />
+    );
+
+    const widget = screen.getByTestId("moonpay-widget");
+    expect(widget).toHaveAttribute("data-wallet", "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd");
+  });
+
+  it("should pass externalTransactionId (project UID) to MoonPay widget", () => {
+    render(
+      <FiatOnrampModal isOpen={true} onClose={jest.fn()} project={mockProject} fiatAmount={100} />
+    );
+
+    const widget = screen.getByTestId("moonpay-widget");
+    expect(widget).toHaveAttribute("data-external-transaction-id", "project-123");
+  });
+
+  it("should pass externalCustomerId (donor address) to MoonPay widget when provided", () => {
+    const donorAddress = "0xdonor1234567890123456789012345678901234";
+
+    render(
       <FiatOnrampModal
         isOpen={true}
         onClose={jest.fn()}
-        project={customProject}
+        project={mockProject}
+        donorAddress={donorAddress}
         fiatAmount={100}
       />
     );
 
     const widget = screen.getByTestId("moonpay-widget");
-    expect(widget).toHaveAttribute("data-wallet", "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd");
+    expect(widget).toHaveAttribute("data-external-customer-id", donorAddress);
+  });
+
+  it("should handle undefined donorAddress gracefully", () => {
+    render(
+      <FiatOnrampModal isOpen={true} onClose={jest.fn()} project={mockProject} fiatAmount={100} />
+    );
+
+    const widget = screen.getByTestId("moonpay-widget");
+    // Widget should still render, externalCustomerId will be undefined
+    expect(widget).toBeInTheDocument();
   });
 });

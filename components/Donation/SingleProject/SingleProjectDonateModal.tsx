@@ -5,12 +5,7 @@ import toast from "react-hot-toast";
 import { type Hex, isAddress } from "viem";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   getAllSupportedChains,
   SUPPORTED_TOKENS,
@@ -53,8 +48,8 @@ function resolvePayoutAddress(
   return "";
 }
 
-export const SingleProjectDonateModal =
-  React.memo<SingleProjectDonateModalProps>(({ isOpen, onClose, project }) => {
+export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps>(
+  ({ isOpen, onClose, project }) => {
     const { address } = useAccount();
     const currentChainId = useChainId();
     const { switchChainAsync } = useSwitchChain();
@@ -62,24 +57,16 @@ export const SingleProjectDonateModal =
     const { mutateAsync: createDonation } = useCreateDonation();
     const fullProject = useProjectStore((state) => state.project);
 
-    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
-      PaymentMethod.CRYPTO
-    );
-    const [selectedToken, setSelectedToken] = useState<SupportedToken | null>(
-      null
-    );
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CRYPTO);
+    const [selectedToken, setSelectedToken] = useState<SupportedToken | null>(null);
     const [amount, setAmount] = useState("");
     const [showOnrampModal, setShowOnrampModal] = useState(false);
 
     const supportedChains = useMemo(() => getAllSupportedChains(), []);
-    const { balanceByTokenKey } = useCrossChainBalances(
-      currentChainId ?? null,
-      supportedChains
-    );
+    const { balanceByTokenKey } = useCrossChainBalances(currentChainId ?? null, supportedChains);
 
     const communityContract = useMemo(() => {
-      if (!fullProject?.grants || fullProject.grants.length === 0)
-        return undefined;
+      if (!fullProject?.grants || fullProject.grants.length === 0) return undefined;
       return fullProject.grants[0]?.community?.uid;
     }, [fullProject?.grants]);
 
@@ -96,12 +83,9 @@ export const SingleProjectDonateModal =
       setPaymentMethod(method);
     }, []);
 
-    const handleAmountChange = useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        setAmount(e.target.value);
-      },
-      []
-    );
+    const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+      setAmount(e.target.value);
+    }, []);
 
     const isValidAmount = useMemo(() => {
       const numAmount = parseFloat(amount);
@@ -138,10 +122,7 @@ export const SingleProjectDonateModal =
           await switchChainAsync({ chainId: selectedToken.chainId });
         }
 
-        const results = await executeDonations(
-          [payment],
-          () => resolvedPayoutAddress
-        );
+        const results = await executeDonations([payment], () => resolvedPayoutAddress);
 
         const successfulResult = results.find(
           (r) => r.status === "success" && r.projectId === project.uid
@@ -156,9 +137,7 @@ export const SingleProjectDonateModal =
             payoutAddress: resolvedPayoutAddress,
             amount,
             tokenSymbol: selectedToken.symbol,
-            tokenAddress: selectedToken.isNative
-              ? undefined
-              : selectedToken.address,
+            tokenAddress: selectedToken.isNative ? undefined : selectedToken.address,
             transactionHash: successfulResult.hash,
             donationType: DonationType.CRYPTO,
             metadata: {
@@ -252,16 +231,13 @@ export const SingleProjectDonateModal =
           </div>
 
           <div className="p-6 space-y-5">
-            <PaymentMethodSelector
-              selected={paymentMethod}
-              onSelect={handlePaymentMethodChange}
-            />
+            <PaymentMethodSelector selected={paymentMethod} onSelect={handlePaymentMethodChange} />
 
             {paymentMethod === PaymentMethod.CRYPTO && (
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <span className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
                   Select Token
-                </label>
+                </span>
                 <TokenSelector
                   selectedToken={selectedToken ?? undefined}
                   tokenOptions={SUPPORTED_TOKENS}
@@ -272,16 +248,20 @@ export const SingleProjectDonateModal =
             )}
 
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="donation-amount"
+                className="block text-sm font-semibold text-gray-700 dark:text-gray-300"
+              >
                 Amount{" "}
                 {paymentMethod === PaymentMethod.FIAT
                   ? "(USD)"
                   : selectedToken
-                  ? `(${selectedToken.symbol})`
-                  : ""}
+                    ? `(${selectedToken.symbol})`
+                    : ""}
               </label>
               <div className="relative">
                 <input
+                  id="donation-amount"
                   type="number"
                   placeholder="0.00"
                   value={amount}
@@ -378,11 +358,13 @@ export const SingleProjectDonateModal =
               payoutAddress: resolvedPayoutAddress as Hex,
               chainID: project.chainID || fullProject?.chainID || 42161,
             }}
+            donorAddress={address as Hex | undefined}
             fiatAmount={parseFloat(amount)}
           />
         )}
       </Dialog>
     );
-  });
+  }
+);
 
 SingleProjectDonateModal.displayName = "SingleProjectDonateModal";

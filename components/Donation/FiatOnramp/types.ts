@@ -1,4 +1,4 @@
-import type { Hex } from 'viem';
+import type { Hex } from "viem";
 
 export interface FiatOnrampModalProps {
   isOpen: boolean;
@@ -9,6 +9,7 @@ export interface FiatOnrampModalProps {
     payoutAddress: Hex;
     chainID: number;
   };
+  donorAddress?: Hex;
   fiatAmount: number;
   defaultCrypto?: string;
 }

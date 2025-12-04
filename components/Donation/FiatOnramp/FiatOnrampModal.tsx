@@ -19,7 +19,7 @@ import {
 import type { FiatOnrampModalProps } from "./types";
 
 export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
-  ({ isOpen, onClose, project, fiatAmount, defaultCrypto = "ETH" }) => {
+  ({ isOpen, onClose, project, donorAddress, fiatAmount, defaultCrypto = "ETH" }) => {
     const [isProcessing, setIsProcessing] = useState(true);
     const selectedNetwork = toMoonPayNetworkName(project.chainID);
     const currencyCode = getMoonPayCurrencyCode(defaultCrypto, selectedNetwork);
@@ -41,8 +41,7 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
 
     const allowedCurrencies = getAllowedMoonPayCurrencies();
 
-    const truncateAddress = (address: string) =>
-      `${address.slice(0, 6)}...${address.slice(-4)}`;
+    const truncateAddress = (address: string) => `${address.slice(0, 6)}...${address.slice(-4)}`;
 
     return (
       <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -59,17 +58,13 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
               <div className="w-10 h-10 rounded-full flex items-center justify-center bg-moonpay-purple">
                 <CreditCard className="w-5 h-5 text-white" />
               </div>
-              <DialogTitle className="text-2xl font-semibold">
-                Pay with Card
-              </DialogTitle>
+              <DialogTitle className="text-2xl font-semibold">Pay with Card</DialogTitle>
             </div>
             <DialogDescription className="flex items-center gap-2 text-base">
               <span>Purchase crypto with your debit or credit card</span>
               <span className="mx-1">•</span>
               <span>Powered by</span>
-              <span className="font-semibold text-moonpay-purple">
-                MoonPay
-              </span>
+              <span className="font-semibold text-moonpay-purple">MoonPay</span>
             </DialogDescription>
           </DialogHeader>
 
@@ -87,9 +82,9 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
                   </code>
                 </p>
                 <p className="text-amber-700 dark:text-amber-300 mt-1">
-                  MoonPay may require additional verification steps for
-                  donations to third-party wallets. This process helps prevent
-                  fraud and ensures your funds reach the intended recipient.
+                  MoonPay may require additional verification steps for donations to third-party
+                  wallets. This process helps prevent fraud and ensures your funds reach the
+                  intended recipient.
                 </p>
               </div>
             </div>
@@ -103,6 +98,8 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
                 baseCurrencyAmount={fiatAmount.toString()}
                 defaultCurrencyCode={currencyCode}
                 walletAddress={project.payoutAddress}
+                externalCustomerId={donorAddress}
+                externalTransactionId={project.uid}
                 showOnlyCurrencies={allowedCurrencies}
                 onUrlSignatureRequested={getSignature}
                 onTransactionCreated={handleTransactionCreated}
