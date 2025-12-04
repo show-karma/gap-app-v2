@@ -2,7 +2,7 @@
 
 import { MoonPayBuyWidget } from "@moonpay/moonpay-react";
 import { AlertTriangle, CreditCard } from "lucide-react";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +33,13 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
     const currencyCode = getMoonPayCurrencyCode(defaultCrypto, selectedNetwork);
     const getSignature = useMoonPaySignature();
 
+    // Use ref to always have latest donorAddress in callbacks
+    // This prevents stale closures when user logs out during transaction
+    const donorAddressRef = useRef(donorAddress);
+    useEffect(() => {
+      donorAddressRef.current = donorAddress;
+    }, [donorAddress]);
+
     // Generate a unique key that includes donorAddress to force widget remount
     // when the donor address changes, ensuring MoonPay receives the correct external IDs
     const widgetKey = `moonpay-${project.uid}-${donorAddress || "anonymous"}`;
@@ -47,16 +54,17 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
 
         // Pre-register donor address for webhook processing
         // MoonPay sandbox doesn't return externalCustomerId in webhooks
-        if (donorAddress && props.id) {
-          console.log("[MoonPay] Registering donor for transaction:", props.id);
+        // Use ref to get the current donorAddress (prevents stale closure on logout)
+        const currentDonorAddress = donorAddressRef.current;
+        if (currentDonorAddress && props.id) {
           await registerMoonPayDonor({
             moonpayTransactionId: props.id,
-            donorAddress,
+            donorAddress: currentDonorAddress,
             projectUid: project.uid,
           });
         }
       },
-      [donorAddress, project.uid]
+      [project.uid]
     );
 
     const handleTransactionCompleted = useCallback(async () => {
