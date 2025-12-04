@@ -116,16 +116,22 @@ export const ProjectNavigator = ({
           <button
             type="button"
             onClick={() => setIsDonateModalOpen(true)}
-            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white justify-center items-center flex flex-row gap-2.5 py-2 px-5 rounded-lg w-max min-w-max transition-all duration-200 shadow-md hover:shadow-lg font-semibold"
+            className="group relative bg-brand-blue hover:bg-blue-600 text-white justify-center items-center flex flex-row gap-2 py-2.5 px-5 rounded-full w-max min-w-max transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] font-semibold text-sm"
           >
-            <Image
-              src="/icons/coins-stacked.svg"
-              alt="Donate"
-              className="w-5 h-5"
-              width={20}
-              height={20}
-            />
-            <p>Donate</p>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
+            </svg>
+            <span>Support Project</span>
           </button>
         )}
         <ProjectOptionsMenu />

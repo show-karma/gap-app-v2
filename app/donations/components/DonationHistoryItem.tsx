@@ -1,19 +1,15 @@
 'use client';
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import type { DonationHistoryItemProps } from '../types';
+import { getNetworkConfig } from '@/constants/supportedTokens';
 
 export const DonationHistoryItem = React.memo<DonationHistoryItemProps>(
   ({ donation }) => {
     const explorerUrl = useMemo(() => {
-      const explorers: Record<number, string> = {
-        1: 'https://etherscan.io',
-        10: 'https://optimistic.etherscan.io',
-        137: 'https://polygonscan.com',
-        8453: 'https://basescan.org'
-      };
-      const baseUrl = explorers[donation.chainID] || 'https://etherscan.io';
+      const networkConfig = getNetworkConfig(donation.chainID);
+      const baseUrl = networkConfig?.blockExplorer || 'https://etherscan.io';
       return `${baseUrl}/tx/${donation.transactionHash}`;
     }, [donation.chainID, donation.transactionHash]);
 
