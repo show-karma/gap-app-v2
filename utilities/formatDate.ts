@@ -2,11 +2,21 @@ type TimeZoneFormat = "UTC" | "ISO" | "local";
 type DateFormatOption = "MMM D, YYYY" | "h:mm a" | "DDD, MMM DD";
 
 export const formatDate = (
-  date: number | Date | string,
+  date: number | Date | string | undefined | null,
   timeZoneFormat: TimeZoneFormat = "local",
   formatOption: DateFormatOption = "MMM D, YYYY"
 ): string => {
+  // Handle undefined, null, or invalid date values
+  if (date === undefined || date === null || date === "") {
+    return "N/A";
+  }
+
   const d = new Date(date);
+
+  // Check if the date is invalid
+  if (isNaN(d.getTime())) {
+    return "N/A";
+  }
 
   const pad = (num: number): string => num.toString().padStart(2, "0");
 
