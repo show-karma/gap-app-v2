@@ -11,12 +11,20 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useMoonPaySignature } from "@/hooks/useMoonPaySignature";
+import { registerMoonPayDonor } from "@/services/register-moonpay-donor.service";
 import {
   getAllowedMoonPayCurrencies,
   getMoonPayCurrencyCode,
   toMoonPayNetworkName,
 } from "@/utilities/moonpay";
 import type { FiatOnrampModalProps } from "./types";
+
+interface MoonPayTransactionProps {
+  id: string;
+  baseCurrency?: { code: string };
+  baseCurrencyAmount?: number;
+  status?: string;
+}
 
 export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
   ({ isOpen, onClose, project, donorAddress, fiatAmount, defaultCrypto = "ETH" }) => {
@@ -25,13 +33,31 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
     const currencyCode = getMoonPayCurrencyCode(defaultCrypto, selectedNetwork);
     const getSignature = useMoonPaySignature();
 
+    // Generate a unique key that includes donorAddress to force widget remount
+    // when the donor address changes, ensuring MoonPay receives the correct external IDs
+    const widgetKey = `moonpay-${project.uid}-${donorAddress || "anonymous"}`;
+
     const handleClose = useCallback(() => {
       onClose();
     }, [onClose, isProcessing]);
 
-    const handleTransactionCreated = useCallback(async () => {
-      setIsProcessing(false);
-    }, []);
+    const handleTransactionCreated = useCallback(
+      async (props: MoonPayTransactionProps) => {
+        setIsProcessing(false);
+
+        // Pre-register donor address for webhook processing
+        // MoonPay sandbox doesn't return externalCustomerId in webhooks
+        if (donorAddress && props.id) {
+          console.log("[MoonPay] Registering donor for transaction:", props.id);
+          await registerMoonPayDonor({
+            moonpayTransactionId: props.id,
+            donorAddress,
+            projectUid: project.uid,
+          });
+        }
+      },
+      [donorAddress, project.uid]
+    );
 
     const handleTransactionCompleted = useCallback(async () => {
       setIsProcessing(false);
@@ -91,6 +117,7 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
           <div className="flex-1 min-h-0 overflow-hidden px-6 pb-6 mt-4">
             <div className="w-full h-full relative rounded-lg overflow-hidden border border-border">
               <MoonPayBuyWidget
+                key={widgetKey}
                 variant="embedded"
                 baseCurrencyCode="usd"
                 baseCurrencyAmount={fiatAmount.toString()}
