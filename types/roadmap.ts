@@ -36,6 +36,7 @@ export type V2ProjectUpdateAssociations = {
 
 export type V2ProjectUpdate = {
   uid: string;
+  recipient: string;
   title: string;
   description: string;
   verified: boolean;

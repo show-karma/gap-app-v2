@@ -34,6 +34,7 @@ const convertToUnifiedMilestones = (data: V2UpdatesApiResponse): UnifiedMileston
       createdAt: update.createdAt || new Date().toISOString(),
       projectUpdate: {
         uid: update.uid,
+        attester: update.recipient || "",
         title: update.title,
         text: update.description,
         createdAt: update.createdAt || new Date().toISOString(),
