@@ -113,6 +113,11 @@ export function NavbarMobileMenu() {
       visible: isLoggedIn,
     },
     {
+      label: "My donations",
+      href: "/donations",
+      visible: isLoggedIn,
+    },
+    {
       label: "Review",
       href: PAGES.MY_REVIEWS,
       visible: isLoggedIn && hasReviewerRole,
