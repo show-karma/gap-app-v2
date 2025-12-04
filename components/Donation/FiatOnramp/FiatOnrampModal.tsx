@@ -26,9 +26,7 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
     const getSignature = useMoonPaySignature();
 
     const handleClose = useCallback(() => {
-      if (!isProcessing) {
-        onClose();
-      }
+      onClose();
     }, [onClose, isProcessing]);
 
     const handleTransactionCreated = useCallback(async () => {
