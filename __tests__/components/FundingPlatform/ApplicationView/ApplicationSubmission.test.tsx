@@ -35,6 +35,50 @@ jest.mock("@/components/Utilities/Button", () => ({
   ),
 }));
 
+// Mock next-themes
+jest.mock("next-themes", () => ({
+  useTheme: () => ({
+    theme: "light",
+    setTheme: jest.fn(),
+    resolvedTheme: "light",
+  }),
+}));
+
+// Mock MarkdownEditor component - render as textarea for testing
+jest.mock("@/components/Utilities/MarkdownEditor", () => ({
+  MarkdownEditor: ({
+    label,
+    value,
+    onChange,
+    onBlur,
+    error,
+    description,
+    isRequired,
+    isDisabled,
+    placeholder,
+    id,
+  }: any) => (
+    <div>
+      {label && (
+        <label htmlFor={id}>
+          {label} {isRequired && <span className="text-red-500">*</span>}
+        </label>
+      )}
+      {description && <p>{description}</p>}
+      <textarea
+        id={id}
+        value={value || ""}
+        onChange={(e) => onChange?.(e.target.value)}
+        onBlur={onBlur}
+        placeholder={placeholder}
+        disabled={isDisabled}
+        data-testid={`markdown-editor-${id}`}
+      />
+      {error && <p className="text-sm text-red-400 mt-1">{error}</p>}
+    </div>
+  ),
+}));
+
 describe("ApplicationSubmission - Field Matching Logic", () => {
   const mockFormSchema: IFormSchema = {
     title: "Test Application Form",
