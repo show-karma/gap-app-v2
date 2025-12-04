@@ -1,10 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { fundingPlatformService } from "@/services/fundingPlatformService";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { fundingPlatformService } from "@/services/fundingPlatformService";
+import type {
+  GrantMilestoneWithCompletion,
+  ProjectGrantMilestonesResponse,
+} from "@/services/milestones";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
-import type { GrantMilestoneWithCompletion } from "@/services/milestones";
-import type { ProjectGrantMilestonesResponse } from "@/services/milestones";
 
 interface UseDeleteMilestoneParams {
   projectId: string;
@@ -69,32 +71,29 @@ export const useDeleteMilestone = ({
       await queryClient.cancelQueries({ queryKey });
 
       // Snapshot the previous value for rollback
-      const previousData = queryClient.getQueryData<ProjectGrantMilestonesResponse | null>(queryKey);
+      const previousData = queryClient.getQueryData<ProjectGrantMilestonesResponse | null>(
+        queryKey
+      );
 
       // Optimistically update the cache to remove the deleted milestone
-      queryClient.setQueryData<ProjectGrantMilestonesResponse | null>(
-        queryKey,
-        (oldData) => {
-          if (!oldData || !oldData.grantMilestones || !Array.isArray(oldData.grantMilestones)) {
-            return oldData;
-          }
-
-          return {
-            ...oldData,
-            grantMilestones: oldData.grantMilestones.filter(
-              (m) => m?.uid !== milestone.uid
-            ),
-          };
+      queryClient.setQueryData<ProjectGrantMilestonesResponse | null>(queryKey, (oldData) => {
+        if (!oldData || !oldData.grantMilestones || !Array.isArray(oldData.grantMilestones)) {
+          return oldData;
         }
-      );
+
+        return {
+          ...oldData,
+          grantMilestones: oldData.grantMilestones.filter((m) => m?.uid !== milestone.uid),
+        };
+      });
 
       return { previousData };
     },
     onSuccess: (data, milestone, context) => {
       const { milestone: deletedMilestone, result } = data;
-      
+
       toast.success(`Milestone "${deletedMilestone.title}" deleted successfully`);
-      
+
       // Invalidate and refetch to ensure consistency
       const queryKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectId, programId);
       queryClient.invalidateQueries({ queryKey });
@@ -109,12 +108,10 @@ export const useDeleteMilestone = ({
       }
 
       const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to delete milestone";
+        error?.response?.data?.message || error?.message || "Failed to delete milestone";
 
       toast.error(errorMessage);
-      
+
       errorManager(
         `Failed to delete milestone "${milestone.title}"`,
         error,
@@ -135,4 +132,3 @@ export const useDeleteMilestone = ({
     error: deleteMilestoneMutation.error,
   };
 };
-

@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import type { IFormField, IFormSchema } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
 
@@ -224,6 +225,12 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             textSchema = (textSchema as z.ZodString).min(
               field.validation.min,
               `Minimum ${field.validation.min} characters required`
+            );
+          }
+          if (field.validation?.maxLength) {
+            textSchema = (textSchema as z.ZodString).max(
+              field.validation.maxLength,
+              `Maximum ${field.validation.maxLength} characters allowed`
             );
           }
           if (field.validation?.pattern) {
@@ -549,20 +556,27 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
       case "textarea":
         return (
           <div key={index} className="flex w-full flex-col">
-            <label htmlFor={fieldName} className={labelStyle}>
-              {field.label} {field.required && <span className="text-red-500">*</span>}
-            </label>
-            <textarea
-              id={fieldName}
-              className={cn(
-                inputStyle,
-                "min-h-[100px] resize-y",
-                error && "border-red-500 dark:border-red-500"
+            <Controller
+              name={fieldKey}
+              control={control}
+              render={({ field: { onChange, onBlur, value }, fieldState }) => (
+                <MarkdownEditor
+                  label={field.label}
+                  placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
+                  description={field.description}
+                  value={value || ""}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  error={fieldState.error?.message}
+                  isRequired={field.required}
+                  isDisabled={isLoading || submitting}
+                  id={fieldName}
+                  data-field-id={field.id || fieldName}
+                  height={300}
+                  minHeight={270}
+                />
               )}
-              placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
-              {...register(fieldKey)}
             />
-            {error && <p className="text-sm text-red-400 mt-1">{errorMessage}</p>}
           </div>
         );
 

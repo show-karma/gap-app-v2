@@ -47,7 +47,8 @@ export interface IFormField {
   options?: string[];
   validation?: {
     min?: number;
-    max?: number;
+    max?: number; // For number fields
+    maxLength?: number; // For text/textarea fields (character limit)
     pattern?: string;
     message?: string;
     maxMilestones?: number;
