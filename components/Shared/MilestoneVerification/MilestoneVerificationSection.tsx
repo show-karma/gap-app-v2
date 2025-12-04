@@ -2,7 +2,7 @@ import type {
   IMilestoneCompleted,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { type FC, useEffect, useState } from "react";
+import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { VerifiedBadge } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
 import { VerifyMilestoneUpdateDialog } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifyMilestoneUpdateDialog";
 import type { UnifiedMilestone } from "@/types/roadmap";
@@ -20,10 +20,8 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
   verifiedMilestones: initialVerifiedMilestones,
   onVerificationAdded,
 }) => {
-  const [verifiedMilestones, setVerifiedMilestones] = useState<IMilestoneCompleted[]>([]);
-
-  // Handle different milestone types
-  const getVerifiedMilestones = () => {
+  // Compute initial verified milestones from props
+  const computedVerifiedMilestones = useMemo(() => {
     if (initialVerifiedMilestones) {
       return initialVerifiedMilestones;
     }
@@ -42,16 +40,24 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
     }
 
     return [];
-  };
+  }, [initialVerifiedMilestones, milestone]);
 
-  const addVerifiedMilestone = (newVerified: IMilestoneCompleted) => {
-    setVerifiedMilestones((prev) => [...prev, newVerified]);
-    onVerificationAdded?.(newVerified);
-  };
+  const [verifiedMilestones, setVerifiedMilestones] = useState<IMilestoneCompleted[]>(
+    computedVerifiedMilestones
+  );
 
+  const addVerifiedMilestone = useCallback(
+    (newVerified: IMilestoneCompleted) => {
+      setVerifiedMilestones((prev) => [...prev, newVerified]);
+      onVerificationAdded?.(newVerified);
+    },
+    [onVerificationAdded]
+  );
+
+  // Sync state when computed value changes
   useEffect(() => {
-    setVerifiedMilestones(getVerifiedMilestones());
-  }, [getVerifiedMilestones]);
+    setVerifiedMilestones(computedVerifiedMilestones);
+  }, [computedVerifiedMilestones]);
 
   // Convert UnifiedMilestone to IMilestoneResponse format for VerifyMilestoneUpdateDialog
   const getMilestoneForDialog = (): IMilestoneResponse | null => {
