@@ -12,7 +12,7 @@ export interface ApplicationComment {
   id: string;
   applicationId: string;
   authorAddress: string;
-  authorRole: 'applicant' | 'admin' | 'reviewer';
+  authorRole: "applicant" | "admin" | "reviewer";
   authorName?: string;
   content: string;
   isDeleted: boolean;
@@ -99,6 +99,7 @@ export interface IAIConfig {
   detailedPrompt?: string;
   aiModel?: string;
   enableRealTimeEvaluation?: boolean;
+  internalLangfusePromptId?: string;
 }
 
 // V2 Funding Application
@@ -117,6 +118,11 @@ export interface IFundingApplication {
   aiEvaluation?: {
     evaluation?: string;
     promptId?: string;
+  };
+  internalAIEvaluation?: {
+    evaluation?: string;
+    promptId?: string;
+    evaluatedAt?: string | Date;
   };
   createdAt: string | Date;
   updatedAt: string | Date;
@@ -236,7 +242,7 @@ export interface IApplicationVersionLegacy {
   statusHistory: IStatusHistoryEntry[];
   editorAddress?: string;
   editorName?: string;
-  editorRole?: 'applicant' | 'admin' | 'reviewer';
+  editorRole?: "applicant" | "admin" | "reviewer";
   changesSummary?: string;
   createdAt: string | Date;
 }
@@ -254,10 +260,31 @@ export interface IApplicationListComponentProps {
 
 // Type conversion helpers
 export function isFormSchema(schema: any): boolean {
-  return schema && 
-    typeof schema === 'object' && 
+  return (
+    schema &&
+    typeof schema === "object" &&
     Array.isArray(schema.fields) &&
-    (schema.id === undefined || typeof schema.id === 'string') &&
-    (schema.title === undefined || typeof schema.title === 'string') &&
-    (schema.settings === undefined || typeof schema.settings === 'object');
+    (schema.id === undefined || typeof schema.id === "string") &&
+    (schema.title === undefined || typeof schema.title === "string") &&
+    (schema.settings === undefined || typeof schema.settings === "object")
+  );
 }
+
+/**
+ * Type for program prop that supports both IFundingProgramConfig and FormSchema structures.
+ * Used in components that need to handle programs from different sources (API vs config).
+ */
+export type ProgramWithFormSchema =
+  | (Partial<IFundingProgramConfig> & {
+      formSchema?:
+        | IFormSchema
+        | {
+            fields?: Array<{ id?: string; label?: string }>;
+            aiConfig?: {
+              internalLangfusePromptId?: string;
+              langfusePromptId?: string;
+            };
+          };
+      name?: string;
+    })
+  | null;

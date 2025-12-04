@@ -1,20 +1,20 @@
 "use client";
-import { useMemo, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
+import { useCallback, useEffect, useMemo } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
+import { useCommunityProjectsInfinite } from "@/hooks/useCommunityProjectsInfinite";
+import { useProjectFilters } from "@/hooks/useProjectFilters";
 import { useCommunityStore } from "@/store/community";
-import { SortByOptions, MaturityStageOptions } from "@/types";
-import { CommunityStatsV2, CommunityProjectsV2Response } from "@/types/community";
+import type { MaturityStageOptions, SortByOptions } from "@/types";
+import type { CommunityProjectsV2Response, CommunityStatsV2 } from "@/types/community";
+import { CategoryFilter } from "./CommunityGrants/CategoryFilter";
+import { MaturityStageFilter } from "./CommunityGrants/MaturityStageFilter";
+import { ProjectsGrid } from "./CommunityGrants/ProjectsGrid";
+import { SortFilter } from "./CommunityGrants/SortFilter";
 import { ProgramFilter } from "./Pages/Communities/Impact/ProgramFilter";
 import { TrackFilter } from "./Pages/Communities/Impact/TrackFilter";
 import { CardListSkeleton } from "./Pages/Communities/Loading";
 import { ProgramBanner } from "./ProgramBanner";
-import { CategoryFilter } from "./CommunityGrants/CategoryFilter";
-import { SortFilter } from "./CommunityGrants/SortFilter";
-import { MaturityStageFilter } from "./CommunityGrants/MaturityStageFilter";
-import { ProjectsGrid } from "./CommunityGrants/ProjectsGrid";
-import { useCommunityProjectsInfinite } from "@/hooks/useCommunityProjectsInfinite";
-import { useProjectFilters } from "@/hooks/useProjectFilters";
 import { errorManager } from "./Utilities/errorManager";
 
 interface CommunityGrantsProps {
@@ -57,23 +57,16 @@ export const CommunityGrants = ({
     defaultSelectedMaturityStage,
   });
 
-  const {
-    data,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isRefetching,
-  } = useCommunityProjectsInfinite({
-    communityId,
-    sortBy: selectedSort,
-    categories: selectedCategories,
-    maturityStage: selectedMaturityStage,
-    programId: selectedProgramId,
-    trackIds: selectedTrackIds,
-    enabled: !!communityId,
-  });
+  const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isRefetching } =
+    useCommunityProjectsInfinite({
+      communityId,
+      sortBy: selectedSort,
+      categories: selectedCategories,
+      maturityStage: selectedMaturityStage,
+      programId: selectedProgramId,
+      trackIds: selectedTrackIds,
+      enabled: !!communityId,
+    });
 
   // Check if we're loading due to filter changes
   const isFilterLoading = isLoading || (isRefetching && !isFetchingNextPage);
@@ -107,7 +100,7 @@ export const CommunityGrants = ({
       setFilteredStats({
         totalProjects: totalCount,
         totalGrants: 0, // Will be updated when API supports it
-        totalMilestones: 0 // Will be updated when API supports it
+        totalMilestones: 0, // Will be updated when API supports it
       });
     }
   }, [totalCount, isFilterLoading, setFilteredStats, setIsLoadingFilters]);
@@ -143,7 +136,7 @@ export const CommunityGrants = ({
 
     const timeoutId = setTimeout(handleScroll, 200);
     return () => clearTimeout(timeoutId);
-  }, [projects, hasNextPage, loadMore, isFilterLoading, isFetchingNextPage]);
+  }, [hasNextPage, loadMore, isFilterLoading, isFetchingNextPage]);
 
   const handleCategoryChange = useCallback(
     (categories: string[]) => {
@@ -201,10 +194,7 @@ export const CommunityGrants = ({
               onChange={handleCategoryChange}
             />
 
-            <SortFilter
-              selectedSort={selectedSort}
-              onChange={handleSortChange}
-            />
+            <SortFilter selectedSort={selectedSort} onChange={handleSortChange} />
 
             {communityId === "celo" && (
               <MaturityStageFilter
@@ -243,9 +233,7 @@ export const CommunityGrants = ({
 
           {!isFilterLoading && !isFetchingNextPage && projects.length === 0 && (
             <div className="w-full flex items-center justify-center py-8">
-              <p className="text-gray-500 dark:text-gray-400">
-                No projects found
-              </p>
+              <p className="text-gray-500 dark:text-gray-400">No projects found</p>
             </div>
           )}
         </div>

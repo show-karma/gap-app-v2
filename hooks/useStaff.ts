@@ -1,7 +1,7 @@
-import fetchData from "@/utilities/fetchData";
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
+import fetchData from "@/utilities/fetchData";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { useAuth } from "./useAuth";
 
 export const useStaff = () => {
@@ -25,7 +25,7 @@ export const useStaff = () => {
     ...defaultQueryOptions,
   });
 
-  const isStaff = data?.authorized ?? false;
+  const isStaff: boolean = data?.authorized ?? false;
 
   return { isStaff, isLoading, error };
 };

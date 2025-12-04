@@ -1,25 +1,25 @@
 "use client";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getGapClient, useGap } from "./useGap";
+import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { getProjectById } from "@/utilities/sdk";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useGrantFormStore } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant/store";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useProjectStore } from "@/store";
+import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { INDEXER } from "@/utilities/indexer";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import toast from "react-hot-toast";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { useStepper } from "@/store/modals/txStepper";
-import { useProjectStore } from "@/store";
-import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
-import { useGrantFormStore } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant/store";
+import { sanitizeObject } from "@/utilities/sanitize";
+import { getProjectById } from "@/utilities/sdk";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useGap } from "./useGap";
 import { useWallet } from "./useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 export function useGrant() {
   const [isLoading, setIsLoading] = useState(false);
@@ -45,17 +45,18 @@ export function useGrant() {
    * @param oldGrant The grant to update
    * @param data The updated data
    */
-  const updateGrant = async (
-    oldGrant: IGrantResponse,
-    data: Partial<typeof formData>
-  ) => {
+  const updateGrant = async (oldGrant: IGrantResponse, data: Partial<typeof formData>) => {
     if (!address || !oldGrant?.refUID || !selectedProject) return;
-    let gapClient = gap;
+    const _gapClient = gap;
     try {
       setIsLoading(true);
       setIsStepper(true);
 
-      const { success, chainId: actualChainId, gapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient,
+      } = await ensureCorrectChain({
         targetChainId: oldGrant.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -84,15 +85,12 @@ export function useGrant() {
         startDate: data.startDate
           ? new Date(data.startDate).getTime() / 1000
           : oldGrantInstance.details?.startDate,
-        selectedTrackIds:
-          data.selectedTrackIds || formData.selectedTrackIds || [],
+        selectedTrackIds: data.selectedTrackIds || formData.selectedTrackIds || [],
       });
 
       oldGrantInstance.details?.setValues(grantData);
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -114,11 +112,7 @@ export function useGrant() {
           changeStepperStep("indexing");
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, oldGrant.chainID),
-              "POST",
-              {}
-            );
+            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, oldGrant.chainID), "POST", {});
           }
           while (retries > 0) {
             const fetchedProject = await gapIndexerApi

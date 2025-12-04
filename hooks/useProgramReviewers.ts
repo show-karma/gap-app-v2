@@ -49,7 +49,8 @@ export function useProgramReviewers(programId: string, chainID: number) {
     },
     onError: (error) => {
       console.error("Error adding program reviewer:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to add program reviewer";
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to add program reviewer";
       toast.error(errorMessage);
     },
   });
@@ -57,11 +58,7 @@ export function useProgramReviewers(programId: string, chainID: number) {
   // Mutation for removing a program reviewer
   const removeMutation = useMutation({
     mutationFn: async (publicAddress: string) => {
-      return programReviewersService.removeReviewer(
-        programId,
-        chainID,
-        publicAddress,
-      );
+      return programReviewersService.removeReviewer(programId, chainID, publicAddress);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
@@ -71,7 +68,8 @@ export function useProgramReviewers(programId: string, chainID: number) {
     },
     onError: (error) => {
       console.error("Error removing program reviewer:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to remove program reviewer";
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to remove program reviewer";
       toast.error(errorMessage);
     },
   });
@@ -93,6 +91,6 @@ export function useProgramReviewers(programId: string, chainID: number) {
       removeReviewer: removeMutation.mutateAsync,
       isRemoving: removeMutation.isPending,
     }),
-    [query, addMutation, removeMutation],
+    [query, addMutation, removeMutation]
   );
 }

@@ -1,15 +1,24 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import {
+  CheckCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ExclamationCircleIcon,
+} from "@heroicons/react/24/outline";
 import Papa from "papaparse";
+import { useCallback, useState } from "react";
+import toast from "react-hot-toast";
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { FileUpload } from "@/components/Utilities/FileUpload";
 import { Button } from "@/components/ui/button";
-import { programScoresService, ProgramScoreUploadRequest, ProgramScoreUploadResult } from "@/services/programScoresService";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import toast from "react-hot-toast";
+import {
+  type ProgramScoreUploadRequest,
+  type ProgramScoreUploadResult,
+  programScoresService,
+} from "@/services/programScoresService";
 import { cn } from "@/utilities/tailwind";
-import { ChevronDownIcon, ChevronUpIcon, CheckCircleIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
-import { errorManager } from "@/components/Utilities/errorManager";
 
 interface ProgramScoresUploadProps {
   communityUID: string;
@@ -31,7 +40,11 @@ interface ParsedCsvData {
   errors: string[];
 }
 
-export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: ProgramScoresUploadProps) {
+export function ProgramScoresUpload({
+  communityUID,
+  programs,
+  defaultChainId,
+}: ProgramScoresUploadProps) {
   const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(null);
   const [chainId, setChainId] = useState<number>(defaultChainId || 42220); // Use community chainId or default to Celo
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -44,7 +57,7 @@ export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: 
     // Check file size - max 10MB
     const maxSize = 10 * 1024 * 1024; // 10MB in bytes
     if (file.size > maxSize) {
-      toast.error('File size exceeds 10MB limit. Please upload a smaller file.');
+      toast.error("File size exceeds 10MB limit. Please upload a smaller file.");
       setCsvFile(null);
       setParsedData(null);
       return;
@@ -62,8 +75,8 @@ export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: 
 
         // Check for required columns
         const headers = Object.keys(rows[0] || {});
-        const hasProjectTitle = headers.includes('projectTitle');
-        const hasProjectProfile = headers.includes('projectProfile');
+        const hasProjectTitle = headers.includes("projectTitle");
+        const hasProjectProfile = headers.includes("projectProfile");
         const hasRequiredColumns = hasProjectTitle && hasProjectProfile;
 
         if (!hasRequiredColumns) {
@@ -73,7 +86,7 @@ export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: 
 
         // Identify score columns (all columns except projectTitle and projectProfile)
         const scoreColumns = headers.filter(
-          header => header !== 'projectTitle' && header !== 'projectProfile'
+          (header) => header !== "projectTitle" && header !== "projectProfile"
         );
 
         setParsedData({
@@ -81,11 +94,13 @@ export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: 
           scoreColumns,
           totalRows: rows.length,
           hasRequiredColumns,
-          errors
+          errors,
         });
 
         if (errors.length > 0) {
-          errors.forEach(error => toast.error(error));
+          errors.forEach((error) => {
+            toast.error(error);
+          });
         } else {
           toast.success(`Parsed ${rows.length} rows with ${scoreColumns.length} score columns`);
           setIsPreviewExpanded(true);
@@ -94,13 +109,11 @@ export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: 
       error: (error) => {
         toast.error(`CSV parsing error: ${error.message}`);
         setParsedData(null);
-      }
+      },
     });
   }, []);
 
   const handleUpload = async () => {
-    console.log("handleUpload called", { selectedProgram, parsedData, hasRequiredColumns: parsedData?.hasRequiredColumns });
-
     if (!selectedProgram || !parsedData || !parsedData.hasRequiredColumns) {
       toast.error("Please select a program and upload a valid CSV file");
       return;
@@ -111,18 +124,18 @@ export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: 
     try {
       const request: ProgramScoreUploadRequest = {
         communityUID,
-        programId: selectedProgram.programId || '',
+        programId: selectedProgram.programId || "",
         chainId: selectedProgram.chainID || chainId,
-        csvData: parsedData.rows
+        csvData: parsedData.rows,
       };
-
-      console.log("Sending request:", request);
       const result = await programScoresService.uploadProgramScores(request);
 
       setUploadResult(result);
 
       if (result.failed.length > 0) {
-        toast.success(`Uploaded ${result.successful} scores. ${result.failed.length} failed to match.`);
+        toast.success(
+          `Uploaded ${result.successful} scores. ${result.failed.length} failed to match.`
+        );
       } else {
         toast.success(`Successfully uploaded all ${result.successful} program scores!`);
       }
@@ -131,7 +144,6 @@ export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: 
       setCsvFile(null);
       setParsedData(null);
       setIsPreviewExpanded(false);
-
     } catch (error) {
       errorManager(
         `Error uploading program scores: ${error}`,
@@ -155,19 +167,22 @@ export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: 
   return (
     <div className="bg-secondary rounded-lg border border-gray-200 shadow-sm">
       <div className="p-6 space-y-6">
-
         {/* Program Selection */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label
+            htmlFor="program-scores-program"
+            className="block text-sm font-medium text-foreground mb-2"
+          >
             Select Program *
           </label>
           <select
-            value={selectedProgram ? `${selectedProgram.programId}_${selectedProgram.chainID}` : ''}
+            id="program-scores-program"
+            value={selectedProgram ? `${selectedProgram.programId}_${selectedProgram.chainID}` : ""}
             onChange={(e) => {
               if (e.target.value) {
-                const [progId, chain] = e.target.value.split('_');
-                const program = programs.find(p =>
-                  p.programId === progId && p.chainID === parseInt(chain)
+                const [progId, chain] = e.target.value.split("_");
+                const program = programs.find(
+                  (p) => p.programId === progId && p.chainID === parseInt(chain, 10)
                 );
                 setSelectedProgram(program || null);
                 if (program?.chainID) {
@@ -182,7 +197,10 @@ export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: 
           >
             <option value="">Choose a program...</option>
             {programs.map((program) => (
-              <option key={`${program.programId}_${program.chainID}`} value={`${program.programId}_${program.chainID}`}>
+              <option
+                key={`${program.programId}_${program.chainID}`}
+                value={`${program.programId}_${program.chainID}`}
+              >
                 {program.metadata?.title || program.programId} (Chain: {program.chainID})
               </option>
             ))}
@@ -194,27 +212,32 @@ export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: 
 
         {/* Chain ID */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label
+            htmlFor="program-scores-chain"
+            className="block text-sm font-medium text-foreground mb-2"
+          >
             Chain ID *
           </label>
           <input
+            id="program-scores-chain"
             type="number"
             value={chainId}
-            onChange={(e) => setChainId(parseInt(e.target.value) || 0)}
+            onChange={(e) => setChainId(parseInt(e.target.value, 10) || 0)}
             placeholder="42220"
             className="bg-background text-foreground w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             disabled={isUploading}
           />
           <p className="text-sm text-foreground-alt mt-1">
-            Chain ID where the program is deployed{defaultChainId ? ` (defaulting to community chain: ${defaultChainId})` : ' (e.g., 42220 for Celo)'}
+            Chain ID where the program is deployed
+            {defaultChainId
+              ? ` (defaulting to community chain: ${defaultChainId})`
+              : " (e.g., 42220 for Celo)"}
           </p>
         </div>
 
         {/* File Upload */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
-            Upload CSV File *
-          </label>
+          <div className="block text-sm font-medium text-foreground mb-2">Upload CSV File *</div>
           <FileUpload
             onFileSelect={handleFileSelect}
             acceptedFormats=".csv"
@@ -238,7 +261,8 @@ export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: 
                   <ExclamationCircleIcon className="h-5 w-5 text-red-500" />
                 )}
                 <span className="font-medium">
-                  CSV Preview ({parsedData.totalRows} rows, {parsedData.scoreColumns.length} score columns)
+                  CSV Preview ({parsedData.totalRows} rows, {parsedData.scoreColumns.length} score
+                  columns)
                 </span>
               </div>
               {isPreviewExpanded ? (
@@ -279,10 +303,17 @@ export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: 
                   <table className="min-w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-200">
-                        <th className="text-left py-2 px-3 font-medium text-foreground">Project Title</th>
-                        <th className="text-left py-2 px-3 font-medium text-foreground">Project Profile</th>
+                        <th className="text-left py-2 px-3 font-medium text-foreground">
+                          Project Title
+                        </th>
+                        <th className="text-left py-2 px-3 font-medium text-foreground">
+                          Project Profile
+                        </th>
                         {parsedData.scoreColumns.map((column) => (
-                          <th key={column} className="text-left py-2 px-3 font-medium text-foreground">
+                          <th
+                            key={column}
+                            className="text-left py-2 px-3 font-medium text-foreground"
+                          >
                             {column}
                           </th>
                         ))}
@@ -321,9 +352,7 @@ export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: 
             onClick={handleUpload}
             disabled={!canUpload}
             isLoading={isUploading}
-            className={cn(
-              "px-6 py-2",
-            )}
+            className={cn("px-6 py-2")}
           >
             {isUploading ? "Uploading..." : "Upload Program Scores"}
           </Button>
@@ -331,28 +360,36 @@ export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: 
 
         {/* Upload Results */}
         {uploadResult && (
-          <div className={cn(
-            "p-4 border rounded-md",
-            uploadResult.failed.length > 0
-              ? "bg-yellow-50 border-yellow-200"
-              : "bg-green-50 border-green-200"
-          )}>
+          <div
+            className={cn(
+              "p-4 border rounded-md",
+              uploadResult.failed.length > 0
+                ? "bg-yellow-50 border-yellow-200"
+                : "bg-green-50 border-green-200"
+            )}
+          >
             <div className="flex items-center gap-2 mb-2">
-              <CheckCircleIcon className={cn(
-                "h-5 w-5",
-                uploadResult.failed.length > 0 ? "text-yellow-500" : "text-green-500"
-              )} />
-              <span className={cn(
-                "font-medium",
-                uploadResult.failed.length > 0 ? "text-yellow-800" : "text-green-800"
-              )}>
+              <CheckCircleIcon
+                className={cn(
+                  "h-5 w-5",
+                  uploadResult.failed.length > 0 ? "text-yellow-500" : "text-green-500"
+                )}
+              />
+              <span
+                className={cn(
+                  "font-medium",
+                  uploadResult.failed.length > 0 ? "text-yellow-800" : "text-green-800"
+                )}
+              >
                 Upload Results
               </span>
             </div>
-            <div className={cn(
-              "text-sm",
-              uploadResult.failed.length > 0 ? "text-yellow-700" : "text-green-700"
-            )}>
+            <div
+              className={cn(
+                "text-sm",
+                uploadResult.failed.length > 0 ? "text-yellow-700" : "text-green-700"
+              )}
+            >
               <p>✅ Successfully uploaded: {uploadResult.successful} program scores</p>
               {uploadResult.failed.length > 0 && (
                 <>

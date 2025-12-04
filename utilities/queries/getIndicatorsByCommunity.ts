@@ -43,7 +43,7 @@ export const getGroupedIndicatorsByCommunity = async (communityId: string) => {
     errorManager("Error fetching grouped indicators by community", error);
     return {
       communityAdminCreated: [],
-      projectOwnerCreated: []
+      projectOwnerCreated: [],
     };
   }
 };

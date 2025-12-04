@@ -1,8 +1,8 @@
 "use client";
 
 import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { useAccount, useDisconnect } from "wagmi";
 import { useEffect, useMemo } from "react";
+import { useAccount, useDisconnect } from "wagmi";
 import { TokenManager } from "@/utilities/auth/token-manager";
 
 interface UsePrivyAuthReturn {

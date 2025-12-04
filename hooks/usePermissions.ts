@@ -1,14 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
-import axios from "axios";
-import { FundingProgram } from "@/services/fundingPlatformService";
-import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
+import type { FundingProgram } from "@/services/fundingPlatformService";
 import { PermissionsService } from "@/services/permissions.service";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
-const apiClient = createAuthenticatedApiClient();
-
+const _apiClient = createAuthenticatedApiClient();
 
 /**
  * Options for configuring the usePermissions hook
@@ -37,7 +36,7 @@ interface PermissionCheckResponse {
 /**
  * Reviewer programs response
  */
-type ReviewerProgramsResponse = FundingProgram[]
+type ReviewerProgramsResponse = FundingProgram[];
 
 /**
  * Generic hook for checking permissions and roles
@@ -75,9 +74,8 @@ type ReviewerProgramsResponse = FundingProgram[]
  */
 export const usePermissions = (options: PermissionOptions = {}) => {
   const { address: wagmiAddress } = useAccount();
-  const { authenticated: isAuth, getAccessToken: getToken, ready } = useAuth()
+  const { authenticated: isAuth, getAccessToken: getToken, ready } = useAuth();
   const { programId, chainID, action, role, enabled = true } = options;
-
 
   const query = useQuery({
     queryKey: ["permissions", programId, chainID, action, role, wagmiAddress, isAuth],
@@ -86,7 +84,7 @@ export const usePermissions = (options: PermissionOptions = {}) => {
         return {
           hasPermission: false,
           permissions: [],
-          programs: []
+          programs: [],
         };
       }
 
@@ -103,7 +101,7 @@ export const usePermissions = (options: PermissionOptions = {}) => {
           return {
             hasPermission: response.hasPermission,
             permissions: response.permissions || [],
-            programs: []
+            programs: [],
           };
         } catch (error) {
           if (axios.isAxiosError(error)) {
@@ -111,10 +109,12 @@ export const usePermissions = (options: PermissionOptions = {}) => {
               console.error("Authentication error: Please reconnect your wallet");
             } else if (error.response?.status === 403) {
               console.error("Permission denied: You don't have access to this resource");
-            } else if (error.code === 'ECONNABORTED') {
+            } else if (error.code === "ECONNABORTED") {
               console.error("Request timeout: Please check your connection and try again");
             } else {
-              console.error(`Error checking permission (${error.response?.status || 'network error'}): ${error.message}`);
+              console.error(
+                `Error checking permission (${error.response?.status || "network error"}): ${error.message}`
+              );
             }
           } else {
             console.error("Error checking permission:", error);
@@ -122,7 +122,7 @@ export const usePermissions = (options: PermissionOptions = {}) => {
           return {
             hasPermission: false,
             permissions: [],
-            programs: []
+            programs: [],
           };
         }
       }
@@ -130,23 +130,27 @@ export const usePermissions = (options: PermissionOptions = {}) => {
       // Get user's reviewer programs
       if (role === "reviewer") {
         try {
-          const programs = await permissionsService.getReviewerPrograms() || [];
+          const programs = (await permissionsService.getReviewerPrograms()) || [];
 
           return {
             hasPermission: programs.length > 0,
             permissions: ["read", "comment"],
-            programs
+            programs,
           };
         } catch (error) {
           if (axios.isAxiosError(error)) {
             if (error.response?.status === 401) {
-              console.error("Authentication error: Please reconnect your wallet to view reviewer programs");
+              console.error(
+                "Authentication error: Please reconnect your wallet to view reviewer programs"
+              );
             } else if (error.response?.status === 403) {
               console.error("Access denied: You don't have permission to view reviewer programs");
-            } else if (error.code === 'ECONNABORTED') {
+            } else if (error.code === "ECONNABORTED") {
               console.error("Request timeout: Unable to fetch reviewer programs. Please try again");
             } else {
-              console.error(`Error fetching reviewer programs (${error.response?.status || 'network error'}): ${error.message}`);
+              console.error(
+                `Error fetching reviewer programs (${error.response?.status || "network error"}): ${error.message}`
+              );
             }
           } else {
             console.error("Error fetching reviewer programs:", error);
@@ -154,7 +158,7 @@ export const usePermissions = (options: PermissionOptions = {}) => {
           return {
             hasPermission: false,
             permissions: [],
-            programs: []
+            programs: [],
           };
         }
       }
@@ -163,7 +167,7 @@ export const usePermissions = (options: PermissionOptions = {}) => {
       return {
         hasPermission: false,
         permissions: [],
-        programs: []
+        programs: [],
       };
     },
     ...defaultQueryOptions,
@@ -175,7 +179,7 @@ export const usePermissions = (options: PermissionOptions = {}) => {
         return false;
       }
       return failureCount < 3;
-    }
+    },
   });
 
   return {

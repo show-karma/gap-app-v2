@@ -1,11 +1,11 @@
 "use client";
-import { EndorsementList } from "../ProgramRegistry/EndorsementList";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { useMemo } from "react";
-import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
-import * as Tooltip from "@radix-ui/react-tooltip";
 import { useProjectStore } from "@/store";
+import { useEndorsementStore } from "@/store/modals/endorsement";
+import { EndorsementList } from "../ProgramRegistry/EndorsementList";
 
 export const ProjectSubTabs = () => {
   const project = useProjectStore((state) => state.project);
@@ -14,11 +14,9 @@ export const ProjectSubTabs = () => {
   const { authenticated: isAuth, login } = useAuth();
 
   const userHasEndorsed = useMemo(() => {
-    if (!address || !isConnected || !isAuth || !project?.endorsements?.length)
-      return false;
+    if (!address || !isConnected || !isAuth || !project?.endorsements?.length) return false;
     return project.endorsements.some(
-      (endorsement) =>
-        endorsement.recipient?.toLowerCase() === address.toLowerCase()
+      (endorsement) => endorsement.recipient?.toLowerCase() === address.toLowerCase()
     );
   }, [address, isConnected, isAuth, project?.endorsements]);
   return (

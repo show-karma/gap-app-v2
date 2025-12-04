@@ -1,7 +1,7 @@
-import { envVars } from "@/utilities/enviromentVars";
-import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { CommunityUpdatesResponse } from "@/types/community-updates";
+import { envVars } from "@/utilities/enviromentVars";
+import { INDEXER } from "@/utilities/indexer";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
@@ -34,9 +34,7 @@ export async function fetchCommunityProjectUpdates(
     const response = await fetch(url);
 
     if (!response.ok) {
-      const errorText = await response
-        .text()
-        .catch(() => "Unable to read error response");
+      const errorText = await response.text().catch(() => "Unable to read error response");
       const error = new Error(
         `Failed to fetch community updates: ${response.status} ${response.statusText}`
       );
@@ -81,10 +79,7 @@ export async function fetchCommunityProjectUpdates(
     }
 
     // Re-throw if already handled above
-    if (
-      error instanceof Error &&
-      error.message.includes("Failed to fetch community updates")
-    ) {
+    if (error instanceof Error && error.message.includes("Failed to fetch community updates")) {
       throw error;
     }
 

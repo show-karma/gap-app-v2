@@ -1,11 +1,6 @@
-import React from "react";
+import type React from "react";
 
-type ButtonVariant =
-  | "primary"
-  | "secondary"
-  | "danger"
-  | "success"
-  | "disabled";
+type ButtonVariant = "primary" | "secondary" | "danger" | "success" | "disabled";
 type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps {
@@ -28,8 +23,7 @@ const baseClasses =
 const variantClasses = {
   primary:
     "text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:ring-indigo-500 transform hover:scale-105",
-  secondary:
-    "text-gray-700 bg-white border-gray-300 hover:bg-gray-50 focus:ring-indigo-500",
+  secondary: "text-gray-700 bg-white border-gray-300 hover:bg-gray-50 focus:ring-indigo-500",
   danger:
     "text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 focus:ring-red-500",
   success:
@@ -48,12 +42,7 @@ const LoadingSpinner = () => (
 );
 
 const ExternalLinkIcon = () => (
-  <svg
-    className="ml-2 h-5 w-5"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
+  <svg className="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -110,12 +99,7 @@ export const Button: React.FC<ButtonProps> = ({
   }
 
   return (
-    <button
-      type="button"
-      disabled={disabled || isLoading}
-      onClick={onClick}
-      className={classes}
-    >
+    <button type="button" disabled={disabled || isLoading} onClick={onClick} className={classes}>
       {content}
     </button>
   );

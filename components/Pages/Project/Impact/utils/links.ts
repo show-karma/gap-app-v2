@@ -62,7 +62,7 @@ export const linkName = (link: string) => {
     if (network && networkNames[network]) {
       return `${networkNames[network]} Contract`;
     }
-  } catch (error) {
+  } catch (_error) {
     // If URL parsing fails, return original link
     return link;
   }
@@ -74,7 +74,7 @@ export const linkName = (link: string) => {
 const isEtherscanApiLink = (url: string): boolean => {
   try {
     // Check for the specific Etherscan v2 API URL
-    return url.includes('api.etherscan.io/v2/api');
+    return url.includes("api.etherscan.io/v2/api");
   } catch {
     return false;
   }
@@ -83,7 +83,7 @@ const isEtherscanApiLink = (url: string): boolean => {
 // Helper function to check if a URL is a Dune link (legacy)
 const isDuneLink = (url: string): boolean => {
   try {
-    return url.includes('dune.com');
+    return url.includes("dune.com");
   } catch {
     return false;
   }
@@ -96,14 +96,9 @@ export const mapLinks = (linksToMap: string[], networkAddresses?: string[]) => {
 
   // Filter out Etherscan API links and Dune links from the displayed links
   const linksMap = linksToMap
-    .map((datapoint) =>
-      urlRegex.test(datapoint) ? linkFormatter(datapoint) : null
-    )
+    .map((datapoint) => (urlRegex.test(datapoint) ? linkFormatter(datapoint) : null))
     .filter(Boolean)
-    .filter((link) => 
-      !isEtherscanApiLink(link as string) && 
-      !isDuneLink(link as string)
-    ); // Don't show API links or Dune links
+    .filter((link) => !isEtherscanApiLink(link as string) && !isDuneLink(link as string)); // Don't show API links or Dune links
 
   // Get contract URLs from network addresses when Etherscan API link or Dune link is present
   let contractUrls: string[] = [];

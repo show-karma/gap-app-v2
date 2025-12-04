@@ -1,13 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, useState } from "react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "cmdk";
+
 import * as Popover from "@radix-ui/react-popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
+import { type FC, useState } from "react";
 import { ChevronDown } from "@/components/Icons/ChevronDown";
 
 interface StatusDropdownProps {
@@ -29,9 +24,7 @@ export const StatusDropdown: FC<StatusDropdownProps> = ({
       <Popover.Trigger className="min-w-40 w-full max-w-full max-md:max-w-full justify-between flex flex-row cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 px-4 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
         {previousValue ? (
           <div className="flex flex-row gap-2 items-center">
-            <p>
-              {previousValue}
-            </p>
+            <p>{previousValue}</p>
           </div>
         ) : (
           "Status"
@@ -56,11 +49,8 @@ export const StatusDropdown: FC<StatusDropdownProps> = ({
                 className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
               >
                 <div className="flex flex-row gap-2 items-center justify-start w-full">
-                  <div className="min-w-5 min-h-5 w-5 h-5 m-0">
-                  </div>
-                  <p className="line-clamp-2 text-sm max-w-full break-normal">
-                    {item}
-                  </p>
+                  <div className="min-w-5 min-h-5 w-5 h-5 m-0"></div>
+                  <p className="line-clamp-2 text-sm max-w-full break-normal">{item}</p>
                 </div>
               </CommandItem>
             ))}

@@ -1,26 +1,22 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo } from "react";
-import { useRouter } from "next/navigation";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
-import { CommunityCard } from "./CommunityCard";
-import { StatsCard } from "./StatsCard";
-import { CommunitiesSkeleton } from "./Loading";
-import { PAGES } from "@/utilities/pages";
+import { Button } from "@/components/ui/button";
+import { PROJECT_NAME } from "@/constants/brand";
 import { useCommunities } from "@/hooks/useCommunities";
 import { useCommunityStats } from "@/hooks/useCommunityStats";
-import { useOwnerStore } from "@/store";
-import { useStaff } from "@/hooks/useStaff";
-import Image from "next/image";
-import { PROJECT_NAME } from "@/constants/brand";
-import { Button } from "@/components/ui/button";
+import { CommunityCard } from "./CommunityCard";
+import { CommunitiesSkeleton } from "./Loading";
+import { StatsCard } from "./StatsCard";
 
 // Responsive breakpoint function
 const getResponsiveColumns = (width: number) => {
   if (width >= 1200) return 4; // 4 columns for large screens
-  if (width >= 768) return 2;  // 2 columns for medium screens
-  return 1;                    // 1 column for small screens
+  if (width >= 768) return 2; // 2 columns for medium screens
+  return 1; // 1 column for small screens
 };
 
 export const CommunitiesPage = () => {
@@ -33,11 +29,7 @@ export const CommunitiesPage = () => {
     error: communitiesErrorMessage,
   } = useCommunities({ limit: 12, includeStats: true });
 
-  const {
-    data: summaryStats,
-    isLoading: statsLoading,
-    isError: statsError,
-  } = useCommunityStats();
+  const { data: summaryStats, isLoading: statsLoading, isError: statsError } = useCommunityStats();
 
   const communities = useMemo(() => {
     return data?.pages.flatMap((page) => page.payload) || [];
@@ -73,31 +65,20 @@ export const CommunitiesPage = () => {
       {/* Page Title */}
       <div className="flex flex-col gap-2 items-center justify-center">
         <div className="flex flex-row gap-2 items-center justify-center rounded-full w-fit h-[40px] px-4 mx-auto">
-          <Image
-            width={24}
-            height={24}
-            src="/icons/impact.png"
-            alt="Rocket icon"
-          />
-          <p className="text-xs sm:text-base font-medium">
-            Trusted by the top web3 ecosystems
-          </p>
+          <Image width={24} height={24} src="/icons/impact.png" alt="Rocket icon" />
+          <p className="text-xs sm:text-base font-medium">Trusted by the top web3 ecosystems</p>
         </div>
 
-        <h1 className="text-4xl sm:text-[72px] font-bold text-black dark:text-white">Communities on Karma</h1>
+        <h1 className="text-4xl sm:text-[72px] font-bold text-black dark:text-white">
+          Communities on Karma
+        </h1>
         <p className="text-black dark:text-white text-sm sm:text-lg max-w-4xl text-center">
-          Explore the ecosystem of DAOs, protocols, and organizations growing their
-          communities through transparent funding, accountability, and impact measurement.
+          Explore the ecosystem of DAOs, protocols, and organizations growing their communities
+          through transparent funding, accountability, and impact measurement.
         </p>
 
-        <a
-          href="https://tally.so/r/wd0jeq"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <Button
-            className="text-xs sm:text-base font-bold rounded-sm px-4 py-2 mt-5 w-fit mx-auto"
-          >
+        <a href="https://tally.so/r/wd0jeq" target="_blank" rel="noreferrer">
+          <Button className="text-xs sm:text-base font-bold rounded-sm px-4 py-2 mt-5 w-fit mx-auto">
             Add your community
           </Button>
         </a>
@@ -142,7 +123,11 @@ export const CommunitiesPage = () => {
                           overflow: "visible",
                         }}
                       >
-                        <StatsCard title={stat.title} value={stat.value} shouldRound={stat.shouldRound} />
+                        <StatsCard
+                          title={stat.title}
+                          value={stat.value}
+                          shouldRound={stat.shouldRound}
+                        />
                       </div>
                     );
                   }}
@@ -272,24 +257,14 @@ export const CommunitiesPage = () => {
         </div>
 
         <div className="relative z-1 flex flex-col max-w-md lg:max-w-2xl">
-          <h2 className="text-3xl font-bold text-black dark:text-white mb-4">
-            Add Your Community
-          </h2>
+          <h2 className="text-3xl font-bold text-black dark:text-white mb-4">Add Your Community</h2>
           <p className="text-lg text-black dark:text-gray-300 mb-6 leading-relaxed">
             Join the ecosystem of Web3 organizations using {PROJECT_NAME} to manage grants with
             complete transparency and accountability. Build trust, track impact, and grow your
             community.
           </p>
-          <a
-            href="https://tally.so/r/wd0jeq"
-            target="_blank"
-            rel="noreferrer"
-            className="w-fit"
-          >
-            <Button
-              type="button"
-              className="font-bold rounded-sm px-4 py-2 mt-5 w-fit mx-auto"
-            >
+          <a href="https://tally.so/r/wd0jeq" target="_blank" rel="noreferrer" className="w-fit">
+            <Button type="button" className="font-bold rounded-sm px-4 py-2 mt-5 w-fit mx-auto">
               Add Your Community
             </Button>
           </a>
@@ -297,4 +272,4 @@ export const CommunitiesPage = () => {
       </div>
     </div>
   );
-}; 
+};

@@ -1,20 +1,20 @@
-import { http, type Config } from "@wagmi/core";
+import { createConfig } from "@privy-io/wagmi";
+import { type Config, http } from "@wagmi/core";
 import {
   arbitrum,
   baseSepolia,
+  celo,
+  lisk,
   optimism,
   optimismSepolia,
-  celo,
+  scroll,
   sei,
   sepolia,
-  lisk,
-  scroll,
 } from "@wagmi/core/chains";
-import { appNetwork } from "../network";
 import { envVars } from "../enviromentVars";
-import {createConfig} from '@privy-io/wagmi';
+import { appNetwork } from "../network";
 
-export const privyConfig: Config = createConfig({
+export const privyConfig = createConfig({
   chains: appNetwork,
   transports: {
     [optimism.id]: http(envVars.RPC.OPTIMISM),
@@ -27,8 +27,8 @@ export const privyConfig: Config = createConfig({
     [lisk.id]: http(envVars.RPC.LISK),
     [scroll.id]: http(envVars.RPC.SCROLL),
   },
-  ssr: true
-});
+  ssr: true,
+}) as unknown as Config;
 
 export function getPrivyWagmiConfig() {
   return privyConfig;

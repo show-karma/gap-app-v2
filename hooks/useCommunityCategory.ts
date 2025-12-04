@@ -1,7 +1,7 @@
 "use client";
-import { getCommunityCategory } from "@/utilities/queries/getCommunityCategory";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+import { getCommunityCategory } from "@/utilities/queries/getCommunityCategory";
 
 export function useCommunityCategory() {
   const { communityId } = useParams();

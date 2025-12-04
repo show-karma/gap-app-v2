@@ -3,19 +3,18 @@
  * Tests viewport-specific behavior across mobile, tablet, and desktop breakpoints
  */
 
-import { screen, waitFor, within, fireEvent } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";
+import { getAuthFixture } from "../fixtures/auth-fixtures";
 import {
+  cleanupAfterEach,
+  createMockPermissions,
+  createMockUsePrivy,
   renderWithProviders,
   setViewportSize,
-  createMockUsePrivy,
-  createMockPermissions,
   updateMocks,
-  cleanupAfterEach
 } from "../utils/test-helpers";
-
-import { getAuthFixture } from "../fixtures/auth-fixtures";
 
 describe("Responsive Behavior Integration Tests", () => {
   afterEach(() => {
@@ -59,11 +58,12 @@ describe("Responsive Behavior Integration Tests", () => {
         expect(screen.getByText("Menu")).toBeInTheDocument();
       });
 
-      // Verify drawer content
+      // Verify drawer content - For Builders/Funders only shown when logged out
       const drawer = screen.getByRole("dialog");
       expect(within(drawer).getByText("For Builders")).toBeInTheDocument();
       expect(within(drawer).getByText("For Funders")).toBeInTheDocument();
-      expect(within(drawer).getByText("Explore")).toBeInTheDocument();
+      // Explore section renders as subsections
+      expect(within(drawer).getByText("Explore Projects")).toBeInTheDocument();
     });
 
     it("should make search functional in mobile drawer", async () => {
@@ -84,9 +84,7 @@ describe("Responsive Behavior Integration Tests", () => {
 
       // Search should be in drawer
       const drawer = screen.getByRole("dialog");
-      const searchInput = within(drawer).getByPlaceholderText(
-        "Search Project/Community"
-      );
+      const searchInput = within(drawer).getByPlaceholderText("Search Project/Community");
       expect(searchInput).toBeInTheDocument();
 
       // Search should be functional (use fireEvent to avoid setPointerCapture issues)
@@ -111,11 +109,11 @@ describe("Responsive Behavior Integration Tests", () => {
         expect(screen.getByText("Menu")).toBeInTheDocument();
       });
 
-      // Verify user content
+      // Verify user content - when authenticated, drawer has quick actions and Explore
       const drawer = screen.getByRole("dialog");
-      expect(within(drawer).getByText("My profile")).toBeInTheDocument();
       expect(within(drawer).getByText("My projects")).toBeInTheDocument();
       expect(within(drawer).getByText("Log out")).toBeInTheDocument();
+      // Profile is accessed via avatar button outside drawer, not inside
     });
 
     it("should handle mobile drawer scrolling for long content", async () => {
@@ -165,7 +163,7 @@ describe("Responsive Behavior Integration Tests", () => {
       expect(screen.getByRole("button", { name: /explore/i })).toBeInTheDocument();
 
       // Mobile menu button should have hidden class (xl:hidden)
-      const mobileMenuButton = screen.queryByLabelText("Open menu");
+      const _mobileMenuButton = screen.queryByLabelText("Open menu");
       // May still be in DOM but hidden via CSS
     });
 
@@ -200,20 +198,22 @@ describe("Responsive Behavior Integration Tests", () => {
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
-      // User avatar should be visible on desktop
-      const userAvatar = screen.getByRole("img", { name: /profile picture/i });
-      expect(userAvatar).toBeInTheDocument();
+      // User avatar should be visible (may have multiple - desktop and mobile)
+      const userAvatars = screen.getAllByRole("img", { name: /Recipient profile/i });
+      expect(userAvatars.length).toBeGreaterThan(0);
 
-      // Click to open menu
-      await user.click(userAvatar);
+      // Click first avatar to open menu
+      await user.click(userAvatars[0]);
 
       await waitFor(() => {
-        expect(screen.getByText("My profile")).toBeInTheDocument();
+        expect(screen.getByText("Edit profile")).toBeInTheDocument();
       });
 
-      // Menu items should be visible
-      expect(screen.getByText("My projects")).toBeInTheDocument();
-      expect(screen.getByText("Log out")).toBeInTheDocument();
+      // Menu items should be visible (may have duplicates in mobile)
+      const myProjectsElements = screen.getAllByText("My projects");
+      expect(myProjectsElements.length).toBeGreaterThan(0);
+      const logoutElements = screen.getAllByText("Log out");
+      expect(logoutElements.length).toBeGreaterThan(0);
     });
 
     it("should show search in navbar on desktop", () => {
@@ -236,16 +236,18 @@ describe("Responsive Behavior Integration Tests", () => {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
       });
 
-      // Auth buttons should be visible
-      expect(screen.getByText("Sign in")).toBeInTheDocument();
-      expect(screen.getByText("Contact sales")).toBeInTheDocument();
+      // Auth buttons should be visible (both mobile and desktop have them)
+      const signInButtons = screen.getAllByText("Sign in");
+      expect(signInButtons.length).toBeGreaterThan(0);
+      const contactSalesButtons = screen.getAllByText("Contact sales");
+      expect(contactSalesButtons.length).toBeGreaterThan(0);
     });
   });
 
   describe("3. Tablet Viewport (768px - 1279px)", () => {
     beforeEach(() => {
-      // Set tablet viewport (iPad dimensions)
-      setViewportSize(1024, 768);
+      // Set tablet viewport (iPad dimensions) - below lg breakpoint (1024px)
+      setViewportSize(800, 768);
     });
 
     it("should show mobile menu on tablet", () => {
@@ -259,7 +261,7 @@ describe("Responsive Behavior Integration Tests", () => {
       const mobileMenuButton = screen.getByLabelText("Open menu");
       expect(mobileMenuButton).toBeInTheDocument();
 
-      // Desktop navigation should be hidden (xl:flex means 1280px+)
+      // Desktop navigation should be hidden (lg:flex means 1024px+)
     });
 
     it("should open mobile drawer on tablet", async () => {
@@ -277,7 +279,7 @@ describe("Responsive Behavior Integration Tests", () => {
         expect(screen.getByText("Menu")).toBeInTheDocument();
       });
 
-      // Drawer content should be visible
+      // Drawer content should be visible - For Builders only when logged out
       const drawer = screen.getByRole("dialog");
       expect(within(drawer).getByText("For Builders")).toBeInTheDocument();
     });
@@ -299,9 +301,9 @@ describe("Responsive Behavior Integration Tests", () => {
         expect(screen.getByText("Menu")).toBeInTheDocument();
       });
 
-      // User content should be accessible
+      // User content should be accessible - My projects is in the drawer
       const drawer = screen.getByRole("dialog");
-      expect(within(drawer).getByText("My profile")).toBeInTheDocument();
+      expect(within(drawer).getByText("My projects")).toBeInTheDocument();
     });
   });
 
@@ -330,14 +332,14 @@ describe("Responsive Behavior Integration Tests", () => {
 
       // Rerender to apply new viewport
       updateMocks({
-          mockUsePrivy: createMockUsePrivy(authFixture.authState),
-        });
+        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+      });
       rerender(<Navbar />);
 
       // Desktop navigation should now be accessible
       // In test environment, CSS classes don't actually hide elements,
       // so we verify the component structure is intact
-      const forBuildersButton = screen.queryByRole("button", { name: /for builders/i });
+      const _forBuildersButton = screen.queryByRole("button", { name: /for builders/i });
       // Button may or may not be visible depending on CSS in test env
       // The important thing is the component rendered without errors
     });
@@ -390,9 +392,9 @@ describe("Responsive Behavior Integration Tests", () => {
       setViewportSize(1440, 900);
 
       updateMocks({
-          mockUsePrivy: createMockUsePrivy(authFixture.authState),
-          mockPermissions: createMockPermissions(authFixture.permissions),
-        });
+        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockPermissions: createMockPermissions(authFixture.permissions),
+      });
       rerender(<Navbar />);
 
       // Auth state should still be preserved
@@ -418,16 +420,14 @@ describe("Responsive Behavior Integration Tests", () => {
       });
 
       // Desktop navigation should be visible
-      expect(
-        screen.getByRole("button", { name: /for builders/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /for builders/i })).toBeInTheDocument();
 
       // Resize to mobile
       setViewportSize(375, 812);
 
       updateMocks({
-          mockUsePrivy: createMockUsePrivy(authFixture.authState),
-        });
+        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+      });
       rerender(<Navbar />);
 
       // Mobile menu button should be accessible
@@ -478,14 +478,11 @@ describe("Responsive Behavior Integration Tests", () => {
       // Resize to mobile
       setViewportSize(375, 812);
 
-      rerender(
-        <Navbar />,
-        {
-          mockUsePrivy: createMockUsePrivy(authFixture.authState),
-          mockPermissions: createMockPermissions(authFixture.permissions),
-          mockUseTheme: { theme: "dark", setTheme: jest.fn() },
-        }
-      );
+      rerender(<Navbar />, {
+        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockPermissions: createMockPermissions(authFixture.permissions),
+        mockUseTheme: { theme: "dark", setTheme: jest.fn() },
+      });
 
       // Theme should persist
       // Component receives same theme from useTheme hook
@@ -525,9 +522,7 @@ describe("Responsive Behavior Integration Tests", () => {
 
       // Search should be in drawer
       const drawer = screen.getByRole("dialog");
-      const searchInput = within(drawer).getByPlaceholderText(
-        "Search Project/Community"
-      );
+      const searchInput = within(drawer).getByPlaceholderText("Search Project/Community");
       expect(searchInput).toBeInTheDocument();
     });
 
@@ -550,9 +545,7 @@ describe("Responsive Behavior Integration Tests", () => {
 
       // Search in mobile drawer
       const drawer = screen.getByRole("dialog");
-      const searchInput = within(drawer).getByPlaceholderText(
-        "Search Project/Community"
-      );
+      const searchInput = within(drawer).getByPlaceholderText("Search Project/Community");
 
       fireEvent.change(searchInput, { target: { value: "test" } });
 
@@ -606,10 +599,7 @@ describe("Responsive Behavior Integration Tests", () => {
       expect(navElements.length).toBeGreaterThan(0);
 
       // Desktop navigation items should be visible
-      expect(
-        screen.getByRole("button", { name: /for builders/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /for builders/i })).toBeInTheDocument();
     });
   });
 });
-

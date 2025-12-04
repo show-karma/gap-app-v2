@@ -8,10 +8,8 @@ export const QUERY_KEYS = {
       ["project-grant-milestones", projectId, programId] as const,
   },
   APPLICATIONS: {
-    BY_PROJECT_UID: (projectUID: string) =>
-      ["application-by-project-uid", projectUID] as const,
-    COMMENTS: (referenceNumber: string) =>
-      ["application-comments", referenceNumber] as const,
+    BY_PROJECT_UID: (projectUID: string) => ["application-by-project-uid", projectUID] as const,
+    COMMENTS: (referenceNumber: string) => ["application-comments", referenceNumber] as const,
   },
   REVIEWERS: {
     PROGRAM: (programId: string, chainID: number) =>
@@ -20,21 +18,17 @@ export const QUERY_KEYS = {
       ["milestone-reviewers", programId, chainID] as const,
   },
   CONTRACTS: {
+    DEPLOYER: (network: string, contractAddress: string) =>
+      ["contract-deployer", network, contractAddress] as const,
     VALIDATION: {
       ALL: ["contract-validation"] as const,
-      VALIDATE: (params: {
-        address: string;
-        network: string;
-        excludeProjectId?: string;
-      }) => ["contract-validation", params] as const,
+      VALIDATE: (params: { address: string; network: string; excludeProjectId?: string }) =>
+        ["contract-validation", params] as const,
     },
   },
   COMMUNITY: {
-    PROJECT_UPDATES: (
-      communityId: string,
-      filter: string,
-      page: number
-    ) => ["community-project-updates", communityId, filter, page] as const,
+    PROJECT_UPDATES: (communityId: string, filter: string, page: number) =>
+      ["community-project-updates", communityId, filter, page] as const,
   },
   GRANTS: {
     DUPLICATE_CHECK: (params: {
@@ -45,12 +39,7 @@ export const QUERY_KEYS = {
     }) => ["duplicate-grant-check", params] as const,
   },
   DONATIONS: {
-    ALL: ["donations"] as const,
-    BY_USER: (address: string) => ["donations", "user", address] as const,
-    BY_PROJECT: (projectId: string) =>
-      ["donations", "project", projectId] as const,
-  },
-  ONRAMP: {
-    SESSION: (sessionId: string) => ["onramp", "session", sessionId] as const,
+    BY_USER: (walletAddress: string) => ["donations", "user", walletAddress] as const,
+    BY_PROJECT: (projectUID: string) => ["donations", "project", projectUID] as const,
   },
 };

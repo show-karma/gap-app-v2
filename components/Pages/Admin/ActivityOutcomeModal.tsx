@@ -1,22 +1,18 @@
+import { Dialog, Transition } from "@headlessui/react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
+import { Fragment, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import {
-  Category,
-  ImpactIndicator,
-  ImpactSegment,
-} from "@/types/impactMeasurement";
+import type { Category, ImpactIndicator, ImpactSegment } from "@/types/impactMeasurement";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { Dialog, Transition } from "@headlessui/react";
-import { Fragment, useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import toast from "react-hot-toast";
-import { XMarkIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
 import { IndicatorsDropdown } from "./IndicatorsDropdown";
-import { useAccount } from "wagmi";
 
 const OUTPUT_TYPES = ["output", "outcome"] as const;
 type OutputType = (typeof OUTPUT_TYPES)[number];
@@ -81,8 +77,7 @@ export const ActivityOutcomeModal = ({
       type: editingSegment ? editingSegment.type : initialType,
       name: editingSegment ? editingSegment.name : "",
       description: editingSegment ? editingSegment.description : "",
-      impact_indicators:
-        editingSegment?.impact_indicators?.map((ind) => ind.id) || [],
+      impact_indicators: editingSegment?.impact_indicators?.map((ind) => ind.id) || [],
     },
     mode: "onChange",
   });
@@ -93,14 +88,13 @@ export const ActivityOutcomeModal = ({
         type: editingSegment ? editingSegment.type : initialType,
         name: editingSegment ? editingSegment.name : "",
         description: editingSegment ? editingSegment.description : "",
-        impact_indicators:
-          editingSegment?.impact_indicators?.map((ind) => ind.id) || [],
+        impact_indicators: editingSegment?.impact_indicators?.map((ind) => ind.id) || [],
       });
     }
   }, [editingSegment, isOpen, initialType, reset]);
 
   const selectedIndicators = watch("impact_indicators") || [];
-  const selectedType = watch("type");
+  const _selectedType = watch("type");
 
   const handleClose = () => {
     reset();
@@ -150,9 +144,7 @@ export const ActivityOutcomeModal = ({
           address,
         },
         {
-          error: `Failed to ${action} ${OUTPUT_TYPE_DISPLAY[
-            data.type
-          ].toLowerCase()}`,
+          error: `Failed to ${action} ${OUTPUT_TYPE_DISPLAY[data.type].toLowerCase()}`,
         }
       );
     } finally {
@@ -202,32 +194,33 @@ export const ActivityOutcomeModal = ({
                   </button>
                 </div>
 
-                <form
-                  onSubmit={handleSubmit(handleAddOutput)}
-                  className="space-y-4"
-                >
+                <form onSubmit={handleSubmit(handleAddOutput)} className="space-y-4">
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm text-gray-600 dark:text-gray-400">
+                    <label
+                      htmlFor="activity-outcome-name"
+                      className="text-sm text-gray-600 dark:text-gray-400"
+                    >
                       Name
                     </label>
                     <input
+                      id="activity-outcome-name"
                       {...register("name")}
                       placeholder={`Enter activity or outcome name`}
                       className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
                         focus:ring-2 focus:ring-blue-500 dark:bg-zinc-700 dark:text-white w-full"
                     />
-                    {errors.name && (
-                      <p className="text-sm text-red-500">
-                        {errors.name.message}
-                      </p>
-                    )}
+                    {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm text-gray-600 dark:text-gray-400">
+                    <label
+                      htmlFor="activity-outcome-description"
+                      className="text-sm text-gray-600 dark:text-gray-400"
+                    >
                       Description
                     </label>
                     <textarea
+                      id="activity-outcome-description"
                       {...register("description")}
                       placeholder="Enter description"
                       rows={3}
@@ -235,16 +228,12 @@ export const ActivityOutcomeModal = ({
                         focus:ring-2 focus:ring-blue-500 dark:bg-zinc-700 dark:text-white w-full"
                     />
                     {errors.description && (
-                      <p className="text-sm text-red-500">
-                        {errors.description.message}
-                      </p>
+                      <p className="text-sm text-red-500">{errors.description.message}</p>
                     )}
                   </div>
 
                   <div className="flex flex-col gap-2 mb-2">
-                    <label className="text-sm text-gray-600 dark:text-gray-400">
-                      Type
-                    </label>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Type</div>
                     <div className="grid grid-cols-2 gap-4">
                       {OUTPUT_TYPES.map((type) => {
                         const isSelected = watch("type") === type;
@@ -274,9 +263,7 @@ export const ActivityOutcomeModal = ({
                                   : "border-gray-300 dark:border-gray-600"
                               } flex items-center justify-center`}
                             >
-                              {isSelected && (
-                                <div className="w-2 h-2 rounded-full bg-white" />
-                              )}
+                              {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                             </div>
                             <div className="flex flex-row gap-4 items-center justify-center flex-1">
                               <div
@@ -317,16 +304,16 @@ export const ActivityOutcomeModal = ({
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm text-gray-600 dark:text-gray-400">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
                       Assign Indicators
-                    </label>
+                    </div>
                     <IndicatorsDropdown
                       selectedIndicators={selectedIndicators}
                       indicators={impact_indicators}
                       onIndicatorChange={handleIndicatorChange}
                       communityId={communityId}
                       isLoading={isLoadingIndicators}
-                      onIndicatorCreated={(newIndicator) => {
+                      onIndicatorCreated={(_newIndicator) => {
                         toast.success("Indicator created successfully");
                       }}
                     />

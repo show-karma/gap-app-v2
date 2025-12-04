@@ -106,14 +106,10 @@ export const pollForMilestoneStatus = async ({
       const updatedProject = await gapClient.fetch.projectById(projectUid);
       if (!updatedProject) return false;
 
-      const updatedGrant = updatedProject.grants.find(
-        (g) => g.details?.programId === programId
-      );
+      const updatedGrant = updatedProject.grants.find((g) => g.details?.programId === programId);
       if (!updatedGrant) return false;
 
-      const updatedMilestone = updatedGrant.milestones?.find(
-        (m) => m.uid === milestoneUid
-      );
+      const updatedMilestone = updatedGrant.milestones?.find((m) => m.uid === milestoneUid);
       if (!updatedMilestone) return false;
 
       const isVerified = updatedMilestone.verified?.find(

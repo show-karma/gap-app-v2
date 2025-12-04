@@ -1,15 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
-import { cn } from "@/utilities/tailwind";
+
 import { CheckIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "cmdk";
-import { FC, useEffect, useState } from "react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
+import { type FC, useEffect, useState } from "react";
+import { cn } from "@/utilities/tailwind";
 
 interface Item {
   value: string;
@@ -69,11 +64,7 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
     if (selected.length) {
       if (isMultiple) {
         return selected
-          .map(
-            (item) =>
-              orderedList.find((orderedItem) => orderedItem.value === item)
-                ?.title
-          )
+          .map((item) => orderedList.find((orderedItem) => orderedItem.value === item)?.title)
           .sort()
           .join(", ");
       }
@@ -138,11 +129,12 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
               )}
               {cleanFunction ? (
                 <CommandItem>
-                  <div
+                  <button
+                    type="button"
                     onClick={() => {
                       cleanFunction();
                     }}
-                    className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
+                    className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
                   >
                     <div className="flex flex-row gap-2 items-center justify-start w-full">
                       <div className="flex flex-row gap-1  items-center justify-start  flex-1">
@@ -151,46 +143,40 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
                         </p>
                       </div>
                       <CheckIcon
-                        className={cn(
-                          "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white"
-                        )}
+                        className={cn("mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white")}
                         style={{
                           display: selected.length ? "none" : "block",
                         }}
                       />
                     </div>
-                  </div>
+                  </button>
                 </CommandItem>
               ) : null}
               {orderedList.map((item) => (
                 <CommandItem key={item.title + item.value}>
-                  <div
+                  <button
+                    type="button"
                     id={`${item.value}-item`}
                     onClick={() => {
                       onSelectFunction(item.value);
                     }}
-                    className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
+                    className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
                   >
                     <div className="flex flex-row gap-2 items-center justify-start w-full">
                       <div className="flex flex-row gap-1  items-center justify-start  flex-1">
-                        <p className="line-clamp-2 text-sm max-w-full break-normal">
-                          {item.title}
-                        </p>
+                        <p className="line-clamp-2 text-sm max-w-full break-normal">{item.title}</p>
                       </div>
                     </div>
                     <CheckIcon
-                      className={cn(
-                        "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white"
-                      )}
+                      className={cn("mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white")}
                       style={{
                         display:
-                          selected.includes(item.value) ||
-                          selected.includes(item.title)
+                          selected.includes(item.value) || selected.includes(item.title)
                             ? "block"
                             : "none",
                       }}
                     />
-                  </div>
+                  </button>
                 </CommandItem>
               ))}
             </CommandGroup>

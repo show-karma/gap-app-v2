@@ -1,11 +1,8 @@
+import path from "node:path";
 import type { StorybookConfig } from "@storybook/nextjs";
-import path from "path";
 
 const config: StorybookConfig = {
-  stories: [
-    "../components/**/*.stories.@(js|jsx|ts|tsx)",
-    "../app/**/*.stories.@(js|jsx|ts|tsx)",
-  ],
+  stories: ["../components/**/*.stories.@(js|jsx|ts|tsx)", "../app/**/*.stories.@(js|jsx|ts|tsx)"],
   addons: [
     "@storybook/addon-essentials",
     "@storybook/addon-interactions",

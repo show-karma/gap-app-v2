@@ -1,36 +1,33 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, useState } from "react";
+
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
-import { Button } from "@/components/ui/button";
-import { z } from "zod";
-import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import toast from "react-hot-toast";
-import fetchData from "@/utilities/fetchData";
 import { useParams } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
-import { INDEXER } from "@/utilities/indexer";
-import { errorManager } from "@/components/Utilities/errorManager";
+import { type FC, Fragment, useState } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
+import { z } from "zod";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import { useCommunityDetails } from "@/hooks/useCommunityDetails";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 type RegionCreationDialogProps = {
   refreshRegions: () => Promise<void>;
 };
 
 const schema = z.object({
-  name: z
-    .string()
-    .min(3, { message: "Region name must be at least 3 characters" }),
+  name: z.string().min(3, { message: "Region name must be at least 3 characters" }),
 });
 
 type SchemaType = z.infer<typeof schema>;
 
-export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
-  refreshRegions,
-}) => {
-  let [isOpen, setIsOpen] = useState(false);
+export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({ refreshRegions }) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { address } = useAccount();
   const params = useParams();
@@ -73,7 +70,7 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
         throw new Error("Community ID is not available");
       }
 
-      const [request, error] = await fetchData(
+      const [_request, error] = await fetchData(
         INDEXER.REGIONS.CREATE(communityUID),
         "POST",
         {
@@ -84,8 +81,7 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
         true
       );
 
-      if (error)
-        throw new Error("An error occurred while creating the region");
+      if (error) throw new Error("An error occurred while creating the region");
 
       toast.success("Region created successfully");
       refreshRegions();
@@ -99,7 +95,6 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
           error: "Failed to create region. Please try again.",
         }
       );
-      console.log(error);
     } finally {
       setIsLoading(false);
     }
@@ -142,15 +137,9 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
-                  <form
-                    onSubmit={handleSubmit(onSubmit)}
-                    className="flex w-full flex-col gap-4"
-                  >
+                  <form onSubmit={handleSubmit(onSubmit)} className="flex w-full flex-col gap-4">
                     <div className="flex w-full flex-col">
-                      <label
-                        htmlFor="region-name"
-                        className={"text-sm font-bold"}
-                      >
+                      <label htmlFor="region-name" className={"text-sm font-bold"}>
                         Region name *
                       </label>
                       <input
@@ -161,23 +150,13 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
                         placeholder="Ex: North America, Europe, Asia"
                         {...register("name")}
                       />
-                      <p className="text-base text-red-400">
-                        {errors.name?.message}
-                      </p>
+                      <p className="text-base text-red-400">{errors.name?.message}</p>
                     </div>
                     <div className="flex flex-row gap-4 justify-end">
-                      <Button
-                        onClick={closeModal}
-                        disabled={isLoading}
-                        variant="outline"
-                      >
+                      <Button onClick={closeModal} disabled={isLoading} variant="outline">
                         Cancel
                       </Button>
-                      <Button
-                        disabled={isLoading || !isValid}
-                        isLoading={isLoading}
-                        type="submit"
-                      >
+                      <Button disabled={isLoading || !isValid} isLoading={isLoading} type="submit">
                         Create
                       </Button>
                     </div>

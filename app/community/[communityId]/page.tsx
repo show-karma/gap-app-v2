@@ -1,15 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 import { CommunityGrants } from "@/components/CommunityGrants";
-import type { SortByOptions, MaturityStageOptions } from "@/types";
-import {
-  getCommunityCategories,
-} from "@/utilities/queries/getCommunityData";
+import type { MaturityStageOptions, SortByOptions } from "@/types";
+import { pagesOnRoot } from "@/utilities/pagesOnRoot";
+import { getCommunityCategories } from "@/utilities/queries/getCommunityData";
 import {
   getCommunityDetailsV2,
-  getCommunityStatsV2,
   getCommunityProjectsV2,
+  getCommunityStatsV2,
 } from "@/utilities/queries/getCommunityDataV2";
-import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 
 type Props = {
   params: Promise<{

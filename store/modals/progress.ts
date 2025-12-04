@@ -15,10 +15,9 @@ interface ProgressModalStore {
   closeProgressModal: () => void;
 }
 
-export const useProgressModalStore = create<ProgressModalStore>((set, get) => ({
+export const useProgressModalStore = create<ProgressModalStore>((set, _get) => ({
   isProgressModalOpen: false,
-  setIsProgressModalOpen: (isProgressModalOpen: boolean) =>
-    set({ isProgressModalOpen }),
+  setIsProgressModalOpen: (isProgressModalOpen: boolean) => set({ isProgressModalOpen }),
   progressModalScreen: "menu",
   setProgressModalScreen: (progressModalScreen: ProgressModalScreen) =>
     set({ progressModalScreen }),

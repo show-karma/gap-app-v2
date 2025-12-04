@@ -1,12 +1,13 @@
 "use client";
 
-import {useChains, useWhitelistedContracts} from "@/hooks/useFaucetAdmin";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { useChains, useWhitelistedContracts } from "@/hooks/useFaucetAdmin";
 
 export function WhitelistManager() {
-  const { contracts, isLoading, whitelistContract, removeFromWhitelist } = useWhitelistedContracts();
+  const { contracts, isLoading, whitelistContract, removeFromWhitelist } =
+    useWhitelistedContracts();
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
     chainId: "",
@@ -15,13 +16,11 @@ export function WhitelistManager() {
     description: "",
     maxGasLimit: "",
   });
-  const { chains } = useChains()
-
-    console.log(contracts)
+  const { chains } = useChains();
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     whitelistContract({
-      chainId: parseInt(formData.chainId),
+      chainId: parseInt(formData.chainId, 10),
       contractAddress: formData.contractAddress,
       name: formData.name,
       description: formData.description,
@@ -38,7 +37,7 @@ export function WhitelistManager() {
   };
 
   const getChainName = (chainId: number) => {
-    return chains?.find(n => n.chainId === chainId)?.name || `Chain ${chainId}`;
+    return chains?.find((n) => n.chainId === chainId)?.name || `Chain ${chainId}`;
   };
 
   if (isLoading) {
@@ -69,10 +68,14 @@ export function WhitelistManager() {
           <form onSubmit={handleAdd} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="whitelist-chain"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Chain
                 </label>
                 <select
+                  id="whitelist-chain"
                   value={formData.chainId}
                   onChange={(e) => setFormData({ ...formData, chainId: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-white"
@@ -88,10 +91,14 @@ export function WhitelistManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="whitelist-contract"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Contract Address
                 </label>
                 <input
+                  id="whitelist-contract"
                   type="text"
                   value={formData.contractAddress}
                   onChange={(e) => setFormData({ ...formData, contractAddress: e.target.value })}
@@ -102,10 +109,14 @@ export function WhitelistManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="whitelist-name"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Name
                 </label>
                 <input
+                  id="whitelist-name"
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -115,10 +126,14 @@ export function WhitelistManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="whitelist-gas"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Max Gas Limit (optional)
                 </label>
                 <input
+                  id="whitelist-gas"
                   type="text"
                   value={formData.maxGasLimit}
                   onChange={(e) => setFormData({ ...formData, maxGasLimit: e.target.value })}
@@ -128,10 +143,14 @@ export function WhitelistManager() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="whitelist-description"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Description (optional)
               </label>
               <textarea
+                id="whitelist-description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
@@ -192,21 +211,25 @@ export function WhitelistManager() {
                   {contract.name}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    contract.enabled 
-                      ? "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400"
-                      : "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400"
-                  }`}>
+                  <span
+                    className={`px-2 py-1 text-xs rounded-full ${
+                      contract.enabled
+                        ? "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400"
+                        : "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400"
+                    }`}
+                  >
                     {contract.enabled ? "Enabled" : "Disabled"}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                   <button
                     onClick={() => {
-                      if (confirm("Are you sure you want to remove this contract from the whitelist?")) {
-                        removeFromWhitelist({ 
-                          chainId: contract.chainId, 
-                          address: contract.contractAddress 
+                      if (
+                        confirm("Are you sure you want to remove this contract from the whitelist?")
+                      ) {
+                        removeFromWhitelist({
+                          chainId: contract.chainId,
+                          address: contract.contractAddress,
                         });
                       }
                     }}

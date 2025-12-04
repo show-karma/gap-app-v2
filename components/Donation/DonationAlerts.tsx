@@ -34,13 +34,13 @@ export function DonationAlerts({
               </svg>
             </div>
             <div>
-              <h3 className="font-semibold text-orange-900 dark:text-orange-100">
-                Connect Wallet
-              </h3>
+              <h3 className="font-semibold text-orange-900 dark:text-orange-100">Connect Wallet</h3>
               <p className="mt-1 text-sm text-orange-700 dark:text-orange-200">
                 Connect your wallet to view token balances and submit donations.
               </p>
-              <Button onClick={login} className="mt-2">Connect Wallet</Button>
+              <Button onClick={login} className="mt-2">
+                Connect Wallet
+              </Button>
             </div>
           </div>
         </div>

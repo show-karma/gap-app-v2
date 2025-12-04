@@ -1,16 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, useState } from "react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "cmdk";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
+
+import { CheckIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
-import { cn } from "@/utilities/tailwind";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
+import { type FC, useState } from "react";
 import { ChevronDown } from "@/components/Icons/ChevronDown";
+import { cn } from "@/utilities/tailwind";
 
 interface Items {
   value: number;
@@ -50,9 +45,7 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
               alt={""}
               className="w-5 h-5"
             />
-            <p>
-              {sortedList.find((item) => item.value === previousValue)?.label}{" "}
-            </p>
+            <p>{sortedList.find((item) => item.value === previousValue)?.label} </p>
           </div>
         ) : (
           "Select network"
@@ -90,9 +83,7 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
                       className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full"
                     />
                   </div>
-                  <p className="line-clamp-2 text-sm max-w-full break-normal">
-                    {item.label}
-                  </p>
+                  <p className="line-clamp-2 text-sm max-w-full break-normal">{item.label}</p>
                 </div>
               </CommandItem>
             ))}

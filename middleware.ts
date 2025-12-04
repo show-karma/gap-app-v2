@@ -1,9 +1,9 @@
+import type { Community } from "@show-karma/karma-gap-sdk";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { chosenCommunities } from "./utilities/chosenCommunities";
-import type { Community } from "@show-karma/karma-gap-sdk";
 import { envVars } from "./utilities/enviromentVars";
-import { shouldRedirectToGov, redirectToGov } from "./utilities/redirectHelpers";
+import { redirectToGov, shouldRedirectToGov } from "./utilities/redirectHelpers";
 import { hasForbiddenChars, sanitizeCommunitySlug } from "./utilities/sanitize";
 
 export async function middleware(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Handle community slugs with forbidden characters
-  const communityPathMatch = path.match(/^\/community\/([^\/]+)(\/.*)?$/);
+  const communityPathMatch = path.match(/^\/community\/([^/]+)(\/.*)?$/);
   if (communityPathMatch) {
     const communitySlug = communityPathMatch[1];
     const restOfPath = communityPathMatch[2] || "";
@@ -27,24 +27,21 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const communityMatch = path.match(/^\/([^\/]+)(?:\/.*)?$/);
+  const communityMatch = path.match(/^\/([^/]+)(?:\/.*)?$/);
 
   if (communityMatch) {
     const communityId = communityMatch[1];
     const communities = chosenCommunities();
     const isChosenCommunity = communities.some(
       (community) =>
-        community.slug === communityId ||
-        community.uid.toLowerCase() === communityId.toLowerCase()
+        community.slug === communityId || community.uid.toLowerCase() === communityId.toLowerCase()
     );
     if (isChosenCommunity && !path.startsWith("/community/")) {
       if (isChosenCommunity) {
-        const newPath = path.replace(/^\/([^\/]+)/, "/community/$1");
+        const newPath = path.replace(/^\/([^/]+)/, "/community/$1");
         return NextResponse.redirect(new URL(newPath, request.url));
       }
-      const communitiesFetched = await fetch(
-        `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/communities`
-      );
+      const communitiesFetched = await fetch(`${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/communities`);
       const communitiesJson: Community[] = await communitiesFetched.json();
       const communitiesArray = communitiesJson.map((community) => ({
         uid: community.uid,
@@ -58,7 +55,7 @@ export async function middleware(request: NextRequest) {
       );
 
       if (findCommunity) {
-        const newPath = path.replace(/^\/([^\/]+)/, "/community/$1");
+        const newPath = path.replace(/^\/([^/]+)/, "/community/$1");
         return NextResponse.redirect(new URL(newPath, request.url));
       }
     }

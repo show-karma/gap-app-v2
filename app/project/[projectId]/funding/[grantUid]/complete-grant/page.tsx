@@ -1,6 +1,6 @@
 "use client";
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 import dynamic from "next/dynamic";
+import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 
 const GrantCompletion = dynamic(
   () =>

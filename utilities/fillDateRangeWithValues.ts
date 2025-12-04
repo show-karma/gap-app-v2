@@ -30,10 +30,7 @@ export const fillDateRangeWithValues = (dataArray: DataType[]) => {
     });
     if (matchingData) {
       filledArray.push({
-        date: moment(matchingData.timestamp)
-          .utc()
-          .startOf("date")
-          .toISOString(),
+        date: moment(matchingData.timestamp).utc().startOf("date").toISOString(),
         value: matchingData.value,
       });
     } else {

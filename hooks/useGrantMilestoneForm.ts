@@ -1,23 +1,20 @@
-import { useState } from "react";
-import { useAccount } from "wagmi";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { getGapClient, useGap } from "@/hooks/useGap";
 import { Milestone } from "@show-karma/karma-gap-sdk";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { useStepper } from "@/store/modals/txStepper";
-import { sanitizeObject } from "@/utilities/sanitize";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useGap } from "@/hooks/useGap";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { useRouter } from "next/navigation";
-import { PAGES } from "@/utilities/pages";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { Hex } from "viem";
-import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "./useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 export interface GrantMilestoneFormData {
   title: string;
@@ -41,17 +38,14 @@ export function useGrantMilestoneForm({
   const { address, chain } = useAccount();
   const { project, refreshProject } = useProjectStore();
   const { switchChainAsync } = useWallet();
-  const isOwner = useOwnerStore((state) => state.isOwner);
+  const _isOwner = useOwnerStore((state) => state.isOwner);
 
   const { gap } = useGap();
   const [isLoading, setIsLoading] = useState(false);
   const { changeStepperStep, setIsStepper } = useStepper();
   const router = useRouter();
 
-  const createMilestoneForGrants = async (
-    data: GrantMilestoneFormData,
-    grantUIDs: string[]
-  ) => {
+  const createMilestoneForGrants = async (data: GrantMilestoneFormData, grantUIDs: string[]) => {
     if (!gap || !address || grantUIDs.length === 0) return;
     setIsLoading(true);
 
@@ -65,7 +59,11 @@ export function useGrantMilestoneForm({
         const chainID = grant.chainID;
 
         // Switch chain if needed
-        const { success, chainId: actualChainId, gapClient } = await ensureCorrectChain({
+        const {
+          success,
+          chainId: actualChainId,
+          gapClient,
+        } = await ensureCorrectChain({
           targetChainId: chainID,
           currentChainId: chain?.id,
           switchChainAsync,
@@ -81,9 +79,7 @@ export function useGrantMilestoneForm({
           title: data.title,
           description: data.description || "",
           endsAt: data.dates.endsAt.getTime() / 1000,
-          startsAt: data.dates.startsAt
-            ? data.dates.startsAt.getTime() / 1000
-            : undefined,
+          startsAt: data.dates.startsAt ? data.dates.startsAt.getTime() / 1000 : undefined,
           priority: data.priority,
         });
 
@@ -104,59 +100,52 @@ export function useGrantMilestoneForm({
         const walletSigner = await walletClientToSigner(walletClient);
 
         // Attest the milestone
-        await milestoneToAttest
-          .attest(walletSigner as any, changeStepperStep)
-          .then(async (res) => {
-            let retries = 1000;
-            const txHash = res?.tx[0]?.hash;
+        await milestoneToAttest.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+          let retries = 1000;
+          const txHash = res?.tx[0]?.hash;
 
-            if (txHash) {
-              await fetchData(
-                INDEXER.ATTESTATION_LISTENER(txHash, milestoneToAttest.chainID),
-                "POST",
-                {}
-              );
-            }
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, milestoneToAttest.chainID),
+              "POST",
+              {}
+            );
+          }
 
-            changeStepperStep("indexing");
+          changeStepperStep("indexing");
 
-            while (retries > 0) {
-              await refreshProject()
-                .then(async (fetchedProject) => {
-                  const fetchedGrant = fetchedProject?.grants.find(
-                    (g) => g.uid === grantUID
-                  );
+          while (retries > 0) {
+            await refreshProject()
+              .then(async (fetchedProject) => {
+                const fetchedGrant = fetchedProject?.grants.find((g) => g.uid === grantUID);
 
-                  const milestoneExists = fetchedGrant?.milestones.find(
-                    (g: any) => g.uid === milestoneToAttest.uid
-                  );
+                const milestoneExists = fetchedGrant?.milestones.find(
+                  (g: any) => g.uid === milestoneToAttest.uid
+                );
 
-                  if (milestoneExists) {
-                    retries = 0;
-                    changeStepperStep("indexed");
-                    toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
+                if (milestoneExists) {
+                  retries = 0;
+                  changeStepperStep("indexed");
+                  toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
 
-                    // Only navigate on the last grant milestone creation
-                    if (
-                      grantUID === grantUIDs[grantUIDs.length - 1] &&
-                      destinationPath
-                    ) {
-                      router.push(destinationPath);
-                      router.refresh();
-                    }
+                  // Only navigate on the last grant milestone creation
+                  if (grantUID === grantUIDs[grantUIDs.length - 1] && destinationPath) {
+                    router.push(destinationPath);
+                    router.refresh();
                   }
+                }
 
-                  retries -= 1;
-                  // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                  await new Promise((resolve) => setTimeout(resolve, 1500));
-                })
-                .catch(async () => {
-                  retries -= 1;
-                  // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                  await new Promise((resolve) => setTimeout(resolve, 1500));
-                });
-            }
-          });
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              })
+              .catch(async () => {
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              });
+          }
+        });
       }
 
       // Call onSuccess after all grant milestones are created
@@ -175,10 +164,7 @@ export function useGrantMilestoneForm({
   };
 
   // Simplified version for single grant
-  const createMilestone = async (
-    data: GrantMilestoneFormData,
-    grantUID: string
-  ) => {
+  const createMilestone = async (data: GrantMilestoneFormData, grantUID: string) => {
     return createMilestoneForGrants(data, [grantUID]);
   };
 

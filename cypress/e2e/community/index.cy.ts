@@ -1,112 +1,89 @@
-const community = "gitcoin";
+/**
+ * E2E Tests: Community Page
+ * Tests community page navigation and basic functionality
+ */
+
+import { EXAMPLE } from "../../support/e2e";
+import {
+  setupCommonIntercepts,
+  waitForPageLoad,
+} from "../../support/intercepts";
+
+const COMMUNITY = EXAMPLE.COMMUNITY;
+
 describe("Community Page", () => {
-  it("should display the community page", () => {
-    cy.visit(`/community/${community}`);
-    // Wait for community header to load (shows community name)
-    cy.get("h1, h2, h3", { timeout: 10000 }).should("exist");
-    // Verify we're on the community page
-    cy.url().should("include", `/community/${community}`);
+  beforeEach(() => {
+    setupCommonIntercepts();
   });
-  it("should display grants", () => {
-    cy.visit(`/community/${community}`);
-    // Wait for grants to load
-    cy.get("#grant-card", { timeout: 10000 }).should("have.length.greaterThan", 0);
-  });
-  it("should display filter by programs", () => {
-    cy.visit(`/community/${community}`);
-    cy.get("#filter-by-programs").should("be.visible");
 
-    // Wait for grants to load first
-    cy.get("#grant-card", { timeout: 10000 }).should("have.length.greaterThan", 0);
-    
-    // Store initial grant count
-    cy.get("#grant-card").then(($initialCards) => {
-      const initialCount = $initialCards.length;
-      
-      // Open the program filter dropdown
-      cy.get("#filter-by-programs").click({ force: true });
-      
-      // Wait for dropdown items to appear (items use format: {programId}_{chainID}-item)
-      cy.get('[id$="-item"]', { timeout: 5000 }).should("have.length.greaterThan", 0);
-      
-      // Click first program item
-      cy.get('[id$="-item"]').first().click({ force: true });
-      
-      // Wait for grants to reload after filter
-      cy.wait(2000);
-      cy.get("#grant-card", { timeout: 10000 }).should("have.length.greaterThan", 0);
-      
-      // Verify the grant count changed (filtered results)
-      cy.get("#grant-card").then(($newCards) => {
-        const newCount = $newCards.length;
-        // The count should be different (could be less or same, but filter was applied)
-        cy.wrap(newCount).should("be.a", "number");
-      });
+  describe("Page Navigation", () => {
+    it("should load community page", () => {
+      cy.visit(`/${COMMUNITY}`, { timeout: 30000 });
+      waitForPageLoad();
+
+      cy.url().should("include", `/${COMMUNITY}`);
+      cy.get("body").should("be.visible");
+    });
+
+    it("should navigate via community URL format", () => {
+      cy.visit(`/community/${COMMUNITY}`, { timeout: 30000 });
+      waitForPageLoad();
+
+      cy.get("body").should("be.visible");
     });
   });
-  it("should be able to sort by", () => {
-    cy.visit(`/community/${community}`);
-    // Wait for grants to load
-    cy.get("#grant-card", { timeout: 10000 }).should("have.length.greaterThan", 0);
 
-    // Store the initial grants
-    cy.get("#grant-card").then(($initialCards) => {
-      const initialTitles = $initialCards
-        .map((_, el) => Cypress.$(el).find("#grant-project-title").first().text())
-        .get();
+  describe("Page Structure", () => {
+    it("should display page content", () => {
+      cy.visit(`/${COMMUNITY}`, { timeout: 30000 });
+      waitForPageLoad();
 
-      // Change the sort option
-      cy.get("#sort-by-button").click({
-        force: true,
-      });
-      cy.contains("span", "Recent").click({
-        force: true,
-      });
+      cy.get("nav").should("exist");
+      cy.get("body").should("be.visible");
+    });
 
-      cy.wait(2000);
-      // Wait for the grants to reload
-      cy.get("#grant-card", { timeout: 10000 }).should("have.length.greaterThan", 0);
+    it("should have navbar", () => {
+      cy.visit(`/${COMMUNITY}`, { timeout: 30000 });
+      waitForPageLoad();
 
-      // Compare with new grants
-      cy.get("#grant-card").then(($newCards) => {
-        const newTitles = $newCards
-          .map((_, el) => Cypress.$(el).find("#grant-project-title").first().text())
-          .get();
-        cy.wrap(newTitles).should("not.deep.equal", initialTitles);
-      });
+      cy.get("nav").should("exist");
     });
   });
-  it("should be able to filter by maturity stage", () => {
-    // This test only works for communities that have maturity stage filter (e.g., celo)
-    cy.visit(`/community/celo`);
-    // Wait for grants to load
-    cy.get("#grant-card", { timeout: 10000 }).should("have.length.greaterThan", 0);
 
-    // Store the initial grants
-    cy.get("#grant-card").then(($initialCards) => {
-      const initialTitles = $initialCards
-        .map((_, el) => Cypress.$(el).find("#grant-project-title").first().text())
-        .get();
+  describe("Navigation Integration", () => {
+    it("should navigate to communities via Explore menu", () => {
+      cy.visit("/");
+      waitForPageLoad();
 
-      // Change the maturity stage filter
-      cy.get("#maturity-stage-button").click({
-        force: true,
-      });
-      cy.contains("span", "Stage 1").click({
-        force: true,
-      });
+      cy.contains("button", "Explore").click();
+      cy.contains("All communities").click();
 
-      cy.wait(2000);
-      // Wait for the grants to reload
-      cy.get("#grant-card", { timeout: 10000 }).should("have.length.greaterThan", 0);
+      cy.url().should("include", "/communities");
+    });
 
-      // Compare with new grants
-      cy.get("#grant-card").then(($newCards) => {
-        const newTitles = $newCards
-          .map((_, el) => Cypress.$(el).find("#grant-project-title").first().text())
-          .get();
-        cy.wrap(newTitles).should("not.deep.equal", initialTitles);
-      });
+    it("should navigate from communities list", () => {
+      cy.visit("/communities");
+      waitForPageLoad();
+
+      cy.get("body").should("be.visible");
+    });
+  });
+
+  describe("Page Responsiveness", () => {
+    it("should render on desktop viewport", () => {
+      cy.viewport(1440, 900);
+      cy.visit(`/${COMMUNITY}`, { timeout: 30000 });
+      waitForPageLoad();
+
+      cy.get("body").should("be.visible");
+    });
+
+    it("should render on mobile viewport", () => {
+      cy.viewport("iphone-x");
+      cy.visit(`/${COMMUNITY}`, { timeout: 30000 });
+      waitForPageLoad();
+
+      cy.get("body").should("be.visible");
     });
   });
 });

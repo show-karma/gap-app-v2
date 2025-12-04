@@ -1,30 +1,29 @@
-import { useState } from "react";
-import { useAccount } from "wagmi";
-import { useWallet } from "@/hooks/useWallet";
-import { useGap } from "@/hooks/useGap";
-import { useStepper } from "@/store/modals/txStepper";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { useGrantStore } from "@/store/grant";
-import { useProjectStore } from "@/store";
-import { useOwnerStore } from "@/store";
-import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
-import toast from "react-hot-toast";
+import { GAP } from "@show-karma/karma-gap-sdk";
 import type {
   IGrantResponse,
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { GAP } from "@show-karma/karma-gap-sdk";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useGap } from "@/hooks/useGap";
+import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { useWallet } from "@/hooks/useWallet";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useGrantStore } from "@/store/grant";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
 import {
+  buildRevocationPayload,
   createCheckIfCompletionExists,
   validateGrantCompletion,
-  buildRevocationPayload,
 } from "@/utilities/grantCompletionHelpers";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 interface UseGrantCompletionRevokeProps {
   grant: IGrantResponse;
@@ -43,10 +42,7 @@ interface UseGrantCompletionRevokeProps {
  * @param project - Parent project
  * @returns Revocation function and loading state
  */
-export const useGrantCompletionRevoke = ({
-  grant,
-  project,
-}: UseGrantCompletionRevokeProps) => {
+export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionRevokeProps) => {
   const [isRevoking, setIsRevoking] = useState(false);
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
@@ -70,7 +66,9 @@ export const useGrantCompletionRevoke = ({
       // Validate chainID before proceeding
       const chainID = grant.completed.chainID || grant.chainID;
       if (!chainID) {
-        throw new Error(`Chain ID not found for grant ${grant.uid}. Cannot proceed with revocation.`);
+        throw new Error(
+          `Chain ID not found for grant ${grant.uid}. Cannot proceed with revocation.`
+        );
       }
 
       // Validate grant completion UID exists
@@ -78,10 +76,7 @@ export const useGrantCompletionRevoke = ({
         throw new Error("Grant completion UID not found");
       }
 
-      const checkIfCompletionExists = createCheckIfCompletionExists(
-        grant.uid,
-        refreshProject
-      );
+      const checkIfCompletionExists = createCheckIfCompletionExists(grant.uid, refreshProject);
 
       if (!isOnChainAuthorized) {
         // Use off-chain revocation for users without on-chain authorization
@@ -161,7 +156,7 @@ export const useGrantCompletionRevoke = ({
           schemaToUse.uid,
           grantInstance.completed.uid
         );
-        
+
         const multicallContract = await GAP.getMulticall(walletSigner);
         const tx = await multicallContract.multiRevoke(revocationPayload);
         const res = await tx.wait();
@@ -170,11 +165,7 @@ export const useGrantCompletionRevoke = ({
 
         const txHash = res?.transactionHash as `0x${string}`;
         if (txHash) {
-          await fetchData(
-            INDEXER.ATTESTATION_LISTENER(txHash, grantInstance.chainID),
-            "POST",
-            {}
-          );
+          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grantInstance.chainID), "POST", {});
         }
         changeStepperStep("indexing");
 
@@ -216,9 +207,7 @@ export const useGrantCompletionRevoke = ({
       }
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.ERROR;
+        error instanceof Error ? error.message : MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.ERROR;
 
       toast.error(errorMessage);
       errorManager(MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.ERROR, error, {

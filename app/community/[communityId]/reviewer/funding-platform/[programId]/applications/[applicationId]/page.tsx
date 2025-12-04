@@ -17,9 +17,9 @@ import {
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
 import { usePermissions } from "@/hooks/usePermissions";
+import { layoutTheme } from "@/src/helper/theme";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import { PAGES } from "@/utilities/pages";
-import { layoutTheme } from "@/src/helper/theme";
 
 /**
  * Reviewer Application Detail Page
@@ -27,7 +27,11 @@ import { layoutTheme } from "@/src/helper/theme";
  * Reuses the same components as admin page but with reviewer permissions
  */
 export default function ReviewerApplicationDetailPage() {
-  const { communityId, programId: combinedProgramId, applicationId } = useParams() as {
+  const {
+    communityId,
+    programId: combinedProgramId,
+    applicationId,
+  } = useParams() as {
     communityId: string;
     programId: string;
     applicationId: string;
@@ -221,8 +225,7 @@ export default function ReviewerApplicationDetailPage() {
                       Review Project Milestones
                     </h3>
                     <p className="text-xs text-green-700 dark:text-green-300">
-                      View and verify milestone completions for this approved
-                      application
+                      View and verify milestone completions for this approved application
                     </p>
                   </div>
                   <Link href={milestoneReviewUrl}>
@@ -239,6 +242,7 @@ export default function ReviewerApplicationDetailPage() {
               program={program}
               showStatusActions={false} // Reviewers cannot change status
               showAIEvaluationButton={false} // Reviewers cannot run AI evaluation
+              showInternalEvaluation={true} // Reviewers can view internal evaluation
               onStatusChange={handleStatusChange}
               viewMode={applicationViewMode}
               onViewModeChange={setApplicationViewMode}
@@ -268,4 +272,3 @@ export default function ReviewerApplicationDetailPage() {
     </div>
   );
 }
-

@@ -37,12 +37,8 @@ export const ProjectGrantsOverviewLoading = () => {
         <div className="w-4/12 max-lg:w-full">
           <div className="border border-gray-200 rounded-xl bg-white  dark:bg-zinc-900 dark:border-gray-800">
             <div className="flex items-center justify-between p-5">
-              <div className="font-semibold text-black dark:text-white">
-                Grant Overview
-              </div>
-              <Skeleton
-                className={`h-5 items-center justify-center rounded-2xl px-2 py-1 w-24`}
-              />
+              <div className="font-semibold text-black dark:text-white">Grant Overview</div>
+              <Skeleton className={`h-5 items-center justify-center rounded-2xl px-2 py-1 w-24`} />
             </div>
             <div className="flex flex-col gap-4  px-5 pt-5 pb-5 border-t border-gray-200">
               <div className="flex items-center justify-between gap-2">
@@ -76,11 +72,7 @@ export const ProjectGrantsOverviewLoading = () => {
                     key={data.title}
                     className="flex flex-row items-center justify-between gap-2"
                   >
-                    <h4
-                      className={
-                        "text-gray-500  font-semibold text-base dark:text-gray-300"
-                      }
-                    >
+                    <h4 className={"text-gray-500  font-semibold text-base dark:text-gray-300"}>
                       {data.title}
                     </h4>
                     <div className={"text-base text-gray-900 dark:text-gray-100"}>

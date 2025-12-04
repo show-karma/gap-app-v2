@@ -79,13 +79,9 @@ describe("TokenManager", () => {
     });
 
     it("should handle getAccessToken errors", async () => {
-      const consoleErrorSpy = jest
-        .spyOn(console, "error")
-        .mockImplementation();
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
 
-      mockPrivyInstance.getAccessToken.mockRejectedValue(
-        new Error("Token fetch failed")
-      );
+      mockPrivyInstance.getAccessToken.mockRejectedValue(new Error("Token fetch failed"));
       TokenManager.setPrivyInstance(mockPrivyInstance);
 
       const token = await TokenManager.getToken();
@@ -208,9 +204,7 @@ describe("TokenManager", () => {
     });
 
     it("should handle cookie access errors", async () => {
-      const consoleErrorSpy = jest
-        .spyOn(console, "error")
-        .mockImplementation();
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
 
       const { cookies } = await import("next/headers");
       (cookies as jest.Mock).mockRejectedValue(new Error("Cookie access denied"));
@@ -475,9 +469,7 @@ describe("TokenManager", () => {
     it("should find cookies with uppercase PRIVY", async () => {
       const mockCookieStore = {
         get: jest.fn(() => undefined),
-        getAll: jest.fn(() => [
-          { name: "PRIVY-TOKEN", value: "uppercase-token" },
-        ]),
+        getAll: jest.fn(() => [{ name: "PRIVY-TOKEN", value: "uppercase-token" }]),
       };
 
       const { cookies } = await import("next/headers");
@@ -491,9 +483,7 @@ describe("TokenManager", () => {
     it("should find cookies with mixed case", async () => {
       const mockCookieStore = {
         get: jest.fn(() => undefined),
-        getAll: jest.fn(() => [
-          { name: "Privy-Access-Token", value: "mixed-case-token" },
-        ]),
+        getAll: jest.fn(() => [{ name: "Privy-Access-Token", value: "mixed-case-token" }]),
       };
 
       const { cookies } = await import("next/headers");
@@ -507,9 +497,7 @@ describe("TokenManager", () => {
     it("should match cookies with jwt in name", async () => {
       const mockCookieStore = {
         get: jest.fn(() => undefined),
-        getAll: jest.fn(() => [
-          { name: "privy-custom-jwt", value: "jwt-value" },
-        ]),
+        getAll: jest.fn(() => [{ name: "privy-custom-jwt", value: "jwt-value" }]),
       };
 
       const { cookies } = await import("next/headers");

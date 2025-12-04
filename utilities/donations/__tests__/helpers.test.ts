@@ -3,30 +3,30 @@
  * @description Tests donation-related utility functions for formatting, validation, and calculations
  */
 
+import type { SupportedToken } from "@/constants/supportedTokens";
 import {
+  calculateTotalByToken,
+  countNetworkSwitches,
+  countTokensNeedingApproval,
+  countUniqueNetworks,
+  type DonationPayment,
+  formatAddressForDisplay,
+  formatDonationAmount,
+  getDonationSummaryByNetwork,
   getTokenBalanceKey,
   getTokenKey,
-  formatDonationAmount,
-  parseDonationAmount,
-  validateDonationAmount,
-  hasSufficientBalance,
-  groupPaymentsByChain,
-  countUniqueNetworks,
   getUniqueChainIds,
-  countNetworkSwitches,
-  calculateTotalByToken,
-  getDonationSummaryByNetwork,
+  getUniqueTokens,
+  groupPaymentsByChain,
+  hasSufficientBalance,
+  isValidAddress,
+  needsTokenApproval,
+  parseDonationAmount,
   requiresCrossChainDonations,
   sortPaymentsByChain,
-  formatAddressForDisplay,
-  isValidAddress,
+  validateDonationAmount,
   validatePayments,
-  getUniqueTokens,
-  needsTokenApproval,
-  countTokensNeedingApproval,
-  type DonationPayment,
 } from "../helpers";
-import type { SupportedToken } from "@/constants/supportedTokens";
 
 describe("Donation Helpers", () => {
   const mockToken: SupportedToken = {
@@ -525,15 +525,11 @@ describe("Donation Helpers", () => {
 
   describe("isValidAddress", () => {
     it("should validate correct Ethereum address", () => {
-      expect(isValidAddress("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")).toBe(
-        true
-      );
+      expect(isValidAddress("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")).toBe(true);
     });
 
     it("should reject address without 0x prefix", () => {
-      expect(isValidAddress("A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")).toBe(
-        false
-      );
+      expect(isValidAddress("A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")).toBe(false);
     });
 
     it("should reject address with wrong length", () => {
@@ -541,9 +537,7 @@ describe("Donation Helpers", () => {
     });
 
     it("should reject address with invalid characters", () => {
-      expect(isValidAddress("0xG0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")).toBe(
-        false
-      );
+      expect(isValidAddress("0xG0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")).toBe(false);
     });
 
     it("should reject empty string", () => {
@@ -555,9 +549,7 @@ describe("Donation Helpers", () => {
     });
 
     it("should accept lowercase address", () => {
-      expect(isValidAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")).toBe(
-        true
-      );
+      expect(isValidAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")).toBe(true);
     });
   });
 

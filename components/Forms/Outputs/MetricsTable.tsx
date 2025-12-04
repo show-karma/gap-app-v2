@@ -1,17 +1,16 @@
 "use client";
 
-import { useState } from "react";
 import { TrashIcon } from "@heroicons/react/24/solid";
-import { cn } from "@/utilities/tailwind";
+import { useState } from "react";
+import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { Button } from "@/components/Utilities/Button";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
+import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import { cn } from "@/utilities/tailwind";
 // Temporarily comment out SearchWithValueDropdown to test
 // import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
 import { OutputDialog } from "./OutputDialog";
-import { CategorizedIndicator, OutputData, CommunityData } from "./types";
-import type { UseFormSetValue } from "react-hook-form";
+import type { CategorizedIndicator, CommunityData, OutputData } from "./types";
 
 interface MetricsTableProps {
   outputs: OutputData[];
@@ -25,7 +24,7 @@ interface MetricsTableProps {
   labelStyle: string;
 }
 
-const EmptyDiv = () => <div className="h-5 w-1" />;
+const _EmptyDiv = () => <div className="h-5 w-1" />;
 
 const isInvalidValue = (value: number | string, unitOfMeasure: string) => {
   if (value === "") return true;
@@ -33,7 +32,7 @@ const isInvalidValue = (value: number | string, unitOfMeasure: string) => {
   if (unitOfMeasure === "int") {
     return !Number.isInteger(numValue);
   }
-  return isNaN(numValue);
+  return Number.isNaN(numValue);
 };
 
 // CategorizedIndicatorDropdown component (extracted from ProjectUpdate.tsx)
@@ -51,9 +50,7 @@ const CategorizedIndicatorDropdown = ({
   selectedCommunities: CommunityData[];
 }) => {
   // Group indicators by source
-  const projectIndicators = indicators.filter(
-    (ind) => ind.source === "project"
-  );
+  const _projectIndicators = indicators.filter((ind) => ind.source === "project");
   const selectedCommunityIds = selectedCommunities.map((c) => c.uid);
   const communityIndicators = indicators.filter(
     (ind) =>
@@ -61,9 +58,7 @@ const CategorizedIndicatorDropdown = ({
       ind.communityId &&
       selectedCommunityIds.includes(ind.communityId)
   );
-  const unlinkedIndicators = indicators.filter(
-    (ind) => ind.source === "unlinked"
-  );
+  const unlinkedIndicators = indicators.filter((ind) => ind.source === "unlinked");
 
   // Create flat list with community indicators first, then unlinked indicators
   const dropdownList = [
@@ -95,7 +90,9 @@ const CategorizedIndicatorDropdown = ({
       className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
     >
       <option value="">Select</option>
-      <option value="CREATE_NEW" className="font-bold">+ Create New Metric</option>
+      <option value="CREATE_NEW" className="font-bold">
+        + Create New Metric
+      </option>
       {dropdownList.map((item) => (
         <option key={item.value} value={item.value}>
           {item.title}
@@ -117,7 +114,7 @@ export const MetricsTable = ({
   labelStyle,
 }: MetricsTableProps) => {
   const [isOutputDialogOpen, setIsOutputDialogOpen] = useState(false);
-  const [selectedToCreate, setSelectedToCreate] = useState<number | undefined>(undefined);
+  const [_selectedToCreate, setSelectedToCreate] = useState<number | undefined>(undefined);
 
   const handleOutputChange = (index: number, field: keyof OutputData, value: any) => {
     const newOutputs = [...outputs];
@@ -215,7 +212,7 @@ export const MetricsTable = ({
                     <CategorizedIndicatorDropdown
                       indicators={categorizedIndicators}
                       onSelect={(indicatorId) => {
-                        handleOutputChange(index, 'outputId', indicatorId);
+                        handleOutputChange(index, "outputId", indicatorId);
                       }}
                       selected={output.outputId}
                       onCreateNew={() => {
@@ -244,24 +241,22 @@ export const MetricsTable = ({
                           if (isValidInput) {
                             handleOutputChange(
                               index,
-                              'value',
+                              "value",
                               e.target.value === "" ? "" : e.target.value
                             );
                           }
                         }}
-                        placeholder={`Enter ${categorizedIndicators.find(
-                          (o) => o.id === output.outputId
-                        )?.unitOfMeasure === "float"
-                          ? "decimal"
-                          : "whole"
-                          } number`}
+                        placeholder={`Enter ${
+                          categorizedIndicators.find((o) => o.id === output.outputId)
+                            ?.unitOfMeasure === "float"
+                            ? "decimal"
+                            : "whole"
+                        } number`}
                         disabled={
                           !!autosyncedIndicators.find(
                             (indicator) =>
                               indicator.name ===
-                              indicatorsList.find(
-                                (i) => i.indicatorId === output.outputId
-                              )?.name
+                              indicatorsList.find((i) => i.indicatorId === output.outputId)?.name
                           )
                         }
                         className={cn(
@@ -269,9 +264,8 @@ export const MetricsTable = ({
                           output.outputId &&
                             isInvalidValue(
                               output.value,
-                              categorizedIndicators.find(
-                                (o) => o.id === output.outputId
-                              )?.unitOfMeasure || "int"
+                              categorizedIndicators.find((o) => o.id === output.outputId)
+                                ?.unitOfMeasure || "int"
                             )
                             ? "border-red-500 dark:border-red-500"
                             : "border-gray-300 dark:border-zinc-700"
@@ -287,12 +281,10 @@ export const MetricsTable = ({
                           ?.unitOfMeasure || "int"
                       ) && (
                         <p className="text-xs text-red-500 mt-1">
-                          {typeof output.value === "string" &&
-                            output.value === ""
+                          {typeof output.value === "string" && output.value === ""
                             ? "This field is required"
-                            : categorizedIndicators.find(
-                              (o) => o.id === output.outputId
-                            )?.unitOfMeasure === "int"
+                            : categorizedIndicators.find((o) => o.id === output.outputId)
+                                  ?.unitOfMeasure === "int"
                               ? "Please enter a whole number"
                               : "Please enter a valid decimal number"}
                         </p>
@@ -304,16 +296,14 @@ export const MetricsTable = ({
                         type="text"
                         value={output.proof || ""}
                         onChange={(e) => {
-                          handleOutputChange(index, 'proof', e.target.value);
+                          handleOutputChange(index, "proof", e.target.value);
                         }}
                         placeholder="Enter proof URL"
                         disabled={
                           !!autosyncedIndicators.find(
                             (indicator) =>
                               indicator.name ===
-                              indicatorsList.find(
-                                (i) => i.indicatorId === output.outputId
-                              )?.name
+                              indicatorsList.find((i) => i.indicatorId === output.outputId)?.name
                           )
                         }
                         className="w-full px-3 py-1.5 bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"

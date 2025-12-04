@@ -32,9 +32,7 @@ describe("pollForGrantCompletion", () => {
       });
 
       const mockProject = {
-        grants: [
-          { uid: "grant-1", completed: { completedAt: Date.now() } },
-        ],
+        grants: [{ uid: "grant-1", completed: { completedAt: Date.now() } }],
       };
       mockGapClient.fetch.projectById.mockResolvedValue(mockProject);
 

@@ -59,7 +59,7 @@ jest.mock("@/utilities/sanitize", () => ({
   sanitizeObject: jest.fn((obj) => obj),
 }));
 
-import { renderHook, act } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 
 // Import the hook to test AFTER mocking dependencies
 const { useGrantCompletion } = require("@/hooks/useGrantCompletion");
@@ -142,11 +142,7 @@ describe("useGrantCompletion", () => {
 
       expect(mockGrantInstance.complete).toHaveBeenCalled();
 
-      expect(mockNotifyIndexerForGrant).toHaveBeenCalledWith(
-        "0xabc123",
-        42161,
-        "project-456"
-      );
+      expect(mockNotifyIndexerForGrant).toHaveBeenCalledWith("0xabc123", 42161, "project-456");
 
       expect(mockPollForGrantCompletion).toHaveBeenCalledWith({
         gapClient: mockGapClient,
@@ -300,9 +296,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
 
-      expect(mockToastError).toHaveBeenCalledWith(
-        "There was an error doing the grant completion."
-      );
+      expect(mockToastError).toHaveBeenCalledWith("There was an error doing the grant completion.");
       expect(result.current.isCompleting).toBe(false);
     });
   });
@@ -360,11 +354,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
 
-      expect(mockNotifyIndexerForGrant).toHaveBeenCalledWith(
-        undefined,
-        42161,
-        "project-456"
-      );
+      expect(mockNotifyIndexerForGrant).toHaveBeenCalledWith(undefined, 42161, "project-456");
     });
 
     it("should handle null transaction hash", async () => {
@@ -389,11 +379,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
 
-      expect(mockNotifyIndexerForGrant).toHaveBeenCalledWith(
-        undefined,
-        42161,
-        "project-456"
-      );
+      expect(mockNotifyIndexerForGrant).toHaveBeenCalledWith(undefined, 42161, "project-456");
     });
   });
 });

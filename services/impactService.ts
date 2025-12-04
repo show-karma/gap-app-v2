@@ -1,4 +1,4 @@
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -11,9 +11,7 @@ import { INDEXER } from "@/utilities/indexer";
 export const getImpactAnswers = async (
   projectIdentifier: string
 ): Promise<ImpactIndicatorWithData[]> => {
-  const [data, error] = await fetchData(
-    INDEXER.PROJECT.IMPACT_INDICATORS.GET(projectIdentifier)
-  );
+  const [data, error] = await fetchData(INDEXER.PROJECT.IMPACT_INDICATORS.GET(projectIdentifier));
 
   if (error) {
     throw new Error(error);

@@ -1,14 +1,12 @@
+import type { Address, PublicClient, WalletClient } from "viem";
 import {
+  approveToken,
   checkTokenAllowance,
   checkTokenAllowances,
-  approveToken,
   executeApprovals,
   getApprovalAmount,
   MAX_UINT256,
-  type TokenApprovalInfo,
-  type ApprovalTransaction,
 } from "@/utilities/erc20";
-import type { PublicClient, WalletClient, Address } from "viem";
 
 // Mock viem
 jest.mock("viem", () => {
@@ -86,9 +84,7 @@ describe("erc20 utilities", () => {
 
     it("should return 0n for invalid token address", async () => {
       const invalidAddress = "0xinvalid" as Address;
-      mockPublicClient.readContract = jest.fn().mockRejectedValue(
-        new Error("Invalid address")
-      );
+      mockPublicClient.readContract = jest.fn().mockRejectedValue(new Error("Invalid address"));
 
       const result = await checkTokenAllowance(
         mockPublicClient,
@@ -101,9 +97,7 @@ describe("erc20 utilities", () => {
     });
 
     it("should handle network errors gracefully", async () => {
-      mockPublicClient.readContract = jest.fn().mockRejectedValue(
-        new Error("Network error")
-      );
+      mockPublicClient.readContract = jest.fn().mockRejectedValue(new Error("Network error"));
 
       const result = await checkTokenAllowance(
         mockPublicClient,
@@ -260,9 +254,7 @@ describe("erc20 utilities", () => {
 
     it("should handle invalid token address", async () => {
       const invalidAddress = "0xinvalid" as Address;
-      mockWalletClient.writeContract = jest.fn().mockRejectedValue(
-        new Error("Invalid address")
-      );
+      mockWalletClient.writeContract = jest.fn().mockRejectedValue(new Error("Invalid address"));
 
       await expect(
         approveToken(
@@ -277,9 +269,7 @@ describe("erc20 utilities", () => {
 
     it("should handle approval amount overflow", async () => {
       const overflowAmount = MAX_UINT256 + 1n;
-      mockWalletClient.writeContract = jest.fn().mockRejectedValue(
-        new Error("Amount overflow")
-      );
+      mockWalletClient.writeContract = jest.fn().mockRejectedValue(new Error("Amount overflow"));
 
       await expect(
         approveToken(
@@ -359,9 +349,7 @@ describe("erc20 utilities", () => {
       mockWalletClient.writeContract = jest.fn().mockResolvedValue(txHash);
       mockPublicClient.waitForTransactionReceipt = jest
         .fn()
-        .mockImplementation(() => 
-          Promise.resolve({ status: "success" })
-        );
+        .mockImplementation(() => Promise.resolve({ status: "success" }));
 
       await executeApprovals(
         mockWalletClient,
@@ -374,7 +362,7 @@ describe("erc20 utilities", () => {
 
       expect(onProgress).toHaveBeenCalledTimes(2);
       expect(firstCallStatus).toBe("pending");
-      
+
       // Second call should have confirmed status
       const secondCall = onProgress.mock.calls[1][0];
       expect(secondCall).toHaveLength(1);
@@ -389,13 +377,9 @@ describe("erc20 utilities", () => {
       mockWalletClient.writeContract = jest.fn().mockRejectedValue(error);
 
       await expect(
-        executeApprovals(
-          mockWalletClient,
-          mockPublicClient,
-          mockAccount,
-          mockSpenderAddress,
-          [mockApprovals[0]]
-        )
+        executeApprovals(mockWalletClient, mockPublicClient, mockAccount, mockSpenderAddress, [
+          mockApprovals[0],
+        ])
       ).rejects.toThrow("Transaction failed");
 
       expect(console.error).toHaveBeenCalledWith(
@@ -412,13 +396,9 @@ describe("erc20 utilities", () => {
         .mockResolvedValue({ status: "reverted" });
 
       await expect(
-        executeApprovals(
-          mockWalletClient,
-          mockPublicClient,
-          mockAccount,
-          mockSpenderAddress,
-          [mockApprovals[0]]
-        )
+        executeApprovals(mockWalletClient, mockPublicClient, mockAccount, mockSpenderAddress, [
+          mockApprovals[0],
+        ])
       ).rejects.toThrow("Approval transaction failed for USDC");
     });
 
@@ -486,7 +466,7 @@ describe("erc20 utilities", () => {
           [mockApprovals[0]],
           onProgress
         );
-      } catch (e) {
+      } catch (_e) {
         // Expected to throw
       }
 
@@ -541,4 +521,3 @@ describe("erc20 utilities", () => {
     });
   });
 });
-

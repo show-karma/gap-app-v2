@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, memo } from "react";
+import { type FC, memo } from "react";
 import { containerClassName } from "@/components/Shared/ActivityCard";
 import { ActivityAttribution } from "@/components/Shared/ActivityCard/ActivityAttribution";
 import { ActivityStatusHeader } from "@/components/Shared/ActivityCard/ActivityStatusHeader";
@@ -41,11 +41,7 @@ const MilestoneCompletionInfoComponent: FC<MilestoneCompletionInfoProps> = ({
         )}
       </div>
       {completionDate && (
-        <ActivityAttribution
-          date={completionDate}
-          attester={completedBy || ""}
-          isCompleted
-        />
+        <ActivityAttribution date={completionDate} attester={completedBy || ""} isCompleted />
       )}
     </div>
   );

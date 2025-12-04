@@ -12,13 +12,13 @@
  * Note: Uses execSync with hardcoded commands only (no user input)
  */
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+const fs = require("node:fs");
+const path = require("node:path");
+const { execSync } = require("node:child_process");
 
-const METRICS_DIR = path.join(__dirname, '../.test-metrics');
-const COVERAGE_DIR = path.join(__dirname, '../coverage');
-const HISTORY_FILE = path.join(METRICS_DIR, 'history.json');
+const METRICS_DIR = path.join(__dirname, "../.test-metrics");
+const COVERAGE_DIR = path.join(__dirname, "../coverage");
+const HISTORY_FILE = path.join(METRICS_DIR, "history.json");
 
 // Ensure metrics directory exists
 if (!fs.existsSync(METRICS_DIR)) {
@@ -30,7 +30,7 @@ if (!fs.existsSync(METRICS_DIR)) {
  */
 function loadHistory() {
   if (fs.existsSync(HISTORY_FILE)) {
-    const content = fs.readFileSync(HISTORY_FILE, 'utf-8');
+    const content = fs.readFileSync(HISTORY_FILE, "utf-8");
     return JSON.parse(content);
   }
   return { runs: [] };
@@ -47,14 +47,14 @@ function saveHistory(history) {
  * Extract coverage data from Jest coverage report
  */
 function extractCoverageData() {
-  const coverageSummaryPath = path.join(COVERAGE_DIR, 'coverage-summary.json');
+  const coverageSummaryPath = path.join(COVERAGE_DIR, "coverage-summary.json");
 
   if (!fs.existsSync(coverageSummaryPath)) {
     console.warn('No coverage summary found. Run "npm run test:coverage" first.');
     return null;
   }
 
-  const coverageData = JSON.parse(fs.readFileSync(coverageSummaryPath, 'utf-8'));
+  const coverageData = JSON.parse(fs.readFileSync(coverageSummaryPath, "utf-8"));
   const total = coverageData.total;
 
   return {
@@ -71,33 +71,28 @@ function extractCoverageData() {
  * Run tests and collect execution data
  */
 function collectTestMetrics() {
-  console.log('Running tests and collecting metrics...\n');
-
   const startTime = Date.now();
-  const testResultsPath = path.join(METRICS_DIR, 'test-results.json');
+  const testResultsPath = path.join(METRICS_DIR, "test-results.json");
 
   // Add validation before use to prevent directory traversal attacks
   const resolvedTestResultsPath = path.resolve(testResultsPath);
   const resolvedMetricsDir = path.resolve(METRICS_DIR);
   if (!resolvedTestResultsPath.startsWith(resolvedMetricsDir)) {
-    throw new Error('Invalid test results path: path traversal detected');
+    throw new Error("Invalid test results path: path traversal detected");
   }
 
   try {
     // Run tests with coverage - hardcoded command, no user input
-    execSync(
-      `npm run test:coverage -- --json --outputFile=${resolvedTestResultsPath}`,
-      {
-        encoding: 'utf-8',
-        stdio: ['inherit', 'pipe', 'pipe'],
-      }
-    );
+    execSync(`npm run test:coverage -- --json --outputFile=${resolvedTestResultsPath}`, {
+      encoding: "utf-8",
+      stdio: ["inherit", "pipe", "pipe"],
+    });
 
     const endTime = Date.now();
     const executionTime = endTime - startTime;
 
     // Parse test results
-    const testResults = JSON.parse(fs.readFileSync(resolvedTestResultsPath, 'utf-8'));
+    const testResults = JSON.parse(fs.readFileSync(resolvedTestResultsPath, "utf-8"));
 
     // Extract coverage data
     const coverage = extractCoverageData();
@@ -123,13 +118,15 @@ function collectTestMetrics() {
 
     return stats;
   } catch (error) {
-    console.error('Error running tests:', error.message);
-    console.error('⚠️  Tests failed - metrics collection will continue but script will exit with error code');
+    console.error("Error running tests:", error.message);
+    console.error(
+      "⚠️  Tests failed - metrics collection will continue but script will exit with error code"
+    );
 
     // If tests fail, still try to extract whatever data we can
     const coverage = extractCoverageData();
 
-    const failedStats = {
+    const _failedStats = {
       timestamp: new Date().toISOString(),
       executionTime: Math.round((Date.now() - startTime) / 1000),
       coverage,
@@ -159,9 +156,9 @@ function collectTestMetrics() {
 function calculateTrends(history) {
   if (history.runs.length < 2) {
     return {
-      coverage: { change: 'N/A', direction: '→' },
-      executionTime: { change: 0, direction: '→' },
-      testCount: { change: 0, direction: '→' },
+      coverage: { change: "N/A", direction: "→" },
+      executionTime: { change: 0, direction: "→" },
+      testCount: { change: 0, direction: "→" },
     };
   }
 
@@ -170,35 +167,38 @@ function calculateTrends(history) {
 
   const trends = {
     coverage: {
-      change: recent.coverage && previous.coverage
-        ? (recent.coverage.lines - previous.coverage.lines).toFixed(2)
-        : 'N/A',
-      direction: recent.coverage && previous.coverage
-        ? recent.coverage.lines > previous.coverage.lines
-          ? '↑'
-          : recent.coverage.lines < previous.coverage.lines
-          ? '↓'
-          : '→'
-        : '→',
+      change:
+        recent.coverage && previous.coverage
+          ? (recent.coverage.lines - previous.coverage.lines).toFixed(2)
+          : "N/A",
+      direction:
+        recent.coverage && previous.coverage
+          ? recent.coverage.lines > previous.coverage.lines
+            ? "↑"
+            : recent.coverage.lines < previous.coverage.lines
+              ? "↓"
+              : "→"
+          : "→",
     },
     executionTime: {
-      change: (recent.executionTime - (previous.executionTime || 0)),
+      change: recent.executionTime - (previous.executionTime || 0),
       direction:
         recent.executionTime > (previous.executionTime || 0)
-          ? '↑'
+          ? "↑"
           : recent.executionTime < (previous.executionTime || 0)
-          ? '↓'
-          : '→',
+            ? "↓"
+            : "→",
     },
     testCount: {
-      change: recent.tests && previous.tests ? (recent.tests.total - previous.tests.total) : 0,
-      direction: recent.tests && previous.tests
-        ? recent.tests.total > previous.tests.total
-          ? '↑'
-          : recent.tests.total < previous.tests.total
-          ? '↓'
-          : '→'
-        : '→',
+      change: recent.tests && previous.tests ? recent.tests.total - previous.tests.total : 0,
+      direction:
+        recent.tests && previous.tests
+          ? recent.tests.total > previous.tests.total
+            ? "↑"
+            : recent.tests.total < previous.tests.total
+              ? "↓"
+              : "→"
+          : "→",
     },
   };
 
@@ -208,16 +208,16 @@ function calculateTrends(history) {
 /**
  * Generate coverage badge
  */
-function generateCoverageBadge(coverage) {
-  if (!coverage) return '';
+function _generateCoverageBadge(coverage) {
+  if (!coverage) return "";
 
   const percentage = coverage.lines;
-  let color = 'red';
+  let color = "red";
 
-  if (percentage >= 80) color = 'brightgreen';
-  else if (percentage >= 70) color = 'green';
-  else if (percentage >= 60) color = 'yellow';
-  else if (percentage >= 50) color = 'orange';
+  if (percentage >= 80) color = "brightgreen";
+  else if (percentage >= 70) color = "green";
+  else if (percentage >= 60) color = "yellow";
+  else if (percentage >= 50) color = "orange";
 
   return `![Coverage](https://img.shields.io/badge/coverage-${percentage}%25-${color})`;
 }
@@ -226,73 +226,24 @@ function generateCoverageBadge(coverage) {
  * Display metrics dashboard
  */
 function displayDashboard(stats, history) {
-  const trends = calculateTrends(history);
-
-  console.log('\n╔═══════════════════════════════════════════════════════════╗');
-  console.log('║          TEST METRICS DASHBOARD                           ║');
-  console.log('╚═══════════════════════════════════════════════════════════╝\n');
-
-  // Coverage
-  console.log('📊 COVERAGE');
-  console.log('─────────────────────────────────────────────────────────────');
+  const _trends = calculateTrends(history);
   if (stats.coverage) {
-    console.log(`  Lines:      ${stats.coverage.lines.toFixed(2)}% ${trends.coverage.direction} (${trends.coverage.change > 0 ? '+' : ''}${trends.coverage.change}%)`);
-    console.log(`  Statements: ${stats.coverage.statements.toFixed(2)}%`);
-    console.log(`  Functions:  ${stats.coverage.functions.toFixed(2)}%`);
-    console.log(`  Branches:   ${stats.coverage.branches.toFixed(2)}%`);
-    console.log(`  Covered:    ${stats.coverage.covered} / ${stats.coverage.total} lines`);
-    console.log(`  Badge:      ${generateCoverageBadge(stats.coverage)}`);
   } else {
-    console.log('  No coverage data available');
   }
-
-  // Test Results
-  console.log('\n✅ TEST RESULTS');
-  console.log('─────────────────────────────────────────────────────────────');
   if (stats.tests) {
-    console.log(`  Total:      ${stats.tests.total} ${trends.testCount.direction} (${trends.testCount.change > 0 ? '+' : ''}${trends.testCount.change})`);
-    console.log(`  Passed:     ${stats.tests.passed} (${((stats.tests.passed / stats.tests.total) * 100).toFixed(1)}%)`);
-    console.log(`  Failed:     ${stats.tests.failed}`);
-    console.log(`  Skipped:    ${stats.tests.skipped} ${stats.tests.skipped > 0 ? '⚠️' : ''}`);
-    console.log(`  Todo:       ${stats.tests.todo}`);
   } else {
-    console.log('  No test data available');
   }
-
-  // Test Suites
-  console.log('\n📦 TEST SUITES');
-  console.log('─────────────────────────────────────────────────────────────');
   if (stats.suites) {
-    console.log(`  Total:      ${stats.suites.total}`);
-    console.log(`  Passed:     ${stats.suites.passed}`);
-    console.log(`  Failed:     ${stats.suites.failed}`);
   } else {
-    console.log('  No suite data available');
   }
-
-  // Performance
-  console.log('\n⚡ PERFORMANCE');
-  console.log('─────────────────────────────────────────────────────────────');
-  console.log(`  Execution:  ${stats.executionTime}s ${trends.executionTime.direction} (${trends.executionTime.change > 0 ? '+' : ''}${trends.executionTime.change}s)`);
-
-  // Historical Data
-  console.log('\n📈 HISTORICAL DATA');
-  console.log('─────────────────────────────────────────────────────────────');
-  console.log(`  Total Runs: ${history.runs.length}`);
 
   if (history.runs.length >= 2) {
-    const coverageHistory = history.runs
-      .filter(r => r.coverage)
+    const _coverageHistory = history.runs
+      .filter((r) => r.coverage)
       .slice(-5)
-      .map(r => `${r.coverage.lines.toFixed(1)}%`)
-      .join(' → ');
-
-    console.log(`  Coverage:   ${coverageHistory}`);
+      .map((r) => `${r.coverage.lines.toFixed(1)}%`)
+      .join(" → ");
   }
-
-  // Warnings
-  console.log('\n⚠️  WARNINGS');
-  console.log('─────────────────────────────────────────────────────────────');
 
   const warnings = [];
 
@@ -313,12 +264,9 @@ function displayDashboard(stats, history) {
   }
 
   if (warnings.length === 0) {
-    console.log('  None! 🎉');
   } else {
-    warnings.forEach(w => console.log(w));
+    warnings.forEach((_w) => {});
   }
-
-  console.log('\n─────────────────────────────────────────────────────────────\n');
 }
 
 /**
@@ -371,10 +319,10 @@ function generateHtmlReport(stats, history) {
     <div class="metrics">
       <div class="metric-card">
         <h3>Coverage</h3>
-        <div class="metric-value">${stats.coverage ? stats.coverage.lines.toFixed(1) : 'N/A'}%</div>
+        <div class="metric-value">${stats.coverage ? stats.coverage.lines.toFixed(1) : "N/A"}%</div>
         <div class="metric-label">
           Line Coverage
-          <span class="trend ${trends.coverage.direction === '↑' ? 'up' : trends.coverage.direction === '↓' ? 'down' : 'same'}">
+          <span class="trend ${trends.coverage.direction === "↑" ? "up" : trends.coverage.direction === "↓" ? "down" : "same"}">
             ${trends.coverage.direction} ${trends.coverage.change}%
           </span>
         </div>
@@ -382,10 +330,10 @@ function generateHtmlReport(stats, history) {
 
       <div class="metric-card">
         <h3>Total Tests</h3>
-        <div class="metric-value">${stats.tests ? stats.tests.total : 'N/A'}</div>
+        <div class="metric-value">${stats.tests ? stats.tests.total : "N/A"}</div>
         <div class="metric-label">
           Test Cases
-          <span class="trend ${trends.testCount.direction === '↑' ? 'up' : trends.testCount.direction === '↓' ? 'down' : 'same'}">
+          <span class="trend ${trends.testCount.direction === "↑" ? "up" : trends.testCount.direction === "↓" ? "down" : "same"}">
             ${trends.testCount.direction} ${trends.testCount.change}
           </span>
         </div>
@@ -393,7 +341,7 @@ function generateHtmlReport(stats, history) {
 
       <div class="metric-card">
         <h3>Pass Rate</h3>
-        <div class="metric-value">${stats.tests ? ((stats.tests.passed / stats.tests.total) * 100).toFixed(1) : 'N/A'}%</div>
+        <div class="metric-value">${stats.tests ? ((stats.tests.passed / stats.tests.total) * 100).toFixed(1) : "N/A"}%</div>
         <div class="metric-label">${stats.tests ? stats.tests.passed : 0} / ${stats.tests ? stats.tests.total : 0} passed</div>
       </div>
 
@@ -402,14 +350,16 @@ function generateHtmlReport(stats, history) {
         <div class="metric-value">${stats.executionTime}s</div>
         <div class="metric-label">
           Total Duration
-          <span class="trend ${trends.executionTime.direction === '↑' ? 'down' : trends.executionTime.direction === '↓' ? 'up' : 'same'}">
+          <span class="trend ${trends.executionTime.direction === "↑" ? "down" : trends.executionTime.direction === "↓" ? "up" : "same"}">
             ${trends.executionTime.direction} ${Math.abs(trends.executionTime.change)}s
           </span>
         </div>
       </div>
     </div>
 
-    ${stats.coverage ? `
+    ${
+      stats.coverage
+        ? `
     <div class="chart">
       <h3>Coverage Breakdown</h3>
       <div style="margin-bottom: 20px;">
@@ -439,17 +389,21 @@ function generateHtmlReport(stats, history) {
         </div>
       </div>
     </div>
-    ` : ''}
+    `
+        : ""
+    }
 
     <div class="chart">
       <h3>Alerts & Warnings</h3>
-      ${stats.tests && stats.tests.skipped > 0 ? `<div class="warning">⚠️ ${stats.tests.skipped} skipped tests need review</div>` : ''}
-      ${stats.tests && stats.tests.failed > 0 ? `<div class="warning">❌ ${stats.tests.failed} failing tests need attention</div>` : ''}
-      ${stats.coverage && stats.coverage.lines < 50 ? `<div class="warning">📉 Coverage is below 50% threshold</div>` : ''}
-      ${stats.tests && stats.tests.failed === 0 && stats.tests.skipped === 0 && stats.coverage && stats.coverage.lines >= 50 ? `<div class="success">✅ All tests passing and coverage meets threshold!</div>` : ''}
+      ${stats.tests && stats.tests.skipped > 0 ? `<div class="warning">⚠️ ${stats.tests.skipped} skipped tests need review</div>` : ""}
+      ${stats.tests && stats.tests.failed > 0 ? `<div class="warning">❌ ${stats.tests.failed} failing tests need attention</div>` : ""}
+      ${stats.coverage && stats.coverage.lines < 50 ? `<div class="warning">📉 Coverage is below 50% threshold</div>` : ""}
+      ${stats.tests && stats.tests.failed === 0 && stats.tests.skipped === 0 && stats.coverage && stats.coverage.lines >= 50 ? `<div class="success">✅ All tests passing and coverage meets threshold!</div>` : ""}
     </div>
 
-    ${history.runs.length >= 2 ? `
+    ${
+      history.runs.length >= 2
+        ? `
     <div class="chart">
       <h3>Historical Trends (Last 10 Runs)</h3>
       <table>
@@ -465,32 +419,37 @@ function generateHtmlReport(stats, history) {
           </tr>
         </thead>
         <tbody>
-          ${history.runs.slice(-10).reverse().map(run => `
+          ${history.runs
+            .slice(-10)
+            .reverse()
+            .map(
+              (run) => `
             <tr>
               <td>${new Date(run.timestamp).toLocaleDateString()}</td>
-              <td>${run.coverage ? run.coverage.lines.toFixed(1) + '%' : 'N/A'}</td>
-              <td>${run.tests ? run.tests.total : 'N/A'}</td>
-              <td>${run.tests ? run.tests.passed : 'N/A'}</td>
-              <td>${run.tests ? run.tests.failed : 'N/A'}</td>
-              <td>${run.tests ? run.tests.skipped : 'N/A'}</td>
+              <td>${run.coverage ? `${run.coverage.lines.toFixed(1)}%` : "N/A"}</td>
+              <td>${run.tests ? run.tests.total : "N/A"}</td>
+              <td>${run.tests ? run.tests.passed : "N/A"}</td>
+              <td>${run.tests ? run.tests.failed : "N/A"}</td>
+              <td>${run.tests ? run.tests.skipped : "N/A"}</td>
               <td>${run.executionTime}s</td>
             </tr>
-          `).join('')}
+          `
+            )
+            .join("")}
         </tbody>
       </table>
     </div>
-    ` : ''}
+    `
+        : ""
+    }
 
     <p class="timestamp">Generated on ${new Date().toLocaleString()}</p>
   </div>
 </body>
 </html>`;
 
-  const reportPath = path.join(METRICS_DIR, 'dashboard.html');
+  const reportPath = path.join(METRICS_DIR, "dashboard.html");
   fs.writeFileSync(reportPath, html);
-
-  console.log(`\n✅ HTML report generated: ${reportPath}`);
-  console.log(`   Open in browser: file://${reportPath}\n`);
 }
 
 /**
@@ -500,18 +459,18 @@ function main() {
   const args = process.argv.slice(2);
   const command = args[0];
 
-  if (command === 'collect') {
+  if (command === "collect") {
     // Collect new metrics
     let stats;
     let testFailed = false;
-    
+
     try {
       stats = collectTestMetrics();
     } catch (error) {
       testFailed = true;
-      console.error('\n❌ Test execution failed:', error.message);
-      console.error('⚠️  Attempting to collect partial metrics...\n');
-      
+      console.error("\n❌ Test execution failed:", error.message);
+      console.error("⚠️  Attempting to collect partial metrics...\n");
+
       // Try to extract coverage even if tests failed
       const coverage = extractCoverageData();
       stats = {
@@ -533,7 +492,7 @@ function main() {
         },
       };
     }
-    
+
     const history = loadHistory();
 
     history.runs.push(stats);
@@ -547,46 +506,33 @@ function main() {
 
     displayDashboard(stats, history);
     generateHtmlReport(stats, history);
-    
+
     // Exit with error code if tests failed
     if (testFailed) {
-      console.error('\n❌ Exiting with error code due to test failures');
+      console.error("\n❌ Exiting with error code due to test failures");
       process.exit(1);
     }
-  } else if (command === 'show') {
+  } else if (command === "show") {
     // Show current metrics without running tests
     const history = loadHistory();
 
     if (history.runs.length === 0) {
-      console.log('No metrics data available. Run "npm run test:metrics:collect" first.');
       return;
     }
 
     const latest = history.runs[history.runs.length - 1];
     displayDashboard(latest, history);
-  } else if (command === 'report') {
+  } else if (command === "report") {
     // Generate HTML report only
     const history = loadHistory();
 
     if (history.runs.length === 0) {
-      console.log('No metrics data available. Run "npm run test:metrics:collect" first.');
       return;
     }
 
     const latest = history.runs[history.runs.length - 1];
     generateHtmlReport(latest, history);
   } else {
-    console.log('Test Metrics Dashboard');
-    console.log('');
-    console.log('Commands:');
-    console.log('  collect  - Run tests and collect metrics');
-    console.log('  show     - Display current metrics');
-    console.log('  report   - Generate HTML report');
-    console.log('');
-    console.log('Examples:');
-    console.log('  npm run test:metrics:collect');
-    console.log('  npm run test:metrics:show');
-    console.log('  npm run test:metrics:report');
   }
 }
 

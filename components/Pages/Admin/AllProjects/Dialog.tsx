@@ -1,10 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, ReactNode, useState } from "react";
+
 import { Dialog, Transition } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/solid";
-import { cn } from "@/utilities/tailwind";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { type FC, Fragment, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ReadMore } from "@/utilities/ReadMore";
 
 type ProjectDescriptionDialogProps = {
@@ -21,8 +20,7 @@ type ProjectDescriptionDialogProps = {
   fundingPath?: string;
 };
 
-const labelClass =
-  "text-lg font-bold leading-6 text-gray-900 dark:text-zinc-100";
+const labelClass = "text-lg font-bold leading-6 text-gray-900 dark:text-zinc-100";
 const valueClass = "text-sm text-gray-600 dark:text-zinc-300";
 
 export const ProjectDescriptionDialog: FC<ProjectDescriptionDialogProps> = ({
@@ -136,14 +134,9 @@ export const ProjectDescriptionDialog: FC<ProjectDescriptionDialogProps> = ({
                     <div className="flex flex-col gap-y-2 mt-8">
                       {stats.map((stat) =>
                         stat.value ? (
-                          <div
-                            className="flex flex-col gap-y-2"
-                            key={stat.label}
-                          >
-                            <label className={labelClass}>{stat.label}</label>
-                            <ReadMore markdownClass={valueClass}>
-                              {stat.value}
-                            </ReadMore>
+                          <div className="flex flex-col gap-y-2" key={stat.label}>
+                            <div className={labelClass}>{stat.label}</div>
+                            <ReadMore markdownClass={valueClass}>{stat.value}</ReadMore>
                           </div>
                         ) : null
                       )}
