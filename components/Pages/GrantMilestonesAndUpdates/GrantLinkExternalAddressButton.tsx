@@ -109,9 +109,8 @@ export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonPr
                     <h2 className="text-2xl font-bold leading-6">Link Octant Address</h2>
                     <p className="text-md text-gray-500 dark:text-gray-400 mt-2">
                       Please add the Ethereum account address you used for the &quot;
-                      {grant.details?.data?.title}&quot; in Octant. This will enable Octant to
-                      retrieve your {PROJECT_NAME} profile data and display it within the Octant
-                      app.
+                      {grant.details?.title}&quot; in Octant. This will enable Octant to retrieve
+                      your {PROJECT_NAME} profile data and display it within the Octant app.
                     </p>
                   </Dialog.Title>
                   <div className="max-h-[60vh] flex flex-col gap-2 mt-8 overflow-y-auto">

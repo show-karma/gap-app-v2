@@ -99,10 +99,10 @@ export function SearchGrantProgram({
     if (
       isEditing &&
       allPrograms?.length > 0 &&
-      grantToEdit?.details?.data?.programId &&
+      grantToEdit?.details?.programId &&
       !hasAttemptedAutoSelect
     ) {
-      const editingProgramId = grantToEdit.details.data.programId.split("_")[0];
+      const editingProgramId = grantToEdit.details.programId.split("_")[0];
       const matchingProgram = allPrograms.find(
         (program: GrantProgram) => program.programId === editingProgramId
       );

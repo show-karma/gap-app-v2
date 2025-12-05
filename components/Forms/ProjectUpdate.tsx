@@ -3,7 +3,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as Popover from "@radix-ui/react-popover";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { type IProjectUpdate, ProjectUpdate } from "@show-karma/karma-gap-sdk";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { FC } from "react";
@@ -107,7 +106,7 @@ const GrantSearchDropdown: FC<{
   onSelect: (grantId: string) => void;
   selected: string[];
   className?: string;
-  project?: IProjectResponse | ProjectResponse;
+  project?: ProjectResponse;
 }> = ({ grants, onSelect, selected, className, project }) => {
   const [open, setOpen] = useState(false);
 
@@ -182,9 +181,7 @@ const GrantSearchDropdown: FC<{
 
       <div className="flex w-full h-full">
         <ExternalLink
-          href={PAGES.PROJECT.SCREENS.NEW_GRANT(
-            (project as ProjectResponse)?.details?.slug || project?.uid || ""
-          )}
+          href={PAGES.PROJECT.SCREENS.NEW_GRANT(project?.details?.slug || project?.uid || "")}
           className="text-sm h-full w-full px-2 py-2 rounded bg-zinc-700 text-white text-center hover:bg-zinc-600 transition-colors"
         >
           Add Grant

@@ -154,10 +154,10 @@ export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate })
                         grant.uid
                       )}
                       className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                      aria-label={`View grant: ${grant.details?.data?.title || grant.uid}`}
+                      aria-label={`View grant: ${grant.details?.title || grant.uid}`}
                       tabIndex={0}
                     >
-                      {grant.details?.data?.title || grant.uid}
+                      {grant.details?.title || grant.uid}
                     </ExternalLink>
                   </div>
                 ))}

@@ -57,7 +57,6 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { gapSupportedNetworks } from "@/utilities/network";
-import { getLinkByType, normalizeProjectData } from "@/utilities/normalizeProjectData";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
@@ -170,63 +169,48 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   previousContacts,
   useEditModalStore = false, // Default to false for create mode
 }) => {
-  /**
-   * V2 Project Structure:
-   *
-   * This component uses the V2 ProjectResponse structure:
-   * - details.title, details.slug, details.description, etc.
-   * - owner instead of recipient
-   *
-   * The SDK methods (new Project(), new ProjectDetails(), etc.) still
-   * expect V1 structure when creating/updating projects, so we convert
-   * from V2 to V1 when calling SDK methods.
-   */
   const dataToUpdate = useMemo(() => {
     if (!projectToUpdate) return undefined;
 
-    // Use normalization helper to handle V1/V2 differences
-    const normalized = normalizeProjectData(projectToUpdate);
-    if (!normalized) return undefined;
+    const { details } = projectToUpdate;
+    const links = details?.links || [];
+    const getLinkUrl = (type: string) => links.find((l) => l.type === type)?.url || "";
 
     return {
       chainID: projectToUpdate.chainID,
-      description: normalized.description,
-      title: normalized.title,
-      problem: normalized.problem,
-      solution: normalized.solution,
-      missionSummary: normalized.missionSummary,
-      locationOfImpact: normalized.locationOfImpact,
-      imageURL: normalized.imageURL,
-      twitter: getLinkByType(normalized.links, "twitter"),
-      github: getLinkByType(normalized.links, "github"),
-      discord: getLinkByType(normalized.links, "discord"),
-      website: getLinkByType(normalized.links, "website"),
-      linkedin: getLinkByType(normalized.links, "linkedin"),
-      pitchDeck: getLinkByType(normalized.links, "pitchDeck"),
-      demoVideo: getLinkByType(normalized.links, "demoVideo"),
-      farcaster: getLinkByType(normalized.links, "farcaster"),
-      profilePicture: normalized.imageURL,
-      tags: normalized.tags?.map((tag) => (typeof tag === "string" ? tag : tag.name)),
-      recipient: normalized.recipient,
-      businessModel: normalized.businessModel,
-      stageIn: normalized.stageIn,
-      raisedMoney: normalized.raisedMoney,
-      pathToTake: normalized.pathToTake,
+      description: details?.description || "",
+      title: details?.title || "",
+      problem: details?.problem,
+      solution: details?.solution,
+      missionSummary: details?.missionSummary,
+      locationOfImpact: details?.locationOfImpact,
+      imageURL: details?.logoUrl,
+      twitter: getLinkUrl("twitter"),
+      github: getLinkUrl("github"),
+      discord: getLinkUrl("discord"),
+      website: getLinkUrl("website"),
+      linkedin: getLinkUrl("linkedin"),
+      pitchDeck: getLinkUrl("pitchDeck"),
+      demoVideo: getLinkUrl("demoVideo"),
+      farcaster: getLinkUrl("farcaster"),
+      profilePicture: details?.logoUrl,
+      tags: details?.tags,
+      recipient: projectToUpdate.owner,
+      businessModel: details?.businessModel,
+      stageIn: details?.stageIn,
+      raisedMoney: details?.raisedMoney,
+      pathToTake: details?.pathToTake,
     };
   }, [projectToUpdate]);
 
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
   const [customLinks, setCustomLinks] = useState<CustomLink[]>(() => {
-    // Initialize custom links from project data if editing
-    const normalized = normalizeProjectData(projectToUpdate);
-    if (normalized?.links) {
-      return normalized.links.filter(isCustomLink).map((link: any, index: number) => ({
-        id: `custom-${index}`,
-        name: link.name || "",
-        url: link.url,
-      }));
-    }
-    return [];
+    const links = projectToUpdate?.details?.links || [];
+    return links.filter(isCustomLink).map((link: any, index: number) => ({
+      id: `custom-${index}`,
+      name: link.name || "",
+      url: link.url,
+    }));
   });
 
   // Logo upload state management

@@ -147,8 +147,8 @@ export const generateGrantOverviewMetadata = (
   const projectTitle = getProjectTitle(project);
   return generateProjectMetadata(project, {
     projectId,
-    title: `${grant.details?.data?.title} Grant Overview | ${projectTitle} | ${PROJECT_NAME}`,
-    description: cleanMarkdownForPlainText(grant.details?.data?.description || "", 160),
+    title: `${grant.details?.title} Grant Overview | ${projectTitle} | ${PROJECT_NAME}`,
+    description: cleanMarkdownForPlainText(grant.details?.description || "", 160),
   });
 };
 
@@ -160,8 +160,8 @@ export const generateGrantMilestonesMetadata = (
   const projectTitle = getProjectTitle(project);
   return generateProjectMetadata(project, {
     projectId,
-    title: `${projectTitle} - Milestones and Updates for ${grant.details?.data?.title} | ${PROJECT_NAME}`,
-    description: `View all milestones and updates by ${projectTitle} for ${grant.details?.data?.title} grant.`,
+    title: `${projectTitle} - Milestones and Updates for ${grant.details?.title} | ${PROJECT_NAME}`,
+    description: `View all milestones and updates by ${projectTitle} for ${grant.details?.title} grant.`,
   });
 };
 
@@ -173,8 +173,8 @@ export const generateGrantImpactCriteriaMetadata = (
   const projectTitle = getProjectTitle(project);
   return generateProjectMetadata(project, {
     projectId,
-    title: `Impact Criteria for ${grant.details?.data?.title} Grant | ${projectTitle} | ${PROJECT_NAME}`,
-    description: `Impact criteria defined by ${projectTitle} for ${grant.details?.data?.title} grant.`,
+    title: `Impact Criteria for ${grant.details?.title} Grant | ${projectTitle} | ${PROJECT_NAME}`,
+    description: `Impact criteria defined by ${projectTitle} for ${grant.details?.title} grant.`,
   });
 };
 

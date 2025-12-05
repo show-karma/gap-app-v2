@@ -117,9 +117,7 @@ export const fetchMilestoneInstance = async ({
     throw new Error("Failed to fetch project data");
   }
 
-  const grantInstance = fetchedProject.grants?.find(
-    (g: any) => g.details?.programId === programId || g.details?.data?.programId === programId
-  );
+  const grantInstance = fetchedProject.grants?.find((g: any) => g.details?.programId === programId);
 
   if (!grantInstance) {
     throw new Error("Grant not found");

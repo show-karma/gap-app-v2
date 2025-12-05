@@ -13,12 +13,10 @@ export const projectToGrant = (project: Project): GrantResponse => {
       communityUID: "",
     },
     details: {
-      data: {
-        title: project.grantNames?.[0] || "Grant",
-        description: project.details.description,
-        selectedTrackIds: [],
-        programId: "",
-      },
+      title: project.grantNames?.[0] || "Grant",
+      description: project.details.description,
+      selectedTrackIds: [],
+      programId: "",
     },
     project: {
       uid: project.uid,
@@ -31,11 +29,10 @@ export const projectToGrant = (project: Project): GrantResponse => {
     },
     community: {
       uid: "",
+      chainID: 0,
       details: {
-        data: {
-          name: "",
-          description: "",
-        },
+        name: "",
+        description: "",
       },
     },
     members: project.members.map((member) => ({
@@ -47,18 +44,15 @@ export const projectToGrant = (project: Project): GrantResponse => {
       uid: `milestone-${index}`,
       completed: index < Math.floor((project.percentCompleted / 100) * project.numMilestones),
       createdAt: project.createdAt,
-      data: {
-        title: `Milestone ${index + 1}`,
-        description: "",
-      },
+      title: `Milestone ${index + 1}`,
+      description: "",
     })),
     updates: Array.from({ length: project.numUpdates }, (_, index) => ({
       uid: `update-${index}`,
       createdAt: project.createdAt,
-      data: {
-        title: `Update ${index + 1}`,
-        text: "",
-      },
+      title: `Update ${index + 1}`,
+      text: "",
+      verified: false,
     })),
     categories: project.categories || [],
     chainID: 0,

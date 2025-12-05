@@ -6,7 +6,6 @@ import { ProjectGrantsImpactLoading } from "../../Project/Loading/Grants/Impact"
 export const GrantImpactCriteria = () => {
   const { grant } = useGrantStore();
   if (!grant) return <ProjectGrantsImpactLoading />;
-  // Grants are still using v1 structure (details.data.*) since we're using v1 endpoint
   const questions = grant?.details?.questions;
   return (
     <div className="space-y-5 max-w-prose">

@@ -154,7 +154,7 @@ export async function fetchProjectGrantMilestones(
 
   // Use the grant fetched with completed status, or fallback to finding it in project.grants
   const grant =
-    grantWithCompleted || project.grants?.find((g) => g.details?.data?.programId === programId);
+    grantWithCompleted || project.grants?.find((g) => g.details?.programId === programId);
 
   return {
     project,

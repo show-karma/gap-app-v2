@@ -136,7 +136,7 @@ export const GrantTitleDropdown: FC<{
             {selectedProgram?.metadata?.title
               ? selectedProgram.metadata.title
               : grantToEdit
-                ? grantToEdit?.details?.data?.title
+                ? grantToEdit?.details?.title
                 : `${prefixUnselected} ${type}`}
           </p>
           <ChevronDownIcon className="h-4 w-4" />
@@ -264,7 +264,7 @@ export const GrantTitleDropdown: FC<{
                     style={{
                       display:
                         grantToEdit && !selectedProgram
-                          ? grantToEdit?.details?.data?.title === item?.metadata?.title
+                          ? grantToEdit?.details?.title === item?.metadata?.title
                             ? "block"
                             : "none"
                           : selectedProgram?.metadata?.title === item?.metadata?.title

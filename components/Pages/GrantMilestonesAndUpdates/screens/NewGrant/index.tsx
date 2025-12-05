@@ -84,18 +84,18 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
 
       // Populate form data from grantToEdit
       updateFormData({
-        title: grantToEdit?.details?.data?.title || "",
-        amount: grantToEdit?.details?.data?.amount || "",
+        title: grantToEdit?.details?.title || "",
+        amount: grantToEdit?.details?.amount || "",
         community: grantToEdit?.data?.communityUID || "",
         recipient: grantToEdit?.recipient || selectedProject?.owner || "",
-        linkToProposal: grantToEdit?.details?.data?.proposalURL || "",
-        description: grantToEdit?.details?.data?.description || "",
-        programId: grantToEdit?.details?.data?.programId,
-        startDate: grantToEdit?.details?.data?.startDate
-          ? new Date(grantToEdit?.details?.data?.startDate * 1000)
+        linkToProposal: grantToEdit?.details?.proposalURL || "",
+        description: grantToEdit?.details?.description || "",
+        programId: grantToEdit?.details?.programId,
+        startDate: grantToEdit?.details?.startDate
+          ? new Date((grantToEdit?.details?.startDate as unknown as number) * 1000)
           : undefined,
-        questions: grantToEdit?.details?.data?.questions || [],
-        selectedTrackIds: grantToEdit?.details?.data?.selectedTrackIds || [],
+        questions: grantToEdit?.details?.questions || [],
+        selectedTrackIds: grantToEdit?.details?.selectedTrackIds || [],
       });
 
       // Initialize milestones if they exist
