@@ -143,7 +143,11 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
                   Proof of Work
                 </p>
                 <a
-                  href={completionProof}
+                  href={
+                    completionProof.includes("http")
+                      ? completionProof
+                      : `https://${completionProof}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-brand-blue hover:underline break-all"
@@ -281,7 +285,11 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
                         )}
                         {deliverable.proof && (
                           <a
-                            href={deliverable.proof}
+                            href={
+                              deliverable.proof.includes("http")
+                                ? deliverable.proof
+                                : `https://${deliverable.proof}`
+                            }
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-brand-blue hover:underline text-sm break-all"
@@ -316,7 +324,11 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
                             </p>
                             {metric.datapoints[0].proof && (
                               <a
-                                href={metric.datapoints[0].proof}
+                                href={
+                                  metric.datapoints[0].proof.includes("http")
+                                    ? metric.datapoints[0].proof
+                                    : `https://${metric.datapoints[0].proof}`
+                                }
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-brand-blue hover:underline text-sm break-all"

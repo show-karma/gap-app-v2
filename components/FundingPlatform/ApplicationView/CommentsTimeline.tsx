@@ -14,18 +14,24 @@ import pluralize from "pluralize";
 import { type FC, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { Badge } from "@/components/ui/badge";
+import { type EditType, editTypeConfig } from "@/constants/editTypeConfig";
 import type {
   ApplicationComment,
   FundingApplicationStatusV2,
   IApplicationVersion,
+  IFormSchema,
+  IFundingApplication,
   IStatusHistoryEntry,
 } from "@/types/funding-platform";
+import { createFieldLabelMap, getFieldLabel } from "@/utilities/fieldLabelMapping";
 import { cn } from "@/utilities/tailwind";
 import CommentInput from "./CommentInput";
 import CommentItem from "./CommentItem";
 
 interface CommentsTimelineProps {
   applicationId: string;
+  application?: IFundingApplication;
   comments: ApplicationComment[];
   statusHistory: IStatusHistoryEntry[];
   versionHistory?: IApplicationVersion[];
@@ -37,6 +43,7 @@ interface CommentsTimelineProps {
   onCommentDelete?: (commentId: string) => Promise<void>;
   onVersionClick?: (versionId: string) => void;
   isLoading?: boolean;
+  formSchema?: IFormSchema; // Optional: for mapping field IDs to labels
 }
 
 type TimelineItem = {
@@ -80,8 +87,43 @@ const labelMap = {
   rejected: "Rejected",
 };
 
+// Helper function to determine edit type
+const getEditType = (version: IApplicationVersion, application?: IFundingApplication): EditType => {
+  // If no submittedBy address, can't determine - default to applicant
+  if (!version.submittedBy) {
+    return "applicant";
+  }
+
+  // If no ownerAddress in application, can't compare - default to applicant
+  if (!application?.ownerAddress) {
+    // Log warning for debugging (development only)
+    if (process.env.NODE_ENV === "development") {
+      console.warn("Cannot determine edit type: application.ownerAddress is missing", {
+        versionId: version.id,
+        submittedBy: version.submittedBy,
+      });
+    }
+    return "applicant";
+  }
+
+  const submittedByLower = version.submittedBy.toLowerCase().trim();
+  const ownerAddressLower = application.ownerAddress.toLowerCase().trim();
+
+  // If addresses match, it's an applicant edit
+  if (submittedByLower === ownerAddressLower) {
+    return "applicant";
+  }
+
+  // If addresses don't match, it's an admin or reviewer edit
+  // Note: We can't distinguish admin vs reviewer from just the address
+  // Backend should ideally add an editedByRole field to IApplicationVersion
+  // For now, we'll show as 'admin' for any non-applicant edit
+  return "admin";
+};
+
 const CommentsTimeline: FC<CommentsTimelineProps> = ({
   applicationId: _applicationId, // Unused but kept for interface compatibility
+  application,
   comments = [],
   statusHistory = [],
   versionHistory = [],
@@ -93,8 +135,12 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
   onCommentDelete,
   onVersionClick,
   isLoading = false,
-}) => {
+  formSchema,
+}: CommentsTimelineProps) => {
   const [isAddingComment, setIsAddingComment] = useState(false);
+
+  // Create field labels mapping from form schema using shared utility
+  const fieldLabels = useMemo(() => createFieldLabelMap(formSchema), [formSchema]);
 
   // Combine comments, status history, and version history into a unified timeline
   const timelineItems = useMemo(() => {
@@ -244,32 +290,55 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
 
   const renderVersionItem = (version: IApplicationVersion) => {
     const isInitialVersion = version.versionNumber === 0;
+    const editType = !isInitialVersion && application ? getEditType(version, application) : null;
+
+    const config = editType ? editTypeConfig[editType] : null;
+    const EditIcon = config?.icon || PencilSquareIcon;
 
     return (
       <div className="flex space-x-3">
         <div className="flex-shrink-0">
-          <span className="h-8 w-8 rounded-full flex items-center justify-center bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400">
+          <span
+            className={`h-8 w-8 rounded-full flex items-center justify-center ${
+              isInitialVersion
+                ? "bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400"
+                : config?.color ||
+                  "bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400"
+            }`}
+          >
             {isInitialVersion ? (
               <DocumentTextIcon className="h-5 w-5" />
             ) : (
-              <PencilSquareIcon className="h-5 w-5" />
+              <EditIcon className="h-5 w-5" />
             )}
           </span>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                {isInitialVersion ? "Initial application submitted" : "Application edited"}
-                {version.submittedBy && (
-                  <span className="ml-1 text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {isInitialVersion ? "Initial application submitted" : "Application edited"}
+                </p>
+                {editType && config && (
+                  <Badge variant={config.badgeVariant} className={config.badgeClassName}>
+                    {config.label}
+                  </Badge>
+                )}
+              </div>
+              {version.submittedBy && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {formatDate(version.createdAt)} • Version {version.versionNumber}
+                  <span className="ml-2 text-gray-400 dark:text-gray-500">
                     by {version.submittedBy.slice(0, 6)}...{version.submittedBy.slice(-4)}
                   </span>
-                )}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {formatDate(version.createdAt)} • Version {version.versionNumber}
-              </p>
+                </p>
+              )}
+              {!version.submittedBy && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {formatDate(version.createdAt)} • Version {version.versionNumber}
+                </p>
+              )}
             </div>
             {onVersionClick && (
               <button
@@ -290,7 +359,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
                     (
                     {version.diffFromPrevious.changedFields
                       .slice(0, 2)
-                      .map((f) => f.fieldLabel)
+                      .map((f) => getFieldLabel(f.fieldLabel, fieldLabels))
                       .join(", ")}
                     {version.diffFromPrevious.changedFields.length > 2 &&
                       `, +${version.diffFromPrevious.changedFields.length - 2} more`}
@@ -355,7 +424,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
       ) : (
         <div className="flow-root">
           <ul className="">
-            {timelineItems.map((item, idx) => {
+            {timelineItems.map((item: TimelineItem, idx: number) => {
               const isLast = idx === timelineItems.length - 1;
               const isLatestStatus =
                 item.type === "status" &&

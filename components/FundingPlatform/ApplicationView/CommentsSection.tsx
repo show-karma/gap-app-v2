@@ -1,11 +1,16 @@
 "use client";
 
 import type { FC } from "react";
-import type { IApplicationVersion } from "@/types/funding-platform";
+import type {
+  IApplicationVersion,
+  IFormSchema,
+  IFundingApplication,
+} from "@/types/funding-platform";
 import CommentsTimeline from "./CommentsTimeline";
 
 interface CommentsSectionProps {
   applicationId: string;
+  application?: IFundingApplication;
   comments: any[];
   statusHistory?: any[];
   versionHistory?: IApplicationVersion[];
@@ -17,10 +22,12 @@ interface CommentsSectionProps {
   onCommentDelete: (commentId: string) => Promise<void>;
   onVersionClick?: (versionId: string) => void;
   isLoading: boolean;
+  formSchema?: IFormSchema; // Optional: for mapping field IDs to labels
 }
 
 const CommentsSection: FC<CommentsSectionProps> = ({
   applicationId,
+  application,
   comments,
   statusHistory = [],
   versionHistory = [],
@@ -32,11 +39,13 @@ const CommentsSection: FC<CommentsSectionProps> = ({
   onCommentDelete,
   onVersionClick,
   isLoading,
+  formSchema,
 }) => {
   return (
     <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <CommentsTimeline
         applicationId={applicationId}
+        application={application}
         comments={comments}
         statusHistory={statusHistory}
         versionHistory={versionHistory}
@@ -48,6 +57,7 @@ const CommentsSection: FC<CommentsSectionProps> = ({
         onCommentDelete={onCommentDelete}
         onVersionClick={onVersionClick}
         isLoading={isLoading}
+        formSchema={formSchema}
       />
     </div>
   );
