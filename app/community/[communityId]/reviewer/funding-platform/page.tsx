@@ -462,7 +462,7 @@ export default function ReviewerFundingPlatformPage() {
                       Deadline:{" "}
                       {program.applicationConfig?.formSchema?.settings?.applicationDeadline
                         ? formatDate(program.applicationConfig.formSchema.settings.applicationDeadline)
-                        : ""}
+                        : "N/A"}
                     </span>
                   </div>
 
