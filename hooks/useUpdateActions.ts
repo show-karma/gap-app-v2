@@ -55,7 +55,7 @@ export const useUpdateActions = (update: UpdateType) => {
       await Promise.all([
         // Milestone-related queries
         queryClient.invalidateQueries({
-          queryKey: ["all-milestones", projectId],
+          queryKey: ["project-updates", projectId],
         }),
         queryClient.invalidateQueries({
           queryKey: ["projectMilestones", project?.uid],

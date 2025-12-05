@@ -148,11 +148,11 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
       }
     } catch (error: any) {
       errorManager(
-        MESSAGES.GRANT.DELETE.ERROR(grant.details?.data?.title || shortAddress(grant.uid)),
+        MESSAGES.GRANT.DELETE.ERROR(grant.details?.title || shortAddress(grant.uid)),
         error,
         { grantUID: grant.uid, address },
         {
-          error: MESSAGES.GRANT.DELETE.ERROR(grant.details?.data?.title || shortAddress(grant.uid)),
+          error: MESSAGES.GRANT.DELETE.ERROR(grant.details?.title || shortAddress(grant.uid)),
         }
       );
     } finally {
@@ -172,8 +172,8 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
       }}
       title={
         <p className="font-normal">
-          Are you sure you want to delete{" "}
-          <b>{grant.details?.data?.title || shortAddress(grant.uid)}</b> grant?
+          Are you sure you want to delete <b>{grant.details?.title || shortAddress(grant.uid)}</b>{" "}
+          grant?
         </p>
       }
     />

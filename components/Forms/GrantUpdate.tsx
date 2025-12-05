@@ -186,10 +186,10 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
                   )
                 );
                 openShareDialog({
-                  modalShareText: `🎉 Update posted for your ${grant.details?.data?.title}!`,
-                  modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building—we’re here for it. 💪`,
+                  modalShareText: `🎉 Update posted for your ${grant.details?.title}!`,
+                  modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building—we're here for it. 💪`,
                   shareText: SHARE_TEXTS.GRANT_UPDATE(
-                    grant.details?.data?.title as string,
+                    grant.details?.title as string,
                     project.uid,
                     grantToUpdate.uid
                   ),

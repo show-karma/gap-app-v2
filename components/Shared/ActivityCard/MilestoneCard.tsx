@@ -161,7 +161,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
               // Invalidate all relevant caches
               await Promise.all([
                 queryClient.invalidateQueries({
-                  queryKey: ["all-milestones", projectId],
+                  queryKey: ["project-updates", projectId],
                 }),
                 queryClient.invalidateQueries({
                   queryKey: ["projectMilestones", project?.uid],
@@ -188,7 +188,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
               // Refresh the activities list when canceling editing
               await Promise.all([
                 queryClient.invalidateQueries({
-                  queryKey: ["all-milestones", projectId],
+                  queryKey: ["project-updates", projectId],
                 }),
                 queryClient.invalidateQueries({
                   queryKey: ["projectMilestones", project?.uid],

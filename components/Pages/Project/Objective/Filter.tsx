@@ -36,7 +36,7 @@ export const ObjectiveFilter = () => {
         onChange={(value) => {
           changeStatus(value);
           queryClient.invalidateQueries({
-            queryKey: ["all-milestones", projectId],
+            queryKey: ["project-updates", projectId],
           });
         }}
       >

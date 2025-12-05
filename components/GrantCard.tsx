@@ -68,9 +68,9 @@ const GrantCardContent = ({
 }: GrantCardProps) => {
   const { pending } = useLinkStatus();
 
-  const selectedTrackIds = grant.details?.data?.selectedTrackIds as string[] | undefined;
-  const communityId = grant.data?.communityUID;
-  const programId = grant.details?.data?.programId;
+  const selectedTrackIds = grant.details?.selectedTrackIds as string[] | undefined;
+  const communityId = grant.communityUID;
+  const programId = grant.details?.programId;
 
   // Extract the base programId if it includes a chainId suffix (format: programId_chainId)
   const _baseProgramId = programId?.includes("_") ? programId.split("_")[0] : programId;

@@ -14,14 +14,12 @@
  * - UI state changes (button disabled states, spinner visibility, text changes)
  */
 
-import type {
-  GrantResponse,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 import toast from "react-hot-toast";
 import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
 import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
+import type { GrantResponse } from "@/types/v2/grant";
 
 // Mock dependencies
 jest.mock("wagmi", () => ({
@@ -151,9 +149,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
   const mockProject: IProjectResponse = {
     uid: "project-456",
     details: {
-      data: {
-        slug: "test-project",
-      },
+      slug: "test-project",
     },
   } as any;
 
