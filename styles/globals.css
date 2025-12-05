@@ -471,4 +471,12 @@ body .react-hot-toast * {
   body .react-hot-toast {
     max-width: calc(100vw - 32px);
   }
+  
+/* Prevent scrollbar from overlapping textarea in MarkdownEditor */
+.markdown-editor-wrapper .w-md-editor-text {
+  padding-right: 1rem !important;
+}
+
+.markdown-editor-wrapper .w-md-editor-text textarea {
+  padding-right: 0.5rem !important;
 }

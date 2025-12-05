@@ -47,7 +47,8 @@ export interface IFormField {
   options?: string[];
   validation?: {
     min?: number;
-    max?: number;
+    max?: number; // For number fields
+    maxLength?: number; // For text/textarea fields (character limit)
     pattern?: string;
     message?: string;
     maxMilestones?: number;
@@ -108,6 +109,7 @@ export interface IFundingApplication {
   programId: string;
   chainID: number; // Changed from chainId to chainID to match V2
   applicantEmail: string; // Changed from applicantAddress to applicantEmail
+  ownerAddress: string; // Wallet address of the person who submitted the application
   applicationData: Record<string, any>;
   postApprovalData?: Record<string, any>; // Optional post-approval data
   status: FundingApplicationStatusV2;
