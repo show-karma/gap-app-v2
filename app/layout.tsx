@@ -41,7 +41,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           <PrivyProviderWrapper>
             <PermissionsProvider />
-            <Toaster />
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                className: "toast-content",
+                style: {
+                  maxWidth: "500px",
+                  wordWrap: "break-word",
+                  overflowWrap: "anywhere",
+                  wordBreak: "break-word",
+                },
+                duration: 4000,
+              }}
+              containerStyle={{
+                maxWidth: "500px",
+              }}
+            />
             <StepperDialog />
             <Suspense fallback={null}>
               <ContributorProfileDialog />
