@@ -1,22 +1,22 @@
-import { useState, useCallback } from "react";
-import { useAccount } from "wagmi";
+import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { UX_CONSTANTS } from "@/constants/donation";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import { useDonationTransfer } from "@/hooks/useDonationTransfer";
-import { parseDonationError } from "@/utilities/donations/errorMessages";
-import { UX_CONSTANTS } from "@/constants/donation";
 import { useDonationCart } from "@/store/donationCart";
-import {
-  type DonationPayment,
-  validatePayoutAddresses,
-  getTargetChainId,
-  ensureCorrectNetwork,
-  waitForWalletSync,
-  createCompletedDonations,
-} from "@/utilities/donations/donationExecution";
-import { useCreateDonation } from "./useCreateDonation";
-import type { CreateDonationRequest } from "./types";
 import { DonationType } from "@/types/donations";
+import {
+  createCompletedDonations,
+  type DonationPayment,
+  ensureCorrectNetwork,
+  getTargetChainId,
+  validatePayoutAddresses,
+  waitForWalletSync,
+} from "@/utilities/donations/donationExecution";
+import { parseDonationError } from "@/utilities/donations/errorMessages";
+import type { CreateDonationRequest } from "./types";
+import { useCreateDonation } from "./useCreateDonation";
 
 export function useDonationCheckout() {
   const { address, isConnected } = useAccount();
@@ -118,11 +118,7 @@ export function useDonationCheckout() {
 
         // Create completed session record
         const cartState = useDonationCart.getState();
-        const completedDonations = createCompletedDonations(
-          results,
-          payments,
-          cartState.items
-        );
+        const completedDonations = createCompletedDonations(results, payments, cartState.items);
 
         // Save session if we have completed donations
         if (completedDonations.length > 0) {
@@ -166,7 +162,10 @@ export function useDonationCheckout() {
               try {
                 await createDonation(donationRequest);
               } catch (error) {
-                console.error(`Failed to persist donation to backend for project ${payment.projectId}:`, error);
+                console.error(
+                  `Failed to persist donation to backend for project ${payment.projectId}:`,
+                  error
+                );
               }
             })
           ).catch((error) => {

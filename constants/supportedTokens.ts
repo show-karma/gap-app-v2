@@ -117,8 +117,9 @@ const TEST_NETWORKS: Record<number, NetworkConfig> = {
   },
 };
 
-export const SUPPORTED_NETWORKS: Record<number, NetworkConfig> =
-  includeTestNetworks ? TEST_NETWORKS : MAINNET_NETWORKS;
+export const SUPPORTED_NETWORKS: Record<number, NetworkConfig> = includeTestNetworks
+  ? TEST_NETWORKS
+  : MAINNET_NETWORKS;
 
 // Export mainnet chain IDs for reuse
 export const MAINNET_CHAIN_IDS = [1, 10, 42161, 8453, 42220, 137] as const;
@@ -549,9 +550,7 @@ export function getTokenBySymbolAndChain(
   symbol: string,
   chainId: number
 ): SupportedToken | undefined {
-  return SUPPORTED_TOKENS.find(
-    (token) => token.symbol === symbol && token.chainId === chainId
-  );
+  return SUPPORTED_TOKENS.find((token) => token.symbol === symbol && token.chainId === chainId);
 }
 
 export function getAllSupportedChains(): number[] {

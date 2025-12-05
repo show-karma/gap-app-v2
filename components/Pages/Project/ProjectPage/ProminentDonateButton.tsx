@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { SingleProjectDonateModal } from "@/components/Donation/SingleProject/SingleProjectDonateModal";
-import type { Hex } from "viem";
 import Image from "next/image";
+import { useState } from "react";
+import type { Hex } from "viem";
+import { SingleProjectDonateModal } from "@/components/Donation/SingleProject/SingleProjectDonateModal";
+import { Button } from "@/components/ui/button";
 
 interface ProminentDonateButtonProps {
   project: {
@@ -35,22 +35,10 @@ export function ProminentDonateButton({ project }: ProminentDonateButtonProps) {
         </div>
         <div className="flex flex-col items-start flex-1">
           <span className="text-lg font-bold">Support This Project</span>
-          <span className="text-sm text-blue-100">
-            Donate with crypto or card
-          </span>
+          <span className="text-sm text-blue-100">Donate with crypto or card</span>
         </div>
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5l7 7-7 7"
-          />
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
       </button>
 

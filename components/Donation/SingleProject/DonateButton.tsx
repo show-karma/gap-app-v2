@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { SingleProjectDonateModal } from './SingleProjectDonateModal';
-import type { DonateButtonProps } from './types';
+import React, { useCallback, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { SingleProjectDonateModal } from "./SingleProjectDonateModal";
+import type { DonateButtonProps } from "./types";
 
 export const DonateButton = React.memo<DonateButtonProps>(
   ({ projectId, projectTitle, payoutAddress, chainID, className }) => {
@@ -29,7 +29,7 @@ export const DonateButton = React.memo<DonateButtonProps>(
             uid: projectId,
             title: projectTitle,
             payoutAddress,
-            chainID
+            chainID,
           }}
         />
       </>
@@ -37,4 +37,4 @@ export const DonateButton = React.memo<DonateButtonProps>(
   }
 );
 
-DonateButton.displayName = 'DonateButton';
+DonateButton.displayName = "DonateButton";

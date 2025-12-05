@@ -1,18 +1,18 @@
 "use client";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import Image from "next/image";
+import Link from "next/link";
+import { useParams, usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { Hex } from "viem";
+import { SingleProjectDonateModal } from "@/components/Donation/SingleProject/SingleProjectDonateModal";
 import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import formatCurrency from "@/utilities/formatCurrency";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { ProjectOptionsMenu } from "./ProjectOptionsMenu";
-import { SingleProjectDonateModal } from "@/components/Donation/SingleProject/SingleProjectDonateModal";
-import type { Hex } from "viem";
-import Image from "next/image";
 
 export const ProjectNavigator = ({
   hasContactInfo,
@@ -39,9 +39,7 @@ export const ProjectNavigator = ({
     },
     {
       name: "Impact",
-      href: PAGES.PROJECT.IMPACT.ROOT(
-        project?.details?.data?.slug || projectId
-      ),
+      href: PAGES.PROJECT.IMPACT.ROOT(project?.details?.data?.slug || projectId),
     },
     {
       name: "Team",
@@ -62,9 +60,7 @@ export const ProjectNavigator = ({
           ...publicTabs,
           {
             name: "Contact Info",
-            href: PAGES.PROJECT.CONTACT_INFO(
-              project?.details?.data.slug || projectId
-            ),
+            href: PAGES.PROJECT.CONTACT_INFO(project?.details?.data.slug || projectId),
           },
         ]);
       } else {

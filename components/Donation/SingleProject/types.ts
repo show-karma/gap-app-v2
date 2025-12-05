@@ -1,6 +1,6 @@
-import type { Hex } from 'viem';
-import type { SupportedToken } from '@/constants/supportedTokens';
-import { PaymentMethod } from '@/types/donations';
+import type { Hex } from "viem";
+import type { SupportedToken } from "@/constants/supportedTokens";
+import type { PaymentMethod } from "@/types/donations";
 
 export interface SingleProjectDonationState {
   projectId: string;

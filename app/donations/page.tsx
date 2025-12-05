@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useMemo } from 'react';
-import { useAccount } from 'wagmi';
-import { useDonationHistory } from '@/hooks/donation/useDonationHistory';
-import { DonationHistoryList } from './components/DonationHistoryList';
-import type { Hex } from 'viem';
+import React, { useMemo } from "react";
+import type { Hex } from "viem";
+import { useAccount } from "wagmi";
+import { useDonationHistory } from "@/hooks/donation/useDonationHistory";
+import { DonationHistoryList } from "./components/DonationHistoryList";
 
 export default function DonationsPage() {
   const { address } = useAccount();
@@ -17,7 +17,7 @@ export default function DonationsPage() {
 
   const completedCount = useMemo(() => {
     if (!donations) return 0;
-    return donations.filter((d) => d.status === 'completed').length;
+    return donations.filter((d) => d.status === "completed").length;
   }, [donations]);
 
   if (!address) {
@@ -25,9 +25,7 @@ export default function DonationsPage() {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">My Donations</h1>
         <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-600">
-            Please connect your wallet to view your donations
-          </p>
+          <p className="text-gray-600">Please connect your wallet to view your donations</p>
         </div>
       </div>
     );
@@ -84,9 +82,7 @@ export default function DonationsPage() {
         </div>
         <div className="bg-white p-6 rounded-lg border">
           <div className="text-sm text-gray-600">Total Amount</div>
-          <div className="text-2xl font-bold mt-2">
-            {totalDonated.toFixed(4)}
-          </div>
+          <div className="text-2xl font-bold mt-2">{totalDonated.toFixed(4)}</div>
         </div>
       </div>
 

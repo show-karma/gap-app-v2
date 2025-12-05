@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback } from "react";
-import { signMoonPayUrl } from "@/services/moonpay-signature.service";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { signMoonPayUrl } from "@/services/moonpay-signature.service";
 
 /**
  * Custom hook for signing MoonPay widget URLs

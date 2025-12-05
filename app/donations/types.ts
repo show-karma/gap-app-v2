@@ -1,10 +1,10 @@
-import type { DonationApiResponse } from '@/hooks/donation/types';
+import type { DonationApiResponse } from "@/hooks/donation/types";
 
 export interface DonationHistoryFilters {
   dateRange?: { from: Date; to: Date };
   tokenSymbol?: string;
   chainId?: number;
-  donationType?: 'crypto' | 'fiat';
+  donationType?: "crypto" | "fiat";
 }
 
 export interface DonationHistoryItemProps {

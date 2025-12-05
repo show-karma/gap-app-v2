@@ -1,8 +1,8 @@
 import {
-  toMoonPayNetworkName,
+  getAllowedMoonPayCurrencies,
   getMoonPayCurrencyCode,
   isMoonPaySupported,
-  getAllowedMoonPayCurrencies,
+  toMoonPayNetworkName,
 } from "@/utilities/moonpay";
 import * as networkUtils from "@/utilities/network";
 
@@ -63,19 +63,17 @@ describe("moonpay utilities", () => {
 
   describe("getMoonPayCurrencyCode", () => {
     beforeEach(() => {
-      (networkUtils.getChainNameById as jest.Mock).mockImplementation(
-        (chainId: number) => {
-          const mapping: Record<number, string> = {
-            1: "mainnet",
-            10: "optimism",
-            42161: "arbitrum",
-            8453: "base",
-            137: "polygon",
-            42220: "celo",
-          };
-          return mapping[chainId] || "unknown";
-        }
-      );
+      (networkUtils.getChainNameById as jest.Mock).mockImplementation((chainId: number) => {
+        const mapping: Record<number, string> = {
+          1: "mainnet",
+          10: "optimism",
+          42161: "arbitrum",
+          8453: "base",
+          137: "polygon",
+          42220: "celo",
+        };
+        return mapping[chainId] || "unknown";
+      });
     });
 
     it("should return 'eth' for ETH on ethereum mainnet", () => {
@@ -218,19 +216,17 @@ describe("moonpay utilities", () => {
 
   describe("getAllowedMoonPayCurrencies", () => {
     beforeEach(() => {
-      (networkUtils.getChainNameById as jest.Mock).mockImplementation(
-        (chainId: number) => {
-          const mapping: Record<number, string> = {
-            1: "mainnet",
-            10: "optimism",
-            42161: "arbitrum",
-            8453: "base",
-            137: "polygon",
-            42220: "celo",
-          };
-          return mapping[chainId] || "unknown";
-        }
-      );
+      (networkUtils.getChainNameById as jest.Mock).mockImplementation((chainId: number) => {
+        const mapping: Record<number, string> = {
+          1: "mainnet",
+          10: "optimism",
+          42161: "arbitrum",
+          8453: "base",
+          137: "polygon",
+          42220: "celo",
+        };
+        return mapping[chainId] || "unknown";
+      });
     });
 
     it("should return comma-separated list of MoonPay currency codes", () => {
@@ -321,9 +317,7 @@ describe("moonpay utilities", () => {
 
       const currencies = result.split(",");
 
-      expect(
-        currencies.every((c) => typeof c === "string" && c.length > 0)
-      ).toBe(true);
+      expect(currencies.every((c) => typeof c === "string" && c.length > 0)).toBe(true);
     });
   });
 });

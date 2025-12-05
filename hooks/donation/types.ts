@@ -1,9 +1,9 @@
-import { DonationType } from '@/types/donations';
+import type { DonationType } from "@/types/donations";
 
 export enum DonationStatus {
-  PENDING = 'pending',
-  COMPLETED = 'completed',
-  FAILED = 'failed'
+  PENDING = "pending",
+  COMPLETED = "completed",
+  FAILED = "failed",
 }
 
 export interface DonationApiResponse {

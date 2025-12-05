@@ -1,8 +1,9 @@
 "use client";
 
 import { MoonPayBuyWidget } from "@moonpay/moonpay-react";
-import { AlertTriangle, CreditCard } from "lucide-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { AlertTriangle, CreditCard, RefreshCw } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,7 @@ interface MoonPayTransactionProps {
 export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
   ({ isOpen, onClose, project, donorAddress, fiatAmount, defaultCrypto = "ETH" }) => {
     const [isProcessing, setIsProcessing] = useState(true);
+    const [retryCount, setRetryCount] = useState(0);
     const selectedNetwork = toMoonPayNetworkName(project.chainID);
     const currencyCode = getMoonPayCurrencyCode(defaultCrypto, selectedNetwork);
     const getSignature = useMoonPaySignature();
@@ -40,9 +42,15 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
       donorAddressRef.current = donorAddress;
     }, [donorAddress]);
 
-    // Generate a unique key that includes donorAddress to force widget remount
-    // when the donor address changes, ensuring MoonPay receives the correct external IDs
-    const widgetKey = `moonpay-${project.uid}-${donorAddress || "anonymous"}`;
+    const handleRefresh = useCallback(() => {
+      setRetryCount((c) => c + 1);
+    }, []);
+
+    // Generate a unique key that includes donorAddress and retryCount to force widget remount
+    const widgetKey = useMemo(
+      () => `moonpay-${project.uid}-${donorAddress || "anonymous"}-${retryCount}`,
+      [project.uid, donorAddress, retryCount]
+    );
 
     const handleClose = useCallback(() => {
       onClose();
@@ -86,11 +94,23 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
           }}
         >
           <DialogHeader className="px-6 pt-6 pb-4 bg-gradient-to-r from-purple-50 to-white dark:from-purple-950/20 dark:to-background border-b">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-moonpay-purple">
-                <CreditCard className="w-5 h-5 text-white" />
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-moonpay-purple">
+                  <CreditCard className="w-5 h-5 text-white" />
+                </div>
+                <DialogTitle className="text-2xl font-semibold">Pay with Card</DialogTitle>
               </div>
-              <DialogTitle className="text-2xl font-semibold">Pay with Card</DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefresh}
+                className="gap-2 text-muted-foreground hover:text-foreground"
+                title="Refresh widget if stuck"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Refresh
+              </Button>
             </div>
             <DialogDescription className="flex items-center gap-2 text-base">
               <span>Purchase crypto with your debit or credit card</span>
@@ -130,6 +150,7 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
                 baseCurrencyCode="usd"
                 baseCurrencyAmount={fiatAmount.toString()}
                 defaultCurrencyCode={currencyCode}
+                paymentMethod="credit_debit_card"
                 walletAddress={project.payoutAddress}
                 externalCustomerId={donorAddress}
                 externalTransactionId={project.uid}
