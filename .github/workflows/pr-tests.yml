@@ -14,16 +14,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup pnpm
+        run: corepack prepare pnpm@10 --activate
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -60,9 +61,9 @@ jobs:
           script: |
             const fs = require('fs');
             const hasCoverage = '${{ steps.test-summary.outputs.has_coverage }}' === 'true';
-            
+
             let body = '';
-            
+
             if (context.payload.workflow_run && context.payload.workflow_run.conclusion === 'failure') {
               body = `## ❌ Tests Failed\n\nSome tests failed. Please check the workflow logs for details.`;
             } else if ('${{ job.status }}' === 'success') {
@@ -105,23 +106,23 @@ jobs:
             } else {
               body = `## ⚠️ Tests Completed with Issues\n\nPlease check the workflow logs for details.`;
             }
-            
+
             body += `\n---\n*Automated test report*`;
-            
+
             // Find existing comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
+
             const botComment = comments.find(comment =>
               comment.user.type === 'Bot' && 
               (comment.body.includes('All Tests Passed') || 
                comment.body.includes('Tests Failed') ||
                comment.body.includes('Tests Completed with Issues'))
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -148,4 +149,3 @@ jobs:
             test-results.json
           retention-days: 7
           if-no-files-found: ignore
-

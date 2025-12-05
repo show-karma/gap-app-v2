@@ -6,7 +6,7 @@ on:
     branches: ['**']
   workflow_dispatch:
   schedule:
-    - cron: '0 4 * * *'  # Nightly at 4 AM UTC
+    - cron: '0 4 * * *' # Nightly at 4 AM UTC
 
 jobs:
   e2e-tests:
@@ -17,16 +17,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup pnpm
+        run: corepack prepare pnpm@10 --activate
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -70,18 +71,18 @@ jobs:
             const body = '${{ job.status }}' === 'success'
               ? `## ✅ E2E Tests Passed!\n\nAll end-to-end tests completed successfully.`
               : `## ❌ E2E Tests Failed\n\nSome E2E tests failed. Please check the workflow logs and artifacts for details.\n\n**Artifacts available:**\n- Screenshots (on failure)\n- Videos (on failure)`;
-            
+
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
+
             const e2eComment = comments.find(comment =>
               comment.user.type === 'Bot' && 
               comment.body.includes('E2E Tests')
             );
-            
+
             if (e2eComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -97,4 +98,3 @@ jobs:
                 body,
               });
             }
-
