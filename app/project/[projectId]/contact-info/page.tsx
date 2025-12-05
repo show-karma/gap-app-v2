@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { Metadata } from "next";
 import type { Hex } from "viem";
 import ContactInfoPage from "@/components/Pages/Project/ContactInfoPage";
@@ -18,7 +19,10 @@ type Params = Promise<{
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { projectId } = await params;
 
-  const projectInfo = await getMetadata<ProjectV2Response>("project", projectId as Hex);
+  const projectInfo = (await getMetadata<IProjectResponse>(
+    "project",
+    projectId as Hex
+  )) as unknown as ProjectV2Response | null;
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
     return {
