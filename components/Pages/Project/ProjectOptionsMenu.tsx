@@ -13,7 +13,6 @@ import {
   WalletIcon,
 } from "@heroicons/react/24/outline";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { Fragment, useState } from "react";
@@ -186,11 +185,7 @@ export const ProjectOptionsMenu = () => {
             <LinkContractAddressButton
               buttonElement={null}
               buttonClassName={buttonClassName}
-              project={
-                project as IProjectResponse & {
-                  external: Record<string, string[]>;
-                }
-              }
+              project={project}
               onClose={handleLinkContractsDialogClose}
             />
           )}
@@ -198,11 +193,7 @@ export const ProjectOptionsMenu = () => {
             <LinkGithubRepoButton
               buttonElement={null}
               buttonClassName={buttonClassName}
-              project={
-                project as IProjectResponse & {
-                  external: Record<string, string[]>;
-                }
-              }
+              project={project}
               onClose={handleLinkGithubDialogClose}
             />
           )}
@@ -210,11 +201,7 @@ export const ProjectOptionsMenu = () => {
             <LinkOSOProfileButton
               buttonElement={null}
               buttonClassName={buttonClassName}
-              project={
-                project as IProjectResponse & {
-                  external: Record<string, string[]>;
-                }
-              }
+              project={project}
               onClose={handleLinkOSODialogClose}
             />
           )}
@@ -222,11 +209,7 @@ export const ProjectOptionsMenu = () => {
             <LinkDivviWalletButton
               buttonElement={null}
               buttonClassName={buttonClassName}
-              project={
-                project as IProjectResponse & {
-                  external: Record<string, string[]>;
-                }
-              }
+              project={project}
               onClose={handleLinkDivviDialogClose}
             />
           )}
@@ -234,7 +217,7 @@ export const ProjectOptionsMenu = () => {
             <SetPayoutAddressButton
               buttonElement={null}
               buttonClassName={buttonClassName}
-              project={project as IProjectResponse & { payoutAddress?: string }}
+              project={project}
               onClose={handleSetPayoutDialogClose}
             />
           )}

@@ -170,7 +170,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
       }
       if (data.id === "0") {
         await fetchData(
-          INDEXER.SUBSCRIPTION.CREATE(project?.details?.data?.slug || (project?.uid as string)),
+          INDEXER.SUBSCRIPTION.CREATE(project?.details?.slug || (project?.uid as string)),
           "POST",
           { contacts: [data] },
           {},
@@ -189,10 +189,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
         });
       } else {
         await fetchData(
-          INDEXER.SUBSCRIPTION.UPDATE(
-            project?.details?.data?.slug || (project?.uid as string),
-            data.id
-          ),
+          INDEXER.SUBSCRIPTION.UPDATE(project?.details?.slug || (project?.uid as string), data.id),
           "PUT",
           data,
           {},
@@ -214,7 +211,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
         "Error while updating contact info",
         error,
         {
-          project: project?.details?.data?.slug || (project?.uid as string),
+          project: project?.details?.slug || (project?.uid as string),
           contactId: data.id,
           data,
         },
@@ -233,7 +230,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
     setIsDeleteLoading(true);
     try {
       await fetchData(
-        INDEXER.SUBSCRIPTION.DELETE(project?.details?.data?.slug || (project?.uid as string)),
+        INDEXER.SUBSCRIPTION.DELETE(project?.details?.slug || (project?.uid as string)),
         "DELETE",
         { contacts: [id] },
         {},
@@ -253,7 +250,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
         "Error deleting contact info",
         error,
         {
-          project: project?.details?.data?.slug || (project?.uid as string),
+          project: project?.details?.slug || (project?.uid as string),
           contactId: watch("id"),
         },
         {

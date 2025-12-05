@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import MilestonesAndUpdates from "@/components/Pages/Grants/MilestonesAndUpdates";
 import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Project/Loading/Grants/MilestonesAndUpdate";
 import { PROJECT_NAME } from "@/constants/brand";
+import type { GrantResponse } from "@/types/v2/grant";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
@@ -32,14 +33,14 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     icons: defaultMetadata.icons,
   };
   if (grantUid) {
-    const grantInfo = await gapIndexerApi
+    const grantInfo = (await gapIndexerApi
       .grantBySlug(grantUid as `0x${string}`)
       .then((res) => res.data)
-      .catch(() => notFound());
+      .catch(() => notFound())) as unknown as GrantResponse | undefined;
     if (grantInfo) {
       const pageMetadata = {
-        title: `${projectInfo?.details?.data?.title} - Milestones and Updates for ${grantInfo?.details?.data.title} | ${PROJECT_NAME}`,
-        description: `View all milestones and updates by ${projectInfo?.details?.data?.title} for ${grantInfo?.details?.data.title} grant.`,
+        title: `${projectInfo?.details?.title} - Milestones and Updates for ${grantInfo?.details?.title} | ${PROJECT_NAME}`,
+        description: `View all milestones and updates by ${projectInfo?.details?.title} for ${grantInfo?.details?.title} grant.`,
       };
 
       metadata = {
@@ -51,9 +52,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   } else {
     metadata = {
       ...metadata,
-      title: `${projectInfo?.details?.data?.title} | ${PROJECT_NAME}`,
-      description:
-        cleanMarkdownForPlainText(projectInfo?.details?.data?.description || "", 80) || "",
+      title: `${projectInfo?.details?.title} | ${PROJECT_NAME}`,
+      description: cleanMarkdownForPlainText(projectInfo?.details?.description || "", 80) || "",
     };
   }
 

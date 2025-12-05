@@ -4,10 +4,10 @@ import type { MaturityStageOptions, SortByOptions } from "@/types";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { getCommunityCategories } from "@/utilities/queries/getCommunityData";
 import {
-  getCommunityDetailsV2,
-  getCommunityProjectsV2,
-  getCommunityStatsV2,
-} from "@/utilities/queries/getCommunityDataV2";
+  getCommunityDetails,
+  getCommunityProjects,
+  getCommunityStats,
+} from "@/utilities/queries/v2/getCommunityData";
 
 type Props = {
   params: Promise<{
@@ -23,10 +23,10 @@ export default async function Page(props: Props) {
   }
 
   const [communityDetails, communityStats, categoriesOptions, initialProjects] = await Promise.all([
-    getCommunityDetailsV2(communityId),
-    getCommunityStatsV2(communityId),
+    getCommunityDetails(communityId),
+    getCommunityStats(communityId),
     getCommunityCategories(communityId),
-    getCommunityProjectsV2(communityId, { page: 1, limit: 12 }),
+    getCommunityProjects(communityId, { page: 1, limit: 12 }),
   ]);
 
   // Layout handles notFound, but TypeScript needs this check

@@ -1,3 +1,5 @@
+import type { GrantResponse } from "@/types/v2/grant";
+
 export type Contact = {
   id: string;
   name?: string;
@@ -54,3 +56,11 @@ export interface ProjectFromList {
   noOfGrantMilestones: number;
   imageURL?: string;
 }
+
+// Re-export V2 types from their canonical location
+export type {
+  ProjectDetails,
+  ProjectMember,
+  ProjectResponse,
+  ProjectV2Response,
+} from "@/types/v2/project";

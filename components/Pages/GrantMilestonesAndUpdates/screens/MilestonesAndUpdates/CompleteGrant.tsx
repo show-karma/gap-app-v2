@@ -1,6 +1,5 @@
 "use client";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
@@ -17,6 +16,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useStepper } from "@/store/modals/txStepper";
+import type { GrantResponse } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -44,7 +44,7 @@ export const GrantCompletion: FC = () => {
   const [isFundingProgram, setIsFundingProgram] = useState(false);
 
   // Get tracks for the program to check if they exist
-  const programIdWithChain = grant?.details?.data?.programId;
+  const programIdWithChain = grant?.details?.programId;
   const { data: availableTracks = [] } = useTracksForProgram(programIdWithChain || "");
 
   // Validation states
@@ -69,7 +69,7 @@ export const GrantCompletion: FC = () => {
     const checkFundingProgram = async () => {
       if (grant) {
         // First check by grant name
-        const grantName = grant?.details?.data?.title || "";
+        const grantName = grant?.details?.title || "";
         if (isFundingProgramGrant(undefined, grantName)) {
           setIsFundingProgram(false);
           return;
@@ -84,7 +84,8 @@ export const GrantCompletion: FC = () => {
 
             const response = await gapIndexerApi.communityBySlug(communityId);
             if (response.data) {
-              const communityName = response.data.details?.data?.name || "";
+              const communityData = response.data as unknown as { details?: { name?: string } };
+              const communityName = communityData.details?.name || "";
               setIsFundingProgram(isFundingProgramGrant(communityName, grantName));
             }
           } catch (error) {
@@ -101,21 +102,21 @@ export const GrantCompletion: FC = () => {
     };
 
     checkFundingProgram();
-  }, [grant?.community, grant?.details?.data?.title, grant]);
+  }, [grant?.community, grant?.details?.title, grant]);
 
   useEffect(() => {
-    if (grant?.details?.data?.selectedTrackIds) {
+    if (grant?.details?.selectedTrackIds) {
       setTrackExplanations(
-        grant.details.data.selectedTrackIds.map((trackId) => ({
+        grant.details.selectedTrackIds.map((trackId) => ({
           trackUID: trackId,
           explanation: "",
         }))
       );
     }
-  }, [grant?.details?.data?.selectedTrackIds]);
+  }, [grant?.details?.selectedTrackIds]);
 
   const markGrantAsComplete = async (
-    grantToComplete: IGrantResponse,
+    grantToComplete: GrantResponse,
     data: {
       text?: string;
       title?: string;
@@ -245,7 +246,7 @@ export const GrantCompletion: FC = () => {
               await refreshProject().then(() => {
                 router.push(
                   PAGES.PROJECT.GRANT(
-                    project?.details?.data.slug || (project?.uid as Hex),
+                    project?.details?.slug || (project?.uid as Hex),
                     grant?.uid as Hex
                   )
                 );
@@ -335,7 +336,7 @@ export const GrantCompletion: FC = () => {
     }
 
     setIsLoading(true);
-    await markGrantAsComplete(grant as IGrantResponse, {
+    await markGrantAsComplete(grant as GrantResponse, {
       text: description,
       ...(isFundingProgram && {
         pitchDeckLink,
@@ -356,7 +357,7 @@ export const GrantCompletion: FC = () => {
           </h4>
           <Link
             href={PAGES.PROJECT.GRANT(
-              project?.details?.data.slug || (project?.uid as Hex),
+              project?.details?.slug || (project?.uid as Hex),
               grant?.uid as Hex
             )}
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"

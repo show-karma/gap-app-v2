@@ -78,12 +78,12 @@ export const AdminTransferOwnershipDialog: FC = () => {
       closeModal();
     } catch (error: any) {
       errorManager(
-        `Error requesting ownership transfer from ${project.recipient} to ${data.newOwner}`,
+        `Error requesting ownership transfer from ${project.owner} to ${data.newOwner}`,
         error,
         {
           address: address,
-          project: project?.details?.data?.slug || project?.uid,
-          oldOwner: project?.recipient,
+          project: project?.details?.slug || project?.uid,
+          oldOwner: project?.owner,
           newOwner: data.newOwner,
         },
         {

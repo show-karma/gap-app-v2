@@ -615,7 +615,7 @@ describe("NavbarSearch", () => {
       // Should show results after successful retry
       await waitFor(() => {
         const firstProject = projectsOnlyResults.projects[0];
-        expect(screen.queryByText(firstProject.details.data.title)).toBeInTheDocument();
+        expect(screen.queryByText(firstProject.details.title)).toBeInTheDocument();
       });
 
       consoleSpy.mockRestore();

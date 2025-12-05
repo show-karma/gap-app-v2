@@ -17,21 +17,20 @@ export async function GET(
     return new Response("Not found", { status: 404 });
   }
 
+  const projectTitle = project?.details?.title || "";
   const title =
-    project?.details?.data.title && project?.details?.data.title.length > 30
-      ? `${project?.details?.data.title.substring(0, 30)}...`
-      : project?.details?.data.title;
+    projectTitle && projectTitle.length > 30 ? projectTitle.substring(0, 30) + "..." : projectTitle;
 
-  const description = cleanMarkdownForPlainText(project?.details?.data?.description || "", 200);
+  const description = cleanMarkdownForPlainText(project?.details?.description || "", 200);
 
-  const milestonesCompleted = project.grants.reduce((acc, grant) => {
-    return acc + grant.milestones.filter((milestone) => milestone.completed).length;
+  const milestonesCompleted = project.grants?.reduce((acc, grant) => {
+    return acc + grant.milestones.filter((mileston: any) => mileston.completed).length;
   }, 0);
 
   const stats = [
     {
-      title: pluralize("Grant", project?.grants.length || 0),
-      value: project?.grants.length || 0,
+      title: pluralize("Grant", project?.grants?.length || 0),
+      value: project?.grants?.length || 0,
       icon: "https://karmahq.xyz/icons/funding-lg.png",
     },
     {
@@ -40,8 +39,8 @@ export async function GET(
       icon: "https://karmahq.xyz/icons/impact.png",
     },
     {
-      title: pluralize("Endorsement", project?.endorsements.length || 0),
-      value: project?.endorsements.length || 0,
+      title: pluralize("Endorsement", project?.endorsements?.length || 0),
+      value: project?.endorsements?.length || 0,
       icon: "https://karmahq.xyz/icons/endorsements-lg.png",
     },
   ];

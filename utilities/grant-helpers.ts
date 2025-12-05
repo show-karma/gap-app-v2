@@ -1,5 +1,6 @@
 import type { GAP } from "@show-karma/karma-gap-sdk";
-import type { Hex } from "viem";
+import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getProjectData } from "@/services/project.service";
 
 interface FetchGrantInstanceParams {
   gapClient: GAP;
@@ -32,7 +33,7 @@ export const fetchGrantInstance = async ({
   projectUid,
   grantUid,
 }: FetchGrantInstanceParams) => {
-  const fetchedProject = await gapClient.fetch.projectById(projectUid as Hex);
+  const fetchedProject = await getProjectData(projectUid);
 
   if (!fetchedProject) {
     throw new Error(
@@ -40,12 +41,38 @@ export const fetchGrantInstance = async ({
     );
   }
 
-  const grantInstance = fetchedProject.grants.find(
+  const grantInstance = fetchedProject.grants?.find(
     (g) => g.uid.toLowerCase() === grantUid.toLowerCase()
   );
 
   if (!grantInstance) {
     throw new Error("Grant not found in project. Please refresh the page and try again.");
+  }
+
+  return grantInstance;
+};
+
+/**
+ * Get SDK Grant class instance for attestation operations
+ * This is needed because V2 data types don't have attestation methods
+ */
+export const getSDKGrantInstance = async ({
+  gapClient,
+  projectUid,
+  grantUid,
+}: FetchGrantInstanceParams) => {
+  const fetchedProject = await gapClient.fetch.projectById(projectUid);
+
+  if (!fetchedProject) {
+    throw new Error("Failed to fetch project from SDK");
+  }
+
+  const grantInstance = fetchedProject.grants?.find(
+    (g) => g.uid.toLowerCase() === grantUid.toLowerCase()
+  );
+
+  if (!grantInstance) {
+    throw new Error("Grant not found in SDK project");
   }
 
   return grantInstance;
@@ -85,12 +112,12 @@ export const fetchMilestoneInstance = async ({
   programId,
   milestoneUid,
 }: FetchMilestoneInstanceParams) => {
-  const fetchedProject = await gapClient.fetch.projectById(projectUid);
+  const fetchedProject = await getProjectData(projectUid);
   if (!fetchedProject) {
     throw new Error("Failed to fetch project data");
   }
 
-  const grantInstance = fetchedProject.grants.find((g) => g.details?.programId === programId);
+  const grantInstance = fetchedProject.grants?.find((g: any) => g.details?.programId === programId);
 
   if (!grantInstance) {
     throw new Error("Grant not found");

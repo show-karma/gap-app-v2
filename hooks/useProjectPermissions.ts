@@ -17,7 +17,7 @@ export const useProjectPermissions = () => {
   const { address, isConnected } = useAccount();
   const { authenticated: isAuth } = useAuth();
   const { project } = useProjectStore();
-  const projectId = project?.details?.data.slug || project?.uid;
+  const projectId = project?.details?.slug || project?.uid;
   const { project: projectInstance } = useProjectInstance(projectId);
 
   const { setIsProjectAdmin, setIsProjectOwner } = useProjectStore();

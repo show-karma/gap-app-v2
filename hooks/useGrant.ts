@@ -1,5 +1,4 @@
 "use client";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -8,6 +7,7 @@ import { useGrantFormStore } from "@/components/Pages/GrantMilestonesAndUpdates/
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
+import type { GrantResponse } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -45,7 +45,7 @@ export function useGrant() {
    * @param oldGrant The grant to update
    * @param data The updated data
    */
-  const updateGrant = async (oldGrant: IGrantResponse, data: Partial<typeof formData>) => {
+  const updateGrant = async (oldGrant: GrantResponse, data: Partial<typeof formData>) => {
     if (!address || !oldGrant?.refUID || !selectedProject) return;
     const _gapClient = gap;
     try {
@@ -116,7 +116,7 @@ export function useGrant() {
           }
           while (retries > 0) {
             const fetchedProject = await gapIndexerApi
-              .projectBySlug(oldGrant.refUID)
+              .projectBySlug(oldGrant.refUID || oldGrant.projectUID || "")
               .then((res) => res.data)
               .catch(() => null);
             const fetchedGrant = fetchedProject?.grants.find(
@@ -139,7 +139,7 @@ export function useGrant() {
               await refreshProject().then(() => {
                 router.push(
                   PAGES.PROJECT.GRANT(
-                    selectedProject.details?.data?.slug || selectedProject.uid,
+                    selectedProject.details?.slug || selectedProject.uid,
                     oldGrant.uid
                   )
                 );

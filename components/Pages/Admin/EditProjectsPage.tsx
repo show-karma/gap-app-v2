@@ -13,11 +13,11 @@ import TablePagination from "@/components/Utilities/TablePagination";
 import { useAuth } from "@/hooks/useAuth";
 import { useCommunityDetails } from "@/hooks/useCommunityDetails";
 import { useCommunityGrants } from "@/hooks/useCommunityGrants";
-import { useCommunityProjectsV2 } from "@/hooks/useCommunityProjectsV2";
 import { useCommunityRegions } from "@/hooks/useCommunityRegions";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useStaff } from "@/hooks/useStaff";
-import type { ProjectV2 } from "@/types/community";
+import { useCommunityProjects } from "@/hooks/v2/useCommunityProjects";
+import type { Project } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -29,7 +29,7 @@ import { RegionCreationDialog } from "./RegionCreationDialog";
 export const metadata = defaultMetadata;
 
 interface ProjectsTableProps {
-  projects: ProjectV2[];
+  projects: Project[];
   regions: any[];
   selectedRegions: Record<string, string>;
   optimisticRegions: Record<string, string>;
@@ -202,7 +202,7 @@ export default function EditProjectsPage() {
     data: projectsData,
     isLoading: isLoadingProjects,
     refetch: refreshProjects,
-  } = useCommunityProjectsV2(community?.details?.data?.slug || communityId, {
+  } = useCommunityProjects(community?.details?.data?.slug || communityId, {
     page: currentPage,
     limit: 12,
     selectedProgramId: selectedProgramId || undefined,

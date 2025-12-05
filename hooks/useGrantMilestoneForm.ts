@@ -53,7 +53,7 @@ export function useGrantMilestoneForm({
       // Process each grant UID
       for (const grantUID of grantUIDs) {
         // Get the current grant's chain ID from the project's grants
-        const grant = project?.grants.find((g) => g.uid === grantUID);
+        const grant = project?.grants?.find((g) => g.uid === grantUID);
         if (!grant) continue;
 
         const chainID = grant.chainID;
@@ -117,7 +117,7 @@ export function useGrantMilestoneForm({
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
-                const fetchedGrant = fetchedProject?.grants.find((g) => g.uid === grantUID);
+                const fetchedGrant = fetchedProject?.grants?.find((g) => g.uid === grantUID);
 
                 const milestoneExists = fetchedGrant?.milestones.find(
                   (g: any) => g.uid === milestoneToAttest.uid

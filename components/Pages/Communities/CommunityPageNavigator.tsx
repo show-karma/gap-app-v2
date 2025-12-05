@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { FolderIcon } from "@/components/Icons/Folder";
 import { Target2Icon } from "@/components/Icons/Target2";
+import type { Community } from "@/types/v2/community";
 import { getCommunityBySlug } from "@/utilities/gapIndexerApi/getCommunityBySlug";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -76,7 +77,7 @@ export const CommunityPageNavigator = () => {
   const programId = searchParams.get("programId");
   const { data: community } = useQuery({
     queryKey: ["community", communityId],
-    queryFn: () => getCommunityBySlug(communityId),
+    queryFn: async () => (await getCommunityBySlug(communityId)) as unknown as Community,
   });
 
   const isAdminPage = pathname.includes("/admin");
@@ -98,7 +99,7 @@ export const CommunityPageNavigator = () => {
                 : "text-brand-darkblue dark:text-zinc-400"
             )}
           />
-          {title(community?.details?.data.name || "")}
+          {title(community?.details?.name || "")}
           {showNewTag ? <NewTag /> : null}
         </Link>
       ))}

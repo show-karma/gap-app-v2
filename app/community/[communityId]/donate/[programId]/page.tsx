@@ -1,6 +1,6 @@
 import { CommunityGrantsDonate } from "@/components/CommunityGrantsDonate";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import { getCommunityProjectsV2 } from "@/utilities/queries/getCommunityDataV2";
+import { getCommunityProjects } from "@/utilities/queries/v2/getCommunityData";
 
 type Props = {
   params: Promise<{
@@ -16,7 +16,7 @@ export default async function Page(props: Props) {
     return undefined;
   }
 
-  const initialProjects = await getCommunityProjectsV2(communityId, {
+  const initialProjects = await getCommunityProjects(communityId, {
     page: 1,
     limit: 12,
     selectedProgramId: programId,

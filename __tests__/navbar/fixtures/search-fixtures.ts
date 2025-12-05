@@ -3,24 +3,24 @@
  * Provides mock search responses for various scenarios
  */
 
-import type { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+interface SearchResponse {
+  projects: any[];
+  communities: any[];
+}
 
 /**
- * Helper: Create mock project
+ * Helper: Create mock project (V2 structure)
  */
 export const createMockProject = (overrides: Partial<any> = {}): any => ({
   uid: overrides.uid || `project-${Math.random().toString(36).substr(2, 9)}`,
   details: {
-    data: {
-      title: overrides.title || "Test Project",
-      description: overrides.description || "Test project description",
-      imageURL: overrides.imageURL || "https://example.com/project.png",
-      slug: overrides.slug || `test-project-${Math.random().toString(36).substr(2, 9)}`,
-    },
+    title: overrides.title || "Test Project",
+    description: overrides.description || "Test project description",
+    logoUrl: overrides.imageURL || "https://example.com/project.png",
+    slug: overrides.slug || `test-project-${Math.random().toString(36).substr(2, 9)}`,
   },
-  recipient: overrides.recipient || "0x1234567890123456789012345678901234567890",
+  owner: overrides.owner || "0x1234567890123456789012345678901234567890",
   type: "project",
-  data: {},
   members: [],
   grants: [],
   milestones: [],
@@ -30,20 +30,17 @@ export const createMockProject = (overrides: Partial<any> = {}): any => ({
 });
 
 /**
- * Helper: Create mock community
+ * Helper: Create mock community (V2 structure)
  */
 export const createMockCommunity = (overrides: Partial<any> = {}): any => ({
   uid: overrides.uid || `community-${Math.random().toString(36).substr(2, 9)}`,
   details: {
-    data: {
-      name: overrides.name || "Test Community",
-      description: overrides.description || "Test community description",
-      imageURL: overrides.imageURL || "https://example.com/community.png",
-      slug: overrides.slug || `test-community-${Math.random().toString(36).substr(2, 9)}`,
-    },
+    name: overrides.name || "Test Community",
+    description: overrides.description || "Test community description",
+    logoUrl: overrides.imageURL || "https://example.com/community.png",
+    slug: overrides.slug || `test-community-${Math.random().toString(36).substr(2, 9)}`,
   },
   type: "community",
-  data: {},
   grants: [],
   projects: [],
   members: [],
@@ -53,7 +50,7 @@ export const createMockCommunity = (overrides: Partial<any> = {}): any => ({
 /**
  * Empty search results
  */
-export const emptySearchResults: ISearchResponse = {
+export const emptySearchResults: SearchResponse = {
   projects: [],
   communities: [],
 };
@@ -61,7 +58,7 @@ export const emptySearchResults: ISearchResponse = {
 /**
  * Search results with projects only
  */
-export const projectsOnlyResults: ISearchResponse = {
+export const projectsOnlyResults: SearchResponse = {
   projects: [
     createMockProject({
       uid: "project-1",
@@ -88,7 +85,7 @@ export const projectsOnlyResults: ISearchResponse = {
 /**
  * Search results with communities only
  */
-export const communitiesOnlyResults: ISearchResponse = {
+export const communitiesOnlyResults: SearchResponse = {
   projects: [],
   communities: [
     createMockCommunity({
@@ -109,7 +106,7 @@ export const communitiesOnlyResults: ISearchResponse = {
 /**
  * Mixed results (both projects and communities)
  */
-export const mixedResults: ISearchResponse = {
+export const mixedResults: SearchResponse = {
   projects: [
     createMockProject({
       uid: "project-1",
@@ -137,7 +134,7 @@ export const mixedResults: ISearchResponse = {
 /**
  * Large result set (for performance testing)
  */
-export const largeResultSet: ISearchResponse = {
+export const largeResultSet: SearchResponse = {
   projects: Array.from({ length: 50 }, (_, i) =>
     createMockProject({
       uid: `project-${i}`,
@@ -159,7 +156,7 @@ export const largeResultSet: ISearchResponse = {
 /**
  * Results with grouped communities (similar names)
  */
-export const groupedCommunitiesResults: ISearchResponse = {
+export const groupedCommunitiesResults: SearchResponse = {
   projects: [],
   communities: [
     createMockCommunity({
@@ -268,7 +265,7 @@ export const searchResponseScenarios = {
 /**
  * Helper: Get results by query
  */
-export const getResultsByQuery = (query: string): ISearchResponse => {
+export const getResultsByQuery = (query: string): SearchResponse => {
   const lowerQuery = query.toLowerCase();
 
   if (query.length < 3) {

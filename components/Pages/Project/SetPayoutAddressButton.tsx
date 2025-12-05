@@ -2,7 +2,6 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronDownIcon, CurrencyDollarIcon } from "@heroicons/react/24/outline";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import debounce from "lodash.debounce";
 import type { FC, ReactNode } from "react";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
@@ -13,6 +12,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
+import type { ProjectResponse } from "@/types/v2/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -20,9 +20,7 @@ import { MESSAGES } from "@/utilities/messages";
 // Updated interface to handle new JSON payoutAddress structure
 interface SetPayoutAddressButtonProps {
   buttonClassName?: string;
-  project: IProjectResponse & {
-    payoutAddress?: string | { [communityUID: string]: string };
-  };
+  project: ProjectResponse;
   "data-set-payout-button"?: string;
   buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
   onClose?: () => void;
@@ -65,7 +63,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
 
     const communityMap = new Map<string, CommunityOption>();
 
-    project.grants.forEach((grant) => {
+    project.grants?.forEach((grant) => {
       if (grant.community?.uid) {
         const communityUID = grant.community.uid;
         const payoutAddresses =
@@ -75,8 +73,8 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
 
         communityMap.set(communityUID, {
           uid: communityUID,
-          name: grant.community.details?.data?.name || "Unknown Community",
-          imageURL: grant.community.details?.data?.imageURL,
+          name: grant.community.details?.name || "Unknown Community",
+          imageURL: grant.community.details?.imageURL,
           currentPayoutAddress: payoutAddresses[communityUID],
         });
       }
@@ -189,7 +187,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
     debounce((address: string) => {
       validatePayoutAddress(address);
     }, 300),
-    [validatePayoutAddress]
+    []
   );
 
   // Cleanup debounced function on unmount

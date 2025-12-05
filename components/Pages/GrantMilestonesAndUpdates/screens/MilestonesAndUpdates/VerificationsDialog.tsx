@@ -66,7 +66,7 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   const _project = useProjectStore((state) => state.project);
   const grant = useGrant();
 
-  const communityUid = useMemo(() => grant?.data.communityUID, [grant]);
+  const communityUid = useMemo(() => grant?.data?.communityUID || grant?.communityUID, [grant]);
   const [communityAdmins, setCommunityAdmins] = useState<string[]>();
 
   const { populateEns } = useENS();
@@ -77,7 +77,7 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   useEffect(() => {
     if (communityUid) {
       gapIndexerApi
-        .communityAdmins(communityUid)
+        .communityAdmins(communityUid as `0x${string}`)
         .then((data) => {
           setCommunityAdmins(data.data.admins.map((admin) => admin.user.id.toLowerCase()));
         })

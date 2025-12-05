@@ -16,7 +16,7 @@ export const ProjectUpdateFormBlock = ({ onClose, updateId }: ProjectUpdateFormB
   // Maintain state to force fresh render when updateId changes
   const [currentUpdateId, setCurrentUpdateId] = useState(updateId);
   const updateBeingEdited = updateId
-    ? project?.updates.find((update) => update.uid === updateId)
+    ? project?.updates?.find((update) => update.uid === updateId)
     : null;
   const router = useRouter();
 

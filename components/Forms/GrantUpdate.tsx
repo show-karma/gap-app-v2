@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GrantUpdate } from "@show-karma/karma-gap-sdk";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
 import { useState } from "react";
@@ -19,6 +18,7 @@ import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useStepper } from "@/store/modals/txStepper";
+import type { GrantResponse } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -63,7 +63,7 @@ const inputStyleDefault =
 type UpdateType = z.infer<typeof updateSchema>;
 
 interface GrantUpdateFormProps {
-  grant: IGrantResponse;
+  grant: GrantResponse;
   labelStyleProps?: string;
   inputStyleProps?: string;
   afterSubmit?: () => void;
@@ -116,7 +116,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
 
   const router = useRouter();
 
-  const createGrantUpdate = async (grantToUpdate: IGrantResponse, data: UpdateType) => {
+  const createGrantUpdate = async (grantToUpdate: GrantResponse, data: UpdateType) => {
     let gapClient = gap;
     if (!address || !project) return;
     try {
@@ -154,8 +154,8 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
       });
       const grantUpdate = new GrantUpdate({
         data: sanitizedGrantUpdate,
-        recipient: grantToUpdate.recipient,
-        refUID: grantToUpdate.uid,
+        recipient: grantToUpdate.recipient as `0x${string}`,
+        refUID: grantToUpdate.uid as `0x${string}`,
         schema: gapClient.findSchema("GrantDetails"),
       });
 
@@ -170,7 +170,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
           await refreshProject()
             .then(async (fetchedProject) => {
               const attestUID = grantUpdate.uid;
-              const updatedGrant = fetchedProject?.grants.find((g) => g.uid === grantToUpdate.uid);
+              const updatedGrant = fetchedProject?.grants?.find((g) => g.uid === grantToUpdate.uid);
 
               const alreadyExists = updatedGrant?.updates.find((u: any) => u.uid === attestUID);
               if (alreadyExists) {
@@ -186,10 +186,10 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
                   )
                 );
                 openShareDialog({
-                  modalShareText: `🎉 Update posted for your ${grant.details?.data?.title}!`,
-                  modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building—we’re here for it. 💪`,
+                  modalShareText: `🎉 Update posted for your ${grant.details?.title}!`,
+                  modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building—we're here for it. 💪`,
                   shareText: SHARE_TEXTS.GRANT_UPDATE(
-                    grant.details?.data?.title as string,
+                    grant.details?.title as string,
                     project.uid,
                     grantToUpdate.uid
                   ),

@@ -23,7 +23,9 @@ export const useENS = create<EnsStore>((set, get) => ({
 
   populateEns: async (addresses: string[]) => {
     const ensData = get().ensData;
-    const lowercasedAddresses = addresses.map((address) => address.toLowerCase() as Hex);
+    const lowercasedAddresses = addresses
+      .filter((address): address is string => !!address)
+      .map((address) => address.toLowerCase() as Hex);
     const notTriedAddresses = lowercasedAddresses.filter((address) => {
       return !ensData[address] || !ensData[address]?.isFetching;
     });

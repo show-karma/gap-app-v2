@@ -344,9 +344,9 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
             <h3 className="text-lg font-bold">{currentMilestone.title}</h3>
             <p>
               {currentMilestone.startsAt
-                ? `${formatDate(currentMilestone.startsAt * 1000)} - `
+                ? `${formatDate(currentMilestone.startsAt)} - `
                 : null}
-              {formatDate(currentMilestone.endsAt * 1000)}
+              {formatDate(currentMilestone.endsAt)}
             </p>
           </div>
           <div className="flex w-max flex-row justify-center gap-4">

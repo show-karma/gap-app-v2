@@ -23,8 +23,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     notFound();
   }
   const metadata = {
-    title: `${projectInfo?.details?.data?.title} Grants | ${PROJECT_NAME}`,
-    description: cleanMarkdownForPlainText(projectInfo?.details?.data?.description || "", 80),
+    title: `${projectInfo?.details?.title} Grants | ${PROJECT_NAME}`,
+    description: cleanMarkdownForPlainText(projectInfo?.details?.description || "", 80),
     twitter: defaultMetadata.twitter,
     openGraph: defaultMetadata.openGraph,
     icons: defaultMetadata.icons,

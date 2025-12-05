@@ -74,9 +74,14 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
 
   // grant milestone-specific properties
   const grantMilestone = milestone.source.grantMilestone;
-  const grantTitle = grantMilestone?.grant.details?.data.title;
-  const programId = grantMilestone?.grant.details?.data.programId;
-  const communityData = grantMilestone?.grant.community?.details?.data;
+  const grantDetails = grantMilestone?.grant.details as
+    | { title?: string; programId?: string }
+    | undefined;
+  const grantTitle = grantDetails?.title;
+  const programId = grantDetails?.programId;
+  const communityData = grantMilestone?.grant.community?.details as
+    | { name?: string; slug?: string; imageURL?: string }
+    | undefined;
   const endsAt = milestone.endsAt;
 
   // completion information
@@ -196,7 +201,7 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
         {/* Due date */}
         {type === "grant" && endsAt ? (
           <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-            <span>Due by {formatDate(endsAt * 1000)}</span>
+            <span>Due by {formatDate(endsAt)}</span>
           </div>
         ) : null}
 

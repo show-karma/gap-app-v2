@@ -129,14 +129,14 @@ export const useInviteLink = (projectIdOrSlug: string | undefined) => {
  * Helper hook to build the invite URL
  */
 export const useInviteUrl = (
-  project: { uid?: string; details?: { data: { slug?: string } } } | undefined,
+  project: { uid?: string; details?: { slug?: string } } | undefined,
   inviteCode: string | undefined
 ) => {
   if (!project || !inviteCode) return null;
 
   const isDev = process.env.NEXT_PUBLIC_ENV === "dev" || process.env.NODE_ENV === "development";
-  const baseUrl = isDev ? "staging.karmahq.xyz" : "www.karmahq.xyz";
-  const projectIdentifier = project.details?.data.slug || project.uid;
+  const baseUrl = isDev ? "staging.karmahq.xyz" : "karmahq.xyz";
+  const projectIdentifier = project.details?.slug || project.uid;
 
   return `https://${baseUrl}/project/${projectIdentifier}?invite-code=${inviteCode}`;
 };
