@@ -434,3 +434,12 @@ body * {
     @apply font-semibold text-3xl leading-tight tracking-tight md:text-4xl;
   }
 }
+
+/* Prevent scrollbar from overlapping textarea in MarkdownEditor */
+.markdown-editor-wrapper .w-md-editor-text {
+  padding-right: 1rem !important;
+}
+
+.markdown-editor-wrapper .w-md-editor-text textarea {
+  padding-right: 0.5rem !important;
+}

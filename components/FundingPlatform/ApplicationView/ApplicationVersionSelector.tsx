@@ -2,26 +2,33 @@
 
 import { Listbox, Transition } from "@headlessui/react";
 import { ChevronDownIcon, ClockIcon, UserIcon } from "@heroicons/react/24/outline";
-import { type FC, Fragment, useEffect } from "react";
+import { type FC, Fragment, useEffect, useMemo } from "react";
 import { useApplicationVersions } from "@/hooks/useFundingPlatform";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
+import type { IFormSchema } from "@/types/funding-platform";
+import { createFieldLabelMap, getFieldLabel } from "@/utilities/fieldLabelMapping";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 
 interface ApplicationVersionSelectorProps {
   applicationId: string; // Can be either application ID or reference number
   onVersionSelect?: (versionId: string) => void;
+  formSchema?: IFormSchema; // Optional: for mapping field IDs to labels
 }
 
 const ApplicationVersionSelector: FC<ApplicationVersionSelectorProps> = ({
   applicationId,
   onVersionSelect,
+  formSchema,
 }) => {
   // Fetch versions using React Query
   const { versions, isLoading, error } = useApplicationVersions(applicationId);
 
   // Get UI state from Zustand store
   const { selectedVersionId, selectedVersion, selectVersion } = useApplicationVersionsStore();
+
+  // Create field labels mapping from form schema using shared utility
+  const fieldLabels = useMemo(() => createFieldLabelMap(formSchema), [formSchema]);
 
   // Auto-select the latest version when versions are loaded
   useEffect(() => {
@@ -143,7 +150,7 @@ const ApplicationVersionSelector: FC<ApplicationVersionSelectorProps> = ({
                                     (
                                     {version.diffFromPrevious.changedFields
                                       .slice(0, 2)
-                                      .map((f) => f.fieldLabel)
+                                      .map((f) => getFieldLabel(f.fieldLabel, fieldLabels))
                                       .join(", ")}
                                     {version.diffFromPrevious.changedFields.length > 2 &&
                                       `, +${version.diffFromPrevious.changedFields.length - 2} more`}

@@ -1,5 +1,6 @@
 "use client";
 
+import { PencilIcon } from "@heroicons/react/24/outline";
 import { ArrowLeftIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -8,6 +9,7 @@ import { useAccount } from "wagmi";
 import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent";
 import CommentsSection from "@/components/FundingPlatform/ApplicationView/CommentsSection";
 import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView/DeleteApplicationModal";
+import EditApplicationModal from "@/components/FundingPlatform/ApplicationView/EditApplicationModal";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import {
@@ -23,6 +25,7 @@ import { useStaff } from "@/hooks/useStaff";
 import { layoutTheme } from "@/src/helper/theme";
 import { useOwnerStore } from "@/store";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
+import type { IFundingApplication } from "@/types/funding-platform";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 
@@ -56,6 +59,9 @@ export default function ApplicationDetailPage() {
   // Delete modal state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+  // Edit modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
   // Fetch application data
   const {
     application,
@@ -64,7 +70,7 @@ export default function ApplicationDetailPage() {
   } = useApplication(applicationId);
 
   // Fetch program config
-  const { data: program } = useProgramConfig(programId, parsedChainId);
+  const { data: program, config } = useProgramConfig(programId, parsedChainId);
 
   // Use the application status hook
   const { updateStatusAsync } = useApplicationStatus(programId, parsedChainId);
@@ -76,6 +82,7 @@ export default function ApplicationDetailPage() {
     createCommentAsync,
     editCommentAsync,
     deleteCommentAsync,
+    refetch: refetchComments,
   } = useApplicationComments(applicationId, hasAccess);
 
   // Use the delete application hook
@@ -85,7 +92,7 @@ export default function ApplicationDetailPage() {
   const applicationIdentifier = application?.referenceNumber || application?.id || applicationId;
 
   // Fetch versions using React Query
-  const { versions } = useApplicationVersions(applicationIdentifier);
+  const { versions, refetch: refetchVersions } = useApplicationVersions(applicationIdentifier);
 
   // Get version selection from store
   const { selectVersion } = useApplicationVersionsStore();
@@ -136,6 +143,29 @@ export default function ApplicationDetailPage() {
 
   const handleDeleteCancel = () => {
     setIsDeleteModalOpen(false);
+  };
+
+  // Helper function to check if editing is allowed
+  // NOTE: This is a UI-only check. The backend API MUST enforce these same restrictions
+  // to prevent unauthorized edits. The backend should reject edit requests for applications
+  // with status 'under_review' or 'approved' regardless of client-side checks.
+  const canEditApplication = (app: IFundingApplication) => {
+    const restrictedStatuses = ["under_review", "approved"];
+    return !restrictedStatuses.includes(app.status.toLowerCase());
+  };
+
+  // Handle edit application
+  const handleEditClick = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditClose = () => {
+    setIsEditModalOpen(false);
+  };
+
+  const handleEditSuccess = async () => {
+    // Refetch all data in parallel for better performance
+    await Promise.all([refetchApplication(), refetchVersions(), refetchComments()]);
   };
 
   const handleVersionClick = (versionId: string) => {
@@ -218,17 +248,36 @@ export default function ApplicationDetailPage() {
                 </p>
               </div>
             </div>
-            {/* Delete button - Only show for community admins */}
-            {isCommunityAdmin && (
-              <Button
-                onClick={handleDeleteClick}
-                disabled={isDeleting}
-                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
-              >
-                <TrashIcon className="w-4 h-4" />
-                Delete Application
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {/* Edit button - Show for admins */}
+              {hasAccess && application && (
+                <Button
+                  onClick={handleEditClick}
+                  disabled={!canEditApplication(application)}
+                  variant="secondary"
+                  className="flex items-center gap-2"
+                  title={
+                    !canEditApplication(application)
+                      ? "Cannot edit applications with status 'under_review' or 'approved'"
+                      : "Edit application"
+                  }
+                >
+                  <PencilIcon className="w-4 h-4" />
+                  Edit Application
+                </Button>
+              )}
+              {/* Delete button - Only show for community admins */}
+              {isCommunityAdmin && (
+                <Button
+                  onClick={handleDeleteClick}
+                  disabled={isDeleting}
+                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
+                >
+                  <TrashIcon className="w-4 h-4" />
+                  Delete Application
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -276,6 +325,7 @@ export default function ApplicationDetailPage() {
           <div className="space-y-6">
             <CommentsSection
               applicationId={application.referenceNumber}
+              application={application}
               comments={comments}
               statusHistory={application.statusHistory}
               versionHistory={versions}
@@ -287,6 +337,7 @@ export default function ApplicationDetailPage() {
               onCommentDelete={handleCommentDelete}
               onVersionClick={handleVersionClick}
               isLoading={isLoadingComments}
+              formSchema={config?.formSchema}
             />
           </div>
         </div>
@@ -300,6 +351,19 @@ export default function ApplicationDetailPage() {
         referenceNumber={application.referenceNumber}
         isDeleting={isDeleting}
       />
+
+      {/* Edit Application Modal */}
+      {application && (
+        <EditApplicationModal
+          isOpen={isEditModalOpen}
+          onClose={handleEditClose}
+          application={application}
+          programId={programId}
+          chainId={parsedChainId}
+          formSchema={config?.formSchema} // Optional - modal will fetch if not provided
+          onSuccess={handleEditSuccess}
+        />
+      )}
     </div>
   );
 }

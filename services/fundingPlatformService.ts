@@ -309,7 +309,7 @@ export const fundingApplicationsAPI = {
   },
 
   /**
-   * Update an existing application (for users)
+   * Update an existing application (for applicants and admins)
    */
   async updateApplication(
     applicationId: string,
