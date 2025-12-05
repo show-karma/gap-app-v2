@@ -1,7 +1,7 @@
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { ProjectV2 } from "@/types/community";
+import type { GrantResponse } from "@/types/v2/grant";
 
-export const projectV2ToGrant = (project: ProjectV2): IGrantResponse => {
+export const projectV2ToGrant = (project: ProjectV2): GrantResponse => {
   return {
     uid: project.uid,
     createdAt: project.createdAt,
@@ -79,5 +79,5 @@ export const projectV2ToGrant = (project: ProjectV2): IGrantResponse => {
     decodedDataJson: "",
     isOffchain: false,
     schemaId: "",
-  } as unknown as IGrantResponse;
+  } as unknown as GrantResponse;
 };

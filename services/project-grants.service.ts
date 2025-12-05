@@ -1,4 +1,4 @@
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { GrantResponse } from "@/types/v2/grant";
 import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -7,7 +7,7 @@ import { INDEXER } from "@/utilities/indexer";
  *
  * NOTE: Grants and Funding Applications are different concepts
  * - Funding Applications: /v2/funding-applications/project/${projectUID} (returns IFundingApplication)
- * - Grants: /v2/projects/:idOrSlug/grants (returns IGrantResponse[])
+ * - Grants: /v2/projects/:idOrSlug/grants (returns GrantResponse[])
  *
  * V2 endpoint: /v2/projects/:idOrSlug/grants
  * - Returns grants with milestones, updates, and completion data
@@ -17,7 +17,7 @@ import { INDEXER } from "@/utilities/indexer";
 export const getProjectGrants = async (
   projectIdOrSlug: string,
   fetchOptions?: RequestInit
-): Promise<IGrantResponse[]> => {
+): Promise<GrantResponse[]> => {
   try {
     const response = await fetch(
       `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.V2.PROJECTS.GRANTS(projectIdOrSlug)}`,
@@ -42,12 +42,12 @@ export const getProjectGrants = async (
 
     // Handle both single application and array of applications
     if (Array.isArray(data)) {
-      return data as IGrantResponse[];
+      return data as GrantResponse[];
     }
 
     // Handle single grant object
     if (data) {
-      return [data as IGrantResponse];
+      return [data as GrantResponse];
     }
 
     return [];

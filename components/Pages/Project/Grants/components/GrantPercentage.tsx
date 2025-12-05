@@ -1,10 +1,10 @@
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useMemo } from "react";
+import type { GrantResponse } from "@/types/v2/grant";
 import { formatPercentage } from "@/utilities/formatNumber";
 
 type TProps = {
   // TODO: this should be refactored in the source components to pass Grant only
-  grant: IGrantResponse;
+  grant: GrantResponse;
   className?: string;
 };
 

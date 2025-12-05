@@ -1,10 +1,10 @@
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useWallet } from "@/hooks/useWallet";
 import { useStepper } from "@/store/modals/txStepper";
+import type { GrantResponse } from "@/types/v2/grant";
 import { pollForGrantCompletion } from "@/utilities/attestation-polling";
 // Import the utilities we created
 import { setupChainAndWallet } from "@/utilities/chain-wallet-setup";
@@ -18,7 +18,7 @@ interface UseGrantCompletionParams {
 }
 
 interface UseGrantCompletionReturn {
-  completeGrant: (grant: IGrantResponse, project: { uid: string }) => Promise<void>;
+  completeGrant: (grant: GrantResponse, project: { uid: string }) => Promise<void>;
   isCompleting: boolean;
 }
 
@@ -52,7 +52,7 @@ export const useGrantCompletion = ({
   const { switchChainAsync } = useWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
 
-  const completeGrant = async (grant: IGrantResponse, project: { uid: string }) => {
+  const completeGrant = async (grant: GrantResponse, project: { uid: string }) => {
     if (!address || !project || !grant) {
       toast.error("Please connect your wallet");
       return;

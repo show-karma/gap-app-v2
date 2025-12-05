@@ -4,10 +4,7 @@ import { Popover } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Milestone } from "@show-karma/karma-gap-sdk";
-import type {
-  IGrantResponse,
-  IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
 import { useState } from "react";
@@ -25,6 +22,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
+import type { GrantResponse } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -71,7 +69,7 @@ const inputStyle =
 type MilestoneType = z.infer<typeof milestoneSchema>;
 
 interface MilestoneFormProps {
-  grant: IGrantResponse;
+  grant: GrantResponse;
   afterSubmit?: () => void;
 }
 

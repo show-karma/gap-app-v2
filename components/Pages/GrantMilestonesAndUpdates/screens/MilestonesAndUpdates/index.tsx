@@ -1,5 +1,4 @@
 "use client";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { GrantCompletionCard } from "@/components/Pages/Grants/MilestonesAndUpdates";
@@ -10,6 +9,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
 import type { ProjectV2Response } from "@/types/project";
+import type { GrantResponse } from "@/types/v2/grant";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 
@@ -27,7 +27,7 @@ export const EmptyMilestone = ({
   grant,
   project,
 }: {
-  grant?: IGrantResponse;
+  grant?: GrantResponse;
   project?: ProjectV2Response;
 }) => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);

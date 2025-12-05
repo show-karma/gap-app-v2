@@ -1,5 +1,5 @@
 import type {
-  IGrantResponse,
+  GrantResponse,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -7,7 +7,7 @@ import { gapIndexerApi } from ".";
 
 export async function getGrantMilestones(
   projectId: string
-): Promise<{ milestone: IMilestoneResponse; grant: IGrantResponse }[]> {
+): Promise<{ milestone: IMilestoneResponse; grant: GrantResponse }[]> {
   try {
     // 1. First get the project to access all its grants
     const project = await gapIndexerApi
@@ -27,7 +27,7 @@ export async function getGrantMilestones(
     // 2. Collect all grant milestones with their parent grant information
     const allGrantMilestones: {
       milestone: IMilestoneResponse;
-      grant: IGrantResponse;
+      grant: GrantResponse;
     }[] = [];
 
     project.grants?.forEach((grant) => {

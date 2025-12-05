@@ -1,17 +1,17 @@
 "use client";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useState } from "react";
 import { MilestoneForm } from "@/components/Forms/Milestone";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
+import type { GrantResponse } from "@/types/v2/grant";
 import { Dropdown } from "./Dropdown";
 import { NoGrant } from "./NoGrant";
 
 export const MilestoneScreen = () => {
   const { project } = useProjectStore();
   const { closeProgressModal } = useProgressModalStore();
-  const [selectedGrant, setSelectedGrant] = useState<IGrantResponse | undefined>();
-  const grants: IGrantResponse[] = project?.grants || [];
+  const [selectedGrant, setSelectedGrant] = useState<GrantResponse | undefined>();
+  const grants: GrantResponse[] = project?.grants || [];
   if (!grants.length && project) {
     return <NoGrant />;
   }

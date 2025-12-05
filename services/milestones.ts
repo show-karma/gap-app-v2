@@ -1,5 +1,5 @@
 import type { IProjectDetails } from "@show-karma/karma-gap-sdk";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { GrantResponse } from "@/types/v2/grant";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
@@ -75,7 +75,7 @@ export interface ProjectData {
 export interface ProjectGrantMilestonesResponse {
   project: ProjectData;
   grantMilestones: GrantMilestoneWithCompletion[];
-  grant?: IGrantResponse; // Grant data with completed status
+  grant?: GrantResponse; // Grant data with completed status
 }
 
 /**
@@ -85,7 +85,7 @@ export interface ProjectGrantMilestonesResponse {
 async function fetchGrantWithCompletedStatus(
   projectUid: string,
   programId: string
-): Promise<IGrantResponse | null> {
+): Promise<GrantResponse | null> {
   try {
     // Step 1: Get grant UID from v2 endpoint
     const grantMilestonesEndpoint = INDEXER.V2.PROJECTS.GRANT_MILESTONES(projectUid, programId);
@@ -99,9 +99,7 @@ async function fetchGrantWithCompletedStatus(
     }
 
     // Step 2: Fetch grant with completed status from v1 endpoint
-    const grantDetailResponse = await apiClient.get<IGrantResponse>(
-      INDEXER.GRANTS.BY_UID(grantUID)
-    );
+    const grantDetailResponse = await apiClient.get<GrantResponse>(INDEXER.GRANTS.BY_UID(grantUID));
 
     return grantDetailResponse.data;
   } catch (error) {
@@ -135,7 +133,7 @@ export async function fetchProjectGrantMilestones(
     throw new Error(`Failed to fetch milestones: ${milestonesError || "No data returned"}`);
   }
 
-  const project = projectData as ProjectData & { grants?: IGrantResponse[] };
+  const project = projectData as ProjectData & { grants?: GrantResponse[] };
   const updatesResponse = milestonesData as ProjectUpdatesResponse;
 
   // Ensure fundingApplicationCompletion is always present (null if missing)

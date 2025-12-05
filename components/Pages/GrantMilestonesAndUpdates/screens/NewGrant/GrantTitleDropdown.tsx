@@ -2,11 +2,11 @@
 
 import { CheckIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
 import pluralize from "pluralize";
 import { type FC, useEffect, useRef, useState } from "react";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import type { GrantResponse } from "@/types/v2/grant";
 import { cn } from "@/utilities/tailwind";
 
 export const GrantTitleDropdown: FC<{
@@ -18,7 +18,7 @@ export const GrantTitleDropdown: FC<{
     }
   ) => void;
   selectedProgram: GrantProgram | null;
-  grantToEdit: IGrantResponse | undefined;
+  grantToEdit: GrantResponse | undefined;
   list: GrantProgram[];
   type: string;
   chainId: number;

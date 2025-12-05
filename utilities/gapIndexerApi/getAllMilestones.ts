@@ -1,5 +1,5 @@
 import type {
-  IGrantResponse,
+  GrantResponse,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -20,14 +20,14 @@ const parseCreatedAt = (createdAt: any): string => {
 
 export async function getAllMilestones(
   projectId: string,
-  projectGrants: IGrantResponse[]
+  projectGrants: GrantResponse[]
 ): Promise<UnifiedMilestone[]> {
   try {
     // Fetch both types of milestones in parallel
     const projectMilestones = await getProjectObjectives(projectId);
     const grantMilestonesWithGrants: {
       milestone: IMilestoneResponse;
-      grant: IGrantResponse;
+      grant: GrantResponse;
     }[] = [];
     projectGrants.forEach((grant) => {
       if (grant.milestones && grant.milestones.length > 0) {

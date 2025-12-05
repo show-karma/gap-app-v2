@@ -3,9 +3,9 @@
  * @description Tests for grant card component rendering and color picking functionality
  */
 
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { render, screen } from "@testing-library/react";
 import { GrantCard, pickColor } from "@/components/GrantCard";
+import type { GrantResponse } from "@/types/v2/grant";
 
 // Mock Next.js Link component
 jest.mock("next/link", () => {
@@ -121,7 +121,7 @@ describe("GrantCard", () => {
     ],
     updates: [{ uid: "update-1" } as any],
     categories: ["DeFi", "Infrastructure"],
-  } as unknown as IGrantResponse;
+  } as unknown as GrantResponse;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -234,7 +234,7 @@ describe("GrantCard", () => {
             selectedTrackIds: [],
           },
         },
-      } as IGrantResponse;
+      } as GrantResponse;
 
       render(<GrantCard grant={grantWithoutTracks} index={0} />);
 
@@ -263,7 +263,7 @@ describe("GrantCard", () => {
       const grantWithoutProject = {
         ...mockGrant,
         project: undefined,
-      } as unknown as IGrantResponse;
+      } as unknown as GrantResponse;
 
       render(<GrantCard grant={grantWithoutProject} index={0} />);
 
@@ -274,7 +274,7 @@ describe("GrantCard", () => {
       const grantWithoutMilestones = {
         ...mockGrant,
         milestones: [],
-      } as IGrantResponse;
+      } as GrantResponse;
 
       render(<GrantCard grant={grantWithoutMilestones} index={0} />);
 
@@ -286,7 +286,7 @@ describe("GrantCard", () => {
         ...mockGrant,
         updates: [],
         milestones: [],
-      } as IGrantResponse;
+      } as GrantResponse;
 
       render(<GrantCard grant={grantWithoutUpdates} index={0} />);
 
@@ -297,7 +297,7 @@ describe("GrantCard", () => {
       const grantWithoutCategories = {
         ...mockGrant,
         categories: undefined,
-      } as IGrantResponse;
+      } as GrantResponse;
 
       render(<GrantCard grant={grantWithoutCategories} index={0} />);
 
@@ -308,7 +308,7 @@ describe("GrantCard", () => {
       const grantWithEmptyCategories = {
         ...mockGrant,
         categories: [],
-      } as IGrantResponse;
+      } as GrantResponse;
 
       render(<GrantCard grant={grantWithEmptyCategories} index={0} />);
 
@@ -327,7 +327,7 @@ describe("GrantCard", () => {
             },
           },
         },
-      } as IGrantResponse;
+      } as GrantResponse;
 
       render(<GrantCard grant={grantWithoutSlug} index={0} />);
 
@@ -388,7 +388,7 @@ describe("GrantCard", () => {
             },
           },
         },
-      } as IGrantResponse;
+      } as GrantResponse;
 
       render(<GrantCard grant={grantWithLongTitle} index={0} />);
 
@@ -402,7 +402,7 @@ describe("GrantCard", () => {
       const grantWithOneMilestone = {
         ...mockGrant,
         milestones: [{ uid: "milestone-1", completed: false } as any],
-      } as IGrantResponse;
+      } as GrantResponse;
 
       render(<GrantCard grant={grantWithOneMilestone} index={0} />);
 
@@ -427,7 +427,7 @@ describe("GrantCard", () => {
             },
           },
         },
-      } as IGrantResponse;
+      } as GrantResponse;
 
       render(<GrantCard grant={grantWithLongDescription} index={0} />);
 
@@ -444,7 +444,7 @@ describe("GrantCard", () => {
           { uid: "m3", completed: false } as any,
         ],
         updates: [{ uid: "u1" } as any, { uid: "u2" } as any],
-      } as IGrantResponse;
+      } as GrantResponse;
 
       render(<GrantCard grant={grantWithMultipleUpdates} index={0} />);
 
@@ -464,7 +464,7 @@ describe("GrantCard", () => {
             programId: "program-123_42",
           },
         },
-      } as IGrantResponse;
+      } as GrantResponse;
 
       render(<GrantCard grant={grantWithChainSuffix} index={0} />);
 

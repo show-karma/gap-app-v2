@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link, { useLinkStatus } from "next/link";
 import pluralize from "pluralize";
+import type { GrantResponse } from "@/types/v2/grant";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { rewriteHeadingsToLevel } from "@/utilities/markdown";
@@ -16,7 +16,7 @@ import { ProfilePicture } from "./Utilities/ProfilePicture";
 import { Spinner } from "./Utilities/Spinner";
 
 interface GrantCardProps {
-  grant: IGrantResponse;
+  grant: GrantResponse;
   index: number;
   hideStats?: boolean;
   hideCategories?: boolean;
@@ -40,7 +40,7 @@ export const pickColor = (index: number) => {
   return cardColors[index % cardColors.length];
 };
 
-const updatesLength = (milestones: IGrantResponse["milestones"], updatesLength: number) =>
+const updatesLength = (milestones: GrantResponse["milestones"], updatesLength: number) =>
   milestones.filter((milestone) => milestone.completed).length + updatesLength;
 
 // Loading indicator component that uses useLinkStatus
@@ -112,18 +112,18 @@ const GrantCardContent = ({
             <div className={cn("flex flex-row items-center gap-2", actionSlot ? "mt-1" : "")}>
               <div className="flex justify-center">
                 <ProfilePicture
-                  imageURL={grant.project?.details?.data?.imageURL}
+                  imageURL={grant.project?.details?.logoUrl}
                   name={grant.project?.uid || grant.refUID || ""}
                   size="32"
                   className="h-8 w-8 min-w-8 min-h-8 border border-white shadow-sm"
-                  alt={grant.project?.details?.data?.title || "Project"}
+                  alt={grant.project?.details?.title || "Project"}
                 />
               </div>
               <p
                 id="grant-project-title"
                 className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm flex-1"
               >
-                {grant.project?.details?.data?.title || grant.uid}
+                {grant.project?.details?.title || grant.uid}
               </p>
             </div>
           </div>
@@ -140,7 +140,7 @@ const GrantCardContent = ({
           <div className="flex flex-col gap-1 flex-1 h-[64px]">
             <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-3">
               <MarkdownPreview
-                source={grant.project?.details?.data?.description?.slice(0, 100)}
+                source={grant.project?.details?.description?.slice(0, 100)}
                 allowElement={(element) => {
                   // Prevent rendering links to avoid nested <a> tags
                   return element.tagName !== "a";
@@ -213,7 +213,7 @@ export const GrantCard = ({
   actionSlot,
   cardClassName,
 }: GrantCardProps) => {
-  const href = PAGES.PROJECT.OVERVIEW(grant.project?.details?.data?.slug || grant.refUID || "");
+  const href = PAGES.PROJECT.OVERVIEW(grant.project?.details?.slug || grant.refUID || "");
 
   return (
     <Link

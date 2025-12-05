@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import type React from "react";
 import { useState } from "react";
@@ -15,6 +14,7 @@ import { useGrant } from "@/hooks/useGrant";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
+import type { GrantResponse } from "@/types/v2/grant";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -152,7 +152,7 @@ export const DetailsScreen: React.FC = () => {
       updateGrant(
         selectedProject?.grants?.find(
           (g) => g.uid.toLowerCase() === grant.toLowerCase()
-        ) as IGrantResponse,
+        ) as GrantResponse,
         { ...updateObj, community: formData.community || "" }
       );
     } else {

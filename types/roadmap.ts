@@ -1,5 +1,5 @@
 import type {
-  IGrantResponse,
+  GrantResponse,
   IGrantUpdate,
   IMilestoneResponse,
   IProjectImpact,
@@ -241,7 +241,7 @@ export type UnifiedMilestone = {
     projectMilestone?: IProjectMilestoneResponse;
     grantMilestone?: {
       milestone: IMilestoneResponse;
-      grant: IGrantResponse;
+      grant: GrantResponse;
     };
     type?: string;
   };

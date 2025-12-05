@@ -1,4 +1,5 @@
 import type { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { GrantResponse } from "@/types/v2/grant";
 
 export type Contact = {
   id: string;
@@ -107,7 +108,7 @@ export interface ProjectV2Response {
   impacts?: any[];
   updates?: any[];
   communities?: string[];
-  grants?: any[]; // Grants are fetched separately and added to the response
+  grants?: GrantResponse[]; // Grants are fetched separately and added to the response
   symlinks?: any[];
   pointers?: any[];
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,6 +10,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
 import type { ProjectV2Response } from "@/types/project";
+import type { GrantResponse } from "@/types/v2/grant";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -21,7 +21,7 @@ const EmptyMilestone = ({
   grant,
   project,
 }: {
-  grant?: IGrantResponse;
+  grant?: GrantResponse;
   project?: ProjectV2Response;
 }) => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
@@ -75,14 +75,14 @@ const EmptyMilestone = ({
 };
 
 interface GrantCompletionCardProps {
-  completion: IGrantResponse["completed"] | undefined;
-  grant?: IGrantResponse;
+  completion: GrantResponse["completed"] | undefined;
+  grant?: GrantResponse;
 }
 
 export const GrantCompletionCard = ({ completion, grant }: GrantCompletionCardProps) => {
   // Get program ID for fetching tracks
   const programId = grant?.details?.programId
-    ? `${grant.details.data.programId}_${grant.chainID}`
+    ? `${grant.details.programId}_${grant.chainID}`
     : undefined;
 
   const { data: tracks = [] } = useTracksForProgram(programId as string);

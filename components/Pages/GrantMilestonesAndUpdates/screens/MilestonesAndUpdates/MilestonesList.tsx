@@ -1,14 +1,14 @@
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import pluralize from "pluralize";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
+import type { GrantResponse } from "@/types/v2/grant";
 import { normalizeTimestamp } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { GrantUpdate } from "./GrantUpdate";
 import { MilestoneDetails } from "./MilestoneDetails";
 
 interface MilestonesListProps {
-  grant: IGrantResponse;
+  grant: GrantResponse;
 }
 
 type Tab = "completed" | "pending" | "all";
@@ -155,9 +155,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
         (a, b) => getCompletedDate(b) - getCompletedDate(a)
       ),
       // Pending: ascending by due date (soonest first)
-      pendingMilestones: [...unsortedPending].sort(
-        (a, b) => getPendingDate(a) - getPendingDate(b)
-      ),
+      pendingMilestones: [...unsortedPending].sort((a, b) => getPendingDate(a) - getPendingDate(b)),
       // All: descending by date (newest first)
       allMilestones: [...generalArray].sort((a, b) => getAllDate(b) - getAllDate(a)),
     };

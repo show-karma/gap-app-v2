@@ -1,9 +1,9 @@
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
 import { isPast, parseISO } from "date-fns";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import type { GrantResponse } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { GrantTitleDropdown } from "./GrantTitleDropdown";
@@ -11,7 +11,7 @@ import { useGrantFormStore } from "./store";
 import { TrackSelection } from "./TrackSelection";
 
 interface SearchGrantProgramProps {
-  grantToEdit?: IGrantResponse;
+  grantToEdit?: GrantResponse;
   communityUID: string;
   chainId: number;
   setValue: (

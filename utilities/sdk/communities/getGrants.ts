@@ -1,13 +1,13 @@
 import type { Hex } from "@show-karma/karma-gap-sdk";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { SortByOptions, StatusOptions } from "@/types/filters";
+import type { GrantResponse } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 export interface GrantsResponse {
   // TODO: needs to be added to the SDK
-  grants: (IGrantResponse & { regions: [] })[];
+  grants: (GrantResponse & { regions: [] })[];
   pageInfo: {
     page?: string;
     pageLimit?: string;

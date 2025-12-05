@@ -1,6 +1,5 @@
 "use client";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
@@ -17,6 +16,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useStepper } from "@/store/modals/txStepper";
+import type { GrantResponse } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -115,7 +115,7 @@ export const GrantCompletion: FC = () => {
   }, [grant?.details?.selectedTrackIds]);
 
   const markGrantAsComplete = async (
-    grantToComplete: IGrantResponse,
+    grantToComplete: GrantResponse,
     data: {
       text?: string;
       title?: string;
@@ -335,7 +335,7 @@ export const GrantCompletion: FC = () => {
     }
 
     setIsLoading(true);
-    await markGrantAsComplete(grant as IGrantResponse, {
+    await markGrantAsComplete(grant as GrantResponse, {
       text: description,
       ...(isFundingProgram && {
         pitchDeckLink,

@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GrantUpdate } from "@show-karma/karma-gap-sdk";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
 import { useState } from "react";
@@ -19,6 +18,7 @@ import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useStepper } from "@/store/modals/txStepper";
+import type { GrantResponse } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -63,7 +63,7 @@ const inputStyleDefault =
 type UpdateType = z.infer<typeof updateSchema>;
 
 interface GrantUpdateFormProps {
-  grant: IGrantResponse;
+  grant: GrantResponse;
   labelStyleProps?: string;
   inputStyleProps?: string;
   afterSubmit?: () => void;
@@ -116,7 +116,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
 
   const router = useRouter();
 
-  const createGrantUpdate = async (grantToUpdate: IGrantResponse, data: UpdateType) => {
+  const createGrantUpdate = async (grantToUpdate: GrantResponse, data: UpdateType) => {
     let gapClient = gap;
     if (!address || !project) return;
     try {

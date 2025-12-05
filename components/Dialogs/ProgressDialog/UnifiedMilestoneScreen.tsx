@@ -3,7 +3,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Milestone } from "@show-karma/karma-gap-sdk";
 import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { Transaction } from "ethers";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -22,6 +21,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { useStepper } from "@/store/modals/txStepper";
+import type { GrantResponse } from "@/types/v2/grant";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
@@ -77,7 +77,7 @@ export const UnifiedMilestoneScreen = () => {
   const { closeProgressModal } = useProgressModalStore();
   const [selectedGrantIds, setSelectedGrantIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const grants: IGrantResponse[] = project?.grants || [];
+  const grants: GrantResponse[] = project?.grants || [];
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
@@ -213,7 +213,7 @@ export const UnifiedMilestoneScreen = () => {
 
     try {
       // Group grants by chain ID to process each network separately
-      const grantsByChain: Record<number, { grant: IGrantResponse; index: number }[]> = {};
+      const grantsByChain: Record<number, { grant: GrantResponse; index: number }[]> = {};
 
       // Build the groups by chain
       selectedGrantIds.forEach((grantId, index) => {
@@ -475,7 +475,7 @@ export const UnifiedMilestoneScreen = () => {
       acc[chainId].grants.push(grant);
       return acc;
     },
-    {} as Record<number, { chainId: number; chainName: string; grants: IGrantResponse[] }>
+    {} as Record<number, { chainId: number; chainName: string; grants: GrantResponse[] }>
   );
 
   return (

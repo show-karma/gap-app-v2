@@ -46,21 +46,21 @@ export const useGrants = (communityId: string, options?: UseGrantsOptions) => {
         );
         if (fetchedGrants) {
           const grants = fetchedGrants.map((grant) => ({
-            grant: grant.details?.data?.title || grant.uid || "",
-            project: grant.project?.details?.data?.title || "",
-            description: reduceText(grant.details?.data?.description || ""),
+            grant: grant.details?.title || grant.uid || "",
+            project: grant.project?.details?.title || "",
+            description: reduceText(grant.details?.description || ""),
             categories: grant.categories || [],
-            regions: grant.regions || [],
+            regions: (grant as any).regions || [],
             uid: grant.uid,
             projectUid: grant.project?.uid || "",
-            projectSlug: grant.project?.details?.data?.slug || "",
+            projectSlug: grant.project?.details?.slug || "",
             createdOn: grant.createdAt || "",
-            programId: grant.details?.data?.programId || "",
+            programId: grant.details?.programId || "",
             chainId: grant.chainID,
-            payoutAddress: grant.project?.payoutAddress,
-            payoutAmount: grant.amount,
+            payoutAddress: (grant.project as any)?.payoutAddress,
+            payoutAmount: (grant as any).amount,
             grantChainId: grant.chainID,
-            projectChainId: grant.project?.chainID,
+            projectChainId: (grant.project as any)?.chainID,
           }));
           return {
             grants,

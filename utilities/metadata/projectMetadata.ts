@@ -1,7 +1,7 @@
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { Metadata } from "next";
 import { PROJECT_NAME } from "@/constants/brand";
 import type { ProjectV2Response } from "@/types/project";
+import type { GrantResponse } from "@/types/v2/grant";
 import { envVars } from "../enviromentVars";
 import { cleanMarkdownForPlainText } from "../markdown";
 import { defaultMetadata } from "../meta";
@@ -141,7 +141,7 @@ export const generateProjectFundingMetadata = (
 // Grant-specific metadata generators
 export const generateGrantOverviewMetadata = (
   project: ProjectV2Response,
-  grant: IGrantResponse,
+  grant: GrantResponse,
   projectId: string
 ): Metadata => {
   const projectTitle = getProjectTitle(project);
@@ -154,7 +154,7 @@ export const generateGrantOverviewMetadata = (
 
 export const generateGrantMilestonesMetadata = (
   project: ProjectV2Response,
-  grant: IGrantResponse,
+  grant: GrantResponse,
   projectId: string
 ): Metadata => {
   const projectTitle = getProjectTitle(project);
@@ -167,7 +167,7 @@ export const generateGrantMilestonesMetadata = (
 
 export const generateGrantImpactCriteriaMetadata = (
   project: ProjectV2Response,
-  grant: IGrantResponse,
+  grant: GrantResponse,
   projectId: string
 ): Metadata => {
   const projectTitle = getProjectTitle(project);
@@ -222,7 +222,7 @@ export const createMetadataFromContext = (
 // Grant-specific metadata composition functions
 export const createGrantMetadataFromContext = (
   project: ProjectV2Response | null,
-  grant: IGrantResponse | null,
+  grant: GrantResponse | null,
   projectId: string,
   _grantUid?: string,
   metadataType: "overview" | "milestones" | "impact-criteria" = "overview"

@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -11,6 +10,7 @@ import { Button } from "@/components/Utilities/Button";
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunitiesStore } from "@/store/communities";
+import type { GrantResponse } from "@/types/v2/grant";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { TypeSelectionScreen } from "./screens/TypeSelectionScreen";
@@ -43,7 +43,7 @@ const CommunitySelectionScreen = dynamic(
 );
 
 interface NewGrantProps {
-  grantToEdit?: IGrantResponse;
+  grantToEdit?: GrantResponse;
 }
 
 export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {

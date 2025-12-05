@@ -1,5 +1,4 @@
 import { TrashIcon } from "@heroicons/react/24/outline";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
@@ -11,6 +10,7 @@ import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
+import type { GrantResponse } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -22,7 +22,7 @@ import { shortAddress } from "@/utilities/shortAddress";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 interface GrantDeleteProps {
-  grant: IGrantResponse;
+  grant: GrantResponse;
 }
 
 export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {

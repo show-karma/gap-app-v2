@@ -1,17 +1,17 @@
 "use client";
 
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC } from "react";
 import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import type { ProjectV2Response } from "@/types/project";
+import type { GrantResponse } from "@/types/v2/grant";
 import { GrantCompletedButton } from "./GrantCompletedButton";
 import { GrantNotCompletedButton } from "./GrantNotCompletedButton";
 
 interface GrantCompleteProps {
   project: ProjectV2Response;
-  grant: IGrantResponse;
+  grant: GrantResponse;
   text?: string;
 }
 

@@ -2,18 +2,18 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { CheckCircleIcon, LinkIcon } from "@heroicons/react/24/outline";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC } from "react";
 import { Fragment, useEffect, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { PROJECT_NAME } from "@/constants/brand";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
+import type { GrantResponse } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 interface GrantLinkExternalAddressButtonProps {
-  grant: IGrantResponse & { external: Record<string, string[]> };
+  grant: GrantResponse & { external: Record<string, string[]> };
 }
 
 export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonProps> = ({

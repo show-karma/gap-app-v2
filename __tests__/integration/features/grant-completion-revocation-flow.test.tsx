@@ -15,7 +15,7 @@
  */
 
 import type {
-  IGrantResponse,
+  GrantResponse,
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
@@ -133,7 +133,7 @@ jest.mock("@heroicons/react/24/outline", () => ({
 }));
 
 describe("Integration: Grant Completion Revocation Flow", () => {
-  const mockGrant: IGrantResponse = {
+  const mockGrant: GrantResponse = {
     uid: "grant-123",
     chainID: 42161,
     completed: {

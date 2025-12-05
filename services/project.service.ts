@@ -28,7 +28,7 @@ export const getProjectData = async (
   // Fetch grants separately (v2 doesn't include grants in project response)
   // NOTE: Grants and Funding Applications are different concepts
   // - Funding Applications: /v2/funding-applications/project/${projectUID} (returns IFundingApplication)
-  // - Grants: Using v1 endpoint temporarily /projects/:idOrSlug/grants (returns IGrantResponse[])
+  // - Grants: Using v1 endpoint temporarily /projects/:idOrSlug/grants (returns GrantResponse[])
   //   TODO: Update to v2 endpoint once available: /v2/projects/${projectUID}/grants
   const grants = await getProjectGrants(v2ProjectData.details?.slug || projectId, fetchOptions);
 

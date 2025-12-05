@@ -3,8 +3,8 @@
  * Use these helpers to create consistent V2 test mocks
  */
 
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { ProjectV2Response } from "@/types/project";
+import type { GrantResponse } from "@/types/v2/grant";
 
 /**
  * Creates a mock ProjectV2Response for testing
@@ -66,7 +66,7 @@ export function createMockProjectV2(overrides?: Partial<ProjectV2Response>): Pro
  * Creates a mock project with grants
  */
 export function createMockProjectV2WithGrants(grantCount: number = 2): ProjectV2Response {
-  const grants: IGrantResponse[] = Array.from({ length: grantCount }, (_, i) => ({
+  const grants: GrantResponse[] = Array.from({ length: grantCount }, (_, i) => ({
     uid: `0xgrant${i}` as `0x${string}`,
     chainID: 10,
     recipient: "0xrecipient" as `0x${string}`,
