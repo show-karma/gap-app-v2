@@ -383,6 +383,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
             <div>
               <ApplicationVersionSelector
                 applicationId={application.referenceNumber || application.id}
+                formSchema={formSchema}
               />
               {selectedVersion && (
                 <div className="mt-6">

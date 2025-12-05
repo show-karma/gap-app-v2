@@ -357,6 +357,9 @@ body * {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+
+    /* Toast max-width for overflow prevention */
+    --toast-max-width: 500px;
   }
 
   .dark {
@@ -414,9 +417,7 @@ body * {
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
@@ -433,4 +434,48 @@ body * {
   .section-title {
     @apply font-semibold text-3xl leading-tight tracking-tight md:text-4xl;
   }
+}
+
+/* Toast content overflow fix */
+body .react-hot-toast {
+  max-width: var(--toast-max-width);
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+body .react-hot-toast > div {
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.toast-content {
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  max-width: 100%;
+}
+
+/* Ensure text content inside toast breaks long strings */
+body .react-hot-toast * {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 640px) {
+  body .react-hot-toast {
+    max-width: calc(100vw - 32px);
+  }
+}
+
+/* Prevent scrollbar from overlapping textarea in MarkdownEditor */
+.markdown-editor-wrapper .w-md-editor-text {
+  padding-right: 1rem !important;
+}
+
+.markdown-editor-wrapper .w-md-editor-text textarea {
+  padding-right: 0.5rem !important;
 }
