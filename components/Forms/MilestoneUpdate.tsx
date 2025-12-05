@@ -262,7 +262,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
       const grantInstance = fetchedProject.grants.find(
-        (g) => g.uid.toLowerCase() === milestone.refUID?.toLowerCase() || ""
+        (g) => g.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? "")
       );
       if (!grantInstance) return;
       const milestoneInstance = grantInstance.milestones.find(
@@ -385,7 +385,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
       const grantInstance = fetchedProject.grants.find(
-        (g) => g.uid.toLowerCase() === milestone.refUID?.toLowerCase() || ""
+        (g) => g.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? "")
       );
       if (!grantInstance) return;
       const milestoneInstance = grantInstance.milestones.find(

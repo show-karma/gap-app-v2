@@ -68,7 +68,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       const walletSigner = await walletClientToSigner(walletClient);
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
       const grantInstance = instanceProject?.grants.find(
-        (item) => item.uid.toLowerCase() === milestone.refUID?.toLowerCase() || ""
+        (item) => item.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? "")
       );
       if (!grantInstance) return;
       const milestoneInstance = grantInstance.milestones.find(

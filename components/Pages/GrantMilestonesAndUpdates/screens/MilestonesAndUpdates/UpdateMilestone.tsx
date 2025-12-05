@@ -22,7 +22,7 @@ interface NotUpdatingCaseProps {
 const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({ milestone, isAuthorized, setIsUpdating }) => {
   const project = useProjectStore((state) => state.project);
   const grant = project?.grants?.find(
-    (g) => g.uid.toLowerCase() === milestone.refUID?.toLowerCase() || ""
+    (g) => g.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? "")
   );
 
   if (!isAuthorized) {

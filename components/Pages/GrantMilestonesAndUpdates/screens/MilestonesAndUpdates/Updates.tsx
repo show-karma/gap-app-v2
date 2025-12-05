@@ -85,7 +85,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
 
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
       const findGrant = instanceProject?.grants.find(
-        (item) => item.uid.toLowerCase() === milestone.refUID?.toLowerCase() || ""
+        (item) => item.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? "")
       );
       const instanceMilestone = findGrant?.milestones.find(
         (item) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
@@ -229,7 +229,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const isAfterProofLaunch = checkProofLaunch();
 
   const grant = project?.grants?.find(
-    (g) => g.uid.toLowerCase() === milestone.refUID?.toLowerCase() || ""
+    (g) => g.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? "")
   );
 
   // Fetch milestone impact data (outputs/metrics) if milestone is completed

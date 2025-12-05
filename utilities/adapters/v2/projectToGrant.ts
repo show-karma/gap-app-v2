@@ -23,12 +23,10 @@ export const projectToGrant = (project: Project): GrantResponse => {
     project: {
       uid: project.uid,
       details: {
-        data: {
-          title: project.details.title,
-          description: project.details.description,
-          imageURL: project.details.logoUrl,
-          slug: project.details.slug,
-        },
+        title: project.details.title,
+        description: project.details.description,
+        logoUrl: project.details.logoUrl,
+        slug: project.details.slug,
       },
     },
     community: {
