@@ -125,7 +125,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
     if (update.type === "Milestone" || update.type === "ProjectMilestone") {
       const milestoneData = update.data as any;
       if (milestoneData.endsAt) {
-        return formatDate(milestoneData.endsAt * 1000);
+        return formatDate(milestoneData.endsAt);
       }
       if (milestoneData.endDate) {
         return formatDate(milestoneData.endDate);

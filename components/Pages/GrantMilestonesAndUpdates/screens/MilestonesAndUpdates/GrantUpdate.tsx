@@ -1,9 +1,6 @@
 import { ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
-import type {
-  IGrantUpdate,
-  IGrantUpdateStatus,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { type FC, useEffect, useState } from "react";
+import type { IGrantUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
@@ -26,7 +23,6 @@ import { retryUntilConditionMet } from "@/utilities/retries";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { VerifiedBadge } from "./VerifiedBadge";
 import { VerifyGrantUpdateDialog } from "./VerifyGrantUpdateDialog";
 
 interface UpdateTagProps {
@@ -203,17 +199,13 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
 
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
-  const [verifiedUpdate, setVerifiedUpdate] = useState<IGrantUpdateStatus[]>(
-    update?.verified || []
+  const [isVerified, setIsVerified] = useState<boolean>(
+    typeof update?.verified === "boolean" ? update.verified : false
   );
 
-  const addVerifiedUpdate = (newVerified: IGrantUpdateStatus) => {
-    setVerifiedUpdate([...verifiedUpdate, newVerified]);
+  const markAsVerified = () => {
+    setIsVerified(true);
   };
-
-  useEffect(() => {
-    setVerifiedUpdate(update?.verified || []);
-  }, [update]);
 
   /*
    * Check if the grant update was created after the launch date of the feature
@@ -225,17 +217,22 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
 
   const isAfterProofLaunch = checkProofLaunch();
 
-  const grant = project?.grants?.find((g) => g.uid.toLowerCase() === update.refUID.toLowerCase());
+  const grant = project?.grants?.find((g) => g.uid?.toLowerCase() === update.refUID?.toLowerCase());
 
   return (
     <div className="flex w-full flex-1 max-w-full flex-col gap-4 rounded-lg border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700 bg-white p-4 transition-all duration-200 ease-in-out  max-sm:px-2">
       <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
         <div className="flex flex-row gap-3 items-center flex-wrap">
           <UpdateTag index={index} />
-          {verifiedUpdate.length ? (
-            <VerifiedBadge verifications={verifiedUpdate} title={`Update ${index} - Reviews`} />
+          {isVerified ? (
+            <div className="flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-green-700 dark:bg-green-900 dark:text-green-300">
+              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span className="text-xs font-bold">Verified</span>
+            </div>
           ) : null}
-          <VerifyGrantUpdateDialog grantUpdate={update} addVerifiedUpdate={addVerifiedUpdate} />
+          <VerifyGrantUpdateDialog grantUpdate={update} onVerified={markAsVerified} isVerified={isVerified} />
         </div>
         <div className="flex flex-row gap-3 items-center flex-wrap">
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
@@ -246,7 +243,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
               <ExternalLink
                 href={shareOnX(
                   SHARE_TEXTS.GRANT_UPDATE(
-                    grant?.details?.data?.title as string,
+                    grant?.details?.title as string,
                     project?.uid as string,
                     update.uid
                   )

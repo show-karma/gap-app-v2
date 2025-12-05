@@ -34,7 +34,7 @@ export const MilestoneUpdateScreen = () => {
         <div className="text-sm font-bold text-black dark:text-zinc-100">Select Grant</div>
         <Dropdown
           list={grants.map((grant) => ({
-            value: grant.details?.data.title || "",
+            value: grant.details?.title || "",
             id: grant.uid,
             timestamp: grant.createdAt,
           }))}

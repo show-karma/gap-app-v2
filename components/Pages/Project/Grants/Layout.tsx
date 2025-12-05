@@ -128,9 +128,9 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
   const navigation =
     project?.grants?.map((item) => ({
       uid: item.uid,
-      name: item.details?.data?.title || "",
+      name: item.details?.title || "",
       href: PAGES.PROJECT.GRANT(project.details?.slug || project.uid, item.uid),
-      icon: item.community?.details?.data?.imageURL || "",
+      icon: item.community?.details?.imageURL || "",
       current: item.uid === grantIdFromQueryParam || item.uid === grant?.uid,
       completed: item.completed,
     })) || [];
@@ -309,7 +309,7 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
             <div className="flex flex-row gap-4 justify-between max-md:flex-col border-b border-b-zinc-900 dark:border-b-zinc-200 pb-2 mb-4">
               <div className="flex flex-row gap-2 items-center">
                 <div className="text-xl font-semibold text-black dark:text-zinc-100">
-                  {grant?.details?.data.title}
+                  {grant?.details?.title}
                 </div>
                 {isAuthorized && grant && project ? (
                   <Link

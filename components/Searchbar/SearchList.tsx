@@ -139,8 +139,8 @@ export const SearchList: React.FC<Props> = ({
           groupedCommunities.map((community) =>
             renderItem(
               community,
-              community.details?.data?.name || "Untitled Community",
-              PAGES.COMMUNITY.ALL_GRANTS(community.details?.data.slug || community.uid),
+              community.details?.name || "Untitled Community",
+              PAGES.COMMUNITY.ALL_GRANTS(community.details?.slug || community.uid),
               "community"
             )
           )}
@@ -149,8 +149,8 @@ export const SearchList: React.FC<Props> = ({
           data.projects.map((project) =>
             renderItem(
               project,
-              project.details?.data.title || "Untitled Project",
-              PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid),
+              project.details?.title || "Untitled Project",
+              PAGES.PROJECT.GRANTS(project.details?.slug || project.uid),
               "project"
             )
           )}

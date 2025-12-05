@@ -73,10 +73,10 @@ export async function GET(
         }}
       >
         <div tw="flex flex-col items-start justify-start w-[520px] pb-[40px]">
-          {community?.details?.data.imageURL ? (
+          {community?.details?.imageURL ? (
             <img
-              alt={community?.details?.data.name}
-              src={community?.details?.data.imageURL}
+              alt={community?.details?.name}
+              src={community?.details?.imageURL}
               width={120}
               height={120}
               tw="rounded-full object-contain"
@@ -86,10 +86,10 @@ export async function GET(
             />
           ) : null}
           <span tw="text-white text-5xl font-extrabold font-body w-full text-start flex flex-col items-start justify-start mt-10 mb-1">
-            {community?.details?.data.name}
+            {community?.details?.name}
           </span>
           <p tw="text-white text-2xl font-normal font-body mt-4 break-normal text-wrap whitespace-nowrap">
-            {`Discover how ${community?.details?.data.name} is fueling innovation: ${projects}+ projects supported through grants!`}
+            {`Discover how ${community?.details?.name} is fueling innovation: ${projects}+ projects supported through grants!`}
           </p>
           <div tw="flex flex-row items-center justify-end w-full pr-[80px]">
             <img

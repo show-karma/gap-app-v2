@@ -23,7 +23,7 @@ export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonPr
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
-  const isEnabledForCommunity = grant.community?.details?.data?.slug === "octant";
+  const isEnabledForCommunity = grant.community?.details?.slug === "octant";
   const [isOpen, setIsOpen] = useState(false);
   const [editedAddress, setEditedAddress] = useState("");
   const [isLoading, setIsLoading] = useState(false);

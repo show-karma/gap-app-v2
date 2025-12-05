@@ -98,7 +98,7 @@ export const CommunityPageNavigator = () => {
                 : "text-brand-darkblue dark:text-zinc-400"
             )}
           />
-          {title(community?.details?.data.name || "")}
+          {title(community?.details?.name || "")}
           {showNewTag ? <NewTag /> : null}
         </Link>
       ))}

@@ -2,6 +2,7 @@ import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-
 import pluralize from "pluralize";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
+import { normalizeTimestamp } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { GrantUpdate } from "./GrantUpdate";
 import { MilestoneDetails } from "./MilestoneDetails";
@@ -61,6 +62,15 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
     }
   }, []);
 
+  // Helper to get timestamp in milliseconds from various date formats
+  const getTimestampMs = (value: any): number => {
+    if (!value) return 0;
+    // If it's a number (Unix timestamp), normalize it
+    if (typeof value === "number") return normalizeTimestamp(value);
+    // If it's a string or Date, parse it
+    return new Date(value).getTime();
+  };
+
   // Compute merged and ordered array from props (no state needed)
   const generalArray = useMemo(() => {
     const merged: any[] = [];
@@ -68,7 +78,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
     updates?.forEach((update) => {
       merged.push({
         object: update,
-        date: new Date(update.createdAt).getTime() / 1000,
+        date: getTimestampMs(update.createdAt),
         type: "update",
       });
     });
@@ -76,44 +86,79 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
     milestones?.forEach((milestone) => {
       merged.push({
         object: milestone,
-        date: milestone.data.endsAt || milestone.createdAt,
+        date: milestone.data.endsAt
+          ? getTimestampMs(milestone.data.endsAt)
+          : getTimestampMs(milestone.createdAt),
         type: "milestone",
       });
     });
 
-    return merged.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    // Sort descending by date (newest first)
+    return merged.sort((a, b) => b.date - a.date);
   }, [updates, milestones]);
+
+  // Helper to properly check if a milestone is completed
+  // API may return empty array [] which is truthy in JS but means not completed
+  const isCompleted = (item: any): boolean => {
+    if (item.type === "update") return true; // Updates are always "completed"
+    const completed = item.object.completed;
+    if (Array.isArray(completed)) return completed.length > 0;
+    return !!completed;
+  };
 
   // Compute sorted milestone arrays (derived from generalArray)
   const { completedMilestones, pendingMilestones, allMilestones } = useMemo(() => {
-    const unsortedCompleted = generalArray.filter(
-      (item) => item.object.completed || item.type === "update"
-    );
+    const unsortedCompleted = generalArray.filter((item) => isCompleted(item));
     const unsortedPending = generalArray.filter(
-      (item) => !item.object.completed && item.type !== "update"
+      (item) => !isCompleted(item) && item.type !== "update"
     );
 
-    const getCompletedDate = (item: any) => {
-      if (item.type === "update") return new Date(item.object.createdAt).getTime();
-      if (item.object.completed) return new Date(item.object.completed.createdAt).getTime();
-      return new Date(item.object.endsAt).getTime() || new Date(item.object.createdAt).getTime();
+    // For completed items: use completion date or creation date, descending (newest first)
+    const getCompletedDate = (item: any): number => {
+      if (item.type === "update") return getTimestampMs(item.object.createdAt);
+      // Check for completion with proper array handling
+      const completed = item.object.completed;
+      if (completed && !Array.isArray(completed) && completed.createdAt) {
+        return getTimestampMs(completed.createdAt);
+      }
+      if (Array.isArray(completed) && completed.length > 0 && completed[0]?.createdAt) {
+        return getTimestampMs(completed[0].createdAt);
+      }
+      return item.date; // fallback to pre-computed date
     };
 
-    const getPendingDate = (item: any) => {
-      return new Date(item.object.endsAt).getTime() || new Date(item.object.createdAt).getTime();
+    // For pending items: use due date (endsAt), ascending (soonest due first)
+    const getPendingDate = (item: any): number => {
+      if (item.object.data?.endsAt) {
+        return getTimestampMs(item.object.data.endsAt);
+      }
+      return item.date; // fallback to pre-computed date
     };
 
-    const getAllDate = (item: any) => {
-      if (item.type === "update") return new Date(item.object.createdAt).getTime() / 1000;
-      if (item.object.completed) return new Date(item.object.completed.createdAt).getTime() / 1000;
-      return new Date(item.object.endsAt).getTime() || new Date(item.object.createdAt).getTime();
+    // For all items: use appropriate date based on status, descending (newest first)
+    const getAllDate = (item: any): number => {
+      if (item.type === "update") return getTimestampMs(item.object.createdAt);
+      // Check for completion with proper array handling
+      const completed = item.object.completed;
+      if (completed && !Array.isArray(completed) && completed.createdAt) {
+        return getTimestampMs(completed.createdAt);
+      }
+      if (Array.isArray(completed) && completed.length > 0 && completed[0]?.createdAt) {
+        return getTimestampMs(completed[0].createdAt);
+      }
+      return item.date; // fallback to pre-computed date (endsAt or createdAt)
     };
 
     return {
+      // Completed: descending by completion/creation date (newest first)
       completedMilestones: [...unsortedCompleted].sort(
         (a, b) => getCompletedDate(b) - getCompletedDate(a)
       ),
-      pendingMilestones: [...unsortedPending].sort((a, b) => getPendingDate(a) - getPendingDate(b)),
+      // Pending: ascending by due date (soonest first)
+      pendingMilestones: [...unsortedPending].sort(
+        (a, b) => getPendingDate(a) - getPendingDate(b)
+      ),
+      // All: descending by date (newest first)
       allMilestones: [...generalArray].sort((a, b) => getAllDate(b) - getAllDate(a)),
     };
   }, [generalArray]);
@@ -135,7 +180,13 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
     }
   };
 
-  const updatesLength = milestones.filter((i) => i.completed).length + updates.length;
+  // Count completed milestones properly (handling array format)
+  const completedMilestonesCount = milestones.filter((i) => {
+    const completed = i.completed;
+    if (Array.isArray(completed)) return completed.length > 0;
+    return !!completed;
+  }).length;
+  const updatesLength = completedMilestonesCount + updates.length;
   const milestonesCounter = milestones.length;
 
   return (

@@ -154,7 +154,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       modalShareText: `You did it! 🎉 Another milestone down, more impact ahead. Your onchain trail is growing — keep stacking progress.`,
       modalShareSecondText: ` `,
       shareText: SHARE_TEXTS.MILESTONE_COMPLETED(
-        grant?.details?.data?.title as string,
+        grant?.details?.title as string,
         (project?.details?.slug || project?.uid) as string,
         grant?.uid as string
       ),

@@ -4,10 +4,41 @@ import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/ka
 import type { FC } from "react";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { formatDate } from "@/utilities/formatDate";
+import { formatDate, normalizeTimestamp } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { MilestoneDelete } from "./MilestoneDelete";
 import { Updates } from "./Updates";
+
+/**
+ * Helper to get the completion object from a milestone.
+ * API may return completion as an object or an array.
+ * Ensures createdAt/updatedAt are preserved from the source.
+ */
+export const getCompletionData = (milestone: IMilestoneResponse) => {
+  const completed = milestone.completed;
+  if (!completed) return null;
+
+  // Handle array format (some API responses return array)
+  if (Array.isArray(completed)) {
+    if (completed.length === 0) return null;
+    const firstItem = completed[0];
+    // Merge createdAt/updatedAt from both sources - array item or array itself
+    return {
+      ...firstItem,
+      createdAt: firstItem?.createdAt ?? (completed as any).createdAt,
+      updatedAt: firstItem?.updatedAt ?? (completed as any).updatedAt,
+    };
+  }
+
+  return completed;
+};
+
+/**
+ * Helper to check if a milestone is completed.
+ */
+export const isMilestoneCompleted = (milestone: IMilestoneResponse): boolean => {
+  return getCompletionData(milestone) !== null;
+};
 
 interface MilestoneDateStatusProps {
   milestone: IMilestoneResponse;
@@ -47,8 +78,8 @@ const FlagIcon = () => {
 
 export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({ milestone }) => {
   const getMilestoneStatus = () => {
-    if (milestone.completed) return "completed";
-    if (milestone.data.endsAt < Date.now() / 1000) return "past due";
+    if (isMilestoneCompleted(milestone)) return "completed";
+    if (normalizeTimestamp(milestone.data.endsAt) < Date.now()) return "past due";
     return "pending";
   };
 
@@ -58,10 +89,8 @@ export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({ milestone })
     <div className="flex max-w-full w-max max-lg:w-full flex-row items-center justify-center gap-4 max-lg:justify-start flex-wrap">
       <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
         {milestone.data.startsAt
-          ? `${formatDate(milestone.data.startsAt * 1000)} - ${formatDate(
-              milestone.data.endsAt * 1000
-            )}`
-          : `Due on ${formatDate(milestone.data.endsAt * 1000)}`}
+          ? `${formatDate(milestone.data.startsAt)} - ${formatDate(milestone.data.endsAt)}`
+          : `Due on ${formatDate(milestone.data.endsAt)}`}
       </p>
       <div className={`flex items-center justify-start rounded-2xl px-2 py-1 ${statusBg[status]}`}>
         <p className="text-center text-xs font-medium leading-none text-white">
@@ -102,6 +131,11 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+
+  // Get normalized completion data (handles both object and array formats)
+  const completionData = getCompletionData(milestone);
+  const isCompleted = completionData !== null;
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex w-full flex-1 flex-col rounded-lg border border-zinc-200 bg-white dark:bg-zinc-800 transition-all duration-200 ease-in-out">
@@ -109,9 +143,9 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }
           className="flex w-full flex-col py-4"
           style={{
             borderBottom:
-              (isAuthorized && !milestone.completed) ||
-              milestone?.completed?.data?.reason ||
-              (isCommunityAdmin && !milestone?.completed)
+              (isAuthorized && !isCompleted) ||
+                completionData?.data?.reason ||
+                (isCommunityAdmin && !isCompleted)
                 ? "1px solid #CCCCCC"
                 : "none",
           }}
@@ -140,13 +174,13 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }
             </ReadMore>
           </div>
         </div>
-        {((isAuthorized && !milestone?.completed) ||
-          milestone?.completed?.data?.reason ||
-          milestone?.completed?.data?.proofOfWork) && (
-          <div className="mx-6 mt-4 rounded-lg bg-transparent pb-4">
-            <Updates milestone={milestone} />
-          </div>
-        )}
+        {((isAuthorized && !isCompleted) ||
+          completionData?.data?.reason ||
+          completionData?.data?.proofOfWork) && (
+            <div className="mx-6 mt-4 rounded-lg bg-transparent pb-4">
+              <Updates milestone={milestone} />
+            </div>
+          )}
       </div>
     </div>
   );

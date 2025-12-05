@@ -38,7 +38,7 @@ const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({ milestone, isAuthorized, se
             className="flex items-center justify-center gap-2 rounded border border-gray-300 bg-transparent px-4 py-2.5 hover:bg-gray-50"
             href={shareOnX(
               SHARE_TEXTS.MILESTONE_PENDING(
-                grant?.details?.data?.title as string,
+                grant?.details?.title as string,
                 (project?.details?.slug || project?.uid) as string,
                 grant?.uid as string
               )

@@ -34,6 +34,7 @@ export const INDEXER = {
       GET: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}`,
       SEARCH: (query: string, limit?: number) =>
         `/v2/projects/search?q=${encodeURIComponent(query)}${limit ? `&limit=${limit}` : ""}`,
+      GRANTS: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/grants`,
       GRANT_MILESTONES: (projectUid: string, programId: string) =>
         `/v2/projects/${projectUid}/grants/${programId}/milestones`,
       UPDATES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/updates`,

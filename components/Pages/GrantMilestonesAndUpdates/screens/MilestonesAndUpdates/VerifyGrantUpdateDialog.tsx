@@ -3,10 +3,7 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { ArrowRightIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type {
-  IGrantUpdate,
-  IGrantUpdateStatus,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { IGrantUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, Fragment, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -29,7 +26,8 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 type VerifyGrantUpdateDialogProps = {
   grantUpdate: IGrantUpdate;
-  addVerifiedUpdate: (newVerified: IGrantUpdateStatus) => void;
+  onVerified: () => void;
+  isVerified: boolean;
 };
 
 const schema = z.object({
@@ -40,7 +38,8 @@ type SchemaType = z.infer<typeof schema>;
 
 export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
   grantUpdate,
-  addVerifiedUpdate,
+  onVerified,
+  isVerified,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -63,9 +62,6 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
   }
   const { address, isConnected, chain } = useAccount();
 
-  const hasVerifiedThis = grantUpdate?.verified?.find(
-    (v) => v.attester?.toLowerCase() === address?.toLowerCase()
-  );
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
   const project = useProjectStore((state) => state.project);
@@ -141,13 +137,11 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
                   (u: any) => u.uid === grantUpdate.uid
                 );
 
-                const alreadyExists = fetchedGrantUpdate?.verified?.find(
-                  (v: any) => v.attester?.toLowerCase() === address?.toLowerCase()
-                );
-
-                if (alreadyExists) {
+                // V2: verified is a boolean
+                if (fetchedGrantUpdate?.verified === true) {
                   retries = 0;
                   changeStepperStep("indexed");
+                  onVerified();
                   toast.success(MESSAGES.GRANT.GRANT_UPDATE.VERIFY.SUCCESS);
                 }
                 retries -= 1;
@@ -186,7 +180,9 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
     return isContractOwner || !isProjectAdmin;
   };
   const ableToVerify = verifyPermission();
-  if (hasVerifiedThis || !ableToVerify) return null;
+  
+  // Hide if already verified or user doesn't have permission
+  if (isVerified || !ableToVerify) return null;
 
   return (
     <>

@@ -30,6 +30,7 @@ import { retryUntilConditionMet } from "@/utilities/retries";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { getCompletionData } from "./MilestoneDetails";
 import { UpdateMilestone } from "./UpdateMilestone";
 
 interface UpdatesProps {
@@ -38,6 +39,10 @@ interface UpdatesProps {
 
 export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const [isEditing, setIsEditing] = useState(false);
+
+  // Get normalized completion data (handles both object and array formats)
+  const completionData = getCompletionData(milestone);
+  const isCompleted = completionData !== null;
 
   const handleEditing = (value: boolean) => {
     setIsEditing(value);
@@ -107,7 +112,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
 
       if (!isOnChainAuthorized) {
         await performOffChainRevoke({
-          uid: milestone.completed?.uid as `0x${string}`,
+          uid: completionData?.uid as `0x${string}`,
           chainID: instanceMilestone.chainID,
           checkIfExists: checkIfAttestationExists,
           toastMessages: {
@@ -139,7 +144,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
           setIsStepper(false); // Reset stepper since we're falling back
 
           const success = await performOffChainRevoke({
-            uid: milestone.completed?.uid as `0x${string}`,
+            uid: completionData?.uid as `0x${string}`,
             chainID: instanceMilestone.chainID,
             checkIfExists: checkIfAttestationExists,
             toastMessages: {
@@ -186,12 +191,42 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
     setVerifiedMilestones(milestone?.verified || []);
   }, [milestone]);
 
+  // Extract actual date value from various formats (handles MongoDB { $date: ... } format)
+  const extractDateValue = (val: any): number | string | Date | null => {
+    if (val === null || val === undefined) return null;
+    // Handle MongoDB { $date: ... } format
+    if (typeof val === "object" && val.$date) return val.$date;
+    // Return as-is if it's a valid type
+    if (typeof val === "number" || typeof val === "string" || val instanceof Date) return val;
+    return null;
+  };
+
+  // Get the best available completion date
+  const getCompletionDate = () => {
+    const candidates = [
+      extractDateValue(completionData?.createdAt),
+      extractDateValue(completionData?.updatedAt),
+      extractDateValue((completionData as any)?.completedAt),
+      extractDateValue((milestone.completed as any)?.createdAt),
+      extractDateValue((milestone.completed as any)?.updatedAt),
+      extractDateValue(milestone.updatedAt),
+      extractDateValue(milestone.createdAt),
+      milestone.data?.endsAt, // This is already a number (Unix timestamp)
+    ];
+
+    // Return first valid date value
+    return candidates.find((val) => val !== null && val !== undefined);
+  };
+
+  const completionDateValue = getCompletionDate();
+
   /*
    * Check if the milestone completion was created after the launch date of the feature
    * @returns {boolean}
    */
   const checkProofLaunch = () => {
-    return new Date("2024-08-30") <= new Date(milestone?.completed?.createdAt);
+    if (!completionDateValue) return false;
+    return new Date("2024-08-30") <= new Date(completionDateValue);
   };
 
   const isAfterProofLaunch = checkProofLaunch();
@@ -202,15 +237,15 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
 
   // Fetch milestone impact data (outputs/metrics) if milestone is completed
   const { data: milestoneImpactData } = useMilestoneImpactAnswers({
-    milestoneUID: milestone.completed ? milestone.uid : undefined,
+    milestoneUID: isCompleted ? milestone.uid : undefined,
   });
 
   // Get deliverables from milestone completion data
-  const completionDeliverables = (milestone.completed?.data as any)?.deliverables;
+  const completionDeliverables = (completionData?.data as any)?.deliverables;
 
   if (
     !isEditing &&
-    (milestone?.completed?.data?.reason?.length || milestone?.completed?.data?.proofOfWork)
+    (completionData?.data?.reason?.length || completionData?.data?.proofOfWork)
   ) {
     return (
       <div className="flex flex-col gap-3 bg-[#F8F9FC] dark:bg-zinc-900 rounded-md px-4 py-2 max-lg:max-w-2xl max-sm:max-w-full w-full">
@@ -222,38 +257,38 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             </div>
           </div>
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-100">
-            Completed on {formatDate(milestone?.completed?.createdAt)}
+            Completed on {formatDate(completionDateValue)}
           </p>
         </div>
 
-        {milestone.completed?.data?.reason || milestone.completed?.data?.proofOfWork ? (
+        {completionData?.data?.reason || completionData?.data?.proofOfWork ? (
           <div className="flex flex-col items-start " data-color-mode="light">
             <ReadMore readLessText="Read less" readMoreText="Read more" side="left">
-              {milestone.completed.data?.reason || ""}
+              {completionData.data?.reason || ""}
             </ReadMore>
 
             <div className="flex w-full flex-row items-center justify-between">
-              {isAfterProofLaunch && milestone?.completed?.data.proofOfWork ? (
+              {isAfterProofLaunch && completionData?.data?.proofOfWork ? (
                 <div className="flex flex-row items-center gap-1 flex-1 max-w-full flex-wrap max-sm:mt-4">
                   <p className="text-sm w-full min-w-max max-w-max font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
                     Proof of work:
                   </p>
                   <ExternalLink
                     href={
-                      milestone?.completed?.data.proofOfWork.includes("http")
-                        ? milestone?.completed?.data.proofOfWork
-                        : `https://${milestone?.completed?.data.proofOfWork}`
+                      completionData?.data?.proofOfWork.includes("http")
+                        ? completionData?.data?.proofOfWork
+                        : `https://${completionData?.data?.proofOfWork}`
                     }
                     className="flex flex-row w-max max-w-full break-all gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent line-clamp-3"
                   >
-                    {milestone?.completed?.data.proofOfWork.includes("http")
-                      ? `${milestone?.completed?.data.proofOfWork.slice(0, 80)}${
-                          milestone?.completed?.data.proofOfWork.slice(0, 80).length >= 80
+                    {completionData?.data?.proofOfWork.includes("http")
+                      ? `${completionData?.data?.proofOfWork.slice(0, 80)}${
+                          completionData?.data?.proofOfWork.slice(0, 80).length >= 80
                             ? "..."
                             : ""
                         }`
-                      : `https://${milestone?.completed?.data.proofOfWork.slice(0, 80)}${
-                          milestone?.completed?.data.proofOfWork.slice(0, 80).length >= 80
+                      : `https://${completionData?.data?.proofOfWork.slice(0, 80)}${
+                          completionData?.data?.proofOfWork.slice(0, 80).length >= 80
                             ? "..."
                             : ""
                         }`}
@@ -275,7 +310,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                       className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
                       href={shareOnX(
                         SHARE_TEXTS.MILESTONE_COMPLETED(
-                          grant?.details?.data?.title as string,
+                          grant?.details?.title as string,
                           (project?.details?.slug || project?.uid) as string,
                           grant?.uid as string
                         )
@@ -380,7 +415,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
     <UpdateMilestone
       milestone={milestone}
       isEditing={isEditing}
-      previousData={milestone.completed?.data}
+      previousData={completionData?.data}
       cancelEditing={handleEditing}
     />
   );

@@ -287,7 +287,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       if (grant?.communityUID) {
         // Get community name from project grants
         const projectGrant = project?.grants?.find((g) => g.uid === grantId);
-        const communityName = projectGrant?.community?.details?.data?.name || "Unknown Community";
+        const communityName = projectGrant?.community?.details?.name || "Unknown Community";
         communities.set(grant.communityUID, {
           uid: grant.communityUID,
           name: communityName,

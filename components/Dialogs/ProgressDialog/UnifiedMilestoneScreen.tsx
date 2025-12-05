@@ -104,7 +104,7 @@ export const UnifiedMilestoneScreen = () => {
 
   const grantOptions = grants.map((grant) => ({
     value: grant.uid,
-    label: `${grant.details?.data.title || "Untitled Grant"}`,
+    label: `${grant.details?.title || "Untitled Grant"}`,
     chainId: grant.chainID,
   }));
 

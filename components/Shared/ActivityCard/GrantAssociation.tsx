@@ -64,9 +64,9 @@ export const GrantAssociation = ({
     }
 
     const grantMilestone = milestone.source.grantMilestone;
-    const grantTitle = grantMilestone?.grant.details?.data.title;
-    const programId = grantMilestone?.grant.details?.data.programId;
-    const communityData = grantMilestone?.grant.community?.details?.data;
+    const grantTitle = grantMilestone?.grant.details?.title;
+    const programId = grantMilestone?.grant.details?.programId;
+    const communityData = grantMilestone?.grant.community?.details;
 
     if (!grantTitle && (!milestone.mergedGrants || milestone.mergedGrants.length === 0)) {
       return null;
@@ -139,26 +139,26 @@ export const GrantAssociation = ({
       {multipleGrants?.length ? (
         multipleGrants.map((individualGrant) => (
           <GrantItem
-            key={`${individualGrant.uid}-${individualGrant.details?.data.title}-${update.uid}-${update.data?.title}-${index}`}
+            key={`${individualGrant.uid}-${individualGrant.details?.title}-${update.uid}-${update.data?.title}-${index}`}
             href={PAGES.COMMUNITY.ALL_GRANTS(
-              individualGrant.community?.details?.data?.slug || "",
-              individualGrant.details?.data.programId
+              individualGrant.community?.details?.slug || "",
+              individualGrant.details?.programId
             )}
-            title={individualGrant.details?.data.title || "Untitled Grant"}
-            communityImage={individualGrant.community?.details?.data?.imageURL}
-            communityName={individualGrant.community?.details?.data?.name}
-            keyPrefix={`${individualGrant.uid}-${individualGrant.details?.data.title}-${update.uid}-${update.data?.title}-${index}`}
+            title={individualGrant.details?.title || "Untitled Grant"}
+            communityImage={individualGrant.community?.details?.imageURL}
+            communityName={individualGrant.community?.details?.name}
+            keyPrefix={`${individualGrant.uid}-${individualGrant.details?.title}-${update.uid}-${update.data?.title}-${index}`}
           />
         ))
       ) : grant ? (
         <GrantItem
           href={PAGES.COMMUNITY.ALL_GRANTS(
-            grant.community?.details?.data?.slug || grant?.community?.uid || "",
-            grant?.details?.data.programId || ""
+            grant.community?.details?.slug || grant?.community?.uid || "",
+            grant?.details?.programId || ""
           )}
-          title={grant?.details?.data.title || "Untitled Grant"}
-          communityImage={grant.community?.details?.data?.imageURL}
-          communityName={grant.community?.details?.data?.name}
+          title={grant?.details?.title || "Untitled Grant"}
+          communityImage={grant.community?.details?.imageURL}
+          communityName={grant.community?.details?.name}
           keyPrefix={`single-update-grant-${update.uid}-${index}`}
         />
       ) : null}

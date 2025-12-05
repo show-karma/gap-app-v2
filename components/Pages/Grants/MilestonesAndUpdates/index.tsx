@@ -81,7 +81,7 @@ interface GrantCompletionCardProps {
 
 export const GrantCompletionCard = ({ completion, grant }: GrantCompletionCardProps) => {
   // Get program ID for fetching tracks
-  const programId = grant?.details?.data?.programId
+  const programId = grant?.details?.programId
     ? `${grant.details.data.programId}_${grant.chainID}`
     : undefined;
 

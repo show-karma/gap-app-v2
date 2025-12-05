@@ -100,9 +100,9 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
 
   // grant milestone-specific properties
   const grantMilestone = milestone.source.grantMilestone;
-  const grantTitle = grantMilestone?.grant.details?.data.title;
-  const _programId = grantMilestone?.grant.details?.data.programId;
-  const _communityData = grantMilestone?.grant.community?.details?.data;
+  const grantTitle = grantMilestone?.grant.details?.title;
+  const _programId = grantMilestone?.grant.details?.programId;
+  const _communityData = grantMilestone?.grant.community?.details;
   const endsAt = milestone.endsAt;
 
   // completion information
@@ -313,14 +313,14 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
                   href={shareOnX(
                     type === "grant" && grantMilestone
                       ? SHARE_TEXTS.MILESTONE_COMPLETED(
-                          grantTitle || "Grant",
-                          (project?.details?.slug || project?.uid) as string,
-                          grantMilestone.grant.uid
-                        )
+                        grantTitle || "Grant",
+                        (project?.details?.slug || project?.uid) as string,
+                        grantMilestone.grant.uid
+                      )
                       : SHARE_TEXTS.PROJECT_ACTIVITY(
-                          title,
-                          (project?.details?.slug || project?.uid) as string
-                        )
+                        title,
+                        (project?.details?.slug || project?.uid) as string
+                      )
                   )}
                   className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent hover:opacity-75  h-6 w-6 items-center justify-center"
                 >
@@ -360,7 +360,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
           <div className="flex flex-col gap-3 w-full">
             <ActivityStatusHeader
               activityType="Milestone"
-              dueDate={type === "grant" && endsAt ? formatDate(endsAt * 1000) : null}
+              dueDate={type === "grant" && endsAt ? formatDate(endsAt) : null}
               showCompletionStatus={true}
               completed={!!completed}
               completionStatusClassName="text-xs px-2 py-1"
@@ -406,10 +406,10 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
         />
       </div>
       {isCompleting ||
-      isEditing ||
-      completionReason ||
-      completionProof ||
-      completionDeliverables ? (
+        isEditing ||
+        completionReason ||
+        completionProof ||
+        completionDeliverables ? (
         <div className="flex flex-col w-full pl-8 md:pl-[120px]">{renderMilestoneCompletion()}</div>
       ) : null}
     </div>

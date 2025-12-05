@@ -105,12 +105,12 @@ export const MilestonesList = ({
           existingMilestone.mergedGrants = [
             {
               grantUID: firstGrant?.grant.uid || "",
-              grantTitle: firstGrant?.grant.details?.data.title,
-              communityName: firstGrant?.grant.community?.details?.data.name,
-              communityImage: firstGrant?.grant.community?.details?.data.imageURL,
+              grantTitle: firstGrant?.grant.details?.title,
+              communityName: firstGrant?.grant.community?.details?.name,
+              communityImage: firstGrant?.grant.community?.details?.imageURL,
               chainID: firstGrant?.grant.chainID || 0,
               milestoneUID: firstGrant?.milestone.uid || "",
-              programId: firstGrant?.grant.details?.data.programId,
+              programId: firstGrant?.grant.details?.programId,
             },
           ];
         }
@@ -118,12 +118,12 @@ export const MilestonesList = ({
         // Add the current grant to the merged list
         existingMilestone.mergedGrants.push({
           grantUID: milestone.source.grantMilestone?.grant.uid || "",
-          grantTitle: milestone.source.grantMilestone?.grant.details?.data.title,
-          communityName: milestone.source.grantMilestone?.grant.community?.details?.data.name,
-          communityImage: milestone.source.grantMilestone?.grant.community?.details?.data.imageURL,
+          grantTitle: milestone.source.grantMilestone?.grant.details?.title,
+          communityName: milestone.source.grantMilestone?.grant.community?.details?.name,
+          communityImage: milestone.source.grantMilestone?.grant.community?.details?.imageURL,
           chainID: milestone.source.grantMilestone?.grant.chainID || 0,
           milestoneUID: milestone.source.grantMilestone?.milestone.uid || "",
-          programId: milestone.source.grantMilestone?.grant.details?.data.programId,
+          programId: milestone.source.grantMilestone?.grant.details?.programId,
         });
 
         // Sort the merged grants alphabetically

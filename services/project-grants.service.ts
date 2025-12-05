@@ -3,28 +3,24 @@ import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
 
 /**
- * Fetches grants for a project using v1 endpoint temporarily
+ * Fetches grants for a project using V2 endpoint
  *
  * NOTE: Grants and Funding Applications are different concepts
  * - Funding Applications: /v2/funding-applications/project/${projectUID} (returns IFundingApplication)
- * - Grants: /projects/:idOrSlug/grants (v1 endpoint, returns IGrantResponse[])
+ * - Grants: /v2/projects/:idOrSlug/grants (returns IGrantResponse[])
  *
- * TODO: Once v2 grants endpoint is available (/v2/projects/${projectUID}/grants),
- * update this to use v2 endpoint and handle v2 grant structure (details.title instead of details.data.title)
- *
- * Current v1 endpoint: /projects/:idOrSlug/grants
- * - Returns IGrantResponse[] with v1 structure (details.data.title)
- * - This is temporary until v2 endpoint is created
+ * V2 endpoint: /v2/projects/:idOrSlug/grants
+ * - Returns grants with milestones, updates, and completion data
+ * - Dates are returned as ISO strings (not MongoDB objects)
+ * - Supports both UID and slug identifiers
  */
 export const getProjectGrants = async (
   projectIdOrSlug: string,
   fetchOptions?: RequestInit
 ): Promise<IGrantResponse[]> => {
   try {
-    // Using v1 endpoint temporarily: /projects/:idOrSlug/grants
-    // TODO: Update to v2 endpoint once available: /v2/projects/${projectUID}/grants
     const response = await fetch(
-      `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.PROJECT.GRANTS(projectIdOrSlug)}`,
+      `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.V2.PROJECTS.GRANTS(projectIdOrSlug)}`,
       {
         method: "GET",
         headers: {

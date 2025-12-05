@@ -128,7 +128,7 @@ export default function MyProjects() {
                         className="h-full bg-white dark:bg-zinc-900 dark:border-gray-900 border border-gray-200 rounded-xl   pb-5 w-full transition-all ease-in-out duration-200"
                       >
                         <Link
-                          href={PAGES.PROJECT.OVERVIEW(card.details?.data.slug || card.uid)}
+                          href={PAGES.PROJECT.OVERVIEW(card.details?.slug || card.uid)}
                           className="w-full flex flex-1 flex-col justify-start gap-3"
                         >
                           <div className="px-2 w-full mt-2.5">
@@ -152,7 +152,7 @@ export default function MyProjects() {
                                 />
                               </div>
                               <div className="font-body line-clamp-1 mb-0 pb-0 truncate text-base font-semibold text-gray-900 dark:text-gray-100 flex-1">
-                                {card.details?.data.title || card.uid}
+                                {card.details?.title || card.uid}
                               </div>
                             </div>
                             <div className="font-body dark:text-slate-400 mb-2 text-sm font-medium text-slate-500">
@@ -163,7 +163,7 @@ export default function MyProjects() {
                           <div className="px-5 flex flex-col gap-1 flex-1 h-full">
                             <div className="line-clamp-2 text-base font-normal ">
                               <MarkdownPreview
-                                source={card.details?.data.description || ""}
+                                source={card.details?.description || ""}
                                 style={{
                                   backgroundColor: "transparent",
                                   color: currentTheme === "dark" ? "white" : "rgb(71, 85, 105)",

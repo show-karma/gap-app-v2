@@ -95,8 +95,8 @@ function SearchProject({
       <button key={item.uid} type="button" onClick={handleSelect} className="w-full text-left">
         <div className=":last:border-b-0 cursor-pointer select-none border-b border-slate-100 px-4 py-2 transition hover:bg-slate-200 dark:hover:bg-zinc-700">
           <div className="flex justify-between max-w-full text-ellipsis text-black dark:text-zinc-100">
-            <span className="font-bold">{item?.details?.data.title}</span>
-            <span>{item?.details?.data.slug}</span>
+            <span className="font-bold">{item?.details?.title}</span>
+            <span>{item?.details?.slug}</span>
           </div>
           <div className="text-gray-500 dark:text-gray-200">
             <div className="mt-3 flex items-center">
@@ -132,7 +132,7 @@ function SearchProject({
         <div className="absolute left-0 top-10 mt-3 max-h-32 min-w-full overflow-y-scroll rounded-md bg-white dark:bg-zinc-800 py-4 border border-zinc-200">
           {results.projects.length > 0 &&
             results.projects.map((project) =>
-              renderItem(project, PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid))
+              renderItem(project, PAGES.PROJECT.GRANTS(project.details?.slug || project.uid))
             )}
 
           {isLoading && (
@@ -336,8 +336,8 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                       (primaryProject ? (
                         <div>
                           <p className="mb-2">Selected Primary Project:</p>
-                          <p className="font-bold text-2xl">{`${primaryProject?.details?.data.title}`}</p>
-                          <p className="text-md">{`/${primaryProject?.details?.data.slug}`}</p>
+                          <p className="font-bold text-2xl">{`${primaryProject?.details?.title}`}</p>
+                          <p className="text-md">{`/${primaryProject?.details?.slug}`}</p>
                         </div>
                       ) : (
                         <div>Select a primary project to merge with.</div>

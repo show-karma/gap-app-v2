@@ -44,7 +44,7 @@ export const GrantCompletion: FC = () => {
   const [isFundingProgram, setIsFundingProgram] = useState(false);
 
   // Get tracks for the program to check if they exist
-  const programIdWithChain = grant?.details?.data?.programId;
+  const programIdWithChain = grant?.details?.programId;
   const { data: availableTracks = [] } = useTracksForProgram(programIdWithChain || "");
 
   // Validation states
@@ -69,7 +69,7 @@ export const GrantCompletion: FC = () => {
     const checkFundingProgram = async () => {
       if (grant) {
         // First check by grant name
-        const grantName = grant?.details?.data?.title || "";
+        const grantName = grant?.details?.title || "";
         if (isFundingProgramGrant(undefined, grantName)) {
           setIsFundingProgram(false);
           return;
@@ -84,7 +84,7 @@ export const GrantCompletion: FC = () => {
 
             const response = await gapIndexerApi.communityBySlug(communityId);
             if (response.data) {
-              const communityName = response.data.details?.data?.name || "";
+              const communityName = response.data.details?.name || "";
               setIsFundingProgram(isFundingProgramGrant(communityName, grantName));
             }
           } catch (error) {
@@ -101,18 +101,18 @@ export const GrantCompletion: FC = () => {
     };
 
     checkFundingProgram();
-  }, [grant?.community, grant?.details?.data?.title, grant]);
+  }, [grant?.community, grant?.details?.title, grant]);
 
   useEffect(() => {
-    if (grant?.details?.data?.selectedTrackIds) {
+    if (grant?.details?.selectedTrackIds) {
       setTrackExplanations(
-        grant.details.data.selectedTrackIds.map((trackId) => ({
+        grant.details.selectedTrackIds.map((trackId) => ({
           trackUID: trackId,
           explanation: "",
         }))
       );
     }
-  }, [grant?.details?.data?.selectedTrackIds]);
+  }, [grant?.details?.selectedTrackIds]);
 
   const markGrantAsComplete = async (
     grantToComplete: IGrantResponse,

@@ -38,8 +38,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       .catch(() => notFound());
     if (grantInfo) {
       const pageMetadata = {
-        title: `${projectInfo?.details?.title} - Milestones and Updates for ${grantInfo?.details?.data.title} | ${PROJECT_NAME}`,
-        description: `View all milestones and updates by ${projectInfo?.details?.title} for ${grantInfo?.details?.data.title} grant.`,
+        title: `${projectInfo?.details?.title} - Milestones and Updates for ${grantInfo?.details?.title} | ${PROJECT_NAME}`,
+        description: `View all milestones and updates by ${projectInfo?.details?.title} for ${grantInfo?.details?.title} grant.`,
       };
 
       metadata = {
