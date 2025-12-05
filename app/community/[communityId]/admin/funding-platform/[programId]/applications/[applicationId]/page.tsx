@@ -1,15 +1,24 @@
 "use client";
 
-import { PencilIcon } from "@heroicons/react/24/outline";
-import { ArrowLeftIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useAccount } from "wagmi";
-import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent";
-import CommentsSection from "@/components/FundingPlatform/ApplicationView/CommentsSection";
+import { AIAnalysisTab } from "@/components/FundingPlatform/ApplicationView/AIAnalysisTab";
+import ApplicationHeader from "@/components/FundingPlatform/ApplicationView/ApplicationHeader";
+import { ApplicationTab } from "@/components/FundingPlatform/ApplicationView/ApplicationTab";
+import {
+  ApplicationTabs,
+  type TabConfig,
+  TabIcons,
+} from "@/components/FundingPlatform/ApplicationView/ApplicationTabs";
 import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView/DeleteApplicationModal";
+import { DiscussionTab } from "@/components/FundingPlatform/ApplicationView/DiscussionTab";
 import EditApplicationModal from "@/components/FundingPlatform/ApplicationView/EditApplicationModal";
+import HeaderActions from "@/components/FundingPlatform/ApplicationView/HeaderActions";
+import MoreActionsDropdown from "@/components/FundingPlatform/ApplicationView/MoreActionsDropdown";
+import { TabPanel } from "@/components/FundingPlatform/ApplicationView/TabPanel";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import {
@@ -107,6 +116,12 @@ export default function ApplicationDetailPage() {
     });
   };
 
+  // Handle status change click (opens modal)
+  const handleStatusChangeClick = (status: string) => {
+    // Pass to ApplicationContent which handles the modal
+    handleStatusChange(status);
+  };
+
   // Handle comment operations
   const handleCommentAdd = async (content: string) => {
     if (!applicationId) return;
@@ -195,6 +210,10 @@ export default function ApplicationDetailPage() {
     return null;
   }, [application?.status, application?.projectUID, communityId, combinedProgramId]);
 
+  // Check if status actions should be shown (not finalized)
+  const showStatusActions =
+    hasAccess && application && !["approved", "rejected"].includes(application.status);
+
   // Check loading states
   if (isLoadingAdmin || isStaffLoading || isLoadingApplication) {
     return (
@@ -229,118 +248,123 @@ export default function ApplicationDetailPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 max-sm:gap-1 max-sm:flex-col max-sm:items-start">
-              <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
-                <ArrowLeftIcon className="w-4 h-4 mr-2" />
-                Back to Applications
-              </Button>
-              <div className="flex flex-col gap-0">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Application Details
-                </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Application ID: {application.referenceNumber}
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+      {/* Main Content */}
+      <div className="px-4 sm:px-6 lg:px-8 py-6">
+        {/* Back Button */}
+        <div className="mb-4">
+          <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
+            <ArrowLeftIcon className="w-4 h-4 mr-2" />
+            Back to Applications
+          </Button>
+        </div>
+        {/* Application Header Card with Actions - connects to tabs when no milestone link */}
+        <ApplicationHeader
+          application={application}
+          program={program}
+          connectedToTabs={!milestoneReviewUrl}
+          statusActions={
+            showStatusActions ? (
+              <HeaderActions
+                currentStatus={application.status as any}
+                onStatusChange={handleStatusChangeClick}
+                isUpdating={false}
+              />
+            ) : undefined
+          }
+          moreActions={
+            <MoreActionsDropdown
+              referenceNumber={application.referenceNumber}
+              onDeleteClick={handleDeleteClick}
+              canDelete={isCommunityAdmin}
+              isDeleting={isDeleting}
+              onEditClick={handleEditClick}
+              canEdit={hasAccess && canEditApplication(application)}
+            />
+          }
+        />
+
+        {/* Milestone Review Link - Only shown if application is approved and has projectUID */}
+        {milestoneReviewUrl && (
+          <div className="my-6 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-1">
+                <h3 className="text-sm font-semibold text-green-900 dark:text-green-100">
+                  Review Project Milestones
+                </h3>
+                <p className="text-xs text-green-700 dark:text-green-300">
+                  View and verify milestone completions for this approved application
                 </p>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {/* Edit button - Show for admins */}
-              {hasAccess && application && (
-                <Button
-                  onClick={handleEditClick}
-                  disabled={!canEditApplication(application)}
-                  variant="secondary"
-                  className="flex items-center gap-2"
-                  title={
-                    !canEditApplication(application)
-                      ? "Cannot edit applications with status 'under_review' or 'approved'"
-                      : "Edit application"
-                  }
-                >
-                  <PencilIcon className="w-4 h-4" />
-                  Edit Application
+              <Link href={milestoneReviewUrl}>
+                <Button className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white">
+                  View Milestones
                 </Button>
-              )}
-              {/* Delete button - Only show for community admins */}
-              {isCommunityAdmin && (
-                <Button
-                  onClick={handleDeleteClick}
-                  disabled={isDeleting}
-                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
-                >
-                  <TrashIcon className="w-4 h-4" />
-                  Delete Application
-                </Button>
-              )}
+              </Link>
             </div>
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* Two Column Layout */}
-      <div className="px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Column - Application Content and AI Evaluation */}
-          <div className="space-y-6">
-            {/* Milestone Review Link - Only shown if application is approved and has projectUID */}
-            {milestoneReviewUrl && (
-              <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col gap-1">
-                    <h3 className="text-sm font-semibold text-green-900 dark:text-green-100">
-                      Review Project Milestones
-                    </h3>
-                    <p className="text-xs text-green-700 dark:text-green-300">
-                      View and verify milestone completions for this approved application
-                    </p>
-                  </div>
-                  <Link href={milestoneReviewUrl}>
-                    <Button className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white">
-                      View Milestones
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            <ApplicationContent
-              application={application}
-              program={program}
-              showStatusActions={hasAccess}
-              showAIEvaluationButton={hasAccess}
-              showInternalEvaluation={hasAccess}
-              onStatusChange={handleStatusChange}
-              viewMode={applicationViewMode}
-              onViewModeChange={setApplicationViewMode}
-              onRefresh={refetchApplication}
-            />
-          </div>
-
-          {/* Right Column - Comments */}
-          <div className="space-y-6">
-            <CommentsSection
-              applicationId={application.referenceNumber}
-              application={application}
-              comments={comments}
-              statusHistory={application.statusHistory}
-              versionHistory={versions}
-              currentStatus={application.status}
-              isAdmin={hasAccess}
-              currentUserAddress={currentUserAddress}
-              onCommentAdd={handleCommentAdd}
-              onCommentEdit={handleCommentEdit}
-              onCommentDelete={handleCommentDelete}
-              onVersionClick={handleVersionClick}
-              isLoading={isLoadingComments}
-              formSchema={config?.formSchema}
-            />
-          </div>
-        </div>
+        {/* Tab-based Layout */}
+        <ApplicationTabs
+          connectedToHeader={!milestoneReviewUrl}
+          tabs={
+            [
+              {
+                id: "application",
+                label: "Application",
+                icon: TabIcons.Application,
+                content: (
+                  <TabPanel>
+                    <ApplicationTab
+                      application={application}
+                      program={program}
+                      viewMode={applicationViewMode}
+                      onViewModeChange={setApplicationViewMode}
+                    />
+                  </TabPanel>
+                ),
+              },
+              {
+                id: "ai-analysis",
+                label: "AI Analysis",
+                icon: TabIcons.AIAnalysis,
+                content: (
+                  <TabPanel>
+                    <AIAnalysisTab
+                      application={application}
+                      program={program}
+                      onEvaluationComplete={refetchApplication}
+                    />
+                  </TabPanel>
+                ),
+              },
+              {
+                id: "discussion",
+                label: "Discussion",
+                icon: TabIcons.Discussion,
+                content: (
+                  <TabPanel padded={false}>
+                    <DiscussionTab
+                      applicationId={application.referenceNumber}
+                      comments={comments}
+                      statusHistory={application.statusHistory}
+                      versionHistory={versions}
+                      currentStatus={application.status}
+                      isAdmin={hasAccess}
+                      currentUserAddress={currentUserAddress}
+                      onCommentAdd={handleCommentAdd}
+                      onCommentEdit={handleCommentEdit}
+                      onCommentDelete={handleCommentDelete}
+                      onVersionClick={handleVersionClick}
+                      isLoading={isLoadingComments}
+                    />
+                  </TabPanel>
+                ),
+              },
+            ] satisfies TabConfig[]
+          }
+        />
       </div>
 
       {/* Delete Confirmation Modal */}
@@ -360,7 +384,7 @@ export default function ApplicationDetailPage() {
           application={application}
           programId={programId}
           chainId={parsedChainId}
-          formSchema={config?.formSchema} // Optional - modal will fetch if not provided
+          formSchema={config?.formSchema}
           onSuccess={handleEditSuccess}
         />
       )}

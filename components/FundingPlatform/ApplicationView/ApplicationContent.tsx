@@ -36,6 +36,12 @@ interface ApplicationContentProps {
   viewMode?: "details" | "changes";
   onViewModeChange?: (mode: "details" | "changes") => void;
   onRefresh?: () => void;
+  /** When true, only show AI evaluation sections (for AI Analysis tab) */
+  showOnlyAIEvaluation?: boolean;
+  /** When true, hide AI evaluation sections (for Application tab when AI is in separate tab) */
+  hideAIEvaluation?: boolean;
+  /** When true, hide the header card (used when header is shown separately) */
+  hideHeader?: boolean;
 }
 
 const statusColors = {
@@ -71,6 +77,9 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
   viewMode: controlledViewMode,
   onViewModeChange,
   onRefresh,
+  showOnlyAIEvaluation = false,
+  hideAIEvaluation = false,
+  hideHeader = false,
 }) => {
   // Resolve form schema from program object (handling both FundingProgram and IFundingProgramConfig structures)
   const formSchema = (program as any)?.applicationConfig?.formSchema || program?.formSchema;
@@ -250,73 +259,168 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
     }
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-5">
         {Object.entries(dataToRender).map(([key, value]) => (
-          <div key={key} className="border-b border-gray-100 dark:border-gray-700 pb-3">
-            <dt className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+          <div key={key} className="border-b border-gray-100 dark:border-gray-700 pb-4">
+            <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
               {fieldLabels[key] || key.replace(/_/g, " ")}
             </dt>
-            <dd className="text-sm text-gray-900 dark:text-gray-100">{renderFieldValue(value)}</dd>
+            <dd className="text-base text-gray-900 dark:text-gray-100">
+              {renderFieldValue(value)}
+            </dd>
           </div>
         ))}
       </div>
     );
   };
 
+  // When showing only AI evaluation, render just the AI sections
+  if (showOnlyAIEvaluation) {
+    return (
+      <>
+        <div className="space-y-6">
+          {/* AI Evaluation */}
+          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">AI Evaluation</h3>
+              {showAIEvaluationButton && (
+                <AIEvaluationButton
+                  referenceNumber={application.referenceNumber}
+                  onEvaluationComplete={handleAIEvaluationComplete}
+                  disabled={isUpdatingStatus}
+                />
+              )}
+            </div>
+            <AIEvaluationDisplay
+              evaluation={application.aiEvaluation?.evaluation || null}
+              isLoading={false}
+              isEnabled={true}
+              hasError={false}
+              programName={program?.name || ""}
+            />
+          </div>
+
+          {/* Internal AI Evaluation */}
+          {shouldShowInternalEvaluation && (
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <div className="flex items-center justify-between gap-4 mb-4">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  Internal AI Evaluation
+                </h3>
+                {showAIEvaluationButton && (
+                  <div
+                    className="flex-shrink-0"
+                    title={!canRunInternalEvaluation ? internalPromptHelpText : undefined}
+                  >
+                    <AIEvaluationButton
+                      referenceNumber={application.referenceNumber}
+                      onEvaluationComplete={handleAIEvaluationComplete}
+                      disabled={isUpdatingStatus || !canRunInternalEvaluation}
+                      isInternal={true}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {showMissingInternalPromptWarning && (
+                <div className="mb-4 flex items-start gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3 dark:border-yellow-900/50 dark:bg-yellow-900/20">
+                  <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                  <div className="space-y-1 text-sm">
+                    <p className="font-medium text-yellow-900 dark:text-yellow-200">
+                      Internal prompt not configured
+                    </p>
+                    <p className="text-yellow-800 dark:text-yellow-200/80 text-xs leading-relaxed">
+                      Set the{" "}
+                      <span className="font-semibold">Internal AI Evaluation Prompt Name</span> in
+                      the program&apos;s AI configuration (Form Builder → AI Evaluation
+                      Configuration) to enable manual internal runs.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <InternalAIEvaluationDisplay
+                evaluation={application.internalAIEvaluation?.evaluation || null}
+                programName={program?.name || ""}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Status Change Modal */}
+        <StatusChangeModal
+          isOpen={statusModalOpen}
+          onClose={() => {
+            setStatusModalOpen(false);
+            setPendingStatus("");
+          }}
+          onConfirm={handleStatusChangeConfirm}
+          status={pendingStatus}
+          isSubmitting={isUpdatingStatus}
+          isReasonRequired={pendingStatus === "revision_requested"}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <div className="space-y-6">
-        {/* Application Header Card */}
-        <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex flex-col flex-wrap items-start justify-between mb-4 gap-1">
-            <div
-              className={cn(
-                "flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium",
-                statusColors[application.status as keyof typeof statusColors] ||
-                  "bg-zinc-100 text-gray-800 border-gray-200"
-              )}
-            >
-              <StatusIcon className="w-4 h-4" />
-              <span>{formatStatus(application.status)}</span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {getProjectTitle(application)}
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {application.applicantEmail}
-              </p>
-            </div>
-          </div>
-
-          <dl className="grid grid-cols-2 gap-4">
-            <div>
-              <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Submitted</dt>
-              <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {formatDate(application.createdAt)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</dt>
-              <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {formatDate(application.updatedAt)}
-              </dd>
-            </div>
-          </dl>
-
-          {/* Status Actions */}
-          {!["approved", "rejected"].includes(application.status) &&
-            showStatusActions &&
-            onStatusChange && (
-              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <StatusActionButtons
-                  currentStatus={application.status as any}
-                  onStatusChange={handleStatusChangeClick}
-                  isUpdating={isUpdatingStatus}
-                />
+        {/* Application Header Card - hidden when header is shown separately */}
+        {!hideHeader && (
+          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex flex-col flex-wrap items-start justify-between mb-4 gap-1">
+              <div
+                className={cn(
+                  "flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium",
+                  statusColors[application.status as keyof typeof statusColors] ||
+                    "bg-zinc-100 text-gray-800 border-gray-200"
+                )}
+              >
+                <StatusIcon className="w-4 h-4" />
+                <span>{formatStatus(application.status)}</span>
               </div>
-            )}
-        </div>
+              <div className="flex flex-col gap-1">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {getProjectTitle(application)}
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  {application.applicantEmail}
+                </p>
+              </div>
+            </div>
+
+            <dl className="grid grid-cols-2 gap-4">
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Submitted</dt>
+                <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                  {formatDate(application.createdAt)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Last Updated
+                </dt>
+                <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                  {formatDate(application.updatedAt)}
+                </dd>
+              </div>
+            </dl>
+
+            {/* Status Actions */}
+            {!["approved", "rejected"].includes(application.status) &&
+              showStatusActions &&
+              onStatusChange && (
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <StatusActionButtons
+                    currentStatus={application.status as any}
+                    onStatusChange={handleStatusChangeClick}
+                    isUpdating={isUpdatingStatus}
+                  />
+                </div>
+              )}
+          </div>
+        )}
 
         {/* Current Revision Reason */}
         {getCurrentRevisionReason() && (
@@ -394,29 +498,31 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
           )}
         </div>
 
-        {/* AI Evaluation */}
-        <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">AI Evaluation</h3>
-            {showAIEvaluationButton && (
-              <AIEvaluationButton
-                referenceNumber={application.referenceNumber}
-                onEvaluationComplete={handleAIEvaluationComplete}
-                disabled={isUpdatingStatus}
-              />
-            )}
+        {/* AI Evaluation - hidden when showing in separate tab */}
+        {!hideAIEvaluation && (
+          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">AI Evaluation</h3>
+              {showAIEvaluationButton && (
+                <AIEvaluationButton
+                  referenceNumber={application.referenceNumber}
+                  onEvaluationComplete={handleAIEvaluationComplete}
+                  disabled={isUpdatingStatus}
+                />
+              )}
+            </div>
+            <AIEvaluationDisplay
+              evaluation={application.aiEvaluation?.evaluation || null}
+              isLoading={false}
+              isEnabled={true}
+              hasError={false}
+              programName={program?.name || ""}
+            />
           </div>
-          <AIEvaluationDisplay
-            evaluation={application.aiEvaluation?.evaluation || null}
-            isLoading={false}
-            isEnabled={true}
-            hasError={false}
-            programName={program?.name || ""}
-          />
-        </div>
+        )}
 
         {/* Internal AI Evaluation */}
-        {shouldShowInternalEvaluation && (
+        {!hideAIEvaluation && shouldShowInternalEvaluation && (
           <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between gap-4 mb-4">
               <h3 className="text-lg font-medium text-gray-900 dark:text-white">
