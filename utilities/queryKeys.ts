@@ -38,4 +38,8 @@ export const QUERY_KEYS = {
       title: string;
     }) => ["duplicate-grant-check", params] as const,
   },
+  DONATIONS: {
+    BY_USER: (walletAddress: string) => ["donations", "user", walletAddress] as const,
+    BY_PROJECT: (projectUID: string) => ["donations", "project", projectUID] as const,
+  },
 };
