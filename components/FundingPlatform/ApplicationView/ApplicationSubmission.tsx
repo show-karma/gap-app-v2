@@ -712,7 +712,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   }
 
   return (
-    <div className="flex flex-col w-full space-y-6">
+    <div className="flex flex-col w-full space-y-6 pr-2">
       {/* Header */}
       <div className="flex flex-col space-y-2">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{formSchema.title}</h2>

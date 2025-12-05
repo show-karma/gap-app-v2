@@ -108,11 +108,11 @@ const EditApplicationModal: FC<EditApplicationModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-8">
+        <DialogHeader className="pb-4">
           <DialogTitle>Edit Application</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto mt-4">
+        <div className="flex-1 overflow-y-auto pr-6">
           {/* Warning banner for low match rate */}
           {matchingDiagnostics && matchingDiagnostics.matchRate < 0.7 && (
             <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">

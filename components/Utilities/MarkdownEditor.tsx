@@ -94,11 +94,14 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
       )}
       <div
         data-color-mode={currentTheme === "dark" ? "dark" : "light"}
-        className={cn("w-full", error && "rounded-lg border border-red-500 dark:border-red-500")}
+        className={cn(
+          "w-full rounded-lg border overflow-hidden markdown-editor-wrapper",
+          error ? "border-red-500 dark:border-red-500" : "border-gray-200 dark:border-gray-700"
+        )}
       >
         <MDEditor
           className={cn(
-            "flex-1 bg-white dark:bg-zinc-900 dark:text-white text-black dark:border-gray-600",
+            "flex-1 bg-white dark:bg-zinc-900 dark:text-white text-black",
             error && "border-red-500 dark:border-red-500",
             isEditorDisabled && "opacity-50 cursor-not-allowed",
             className
@@ -116,7 +119,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
           textareaProps={{
             placeholder: editorPlaceholder,
             spellCheck: true,
-            style: { height: "100%", minHeight: "100%" },
+            style: { height: "100%", minHeight: "100%", paddingRight: "0.5rem" },
             disabled: isEditorDisabled,
             id,
           }}
