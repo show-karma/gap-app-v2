@@ -138,6 +138,16 @@ export const generateProjectFundingMetadata = (
   });
 };
 
+// Helper to get grant title supporting both V1 and V2 API structures
+const getGrantTitle = (grant: GrantResponse): string => {
+  return grant.details?.title || (grant.details as any)?.data?.title || "";
+};
+
+// Helper to get grant description supporting both V1 and V2 API structures
+const getGrantDescription = (grant: GrantResponse): string => {
+  return grant.details?.description || (grant.details as any)?.data?.description || "";
+};
+
 // Grant-specific metadata generators
 export const generateGrantOverviewMetadata = (
   project: ProjectResponse,
@@ -145,10 +155,11 @@ export const generateGrantOverviewMetadata = (
   projectId: string
 ): Metadata => {
   const projectTitle = getProjectTitle(project);
+  const grantTitle = getGrantTitle(grant);
   return generateProjectMetadata(project, {
     projectId,
-    title: `${grant.details?.title} Grant Overview | ${projectTitle} | ${PROJECT_NAME}`,
-    description: cleanMarkdownForPlainText(grant.details?.description || "", 160),
+    title: `${grantTitle} Grant Overview | ${projectTitle} | ${PROJECT_NAME}`,
+    description: cleanMarkdownForPlainText(getGrantDescription(grant), 160),
   });
 };
 
@@ -158,10 +169,11 @@ export const generateGrantMilestonesMetadata = (
   projectId: string
 ): Metadata => {
   const projectTitle = getProjectTitle(project);
+  const grantTitle = getGrantTitle(grant);
   return generateProjectMetadata(project, {
     projectId,
-    title: `${projectTitle} - Milestones and Updates for ${grant.details?.title} | ${PROJECT_NAME}`,
-    description: `View all milestones and updates by ${projectTitle} for ${grant.details?.title} grant.`,
+    title: `${projectTitle} - Milestones and Updates for ${grantTitle} | ${PROJECT_NAME}`,
+    description: `View all milestones and updates by ${projectTitle} for ${grantTitle} grant.`,
   });
 };
 
@@ -171,10 +183,11 @@ export const generateGrantImpactCriteriaMetadata = (
   projectId: string
 ): Metadata => {
   const projectTitle = getProjectTitle(project);
+  const grantTitle = getGrantTitle(grant);
   return generateProjectMetadata(project, {
     projectId,
-    title: `Impact Criteria for ${grant.details?.title} Grant | ${projectTitle} | ${PROJECT_NAME}`,
-    description: `Impact criteria defined by ${projectTitle} for ${grant.details?.title} grant.`,
+    title: `Impact Criteria for ${grantTitle} Grant | ${projectTitle} | ${PROJECT_NAME}`,
+    description: `Impact criteria defined by ${projectTitle} for ${grantTitle} grant.`,
   });
 };
 

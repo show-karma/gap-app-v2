@@ -35,9 +35,12 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       .then((res) => res.data)
       .catch(() => notFound())) as unknown as GrantResponse | undefined;
     if (grantInfo) {
+      // Support both V1 (details.data.x) and V2 (details.x) API response structures
+      const grantTitle = grantInfo?.details?.title || (grantInfo?.details as any)?.data?.title;
+
       const pageMetadata = {
-        title: `Impact Criteria for ${grantInfo?.details?.title} Grant | ${projectInfo?.details?.title} | ${PROJECT_NAME}`,
-        description: `Impact criteria defined by ${projectInfo?.details?.title} for ${grantInfo?.details?.title} grant.`,
+        title: `Impact Criteria for ${grantTitle} Grant | ${projectInfo?.details?.title} | ${PROJECT_NAME}`,
+        description: `Impact criteria defined by ${projectInfo?.details?.title} for ${grantTitle} grant.`,
       };
 
       metadata = {

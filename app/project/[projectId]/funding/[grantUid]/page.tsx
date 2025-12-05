@@ -40,6 +40,11 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       .catch(() => notFound())) as unknown as GrantResponse | undefined;
 
     if (grantInfo) {
+      // Support both V1 (details.data.x) and V2 (details.x) API response structures
+      const grantTitle = grantInfo?.details?.title || (grantInfo?.details as any)?.data?.title;
+      const grantDescription =
+        grantInfo?.details?.description || (grantInfo?.details as any)?.data?.description;
+
       const tabMetadata: Record<
         string,
         {
@@ -48,9 +53,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
         }
       > = {
         overview: {
-          title: `${grantInfo?.details?.title} Grant Overview | ${projectInfo?.details?.title} | ${PROJECT_NAME}`,
-          description:
-            `${cleanMarkdownForPlainText(grantInfo?.details?.description || "", 160)}` || "",
+          title: `${grantTitle} Grant Overview | ${projectInfo?.details?.title} | ${PROJECT_NAME}`,
+          description: `${cleanMarkdownForPlainText(grantDescription || "", 160)}` || "",
         },
       };
 
