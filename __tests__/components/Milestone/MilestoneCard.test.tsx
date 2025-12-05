@@ -399,6 +399,406 @@ describe("MilestoneCard", () => {
     });
   });
 
+  describe("URL Protocol Handling", () => {
+    describe("Deliverable Proof Links", () => {
+      it("should prepend https:// to deliverable proof URLs without protocol", () => {
+        const milestoneWithDeliverable = {
+          ...mockGrantMilestone,
+          completed: true,
+          source: {
+            projectMilestone: null,
+            grantMilestone: {
+              milestone: {
+                uid: "gm-456",
+                attester: "0x1234567890123456789012345678901234567890",
+                completed: {
+                  data: {
+                    reason: "Milestone completed",
+                    proofOfWork: "",
+                    deliverables: [
+                      {
+                        name: "Moviemeter",
+                        description: "A movie tracking app",
+                        proof: "Moviemeter.io/home", // Missing protocol
+                      },
+                    ],
+                  },
+                },
+              },
+              grant: {
+                uid: "grant-123",
+                details: {
+                  data: {
+                    title: "Test Grant Program",
+                    programId: "program-123",
+                  },
+                },
+                community: {
+                  details: {
+                    data: {
+                      name: "Test Community",
+                      slug: "test-community",
+                      imageURL: "https://example.com/community.jpg",
+                    },
+                  },
+                },
+              },
+            } as any,
+          },
+        } as unknown as UnifiedMilestone;
+
+        render(<MilestoneCard milestone={milestoneWithDeliverable} isAuthorized={false} />);
+
+        const proofLink = screen.getByText("Moviemeter.io/home");
+        expect(proofLink).toHaveAttribute("href", "https://Moviemeter.io/home");
+      });
+
+      it("should not modify deliverable proof URLs that already have https://", () => {
+        const milestoneWithDeliverable = {
+          ...mockGrantMilestone,
+          completed: true,
+          source: {
+            projectMilestone: null,
+            grantMilestone: {
+              milestone: {
+                uid: "gm-456",
+                attester: "0x1234567890123456789012345678901234567890",
+                completed: {
+                  data: {
+                    reason: "Milestone completed",
+                    proofOfWork: "",
+                    deliverables: [
+                      {
+                        name: "Test Deliverable",
+                        proof: "https://example.com/proof",
+                      },
+                    ],
+                  },
+                },
+              },
+              grant: {
+                uid: "grant-123",
+                details: {
+                  data: {
+                    title: "Test Grant Program",
+                    programId: "program-123",
+                  },
+                },
+                community: {
+                  details: {
+                    data: {
+                      name: "Test Community",
+                      slug: "test-community",
+                      imageURL: "https://example.com/community.jpg",
+                    },
+                  },
+                },
+              },
+            } as any,
+          },
+        } as unknown as UnifiedMilestone;
+
+        render(<MilestoneCard milestone={milestoneWithDeliverable} isAuthorized={false} />);
+
+        const proofLink = screen.getByText("https://example.com/proof");
+        expect(proofLink).toHaveAttribute("href", "https://example.com/proof");
+      });
+
+      it("should not modify deliverable proof URLs that already have http://", () => {
+        const milestoneWithDeliverable = {
+          ...mockGrantMilestone,
+          completed: true,
+          source: {
+            projectMilestone: null,
+            grantMilestone: {
+              milestone: {
+                uid: "gm-456",
+                attester: "0x1234567890123456789012345678901234567890",
+                completed: {
+                  data: {
+                    reason: "Milestone completed",
+                    proofOfWork: "",
+                    deliverables: [
+                      {
+                        name: "Test Deliverable",
+                        proof: "http://example.com/proof",
+                      },
+                    ],
+                  },
+                },
+              },
+              grant: {
+                uid: "grant-123",
+                details: {
+                  data: {
+                    title: "Test Grant Program",
+                    programId: "program-123",
+                  },
+                },
+                community: {
+                  details: {
+                    data: {
+                      name: "Test Community",
+                      slug: "test-community",
+                      imageURL: "https://example.com/community.jpg",
+                    },
+                  },
+                },
+              },
+            } as any,
+          },
+        } as unknown as UnifiedMilestone;
+
+        render(<MilestoneCard milestone={milestoneWithDeliverable} isAuthorized={false} />);
+
+        const proofLink = screen.getByText("http://example.com/proof");
+        expect(proofLink).toHaveAttribute("href", "http://example.com/proof");
+      });
+    });
+
+    describe("Proof of Work Links", () => {
+      it("should prepend https:// to proof of work URLs without protocol", () => {
+        const milestoneWithoutProtocol = {
+          ...mockCompletedMilestone,
+          source: {
+            projectMilestone: {
+              uid: "pm-123",
+              attester: "0x1234567890123456789012345678901234567890",
+              completed: {
+                data: {
+                  reason: "Milestone completed",
+                  proofOfWork: "github.com/user/repo", // Missing protocol
+                },
+              },
+            } as any,
+            grantMilestone: null,
+          },
+        } as unknown as UnifiedMilestone;
+
+        render(<MilestoneCard milestone={milestoneWithoutProtocol} isAuthorized={false} />);
+
+        const proofLink = screen.getByText("github.com/user/repo");
+        expect(proofLink).toHaveAttribute("href", "https://github.com/user/repo");
+      });
+
+      it("should not modify proof of work URLs that already have https://", () => {
+        render(<MilestoneCard milestone={mockCompletedMilestone} isAuthorized={false} />);
+
+        const proofLink = screen.getByText("https://github.com/proof");
+        expect(proofLink).toHaveAttribute("href", "https://github.com/proof");
+      });
+
+      it("should not modify proof of work URLs that already have http://", () => {
+        const milestoneWithHttp = {
+          ...mockCompletedMilestone,
+          source: {
+            projectMilestone: {
+              uid: "pm-123",
+              attester: "0x1234567890123456789012345678901234567890",
+              completed: {
+                data: {
+                  reason: "Milestone completed",
+                  proofOfWork: "http://example.com/proof",
+                },
+              },
+            } as any,
+            grantMilestone: null,
+          },
+        } as unknown as UnifiedMilestone;
+
+        render(<MilestoneCard milestone={milestoneWithHttp} isAuthorized={false} />);
+
+        const proofLink = screen.getByText("http://example.com/proof");
+        expect(proofLink).toHaveAttribute("href", "http://example.com/proof");
+      });
+    });
+
+    describe("Metric Proof Links", () => {
+      it("should prepend https:// to metric proof URLs without protocol", () => {
+        const { useMilestoneImpactAnswers } = require("@/hooks/useMilestoneImpactAnswers");
+        useMilestoneImpactAnswers.mockReturnValue({
+          data: [
+            {
+              name: "Test Metric",
+              indicator: { data: { title: "Test Indicator" } },
+              datapoints: [
+                {
+                  value: "100",
+                  proof: "example.com/metric-proof", // Missing protocol
+                },
+              ],
+            },
+          ],
+        });
+
+        const milestoneWithMetrics = {
+          ...mockGrantMilestone,
+          completed: true,
+          source: {
+            projectMilestone: null,
+            grantMilestone: {
+              milestone: {
+                uid: "gm-456",
+                attester: "0x1234567890123456789012345678901234567890",
+                completed: {
+                  data: {
+                    reason: "Milestone completed",
+                    proofOfWork: "",
+                  },
+                },
+              },
+              grant: {
+                uid: "grant-123",
+                details: {
+                  data: {
+                    title: "Test Grant Program",
+                    programId: "program-123",
+                  },
+                },
+                community: {
+                  details: {
+                    data: {
+                      name: "Test Community",
+                      slug: "test-community",
+                      imageURL: "https://example.com/community.jpg",
+                    },
+                  },
+                },
+              },
+            } as any,
+          },
+        } as unknown as UnifiedMilestone;
+
+        render(<MilestoneCard milestone={milestoneWithMetrics} isAuthorized={false} />);
+
+        const proofLink = screen.getByText("example.com/metric-proof");
+        expect(proofLink).toHaveAttribute("href", "https://example.com/metric-proof");
+      });
+
+      it("should not modify metric proof URLs that already have https://", () => {
+        const { useMilestoneImpactAnswers } = require("@/hooks/useMilestoneImpactAnswers");
+        useMilestoneImpactAnswers.mockReturnValue({
+          data: [
+            {
+              name: "Test Metric",
+              indicator: { data: { title: "Test Indicator" } },
+              datapoints: [
+                {
+                  value: "100",
+                  proof: "https://example.com/metric-proof",
+                },
+              ],
+            },
+          ],
+        });
+
+        const milestoneWithMetrics = {
+          ...mockGrantMilestone,
+          completed: true,
+          source: {
+            projectMilestone: null,
+            grantMilestone: {
+              milestone: {
+                uid: "gm-456",
+                attester: "0x1234567890123456789012345678901234567890",
+                completed: {
+                  data: {
+                    reason: "Milestone completed",
+                    proofOfWork: "",
+                  },
+                },
+              },
+              grant: {
+                uid: "grant-123",
+                details: {
+                  data: {
+                    title: "Test Grant Program",
+                    programId: "program-123",
+                  },
+                },
+                community: {
+                  details: {
+                    data: {
+                      name: "Test Community",
+                      slug: "test-community",
+                      imageURL: "https://example.com/community.jpg",
+                    },
+                  },
+                },
+              },
+            } as any,
+          },
+        } as unknown as UnifiedMilestone;
+
+        render(<MilestoneCard milestone={milestoneWithMetrics} isAuthorized={false} />);
+
+        const proofLink = screen.getByText("https://example.com/metric-proof");
+        expect(proofLink).toHaveAttribute("href", "https://example.com/metric-proof");
+      });
+
+      it("should not modify metric proof URLs that already have http://", () => {
+        const { useMilestoneImpactAnswers } = require("@/hooks/useMilestoneImpactAnswers");
+        useMilestoneImpactAnswers.mockReturnValue({
+          data: [
+            {
+              name: "Test Metric",
+              indicator: { data: { title: "Test Indicator" } },
+              datapoints: [
+                {
+                  value: "100",
+                  proof: "http://example.com/metric-proof",
+                },
+              ],
+            },
+          ],
+        });
+
+        const milestoneWithMetrics = {
+          ...mockGrantMilestone,
+          completed: true,
+          source: {
+            projectMilestone: null,
+            grantMilestone: {
+              milestone: {
+                uid: "gm-456",
+                attester: "0x1234567890123456789012345678901234567890",
+                completed: {
+                  data: {
+                    reason: "Milestone completed",
+                    proofOfWork: "",
+                  },
+                },
+              },
+              grant: {
+                uid: "grant-123",
+                details: {
+                  data: {
+                    title: "Test Grant Program",
+                    programId: "program-123",
+                  },
+                },
+                community: {
+                  details: {
+                    data: {
+                      name: "Test Community",
+                      slug: "test-community",
+                      imageURL: "https://example.com/community.jpg",
+                    },
+                  },
+                },
+              },
+            } as any,
+          },
+        } as unknown as UnifiedMilestone;
+
+        render(<MilestoneCard milestone={milestoneWithMetrics} isAuthorized={false} />);
+
+        const proofLink = screen.getByText("http://example.com/metric-proof");
+        expect(proofLink).toHaveAttribute("href", "http://example.com/metric-proof");
+      });
+    });
+  });
+
   describe("Authorization and Options Menu", () => {
     it("should not display options menu when not authorized", () => {
       render(<MilestoneCard milestone={mockProjectMilestone} isAuthorized={false} />);
