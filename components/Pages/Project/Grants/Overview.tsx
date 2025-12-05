@@ -18,7 +18,7 @@ import { PAGES } from "@/utilities/pages";
 import { ProjectGrantsOverviewLoading } from "../Loading/Grants/Overview";
 import { GrantPercentage } from "./components/GrantPercentage";
 
-const isValidAmount = (grant?: { amount?: Hex; details?: { amount?: string } }) => {
+const isValidAmount = (grant?: { amount?: string; details?: { amount?: string } }) => {
   // First check root-level amount (Hex format)
   if (grant?.amount) {
     const formattedAmount = formatCurrency(Number(grant?.amount));
@@ -148,12 +148,14 @@ export const GrantOverview = () => {
 
                 <div className="inline-flex items-center gap-x-2 rounded-full bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
                   <img
-                    src={chainImgDictionary(grant?.community?.chainID || grant?.chainID as number)}
+                    src={chainImgDictionary(
+                      grant?.community?.chainID || (grant?.chainID as number)
+                    )}
                     alt=""
                     className="h-5 w-5 rounded-full"
                   />
                   <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm  w-full break-words whitespace-break-spaces">
-                    {chainNameDictionary(grant?.community?.chainID || grant?.chainID as number)}
+                    {chainNameDictionary(grant?.community?.chainID || (grant?.chainID as number))}
                   </p>
                 </div>
               </div>

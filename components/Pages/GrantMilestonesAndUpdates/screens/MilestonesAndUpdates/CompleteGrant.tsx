@@ -84,7 +84,8 @@ export const GrantCompletion: FC = () => {
 
             const response = await gapIndexerApi.communityBySlug(communityId);
             if (response.data) {
-              const communityName = response.data.details?.name || "";
+              const communityData = response.data as unknown as { details?: { name?: string } };
+              const communityName = communityData.details?.name || "";
               setIsFundingProgram(isFundingProgramGrant(communityName, grantName));
             }
           } catch (error) {

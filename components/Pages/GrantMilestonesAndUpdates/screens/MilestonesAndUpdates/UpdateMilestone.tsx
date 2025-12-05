@@ -2,21 +2,19 @@
 "use client";
 
 import { PencilSquareIcon, ShareIcon } from "@heroicons/react/24/outline";
-import type {
-  IMilestoneCompleted,
-  IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { IMilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, useState } from "react";
 import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Button } from "@/components/ui/button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
+import type { GrantMilestone } from "@/types/v2/grant";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 
 interface NotUpdatingCaseProps {
-  milestone: IMilestoneResponse;
+  milestone: GrantMilestone;
   isAuthorized: boolean;
   setIsUpdating: (value: boolean) => void;
 }
@@ -24,7 +22,7 @@ interface NotUpdatingCaseProps {
 const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({ milestone, isAuthorized, setIsUpdating }) => {
   const project = useProjectStore((state) => state.project);
   const grant = project?.grants?.find(
-    (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
+    (g) => g.uid.toLowerCase() === milestone.refUID?.toLowerCase() || ""
   );
 
   if (!isAuthorized) {
@@ -61,7 +59,7 @@ const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({ milestone, isAuthorized, se
 };
 
 interface UpdateMilestoneProps {
-  milestone: IMilestoneResponse;
+  milestone: GrantMilestone;
   isEditing: boolean;
   previousData?: IMilestoneCompleted["data"];
   cancelEditing: (value: boolean) => void;

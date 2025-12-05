@@ -4,10 +4,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { ProjectPointer } from "@show-karma/karma-gap-sdk";
-import type {
-  IProjectResponse,
-  ISearchResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/navigation";
 import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
@@ -20,6 +17,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useMergeModalStore } from "@/store/modals/merge";
 import { useStepper } from "@/store/modals/txStepper";
+import type { ProjectV2Response } from "@/types/project";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -46,7 +44,7 @@ type MergeProjectProps = {
 function SearchProject({
   setPrimaryProject,
 }: {
-  setPrimaryProject: (value: IProjectResponse) => void;
+  setPrimaryProject: (value: ProjectV2Response) => void;
 }) {
   const { project: currentProject } = useProjectStore();
   const [results, setResults] = useState<ISearchResponse>({
@@ -85,7 +83,7 @@ function SearchProject({
     return setIsLoading(false);
   }, 500);
 
-  const renderItem = (item: IProjectResponse, _href: string) => {
+  const renderItem = (item: ProjectV2Response, _href: string) => {
     const handleSelect = () => {
       setPrimaryProject(item);
       closeSearchList();
@@ -103,10 +101,10 @@ function SearchProject({
               <small className="mr-2">By</small>
               <div className="flex flex-row gap-1 items-center font-medium">
                 <EthereumAddressToENSAvatar
-                  address={item.recipient}
+                  address={item.owner}
                   className="w-4 h-4  rounded-full border-1 border-gray-100 dark:border-zinc-900"
                 />
-                <EthereumAddressToENSName address={item.recipient} />
+                <EthereumAddressToENSName address={item.owner} />
               </div>
             </div>
           </div>
@@ -132,7 +130,12 @@ function SearchProject({
         <div className="absolute left-0 top-10 mt-3 max-h-32 min-w-full overflow-y-scroll rounded-md bg-white dark:bg-zinc-800 py-4 border border-zinc-200">
           {results.projects.length > 0 &&
             results.projects.map((project) =>
-              renderItem(project, PAGES.PROJECT.GRANTS(project.details?.slug || project.uid))
+              renderItem(
+                project as unknown as ProjectV2Response,
+                PAGES.PROJECT.GRANTS(
+                  (project as unknown as ProjectV2Response).details?.slug || project.uid
+                )
+              )
             )}
 
           {isLoading && (
@@ -165,7 +168,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   },
 }) => {
   const { isMergeModalOpen: isOpen, setIsMergeModalOpen: setIsOpen } = useMergeModalStore();
-  const [primaryProject, setPrimaryProject] = useState<IProjectResponse | null>(null);
+  const [primaryProject, setPrimaryProject] = useState<ProjectV2Response | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [validAddress, setValidAddress] = useState(true);
 
@@ -242,7 +245,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
 
               if (alreadyExists) {
                 retries = 0;
-                router.push(`/project/${primaryProject?.details?.data?.slug}`);
+                router.push(`/project/${primaryProject?.details?.slug}`);
                 router.refresh();
                 changeStepperStep("indexed");
                 toast.success(MESSAGES.PROJECT_POINTER_FORM.SUCCESS);
@@ -264,7 +267,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         error,
         {
           project: project?.details?.slug || project?.uid,
-          primaryProject: primaryProject?.details?.data?.slug || primaryProject?.uid,
+          primaryProject: primaryProject?.details?.slug || primaryProject?.uid,
           address: address,
         },
         {

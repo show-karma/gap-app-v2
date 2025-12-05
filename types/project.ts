@@ -111,4 +111,6 @@ export interface ProjectV2Response {
   grants?: GrantResponse[]; // Grants are fetched separately and added to the response
   symlinks?: any[];
   pointers?: any[];
+  createdAt?: string;
+  updatedAt?: string;
 }

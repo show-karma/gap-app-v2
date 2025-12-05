@@ -73,8 +73,8 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
 
         communityMap.set(communityUID, {
           uid: communityUID,
-          name: grant.community.details?.data?.name || "Unknown Community",
-          imageURL: grant.community.details?.data?.imageURL,
+          name: grant.community.details?.name || "Unknown Community",
+          imageURL: grant.community.details?.imageURL,
           currentPayoutAddress: payoutAddresses[communityUID],
         });
       }

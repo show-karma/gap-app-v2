@@ -52,6 +52,32 @@ export const fetchGrantInstance = async ({
   return grantInstance;
 };
 
+/**
+ * Get SDK Grant class instance for attestation operations
+ * This is needed because V2 data types don't have attestation methods
+ */
+export const getSDKGrantInstance = async ({
+  gapClient,
+  projectUid,
+  grantUid,
+}: FetchGrantInstanceParams) => {
+  const fetchedProject = await gapClient.fetch.projectById(projectUid);
+
+  if (!fetchedProject) {
+    throw new Error("Failed to fetch project from SDK");
+  }
+
+  const grantInstance = fetchedProject.grants?.find(
+    (g) => g.uid.toLowerCase() === grantUid.toLowerCase()
+  );
+
+  if (!grantInstance) {
+    throw new Error("Grant not found in SDK project");
+  }
+
+  return grantInstance;
+};
+
 interface FetchMilestoneInstanceParams {
   gapClient: GAP;
   projectUid: string;
@@ -100,7 +126,7 @@ export const fetchMilestoneInstance = async ({
   }
 
   const milestoneInstance = grantInstance.milestones?.find(
-    (m: IMilestoneResponse) => m.uid.toLowerCase() === milestoneUid.toLowerCase()
+    (m) => m.uid.toLowerCase() === milestoneUid.toLowerCase()
   );
 
   if (!milestoneInstance) {

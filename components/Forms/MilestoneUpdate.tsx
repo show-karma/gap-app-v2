@@ -2,10 +2,7 @@
 
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type {
-  IMilestoneCompleted,
-  IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { IMilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import { type FC, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -22,6 +19,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useStepper } from "@/store/modals/txStepper";
+import type { GrantMilestone } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -36,9 +34,15 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { errorManager } from "../Utilities/errorManager";
 
 interface MilestoneUpdateFormProps {
-  milestone: IMilestoneResponse;
+  milestone: GrantMilestone;
   isEditing: boolean;
-  previousData?: IMilestoneCompleted["data"];
+  previousData?: {
+    type?: string;
+    reason?: string;
+    proofOfWork?: string;
+    deliverables?: string;
+    completionPercentage?: string | number;
+  };
   cancelEditing: (value: boolean) => void;
   afterSubmit?: () => void;
   setIsUpdating?: (value: boolean) => void;
@@ -171,16 +175,16 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     ? [
         {
           uid: grantInstance.community.uid,
-          name: grantInstance.community.details?.data?.name || "",
+          name: grantInstance.community.details?.name || "",
           details: grantInstance.community.details,
         },
       ]
     : [];
-  const selectedPrograms = grantInstance?.details?.data?.programId
+  const selectedPrograms = grantInstance?.details?.programId
     ? [
         {
-          programId: grantInstance.details.data.programId,
-          title: grantInstance.details.data.title || "",
+          programId: grantInstance.details.programId,
+          title: grantInstance.details.title || "",
           chainID: grantInstance.chainID,
         },
       ]
@@ -227,7 +231,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     }
   };
 
-  const completeMilestone = async (milestone: IMilestoneResponse, data: SchemaType) => {
+  const completeMilestone = async (milestone: GrantMilestone, data: SchemaType) => {
     let gapClient = gap;
     setIsSubmitLoading(true);
     try {
@@ -236,7 +240,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         chainId: actualChainId,
         gapClient: updatedGapClient,
       } = await ensureCorrectChain({
-        targetChainId: milestone.chainID,
+        targetChainId: milestone.chainID || 0,
         currentChainId: chain?.id,
         switchChainAsync,
       });
@@ -258,7 +262,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
       const grantInstance = fetchedProject.grants.find(
-        (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
+        (g) => g.uid.toLowerCase() === milestone.refUID?.toLowerCase() || ""
       );
       if (!grantInstance) return;
       const milestoneInstance = grantInstance.milestones.find(
@@ -350,7 +354,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     }
   };
 
-  const updateMilestoneCompletion = async (milestone: IMilestoneResponse, data: SchemaType) => {
+  const updateMilestoneCompletion = async (milestone: GrantMilestone, data: SchemaType) => {
     let gapClient = gap;
     setIsSubmitLoading(true);
     try {
@@ -359,7 +363,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         chainId: actualChainId,
         gapClient: newGapClient,
       } = await ensureCorrectChain({
-        targetChainId: milestone.chainID,
+        targetChainId: milestone.chainID || 0,
         currentChainId: chain?.id,
         switchChainAsync,
       });
@@ -381,7 +385,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
       const grantInstance = fetchedProject.grants.find(
-        (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
+        (g) => g.uid.toLowerCase() === milestone.refUID?.toLowerCase() || ""
       );
       if (!grantInstance) return;
       const milestoneInstance = grantInstance.milestones.find(
@@ -420,8 +424,8 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 );
 
                 if (
-                  new Date(milestone?.completed?.updatedAt) <
-                  new Date(fetchedMilestone?.completed?.updatedAt)
+                  new Date(milestone?.completed?.updatedAt || 0).getTime() <
+                  new Date(fetchedMilestone?.completed?.updatedAt || 0).getTime()
                 ) {
                   retries = 0;
                   changeStepperStep("indexed");

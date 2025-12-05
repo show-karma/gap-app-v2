@@ -1,10 +1,9 @@
 import type {
-  GrantResponse,
   IGrantUpdate,
-  IMilestoneResponse,
   IProjectImpact,
   IProjectMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { GrantMilestone, GrantResponse } from "@/types/v2/grant";
 
 // =============================================================================
 // V2 API Response Types (mirrors gap-indexer GetUpdatesApiResponse)
@@ -240,7 +239,7 @@ export type UnifiedMilestone = {
   source: {
     projectMilestone?: IProjectMilestoneResponse;
     grantMilestone?: {
-      milestone: IMilestoneResponse;
+      milestone: GrantMilestone;
       grant: GrantResponse;
     };
     type?: string;

@@ -116,7 +116,7 @@ export function useGrant() {
           }
           while (retries > 0) {
             const fetchedProject = await gapIndexerApi
-              .projectBySlug(oldGrant.refUID)
+              .projectBySlug(oldGrant.refUID || oldGrant.projectUID || "")
               .then((res) => res.data)
               .catch(() => null);
             const fetchedGrant = fetchedProject?.grants.find(

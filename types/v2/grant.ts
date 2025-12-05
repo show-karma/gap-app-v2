@@ -1,5 +1,15 @@
 // V2 Grant API Response types
 
+export type GrantScreen =
+  | "milestones-and-updates"
+  | "create-milestone"
+  | "new"
+  | "edit"
+  | "impact-criteria"
+  | "overview"
+  | "complete-grant"
+  | "outputs";
+
 export interface GrantDetails {
   title: string;
   amount?: string;
@@ -57,12 +67,14 @@ export interface GrantMilestone {
   } | null;
   createdAt?: string;
   updatedAt?: string;
+  verified?: boolean;
   data?: {
     title?: string;
     description?: string;
     endsAt?: number;
     startsAt?: number;
     type?: string;
+    priority?: number;
   };
   // Additional fields for compatibility
   id?: string;
@@ -91,12 +103,14 @@ export interface GrantUpdate {
     text?: string;
     proofOfWork?: string;
     type?: string;
+    completionPercentage?: string;
   };
 }
 
 export interface GrantCompleted {
   uid?: string;
   createdAt?: string;
+  chainID?: number;
   data?: {
     title?: string;
     text?: string;
@@ -110,12 +124,7 @@ export interface GrantCompleted {
   };
 }
 
-export interface CommunityDetails {
-  name: string;
-  description?: string;
-  imageURL?: string;
-  slug?: string;
-}
+import type { CommunityDetails } from "./community";
 
 export interface CommunityResponse {
   uid: string;
@@ -144,6 +153,8 @@ export interface GrantResponse {
   community?: CommunityResponse;
   project?: {
     uid: string;
+    chainID?: number;
+    payoutAddress?: string;
     details?: {
       title?: string;
       slug?: string;
@@ -152,6 +163,8 @@ export interface GrantResponse {
     };
   };
   categories?: string[];
+  regions?: string[];
+  amount?: string;
   createdAt?: string;
   updatedAt?: string;
 }

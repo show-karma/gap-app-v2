@@ -381,10 +381,10 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         const grantOptions = (project.grants || [])
           .filter((grant) => grant && typeof grant === "object")
           .map((grant) => ({
-            title: grant.details?.data?.title || grant.uid || "Untitled Grant",
+            title: grant.details?.title || grant.uid || "Untitled Grant",
             value: grant.uid || "",
             chain: grant.chainID || project.chainID,
-            communityUID: grant.community.uid || "",
+            communityUID: grant.community?.uid || "",
           }));
 
         setGrants((prev) => {

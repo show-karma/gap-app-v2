@@ -1,14 +1,12 @@
 "use client";
-import type {
-  ICommunityResponse,
-  IProjectResponse,
-  ISearchResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
 import { useMobileStore } from "@/store/mobile";
+import type { ProjectV2Response } from "@/types/project";
+import type { Community } from "@/types/v2/community";
 import { groupSimilarCommunities } from "@/utilities/communityHelpers"; // You'll need to create this utility function
 import { PAGES } from "@/utilities/pages";
 import { ProfilePicture } from "../Utilities/ProfilePicture";
@@ -79,15 +77,15 @@ export const SearchList: React.FC<Props> = ({
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
   const renderItem = (
-    item: IProjectResponse | ICommunityResponse,
+    item: ProjectV2Response | Community,
     title: string,
     href: string,
     type: "project" | "community"
   ) => {
     const imageURL =
       type === "project"
-        ? (item as IProjectResponse).details?.data?.imageURL
-        : (item as ICommunityResponse).details?.data?.imageURL;
+        ? (item as ProjectV2Response).details?.logoUrl
+        : (item as Community).details?.imageURL;
 
     return (
       <button
@@ -136,24 +134,26 @@ export const SearchList: React.FC<Props> = ({
         onTouchEnd={() => onInteractionEnd?.()}
       >
         {groupedCommunities.length > 0 &&
-          groupedCommunities.map((community) =>
-            renderItem(
-              community,
-              community.details?.name || "Untitled Community",
-              PAGES.COMMUNITY.ALL_GRANTS(community.details?.slug || community.uid),
+          groupedCommunities.map((community) => {
+            const c = community as unknown as Community;
+            return renderItem(
+              c,
+              c.details?.name || "Untitled Community",
+              PAGES.COMMUNITY.ALL_GRANTS(c.details?.slug || c.uid),
               "community"
-            )
-          )}
+            );
+          })}
 
         {data.projects.length > 0 &&
-          data.projects.map((project) =>
-            renderItem(
-              project,
-              project.details?.title || "Untitled Project",
-              PAGES.PROJECT.GRANTS(project.details?.slug || project.uid),
+          data.projects.map((project) => {
+            const p = project as unknown as ProjectV2Response;
+            return renderItem(
+              p,
+              p.details?.title || "Untitled Project",
+              PAGES.PROJECT.GRANTS(p.details?.slug || p.uid),
               "project"
-            )
-          )}
+            );
+          })}
 
         {isLoading && (
           <div className="flex justify-center ">

@@ -14,7 +14,7 @@ import type { GrantResponse } from "@/types/v2/grant";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { TypeSelectionScreen } from "./screens/TypeSelectionScreen";
-import { useGrantFormStore } from "./store";
+import { type MilestonesForms, useGrantFormStore } from "./store";
 
 export { SearchGrantProgram } from "./SearchGrantProgram";
 
@@ -104,15 +104,15 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           isValid: true,
           isEditing: false,
           data: {
-            title: milestone.data.title,
-            description: milestone.data.description,
-            endsAt: milestone.data.endsAt,
-            startsAt: milestone.data.startsAt,
-            priority: milestone.data.priority,
+            title: milestone.data?.title || milestone.title || "",
+            description: milestone.data?.description || milestone.description || "",
+            endsAt: milestone.data?.endsAt || milestone.endsAt,
+            startsAt: milestone.data?.startsAt || milestone.startsAt,
+            priority: milestone.data?.priority,
           },
         }));
 
-        setMilestonesForms(milestones);
+        setMilestonesForms(milestones as MilestonesForms[]);
       }
     } else {
       // Reset form data for new grant

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import MilestonesAndUpdates from "@/components/Pages/Grants/MilestonesAndUpdates";
 import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Project/Loading/Grants/MilestonesAndUpdate";
 import { PROJECT_NAME } from "@/constants/brand";
+import type { GrantResponse } from "@/types/v2/grant";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
@@ -32,10 +33,10 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     icons: defaultMetadata.icons,
   };
   if (grantUid) {
-    const grantInfo = await gapIndexerApi
+    const grantInfo = (await gapIndexerApi
       .grantBySlug(grantUid as `0x${string}`)
       .then((res) => res.data)
-      .catch(() => notFound());
+      .catch(() => notFound())) as unknown as GrantResponse | undefined;
     if (grantInfo) {
       const pageMetadata = {
         title: `${projectInfo?.details?.title} - Milestones and Updates for ${grantInfo?.details?.title} | ${PROJECT_NAME}`,

@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import type { Hex } from "viem";
 import ContactInfoPage from "@/components/Pages/Project/ContactInfoPage";
 import { PROJECT_NAME } from "@/constants/brand";
+import type { ProjectV2Response } from "@/types/project";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
@@ -18,7 +19,10 @@ type Params = Promise<{
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { projectId } = await params;
 
-  const projectInfo = await getMetadata<IProjectResponse>("project", projectId as Hex);
+  const projectInfo = (await getMetadata<IProjectResponse>(
+    "project",
+    projectId as Hex
+  )) as unknown as ProjectV2Response | null;
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
     return {

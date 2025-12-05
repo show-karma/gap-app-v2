@@ -113,14 +113,11 @@ export const pollForMilestoneStatus = async ({
       );
       if (!updatedGrant) return false;
 
-      const updatedMilestone = updatedGrant.milestones?.find(
-        (m: IMilestoneResponse) => m.uid === milestoneUid
-      );
+      const updatedMilestone = updatedGrant.milestones?.find((m) => m.uid === milestoneUid);
       if (!updatedMilestone) return false;
 
-      const isVerified = updatedMilestone.verified?.find(
-        (v: any) => v.attester?.toLowerCase() === userAddress.toLowerCase()
-      );
+      // V2: verified is now a boolean, not an array
+      const isVerified = updatedMilestone.verified === true;
 
       // If checking completion, ensure both are indexed
       if (checkCompletion) {

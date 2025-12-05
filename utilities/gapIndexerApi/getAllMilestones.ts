@@ -1,9 +1,7 @@
-import type {
-  GrantResponse,
-  IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { UnifiedMilestone } from "@/types/roadmap";
+import type { GrantMilestone, GrantResponse } from "@/types/v2/grant";
 import { getProjectObjectives } from "./getProjectObjectives";
 
 const parseCreatedAt = (createdAt: any): string => {
@@ -26,7 +24,7 @@ export async function getAllMilestones(
     // Fetch both types of milestones in parallel
     const projectMilestones = await getProjectObjectives(projectId);
     const grantMilestonesWithGrants: {
-      milestone: IMilestoneResponse;
+      milestone: GrantMilestone;
       grant: GrantResponse;
     }[] = [];
     projectGrants.forEach((grant) => {
@@ -74,15 +72,15 @@ export async function getAllMilestones(
           : !!milestone.completed;
 
         return {
-          uid: milestone.uid,
-          chainID: milestone.chainID,
-          refUID: milestone.refUID,
-          type: "grant",
-          title: milestone.data.title,
-          description: milestone.data.description,
+          uid: milestone.uid as `0x${string}`,
+          chainID: milestone.chainID || 0,
+          refUID: (milestone.refUID || "") as `0x${string}`,
+          type: "grant" as const,
+          title: milestone.data?.title || milestone.title || "",
+          description: milestone.data?.description || milestone.description,
           completed: isCompleted,
           createdAt: parseCreatedAt(milestone.createdAt),
-          endsAt: milestone.data.endsAt,
+          endsAt: milestone.data?.endsAt || milestone.endsAt,
           source: {
             grantMilestone: {
               milestone,

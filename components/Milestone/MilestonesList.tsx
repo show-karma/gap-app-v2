@@ -88,8 +88,12 @@ export const MilestonesList = ({
       }
 
       // Create a unique key based on title, description, and dates
-      const startDate = milestone.source.grantMilestone?.milestone.data.startsAt;
-      const endDate = milestone.source.grantMilestone?.milestone.data.endsAt;
+      const startDate =
+        milestone.source.grantMilestone?.milestone.data?.startsAt ||
+        milestone.source.grantMilestone?.milestone.startsAt;
+      const endDate =
+        milestone.source.grantMilestone?.milestone.data?.endsAt ||
+        milestone.source.grantMilestone?.milestone.endsAt;
 
       const key = `${milestone.title}|${milestone.description || ""}|${
         startDate || ""
@@ -102,28 +106,40 @@ export const MilestonesList = ({
         if (!existingMilestone.mergedGrants) {
           // Initialize mergedGrants if this is the first duplicate
           const firstGrant = existingMilestone.source.grantMilestone;
+          const firstGrantDetails = firstGrant?.grant.details as
+            | { title?: string; programId?: string }
+            | undefined;
+          const firstCommunityDetails = firstGrant?.grant.community?.details as
+            | { name?: string; imageURL?: string }
+            | undefined;
           existingMilestone.mergedGrants = [
             {
               grantUID: firstGrant?.grant.uid || "",
-              grantTitle: firstGrant?.grant.details?.title,
-              communityName: firstGrant?.grant.community?.details?.name,
-              communityImage: firstGrant?.grant.community?.details?.imageURL,
+              grantTitle: firstGrantDetails?.title,
+              communityName: firstCommunityDetails?.name,
+              communityImage: firstCommunityDetails?.imageURL,
               chainID: firstGrant?.grant.chainID || 0,
               milestoneUID: firstGrant?.milestone.uid || "",
-              programId: firstGrant?.grant.details?.programId,
+              programId: firstGrantDetails?.programId,
             },
           ];
         }
 
         // Add the current grant to the merged list
+        const currentGrantDetails = milestone.source.grantMilestone?.grant.details as
+          | { title?: string; programId?: string }
+          | undefined;
+        const currentCommunityDetails = milestone.source.grantMilestone?.grant.community?.details as
+          | { name?: string; imageURL?: string }
+          | undefined;
         existingMilestone.mergedGrants.push({
           grantUID: milestone.source.grantMilestone?.grant.uid || "",
-          grantTitle: milestone.source.grantMilestone?.grant.details?.title,
-          communityName: milestone.source.grantMilestone?.grant.community?.details?.name,
-          communityImage: milestone.source.grantMilestone?.grant.community?.details?.imageURL,
+          grantTitle: currentGrantDetails?.title,
+          communityName: currentCommunityDetails?.name,
+          communityImage: currentCommunityDetails?.imageURL,
           chainID: milestone.source.grantMilestone?.grant.chainID || 0,
           milestoneUID: milestone.source.grantMilestone?.milestone.uid || "",
-          programId: milestone.source.grantMilestone?.grant.details?.programId,
+          programId: currentGrantDetails?.programId,
         });
 
         // Sort the merged grants alphabetically

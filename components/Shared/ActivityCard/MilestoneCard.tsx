@@ -100,9 +100,14 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
 
   // grant milestone-specific properties
   const grantMilestone = milestone.source.grantMilestone;
-  const grantTitle = grantMilestone?.grant.details?.title;
-  const _programId = grantMilestone?.grant.details?.programId;
-  const _communityData = grantMilestone?.grant.community?.details;
+  const grantDetails = grantMilestone?.grant.details as
+    | { title?: string; programId?: string }
+    | undefined;
+  const grantTitle = grantDetails?.title;
+  const _programId = grantDetails?.programId;
+  const _communityData = grantMilestone?.grant.community?.details as
+    | { name?: string; imageURL?: string }
+    | undefined;
   const endsAt = milestone.endsAt;
 
   // completion information
@@ -113,10 +118,14 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
     grantMilestone?.milestone.completed?.data?.proofOfWork;
   const completionDate =
     projectMilestone?.completed?.createdAt || grantMilestone?.milestone.completed?.createdAt;
-  const completionAttester =
-    projectMilestone?.completed?.attester || grantMilestone?.milestone.completed?.attester;
-  const _verifiedMilestones =
-    projectMilestone?.verified?.length || grantMilestone?.milestone.verified?.length;
+  const completionAttester = projectMilestone?.completed?.attester;
+  // V2: verified is now a boolean for grant milestones, array for project milestones
+  const isVerified =
+    Boolean(
+      projectMilestone?.verified &&
+        Array.isArray(projectMilestone.verified) &&
+        projectMilestone.verified.length > 0
+    ) || grantMilestone?.milestone.verified === true;
   const completionDeliverables =
     (projectMilestone?.completed?.data as any)?.deliverables ||
     (grantMilestone?.milestone.completed?.data as any)?.deliverables;
@@ -313,14 +322,14 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
                   href={shareOnX(
                     type === "grant" && grantMilestone
                       ? SHARE_TEXTS.MILESTONE_COMPLETED(
-                        grantTitle || "Grant",
-                        (project?.details?.slug || project?.uid) as string,
-                        grantMilestone.grant.uid
-                      )
+                          grantTitle || "Grant",
+                          (project?.details?.slug || project?.uid) as string,
+                          grantMilestone.grant.uid
+                        )
                       : SHARE_TEXTS.PROJECT_ACTIVITY(
-                        title,
-                        (project?.details?.slug || project?.uid) as string
-                      )
+                          title,
+                          (project?.details?.slug || project?.uid) as string
+                        )
                   )}
                   className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent hover:opacity-75  h-6 w-6 items-center justify-center"
                 >
@@ -406,10 +415,10 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
         />
       </div>
       {isCompleting ||
-        isEditing ||
-        completionReason ||
-        completionProof ||
-        completionDeliverables ? (
+      isEditing ||
+      completionReason ||
+      completionProof ||
+      completionDeliverables ? (
         <div className="flex flex-col w-full pl-8 md:pl-[120px]">{renderMilestoneCompletion()}</div>
       ) : null}
     </div>

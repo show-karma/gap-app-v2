@@ -4,6 +4,7 @@ import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import pluralize from "pluralize";
 import { PROJECT_NAME } from "@/constants/brand";
+import type { Community } from "@/types/v2/community";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getTotalProjects } from "@/utilities/karma/totalProjects";
 import { getGrants } from "@/utilities/sdk";
@@ -18,7 +19,7 @@ export async function GET(
   const [community, grantsData, projects] = await Promise.all([
     gapIndexerApi
       .communityBySlug(communityId)
-      .then((res) => res.data)
+      .then((res) => res.data as unknown as Community)
       .catch(() => null),
     getGrants(
       communityId as `0x${string}`,

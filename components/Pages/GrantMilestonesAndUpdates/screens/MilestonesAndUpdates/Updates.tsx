@@ -1,10 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { PencilSquareIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
-import type {
-  IMilestoneCompleted,
-  IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { IMilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
@@ -19,6 +16,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
+import type { GrantMilestone } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -34,7 +32,7 @@ import { getCompletionData } from "./MilestoneDetails";
 import { UpdateMilestone } from "./UpdateMilestone";
 
 interface UpdatesProps {
-  milestone: IMilestoneResponse;
+  milestone: GrantMilestone;
 }
 
 export const Updates: FC<UpdatesProps> = ({ milestone }) => {
@@ -58,7 +56,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();
 
-  const undoMilestoneCompletion = async (milestone: IMilestoneResponse) => {
+  const undoMilestoneCompletion = async (milestone: GrantMilestone) => {
     let gapClient = gap;
     try {
       const {
@@ -66,7 +64,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
         chainId: actualChainId,
         gapClient: newGapClient,
       } = await ensureCorrectChain({
-        targetChainId: milestone.chainID,
+        targetChainId: milestone.chainID || 0,
         currentChainId: chain?.id,
         switchChainAsync,
       });
@@ -87,7 +85,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
 
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
       const findGrant = instanceProject?.grants.find(
-        (item) => item.uid.toLowerCase() === milestone.refUID.toLowerCase()
+        (item) => item.uid.toLowerCase() === milestone.refUID?.toLowerCase() || ""
       );
       const instanceMilestone = findGrant?.milestones.find(
         (item) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
@@ -179,16 +177,15 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
-  const [verifiedMilestones, setVerifiedMilestones] = useState<IMilestoneCompleted[]>(
-    milestone?.verified || []
-  );
+  // V2: verified is now a boolean, not an array
+  const [isVerified, setIsVerified] = useState<boolean>(milestone?.verified === true);
 
-  const addVerifiedMilestone = (newVerified: IMilestoneCompleted) => {
-    setVerifiedMilestones([...verifiedMilestones, newVerified]);
+  const markAsVerified = () => {
+    setIsVerified(true);
   };
 
   useEffect(() => {
-    setVerifiedMilestones(milestone?.verified || []);
+    setIsVerified(milestone?.verified === true);
   }, [milestone]);
 
   // Extract actual date value from various formats (handles MongoDB { $date: ... } format)
@@ -232,7 +229,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const isAfterProofLaunch = checkProofLaunch();
 
   const grant = project?.grants?.find(
-    (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
+    (g) => g.uid.toLowerCase() === milestone.refUID?.toLowerCase() || ""
   );
 
   // Fetch milestone impact data (outputs/metrics) if milestone is completed
@@ -243,10 +240,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   // Get deliverables from milestone completion data
   const completionDeliverables = (completionData?.data as any)?.deliverables;
 
-  if (
-    !isEditing &&
-    (completionData?.data?.reason?.length || completionData?.data?.proofOfWork)
-  ) {
+  if (!isEditing && (completionData?.data?.reason?.length || completionData?.data?.proofOfWork)) {
     return (
       <div className="flex flex-col gap-3 bg-[#F8F9FC] dark:bg-zinc-900 rounded-md px-4 py-2 max-lg:max-w-2xl max-sm:max-w-full w-full">
         <div className="flex w-full flex-row flex-wrap items-center justify-between gap-2">
@@ -283,14 +277,10 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                   >
                     {completionData?.data?.proofOfWork.includes("http")
                       ? `${completionData?.data?.proofOfWork.slice(0, 80)}${
-                          completionData?.data?.proofOfWork.slice(0, 80).length >= 80
-                            ? "..."
-                            : ""
+                          completionData?.data?.proofOfWork.slice(0, 80).length >= 80 ? "..." : ""
                         }`
                       : `https://${completionData?.data?.proofOfWork.slice(0, 80)}${
-                          completionData?.data?.proofOfWork.slice(0, 80).length >= 80
-                            ? "..."
-                            : ""
+                          completionData?.data?.proofOfWork.slice(0, 80).length >= 80 ? "..." : ""
                         }`}
                   </ExternalLink>
                 </div>
@@ -301,9 +291,9 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                   <div className="flex w-max flex-row items-center gap-2">
                     <MilestoneVerificationSection
                       milestone={milestone}
-                      title={`${milestone.data.title} - Reviews`}
-                      verifiedMilestones={verifiedMilestones}
-                      onVerificationAdded={addVerifiedMilestone}
+                      title={`${milestone.data?.title || milestone.title} - Reviews`}
+                      isVerified={isVerified}
+                      onVerified={markAsVerified}
                     />
                     <ExternalLink
                       type="button"

@@ -1,9 +1,9 @@
 "use client";
 
-import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC } from "react";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
+import type { GrantMilestone } from "@/types/v2/grant";
 import { formatDate, normalizeTimestamp } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { MilestoneDelete } from "./MilestoneDelete";
@@ -14,7 +14,7 @@ import { Updates } from "./Updates";
  * API may return completion as an object or an array.
  * Ensures createdAt/updatedAt are preserved from the source.
  */
-export const getCompletionData = (milestone: IMilestoneResponse) => {
+export const getCompletionData = (milestone: GrantMilestone) => {
   const completed = milestone.completed;
   if (!completed) return null;
 
@@ -36,12 +36,12 @@ export const getCompletionData = (milestone: IMilestoneResponse) => {
 /**
  * Helper to check if a milestone is completed.
  */
-export const isMilestoneCompleted = (milestone: IMilestoneResponse): boolean => {
+export const isMilestoneCompleted = (milestone: GrantMilestone): boolean => {
   return getCompletionData(milestone) !== null;
 };
 
 interface MilestoneDateStatusProps {
-  milestone: IMilestoneResponse;
+  milestone: GrantMilestone;
 }
 
 const statusDictionary = {
@@ -79,7 +79,8 @@ const FlagIcon = () => {
 export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({ milestone }) => {
   const getMilestoneStatus = () => {
     if (isMilestoneCompleted(milestone)) return "completed";
-    if (normalizeTimestamp(milestone.data.endsAt) < Date.now()) return "past due";
+    if (normalizeTimestamp(milestone.data?.endsAt || milestone.endsAt || 0) < Date.now())
+      return "past due";
     return "pending";
   };
 
@@ -88,9 +89,9 @@ export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({ milestone })
   return (
     <div className="flex max-w-full w-max max-lg:w-full flex-row items-center justify-center gap-4 max-lg:justify-start flex-wrap">
       <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
-        {milestone.data.startsAt
-          ? `${formatDate(milestone.data.startsAt)} - ${formatDate(milestone.data.endsAt)}`
-          : `Due on ${formatDate(milestone.data.endsAt)}`}
+        {milestone.data?.startsAt
+          ? `${formatDate(milestone.data?.startsAt)} - ${formatDate(milestone.data?.endsAt)}`
+          : `Due on ${formatDate(milestone.data?.endsAt)}`}
       </p>
       <div className={`flex items-center justify-start rounded-2xl px-2 py-1 ${statusBg[status]}`}>
         <p className="text-center text-xs font-medium leading-none text-white">
@@ -122,7 +123,7 @@ export const MilestoneTag: FC<MilestoneTagProps> = ({ index, priority }) => {
 };
 
 interface MilestoneDetailsProps {
-  milestone: IMilestoneResponse;
+  milestone: GrantMilestone;
   index: number;
 }
 
@@ -144,8 +145,8 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }
           style={{
             borderBottom:
               (isAuthorized && !isCompleted) ||
-                completionData?.data?.reason ||
-                (isCommunityAdmin && !isCompleted)
+              completionData?.data?.reason ||
+              (isCommunityAdmin && !isCompleted)
                 ? "1px solid #CCCCCC"
                 : "none",
           }}
@@ -154,7 +155,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }
             <div className="flex flex-col gap-3">
               <MilestoneTag index={index} priority={milestone?.data?.priority} />
               <h4 className="text-base font-bold leading-normal text-black dark:text-zinc-100">
-                {milestone.data.title}
+                {milestone.data?.title}
               </h4>
             </div>
             <div className="flex flex-row items-center justify-start gap-2">
@@ -170,17 +171,17 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }
               readLessText="Read less milestone description"
               readMoreText="Read full milestone description"
             >
-              {milestone.data.description}
+              {milestone.data?.description || milestone.description || ""}
             </ReadMore>
           </div>
         </div>
         {((isAuthorized && !isCompleted) ||
           completionData?.data?.reason ||
           completionData?.data?.proofOfWork) && (
-            <div className="mx-6 mt-4 rounded-lg bg-transparent pb-4">
-              <Updates milestone={milestone} />
-            </div>
-          )}
+          <div className="mx-6 mt-4 rounded-lg bg-transparent pb-4">
+            <Updates milestone={milestone} />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -21,8 +21,8 @@ export const useGrantStore = create<GrantStore>((set, get) => ({
     set({ loading: true });
     try {
       const refreshedGrant = await gapIndexerApi
-        .grantBySlug(grant.uid)
-        .then((res) => res.data as GrantResponse);
+        .grantBySlug(grant.uid as `0x${string}`)
+        .then((res) => res.data as unknown as GrantResponse);
       set({ grant: refreshedGrant, loading: false });
       return refreshedGrant;
     } catch (error) {

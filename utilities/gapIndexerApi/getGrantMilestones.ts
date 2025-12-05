@@ -1,5 +1,5 @@
 import type {
-  GrantResponse,
+  IGrantResponse as GrantResponse,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/components/Utilities/errorManager";

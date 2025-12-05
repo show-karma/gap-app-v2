@@ -286,7 +286,7 @@ export const UnifiedMilestoneScreen = () => {
           });
 
           const milestoneToAttest = new Milestone({
-            refUID: grant.uid,
+            refUID: grant.uid as `0x${string}`,
             schema: gapClient.findSchema("Milestone"),
             recipient: address as `0x${string}`,
             data: milestone,
@@ -333,7 +333,7 @@ export const UnifiedMilestoneScreen = () => {
 
           const milestoneToAttest = new Milestone({
             // We'll use the first grant as reference, but it will be attested to all selected grants
-            refUID: firstGrant.uid,
+            refUID: firstGrant.uid as `0x${string}`,
             schema: gapClient.findSchema("Milestone"),
             recipient: address as `0x${string}`,
             data: milestone,

@@ -107,7 +107,7 @@ export const GrantCompletionCard = ({ completion, grant }: GrantCompletionCardPr
           <div className="flex w-full flex-row justify-between  px-4 max-lg:mb-4 max-lg:flex-col">
             <div className="flex flex-col gap-3">
               <h4 className="text-base font-bold leading-normal text-gray-700">
-                {completion.data.title}
+                {completion.data?.title}
               </h4>
             </div>
             <div className="flex flex-row items-center justify-center gap-4 max-lg:justify-start">
@@ -123,10 +123,10 @@ export const GrantCompletionCard = ({ completion, grant }: GrantCompletionCardPr
               <p className="text-sm font-semibold text-gray-700 dark:text-gray-100">
                 Completion Summary
               </p>
-              {completion.data.text && (
+              {completion.data?.text && (
                 <div className="max-lg:max-w-xl max-sm:max-w-[300px]">
                   <ReadMore readLessText="Read less" readMoreText="Read full">
-                    {completion.data.text}
+                    {completion.data?.text}
                   </ReadMore>
                 </div>
               )}

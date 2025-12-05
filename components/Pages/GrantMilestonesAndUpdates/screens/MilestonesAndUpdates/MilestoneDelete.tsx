@@ -1,5 +1,4 @@
 import { TrashIcon } from "@heroicons/react/24/outline";
-import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
@@ -10,6 +9,7 @@ import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
+import type { GrantMilestone } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -19,7 +19,7 @@ import { retryUntilConditionMet } from "@/utilities/retries";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 interface MilestoneDeleteProps {
-  milestone: IMilestoneResponse;
+  milestone: GrantMilestone;
 }
 
 export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
@@ -46,7 +46,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
         chainId: actualChainId,
         gapClient: newGapClient,
       } = await ensureCorrectChain({
-        targetChainId: milestone.chainID,
+        targetChainId: milestone.chainID || 0,
         currentChainId: chain?.id,
         switchChainAsync,
       });
@@ -68,7 +68,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       const walletSigner = await walletClientToSigner(walletClient);
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
       const grantInstance = instanceProject?.grants.find(
-        (item) => item.uid.toLowerCase() === milestone.refUID.toLowerCase()
+        (item) => item.uid.toLowerCase() === milestone.refUID?.toLowerCase() || ""
       );
       if (!grantInstance) return;
       const milestoneInstance = grantInstance.milestones.find(
@@ -81,9 +81,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
           async () => {
             const fetchedProject = await refreshProject();
             const grant = fetchedProject?.grants?.find((g) => g.uid === milestone.refUID);
-            const stillExists = grant?.milestones?.find(
-              (m: IMilestoneResponse) => m.uid === milestoneUID
-            );
+            const stillExists = grant?.milestones?.find((m) => m.uid === milestoneUID);
             return !stillExists && !!grant?.milestones;
           },
           () => {
@@ -97,14 +95,20 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
           chainID: milestoneInstance.chainID,
           onError: (error) => {
             errorManager(
-              MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title),
+              MESSAGES.MILESTONES.DELETE.ERROR(
+                milestone.data?.title || milestone.title || "Milestone"
+              ),
               error,
               {
                 milestone: milestone.uid,
                 grant: milestone.refUID,
                 address: address,
               },
-              { error: MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title) }
+              {
+                error: MESSAGES.MILESTONES.DELETE.ERROR(
+                  milestone.data?.title || milestone.title || "Milestone"
+                ),
+              }
             );
           },
           onSuccess: () => {
@@ -154,14 +158,18 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       }
     } catch (error: any) {
       errorManager(
-        MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title),
+        MESSAGES.MILESTONES.DELETE.ERROR(milestone.data?.title || milestone.title || "Milestone"),
         error,
         {
           milestone: milestone.uid,
           grant: milestone.refUID,
           address: address,
         },
-        { error: MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title) }
+        {
+          error: MESSAGES.MILESTONES.DELETE.ERROR(
+            milestone.data?.title || milestone.title || "Milestone"
+          ),
+        }
       );
     } finally {
       setIsDeletingMilestone(false);
@@ -175,7 +183,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       isLoading={isDeletingMilestone}
       title={
         <p className="font-normal">
-          Are you sure you want to delete <b>{milestone.data.title}</b> milestone?
+          Are you sure you want to delete <b>{milestone.data?.title}</b> milestone?
         </p>
       }
       buttonElement={{

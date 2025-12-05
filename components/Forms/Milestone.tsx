@@ -143,7 +143,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
       gapClient = newGapClient;
 
       const milestoneToAttest = new Milestone({
-        refUID: uid,
+        refUID: uid as `0x${string}`,
         schema: gapClient.findSchema("Milestone"),
         recipient: (recipient as Hex) || address,
         data: milestone,
@@ -272,9 +272,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                             <button
                               key={priority}
                               className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
-                              disabled={milestones.some(
-                                (m: IMilestoneResponse) => m.data.priority === priority
-                              )}
+                              disabled={milestones.some((m) => m.data?.priority === priority)}
                               onClick={(event) => {
                                 event?.preventDefault();
                                 event?.stopPropagation();

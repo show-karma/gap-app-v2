@@ -1,8 +1,6 @@
 "use client";
 
 import type {
-  IGrantUpdate,
-  IMilestoneResponse,
   IProjectImpact,
   IProjectMilestoneResponse,
   IProjectUpdate,
@@ -13,6 +11,7 @@ import { ActivityList } from "@/components/Shared/ActivityList";
 import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
+import type { GrantMilestone, GrantUpdate } from "@/types/v2/grant";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { MESSAGES } from "@/utilities/messages";
 
@@ -37,8 +36,8 @@ export const UpdatesPage: FC = () => {
     // Log project structure for debugging
 
     const updates: IProjectUpdate[] = project?.updates || [];
-    const grantUpdates: IGrantUpdate[] = [];
-    const grantMilestones: IMilestoneResponse[] = [];
+    const grantUpdates: GrantUpdate[] = [];
+    const grantMilestones: GrantMilestone[] = [];
     const impacts: IProjectImpact[] = project?.impacts || [];
 
     project?.grants?.forEach((grant) => {

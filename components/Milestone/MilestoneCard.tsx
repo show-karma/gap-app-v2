@@ -74,9 +74,14 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
 
   // grant milestone-specific properties
   const grantMilestone = milestone.source.grantMilestone;
-  const grantTitle = grantMilestone?.grant.details?.title;
-  const programId = grantMilestone?.grant.details?.programId;
-  const communityData = grantMilestone?.grant.community?.details;
+  const grantDetails = grantMilestone?.grant.details as
+    | { title?: string; programId?: string }
+    | undefined;
+  const grantTitle = grantDetails?.title;
+  const programId = grantDetails?.programId;
+  const communityData = grantMilestone?.grant.community?.details as
+    | { name?: string; slug?: string; imageURL?: string }
+    | undefined;
   const endsAt = milestone.endsAt;
 
   // completion information

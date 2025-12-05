@@ -290,8 +290,7 @@ export const useMilestone = () => {
               const projectInstance = await refreshProject();
               const isMilestoneExists = projectInstance?.grants?.some((grant) =>
                 grant.milestones?.some(
-                  (milestone: IMilestoneResponse) =>
-                    milestone.uid.toLowerCase() === milestoneInstance.uid.toLowerCase()
+                  (milestone) => milestone.uid.toLowerCase() === milestoneInstance.uid.toLowerCase()
                 )
               );
 
@@ -651,7 +650,7 @@ export const useMilestone = () => {
               // Check if any of the milestones have been completed
               const areMilestonesCompleted = projectInstance?.grants?.some((grant) =>
                 grant.milestones?.some(
-                  (m: IMilestoneResponse) =>
+                  (m) =>
                     m.uid.toLowerCase() === milestoneInstance.uid.toLowerCase() && !!m.completed
                 )
               );
@@ -1081,7 +1080,8 @@ export const useMilestone = () => {
                 );
                 return !!(
                   fetchedMilestone?.completed &&
-                  new Date(originalCreatedAt) < new Date(fetchedMilestone.completed.createdAt)
+                  new Date(originalCreatedAt || 0).getTime() <
+                    new Date(fetchedMilestone.completed.createdAt || 0).getTime()
                 );
               },
               async () => {

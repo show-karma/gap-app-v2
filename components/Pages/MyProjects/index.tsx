@@ -1,5 +1,4 @@
 "use client";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -17,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMixpanel } from "@/hooks/useMixpanel";
 import { layoutTheme } from "@/src/helper/theme";
 import { useOnboarding } from "@/store/modals/onboarding";
+import type { ProjectV2Response } from "@/types/project";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
@@ -90,8 +90,8 @@ export default function MyProjects() {
   });
 
   const totalProjects: number = projects?.length || 0;
-  const myProjects: IProjectResponse[] =
-    projects?.slice(itemsPerPage * (page - 1), itemsPerPage * page) || [];
+  const myProjects = (projects?.slice(itemsPerPage * (page - 1), itemsPerPage * page) ||
+    []) as unknown as ProjectV2Response[];
 
   // do a empty array of 12
   const loadingArray = Array.from({ length: 12 }, (_, index) => index);
@@ -144,11 +144,11 @@ export default function MyProjects() {
                             <div className="flex flex-row items-center gap-2 mb-1">
                               <div className="flex justify-center">
                                 <ProfilePicture
-                                  imageURL={card.details?.data?.imageURL}
+                                  imageURL={card.details?.logoUrl}
                                   name={card.uid || ""}
                                   size="32"
                                   className="h-8 w-8 min-w-8 min-h-8 border border-white shadow-sm"
-                                  alt={card.details?.data?.title || "Project"}
+                                  alt={card.details?.title || "Project"}
                                 />
                               </div>
                               <div className="font-body line-clamp-1 mb-0 pb-0 truncate text-base font-semibold text-gray-900 dark:text-gray-100 flex-1">
