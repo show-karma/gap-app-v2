@@ -8,7 +8,7 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import type { ProjectV2Response } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -32,7 +32,7 @@ const schema = z.object({
 type SchemaType = z.infer<typeof schema>;
 
 interface ProjectSubscriptionProps {
-  project: ProjectV2Response;
+  project: ProjectResponse;
 }
 
 export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({ project }) => {

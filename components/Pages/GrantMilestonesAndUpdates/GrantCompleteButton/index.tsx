@@ -4,13 +4,13 @@ import type { FC } from "react";
 import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import type { ProjectV2Response } from "@/types/project";
 import type { GrantResponse } from "@/types/v2/grant";
+import type { ProjectResponse } from "@/types/v2/project";
 import { GrantCompletedButton } from "./GrantCompletedButton";
 import { GrantNotCompletedButton } from "./GrantNotCompletedButton";
 
 interface GrantCompleteProps {
-  project: ProjectV2Response;
+  project: ProjectResponse;
   grant: GrantResponse;
   text?: string;
 }

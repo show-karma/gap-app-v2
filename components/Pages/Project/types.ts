@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { ProjectV2Response } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 
 export interface NetworkAddressPair {
   network: string;
@@ -17,7 +17,7 @@ export interface InvalidInfo {
 
 export interface LinkContractAddressesButtonProps {
   buttonClassName?: string;
-  project: ProjectV2Response;
+  project: ProjectResponse;
   "data-link-contracts-button"?: string;
   buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
   onClose?: () => void;

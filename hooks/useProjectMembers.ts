@@ -1,5 +1,5 @@
 import React from "react";
-import type { ProjectV2Response } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 
 interface Member {
   uid: string;
@@ -9,7 +9,7 @@ interface Member {
   };
 }
 
-export const useProjectMembers = (project?: ProjectV2Response): Member[] => {
+export const useProjectMembers = (project?: ProjectResponse): Member[] => {
   return React.useMemo(() => {
     if (!project) return [];
 

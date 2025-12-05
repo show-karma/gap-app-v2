@@ -4,16 +4,16 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { MilestonesList } from "@/components/Milestone/MilestonesList";
 import { Button } from "@/components/Utilities/Button";
-import { useProjectUpdatesV2 } from "@/hooks/useProjectUpdatesV2";
+import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
-import type { ProjectV2Response } from "@/types/project";
-import type { UnifiedMilestone } from "@/types/roadmap";
+import type { ProjectResponse } from "@/types/v2/project";
+import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { MESSAGES } from "@/utilities/messages";
 import { RoadmapListLoading } from "../Loading/Roadmap";
 
 interface ProjectRoadmapProps {
-  project?: ProjectV2Response;
+  project?: ProjectResponse;
 }
 
 // Pure utility function for sorting
@@ -33,9 +33,9 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
 
   const project = propProject || zustandProject;
 
-  // Use V2 API endpoint for all updates, milestones, and grant milestones
-  // V2 API now returns grant title and community info directly
-  const { milestones: v2Milestones = [], isLoading } = useProjectUpdatesV2(projectId as string);
+  // Use API endpoint for all updates, milestones, and grant milestones
+  // API now returns grant title and community info directly
+  const { milestones: apiMilestones = [], isLoading } = useProjectUpdates(projectId as string);
 
   const { setIsProgressModalOpen, setProgressModalScreen } = useProgressModalStore();
 
@@ -73,7 +73,7 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
       };
     });
 
-    const allItems = [...v2Milestones, ...impactItems];
+    const allItems = [...apiMilestones, ...impactItems];
 
     const allSortedItems = [...allItems].sort((a, b) => {
       const timestampA = getSortTimestamp(a);
@@ -83,7 +83,7 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
     });
 
     return allSortedItems;
-  }, [project?.impacts, project?.uid, v2Milestones]);
+  }, [project?.impacts, project?.uid, apiMilestones]);
 
   // Filter items based on active filters
   const filteredItems = useMemo(() => {

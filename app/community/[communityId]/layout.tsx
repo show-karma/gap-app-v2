@@ -6,7 +6,7 @@ import { layoutTheme } from "@/src/helper/theme";
 import { envVars } from "@/utilities/enviromentVars";
 import { defaultMetadata } from "@/utilities/meta";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import { getCommunityDetailsV2 } from "@/utilities/queries/getCommunityDataV2";
+import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 import { cn } from "@/utilities/tailwind";
 
 type Params = Promise<{
@@ -15,7 +15,7 @@ type Params = Promise<{
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { communityId } = await params;
 
-  const community = await getCommunityDetailsV2(communityId);
+  const community = await getCommunityDetails(communityId);
   const communityName = community?.details?.name || communityId;
 
   const dynamicMetadata = {
@@ -64,7 +64,7 @@ export default async function Layout(props: { children: React.ReactNode; params:
     return undefined;
   }
 
-  const community = await getCommunityDetailsV2(communityId);
+  const community = await getCommunityDetails(communityId);
 
   if (!community) {
     return <CommunityNotFound communityId={communityId} />;

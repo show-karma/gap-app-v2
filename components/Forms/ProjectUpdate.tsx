@@ -26,7 +26,7 @@ import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useStepper } from "@/store/modals/txStepper";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import type { ProjectV2Response } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -107,7 +107,7 @@ const GrantSearchDropdown: FC<{
   onSelect: (grantId: string) => void;
   selected: string[];
   className?: string;
-  project?: IProjectResponse | ProjectV2Response;
+  project?: IProjectResponse | ProjectResponse;
 }> = ({ grants, onSelect, selected, className, project }) => {
   const [open, setOpen] = useState(false);
 
@@ -183,7 +183,7 @@ const GrantSearchDropdown: FC<{
       <div className="flex w-full h-full">
         <ExternalLink
           href={PAGES.PROJECT.SCREENS.NEW_GRANT(
-            (project as ProjectV2Response)?.details?.slug || project?.uid || ""
+            (project as ProjectResponse)?.details?.slug || project?.uid || ""
           )}
           className="text-sm h-full w-full px-2 py-2 rounded bg-zinc-700 text-white text-center hover:bg-zinc-600 transition-colors"
         >

@@ -6,9 +6,9 @@ jest.mock("@/utilities/queries/getCommunityData", () => ({
 }));
 
 jest.mock("@/utilities/queries/getCommunityDataV2", () => ({
-  getCommunityDetailsV2: jest.fn(),
-  getCommunityStatsV2: jest.fn(),
-  getCommunityProjectsV2: jest.fn(),
+  getCommunityDetailsResponse: jest.fn(),
+  getCommunityStats: jest.fn(),
+  getCommunityProjects: jest.fn(),
 }));
 
 jest.mock("@/utilities/pagesOnRoot", () => ({
@@ -44,16 +44,16 @@ describe("Community Page", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     const {
-      getCommunityDetailsV2,
-      getCommunityStatsV2,
-      getCommunityProjectsV2,
+      getCommunityDetailsResponse,
+      getCommunityStats,
+      getCommunityProjects,
     } = require("@/utilities/queries/getCommunityDataV2");
     const { getCommunityCategories } = require("@/utilities/queries/getCommunityData");
 
-    getCommunityDetailsV2.mockResolvedValue(mockCommunityDetails);
-    getCommunityStatsV2.mockResolvedValue(mockCommunityStats);
+    getCommunityDetailsResponse.mockResolvedValue(mockCommunityDetails);
+    getCommunityStats.mockResolvedValue(mockCommunityStats);
     getCommunityCategories.mockResolvedValue(mockCategories);
-    getCommunityProjectsV2.mockResolvedValue(mockProjects);
+    getCommunityProjects.mockResolvedValue(mockProjects);
   });
 
   it("renders the community page with correct components", async () => {

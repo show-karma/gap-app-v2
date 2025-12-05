@@ -41,13 +41,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
-import { searchProjectsV2 } from "@/services/project-search.service";
+import { searchProjects } from "@/services/project-search.service";
 import { useProjectStore } from "@/store";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useStepper } from "@/store/modals/txStepper";
 import { useOwnerStore } from "@/store/owner";
-import type { Contact, ProjectV2Response } from "@/types/project";
+import type { Contact } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
@@ -153,7 +154,7 @@ type ProjectDialogProps = {
     iconSide?: "left" | "right";
     styleClass: string;
   } | null;
-  projectToUpdate?: ProjectV2Response;
+  projectToUpdate?: ProjectResponse;
   previousContacts?: Contact[];
   useEditModalStore?: boolean; // New prop to control which modal state to use
 };
@@ -172,7 +173,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   /**
    * V2 Project Structure:
    *
-   * This component uses the V2 ProjectV2Response structure:
+   * This component uses the V2 ProjectResponse structure:
    * - details.title, details.slug, details.description, etc.
    * - owner instead of recipient
    *
@@ -999,20 +1000,19 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const [isSearchingProject, setIsSearchingProject] = useState(false);
-  const [existingProjects, setExistingProjects] = useState<ProjectV2Response[]>([]);
+  const [existingProjects, setExistingProjects] = useState<ProjectResponse[]>([]);
 
   const searchByExistingName = debounce(async (value: string) => {
     if (
       value.length < 3 ||
       (projectToUpdate &&
-        value.toLowerCase() ===
-          (projectToUpdate as ProjectV2Response).details?.title?.toLowerCase())
+        value.toLowerCase() === (projectToUpdate as ProjectResponse).details?.title?.toLowerCase())
     ) {
       return;
     }
     try {
       setIsSearchingProject(true);
-      const result = await searchProjectsV2(value);
+      const result = await searchProjects(value);
       const hasEqualTitle =
         result.filter((item) => item.details?.title?.toLowerCase() === value.toLowerCase()).length >
         0;

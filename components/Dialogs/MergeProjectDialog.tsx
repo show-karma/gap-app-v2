@@ -17,7 +17,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useMergeModalStore } from "@/store/modals/merge";
 import { useStepper } from "@/store/modals/txStepper";
-import type { ProjectV2Response } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -44,7 +44,7 @@ type MergeProjectProps = {
 function SearchProject({
   setPrimaryProject,
 }: {
-  setPrimaryProject: (value: ProjectV2Response) => void;
+  setPrimaryProject: (value: ProjectResponse) => void;
 }) {
   const { project: currentProject } = useProjectStore();
   const [results, setResults] = useState<ISearchResponse>({
@@ -83,7 +83,7 @@ function SearchProject({
     return setIsLoading(false);
   }, 500);
 
-  const renderItem = (item: ProjectV2Response, _href: string) => {
+  const renderItem = (item: ProjectResponse, _href: string) => {
     const handleSelect = () => {
       setPrimaryProject(item);
       closeSearchList();
@@ -131,9 +131,9 @@ function SearchProject({
           {results.projects.length > 0 &&
             results.projects.map((project) =>
               renderItem(
-                project as unknown as ProjectV2Response,
+                project as unknown as ProjectResponse,
                 PAGES.PROJECT.GRANTS(
-                  (project as unknown as ProjectV2Response).details?.slug || project.uid
+                  (project as unknown as ProjectResponse).details?.slug || project.uid
                 )
               )
             )}
@@ -168,7 +168,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   },
 }) => {
   const { isMergeModalOpen: isOpen, setIsMergeModalOpen: setIsOpen } = useMergeModalStore();
-  const [primaryProject, setPrimaryProject] = useState<ProjectV2Response | null>(null);
+  const [primaryProject, setPrimaryProject] = useState<ProjectResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [validAddress, setValidAddress] = useState(true);
 

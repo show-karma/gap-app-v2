@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { getProjectData } from "@/services/project.service";
 import { useProjectStore } from "@/store";
-import type { ProjectV2Response } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
 export const useProject = (projectId: string) => {
@@ -10,7 +10,7 @@ export const useProject = (projectId: string) => {
 
   const query = useQuery({
     queryKey: ["project", projectId],
-    queryFn: async (): Promise<ProjectV2Response> => {
+    queryFn: async (): Promise<ProjectResponse> => {
       const data = await getProjectData(projectId, {});
       if (!data) {
         throw new Error("Project not found");

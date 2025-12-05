@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
 import { useMobileStore } from "@/store/mobile";
-import type { ProjectV2Response } from "@/types/project";
 import type { Community } from "@/types/v2/community";
+import type { ProjectResponse } from "@/types/v2/project";
 import { groupSimilarCommunities } from "@/utilities/communityHelpers"; // You'll need to create this utility function
 import { PAGES } from "@/utilities/pages";
 import { ProfilePicture } from "../Utilities/ProfilePicture";
@@ -77,14 +77,14 @@ export const SearchList: React.FC<Props> = ({
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
   const renderItem = (
-    item: ProjectV2Response | Community,
+    item: ProjectResponse | Community,
     title: string,
     href: string,
     type: "project" | "community"
   ) => {
     const imageURL =
       type === "project"
-        ? (item as ProjectV2Response).details?.logoUrl
+        ? (item as ProjectResponse).details?.logoUrl
         : (item as Community).details?.imageURL;
 
     return (
@@ -146,7 +146,7 @@ export const SearchList: React.FC<Props> = ({
 
         {data.projects.length > 0 &&
           data.projects.map((project) => {
-            const p = project as unknown as ProjectV2Response;
+            const p = project as unknown as ProjectResponse;
             return renderItem(
               p,
               p.details?.title || "Untitled Project",

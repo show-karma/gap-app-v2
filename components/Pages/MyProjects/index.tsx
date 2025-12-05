@@ -16,7 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMixpanel } from "@/hooks/useMixpanel";
 import { layoutTheme } from "@/src/helper/theme";
 import { useOnboarding } from "@/store/modals/onboarding";
-import type { ProjectV2Response } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
@@ -91,7 +91,7 @@ export default function MyProjects() {
 
   const totalProjects: number = projects?.length || 0;
   const myProjects = (projects?.slice(itemsPerPage * (page - 1), itemsPerPage * page) ||
-    []) as unknown as ProjectV2Response[];
+    []) as unknown as ProjectResponse[];
 
   // do a empty array of 12
   const loadingArray = Array.from({ length: 12 }, (_, index) => index);

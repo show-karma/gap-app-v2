@@ -3,13 +3,13 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { type FC, Fragment } from "react";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
-import type { ProjectV2Response } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 import { PAGES } from "@/utilities/pages";
 import { Button } from "../Utilities/Button";
 import { ExternalLink } from "../Utilities/ExternalLink";
 
 type SimilarProjectsProps = {
-  similarProjects: ProjectV2Response[];
+  similarProjects: ProjectResponse[];
   projectName: string;
 };
 

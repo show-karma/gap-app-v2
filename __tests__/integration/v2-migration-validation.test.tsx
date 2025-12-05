@@ -9,12 +9,12 @@
  */
 
 import {
-  createMinimalMockProjectV2,
-  createMockProjectV2,
-  createMockProjectV2List,
-  createMockProjectV2WithGrants,
-} from "@/__tests__/utils/mockProjectV2";
-import type { ProjectV2Response } from "@/types/project";
+  createMinimalMockProject,
+  createMockProject,
+  createMockProjectList,
+  createMockProjectWithGrants,
+} from "@/__tests__/utils/mockProject";
+import type { ProjectResponse } from "@/types/v2/project";
 import {
   getCustomLinks,
   getLinkByType,
@@ -26,7 +26,7 @@ import {
 describe("V2 Migration - Validation Tests", () => {
   describe("Mock Utilities", () => {
     it("should create a complete V2 project mock", () => {
-      const project = createMockProjectV2();
+      const project = createMockProject();
 
       // Verify V2 structure
       expect(project.uid).toBeDefined();
@@ -45,7 +45,7 @@ describe("V2 Migration - Validation Tests", () => {
     });
 
     it("should create a project with grants", () => {
-      const project = createMockProjectV2WithGrants(3);
+      const project = createMockProjectWithGrants(3);
 
       expect(project.grants).toBeDefined();
       expect(project.grants?.length).toBe(3);
@@ -55,7 +55,7 @@ describe("V2 Migration - Validation Tests", () => {
     });
 
     it("should create a minimal mock", () => {
-      const project = createMinimalMockProjectV2();
+      const project = createMinimalMockProject();
 
       expect(project.uid).toBe("0x123");
       expect(project.owner).toBe("0xabc");
@@ -63,7 +63,7 @@ describe("V2 Migration - Validation Tests", () => {
     });
 
     it("should create a list of projects", () => {
-      const projects = createMockProjectV2List(5);
+      const projects = createMockProjectList(5);
 
       expect(projects).toHaveLength(5);
       expect(projects[0].details.title).toBe("Project 1");
@@ -71,7 +71,7 @@ describe("V2 Migration - Validation Tests", () => {
     });
 
     it("should allow custom overrides", () => {
-      const project = createMockProjectV2({
+      const project = createMockProject({
         details: {
           title: "Custom Title",
           slug: "custom-slug",
@@ -87,7 +87,7 @@ describe("V2 Migration - Validation Tests", () => {
 
   describe("Normalization Helper", () => {
     it("should normalize V2 project correctly", () => {
-      const v2Project = createMockProjectV2();
+      const v2Project = createMockProject();
       const normalized = normalizeProjectData(v2Project);
 
       expect(normalized).toBeDefined();
@@ -98,7 +98,7 @@ describe("V2 Migration - Validation Tests", () => {
     });
 
     it("should detect V2 project correctly", () => {
-      const v2Project = createMockProjectV2();
+      const v2Project = createMockProject();
       expect(isV1Project(v2Project)).toBe(false);
     });
 
@@ -108,7 +108,7 @@ describe("V2 Migration - Validation Tests", () => {
     });
 
     it("should extract links correctly", () => {
-      const project = createMockProjectV2();
+      const project = createMockProject();
       const normalized = normalizeProjectData(project);
 
       expect(normalized).toBeDefined();
@@ -122,7 +122,7 @@ describe("V2 Migration - Validation Tests", () => {
     });
 
     it("should extract custom links", () => {
-      const project = createMockProjectV2({
+      const project = createMockProject({
         details: {
           links: [
             { type: "custom", url: "https://custom1.com", name: "Custom 1" },
@@ -141,10 +141,10 @@ describe("V2 Migration - Validation Tests", () => {
     });
 
     it("should get project identifier (slug or uid)", () => {
-      const projectWithSlug = createMockProjectV2({
+      const projectWithSlug = createMockProject({
         details: { slug: "my-project" },
       });
-      const projectWithoutSlug = createMockProjectV2({
+      const projectWithoutSlug = createMockProject({
         uid: "0xabc123" as `0x${string}`,
         details: { slug: undefined } as any,
       });
@@ -157,8 +157,8 @@ describe("V2 Migration - Validation Tests", () => {
 
   describe("Optional Chaining Safety", () => {
     it("should safely handle undefined grants", () => {
-      const projectWithGrants = createMockProjectV2WithGrants(2);
-      const projectWithoutGrants = createMockProjectV2({ grants: undefined });
+      const projectWithGrants = createMockProjectWithGrants(2);
+      const projectWithoutGrants = createMockProject({ grants: undefined });
 
       let count = 0;
 
@@ -179,7 +179,7 @@ describe("V2 Migration - Validation Tests", () => {
     });
 
     it("should safely handle undefined updates", () => {
-      const project = createMockProjectV2({ updates: undefined });
+      const project = createMockProject({ updates: undefined });
 
       expect(() => {
         project.updates?.forEach(() => {});
@@ -187,7 +187,7 @@ describe("V2 Migration - Validation Tests", () => {
     });
 
     it("should safely handle undefined members", () => {
-      const project = createMockProjectV2({ members: undefined });
+      const project = createMockProject({ members: undefined });
 
       expect(() => {
         project.members?.forEach(() => {});
@@ -197,7 +197,7 @@ describe("V2 Migration - Validation Tests", () => {
 
   describe("Type Safety", () => {
     it("should have correct TypeScript types", () => {
-      const project: ProjectV2Response = createMockProjectV2();
+      const project: ProjectResponse = createMockProject();
 
       // These should compile without errors
       const title: string = project.details.title;
@@ -212,7 +212,7 @@ describe("V2 Migration - Validation Tests", () => {
     });
 
     it("should not allow V1 structure access", () => {
-      const project = createMockProjectV2();
+      const project = createMockProject();
 
       // TypeScript should catch these (but we test at runtime)
       expect((project.details as any).data).toBeUndefined();
@@ -222,7 +222,7 @@ describe("V2 Migration - Validation Tests", () => {
 
   describe("Edge Cases", () => {
     it("should handle empty arrays", () => {
-      const project = createMockProjectV2({
+      const project = createMockProject({
         grants: [],
         members: [],
         updates: [],
@@ -234,7 +234,7 @@ describe("V2 Migration - Validation Tests", () => {
     });
 
     it("should handle missing optional fields", () => {
-      const project = createMockProjectV2({
+      const project = createMockProject({
         details: {
           title: "Required Title",
           description: "Required Description",
@@ -249,7 +249,7 @@ describe("V2 Migration - Validation Tests", () => {
     });
 
     it("should preserve custom properties through normalization", () => {
-      const project = createMockProjectV2({
+      const project = createMockProject({
         details: {
           businessModel: "Freemium",
           stageIn: "Growth",

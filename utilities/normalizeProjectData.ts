@@ -8,7 +8,7 @@
  */
 
 import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import type { ProjectV2Response } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 
 type ExternalLink = {
   type: string;
@@ -40,7 +40,7 @@ export interface NormalizedProjectData {
  * Checks if a project uses V1 structure
  */
 export function isV1Project(
-  project: IProjectResponse | ProjectV2Response
+  project: IProjectResponse | ProjectResponse
 ): project is IProjectResponse {
   return (
     "details" in project &&
@@ -54,7 +54,7 @@ export function isV1Project(
  * Normalizes project data from either V1 or V2 structure to a consistent format
  */
 export function normalizeProjectData(
-  project: IProjectResponse | ProjectV2Response | undefined
+  project: IProjectResponse | ProjectResponse | undefined
 ): NormalizedProjectData | null {
   if (!project) return null;
 
@@ -84,7 +84,7 @@ export function normalizeProjectData(
   }
 
   // V2 structure
-  const v2Project = project as ProjectV2Response;
+  const v2Project = project as ProjectResponse;
   return {
     title: v2Project.details?.title || "",
     description: v2Project.details?.description || "",
@@ -129,7 +129,7 @@ export function getCustomLinks(links: ExternalLink[]): Array<{ name: string; url
  * Gets the project identifier (slug or uid)
  */
 export function getProjectIdentifier(
-  project: IProjectResponse | ProjectV2Response | undefined
+  project: IProjectResponse | ProjectResponse | undefined
 ): string {
   if (!project) return "";
 

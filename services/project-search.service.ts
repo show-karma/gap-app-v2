@@ -1,4 +1,4 @@
-import type { ProjectV2Response } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -11,10 +11,7 @@ import { INDEXER } from "@/utilities/indexer";
  * @param query - Search query string (minimum 3 characters)
  * @param limit - Maximum number of results (1-50, default: 10)
  */
-export const searchProjectsV2 = async (
-  query: string,
-  limit?: number
-): Promise<ProjectV2Response[]> => {
+export const searchProjects = async (query: string, limit?: number): Promise<ProjectResponse[]> => {
   if (query.length < 3) {
     return [];
   }
@@ -37,10 +34,13 @@ export const searchProjectsV2 = async (
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data: ProjectV2Response[] = await response.json();
+    const data: ProjectResponse[] = await response.json();
     return data;
   } catch (error) {
     console.error("Error searching projects:", error);
     return [];
   }
 };
+
+// Alias for backward compatibility during migration
+export const searchProjectsV2 = searchProjects;

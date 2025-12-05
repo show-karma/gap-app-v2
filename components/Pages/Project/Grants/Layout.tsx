@@ -16,7 +16,7 @@ import { useCommunitiesStore } from "@/store/communities";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
 import type { GrantScreen } from "@/types";
-import type { ProjectV2Response } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { GrantCompleteButton } from "../../GrantMilestonesAndUpdates/GrantCompleteButton";
@@ -28,7 +28,7 @@ import { ProjectGrantsLayoutLoading } from "../Loading/Grants/Layout";
 
 interface GrantsLayoutProps {
   children: React.ReactNode;
-  fetchedProject?: ProjectV2Response;
+  fetchedProject?: ProjectResponse;
 }
 
 interface Tab {

@@ -1,6 +1,6 @@
 import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 import type { SignerOrProvider } from "@show-karma/karma-gap-sdk/core/types";
-import type { ProjectV2Response } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 import { getRPCClient } from "./rpcClient";
 
 export interface Member {
@@ -11,10 +11,7 @@ export interface Member {
   };
   role?: "Owner" | "Admin" | "Member";
 }
-export const getProjectMemberRoles = async (
-  project: ProjectV2Response,
-  projectInstance: Project
-) => {
+export const getProjectMemberRoles = async (project: ProjectResponse, projectInstance: Project) => {
   const roles: Record<string, Member["role"]> = {};
   if (project?.members) {
     const client = await getRPCClient(project.chainID);

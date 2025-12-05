@@ -9,8 +9,8 @@ import type { Track } from "@/services/tracks";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
-import type { ProjectV2Response } from "@/types/project";
 import type { GrantResponse } from "@/types/v2/grant";
+import type { ProjectResponse } from "@/types/v2/project";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -22,7 +22,7 @@ const EmptyMilestone = ({
   project,
 }: {
   grant?: GrantResponse;
-  project?: ProjectV2Response;
+  project?: ProjectResponse;
 }) => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);

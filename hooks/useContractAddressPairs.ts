@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import type { NetworkAddressPair } from "@/components/Pages/Project/types";
-import type { ProjectV2Response } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 
 interface UseContractAddressPairsProps {
-  project: ProjectV2Response;
+  project: ProjectResponse;
 }
 
 export const useContractAddressPairs = ({ project }: UseContractAddressPairsProps) => {

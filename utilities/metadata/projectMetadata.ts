@@ -1,22 +1,22 @@
 import type { Metadata } from "next";
 import { PROJECT_NAME } from "@/constants/brand";
-import type { ProjectV2Response } from "@/types/project";
 import type { GrantResponse } from "@/types/v2/grant";
+import type { ProjectResponse } from "@/types/v2/project";
 import { envVars } from "../enviromentVars";
 import { cleanMarkdownForPlainText } from "../markdown";
 import { defaultMetadata } from "../meta";
 
-const getProjectTitle = (project: ProjectV2Response): string => {
+const getProjectTitle = (project: ProjectResponse): string => {
   return project?.details?.title || "";
 };
 
-const getProjectDescription = (project: ProjectV2Response): string => {
+const getProjectDescription = (project: ProjectResponse): string => {
   return project?.details?.description || "";
 };
 
 // Base project metadata generator
 export const generateProjectMetadata = (
-  project: ProjectV2Response,
+  project: ProjectResponse,
   options: {
     title?: string;
     description?: string;
@@ -67,7 +67,7 @@ export const generateProjectMetadata = (
 
 // Specific metadata generators for different page types
 export const generateProjectOverviewMetadata = (
-  project: ProjectV2Response,
+  project: ProjectResponse,
   projectId: string
 ): Metadata => {
   const projectTitle = getProjectTitle(project);
@@ -79,7 +79,7 @@ export const generateProjectOverviewMetadata = (
 };
 
 export const generateProjectTeamMetadata = (
-  project: ProjectV2Response,
+  project: ProjectResponse,
   projectId: string
 ): Metadata => {
   const projectTitle = getProjectTitle(project);
@@ -91,7 +91,7 @@ export const generateProjectTeamMetadata = (
 };
 
 export const generateProjectImpactMetadata = (
-  project: ProjectV2Response,
+  project: ProjectResponse,
   projectId: string
 ): Metadata => {
   const projectTitle = getProjectTitle(project);
@@ -103,7 +103,7 @@ export const generateProjectImpactMetadata = (
 };
 
 export const generateProjectContactMetadata = (
-  project: ProjectV2Response,
+  project: ProjectResponse,
   projectId: string
 ): Metadata => {
   const projectTitle = getProjectTitle(project);
@@ -115,7 +115,7 @@ export const generateProjectContactMetadata = (
 };
 
 export const generateProjectUpdatesMetadata = (
-  project: ProjectV2Response,
+  project: ProjectResponse,
   projectId: string
 ): Metadata => {
   const projectTitle = getProjectTitle(project);
@@ -127,7 +127,7 @@ export const generateProjectUpdatesMetadata = (
 };
 
 export const generateProjectFundingMetadata = (
-  project: ProjectV2Response,
+  project: ProjectResponse,
   projectId: string
 ): Metadata => {
   const projectTitle = getProjectTitle(project);
@@ -140,7 +140,7 @@ export const generateProjectFundingMetadata = (
 
 // Grant-specific metadata generators
 export const generateGrantOverviewMetadata = (
-  project: ProjectV2Response,
+  project: ProjectResponse,
   grant: GrantResponse,
   projectId: string
 ): Metadata => {
@@ -153,7 +153,7 @@ export const generateGrantOverviewMetadata = (
 };
 
 export const generateGrantMilestonesMetadata = (
-  project: ProjectV2Response,
+  project: ProjectResponse,
   grant: GrantResponse,
   projectId: string
 ): Metadata => {
@@ -166,7 +166,7 @@ export const generateGrantMilestonesMetadata = (
 };
 
 export const generateGrantImpactCriteriaMetadata = (
-  project: ProjectV2Response,
+  project: ProjectResponse,
   grant: GrantResponse,
   projectId: string
 ): Metadata => {
@@ -180,7 +180,7 @@ export const generateGrantImpactCriteriaMetadata = (
 
 // Enhanced metadata composition functions
 export const createMetadataFromContext = (
-  project: ProjectV2Response | null,
+  project: ProjectResponse | null,
   projectId: string,
   metadataType: "overview" | "team" | "impact" | "contact" | "updates" | "funding",
   customOptions?: {
@@ -221,7 +221,7 @@ export const createMetadataFromContext = (
 
 // Grant-specific metadata composition functions
 export const createGrantMetadataFromContext = (
-  project: ProjectV2Response | null,
+  project: ProjectResponse | null,
   grant: GrantResponse | null,
   projectId: string,
   _grantUid?: string,

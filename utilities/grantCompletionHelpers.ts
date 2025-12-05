@@ -1,4 +1,4 @@
-import type { ProjectV2Response } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 import { retryUntilConditionMet } from "@/utilities/retries";
 
 /**
@@ -6,7 +6,7 @@ import { retryUntilConditionMet } from "@/utilities/retries";
  */
 export const createCheckIfCompletionExists = (
   grantUID: string,
-  refreshProject: () => Promise<ProjectV2Response | null | undefined>
+  refreshProject: () => Promise<ProjectResponse | null | undefined>
 ) => {
   return async (callbackFn?: () => void) => {
     await retryUntilConditionMet(

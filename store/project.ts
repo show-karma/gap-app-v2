@@ -2,17 +2,17 @@ import type { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { QueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
 import { getProjectGrants } from "@/services/project-grants.service";
-import type { ProjectV2Response } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { useGrantStore } from "./grant";
 
 interface ProjectStore {
-  project: ProjectV2Response | undefined;
-  setProject: (project: ProjectV2Response | undefined) => void;
+  project: ProjectResponse | undefined;
+  setProject: (project: ProjectResponse | undefined) => void;
   loading: boolean;
-  refreshProject: () => Promise<ProjectV2Response | undefined>;
+  refreshProject: () => Promise<ProjectResponse | undefined>;
   setLoading: (loading: boolean) => void;
   isProjectAdmin: boolean;
   setIsProjectAdmin: (isProjectAdmin: boolean) => void;
@@ -24,7 +24,7 @@ interface ProjectStore {
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
   project: undefined,
-  setProject: (project: ProjectV2Response | undefined) => set({ project }),
+  setProject: (project: ProjectResponse | undefined) => set({ project }),
   refreshProject: async () => {
     const { project } = get();
     if (!project) return;
@@ -43,13 +43,13 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       throw new Error(`HTTP error! status: ${projectResponse.status}`);
     }
 
-    const v2ProjectData: ProjectV2Response = await projectResponse.json();
+    const projectData: ProjectResponse = await projectResponse.json();
 
     // Fetch grants separately (v2 doesn't include grants in project response)
-    const grants = await getProjectGrants(v2ProjectData.details?.slug || project.uid);
+    const grants = await getProjectGrants(projectData.details?.slug || project.uid);
 
-    const refreshedProject: ProjectV2Response = {
-      ...v2ProjectData,
+    const refreshedProject: ProjectResponse = {
+      ...projectData,
       grants: grants || [],
     };
 

@@ -1,11 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { getProjectData } from "@/services/project.service";
-import type { ProjectV2Response } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 import { zeroUID } from "@/utilities/commons";
 
-export const getProjectCachedData = cache(async (projectId: string): Promise<ProjectV2Response> => {
-  let project: ProjectV2Response | undefined;
+export const getProjectCachedData = cache(async (projectId: string): Promise<ProjectResponse> => {
+  let project: ProjectResponse | undefined;
 
   try {
     const projectData = await getProjectData(projectId, {

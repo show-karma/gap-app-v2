@@ -12,7 +12,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import type { ProjectV2Response } from "@/types/project";
+import type { ProjectResponse } from "@/types/v2/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -20,7 +20,7 @@ import { MESSAGES } from "@/utilities/messages";
 // Updated interface to handle new JSON payoutAddress structure
 interface SetPayoutAddressButtonProps {
   buttonClassName?: string;
-  project: ProjectV2Response;
+  project: ProjectResponse;
   "data-set-payout-button"?: string;
   buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
   onClose?: () => void;
