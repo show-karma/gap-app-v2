@@ -183,8 +183,8 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ steps.app-token.outputs.token }}
           
-          # Enable automatic PR reviews (not just when @claude is mentioned)
-          mode: auto
+          # Enable automatic PR reviews with tracking comments
+          track_progress: true
 
           # Tool permissions for frontend development
           allowed_tools: |
