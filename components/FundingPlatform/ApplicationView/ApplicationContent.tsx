@@ -177,32 +177,103 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         value.length > 0 && typeof value[0] === "object" && "title" in value[0];
 
       if (isMilestoneArray) {
+        // Core fields that have special rendering
+        const coreFields = ["title", "description", "dueDate"];
+
+        // Helper to convert camelCase to Title Case
+        const formatFieldLabel = (key: string): string => {
+          return key
+            .replace(/([A-Z])/g, " $1")
+            .replace(/^./, (str) => str.toUpperCase())
+            .trim();
+        };
+
+        // Helper to check if a value looks like markdown (multi-line or has markdown syntax)
+        const isMarkdownContent = (val: string): boolean => {
+          return (
+            val.includes("\n") ||
+            val.includes("**") ||
+            val.includes("##") ||
+            val.includes("- ") ||
+            val.includes("* ") ||
+            val.includes("`") ||
+            val.length > 100
+          );
+        };
+
         return (
           <div className="space-y-2">
-            {value.map((milestone: any, index) => (
-              <div
-                key={index}
-                className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700"
-              >
-                <div className="space-y-1">
-                  <div className="flex justify-between items-start">
-                    <h5 className="font-medium text-gray-900 dark:text-gray-100">
-                      {milestone.title}
-                    </h5>
-                    {milestone.dueDate && (
-                      <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
-                        Due: {formatDate(new Date(milestone.dueDate))}
-                      </span>
-                    )}
-                  </div>
-                  {milestone.description && (
-                    <div className="text-xs text-gray-600 dark:text-gray-400 prose prose-xs dark:prose-invert max-w-none">
-                      <MarkdownPreview source={milestone.description} />
+            {value.map((milestone: any, index) => {
+              // Get additional fields (excluding core fields)
+              const additionalFields = Object.keys(milestone).filter(
+                (key) => !coreFields.includes(key) && milestone[key]
+              );
+
+              return (
+                <div
+                  key={index}
+                  className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700"
+                >
+                  <div className="space-y-2">
+                    {/* Title and Due Date - Core fields with special rendering */}
+                    <div className="flex justify-between items-start">
+                      <h5 className="font-medium text-gray-900 dark:text-gray-100">
+                        {milestone.title}
+                      </h5>
+                      {milestone.dueDate && (
+                        <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
+                          Due: {formatDate(new Date(milestone.dueDate))}
+                        </span>
+                      )}
                     </div>
-                  )}
+
+                    {/* Description - Core field with markdown */}
+                    {milestone.description && (
+                      <div className="text-xs text-gray-600 dark:text-gray-400 prose prose-xs dark:prose-invert max-w-none">
+                        <MarkdownPreview source={milestone.description} />
+                      </div>
+                    )}
+
+                    {/* Dynamic additional fields */}
+                    {additionalFields.map((fieldKey) => {
+                      const fieldValue = milestone[fieldKey];
+                      const label = formatFieldLabel(fieldKey);
+
+                      // Skip empty values
+                      if (!fieldValue) return null;
+
+                      // Check if content looks like markdown
+                      const shouldRenderAsMarkdown =
+                        typeof fieldValue === "string" && isMarkdownContent(fieldValue);
+
+                      return (
+                        <div key={fieldKey} className="text-xs">
+                          {shouldRenderAsMarkdown ? (
+                            <>
+                              <div className="font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                                {label}:
+                              </div>
+                              <div className="text-gray-600 dark:text-gray-400 prose prose-xs dark:prose-invert max-w-none">
+                                <MarkdownPreview source={String(fieldValue)} />
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <span className="font-semibold text-gray-700 dark:text-gray-300">
+                                {label}:{" "}
+                              </span>
+                              <span className="text-gray-900 dark:text-gray-100">
+                                {String(fieldValue)}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         );
       }
