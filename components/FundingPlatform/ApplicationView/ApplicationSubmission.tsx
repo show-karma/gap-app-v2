@@ -6,6 +6,7 @@ import { Controller, type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import { MilestoneInput } from "@/components/FundingPlatform/FormFields/MilestoneInput";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import type { IFormField, IFormSchema } from "@/types/funding-platform";
@@ -251,28 +252,46 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
         case "date":
           fieldSchema = z.string();
           break;
-        case "milestone":
+        case "milestone": {
+          // Define milestone object schema
+          const milestoneObjectSchema = z.object({
+            title: z.string().min(1, "Milestone title is required"),
+            description: z.string().min(1, "Milestone description is required"),
+            dueDate: z.string().min(1, "Due date is required"),
+            fundingRequested: z.string().optional(),
+            completionCriteria: z.string().optional(),
+          });
+
+          // Build array schema with min/max validations
+          let milestoneArraySchema: z.ZodTypeAny = z.array(milestoneObjectSchema);
+
           if (field.required) {
             if (field.validation?.minMilestones) {
-              fieldSchema = z
-                .array(z.any())
-                .min(
-                  field.validation.minMilestones,
-                  `Please add at least ${field.validation.minMilestones} milestone(s)`
-                );
+              milestoneArraySchema = (milestoneArraySchema as z.ZodArray<any>).min(
+                field.validation.minMilestones,
+                `Please add at least ${field.validation.minMilestones} milestone(s)`
+              );
             } else {
-              fieldSchema = z.array(z.any()).min(1, `${field.label} is required`);
+              milestoneArraySchema = (milestoneArraySchema as z.ZodArray<any>).min(
+                1,
+                `${field.label} is required`
+              );
             }
             if (field.validation?.maxMilestones) {
-              fieldSchema = (fieldSchema as z.ZodArray<any>).max(
+              milestoneArraySchema = (milestoneArraySchema as z.ZodArray<any>).max(
                 field.validation.maxMilestones,
                 `Maximum ${field.validation.maxMilestones} milestone(s) allowed`
               );
             }
           } else {
-            fieldSchema = z.array(z.any()).optional().or(z.array(z.any()).length(0));
+            milestoneArraySchema = (milestoneArraySchema as z.ZodArray<any>)
+              .optional()
+              .or(z.array(milestoneObjectSchema).length(0));
           }
+
+          fieldSchema = milestoneArraySchema;
           break;
+        }
         default:
           fieldSchema = z.string();
           break;
@@ -307,6 +326,8 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
       // Use field.id if available, otherwise fall back to fieldName (consistent with validation schema)
       const fieldKey = field.id || fieldName;
       if (field.type === "checkbox") {
+        defaults[fieldKey] = [];
+      } else if (field.type === "milestone") {
         defaults[fieldKey] = [];
       } else {
         defaults[fieldKey] = "";
@@ -452,6 +473,9 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             // Handle checkbox fields (arrays)
             if (field.type === "checkbox") {
               formData[fieldKey] = Array.isArray(value) ? value : [value];
+            } else if (field.type === "milestone") {
+              // Handle milestone fields (arrays of objects)
+              formData[fieldKey] = Array.isArray(value) ? value : [];
             } else {
               // Convert all other values to strings
               if (Array.isArray(value)) {
@@ -471,6 +495,8 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
           } else {
             // Set default values for unmatched fields
             if (field.type === "checkbox") {
+              formData[fieldKey] = [];
+            } else if (field.type === "milestone") {
               formData[fieldKey] = [];
             } else {
               formData[fieldKey] = "";
@@ -677,6 +703,18 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             />
             {error && <p className="text-sm text-red-400 mt-1">{errorMessage}</p>}
           </div>
+        );
+
+      case "milestone":
+        return (
+          <MilestoneInput
+            key={index}
+            field={field}
+            control={control}
+            fieldKey={fieldKey}
+            error={error}
+            isLoading={isLoading || submitting}
+          />
         );
 
       default:
