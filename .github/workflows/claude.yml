@@ -182,9 +182,6 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ steps.app-token.outputs.token }}
-          
-          # Enable automatic PR reviews (not just when @claude is mentioned)
-          mode: auto
 
           # Tool permissions for frontend development
           allowed_tools: |
@@ -351,6 +348,10 @@ jobs:
             2. Check against coding standards
             3. Provide constructive feedback
             4. Suggest improvements
+
+          # Conditional prompts based on triggers - enables automatic PR reviews
+          direct_prompt: |
+            ${{ github.event_name == 'pull_request' && 'Perform a comprehensive code review of this PR. Check TypeScript standards, React/Next.js best practices, component architecture, accessibility, state management, Web3 integration, and performance. Generate Mermaid diagrams to visualize the changes and provide actionable feedback.' || '' }}
 
           max_turns: '30'
           timeout_minutes: '45'
