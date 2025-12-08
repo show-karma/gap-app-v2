@@ -234,14 +234,14 @@ describe("network utilities", () => {
       expect(hasMainnet).toBe(false);
     });
 
-    it("should exclude base (ID 8453)", () => {
+    it("should include base (ID 8453)", () => {
       const hasBase = gapSupportedNetworks.some((chain) => chain.id === 8453);
-      expect(hasBase).toBe(false);
+      expect(hasBase).toBe(true);
     });
 
-    it("should exclude polygon (ID 137)", () => {
+    it("should include polygon (ID 137)", () => {
       const hasPolygon = gapSupportedNetworks.some((chain) => chain.id === 137);
-      expect(hasPolygon).toBe(false);
+      expect(hasPolygon).toBe(true);
     });
 
     it("should include Optimism", () => {
