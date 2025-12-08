@@ -7,7 +7,7 @@ import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { Fragment } from "react";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
+import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import type { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { cn } from "@/utilities/tailwind";
 
@@ -25,7 +25,7 @@ export const ObjectiveFilter = () => {
     parse: (value) => (value ? (value as StatusOptions) : ("all" as StatusOptions)),
   });
 
-  const { milestones } = useAllMilestones(projectId);
+  const { milestones } = useProjectUpdates(projectId);
 
   if (!milestones?.length || !milestones) return null;
 

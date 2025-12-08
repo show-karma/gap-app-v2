@@ -8,9 +8,9 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -100,7 +100,7 @@ export const ProjectObjectiveCompletionForm = ({
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
   const router = useRouter();
 
-  const { refetch } = useAllMilestones(projectId as string);
+  const { refetch } = useProjectUpdates(projectId as string);
 
   const onSubmit = async (data: SchemaType) => {
     if (!address || !project) return;

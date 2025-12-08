@@ -24,7 +24,7 @@ export async function GET(
   const description = cleanMarkdownForPlainText(project?.details?.description || "", 200);
 
   const milestonesCompleted = project.grants?.reduce((acc, grant) => {
-    return acc + grant.milestones.filter((mileston: any) => mileston.completed).length;
+    return acc + (grant.milestones?.filter((milestone: any) => milestone.completed)?.length ?? 0);
   }, 0);
 
   const stats = [

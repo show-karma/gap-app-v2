@@ -1,4 +1,3 @@
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { UnifiedMilestone } from "@/types/roadmap";
 import type { GrantMilestone, GrantResponse } from "@/types/v2/grant";

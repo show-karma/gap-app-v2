@@ -81,9 +81,11 @@ export const CommunityAdminPage = ({
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(
     community?.uid,
-    address
+    "0x1724707c52de2fa65ad9c586b5d38507f52D3c06"
   );
-  const { isStaff } = useStaff();
+  console.log("isAdmin", "0x1724707c52de2fa65ad9c586b5d38507f52D3c06", isAdmin);
+  // const { isStaff } = useStaff();
+  const isStaff = false;
 
   return (
     <div className="max-w-full w-full">

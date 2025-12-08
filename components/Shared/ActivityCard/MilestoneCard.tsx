@@ -11,10 +11,10 @@ import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerif
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { useMilestone } from "@/hooks/useMilestone";
 import { useMilestoneActions } from "@/hooks/useMilestoneActions";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
+import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/roadmap";
 import { formatDate } from "@/utilities/formatDate";
@@ -85,7 +85,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
   const { title, description, completed, type } = milestone;
   const { project } = useProjectStore();
   const { projectId } = useParams();
-  const { refetch } = useAllMilestones(projectId as string);
+  const { refetch } = useProjectUpdates(projectId as string);
 
   // Fetch milestone impact data (outputs/metrics) if milestone is completed
   const { data: milestoneImpactData } = useMilestoneImpactAnswers({

@@ -8,9 +8,9 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -79,7 +79,7 @@ export const ProjectObjectiveForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const { changeStepperStep, setIsStepper } = useStepper();
 
-  const { refetch } = useAllMilestones(projectId as string);
+  const { refetch } = useProjectUpdates(projectId as string);
 
   const createObjective = async (data: ObjectiveType) => {
     if (!gap) return;

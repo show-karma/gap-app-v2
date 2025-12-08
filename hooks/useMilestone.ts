@@ -1,5 +1,4 @@
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
-import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -23,10 +22,10 @@ import { retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useAllMilestones } from "./useAllMilestones";
 import { useGap } from "./useGap";
 import { useOffChainRevoke } from "./useOffChainRevoke";
 import { useWallet } from "./useWallet";
+import { useProjectUpdates } from "./v2/useProjectUpdates";
 
 // Helper function to send outputs and deliverables data
 const sendOutputsAndDeliverables = async (
@@ -81,7 +80,7 @@ export const useMilestone = () => {
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const project = useProjectStore((state) => state.project);
   const { projectId } = useParams();
-  const { refetch } = useAllMilestones(projectId as string);
+  const { refetch } = useProjectUpdates(projectId as string);
   const router = useRouter();
   const { isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();

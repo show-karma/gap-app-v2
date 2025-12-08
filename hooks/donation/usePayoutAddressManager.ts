@@ -1,8 +1,21 @@
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+
+// Type for project data that can come from either V1 or V2 API at the SDK boundary
+interface ProjectPayoutData {
+  owner?: string;
+  payoutAddress?: string | Record<string, string>;
+  grants?: Array<{
+    details?: {
+      payoutAddress?: string;
+      data?: {
+        payoutAddress?: string;
+      };
+    };
+  }>;
+}
 
 interface CartItem {
   uid: string;
@@ -26,10 +39,10 @@ export function usePayoutAddressManager(items: CartItem[], communityId?: string)
    * SECURITY: Resolve and validate payout address from project metadata
    * - Returns undefined if no address is found OR if address is invalid
    * - Validates that the address is a proper Ethereum address
-   * - Priority: communityId-specific > first available > grant > recipient
+   * - Priority: communityId-specific > first available > grant > owner
    */
   const resolvePayoutAddress = useCallback(
-    (project: IProjectResponse): string | undefined => {
+    (project: ProjectPayoutData): string | undefined => {
       const payout = project.payoutAddress as string | Record<string, string> | undefined;
 
       let candidateAddress: string | undefined;
@@ -51,16 +64,19 @@ export function usePayoutAddressManager(items: CartItem[], communityId?: string)
           }
         }
       }
-      // Priority 3: Grant payout address
+      // Priority 3: Grant payout address (V2: details.payoutAddress, V1: details.data.payoutAddress)
       else {
-        const grantPayout = project.grants?.find((grant) => grant.details?.data?.payoutAddress)
-          ?.details?.data?.payoutAddress;
-        if (grantPayout) {
-          candidateAddress = grantPayout;
+        const grantPayout = project.grants?.find(
+          (grant) => grant.details?.payoutAddress || grant.details?.data?.payoutAddress
+        );
+        const payoutAddr =
+          grantPayout?.details?.payoutAddress || grantPayout?.details?.data?.payoutAddress;
+        if (payoutAddr) {
+          candidateAddress = payoutAddr;
         }
-        // Priority 4: Owner address (V2) or recipient (V1)
-        else if ((project as any).owner || (project as any).recipient) {
-          candidateAddress = ((project as any).owner || (project as any).recipient) as string;
+        // Priority 4: Owner address (V2)
+        else if (project.owner) {
+          candidateAddress = project.owner;
         }
       }
 
@@ -92,7 +108,8 @@ export function usePayoutAddressManager(items: CartItem[], communityId?: string)
         const results = await Promise.all(
           items.map(async (item) => {
             const { data } = await gapIndexerApi.projectBySlug(item.slug || item.uid);
-            const address = resolvePayoutAddress(data);
+            // Cast to our flexible type that handles both V1 and V2 API responses
+            const address = resolvePayoutAddress(data as unknown as ProjectPayoutData);
             return { projectId: item.uid, address };
           })
         );

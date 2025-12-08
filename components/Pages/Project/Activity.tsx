@@ -2,7 +2,7 @@ import { Tab } from "@headlessui/react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { ActivityList } from "@/components/Shared/ActivityList";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
+import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/roadmap";
 import { cn } from "@/utilities/tailwind";
@@ -10,7 +10,7 @@ import { cn } from "@/utilities/tailwind";
 export const ProjectActivity = () => {
   const { project, isProjectAdmin } = useProjectStore();
   const { projectId } = useParams();
-  const { milestones = [] } = useAllMilestones(projectId as string);
+  const { milestones = [] } = useProjectUpdates(projectId as string);
   const [selectedTab, setSelectedTab] = useState(0);
 
   // Combine all types of updates like in the original Updates.tsx
