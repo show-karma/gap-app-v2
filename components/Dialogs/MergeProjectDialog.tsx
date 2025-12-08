@@ -4,7 +4,6 @@ import { Dialog, Transition } from "@headlessui/react";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { ProjectPointer } from "@show-karma/karma-gap-sdk";
-import type { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/navigation";
 import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
@@ -14,6 +13,7 @@ import { z } from "zod";
 import { useGap } from "@/hooks/useGap";
 import { useStaff } from "@/hooks/useStaff";
 import { useWallet } from "@/hooks/useWallet";
+import { searchProjects } from "@/services/project-search.service";
 import { useProjectStore } from "@/store";
 import { useMergeModalStore } from "@/store/modals/merge";
 import { useStepper } from "@/store/modals/txStepper";
@@ -21,7 +21,6 @@ import type { ProjectResponse } from "@/types/v2/project";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -47,10 +46,7 @@ function SearchProject({
   setPrimaryProject: (value: ProjectResponse) => void;
 }) {
   const { project: currentProject } = useProjectStore();
-  const [results, setResults] = useState<ISearchResponse>({
-    communities: [],
-    projects: [],
-  });
+  const [results, setResults] = useState<ProjectResponse[]>([]);
   const [isSearchListOpen, setIsSearchListOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -63,23 +59,20 @@ function SearchProject({
   const debouncedSearch = debounce(async (value: string) => {
     const sanitizedValue = sanitizeInput(value);
     if (sanitizedValue.length < 3) {
-      setResults({ communities: [], projects: [] });
+      setResults([]);
       return setIsSearchListOpen(false);
     }
 
     setIsLoading(true);
     setIsSearchListOpen(true);
-    const result = await gapIndexerApi.search(sanitizedValue);
-    const projectsData = result.data.projects.filter(
+
+    // Use V2 search service which returns ProjectResponse[]
+    const projectsData = await searchProjects(sanitizedValue);
+    const filteredProjects = projectsData.filter(
       (project) => project?.uid?.toLowerCase() !== currentProject?.uid?.toLowerCase()
     );
 
-    const finalData = {
-      communities: [],
-      projects: projectsData,
-    };
-
-    setResults(finalData);
+    setResults(filteredProjects);
     return setIsLoading(false);
   }, 500);
 
@@ -121,21 +114,14 @@ function SearchProject({
         placeholder="Search for the primary project"
         className="w-full min-w-[160px] bg-transparent placeholder:text-gray-400 px-1 py-2 text-gray-600 dark:text-gray-200 border-none border-b-zinc-800 outline-none focus:ring-0"
         onChange={(e) => debouncedSearch(e.target.value)}
-        onFocus={() =>
-          [...results.projects, ...results.communities].length > 0 && setIsSearchListOpen(true)
-        }
+        onFocus={() => results.length > 0 && setIsSearchListOpen(true)}
         onBlur={() => closeSearchList()}
       />
       {isSearchListOpen && (
         <div className="absolute left-0 top-10 mt-3 max-h-32 min-w-full overflow-y-scroll rounded-md bg-white dark:bg-zinc-800 py-4 border border-zinc-200">
-          {results.projects.length > 0 &&
-            results.projects.map((project) =>
-              renderItem(
-                project as unknown as ProjectResponse,
-                PAGES.PROJECT.GRANTS(
-                  (project as unknown as ProjectResponse).details?.slug || project.uid
-                )
-              )
+          {results.length > 0 &&
+            results.map((project) =>
+              renderItem(project, PAGES.PROJECT.GRANTS(project.details?.slug || project.uid))
             )}
 
           {isLoading && (
@@ -143,7 +129,7 @@ function SearchProject({
               <Spinner />
             </div>
           )}
-          {!isLoading && results.projects.length === 0 && (
+          {!isLoading && results.length === 0 && (
             <div className="flex flex-col items-center text-center">
               <div className="w-full text-center">No results found.</div>
             </div>

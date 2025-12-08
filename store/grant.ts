@@ -1,6 +1,7 @@
 import { create } from "zustand";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { getProjectGrants } from "@/services/project-grants.service";
 import type { GrantResponse } from "@/types/v2/grant";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 interface GrantStore {
   grant: GrantResponse | undefined;
@@ -20,13 +21,27 @@ export const useGrantStore = create<GrantStore>((set, get) => ({
     if (!grant) return;
     set({ loading: true });
     try {
-      const refreshedGrant = await gapIndexerApi
-        .grantBySlug(grant.uid as `0x${string}`)
-        .then((res) => res.data as unknown as GrantResponse);
+      // Get grant's project UID from the grant's project property
+      const projectIdOrSlug = grant.project?.details?.slug || grant.projectUID;
+      if (!projectIdOrSlug) {
+        throw new Error("Cannot refresh grant: no project identifier available");
+      }
+
+      // Fetch grants using V2 endpoint which returns proper V2 GrantResponse format
+      const grants = await getProjectGrants(projectIdOrSlug);
+      const refreshedGrant = grants.find((g) => g.uid.toLowerCase() === grant.uid.toLowerCase());
+
+      if (!refreshedGrant) {
+        throw new Error(`Grant ${grant.uid} not found in project ${projectIdOrSlug}`);
+      }
+
       set({ grant: refreshedGrant, loading: false });
       return refreshedGrant;
     } catch (error) {
-      console.error("Failed to refresh grant:", error);
+      errorManager("Failed to refresh grant", error, {
+        grantUID: grant.uid,
+        projectUID: grant.projectUID,
+      });
       set({ loading: false });
     }
   },

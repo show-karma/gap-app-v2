@@ -90,31 +90,26 @@ jest.mock("@/utilities/markdown", () => ({
 }));
 
 describe("GrantCard", () => {
+  // V2 flat structure - details properties are at top level, not nested in data
   const mockGrant = {
     uid: "grant-123",
     refUID: "ref-123",
     createdAt: 1704067200000,
-    data: {
-      communityUID: "community-123",
-    },
+    communityUID: "community-123",
     details: {
-      data: {
-        title: "Test Grant",
-        selectedTrackIds: ["track-1", "track-2"],
-        programId: "program-123",
-      },
-    } as any,
+      title: "Test Grant",
+      selectedTrackIds: ["track-1", "track-2"],
+      programId: "program-123",
+    },
     project: {
       uid: "project-123",
       details: {
-        data: {
-          title: "Test Project",
-          slug: "test-project",
-          description: "This is a test project description for testing purposes.",
-          imageURL: "https://example.com/image.jpg",
-        },
+        title: "Test Project",
+        slug: "test-project",
+        description: "This is a test project description for testing purposes.",
+        logoUrl: "https://example.com/image.jpg",
       },
-    } as any,
+    },
     milestones: [
       { uid: "milestone-1", completed: false } as any,
       { uid: "milestone-2", completed: true } as any,
@@ -229,10 +224,7 @@ describe("GrantCard", () => {
         ...mockGrant,
         details: {
           ...mockGrant.details,
-          data: {
-            ...mockGrant.details?.data,
-            selectedTrackIds: [],
-          },
+          selectedTrackIds: [],
         },
       } as GrantResponse;
 
@@ -321,10 +313,8 @@ describe("GrantCard", () => {
         project: {
           ...mockGrant.project,
           details: {
-            data: {
-              ...mockGrant.project?.details?.data,
-              slug: "",
-            },
+            ...mockGrant.project?.details,
+            slug: "",
           },
         },
       } as GrantResponse;
@@ -382,10 +372,8 @@ describe("GrantCard", () => {
         project: {
           ...mockGrant.project,
           details: {
-            data: {
-              ...mockGrant.project?.details?.data,
-              title: "This is a very long project title that should be truncated",
-            },
+            ...mockGrant.project?.details,
+            title: "This is a very long project title that should be truncated",
           },
         },
       } as GrantResponse;
@@ -421,10 +409,8 @@ describe("GrantCard", () => {
         project: {
           ...mockGrant.project,
           details: {
-            data: {
-              ...mockGrant.project?.details?.data,
-              description: "A".repeat(400),
-            },
+            ...mockGrant.project?.details,
+            description: "A".repeat(400),
           },
         },
       } as GrantResponse;
@@ -459,10 +445,7 @@ describe("GrantCard", () => {
         ...mockGrant,
         details: {
           ...mockGrant.details,
-          data: {
-            ...mockGrant.details?.data,
-            programId: "program-123_42",
-          },
+          programId: "program-123_42",
         },
       } as GrantResponse;
 

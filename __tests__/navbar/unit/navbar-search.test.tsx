@@ -15,11 +15,9 @@ import {
 } from "../fixtures/search-fixtures";
 import { renderWithProviders } from "../utils/test-helpers";
 
-// Mock gapIndexerApi
-jest.mock("@/utilities/gapIndexerApi", () => ({
-  gapIndexerApi: {
-    search: jest.fn(),
-  },
+// Mock unified search service
+jest.mock("@/services/unified-search.service", () => ({
+  unifiedSearch: jest.fn(),
 }));
 
 // Mock groupSimilarCommunities
@@ -165,8 +163,8 @@ describe("NavbarSearch", () => {
     });
 
     it("search triggers after 500ms delay", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: mixedResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -174,7 +172,7 @@ describe("NavbarSearch", () => {
       fireEvent.change(searchInput, { target: { value: "project" } });
 
       // Should not call immediately
-      expect(gapIndexerApi.search).not.toHaveBeenCalled();
+      expect(unifiedSearch).not.toHaveBeenCalled();
 
       // Advance timers by 500ms
       act(() => {
@@ -183,13 +181,13 @@ describe("NavbarSearch", () => {
 
       // Should call after debounce
       await waitFor(() => {
-        expect(gapIndexerApi.search).toHaveBeenCalledWith("project");
+        expect(unifiedSearch).toHaveBeenCalledWith("project");
       });
     });
 
     it("multiple rapid keystrokes result in single API call", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: mixedResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -201,7 +199,7 @@ describe("NavbarSearch", () => {
       fireEvent.change(searchInput, { target: { value: "project" } });
 
       // Verify no calls have been made yet (still in debounce window)
-      expect(gapIndexerApi.search).not.toHaveBeenCalled();
+      expect(unifiedSearch).not.toHaveBeenCalled();
 
       // Advance to complete debounce (500ms)
       act(() => {
@@ -210,17 +208,17 @@ describe("NavbarSearch", () => {
 
       // Wait for async operations to complete
       await waitFor(() => {
-        expect(gapIndexerApi.search).toHaveBeenCalled();
+        expect(unifiedSearch).toHaveBeenCalled();
       });
 
       // Should only call once with final value
-      expect(gapIndexerApi.search).toHaveBeenCalledTimes(1);
-      expect(gapIndexerApi.search).toHaveBeenCalledWith("project");
+      expect(unifiedSearch).toHaveBeenCalledTimes(1);
+      expect(unifiedSearch).toHaveBeenCalledWith("project");
     });
 
     it("debounce timer resets on each keystroke", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: mixedResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -230,14 +228,14 @@ describe("NavbarSearch", () => {
       act(() => jest.advanceTimersByTime(400)); // Not enough to trigger (need 500ms)
 
       // No call should have been made yet
-      expect(gapIndexerApi.search).not.toHaveBeenCalled();
+      expect(unifiedSearch).not.toHaveBeenCalled();
 
       // Type again - this resets the timer
       fireEvent.change(searchInput, { target: { value: "testing" } });
       act(() => jest.advanceTimersByTime(400)); // Again, not enough
 
       // Still no call
-      expect(gapIndexerApi.search).not.toHaveBeenCalled();
+      expect(unifiedSearch).not.toHaveBeenCalled();
 
       // Now complete the debounce from the last keystroke
       act(() => {
@@ -246,17 +244,17 @@ describe("NavbarSearch", () => {
 
       // Wait for async operation
       await waitFor(() => {
-        expect(gapIndexerApi.search).toHaveBeenCalled();
+        expect(unifiedSearch).toHaveBeenCalled();
       });
 
       // Should only call once with final value
-      expect(gapIndexerApi.search).toHaveBeenCalledTimes(1);
-      expect(gapIndexerApi.search).toHaveBeenCalledWith("testing");
+      expect(unifiedSearch).toHaveBeenCalledTimes(1);
+      expect(unifiedSearch).toHaveBeenCalledWith("testing");
     });
 
     it("search executes after typing stops", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -264,7 +262,7 @@ describe("NavbarSearch", () => {
       fireEvent.change(searchInput, { target: { value: "awesome" } });
 
       // Immediately after typing
-      expect(gapIndexerApi.search).not.toHaveBeenCalled();
+      expect(unifiedSearch).not.toHaveBeenCalled();
 
       // After debounce delay
       act(() => {
@@ -272,7 +270,7 @@ describe("NavbarSearch", () => {
       });
 
       await waitFor(() => {
-        expect(gapIndexerApi.search).toHaveBeenCalledWith("awesome");
+        expect(unifiedSearch).toHaveBeenCalledWith("awesome");
       });
     });
   });
@@ -283,8 +281,8 @@ describe("NavbarSearch", () => {
     });
 
     it("less than 3 characters: no API call", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: mixedResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -292,12 +290,12 @@ describe("NavbarSearch", () => {
       fireEvent.change(searchInput, { target: { value: "ab" } });
       act(() => jest.advanceTimersByTime(500));
 
-      expect(gapIndexerApi.search).not.toHaveBeenCalled();
+      expect(unifiedSearch).not.toHaveBeenCalled();
     });
 
     it("exactly 3 characters: triggers search", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -306,13 +304,13 @@ describe("NavbarSearch", () => {
       act(() => jest.advanceTimersByTime(500));
 
       await waitFor(() => {
-        expect(gapIndexerApi.search).toHaveBeenCalledWith("pro");
+        expect(unifiedSearch).toHaveBeenCalledWith("pro");
       });
     });
 
     it("more than 3 characters: continues searching", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: mixedResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -321,13 +319,13 @@ describe("NavbarSearch", () => {
       act(() => jest.advanceTimersByTime(500));
 
       await waitFor(() => {
-        expect(gapIndexerApi.search).toHaveBeenCalledWith("project");
+        expect(unifiedSearch).toHaveBeenCalledWith("project");
       });
     });
 
     it("results clear when below 3 characters", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       // Use real timers for this test since it involves async state updates
       jest.useRealTimers();
@@ -340,13 +338,13 @@ describe("NavbarSearch", () => {
 
       await waitFor(
         () => {
-          expect(gapIndexerApi.search).toHaveBeenCalled();
+          expect(unifiedSearch).toHaveBeenCalled();
         },
         { timeout: 1000 }
       );
 
       // Then reduce to less than 3 characters
-      gapIndexerApi.search.mockClear();
+      unifiedSearch.mockClear();
       fireEvent.change(searchInput, { target: { value: "te" } });
 
       // Wait for any potential debounce (there shouldn't be an API call)
@@ -355,7 +353,7 @@ describe("NavbarSearch", () => {
       });
 
       // Should not trigger new search
-      expect(gapIndexerApi.search).not.toHaveBeenCalled();
+      expect(unifiedSearch).not.toHaveBeenCalled();
 
       // Restore fake timers for other tests
       jest.useFakeTimers();
@@ -368,9 +366,9 @@ describe("NavbarSearch", () => {
     });
 
     it("loading spinner shows during API call", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ data: mixedResults }), 1000))
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve(mixedResults), 1000))
       );
 
       renderWithProviders(<NavbarSearch />);
@@ -387,9 +385,9 @@ describe("NavbarSearch", () => {
     });
 
     it("dropdown opens with spinner", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ data: mixedResults }), 1000))
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve(mixedResults), 1000))
       );
 
       renderWithProviders(<NavbarSearch />);
@@ -405,8 +403,8 @@ describe("NavbarSearch", () => {
     });
 
     it("spinner disappears when results arrive", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -425,8 +423,8 @@ describe("NavbarSearch", () => {
   describe("API Integration Tests", () => {
     // Don't use fake timers for these tests - they need real async behavior
     it("successful search response displays results", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -437,7 +435,7 @@ describe("NavbarSearch", () => {
       // First verify the API gets called
       await waitFor(
         () => {
-          expect(gapIndexerApi.search).toHaveBeenCalledWith("awesome");
+          expect(unifiedSearch).toHaveBeenCalledWith("awesome");
         },
         { timeout: 1000 }
       );
@@ -452,23 +450,25 @@ describe("NavbarSearch", () => {
     });
 
     it("empty results show 'No results found' message", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: emptySearchResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(emptySearchResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "nonexistent" } });
-      act(() => jest.advanceTimersByTime(500));
 
-      await waitFor(() => {
-        expect(screen.getByText(/no results found/i)).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.getByText(/no results found/i)).toBeInTheDocument();
+        },
+        { timeout: 2000 }
+      );
     });
 
     it("API error shows error state (no crash)", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockRejectedValue(new Error("API Error"));
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockRejectedValue(new Error("API Error"));
 
       const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
@@ -476,19 +476,21 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
 
       // Component should not crash
-      await waitFor(() => {
-        expect(searchInput).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(searchInput).toBeInTheDocument();
+        },
+        { timeout: 2000 }
+      );
 
       consoleSpy.mockRestore();
     });
 
     it("shows 'No results found' message when API fails", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockRejectedValue(new Error("API Error"));
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockRejectedValue(new Error("API Error"));
 
       const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
@@ -496,7 +498,6 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(500));
 
       // Wait for error handling to complete
       await waitFor(
@@ -513,12 +514,12 @@ describe("NavbarSearch", () => {
     });
 
     it("shows loading spinner during API call", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
+      const { unifiedSearch } = require("@/services/unified-search.service");
       // Delay the response to see loading state
-      gapIndexerApi.search.mockImplementation(
+      unifiedSearch.mockImplementation(
         () =>
           new Promise((resolve) =>
-            setTimeout(() => resolve({ data: { projects: [], communities: [] } }), 100)
+            setTimeout(() => resolve({ projects: [], communities: [] }), 100)
           )
       );
 
@@ -536,11 +537,11 @@ describe("NavbarSearch", () => {
     });
 
     it("loading spinner is accessible", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockImplementation(
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockImplementation(
         () =>
           new Promise((resolve) =>
-            setTimeout(() => resolve({ data: { projects: [], communities: [] } }), 100)
+            setTimeout(() => resolve({ projects: [], communities: [] }), 100)
           )
       );
 
@@ -559,8 +560,8 @@ describe("NavbarSearch", () => {
     });
 
     it("network timeout handled gracefully", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockImplementation(
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockImplementation(
         () => new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 100))
       );
 
@@ -589,14 +590,14 @@ describe("NavbarSearch", () => {
     });
 
     it("recovers from error and shows results on successful retry", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
+      const { unifiedSearch } = require("@/services/unified-search.service");
       const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
 
       // First search - error
-      gapIndexerApi.search.mockRejectedValueOnce(new Error("API Error"));
+      unifiedSearch.mockRejectedValueOnce(new Error("API Error"));
       fireEvent.change(searchInput, { target: { value: "error" } });
       act(() => jest.advanceTimersByTime(500));
 
@@ -608,7 +609,7 @@ describe("NavbarSearch", () => {
       fireEvent.change(searchInput, { target: { value: "" } });
       act(() => jest.advanceTimersByTime(100));
 
-      gapIndexerApi.search.mockResolvedValueOnce({ data: projectsOnlyResults });
+      unifiedSearch.mockResolvedValueOnce(projectsOnlyResults);
       fireEvent.change(searchInput, { target: { value: "test" } });
       act(() => jest.advanceTimersByTime(500));
 
@@ -628,8 +629,8 @@ describe("NavbarSearch", () => {
     });
 
     it("project results render with correct data", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -645,8 +646,8 @@ describe("NavbarSearch", () => {
     });
 
     it("community results render with 'Community' badge", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: communitiesOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(communitiesOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -662,8 +663,8 @@ describe("NavbarSearch", () => {
     });
 
     it("mixed results show both types", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: mixedResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -683,8 +684,8 @@ describe("NavbarSearch", () => {
     });
 
     it("results are scrollable when many", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: largeResultSet });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(largeResultSet);
 
       const { container } = renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -705,8 +706,8 @@ describe("NavbarSearch", () => {
     });
 
     it("clicking result closes dropdown", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -726,8 +727,8 @@ describe("NavbarSearch", () => {
     });
 
     it("search value clears after selection", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(
@@ -746,8 +747,8 @@ describe("NavbarSearch", () => {
     });
 
     it("onSelectItem callback is called when clicking a result", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       const onSelectItemMock = jest.fn();
 
@@ -770,8 +771,8 @@ describe("NavbarSearch", () => {
     });
 
     it("onSelectItem callback is called when clicking a community result", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: communitiesOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(communitiesOnlyResults);
 
       const onSelectItemMock = jest.fn();
 
@@ -794,8 +795,8 @@ describe("NavbarSearch", () => {
     });
 
     it("works without onSelectItem callback (optional prop)", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       // Render without onSelectItem prop
       renderWithProviders(<NavbarSearch />);
@@ -825,8 +826,8 @@ describe("NavbarSearch", () => {
     });
 
     it("dropdown opens when results available", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -841,8 +842,8 @@ describe("NavbarSearch", () => {
     });
 
     it("dropdown stays open while typing", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -862,8 +863,8 @@ describe("NavbarSearch", () => {
     });
 
     it("opens on focus if results exist", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -903,8 +904,8 @@ describe("NavbarSearch", () => {
     });
 
     it("click outside closes dropdown", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -925,8 +926,8 @@ describe("NavbarSearch", () => {
     });
 
     it("click on search input doesn't close dropdown", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
@@ -955,8 +956,8 @@ describe("NavbarSearch", () => {
     });
 
     it("results are keyboard navigable", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      const { unifiedSearch } = require("@/services/unified-search.service");
+      unifiedSearch.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);

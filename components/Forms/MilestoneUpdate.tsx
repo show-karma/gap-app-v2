@@ -483,7 +483,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   };
 
   const grant = project?.grants?.find(
-    (item) => item.uid.toLowerCase() === milestone.refUID?.toLowerCase()
+    (item) => item.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? "")
   );
 
   return (

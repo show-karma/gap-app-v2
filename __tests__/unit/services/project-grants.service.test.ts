@@ -1,9 +1,12 @@
-import axios, { type AxiosInstance } from "axios";
-import { TokenManager } from "@/utilities/auth/token-manager";
+/**
+ * @file Tests for project-grants.service
+ * @description Tests the V2 project grants API service
+ */
 
-// Mock dependencies BEFORE importing the service
-jest.mock("axios");
-jest.mock("@/utilities/auth/token-manager");
+import type { AxiosInstance } from "axios";
+import type { GrantResponse } from "@/types/v2/grant";
+
+// Mock environment variables
 jest.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
@@ -35,7 +38,6 @@ jest.mock("@/utilities/auth/api-client", () => {
     },
     defaults: {} as any,
     getUri: jest.fn(),
-    deleteUri: jest.fn(),
   } as unknown as jest.Mocked<AxiosInstance>;
 
   mockAxiosInstance = instance;
@@ -48,125 +50,95 @@ jest.mock("@/utilities/auth/api-client", () => {
 // Import the service AFTER all mocks are set up
 import { getProjectGrants } from "@/services/project-grants.service";
 
-const _mockedAxios = axios as jest.Mocked<typeof axios>;
-
 describe("project-grants.service", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockAxiosInstance.get.mockClear();
-
-    // Mock TokenManager
-    (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue("test-token");
   });
 
   describe("getProjectGrants", () => {
-    it("should fetch grants for a project by UID", async () => {
-      const mockGrants = [
-        {
-          uid: "grant-1",
+    const mockGrants: GrantResponse[] = [
+      {
+        uid: "0xgrant1",
+        chainID: 10,
+        details: {
           title: "Test Grant 1",
-          programUID: "program-1",
-          milestones: [],
+          description: "Description 1",
         },
-        {
-          uid: "grant-2",
-          title: "Test Grant 2",
-          programUID: "program-2",
-          milestones: [],
-        },
-      ];
-
-      mockAxiosInstance.get.mockResolvedValue({ data: mockGrants });
-
-      const result = await getProjectGrants("project-uid-123");
-
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith("/v2/projects/project-uid-123/grants");
-      expect(result).toEqual(mockGrants);
-    });
-
-    it("should fetch grants for a project by slug", async () => {
-      const mockGrants = [
-        {
-          uid: "grant-1",
-          title: "Test Grant",
-          programUID: "program-1",
-          milestones: [],
-        },
-      ];
-
-      mockAxiosInstance.get.mockResolvedValue({ data: mockGrants });
-
-      const result = await getProjectGrants("my-project-slug");
-
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith("/v2/projects/my-project-slug/grants");
-      expect(result).toEqual(mockGrants);
-    });
-
-    it("should return empty array when no grants found (array response)", async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: [] });
-
-      const result = await getProjectGrants("project-uid-123");
-
-      expect(result).toEqual([]);
-    });
-
-    it("should handle single grant object response", async () => {
-      const mockGrant = {
-        uid: "grant-1",
-        title: "Single Grant",
-        programUID: "program-1",
         milestones: [],
-      };
-
-      mockAxiosInstance.get.mockResolvedValue({ data: mockGrant });
-
-      const result = await getProjectGrants("project-uid-123");
-
-      expect(result).toEqual([mockGrant]);
-    });
-
-    it("should return empty array on 404 error", async () => {
-      const error = {
-        response: {
-          status: 404,
-          data: { message: "Not found" },
+        updates: [],
+      },
+      {
+        uid: "0xgrant2",
+        chainID: 10,
+        details: {
+          title: "Test Grant 2",
+          description: "Description 2",
         },
-      };
-      mockAxiosInstance.get.mockRejectedValue(error);
+        milestones: [],
+        updates: [],
+      },
+    ];
 
-      const result = await getProjectGrants("non-existent-project");
+    it("should return grants array when API returns array", async () => {
+      mockAxiosInstance.get.mockResolvedValueOnce({ data: mockGrants });
+
+      const result = await getProjectGrants("test-project");
+
+      expect(result).toEqual(mockGrants);
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith(expect.stringContaining("test-project"));
+    });
+
+    it("should return array with single grant when API returns single object", async () => {
+      const singleGrant = mockGrants[0];
+      mockAxiosInstance.get.mockResolvedValueOnce({ data: singleGrant });
+
+      const result = await getProjectGrants("test-project");
+
+      expect(result).toEqual([singleGrant]);
+    });
+
+    it("should return empty array when API returns null", async () => {
+      mockAxiosInstance.get.mockResolvedValueOnce({ data: null });
+
+      const result = await getProjectGrants("test-project");
 
       expect(result).toEqual([]);
     });
 
-    it("should return empty array on other errors to prevent breaking the page", async () => {
-      const error = {
-        response: {
-          status: 500,
-          data: { message: "Internal server error" },
-        },
-      };
-      mockAxiosInstance.get.mockRejectedValue(error);
+    it("should return empty array on 404", async () => {
+      mockAxiosInstance.get.mockRejectedValueOnce({ response: { status: 404 } });
 
-      const result = await getProjectGrants("project-uid-123");
+      const result = await getProjectGrants("nonexistent-project");
 
       expect(result).toEqual([]);
     });
 
-    it("should return empty array on network error", async () => {
-      mockAxiosInstance.get.mockRejectedValue(new Error("Network error"));
+    it("should return empty array on other errors", async () => {
+      mockAxiosInstance.get.mockRejectedValueOnce({ response: { status: 500 } });
 
-      const result = await getProjectGrants("project-uid-123");
+      const result = await getProjectGrants("test-project");
 
       expect(result).toEqual([]);
     });
 
-    it("should handle null/undefined data response", async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: null });
+    it("should call correct endpoint for project slug", async () => {
+      mockAxiosInstance.get.mockResolvedValueOnce({ data: mockGrants });
 
-      const result = await getProjectGrants("project-uid-123");
+      await getProjectGrants("my-project-slug");
 
-      expect(result).toEqual([]);
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith(
+        expect.stringContaining("my-project-slug")
+      );
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith(expect.stringContaining("/grants"));
+    });
+
+    it("should call correct endpoint for project UID", async () => {
+      mockAxiosInstance.get.mockResolvedValueOnce({ data: mockGrants });
+
+      await getProjectGrants("0x1234567890");
+
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith(expect.stringContaining("0x1234567890"));
     });
   });
 });

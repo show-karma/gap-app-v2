@@ -39,7 +39,7 @@ describe("Search Flow Integration Tests", () => {
       const user = userEvent.setup();
       // Mock the search API to return mixed results
       // The SDK returns { data: {...} } structure
-      mockSearchFunction.mockResolvedValue({ data: mixedResults });
+      mockSearchFunction.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
 
@@ -81,7 +81,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should show loading spinner during API call", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: mixedResults });
+      mockSearchFunction.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
 
@@ -106,7 +106,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should navigate and reset search after clicking result", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: mixedResults });
+      mockSearchFunction.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
 
@@ -138,7 +138,7 @@ describe("Search Flow Integration Tests", () => {
   describe("2. Mobile Search Flow", () => {
     it("should complete search in mobile drawer", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: mixedResults });
+      mockSearchFunction.mockResolvedValue(mixedResults);
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
@@ -176,7 +176,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should close drawer after clicking search result", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: mixedResults });
+      mockSearchFunction.mockResolvedValue(mixedResults);
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
@@ -236,7 +236,7 @@ describe("Search Flow Integration Tests", () => {
       const mockHandler = jest.fn();
       mockSearchFunction.mockImplementation(() => {
         mockHandler();
-        return Promise.resolve({ data: projectsOnlyResults });
+        return Promise.resolve(projectsOnlyResults);
       });
 
       renderWithProviders(<NavbarSearch />);
@@ -266,7 +266,7 @@ describe("Search Flow Integration Tests", () => {
       const mockHandler = jest.fn();
       mockSearchFunction.mockImplementation((query) => {
         mockHandler(query);
-        return Promise.resolve({ data: projectsOnlyResults });
+        return Promise.resolve(projectsOnlyResults);
       });
 
       renderWithProviders(<NavbarSearch />);
@@ -296,7 +296,7 @@ describe("Search Flow Integration Tests", () => {
       const mockHandler = jest.fn();
       mockSearchFunction.mockImplementation(() => {
         mockHandler();
-        return Promise.resolve({ data: emptySearchResults });
+        return Promise.resolve(emptySearchResults);
       });
 
       renderWithProviders(<NavbarSearch />);
@@ -316,7 +316,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should search when query reaches 3 characters", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: projectsOnlyResults });
+      mockSearchFunction.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
 
@@ -343,7 +343,7 @@ describe("Search Flow Integration Tests", () => {
       const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // First search - projects
-      mockSearchFunction.mockResolvedValue({ data: projectsOnlyResults });
+      mockSearchFunction.mockResolvedValue(projectsOnlyResults);
       await user.type(searchInput, searchQueries.short);
       await waitForDebounce();
 
@@ -355,7 +355,7 @@ describe("Search Flow Integration Tests", () => {
       await user.clear(searchInput);
 
       // Second search - communities
-      mockSearchFunction.mockResolvedValue({ data: communitiesOnlyResults });
+      mockSearchFunction.mockResolvedValue(communitiesOnlyResults);
       await user.type(searchInput, searchQueries.ethereum);
       await waitForDebounce();
 
@@ -379,7 +379,7 @@ describe("Search Flow Integration Tests", () => {
       const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // First search
-      mockSearchFunction.mockResolvedValue({ data: mixedResults });
+      mockSearchFunction.mockResolvedValue(mixedResults);
       await user.type(searchInput, searchQueries.medium);
       await waitForDebounce();
 
@@ -446,7 +446,7 @@ describe("Search Flow Integration Tests", () => {
       await user.clear(searchInput);
 
       // Second search - success
-      mockSearchFunction.mockResolvedValue({ data: projectsOnlyResults });
+      mockSearchFunction.mockResolvedValue(projectsOnlyResults);
       await user.type(searchInput, searchQueries.short);
       await waitForDebounce();
 
@@ -476,7 +476,7 @@ describe("Search Flow Integration Tests", () => {
   describe("6. Empty State Handling", () => {
     it("should show no results message for empty results", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: emptySearchResults });
+      mockSearchFunction.mockResolvedValue(emptySearchResults);
 
       renderWithProviders(<NavbarSearch />);
 
@@ -502,7 +502,7 @@ describe("Search Flow Integration Tests", () => {
       const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // First search - empty
-      mockSearchFunction.mockResolvedValue({ data: emptySearchResults });
+      mockSearchFunction.mockResolvedValue(emptySearchResults);
       await user.type(searchInput, "nonexistent");
       await waitForDebounce();
 
@@ -514,7 +514,7 @@ describe("Search Flow Integration Tests", () => {
       // Clear and search again
       await user.clear(searchInput);
 
-      mockSearchFunction.mockResolvedValue({ data: projectsOnlyResults });
+      mockSearchFunction.mockResolvedValue(projectsOnlyResults);
       await user.type(searchInput, searchQueries.short);
       await waitForDebounce();
 
@@ -528,7 +528,7 @@ describe("Search Flow Integration Tests", () => {
   describe("7. Search Result Types", () => {
     it("should display projects only results correctly", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: projectsOnlyResults });
+      mockSearchFunction.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
 
@@ -552,7 +552,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should display communities only results correctly", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: communitiesOnlyResults });
+      mockSearchFunction.mockResolvedValue(communitiesOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
 
@@ -574,7 +574,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should display mixed results (projects and communities)", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: mixedResults });
+      mockSearchFunction.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
 
@@ -597,7 +597,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should handle large result sets", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: largeResultSet });
+      mockSearchFunction.mockResolvedValue(largeResultSet);
 
       renderWithProviders(<NavbarSearch />);
 

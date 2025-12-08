@@ -217,7 +217,7 @@ describe("pollForMilestoneStatus", () => {
             milestones: [
               {
                 uid: "milestone-1",
-                verified: [{ attester: "0x123" }],
+                verified: true,
               },
             ],
           },
@@ -239,7 +239,7 @@ describe("pollForMilestoneStatus", () => {
       expect(result).toBe(true);
     });
 
-    it("should handle case-insensitive address matching", async () => {
+    it("should poll for verified status regardless of user address", async () => {
       mockRetryUntilConditionMet.mockImplementation(async (conditionFn) => {
         await conditionFn();
       });
@@ -251,7 +251,7 @@ describe("pollForMilestoneStatus", () => {
             milestones: [
               {
                 uid: "milestone-1",
-                verified: [{ attester: "0xABC" }],
+                verified: true,
               },
             ],
           },
@@ -288,7 +288,7 @@ describe("pollForMilestoneStatus", () => {
               {
                 uid: "milestone-1",
                 completed: true,
-                verified: [{ attester: "0x123" }],
+                verified: true,
               },
             ],
           },
@@ -358,7 +358,7 @@ describe("pollForMilestoneStatus", () => {
               {
                 uid: "milestone-1",
                 completed: false,
-                verified: [{ attester: "0x123" }],
+                verified: true,
               },
             ],
           },
@@ -470,7 +470,7 @@ describe("pollForMilestoneStatus", () => {
             milestones: [
               {
                 uid: "milestone-1",
-                verified: [{ attester: "0x123" }],
+                verified: true,
               },
             ],
           },

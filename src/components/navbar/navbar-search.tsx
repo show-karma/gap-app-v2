@@ -1,14 +1,12 @@
 "use client";
 
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
-import type { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import debounce from "lodash.debounce";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { errorManager } from "@/components/Utilities/errorManager";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { type UnifiedSearchResponse, unifiedSearch } from "@/services/unified-search.service";
 import { groupSimilarCommunities } from "@/utilities/communityHelpers";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { PAGES } from "@/utilities/pages";
 
 interface NavbarSearchProps {
@@ -16,7 +14,7 @@ interface NavbarSearchProps {
 }
 
 export function NavbarSearch({ onSelectItem }: NavbarSearchProps = {}) {
-  const [results, setResults] = useState<ISearchResponse>({
+  const [results, setResults] = useState<UnifiedSearchResponse>({
     communities: [],
     projects: [],
   });
@@ -56,10 +54,9 @@ export function NavbarSearch({ onSelectItem }: NavbarSearchProps = {}) {
         setIsLoading(true);
         setIsSearchListOpen(true);
         try {
-          const result = await gapIndexerApi.search(value);
-          setResults(result.data);
-        } catch (error) {
-          errorManager(`Error searching: ${error}`, error);
+          const result = await unifiedSearch(value);
+          setResults(result);
+        } catch {
           setResults({ communities: [], projects: [] });
         } finally {
           setIsLoading(false);
@@ -126,9 +123,9 @@ export function NavbarSearch({ onSelectItem }: NavbarSearchProps = {}) {
                 style={{ maxWidth: "100%", boxSizing: "border-box" }}
               >
                 {groupedCommunities.map((community) => {
-                  const name = community.details?.data?.name || "Untitled Community";
-                  const imageURL = community.details?.data?.imageURL;
-                  const slug = community.details?.data?.slug || community.uid;
+                  const name = community.details?.name || "Untitled Community";
+                  const imageURL = community.details?.imageURL;
+                  const slug = community.details?.slug || community.uid;
 
                   return (
                     <Link
@@ -153,9 +150,9 @@ export function NavbarSearch({ onSelectItem }: NavbarSearchProps = {}) {
                   );
                 })}
                 {results.projects.map((project) => {
-                  const title = project.details?.data?.title || "Untitled Project";
-                  const imageURL = project.details?.data?.imageURL;
-                  const slug = project.details?.data?.slug || project.uid;
+                  const title = project.details?.title || "Untitled Project";
+                  const imageURL = project.details?.logoUrl;
+                  const slug = project.details?.slug || project.uid;
 
                   return (
                     <Link

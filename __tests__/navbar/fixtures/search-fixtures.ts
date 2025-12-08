@@ -37,7 +37,7 @@ export const createMockCommunity = (overrides: Partial<any> = {}): any => ({
   details: {
     name: overrides.name || "Test Community",
     description: overrides.description || "Test community description",
-    logoUrl: overrides.imageURL || "https://example.com/community.png",
+    imageURL: overrides.imageURL || "https://example.com/community.png",
     slug: overrides.slug || `test-community-${Math.random().toString(36).substr(2, 9)}`,
   },
   type: "community",

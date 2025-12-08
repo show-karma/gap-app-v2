@@ -71,31 +71,22 @@ export function createMockProjectWithGrants(grantCount: number = 2): ProjectResp
     chainID: 10,
     recipient: "0xrecipient" as `0x${string}`,
     details: {
-      data: {
-        title: `Grant ${i + 1}`,
-        description: `Description for grant ${i + 1}`,
-        amount: "10000",
-        proposalURL: "https://example.com/proposal",
-      },
-      schema: "",
-      refUID: "",
-      uid: "" as `0x${string}`,
+      title: `Grant ${i + 1}`,
+      description: `Description for grant ${i + 1}`,
+      amount: "10000",
+      proposalURL: "https://example.com/proposal",
     },
     milestones: [],
     updates: [],
     community: {
       uid: "0xcommunity" as `0x${string}`,
+      chainID: 10,
       details: {
-        data: {
-          name: "Test Community",
-          imageURL: "https://example.com/community.png",
-        },
-        schema: "",
-        refUID: "",
-        uid: "" as `0x${string}`,
+        name: "Test Community",
+        imageURL: "https://example.com/community.png",
       },
-    } as any,
-  })) as any;
+    },
+  })) as GrantResponse[];
 
   return createMockProject({ grants });
 }
