@@ -6,6 +6,12 @@ import { INDEXER } from "@/utilities/indexer";
 
 /**
  * Fetches community data using the v2 endpoint
+ *
+ * @remarks
+ * Returns null on error instead of throwing. This means React Query will show
+ * `isSuccess: true` and `isError: false` even when the API fails.
+ * Consumers should check `data === null` to detect fetch failures.
+ * Errors are logged via errorManager for monitoring.
  */
 const fetchCommunityDetails = async (
   communityUIDorSlug: string
@@ -41,9 +47,19 @@ interface UseCommunityDetailsOptions {
  *
  * @returns React Query result with community data
  *
+ * @remarks
+ * **Important:** This hook returns `null` on error instead of throwing.
+ * Therefore `isSuccess` will be `true` and `isError` will be `false` even when
+ * the API request fails. Always check `data === null` to detect failures.
+ *
  * @example
  * ```tsx
  * const { data: community, isLoading } = useCommunityDetails('optimism');
+ *
+ * // Check for fetch failure
+ * if (data === null && !isLoading) {
+ *   // Handle error case
+ * }
  * ```
  */
 export const useCommunityDetails = (
