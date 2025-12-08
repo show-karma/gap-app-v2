@@ -3,6 +3,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import type { CommunityDetailsV2 } from "@/types/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 /**
  * Fetches community data using the v2 endpoint
@@ -67,7 +68,7 @@ export const useCommunityDetails = (
   options?: UseCommunityDetailsOptions
 ) => {
   return useQuery({
-    queryKey: ["communityDetails", communityUIDorSlug],
+    queryKey: QUERY_KEYS.COMMUNITY.DETAILS(communityUIDorSlug),
     queryFn: () => fetchCommunityDetails(communityUIDorSlug!),
     enabled: !!communityUIDorSlug && options?.enabled !== false,
     staleTime: 1000 * 60 * 5, // 5 minutes

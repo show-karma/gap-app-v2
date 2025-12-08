@@ -374,7 +374,7 @@ describe("useCheckCommunityAdmin", () => {
         expect(mockIsCommunityAdminOf).toHaveBeenCalled();
       });
 
-      // Verify the query is cached with the correct key components
+      // Verify the query is cached with the correct key components (using centralized QUERY_KEYS)
       const cachedData = queryClient.getQueryData([
         "isCommunityAdmin",
         mockCommunity.uid,

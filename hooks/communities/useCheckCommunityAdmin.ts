@@ -4,6 +4,7 @@ import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
 import type { CommunityDetailsV2 } from "@/types/community";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 
 interface UseCheckCommunityAdminOptions {
@@ -35,14 +36,13 @@ export const useCheckCommunityAdmin = (
   const checkAddress = address || accountAddress;
 
   const query = useQuery({
-    queryKey: [
-      "isCommunityAdmin",
+    queryKey: QUERY_KEYS.COMMUNITY.IS_ADMIN(
       community?.uid,
       community?.chainID,
       checkAddress,
       !!isAuth,
-      signer,
-    ],
+      signer
+    ),
     queryFn: async () => {
       if (!community || !checkAddress || !isAuth) {
         return false;
