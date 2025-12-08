@@ -10,7 +10,7 @@ import type {
   RoleOption,
 } from "@/components/Generic/RoleManagement/types";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import {

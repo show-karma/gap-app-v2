@@ -5,8 +5,8 @@ import FormBuilderErrorBoundary from "@/components/ErrorBoundary/FormBuilderErro
 import { QuestionBuilder } from "@/components/QuestionBuilder";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
 import { useStaff } from "@/hooks/useStaff";
 import { layoutTheme } from "@/src/helper/theme";

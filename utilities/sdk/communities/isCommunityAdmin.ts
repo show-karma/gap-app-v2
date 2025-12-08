@@ -1,10 +1,10 @@
 import { GAP, type SignerOrProvider } from "@show-karma/karma-gap-sdk";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { Hex } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
+import type { CommunityDetailsV2 } from "@/types/community";
 
 export const isCommunityAdminOf = async (
-  community: ICommunityResponse,
+  community: CommunityDetailsV2,
   address: string | Hex,
   signer?: SignerOrProvider
 ) => {
