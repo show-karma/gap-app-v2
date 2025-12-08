@@ -1,11 +1,14 @@
+import type { TNetwork } from "@show-karma/karma-gap-sdk";
 import { createPublicClient, http, type PublicClient } from "viem";
 import {
   arbitrum,
+  base,
   baseSepolia,
   celo,
   lisk,
   optimism,
   optimismSepolia,
+  polygon,
   scroll,
   sei,
   sepolia,
@@ -58,7 +61,38 @@ const scrollClient = createPublicClient({
   transport: http(envVars.RPC.SCROLL),
 });
 
-export const rpcClient = {
+const baseClient = createPublicClient({
+  chain: base,
+  transport: http(envVars.RPC.BASE),
+});
+
+const polygonClient = createPublicClient({
+  chain: polygon,
+  transport: http(envVars.RPC.POLYGON),
+});
+
+type RpcClientNetwork =
+  | TNetwork
+  | "base"
+  | "polygon"
+  | "optimismSepolia"
+  | "sepolia"
+  | "baseSepolia";
+
+type RpcClientValue =
+  | typeof optimismClient
+  | typeof seiClient
+  | typeof arbitrumClient
+  | typeof celoClient
+  | typeof liskClient
+  | typeof scrollClient
+  | typeof baseClient
+  | typeof polygonClient
+  | typeof optimismSepoliaClient
+  | typeof sepoliaClient
+  | typeof baseSepoliaClient;
+
+export const rpcClient: Partial<Record<RpcClientNetwork, RpcClientValue>> = {
   //   prod networks
   optimism: optimismClient,
   sei: seiClient,
@@ -66,6 +100,8 @@ export const rpcClient = {
   celo: celoClient,
   lisk: liskClient,
   scroll: scrollClient,
+  base: baseClient,
+  polygon: polygonClient,
   //   testnets
   optimismSepolia: optimismSepoliaClient,
   sepolia: sepoliaClient,
@@ -105,10 +141,7 @@ export const getRPCUrlByChainId = (chainId: number): string | undefined => {
 
 export const getRPCClient = async (chainId: number): Promise<PublicClient> => {
   const chainName = getChainNameById(chainId);
-  const client =
-    rpcClient[chainName as keyof typeof rpcClient] ??
-    (chainName === "base-sepolia" ? baseSepoliaClient : undefined) ??
-    (chainName === "optimism-sepolia" ? optimismSepoliaClient : undefined);
+  const client = rpcClient[chainName as RpcClientNetwork];
   if (!client) {
     throw new Error(`RPC client not configured for chain ${chainId}`);
   }
