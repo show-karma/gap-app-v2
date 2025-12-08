@@ -12,13 +12,13 @@ import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Spinner } from "@/components/Utilities/Spinner";
 import TablePagination from "@/components/Utilities/TablePagination";
-import { useCommunityDetails } from "@/hooks/useCommunityDetails";
+import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import {
   type AttestationBatchUpdateItem,
   useBatchUpdatePayouts,
 } from "@/hooks/useCommunityPayouts";
 import { useGrants } from "@/hooks/useGrants";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useStaff } from "@/hooks/useStaff";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -88,8 +88,7 @@ export default function PayoutsAdminPage() {
 
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: loadingAdmin } = useIsCommunityAdmin(
-    community?.uid,
-    address
+    community?.uid
   );
   const { isStaff, isLoading: isStaffLoading } = useStaff();
 
@@ -437,9 +436,7 @@ export default function PayoutsAdminPage() {
     <div className="my-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
       <div className="w-full flex flex-col gap-8">
         <div className="w-full flex flex-wrap flex-row items-center justify-between px-4">
-          <Link
-            href={PAGES.ADMIN.ROOT(community?.details?.data?.slug || (community?.uid as string))}
-          >
+          <Link href={PAGES.ADMIN.ROOT(community?.details?.slug || (community?.uid as string))}>
             <Button className="flex flex-row items-center gap-2 px-0 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
               <ChevronLeftIcon className="h-5 w-5" />
               Return to admin page

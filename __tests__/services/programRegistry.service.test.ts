@@ -4,8 +4,8 @@
  * covering business logic, error handling, and response parsing
  */
 
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
+import type { CommunityDetailsV2 } from "@/types/community";
 import type { CreateProgramFormData } from "@/types/program-registry";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -17,12 +17,18 @@ jest.mock("@/utilities/fetchData", () => ({
 }));
 
 describe("ProgramRegistryService", () => {
-  const mockCommunity: ICommunityResponse = {
+  const mockCommunity: CommunityDetailsV2 = {
     uid: "0x1234567890123456789012345678901234567890",
     chainID: 1,
-    name: "Test Community",
-    slug: "test-community",
-  } as ICommunityResponse;
+    details: {
+      name: "Test Community",
+      description: "Test community description",
+      slug: "test-community",
+      logoUrl: "",
+    },
+    createdAt: "2024-01-01T00:00:00.000Z",
+    updatedAt: "2024-01-01T00:00:00.000Z",
+  };
 
   const mockFormData: CreateProgramFormData = {
     name: "Test Program",

@@ -12,6 +12,7 @@ import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView
 import EditApplicationModal from "@/components/FundingPlatform/ApplicationView/EditApplicationModal";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import {
   useApplication,
   useApplicationComments,
@@ -20,7 +21,6 @@ import {
   useDeleteApplication,
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useStaff } from "@/hooks/useStaff";
 import { layoutTheme } from "@/src/helper/theme";
 import { useOwnerStore } from "@/store";
