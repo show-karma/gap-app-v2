@@ -154,7 +154,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
       });
       const grantUpdate = new GrantUpdate({
         data: sanitizedGrantUpdate,
-        recipient: grantToUpdate.recipient as `0x${string}`,
+        recipient: (grantToUpdate.recipient || address) as `0x${string}`,
         refUID: grantToUpdate.uid as `0x${string}`,
         schema: gapClient.findSchema("GrantDetails"),
       });
