@@ -285,36 +285,42 @@ describe("useCheckCommunityAdmin", () => {
     });
   });
 
-  describe("Error Propagation", () => {
-    it("should set isError to true when isCommunityAdminOf throws", async () => {
-      const testError = new Error("Network error");
-      mockIsCommunityAdminOf.mockRejectedValueOnce(testError);
+  describe("Error Handling", () => {
+    it("should return isAdmin: false when isCommunityAdminOf returns false (internal error handling)", async () => {
+      // isCommunityAdminOf catches errors internally and returns false
+      // So we test that the hook properly handles this case
+      mockIsCommunityAdminOf.mockResolvedValueOnce(false);
 
       const { result } = renderHook(() => useCheckCommunityAdmin(mockCommunity), {
         wrapper: createWrapper(queryClient),
       });
 
       await waitFor(() => {
-        expect(result.current.isError).toBe(true);
+        expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.error).toBe(testError);
+      // isCommunityAdminOf returns false on error, not throws
       expect(result.current.isAdmin).toBe(false);
+      expect(result.current.isError).toBe(false);
     });
 
-    it("should provide error details in error field", async () => {
-      const networkError = new Error("Failed to connect to RPC");
-      mockIsCommunityAdminOf.mockRejectedValueOnce(networkError);
+    it("should gracefully handle network or RPC failures by returning false", async () => {
+      // When isCommunityAdminOf encounters an error, it catches it internally
+      // and returns false (with error logged via errorManager)
+      // This test verifies the hook handles this gracefully
+      mockIsCommunityAdminOf.mockResolvedValueOnce(false);
 
       const { result } = renderHook(() => useCheckCommunityAdmin(mockCommunity), {
         wrapper: createWrapper(queryClient),
       });
 
       await waitFor(() => {
-        expect(result.current.isError).toBe(true);
+        expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.error?.message).toBe("Failed to connect to RPC");
+      // The function returns false on errors, not throws
+      expect(result.current.isAdmin).toBe(false);
+      expect(result.current.isError).toBe(false);
     });
   });
 

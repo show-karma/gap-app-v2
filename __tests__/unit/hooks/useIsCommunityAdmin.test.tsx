@@ -472,6 +472,11 @@ describe("useIsCommunityAdmin", () => {
         data: undefined,
         isLoading: false,
       } as unknown as ReturnType<typeof useCommunityDetails>);
+      // When community data is undefined, admin check should return false
+      mockUseCheckCommunityAdmin.mockReturnValue({
+        ...defaultAdminQueryResult,
+        isAdmin: false,
+      });
 
       const { result } = renderHook(() => useIsCommunityAdmin(undefined), {
         wrapper: createWrapper(queryClient),
@@ -485,6 +490,11 @@ describe("useIsCommunityAdmin", () => {
       mockUseAccount.mockReturnValue({
         address: undefined,
       } as ReturnType<typeof useAccount>);
+      // When no wallet is connected, admin check should return false
+      mockUseCheckCommunityAdmin.mockReturnValue({
+        ...defaultAdminQueryResult,
+        isAdmin: false,
+      });
 
       const { result } = renderHook(() => useIsCommunityAdmin("test-community"), {
         wrapper: createWrapper(queryClient),
