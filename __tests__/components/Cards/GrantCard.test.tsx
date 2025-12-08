@@ -415,7 +415,7 @@ describe("GrantCard", () => {
       expect(screen.getByText(/2.*Milestones/i)).toBeInTheDocument();
     });
 
-    it("should truncate description to 100 characters", () => {
+    it("should truncate description to 200 characters", () => {
       const grantWithLongDescription = {
         ...mockGrant,
         project: {
@@ -423,7 +423,7 @@ describe("GrantCard", () => {
           details: {
             data: {
               ...mockGrant.project?.details?.data,
-              description: "A".repeat(200),
+              description: "A".repeat(400),
             },
           },
         },
@@ -432,7 +432,7 @@ describe("GrantCard", () => {
       render(<GrantCard grant={grantWithLongDescription} index={0} />);
 
       const markdownPreview = screen.getByTestId("markdown-preview");
-      expect(markdownPreview.textContent?.length).toBe(100);
+      expect(markdownPreview.textContent?.length).toBe(200);
     });
 
     it("should calculate updates correctly (completed milestones + updates)", () => {

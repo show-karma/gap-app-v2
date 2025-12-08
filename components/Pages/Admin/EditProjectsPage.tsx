@@ -10,13 +10,13 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
 import TablePagination from "@/components/Utilities/TablePagination";
+import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useAuth } from "@/hooks/useAuth";
-import { useCommunityDetails } from "@/hooks/useCommunityDetails";
 import { useCommunityGrants } from "@/hooks/useCommunityGrants";
 import { useCommunityRegions } from "@/hooks/useCommunityRegions";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useStaff } from "@/hooks/useStaff";
-import { useCommunityProjects } from "@/hooks/v2/useCommunityProjects";
+import { useCommunityProjectsV2 } from "@/hooks/v2/useCommunityProjects";
 import type { Project } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -178,10 +178,7 @@ export default function EditProjectsPage() {
   } = useCommunityDetails(communityId);
 
   // Check if user is admin of this community
-  const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(
-    community?.uid,
-    address
-  );
+  const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(community?.uid);
   const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   useEffect(() => {
@@ -202,14 +199,14 @@ export default function EditProjectsPage() {
     data: projectsData,
     isLoading: isLoadingProjects,
     refetch: refreshProjects,
-  } = useCommunityProjects(community?.details?.data?.slug || communityId, {
+  } = useCommunityProjectsV2(community?.details?.slug || communityId, {
     page: currentPage,
     limit: 12,
     selectedProgramId: selectedProgramId || undefined,
   });
 
   // Fetch all grants for the filter dropdown
-  const { data: grants = [] } = useCommunityGrants(community?.details?.data?.slug || communityId);
+  const { data: grants = [] } = useCommunityGrants(community?.details?.slug || communityId);
 
   const projects = projectsData?.payload || [];
   const totalItems = projectsData?.pagination?.totalCount || 0;
@@ -310,9 +307,7 @@ export default function EditProjectsPage() {
     <div className="mt-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
       <div className="w-full flex flex-col gap-8">
         <div className="w-full flex flex-row items-center justify-between">
-          <Link
-            href={PAGES.ADMIN.ROOT(community?.details?.data?.slug || (community?.uid as string))}
-          >
+          <Link href={PAGES.ADMIN.ROOT(community?.details?.slug || (community?.uid as string))}>
             <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
               <ChevronLeftIcon className="h-5 w-5" />
               Back to admin

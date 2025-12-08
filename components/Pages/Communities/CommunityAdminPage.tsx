@@ -14,8 +14,8 @@ import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/ka
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { Skeleton } from "@/components/Utilities/Skeleton";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useAuth } from "@/hooks/useAuth";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useStaff } from "@/hooks/useStaff";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
@@ -73,19 +73,9 @@ export const CommunityAdminPage = ({
   communityId: string;
   community: ICommunityResponse;
 }) => {
-  const { address, isConnected } = useAccount();
-  const { authenticated: isAuth } = useAuth();
-
-  const _signer = useSigner();
-
   // Check if user is admin of this community
-  const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(
-    community?.uid,
-    "0x1724707c52de2fa65ad9c586b5d38507f52D3c06"
-  );
-  console.log("isAdmin", "0x1724707c52de2fa65ad9c586b5d38507f52D3c06", isAdmin);
-  // const { isStaff } = useStaff();
-  const isStaff = false;
+  const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(community?.uid);
+  const { isStaff } = useStaff();
 
   return (
     <div className="max-w-full w-full">

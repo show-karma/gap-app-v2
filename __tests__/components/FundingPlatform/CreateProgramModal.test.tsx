@@ -22,7 +22,7 @@ jest.mock("@/hooks/useAuth", () => ({
   useAuth: jest.fn(),
 }));
 
-jest.mock("@/hooks/useCommunityDetails", () => ({
+jest.mock("@/hooks/communities/useCommunityDetails", () => ({
   useCommunityDetails: jest.fn(),
 }));
 
@@ -87,8 +87,8 @@ jest.mock("@radix-ui/react-dialog", () => {
 import toast from "react-hot-toast";
 // Import mocked modules
 import { useAccount } from "wagmi";
+import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
-import { useCommunityDetails } from "@/hooks/useCommunityDetails";
 
 const INDEXER_API_BASE_URL = process.env.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
 
@@ -96,8 +96,14 @@ const INDEXER_API_BASE_URL = process.env.NEXT_PUBLIC_GAP_INDEXER_URL || "http://
 const mockCommunity = {
   uid: "0x1234567890123456789012345678901234567890",
   chainID: 1,
-  name: "Test Community",
-  slug: "test-community",
+  details: {
+    name: "Test Community",
+    description: "Test community description",
+    slug: "test-community",
+    logoUrl: "",
+  },
+  createdAt: "2024-01-01T00:00:00.000Z",
+  updatedAt: "2024-01-01T00:00:00.000Z",
 };
 
 const mockAddress = "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd";
