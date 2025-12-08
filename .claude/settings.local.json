@@ -39,7 +39,9 @@
       "Bash(git log:*)",
       "Bash(npx next lint:*)",
       "Bash(test:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run test:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

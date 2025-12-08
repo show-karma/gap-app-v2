@@ -11,8 +11,8 @@ import { useAccount } from "wagmi";
 import { CreateTrackModal } from "@/components/Pages/Communities/Tracks/CreateTrackModal";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useAuth } from "@/hooks/useAuth";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { useStaff } from "@/hooks/useStaff";
 import {
@@ -53,10 +53,7 @@ export const TracksAdminPage = ({
   const _signer = useSigner();
 
   // Check if user is admin of this community
-  const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(
-    community?.uid,
-    address
-  );
+  const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(community?.uid);
   const { isStaff } = useStaff();
 
   // React Query hooks

@@ -7,12 +7,12 @@ import { useMemo } from "react";
 import { ApplicationListWithAPI } from "@/components/FundingPlatform";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import {
   useApplication,
   useApplicationStatus,
   useFundingApplications,
 } from "@/hooks/useFundingPlatform";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useStaff } from "@/hooks/useStaff";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";

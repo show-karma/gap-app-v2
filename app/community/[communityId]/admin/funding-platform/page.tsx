@@ -26,8 +26,8 @@ import { FundingPlatformStatsCard } from "@/components/FundingPlatform/Dashboard
 import { Button } from "@/components/Utilities/Button";
 import { LoadingOverlay } from "@/components/Utilities/LoadingOverlay";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useStaff } from "@/hooks/useStaff";
 import { type FundingProgram, fundingPlatformService } from "@/services/fundingPlatformService";
 import { layoutTheme } from "@/src/helper/theme";
@@ -623,7 +623,9 @@ export default function FundingPlatformAdminPage() {
                   <span className="text-orange-700 dark:text-orange-300">
                     Deadline:{" "}
                     {program.applicationConfig?.formSchema?.settings?.applicationDeadline
-                      ? formatDate(program.applicationConfig.formSchema.settings.applicationDeadline)
+                      ? formatDate(
+                          program.applicationConfig.formSchema.settings.applicationDeadline
+                        )
                       : "N/A"}
                   </span>
                 </div>
