@@ -623,7 +623,9 @@ export default function FundingPlatformAdminPage() {
                   <span className="text-orange-700 dark:text-orange-300">
                     Deadline:{" "}
                     {program.applicationConfig?.formSchema?.settings?.applicationDeadline
-                      ? formatDate(program.applicationConfig.formSchema.settings.applicationDeadline)
+                      ? formatDate(
+                          program.applicationConfig.formSchema.settings.applicationDeadline
+                        )
                       : "N/A"}
                   </span>
                 </div>
