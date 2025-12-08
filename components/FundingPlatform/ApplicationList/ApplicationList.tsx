@@ -14,7 +14,13 @@ import { TableStatusActionButtons } from "./TableStatusActionButtons";
 interface IApplicationListComponentProps extends IApplicationListProps {
   applications: IFundingApplication[];
   isLoading?: boolean;
-  onStatusChange?: (applicationId: string, status: string, note?: string) => Promise<void>;
+  onStatusChange?: (
+    applicationId: string,
+    status: string,
+    note?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => Promise<void>;
   onExport?: () => void;
   showStatusActions?: boolean;
   sortBy?: IApplicationFilters["sortBy"];
@@ -53,6 +59,8 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string>("");
   const [pendingApplicationId, setPendingApplicationId] = useState<string>("");
+  const [pendingProgramId, setPendingProgramId] = useState<string>("");
+  const [pendingChainId, setPendingChainId] = useState<number | undefined>(undefined);
 
   // Show all applications (no internal pagination for infinite scroll)
   const paginatedApplications = applications;
@@ -63,16 +71,32 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
     e: React.MouseEvent
   ) => {
     e.stopPropagation();
+    // Find the application to get programId and chainID
+    const application = applications.find(
+      (app) => app.referenceNumber === applicationId || app.id === applicationId
+    );
     setPendingApplicationId(applicationId);
     setPendingStatus(newStatus);
+    setPendingProgramId(application?.programId || "");
+    setPendingChainId(application?.chainID);
     setStatusModalOpen(true);
   };
 
-  const handleStatusChangeConfirm = async (reason?: string) => {
+  const handleStatusChangeConfirm = async (
+    reason?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => {
     if (onStatusChange && pendingApplicationId && pendingStatus) {
       try {
         setIsUpdatingStatus(true);
-        await onStatusChange(pendingApplicationId, pendingStatus, reason);
+        await onStatusChange(
+          pendingApplicationId,
+          pendingStatus,
+          reason,
+          approvedAmount,
+          approvedCurrency
+        );
         setIsUpdatingStatus(false);
         setStatusModalOpen(false);
         setPendingStatus("");
@@ -240,10 +264,14 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
           setStatusModalOpen(false);
           setPendingStatus("");
           setPendingApplicationId("");
+          setPendingProgramId("");
+          setPendingChainId(undefined);
         }}
         onConfirm={handleStatusChangeConfirm}
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
+        programId={pendingProgramId}
+        chainId={pendingChainId}
       />
     </div>
   );

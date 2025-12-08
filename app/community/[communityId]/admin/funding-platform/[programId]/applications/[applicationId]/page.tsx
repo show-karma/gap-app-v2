@@ -98,12 +98,19 @@ export default function ApplicationDetailPage() {
   const { selectVersion } = useApplicationVersionsStore();
 
   // Handle status change
-  const handleStatusChange = async (status: string, note?: string) => {
+  const handleStatusChange = async (
+    status: string,
+    note?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => {
     if (!application) return;
     await updateStatusAsync({
       applicationId: application.referenceNumber,
       status,
       note,
+      approvedAmount,
+      approvedCurrency,
     });
   };
 

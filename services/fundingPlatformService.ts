@@ -138,6 +138,24 @@ export const fundingProgramsAPI = {
   },
 
   /**
+   * Get funding details for a program
+   */
+  async getFundingDetails(
+    programId: string,
+    chainId: number
+  ): Promise<{
+    currency?: string;
+    data?: { currency?: string };
+    fundingDetails?: { currency?: string };
+    details?: { currency?: string };
+  }> {
+    const response = await apiClient.get(
+      `/v2/program/funding-details?programId=${programId}&chainId=${chainId}`
+    );
+    return response.data;
+  },
+
+  /**
    * Get program configuration including form schema
    */
   async getProgramConfiguration(

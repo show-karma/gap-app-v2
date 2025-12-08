@@ -32,7 +32,12 @@ interface ApplicationContentProps {
   showStatusActions?: boolean;
   showAIEvaluationButton?: boolean;
   showInternalEvaluation?: boolean;
-  onStatusChange?: (status: string, note?: string) => Promise<void>;
+  onStatusChange?: (
+    status: string,
+    note?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => Promise<void>;
   viewMode?: "details" | "changes";
   onViewModeChange?: (mode: "details" | "changes") => void;
   onRefresh?: () => void;
@@ -129,11 +134,15 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
     setStatusModalOpen(true);
   };
 
-  const handleStatusChangeConfirm = async (reason?: string) => {
+  const handleStatusChangeConfirm = async (
+    reason?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => {
     if (onStatusChange && pendingStatus) {
       try {
         setIsUpdatingStatus(true);
-        await onStatusChange(pendingStatus, reason);
+        await onStatusChange(pendingStatus, reason, approvedAmount, approvedCurrency);
         setStatusModalOpen(false);
         setPendingStatus("");
         toast.success(`Application status updated to ${formatStatus(pendingStatus)}`);
@@ -544,6 +553,8 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
         isReasonRequired={pendingStatus === "revision_requested"}
+        programId={application.programId}
+        chainId={application.chainID}
       />
     </>
   );
