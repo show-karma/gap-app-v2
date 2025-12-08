@@ -75,7 +75,7 @@ jest.mock("@/components/Utilities/Button", () => ({
       children === "Confirm" || children === "Processing..." ? "confirm-button" : "cancel-button";
     return (
       <button
-        onClick={onClick}
+        onClick={disabled ? undefined : onClick}
         disabled={disabled}
         className={className}
         data-variant={variant}
@@ -169,6 +169,12 @@ describe("StatusChangeModal", () => {
     it("should not require reason for approved status when isReasonRequired is false", () => {
       render(<StatusChangeModal {...defaultProps} status="approved" isReasonRequired={false} />);
 
+      // Fill in required amount and currency fields for approved status
+      const amountInput = screen.getByLabelText(/approved amount/i);
+      const currencyInput = screen.getByLabelText(/approved currency/i);
+      fireEvent.change(amountInput, { target: { value: "1000" } });
+      fireEvent.change(currencyInput, { target: { value: "USD" } });
+
       const confirmButton = screen.getByTestId("confirm-button");
       expect(confirmButton).not.toBeDisabled();
 
@@ -230,17 +236,25 @@ describe("StatusChangeModal", () => {
       expect(confirmButton).not.toBeDisabled();
 
       fireEvent.click(confirmButton);
-      expect(onConfirm).toHaveBeenCalledWith("Please update section 3");
+      // For non-approval statuses, amount and currency are undefined
+      expect(onConfirm).toHaveBeenCalledWith("Please update section 3", undefined, undefined);
     });
 
     it("should allow submission without reason when not required", () => {
       const onConfirm = jest.fn();
       render(<StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />);
 
+      // Fill in required amount and currency fields for approved status
+      const amountInput = screen.getByLabelText(/approved amount/i);
+      const currencyInput = screen.getByLabelText(/approved currency/i);
+      fireEvent.change(amountInput, { target: { value: "1000" } });
+      fireEvent.change(currencyInput, { target: { value: "USD" } });
+
       const confirmButton = screen.getByTestId("confirm-button");
+      expect(confirmButton).not.toBeDisabled();
       fireEvent.click(confirmButton);
 
-      expect(onConfirm).toHaveBeenCalledWith(undefined);
+      expect(onConfirm).toHaveBeenCalledWith(undefined, "1000", "USD");
     });
   });
 
@@ -272,7 +286,14 @@ describe("StatusChangeModal", () => {
       const textarea = screen.getByLabelText(/reason/i) as HTMLTextAreaElement;
       fireEvent.change(textarea, { target: { value: "Test reason" } });
 
+      // Fill in required amount and currency fields for approved status
+      const amountInput = screen.getByLabelText(/approved amount/i);
+      const currencyInput = screen.getByLabelText(/approved currency/i);
+      fireEvent.change(amountInput, { target: { value: "1000" } });
+      fireEvent.change(currencyInput, { target: { value: "USD" } });
+
       const confirmButton = screen.getByTestId("confirm-button");
+      expect(confirmButton).not.toBeDisabled();
       fireEvent.click(confirmButton);
 
       expect(onConfirm).toHaveBeenCalled();
@@ -410,20 +431,34 @@ describe("StatusChangeModal", () => {
       const textarea = screen.getByLabelText(/reason/i);
       fireEvent.change(textarea, { target: { value: "Approved because it meets criteria" } });
 
+      // Fill in required amount and currency fields for approved status
+      const amountInput = screen.getByLabelText(/approved amount/i);
+      const currencyInput = screen.getByLabelText(/approved currency/i);
+      fireEvent.change(amountInput, { target: { value: "1000" } });
+      fireEvent.change(currencyInput, { target: { value: "USD" } });
+
       const confirmButton = screen.getByTestId("confirm-button");
+      expect(confirmButton).not.toBeDisabled();
       fireEvent.click(confirmButton);
 
-      expect(onConfirm).toHaveBeenCalledWith("Approved because it meets criteria");
+      expect(onConfirm).toHaveBeenCalledWith("Approved because it meets criteria", "1000", "USD");
     });
 
     it("should call onConfirm with undefined when reason not provided and not required", () => {
       const onConfirm = jest.fn();
       render(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
+      // Fill in required amount and currency fields for approved status
+      const amountInput = screen.getByLabelText(/approved amount/i);
+      const currencyInput = screen.getByLabelText(/approved currency/i);
+      fireEvent.change(amountInput, { target: { value: "1000" } });
+      fireEvent.change(currencyInput, { target: { value: "USD" } });
+
       const confirmButton = screen.getByTestId("confirm-button");
+      expect(confirmButton).not.toBeDisabled();
       fireEvent.click(confirmButton);
 
-      expect(onConfirm).toHaveBeenCalledWith(undefined);
+      expect(onConfirm).toHaveBeenCalledWith(undefined, "1000", "USD");
     });
 
     it("should call onClose when cancel button is clicked", () => {
@@ -494,10 +529,17 @@ describe("StatusChangeModal", () => {
       const textarea = screen.getByLabelText(/reason/i);
       fireEvent.change(textarea, { target: { value: longReason } });
 
+      // Fill in required amount and currency fields for approved status
+      const amountInput = screen.getByLabelText(/approved amount/i);
+      const currencyInput = screen.getByLabelText(/approved currency/i);
+      fireEvent.change(amountInput, { target: { value: "1000" } });
+      fireEvent.change(currencyInput, { target: { value: "USD" } });
+
       const confirmButton = screen.getByTestId("confirm-button");
+      expect(confirmButton).not.toBeDisabled();
       fireEvent.click(confirmButton);
 
-      expect(onConfirm).toHaveBeenCalledWith(longReason);
+      expect(onConfirm).toHaveBeenCalledWith(longReason, "1000", "USD");
     });
 
     it("should handle special characters in reason", () => {
@@ -508,10 +550,17 @@ describe("StatusChangeModal", () => {
       const textarea = screen.getByLabelText(/reason/i);
       fireEvent.change(textarea, { target: { value: specialReason } });
 
+      // Fill in required amount and currency fields for approved status
+      const amountInput = screen.getByLabelText(/approved amount/i);
+      const currencyInput = screen.getByLabelText(/approved currency/i);
+      fireEvent.change(amountInput, { target: { value: "1000" } });
+      fireEvent.change(currencyInput, { target: { value: "USD" } });
+
       const confirmButton = screen.getByTestId("confirm-button");
+      expect(confirmButton).not.toBeDisabled();
       fireEvent.click(confirmButton);
 
-      expect(onConfirm).toHaveBeenCalledWith(specialReason);
+      expect(onConfirm).toHaveBeenCalledWith(specialReason, "1000", "USD");
     });
   });
 });
