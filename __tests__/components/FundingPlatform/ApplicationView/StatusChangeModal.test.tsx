@@ -1,5 +1,95 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import StatusChangeModal from "@/components/FundingPlatform/ApplicationView/StatusChangeModal";
+
+// Mock react-hot-toast
+jest.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    error: jest.fn(),
+    success: jest.fn(),
+  },
+}));
+
+// Mock Select component from ui/select - simplified version for testing
+jest.mock("@/components/ui/select", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const React = require("react");
+
+  // Create a context-like mechanism to share onValueChange
+  let sharedOnValueChange: ((value: string) => void) | undefined;
+
+  return {
+    Select: ({ children, value, onValueChange, disabled }: any) => {
+      // Store onValueChange globally so SelectItem can access it
+      sharedOnValueChange = onValueChange;
+
+      return React.createElement(
+        "div",
+        {
+          "data-testid": "select",
+          "data-value": value || "",
+          "data-disabled": disabled,
+        },
+        React.Children.map(children, (child: any) => {
+          if (React.isValidElement(child)) {
+            // Pass onValueChange to all children
+            return React.cloneElement(child, { onValueChange, value, disabled });
+          }
+          return child;
+        })
+      );
+    },
+    SelectTrigger: ({ children, disabled, ...props }: any) => {
+      return React.createElement(
+        "button",
+        {
+          ...props,
+          "data-testid": "select-trigger",
+          disabled,
+          type: "button",
+        },
+        children
+      );
+    },
+    SelectContent: ({ children, ...props }: any) => {
+      return React.createElement("div", { ...props, "data-testid": "select-content" }, children);
+    },
+    SelectItem: ({ children, value, onValueChange, disabled, ...props }: any) => {
+      // Use the shared onValueChange or the one passed directly
+      const handleClick = () => {
+        const handler = onValueChange || sharedOnValueChange;
+        if (!disabled && handler) {
+          handler(value);
+        }
+      };
+
+      return React.createElement(
+        "button",
+        {
+          ...props,
+          "data-value": value,
+          "data-testid": `select-item-${value}`,
+          onClick: handleClick,
+          disabled,
+          type: "button",
+        },
+        children
+      );
+    },
+    SelectValue: ({ placeholder, ...props }: any) => {
+      return React.createElement("span", { ...props, "data-testid": "select-value" }, placeholder);
+    },
+  };
+});
+
+// Mock fundingPlatformService
+jest.mock("@/services/fundingPlatformService", () => ({
+  fundingPlatformService: {
+    programs: {
+      getFundingDetails: jest.fn(),
+    },
+  },
+}));
 
 // Mock Headless UI Dialog components
 jest.mock("@headlessui/react", () => {
@@ -97,8 +187,28 @@ describe("StatusChangeModal", () => {
     isReasonRequired: false,
   };
 
+  // Helper function to select currency from dropdown
+  const selectCurrency = async (currency: string) => {
+    // Click the select item which triggers onValueChange
+    const selectItem = screen.getByTestId(`select-item-${currency}`);
+    expect(selectItem).toBeInTheDocument();
+    fireEvent.click(selectItem);
+
+    // Wait for the value to be set in the Select component
+    await waitFor(
+      () => {
+        const select = screen.getByTestId("select");
+        expect(select).toHaveAttribute("data-value", currency);
+      },
+      { timeout: 2000 }
+    );
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset fundingPlatformService mock
+    const { fundingPlatformService } = require("@/services/fundingPlatformService");
+    fundingPlatformService.programs.getFundingDetails.mockResolvedValue({});
   });
 
   describe("Rendering", () => {
@@ -166,17 +276,20 @@ describe("StatusChangeModal", () => {
       expect(label.textContent).toMatch(/\*/); // Required asterisk
     });
 
-    it("should not require reason for approved status when isReasonRequired is false", () => {
+    it("should not require reason for approved status when isReasonRequired is false", async () => {
       render(<StatusChangeModal {...defaultProps} status="approved" isReasonRequired={false} />);
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
-      const currencyInput = screen.getByLabelText(/approved currency/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
-      fireEvent.change(currencyInput, { target: { value: "USD" } });
+
+      // Select currency from dropdown
+      selectCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
-      expect(confirmButton).not.toBeDisabled();
+      await waitFor(() => {
+        expect(confirmButton).not.toBeDisabled();
+      });
 
       // Check for optional text in label
       const label = screen.getByText(/^Reason/);
@@ -240,18 +353,21 @@ describe("StatusChangeModal", () => {
       expect(onConfirm).toHaveBeenCalledWith("Please update section 3", undefined, undefined);
     });
 
-    it("should allow submission without reason when not required", () => {
+    it("should allow submission without reason when not required", async () => {
       const onConfirm = jest.fn();
       render(<StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />);
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
-      const currencyInput = screen.getByLabelText(/approved currency/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
-      fireEvent.change(currencyInput, { target: { value: "USD" } });
+
+      // Select currency from dropdown
+      selectCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
-      expect(confirmButton).not.toBeDisabled();
+      await waitFor(() => {
+        expect(confirmButton).not.toBeDisabled();
+      });
       fireEvent.click(confirmButton);
 
       expect(onConfirm).toHaveBeenCalledWith(undefined, "1000", "USD");
@@ -279,7 +395,7 @@ describe("StatusChangeModal", () => {
       expect(newTextarea.value).toBe("");
     });
 
-    it("should reset reason field after successful confirmation", () => {
+    it("should reset reason field after successful confirmation", async () => {
       const onConfirm = jest.fn();
       const { rerender } = render(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
@@ -288,12 +404,15 @@ describe("StatusChangeModal", () => {
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
-      const currencyInput = screen.getByLabelText(/approved currency/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
-      fireEvent.change(currencyInput, { target: { value: "USD" } });
+
+      // Select currency from dropdown
+      selectCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
-      expect(confirmButton).not.toBeDisabled();
+      await waitFor(() => {
+        expect(confirmButton).not.toBeDisabled();
+      });
       fireEvent.click(confirmButton);
 
       expect(onConfirm).toHaveBeenCalled();
@@ -424,7 +543,7 @@ describe("StatusChangeModal", () => {
   });
 
   describe("User Interactions", () => {
-    it("should call onConfirm with reason when provided", () => {
+    it("should call onConfirm with reason when provided", async () => {
       const onConfirm = jest.fn();
       render(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
@@ -433,29 +552,35 @@ describe("StatusChangeModal", () => {
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
-      const currencyInput = screen.getByLabelText(/approved currency/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
-      fireEvent.change(currencyInput, { target: { value: "USD" } });
+
+      // Select currency from dropdown
+      selectCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
-      expect(confirmButton).not.toBeDisabled();
+      await waitFor(() => {
+        expect(confirmButton).not.toBeDisabled();
+      });
       fireEvent.click(confirmButton);
 
       expect(onConfirm).toHaveBeenCalledWith("Approved because it meets criteria", "1000", "USD");
     });
 
-    it("should call onConfirm with undefined when reason not provided and not required", () => {
+    it("should call onConfirm with undefined when reason not provided and not required", async () => {
       const onConfirm = jest.fn();
       render(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
-      const currencyInput = screen.getByLabelText(/approved currency/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
-      fireEvent.change(currencyInput, { target: { value: "USD" } });
+
+      // Select currency from dropdown
+      selectCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
-      expect(confirmButton).not.toBeDisabled();
+      await waitFor(() => {
+        expect(confirmButton).not.toBeDisabled();
+      });
       fireEvent.click(confirmButton);
 
       expect(onConfirm).toHaveBeenCalledWith(undefined, "1000", "USD");
@@ -521,7 +646,7 @@ describe("StatusChangeModal", () => {
       expect(screen.getByText("Change the status of this application.")).toBeInTheDocument();
     });
 
-    it("should handle very long reason text", () => {
+    it("should handle very long reason text", async () => {
       const longReason = "A".repeat(1000);
       const onConfirm = jest.fn();
       render(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
@@ -531,18 +656,21 @@ describe("StatusChangeModal", () => {
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
-      const currencyInput = screen.getByLabelText(/approved currency/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
-      fireEvent.change(currencyInput, { target: { value: "USD" } });
+
+      // Select currency from dropdown
+      selectCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
-      expect(confirmButton).not.toBeDisabled();
+      await waitFor(() => {
+        expect(confirmButton).not.toBeDisabled();
+      });
       fireEvent.click(confirmButton);
 
       expect(onConfirm).toHaveBeenCalledWith(longReason, "1000", "USD");
     });
 
-    it("should handle special characters in reason", () => {
+    it("should handle special characters in reason", async () => {
       const specialReason = 'Reason with <script>alert("xss")</script> & special chars';
       const onConfirm = jest.fn();
       render(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
@@ -552,15 +680,185 @@ describe("StatusChangeModal", () => {
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
-      const currencyInput = screen.getByLabelText(/approved currency/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
-      fireEvent.change(currencyInput, { target: { value: "USD" } });
+
+      // Select currency from dropdown
+      selectCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
-      expect(confirmButton).not.toBeDisabled();
+      await waitFor(() => {
+        expect(confirmButton).not.toBeDisabled();
+      });
       fireEvent.click(confirmButton);
 
       expect(onConfirm).toHaveBeenCalledWith(specialReason, "1000", "USD");
+    });
+  });
+
+  describe("Currency Field - New Features", () => {
+    it("should show currency dropdown for approved status", () => {
+      render(<StatusChangeModal {...defaultProps} status="approved" />);
+
+      const select = screen.getByTestId("select");
+      expect(select).toBeInTheDocument();
+      expect(screen.getByLabelText(/approved currency/i)).toBeInTheDocument();
+    });
+
+    it("should not show currency field for non-approved statuses", () => {
+      render(<StatusChangeModal {...defaultProps} status="rejected" />);
+
+      expect(screen.queryByLabelText(/approved currency/i)).not.toBeInTheDocument();
+    });
+
+    it("should require currency for approved status", async () => {
+      render(<StatusChangeModal {...defaultProps} status="approved" />);
+
+      const amountInput = screen.getByLabelText(/approved amount/i);
+      fireEvent.change(amountInput, { target: { value: "1000" } });
+
+      const confirmButton = screen.getByTestId("confirm-button");
+      expect(confirmButton).toBeDisabled();
+    });
+
+    it("should auto-load currency from API when programId and chainId are provided", async () => {
+      const { fundingPlatformService } = require("@/services/fundingPlatformService");
+      fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
+        currency: "ETH",
+      });
+
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programId="test-program"
+          chainId={1}
+        />
+      );
+
+      // When currency is auto-loaded, it shows as a read-only input, not a Select
+      await waitFor(() => {
+        const currencyInput = screen.getByLabelText(/approved currency/i) as HTMLInputElement;
+        expect(currencyInput).toBeInTheDocument();
+        expect(currencyInput.value).toBe("ETH");
+        expect(currencyInput).toHaveAttribute("readonly");
+      });
+
+      expect(fundingPlatformService.programs.getFundingDetails).toHaveBeenCalledWith(
+        "test-program",
+        1
+      );
+    });
+
+    it("should show toast error when currency API fetch fails", async () => {
+      const toast = require("react-hot-toast");
+      const { fundingPlatformService } = require("@/services/fundingPlatformService");
+      fundingPlatformService.programs.getFundingDetails.mockRejectedValue(new Error("API Error"));
+
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programId="test-program"
+          chainId={1}
+        />
+      );
+
+      await waitFor(() => {
+        expect(toast.default.error).toHaveBeenCalledWith(
+          "Could not auto-load currency. Please enter it manually.",
+          expect.objectContaining({
+            duration: 4000,
+            icon: "ℹ️",
+          })
+        );
+      });
+    });
+
+    it("should allow manual currency selection when API fails", async () => {
+      const toast = require("react-hot-toast");
+      const { fundingPlatformService } = require("@/services/fundingPlatformService");
+      fundingPlatformService.programs.getFundingDetails.mockRejectedValue(new Error("API Error"));
+
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programId="test-program"
+          chainId={1}
+        />
+      );
+
+      await waitFor(() => {
+        expect(toast.default.error).toHaveBeenCalled();
+      });
+
+      // Should be able to manually select currency
+      const amountInput = screen.getByLabelText(/approved amount/i);
+      fireEvent.change(amountInput, { target: { value: "1000" } });
+
+      await selectCurrency("USDC");
+
+      const confirmButton = screen.getByTestId("confirm-button");
+      await waitFor(() => {
+        expect(confirmButton).not.toBeDisabled();
+      });
+    });
+  });
+
+  describe("Amount Validation", () => {
+    it("should show error for invalid amount on form submission", async () => {
+      const onConfirm = jest.fn();
+      render(<StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />);
+
+      const amountInput = screen.getByLabelText(/approved amount/i) as HTMLInputElement;
+      const confirmButton = screen.getByTestId("confirm-button");
+
+      // Type invalid value
+      fireEvent.change(amountInput, { target: { value: "abc" } });
+
+      // Select currency
+      await selectCurrency("USD");
+
+      // Wait a bit for debounced validation
+      await waitFor(
+        () => {
+          // Button should still be disabled due to invalid amount
+          expect(confirmButton).toBeDisabled();
+        },
+        { timeout: 1000 }
+      );
+
+      // Try to submit
+      fireEvent.click(confirmButton);
+
+      // onConfirm should not be called
+      expect(onConfirm).not.toHaveBeenCalled();
+    });
+
+    it("should accept valid amount", async () => {
+      const onConfirm = jest.fn();
+      render(<StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />);
+
+      const amountInput = screen.getByLabelText(/approved amount/i) as HTMLInputElement;
+
+      // Type valid value
+      fireEvent.change(amountInput, { target: { value: "1000" } });
+
+      // Select currency
+      await selectCurrency("USD");
+
+      const confirmButton = screen.getByTestId("confirm-button");
+
+      // Button should be enabled
+      await waitFor(
+        () => {
+          expect(confirmButton).not.toBeDisabled();
+        },
+        { timeout: 1000 }
+      );
+
+      fireEvent.click(confirmButton);
+      expect(onConfirm).toHaveBeenCalledWith(undefined, "1000", "USD");
     });
   });
 });

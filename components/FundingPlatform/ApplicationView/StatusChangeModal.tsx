@@ -2,8 +2,17 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { type FC, Fragment, useEffect, useState } from "react";
+import debounce from "lodash.debounce";
+import { type FC, Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { fundingPlatformService } from "@/services/fundingPlatformService";
 
 interface StatusChangeModalProps {
@@ -30,6 +39,18 @@ const statusDescriptions: Record<string, string> = {
   rejected: "Reject this application",
   pending: "Set this application back to pending",
 };
+
+// Common currency codes for funding applications
+const COMMON_CURRENCIES = [
+  { value: "USD", label: "USD - US Dollar" },
+  { value: "ETH", label: "ETH - Ethereum" },
+  { value: "USDC", label: "USDC - USD Coin" },
+  { value: "USDT", label: "USDT - Tether USD" },
+  { value: "WETH", label: "WETH - Wrapped Ethereum" },
+  { value: "MATIC", label: "MATIC - Polygon" },
+  { value: "CELO", label: "CELO - Celo" },
+  { value: "USDGLO", label: "USDGLO - USD Global" },
+] as const;
 
 // Helper to extract currency from API response (handles multiple possible response structures)
 const extractCurrency = (fundingDetails: {
@@ -67,15 +88,63 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   // When status is "approved", amount and currency are required
   const isApprovalStatus = status === "approved";
 
+  // Make reason required for revision_requested and rejected statuses
+  const isReasonActuallyRequired =
+    isReasonRequired || status === "revision_requested" || status === "rejected";
+
+  // Validate approved amount
+  const validateAmount = useCallback((value: string): boolean => {
+    if (!value || value.trim() === "") {
+      return false;
+    }
+    const num = Number.parseFloat(value);
+    return !Number.isNaN(num) && num > 0 && Number.isFinite(num);
+  }, []);
+
+  // Validate approved currency with format check
+  const validateCurrency = useCallback((value: string): boolean => {
+    if (!value || value.trim() === "") {
+      return false;
+    }
+    // Validate currency code format: 3-4 uppercase letters (ISO 4217 standard)
+    const currencyRegex = /^[A-Z]{3,4}$/;
+    return currencyRegex.test(value.trim().toUpperCase());
+  }, []);
+
+  // Debounced validation for amount input - use ref to persist across renders
+  const debouncedAmountValidationRef = useRef<ReturnType<typeof debounce> | null>(null);
+
+  const debouncedAmountValidation = useMemo(() => {
+    // Cancel previous debounced function if it exists
+    if (debouncedAmountValidationRef.current) {
+      debouncedAmountValidationRef.current.cancel();
+    }
+
+    const debounced = debounce((value: string) => {
+      if (isApprovalStatus) {
+        if (!value || value.trim() === "") {
+          setAmountError("Approved amount is required");
+        } else if (!validateAmount(value)) {
+          setAmountError("Approved amount must be a valid positive number");
+        } else {
+          setAmountError(null);
+        }
+      }
+    }, 300);
+
+    debouncedAmountValidationRef.current = debounced;
+    return debounced;
+  }, [isApprovalStatus, validateAmount]);
+
   // Helper to reset form state
-  const resetFormState = () => {
+  const resetFormState = useCallback(() => {
     setReason("");
     setApprovedAmount("");
     setApprovedCurrency("");
     setAmountError(null);
     setCurrencyError(null);
     setIsCurrencyFromAPI(false);
-  };
+  }, []);
 
   // Fetch funding details when modal opens and status is "approved"
   useEffect(() => {
@@ -106,9 +175,13 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
           }
         } catch (error) {
           console.error("Failed to fetch funding details:", error);
-          // Don't show error to user, just log it - currency field will remain empty
-          if (!isCancelled) {
+          // Show subtle notification to inform user about auto-load failure
+          if (!isCancelled && isOpen) {
             setIsCurrencyFromAPI(false);
+            toast.error("Could not auto-load currency. Please enter it manually.", {
+              duration: 4000,
+              icon: "ℹ️",
+            });
           }
         } finally {
           if (!isCancelled) {
@@ -126,42 +199,33 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
     };
   }, [isOpen, isApprovalStatus, programId, chainId]);
 
-  // Make reason required for revision_requested and rejected statuses
-  const isReasonActuallyRequired =
-    isReasonRequired || status === "revision_requested" || status === "rejected";
-
-  // Validate approved amount
-  const validateAmount = (value: string): boolean => {
-    if (!value || value.trim() === "") {
-      return false;
-    }
-    const num = Number.parseFloat(value);
-    return !Number.isNaN(num) && num > 0 && Number.isFinite(num);
-  };
-
-  // Validate approved currency
-  const validateCurrency = (value: string): boolean => {
-    return value !== undefined && value.trim() !== "";
-  };
+  // Cleanup debounced function on unmount
+  useEffect(() => {
+    return () => {
+      if (debouncedAmountValidationRef.current) {
+        debouncedAmountValidationRef.current.cancel();
+      }
+    };
+  }, []);
 
   const handleAmountChange = (value: string) => {
     setApprovedAmount(value);
-    if (isApprovalStatus) {
-      if (!value || value.trim() === "") {
-        setAmountError("Approved amount is required");
-      } else if (!validateAmount(value)) {
-        setAmountError("Approved amount must be a valid positive number");
-      } else {
-        setAmountError(null);
-      }
+    // Clear error immediately on change for better UX
+    if (value && value.trim() !== "" && validateAmount(value)) {
+      setAmountError(null);
     }
+    // Debounce validation to avoid excessive error messages while typing
+    debouncedAmountValidation(value);
   };
 
   const handleCurrencyChange = (value: string) => {
-    setApprovedCurrency(value);
+    const normalizedValue = value.trim().toUpperCase();
+    setApprovedCurrency(normalizedValue);
     if (isApprovalStatus) {
-      if (!validateCurrency(value)) {
+      if (!normalizedValue) {
         setCurrencyError("Approved currency is required");
+      } else if (!validateCurrency(normalizedValue)) {
+        setCurrencyError("Currency must be a valid 3-4 letter code (e.g., USD, ETH, USDC)");
       } else {
         setCurrencyError(null);
       }
@@ -192,17 +256,20 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
     onConfirm(
       reason || undefined,
       isApprovalStatus ? approvedAmount.trim() : undefined,
-      isApprovalStatus ? approvedCurrency.trim() : undefined
+      isApprovalStatus ? approvedCurrency.trim().toUpperCase() : undefined
     );
     resetFormState();
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (!isSubmitting) {
+      if (debouncedAmountValidationRef.current) {
+        debouncedAmountValidationRef.current.cancel();
+      }
       resetFormState();
       onClose();
     }
-  };
+  }, [isSubmitting, resetFormState, onClose]);
 
   // Check if form is valid for submission
   const isFormValid = () => {
@@ -303,6 +370,8 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                                 type="number"
                                 step="any"
                                 min="0"
+                                aria-describedby={amountError ? "amount-error" : undefined}
+                                aria-invalid={!!amountError}
                                 className={`block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 ${
                                   amountError
                                     ? "border-red-500 focus:border-red-500 focus:ring-red-500"
@@ -314,7 +383,11 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                                 disabled={isSubmitting}
                               />
                               {amountError && (
-                                <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                                <p
+                                  id="amount-error"
+                                  role="alert"
+                                  className="mt-1 text-xs text-red-600 dark:text-red-400"
+                                >
                                   {amountError}
                                 </p>
                               )}
@@ -327,39 +400,75 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                               >
                                 Approved Currency <span className="text-red-500">*</span>
                               </label>
-                              <input
-                                id="approvedCurrency"
-                                name="approvedCurrency"
-                                type="text"
-                                className={`block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 ${
-                                  currencyError
-                                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                                    : ""
-                                } ${
-                                  isCurrencyFromAPI
-                                    ? "bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
-                                    : ""
-                                }`}
-                                placeholder={
-                                  isLoadingCurrency ? "Loading currency..." : "USD, ETH, USDC, etc."
-                                }
-                                value={approvedCurrency}
-                                onChange={(e) => handleCurrencyChange(e.target.value)}
-                                disabled={isSubmitting || isLoadingCurrency || isCurrencyFromAPI}
-                                readOnly={isCurrencyFromAPI}
-                              />
+                              {isCurrencyFromAPI ? (
+                                <input
+                                  id="approvedCurrency"
+                                  name="approvedCurrency"
+                                  type="text"
+                                  aria-describedby="currency-info"
+                                  aria-invalid={false}
+                                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 cursor-not-allowed"
+                                  value={approvedCurrency}
+                                  readOnly
+                                  disabled
+                                />
+                              ) : (
+                                <Select
+                                  value={approvedCurrency}
+                                  onValueChange={handleCurrencyChange}
+                                  disabled={isSubmitting || isLoadingCurrency}
+                                >
+                                  <SelectTrigger
+                                    id="approvedCurrency"
+                                    aria-describedby={
+                                      currencyError ? "currency-error" : "currency-info"
+                                    }
+                                    aria-invalid={!!currencyError}
+                                    className={`w-full ${
+                                      currencyError
+                                        ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                                        : ""
+                                    }`}
+                                  >
+                                    <SelectValue
+                                      placeholder={
+                                        isLoadingCurrency
+                                          ? "Loading currency..."
+                                          : "Select currency"
+                                      }
+                                    />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {COMMON_CURRENCIES.map((currency) => (
+                                      <SelectItem key={currency.value} value={currency.value}>
+                                        {currency.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
                               {currencyError && (
-                                <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                                <p
+                                  id="currency-error"
+                                  role="alert"
+                                  className="mt-1 text-xs text-red-600 dark:text-red-400"
+                                >
                                   {currencyError}
                                 </p>
                               )}
                               {isCurrencyFromAPI ? (
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                <p
+                                  id="currency-info"
+                                  className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                                >
                                   Currency automatically loaded from program funding details
                                 </p>
                               ) : (
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                  Enter the currency code (e.g., USD, ETH, USDC)
+                                <p
+                                  id="currency-info"
+                                  className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                                >
+                                  Select a currency from the dropdown
                                 </p>
                               )}
                             </div>
@@ -383,6 +492,9 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                             id="reason"
                             name="reason"
                             rows={4}
+                            aria-describedby="reason-description"
+                            aria-invalid={isReasonActuallyRequired && !reason.trim()}
+                            aria-required={isReasonActuallyRequired}
                             className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
                             placeholder={
                               status === "revision_requested"
@@ -395,7 +507,10 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                             onChange={(e) => setReason(e.target.value)}
                             disabled={isSubmitting}
                           />
-                          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                          <p
+                            id="reason-description"
+                            className="mt-2 text-xs text-gray-500 dark:text-gray-400"
+                          >
                             {status === "revision_requested"
                               ? "The applicant will see this message and can update their application."
                               : status === "rejected"
