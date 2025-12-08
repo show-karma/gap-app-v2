@@ -349,6 +349,10 @@ jobs:
             3. Provide constructive feedback
             4. Suggest improvements
 
+          # Conditional prompts based on triggers - enables automatic PR reviews
+          direct_prompt: |
+            ${{ github.event_name == 'pull_request' && 'Perform a comprehensive code review of this PR. Check TypeScript standards, React/Next.js best practices, component architecture, accessibility, state management, Web3 integration, and performance. Generate Mermaid diagrams to visualize the changes and provide actionable feedback.' || '' }}
+
           max_turns: '30'
           timeout_minutes: '45'
 

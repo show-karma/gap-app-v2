@@ -383,7 +383,6 @@ export function QuestionBuilder({
           return;
         }
         await onSave?.(schema);
-        toast.success("Form saved successfully!");
       }
     } catch (error) {
       errorManager("Failed to save form schema", error, {

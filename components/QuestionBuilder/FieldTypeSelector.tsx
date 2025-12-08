@@ -66,7 +66,8 @@ export const fieldTypes = [
     type: "milestone" as const,
     label: "Milestones",
     icon: "🎯",
-    description: "Dynamic milestone management with title, description, and due dates",
+    description:
+      "Dynamic milestone management with title, description, due dates, funding requested, and completion criteria",
   },
 ];
 
