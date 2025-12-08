@@ -53,7 +53,7 @@ export const appNetwork = configuredNetworks as [Chain, ...Chain[]];
  * Filters out chains that are available for other features (e.g., donations)
  * but cannot be used for creating projects/attestations.
  */
-const gapUnsupportedChainIds: number[] = [mainnet.id, base.id, polygon.id];
+const gapUnsupportedChainIds: number[] = [mainnet.id];
 
 export const gapSupportedNetworks = appNetwork.filter(
   (chain) => !gapUnsupportedChainIds.includes(chain.id)
