@@ -270,8 +270,8 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
       }
 
       if (error) {
-        // Use the error message from the API, with fallbacks for different status codes
-        const errorMessage = error.message || getDefaultErrorMessage(error.status);
+        // Use the error message from the API
+        const errorMessage = typeof error === "string" ? error : "Error setting payout address";
         setError(errorMessage);
         throw new Error(errorMessage);
       }
@@ -349,8 +349,8 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
       }
 
       if (error) {
-        // Use the error message from the API, with fallbacks for different status codes
-        const errorMessage = error.message || getDefaultErrorMessage(error.status);
+        // Use the error message from the API
+        const errorMessage = typeof error === "string" ? error : "Error removing payout address";
         setError(errorMessage);
         throw new Error(errorMessage);
       }

@@ -917,7 +917,7 @@ export const CommunityProjectEvaluatorPage = () => {
       setIsLoadingProjects(true);
       const [projects, error] = (await fetchData(
         INDEXER.PROJECTS.BY_PROGRAM(programId, chainId, communityId)
-      )) as [Project[], Error | null];
+      )) as [Project[], string | null, any];
       if (error) {
         console.error("Error fetching projects:", error);
         return;
