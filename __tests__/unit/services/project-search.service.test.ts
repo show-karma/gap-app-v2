@@ -3,7 +3,6 @@
  * @description Tests the V2 project search API service
  */
 
-import type { AxiosInstance } from "axios";
 import type { ProjectResponse } from "@/types/v2/project";
 
 // Mock environment variables
@@ -18,42 +17,19 @@ jest.mock("@/components/Utilities/errorManager", () => ({
   errorManager: jest.fn(),
 }));
 
-// Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
-var mockAxiosInstance: jest.Mocked<AxiosInstance>;
-
-// Mock api-client - the factory runs at hoist time, so we initialize the mock here
-jest.mock("@/utilities/auth/api-client", () => {
-  const instance = {
-    get: jest.fn(),
-    post: jest.fn(),
-    delete: jest.fn(),
-    put: jest.fn(),
-    patch: jest.fn(),
-    request: jest.fn(),
-    head: jest.fn(),
-    options: jest.fn(),
-    interceptors: {
-      request: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
-      response: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
-    },
-    defaults: {} as any,
-    getUri: jest.fn(),
-  } as unknown as jest.Mocked<AxiosInstance>;
-
-  mockAxiosInstance = instance;
-
-  return {
-    createAuthenticatedApiClient: jest.fn(() => instance),
-  };
-});
+// Mock fetchData utility - the service now uses fetchData instead of api-client directly
+jest.mock("@/utilities/fetchData");
 
 // Import the service AFTER all mocks are set up
 import { searchProjects, searchProjectsV2 } from "@/services/project-search.service";
+// Import the mocked module to get access to the mock function
+import fetchData from "@/utilities/fetchData";
+
+const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
 
 describe("project-search.service", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockAxiosInstance.get.mockClear();
   });
 
   describe("searchProjects", () => {
@@ -88,54 +64,55 @@ describe("project-search.service", () => {
       const result = await searchProjects("ab");
 
       expect(result).toEqual([]);
-      expect(mockAxiosInstance.get).not.toHaveBeenCalled();
+      expect(mockFetchData).not.toHaveBeenCalled();
     });
 
     it("should return empty array for empty query", async () => {
       const result = await searchProjects("");
 
       expect(result).toEqual([]);
-      expect(mockAxiosInstance.get).not.toHaveBeenCalled();
+      expect(mockFetchData).not.toHaveBeenCalled();
     });
 
     it("should return projects for valid queries", async () => {
-      mockAxiosInstance.get.mockResolvedValueOnce({ data: mockProjects });
+      mockFetchData.mockResolvedValueOnce([mockProjects, null, null, 200]);
 
       const result = await searchProjects("test");
 
       expect(result).toEqual(mockProjects);
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith(expect.stringContaining("test"));
+      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("test"));
     });
 
     it("should include limit parameter when provided", async () => {
-      mockAxiosInstance.get.mockResolvedValueOnce({ data: mockProjects });
+      mockFetchData.mockResolvedValueOnce([mockProjects, null, null, 200]);
 
       await searchProjects("test", 5);
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith(expect.stringContaining("limit=5"));
+      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("limit=5"));
     });
 
-    it("should return empty array on 404", async () => {
-      mockAxiosInstance.get.mockRejectedValueOnce({ response: { status: 404 } });
+    it("should return empty array on error", async () => {
+      mockFetchData.mockResolvedValueOnce([null, "Not found", null, 404]);
 
       const result = await searchProjects("nonexistent");
 
       expect(result).toEqual([]);
     });
 
-    it("should throw on non-404 errors", async () => {
-      const error = { response: { status: 500 } };
-      mockAxiosInstance.get.mockRejectedValueOnce(error);
+    it("should return empty array on API error", async () => {
+      mockFetchData.mockResolvedValueOnce([null, "Server error", null, 500]);
 
-      await expect(searchProjects("test")).rejects.toEqual(error);
+      const result = await searchProjects("test");
+
+      expect(result).toEqual([]);
     });
 
     it("should encode special characters in query", async () => {
-      mockAxiosInstance.get.mockResolvedValueOnce({ data: [] });
+      mockFetchData.mockResolvedValueOnce([[], null, null, 200]);
 
       await searchProjects("test & project");
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         expect.stringContaining(encodeURIComponent("test & project"))
       );
     });

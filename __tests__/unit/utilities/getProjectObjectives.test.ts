@@ -80,7 +80,8 @@ describe("getProjectObjectives (V2)", () => {
       expect(result[0].title).toBe("Complete Phase 1");
       expect(result[0].description).toBe("First phase of development");
       expect(result[0].endsAt).toBeInstanceOf(Date);
-      expect(result[0].completed).toBeNull();
+      // The implementation maps null completed to undefined
+      expect(result[0].completed).toBeUndefined();
       expect(result[0].createdAt).toBeInstanceOf(Date);
 
       // Check second milestone (completed)

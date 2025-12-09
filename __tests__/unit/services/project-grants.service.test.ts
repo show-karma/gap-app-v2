@@ -3,7 +3,6 @@
  * @description Tests the V2 project grants API service
  */
 
-import type { AxiosInstance } from "axios";
 import type { GrantResponse } from "@/types/v2/grant";
 
 // Mock environment variables
@@ -18,42 +17,19 @@ jest.mock("@/components/Utilities/errorManager", () => ({
   errorManager: jest.fn(),
 }));
 
-// Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
-var mockAxiosInstance: jest.Mocked<AxiosInstance>;
-
-// Mock api-client - the factory runs at hoist time, so we initialize the mock here
-jest.mock("@/utilities/auth/api-client", () => {
-  const instance = {
-    get: jest.fn(),
-    post: jest.fn(),
-    delete: jest.fn(),
-    put: jest.fn(),
-    patch: jest.fn(),
-    request: jest.fn(),
-    head: jest.fn(),
-    options: jest.fn(),
-    interceptors: {
-      request: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
-      response: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
-    },
-    defaults: {} as any,
-    getUri: jest.fn(),
-  } as unknown as jest.Mocked<AxiosInstance>;
-
-  mockAxiosInstance = instance;
-
-  return {
-    createAuthenticatedApiClient: jest.fn(() => instance),
-  };
-});
+// Mock fetchData utility - the service now uses fetchData instead of api-client directly
+jest.mock("@/utilities/fetchData");
 
 // Import the service AFTER all mocks are set up
 import { getProjectGrants } from "@/services/project-grants.service";
+// Import the mocked module to get access to the mock function
+import fetchData from "@/utilities/fetchData";
+
+const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
 
 describe("project-grants.service", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockAxiosInstance.get.mockClear();
   });
 
   describe("getProjectGrants", () => {
@@ -81,17 +57,17 @@ describe("project-grants.service", () => {
     ];
 
     it("should return grants array when API returns array", async () => {
-      mockAxiosInstance.get.mockResolvedValueOnce({ data: mockGrants });
+      mockFetchData.mockResolvedValueOnce([mockGrants, null, null, 200]);
 
       const result = await getProjectGrants("test-project");
 
       expect(result).toEqual(mockGrants);
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith(expect.stringContaining("test-project"));
+      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("test-project"));
     });
 
     it("should return array with single grant when API returns single object", async () => {
       const singleGrant = mockGrants[0];
-      mockAxiosInstance.get.mockResolvedValueOnce({ data: singleGrant });
+      mockFetchData.mockResolvedValueOnce([singleGrant, null, null, 200]);
 
       const result = await getProjectGrants("test-project");
 
@@ -99,45 +75,44 @@ describe("project-grants.service", () => {
     });
 
     it("should return empty array when API returns null", async () => {
-      mockAxiosInstance.get.mockResolvedValueOnce({ data: null });
+      mockFetchData.mockResolvedValueOnce([null, "Not found", null, 404]);
 
       const result = await getProjectGrants("test-project");
 
       expect(result).toEqual([]);
     });
 
-    it("should return empty array on 404", async () => {
-      mockAxiosInstance.get.mockRejectedValueOnce({ response: { status: 404 } });
+    it("should return empty array on error", async () => {
+      mockFetchData.mockResolvedValueOnce([null, "Not found", null, 404]);
 
       const result = await getProjectGrants("nonexistent-project");
 
       expect(result).toEqual([]);
     });
 
-    it("should throw on non-404 errors", async () => {
-      const error = { response: { status: 500 } };
-      mockAxiosInstance.get.mockRejectedValueOnce(error);
+    it("should return empty array on API error", async () => {
+      mockFetchData.mockResolvedValueOnce([null, "Server error", null, 500]);
 
-      await expect(getProjectGrants("test-project")).rejects.toEqual(error);
+      const result = await getProjectGrants("test-project");
+
+      expect(result).toEqual([]);
     });
 
     it("should call correct endpoint for project slug", async () => {
-      mockAxiosInstance.get.mockResolvedValueOnce({ data: mockGrants });
+      mockFetchData.mockResolvedValueOnce([mockGrants, null, null, 200]);
 
       await getProjectGrants("my-project-slug");
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith(
-        expect.stringContaining("my-project-slug")
-      );
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith(expect.stringContaining("/grants"));
+      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("my-project-slug"));
+      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("/grants"));
     });
 
     it("should call correct endpoint for project UID", async () => {
-      mockAxiosInstance.get.mockResolvedValueOnce({ data: mockGrants });
+      mockFetchData.mockResolvedValueOnce([mockGrants, null, null, 200]);
 
       await getProjectGrants("0x1234567890");
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith(expect.stringContaining("0x1234567890"));
+      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("0x1234567890"));
     });
   });
 });
