@@ -132,6 +132,11 @@ export function ProgramDetailsTab({
   const processProgramData = useCallback(
     (data: unknown) => {
       const programData = Array.isArray(data) ? data[0] : data;
+      if (!programData) {
+        // Handle empty array or undefined data
+        setProgram(null);
+        return;
+      }
       setProgram(programData as GrantProgram);
       const formValues = buildFormValuesFromMetadata((programData as GrantProgram).metadata);
       if (formValues) {
@@ -165,6 +170,9 @@ export function ProgramDetailsTab({
   useEffect(() => {
     if (programId && chainId) {
       fetchProgram();
+    } else {
+      // Don't leave in loading state if programId/chainId is missing
+      setIsLoadingProgram(false);
     }
   }, [programId, chainId, fetchProgram]);
 
