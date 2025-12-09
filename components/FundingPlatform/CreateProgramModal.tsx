@@ -116,7 +116,7 @@ export function CreateProgramModal({
       try {
         await ProgramRegistryService.approveProgram(result.programId);
         toast.success("Program created and approved successfully!");
-      } catch (approveError: any) {
+      } catch (approveError: unknown) {
         console.error("Error during auto-approval:", approveError);
         toast.success(
           "Program created successfully, but auto-approval failed. Please approve it manually from the manage programs page.",
@@ -127,8 +127,8 @@ export function CreateProgramModal({
       reset();
       onSuccess();
       onClose();
-    } catch (error: any) {
-      const errorMessage = error.message;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage?.includes("already exists")) {
         toast.error("A program with this name already exists");
       } else {
