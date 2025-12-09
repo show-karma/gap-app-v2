@@ -9,16 +9,17 @@ import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-export const getCommunityDetailsV2 = cache(
+/**
+ * Fetches community details with Next.js cache revalidation (30 minutes).
+ * Returns null if community not found.
+ */
+export const getCommunityDetails = cache(
   async (slug: string): Promise<CommunityDetailsV2 | null> => {
     try {
       const response = await fetch(
         `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.COMMUNITY.V2.GET(slug)}`,
         {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
           next: { revalidate: 1800 }, // 30 minutes
         }
       );
@@ -40,7 +41,7 @@ export const getCommunityDetailsV2 = cache(
   }
 );
 
-export const getCommunityStatsV2 = cache(async (slug: string): Promise<CommunityStatsV2> => {
+export const getCommunityStats = cache(async (slug: string): Promise<CommunityStatsV2> => {
   try {
     const [data] = await fetchData(INDEXER.COMMUNITY.V2.STATS(slug));
 
@@ -84,7 +85,7 @@ export const getCommunityStatsV2 = cache(async (slug: string): Promise<Community
   }
 });
 
-export const getCommunityProjectsV2 = async (
+export const getCommunityProjects = async (
   slug: string,
   options: {
     page?: number;
@@ -132,3 +133,18 @@ export const getCommunityProjectsV2 = async (
     };
   }
 };
+
+export const getCommunityCategories = cache(async (communityId: string): Promise<string[]> => {
+  try {
+    const [data] = await fetchData(INDEXER.COMMUNITY.CATEGORIES(communityId));
+
+    if (data?.length) {
+      const categoriesToOrder = data.map((category: { name: string }) => category.name);
+      return categoriesToOrder.sort((a: string, b: string) => a.localeCompare(b, "en"));
+    }
+
+    return [];
+  } catch (_error) {
+    return [];
+  }
+});

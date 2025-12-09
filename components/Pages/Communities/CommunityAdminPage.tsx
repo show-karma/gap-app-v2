@@ -152,7 +152,7 @@ export const CommunityAdminPage = ({
       ) : (
         <div className="flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
           <p className="text-gray-600 dark:text-gray-300 text-center">
-            {MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}
+            {MESSAGES.ADMIN.NOT_AUTHORIZED(community?.details?.name || communityId)}
           </p>
           <Button className="mt-4" onClick={() => window.history.back()}>
             Go Back

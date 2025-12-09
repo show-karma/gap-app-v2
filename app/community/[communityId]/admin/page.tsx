@@ -1,8 +1,9 @@
+import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CommunityAdminPage } from "@/components/Pages/Communities/CommunityAdminPage";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { defaultMetadata } from "@/utilities/meta";
-import { getCommunityDataV2 } from "@/utilities/queries/getCommunityData";
+import { getCommunityDetails } from "@/utilities/queries/v2/community";
 
 export const metadata = defaultMetadata;
 
@@ -12,7 +13,11 @@ interface Props {
 
 export default async function Page(props: Props) {
   const { communityId } = await props.params;
-  const community = await getCommunityDataV2(communityId);
+  const community = await getCommunityDetails(communityId);
+
+  if (!community) {
+    notFound();
+  }
 
   return (
     <Suspense

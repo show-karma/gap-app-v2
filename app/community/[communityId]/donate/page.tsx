@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import type { CommunityDetailsV2 } from "@/types/community";
-import { getCommunityDetailsV2 } from "@/utilities/queries/getCommunityDataV2";
+import { getCommunityDetails } from "@/utilities/queries/v2/community";
 
 export default function DonateProgramSelectPage() {
   const params = useParams();
@@ -26,8 +26,8 @@ export default function DonateProgramSelectPage() {
     isLoading: communityLoading,
     error: communityError,
   } = useQuery<CommunityDetailsV2 | null>({
-    queryKey: ["communityDetailsV2", communityId],
-    queryFn: () => getCommunityDetailsV2(communityId),
+    queryKey: ["communityDetails", communityId],
+    queryFn: () => getCommunityDetails(communityId),
     enabled: !!communityId,
   });
 
