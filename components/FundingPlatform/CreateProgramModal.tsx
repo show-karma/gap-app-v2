@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { z } from "zod";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
@@ -21,42 +20,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
+import { type CreateProgramFormSchema, createProgramSchema } from "@/schemas/programFormSchema";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
 import type { CreateProgramFormData } from "@/types/program-registry";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
-
-const createProgramSchema = z.object({
-  name: z
-    .string()
-    .min(3, { message: "Program name must be at least 3 characters" })
-    .max(50, { message: "Program name must be at most 50 characters" }),
-  description: z.string().min(3, { message: "Description is required" }),
-  shortDescription: z
-    .string()
-    .max(100, { message: "Short description must be at most 100 characters" })
-    .min(1, { message: "Short description is required" }),
-  dates: z
-    .object({
-      endsAt: z.date().optional(),
-      startsAt: z.date().optional(),
-    })
-    .refine(
-      (data) => {
-        if (!data.endsAt || !data.startsAt) return true;
-        const endsAt = data.endsAt.getTime() / 1000;
-        const startsAt = data.startsAt.getTime() / 1000;
-        return startsAt ? startsAt <= endsAt : true;
-      },
-      {
-        message: "Start date must be before the end date",
-        path: ["startsAt"],
-      }
-    ),
-  budget: z.coerce.number().min(0, { message: "Budget must be a positive number" }).optional(),
-});
-
-type CreateProgramFormSchema = z.infer<typeof createProgramSchema>;
 
 interface CreateProgramModalProps {
   isOpen: boolean;
