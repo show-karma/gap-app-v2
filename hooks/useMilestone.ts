@@ -12,7 +12,6 @@ import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
 import { INDEXER } from "@/utilities/indexer";
@@ -1118,9 +1117,7 @@ export const useMilestone = () => {
           // Project milestone editing
           const fetchedProject = await getProjectById(project?.uid as string);
           if (!fetchedProject) return;
-          const fetchedMilestones = await gapIndexerApi
-            .projectMilestones(project?.uid as string)
-            .then((res: any) => res.data);
+          const fetchedMilestones = await getProjectObjectives(project?.uid as string);
           if (!fetchedMilestones || !gapClient?.network) return;
           const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient?.network);
           const objectiveInstance = objectivesInstances.find(

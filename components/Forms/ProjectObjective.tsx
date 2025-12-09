@@ -16,7 +16,6 @@ import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -220,9 +219,7 @@ export const ProjectObjectiveForm = ({
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),
       };
-      const fetchedMilestones = await gapIndexerApi
-        .projectMilestones(projectId)
-        .then((res) => res.data);
+      const fetchedMilestones = await getProjectObjectives(projectId);
       if (!fetchedMilestones || !gapClient?.network) return;
       const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient?.network);
       const objectiveInstance = objectivesInstances.find(

@@ -5,7 +5,7 @@ import { INDEXER } from "@/utilities/indexer";
 export interface Track {
   id: string;
   name: string;
-  description?: string;
+  description?: string | null;
   communityUID: string;
   isArchived: boolean;
   createdAt: string | Date;
@@ -14,72 +14,89 @@ export interface Track {
   isActive?: boolean;
 }
 
+export interface ProjectTrack {
+  id: string;
+  projectUID: string;
+  trackId: string;
+  programId: string;
+  isActive: boolean;
+  track?: Track;
+  createdAt: string;
+}
+
+// V2 API response types
+interface GetTracksV2Response {
+  tracks: Track[];
+}
+
+interface GetProjectTracksV2Response {
+  tracks: ProjectTrack[];
+}
+
+// Helper to map track from API response
+const mapTrackResponse = (track: any): Track => ({
+  ...track,
+  createdAt: new Date(track.createdAt),
+  updatedAt: new Date(track.updatedAt),
+});
+
 export const trackService = {
-  // Get all tracks for a community
+  // Get all tracks for a community (V2)
   getAllTracks: async (
     communityUID: string,
     includeArchived: boolean = false
   ): Promise<Track[]> => {
     try {
-      const [data, error] = await fetchData(
-        INDEXER.TRACKS.ALL(communityUID, includeArchived),
+      const [data, error] = await fetchData<GetTracksV2Response>(
+        INDEXER.V2.TRACKS.LIST(communityUID, includeArchived),
         "GET",
         {},
         {},
         {},
-        true,
+        false,
         false
       );
 
-      if (error) {
-        throw new Error(error);
+      if (error || !data) {
+        throw new Error(error || "Failed to fetch tracks");
       }
 
-      return data.map((track: any) => ({
-        ...track,
-        createdAt: new Date(track.createdAt),
-        updatedAt: new Date(track.updatedAt),
-      }));
+      return (data.tracks || []).map(mapTrackResponse);
     } catch (error: any) {
       errorManager("Error fetching tracks", error);
       throw error;
     }
   },
 
-  // Get tracks for a program
-  getProgramTracks: async (programId: string) => {
+  // Get tracks for a program (V2)
+  getProgramTracks: async (programId: string): Promise<Track[]> => {
     try {
-      const [data, error] = await fetchData(
-        INDEXER.PROGRAMS.TRACKS(programId),
+      const [data, error] = await fetchData<GetTracksV2Response>(
+        INDEXER.V2.TRACKS.PROGRAM_TRACKS(programId),
         "GET",
         {},
         {},
         {},
-        true,
+        false,
         false
       );
 
-      if (error) {
-        throw new Error(error);
+      if (error || !data) {
+        throw new Error(error || "Failed to fetch program tracks");
       }
 
-      const mappedTracks = data.map((track: any) => ({
-        ...track,
-        createdAt: new Date(track.createdAt),
-        updatedAt: new Date(track.updatedAt),
-      }));
-      return mappedTracks;
+      return (data.tracks || []).map(mapTrackResponse);
     } catch (error: any) {
       errorManager(`Error fetching tracks for program ${programId}`, error);
       throw error;
     }
   },
 
-  // Create a new track
+  // Create a new track (V2)
   createTrack: async (name: string, description: string, communityUID: string): Promise<Track> => {
     try {
-      const [data, error] = await fetchData(
-        INDEXER.TRACKS.CREATE(),
+      const [data, error] = await fetchData<Track>(
+        INDEXER.V2.TRACKS.CREATE(),
         "POST",
         {
           name,
@@ -92,36 +109,31 @@ export const trackService = {
         false
       );
 
-      if (error) {
-        throw new Error(error);
+      if (error || !data) {
+        throw new Error(error || "Failed to create track");
       }
 
-      return {
-        ...data,
-        createdAt: new Date(data.createdAt),
-        updatedAt: new Date(data.updatedAt),
-      };
+      return mapTrackResponse(data);
     } catch (error: any) {
       errorManager("Error creating track", error);
       throw error;
     }
   },
 
-  // Update an existing track
+  // Update an existing track (V2)
   updateTrack: async (
     id: string,
     name: string,
     description?: string,
-    communityUID?: string
+    _communityUID?: string // Not needed for V2
   ): Promise<Track> => {
     try {
-      const [data, error] = await fetchData(
-        INDEXER.TRACKS.UPDATE(id),
+      const [data, error] = await fetchData<Track>(
+        INDEXER.V2.TRACKS.UPDATE(id),
         "PUT",
         {
           name,
           description,
-          communityUID,
         },
         {},
         {},
@@ -129,26 +141,22 @@ export const trackService = {
         false
       );
 
-      if (error) {
-        throw new Error(error);
+      if (error || !data) {
+        throw new Error(error || "Failed to update track");
       }
 
-      return {
-        ...data,
-        createdAt: new Date(data.createdAt),
-        updatedAt: new Date(data.updatedAt),
-      };
+      return mapTrackResponse(data);
     } catch (error: any) {
       errorManager("Error updating track", error);
       throw error;
     }
   },
 
-  // Archive a track
-  archiveTrack: async (id: string, communityUID: string): Promise<void> => {
+  // Archive a track (V2)
+  archiveTrack: async (id: string, _communityUID?: string): Promise<Track> => {
     try {
-      const [, error] = await fetchData(
-        INDEXER.TRACKS.ARCHIVE(id, communityUID),
+      const [data, error] = await fetchData<Track>(
+        INDEXER.V2.TRACKS.ARCHIVE(id),
         "DELETE",
         {},
         {},
@@ -157,26 +165,28 @@ export const trackService = {
         false
       );
 
-      if (error) {
-        throw new Error(error);
+      if (error || !data) {
+        throw new Error(error || "Failed to archive track");
       }
+
+      return mapTrackResponse(data);
     } catch (error: any) {
       errorManager("Error archiving track", error);
       throw error;
     }
   },
 
-  // Assign tracks to a program
+  // Assign tracks to a program (V2)
   assignTracksToProgram: async (
     programId: string,
     trackIds: string[],
-    communityUID: string
+    _communityUID?: string // Not needed for V2
   ): Promise<void> => {
     try {
       const [, error] = await fetchData(
-        INDEXER.PROGRAMS.TRACKS_ASSIGN(programId),
+        INDEXER.V2.TRACKS.ASSIGN_TO_PROGRAM(programId),
         "POST",
-        { trackIds, communityUID },
+        { trackIds },
         {},
         {},
         true,
@@ -192,15 +202,15 @@ export const trackService = {
     }
   },
 
-  // Remove a track from a program
+  // Remove a track from a program (V2)
   removeTrackFromProgram: async (
     programId: string,
     trackId: string,
-    communityUID: string
+    _communityUID?: string // Not needed for V2
   ): Promise<void> => {
     try {
       const [, error] = await fetchData(
-        INDEXER.PROGRAMS.TRACKS_REMOVE(programId, trackId, communityUID),
+        INDEXER.V2.TRACKS.UNASSIGN_FROM_PROGRAM(programId, trackId),
         "DELETE",
         {},
         {},
@@ -218,68 +228,69 @@ export const trackService = {
     }
   },
 
-  // Remove multiple tracks from a program in batch
+  // Remove multiple tracks from a program in batch (V2)
   removeTracksFromProgramBatch: async (
     programId: string,
     trackIds: string[],
-    communityUID: string
+    _communityUID?: string // Not needed for V2
   ): Promise<void> => {
+    // For V2, we can remove tracks one by one or use a batch endpoint if available
     try {
-      const [, error] = await fetchData(
-        INDEXER.PROGRAMS.TRACKS_REMOVE_BATCH(programId),
-        "DELETE",
-        { trackIds, communityUID },
-        {},
-        {},
-        true,
-        false
+      await Promise.all(
+        trackIds.map((trackId) =>
+          fetchData(
+            INDEXER.V2.TRACKS.UNASSIGN_FROM_PROGRAM(programId, trackId),
+            "DELETE",
+            {},
+            {},
+            {},
+            true,
+            false
+          )
+        )
       );
-
-      if (error) {
-        throw new Error(error);
-      }
     } catch (error: any) {
       errorManager("Error removing tracks from program in batch", error);
       throw error;
     }
   },
 
-  // Get tracks for a project
-  getProjectTracks: async (projectId: string): Promise<Track[]> => {
+  // Get tracks for a project (V2)
+  getProjectTracks: async (projectId: string, programId: string): Promise<ProjectTrack[]> => {
     try {
-      const [data, error] = await fetchData(
-        INDEXER.PROJECTS.TRACKS(projectId),
+      const [data, error] = await fetchData<GetProjectTracksV2Response>(
+        INDEXER.V2.TRACKS.PROJECT_TRACKS(projectId, programId),
         "GET",
         {},
         {},
         {},
-        true,
+        false,
         false
       );
 
-      if (error) {
-        throw new Error(error);
+      if (error || !data) {
+        throw new Error(error || "Failed to fetch project tracks");
       }
 
-      return data.data || [];
+      return data.tracks || [];
     } catch (error: any) {
       errorManager(`Error fetching tracks for project ${projectId}`, error);
       throw error;
     }
   },
 
-  // Assign tracks to a project
+  // Assign tracks to a project (V2)
   assignTracksToProject: async (
     projectId: string,
     trackIds: string[],
     programId: string,
-    communityUID: string
+    _communityUID?: string // Not needed for V2
   ): Promise<void> => {
     try {
       const [, error] = await fetchData(
-        INDEXER.PROJECTS.TRACKS(projectId),
+        INDEXER.V2.TRACKS.ASSIGN_TO_PROJECT(projectId),
         "POST",
-        { trackIds, programId, communityUID },
+        { trackIds, programId },
         {},
         {},
         true,
@@ -291,6 +302,60 @@ export const trackService = {
       }
     } catch (error: any) {
       errorManager("Error assigning tracks to project", error);
+      throw error;
+    }
+  },
+
+  // Unassign tracks from a project (V2)
+  unassignTracksFromProject: async (
+    programId: string,
+    projectId: string,
+    trackIds: string[]
+  ): Promise<void> => {
+    try {
+      const [, error] = await fetchData(
+        INDEXER.V2.TRACKS.UNASSIGN_FROM_PROJECT(programId, projectId),
+        "DELETE",
+        { trackIds },
+        {},
+        {},
+        true,
+        false
+      );
+
+      if (error) {
+        throw new Error(error);
+      }
+    } catch (error: any) {
+      errorManager("Error unassigning tracks from project", error);
+      throw error;
+    }
+  },
+
+  // Get projects by track (V2)
+  getProjectsByTrack: async (
+    communityId: string,
+    programId: string,
+    trackId?: string
+  ): Promise<any[]> => {
+    try {
+      const [data, error] = await fetchData(
+        INDEXER.V2.TRACKS.PROJECTS_BY_TRACK(communityId, programId, trackId),
+        "GET",
+        {},
+        {},
+        {},
+        false,
+        false
+      );
+
+      if (error || !data) {
+        throw new Error(error || "Failed to fetch projects by track");
+      }
+
+      return data.projects || [];
+    } catch (error: any) {
+      errorManager("Error fetching projects by track", error);
       throw error;
     }
   },

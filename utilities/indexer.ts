@@ -38,6 +38,7 @@ export const INDEXER = {
       GRANT_MILESTONES: (projectUid: string, programId: string) =>
         `/v2/projects/${projectUid}/grants/${programId}/milestones`,
       UPDATES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/updates`,
+      MILESTONES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/milestones`,
     },
     APPLICATIONS: {
       BY_PROJECT_UID: (projectUID: string) => `/v2/funding-applications/project/${projectUID}`,
@@ -83,10 +84,41 @@ export const INDEXER = {
         if (resource) params.append("resource", resource);
         return `/v2/user/permissions?${params.toString()}`;
       },
+      ADMIN_COMMUNITIES: () => `/v2/user/communities/admin`,
+      PROJECTS: (page?: number, limit?: number) => {
+        const params = new URLSearchParams();
+        if (page !== undefined) params.set("page", page.toString());
+        if (limit !== undefined) params.set("limit", limit.toString());
+        return `/v2/user/projects${params.toString() ? `?${params.toString()}` : ""}`;
+      },
     },
     MILESTONE_REVIEWERS: {
       LIST: (programId: string, chainID: number) =>
         `/v2/programs/${programId}/${chainID}/milestone-reviewers`,
+    },
+    TRACKS: {
+      LIST: (communityUID: string, includeArchived?: boolean) => {
+        const params = new URLSearchParams({ communityUID });
+        if (includeArchived) params.set("includeArchived", "true");
+        return `/v2/tracks?${params.toString()}`;
+      },
+      BY_ID: (id: string) => `/v2/tracks/${id}`,
+      CREATE: () => `/v2/tracks`,
+      UPDATE: (id: string) => `/v2/tracks/${id}`,
+      ARCHIVE: (id: string) => `/v2/tracks/${id}`,
+      PROGRAM_TRACKS: (programId: string) => `/v2/programs/${programId}/tracks`,
+      ASSIGN_TO_PROGRAM: (programId: string) => `/v2/programs/${programId}/tracks`,
+      UNASSIGN_FROM_PROGRAM: (programId: string, trackId: string) =>
+        `/v2/programs/${programId}/tracks/${trackId}`,
+      PROJECT_TRACKS: (projectId: string, programId: string) =>
+        `/v2/projects/${projectId}/programs/${programId}/tracks`,
+      ASSIGN_TO_PROJECT: (projectId: string) => `/v2/projects/${projectId}/tracks`,
+      UNASSIGN_FROM_PROJECT: (programId: string, projectId: string) =>
+        `/v2/programs/${programId}/projects/${projectId}/tracks`,
+      PROJECTS_BY_TRACK: (communityId: string, programId: string, trackId?: string) => {
+        const base = `/v2/communities/${communityId}/programs/${programId}/projects`;
+        return trackId ? `${base}?trackId=${trackId}` : base;
+      },
     },
   },
   PROGRAMS: {

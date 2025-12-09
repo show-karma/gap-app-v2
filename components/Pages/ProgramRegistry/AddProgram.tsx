@@ -33,7 +33,6 @@ import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { appNetwork } from "@/utilities/network";
