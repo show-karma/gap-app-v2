@@ -3,22 +3,15 @@ import type { Hex } from "viem";
 export const INDEXER = {
   ATTESTATION_LISTENER: (hash: Hex | string, chainId: number) =>
     `/attestations/index-by-transaction/${hash}/${chainId}`,
-  ATTESTATIONS: {
-    GET: (uid: string, chainId?: number) =>
-      `/attestations/${uid}${chainId ? `?chainId=${chainId}` : ""}`,
-  },
   PROFILE: {
     GET: (address: string) => `/user/${address}`,
   },
   REGISTRY: {
     GET_ALL: "/registry",
     FIND_BY_ID: (id: string, chainId: number) => `/registry/find/${id}/${chainId}`,
-    GET_ALL_PENDING: "/registry/pending",
     APPROVE: "/registry/approve",
     UPDATE: (id: string, chainId: number) => `/registry/${id}/${chainId}/updateMetadata`,
     CREATE: "/registry/offchain/create",
-    MANAGERS: (profileId: string, chainId: number) =>
-      `/registry/profile/${profileId}/${chainId}/members`,
   },
   PROJECTS: {
     GET_ALL: (offset: number, limit: number, sortField: string, sortOrder: "asc" | "desc") =>
@@ -122,21 +115,8 @@ export const INDEXER = {
     },
   },
   PROGRAMS: {
-    TRACKS: (programId: string) => `/tracks/programs/${programId}/tracks`,
-    TRACKS_ASSIGN: (programId: string) => `/tracks/programs/${programId}/tracks`,
-    TRACKS_REMOVE: (programId: string, trackId: string, communityUID: string) =>
-      `/tracks/programs/${programId}/tracks/${trackId}?communityUID=${communityUID}`,
-    TRACKS_REMOVE_BATCH: (programId: string) => `/tracks/programs/${programId}/tracks`,
     GET: (programId: string) => `/programs/${programId}`,
     COMMUNITY: (communityId: string) => `/communities/${communityId}/programs`,
-  },
-  TRACKS: {
-    ALL: (communityUID: string, includeArchived: boolean = false) =>
-      `/tracks?communityUID=${communityUID}${includeArchived ? "&includeArchived=true" : ""}`,
-    BY_ID: (id: string) => `/tracks/${id}`,
-    CREATE: () => `/tracks`,
-    UPDATE: (id: string) => `/tracks/${id}`,
-    ARCHIVE: (id: string, communityUID: string) => `/tracks/${id}?communityUID=${communityUID}`,
   },
   PROJECT: {
     EXTERNAL: {
@@ -150,11 +130,9 @@ export const INDEXER = {
       VERIFY_SIGNATURE: () => `/v2/projects/contracts/verify-signature`,
     },
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
-    GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
     FUNDEDBY: (address: string) => `/projects/fundedby/${address}`,
     GRANTS_GENIE: (projectId: string) => `/projects/${projectId}/grants-genie`,
-    GRANTS: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/grants`,
     REQUEST_INTRO: (projectIdOrSlug: string) => `/projects/requestintro/${projectIdOrSlug}`,
     ENDORSEMENT: {
       NOTIFY: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/endorsements/notify`,
@@ -225,7 +203,6 @@ export const INDEXER = {
   COMMUNITY: {
     LIST: ({ page, limit, includeStats }: { page: number; limit: number; includeStats: boolean }) =>
       `/v2/communities/?page=${page}&limit=${limit}&includeStats=${includeStats}`,
-    GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
     CATEGORIES: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
     REGIONS: (idOrSlug: string) => `/v2/communities/${idOrSlug}/regions`,
     V2: {
@@ -292,18 +269,7 @@ export const INDEXER = {
     REPORT: {
       GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/report`,
     },
-    GRANT_TITLES: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/grant-titles`,
-    GRANT_CATEGORIES: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/grant-categories`,
-    GRANT_PROGRAMS: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/grant-programs`,
-    GRANT_PROGRAMS_STATS: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/grant-programs/stats`,
-    GRANT_PROGRAMS_STATS_TOTAL: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/grant-programs/stats/total`,
     PROGRAMS: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/programs`,
-    PROGRAMS_IMPACT: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/programs/impact`,
     ALL_PROGRAMS_IMPACT_AGGREGATE: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/programs/impact-aggregate`,
     PROJECT_DISCOVERY: (communityIdOrSlug: string) =>
@@ -361,11 +327,6 @@ export const INDEXER = {
     },
   },
   GRANTS: {
-    GET_ZK_GROUP: (chainID: string, communityUID: string, grantUID: string, scope: string) =>
-      `/semaphores/groups/check?chainID=${chainID}&communityUID=${communityUID}&grantUID=${grantUID}&scope=${scope}`,
-    BY_UID: (grantUID: string) => `/grants/${grantUID}`,
-    UPDATE_EXTERNAL_ID: `/grants/external-id/update`,
-    REMOVE_EXTERNAL_ID: `/grants/external-id/delete`,
     EXTERNAL_ADDRESS: {
       UPDATE: (grantUID: string) => `/grants/${grantUID}/external/update`,
     },

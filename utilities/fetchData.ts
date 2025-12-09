@@ -10,7 +10,7 @@ import { sanitizeObject } from "./sanitize";
  * Privy's simplified token management.
  *
  * @template T - Optional type parameter for response data (defaults to any for backward compatibility)
- * @returns Promise<[T, null, any] | [null, string]> - Tuple of [data, error, pageInfo]
+ * @returns Promise<[T, null, any, number] | [null, string, null, number]> - Tuple of [data, error, pageInfo, status]
  */
 export default async function fetchData<T = any>(
   endpoint: string,
@@ -21,7 +21,7 @@ export default async function fetchData<T = any>(
   isAuthorized = true,
   cache: boolean | undefined = false,
   baseUrl: string = envVars.NEXT_PUBLIC_GAP_INDEXER_URL
-): Promise<[T, null, any] | [null, string]> {
+): Promise<[T, null, any, number] | [null, string, null, number]> {
   try {
     const sanitizedData = sanitizeObject(axiosData);
     const isIndexerUrl = baseUrl === envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
@@ -52,9 +52,9 @@ export default async function fetchData<T = any>(
       requestConfig.timeout = 360000;
     }
 
-    const res = await axios.request<T>(requestConfig);
+    const res = await axios.request<T & { pageInfo?: any }>(requestConfig);
     const resData = res.data;
-    const pageInfo = res.data.pageInfo || null;
+    const pageInfo = resData?.pageInfo || null;
     return [resData, null, pageInfo, res.status];
   } catch (err: any) {
     let error = "";
