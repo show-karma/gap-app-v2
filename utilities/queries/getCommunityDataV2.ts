@@ -5,19 +5,35 @@ import type {
   CommunityStatsV2,
 } from "@/types/community";
 import { zeroUID } from "@/utilities/commons";
+import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 export const getCommunityDetailsV2 = cache(
   async (slug: string): Promise<CommunityDetailsV2 | null> => {
     try {
-      const [data] = await fetchData(INDEXER.COMMUNITY.V2.GET(slug));
+      const response = await fetch(
+        `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.COMMUNITY.V2.GET(slug)}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          next: { revalidate: 1800 }, // 30 minutes
+        }
+      );
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const data: CommunityDetailsV2 = await response.json();
 
       if (!data || data?.uid === zeroUID || !data?.details?.name) {
         return null;
       }
 
-      return data as CommunityDetailsV2;
+      return data;
     } catch (_error) {
       return null;
     }

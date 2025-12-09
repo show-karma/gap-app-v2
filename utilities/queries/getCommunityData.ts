@@ -1,23 +1,18 @@
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { notFound } from "next/navigation";
 import { cache } from "react";
-import { zeroUID } from "@/utilities/commons";
+import type { CommunityDetailsV2 } from "@/types/community";
 import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
+import { getCommunityDetailsV2 } from "./getCommunityDataV2";
 
-export const getCommunityData = cache(async (communityId: string): Promise<ICommunityResponse> => {
-  try {
-    const { data } = await gapIndexerApi.communityBySlug(communityId);
+export const getCommunityDataV2 = cache(async (communityId: string): Promise<CommunityDetailsV2> => {
+  const data = await getCommunityDetailsV2(communityId);
 
-    if (!data || data?.uid === zeroUID || !data?.details?.data?.name) {
-      notFound();
-    }
-
-    return data as ICommunityResponse;
-  } catch (_error) {
+  if (!data) {
     notFound();
   }
+
+  return data;
 });
 
 export const getCommunityCategories = cache(async (communityId: string): Promise<string[]> => {
