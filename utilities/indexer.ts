@@ -41,8 +41,52 @@ export const INDEXER = {
     },
     APPLICATIONS: {
       BY_PROJECT_UID: (projectUID: string) => `/v2/funding-applications/project/${projectUID}`,
-      COMMENTS: (referenceNumber: string) => `/v2/applications/${referenceNumber}/comments`,
+      COMMENTS: (applicationId: string) => `/v2/applications/${applicationId}/comments`,
       DELETE: (referenceNumber: string) => `/v2/funding-applications/${referenceNumber}`,
+    },
+    SEARCH: (query: string, limit: number = 10) =>
+      `/v2/search?q=${encodeURIComponent(query)}&limit=${limit}`,
+    FUNDING_PROGRAMS: {
+      BY_COMMUNITY: (communityId: string) => `/v2/funding-program-configs/community/${communityId}`,
+      GET: (programId: string, chainId: number) =>
+        `/v2/funding-program-configs/${programId}/${chainId}`,
+      LIST: (community?: string) =>
+        `/v2/funding-program-configs${community ? `?community=${community}` : ""}`,
+      ENABLED: () => `/v2/funding-program-configs/enabled`,
+      REVIEWERS: (programId: string, chainID: number) =>
+        `/v2/funding-program-configs/${programId}/${chainID}/reviewers`,
+      CHECK_PERMISSION: (programId: string, chainID: number, action?: string) => {
+        const params = new URLSearchParams();
+        if (action) params.append("action", action);
+        return `/v2/funding-program-configs/${programId}/${chainID}/check-permission?${params.toString()}`;
+      },
+      MY_REVIEWER_PROGRAMS: () => `/v2/funding-program-configs/my-reviewer-programs`,
+    },
+    FUNDING_APPLICATIONS: {
+      GET: (applicationId: string) => `/v2/funding-applications/${applicationId}`,
+      BY_PROGRAM: (programId: string, chainId: number) =>
+        `/v2/funding-applications/program/${programId}/${chainId}`,
+      BY_EMAIL: (programId: string, chainId: number, email: string) =>
+        `/v2/funding-applications/program/${programId}/${chainId}/by-email?email=${encodeURIComponent(email)}`,
+      STATISTICS: (programId: string, chainId: number) =>
+        `/v2/funding-applications/program/${programId}/${chainId}/statistics`,
+      EXPORT: (programId: string, chainId: number) =>
+        `/v2/funding-applications/program/${programId}/${chainId}/export`,
+      ADMIN_EXPORT: (programId: string, chainId: number) =>
+        `/v2/funding-applications/admin/${programId}/${chainId}/export`,
+      VERSIONS_TIMELINE: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/versions/timeline`,
+    },
+    USER: {
+      PERMISSIONS: (resource?: string) => {
+        const params = new URLSearchParams();
+        if (resource) params.append("resource", resource);
+        return `/v2/user/permissions?${params.toString()}`;
+      },
+    },
+    MILESTONE_REVIEWERS: {
+      LIST: (programId: string, chainID: number) =>
+        `/v2/programs/${programId}/${chainID}/milestone-reviewers`,
     },
   },
   PROGRAMS: {

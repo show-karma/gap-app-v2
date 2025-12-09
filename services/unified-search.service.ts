@@ -6,8 +6,8 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Community } from "@/types/v2/community";
 import type { ProjectResponse } from "@/types/v2/project";
-import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
-import { envVars } from "@/utilities/enviromentVars";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 export interface UnifiedSearchResponse {
   projects: ProjectResponse[];
@@ -40,8 +40,6 @@ interface UnifiedSearchApiResponse {
     error: null;
   };
 }
-
-const apiClient = createAuthenticatedApiClient(envVars.NEXT_PUBLIC_GAP_INDEXER_URL);
 
 /**
  * Transform API response to match existing UnifiedSearchResponse format
@@ -90,14 +88,12 @@ export const unifiedSearch = async (
     return { projects: [], communities: [] };
   }
 
-  try {
-    const response = await apiClient.get<UnifiedSearchApiResponse>(
-      `/v2/search?q=${encodeURIComponent(query)}&limit=${limit}`
-    );
+  const [data, error] = await fetchData<UnifiedSearchApiResponse>(INDEXER.V2.SEARCH(query, limit));
 
-    return transformSearchResponse(response.data);
-  } catch (error) {
+  if (error || !data) {
     errorManager(`Error in unified search: ${error}`, error);
     return { projects: [], communities: [] };
   }
+
+  return transformSearchResponse(data);
 };
