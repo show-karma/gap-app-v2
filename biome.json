@@ -167,6 +167,12 @@
           }
         }
       }
+    },
+    {
+      "includes": ["**/globals.css"],
+      "formatter": {
+        "enabled": false
+      }
     }
   ],
   "assist": {
