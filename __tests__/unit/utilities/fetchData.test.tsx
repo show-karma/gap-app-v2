@@ -80,7 +80,7 @@ describe("fetchData", () => {
     expect(resData).toBeNull();
     // When there's no response, the implementation returns the error object itself
     expect(error).toBe(mockError);
-    expect(pageInfo).toBeUndefined();
+    expect(pageInfo).toBeNull();
   });
 
   it("should handle API errors", async () => {
@@ -97,6 +97,6 @@ describe("fetchData", () => {
 
     expect(resData).toBeNull();
     expect(error).toBe("Bad Request");
-    expect(pageInfo).toBeUndefined();
+    expect(pageInfo).toBeNull();
   });
 });
