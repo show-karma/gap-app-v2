@@ -23,7 +23,7 @@ describe("fetchData", () => {
     (axios.request as jest.Mock).mockResolvedValue(mockResponse);
     (TokenManager.getToken as jest.Mock).mockResolvedValue(null);
 
-    const [resData, error, pageInfo] = await fetchData("/test-endpoint");
+    const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
 
     expect(axios.request).toHaveBeenCalledWith({
       url: "https://test-api.com/test-endpoint",
@@ -36,6 +36,7 @@ describe("fetchData", () => {
     expect(resData).toEqual({ result: "success" });
     expect(error).toBeNull();
     expect(pageInfo).toBeNull();
+    expect(status).toBe(200);
   });
 
   it("should make an authorized POST request", async () => {
@@ -48,7 +49,7 @@ describe("fetchData", () => {
     };
     (axios.request as jest.Mock).mockResolvedValue(mockResponse);
 
-    const [resData, error, pageInfo] = await fetchData(
+    const [resData, error, pageInfo, status] = await fetchData(
       "/test-endpoint",
       "POST",
       { key: "value" },
@@ -68,6 +69,7 @@ describe("fetchData", () => {
     expect(resData).toEqual({ result: "success", pageInfo: { page: 1 } });
     expect(error).toBeNull();
     expect(pageInfo).toEqual({ page: 1 });
+    expect(status).toBe(200);
   });
 
   it("should handle network errors", async () => {
@@ -75,12 +77,14 @@ describe("fetchData", () => {
     (axios.request as jest.Mock).mockRejectedValue(mockError);
     (TokenManager.getToken as jest.Mock).mockResolvedValue(null);
 
-    const [resData, error, pageInfo] = await fetchData("/test-endpoint");
+    const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
 
     expect(resData).toBeNull();
     // When there's no response, the implementation returns the error object itself
     expect(error).toBe(mockError);
     expect(pageInfo).toBeNull();
+    // Default status for network errors without response
+    expect(status).toBe(500);
   });
 
   it("should handle API errors", async () => {
@@ -89,14 +93,71 @@ describe("fetchData", () => {
         data: {
           message: "Bad Request",
         },
+        status: 400,
       },
     };
     (axios.request as jest.Mock).mockRejectedValue(mockError);
 
-    const [resData, error, pageInfo] = await fetchData("/test-endpoint");
+    const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
 
     expect(resData).toBeNull();
     expect(error).toBe("Bad Request");
     expect(pageInfo).toBeNull();
+    expect(status).toBe(400);
+  });
+
+  it("should return 404 status for not found errors", async () => {
+    const mockError = {
+      response: {
+        data: {
+          message: "Not Found",
+        },
+        status: 404,
+      },
+    };
+    (axios.request as jest.Mock).mockRejectedValue(mockError);
+    (TokenManager.getToken as jest.Mock).mockResolvedValue(null);
+
+    const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
+
+    expect(resData).toBeNull();
+    expect(error).toBe("Not Found");
+    expect(pageInfo).toBeNull();
+    expect(status).toBe(404);
+  });
+
+  it("should return 500 status for server errors", async () => {
+    const mockError = {
+      response: {
+        data: {
+          message: "Internal Server Error",
+        },
+        status: 500,
+      },
+    };
+    (axios.request as jest.Mock).mockRejectedValue(mockError);
+    (TokenManager.getToken as jest.Mock).mockResolvedValue(null);
+
+    const [resData, error, pageInfo, status] = await fetchData("/test-endpoint");
+
+    expect(resData).toBeNull();
+    expect(error).toBe("Internal Server Error");
+    expect(pageInfo).toBeNull();
+    expect(status).toBe(500);
+  });
+
+  it("should return 201 status for successful creation", async () => {
+    const mockResponse = { data: { id: "123", created: true }, status: 201 };
+    (axios.request as jest.Mock).mockResolvedValue(mockResponse);
+    (TokenManager.getToken as jest.Mock).mockResolvedValue("test-token");
+
+    const [resData, error, pageInfo, status] = await fetchData("/test-endpoint", "POST", {
+      name: "test",
+    });
+
+    expect(resData).toEqual({ id: "123", created: true });
+    expect(error).toBeNull();
+    expect(pageInfo).toBeNull();
+    expect(status).toBe(201);
   });
 });
