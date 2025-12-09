@@ -1,7 +1,7 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
@@ -25,6 +25,22 @@ interface ProgramDetailsTabProps {
   programId: string;
   chainId: number;
   readOnly?: boolean;
+}
+
+// Constants
+const SHORT_DESCRIPTION_MAX_LENGTH = 100;
+const DATE_PICKER_BUTTON_CLASS = "w-full text-base";
+
+/**
+ * Helper component for ARIA live region error announcements
+ */
+function AriaLiveError({ error }: { error?: { message?: string } }) {
+  if (!error?.message) return null;
+  return (
+    <div aria-live="polite" aria-atomic="true" className="sr-only">
+      {`Error: ${error.message}`}
+    </div>
+  );
 }
 
 /**
@@ -102,6 +118,29 @@ export function ProgramDetailsTab({
     },
   });
 
+  // Optimize watched values to prevent unnecessary re-renders
+  const shortDescription = useWatch({ control, name: "shortDescription" });
+  const startDate = useWatch({ control, name: "dates.startsAt" });
+
+  // Memoize disabled state calculation
+  const isDisabled = useMemo(
+    () => isSubmitting || isLoading || readOnly,
+    [isSubmitting, isLoading, readOnly]
+  );
+
+  // Helper to process and update program data
+  const processProgramData = useCallback(
+    (data: unknown) => {
+      const programData = Array.isArray(data) ? data[0] : data;
+      setProgram(programData as GrantProgram);
+      const formValues = buildFormValuesFromMetadata((programData as GrantProgram).metadata);
+      if (formValues) {
+        reset(formValues);
+      }
+    },
+    [reset]
+  );
+
   // Fetch program data
   const fetchProgram = useCallback(async () => {
     try {
@@ -112,15 +151,7 @@ export function ProgramDetailsTab({
         throw new Error(error);
       }
       if (data) {
-        // Handle array response (some endpoints return array)
-        const programData = Array.isArray(data) ? data[0] : data;
-        setProgram(programData as GrantProgram);
-
-        // Populate form with existing data
-        const formValues = buildFormValuesFromMetadata((programData as GrantProgram).metadata);
-        if (formValues) {
-          reset(formValues);
-        }
+        processProgramData(data);
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Failed to load program data";
@@ -129,7 +160,7 @@ export function ProgramDetailsTab({
     } finally {
       setIsLoadingProgram(false);
     }
-  }, [programId, chainId, reset]);
+  }, [programId, chainId, processProgramData]);
 
   useEffect(() => {
     if (programId && chainId) {
@@ -168,40 +199,34 @@ export function ProgramDetailsTab({
       }
 
       if (updatedData) {
-        const programData = Array.isArray(updatedData) ? updatedData[0] : updatedData;
-        setProgram(programData as GrantProgram);
-        const formValues = buildFormValuesFromMetadata((programData as GrantProgram).metadata);
-        if (formValues) {
-          reset(formValues);
-        }
+        processProgramData(updatedData);
       }
     } catch (error) {
       console.warn("Error refetching program data:", error);
     }
-  }, [programId, chainId, reset]);
+  }, [programId, chainId, processProgramData]);
 
-  // Helper function to create date picker props
-  const createDatePickerProps = (
-    fieldName: "startsAt" | "endsAt",
-    isDisabled: boolean,
-    field: { onChange: (value: Date | undefined) => void }
-  ) => ({
-    onSelect: (date: Date | undefined) => {
-      if (isDisabled) return;
-      const currentValue = watch(`dates.${fieldName}`);
-      if (currentValue && date && formatDate(date) === formatDate(currentValue)) {
+  // Helper function to create date picker props (memoized to prevent recreation)
+  const createDatePickerProps = useCallback(
+    (fieldName: "startsAt" | "endsAt", field: { onChange: (value: Date | undefined) => void }) => ({
+      onSelect: (date: Date | undefined) => {
+        if (isDisabled) return;
+        const currentValue = watch(`dates.${fieldName}`);
+        if (currentValue && date && formatDate(date) === formatDate(currentValue)) {
+          setValue(`dates.${fieldName}`, undefined, { shouldValidate: true });
+          field.onChange(undefined);
+        } else {
+          setValue(`dates.${fieldName}`, date, { shouldValidate: true });
+          field.onChange(date);
+        }
+      },
+      clearButtonFn: () => {
         setValue(`dates.${fieldName}`, undefined, { shouldValidate: true });
         field.onChange(undefined);
-      } else {
-        setValue(`dates.${fieldName}`, date, { shouldValidate: true });
-        field.onChange(date);
-      }
-    },
-    clearButtonFn: () => {
-      setValue(`dates.${fieldName}`, undefined, { shouldValidate: true });
-      field.onChange(undefined);
-    },
-  });
+      },
+    }),
+    [isDisabled, watch, setValue]
+  );
 
   const onSubmit = async (data: CreateProgramFormSchema) => {
     const validationError = validateSubmissionPrerequisites();
@@ -298,7 +323,7 @@ export function ProgramDetailsTab({
               id="program-name"
               placeholder="Ex: Super cool Program"
               {...register("name")}
-              disabled={isSubmitting || isLoading || readOnly}
+              disabled={isDisabled}
               aria-invalid={errors.name ? "true" : "false"}
               aria-describedby={errors.name ? "program-name-error" : undefined}
             />
@@ -307,9 +332,7 @@ export function ProgramDetailsTab({
                 {errors.name.message}
               </p>
             )}
-            <div aria-live="polite" aria-atomic="true" className="sr-only">
-              {errors.name && `Error: ${errors.name.message}`}
-            </div>
+            <AriaLiveError error={errors.name} />
           </div>
 
           {/* Program Description */}
@@ -322,7 +345,7 @@ export function ProgramDetailsTab({
               className="min-h-[120px] max-h-[240px] resize-y"
               placeholder="Please provide a description of this program"
               {...register("description")}
-              disabled={isSubmitting || isLoading || readOnly}
+              disabled={isDisabled}
               aria-invalid={errors.description ? "true" : "false"}
               aria-describedby={errors.description ? "program-description-error" : undefined}
             />
@@ -331,9 +354,7 @@ export function ProgramDetailsTab({
                 {errors.description.message}
               </p>
             )}
-            <div aria-live="polite" aria-atomic="true" className="sr-only">
-              {errors.description && `Error: ${errors.description.message}`}
-            </div>
+            <AriaLiveError error={errors.description} />
           </div>
 
           {/* Short Description */}
@@ -347,9 +368,9 @@ export function ProgramDetailsTab({
             <Input
               id="short-description"
               placeholder="Brief description (max 100 characters)"
-              maxLength={100}
+              maxLength={SHORT_DESCRIPTION_MAX_LENGTH}
               {...register("shortDescription")}
-              disabled={isSubmitting || isLoading || readOnly}
+              disabled={isDisabled}
               aria-invalid={errors.shortDescription ? "true" : "false"}
               aria-describedby={
                 errors.shortDescription ? "short-description-error" : "short-description-count"
@@ -362,12 +383,10 @@ export function ProgramDetailsTab({
                 </p>
               )}
               <p id="short-description-count" className="text-xs text-muted-foreground">
-                {watch("shortDescription")?.length || 0}/100
+                {shortDescription?.length || 0}/{SHORT_DESCRIPTION_MAX_LENGTH}
               </p>
             </div>
-            <div aria-live="polite" aria-atomic="true" className="sr-only">
-              {errors.shortDescription && `Error: ${errors.shortDescription.message}`}
-            </div>
+            <AriaLiveError error={errors.shortDescription} />
           </div>
 
           {/* Dates */}
@@ -376,8 +395,7 @@ export function ProgramDetailsTab({
               name="dates.startsAt"
               control={control}
               render={({ field, formState }) => {
-                const isDisabled = isSubmitting || isLoading || readOnly;
-                const datePickerProps = createDatePickerProps("startsAt", isDisabled, field);
+                const datePickerProps = createDatePickerProps("startsAt", field);
                 return (
                   <div className="flex w-full flex-col gap-2">
                     <Label htmlFor="start-date">Start Date (optional)</Label>
@@ -385,7 +403,7 @@ export function ProgramDetailsTab({
                       selected={field.value}
                       onSelect={datePickerProps.onSelect}
                       placeholder="Pick a date"
-                      buttonClassName={`w-full text-base ${
+                      buttonClassName={`${DATE_PICKER_BUTTON_CLASS} ${
                         isDisabled ? "opacity-50 cursor-not-allowed" : ""
                       }`}
                       clearButtonFn={datePickerProps.clearButtonFn}
@@ -395,10 +413,7 @@ export function ProgramDetailsTab({
                         {formState.errors.dates.startsAt.message}
                       </p>
                     )}
-                    <div aria-live="polite" aria-atomic="true" className="sr-only">
-                      {formState.errors.dates?.startsAt &&
-                        `Error: ${formState.errors.dates.startsAt.message}`}
-                    </div>
+                    <AriaLiveError error={formState.errors.dates?.startsAt} />
                   </div>
                 );
               }}
@@ -408,17 +423,16 @@ export function ProgramDetailsTab({
               name="dates.endsAt"
               control={control}
               render={({ field, formState }) => {
-                const isDisabled = isSubmitting || isLoading || readOnly;
-                const datePickerProps = createDatePickerProps("endsAt", isDisabled, field);
+                const datePickerProps = createDatePickerProps("endsAt", field);
                 return (
                   <div className="flex w-full flex-col gap-2">
                     <Label htmlFor="end-date">End Date (optional)</Label>
                     <DatePicker
                       selected={field.value}
                       onSelect={datePickerProps.onSelect}
-                      minDate={watch("dates.startsAt")}
+                      minDate={startDate}
                       placeholder="Pick a date"
-                      buttonClassName={`w-full text-base ${
+                      buttonClassName={`${DATE_PICKER_BUTTON_CLASS} ${
                         isDisabled ? "opacity-50 cursor-not-allowed" : ""
                       }`}
                       clearButtonFn={datePickerProps.clearButtonFn}
@@ -428,10 +442,7 @@ export function ProgramDetailsTab({
                         {formState.errors.dates.endsAt.message}
                       </p>
                     )}
-                    <div aria-live="polite" aria-atomic="true" className="sr-only">
-                      {formState.errors.dates?.endsAt &&
-                        `Error: ${formState.errors.dates.endsAt.message}`}
-                    </div>
+                    <AriaLiveError error={formState.errors.dates?.endsAt} />
                   </div>
                 );
               }}
@@ -448,7 +459,7 @@ export function ProgramDetailsTab({
               step="1"
               placeholder="Ex: 100000"
               {...register("budget")}
-              disabled={isSubmitting || isLoading || readOnly}
+              disabled={isDisabled}
               aria-invalid={errors.budget ? "true" : "false"}
               aria-describedby={errors.budget ? "program-budget-error" : undefined}
             />
@@ -457,9 +468,7 @@ export function ProgramDetailsTab({
                 {errors.budget.message}
               </p>
             )}
-            <div aria-live="polite" aria-atomic="true" className="sr-only">
-              {errors.budget && `Error: ${errors.budget.message}`}
-            </div>
+            <AriaLiveError error={errors.budget} />
           </div>
 
           {/* Actions */}
