@@ -54,6 +54,53 @@ jest.mock("@/components/Utilities/errorManager", () => ({
   errorManager: jest.fn(),
 }));
 
+// Mock MarkdownEditor to render a simple textarea for testing
+jest.mock("@/components/Utilities/MarkdownEditor", () => ({
+  MarkdownEditor: ({
+    value,
+    onChange,
+    onBlur,
+    label,
+    error,
+    isRequired,
+    isDisabled,
+    placeholder,
+    id,
+  }: {
+    value?: string;
+    onChange?: (value: string) => void;
+    onBlur?: () => void;
+    label?: string;
+    error?: string;
+    isRequired?: boolean;
+    isDisabled?: boolean;
+    placeholder?: string;
+    id?: string;
+  }) => (
+    <div className="w-full">
+      {label && (
+        <label htmlFor={id} className="block text-sm font-bold">
+          {label} {isRequired && <span className="text-red-500">*</span>}
+        </label>
+      )}
+      <textarea
+        id={id}
+        value={value || ""}
+        onChange={(e) => onChange?.(e.target.value)}
+        onBlur={onBlur}
+        placeholder={placeholder}
+        disabled={isDisabled}
+        data-testid={`markdown-editor-${id}`}
+      />
+      {error && (
+        <p className="text-sm text-red-400" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  ),
+}));
+
 jest.mock("@/components/Utilities/DatePicker", () => ({
   DatePicker: ({ selected, onSelect, placeholder, buttonClassName, clearButtonFn }: any) => (
     <div data-testid="date-picker">
