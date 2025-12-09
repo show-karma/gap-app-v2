@@ -7,11 +7,11 @@ import { useAccount } from "wagmi";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { type CreateProgramFormSchema, createProgramSchema } from "@/schemas/programFormSchema";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
@@ -344,58 +344,63 @@ export function ProgramDetailsTab({
           </div>
 
           {/* Program Description */}
-          <div className="flex w-full flex-col gap-1">
-            <Label htmlFor="program-description">
-              Program Description <span className="text-destructive">*</span>
-            </Label>
-            <Textarea
-              id="program-description"
-              className="min-h-[120px] max-h-[240px] resize-y"
-              placeholder="Please provide a description of this program"
-              {...register("description")}
-              disabled={isDisabled}
-              aria-invalid={errors.description ? "true" : "false"}
-              aria-describedby={errors.description ? "program-description-error" : undefined}
-            />
-            {errors.description && (
-              <p id="program-description-error" className="text-sm text-destructive" role="alert">
-                {errors.description.message}
-              </p>
+          <Controller
+            name="description"
+            control={control}
+            render={({ field: { onChange, onBlur, value }, fieldState }) => (
+              <div className="flex w-full flex-col gap-1">
+                <MarkdownEditor
+                  label="Program Description"
+                  placeholder="Please provide a description of this program"
+                  value={value || ""}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  error={fieldState.error?.message}
+                  isRequired
+                  isDisabled={isDisabled}
+                  id="program-description"
+                  height={200}
+                  minHeight={150}
+                />
+                <AriaLiveError error={fieldState.error} />
+              </div>
             )}
-            <AriaLiveError error={errors.description} />
-          </div>
+          />
 
           {/* Short Description */}
-          <div className="flex w-full flex-col gap-1">
-            <Label htmlFor="short-description">
-              Program Short Description <span className="text-destructive">*</span>
-              <span className="text-xs text-muted-foreground ml-2 font-normal">
-                (100 characters max)
-              </span>
-            </Label>
-            <Input
-              id="short-description"
-              placeholder="Brief description (max 100 characters)"
-              maxLength={SHORT_DESCRIPTION_MAX_LENGTH}
-              {...register("shortDescription")}
-              disabled={isDisabled}
-              aria-invalid={errors.shortDescription ? "true" : "false"}
-              aria-describedby={
-                errors.shortDescription ? "short-description-error" : "short-description-count"
-              }
-            />
-            <div className="flex justify-between items-center">
-              {errors.shortDescription && (
-                <p id="short-description-error" className="text-sm text-destructive" role="alert">
-                  {errors.shortDescription.message}
+          <Controller
+            name="shortDescription"
+            control={control}
+            render={({ field: { onChange, onBlur, value }, fieldState }) => (
+              <div className="flex w-full flex-col gap-1">
+                <MarkdownEditor
+                  label="Program Short Description"
+                  description="100 characters max"
+                  placeholder="Brief description (max 100 characters)"
+                  value={value || ""}
+                  onChange={(val) => {
+                    if (val.length <= SHORT_DESCRIPTION_MAX_LENGTH) {
+                      onChange(val);
+                    }
+                  }}
+                  onBlur={onBlur}
+                  error={fieldState.error?.message}
+                  isRequired
+                  isDisabled={isDisabled}
+                  id="short-description"
+                  height={120}
+                  minHeight={100}
+                />
+                <p
+                  id="short-description-count"
+                  className="text-xs text-muted-foreground text-right"
+                >
+                  {shortDescription?.length || 0}/{SHORT_DESCRIPTION_MAX_LENGTH}
                 </p>
-              )}
-              <p id="short-description-count" className="text-xs text-muted-foreground">
-                {shortDescription?.length || 0}/{SHORT_DESCRIPTION_MAX_LENGTH}
-              </p>
-            </div>
-            <AriaLiveError error={errors.shortDescription} />
-          </div>
+                <AriaLiveError error={fieldState.error} />
+              </div>
+            )}
+          />
 
           {/* Dates */}
           <div className="grid grid-cols-2 gap-4">
