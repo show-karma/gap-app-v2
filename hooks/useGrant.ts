@@ -5,13 +5,13 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { useGrantFormStore } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant/store";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { getProjectData } from "@/services/project.service";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import type { GrantResponse } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -98,9 +98,7 @@ export function useGrant() {
       if (!walletClient) return;
 
       const walletSigner = await walletClientToSigner(walletClient);
-      const oldProjectData = await gapIndexerApi
-        .projectBySlug(oldGrant.refUID)
-        .then((res) => res.data);
+      const oldProjectData = await getProjectData(oldGrant.refUID).catch(() => null);
       const oldGrantData = oldProjectData?.grants?.find(
         (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
       );
@@ -115,17 +113,16 @@ export function useGrant() {
             await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, oldGrant.chainID), "POST", {});
           }
           while (retries > 0) {
-            const fetchedProject = await gapIndexerApi
-              .projectBySlug(oldGrant.refUID || oldGrant.projectUID || "")
-              .then((res) => res.data)
-              .catch(() => null);
-            const fetchedGrant = fetchedProject?.grants.find(
+            const fetchedProject = await getProjectData(
+              oldGrant.refUID || oldGrant.projectUID || ""
+            ).catch(() => null);
+            const fetchedGrant = fetchedProject?.grants?.find(
               (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
             );
 
             if (
-              new Date(fetchedGrant?.details?.updatedAt) >
-              new Date(oldGrantData?.details?.updatedAt)
+              new Date(fetchedGrant?.updatedAt || 0) >
+              new Date(oldGrantData?.updatedAt || 0)
             ) {
               clearMilestonesForms();
               // Reset form data and go back to step 1 for a new grant

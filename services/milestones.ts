@@ -1,4 +1,5 @@
 import type { IProjectDetails } from "@show-karma/karma-gap-sdk";
+import { errorManager } from "@/components/Utilities/errorManager";
 import type { GrantResponse } from "@/types/v2/grant";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
@@ -87,7 +88,7 @@ async function fetchGrantByProgramId(
   const [grants, error] = await fetchData<GrantResponse[]>(grantsEndpoint);
 
   if (error || !grants) {
-    console.error("Error fetching grant:", error);
+    errorManager("Error fetching grant", error, { projectUid, programId });
     return undefined;
   }
 
