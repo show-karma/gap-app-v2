@@ -64,7 +64,7 @@ export const MilestoneUpdateScreen = () => {
         {possibleMilestones?.length ? (
           <Dropdown
             list={possibleMilestones.map((milestone) => ({
-              value: milestone.title || milestone.data?.title || "",
+              value: milestone.title || "",
               id: milestone.uid,
               timestamp: milestone.createdAt,
             }))}

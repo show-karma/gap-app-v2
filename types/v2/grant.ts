@@ -13,16 +13,9 @@ export type GrantScreen =
 /**
  * V2 Grant Details - flat structure with properties at top level
  *
- * IMPORTANT: Always use top-level properties (e.g., `details.title`, `details.programId`).
- * The nested `data` field is DEPRECATED and only exists for SDK compatibility during migration.
- *
  * @example
- * // ✅ Correct V2 access
  * grant.details?.title
  * grant.details?.programId
- *
- * // ❌ Deprecated V1 access (avoid)
- * grant.details?.data?.title
  */
 export interface GrantDetails {
   title: string;
@@ -39,38 +32,15 @@ export interface GrantDetails {
   lastDetailsUpdate?: string;
   programId?: string;
   fundUsage?: string;
-  /**
-   * @deprecated Use top-level properties instead. This field exists only for SDK compatibility.
-   * Will be removed in a future version.
-   */
-  data?: {
-    title?: string;
-    amount?: string;
-    description?: string;
-    proposalURL?: string;
-    startDate?: number;
-    payoutAddress?: string;
-    questions?: any[];
-    programId?: string;
-    type?: string;
-    selectedTrackIds?: string[];
-  };
 }
 
 /**
  * V2 Grant Milestone - flat structure with properties at top level
  *
- * IMPORTANT: Always use top-level properties (e.g., `milestone.title`, `milestone.description`).
- * The nested `data` field is DEPRECATED and only exists for SDK compatibility during migration.
- *
  * @example
- * // ✅ Correct V2 access
  * milestone.title
  * milestone.description
  * milestone.verified  // boolean in V2
- *
- * // ❌ Deprecated V1 access (avoid)
- * milestone.data?.title
  */
 export interface GrantMilestone {
   uid: string;
@@ -78,6 +48,7 @@ export interface GrantMilestone {
   type?: string;
   title: string;
   description?: string;
+  priority?: number;
   endsAt?: number;
   startsAt?: number;
   currentStatus?: string;
@@ -100,20 +71,8 @@ export interface GrantMilestone {
   } | null;
   createdAt?: string;
   updatedAt?: string;
-  /** V2: Simple boolean. V1 used array of attesters. */
+  /** V2: Simple boolean */
   verified?: boolean;
-  /**
-   * @deprecated Use top-level properties instead. This field exists only for SDK compatibility.
-   * Will be removed in a future version.
-   */
-  data?: {
-    title?: string;
-    description?: string;
-    endsAt?: number;
-    startsAt?: number;
-    type?: string;
-    priority?: number;
-  };
   // Additional fields for compatibility
   id?: string;
   schemaUID?: string;
@@ -145,20 +104,21 @@ export interface GrantUpdate {
   };
 }
 
+export interface GrantCompletedTrackExplanation {
+  trackUID: string;
+  explanation: string;
+}
+
 export interface GrantCompleted {
   uid?: string;
   createdAt?: string;
-  chainID?: number;
   data?: {
     title?: string;
     text?: string;
     proofOfWork?: string;
     pitchDeckLink?: string;
     demoVideoLink?: string;
-    trackExplanations?: Array<{
-      trackUID: string;
-      explanation: string;
-    }>;
+    trackExplanations?: GrantCompletedTrackExplanation[];
   };
 }
 

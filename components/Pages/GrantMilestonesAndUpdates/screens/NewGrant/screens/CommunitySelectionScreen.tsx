@@ -1,17 +1,17 @@
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
 import { useDuplicateGrantCheck } from "@/hooks/useDuplicateGrantCheck";
 import { useGrant } from "@/hooks/useGrant";
+import { getCommunities } from "@/services/communities.service";
 import { useProjectStore } from "@/store";
+import type { Community } from "@/types/v2/community";
 import {
   FUNDING_PROGRAM_GRANT_NAMES,
   isFundingProgramCommunity,
 } from "@/utilities/funding-programs";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { PAGES } from "@/utilities/pages";
 import { SearchGrantProgram } from "../index";
 import { StepBlock } from "../StepBlock";
@@ -44,29 +44,24 @@ export const CommunitySelectionScreen: React.FC = () => {
       },
       { enabled: false } // Only run manually via refetch
     );
-  const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>([]);
+  const [allCommunities, setAllCommunities] = useState<Community[]>([]);
 
   // For funding program flow, we only show Celo community
   useEffect(() => {
-    const fetchCommunities = async () => {
-      try {
-        const result = await gapIndexerApi.communities();
+    const fetchCommunitiesData = async () => {
+      const communities = await getCommunities();
 
-        if (flowType === "program") {
-          const filteredCommunities = result.data.filter((community) =>
-            isFundingProgramCommunity(community.details?.data?.name)
-          );
-          setAllCommunities(filteredCommunities.length > 0 ? filteredCommunities : []);
-        } else {
-          setAllCommunities(result.data);
-        }
-      } catch (error) {
-        console.error(error);
-        setAllCommunities([]);
+      if (flowType === "program") {
+        const filteredCommunities = communities.filter((community) =>
+          isFundingProgramCommunity(community.details?.name)
+        );
+        setAllCommunities(filteredCommunities.length > 0 ? filteredCommunities : []);
+      } else {
+        setAllCommunities(communities);
       }
     };
 
-    fetchCommunities();
+    fetchCommunitiesData();
   }, [flowType]);
 
   // Note: React Query automatically handles cache invalidation when params change
@@ -127,7 +122,7 @@ export const CommunitySelectionScreen: React.FC = () => {
     return selectedProject.grants.some((grant) => {
       if (formData.programId) {
         // For program grants: match by programId (base part before underscore)
-        const existingProgramId = grant.details?.data?.programId;
+        const existingProgramId = grant.details?.programId;
         if (!existingProgramId) return false;
 
         const selectedProgramId = formData.programId.split("_")[0];
@@ -136,8 +131,8 @@ export const CommunitySelectionScreen: React.FC = () => {
         return existingProgramIdBase === selectedProgramId;
       } else if (formData.title) {
         // For regular grants: match by community AND title
-        const existingCommunity = grant.data?.communityUID;
-        const existingTitle = grant.details?.data?.title;
+        const existingCommunity = grant.communityUID;
+        const existingTitle = grant.details?.title;
 
         return (
           existingCommunity === formData.community &&

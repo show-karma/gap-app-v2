@@ -208,7 +208,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
       extractDateValue((milestone.completed as any)?.updatedAt),
       extractDateValue(milestone.updatedAt),
       extractDateValue(milestone.createdAt),
-      milestone.data?.endsAt, // This is already a number (Unix timestamp)
+      milestone.endsAt, // This is already a number (Unix timestamp)
     ];
 
     // Return first valid date value
@@ -291,7 +291,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                   <div className="flex w-max flex-row items-center gap-2">
                     <MilestoneVerificationSection
                       milestone={milestone}
-                      title={`${milestone.data?.title || milestone.title} - Reviews`}
+                      title={`${milestone.title} - Reviews`}
                       isVerified={isVerified}
                       onVerified={markAsVerified}
                     />
@@ -376,7 +376,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               >
                 <div className="flex flex-col gap-1">
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    {metric.name || metric.indicator?.data?.title || "Untitled Indicator"}
+                    {metric.name || metric.indicator?.name || "Untitled Indicator"}
                   </p>
                   {metric.datapoints && metric.datapoints.length > 0 && (
                     <div className="flex flex-col gap-1">

@@ -9,7 +9,7 @@ import type {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC } from "react";
 import { useOwnerStore, useProjectStore } from "@/store";
-import type { ProjectUpdate, UnifiedMilestone } from "@/types/roadmap";
+import type { ConversionGrantUpdate, ProjectUpdate, UnifiedMilestone } from "@/types/roadmap";
 import { MilestoneCard } from "./ActivityCard/MilestoneCard";
 import { ProjectUpdateCard } from "./ActivityCard/ProjectUpdateCard";
 import { UpdateCard } from "./ActivityCard/UpdateCard";
@@ -19,7 +19,8 @@ type SdkUpdateType =
   | IGrantUpdate
   | IMilestoneResponse
   | IProjectImpact
-  | IProjectMilestoneResponse;
+  | IProjectMilestoneResponse
+  | ConversionGrantUpdate;
 
 type ActivityType =
   | {

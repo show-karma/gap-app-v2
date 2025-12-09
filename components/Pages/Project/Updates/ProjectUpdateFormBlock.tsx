@@ -39,7 +39,7 @@ export const ProjectUpdateFormBlock = ({ onClose, updateId }: ProjectUpdateFormB
     <div className="flex flex-col w-full gap-4">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-xl font-bold text-black dark:text-zinc-100">
-          {updateId ? `Edit "${updateBeingEdited?.data?.title || "Activity"}"` : "Add Activity"}
+          {updateId ? `Edit "${updateBeingEdited?.title || "Activity"}"` : "Add Activity"}
         </h2>
         {onClose && (
           <button

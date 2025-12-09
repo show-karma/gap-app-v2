@@ -2,10 +2,10 @@
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
 import Image from "next/image";
 import { createElement, type ElementType, type FC, useEffect, useRef, useState } from "react";
+import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { shortAddress } from "@/utilities/shortAddress";
@@ -14,7 +14,7 @@ import { cn } from "@/utilities/tailwind";
 interface CommunitiesDropdownProps {
   onSelectFunction: (value: string, networkId: number) => void;
   previousValue?: string;
-  communities: ICommunityResponse[];
+  communities: Community[];
   triggerClassName?: string;
   RightIcon?: ElementType;
   rightIconClassName?: string;
@@ -43,12 +43,12 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
   }, []);
 
   const communitiesArray = communities
-    .filter((community) => community.details?.data?.name) // Filter out communities without a name
+    .filter((community) => community.details?.name) // Filter out communities without a name
     .map((community) => ({
       value: community.uid,
-      label: community.details?.data?.name || shortAddress(community.uid),
+      label: community.details?.name || shortAddress(community.uid),
       networkId: community.chainID,
-      logo: community.details?.data?.imageURL,
+      logo: community.details?.imageURL,
     }));
 
   // sort communities by name alphabetically

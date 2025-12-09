@@ -4,20 +4,35 @@ import { useEffect } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useCommunitiesStore } from "@/store/communities";
+import type { Community } from "@/types/v2/community";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
-const fetchAdminCommunities = async (address: string): Promise<ICommunityResponse[]> => {
+// Map SDK ICommunityResponse to V2 Community type
+const mapToV2Community = (sdkCommunity: ICommunityResponse): Community => ({
+  uid: sdkCommunity.uid,
+  chainID: sdkCommunity.chainID,
+  details: sdkCommunity.details?.data
+    ? {
+        name: sdkCommunity.details.data.name ?? "",
+        slug: sdkCommunity.details.data.slug ?? "",
+        description: sdkCommunity.details.data.description,
+        imageURL: sdkCommunity.details.data.imageURL,
+      }
+    : undefined,
+});
+
+const fetchAdminCommunities = async (address: string): Promise<Community[]> => {
   if (!address) return [];
 
   const response = await gapIndexerApi.adminOf(address as `0x${string}`);
-  return response?.data || [];
+  return (response?.data || []).map(mapToV2Community);
 };
 
 export const useAdminCommunities = (address?: string) => {
   const { authenticated: isAuth } = useAuth();
   const { setCommunities, setIsLoading, communities } = useCommunitiesStore();
 
-  const queryResult = useQuery<ICommunityResponse[], Error>({
+  const queryResult = useQuery<Community[], Error>({
     queryKey: ["admin-communities", address],
     queryFn: () => fetchAdminCommunities(address!),
     enabled: !!address && isAuth,

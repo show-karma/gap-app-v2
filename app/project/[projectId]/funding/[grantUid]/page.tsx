@@ -40,10 +40,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       .catch(() => notFound())) as unknown as GrantResponse | undefined;
 
     if (grantInfo) {
-      // Support both V1 (details.data.x) and V2 (details.x) API response structures
-      const grantTitle = grantInfo?.details?.title || (grantInfo?.details as any)?.data?.title;
-      const grantDescription =
-        grantInfo?.details?.description || (grantInfo?.details as any)?.data?.description;
+      // V2 API structure
+      const grantTitle = grantInfo?.details?.title;
+      const grantDescription = grantInfo?.details?.description;
 
       const tabMetadata: Record<
         string,

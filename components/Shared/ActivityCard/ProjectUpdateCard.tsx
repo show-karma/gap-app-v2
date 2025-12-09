@@ -36,12 +36,11 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
     // TODO: Implement delete functionality
   };
 
-  // Access data - API returns flat structure (title, text at root level)
-  // Support both flat (update.title) and nested (update.data?.title) for compatibility
-  const title = update.title || update.data?.title || "";
-  const description = update.text || update.data?.text || "";
-  const deliverables = update.deliverables || update.data?.deliverables || [];
-  const indicators = update.indicators || [];
+  // V2 API structure
+  const title = update.title || "";
+  const description = update.description || "";
+  const deliverables = update.associations?.deliverables || [];
+  const indicators = update.associations?.indicators || [];
 
   const hasDeliverables = deliverables.length > 0;
   const hasIndicators = indicators.length > 0;
@@ -169,8 +168,8 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
         )}
       </div>
       <ActivityAttribution
-        date={update.createdAt}
-        attester={update.attester}
+        date={update.createdAt || ""}
+        attester={update.recipient}
         actions={
           isAuthorized ? (
             <ActivityMenu

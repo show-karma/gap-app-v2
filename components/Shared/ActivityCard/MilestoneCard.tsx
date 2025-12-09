@@ -289,7 +289,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
                 >
                   <div className="flex flex-col gap-1">
                     <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                      {metric.name || metric.indicator?.data?.title || "Untitled Indicator"}
+                      {metric.name || metric.indicator?.name || "Untitled Indicator"}
                     </p>
                     {metric.datapoints && metric.datapoints.length > 0 && (
                       <div className="flex flex-col gap-1">
@@ -322,7 +322,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
           ) : null}
         </div>
         <ActivityAttribution
-          date={completionDate}
+          date={completionDate || ""}
           attester={completionAttester}
           actions={
             isAuthorized ? (

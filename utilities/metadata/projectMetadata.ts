@@ -138,14 +138,14 @@ export const generateProjectFundingMetadata = (
   });
 };
 
-// Helper to get grant title supporting both V1 and V2 API structures
+// Helper to get grant title (V2 API structure)
 const getGrantTitle = (grant: GrantResponse): string => {
-  return grant.details?.title || (grant.details as any)?.data?.title || "";
+  return grant.details?.title || "";
 };
 
-// Helper to get grant description supporting both V1 and V2 API structures
+// Helper to get grant description (V2 API structure)
 const getGrantDescription = (grant: GrantResponse): string => {
-  return grant.details?.description || (grant.details as any)?.data?.description || "";
+  return grant.details?.description || "";
 };
 
 // Grant-specific metadata generators

@@ -1,7 +1,6 @@
 "use client";
 import { Disclosure } from "@headlessui/react";
 import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -13,10 +12,10 @@ import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useAuth } from "@/hooks/useAuth";
 import { useStaff } from "@/hooks/useStaff";
 import type { Category } from "@/types/impactMeasurement";
+import type { Community } from "@/types/v2/community";
 import { zeroUID } from "@/utilities/commons";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
@@ -44,7 +43,7 @@ export default function ManageIndicatorsPage() {
   const [_searchQuery, _setSearchQuery] = useState<string>("");
 
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
-  const [community, setCommunity] = useState<ICommunityResponse | undefined>(undefined); // Data returned from the API
+  const [community, setCommunity] = useState<Community | undefined>(undefined);
   const _signer = useSigner();
 
   // Check if user is admin of this community
@@ -58,15 +57,16 @@ export default function ManageIndicatorsPage() {
       if (!communityId) return;
       setLoading(true);
       try {
-        const { data: result } = await gapIndexerApi.communityBySlug(communityId);
-        if (!result || result.uid === zeroUID) throw new Error("Community not found");
+        const [result, error] = await fetchData<Community>(INDEXER.COMMUNITY.V2.GET(communityId));
+        if (error || !result || result.uid === zeroUID) {
+          throw new Error("Community not found");
+        }
         setCommunity(result);
       } catch (error: any) {
         errorManager(`Error fetching community ${communityId}`, error, {
           community: communityId,
         });
-        console.error("Error fetching data:", error);
-        if (error.message === "Community not found" || error.message.includes("422")) {
+        if (error.message === "Community not found" || error.message?.includes("422")) {
           router.push(PAGES.NOT_FOUND);
         }
       } finally {
@@ -85,7 +85,7 @@ export default function ManageIndicatorsPage() {
 
       try {
         const [data] = await fetchData(
-          INDEXER.COMMUNITY.CATEGORIES((community?.details?.data?.slug || community?.uid) as string)
+          INDEXER.COMMUNITY.CATEGORIES((community?.details?.slug || community?.uid) as string)
         );
         if (data) {
           const categoriesWithoutOutputs = data.map((category: Category) => {
@@ -153,9 +153,7 @@ export default function ManageIndicatorsPage() {
       ) : isAdmin || isStaff ? (
         <div className="flex w-full flex-1 flex-col items-center gap-8">
           <div className="w-full flex flex-row items-center justify-between max-w-full">
-            <Link
-              href={PAGES.ADMIN.ROOT(community?.details?.data?.slug || (community?.uid as string))}
-            >
+            <Link href={PAGES.ADMIN.ROOT(community?.details?.slug || (community?.uid as string))}>
               <Button className="flex flex-row items-center gap-2 px-4 py-2 font-semibold text-base  bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
                 <ChevronLeftIcon className="h-5 w-5" />
                 Return to admin page

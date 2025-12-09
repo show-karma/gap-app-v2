@@ -1,17 +1,15 @@
 "use client";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CommunityImpactCharts } from "@/components/Pages/Communities/Impact/ImpactCharts";
 import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useStaff } from "@/hooks/useStaff";
 import { zeroUID } from "@/utilities/commons";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -23,9 +21,9 @@ export default function ProgramImpactPage() {
   const router = useRouter();
   const params = useParams();
   const communityId = params.communityId as string;
-  const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
-  const [community, setCommunity] = useState<ICommunityResponse | undefined>(undefined); // Data returned from the API
   const [activeTab, setActiveTab] = useState<Tab>("metrics");
+
+  const { data: community, isLoading: loading } = useCommunityDetails(communityId);
 
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: adminLoading } = useIsCommunityAdmin(
@@ -34,31 +32,10 @@ export default function ProgramImpactPage() {
   const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   useEffect(() => {
-    const fetchDetails = async () => {
-      if (!communityId) return;
-      setLoading(true);
-      try {
-        const { data: result } = await gapIndexerApi.communityBySlug(communityId);
-        if (!result || result.uid === zeroUID) throw new Error("Community not found");
-        setCommunity(result);
-
-        setLoading(false);
-      } catch (error: any) {
-        setLoading(false);
-        errorManager(`Error fetching community ${communityId}`, error, {
-          community: communityId,
-        });
-        console.error("Error fetching data:", error);
-        if (error.message === "Community not found" || error.message.includes("422")) {
-          router.push(PAGES.NOT_FOUND);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDetails();
-  }, [communityId, router]);
+    if (!loading && (community === null || community?.uid === zeroUID)) {
+      router.push(PAGES.NOT_FOUND);
+    }
+  }, [community, loading, router]);
 
   const tabs = [
     { id: "metrics", label: "Output Metrics" },
@@ -74,9 +51,7 @@ export default function ProgramImpactPage() {
       ) : isAdmin || isStaff ? (
         <div className="flex w-full flex-1 flex-col items-center gap-8">
           <div className="w-full flex flex-row items-center justify-between max-w-4xl">
-            <Link
-              href={PAGES.ADMIN.ROOT(community?.details?.data?.slug || (community?.uid as string))}
-            >
+            <Link href={PAGES.ADMIN.ROOT(community?.details?.slug || (community?.uid as string))}>
               <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
                 <ChevronLeftIcon className="h-5 w-5" />
                 Return to admin page
@@ -113,7 +88,7 @@ export default function ProgramImpactPage() {
 
             <div className="mt-6">
               {activeTab === "metrics" && (
-                <OutputMetrics communitySlug={community?.details?.data?.slug || ""} />
+                <OutputMetrics communitySlug={community?.details?.slug || ""} />
               )}
               {activeTab === "impact" && <CommunityImpactCharts />}
             </div>

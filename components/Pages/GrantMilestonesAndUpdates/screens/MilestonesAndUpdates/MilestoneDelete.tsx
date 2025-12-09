@@ -95,9 +95,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
           chainID: milestoneInstance.chainID,
           onError: (error) => {
             errorManager(
-              MESSAGES.MILESTONES.DELETE.ERROR(
-                milestone.data?.title || milestone.title || "Milestone"
-              ),
+              MESSAGES.MILESTONES.DELETE.ERROR(milestone.title || "Milestone"),
               error,
               {
                 milestone: milestone.uid,
@@ -105,9 +103,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
                 address: address,
               },
               {
-                error: MESSAGES.MILESTONES.DELETE.ERROR(
-                  milestone.data?.title || milestone.title || "Milestone"
-                ),
+                error: MESSAGES.MILESTONES.DELETE.ERROR(milestone.title || "Milestone"),
               }
             );
           },
@@ -158,7 +154,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       }
     } catch (error: any) {
       errorManager(
-        MESSAGES.MILESTONES.DELETE.ERROR(milestone.data?.title || milestone.title || "Milestone"),
+        MESSAGES.MILESTONES.DELETE.ERROR(milestone.title || "Milestone"),
         error,
         {
           milestone: milestone.uid,
@@ -166,9 +162,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
           address: address,
         },
         {
-          error: MESSAGES.MILESTONES.DELETE.ERROR(
-            milestone.data?.title || milestone.title || "Milestone"
-          ),
+          error: MESSAGES.MILESTONES.DELETE.ERROR(milestone.title || "Milestone"),
         }
       );
     } finally {
@@ -183,7 +177,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       isLoading={isDeletingMilestone}
       title={
         <p className="font-normal">
-          Are you sure you want to delete <b>{milestone.data?.title}</b> milestone?
+          Are you sure you want to delete <b>{milestone.title}</b> milestone?
         </p>
       }
       buttonElement={{

@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { getProjectUpdates } from "@/services/project-updates.service";
+import type { UnifiedMilestone } from "@/types/roadmap";
 import type {
   GrantMilestoneWithDetails,
   GrantUpdateWithDetails,
   ProjectMilestone,
   ProjectUpdate,
-  UnifiedMilestone,
   UpdatesApiResponse,
 } from "@/types/v2/roadmap";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
@@ -35,24 +35,18 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
       createdAt: update.createdAt || new Date().toISOString(),
       projectUpdate: {
         uid: update.uid,
-        attester: update.recipient || "",
+        recipient: update.recipient,
         title: update.title,
-        text: update.description,
-        createdAt: update.createdAt || new Date().toISOString(),
+        description: update.description,
         verified: update.verified,
-        startDate: update.startDate || undefined,
-        endDate: update.endDate || undefined,
-        deliverables: update.associations.deliverables.map((d) => ({
-          name: d.name || "",
-          proof: d.proof || "",
-          description: d.description || "",
-        })),
-        indicators: update.associations.indicators.map((i) => ({
-          id: i.id,
-          name: i.name || "",
-          description: i.description,
-          unitOfMeasure: i.unitOfMeasure,
-        })),
+        startDate: update.startDate,
+        endDate: update.endDate,
+        createdAt: update.createdAt,
+        associations: {
+          deliverables: update.associations.deliverables,
+          indicators: update.associations.indicators,
+          funding: update.associations.funding,
+        },
       },
       source: {
         type: "update",
@@ -100,7 +94,7 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
                 },
               }
             : undefined,
-        } as any,
+        },
       },
     });
   });
@@ -141,14 +135,11 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
           milestone: {
             uid: milestone.uid,
             attester,
-            data: {
-              title: milestone.title,
-              description: milestone.description,
-              startsAt: undefined,
-              endsAt: milestone.dueDate
-                ? Math.floor(new Date(milestone.dueDate).getTime() / 1000)
-                : undefined,
-            },
+            title: milestone.title,
+            description: milestone.description,
+            endsAt: milestone.dueDate
+              ? Math.floor(new Date(milestone.dueDate).getTime() / 1000)
+              : undefined,
             completed: isCompleted
               ? {
                   createdAt: milestone.completionDetails?.completedAt || "",
@@ -163,22 +154,20 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
             uid: grantInfo?.uid || "",
             chainID,
             details: {
-              data: {
-                title: grantInfo?.title,
-                programId: milestone.programId,
-              },
+              title: grantInfo?.title,
+              programId: milestone.programId,
             },
             community: {
+              uid: "",
+              chainID,
               details: {
-                data: {
-                  slug: grantInfo?.communitySlug,
-                  name: grantInfo?.communityName,
-                  imageURL: grantInfo?.communityImage,
-                },
+                slug: grantInfo?.communitySlug,
+                name: grantInfo?.communityName,
+                imageURL: grantInfo?.communityImage,
               },
             },
           },
-        } as any,
+        },
       },
     });
   });
@@ -198,12 +187,12 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
       completed: false,
       createdAt: update.createdAt || new Date().toISOString(),
       grantUpdate: {
-        // SDK IGrantUpdate format - needs type at root level and data object
+        // Partial IGrantUpdate format for backward compatibility
         type: "GrantUpdate",
         uid: update.uid,
         refUID: update.refUID || "",
         recipient: update.recipient || "",
-        attester: update.recipient || "", // ActivityAttribution uses attester
+        attester: update.recipient || "",
         createdAt: update.createdAt || new Date().toISOString(),
         data: {
           type: "grant-update",
@@ -213,30 +202,31 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
           completionPercentage: update.completionPercentage,
         },
         verified: update.verified ? [] : undefined,
-      } as any,
+      },
       source: {
         type: "grant_update",
         grantMilestone: {
-          milestone: {} as any,
+          milestone: {
+            uid: "",
+            title: update.title,
+          },
           grant: {
             uid: grantInfo?.uid || "",
             chainID,
             details: {
-              data: {
-                title: grantInfo?.title,
-              },
+              title: grantInfo?.title,
             },
             community: {
+              uid: "",
+              chainID,
               details: {
-                data: {
-                  slug: grantInfo?.communitySlug,
-                  name: grantInfo?.communityName,
-                  imageURL: grantInfo?.communityImage,
-                },
+                slug: grantInfo?.communitySlug,
+                name: grantInfo?.communityName,
+                imageURL: grantInfo?.communityImage,
               },
             },
           },
-        } as any,
+        },
       },
     });
   });

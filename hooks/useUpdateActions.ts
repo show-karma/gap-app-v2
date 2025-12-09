@@ -15,6 +15,7 @@ import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
+import type { ConversionGrantUpdate } from "@/types/v2/roadmap";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -32,7 +33,8 @@ type UpdateType =
   | IGrantUpdate
   | IMilestoneResponse
   | IProjectImpact
-  | IProjectMilestoneResponse;
+  | IProjectMilestoneResponse
+  | ConversionGrantUpdate;
 
 export const useUpdateActions = (update: UpdateType) => {
   const [isDeletingUpdate, setIsDeletingUpdate] = useState(false);
@@ -84,12 +86,19 @@ export const useUpdateActions = (update: UpdateType) => {
     let gapClient = gap;
     try {
       setIsDeletingUpdate(true);
+      const updateChainID = "chainID" in update ? update.chainID : undefined;
+      if (!updateChainID) {
+        errorManager("Cannot delete update: missing chain ID", new Error("Missing chainID"));
+        setIsDeletingUpdate(false);
+        return;
+      }
+
       const {
         success,
         chainId: actualChainId,
         gapClient: newGapClient,
       } = await ensureCorrectChain({
-        targetChainId: update.chainID,
+        targetChainId: updateChainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });

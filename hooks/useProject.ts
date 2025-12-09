@@ -11,7 +11,7 @@ export const useProject = (projectId: string) => {
   const query = useQuery({
     queryKey: ["project", projectId],
     queryFn: async (): Promise<ProjectResponse> => {
-      const data = await getProjectData(projectId, {});
+      const data = await getProjectData(projectId);
       if (!data) {
         throw new Error("Project not found");
       }

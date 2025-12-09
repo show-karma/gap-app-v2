@@ -123,7 +123,7 @@ export const ObjectiveCardComplete = ({
       if (!isOnChainAuthorized) {
         await performOffChainRevoke({
           uid: objectiveInstance.completed?.uid as `0x${string}`,
-          chainID: objectiveInstance.completed?.chainID || objectiveInstance.chainID,
+          chainID: objectiveInstance.chainID,
           checkIfExists: checkIfAttestationExists,
           toastMessages: {
             success: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.SUCCESS,
@@ -155,7 +155,7 @@ export const ObjectiveCardComplete = ({
 
           const success = await performOffChainRevoke({
             uid: objectiveInstance.completed?.uid as `0x${string}`,
-            chainID: objectiveInstance.completed?.chainID || objectiveInstance.chainID,
+            chainID: objectiveInstance.chainID,
             checkIfExists: checkIfAttestationExists,
             toastMessages: {
               success: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.SUCCESS,

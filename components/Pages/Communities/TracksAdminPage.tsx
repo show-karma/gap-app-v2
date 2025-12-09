@@ -2,7 +2,6 @@
 
 import { ArchiveBoxIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { ChevronLeftIcon } from "@heroicons/react/24/solid";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -25,6 +24,7 @@ import {
   useUpdateTrack,
 } from "@/hooks/useTracks";
 import type { Track } from "@/services/tracks";
+import type { Community } from "@/types/v2/community";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -36,7 +36,7 @@ export const TracksAdminPage = ({
   community,
 }: {
   communityId: string;
-  community: ICommunityResponse;
+  community: Community;
 }) => {
   const { address, isConnected } = useAccount();
   const { authenticated: isAuth } = useAuth();
@@ -204,7 +204,7 @@ export const TracksAdminPage = ({
   return (
     <div className="max-w-full w-full">
       <div className="w-full flex flex-row items-center justify-between max-w-4xl mb-4">
-        <Link href={PAGES.ADMIN.ROOT(community?.details?.data?.slug || (community?.uid as string))}>
+        <Link href={PAGES.ADMIN.ROOT(community?.details?.slug || (community?.uid as string))}>
           <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
             <ChevronLeftIcon className="h-5 w-5" />
             Return to admin page

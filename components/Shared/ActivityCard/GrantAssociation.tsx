@@ -144,7 +144,7 @@ export const GrantAssociation = ({
       {multipleGrants?.length ? (
         multipleGrants.map((individualGrant) => (
           <GrantItem
-            key={`${individualGrant.uid}-${individualGrant.details?.title}-${update.uid}-${update.data?.title}-${index}`}
+            key={`${individualGrant.uid}-${individualGrant.details?.title}-${update.uid}-${update.title}-${index}`}
             href={PAGES.COMMUNITY.ALL_GRANTS(
               individualGrant.community?.details?.slug || "",
               individualGrant.details?.programId
@@ -152,7 +152,7 @@ export const GrantAssociation = ({
             title={individualGrant.details?.title || "Untitled Grant"}
             communityImage={individualGrant.community?.details?.imageURL}
             communityName={individualGrant.community?.details?.name}
-            keyPrefix={`${individualGrant.uid}-${individualGrant.details?.title}-${update.uid}-${update.data?.title}-${index}`}
+            keyPrefix={`${individualGrant.uid}-${individualGrant.details?.title}-${update.uid}-${update.title}-${index}`}
           />
         ))
       ) : grant ? (

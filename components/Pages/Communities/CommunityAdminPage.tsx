@@ -10,13 +10,13 @@ import {
   Square2StackIcon,
   TagIcon,
 } from "@heroicons/react/24/outline";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useAuth } from "@/hooks/useAuth";
 import { useStaff } from "@/hooks/useStaff";
+import type { Community } from "@/types/v2/community";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -71,7 +71,7 @@ export const CommunityAdminPage = ({
   community,
 }: {
   communityId: string;
-  community: ICommunityResponse;
+  community: Community;
 }) => {
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(community?.uid);
@@ -88,7 +88,7 @@ export const CommunityAdminPage = ({
       ) : isAdmin || isStaff ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <AdminButton
-            href={PAGES.ADMIN.EDIT_CATEGORIES(community?.details?.data?.slug || communityId)}
+            href={PAGES.ADMIN.EDIT_CATEGORIES(community?.details?.slug || communityId)}
             label="Categories"
             description="Manage and organize community categories"
             colorClass=""
@@ -96,7 +96,7 @@ export const CommunityAdminPage = ({
           />
 
           <AdminButton
-            href={PAGES.ADMIN.MILESTONES(community?.details?.data?.slug || communityId)}
+            href={PAGES.ADMIN.MILESTONES(community?.details?.slug || communityId)}
             label="Milestones"
             description="Track and update project milestones"
             colorClass=""
@@ -104,7 +104,7 @@ export const CommunityAdminPage = ({
           />
 
           <AdminButton
-            href={PAGES.ADMIN.MANAGE_INDICATORS(community?.details?.data?.slug || communityId)}
+            href={PAGES.ADMIN.MANAGE_INDICATORS(community?.details?.slug || communityId)}
             label="Impact Measurement"
             description="Setup and manage impact indicators"
             colorClass=""
@@ -112,7 +112,7 @@ export const CommunityAdminPage = ({
           />
 
           <AdminButton
-            href={PAGES.ADMIN.TRACKS(community?.details?.data?.slug || communityId)}
+            href={PAGES.ADMIN.TRACKS(community?.details?.slug || communityId)}
             label="Tracks"
             description="Manage tracks and assign them to programs"
             colorClass=""
@@ -120,7 +120,7 @@ export const CommunityAdminPage = ({
           />
 
           <AdminButton
-            href={PAGES.ADMIN.EDIT_PROJECTS(community?.details?.data?.slug || communityId)}
+            href={PAGES.ADMIN.EDIT_PROJECTS(community?.details?.slug || communityId)}
             label="Projects"
             description="Manage your projects and assign regions"
             colorClass=""
@@ -128,14 +128,14 @@ export const CommunityAdminPage = ({
           />
 
           <AdminButton
-            href={PAGES.ADMIN.FUNDING_PLATFORM(community?.details?.data?.slug || communityId)}
+            href={PAGES.ADMIN.FUNDING_PLATFORM(community?.details?.slug || communityId)}
             label="Funding Platform"
             description="Create forms and manage funding applications"
             colorClass=""
             icon={<CurrencyDollarIcon className="w-6 h-6" />}
           />
           <AdminButton
-            href={PAGES.ADMIN.PAYOUTS(community?.details?.data?.slug || communityId)}
+            href={PAGES.ADMIN.PAYOUTS(community?.details?.slug || communityId)}
             label="Payouts"
             description="Manage payout addresses and amounts"
             colorClass=""
@@ -143,7 +143,7 @@ export const CommunityAdminPage = ({
           />
 
           <AdminButton
-            href={PAGES.ADMIN.PROGRAM_SCORES(community?.details?.data?.slug || communityId)}
+            href={PAGES.ADMIN.PROGRAM_SCORES(community?.details?.slug || communityId)}
             label="Program Scores"
             description="Upload CSV scores for program participants"
             colorClass=""

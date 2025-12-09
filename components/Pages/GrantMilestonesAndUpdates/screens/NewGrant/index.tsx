@@ -98,17 +98,17 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         selectedTrackIds: grantToEdit?.details?.selectedTrackIds || [],
       });
 
-      // Initialize milestones if they exist
+      // Initialize milestones if they exist (V2 API structure)
       if (grantToEdit?.milestones?.length) {
         const milestones = grantToEdit.milestones.map((milestone) => ({
           isValid: true,
           isEditing: false,
           data: {
-            title: milestone.data?.title || milestone.title || "",
-            description: milestone.data?.description || milestone.description || "",
-            endsAt: milestone.data?.endsAt || milestone.endsAt,
-            startsAt: milestone.data?.startsAt || milestone.startsAt,
-            priority: milestone.data?.priority,
+            title: milestone.title || "",
+            description: milestone.description || "",
+            endsAt: milestone.endsAt,
+            startsAt: milestone.startsAt,
+            priority: milestone.priority,
           },
         }));
 

@@ -9,6 +9,7 @@ import Link from "next/link";
 import type { FC } from "react";
 import { useUpdateActions } from "@/hooks/useUpdateActions";
 import { useProjectStore } from "@/store";
+import type { ConversionGrantUpdate } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
 import { ReadMore } from "@/utilities/ReadMore";
@@ -24,7 +25,8 @@ type UpdateType =
   | IGrantUpdate
   | IMilestoneResponse
   | IProjectImpact
-  | IProjectMilestoneResponse;
+  | IProjectMilestoneResponse
+  | ConversionGrantUpdate;
 
 type UpdateWithTitle =
   | IProjectUpdate

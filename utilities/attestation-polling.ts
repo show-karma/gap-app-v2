@@ -108,9 +108,8 @@ export const pollForMilestoneStatus = async ({
       const updatedProject = await getProjectData(projectUid);
       if (!updatedProject) return false;
 
-      const updatedGrant = updatedProject.grants?.find(
-        (g: any) => g.details?.programId === programId
-      );
+      const grants = updatedProject.grants ?? [];
+      const updatedGrant = grants.find((g) => g.details?.programId === programId);
       if (!updatedGrant) return false;
 
       const updatedMilestone = updatedGrant.milestones?.find((m) => m.uid === milestoneUid);

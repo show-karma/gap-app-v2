@@ -86,8 +86,8 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
     milestones?.forEach((milestone) => {
       merged.push({
         object: milestone,
-        date: milestone.data?.endsAt
-          ? getTimestampMs(milestone.data.endsAt)
+        date: milestone.endsAt
+          ? getTimestampMs(milestone.endsAt)
           : getTimestampMs(milestone.createdAt),
         type: "milestone",
       });
@@ -241,8 +241,8 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
                   <GrantUpdate
                     key={item.object.uid}
                     index={updatesArray.length - updatesIndex}
-                    title={item.object?.data?.title}
-                    description={item.object?.data?.text}
+                    title={item.object?.title}
+                    description={item.object?.text}
                     date={item.object.createdAt}
                     update={item.object}
                   />

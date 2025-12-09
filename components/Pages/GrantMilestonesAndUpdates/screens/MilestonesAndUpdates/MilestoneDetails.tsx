@@ -79,8 +79,7 @@ const FlagIcon = () => {
 export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({ milestone }) => {
   const getMilestoneStatus = () => {
     if (isMilestoneCompleted(milestone)) return "completed";
-    if (normalizeTimestamp(milestone.data?.endsAt || milestone.endsAt || 0) < Date.now())
-      return "past due";
+    if (normalizeTimestamp(milestone.endsAt || 0) < Date.now()) return "past due";
     return "pending";
   };
 
@@ -89,9 +88,9 @@ export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({ milestone })
   return (
     <div className="flex max-w-full w-max max-lg:w-full flex-row items-center justify-center gap-4 max-lg:justify-start flex-wrap">
       <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
-        {milestone.data?.startsAt
-          ? `${formatDate(milestone.data?.startsAt)} - ${formatDate(milestone.data?.endsAt)}`
-          : `Due on ${formatDate(milestone.data?.endsAt)}`}
+        {milestone.startsAt
+          ? `${formatDate(milestone.startsAt)} - ${formatDate(milestone.endsAt)}`
+          : `Due on ${formatDate(milestone.endsAt)}`}
       </p>
       <div className={`flex items-center justify-start rounded-2xl px-2 py-1 ${statusBg[status]}`}>
         <p className="text-center text-xs font-medium leading-none text-white">
@@ -153,9 +152,9 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }
         >
           <div className="flex w-full flex-row items-start justify-between px-4 max-lg:mb-4 max-lg:flex-col">
             <div className="flex flex-col gap-3">
-              <MilestoneTag index={index} priority={milestone?.data?.priority} />
+              <MilestoneTag index={index} priority={milestone.priority} />
               <h4 className="text-base font-bold leading-normal text-black dark:text-zinc-100">
-                {milestone.data?.title}
+                {milestone.title}
               </h4>
             </div>
             <div className="flex flex-row items-center justify-start gap-2">
@@ -171,7 +170,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }
               readLessText="Read less milestone description"
               readMoreText="Read full milestone description"
             >
-              {milestone.data?.description || milestone.description || ""}
+              {milestone.description || ""}
             </ReadMore>
           </div>
         </div>

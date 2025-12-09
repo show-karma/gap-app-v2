@@ -23,8 +23,11 @@ export const useENS = create<EnsStore>((set, get) => ({
 
   populateEns: async (addresses: string[]) => {
     const ensData = get().ensData;
+    // Validate Ethereum address format (0x + 40 hex chars) before processing
+    const isValidEthAddress = (addr: string): boolean => /^0x[0-9a-fA-F]{40}$/i.test(addr);
+
     const lowercasedAddresses = addresses
-      .filter((address): address is string => !!address)
+      .filter((address): address is string => !!address && isValidEthAddress(address))
       .map((address) => address.toLowerCase() as Hex);
     const notTriedAddresses = lowercasedAddresses.filter((address) => {
       return !ensData[address] || !ensData[address]?.isFetching;

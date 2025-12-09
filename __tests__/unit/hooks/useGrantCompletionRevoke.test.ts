@@ -303,10 +303,9 @@ describe("useGrantCompletionRevoke", () => {
       expect(mockErrorManager).toHaveBeenCalled();
     });
 
-    it("should use grant.chainID when completed.chainID is missing", async () => {
-      const grantWithChainIDOnGrant = {
+    it("should use grant.chainID for chain switching", async () => {
+      const grantWithChainID = {
         ...mockGrant,
-        completed: { ...mockGrant.completed, chainID: undefined },
         chainID: 42161,
       };
       mockIsProjectOwner.mockReturnValue(true);
@@ -330,7 +329,7 @@ describe("useGrantCompletionRevoke", () => {
 
       const { result } = renderHook(() =>
         useGrantCompletionRevoke({
-          grant: grantWithChainIDOnGrant,
+          grant: grantWithChainID,
           project: mockProject,
         })
       );

@@ -8,11 +8,9 @@ export const getProjectCachedData = cache(async (projectId: string): Promise<Pro
   let project: ProjectResponse | undefined;
 
   try {
-    const projectData = await getProjectData(projectId, {
-      cache: "reload",
-      next: { revalidate: 60 },
-    });
-
+    // React cache() provides request-level memoization
+    // Page-level revalidation should be configured via route segment config
+    const projectData = await getProjectData(projectId);
     project = projectData;
   } catch (_error) {
     notFound();

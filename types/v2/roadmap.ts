@@ -110,6 +110,7 @@ export type GrantMilestoneWithDetails = {
   chainId: string;
   title: string;
   description: string;
+  priority?: number;
   dueDate: string | null;
   createdAt: string | null;
   recipient?: string;
@@ -147,6 +148,69 @@ export type UpdatesApiResponse = {
 // Unified Types (for backward compatibility with existing components)
 // =============================================================================
 
+/**
+ * Lightweight grant update type for UI display.
+ * Used in ActivityCard, UpdateCard, and useUpdateActions.
+ */
+export type ConversionGrantUpdate = {
+  type: string;
+  uid: string;
+  refUID: string;
+  chainID?: number;
+  recipient: string;
+  attester: string;
+  createdAt: string;
+  data: {
+    type: string;
+    title: string;
+    text: string;
+    proofOfWork?: string;
+    completionPercentage?: string;
+  };
+  verified?: unknown[];
+};
+
+/**
+ * Source tracking for unified milestones.
+ * Uses inline types for minimal UI display requirements.
+ */
+export type UnifiedMilestoneSource = {
+  projectMilestone?: {
+    uid: string;
+    attester?: string;
+    completed?: {
+      createdAt: string;
+      attester?: string;
+      data: {
+        proofOfWork?: string;
+        reason?: string;
+      };
+    };
+    verified?: boolean;
+  };
+  grantMilestone?: {
+    milestone: GrantMilestone;
+    grant: {
+      uid: string;
+      chainID: number;
+      details?: {
+        title?: string;
+        programId?: string;
+      };
+      community?: {
+        uid: string;
+        chainID: number;
+        details?: {
+          slug?: string;
+          name?: string;
+          imageURL?: string;
+        };
+      };
+    };
+  };
+  type?: string;
+};
+
 export type UnifiedMilestone = {
   uid: string;
   type: "project" | "grant" | "update" | "impact" | "activity" | "grant_update" | "milestone";
@@ -165,18 +229,12 @@ export type UnifiedMilestone = {
   createdAt: string;
   startsAt?: number;
   endsAt?: number;
-  source: {
-    projectMilestone?: IProjectMilestoneResponse;
-    grantMilestone?: {
-      milestone: GrantMilestone;
-      grant: GrantResponse;
-    };
-    type?: string;
-  };
+  source: UnifiedMilestoneSource;
   chainID: number;
   refUID: string;
-  projectUpdate?: LegacyProjectUpdate;
-  grantUpdate?: IGrantUpdate;
+  projectUpdate?: ProjectUpdate;
+  /** Grant update for display - uses conversion type for flexibility, or SDK type */
+  grantUpdate?: ConversionGrantUpdate | IGrantUpdate;
   projectImpact?: IProjectImpact;
   mergedGrants?: Array<{
     grantUID: string;
@@ -187,67 +245,6 @@ export type UnifiedMilestone = {
     chainID: number;
     programId?: string;
   }>;
-};
-
-// Legacy project update type (for backward compatibility)
-export type LegacyProjectUpdateDeliverable = {
-  name: string;
-  proof: string;
-  description: string;
-};
-
-export type LegacyFundingAssociation = {
-  name: string;
-  uid: string;
-};
-
-export type LegacyIndicatorAssociation = {
-  id?: string;
-  indicatorId?: string;
-  name: string;
-  description?: string;
-  unitOfMeasure?: string;
-  datapoints?: Array<{
-    value: number;
-    startDate: string;
-    endDate: string;
-    proof?: string;
-  }>;
-};
-
-export type LegacyProjectUpdateData = {
-  title: string;
-  text: string;
-  type?: string;
-  grants?: string[];
-  deliverables?: LegacyProjectUpdateDeliverable[];
-  indicators?: Array<{
-    indicatorId: string;
-    name: string;
-  }>;
-};
-
-export type LegacyProjectUpdate = {
-  uid: string;
-  type?: string;
-  schemaUID?: string;
-  refUID?: string;
-  attester?: string;
-  recipient?: string;
-  revoked?: boolean;
-  createdAt: string;
-  updatedAt?: string;
-  chainID?: number;
-  txid?: string;
-  verified?: boolean | string[];
-  title?: string;
-  text?: string;
-  startDate?: string;
-  endDate?: string;
-  grants?: string[];
-  deliverables?: LegacyProjectUpdateDeliverable[];
-  data?: LegacyProjectUpdateData;
-  indicators?: LegacyIndicatorAssociation[];
 };
 
 // Aliases for backward compatibility during migration

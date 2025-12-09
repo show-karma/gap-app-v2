@@ -62,7 +62,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
 
     try {
       // Validate chainID before proceeding
-      const chainID = grant.completed.chainID || grant.chainID;
+      const chainID = grant.chainID;
       if (!chainID) {
         throw new Error(
           `Chain ID not found for grant ${grant.uid}. Cannot proceed with revocation.`

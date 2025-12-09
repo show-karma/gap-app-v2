@@ -81,19 +81,15 @@ export const MilestonesList = ({
         mergedMap.set(milestone.uid, {
           ...milestone,
           uid: milestone.uid || "",
-          chainID: milestone.source.projectMilestone?.chainID || 0,
-          refUID: milestone.source.projectMilestone?.uid || "",
+          chainID: milestone.chainID || 0,
+          refUID: milestone.source.projectMilestone?.uid || milestone.refUID || "",
         });
         return;
       }
 
       // Create a unique key based on title, description, and dates
-      const startDate =
-        milestone.source.grantMilestone?.milestone.data?.startsAt ||
-        milestone.source.grantMilestone?.milestone.startsAt;
-      const endDate =
-        milestone.source.grantMilestone?.milestone.data?.endsAt ||
-        milestone.source.grantMilestone?.milestone.endsAt;
+      const startDate = milestone.startsAt;
+      const endDate = milestone.endsAt;
 
       const key = `${milestone.title}|${milestone.description || ""}|${
         startDate || ""
