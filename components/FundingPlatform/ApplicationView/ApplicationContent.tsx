@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useApplicationVersions } from "@/hooks/useFundingPlatform";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
-import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
+import type { IFundingApplication, ProgramWithFormSchema, IFundingProgramConfig } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { getProjectTitle } from "../helper/getProjecTitle";
@@ -544,6 +544,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
         isReasonRequired={pendingStatus === "revision_requested"}
+        programConfig={program as IFundingProgramConfig | undefined}
       />
     </>
   );
