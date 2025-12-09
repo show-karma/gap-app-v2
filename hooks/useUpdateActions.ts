@@ -20,6 +20,7 @@ import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
@@ -55,7 +56,7 @@ export const useUpdateActions = (update: UpdateType) => {
       await Promise.all([
         // Milestone-related queries
         queryClient.invalidateQueries({
-          queryKey: ["project-updates", projectId],
+          queryKey: QUERY_KEYS.PROJECT.UPDATES(projectId),
         }),
         queryClient.invalidateQueries({
           queryKey: ["projectMilestones", project?.uid],

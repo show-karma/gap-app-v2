@@ -9,6 +9,7 @@ import type {
   UnifiedMilestone,
   UpdatesApiResponse,
 } from "@/types/v2/roadmap";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 /**
  * Converts API response to UnifiedMilestone format for backward compatibility
@@ -267,7 +268,7 @@ const sortByDateDescending = (milestones: UnifiedMilestone[]): UnifiedMilestone[
  * @returns Object containing unified milestones, loading state, error, and refetch function
  */
 export function useProjectUpdates(projectIdOrSlug: string) {
-  const queryKey = ["project-updates", projectIdOrSlug];
+  const queryKey = QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug);
 
   const {
     data,

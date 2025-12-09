@@ -46,4 +46,7 @@ export const QUERY_KEYS = {
       title: string;
     }) => ["duplicate-grant-check", params] as const,
   },
+  PROJECT: {
+    UPDATES: (projectIdOrSlug: string) => ["project-updates", projectIdOrSlug] as const,
+  },
 };

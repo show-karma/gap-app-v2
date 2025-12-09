@@ -5,6 +5,7 @@ import { getProjectUpdates } from "@/services/project-updates.service";
 import { generateProjectUpdatesMetadata } from "@/utilities/metadata/projectMetadata";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 type Params = Promise<{
   projectId: string;
@@ -39,7 +40,7 @@ export default async function RoadmapPage(props: { params: Promise<{ projectId: 
   });
 
   await queryClient.prefetchQuery({
-    queryKey: ["project-updates", projectId],
+    queryKey: QUERY_KEYS.PROJECT.UPDATES(projectId),
     queryFn: () => getProjectUpdates(projectId),
   });
 

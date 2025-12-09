@@ -18,6 +18,7 @@ import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/roadmap";
 import { formatDate } from "@/utilities/formatDate";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { ReadMore } from "@/utilities/ReadMore";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
@@ -161,7 +162,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
               // Invalidate all relevant caches
               await Promise.all([
                 queryClient.invalidateQueries({
-                  queryKey: ["project-updates", projectId],
+                  queryKey: QUERY_KEYS.PROJECT.UPDATES(projectId as string),
                 }),
                 queryClient.invalidateQueries({
                   queryKey: ["projectMilestones", project?.uid],
@@ -188,7 +189,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
               // Refresh the activities list when canceling editing
               await Promise.all([
                 queryClient.invalidateQueries({
-                  queryKey: ["project-updates", projectId],
+                  queryKey: QUERY_KEYS.PROJECT.UPDATES(projectId as string),
                 }),
                 queryClient.invalidateQueries({
                   queryKey: ["projectMilestones", project?.uid],

@@ -9,6 +9,7 @@ import { Fragment } from "react";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import type { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { cn } from "@/utilities/tailwind";
 
 const statuses: Record<StatusOptions, string> = {
@@ -36,7 +37,7 @@ export const ObjectiveFilter = () => {
         onChange={(value) => {
           changeStatus(value);
           queryClient.invalidateQueries({
-            queryKey: ["project-updates", projectId],
+            queryKey: QUERY_KEYS.PROJECT.UPDATES(projectId),
           });
         }}
       >
