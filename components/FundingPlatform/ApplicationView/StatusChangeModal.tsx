@@ -97,7 +97,8 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
     if (!value || value.trim() === "") {
       return false;
     }
-    const num = Number.parseFloat(value);
+    const trimmedValue = value.trim();
+    const num = Number.parseFloat(trimmedValue);
     return !Number.isNaN(num) && num > 0 && Number.isFinite(num);
   }, []);
 
@@ -106,8 +107,8 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
     if (!value || value.trim() === "") {
       return false;
     }
-    // Validate currency code format: 3-4 uppercase letters (ISO 4217 standard)
-    const currencyRegex = /^[A-Z]{3,4}$/;
+    // Validate currency code format: uppercase letters only (length doesn't matter)
+    const currencyRegex = /^[A-Z]+$/;
     return currencyRegex.test(value.trim().toUpperCase());
   }, []);
 
@@ -148,10 +149,9 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
 
   // Fetch funding details when modal opens and status is "approved"
   useEffect(() => {
-    // Reset currency when modal closes
+    // Reset all form fields when modal closes
     if (!isOpen) {
-      setApprovedCurrency("");
-      setIsCurrencyFromAPI(false);
+      resetFormState();
       return;
     }
 
@@ -169,8 +169,18 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
           if (!isCancelled && isOpen) {
             const currency = extractCurrency(fundingDetails);
             if (currency) {
-              setApprovedCurrency(currency);
+              // Normalize currency (trim and uppercase) to match validation requirements
+              const normalizedCurrency = currency.trim().toUpperCase();
+              setApprovedCurrency(normalizedCurrency);
               setIsCurrencyFromAPI(true);
+              // Validate and clear any currency errors
+              if (isApprovalStatus) {
+                if (validateCurrency(normalizedCurrency)) {
+                  setCurrencyError(null);
+                } else {
+                  setCurrencyError("Currency must be a valid code (e.g., USD, ETH, USDC)");
+                }
+              }
             }
           }
         } catch (error) {
@@ -197,7 +207,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [isOpen, isApprovalStatus, programId, chainId]);
+  }, [isOpen, isApprovalStatus, programId, chainId, resetFormState]);
 
   // Cleanup debounced function on unmount
   useEffect(() => {
@@ -225,7 +235,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
       if (!normalizedValue) {
         setCurrencyError("Approved currency is required");
       } else if (!validateCurrency(normalizedValue)) {
-        setCurrencyError("Currency must be a valid 3-4 letter code (e.g., USD, ETH, USDC)");
+        setCurrencyError("Currency must be a valid code (e.g., USD, ETH, USDC)");
       } else {
         setCurrencyError(null);
       }
@@ -271,15 +281,24 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
     }
   }, [isSubmitting, resetFormState, onClose]);
 
-  // Check if form is valid for submission
-  const isFormValid = () => {
+  // Check if form is valid for submission - memoized to react to state changes
+  const isFormValid = useMemo(() => {
     if (isSubmitting) return false;
     if (isReasonActuallyRequired && !reason.trim()) return false;
     if (isApprovalStatus) {
       return validateAmount(approvedAmount) && validateCurrency(approvedCurrency);
     }
     return true;
-  };
+  }, [
+    isSubmitting,
+    isReasonActuallyRequired,
+    reason,
+    isApprovalStatus,
+    approvedAmount,
+    approvedCurrency,
+    validateAmount,
+    validateCurrency,
+  ]);
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -526,7 +545,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                   <Button
                     onClick={handleConfirm}
-                    disabled={!isFormValid()}
+                    disabled={!isFormValid}
                     className={`w-full sm:w-auto sm:ml-3 ${
                       status === "approved"
                         ? "bg-green-600 hover:bg-green-700"
