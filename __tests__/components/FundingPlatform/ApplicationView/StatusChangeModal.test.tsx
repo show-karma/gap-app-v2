@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import StatusChangeModal from "@/components/FundingPlatform/ApplicationView/StatusChangeModal";
 
-// Mock react-hot-toast
+// Note: react-hot-toast is no longer used in StatusChangeModal, but keeping mock for other components
 jest.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
@@ -9,78 +9,6 @@ jest.mock("react-hot-toast", () => ({
     success: jest.fn(),
   },
 }));
-
-// Mock Select component from ui/select - simplified version for testing
-jest.mock("@/components/ui/select", () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const React = require("react");
-
-  // Create a context-like mechanism to share onValueChange
-  let sharedOnValueChange: ((value: string) => void) | undefined;
-
-  return {
-    Select: ({ children, value, onValueChange, disabled }: any) => {
-      // Store onValueChange globally so SelectItem can access it
-      sharedOnValueChange = onValueChange;
-
-      return React.createElement(
-        "div",
-        {
-          "data-testid": "select",
-          "data-value": value || "",
-          "data-disabled": disabled,
-        },
-        React.Children.map(children, (child: any) => {
-          if (React.isValidElement(child)) {
-            // Pass onValueChange to all children
-            return React.cloneElement(child, { onValueChange, value, disabled });
-          }
-          return child;
-        })
-      );
-    },
-    SelectTrigger: ({ children, disabled, ...props }: any) => {
-      return React.createElement(
-        "button",
-        {
-          ...props,
-          "data-testid": "select-trigger",
-          disabled,
-          type: "button",
-        },
-        children
-      );
-    },
-    SelectContent: ({ children, ...props }: any) => {
-      return React.createElement("div", { ...props, "data-testid": "select-content" }, children);
-    },
-    SelectItem: ({ children, value, onValueChange, disabled, ...props }: any) => {
-      // Use the shared onValueChange or the one passed directly
-      const handleClick = () => {
-        const handler = onValueChange || sharedOnValueChange;
-        if (!disabled && handler) {
-          handler(value);
-        }
-      };
-
-      return React.createElement(
-        "button",
-        {
-          ...props,
-          "data-value": value,
-          "data-testid": `select-item-${value}`,
-          onClick: handleClick,
-          disabled,
-          type: "button",
-        },
-        children
-      );
-    },
-    SelectValue: ({ placeholder, ...props }: any) => {
-      return React.createElement("span", { ...props, "data-testid": "select-value" }, placeholder);
-    },
-  };
-});
 
 // Mock fundingPlatformService
 jest.mock("@/services/fundingPlatformService", () => ({
@@ -187,18 +115,18 @@ describe("StatusChangeModal", () => {
     isReasonRequired: false,
   };
 
-  // Helper function to select currency from dropdown
-  const selectCurrency = async (currency: string) => {
-    // Click the select item which triggers onValueChange
-    const selectItem = screen.getByTestId(`select-item-${currency}`);
-    expect(selectItem).toBeInTheDocument();
-    fireEvent.click(selectItem);
+  // Helper function to enter currency in text input
+  const enterCurrency = async (currency: string) => {
+    const currencyInput = screen.getByLabelText(/approved currency/i) as HTMLInputElement;
+    expect(currencyInput).toBeInTheDocument();
+    expect(currencyInput).not.toBeDisabled();
 
-    // Wait for the value to be set in the Select component
+    fireEvent.change(currencyInput, { target: { value: currency } });
+
+    // Wait for the value to be set
     await waitFor(
       () => {
-        const select = screen.getByTestId("select");
-        expect(select).toHaveAttribute("data-value", currency);
+        expect(currencyInput.value).toBe(currency);
       },
       { timeout: 2000 }
     );
@@ -284,7 +212,7 @@ describe("StatusChangeModal", () => {
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
       // Select currency from dropdown
-      selectCurrency("USD");
+      enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -362,7 +290,7 @@ describe("StatusChangeModal", () => {
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
       // Select currency from dropdown
-      selectCurrency("USD");
+      enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -407,7 +335,7 @@ describe("StatusChangeModal", () => {
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
       // Select currency from dropdown
-      selectCurrency("USD");
+      enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -555,7 +483,7 @@ describe("StatusChangeModal", () => {
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
       // Select currency from dropdown
-      selectCurrency("USD");
+      enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -575,7 +503,7 @@ describe("StatusChangeModal", () => {
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
       // Select currency from dropdown
-      selectCurrency("USD");
+      enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -659,7 +587,7 @@ describe("StatusChangeModal", () => {
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
       // Select currency from dropdown
-      selectCurrency("USD");
+      enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -683,7 +611,7 @@ describe("StatusChangeModal", () => {
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
       // Select currency from dropdown
-      selectCurrency("USD");
+      enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -696,12 +624,12 @@ describe("StatusChangeModal", () => {
   });
 
   describe("Currency Field - New Features", () => {
-    it("should show currency dropdown for approved status", () => {
+    it("should show currency input field for approved status", () => {
       render(<StatusChangeModal {...defaultProps} status="approved" />);
 
-      const select = screen.getByTestId("select");
-      expect(select).toBeInTheDocument();
-      expect(screen.getByLabelText(/approved currency/i)).toBeInTheDocument();
+      const currencyInput = screen.getByLabelText(/approved currency/i);
+      expect(currencyInput).toBeInTheDocument();
+      expect(currencyInput).toHaveAttribute("type", "text");
     });
 
     it("should not show currency field for non-approved statuses", () => {
@@ -749,8 +677,7 @@ describe("StatusChangeModal", () => {
       );
     });
 
-    it("should show toast error when currency API fetch fails", async () => {
-      const toast = require("react-hot-toast");
+    it("should show empty currency input when API fetch fails", async () => {
       const { fundingPlatformService } = require("@/services/fundingPlatformService");
       fundingPlatformService.programs.getFundingDetails.mockRejectedValue(new Error("API Error"));
 
@@ -764,18 +691,15 @@ describe("StatusChangeModal", () => {
       );
 
       await waitFor(() => {
-        expect(toast.default.error).toHaveBeenCalledWith(
-          "Could not auto-load currency. Please enter it manually.",
-          expect.objectContaining({
-            duration: 4000,
-            icon: "ℹ️",
-          })
-        );
+        const currencyInput = screen.getByLabelText(/approved currency/i) as HTMLInputElement;
+        expect(currencyInput).toBeInTheDocument();
+        expect(currencyInput.value).toBe("");
+        expect(currencyInput).not.toBeDisabled();
+        expect(currencyInput).not.toHaveAttribute("readonly");
       });
     });
 
-    it("should allow manual currency selection when API fails", async () => {
-      const toast = require("react-hot-toast");
+    it("should allow manual currency entry when API fails", async () => {
       const { fundingPlatformService } = require("@/services/fundingPlatformService");
       fundingPlatformService.programs.getFundingDetails.mockRejectedValue(new Error("API Error"));
 
@@ -789,14 +713,16 @@ describe("StatusChangeModal", () => {
       );
 
       await waitFor(() => {
-        expect(toast.default.error).toHaveBeenCalled();
+        const currencyInput = screen.getByLabelText(/approved currency/i) as HTMLInputElement;
+        expect(currencyInput.value).toBe("");
+        expect(currencyInput).not.toBeDisabled();
       });
 
-      // Should be able to manually select currency
+      // Should be able to manually enter currency
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
-      await selectCurrency("USDC");
+      await enterCurrency("USDC");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -817,7 +743,7 @@ describe("StatusChangeModal", () => {
       fireEvent.change(amountInput, { target: { value: "abc" } });
 
       // Select currency
-      await selectCurrency("USD");
+      await enterCurrency("USD");
 
       // Wait a bit for debounced validation
       await waitFor(
@@ -845,7 +771,7 @@ describe("StatusChangeModal", () => {
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
       // Select currency
-      await selectCurrency("USD");
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
 
@@ -871,9 +797,8 @@ describe("StatusChangeModal", () => {
 
       // Manually set currency via input (simulating direct state change)
       const currencyInput = screen.getByLabelText(/approved currency/i);
-      // Since we can't directly set Select value, we'll test via the component's validation
-      // by checking that the form accepts various currency lengths
-      await selectCurrency("USD");
+      // Test that the form accepts various currency lengths
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -1037,7 +962,7 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "0" } });
 
-      await selectCurrency("USD");
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -1051,7 +976,7 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "-100" } });
 
-      await selectCurrency("USD");
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -1066,7 +991,7 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1234.56" } });
 
-      await selectCurrency("USD");
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -1084,7 +1009,7 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "0.0001" } });
 
-      await selectCurrency("USD");
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -1102,7 +1027,7 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "999999999999.99" } });
 
-      await selectCurrency("USD");
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -1119,7 +1044,7 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "abc" } });
 
-      await selectCurrency("USD");
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -1130,7 +1055,7 @@ describe("StatusChangeModal", () => {
     it("should reject empty amount", async () => {
       render(<StatusChangeModal {...defaultProps} status="approved" />);
 
-      await selectCurrency("USD");
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       expect(confirmButton).toBeDisabled();
@@ -1142,7 +1067,7 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "Infinity" } });
 
-      await selectCurrency("USD");
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -1158,7 +1083,7 @@ describe("StatusChangeModal", () => {
       // Enter amount with whitespace - Number.parseFloat handles this, and validation should pass
       fireEvent.change(amountInput, { target: { value: "1000" } }); // Use valid input without whitespace for reliability
 
-      await selectCurrency("USD");
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(
@@ -1186,7 +1111,7 @@ describe("StatusChangeModal", () => {
       expect(confirmButton).toBeDisabled();
 
       // Select valid currency
-      await selectCurrency("USD");
+      await enterCurrency("USD");
 
       // Error should be cleared
       await waitFor(() => {
@@ -1202,7 +1127,7 @@ describe("StatusChangeModal", () => {
 
       // Enter invalid amount
       fireEvent.change(amountInput, { target: { value: "abc" } });
-      await selectCurrency("USD");
+      await enterCurrency("USD");
 
       // Wait a bit for debounced validation
       await new Promise((resolve) => setTimeout(resolve, 400));
@@ -1301,8 +1226,9 @@ describe("StatusChangeModal", () => {
     it("should have proper ARIA attributes on currency input", () => {
       render(<StatusChangeModal {...defaultProps} status="approved" />);
 
-      const currencyTrigger = screen.getByTestId("select-trigger");
-      expect(currencyTrigger).toHaveAttribute("id", "approvedCurrency");
+      const currencyInput = screen.getByLabelText(/approved currency/i);
+      expect(currencyInput).toHaveAttribute("id", "approvedCurrency");
+      expect(currencyInput).toHaveAttribute("name", "approvedCurrency");
     });
 
     it("should have proper ARIA attributes on reason textarea", () => {
@@ -1321,7 +1247,7 @@ describe("StatusChangeModal", () => {
 
       // Enter invalid amount
       fireEvent.change(amountInput, { target: { value: "abc" } });
-      await selectCurrency("USD");
+      await enterCurrency("USD");
 
       // Wait for debounced validation (300ms + buffer)
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -1346,8 +1272,8 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
-      // Currency is required but not selected
-      const currencyTrigger = screen.getByTestId("select-trigger");
+      // Currency is required but not entered
+      const currencyInput = screen.getByLabelText(/approved currency/i);
 
       // Try to submit without currency
       const confirmButton = screen.getByTestId("confirm-button");
@@ -1392,19 +1318,20 @@ describe("StatusChangeModal", () => {
       );
 
       // Check for loading placeholder
-      const selectValue = screen.getByTestId("select-value");
-      expect(selectValue.textContent).toContain("Loading currency");
+      const currencyInput = screen.getByLabelText(/approved currency/i) as HTMLInputElement;
+      expect(currencyInput).toBeDisabled();
+      expect(currencyInput.placeholder).toContain("Loading currency");
 
       // Resolve the promise
       resolvePromise!({ currency: "ETH" });
 
       await waitFor(() => {
-        const currencyInput = screen.getByLabelText(/approved currency/i) as HTMLInputElement;
         expect(currencyInput.value).toBe("ETH");
+        expect(currencyInput).toHaveAttribute("readonly");
       });
     });
 
-    it("should disable currency select while loading", async () => {
+    it("should disable currency input while loading", async () => {
       const { fundingPlatformService } = require("@/services/fundingPlatformService");
 
       let resolvePromise: (value: any) => void;
@@ -1423,23 +1350,23 @@ describe("StatusChangeModal", () => {
         />
       );
 
-      // During loading, Select should be disabled
-      const selectTrigger = screen.getByTestId("select-trigger");
-      expect(selectTrigger).toBeDisabled();
+      // During loading, input should be disabled
+      const currencyInput = screen.getByLabelText(/approved currency/i) as HTMLInputElement;
+      expect(currencyInput).toBeDisabled();
 
-      // Resolve the promise with no currency (so Select remains)
+      // Resolve the promise with no currency (so input becomes editable)
       resolvePromise!({});
 
       await waitFor(() => {
-        // After loading completes, Select should be enabled (if no currency was loaded)
-        expect(selectTrigger).not.toBeDisabled();
+        // After loading completes, input should be enabled (if no currency was loaded)
+        expect(currencyInput).not.toBeDisabled();
+        expect(currencyInput.value).toBe("");
       });
     });
   });
 
   describe("Error Handling", () => {
     it("should handle API error gracefully and allow manual entry", async () => {
-      const toast = require("react-hot-toast");
       const { fundingPlatformService } = require("@/services/fundingPlatformService");
       fundingPlatformService.programs.getFundingDetails.mockRejectedValue(
         new Error("Network error")
@@ -1455,14 +1382,16 @@ describe("StatusChangeModal", () => {
       );
 
       await waitFor(() => {
-        expect(toast.default.error).toHaveBeenCalled();
+        const currencyInput = screen.getByLabelText(/approved currency/i) as HTMLInputElement;
+        expect(currencyInput.value).toBe("");
+        expect(currencyInput).not.toBeDisabled();
       });
 
-      // Should be able to manually select currency after error
+      // Should be able to manually enter currency after error
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
-      await selectCurrency("USD");
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -1504,8 +1433,8 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
-      // Select currency - the Select component normalizes to uppercase in handleCurrencyChange
-      await selectCurrency("USDC"); // Select expects uppercase value
+      // Enter currency in lowercase - should be normalized to uppercase
+      await enterCurrency("usdc");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -1513,7 +1442,7 @@ describe("StatusChangeModal", () => {
       });
 
       fireEvent.click(confirmButton);
-      // Currency should be normalized to uppercase (handled by handleCurrencyChange)
+      // Currency should be normalized to uppercase (handled by handleConfirm)
       expect(onConfirm).toHaveBeenCalledWith(undefined, "1000", "USDC");
     });
 

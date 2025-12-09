@@ -4,15 +4,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import debounce from "lodash.debounce";
 import { type FC, Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { fundingPlatformService } from "@/services/fundingPlatformService";
 
 interface StatusChangeModalProps {
@@ -39,18 +31,6 @@ const statusDescriptions: Record<string, string> = {
   rejected: "Reject this application",
   pending: "Set this application back to pending",
 };
-
-// Common currency codes for funding applications
-const COMMON_CURRENCIES = [
-  { value: "USD", label: "USD - US Dollar" },
-  { value: "ETH", label: "ETH - Ethereum" },
-  { value: "USDC", label: "USDC - USD Coin" },
-  { value: "USDT", label: "USDT - Tether USD" },
-  { value: "WETH", label: "WETH - Wrapped Ethereum" },
-  { value: "MATIC", label: "MATIC - Polygon" },
-  { value: "CELO", label: "CELO - Celo" },
-  { value: "USDGLO", label: "USDGLO - USD Global" },
-] as const;
 
 // Helper to extract currency from API response (handles multiple possible response structures)
 const extractCurrency = (fundingDetails: {
@@ -175,7 +155,9 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
               setIsCurrencyFromAPI(true);
               // Validate and clear any currency errors
               if (isApprovalStatus) {
-                if (validateCurrency(normalizedCurrency)) {
+                // Inline validation to avoid dependency array issues
+                const currencyRegex = /^[A-Z]+$/;
+                if (currencyRegex.test(normalizedCurrency)) {
                   setCurrencyError(null);
                 } else {
                   setCurrencyError("Currency must be a valid code (e.g., USD, ETH, USDC)");
@@ -185,13 +167,9 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
           }
         } catch (error) {
           console.error("Failed to fetch funding details:", error);
-          // Show subtle notification to inform user about auto-load failure
+          // If currency can't be loaded, leave field empty for manual entry
           if (!isCancelled && isOpen) {
             setIsCurrencyFromAPI(false);
-            toast.error("Could not auto-load currency. Please enter it manually.", {
-              duration: 4000,
-              icon: "ℹ️",
-            });
           }
         } finally {
           if (!isCancelled) {
@@ -229,15 +207,19 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   };
 
   const handleCurrencyChange = (value: string) => {
-    const normalizedValue = value.trim().toUpperCase();
-    setApprovedCurrency(normalizedValue);
+    // Don't normalize while typing - only normalize on blur/submit for better UX
+    setApprovedCurrency(value);
     if (isApprovalStatus) {
-      if (!normalizedValue) {
+      const trimmedValue = value.trim();
+      if (!trimmedValue) {
         setCurrencyError("Approved currency is required");
-      } else if (!validateCurrency(normalizedValue)) {
-        setCurrencyError("Currency must be a valid code (e.g., USD, ETH, USDC)");
       } else {
-        setCurrencyError(null);
+        const normalizedValue = trimmedValue.toUpperCase();
+        if (!validateCurrency(normalizedValue)) {
+          setCurrencyError("Currency must be a valid code (e.g., USD, ETH, USDC)");
+        } else {
+          setCurrencyError(null);
+        }
       }
     }
   };
@@ -419,7 +401,20 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                               >
                                 Approved Currency <span className="text-red-500">*</span>
                               </label>
-                              {isCurrencyFromAPI ? (
+                              {isLoadingCurrency ? (
+                                <input
+                                  id="approvedCurrency"
+                                  name="approvedCurrency"
+                                  type="text"
+                                  aria-describedby="currency-info"
+                                  aria-invalid={false}
+                                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 cursor-not-allowed"
+                                  value=""
+                                  placeholder="Loading currency..."
+                                  readOnly
+                                  disabled
+                                />
+                              ) : isCurrencyFromAPI ? (
                                 <input
                                   id="approvedCurrency"
                                   name="approvedCurrency"
@@ -432,39 +427,24 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                                   disabled
                                 />
                               ) : (
-                                <Select
+                                <input
+                                  id="approvedCurrency"
+                                  name="approvedCurrency"
+                                  type="text"
+                                  aria-describedby={
+                                    currencyError ? "currency-error" : "currency-info"
+                                  }
+                                  aria-invalid={!!currencyError}
+                                  className={`block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 ${
+                                    currencyError
+                                      ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                                      : ""
+                                  }`}
+                                  placeholder="e.g., USD, ETH, USDC"
                                   value={approvedCurrency}
-                                  onValueChange={handleCurrencyChange}
-                                  disabled={isSubmitting || isLoadingCurrency}
-                                >
-                                  <SelectTrigger
-                                    id="approvedCurrency"
-                                    aria-describedby={
-                                      currencyError ? "currency-error" : "currency-info"
-                                    }
-                                    aria-invalid={!!currencyError}
-                                    className={`w-full ${
-                                      currencyError
-                                        ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                                        : ""
-                                    }`}
-                                  >
-                                    <SelectValue
-                                      placeholder={
-                                        isLoadingCurrency
-                                          ? "Loading currency..."
-                                          : "Select currency"
-                                      }
-                                    />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {COMMON_CURRENCIES.map((currency) => (
-                                      <SelectItem key={currency.value} value={currency.value}>
-                                        {currency.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
+                                  onChange={(e) => handleCurrencyChange(e.target.value)}
+                                  disabled={isSubmitting}
+                                />
                               )}
                               {currencyError && (
                                 <p
@@ -475,7 +455,14 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                                   {currencyError}
                                 </p>
                               )}
-                              {isCurrencyFromAPI ? (
+                              {isLoadingCurrency ? (
+                                <p
+                                  id="currency-info"
+                                  className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                                >
+                                  Loading currency from program funding details...
+                                </p>
+                              ) : isCurrencyFromAPI ? (
                                 <p
                                   id="currency-info"
                                   className="mt-1 text-xs text-gray-500 dark:text-gray-400"
@@ -487,7 +474,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                                   id="currency-info"
                                   className="mt-1 text-xs text-gray-500 dark:text-gray-400"
                                 >
-                                  Select a currency from the dropdown
+                                  Enter the currency code (e.g., USD, ETH, USDC)
                                 </p>
                               )}
                             </div>
