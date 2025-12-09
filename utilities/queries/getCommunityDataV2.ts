@@ -16,9 +16,6 @@ export const getCommunityDetailsV2 = cache(
         `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.COMMUNITY.V2.GET(slug)}`,
         {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
           next: { revalidate: 1800 }, // 30 minutes
         }
       );

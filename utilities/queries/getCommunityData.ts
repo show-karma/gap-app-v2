@@ -5,7 +5,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { getCommunityDetailsV2 } from "./getCommunityDataV2";
 
-export const getCommunityDataV2 = cache(async (communityId: string): Promise<CommunityDetailsV2> => {
+export const getCommunityDataV2 = async (communityId: string): Promise<CommunityDetailsV2> => {
   const data = await getCommunityDetailsV2(communityId);
 
   if (!data) {
@@ -13,7 +13,7 @@ export const getCommunityDataV2 = cache(async (communityId: string): Promise<Com
   }
 
   return data;
-});
+};
 
 export const getCommunityCategories = cache(async (communityId: string): Promise<string[]> => {
   try {
