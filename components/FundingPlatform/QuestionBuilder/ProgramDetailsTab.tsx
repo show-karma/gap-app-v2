@@ -181,32 +181,27 @@ export function ProgramDetailsTab({
   }, [programId, chainId, reset]);
 
   // Helper function to create date picker props
-  const createDatePickerProps = useCallback(
-    (
-      fieldName: "startsAt" | "endsAt",
-      isDisabled: boolean,
-      field: { onChange: (value: Date | undefined) => void }
-    ) => {
+  const createDatePickerProps = (
+    fieldName: "startsAt" | "endsAt",
+    isDisabled: boolean,
+    field: { onChange: (value: Date | undefined) => void }
+  ) => ({
+    onSelect: (date: Date | undefined) => {
+      if (isDisabled) return;
       const currentValue = watch(`dates.${fieldName}`);
-      return {
-        onSelect: (date: Date | undefined) => {
-          if (isDisabled) return;
-          if (currentValue && date && formatDate(date) === formatDate(currentValue)) {
-            setValue(`dates.${fieldName}`, undefined, { shouldValidate: true });
-            field.onChange(undefined);
-          } else if (date) {
-            setValue(`dates.${fieldName}`, date, { shouldValidate: true });
-            field.onChange(date);
-          }
-        },
-        clearButtonFn: () => {
-          setValue(`dates.${fieldName}`, undefined, { shouldValidate: true });
-          field.onChange(undefined);
-        },
-      };
+      if (currentValue && date && formatDate(date) === formatDate(currentValue)) {
+        setValue(`dates.${fieldName}`, undefined, { shouldValidate: true });
+        field.onChange(undefined);
+      } else {
+        setValue(`dates.${fieldName}`, date, { shouldValidate: true });
+        field.onChange(date);
+      }
     },
-    [watch, setValue]
-  );
+    clearButtonFn: () => {
+      setValue(`dates.${fieldName}`, undefined, { shouldValidate: true });
+      field.onChange(undefined);
+    },
+  });
 
   const onSubmit = async (data: CreateProgramFormSchema) => {
     const validationError = validateSubmissionPrerequisites();
@@ -293,16 +288,6 @@ export function ProgramDetailsTab({
   return (
     <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
       <div className="max-w-4xl mx-auto">
-        {/* ARIA live region for error announcements */}
-        <div aria-live="polite" aria-atomic="true" className="sr-only">
-          {errors.name && `Error: ${errors.name.message}`}
-          {errors.description && `Error: ${errors.description.message}`}
-          {errors.shortDescription && `Error: ${errors.shortDescription.message}`}
-          {errors.dates?.startsAt && `Error: ${errors.dates.startsAt.message}`}
-          {errors.dates?.endsAt && `Error: ${errors.dates.endsAt.message}`}
-          {errors.budget && `Error: ${errors.budget.message}`}
-        </div>
-
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Program Name */}
           <div className="flex w-full flex-col gap-1">
@@ -322,6 +307,9 @@ export function ProgramDetailsTab({
                 {errors.name.message}
               </p>
             )}
+            <div aria-live="polite" aria-atomic="true" className="sr-only">
+              {errors.name && `Error: ${errors.name.message}`}
+            </div>
           </div>
 
           {/* Program Description */}
@@ -343,6 +331,9 @@ export function ProgramDetailsTab({
                 {errors.description.message}
               </p>
             )}
+            <div aria-live="polite" aria-atomic="true" className="sr-only">
+              {errors.description && `Error: ${errors.description.message}`}
+            </div>
           </div>
 
           {/* Short Description */}
@@ -374,6 +365,9 @@ export function ProgramDetailsTab({
                 {watch("shortDescription")?.length || 0}/100
               </p>
             </div>
+            <div aria-live="polite" aria-atomic="true" className="sr-only">
+              {errors.shortDescription && `Error: ${errors.shortDescription.message}`}
+            </div>
           </div>
 
           {/* Dates */}
@@ -401,6 +395,10 @@ export function ProgramDetailsTab({
                         {formState.errors.dates.startsAt.message}
                       </p>
                     )}
+                    <div aria-live="polite" aria-atomic="true" className="sr-only">
+                      {formState.errors.dates?.startsAt &&
+                        `Error: ${formState.errors.dates.startsAt.message}`}
+                    </div>
                   </div>
                 );
               }}
@@ -430,6 +428,10 @@ export function ProgramDetailsTab({
                         {formState.errors.dates.endsAt.message}
                       </p>
                     )}
+                    <div aria-live="polite" aria-atomic="true" className="sr-only">
+                      {formState.errors.dates?.endsAt &&
+                        `Error: ${formState.errors.dates.endsAt.message}`}
+                    </div>
                   </div>
                 );
               }}
@@ -455,6 +457,9 @@ export function ProgramDetailsTab({
                 {errors.budget.message}
               </p>
             )}
+            <div aria-live="polite" aria-atomic="true" className="sr-only">
+              {errors.budget && `Error: ${errors.budget.message}`}
+            </div>
           </div>
 
           {/* Actions */}
