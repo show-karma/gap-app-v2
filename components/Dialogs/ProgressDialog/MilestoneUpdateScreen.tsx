@@ -38,7 +38,7 @@ export const MilestoneUpdateScreen = () => {
           onSelectFunction={(value: string) => {
             const newGrant = grants.find((grant) => grant.uid === value);
             setSelectedGrant(newGrant);
-            const availableMilestones = newGrant?.milestones.filter(
+            const availableMilestones = newGrant?.milestones?.filter(
               (milestone) => !milestone.completed
             );
             if (availableMilestones && availableMilestones.length > 0) {
@@ -55,7 +55,7 @@ export const MilestoneUpdateScreen = () => {
   };
 
   const MilestoneSelection = () => {
-    const possibleMilestones = selectedGrant?.milestones.filter(
+    const possibleMilestones = selectedGrant?.milestones?.filter(
       (milestone) => !milestone.completed
     );
     return (

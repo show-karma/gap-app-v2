@@ -133,7 +133,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
                   (g) => g.uid === grantUpdate.refUID
                 );
 
-                const fetchedGrantUpdate = foundGrant?.updates.find(
+                const fetchedGrantUpdate = foundGrant?.updates?.find(
                   (u: any) => u.uid === grantUpdate.uid
                 );
 
@@ -180,7 +180,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
     return isContractOwner || !isProjectAdmin;
   };
   const ableToVerify = verifyPermission();
-  
+
   // Hide if already verified or user doesn't have permission
   if (isVerified || !ableToVerify) return null;
 

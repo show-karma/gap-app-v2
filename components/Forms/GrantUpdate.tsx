@@ -172,7 +172,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
               const attestUID = grantUpdate.uid;
               const updatedGrant = fetchedProject?.grants?.find((g) => g.uid === grantToUpdate.uid);
 
-              const alreadyExists = updatedGrant?.updates.find((u: any) => u.uid === attestUID);
+              const alreadyExists = updatedGrant?.updates?.find((u: any) => u.uid === attestUID);
               if (alreadyExists) {
                 retries = 0;
                 changeStepperStep("indexed");

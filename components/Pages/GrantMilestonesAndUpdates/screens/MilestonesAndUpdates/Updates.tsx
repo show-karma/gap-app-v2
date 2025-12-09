@@ -97,7 +97,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
           async () => {
             const fetchedProject = await refreshProject();
             const foundGrant = fetchedProject?.grants?.find((g) => g.uid === milestone.refUID);
-            const fetchedMilestone = foundGrant?.milestones.find(
+            const fetchedMilestone = foundGrant?.milestones?.find(
               (u: any) => u.uid === milestone.uid
             );
             return !fetchedMilestone?.completed;

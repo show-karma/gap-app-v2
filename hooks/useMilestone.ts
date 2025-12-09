@@ -530,7 +530,7 @@ export const useMilestone = () => {
             async () => {
               const projectInstance = await refreshProject();
               const foundGrant = projectInstance?.grants?.find((g) => g.uid === milestone.refUID);
-              const fetchedMilestone = foundGrant?.milestones.find(
+              const fetchedMilestone = foundGrant?.milestones?.find(
                 (u: any) => u.uid === milestone.uid
               );
               return !fetchedMilestone?.completed;
@@ -798,8 +798,8 @@ export const useMilestone = () => {
                 const projectInstance = await refreshProject();
                 if (!projectInstance?.grants) return false;
                 // Check if any of the milestones have been completed
-                const areMilestonesCompleted = projectInstance?.grants.some((grant) =>
-                  grant.milestones.some((m: any) => milestoneUIDs.includes(m.uid) && !!m.completed)
+                const areMilestonesCompleted = projectInstance?.grants?.some((grant) =>
+                  grant.milestones?.some((m: any) => milestoneUIDs.includes(m.uid) && !!m.completed)
                 );
                 return areMilestonesCompleted || false;
               },
@@ -941,8 +941,8 @@ export const useMilestone = () => {
               async () => {
                 const projectInstance = await refreshProject();
                 if (!projectInstance?.grants) return false;
-                const areCompletionsUpdated = projectInstance?.grants.some((grant) =>
-                  grant.milestones
+                const areCompletionsUpdated = projectInstance?.grants?.some((grant) =>
+                  (grant.milestones || [])
                     .filter((milestone: any) => milestoneUIDs.includes(milestone.uid))
                     .some((milestone: any) => {
                       if (!milestone.completed) return false;
@@ -1074,7 +1074,7 @@ export const useMilestone = () => {
                 const projectInstance = await refreshProject();
                 if (!projectInstance?.grants) return false;
                 const foundGrant = projectInstance?.grants?.find((g) => g.uid === milestone.refUID);
-                const fetchedMilestone = foundGrant?.milestones.find(
+                const fetchedMilestone = foundGrant?.milestones?.find(
                   (u: any) => u.uid === milestone.uid
                 );
                 return !!(

@@ -179,13 +179,13 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
   };
 
   // Count completed milestones properly (handling array format)
-  const completedMilestonesCount = milestones.filter((i) => {
+  const completedMilestonesCount = (milestones || []).filter((i) => {
     const completed = i.completed;
     if (Array.isArray(completed)) return completed.length > 0;
     return !!completed;
   }).length;
-  const updatesLength = completedMilestonesCount + updates.length;
-  const milestonesCounter = milestones.length;
+  const updatesLength = completedMilestonesCount + (updates?.length || 0);
+  const milestonesCounter = milestones?.length || 0;
 
   return (
     <div className="flex flex-col gap-2" id="milestones-and-updates-list">

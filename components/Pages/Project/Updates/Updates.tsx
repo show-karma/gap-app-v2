@@ -41,8 +41,8 @@ export const UpdatesPage: FC = () => {
     const impacts: IProjectImpact[] = project?.impacts || [];
 
     project?.grants?.forEach((grant) => {
-      grantUpdates.push(...grant.updates);
-      grantMilestones.push(...grant.milestones);
+      grantUpdates.push(...(grant.updates || []));
+      grantMilestones.push(...(grant.milestones || []));
     });
 
     const sortedUpdates = [

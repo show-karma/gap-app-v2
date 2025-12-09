@@ -117,7 +117,7 @@ export default function MyProjects() {
                     const total = card.grants?.length || 0;
                     card.grants?.forEach((grant) => {
                       if (grant.completed) return;
-                      const hasActive = grant.milestones.find(
+                      const hasActive = grant.milestones?.find(
                         (milestone: any) => !milestone.completed
                       );
                       if (hasActive) active += 1;

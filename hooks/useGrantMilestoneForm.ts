@@ -119,7 +119,7 @@ export function useGrantMilestoneForm({
               .then(async (fetchedProject) => {
                 const fetchedGrant = fetchedProject?.grants?.find((g) => g.uid === grantUID);
 
-                const milestoneExists = fetchedGrant?.milestones.find(
+                const milestoneExists = fetchedGrant?.milestones?.find(
                   (g: any) => g.uid === milestoneToAttest.uid
                 );
 
