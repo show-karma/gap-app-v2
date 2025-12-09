@@ -52,14 +52,16 @@ export default async function fetchData(
     const res = await axios.request(requestConfig);
     const resData = res.data;
     const pageInfo = res.data.pageInfo || null;
-    return [resData, null, pageInfo];
+    return [resData, null, pageInfo, res.status];
   } catch (err: any) {
     let error = "";
+    let status = 500;
     if (!err.response) {
       error = err;
     } else {
       error = err.response.data.message || err.message;
+      status = err.response.status;
     }
-    return [null, error];
+    return [null, error, null, status];
   }
 }
