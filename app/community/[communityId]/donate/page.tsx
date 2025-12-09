@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
-import type { CommunityDetailsV2 } from "@/types/community";
+import type { CommunityDetails } from "@/types/community";
 import { getCommunityDetails } from "@/utilities/queries/v2/community";
 
 export default function DonateProgramSelectPage() {
@@ -25,7 +25,7 @@ export default function DonateProgramSelectPage() {
     data: community,
     isLoading: communityLoading,
     error: communityError,
-  } = useQuery<CommunityDetailsV2 | null>({
+  } = useQuery<CommunityDetails | null>({
     queryKey: ["communityDetails", communityId],
     queryFn: () => getCommunityDetails(communityId),
     enabled: !!communityId,

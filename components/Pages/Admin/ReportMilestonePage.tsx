@@ -20,7 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { useStaff } from "@/hooks/useStaff";
 import { useOwnerStore } from "@/store";
-import type { CommunityDetailsV2 } from "@/types/community";
+import type { CommunityDetails } from "@/types/community";
 import { downloadCommunityReport } from "@/utilities/downloadReports";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -107,7 +107,7 @@ const itemsPerPage = 50;
 const skeletonArray = Array.from({ length: 12 }, (_, index) => index);
 
 interface ReportMilestonePageProps {
-  community: CommunityDetailsV2;
+  community: CommunityDetails;
   grantPrograms: GrantProgram[];
 }
 
@@ -610,9 +610,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
         </div>
       ) : (
         <div className="flex w-full items-center justify-center">
-          <p>
-            {MESSAGES.ADMIN.NOT_AUTHORIZED(community?.details?.name || communityId || "")}
-          </p>
+          <p>{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.details?.name || communityId || "")}</p>
         </div>
       )}
     </div>

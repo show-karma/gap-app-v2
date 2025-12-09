@@ -1,6 +1,6 @@
 "use client";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import type { CommunityProjectsV2Response } from "@/types/community";
+import type { CommunityProjectsResponse } from "@/types/community";
 import { getCommunityProjects } from "@/utilities/queries/v2/community";
 
 interface UseCommunityProjectsPaginatedOptions {
@@ -14,7 +14,7 @@ export function useCommunityProjectsPaginated({
   programId,
   itemsPerPage = 12,
 }: UseCommunityProjectsPaginatedOptions) {
-  return useInfiniteQuery<CommunityProjectsV2Response>({
+  return useInfiniteQuery<CommunityProjectsResponse>({
     queryKey: ["community-projects-paginated", communityId, programId, itemsPerPage],
     queryFn: ({ pageParam = 1 }) =>
       getCommunityProjects(communityId, {

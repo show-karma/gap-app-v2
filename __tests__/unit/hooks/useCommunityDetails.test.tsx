@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type React from "react";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
-import type { CommunityDetailsV2 } from "@/types/community";
+import type { CommunityDetails } from "@/types/community";
 
 // Mock fetchData utility
 jest.mock("@/utilities/fetchData", () => ({
@@ -28,7 +28,7 @@ const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
 const mockErrorManager = errorManager as jest.MockedFunction<typeof errorManager>;
 
 // Test data
-const mockCommunity: CommunityDetailsV2 = {
+const mockCommunity: CommunityDetails = {
   uid: "0x1234567890123456789012345678901234567890",
   chainID: 10,
   details: {
@@ -253,8 +253,8 @@ describe("useCommunityDetails", () => {
 
     it("should return correct loading state while fetching", async () => {
       // Create a promise that we can resolve manually
-      let resolvePromise: (value: [CommunityDetailsV2, null, null]) => void;
-      const pendingPromise = new Promise<[CommunityDetailsV2, null, null]>((resolve) => {
+      let resolvePromise: (value: [CommunityDetails, null, null]) => void;
+      const pendingPromise = new Promise<[CommunityDetails, null, null]>((resolve) => {
         resolvePromise = resolve;
       });
 
@@ -318,7 +318,7 @@ describe("useCommunityDetails", () => {
 
   describe("error scenarios coverage", () => {
     it("should report malformed response to Sentry", async () => {
-      // Simulate a malformed response (not a valid CommunityDetailsV2)
+      // Simulate a malformed response (not a valid CommunityDetails)
       mockFetchData.mockResolvedValueOnce([undefined, null, null]);
 
       const { result } = renderHook(() => useCommunityDetails("malformed-response"), {

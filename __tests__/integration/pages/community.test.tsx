@@ -6,7 +6,7 @@ jest.mock("@/utilities/queries/getCommunityData", () => ({
 }));
 
 jest.mock("@/utilities/queries/getCommunityDataV2", () => ({
-  getCommunityDetailsV2: jest.fn(),
+  getCommunityDetails: jest.fn(),
   getCommunityStatsV2: jest.fn(),
   getCommunityProjectsV2: jest.fn(),
 }));
@@ -44,13 +44,13 @@ describe("Community Page", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     const {
-      getCommunityDetailsV2,
+      getCommunityDetails,
       getCommunityStatsV2,
       getCommunityProjectsV2,
     } = require("@/utilities/queries/getCommunityDataV2");
     const { getCommunityCategories } = require("@/utilities/queries/getCommunityData");
 
-    getCommunityDetailsV2.mockResolvedValue(mockCommunityDetails);
+    getCommunityDetails.mockResolvedValue(mockCommunityDetails);
     getCommunityStatsV2.mockResolvedValue(mockCommunityStats);
     getCommunityCategories.mockResolvedValue(mockCategories);
     getCommunityProjectsV2.mockResolvedValue(mockProjects);

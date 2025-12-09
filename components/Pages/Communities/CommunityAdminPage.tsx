@@ -14,7 +14,7 @@ import { Button } from "@/components/Utilities/Button";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useStaff } from "@/hooks/useStaff";
-import type { CommunityDetailsV2 } from "@/types/community";
+import type { CommunityDetails } from "@/types/community";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -68,7 +68,7 @@ export const CommunityAdminPage = ({
   community,
 }: {
   communityId: string;
-  community: CommunityDetailsV2;
+  community: CommunityDetails;
 }) => {
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(community?.uid);

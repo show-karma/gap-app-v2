@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type React from "react";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
-import type { CommunityDetailsV2 } from "@/types/community";
+import type { CommunityDetails } from "@/types/community";
 
 // Mock wagmi useAccount
 jest.mock("wagmi", () => ({
@@ -39,7 +39,7 @@ const mockUseCheckCommunityAdmin = useCheckCommunityAdmin as jest.MockedFunction
 >;
 
 // Test data
-const mockCommunity: CommunityDetailsV2 = {
+const mockCommunity: CommunityDetails = {
   uid: "0x1234567890123456789012345678901234567890",
   chainID: 10,
   details: {

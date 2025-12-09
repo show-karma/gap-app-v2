@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { CommunityProjectsV2Response } from "@/types/community";
+import type { CommunityProjectsResponse } from "@/types/community";
 import { getCommunityProjects } from "@/utilities/queries/v2/community";
 
 interface UseCommunityProjectsOptions {
@@ -13,7 +13,7 @@ interface UseCommunityProjectsOptions {
 }
 
 export const useCommunityProjects = (slug: string, options?: UseCommunityProjectsOptions) => {
-  return useQuery<CommunityProjectsV2Response, Error>({
+  return useQuery<CommunityProjectsResponse, Error>({
     queryKey: ["community-projects", slug, options],
     queryFn: () => getCommunityProjects(slug, options || {}),
     enabled: !!slug,

@@ -24,7 +24,7 @@ import {
   useUpdateTrack,
 } from "@/hooks/useTracks";
 import type { Track } from "@/services/tracks";
-import type { CommunityDetailsV2 } from "@/types/community";
+import type { CommunityDetails } from "@/types/community";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -36,7 +36,7 @@ export const TracksAdminPage = ({
   community,
 }: {
   communityId: string;
-  community: CommunityDetailsV2;
+  community: CommunityDetails;
 }) => {
   const { address, isConnected } = useAccount();
   const { authenticated: isAuth } = useAuth();

@@ -1,7 +1,7 @@
 import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import type { ProjectV2 } from "@/types/community";
+import type { Project } from "@/types/community";
 
-export const projectV2ToGrant = (project: ProjectV2): IGrantResponse => {
+export const projectV2ToGrant = (project: Project): IGrantResponse => {
   return {
     uid: project.uid,
     createdAt: project.createdAt,
