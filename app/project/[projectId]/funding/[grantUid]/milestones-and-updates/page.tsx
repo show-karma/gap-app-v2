@@ -4,10 +4,9 @@ import { Suspense } from "react";
 import MilestonesAndUpdates from "@/components/Pages/Grants/MilestonesAndUpdates";
 import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Project/Loading/Grants/MilestonesAndUpdate";
 import { PROJECT_NAME } from "@/constants/brand";
-import type { GrantResponse } from "@/types/v2/grant";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { defaultMetadata } from "@/utilities/meta";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
@@ -33,22 +32,24 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     icons: defaultMetadata.icons,
   };
   if (grantUid) {
-    const grantInfo = (await gapIndexerApi
-      .grantBySlug(grantUid as `0x${string}`)
-      .then((res) => res.data)
-      .catch(() => notFound())) as unknown as GrantResponse | undefined;
-    if (grantInfo) {
-      const pageMetadata = {
-        title: `${projectInfo?.details?.title} - Milestones and Updates for ${grantInfo?.details?.title} | ${PROJECT_NAME}`,
-        description: `View all milestones and updates by ${projectInfo?.details?.title} for ${grantInfo?.details?.title} grant.`,
-      };
+    // Fetch grants using V2 endpoint and find the specific grant
+    const grants = await getProjectGrants(projectId);
+    const grantInfo = grants.find((g) => g.uid.toLowerCase() === grantUid.toLowerCase());
 
-      metadata = {
-        ...metadata,
-        title: pageMetadata?.title || pageMetadata?.title || "",
-        description: pageMetadata?.description || pageMetadata?.description || "",
-      };
+    if (!grantInfo) {
+      notFound();
     }
+
+    const pageMetadata = {
+      title: `${projectInfo?.details?.title} - Milestones and Updates for ${grantInfo.details?.title} | ${PROJECT_NAME}`,
+      description: `View all milestones and updates by ${projectInfo?.details?.title} for ${grantInfo.details?.title} grant.`,
+    };
+
+    metadata = {
+      ...metadata,
+      title: pageMetadata.title || "",
+      description: pageMetadata.description || "",
+    };
   } else {
     metadata = {
       ...metadata,

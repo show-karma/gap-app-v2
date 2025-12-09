@@ -4,7 +4,7 @@ import { getMetadata } from "@/utilities/sdk/getMetadata";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const type = searchParams.get("type") as "project" | "community" | "grant";
+  const type = searchParams.get("type") as "project" | "community";
   const uid = searchParams.get("uid") as Hex;
 
   if (!type || !uid) {

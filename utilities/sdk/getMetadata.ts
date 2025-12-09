@@ -1,35 +1,22 @@
 import type { Hex } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { envVars } from "../enviromentVars";
-import { gapIndexerApi } from "../gapIndexerApi";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 export const getMetadata = async <T>(
-  type: "project" | "community" | "grant",
+  type: "project" | "community",
   uid: Hex
 ): Promise<T | undefined> => {
-  const apiUrl = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
   try {
-    if (!apiUrl) throw new Error("Indexer url not set.");
     if (type === "project") {
-      const project = await gapIndexerApi
-        .projectBySlug(uid)
-        .then((res) => res.data)
-        .catch(() => undefined);
+      const [project, error] = await fetchData(INDEXER.V2.PROJECTS.GET(uid));
+      if (error || !project) return undefined;
       return project as T;
     }
     if (type === "community") {
-      const community = await gapIndexerApi
-        .communityBySlug(uid)
-        .then((res) => res.data)
-        .catch(() => undefined);
+      const [community, error] = await fetchData(INDEXER.COMMUNITY.V2.GET(uid));
+      if (error || !community) return undefined;
       return community as T;
-    }
-    if (type === "grant") {
-      const grant = await gapIndexerApi
-        .grantBySlug(uid)
-        .then((res) => res.data)
-        .catch(() => undefined);
-      return grant as T;
     }
 
     return undefined;

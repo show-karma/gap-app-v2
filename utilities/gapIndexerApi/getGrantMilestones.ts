@@ -1,36 +1,25 @@
-import type {
-  IGrantResponse as GrantResponse,
-  IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { gapIndexerApi } from ".";
+import { getProjectGrants } from "@/services/project-grants.service";
+import type { GrantMilestone, GrantResponse } from "@/types/v2/grant";
 
 export async function getGrantMilestones(
   projectId: string
-): Promise<{ milestone: IMilestoneResponse; grant: GrantResponse }[]> {
+): Promise<{ milestone: GrantMilestone; grant: GrantResponse }[]> {
   try {
-    // 1. First get the project to access all its grants
-    const project = await gapIndexerApi
-      .projectBySlug(projectId)
-      .then((res) => res.data)
-      .catch((error) => {
-        errorManager("Error fetching project for grants", error, {
-          projectId,
-        });
-        return null;
-      });
+    // Fetch grants using V2 endpoint
+    const grants = await getProjectGrants(projectId);
 
-    if (!project || !project.grants?.length) {
+    if (!grants?.length) {
       return [];
     }
 
-    // 2. Collect all grant milestones with their parent grant information
+    // Collect all grant milestones with their parent grant information
     const allGrantMilestones: {
-      milestone: IMilestoneResponse;
+      milestone: GrantMilestone;
       grant: GrantResponse;
     }[] = [];
 
-    project.grants?.forEach((grant) => {
+    grants.forEach((grant) => {
       if (grant.milestones && grant.milestones.length > 0) {
         grant.milestones.forEach((milestone) => {
           allGrantMilestones.push({

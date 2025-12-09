@@ -4,10 +4,9 @@ import { Suspense } from "react";
 import { GrantOverview } from "@/components/Pages/Project/Grants/Overview";
 import { ProjectGrantsOverviewLoading } from "@/components/Pages/Project/Loading/Grants/Overview";
 import { PROJECT_NAME } from "@/constants/brand";
-import type { GrantResponse } from "@/types/v2/grant";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { defaultMetadata } from "@/utilities/meta";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
@@ -34,35 +33,35 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     icons: defaultMetadata.icons,
   };
   if (grantUid) {
-    const grantInfo = (await gapIndexerApi
-      .grantBySlug(grantUid as `0x${string}`)
-      .then((res) => res.data)
-      .catch(() => notFound())) as unknown as GrantResponse | undefined;
+    // Fetch grants using V2 endpoint and find the specific grant
+    const grants = await getProjectGrants(projectId);
+    const grantInfo = grants.find((g) => g.uid.toLowerCase() === grantUid.toLowerCase());
 
-    if (grantInfo) {
-      // V2 API structure
-      const grantTitle = grantInfo?.details?.title;
-      const grantDescription = grantInfo?.details?.description;
-
-      const tabMetadata: Record<
-        string,
-        {
-          title: string;
-          description: string;
-        }
-      > = {
-        overview: {
-          title: `${grantTitle} Grant Overview | ${projectInfo?.details?.title} | ${PROJECT_NAME}`,
-          description: `${cleanMarkdownForPlainText(grantDescription || "", 160)}` || "",
-        },
-      };
-
-      metadata = {
-        ...metadata,
-        title: tabMetadata.overview?.title || "",
-        description: tabMetadata.overview?.description || "",
-      };
+    if (!grantInfo) {
+      notFound();
     }
+
+    const grantTitle = grantInfo.details?.title;
+    const grantDescription = grantInfo.details?.description;
+
+    const tabMetadata: Record<
+      string,
+      {
+        title: string;
+        description: string;
+      }
+    > = {
+      overview: {
+        title: `${grantTitle} Grant Overview | ${projectInfo?.details?.title} | ${PROJECT_NAME}`,
+        description: `${cleanMarkdownForPlainText(grantDescription || "", 160)}` || "",
+      },
+    };
+
+    metadata = {
+      ...metadata,
+      title: tabMetadata.overview?.title || "",
+      description: tabMetadata.overview?.description || "",
+    };
   } else {
     metadata = {
       ...metadata,
