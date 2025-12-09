@@ -4,11 +4,11 @@ import { useParams, usePathname } from "next/navigation";
 import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
 import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards";
 import { layoutTheme } from "@/src/helper/theme";
-import type { CommunityDetailsV2 } from "@/types/community";
+import type { CommunityDetails } from "@/types/community";
 import { communityColors } from "@/utilities/communityColors";
 import { cn } from "@/utilities/tailwind";
 
-const AdminCommunityHeader = ({ community }: { community: CommunityDetailsV2 }) => {
+const AdminCommunityHeader = ({ community }: { community: CommunityDetails }) => {
   return (
     <div
       className={cn(
@@ -20,8 +20,8 @@ const AdminCommunityHeader = ({ community }: { community: CommunityDetailsV2 }) 
         <div className="flex h-max flex-1 flex-row items-center justify-start gap-3 ">
           <div className="flex justify-center bg-black rounded-full p-2">
             <Image
-              alt={(community as CommunityDetailsV2)?.details?.name || "Community"}
-              src={(community as CommunityDetailsV2)?.details?.logoUrl || "/placeholder.png"}
+              alt={(community as CommunityDetails)?.details?.name || "Community"}
+              src={(community as CommunityDetails)?.details?.logoUrl || "/placeholder.png"}
               width={24}
               height={24}
               className={"h-6 w-6 min-w-6 min-h-6 rounded-full"}
@@ -29,7 +29,7 @@ const AdminCommunityHeader = ({ community }: { community: CommunityDetailsV2 }) 
           </div>
           <div className="flex flex-col gap-0">
             <p className="text-3xl font-body font-semibold text-black dark:text-white max-2xl:text-2xl max-lg:text-xl">
-              {community ? (community as CommunityDetailsV2)?.details?.name : ""}
+              {community ? (community as CommunityDetails)?.details?.name : ""}
             </p>
           </div>
         </div>
@@ -39,7 +39,7 @@ const AdminCommunityHeader = ({ community }: { community: CommunityDetailsV2 }) 
   );
 };
 
-const NormalCommunityHeader = ({ community }: { community: CommunityDetailsV2 }) => {
+const NormalCommunityHeader = ({ community }: { community: CommunityDetails }) => {
   const _pathname = usePathname();
   const _params = useParams();
 
@@ -56,14 +56,14 @@ const NormalCommunityHeader = ({ community }: { community: CommunityDetailsV2 })
             className="p-3 rounded-xl"
             style={{
               backgroundColor:
-                communityColors[(community as CommunityDetailsV2)?.uid?.toLowerCase() || "black"] ||
+                communityColors[(community as CommunityDetails)?.uid?.toLowerCase() || "black"] ||
                 "#000000",
             }}
           >
             <div className="flex justify-center border border-white rounded-full p-2">
               <Image
-                alt={(community as CommunityDetailsV2)?.details?.name || "Community"}
-                src={(community as CommunityDetailsV2)?.details?.logoUrl || "/placeholder.png"}
+                alt={(community as CommunityDetails)?.details?.name || "Community"}
+                src={(community as CommunityDetails)?.details?.logoUrl || "/placeholder.png"}
                 width={56}
                 height={56}
                 className={
@@ -74,7 +74,7 @@ const NormalCommunityHeader = ({ community }: { community: CommunityDetailsV2 })
           </div>
           <div className="flex flex-col gap-0">
             <p className="text-3xl font-body font-semibold text-black dark:text-white max-2xl:text-2xl max-lg:text-xl">
-              {community ? (community as CommunityDetailsV2)?.details?.name : ""}
+              {community ? (community as CommunityDetails)?.details?.name : ""}
             </p>
           </div>
         </div>
@@ -84,7 +84,7 @@ const NormalCommunityHeader = ({ community }: { community: CommunityDetailsV2 })
     </div>
   );
 };
-export default function CommunityHeader({ community }: { community: CommunityDetailsV2 }) {
+export default function CommunityHeader({ community }: { community: CommunityDetails }) {
   const pathname = usePathname();
   const isAdminPage = pathname.includes("/admin");
   const isReviewerPage = pathname.includes("/reviewer");

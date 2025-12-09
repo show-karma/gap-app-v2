@@ -1,35 +1,50 @@
 import { cache } from "react";
 import type {
-  CommunityDetailsV2,
-  CommunityProjectsV2Response,
-  CommunityStatsV2,
+  CommunityDetails,
+  CommunityProjectsResponse,
+  CommunityStats,
 } from "@/types/community";
 import { zeroUID } from "@/utilities/commons";
+import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-export const getCommunityDetailsV2 = cache(
-  async (slug: string): Promise<CommunityDetailsV2 | null> => {
-    try {
-      const [data] = await fetchData(INDEXER.COMMUNITY.V2.GET(slug));
-
-      if (!data || data?.uid === zeroUID || !data?.details?.name) {
-        return null;
+/**
+ * Fetches community details with Next.js cache revalidation (30 minutes).
+ * Returns null if community not found.
+ */
+export const getCommunityDetails = cache(async (slug: string): Promise<CommunityDetails | null> => {
+  try {
+    const response = await fetch(
+      `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.COMMUNITY.V2.GET(slug)}`,
+      {
+        method: "GET",
+        next: { revalidate: 1800 }, // 30 minutes
       }
+    );
 
-      return data as CommunityDetailsV2;
-    } catch (_error) {
+    if (!response.ok) {
       return null;
     }
-  }
-);
 
-export const getCommunityStatsV2 = cache(async (slug: string): Promise<CommunityStatsV2> => {
+    const data: CommunityDetails = await response.json();
+
+    if (!data || data?.uid === zeroUID || !data?.details?.name) {
+      return null;
+    }
+
+    return data;
+  } catch (_error) {
+    return null;
+  }
+});
+
+export const getCommunityStats = cache(async (slug: string): Promise<CommunityStats> => {
   try {
     const [data] = await fetchData(INDEXER.COMMUNITY.V2.STATS(slug));
 
     if (data) {
-      return data as CommunityStatsV2;
+      return data as CommunityStats;
     }
 
     return {
@@ -68,7 +83,7 @@ export const getCommunityStatsV2 = cache(async (slug: string): Promise<Community
   }
 });
 
-export const getCommunityProjectsV2 = async (
+export const getCommunityProjects = async (
   slug: string,
   options: {
     page?: number;
@@ -79,12 +94,12 @@ export const getCommunityProjectsV2 = async (
     selectedProgramId?: string;
     selectedTrackIds?: string[];
   } = {}
-): Promise<CommunityProjectsV2Response> => {
+): Promise<CommunityProjectsResponse> => {
   try {
     const [data] = await fetchData(INDEXER.COMMUNITY.V2.PROJECTS(slug, options));
 
     if (data) {
-      return data as CommunityProjectsV2Response;
+      return data as CommunityProjectsResponse;
     }
 
     return {
@@ -116,3 +131,18 @@ export const getCommunityProjectsV2 = async (
     };
   }
 };
+
+export const getCommunityCategories = cache(async (communityId: string): Promise<string[]> => {
+  try {
+    const [data] = await fetchData(INDEXER.COMMUNITY.CATEGORIES(communityId));
+
+    if (data?.length) {
+      const categoriesToOrder = data.map((category: { name: string }) => category.name);
+      return categoriesToOrder.sort((a: string, b: string) => a.localeCompare(b, "en"));
+    }
+
+    return [];
+  } catch (_error) {
+    return [];
+  }
+});

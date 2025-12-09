@@ -17,7 +17,7 @@ import { useCommunityGrants } from "@/hooks/useCommunityGrants";
 import { useCommunityProjectsV2 } from "@/hooks/useCommunityProjectsV2";
 import { useCommunityRegions } from "@/hooks/useCommunityRegions";
 import { useStaff } from "@/hooks/useStaff";
-import type { ProjectV2 } from "@/types/community";
+import type { Project } from "@/types/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -29,7 +29,7 @@ import { RegionCreationDialog } from "./RegionCreationDialog";
 export const metadata = defaultMetadata;
 
 interface ProjectsTableProps {
-  projects: ProjectV2[];
+  projects: Project[];
   regions: any[];
   selectedRegions: Record<string, string>;
   optimisticRegions: Record<string, string>;

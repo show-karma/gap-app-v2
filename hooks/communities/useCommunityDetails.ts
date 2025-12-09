@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { errorManager } from "@/components/Utilities/errorManager";
-import type { CommunityDetailsV2 } from "@/types/community";
+import type { CommunityDetails } from "@/types/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
@@ -16,7 +16,7 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
  */
 const fetchCommunityDetails = async (
   communityUIDorSlug: string
-): Promise<CommunityDetailsV2 | null> => {
+): Promise<CommunityDetails | null> => {
   const [data, error] = await fetchData(
     INDEXER.COMMUNITY.V2.GET(communityUIDorSlug),
     "GET",
@@ -33,7 +33,7 @@ const fetchCommunityDetails = async (
     return null;
   }
 
-  return data as CommunityDetailsV2;
+  return data as CommunityDetails;
 };
 
 interface UseCommunityDetailsOptions {
