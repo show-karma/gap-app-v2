@@ -6,6 +6,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
+// Keep apiClient for mutations (PUT, POST)
 const apiClient = createAuthenticatedApiClient(API_URL, 30000);
 
 // Milestone completion data from funding applications
@@ -78,48 +79,32 @@ export interface ProjectGrantMilestonesResponse {
   grant?: GrantResponse; // Grant data with completed status
 }
 
-/**
- * Fetch grant with completed status by project UID and programId
- * Uses the v2 grant milestones endpoint to get grant UID, then fetches grant with completed status
- */
-async function fetchGrantWithCompletedStatus(
+async function fetchGrantByProgramId(
   projectUid: string,
   programId: string
-): Promise<GrantResponse | null> {
-  try {
-    // Step 1: Get grant UID from v2 endpoint
-    const grantMilestonesEndpoint = INDEXER.V2.PROJECTS.GRANT_MILESTONES(projectUid, programId);
-    const grantResponse = await apiClient.get<{ grant?: { uid: string; chainID: number } }>(
-      grantMilestonesEndpoint
-    );
+): Promise<GrantResponse | undefined> {
+  const grantsEndpoint = INDEXER.V2.PROJECTS.GRANTS(projectUid);
+  const [grants, error] = await fetchData<GrantResponse[]>(grantsEndpoint);
 
-    const grantUID = grantResponse.data.grant?.uid;
-    if (!grantUID) {
-      return null;
-    }
-
-    // Step 2: Fetch grant with completed status from v1 endpoint
-    const grantDetailResponse = await apiClient.get<GrantResponse>(INDEXER.GRANTS.BY_UID(grantUID));
-
-    return grantDetailResponse.data;
-  } catch (error) {
-    console.error("Error fetching grant with completed status:", error);
-    return null;
+  if (error || !grants) {
+    console.error("Error fetching grant:", error);
+    return undefined;
   }
+
+  return grants.find((g) => g.details?.programId === programId);
 }
 
 export async function fetchProjectGrantMilestones(
   projectUid: string,
   programId: string
 ): Promise<ProjectGrantMilestonesResponse> {
-  // Fetch project details, milestones, and grant with completed status in parallel
-  const [projectResponse, milestonesResponse, grantWithCompleted] = await Promise.all([
+  const [projectResponse, milestonesResponse, grant] = await Promise.all([
     fetchData(INDEXER.V2.PROJECTS.GET(projectUid), "GET"),
     fetchData(
       `${INDEXER.V2.PROJECTS.UPDATES(projectUid)}?programIds=${programId}&includeFundingApplicationData=true`,
       "GET"
     ),
-    fetchGrantWithCompletedStatus(projectUid, programId),
+    fetchGrantByProgramId(projectUid, programId),
   ]);
 
   const [projectData, projectError] = projectResponse;
@@ -133,10 +118,9 @@ export async function fetchProjectGrantMilestones(
     throw new Error(`Failed to fetch milestones: ${milestonesError || "No data returned"}`);
   }
 
-  const project = projectData as ProjectData & { grants?: GrantResponse[] };
+  const project = projectData as ProjectData;
   const updatesResponse = milestonesData as ProjectUpdatesResponse;
 
-  // Ensure fundingApplicationCompletion is always present (null if missing)
   const grantMilestones: GrantMilestoneWithCompletion[] = updatesResponse.grantMilestones.map(
     (milestone) => ({
       uid: milestone.uid,
@@ -151,10 +135,6 @@ export async function fetchProjectGrantMilestones(
       fundingApplicationCompletion: milestone.fundingApplicationCompletion || null,
     })
   );
-
-  // Use the grant fetched with completed status, or fallback to finding it in project.grants
-  const grant =
-    grantWithCompleted || project.grants?.find((g) => g.details?.programId === programId);
 
   return {
     project,
