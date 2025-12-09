@@ -52,42 +52,18 @@ function buildUpdateMetadata(
   formData: CreateProgramFormSchema,
   existingMetadata: GrantProgram["metadata"]
 ) {
-  return sanitizeObject({
+  const updatedFields = {
     title: formData.name,
     description: formData.description,
     shortDescription: formData.shortDescription,
     programBudget: formData.budget,
     startsAt: formData.dates.startsAt,
     endsAt: formData.dates.endsAt,
-    // Preserve existing metadata fields
-    website: existingMetadata?.website || "",
-    projectTwitter: existingMetadata?.projectTwitter || "",
-    socialLinks: existingMetadata?.socialLinks || {
-      twitter: "",
-      website: "",
-      discord: "",
-      orgWebsite: "",
-      blog: "",
-      forum: "",
-      grantsSite: "",
-      telegram: "",
-    },
-    bugBounty: existingMetadata?.bugBounty || "",
-    categories: existingMetadata?.categories || [],
-    ecosystems: existingMetadata?.ecosystems || [],
-    organizations: existingMetadata?.organizations || [],
-    networks: existingMetadata?.networks || [],
-    grantTypes: existingMetadata?.grantTypes || [],
-    platformsUsed: existingMetadata?.platformsUsed || [],
-    logoImg: existingMetadata?.logoImg || "",
-    bannerImg: existingMetadata?.bannerImg || "",
-    logoImgData: existingMetadata?.logoImgData || {},
-    bannerImgData: existingMetadata?.bannerImgData || {},
-    credentials: existingMetadata?.credentials || {},
-    type: existingMetadata?.type || "program",
-    tags: existingMetadata?.tags || ["karma-gap", "grant-program-registry"],
-    status: existingMetadata?.status || "Active",
-    communityRef: existingMetadata?.communityRef || [],
+  };
+
+  return sanitizeObject({
+    ...existingMetadata,
+    ...updatedFields,
   });
 }
 
@@ -204,6 +180,34 @@ export function ProgramDetailsTab({
     }
   }, [programId, chainId, reset]);
 
+  // Helper function to create date picker props
+  const createDatePickerProps = useCallback(
+    (
+      fieldName: "startsAt" | "endsAt",
+      isDisabled: boolean,
+      field: { onChange: (value: Date | undefined) => void }
+    ) => {
+      const currentValue = watch(`dates.${fieldName}`);
+      return {
+        onSelect: (date: Date | undefined) => {
+          if (isDisabled) return;
+          if (currentValue && date && formatDate(date) === formatDate(currentValue)) {
+            setValue(`dates.${fieldName}`, undefined, { shouldValidate: true });
+            field.onChange(undefined);
+          } else if (date) {
+            setValue(`dates.${fieldName}`, date, { shouldValidate: true });
+            field.onChange(date);
+          }
+        },
+        clearButtonFn: () => {
+          setValue(`dates.${fieldName}`, undefined, { shouldValidate: true });
+          field.onChange(undefined);
+        },
+      };
+    },
+    [watch, setValue]
+  );
+
   const onSubmit = async (data: CreateProgramFormSchema) => {
     const validationError = validateSubmissionPrerequisites();
     if (validationError) {
@@ -289,6 +293,16 @@ export function ProgramDetailsTab({
   return (
     <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
       <div className="max-w-4xl mx-auto">
+        {/* ARIA live region for error announcements */}
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
+          {errors.name && `Error: ${errors.name.message}`}
+          {errors.description && `Error: ${errors.description.message}`}
+          {errors.shortDescription && `Error: ${errors.shortDescription.message}`}
+          {errors.dates?.startsAt && `Error: ${errors.dates.startsAt.message}`}
+          {errors.dates?.endsAt && `Error: ${errors.dates.endsAt.message}`}
+          {errors.budget && `Error: ${errors.budget.message}`}
+        </div>
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Program Name */}
           <div className="flex w-full flex-col gap-1">
@@ -300,8 +314,14 @@ export function ProgramDetailsTab({
               placeholder="Ex: Super cool Program"
               {...register("name")}
               disabled={isSubmitting || isLoading || readOnly}
+              aria-invalid={errors.name ? "true" : "false"}
+              aria-describedby={errors.name ? "program-name-error" : undefined}
             />
-            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+            {errors.name && (
+              <p id="program-name-error" className="text-sm text-destructive" role="alert">
+                {errors.name.message}
+              </p>
+            )}
           </div>
 
           {/* Program Description */}
@@ -315,9 +335,13 @@ export function ProgramDetailsTab({
               placeholder="Please provide a description of this program"
               {...register("description")}
               disabled={isSubmitting || isLoading || readOnly}
+              aria-invalid={errors.description ? "true" : "false"}
+              aria-describedby={errors.description ? "program-description-error" : undefined}
             />
             {errors.description && (
-              <p className="text-sm text-destructive">{errors.description.message}</p>
+              <p id="program-description-error" className="text-sm text-destructive" role="alert">
+                {errors.description.message}
+              </p>
             )}
           </div>
 
@@ -335,12 +359,18 @@ export function ProgramDetailsTab({
               maxLength={100}
               {...register("shortDescription")}
               disabled={isSubmitting || isLoading || readOnly}
+              aria-invalid={errors.shortDescription ? "true" : "false"}
+              aria-describedby={
+                errors.shortDescription ? "short-description-error" : "short-description-count"
+              }
             />
             <div className="flex justify-between items-center">
               {errors.shortDescription && (
-                <p className="text-sm text-destructive">{errors.shortDescription.message}</p>
+                <p id="short-description-error" className="text-sm text-destructive" role="alert">
+                  {errors.shortDescription.message}
+                </p>
               )}
-              <p className="text-xs text-muted-foreground">
+              <p id="short-description-count" className="text-xs text-muted-foreground">
                 {watch("shortDescription")?.length || 0}/100
               </p>
             </div>
@@ -353,33 +383,21 @@ export function ProgramDetailsTab({
               control={control}
               render={({ field, formState }) => {
                 const isDisabled = isSubmitting || isLoading || readOnly;
-                const currentValue = watch("dates.startsAt");
+                const datePickerProps = createDatePickerProps("startsAt", isDisabled, field);
                 return (
                   <div className="flex w-full flex-col gap-2">
-                    <Label>Start Date (optional)</Label>
+                    <Label htmlFor="start-date">Start Date (optional)</Label>
                     <DatePicker
                       selected={field.value}
-                      onSelect={(date) => {
-                        if (isDisabled) return;
-                        if (currentValue && formatDate(date) === formatDate(currentValue)) {
-                          setValue("dates.startsAt", undefined, { shouldValidate: true });
-                          field.onChange(undefined);
-                        } else {
-                          setValue("dates.startsAt", date, { shouldValidate: true });
-                          field.onChange(date);
-                        }
-                      }}
+                      onSelect={datePickerProps.onSelect}
                       placeholder="Pick a date"
                       buttonClassName={`w-full text-base ${
                         isDisabled ? "opacity-50 cursor-not-allowed" : ""
                       }`}
-                      clearButtonFn={() => {
-                        setValue("dates.startsAt", undefined, { shouldValidate: true });
-                        field.onChange(undefined);
-                      }}
+                      clearButtonFn={datePickerProps.clearButtonFn}
                     />
                     {formState.errors.dates?.startsAt && (
-                      <p className="text-sm text-destructive">
+                      <p className="text-sm text-destructive" role="alert">
                         {formState.errors.dates.startsAt.message}
                       </p>
                     )}
@@ -393,34 +411,22 @@ export function ProgramDetailsTab({
               control={control}
               render={({ field, formState }) => {
                 const isDisabled = isSubmitting || isLoading || readOnly;
-                const currentValue = watch("dates.endsAt");
+                const datePickerProps = createDatePickerProps("endsAt", isDisabled, field);
                 return (
                   <div className="flex w-full flex-col gap-2">
-                    <Label>End Date (optional)</Label>
+                    <Label htmlFor="end-date">End Date (optional)</Label>
                     <DatePicker
                       selected={field.value}
-                      onSelect={(date) => {
-                        if (isDisabled) return;
-                        if (currentValue && formatDate(date) === formatDate(currentValue)) {
-                          setValue("dates.endsAt", undefined, { shouldValidate: true });
-                          field.onChange(undefined);
-                        } else {
-                          setValue("dates.endsAt", date, { shouldValidate: true });
-                          field.onChange(date);
-                        }
-                      }}
+                      onSelect={datePickerProps.onSelect}
                       minDate={watch("dates.startsAt")}
                       placeholder="Pick a date"
                       buttonClassName={`w-full text-base ${
                         isDisabled ? "opacity-50 cursor-not-allowed" : ""
                       }`}
-                      clearButtonFn={() => {
-                        setValue("dates.endsAt", undefined, { shouldValidate: true });
-                        field.onChange(undefined);
-                      }}
+                      clearButtonFn={datePickerProps.clearButtonFn}
                     />
                     {formState.errors.dates?.endsAt && (
-                      <p className="text-sm text-destructive">
+                      <p className="text-sm text-destructive" role="alert">
                         {formState.errors.dates.endsAt.message}
                       </p>
                     )}
@@ -441,8 +447,14 @@ export function ProgramDetailsTab({
               placeholder="Ex: 100000"
               {...register("budget")}
               disabled={isSubmitting || isLoading || readOnly}
+              aria-invalid={errors.budget ? "true" : "false"}
+              aria-describedby={errors.budget ? "program-budget-error" : undefined}
             />
-            {errors.budget && <p className="text-sm text-destructive">{errors.budget.message}</p>}
+            {errors.budget && (
+              <p id="program-budget-error" className="text-sm text-destructive" role="alert">
+                {errors.budget.message}
+              </p>
+            )}
           </div>
 
           {/* Actions */}

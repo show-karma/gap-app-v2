@@ -297,7 +297,12 @@ describe("ProgramDetailsTab", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/program name must be at least 3 characters/i)).toBeInTheDocument();
+        // Find the visible error message (not the sr-only one)
+        const errorMessages = screen.getAllByText(/program name must be at least 3 characters/i);
+        const visibleError = errorMessages.find(
+          (el) => !el.closest('[class*="sr-only"]') && el.getAttribute("role") === "alert"
+        );
+        expect(visibleError).toBeInTheDocument();
       });
     });
 
@@ -317,7 +322,12 @@ describe("ProgramDetailsTab", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/program name must be at least 3 characters/i)).toBeInTheDocument();
+        // Find the visible error message (not the sr-only one)
+        const errorMessages = screen.getAllByText(/program name must be at least 3 characters/i);
+        const visibleError = errorMessages.find(
+          (el) => !el.closest('[class*="sr-only"]') && el.getAttribute("role") === "alert"
+        );
+        expect(visibleError).toBeInTheDocument();
       });
     });
 
@@ -337,7 +347,12 @@ describe("ProgramDetailsTab", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/program name must be at most 50 characters/i)).toBeInTheDocument();
+        // Find the visible error message (not the sr-only one)
+        const errorMessages = screen.getAllByText(/program name must be at most 50 characters/i);
+        const visibleError = errorMessages.find(
+          (el) => !el.closest('[class*="sr-only"]') && el.getAttribute("role") === "alert"
+        );
+        expect(visibleError).toBeInTheDocument();
       });
     });
 
@@ -358,9 +373,14 @@ describe("ProgramDetailsTab", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/short description must be at most 100 characters/i)
-        ).toBeInTheDocument();
+        // Find the visible error message (not the sr-only one)
+        const errorMessages = screen.getAllByText(
+          /short description must be at most 100 characters/i
+        );
+        const visibleError = errorMessages.find(
+          (el) => !el.closest('[class*="sr-only"]') && el.getAttribute("role") === "alert"
+        );
+        expect(visibleError).toBeInTheDocument();
       });
     });
 
