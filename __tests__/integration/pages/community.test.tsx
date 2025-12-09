@@ -1,14 +1,11 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 
-jest.mock("@/utilities/queries/getCommunityData", () => ({
-  getCommunityCategories: jest.fn(),
-}));
-
 jest.mock("@/utilities/queries/v2/getCommunityData", () => ({
   getCommunityDetails: jest.fn(),
   getCommunityStats: jest.fn(),
   getCommunityProjects: jest.fn(),
+  getCommunityCategories: jest.fn(),
 }));
 
 jest.mock("@/utilities/pagesOnRoot", () => ({
@@ -47,8 +44,8 @@ describe("Community Page", () => {
       getCommunityDetails,
       getCommunityStats,
       getCommunityProjects,
+      getCommunityCategories,
     } = require("@/utilities/queries/v2/getCommunityData");
-    const { getCommunityCategories } = require("@/utilities/queries/getCommunityData");
 
     getCommunityDetails.mockResolvedValue(mockCommunityDetails);
     getCommunityStats.mockResolvedValue(mockCommunityStats);

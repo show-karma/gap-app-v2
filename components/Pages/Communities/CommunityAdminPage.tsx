@@ -10,14 +10,11 @@ import {
   Square2StackIcon,
   TagIcon,
 } from "@heroicons/react/24/outline";
-import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
-import { useAuth } from "@/hooks/useAuth";
 import { useStaff } from "@/hooks/useStaff";
 import type { Community } from "@/types/v2/community";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -77,6 +74,8 @@ export const CommunityAdminPage = ({
   const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(community?.uid);
   const { isStaff } = useStaff();
 
+  const slug = community?.details?.slug || communityId;
+
   return (
     <div className="max-w-full w-full">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
@@ -88,7 +87,7 @@ export const CommunityAdminPage = ({
       ) : isAdmin || isStaff ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <AdminButton
-            href={PAGES.ADMIN.EDIT_CATEGORIES(community?.details?.slug || communityId)}
+            href={PAGES.ADMIN.EDIT_CATEGORIES(slug)}
             label="Categories"
             description="Manage and organize community categories"
             colorClass=""
@@ -96,7 +95,7 @@ export const CommunityAdminPage = ({
           />
 
           <AdminButton
-            href={PAGES.ADMIN.MILESTONES(community?.details?.slug || communityId)}
+            href={PAGES.ADMIN.MILESTONES(slug)}
             label="Milestones"
             description="Track and update project milestones"
             colorClass=""
@@ -104,7 +103,7 @@ export const CommunityAdminPage = ({
           />
 
           <AdminButton
-            href={PAGES.ADMIN.MANAGE_INDICATORS(community?.details?.slug || communityId)}
+            href={PAGES.ADMIN.MANAGE_INDICATORS(slug)}
             label="Impact Measurement"
             description="Setup and manage impact indicators"
             colorClass=""
@@ -112,7 +111,7 @@ export const CommunityAdminPage = ({
           />
 
           <AdminButton
-            href={PAGES.ADMIN.TRACKS(community?.details?.slug || communityId)}
+            href={PAGES.ADMIN.TRACKS(slug)}
             label="Tracks"
             description="Manage tracks and assign them to programs"
             colorClass=""
@@ -120,7 +119,7 @@ export const CommunityAdminPage = ({
           />
 
           <AdminButton
-            href={PAGES.ADMIN.EDIT_PROJECTS(community?.details?.slug || communityId)}
+            href={PAGES.ADMIN.EDIT_PROJECTS(slug)}
             label="Projects"
             description="Manage your projects and assign regions"
             colorClass=""
@@ -128,14 +127,14 @@ export const CommunityAdminPage = ({
           />
 
           <AdminButton
-            href={PAGES.ADMIN.FUNDING_PLATFORM(community?.details?.slug || communityId)}
+            href={PAGES.ADMIN.FUNDING_PLATFORM(slug)}
             label="Funding Platform"
             description="Create forms and manage funding applications"
             colorClass=""
             icon={<CurrencyDollarIcon className="w-6 h-6" />}
           />
           <AdminButton
-            href={PAGES.ADMIN.PAYOUTS(community?.details?.slug || communityId)}
+            href={PAGES.ADMIN.PAYOUTS(slug)}
             label="Payouts"
             description="Manage payout addresses and amounts"
             colorClass=""
@@ -143,7 +142,7 @@ export const CommunityAdminPage = ({
           />
 
           <AdminButton
-            href={PAGES.ADMIN.PROGRAM_SCORES(community?.details?.slug || communityId)}
+            href={PAGES.ADMIN.PROGRAM_SCORES(slug)}
             label="Program Scores"
             description="Upload CSV scores for program participants"
             colorClass=""
@@ -153,7 +152,7 @@ export const CommunityAdminPage = ({
       ) : (
         <div className="flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
           <p className="text-gray-600 dark:text-gray-300 text-center">
-            {MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}
+            {MESSAGES.ADMIN.NOT_AUTHORIZED(community?.details?.name || communityId)}
           </p>
           <Button className="mt-4" onClick={() => window.history.back()}>
             Go Back

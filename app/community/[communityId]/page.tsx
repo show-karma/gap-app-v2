@@ -2,8 +2,8 @@
 import { CommunityGrants } from "@/components/CommunityGrants";
 import type { MaturityStageOptions, SortByOptions } from "@/types";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import { getCommunityCategories } from "@/utilities/queries/getCommunityData";
 import {
+  getCommunityCategories,
   getCommunityDetails,
   getCommunityProjects,
   getCommunityStats,

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
-import type { CommunityDetailsV2 } from "@/types/community";
+import type { CommunityDetailsResponse } from "@/types/v2/community";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
@@ -25,7 +25,7 @@ interface UseCheckCommunityAdminOptions {
  * ```
  */
 export const useCheckCommunityAdmin = (
-  community?: CommunityDetailsV2 | null,
+  community?: CommunityDetailsResponse | null,
   address?: string | Hex,
   options?: UseCheckCommunityAdminOptions
 ) => {

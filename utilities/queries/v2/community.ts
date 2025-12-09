@@ -1,5 +1,6 @@
 // Re-export from canonical location
 export {
+  getCommunityCategories,
   getCommunityDetails,
   getCommunityDetailsV2,
   getCommunityProjects,

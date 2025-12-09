@@ -32,8 +32,20 @@ export const useProjectPermissions = () => {
       const rpcClient = await getRPCClient(projectInstance.chainID);
 
       const [isOwnerResult, isAdminResult] = await Promise.all([
-        projectInstance?.isOwner(rpcClient as any, address).catch(() => false),
-        projectInstance?.isAdmin(rpcClient as any, address).catch(() => false),
+        projectInstance?.isOwner(rpcClient as any, address).catch((error) => {
+          errorManager(
+            `Error checking owner permissions for user ${address} on project ${projectId}`,
+            error
+          );
+          return false;
+        }),
+        projectInstance?.isAdmin(rpcClient as any, address).catch((error) => {
+          errorManager(
+            `Error checking admin permissions for user ${address} on project ${projectId}`,
+            error
+          );
+          return false;
+        }),
       ]);
 
       return {
