@@ -1,6 +1,6 @@
 import { registryService } from "@/services/registry.service";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import { getCommunityDetailsV2 } from "@/utilities/queries/getCommunityDataV2";
+import { getCommunityDetails } from "@/utilities/queries/v2/community";
 import { DonationHeader } from "./header";
 
 type Params = Promise<{
@@ -16,7 +16,7 @@ export default async function Layout(props: { children: React.ReactNode; params:
     return undefined;
   }
 
-  const community = await getCommunityDetailsV2(communityId);
+  const community = await getCommunityDetails(communityId);
   if (!community) return undefined;
 
   const programSplitted = programId.split("_");

@@ -466,8 +466,8 @@ export default function CommunitiesToAdminPage() {
                                   className="flex items-center justify-between gap-2 p-2 bg-gray-50 dark:bg-zinc-800 rounded"
                                   key={index}
                                 >
-                                  <span className="text-xs font-mono text-gray-700 dark:text-gray-300">
-                                    {shortenHex(admin.user.id)}
+                                  <span className="text-xs font-mono text-gray-700 dark:text-gray-300 break-all">
+                                    {admin.user.id}
                                   </span>
                                   {canManageAdmins && (
                                     <RemoveAdmin

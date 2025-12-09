@@ -2,9 +2,8 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { TracksAdminPage } from "@/components/Pages/Communities/TracksAdminPage";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
-import { getCommunityData } from "@/utilities/queries/getCommunityData";
+import { getCommunityDetails } from "@/utilities/queries/v2/community";
 
 export const metadata = defaultMetadata;
 
@@ -14,8 +13,9 @@ interface Props {
 
 export default async function Page(props: Props) {
   const { communityId } = await props.params;
-  const community = await getCommunityData(communityId);
-  if (!community || community?.uid === zeroUID) {
+  const community = await getCommunityDetails(communityId);
+
+  if (!community) {
     notFound();
   }
 

@@ -1,4 +1,4 @@
-import type { CommunityDetailsV2 } from "@/types/community";
+import type { CommunityDetails } from "@/types/community";
 import type {
   CreateProgramFormData,
   ProgramApprovalRequest,
@@ -20,7 +20,7 @@ export class ProgramRegistryService {
    */
   static buildProgramMetadata(
     formData: CreateProgramFormData,
-    community: CommunityDetailsV2
+    community: CommunityDetails
   ): ProgramMetadata {
     return {
       title: formData.name,

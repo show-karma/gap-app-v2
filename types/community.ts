@@ -1,4 +1,4 @@
-export interface CommunityDetailsV2 {
+export interface CommunityDetails {
   uid: string;
   chainID: number;
   details: {
@@ -20,7 +20,7 @@ export interface ProjectUpdatesBreakdown {
   grantUpdates: number;
 }
 
-export interface CommunityStatsV2 {
+export interface CommunityStats {
   totalProjects: number;
   totalGrants: number;
   totalMilestones: number;
@@ -30,7 +30,7 @@ export interface CommunityStatsV2 {
   averageCompletion: number;
 }
 
-export interface ProjectV2 {
+export interface Project {
   uid: string;
   details: {
     title: string;
@@ -63,8 +63,8 @@ export interface ProjectV2 {
   createdAt: string;
 }
 
-export interface CommunityProjectsV2Response {
-  payload: ProjectV2[];
+export interface CommunityProjectsResponse {
+  payload: Project[];
   pagination: {
     totalCount: number;
     page: number;
