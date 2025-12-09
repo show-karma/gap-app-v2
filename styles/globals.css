@@ -102,7 +102,7 @@ body * {
     display: inline;
   }
   *::after {
-    content: " \A";
+    content: " A";
     white-space: pre;
   }
   strong::after,
@@ -124,7 +124,7 @@ body * {
     display: inline;
   }
   *::after {
-    content: " \A";
+    content: " A";
     white-space: pre;
   }
   strong::after,
@@ -157,7 +157,7 @@ body * {
     display: list-item;
   }
   *::after {
-    content: " \A";
+    content: " A";
     white-space: pre;
   }
   strong::after,
@@ -179,7 +179,7 @@ body * {
     display: inline;
   }
   *::after {
-    content: " \A";
+    content: " A";
     white-space: pre;
   }
   strong::after,
@@ -325,7 +325,7 @@ body * {
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 72% 51%;
     --border: 0 0% 90%;
-    --input: 0 0% 100%;
+    --input: 0 0% 90%;
     --ring: 0 0% 4%;
 
     /* General/Unofficial - Extended colors */
@@ -385,7 +385,7 @@ body * {
     --destructive: 357 41% 44%;
     --destructive-foreground: 357 41% 44%;
     --border: 0 0% 16%;
-    --input: 0 0% 100% / 0.05;
+    --input: 0 0% 16%;
     --ring: 0 0% 98%;
 
     /* General/Unofficial - Extended colors */
