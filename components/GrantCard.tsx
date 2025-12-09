@@ -40,8 +40,8 @@ export const pickColor = (index: number) => {
   return cardColors[index % cardColors.length];
 };
 
-const updatesLength = (milestones: GrantResponse["milestones"], updatesLength: number) =>
-  milestones.filter((milestone) => milestone.completed).length + updatesLength;
+const updatesLength = (milestones: GrantResponse["milestones"], updatesCount: number) =>
+  (milestones?.filter((milestone) => milestone.completed)?.length ?? 0) + updatesCount;
 
 // Loading indicator component that uses useLinkStatus
 const LoadingIndicator = () => {
@@ -177,8 +177,8 @@ const GrantCardContent = ({
 
                 <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-600 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
                   <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-                    {formatCurrency(updatesLength(grant.milestones, grant.updates.length))}{" "}
-                    {pluralize("Update", updatesLength(grant.milestones, grant.updates.length))}
+                    {formatCurrency(updatesLength(grant.milestones, grant.updates?.length ?? 0))}{" "}
+                    {pluralize("Update", updatesLength(grant.milestones, grant.updates?.length ?? 0))}
                   </p>
                 </div>
               </div>

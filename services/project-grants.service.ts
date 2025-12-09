@@ -54,12 +54,12 @@ export const getProjectGrants = async (projectIdOrSlug: string): Promise<GrantRe
 
     return [];
   } catch (error: any) {
-    // Return empty array on 404 (no grants found)
+    // Return empty array on 404 (no grants found) - this is expected behavior
     if (error.response?.status === 404) {
       return [];
     }
-    // For other errors, return empty array to prevent breaking the project page
+    // Re-throw other errors (500, network issues, auth) so callers can handle them
     // Error is already logged by the interceptor
-    return [];
+    throw error;
   }
 };

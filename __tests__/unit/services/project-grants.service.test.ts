@@ -114,12 +114,11 @@ describe("project-grants.service", () => {
       expect(result).toEqual([]);
     });
 
-    it("should return empty array on other errors", async () => {
-      mockAxiosInstance.get.mockRejectedValueOnce({ response: { status: 500 } });
+    it("should throw on non-404 errors", async () => {
+      const error = { response: { status: 500 } };
+      mockAxiosInstance.get.mockRejectedValueOnce(error);
 
-      const result = await getProjectGrants("test-project");
-
-      expect(result).toEqual([]);
+      await expect(getProjectGrants("test-project")).rejects.toEqual(error);
     });
 
     it("should call correct endpoint for project slug", async () => {

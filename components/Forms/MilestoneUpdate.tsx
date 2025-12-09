@@ -261,8 +261,11 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
+      if (!milestone.refUID) {
+        throw new Error("Cannot find grant: milestone has no refUID");
+      }
       const grantInstance = fetchedProject.grants.find(
-        (g) => g.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? "")
+        (g) => g.uid.toLowerCase() === milestone.refUID!.toLowerCase()
       );
       if (!grantInstance) return;
       const milestoneInstance = grantInstance.milestones.find(
@@ -296,7 +299,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
               .then(async (fetchedProject) => {
                 const foundGrant = fetchedProject?.grants?.find((g) => g.uid === milestone.refUID);
 
-                const fetchedMilestone = foundGrant?.milestones.find(
+                const fetchedMilestone = foundGrant?.milestones?.find(
                   (u: any) => u.uid === milestone.uid
                 );
 
@@ -384,8 +387,11 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
+      if (!milestone.refUID) {
+        throw new Error("Cannot update milestone completion: milestone has no refUID");
+      }
       const grantInstance = fetchedProject.grants.find(
-        (g) => g.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? "")
+        (g) => g.uid.toLowerCase() === milestone.refUID!.toLowerCase()
       );
       if (!grantInstance) return;
       const milestoneInstance = grantInstance.milestones.find(
@@ -419,7 +425,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
               .then(async (fetchedProject) => {
                 const foundGrant = fetchedProject?.grants?.find((g) => g.uid === milestone.refUID);
 
-                const fetchedMilestone = foundGrant?.milestones.find(
+                const fetchedMilestone = foundGrant?.milestones?.find(
                   (u: any) => u.uid === milestone.uid
                 );
 
@@ -482,9 +488,9 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     }
   };
 
-  const grant = project?.grants?.find(
-    (item) => item.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? "")
-  );
+  const grant = milestone.refUID
+    ? project?.grants?.find((item) => item.uid.toLowerCase() === milestone.refUID!.toLowerCase())
+    : undefined;
 
   return (
     <form className="flex w-full flex-col" onSubmit={handleSubmit(onSubmit)}>

@@ -37,13 +37,15 @@ describe("usePayoutAddressManager", () => {
     },
   ];
 
-  // V2 flat structure - details properties at top level
+  // V2 flat structure - payoutAddress is at root level, not inside details
   const mockProjectResponse = {
     uid: "project-1",
     owner: mockValidAddress,
+    payoutAddress: mockValidAddress,
     details: {
       title: "Project 1",
-      payoutAddress: mockValidAddress,
+      slug: "project-1-slug",
+      description: "Test project",
     },
     grants: [],
   };
@@ -144,10 +146,7 @@ describe("usePayoutAddressManager", () => {
       const { getProjectData } = require("@/services/project.service");
       getProjectData.mockResolvedValue({
         ...mockProjectResponse,
-        details: {
-          ...mockProjectResponse.details,
-          payoutAddress: mockValidAddress,
-        },
+        payoutAddress: mockValidAddress,
       });
 
       const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
@@ -161,12 +160,9 @@ describe("usePayoutAddressManager", () => {
       const { getProjectData } = require("@/services/project.service");
       getProjectData.mockResolvedValue({
         ...mockProjectResponse,
-        details: {
-          ...mockProjectResponse.details,
-          payoutAddress: {
-            "community-1": mockValidAddress,
-            "community-2": "0x9876543210987654321098765432109876543210",
-          },
+        payoutAddress: {
+          "community-1": mockValidAddress,
+          "community-2": "0x9876543210987654321098765432109876543210",
         },
       });
 
@@ -185,12 +181,9 @@ describe("usePayoutAddressManager", () => {
       const firstAddress = "0x9876543210987654321098765432109876543210";
       getProjectData.mockResolvedValue({
         ...mockProjectResponse,
-        details: {
-          ...mockProjectResponse.details,
-          payoutAddress: {
-            "community-1": firstAddress,
-            "community-2": mockValidAddress,
-          },
+        payoutAddress: {
+          "community-1": firstAddress,
+          "community-2": mockValidAddress,
         },
       });
 
@@ -209,10 +202,7 @@ describe("usePayoutAddressManager", () => {
       const { getProjectData } = require("@/services/project.service");
       getProjectData.mockResolvedValue({
         ...mockProjectResponse,
-        details: {
-          ...mockProjectResponse.details,
-          payoutAddress: undefined,
-        },
+        payoutAddress: undefined,
         grants: [
           {
             details: {
@@ -234,10 +224,7 @@ describe("usePayoutAddressManager", () => {
       getProjectData.mockResolvedValue({
         ...mockProjectResponse,
         owner: mockValidAddress,
-        details: {
-          ...mockProjectResponse.details,
-          payoutAddress: undefined,
-        },
+        payoutAddress: undefined,
         grants: [],
       });
 
@@ -252,10 +239,7 @@ describe("usePayoutAddressManager", () => {
       const { getProjectData } = require("@/services/project.service");
       getProjectData.mockResolvedValue({
         ...mockProjectResponse,
-        details: {
-          ...mockProjectResponse.details,
-          payoutAddress: mockInvalidAddress,
-        },
+        payoutAddress: mockInvalidAddress,
       });
 
       const mockIsAddress = isAddress as unknown as jest.Mock;
@@ -274,10 +258,7 @@ describe("usePayoutAddressManager", () => {
       getProjectData.mockResolvedValue({
         ...mockProjectResponse,
         owner: undefined,
-        details: {
-          ...mockProjectResponse.details,
-          payoutAddress: undefined,
-        },
+        payoutAddress: undefined,
         grants: [],
       });
 
@@ -297,15 +278,12 @@ describe("usePayoutAddressManager", () => {
       getProjectData
         .mockResolvedValueOnce({
           ...mockProjectResponse,
-          details: { ...mockProjectResponse.details, payoutAddress: mockValidAddress },
+          payoutAddress: mockValidAddress,
         })
         .mockResolvedValueOnce({
           ...mockProjectResponse,
           owner: undefined,
-          details: {
-            ...mockProjectResponse.details,
-            payoutAddress: undefined,
-          },
+          payoutAddress: undefined,
           grants: [],
         });
 
@@ -321,10 +299,7 @@ describe("usePayoutAddressManager", () => {
       getProjectData.mockResolvedValue({
         ...mockProjectResponse,
         owner: undefined,
-        details: {
-          ...mockProjectResponse.details,
-          payoutAddress: undefined,
-        },
+        payoutAddress: undefined,
         grants: [],
       });
 
@@ -380,10 +355,7 @@ describe("usePayoutAddressManager", () => {
       getProjectData.mockResolvedValue({
         ...mockProjectResponse,
         owner: undefined,
-        details: {
-          ...mockProjectResponse.details,
-          payoutAddress: undefined,
-        },
+        payoutAddress: undefined,
         grants: [],
       });
 
@@ -479,10 +451,7 @@ describe("usePayoutAddressManager", () => {
       getProjectData.mockResolvedValue({
         ...mockProjectResponse,
         owner: undefined,
-        details: {
-          ...mockProjectResponse.details,
-          payoutAddress: {},
-        },
+        payoutAddress: {},
         grants: [],
       });
 
@@ -498,13 +467,10 @@ describe("usePayoutAddressManager", () => {
       getProjectData.mockResolvedValue({
         ...mockProjectResponse,
         owner: undefined,
-        details: {
-          ...mockProjectResponse.details,
-          payoutAddress: {
-            "community-1": null,
-            "community-2": undefined,
-            "community-3": "",
-          },
+        payoutAddress: {
+          "community-1": null,
+          "community-2": undefined,
+          "community-3": "",
         },
         grants: [],
       });

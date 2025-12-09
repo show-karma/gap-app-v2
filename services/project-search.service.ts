@@ -43,13 +43,13 @@ export const searchProjects = async (query: string, limit?: number): Promise<Pro
 
     return response.data;
   } catch (error: any) {
-    // Return empty array on 404 (no results)
+    // Return empty array on 404 (no results) - this is expected behavior
     if (error.response?.status === 404) {
       return [];
     }
-    // For other errors, return empty array to prevent breaking search
+    // Re-throw other errors (500, network issues, auth) so callers can handle them
     // Error is already logged by the interceptor
-    return [];
+    throw error;
   }
 };
 

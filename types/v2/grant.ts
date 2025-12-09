@@ -10,6 +10,20 @@ export type GrantScreen =
   | "complete-grant"
   | "outputs";
 
+/**
+ * V2 Grant Details - flat structure with properties at top level
+ *
+ * IMPORTANT: Always use top-level properties (e.g., `details.title`, `details.programId`).
+ * The nested `data` field is DEPRECATED and only exists for SDK compatibility during migration.
+ *
+ * @example
+ * // ✅ Correct V2 access
+ * grant.details?.title
+ * grant.details?.programId
+ *
+ * // ❌ Deprecated V1 access (avoid)
+ * grant.details?.data?.title
+ */
 export interface GrantDetails {
   title: string;
   amount?: string;
@@ -25,6 +39,10 @@ export interface GrantDetails {
   lastDetailsUpdate?: string;
   programId?: string;
   fundUsage?: string;
+  /**
+   * @deprecated Use top-level properties instead. This field exists only for SDK compatibility.
+   * Will be removed in a future version.
+   */
   data?: {
     title?: string;
     amount?: string;
@@ -39,6 +57,21 @@ export interface GrantDetails {
   };
 }
 
+/**
+ * V2 Grant Milestone - flat structure with properties at top level
+ *
+ * IMPORTANT: Always use top-level properties (e.g., `milestone.title`, `milestone.description`).
+ * The nested `data` field is DEPRECATED and only exists for SDK compatibility during migration.
+ *
+ * @example
+ * // ✅ Correct V2 access
+ * milestone.title
+ * milestone.description
+ * milestone.verified  // boolean in V2
+ *
+ * // ❌ Deprecated V1 access (avoid)
+ * milestone.data?.title
+ */
 export interface GrantMilestone {
   uid: string;
   refUID?: string;
@@ -67,7 +100,12 @@ export interface GrantMilestone {
   } | null;
   createdAt?: string;
   updatedAt?: string;
+  /** V2: Simple boolean. V1 used array of attesters. */
   verified?: boolean;
+  /**
+   * @deprecated Use top-level properties instead. This field exists only for SDK compatibility.
+   * Will be removed in a future version.
+   */
   data?: {
     title?: string;
     description?: string;
@@ -147,8 +185,10 @@ export interface GrantResponse {
     communityUID?: string;
   };
   details?: GrantDetails;
-  milestones: GrantMilestone[];
-  updates: GrantUpdate[];
+  /** Array of grant milestones. May be undefined if not fetched. Default to [] when missing. */
+  milestones?: GrantMilestone[];
+  /** Array of grant updates. May be undefined if not fetched. Default to [] when missing. */
+  updates?: GrantUpdate[];
   completed?: GrantCompleted | null;
   community?: CommunityResponse;
   project?: {

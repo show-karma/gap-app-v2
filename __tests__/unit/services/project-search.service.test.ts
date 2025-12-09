@@ -123,12 +123,11 @@ describe("project-search.service", () => {
       expect(result).toEqual([]);
     });
 
-    it("should return empty array on other errors", async () => {
-      mockAxiosInstance.get.mockRejectedValueOnce({ response: { status: 500 } });
+    it("should throw on non-404 errors", async () => {
+      const error = { response: { status: 500 } };
+      mockAxiosInstance.get.mockRejectedValueOnce(error);
 
-      const result = await searchProjects("test");
-
-      expect(result).toEqual([]);
+      await expect(searchProjects("test")).rejects.toEqual(error);
     });
 
     it("should encode special characters in query", async () => {
