@@ -8,13 +8,13 @@ import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useAuth } from "@/hooks/useAuth";
 import { useCategories } from "@/hooks/useCategories";
-import { useCommunityDetails } from "@/hooks/useCommunityDetails";
 import { useCommunityGrants } from "@/hooks/useCommunityGrants";
 import { type SimplifiedGrant, useGrants } from "@/hooks/useGrants";
 import { useGrantsTable } from "@/hooks/useGrantsTable";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useStaff } from "@/hooks/useStaff";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -35,8 +35,7 @@ export interface CategoriesOptions {
 
 export default function EditCategoriesPage() {
   const router = useRouter();
-  const { address, isConnected } = useAccount();
-  const { authenticated: isAuth } = useAuth();
+  const { address } = useAccount();
   const params = useParams();
   const communityId = params.communityId as string;
   const [selectedCategories, setSelectedCategories] = useState<Record<string, string[]>>({});
@@ -50,10 +49,7 @@ export default function EditCategoriesPage() {
   } = useCommunityDetails(communityId);
 
   // Check if user is admin of this community
-  const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(
-    community?.uid,
-    address
-  );
+  const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(community?.uid);
   const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   useEffect(() => {
@@ -70,7 +66,7 @@ export default function EditCategoriesPage() {
 
   // Fetch all grants for the filter dropdown
   const { data: communityGrants = [] } = useCommunityGrants(
-    community?.details?.data?.slug || communityId
+    community?.details?.slug || communityId
   );
 
   // Table state management
@@ -158,9 +154,7 @@ export default function EditCategoriesPage() {
     <div className="mt-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
       <div className="w-full flex flex-col gap-8">
         <div className="w-full flex flex-row items-center justify-between">
-          <Link
-            href={PAGES.ADMIN.ROOT(community?.details?.data?.slug || (community?.uid as string))}
-          >
+          <Link href={PAGES.ADMIN.ROOT(community?.details?.slug || (community?.uid as string))}>
             <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
               <ChevronLeftIcon className="h-5 w-5" />
               Return to admin page

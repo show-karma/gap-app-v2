@@ -50,7 +50,7 @@ export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperP
             "wallet_connect",
           ],
         },
-        loginMethods: ["wallet"],
+        loginMethods: ["email", "google", "wallet"],
         defaultChain: defaultChain,
         supportedChains: appNetwork,
         externalWallets: {

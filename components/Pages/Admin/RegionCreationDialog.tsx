@@ -11,8 +11,8 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
+import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
-import { useCommunityDetails } from "@/hooks/useCommunityDetails";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 

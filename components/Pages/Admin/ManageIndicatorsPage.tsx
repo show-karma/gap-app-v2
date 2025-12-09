@@ -9,8 +9,8 @@ import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useAuth } from "@/hooks/useAuth";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useStaff } from "@/hooks/useStaff";
 import type { Category } from "@/types/impactMeasurement";
 import { zeroUID } from "@/utilities/commons";
@@ -49,8 +49,7 @@ export default function ManageIndicatorsPage() {
 
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: adminLoading } = useIsCommunityAdmin(
-    community?.uid,
-    address
+    community?.uid
   );
   const { isStaff, isLoading: isStaffLoading } = useStaff();
 
