@@ -30,6 +30,7 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const refreshProject = useProjectStore((state) => state.refreshProject);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const { isStaff } = useStaff();
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin || isStaff;
@@ -155,6 +156,9 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
         updateVerified(contractToVerify.network, contractToVerify.address, result);
       }
 
+      // Refresh the project store to get updated verification data
+      refreshProject();
+
       // Also invalidate queries to keep cache in sync
       queryClient.invalidateQueries({
         queryKey: ["project-instance", project.uid],
@@ -163,7 +167,14 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
         queryKey: ["project-instance", project.details?.data?.slug],
       });
     },
-    [contractToVerify, updateVerified, queryClient, project.uid, project.details?.data?.slug]
+    [
+      contractToVerify,
+      updateVerified,
+      refreshProject,
+      queryClient,
+      project.uid,
+      project.details?.data?.slug,
+    ]
   );
 
   // Define a function to handle dialog close
