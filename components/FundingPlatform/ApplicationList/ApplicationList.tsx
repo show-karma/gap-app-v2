@@ -8,6 +8,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import StatusChangeModal from "../ApplicationView/StatusChangeModal";
 import { formatAIScore } from "../helper/getAIScore";
+import { formatInternalAIScore } from "../helper/getInternalAIScore";
 import { getProjectTitle } from "../helper/getProjecTitle";
 import { TableStatusActionButtons } from "./TableStatusActionButtons";
 
@@ -20,6 +21,8 @@ interface IApplicationListComponentProps extends IApplicationListProps {
   sortBy?: IApplicationFilters["sortBy"];
   sortOrder?: IApplicationFilters["sortOrder"];
   onSortChange?: (sortBy: string) => void;
+  showAIScoreColumn?: boolean;
+  showInternalAIScoreColumn?: boolean;
 }
 
 const statusColors = {
@@ -48,6 +51,8 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   sortBy,
   sortOrder,
   onSortChange,
+  showAIScoreColumn = false,
+  showInternalAIScoreColumn = false,
 }) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
@@ -147,13 +152,24 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                   currentSortDirection={sortOrder}
                   onSort={onSortChange}
                 />
-                <SortableTableHeader
-                  label="AI Score"
-                  sortKey="aiEvaluationScore"
-                  currentSortKey={sortBy}
-                  currentSortDirection={sortOrder}
-                  onSort={onSortChange}
-                />
+                {showAIScoreColumn && (
+                  <SortableTableHeader
+                    label="AI Score"
+                    sortKey="aiEvaluationScore"
+                    currentSortKey={sortBy}
+                    currentSortDirection={sortOrder}
+                    onSort={onSortChange}
+                  />
+                )}
+                {showInternalAIScoreColumn && (
+                  <SortableTableHeader
+                    label="Internal AI Score"
+                    sortKey="internalAIEvaluationScore"
+                    currentSortKey={sortBy}
+                    currentSortDirection={sortOrder}
+                    onSort={onSortChange}
+                  />
+                )}
                 <SortableTableHeader
                   label="Created Date"
                   sortKey="createdAt"
@@ -205,9 +221,16 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                   <td className="px-4 py-4 whitespace-nowrap">
                     {getStatusBadge(application.status)}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 text-center">
-                    <span className="font-medium">{formatAIScore(application)}</span>
-                  </td>
+                  {showAIScoreColumn && (
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 text-center">
+                      <span className="font-medium">{formatAIScore(application)}</span>
+                    </td>
+                  )}
+                  {showInternalAIScoreColumn && (
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 text-center">
+                      <span className="font-medium">{formatInternalAIScore(application)}</span>
+                    </td>
+                  )}
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                     {formatDate(application.createdAt)}
                   </td>
