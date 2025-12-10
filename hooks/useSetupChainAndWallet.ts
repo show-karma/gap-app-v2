@@ -20,56 +20,36 @@ interface SetupChainAndWalletResult {
 }
 
 interface UseSetupChainAndWalletResult {
-  /**
-   * Sets up the chain and wallet for attestation operations.
-   * Uses gasless smart wallet if available, otherwise falls back to regular wallet.
-   */
+  /** Sets up chain and wallet for attestations (gasless if available). */
   setupChainAndWallet: (
     params: SetupChainAndWalletParams
   ) => Promise<SetupChainAndWalletResult | null>;
 
-  /**
-   * Whether the smart wallet is ready for gasless transactions.
-   */
+  /** Whether the smart wallet is ready for gasless transactions. */
   isSmartWalletReady: boolean;
 
-  /**
-   * The smart wallet address if available.
-   */
+  /** The smart wallet address if available. */
   smartWalletAddress: string | null;
 }
 
 /**
- * Hook that provides chain and wallet setup for attestation operations.
- *
- * Uses gasless smart wallet when available, falls back to regular wallet.
+ * Hook for setting up chain and wallet for attestation operations.
  *
  * @example
- * const { setupChainAndWallet, isSmartWalletReady } = useSetupChainAndWallet();
+ * const { setupChainAndWallet } = useSetupChainAndWallet();
  *
- * const handleAttest = async () => {
- *   const setup = await setupChainAndWallet({
- *     targetChainId: project.chainID,
- *     currentChainId: chain?.id,
- *     switchChainAsync,
- *   });
+ * const setup = await setupChainAndWallet({
+ *   targetChainId: project.chainID,
+ *   currentChainId: chain?.id,
+ *   switchChainAsync,
+ * });
  *
- *   if (!setup) return;
- *
- *   const { gapClient, walletSigner, isGasless } = setup;
- *   await entity.attest(walletSigner, data);
- *
- *   if (isGasless) {
- *     console.log('Transaction was gasless!');
- *   }
- * };
+ * if (!setup) return;
+ * await entity.attest(setup.walletSigner, callback);
  */
 export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
-  const {
-    getAttestationSigner,
-    isSmartWalletReady,
-    smartWalletAddress,
-  } = useGaslessSigner();
+  const { getAttestationSigner, isSmartWalletReady, smartWalletAddress } =
+    useGaslessSigner();
 
   const setupChainAndWallet = useCallback(
     async ({
@@ -77,40 +57,24 @@ export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
       currentChainId,
       switchChainAsync,
     }: SetupChainAndWalletParams): Promise<SetupChainAndWalletResult | null> => {
-      console.log("[SetupChainAndWallet] Starting setup...");
-      console.log("[SetupChainAndWallet] Target chain:", targetChainId);
-      console.log("[SetupChainAndWallet] Current chain:", currentChainId);
+      const { success, chainId, gapClient } = await ensureCorrectChain({
+        targetChainId,
+        currentChainId,
+        switchChainAsync,
+      });
 
-      // Step 1: Ensure correct chain (for UI/wagmi state)
-      try {
-        const { success, chainId, gapClient } = await ensureCorrectChain({
-          targetChainId,
-          currentChainId,
-          switchChainAsync,
-        });
-
-        console.log("[SetupChainAndWallet] ensureCorrectChain result:", { success, chainId, hasGapClient: !!gapClient });
-
-        if (!success || !gapClient) {
-          console.error("[SetupChainAndWallet] Chain setup failed or gapClient missing");
-          return null;
-        }
-
-        // Step 2: Get signer (gasless if available, otherwise regular)
-        console.log("[SetupChainAndWallet] Getting attestation signer...");
-        const walletSigner = await getAttestationSigner(chainId);
-        console.log("[SetupChainAndWallet] Got signer, isGasless:", isSmartWalletReady);
-
-        return {
-          gapClient,
-          walletSigner,
-          chainId,
-          isGasless: isSmartWalletReady,
-        };
-      } catch (error) {
-        console.error("[SetupChainAndWallet] Error during setup:", error);
-        throw error;
+      if (!success || !gapClient) {
+        return null;
       }
+
+      const walletSigner = await getAttestationSigner(chainId);
+
+      return {
+        gapClient,
+        walletSigner,
+        chainId,
+        isGasless: isSmartWalletReady,
+      };
     },
     [getAttestationSigner, isSmartWalletReady]
   );

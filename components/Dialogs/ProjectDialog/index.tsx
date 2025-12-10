@@ -345,8 +345,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     if (isOpen) {
       // Don't reset if reopening after an error (to preserve user's data)
       if (!shouldResetOnOpen) {
-        console.log("[ProjectDialog] Skipping form reset - reopening after error");
-        setShouldResetOnOpen(true); // Reset the flag for next time
+        setShouldResetOnOpen(true);
         return;
       }
 
@@ -517,45 +516,29 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const createProject = async (data: SchemaType): Promise<void> => {
-    console.log("[CreateProject] Starting project creation...");
-    console.log("[CreateProject] Form data:", data);
     try {
       setIsLoading(true);
       if (!isConnected || !isAuth) {
-        console.log("[CreateProject] Not connected or not authenticated, prompting login");
         login?.();
         return;
       }
-      if (!address) {
-        console.log("[CreateProject] No address found");
-        return;
-      }
-      if (!gap) {
-        console.log("[CreateProject] No gap client found");
-        return;
-      }
+      if (!address || !gap) return;
 
       const chainSelected = data.chainID;
-      console.log("[CreateProject] Chain selected:", chainSelected);
 
       // Setup chain and wallet (uses gasless smart wallet if available)
-      console.log("[CreateProject] Calling setupChainAndWallet...");
       const setup = await setupChainAndWallet({
         targetChainId: chainSelected,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      console.log("[CreateProject] setupChainAndWallet result:", setup);
-
       if (!setup) {
-        console.error("[CreateProject] Setup failed, returning early");
         setIsLoading(false);
         return;
       }
 
       const { gapClient, walletSigner: signer, chainId } = setup;
-      console.log("[CreateProject] Creating Project object...");
 
       const project = new Project({
         data: {
@@ -565,7 +548,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         recipient: (data.recipient || address) as Hex,
         uid: nullRef,
       });
-      console.log("[CreateProject] Project object created");
 
       interface NewProjectData extends IProjectDetails {
         // tags?: Tag[];
@@ -619,14 +601,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         imageURL: data.profilePicture || "",
       };
 
-      if (!gapClient) {
-        console.log("[CreateProject] gapClient is null, returning");
-        return;
-      }
+      if (!gapClient) return;
 
-      console.log("[CreateProject] Generating slug...");
       const slug = await gapClient.generateSlug(newProjectInfo.title);
-      console.log("[CreateProject] Slug generated:", slug);
 
       // Promote temporary logo to permanent before project creation
       let finalImageURL = data.profilePicture || "";
@@ -656,7 +633,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
 
       newProjectInfo.imageURL = finalImageURL;
-      console.log("[CreateProject] Setting project details...");
 
       // eslint-disable-next-line no-param-reassign
       project.details = new ProjectDetails({
@@ -706,15 +682,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             })
         );
       }
-      console.log("[CreateProject] Project fully prepared, ready for attestation");
 
       // Use the gasless signer from setupChainAndWallet
-      console.log("[CreateProject] About to close modal and start attestation...");
       closeModal();
       changeStepperStep("preparing");
-      console.log("[CreateProject] Calling project.attest with signer:", signer);
       await project.attest(signer as any, changeStepperStep).then(async (res) => {
-        console.log("[CreateProject] Attestation successful, result:", res);
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
@@ -803,26 +775,16 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setContacts([]);
       setCustomLinks([]);
     } catch (error: any) {
-      console.error("[CreateProject] Error caught:", error);
-      console.error("[CreateProject] Error message:", error?.message);
-      console.error("[CreateProject] Error stack:", error?.stack);
       errorManager(
         MESSAGES.PROJECT.CREATE.ERROR(data.title),
         error,
-        {
-          address,
-          data,
-        },
-        {
-          error: MESSAGES.PROJECT.CREATE.ERROR(data.title),
-        }
+        { address, data },
+        { error: MESSAGES.PROJECT.CREATE.ERROR(data.title) }
       );
       setIsStepper(false);
-      // Don't reset form on error - keep user's data
       setShouldResetOnOpen(false);
       openModal();
     } finally {
-      console.log("[CreateProject] Finally block - setting isLoading to false");
       setIsLoading(false);
     }
   };
@@ -976,16 +938,12 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }
       });
     } catch (error: any) {
-      console.error("[UpdateProject] Error caught:", error);
       errorManager(
         `Error updating project ${projectToUpdate?.details?.data?.slug || projectToUpdate?.uid}`,
         error,
         { ...data, address },
-        {
-          error: MESSAGES.PROJECT.UPDATE.ERROR,
-        }
+        { error: MESSAGES.PROJECT.UPDATE.ERROR }
       );
-      // Don't reset form on error - keep user's data
       setShouldResetOnOpen(false);
       openModal();
     } finally {

@@ -19,7 +19,6 @@ import { MESSAGES } from "@/utilities/messages";
 import { appNetwork } from "@/utilities/network";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
-import { handleAttestationError, getErrorMessage } from "@/utilities/attestation-errors";
 import { errorManager } from "../Utilities/errorManager";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { Button } from "../ui/button";
@@ -170,17 +169,15 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
           }
         });
     } catch (error: unknown) {
-      const attestError = handleAttestationError(error);
       errorManager(
         `Error creating community`,
         error,
         {
           ...data,
           address: address,
-          errorCode: attestError.code,
         },
         {
-          error: getErrorMessage(attestError.code),
+          error: "Failed to create community. Please try again.",
         }
       );
     } finally {

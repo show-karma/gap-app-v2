@@ -139,20 +139,12 @@ export class PrivySmartWalletSigner extends AbstractSigner {
    * - Gas policy created in ZeroDev Dashboard that covers the chain/contracts
    */
   async sendTransaction(tx: TransactionRequest): Promise<TransactionResponse> {
-    console.log("[PrivySmartWalletSigner] Sending transaction...");
-    console.log("[PrivySmartWalletSigner] To:", tx.to);
-    console.log("[PrivySmartWalletSigner] Data length:", tx.data?.toString().length);
-
-    // Send via smart wallet - gas sponsorship is configured at the infrastructure level
-    // (Privy Dashboard > Smart Wallets > Paymaster URL + ZeroDev gas policy)
     const hash = await this.client.sendTransaction({
       account: this._address as `0x${string}`,
       to: tx.to as `0x${string}`,
       data: tx.data as `0x${string}`,
       value: tx.value ? BigInt(tx.value.toString()) : undefined,
     });
-
-    console.log("[PrivySmartWalletSigner] Transaction sent, hash:", hash);
 
     // CRITICAL: Wait for transaction to be indexed
     // Without this, provider.getTransaction() can return null

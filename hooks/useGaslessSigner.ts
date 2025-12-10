@@ -51,40 +51,27 @@ function getRpcUrl(chainId: number): string | null {
 interface UseGaslessSignerResult {
   /**
    * Gets a signer for attestations.
-   * Attempts to use Privy smart wallet (gasless) first, falls back to regular wallet.
+   * Uses Privy smart wallet (gasless) if available, otherwise falls back to regular wallet.
    */
   getAttestationSigner: (chainId: number) => Promise<Signer>;
 
-  /**
-   * Whether the smart wallet is ready for gasless transactions.
-   */
+  /** Whether the smart wallet is ready for gasless transactions. */
   isSmartWalletReady: boolean;
 
-  /**
-   * The smart wallet address if available.
-   */
+  /** The smart wallet address if available. */
   smartWalletAddress: string | null;
 }
 
 /**
- * Hook that provides a unified way to get signers for attestations.
+ * Hook that provides signers for attestations with gasless support.
  *
- * Attempts to use Privy's smart wallet for gasless transactions.
- * Falls back to regular wagmi wallet if smart wallet is not available.
- *
- * @example
- * const { getAttestationSigner, isSmartWalletReady } = useGaslessSigner();
- *
- * const handleAttest = async () => {
- *   const signer = await getAttestationSigner(chainId);
- *   await entity.attest(signer, data);
- * };
+ * Uses Privy's smart wallet for gasless transactions when available.
+ * Falls back to regular wagmi wallet if smart wallet is not ready.
  */
 export function useGaslessSigner(): UseGaslessSignerResult {
   const { client: smartWalletClient } = useSmartWallets();
   const { user, ready: privyReady } = usePrivy();
 
-  // Find the smart wallet account
   const smartWallet = useMemo(() => {
     if (!privyReady || !user) return null;
     return user.linkedAccounts?.find(
@@ -103,68 +90,38 @@ export function useGaslessSigner(): UseGaslessSignerResult {
 
   const getAttestationSigner = useCallback(
     async (chainId: number): Promise<Signer> => {
-      console.log("[Gasless] Getting signer for chain:", chainId);
-      console.log("[Gasless] Smart wallet ready:", isSmartWalletReady);
-      console.log("[Gasless] Smart wallet address:", smartWalletAddress);
-
-      // Try to use smart wallet for gasless transactions
+      // Try gasless smart wallet first
       if (isSmartWalletReady && smartWalletClient && smartWalletAddress) {
         const rpcUrl = getRpcUrl(chainId);
-        console.log("[Gasless] RPC URL for chain:", rpcUrl);
 
         if (rpcUrl) {
           try {
-            // Switch smart wallet to the target chain
-            console.log("[Gasless] Switching smart wallet to chain:", chainId);
             await smartWalletClient.switchChain({ id: chainId });
-
             const provider = new JsonRpcProvider(rpcUrl);
-            // The smartWalletClient is a viem WalletClient - pass it directly
-            // PrivySmartWalletSigner will use its request method for JSON-RPC calls
-            const signer = new PrivySmartWalletSigner(
+            return new PrivySmartWalletSigner(
               smartWalletClient,
               smartWalletAddress,
               provider
             );
-
-            console.log("[Gasless] Created gasless signer successfully");
-            console.log("[Gasless] NOTE: If paymaster rejects, transaction will fail.");
-            console.log("[Gasless] Check Privy Dashboard > Smart Wallets > Gas Policies");
-            return signer;
-          } catch (error) {
-            console.warn(
-              "[Gasless] Failed to create gasless signer, falling back to regular wallet:",
-              error
-            );
+          } catch {
             // Fall through to regular wallet
           }
-        } else {
-          console.log("[Gasless] No RPC URL for chain, falling back to regular wallet");
         }
-      } else {
-        console.log("[Gasless] Smart wallet not ready, using regular wallet");
       }
 
       // Fallback to regular wagmi wallet
-      console.log("[Gasless] Getting regular wallet client...");
       const { walletClient, error } = await safeGetWalletClient(chainId);
 
       if (error || !walletClient) {
-        console.error("[Gasless] Failed to get wallet client:", error);
-        throw new Error(
-          `Failed to get wallet client: ${error || "Unknown error"}`
-        );
+        throw new Error(`Failed to get wallet client: ${error || "Unknown error"}`);
       }
 
-      console.log("[Gasless] Got wallet client, creating signer...");
       const signer = await walletClientToSigner(walletClient);
 
       if (!signer) {
-        console.error("[Gasless] Failed to create signer from wallet client");
         throw new Error("Failed to create signer from wallet client");
       }
 
-      console.log("[Gasless] Created regular signer successfully");
       return signer;
     },
     [isSmartWalletReady, smartWalletClient, smartWalletAddress]
