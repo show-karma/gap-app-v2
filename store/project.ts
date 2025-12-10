@@ -1,10 +1,9 @@
 import type { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { QueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
+import { getProject } from "@/services/project.service";
 import { getProjectGrants } from "@/services/project-grants.service";
 import type { ProjectResponse } from "@/types/v2/project";
-import { envVars } from "@/utilities/enviromentVars";
-import { INDEXER } from "@/utilities/indexer";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { useGrantStore } from "./grant";
 
@@ -28,39 +27,22 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   refreshProject: async () => {
     const { project } = get();
     if (!project) return;
-    // Fetch V2 project data directly
-    const projectResponse = await fetch(
-      `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.V2.PROJECTS.GET(project.details?.slug || project.uid)}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
 
-    if (!projectResponse.ok) {
-      throw new Error(`HTTP error! status: ${projectResponse.status}`);
-    }
+    const refreshedProject = await getProject(project.details?.slug || project.uid);
+    if (!refreshedProject) return;
 
-    const projectData: ProjectResponse = await projectResponse.json();
-
-    // Fetch grants separately (v2 doesn't include grants in project response)
-    const grants = await getProjectGrants(projectData.details?.slug || project.uid);
-
-    const refreshedProject: ProjectResponse = {
-      ...projectData,
-      grants: grants || [],
-    };
-
+    // Refresh grants separately and update grant store if needed
     const currentGrantState = useGrantStore.getState();
-    const shareSameGrant = refreshedProject.grants?.find(
-      (g) => g.uid.toLowerCase() === currentGrantState.grant?.uid?.toLowerCase()
-    );
-
-    if (shareSameGrant) {
-      currentGrantState.setGrant(shareSameGrant);
+    if (currentGrantState.grant?.uid) {
+      const grants = await getProjectGrants(refreshedProject.details?.slug || refreshedProject.uid);
+      const matchingGrant = grants?.find(
+        (g) => g.uid.toLowerCase() === currentGrantState.grant?.uid?.toLowerCase()
+      );
+      if (matchingGrant) {
+        currentGrantState.setGrant(matchingGrant);
+      }
     }
+
     const queryClient = new QueryClient({
       defaultOptions: {
         queries: defaultQueryOptions,

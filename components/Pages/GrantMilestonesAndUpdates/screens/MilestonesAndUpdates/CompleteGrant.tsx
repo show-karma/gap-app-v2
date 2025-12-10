@@ -13,6 +13,8 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useGap } from "@/hooks/useGap";
 import { useTracksForProgram } from "@/hooks/useTracks";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useStepper } from "@/store/modals/txStepper";
@@ -58,7 +60,7 @@ export const GrantCompletion: FC = () => {
 
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
 
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
@@ -218,7 +220,7 @@ export const GrantCompletion: FC = () => {
           const maxRetries = 40; // 60 seconds total (40 * 1.5s)
           let retries = maxRetries;
           changeStepperStep("indexing");
-          let fetchedProject = null;
+          const fetchedProject = null;
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(
@@ -228,24 +230,17 @@ export const GrantCompletion: FC = () => {
             );
           }
           while (retries > 0) {
-            fetchedProject = await gapClient!.fetch
-              .projectById(project?.uid as Hex)
-              .catch((err) => {
-                errorManager("Error polling for grant completion", err, {
-                  grantUID: grantToComplete.uid,
-                  retriesRemaining: retries,
-                });
-                return null;
-              });
-            const grant = fetchedProject?.grants?.find((g) => g.uid === grantToComplete.uid);
-            if (grant?.completed) {
+            // Fetch grants to check completion status
+            const polledGrants = await getProjectGrants(project?.uid as string);
+            const completedGrant = polledGrants.find((g) => g.uid === grantToComplete.uid);
+            if (completedGrant?.completed) {
               changeStepperStep("indexed");
               toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS);
-              await refreshProject().then(() => {
+              await refetchGrants().then(() => {
                 router.push(
                   PAGES.PROJECT.GRANT(
                     project?.details?.slug || (project?.uid as Hex),
-                    grant?.uid as Hex
+                    completedGrant?.uid as Hex
                   )
                 );
                 router.refresh();

@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
 import { Button } from "@/components/Utilities/Button";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import type { GrantMilestone, GrantResponse } from "@/types/v2/grant";
@@ -14,7 +15,9 @@ export const MilestoneUpdateScreen = () => {
   const { closeProgressModal } = useProgressModalStore();
   const [selectedGrant, setSelectedGrant] = useState<GrantResponse | undefined>();
   const [selectedMilestone, setSelectedMilestone] = useState<GrantMilestone | undefined>();
-  const grants: GrantResponse[] = project?.grants || [];
+
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(project?.uid || "");
   const { setProgressModalScreen } = useProgressModalStore();
 
   if (!grants.length && project) {

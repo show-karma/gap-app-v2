@@ -9,7 +9,7 @@ import { INDEXER } from "@/utilities/indexer";
 
 // V2 API response types
 interface AdminCommunityV2 {
-  uid: string;
+  uid: `0x${string}`;
   chainID: number;
   details: {
     name: string;

@@ -14,6 +14,8 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
@@ -83,7 +85,8 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const projectIdOrSlug = project?.details?.slug || project?.uid || "";
+  const { refetch: refetchGrants } = useProjectGrants(projectIdOrSlug);
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
 
   const {
@@ -166,46 +169,44 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grantToUpdate.chainID), "POST", {});
         }
         changeStepperStep("indexing");
+        const attestUID = grantUpdate.uid;
         while (retries > 0) {
-          await refreshProject()
-            .then(async (fetchedProject) => {
-              const attestUID = grantUpdate.uid;
-              const updatedGrant = fetchedProject?.grants?.find((g) => g.uid === grantToUpdate.uid);
+          try {
+            const fetchedGrants = await getProjectGrants(projectIdOrSlug);
+            const updatedGrant = fetchedGrants.find((g) => g.uid === grantToUpdate.uid);
 
-              const alreadyExists = updatedGrant?.updates?.find((u: any) => u.uid === attestUID);
-              if (alreadyExists) {
-                retries = 0;
-                changeStepperStep("indexed");
-                afterSubmit?.();
-                toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
-                router.push(
-                  PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                    project.uid,
-                    grantToUpdate.uid,
-                    "milestones-and-updates"
-                  )
-                );
-                openShareDialog({
-                  modalShareText: `🎉 Update posted for your ${grant.details?.title}!`,
-                  modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building—we're here for it. 💪`,
-                  shareText: SHARE_TEXTS.GRANT_UPDATE(
-                    grant.details?.title as string,
-                    project.uid,
-                    grantToUpdate.uid
-                  ),
-                });
+            const alreadyExists = updatedGrant?.updates?.find((u) => u.uid === attestUID);
+            if (alreadyExists) {
+              retries = 0;
+              await refetchGrants();
+              changeStepperStep("indexed");
+              afterSubmit?.();
+              toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
+              router.push(
+                PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                  project.uid,
+                  grantToUpdate.uid,
+                  "milestones-and-updates"
+                )
+              );
+              openShareDialog({
+                modalShareText: `🎉 Update posted for your ${grant.details?.title}!`,
+                modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building—we're here for it. 💪`,
+                shareText: SHARE_TEXTS.GRANT_UPDATE(
+                  grant.details?.title as string,
+                  project.uid,
+                  grantToUpdate.uid
+                ),
+              });
 
-                router.refresh();
-              }
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            })
-            .catch(async () => {
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            });
+              router.refresh();
+            }
+          } catch {
+            // Ignore polling errors, continue retrying
+          }
+          retries -= 1;
+          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+          await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       });
     } catch (error) {

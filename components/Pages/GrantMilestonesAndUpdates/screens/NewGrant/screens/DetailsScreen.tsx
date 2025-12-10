@@ -11,6 +11,7 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
 import { useGrant } from "@/hooks/useGrant";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
@@ -82,6 +83,9 @@ export const DetailsScreen: React.FC = () => {
   const _refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
   const { address, isConnected, connector, chain } = useAccount();
+
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(selectedProject?.uid || "");
   const { authenticated: isAuth } = useAuth();
   const { gap } = useGap();
   const { updateGrant, isLoading: isUpdatingGrant } = useGrant();
@@ -150,9 +154,7 @@ export const DetailsScreen: React.FC = () => {
     updateFormData(updateObj);
     if (isEditing) {
       updateGrant(
-        selectedProject?.grants?.find(
-          (g) => g.uid.toLowerCase() === grant.toLowerCase()
-        ) as GrantResponse,
+        grants.find((g) => g.uid.toLowerCase() === grant.toLowerCase()) as GrantResponse,
         { ...updateObj, community: formData.community || "" }
       );
     } else {

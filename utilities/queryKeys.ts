@@ -39,6 +39,7 @@ export const QUERY_KEYS = {
       ["community-project-updates", communityId, filter, page] as const,
   },
   GRANTS: {
+    DUPLICATE_CHECK_BASE: ["duplicate-grant-check"] as const,
     DUPLICATE_CHECK: (params: {
       projectUid?: string;
       programId?: string;
@@ -48,5 +49,8 @@ export const QUERY_KEYS = {
   },
   PROJECT: {
     UPDATES: (projectIdOrSlug: string) => ["project-updates", projectIdOrSlug] as const,
+    IMPACTS: (projectIdOrSlug: string) => ["project-impacts", projectIdOrSlug] as const,
+    MILESTONES: (projectIdOrSlug: string) => ["project-milestones", projectIdOrSlug] as const,
+    GRANTS: (projectIdOrSlug: string) => ["project-grants", projectIdOrSlug] as const,
   },
 };

@@ -1,9 +1,9 @@
 "use client";
-import type { IProjectImpact } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useParams, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { MilestonesList } from "@/components/Milestone/MilestonesList";
 import { Button } from "@/components/Utilities/Button";
+import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
@@ -16,13 +16,15 @@ interface ProjectRoadmapProps {
   project?: ProjectResponse;
 }
 
-// Pure utility function for sorting
+// Pure utility function for sorting - uses seconds for consistency
 const getSortTimestamp = (item: UnifiedMilestone): number => {
+  // endsAt is already in seconds (Unix timestamp)
   if (item.endsAt) return item.endsAt;
+  // Convert other dates to seconds for consistent comparison
   if (item.completed && typeof item.completed === "object" && "createdAt" in item.completed) {
-    return new Date(item.completed.createdAt).getTime();
+    return Math.floor(new Date(item.completed.createdAt).getTime() / 1000);
   }
-  return new Date(item.createdAt).getTime();
+  return Math.floor(new Date(item.createdAt).getTime() / 1000);
 };
 
 export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) => {
@@ -37,6 +39,9 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
   // API now returns grant title and community info directly
   const { milestones: apiMilestones = [], isLoading } = useProjectUpdates(projectId as string);
 
+  // Use dedicated API endpoint for impacts
+  const { impacts } = useProjectImpacts(projectId as string);
+
   const { setIsProgressModalOpen, setProgressModalScreen } = useProgressModalStore();
 
   const isOwner = useOwnerStore((state) => state.isOwner);
@@ -50,23 +55,22 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
     return filterParam.split(",");
   }, [searchParams]);
 
-  // Combine V2 milestones with impacts from project data (impacts not yet in V2 endpoint)
+  // Combine V2 milestones with impacts from dedicated API endpoint
   const combinedUpdatesAndMilestones = useMemo(() => {
-    const impacts: IProjectImpact[] = project?.impacts || [];
-
     const impactItems = impacts.map((impact): UnifiedMilestone => {
       const createdAt = impact.createdAt || new Date().toISOString();
 
       return {
         uid: impact.uid,
-        chainID: impact.chainID,
-        refUID: impact.refUID || project?.uid || "",
+        chainID: impact.chainID || 0,
+        refUID: impact.refUID || project?.uid || ("" as `0x${string}`),
         title: "Project Impact",
-        description: "",
+        description: impact.data?.work || impact.data?.impact || "",
         type: "impact",
         completed: false,
         createdAt,
-        projectImpact: impact,
+        // Note: projectImpact property skipped as full IProjectImpact is not available
+        // Impact data is embedded in description for display purposes
         source: {
           type: "impact",
         },
@@ -83,7 +87,7 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
     });
 
     return allSortedItems;
-  }, [project?.impacts, project?.uid, apiMilestones]);
+  }, [impacts, project?.uid, apiMilestones]);
 
   // Filter items based on active filters
   const filteredItems = useMemo(() => {

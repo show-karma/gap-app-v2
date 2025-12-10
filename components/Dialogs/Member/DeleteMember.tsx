@@ -78,7 +78,6 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) throw new Error("Project not found");
-      // SDK Project uses recipient (v1), which matches address (v2)
       const member = fetchedProject.members.find(
         (item) => item.recipient.toLowerCase() === memberAddress.toLowerCase()
       );

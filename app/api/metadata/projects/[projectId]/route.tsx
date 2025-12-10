@@ -4,6 +4,7 @@ import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import pluralize from "pluralize";
 import { PROJECT_NAME } from "@/constants/brand";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 
@@ -12,7 +13,10 @@ export async function GET(
   context: { params: Promise<{ projectId: string }> }
 ) {
   const projectId = (await context.params).projectId;
-  const project = await getProjectCachedData(projectId);
+  const [project, grants] = await Promise.all([
+    getProjectCachedData(projectId),
+    getProjectGrants(projectId),
+  ]);
   if (!project) {
     return new Response("Not found", { status: 404 });
   }
@@ -23,14 +27,14 @@ export async function GET(
 
   const description = cleanMarkdownForPlainText(project?.details?.description || "", 200);
 
-  const milestonesCompleted = project.grants?.reduce((acc, grant) => {
-    return acc + (grant.milestones?.filter((milestone: any) => milestone.completed)?.length ?? 0);
+  const milestonesCompleted = grants.reduce((acc, grant) => {
+    return acc + (grant.milestones?.filter((milestone) => milestone.completed)?.length ?? 0);
   }, 0);
 
   const stats = [
     {
-      title: pluralize("Grant", project?.grants?.length || 0),
-      value: project?.grants?.length || 0,
+      title: pluralize("Grant", grants.length),
+      value: grants.length,
       icon: "https://karmahq.xyz/icons/funding-lg.png",
     },
     {

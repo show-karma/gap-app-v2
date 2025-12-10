@@ -1,6 +1,6 @@
 import type { GAP } from "@show-karma/karma-gap-sdk";
 import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getProjectData } from "@/services/project.service";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { retryUntilConditionMet } from "@/utilities/retries";
 
 interface PollForGrantCompletionParams {
@@ -37,12 +37,9 @@ export const pollForGrantCompletion = async ({
 }: PollForGrantCompletionParams): Promise<void> => {
   await retryUntilConditionMet(
     async () => {
-      const updatedProject = await getProjectData(projectUid);
-      if (!updatedProject) return false;
+      const grants = await getProjectGrants(projectUid);
 
-      const completedGrant = updatedProject.grants?.find(
-        (g) => g.uid.toLowerCase() === grantUid.toLowerCase()
-      );
+      const completedGrant = grants?.find((g) => g.uid.toLowerCase() === grantUid.toLowerCase());
 
       return !!completedGrant?.completed;
     },
@@ -105,18 +102,16 @@ export const pollForMilestoneStatus = async ({
 }: PollForMilestoneStatusParams): Promise<void> => {
   await retryUntilConditionMet(
     async () => {
-      const updatedProject = await getProjectData(projectUid);
-      if (!updatedProject) return false;
-
-      const grants = updatedProject.grants ?? [];
+      const grants = await getProjectGrants(projectUid);
       const updatedGrant = grants.find((g) => g.details?.programId === programId);
       if (!updatedGrant) return false;
 
       const updatedMilestone = updatedGrant.milestones?.find((m) => m.uid === milestoneUid);
       if (!updatedMilestone) return false;
 
-      // V2: verified is now a boolean, not an array
-      const isVerified = updatedMilestone.verified === true;
+      // V2: verified is an array of verifications
+      const isVerified =
+        Array.isArray(updatedMilestone.verified) && updatedMilestone.verified.length > 0;
 
       // If checking completion, ensure both are indexed
       if (checkCompletion) {

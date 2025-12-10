@@ -10,6 +10,8 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -18,6 +20,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { Milestone } from "../Milestone";
@@ -43,7 +46,7 @@ export const MilestonesScreen: React.FC = () => {
   } = useGrantFormStore();
   const { switchChainAsync } = useWallet();
   const selectedProject = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { refetch: refetchGrants } = useProjectGrants(selectedProject?.uid || "");
   const router = useRouter();
   const { address, isConnected, connector, chain } = useAccount();
   const { authenticated: isAuth } = useAuth();
@@ -197,7 +200,7 @@ export const MilestonesScreen: React.FC = () => {
         .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
-          let fetchedProject = null;
+          const fetchedProject = null;
           const txHash = res?.tx[0]?.hash;
 
           if (txHash) {
@@ -205,11 +208,11 @@ export const MilestonesScreen: React.FC = () => {
           }
 
           while (retries > 0) {
-            fetchedProject = await gapClient.fetch
-              .projectById(selectedProject.uid as Hex)
-              .catch(() => null);
+            const polledGrants = await getProjectGrants(selectedProject.uid);
 
-            if (fetchedProject?.grants?.find((oldGrant) => oldGrant.uid === grant.uid)) {
+            // Check that grant exists AND has non-empty details (GrantDetails attestation processed)
+            const foundGrant = polledGrants?.find((oldGrant) => oldGrant.uid === grant.uid);
+            if (foundGrant && foundGrant.details?.title) {
               clearMilestonesForms();
               retries = 0;
               toast.success(
@@ -222,7 +225,7 @@ export const MilestonesScreen: React.FC = () => {
               // Invalidate duplicate grant check query to refresh data
               if (!isEditing) {
                 await queryClient.invalidateQueries({
-                  queryKey: ["duplicate-grant-check"],
+                  queryKey: QUERY_KEYS.GRANTS.DUPLICATE_CHECK_BASE,
                 });
               }
 
@@ -255,7 +258,7 @@ export const MilestonesScreen: React.FC = () => {
                 }
               }
 
-              await refreshProject();
+              await refetchGrants();
               router.push(
                 PAGES.PROJECT.GRANT(
                   selectedProject?.details?.slug || selectedProject.uid,

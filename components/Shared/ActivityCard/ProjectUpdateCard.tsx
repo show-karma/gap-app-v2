@@ -1,9 +1,10 @@
-import type { FC } from "react";
+import { type FC, useState } from "react";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useProjectStore } from "@/store";
 import type { ProjectUpdate } from "@/types/roadmap";
 import { PAGES } from "@/utilities/pages";
 import { ReadMore } from "@/utilities/ReadMore";
+import { EditUpdateDialog } from "../../Pages/Project/Updates/EditUpdateDialog";
 import { ActivityAttribution } from "./ActivityAttribution";
 import { ActivityMenu } from "./ActivityMenu";
 import { ActivityStatusHeader } from "./ActivityStatusHeader";
@@ -16,6 +17,7 @@ interface ProjectUpdateCardProps {
 
 export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, isAuthorized }) => {
   const { project } = useProjectStore();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const canEdit = true;
   const canDelete = true;
@@ -28,8 +30,12 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
     navigator.clipboard.writeText(url);
   };
 
-  const handleEdit = async () => {
-    // TODO: Implement edit functionality
+  const handleEdit = () => {
+    setIsEditDialogOpen(true);
+  };
+
+  const closeEditDialog = () => {
+    setIsEditDialogOpen(false);
   };
 
   const handleDelete = async () => {
@@ -165,6 +171,15 @@ export const ProjectUpdateCard: FC<ProjectUpdateCardProps> = ({ update, index, i
               )}
             </div>
           </div>
+        )}
+        {isAuthorized && (
+          <EditUpdateDialog
+            isOpen={isEditDialogOpen}
+            onClose={closeEditDialog}
+            projectId={project?.uid || ""}
+            updateId={update.uid}
+            updateType="ProjectUpdate"
+          />
         )}
       </div>
       <ActivityAttribution

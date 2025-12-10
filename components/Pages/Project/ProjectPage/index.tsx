@@ -23,6 +23,7 @@ import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useMemberRoles } from "@/hooks/useMemberRoles";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useActivityTabStore } from "@/store/activityTab";
 import { useENS } from "@/store/ens";
@@ -58,6 +59,9 @@ function ProjectPage() {
   const { project: projectInstance } = useProjectInstance(
     project?.details?.slug || project?.uid || ""
   );
+
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(project?.uid || "");
   const { teamProfiles } = useTeamProfiles(project);
   const { address } = useAccount();
   const { openModal } = useContributorProfileModalStore();
@@ -307,11 +311,11 @@ function ProjectPage() {
             >
               <div className="flex flex-col gap-2">
                 <p className="text-black dark:text-zinc-300 dark:bg-zinc-800 text-2xl font-bold bg-[#EFF4FF] rounded-lg px-2 py-1 flex justify-center items-center min-h-[40px]  min-w-[40px] w-max h-max">
-                  {project?.grants?.length || 0}
+                  {grants.length}
                 </p>
                 <div className="flex flex-row gap-2">
                   <p className="font-normal text-brand-gray text-sm dark:text-zinc-300">
-                    {pluralize("Grant", project?.grants?.length || 0)}
+                    {pluralize("Grant", grants.length)}
                   </p>
                   <img src={"/icons/funding.png"} alt="Grants" className="w-5 h-5" />
                 </div>

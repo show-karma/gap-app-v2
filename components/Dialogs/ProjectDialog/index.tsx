@@ -41,6 +41,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { getProject } from "@/services/project.service";
 import { searchProjects } from "@/services/project-search.service";
 import { useProjectStore } from "@/store";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
@@ -676,14 +677,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});
         }
-        let fetchedProject: Project | null = null;
+        let fetchedProject: ProjectResponse | null = null;
         changeStepperStep("indexing");
         while (retries > 0) {
           // eslint-disable-next-line no-await-in-loop
-          fetchedProject = await (slug
-            ? gapClient.fetch.projectBySlug(slug)
-            : gapClient.fetch.projectById(project.uid)
-          ).catch(() => null);
+          fetchedProject = await getProject(slug || project.uid);
           if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
             if (data.github) {
               const githubFromField = data.github.includes("http")
@@ -723,29 +721,26 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               }
             }
 
-            await fetchData(
+            const [, subscriptionError] = await fetchData(
               INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
               "POST",
               { contacts },
               {},
               {},
               true
-            ).then(([_res, error]) => {
-              if (error) {
-                toast.error(
-                  "Something went wrong with contact info save. Please try again later.",
-                  {
-                    className: "z-[9999]",
-                  }
-                );
-              }
-              retries = 0;
-              toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
-              router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
-              router.refresh();
-              changeStepperStep("indexed");
-              return;
-            });
+            );
+
+            if (subscriptionError) {
+              toast.error("Something went wrong with contact info save. Please try again later.", {
+                className: "z-[9999]",
+              });
+            }
+
+            toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
+            changeStepperStep("indexed");
+            router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
+            router.refresh();
+            break;
           }
           retries -= 1;
           // eslint-disable-next-line no-await-in-loop, no-promise-executor-return

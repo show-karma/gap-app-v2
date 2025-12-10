@@ -3,7 +3,6 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { ArrowRightIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { IGrantUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, Fragment, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -14,18 +13,22 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
+import type { GrantUpdate } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
+import { getSDKGrantInstance } from "@/utilities/grant-helpers";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 type VerifyGrantUpdateDialogProps = {
-  grantUpdate: IGrantUpdate;
+  grantUpdate: GrantUpdate;
   onVerified: () => void;
   isVerified: boolean;
 };
@@ -65,7 +68,8 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
   const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const projectIdOrSlug = project?.details?.slug || project?.uid || "";
+  const { refetch: refetchGrants } = useProjectGrants(projectIdOrSlug);
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
@@ -97,16 +101,26 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
       }
       const walletSigner = await walletClientToSigner(walletClient);
 
-      const fetchedProject = await gapClient.fetch.projectById(project?.uid);
-      if (!fetchedProject) return;
-      const grantInstance = fetchedProject.grants.find(
-        (g) => g.uid.toLowerCase() === grantUpdate.refUID.toLowerCase()
-      );
-      if (!grantInstance) return;
+      if (!grantUpdate.refUID) {
+        throw new Error("Grant update is missing refUID");
+      }
+
+      if (!project?.uid) {
+        throw new Error("Project UID is missing");
+      }
+
+      const grantInstance = await getSDKGrantInstance({
+        gapClient,
+        projectUid: project.uid,
+        grantUid: grantUpdate.refUID,
+      });
+
       const grantUpdateInstance = grantInstance.updates.find(
         (u) => u.uid.toLowerCase() === grantUpdate.uid.toLowerCase()
       );
-      if (!grantUpdateInstance) return;
+      if (!grantUpdateInstance) {
+        throw new Error("Grant update not found in SDK");
+      }
       await grantUpdateInstance
         .verify(
           walletSigner,
@@ -127,36 +141,37 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
             );
           }
           while (retries > 0) {
-            await refreshProject()
-              .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants?.find(
-                  (g) => g.uid === grantUpdate.refUID
-                );
+            try {
+              const fetchedGrants = await getProjectGrants(projectIdOrSlug);
+              const foundGrant = fetchedGrants.find((g) => g.uid === grantUpdate.refUID);
 
-                const fetchedGrantUpdate = foundGrant?.updates?.find(
-                  (u: any) => u.uid === grantUpdate.uid
-                );
+              const fetchedGrantUpdate = foundGrant?.updates?.find(
+                (u) => u.uid === grantUpdate.uid
+              );
 
-                // V2: verified is a boolean
-                if (fetchedGrantUpdate?.verified === true) {
-                  retries = 0;
-                  changeStepperStep("indexed");
-                  onVerified();
-                  toast.success(MESSAGES.GRANT.GRANT_UPDATE.VERIFY.SUCCESS);
-                }
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              })
-              .catch(async () => {
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              });
+              // V2: verified is an array of verifications
+              const isNowVerified =
+                fetchedGrantUpdate &&
+                Array.isArray(fetchedGrantUpdate.verified) &&
+                fetchedGrantUpdate.verified.length > 0;
+              if (isNowVerified) {
+                retries = 0;
+                await refetchGrants();
+                changeStepperStep("indexed");
+                onVerified();
+                toast.success(MESSAGES.GRANT.GRANT_UPDATE.VERIFY.SUCCESS);
+              }
+            } catch {
+              // Ignore polling errors, continue retrying
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
       closeModal();
     } catch (error: any) {
+      console.log("[VerifyGrantUpdateDialog] error:", error);
       errorManager(
         MESSAGES.GRANT.GRANT_UPDATE.VERIFY.ERROR,
         error,

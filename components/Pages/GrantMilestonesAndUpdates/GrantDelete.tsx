@@ -8,6 +8,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import type { GrantResponse } from "@/types/v2/grant";
@@ -31,11 +32,10 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
 
-  const refreshProject = useProjectStore((state) => state.refreshProject);
-
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const { project, isProjectOwner } = useProjectStore();
+  const { refetch: refetchGrants, grants } = useProjectGrants(project?.uid || "");
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { gap } = useGap();
@@ -81,12 +81,12 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
           async () => {
-            const fetchedProject = await refreshProject();
-            const stillExist = fetchedProject?.grants?.find(
+            const { data: fetchedGrants } = await refetchGrants();
+            const stillExist = fetchedGrants?.find(
               (g) => g.uid?.toLowerCase() === grantUID?.toLowerCase()
             );
             if (!stillExist) {
-              if (fetchedProject?.grants && fetchedProject?.grants?.length > 0) {
+              if (fetchedGrants && fetchedGrants.length > 0) {
                 router.push(PAGES.PROJECT.GRANTS(project?.uid || project?.details?.slug || ""));
               }
             }

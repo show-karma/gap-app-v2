@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
 import { useDuplicateGrantCheck } from "@/hooks/useDuplicateGrantCheck";
 import { useGrant } from "@/hooks/useGrant";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getCommunities } from "@/services/communities.service";
 import { useProjectStore } from "@/store";
 import type { Community } from "@/types/v2/community";
@@ -35,6 +36,9 @@ export const CommunitySelectionScreen: React.FC = () => {
   const grantUid = params.grantUid as string;
   const isEditing = pathname.includes("/edit");
   const { updateGrant } = useGrant();
+
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(selectedProject?.uid || "");
   const { checkForDuplicateGrantInProject, isCheckingGrantDuplicate, isGrantDuplicateInProject } =
     useDuplicateGrantCheck(
       {
@@ -84,9 +88,7 @@ export const CommunitySelectionScreen: React.FC = () => {
     }
 
     if (isEditing && flowType === "program") {
-      const grantToUpdate = selectedProject?.grants?.find(
-        (g) => g.uid.toLowerCase() === grantUid?.toLowerCase()
-      );
+      const grantToUpdate = grants.find((g) => g.uid.toLowerCase() === grantUid?.toLowerCase());
 
       if (grantToUpdate) {
         const updateData = {
@@ -117,9 +119,9 @@ export const CommunitySelectionScreen: React.FC = () => {
   };
 
   const isProjectAlreadyInProgram = useMemo(() => {
-    if (!selectedProject?.grants || isEditing) return false;
+    if (!grants.length || isEditing) return false;
 
-    return selectedProject.grants.some((grant) => {
+    return grants.some((grant) => {
       if (formData.programId) {
         // For program grants: match by programId (base part before underscore)
         const existingProgramId = grant.details?.programId;
@@ -142,7 +144,7 @@ export const CommunitySelectionScreen: React.FC = () => {
 
       return false;
     });
-  }, [formData.programId, formData.community, formData.title, selectedProject?.grants, isEditing]);
+  }, [formData.programId, formData.community, formData.title, grants, isEditing]);
 
   const canProceed = useMemo(() => {
     return (

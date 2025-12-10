@@ -56,7 +56,8 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
 
   // Convert project milestones to unified format
   data.projectMilestones.forEach((milestone: ProjectMilestone) => {
-    const isCompleted = milestone.status === "completed" && milestone.completionDetails !== null;
+    // A milestone is completed if status is "completed" (completionDetails may or may not be present)
+    const isCompleted = milestone.status === "completed";
     // Use recipient from API (the milestone owner)
     const attester = milestone.recipient || "";
 
@@ -69,7 +70,7 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
       description: milestone.description,
       completed: isCompleted
         ? {
-            createdAt: milestone.completionDetails?.completedAt || "",
+            createdAt: milestone.completionDetails?.completedAt || milestone.createdAt || "",
             data: {
               proofOfWork: milestone.completionDetails?.proofOfWork,
               reason: milestone.completionDetails?.description,
@@ -87,7 +88,7 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
           attester,
           completed: isCompleted
             ? {
-                createdAt: milestone.completionDetails?.completedAt || "",
+                createdAt: milestone.completionDetails?.completedAt || milestone.createdAt || "",
                 data: {
                   proofOfWork: milestone.completionDetails?.proofOfWork,
                   reason: milestone.completionDetails?.description,
@@ -101,7 +102,8 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
 
   // Convert grant milestones to unified format
   data.grantMilestones.forEach((milestone: GrantMilestoneWithDetails) => {
-    const isCompleted = milestone.status === "completed" && milestone.completionDetails !== null;
+    // A milestone is completed if status is "completed" (completionDetails may or may not be present)
+    const isCompleted = milestone.status === "completed";
     // Use recipient from API (the milestone owner)
     const attester = milestone.recipient || "";
     const chainID = parseInt(milestone.chainId, 10) || 0;
@@ -118,10 +120,12 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
       description: milestone.description,
       completed: isCompleted
         ? {
-            createdAt: milestone.completionDetails?.completedAt || "",
+            createdAt: milestone.completionDetails?.completedAt || milestone.createdAt || "",
             data: {
               proofOfWork: milestone.completionDetails?.proofOfWork,
               reason: milestone.completionDetails?.description,
+              completionPercentage: milestone.completionDetails?.completionPercentage,
+              deliverables: milestone.completionDetails?.deliverables,
             },
           }
         : false,
@@ -132,8 +136,10 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
       source: {
         type: "grant",
         grantMilestone: {
+          completionDetails: milestone.completionDetails,
           milestone: {
             uid: milestone.uid,
+            chainID,
             attester,
             title: milestone.title,
             description: milestone.description,
@@ -142,13 +148,26 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
               : undefined,
             completed: isCompleted
               ? {
-                  createdAt: milestone.completionDetails?.completedAt || "",
+                  createdAt: milestone.completionDetails?.completedAt || milestone.createdAt || "",
+                  attester: milestone.completionDetails?.completedBy,
                   data: {
                     proofOfWork: milestone.completionDetails?.proofOfWork,
                     reason: milestone.completionDetails?.description,
+                    completionPercentage: milestone.completionDetails?.completionPercentage,
+                    deliverables: milestone.completionDetails?.deliverables,
                   },
                 }
               : undefined,
+            verified: milestone.verificationDetails
+              ? [
+                  {
+                    uid: milestone.verificationDetails.attestationUID || "",
+                    attester: milestone.verificationDetails.verifiedBy || "",
+                    reason: milestone.verificationDetails.description,
+                    createdAt: milestone.verificationDetails.verifiedAt || "",
+                  },
+                ]
+              : [],
           },
           grant: {
             uid: grantInfo?.uid || "",
@@ -208,7 +227,9 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
         grantMilestone: {
           milestone: {
             uid: "",
+            chainID,
             title: update.title,
+            verified: [],
           },
           grant: {
             uid: grantInfo?.uid || "",
@@ -236,12 +257,16 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
 
 /**
  * Sort milestones by date (newest first)
+ * Uses endsAt (due date) for milestones, createdAt for activities/updates
+ * Note: endsAt is in seconds, createdAt needs conversion from ISO string to seconds
  */
 const sortByDateDescending = (milestones: UnifiedMilestone[]): UnifiedMilestone[] => {
   return [...milestones].sort((a, b) => {
     const getTimestamp = (item: UnifiedMilestone): number => {
+      // endsAt is already in seconds (Unix timestamp)
       if (item.endsAt) return item.endsAt;
-      return new Date(item.createdAt).getTime();
+      // Convert createdAt from ISO string to seconds to match endsAt units
+      return Math.floor(new Date(item.createdAt).getTime() / 1000);
     };
 
     return getTimestamp(b) - getTimestamp(a);

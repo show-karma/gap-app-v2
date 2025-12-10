@@ -1,8 +1,5 @@
 // Project API Response types
 
-import type { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import type { GrantResponse } from "./grant";
-
 export interface ProjectDetails {
   title: string;
   description?: string;
@@ -28,6 +25,12 @@ export interface ProjectMember {
   address: string;
   role: string;
   joinedAt: string;
+}
+
+export interface ProjectPointer {
+  uid: string;
+  originalProjectUID: string;
+  createdAt: string;
 }
 
 export interface ProjectResponse {
@@ -75,16 +78,21 @@ export interface ProjectResponse {
     joinedAt: string;
   }>;
   endorsements?: any[];
-  milestones?: IProjectMilestoneResponse;
-  impacts?: any[];
-  updates?: any[];
   communities?: string[];
-  grants?: GrantResponse[];
   symlinks?: any[];
-  pointers?: any[];
+  pointers?: ProjectPointer[];
   createdAt?: string;
   updatedAt?: string;
 }
 
 // Alias for backward compatibility during migration
 export type ProjectV2Response = ProjectResponse;
+
+/**
+ * Extended ProjectResponse that includes grants data.
+ * Used for specific endpoints that return projects with embedded grants (e.g., /v2/user/projects)
+ * Note: Most endpoints should fetch grants separately using getProjectGrants()
+ */
+export interface ProjectWithGrantsResponse extends ProjectResponse {
+  grants?: import("@/types/v2/grant").GrantResponse[];
+}

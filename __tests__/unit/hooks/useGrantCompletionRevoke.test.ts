@@ -97,7 +97,6 @@ jest.mock("@/store/modals/txStepper", () => ({
   })),
 }));
 
-const mockRefreshProject = jest.fn();
 const mockIsProjectOwner = jest.fn();
 const mockIsOwner = jest.fn();
 
@@ -106,20 +105,17 @@ jest.mock("@/store", () => ({
     // When called without selector or with destructuring pattern, return object
     if (!selector) {
       return {
-        refreshProject: mockRefreshProject,
         isProjectOwner: mockIsProjectOwner(),
       };
     }
     // When called with selector function
     if (typeof selector === "function") {
       const state = {
-        refreshProject: mockRefreshProject,
         isProjectOwner: mockIsProjectOwner(),
       };
       return selector(state);
     }
     return {
-      refreshProject: mockRefreshProject,
       isProjectOwner: mockIsProjectOwner(),
     };
   }),
@@ -135,6 +131,14 @@ jest.mock("@/store", () => ({
     }
     return { isOwner: mockIsOwner() };
   }),
+}));
+
+const mockRefetchGrants = jest.fn();
+jest.mock("@/hooks/v2/useProjectGrants", () => ({
+  useProjectGrants: jest.fn(() => ({
+    refetch: mockRefetchGrants,
+    grants: [],
+  })),
 }));
 
 const mockRefreshGrant = jest.fn();
@@ -216,6 +220,7 @@ describe("useGrantCompletionRevoke", () => {
     mockIsOwner.mockReturnValue(false);
     mockCreateCheckIfCompletionExists.mockReturnValue(mockCheckIfCompletionExists);
     mockCheckIfCompletionExists.mockResolvedValue(undefined);
+    mockRefetchGrants.mockResolvedValue(undefined);
   });
 
   describe("Initialization", () => {

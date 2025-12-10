@@ -7,6 +7,7 @@ import { type FC, useState } from "react";
 import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Button } from "@/components/ui/button";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import type { GrantMilestone } from "@/types/v2/grant";
@@ -21,9 +22,11 @@ interface NotUpdatingCaseProps {
 
 const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({ milestone, isAuthorized, setIsUpdating }) => {
   const project = useProjectStore((state) => state.project);
-  const grant = project?.grants?.find(
-    (g) => g.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? "")
-  );
+
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(project?.uid || "");
+
+  const grant = grants.find((g) => g.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? ""));
 
   if (!isAuthorized) {
     return undefined;

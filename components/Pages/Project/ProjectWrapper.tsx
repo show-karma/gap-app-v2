@@ -13,6 +13,7 @@ import { useProjectMembers } from "@/hooks/useProjectMembers";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectSocials } from "@/hooks/useProjectSocials";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { layoutTheme } from "@/src/helper/theme";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
@@ -36,6 +37,9 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
   const isOwner = useOwnerStore((state: any) => state.isOwner);
 
   const { project } = useProject(projectId);
+
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(project?.uid || projectId);
 
   // Start hook for permissions
   useProjectPermissions();
@@ -171,10 +175,7 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
         </div>
         <div className="mt-4 max-sm:px-4">
           <div className={cn(layoutTheme.padding, "py-0")}>
-            <ProjectNavigator
-              hasContactInfo={hasContactInfo}
-              grantsLength={project?.grants?.length || 0}
-            />
+            <ProjectNavigator hasContactInfo={hasContactInfo} grantsLength={grants.length} />
           </div>
         </div>
       </div>

@@ -32,6 +32,7 @@ export const INDEXER = {
         `/v2/projects/${projectUid}/grants/${programId}/milestones`,
       UPDATES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/updates`,
       MILESTONES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/milestones`,
+      IMPACTS: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/impacts`,
     },
     APPLICATIONS: {
       BY_PROJECT_UID: (projectUID: string) => `/v2/funding-applications/project/${projectUID}`,

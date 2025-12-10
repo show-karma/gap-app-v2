@@ -231,7 +231,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
 
               if (alreadyExists) {
                 retries = 0;
-                router.push(`/project/${primaryProject?.details?.slug}`);
+                router.push(PAGES.PROJECT.OVERVIEW(primaryProject?.details?.slug as string));
                 router.refresh();
                 changeStepperStep("indexed");
                 toast.success(MESSAGES.PROJECT_POINTER_FORM.SUCCESS);

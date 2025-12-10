@@ -4,6 +4,7 @@ import type {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Image from "next/image";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/roadmap";
 import { PAGES } from "@/utilities/pages";
@@ -53,6 +54,9 @@ export const GrantAssociation = ({
 }: GrantAssociationProps) => {
   const containerClass = `flex flex-row w-max flex-wrap gap-2 ${className}`;
   const { project } = useProjectStore();
+
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(project?.uid || "");
 
   // Handle milestone data
   if (milestone) {
@@ -127,21 +131,19 @@ export const GrantAssociation = ({
     return null;
   }
 
-  const grant = project?.grants?.find(
-    (grant) => grant.uid?.toLowerCase() === update.refUID?.toLowerCase()
-  );
+  const grant = grants.find((g) => g.uid?.toLowerCase() === update.refUID?.toLowerCase());
 
-  const multipleGrants = project?.grants?.filter((grant) =>
+  const multipleGrants = grants.filter((g) =>
     (update as IProjectUpdate)?.data?.grants?.some(
-      (grantId: string) => grantId.toLowerCase() === grant.uid.toLowerCase()
+      (grantId: string) => grantId.toLowerCase() === g.uid.toLowerCase()
     )
   );
 
-  if (!grant && !multipleGrants?.length) return null;
+  if (!grant && !multipleGrants.length) return null;
 
   return (
     <div className={containerClass}>
-      {multipleGrants?.length ? (
+      {multipleGrants.length ? (
         multipleGrants.map((individualGrant) => (
           <GrantItem
             key={`${individualGrant.uid}-${individualGrant.details?.title}-${update.uid}-${update.title}-${index}`}

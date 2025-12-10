@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
-import { getProjectData } from "@/services/project.service";
+import { getProject } from "@/services/project.service";
+import { getProjectGrants } from "@/services/project-grants.service";
+import type { GrantResponse } from "@/types/v2/grant";
 import type { ProjectResponse } from "@/types/v2/project";
 
 interface CartItem {
@@ -29,7 +31,7 @@ export function usePayoutAddressManager(items: CartItem[], communityId?: string)
    * - Priority: communityId-specific > first available > grant > owner
    */
   const resolvePayoutAddress = useCallback(
-    (project: ProjectResponse): string | undefined => {
+    (project: ProjectResponse, grants: GrantResponse[]): string | undefined => {
       const payout = project.payoutAddress as string | Record<string, string> | undefined;
 
       let candidateAddress: string | undefined;
@@ -53,7 +55,7 @@ export function usePayoutAddressManager(items: CartItem[], communityId?: string)
       }
       // Priority 3: Grant payout address (V2 flat structure)
       else {
-        const grantPayout = project.grants?.find((grant) => grant.details?.payoutAddress);
+        const grantPayout = grants?.find((grant) => grant.details?.payoutAddress);
         if (grantPayout?.details?.payoutAddress) {
           candidateAddress = grantPayout.details.payoutAddress;
         }
@@ -90,8 +92,12 @@ export function usePayoutAddressManager(items: CartItem[], communityId?: string)
       try {
         const results = await Promise.all(
           items.map(async (item) => {
-            const project = await getProjectData(item.slug || item.uid);
-            const address = project ? resolvePayoutAddress(project) : undefined;
+            const projectId = item.slug || item.uid;
+            const [project, grants] = await Promise.all([
+              getProject(projectId),
+              getProjectGrants(projectId),
+            ]);
+            const address = project ? resolvePayoutAddress(project, grants) : undefined;
             return { projectId: item.uid, address };
           })
         );

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FC, useEffect } from "react";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunitiesStore } from "@/store/communities";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
@@ -20,15 +21,18 @@ export const EmptyGrantsSection: FC = () => {
   const isAuthorized = isProjectAdmin || isOwner || isCommunityAdmin || isCommunityAdminOfSome;
   const router = useRouter();
 
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(project?.uid || "");
+
   useEffect(() => {
-    if (project?.grants?.length === 0) {
+    if (grants.length === 0) {
       if (isAuthorized) {
         router.push(
           PAGES.PROJECT.SCREENS.NEW_GRANT((project?.details?.slug || project?.uid) as string)
         );
       }
     }
-  }, [isAuthorized, project, router]);
+  }, [isAuthorized, project, router, grants]);
 
   if (!isAuthorized) {
     return (

@@ -104,6 +104,13 @@ jest.mock("@/store", () => ({
   useOwnerStore: jest.fn(),
 }));
 
+jest.mock("@/hooks/v2/useProjectGrants", () => ({
+  useProjectGrants: jest.fn(() => ({
+    refetch: jest.fn(),
+    grants: [],
+  })),
+}));
+
 jest.mock("@/store/communityAdmin", () => ({
   useCommunityAdminStore: jest.fn(),
 }));

@@ -1,11 +1,11 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { ProjectWithGrantsResponse } from "@/types/v2/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-// V2 API response types
+// V2 API response types - user projects endpoint includes grants
 interface UserProjectsV2Response {
-  projects: ProjectResponse[];
+  projects: ProjectWithGrantsResponse[];
   pagination: {
     page: number;
     limit: number;
@@ -22,7 +22,7 @@ export const fetchMyProjects = async (
   _address: `0x${string}` | undefined,
   page: number = 1,
   limit: number = 100
-): Promise<ProjectResponse[]> => {
+): Promise<ProjectWithGrantsResponse[]> => {
   if (!_address) return [];
 
   try {

@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import type { MilestoneCompletedFormData } from "@/components/Forms/GrantMilestoneCompletion";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import type { UnifiedMilestone } from "@/types/roadmap";
@@ -24,6 +25,7 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useGap } from "./useGap";
 import { useOffChainRevoke } from "./useOffChainRevoke";
 import { useWallet } from "./useWallet";
+import { useProjectGrants } from "./v2/useProjectGrants";
 import { useProjectUpdates } from "./v2/useProjectUpdates";
 
 // Helper function to send outputs and deliverables data
@@ -76,10 +78,10 @@ export const useMilestone = () => {
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
   const project = useProjectStore((state) => state.project);
   const { projectId } = useParams();
   const { refetch } = useProjectUpdates(projectId as string);
+  const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
   const router = useRouter();
   const { isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
@@ -178,9 +180,9 @@ export const useMilestone = () => {
           const checkIfMilestonesExists = async (callbackFn?: () => void) => {
             await retryUntilConditionMet(
               async () => {
-                const projectInstance = await refreshProject();
-                const isMilestoneExists = projectInstance?.grants?.some((grant) =>
-                  grant.milestones?.some((milestone: any) => milestoneUIDs.includes(milestone.uid))
+                const { data: fetchedGrants } = await refetchGrants();
+                const isMilestoneExists = (fetchedGrants || []).some((grant) =>
+                  grant.milestones?.some((milestone) => milestoneUIDs.includes(milestone.uid))
                 );
 
                 return !isMilestoneExists || false;
@@ -285,8 +287,8 @@ export const useMilestone = () => {
         const checkIfMilestoneExists = async (callbackFn?: () => void) => {
           await retryUntilConditionMet(
             async () => {
-              const projectInstance = await refreshProject();
-              const isMilestoneExists = projectInstance?.grants?.some((grant) =>
+              const { data: fetchedGrants } = await refetchGrants();
+              const isMilestoneExists = (fetchedGrants || []).some((grant) =>
                 grant.milestones?.some(
                   (milestone) => milestone.uid.toLowerCase() === milestoneInstance.uid.toLowerCase()
                 )
@@ -430,11 +432,11 @@ export const useMilestone = () => {
           const checkIfCompletionExists = async (callbackFn?: () => void) => {
             await retryUntilConditionMet(
               async () => {
-                const projectInstance = await refreshProject();
-                const areCompletionsRemoved = projectInstance?.grants?.every((grant) =>
+                const { data: fetchedGrants } = await refetchGrants();
+                const areCompletionsRemoved = (fetchedGrants || []).every((grant) =>
                   grant.milestones
-                    ?.filter((milestone: any) => milestoneUIDs.includes(milestone.uid))
-                    .every((milestone: any) => !milestone.completed)
+                    ?.filter((milestone) => milestoneUIDs.includes(milestone.uid))
+                    .every((milestone) => !milestone.completed)
                 );
 
                 return areCompletionsRemoved || false;
@@ -527,11 +529,9 @@ export const useMilestone = () => {
         const checkIfCompletionExists = async (callbackFn?: () => void) => {
           await retryUntilConditionMet(
             async () => {
-              const projectInstance = await refreshProject();
-              const foundGrant = projectInstance?.grants?.find((g) => g.uid === milestone.refUID);
-              const fetchedMilestone = foundGrant?.milestones?.find(
-                (u: any) => u.uid === milestone.uid
-              );
+              const { data: fetchedGrants } = await refetchGrants();
+              const foundGrant = (fetchedGrants || []).find((g) => g.uid === milestone.refUID);
+              const fetchedMilestone = foundGrant?.milestones?.find((u) => u.uid === milestone.uid);
               return !fetchedMilestone?.completed;
             },
             async () => {
@@ -644,9 +644,9 @@ export const useMilestone = () => {
           // Wait for indexer to process
           await retryUntilConditionMet(
             async () => {
-              const projectInstance = await refreshProject();
+              const { data: fetchedGrants } = await refetchGrants();
               // Check if any of the milestones have been completed
-              const areMilestonesCompleted = projectInstance?.grants?.some((grant) =>
+              const areMilestonesCompleted = (fetchedGrants || []).some((grant) =>
                 grant.milestones?.some(
                   (m) =>
                     m.uid.toLowerCase() === milestoneInstance.uid.toLowerCase() && !!m.completed
@@ -794,11 +794,13 @@ export const useMilestone = () => {
             // Wait for indexer to process
             await retryUntilConditionMet(
               async () => {
-                const projectInstance = await refreshProject();
-                if (!projectInstance?.grants) return false;
+                const { data: fetchedGrants } = await refetchGrants();
+                if (!fetchedGrants?.length) return false;
                 // Check if any of the milestones have been completed
-                const areMilestonesCompleted = projectInstance?.grants?.some((grant) =>
-                  grant.milestones?.some((m: any) => milestoneUIDs.includes(m.uid) && !!m.completed)
+                const areMilestonesCompleted = fetchedGrants.some((grant) =>
+                  grant.milestones?.some(
+                    (m) => milestoneUIDs.includes(m.uid as `0x${string}`) && !!m.completed
+                  )
                 );
                 return areMilestonesCompleted || false;
               },
@@ -938,12 +940,12 @@ export const useMilestone = () => {
           const checkIfCompletionUpdated = async (callbackFn?: () => void) => {
             await retryUntilConditionMet(
               async () => {
-                const projectInstance = await refreshProject();
-                if (!projectInstance?.grants) return false;
-                const areCompletionsUpdated = projectInstance?.grants?.some((grant) =>
+                const { data: fetchedGrants } = await refetchGrants();
+                if (!fetchedGrants?.length) return false;
+                const areCompletionsUpdated = fetchedGrants.some((grant) =>
                   (grant.milestones || [])
-                    .filter((milestone: any) => milestoneUIDs.includes(milestone.uid))
-                    .some((milestone: any) => {
+                    .filter((milestone) => milestoneUIDs.includes(milestone.uid))
+                    .some((milestone) => {
                       if (!milestone.completed) return false;
 
                       const originalCompletion = milestoneInstances.find(
@@ -953,6 +955,8 @@ export const useMilestone = () => {
                       return !!(
                         originalCompletion &&
                         milestone.completed &&
+                        originalCompletion.createdAt &&
+                        milestone.completed.createdAt &&
                         new Date(originalCompletion.createdAt) <
                           new Date(milestone.completed.createdAt)
                       );
@@ -1070,11 +1074,11 @@ export const useMilestone = () => {
           const checkIfCompletionUpdated = async (callbackFn?: () => void) => {
             await retryUntilConditionMet(
               async () => {
-                const projectInstance = await refreshProject();
-                if (!projectInstance?.grants) return false;
-                const foundGrant = projectInstance?.grants?.find((g) => g.uid === milestone.refUID);
+                const { data: fetchedGrants } = await refetchGrants();
+                if (!fetchedGrants?.length) return false;
+                const foundGrant = fetchedGrants.find((g) => g.uid === milestone.refUID);
                 const fetchedMilestone = foundGrant?.milestones?.find(
-                  (u: any) => u.uid === milestone.uid
+                  (u) => u.uid === milestone.uid
                 );
                 return !!(
                   fetchedMilestone?.completed &&

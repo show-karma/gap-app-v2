@@ -17,22 +17,22 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
   isVerified: isVerifiedProp,
   onVerified,
 }) => {
-  // V2: verified is now a boolean
+  // V2: verified is an array of verifications
   const getInitialVerifiedState = (): boolean => {
     if (isVerifiedProp !== undefined) {
       return isVerifiedProp;
     }
 
-    // For GrantMilestone with boolean verified
-    if ("verified" in milestone && typeof milestone.verified === "boolean") {
-      return milestone.verified;
+    // For GrantMilestone with array verified
+    if ("verified" in milestone && Array.isArray(milestone.verified)) {
+      return milestone.verified.length > 0;
     }
 
     // For UnifiedMilestone
     if ("source" in milestone) {
       const grantMilestone = milestone.source.grantMilestone;
-      if (grantMilestone?.milestone.verified) {
-        return grantMilestone.milestone.verified === true;
+      if (grantMilestone?.milestone.verified && Array.isArray(grantMilestone.milestone.verified)) {
+        return grantMilestone.milestone.verified.length > 0;
       }
     }
 

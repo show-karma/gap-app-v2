@@ -7,8 +7,15 @@ export const ObjectivesSub = () => {
   const { projectId } = useParams();
   const { milestones } = useProjectUpdates(projectId as string);
 
-  const completedMilestones = milestones?.filter((milestone) => milestone.completed)?.length || 0;
-  const totalMilestones = milestones?.length || 0;
+  // Filter to only include actual milestones (project milestones and grant milestones)
+  // Excludes activity (project updates), grant_update, impact, and other non-milestone types
+  const actualMilestones = milestones?.filter(
+    (item) => item.type === "milestone" || item.type === "grant"
+  );
+
+  const completedMilestones =
+    actualMilestones?.filter((milestone) => milestone.completed)?.length || 0;
+  const totalMilestones = actualMilestones?.length || 0;
 
   if (totalMilestones === 0) return null;
 

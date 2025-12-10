@@ -62,5 +62,4 @@ export type {
   ProjectDetails,
   ProjectMember,
   ProjectResponse,
-  ProjectV2Response,
 } from "@/types/v2/project";

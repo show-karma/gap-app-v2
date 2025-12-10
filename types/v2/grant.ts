@@ -35,15 +35,26 @@ export interface GrantDetails {
 }
 
 /**
+ * V2 Verification - represents a single verification attestation
+ */
+export interface Verification {
+  uid: string;
+  attester: string;
+  reason?: string;
+  createdAt: string;
+}
+
+/**
  * V2 Grant Milestone - flat structure with properties at top level
  *
  * @example
  * milestone.title
  * milestone.description
- * milestone.verified  // boolean in V2
+ * milestone.verified  // array of verifications in V2
  */
 export interface GrantMilestone {
   uid: string;
+  chainID: number;
   refUID?: string;
   type?: string;
   title: string;
@@ -61,18 +72,27 @@ export interface GrantMilestone {
   }>;
   completed?: {
     uid?: string;
+    chainID?: number;
     createdAt?: string;
     updatedAt?: string;
+    attester?: string;
     data?: {
       reason?: string;
       proofOfWork?: string;
-      deliverables?: string;
+      deliverables?:
+        | string
+        | Array<{
+            name?: string;
+            proof?: string;
+            description?: string;
+          }>;
+      completionPercentage?: number;
     };
   } | null;
   createdAt?: string;
   updatedAt?: string;
-  /** V2: Simple boolean */
-  verified?: boolean;
+  /** V2: Array of verification attestations */
+  verified: Verification[];
   // Additional fields for compatibility
   id?: string;
   schemaUID?: string;
@@ -80,12 +100,12 @@ export interface GrantMilestone {
   recipient?: string;
   revoked?: boolean;
   revocationTime?: number;
-  chainID?: number;
 }
 
 export interface GrantUpdate {
   uid: string;
-  refUID?: string;
+  chainID: number;
+  refUID: string;
   type?: string;
   title: string;
   text?: string;
@@ -93,7 +113,8 @@ export interface GrantUpdate {
   completionPercentage?: string;
   currentStatus?: string;
   statusUpdatedAt?: string;
-  verified: boolean;
+  /** V2: Array of verification attestations */
+  verified: Verification[];
   createdAt?: string;
   data?: {
     title?: string;

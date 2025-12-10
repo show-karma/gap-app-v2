@@ -7,6 +7,11 @@ jest.mock("@/utilities/retries", () => ({
   retryUntilConditionMet: jest.fn(),
 }));
 
+const mockGetProjectGrants = jest.fn();
+jest.mock("@/services/project-grants.service", () => ({
+  getProjectGrants: mockGetProjectGrants,
+}));
+
 import {
   buildRevocationPayload,
   createCheckIfCompletionExists,
@@ -164,54 +169,39 @@ describe("grantCompletionHelpers", () => {
   });
 
   describe("createCheckIfCompletionExists", () => {
-    const mockRefreshProject = jest.fn();
     const grantUID = "grant-123";
+    const projectIdOrSlug = "project-456";
 
     beforeEach(() => {
       jest.clearAllMocks();
       mockRetryUntilConditionMet.mockResolvedValue(undefined);
+      mockGetProjectGrants.mockResolvedValue([]);
     });
 
     it("should return async function", () => {
-      const checkFn = createCheckIfCompletionExists(grantUID, mockRefreshProject);
+      const checkFn = createCheckIfCompletionExists(grantUID, projectIdOrSlug);
 
       expect(typeof checkFn).toBe("function");
       expect(checkFn.constructor.name).toBe("AsyncFunction");
     });
 
-    it("should call refreshProject", async () => {
-      mockRefreshProject.mockResolvedValue({
-        grants: [],
-      });
+    it("should call getProjectGrants with projectIdOrSlug", async () => {
+      mockGetProjectGrants.mockResolvedValue([]);
 
-      const checkFn = createCheckIfCompletionExists(grantUID, mockRefreshProject);
+      const checkFn = createCheckIfCompletionExists(grantUID, projectIdOrSlug);
       await checkFn();
 
       expect(mockRetryUntilConditionMet).toHaveBeenCalled();
       const conditionFn = mockRetryUntilConditionMet.mock.calls[0][0];
       await conditionFn();
 
-      expect(mockRefreshProject).toHaveBeenCalled();
-    });
-
-    it("should return true when project doesn't exist", async () => {
-      mockRefreshProject.mockResolvedValue(null);
-
-      const checkFn = createCheckIfCompletionExists(grantUID, mockRefreshProject);
-      await checkFn();
-
-      const conditionFn = mockRetryUntilConditionMet.mock.calls[0][0];
-      const result = await conditionFn();
-
-      expect(result).toBe(true);
+      expect(mockGetProjectGrants).toHaveBeenCalledWith(projectIdOrSlug);
     });
 
     it("should return true when project has no grants", async () => {
-      mockRefreshProject.mockResolvedValue({
-        grants: undefined,
-      });
+      mockGetProjectGrants.mockResolvedValue([]);
 
-      const checkFn = createCheckIfCompletionExists(grantUID, mockRefreshProject);
+      const checkFn = createCheckIfCompletionExists(grantUID, projectIdOrSlug);
       await checkFn();
 
       const conditionFn = mockRetryUntilConditionMet.mock.calls[0][0];
@@ -221,14 +211,12 @@ describe("grantCompletionHelpers", () => {
     });
 
     it("should return true when grant doesn't exist", async () => {
-      mockRefreshProject.mockResolvedValue({
-        grants: [
-          { uid: "grant-456", completed: true },
-          { uid: "grant-789", completed: false },
-        ],
-      });
+      mockGetProjectGrants.mockResolvedValue([
+        { uid: "grant-456", completed: true },
+        { uid: "grant-789", completed: false },
+      ]);
 
-      const checkFn = createCheckIfCompletionExists(grantUID, mockRefreshProject);
+      const checkFn = createCheckIfCompletionExists(grantUID, projectIdOrSlug);
       await checkFn();
 
       const conditionFn = mockRetryUntilConditionMet.mock.calls[0][0];
@@ -238,11 +226,9 @@ describe("grantCompletionHelpers", () => {
     });
 
     it("should return true when grant.completed is falsy", async () => {
-      mockRefreshProject.mockResolvedValue({
-        grants: [{ uid: grantUID, completed: null }],
-      });
+      mockGetProjectGrants.mockResolvedValue([{ uid: grantUID, completed: null }]);
 
-      const checkFn = createCheckIfCompletionExists(grantUID, mockRefreshProject);
+      const checkFn = createCheckIfCompletionExists(grantUID, projectIdOrSlug);
       await checkFn();
 
       const conditionFn = mockRetryUntilConditionMet.mock.calls[0][0];
@@ -252,11 +238,9 @@ describe("grantCompletionHelpers", () => {
     });
 
     it("should return true when grant.completed is false", async () => {
-      mockRefreshProject.mockResolvedValue({
-        grants: [{ uid: grantUID, completed: false }],
-      });
+      mockGetProjectGrants.mockResolvedValue([{ uid: grantUID, completed: false }]);
 
-      const checkFn = createCheckIfCompletionExists(grantUID, mockRefreshProject);
+      const checkFn = createCheckIfCompletionExists(grantUID, projectIdOrSlug);
       await checkFn();
 
       const conditionFn = mockRetryUntilConditionMet.mock.calls[0][0];
@@ -266,11 +250,11 @@ describe("grantCompletionHelpers", () => {
     });
 
     it("should return false when grant.completed exists", async () => {
-      mockRefreshProject.mockResolvedValue({
-        grants: [{ uid: grantUID, completed: { uid: "0xcompletion123" } }],
-      });
+      mockGetProjectGrants.mockResolvedValue([
+        { uid: grantUID, completed: { uid: "0xcompletion123" } },
+      ]);
 
-      const checkFn = createCheckIfCompletionExists(grantUID, mockRefreshProject);
+      const checkFn = createCheckIfCompletionExists(grantUID, projectIdOrSlug);
       await checkFn();
 
       const conditionFn = mockRetryUntilConditionMet.mock.calls[0][0];
@@ -289,20 +273,18 @@ describe("grantCompletionHelpers", () => {
           }
         }
       );
-      mockRefreshProject.mockResolvedValue(null);
+      mockGetProjectGrants.mockResolvedValue([]);
 
-      const checkFn = createCheckIfCompletionExists(grantUID, mockRefreshProject);
+      const checkFn = createCheckIfCompletionExists(grantUID, projectIdOrSlug);
       await checkFn(callbackFn);
 
       expect(callbackFn).toHaveBeenCalled();
     });
 
     it("should use retryUntilConditionMet with correct parameters", async () => {
-      mockRefreshProject.mockResolvedValue({
-        grants: [{ uid: grantUID, completed: null }],
-      });
+      mockGetProjectGrants.mockResolvedValue([{ uid: grantUID, completed: null }]);
 
-      const checkFn = createCheckIfCompletionExists(grantUID, mockRefreshProject);
+      const checkFn = createCheckIfCompletionExists(grantUID, projectIdOrSlug);
       await checkFn();
 
       expect(mockRetryUntilConditionMet).toHaveBeenCalledWith(
@@ -312,10 +294,8 @@ describe("grantCompletionHelpers", () => {
     });
 
     it("should handle retry logic properly", async () => {
-      let callCount = 0;
       mockRetryUntilConditionMet.mockImplementation(
         async (conditionFn: () => Promise<boolean>, cb?: () => void) => {
-          callCount++;
           const result = await conditionFn();
           if (result) {
             cb?.();
@@ -331,18 +311,14 @@ describe("grantCompletionHelpers", () => {
       );
 
       // First call returns false (completion exists), second returns true (removed)
-      mockRefreshProject
-        .mockResolvedValueOnce({
-          grants: [{ uid: grantUID, completed: { uid: "0xcompletion123" } }],
-        })
-        .mockResolvedValueOnce({
-          grants: [{ uid: grantUID, completed: null }],
-        });
+      mockGetProjectGrants
+        .mockResolvedValueOnce([{ uid: grantUID, completed: { uid: "0xcompletion123" } }])
+        .mockResolvedValueOnce([{ uid: grantUID, completed: null }]);
 
-      const checkFn = createCheckIfCompletionExists(grantUID, mockRefreshProject);
+      const checkFn = createCheckIfCompletionExists(grantUID, projectIdOrSlug);
       await checkFn();
 
-      expect(mockRefreshProject).toHaveBeenCalled();
+      expect(mockGetProjectGrants).toHaveBeenCalled();
     });
 
     /**
@@ -367,11 +343,11 @@ describe("grantCompletionHelpers", () => {
      */
     it("should handle case-sensitive grant UID matching", async () => {
       const upperCaseGrantUID = "GRANT-123";
-      mockRefreshProject.mockResolvedValue({
-        grants: [{ uid: grantUID.toLowerCase(), completed: { uid: "0xcompletion123" } }],
-      });
+      mockGetProjectGrants.mockResolvedValue([
+        { uid: grantUID.toLowerCase(), completed: { uid: "0xcompletion123" } },
+      ]);
 
-      const checkFn = createCheckIfCompletionExists(upperCaseGrantUID, mockRefreshProject);
+      const checkFn = createCheckIfCompletionExists(upperCaseGrantUID, projectIdOrSlug);
       await checkFn();
 
       const conditionFn = mockRetryUntilConditionMet.mock.calls[0][0];
@@ -383,11 +359,9 @@ describe("grantCompletionHelpers", () => {
     });
 
     it("should handle empty grants array", async () => {
-      mockRefreshProject.mockResolvedValue({
-        grants: [],
-      });
+      mockGetProjectGrants.mockResolvedValue([]);
 
-      const checkFn = createCheckIfCompletionExists(grantUID, mockRefreshProject);
+      const checkFn = createCheckIfCompletionExists(grantUID, projectIdOrSlug);
       await checkFn();
 
       const conditionFn = mockRetryUntilConditionMet.mock.calls[0][0];

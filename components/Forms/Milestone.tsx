@@ -19,6 +19,7 @@ import { DatePicker } from "@/components/Utilities/DatePicker";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
@@ -100,10 +101,10 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const { gap } = useGap();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const project = useProjectStore((state) => state.project);
   const projectUID = project?.uid;
+  const { refetch: refetchGrants } = useProjectGrants(projectUID || "");
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -167,35 +168,34 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         }
         changeStepperStep("indexing");
         while (retries > 0) {
-          await refreshProject()
-            .then(async (fetchedProject) => {
-              const fetchedGrant = fetchedProject?.grants?.find((g) => g.uid === uid);
-              const milestoneExists = fetchedGrant?.milestones?.find(
-                (g: any) => g.uid === milestoneToAttest.uid
+          try {
+            const { data: fetchedGrants } = await refetchGrants();
+            const fetchedGrant = (fetchedGrants || []).find((g) => g.uid === uid);
+            const milestoneExists = fetchedGrant?.milestones?.find(
+              (m) => m.uid === milestoneToAttest.uid
+            );
+            if (milestoneExists) {
+              retries = 0;
+              changeStepperStep("indexed");
+              toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
+              router.push(
+                PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                  (project?.details?.slug || project?.uid) as string,
+                  fetchedGrant?.uid as string,
+                  "milestones-and-updates"
+                )
               );
-              if (milestoneExists) {
-                retries = 0;
-                changeStepperStep("indexed");
-                toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
-                router.push(
-                  PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                    (fetchedProject?.details?.slug || fetchedProject?.uid) as string,
-                    fetchedGrant?.uid as string,
-                    "milestones-and-updates"
-                  )
-                );
-                router.refresh();
-                afterSubmit?.();
-              }
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            })
-            .catch(async () => {
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            });
+              router.refresh();
+              afterSubmit?.();
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          } catch {
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
         }
       });
     } catch (error) {

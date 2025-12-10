@@ -6,6 +6,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useStepper } from "@/store/modals/txStepper";
@@ -46,7 +47,8 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const projectIdOrSlug = project?.details?.slug || project?.uid || "";
+  const { refetch: refetchGrants } = useProjectGrants(projectIdOrSlug);
   const { refreshGrant } = useGrantStore();
   const { isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
@@ -74,7 +76,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
         throw new Error("Grant completion UID not found");
       }
 
-      const checkIfCompletionExists = createCheckIfCompletionExists(grant.uid, refreshProject);
+      const checkIfCompletionExists = createCheckIfCompletionExists(grant.uid, projectIdOrSlug);
 
       if (!isOnChainAuthorized) {
         // Use off-chain revocation for users without on-chain authorization
@@ -97,6 +99,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
             loading: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.LOADING,
           },
         });
+        await refetchGrants();
         await refreshGrant();
         return;
       }
@@ -170,6 +173,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
         await checkIfCompletionExists(() => {
           changeStepperStep("indexed");
         });
+        await refetchGrants();
         await refreshGrant();
         toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS);
       } catch (onChainError: any) {
@@ -197,6 +201,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
         });
 
         if (success) {
+          await refetchGrants();
           await refreshGrant();
         } else {
           // Both methods failed - throw the original error

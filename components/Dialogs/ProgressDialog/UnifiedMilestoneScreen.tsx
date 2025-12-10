@@ -17,6 +17,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
@@ -73,17 +74,19 @@ const milestoneSchema = z.object({
 type MilestoneFormData = z.infer<typeof milestoneSchema>;
 
 export const UnifiedMilestoneScreen = () => {
-  const { project, refreshProject } = useProjectStore();
+  const { project } = useProjectStore();
   const { closeProgressModal } = useProgressModalStore();
   const [selectedGrantIds, setSelectedGrantIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const grants: GrantResponse[] = project?.grants || [];
+
+  // Fetch grants using dedicated hook
+  const { grants, refetch: refetchGrants } = useProjectGrants(project?.uid || "");
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
   const { projectId } = useParams();
-  const { refetch } = useProjectUpdates(projectId as string);
+  const { refetch: refetchUpdates } = useProjectUpdates(projectId as string);
   const router = useRouter();
 
   const {
@@ -194,8 +197,8 @@ export const UnifiedMilestoneScreen = () => {
   // Function to attempt multiple refetches with delays between attempts
   const tryRefetch = async (attempts = 3, delayMs = 2000) => {
     for (let i = 0; i < attempts; i++) {
-      await refetch();
-      await refreshProject();
+      await refetchUpdates();
+      await refetchGrants();
       if (i < attempts - 1) {
         await sleep(delayMs);
       }

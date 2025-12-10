@@ -1,18 +1,12 @@
 "use client";
 
-import type {
-  IProjectImpact,
-  IProjectMilestoneResponse,
-  IProjectUpdate,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useQuery } from "@tanstack/react-query";
-import { type FC, useEffect, useState } from "react";
+import type { FC } from "react";
 import { ActivityList } from "@/components/Shared/ActivityList";
 import { Button } from "@/components/Utilities/Button";
+import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
+import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
-import type { GrantMilestone, GrantUpdate } from "@/types/v2/grant";
-import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { MESSAGES } from "@/utilities/messages";
 
 export const UpdatesPage: FC = () => {
@@ -22,82 +16,42 @@ export const UpdatesPage: FC = () => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isAuthorized = isOwner || isProjectAdmin;
 
-  const [allUpdates, setAllUpdates] = useState<any[]>([]);
   const { setIsProgressModalOpen, setProgressModalScreen } = useProgressModalStore();
 
-  // Fetch project milestones directly from API
-  const { data: projectMilestones } = useQuery<IProjectMilestoneResponse[]>({
-    queryKey: ["projectMilestones", project?.uid],
-    queryFn: () => getProjectObjectives(project?.uid || ""),
-    enabled: !!project?.uid,
+  // Fetch all updates using the dedicated hook
+  const { milestones: allUpdates } = useProjectUpdates(project?.uid || "");
+
+  // Fetch impacts using the dedicated hook
+  const { impacts } = useProjectImpacts(project?.uid || "");
+
+  // Combine updates and impacts, then sort by date
+  const combinedUpdates = [
+    ...allUpdates,
+    ...impacts.map((impact) => ({
+      uid: impact.uid,
+      type: "impact" as const,
+      title: impact.data?.work || "Impact",
+      description: impact.data?.impact,
+      createdAt: impact.createdAt || new Date().toISOString(),
+      completed: false,
+      chainID: 0,
+      refUID: impact.refUID,
+      source: { type: "impact" },
+    })),
+  ].sort((a, b) => {
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
-
-  useEffect(() => {
-    // Log project structure for debugging
-
-    const updates: IProjectUpdate[] = project?.updates || [];
-    const grantUpdates: GrantUpdate[] = [];
-    const grantMilestones: GrantMilestone[] = [];
-    const impacts: IProjectImpact[] = project?.impacts || [];
-
-    project?.grants?.forEach((grant) => {
-      grantUpdates.push(...(grant.updates || []));
-      grantMilestones.push(...(grant.milestones || []));
-    });
-
-    const sortedUpdates = [
-      ...updates,
-      ...grantUpdates,
-      ...grantMilestones,
-      ...(projectMilestones || []), // Use API-fetched milestones instead
-      ...impacts,
-    ].sort((a, b) => {
-      // For completed milestones, use completion date for sorting
-      const getDateA = () => {
-        if ("type" in a) {
-          if (a.type === "ProjectMilestone" && "completed" in a && a.completed) {
-            return new Date(a.completed.createdAt).getTime();
-          }
-          if (a.type === "Milestone" && "completed" in a && a.completed) {
-            return new Date(a.completed.createdAt).getTime();
-          }
-        }
-        return new Date(a.createdAt).getTime();
-      };
-
-      const getDateB = () => {
-        if ("type" in b) {
-          if (b.type === "ProjectMilestone" && "completed" in b && b.completed) {
-            return new Date(b.completed.createdAt).getTime();
-          }
-          if (b.type === "Milestone" && "completed" in b && b.completed) {
-            return new Date(b.completed.createdAt).getTime();
-          }
-        }
-        return new Date(b.createdAt).getTime();
-      };
-
-      return getDateB() - getDateA();
-    });
-
-    setAllUpdates(sortedUpdates);
-  }, [
-    project?.grants,
-    project?.updates,
-    project?.impacts,
-    projectMilestones, // Use the query result instead of project.milestones
-  ]);
 
   return (
     <div className="flex flex-col items-center justify-start">
       <div id="updates-tab" className="flex flex-col gap-6 my-10 max-lg:my-5 max-w-full w-full">
         <div className="flex flex-row gap-4 justify-between">
           <p className="font-bold text-black dark:text-zinc-200 text-xl">
-            Updates {allUpdates.length ? `(${allUpdates.length})` : ""}
+            Updates {combinedUpdates.length ? `(${combinedUpdates.length})` : ""}
           </p>
         </div>
-        {allUpdates.length ? (
-          <ActivityList updates={allUpdates} milestones={[]} isAuthorized={isAuthorized} />
+        {combinedUpdates.length ? (
+          <ActivityList milestones={combinedUpdates} isAuthorized={isAuthorized} />
         ) : (
           <div className="flex flex-col gap-6">
             {isAuthorized ? (

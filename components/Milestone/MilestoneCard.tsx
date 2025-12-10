@@ -86,12 +86,16 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
 
   // completion information
   const completionReason =
-    projectMilestone?.completed?.data?.reason || grantMilestone?.milestone.completed?.data?.reason;
+    projectMilestone?.completed?.data?.reason ||
+    grantMilestone?.completionDetails?.description ||
+    grantMilestone?.milestone.completed?.data?.reason;
   const completionProof =
     projectMilestone?.completed?.data?.proofOfWork ||
+    grantMilestone?.completionDetails?.proofOfWork ||
     grantMilestone?.milestone.completed?.data?.proofOfWork;
   const completionDeliverables =
     (projectMilestone?.completed?.data as any)?.deliverables ||
+    grantMilestone?.completionDetails?.deliverables ||
     (grantMilestone?.milestone.completed?.data as any)?.deliverables;
 
   // Determine border color and tag based on milestone type and status

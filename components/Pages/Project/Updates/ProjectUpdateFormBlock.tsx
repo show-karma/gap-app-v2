@@ -1,10 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { XMarkIcon } from "@heroicons/react/24/solid";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 interface ProjectUpdateFormBlockProps {
   onClose?: () => void;
@@ -13,11 +16,20 @@ interface ProjectUpdateFormBlockProps {
 
 export const ProjectUpdateFormBlock = ({ onClose, updateId }: ProjectUpdateFormBlockProps) => {
   const project = useProjectStore((state) => state.project);
+  const queryClient = useQueryClient();
+
+  // Fetch updates using dedicated hook
+  const { rawData, isLoading } = useProjectUpdates(project?.uid || "");
+
   // Maintain state to force fresh render when updateId changes
   const [currentUpdateId, setCurrentUpdateId] = useState(updateId);
-  const updateBeingEdited = updateId
-    ? project?.updates?.find((update) => update.uid === updateId)
-    : null;
+
+  // Find update being edited from dedicated API data
+  const updateBeingEdited = useMemo(() => {
+    if (!updateId || !rawData?.projectUpdates) return null;
+    return rawData.projectUpdates.find((update) => update.uid === updateId);
+  }, [updateId, rawData?.projectUpdates]);
+
   const router = useRouter();
 
   // Update the component state when updateId changes
@@ -27,35 +39,39 @@ export const ProjectUpdateFormBlock = ({ onClose, updateId }: ProjectUpdateFormB
     }
   }, [updateId, currentUpdateId]);
 
-  // Clean up on success
-  const handleSuccess = () => {
+  // Clean up on success - invalidate cache and close dialog
+  const handleSuccess = async () => {
+    // Invalidate the project updates cache to trigger a refetch
+    await queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.PROJECT.UPDATES(project?.uid || ""),
+    });
     router.refresh();
     if (onClose) {
       onClose();
     }
   };
 
+  // Show loading state while fetching data in edit mode
+  const isEditMode = !!updateId;
+  const isDataReady = !isEditMode || (isEditMode && updateBeingEdited);
+
   return (
     <div className="flex flex-col w-full gap-4">
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="text-xl font-bold text-black dark:text-zinc-100">
-          {updateId ? `Edit "${updateBeingEdited?.title || "Activity"}"` : "Add Activity"}
-        </h2>
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700"
-          >
-            <XMarkIcon className="w-5 h-5 text-gray-500" />
-          </button>
-        )}
-      </div>
+      <h2 className="text-xl font-bold text-black dark:text-zinc-100 pr-8">
+        {updateId ? `Edit "${updateBeingEdited?.title || "Activity"}"` : "Add Activity"}
+      </h2>
 
-      <ProjectUpdateForm
-        key={`form-${currentUpdateId}`}
-        afterSubmit={handleSuccess}
-        editId={currentUpdateId}
-      />
+      {isLoading || !isDataReady ? (
+        <div className="flex items-center justify-center py-12">
+          <Spinner />
+        </div>
+      ) : (
+        <ProjectUpdateForm
+          key={`form-${currentUpdateId}`}
+          afterSubmit={handleSuccess}
+          editId={currentUpdateId}
+        />
+      )}
     </div>
   );
 };

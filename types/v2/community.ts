@@ -13,7 +13,7 @@ export interface CommunityDetails {
 }
 
 export interface Community {
-  uid: string;
+  uid: `0x${string}`;
   chainID: number;
   details?: CommunityDetails;
   slug?: string;
@@ -24,7 +24,7 @@ export interface Community {
 }
 
 export interface CommunityDetailsResponse {
-  uid: string;
+  uid: `0x${string}`;
   chainID: number;
   details: {
     name: string;

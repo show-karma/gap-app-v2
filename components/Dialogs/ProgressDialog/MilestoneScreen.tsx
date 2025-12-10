@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { MilestoneForm } from "@/components/Forms/Milestone";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import type { GrantResponse } from "@/types/v2/grant";
@@ -11,7 +12,9 @@ export const MilestoneScreen = () => {
   const { project } = useProjectStore();
   const { closeProgressModal } = useProgressModalStore();
   const [selectedGrant, setSelectedGrant] = useState<GrantResponse | undefined>();
-  const grants: GrantResponse[] = project?.grants || [];
+
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(project?.uid || "");
   if (!grants.length && project) {
     return <NoGrant />;
   }

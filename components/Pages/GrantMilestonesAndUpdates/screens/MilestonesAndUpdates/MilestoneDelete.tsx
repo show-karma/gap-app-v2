@@ -7,6 +7,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import type { GrantMilestone } from "@/types/v2/grant";
@@ -27,17 +28,17 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
 
   const { switchChainAsync } = useWallet();
   const { chain, address } = useAccount();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const _selectedProject = useProjectStore((state) => state.project);
 
   const { project, isProjectOwner } = useProjectStore();
+  const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();
 
   const deleteFn = async () => {
+    console.log("deleteFn", milestone.chainID);
     setIsDeletingMilestone(true);
     let gapClient = gap;
     try {
@@ -64,23 +65,25 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      if (!walletClient || !gapClient) return;
+      if (!walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet or gap client");
+      }
       const walletSigner = await walletClientToSigner(walletClient);
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
       const grantInstance = instanceProject?.grants.find(
         (item) => item.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? "")
       );
-      if (!grantInstance) return;
+      if (!grantInstance) throw new Error("Grant not found");
       const milestoneInstance = grantInstance.milestones.find(
         (item) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
       );
-      if (!milestoneInstance) return;
+      if (!milestoneInstance) throw new Error("Milestone not found");
 
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
           async () => {
-            const fetchedProject = await refreshProject();
-            const grant = fetchedProject?.grants?.find((g) => g.uid === milestone.refUID);
+            const { data: fetchedGrants } = await refetchGrants();
+            const grant = (fetchedGrants || []).find((g) => g.uid === milestone.refUID);
             const stillExists = grant?.milestones?.find((m) => m.uid === milestoneUID);
             return !stillExists && !!grant?.milestones;
           },
@@ -153,6 +156,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
         }
       }
     } catch (error: any) {
+      console.error(error);
       errorManager(
         MESSAGES.MILESTONES.DELETE.ERROR(milestone.title || "Milestone"),
         error,

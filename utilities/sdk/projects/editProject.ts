@@ -8,8 +8,8 @@ import type {
 } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { getProject } from "@/services/project.service";
 import type { TxStepperSteps } from "@/store/modals/txStepper";
-import type { ProjectResponse } from "@/types/v2/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -100,7 +100,7 @@ export const updateProject = async (
 
     closeModal();
 
-    const [projectBefore] = await fetchData<ProjectResponse>(INDEXER.V2.PROJECTS.GET(project.uid));
+    const projectBefore = await getProject(project.uid);
 
     await project.details?.attest(signer, changeStepperStep).then(async (res) => {
       let retries = 1000;
@@ -111,12 +111,8 @@ export const updateProject = async (
       }
       while (retries > 0) {
         // eslint-disable-next-line no-await-in-loop
-        const [fetchedProject] = await fetchData<ProjectResponse>(
-          INDEXER.V2.PROJECTS.GET(project.uid)
-        );
-        if (
-          fetchedProject?.details?.lastDetailsUpdate !== projectBefore?.details?.lastDetailsUpdate
-        ) {
+        const fetchedProject = await getProject(project.uid);
+        if (fetchedProject?.details.lastDetailsUpdate !== projectBefore?.updatedAt) {
           retries = 0;
           changeStepperStep("indexed");
 

@@ -12,6 +12,7 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { getProject } from "@/services/project.service";
 import { useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
@@ -127,11 +128,10 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         }
         let retries = 1000;
         refreshProject();
-        let fetchedProject: Project | null = null;
         changeStepperStep("indexing");
         while (retries > 0) {
-          fetchedProject = await gapClient!.fetch.projectById(project.uid as Hex).catch(() => null);
-          if (fetchedProject?.endorsements?.find((end) => end.uid === endorsement.uid)) {
+          const polledProject = await getProject(project.uid);
+          if (polledProject?.endorsements?.find((end: any) => end.uid === endorsement.uid)) {
             retries = 0;
             changeStepperStep("indexed");
 

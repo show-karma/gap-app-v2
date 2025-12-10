@@ -2,6 +2,7 @@
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
+import { blo } from "blo";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
 import Image from "next/image";
 import { createElement, type ElementType, type FC, useEffect, useRef, useState } from "react";
@@ -10,6 +11,23 @@ import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
+
+const isValidImageUrl = (url: string | undefined): boolean => {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
+const getCommunityLogo = (logoUrl: string | undefined, uid: string): string => {
+  if (isValidImageUrl(logoUrl)) {
+    return logoUrl as string;
+  }
+  return blo(uid as `0x${string}`);
+};
 
 interface CommunitiesDropdownProps {
   onSelectFunction: (value: string, networkId: number) => void;
@@ -44,12 +62,15 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
 
   const communitiesArray = communities
     .filter((community) => community.details?.name) // Filter out communities without a name
-    .map((community) => ({
-      value: community.uid,
-      label: community.details?.name || shortAddress(community.uid),
-      networkId: community.chainID,
-      logo: community.details?.imageURL,
-    }));
+    .map((community) => {
+      const logoUrl = community.details?.logoUrl || community.details?.imageURL;
+      return {
+        value: community.uid,
+        label: community.details?.name || shortAddress(community.uid),
+        networkId: community.chainID,
+        logo: getCommunityLogo(logoUrl, community.uid),
+      };
+    });
 
   // sort communities by name alphabetically
   const sortedCommunities = communitiesArray.sort((a, b) => {
@@ -79,10 +100,7 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
         {value ? (
           <div className="flex flex-row gap-2 items-center">
             <Image
-              src={
-                communitiesArray.find((community) => community.value === value)?.logo ||
-                "/placeholder.png"
-              }
+              src={communitiesArray.find((community) => community.value === value)?.logo || ""}
               alt={
                 communitiesArray.find((community) => community.value === value)?.label ||
                 "Community"
@@ -149,7 +167,7 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
                 <div className="flex flex-row gap-2 items-center justify-start w-full">
                   <div className="min-w-5 min-h-5 w-5 h-5 m-0">
                     <Image
-                      src={community.logo || "/placeholder.png"}
+                      src={community.logo}
                       alt={community.label || "Community"}
                       width={20}
                       height={20}

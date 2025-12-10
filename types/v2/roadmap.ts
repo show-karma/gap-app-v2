@@ -72,6 +72,8 @@ export type GrantMilestoneCompletionDetails = {
   completedBy: string;
   attestationUID?: string;
   proofOfWork?: string;
+  completionPercentage?: number;
+  deliverables?: ProjectUpdateDeliverable[];
 };
 
 export type GrantMilestoneVerificationDetails = {
@@ -190,6 +192,7 @@ export type UnifiedMilestoneSource = {
   };
   grantMilestone?: {
     milestone: GrantMilestone;
+    completionDetails?: GrantMilestoneCompletionDetails | null;
     grant: {
       uid: string;
       chainID: number;
@@ -224,6 +227,8 @@ export type UnifiedMilestone = {
           proofOfWork?: string;
           reason?: string;
           type?: string;
+          completionPercentage?: number;
+          deliverables?: ProjectUpdateDeliverable[];
         };
       };
   createdAt: string;

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { getProjectData } from "@/services/project.service";
+import { getProject } from "@/services/project.service";
 import { useProjectStore } from "@/store";
 import type { ProjectResponse } from "@/types/v2/project";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
@@ -11,7 +11,7 @@ export const useProject = (projectId: string) => {
   const query = useQuery({
     queryKey: ["project", projectId],
     queryFn: async (): Promise<ProjectResponse> => {
-      const data = await getProjectData(projectId);
+      const data = await getProject(projectId);
       if (!data) {
         throw new Error("Project not found");
       }

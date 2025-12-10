@@ -119,14 +119,20 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
     grantMilestone?.milestone.completed?.data?.proofOfWork;
   const completionDate =
     projectMilestone?.completed?.createdAt || grantMilestone?.milestone.completed?.createdAt;
-  const completionAttester = projectMilestone?.completed?.attester;
-  // V2: verified is now a boolean for grant milestones, array for project milestones
+  const completionAttester =
+    projectMilestone?.completed?.attester || grantMilestone?.milestone.completed?.attester;
+  // V2: verified is an array for both grant and project milestones
   const isVerified =
     Boolean(
       projectMilestone?.verified &&
         Array.isArray(projectMilestone.verified) &&
         projectMilestone.verified.length > 0
-    ) || grantMilestone?.milestone.verified === true;
+    ) ||
+    Boolean(
+      grantMilestone?.milestone.verified &&
+        Array.isArray(grantMilestone.milestone.verified) &&
+        grantMilestone.milestone.verified.length > 0
+    );
   const completionDeliverables =
     (projectMilestone?.completed?.data as any)?.deliverables ||
     (grantMilestone?.milestone.completed?.data as any)?.deliverables;

@@ -13,6 +13,9 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { getProjectGrants } from "@/services/project-grants.service";
+import { getProjectImpacts } from "@/services/project-impacts.service";
+import { getProjectUpdates } from "@/services/project-updates.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import type { ConversionGrantUpdate } from "@/types/v2/roadmap";
@@ -44,7 +47,7 @@ export const useUpdateActions = (update: UpdateType) => {
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { project, isProjectOwner } = useProjectStore();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isOnChainAuthorized = isProjectOwner || isOwner;
   const projectId = useParams().projectId as string;
@@ -70,8 +73,14 @@ export const useUpdateActions = (update: UpdateType) => {
         queryClient.invalidateQueries({
           queryKey: ["project", project?.details?.slug],
         }),
-        // Refresh the project data from the store
-        refreshProject(),
+        // Grant-related queries
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PROJECT.GRANTS(projectIdOrSlug),
+        }),
+        // Impact-related queries
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PROJECT.IMPACTS(projectIdOrSlug),
+        }),
       ]);
 
       // Force a router refresh to update components that use direct API calls
@@ -173,26 +182,26 @@ export const useUpdateActions = (update: UpdateType) => {
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
           async () => {
-            const fetchedProject = await refreshProject();
             let stillExists = false;
 
             switch (update.type) {
-              case "ProjectUpdate":
-                stillExists = !!fetchedProject?.updates?.find(
-                  (upd) => ((upd as any)?._uid || upd.uid) === update.uid
-                );
+              case "ProjectUpdate": {
+                const fetchedUpdates = await getProjectUpdates(projectIdOrSlug);
+                stillExists = !!fetchedUpdates.projectUpdates.find((upd) => upd.uid === update.uid);
                 break;
-              case "ProjectImpact":
-                stillExists = !!fetchedProject?.impacts?.find(
-                  (impact) => impact.uid === update.uid
-                );
+              }
+              case "ProjectImpact": {
+                const fetchedImpacts = await getProjectImpacts(projectIdOrSlug);
+                stillExists = !!fetchedImpacts.find((imp) => imp.uid === update.uid);
                 break;
+              }
               case "GrantUpdate": {
-                const grant = fetchedProject?.grants?.find(
-                  (grant) => grant.uid.toLowerCase() === update.refUID.toLowerCase()
+                const fetchedGrants = await getProjectGrants(projectIdOrSlug);
+                const grant = fetchedGrants.find(
+                  (g) => g.uid.toLowerCase() === update.refUID.toLowerCase()
                 );
                 stillExists = !!grant?.updates?.find(
-                  (grantUpdate: any) => grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
+                  (grantUpdate) => grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
                 );
                 break;
               }
@@ -200,7 +209,8 @@ export const useUpdateActions = (update: UpdateType) => {
 
             return !stillExists;
           },
-          () => {
+          async () => {
+            await refreshDataAfterDeletion();
             callbackFn?.();
           }
         );

@@ -1,6 +1,6 @@
 import type { GAP } from "@show-karma/karma-gap-sdk";
 import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getProjectData } from "@/services/project.service";
+import { getProjectGrants } from "@/services/project-grants.service";
 
 interface FetchGrantInstanceParams {
   gapClient: GAP;
@@ -9,12 +9,12 @@ interface FetchGrantInstanceParams {
 }
 
 /**
- * Fetch project and find grant instance by UID
+ * Fetch grants and find grant instance by UID
  * Reusable for any grant operation
  *
  * @param params - Parameters for fetching grant instance
- * @returns Grant instance from the SDK
- * @throws Error if project or grant not found
+ * @returns Grant instance
+ * @throws Error if grant not found
  *
  * @example
  * ```typescript
@@ -33,17 +33,9 @@ export const fetchGrantInstance = async ({
   projectUid,
   grantUid,
 }: FetchGrantInstanceParams) => {
-  const fetchedProject = await getProjectData(projectUid);
+  const grants = await getProjectGrants(projectUid);
 
-  if (!fetchedProject) {
-    throw new Error(
-      "Failed to fetch project data. The project may have been deleted or you may not have permission to access it."
-    );
-  }
-
-  const grantInstance = fetchedProject.grants?.find(
-    (g) => g.uid.toLowerCase() === grantUid.toLowerCase()
-  );
+  const grantInstance = grants?.find((g) => g.uid.toLowerCase() === grantUid.toLowerCase());
 
   if (!grantInstance) {
     throw new Error("Grant not found in project. Please refresh the page and try again.");
@@ -112,12 +104,7 @@ export const fetchMilestoneInstance = async ({
   programId,
   milestoneUid,
 }: FetchMilestoneInstanceParams) => {
-  const fetchedProject = await getProjectData(projectUid);
-  if (!fetchedProject) {
-    throw new Error("Failed to fetch project data");
-  }
-
-  const grants = fetchedProject.grants ?? [];
+  const grants = await getProjectGrants(projectUid);
   const grantInstance = grants.find((g) => g.details?.programId === programId);
 
   if (!grantInstance) {

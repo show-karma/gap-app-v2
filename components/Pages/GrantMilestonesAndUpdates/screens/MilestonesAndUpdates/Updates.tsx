@@ -13,6 +13,8 @@ import { useGap } from "@/hooks/useGap";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
@@ -47,14 +49,16 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   };
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
-
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
   const { project, isProjectOwner } = useProjectStore();
+  const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();
+
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(project?.uid || "");
 
   const undoMilestoneCompletion = async (milestone: GrantMilestone) => {
     let gapClient = gap;
@@ -95,12 +99,10 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
           async () => {
-            const fetchedProject = await refreshProject();
-            const foundGrant = fetchedProject?.grants?.find((g) => g.uid === milestone.refUID);
-            const fetchedMilestone = foundGrant?.milestones?.find(
-              (u: any) => u.uid === milestone.uid
-            );
-            return !fetchedMilestone?.completed;
+            const { data: fetchedGrants } = await refetchGrants();
+            const foundGrant = (fetchedGrants || []).find((g) => g.uid === milestone.refUID);
+            const fetchedMilestone = foundGrant?.milestones?.find((u) => u.uid === milestone.uid);
+            return !!fetchedMilestone?.completed;
           },
           () => {
             callbackFn?.();
@@ -135,8 +137,8 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
           }
           await checkIfAttestationExists(() => {
             changeStepperStep("indexed");
+            toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
           });
-          toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
         } catch (onChainError: any) {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
@@ -177,15 +179,17 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
-  // V2: verified is now a boolean, not an array
-  const [isVerified, setIsVerified] = useState<boolean>(milestone?.verified === true);
+  // V2: verified is an array of verifications
+  const [isVerified, setIsVerified] = useState<boolean>(
+    Array.isArray(milestone?.verified) && milestone.verified.length > 0
+  );
 
   const markAsVerified = () => {
     setIsVerified(true);
   };
 
   useEffect(() => {
-    setIsVerified(milestone?.verified === true);
+    setIsVerified(Array.isArray(milestone?.verified) && milestone.verified.length > 0);
   }, [milestone]);
 
   // Extract actual date value from various formats (handles MongoDB { $date: ... } format)
@@ -228,9 +232,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
 
   const isAfterProofLaunch = checkProofLaunch();
 
-  const grant = project?.grants?.find(
-    (g) => g.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? "")
-  );
+  const grant = grants.find((g) => g.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? ""));
 
   // Fetch milestone impact data (outputs/metrics) if milestone is completed
   const { data: milestoneImpactData } = useMilestoneImpactAnswers({

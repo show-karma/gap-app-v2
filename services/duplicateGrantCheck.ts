@@ -1,5 +1,5 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import { getProjectData } from "@/services/project.service";
+import { getProjectGrants } from "@/services/project-grants.service";
 
 export interface DuplicateCheckParams {
   projectUid?: string;
@@ -19,10 +19,9 @@ export async function checkForDuplicateGrant(params: DuplicateCheckParams): Prom
       return false;
     }
 
-    // Fetch fresh project data using V2 API
-    const freshProject = await getProjectData(params.projectUid);
+    // Fetch fresh grants using V2 API
+    const grants = await getProjectGrants(params.projectUid);
 
-    const grants = freshProject?.grants ?? [];
     if (grants.length === 0) {
       return false;
     }

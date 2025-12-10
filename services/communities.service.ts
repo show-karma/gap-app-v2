@@ -4,7 +4,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 interface CommunitiesListResponse {
-  data: Community[];
+  payload: Community[];
   pagination: {
     totalCount: number;
     page: number;
@@ -37,5 +37,5 @@ export const getCommunities = async (options?: {
     return [];
   }
 
-  return data.data ?? [];
+  return data.payload ?? [];
 };
