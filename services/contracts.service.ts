@@ -11,6 +11,16 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     console.error("Contract API Error:", error.response?.data || error.message);
+
+    // Extract the API error message if available, otherwise use a user-friendly message
+    const apiErrorMessage = error.response?.data?.message;
+    if (apiErrorMessage) {
+      // Create a new error with the API message
+      const enhancedError = new Error(apiErrorMessage);
+      (enhancedError as Error & { originalError?: unknown }).originalError = error;
+      throw enhancedError;
+    }
+
     throw error;
   }
 );
