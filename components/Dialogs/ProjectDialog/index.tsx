@@ -42,6 +42,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useProjectStore } from "@/store";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
@@ -50,7 +51,6 @@ import { useOwnerStore } from "@/store/owner";
 import type { Contact } from "@/types/project";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
@@ -254,8 +254,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
   const [walletSigner, setWalletSigner] = useState<any>(null);
   const [_faucetFunded, setFaucetFunded] = useState(false);
+  // Flag to prevent form reset when reopening after an error
+  const [shouldResetOnOpen, setShouldResetOnOpen] = useState(true);
 
   const { register, handleSubmit, reset, watch, setValue, trigger, formState, setError } =
     useForm<SchemaType>({
@@ -340,6 +343,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   // Reset form when switching between create/edit modes or when modal opens
   useEffect(() => {
     if (isOpen) {
+      // Don't reset if reopening after an error (to preserve user's data)
+      if (!shouldResetOnOpen) {
+        console.log("[ProjectDialog] Skipping form reset - reopening after error");
+        setShouldResetOnOpen(true); // Reset the flag for next time
+        return;
+      }
+
       if (projectToUpdate) {
         // Edit mode - populate with existing data
         const updateData = dataToUpdate ?? {
@@ -411,7 +421,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setTempLogoKey(null);
       }
     }
-  }, [isOpen, projectToUpdate, reset, dataToUpdate]);
+  }, [isOpen, projectToUpdate, reset, dataToUpdate, shouldResetOnOpen]);
 
   function closeModal() {
     setIsOpen(false);
@@ -507,28 +517,45 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const createProject = async (data: SchemaType): Promise<void> => {
+    console.log("[CreateProject] Starting project creation...");
+    console.log("[CreateProject] Form data:", data);
     try {
       setIsLoading(true);
       if (!isConnected || !isAuth) {
+        console.log("[CreateProject] Not connected or not authenticated, prompting login");
         login?.();
         return;
       }
-      if (!address) return;
-      if (!gap) return;
+      if (!address) {
+        console.log("[CreateProject] No address found");
+        return;
+      }
+      if (!gap) {
+        console.log("[CreateProject] No gap client found");
+        return;
+      }
 
       const chainSelected = data.chainID;
+      console.log("[CreateProject] Chain selected:", chainSelected);
 
-      // Ensure we're on the correct chain
-      const { success, chainId, gapClient } = await ensureCorrectChain({
+      // Setup chain and wallet (uses gasless smart wallet if available)
+      console.log("[CreateProject] Calling setupChainAndWallet...");
+      const setup = await setupChainAndWallet({
         targetChainId: chainSelected,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      console.log("[CreateProject] setupChainAndWallet result:", setup);
+
+      if (!setup) {
+        console.error("[CreateProject] Setup failed, returning early");
         setIsLoading(false);
         return;
       }
+
+      const { gapClient, walletSigner: signer, chainId } = setup;
+      console.log("[CreateProject] Creating Project object...");
 
       const project = new Project({
         data: {
@@ -538,6 +565,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         recipient: (data.recipient || address) as Hex,
         uid: nullRef,
       });
+      console.log("[CreateProject] Project object created");
 
       interface NewProjectData extends IProjectDetails {
         // tags?: Tag[];
@@ -591,9 +619,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         imageURL: data.profilePicture || "",
       };
 
-      if (!gapClient) return;
+      if (!gapClient) {
+        console.log("[CreateProject] gapClient is null, returning");
+        return;
+      }
 
+      console.log("[CreateProject] Generating slug...");
       const slug = await gapClient.generateSlug(newProjectInfo.title);
+      console.log("[CreateProject] Slug generated:", slug);
 
       // Promote temporary logo to permanent before project creation
       let finalImageURL = data.profilePicture || "";
@@ -623,6 +656,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
 
       newProjectInfo.imageURL = finalImageURL;
+      console.log("[CreateProject] Setting project details...");
 
       // eslint-disable-next-line no-param-reassign
       project.details = new ProjectDetails({
@@ -672,17 +706,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             })
         );
       }
+      console.log("[CreateProject] Project fully prepared, ready for attestation");
 
-      // Use chainId from ensureCorrectChain result to ensure we're using the correct chain
-      const { walletClient, error } = await safeGetWalletClient(chainId);
-
-      if (error || !walletClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
+      // Use the gasless signer from setupChainAndWallet
+      console.log("[CreateProject] About to close modal and start attestation...");
       closeModal();
       changeStepperStep("preparing");
-      await project.attest(walletSigner, changeStepperStep).then(async (res) => {
+      console.log("[CreateProject] Calling project.attest with signer:", signer);
+      await project.attest(signer as any, changeStepperStep).then(async (res) => {
+        console.log("[CreateProject] Attestation successful, result:", res);
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
@@ -771,6 +803,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setContacts([]);
       setCustomLinks([]);
     } catch (error: any) {
+      console.error("[CreateProject] Error caught:", error);
+      console.error("[CreateProject] Error message:", error?.message);
+      console.error("[CreateProject] Error stack:", error?.stack);
       errorManager(
         MESSAGES.PROJECT.CREATE.ERROR(data.title),
         error,
@@ -784,8 +819,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       );
       setIsStepper(false);
       // Don't reset form on error - keep user's data
+      setShouldResetOnOpen(false);
       openModal();
     } finally {
+      console.log("[CreateProject] Finally block - setting isLoading to false");
       setIsLoading(false);
     }
   };
@@ -812,27 +849,20 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
       const targetChainId = projectToUpdate.chainID;
 
-      // Ensure we're on the correct chain
-      const { success, chainId, gapClient } = await ensureCorrectChain({
+      // Setup chain and wallet (uses gasless smart wallet if available)
+      const setup = await setupChainAndWallet({
         targetChainId,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
+      const { gapClient, walletSigner, chainId } = setup;
       const shouldRefresh = dataToUpdate.title === data.title;
-
-      // Use chainId from ensureCorrectChain result
-      const { walletClient, error } = await safeGetWalletClient(chainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await getProjectById(projectToUpdate.uid);
       if (!fetchedProject) return;
       changeStepperStep("preparing");
@@ -946,6 +976,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }
       });
     } catch (error: any) {
+      console.error("[UpdateProject] Error caught:", error);
       errorManager(
         `Error updating project ${projectToUpdate?.details?.data?.slug || projectToUpdate?.uid}`,
         error,
@@ -954,6 +985,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           error: MESSAGES.PROJECT.UPDATE.ERROR,
         }
       );
+      // Don't reset form on error - keep user's data
+      setShouldResetOnOpen(false);
       openModal();
     } finally {
       setIsLoading(false);
