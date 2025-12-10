@@ -8,10 +8,16 @@ import pluralize from "pluralize";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { Button } from "@/components/Utilities/Button";
-import { useApplicationExport, useFundingApplications } from "@/hooks/useFundingPlatform";
+import {
+  useApplicationExport,
+  useFundingApplications,
+  useProgramConfig,
+} from "@/hooks/useFundingPlatform";
+import { useProgram } from "@/hooks/usePrograms";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
 import type { IFundingApplication } from "@/types/funding-platform";
 import formatCurrency from "@/utilities/formatCurrency";
+import { getAIColumnVisibility } from "../helper/getAIColumnVisibility";
 import ApplicationList from "./ApplicationList";
 
 interface IApplicationListWithAPIProps {
@@ -96,6 +102,16 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const { exportApplications, isExporting } = useApplicationExport(programId, chainId, isAdmin);
+
+  // Fetch program config and program data to determine AI column visibility
+  const { config } = useProgramConfig(programId, chainId);
+  const { data: program } = useProgram(programId);
+
+  // Determine column visibility based on configured prompts
+  const { showAIScoreColumn, showInternalAIScoreColumn } = useMemo(
+    () => getAIColumnVisibility(config?.formSchema, program?.langfusePromptId),
+    [config?.formSchema, program?.langfusePromptId]
+  );
 
   // Sync filters and sorting with URL
   useEffect(() => {
@@ -414,6 +430,8 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           sortBy={sortBy}
           sortOrder={sortOrder}
           onSortChange={handleSortChange}
+          showAIScoreColumn={showAIScoreColumn}
+          showInternalAIScoreColumn={showInternalAIScoreColumn}
         />
       </InfiniteScroll>
     </div>
