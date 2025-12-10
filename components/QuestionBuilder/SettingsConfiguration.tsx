@@ -195,7 +195,8 @@ export function SettingsConfiguration({
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Customize the emails sent to applicants when their applications are approved or rejected.
-              Use placeholders like <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{projectName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{reason}}"}</code>, etc.
+              Use placeholders like <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{programName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{reason}}"}</code>, etc.
+              Note: Project name and application details are already shown in the application info section of the email.
             </p>
 
             {/* Approval Email Template */}
@@ -221,14 +222,14 @@ export function SettingsConfiguration({
                       onUpdate(updatedSchema);
                     }
                   }}
-                  placeholderText={`Subject: Congratulations! Your application has been approved 🎉\n\nHi {{applicantName}},\n\nCongratulations! Your application for {{projectName}} has been approved for the {{programName}} program.\n\n**Reference Number:** {{referenceNumber}}\n\n[View Your Application]({{dashboardLink}})\n\n{{reason}}\n\nWe're excited to support your journey!`}
+                  placeholderText={`Subject: Congratulations! Your application has been approved 🎉\n\nCongratulations! Your application has been approved for the {{programName}} program.\n\n**Reference Number:** {{referenceNumber}}\n\n{{reason}}\n\nWe're excited to support your journey!`}
                   height={400}
                   minHeight={350}
                   disabled={readOnly}
                 />
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Available placeholders: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{projectName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{programName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{referenceNumber}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{dashboardLink}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{reason}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{postApprovalFormDescription}}"}</code>
+                Available placeholders: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{programName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{referenceNumber}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{dashboardLink}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{reason}}"}</code>
               </p>
             </div>
 
@@ -255,14 +256,14 @@ export function SettingsConfiguration({
                       onUpdate(updatedSchema);
                     }
                   }}
-                  placeholderText={`Subject: Update on Your Application\n\nHi {{applicantName}},\n\nAfter careful review, we regret to inform you that your application for {{projectName}} has not been selected for funding at this time.\n\n**Reference Number:** {{referenceNumber}}\n\n{{reason}}\n\n[View Application Details]({{dashboardLink}})\n\nWe appreciate your interest and encourage you to apply for future opportunities.`}
+                  placeholderText={`Subject: Update on Your Application\n\nAfter careful review, we regret to inform you that your application has not been selected for funding at this time.\n\n**Reference Number:** {{referenceNumber}}\n\n{{reason}}\n\nWe appreciate your interest and encourage you to apply for future opportunities.`}
                   height={400}
                   minHeight={350}
                   disabled={readOnly}
                 />
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Available placeholders: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{projectName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{programName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{referenceNumber}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{dashboardLink}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{reason}}"}</code>
+                Available placeholders: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{programName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{referenceNumber}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{dashboardLink}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{reason}}"}</code>
               </p>
             </div>
           </div>
