@@ -17,6 +17,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { DocumentTextIcon } from "@heroicons/react/24/outline";
 import {
   Bars3Icon,
   CheckCircleIcon,
@@ -34,6 +35,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { ProgramDetailsTab } from "@/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab";
 import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -45,7 +47,14 @@ import { FieldEditor } from "./FieldEditor";
 import { FieldTypeSelector, fieldTypes } from "./FieldTypeSelector";
 import { SettingsConfiguration } from "./SettingsConfiguration";
 
-const TAB_KEYS = ["build", "settings", "post-approval", "ai-config", "reviewers"] as const;
+const TAB_KEYS = [
+  "build",
+  "settings",
+  "post-approval",
+  "ai-config",
+  "reviewers",
+  "program-details",
+] as const;
 type TabKey = (typeof TAB_KEYS)[number];
 const DEFAULT_TAB: TabKey = "build";
 
@@ -65,6 +74,7 @@ const TAB_CONFIG = [
   },
   { key: "ai-config" as TabKey, icon: CpuChipIcon, label: "AI Config" },
   { key: "reviewers" as TabKey, icon: UserGroupIcon, label: "Reviewers" },
+  { key: "program-details" as TabKey, icon: DocumentTextIcon, label: "Program Details" },
 ] as const;
 
 // Helper to get tab button class names
@@ -784,6 +794,8 @@ export function QuestionBuilder({
               )}
             </div>
           </div>
+        ) : activeTab === "program-details" ? (
+          <ProgramDetailsTab programId={programId} chainId={chainId} readOnly={readOnly} />
         ) : null}
       </div>
     </div>

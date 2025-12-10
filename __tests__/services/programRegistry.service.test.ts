@@ -5,7 +5,7 @@
  */
 
 import { ProgramRegistryService } from "@/services/programRegistry.service";
-import type { CommunityDetailsV2 } from "@/types/community";
+import type { CommunityDetails } from "@/types/community";
 import type { CreateProgramFormData } from "@/types/program-registry";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -17,7 +17,7 @@ jest.mock("@/utilities/fetchData", () => ({
 }));
 
 describe("ProgramRegistryService", () => {
-  const mockCommunity: CommunityDetailsV2 = {
+  const mockCommunity: CommunityDetails = {
     uid: "0x1234567890123456789012345678901234567890",
     chainID: 1,
     details: {
