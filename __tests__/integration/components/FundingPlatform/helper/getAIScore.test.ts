@@ -144,7 +144,7 @@ describe("getAIScore", () => {
       const score = getAIScore(application);
       expect(score).toBeNull();
       expect(mockConsoleWarn).toHaveBeenCalledWith(
-        "aiEvaluation evaluation missing or invalid final_score field:",
+        expect.stringContaining("aiEvaluation evaluation missing valid score field"),
         {}
       );
     });
@@ -158,7 +158,7 @@ describe("getAIScore", () => {
       const score = getAIScore(application);
       expect(score).toBeNull();
       expect(mockConsoleWarn).toHaveBeenCalledWith(
-        "aiEvaluation evaluation missing or invalid final_score field:",
+        expect.stringContaining("aiEvaluation evaluation missing valid score field"),
         { score: 4.5 }
       );
     });

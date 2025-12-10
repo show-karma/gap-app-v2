@@ -35,9 +35,9 @@ describe("getInternalAIScore", () => {
   });
 
   describe("Valid score extraction", () => {
-    it("should extract valid final_score from internal AI evaluation", () => {
+    it("should extract valid total_score from internal AI evaluation", () => {
       const application = createMockApplication({
-        evaluation: JSON.stringify({ final_score: 4.5 }),
+        evaluation: JSON.stringify({ total_score: 4.5 }),
         promptId: "internal-prompt",
       });
 
@@ -45,9 +45,19 @@ describe("getInternalAIScore", () => {
       expect(score).toBe(4.5);
     });
 
+    it("should also extract final_score from internal AI evaluation", () => {
+      const application = createMockApplication({
+        evaluation: JSON.stringify({ final_score: 8.5 }),
+        promptId: "internal-prompt",
+      });
+
+      const score = getInternalAIScore(application);
+      expect(score).toBe(8.5);
+    });
+
     it("should handle integer scores", () => {
       const application = createMockApplication({
-        evaluation: JSON.stringify({ final_score: 3 }),
+        evaluation: JSON.stringify({ total_score: 3 }),
         promptId: "internal-prompt",
       });
 
@@ -57,7 +67,7 @@ describe("getInternalAIScore", () => {
 
     it("should handle zero score", () => {
       const application = createMockApplication({
-        evaluation: JSON.stringify({ final_score: 0 }),
+        evaluation: JSON.stringify({ total_score: 0 }),
         promptId: "internal-prompt",
       });
 

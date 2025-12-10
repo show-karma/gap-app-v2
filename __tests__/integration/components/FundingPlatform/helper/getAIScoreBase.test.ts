@@ -2,7 +2,6 @@ import {
   formatAIScoreBase,
   getAIResponseBase,
   getAIScoreBase,
-  isValidEvaluation,
 } from "@/components/FundingPlatform/helper/getAIScoreBase";
 import type { IFundingApplication } from "@/types/funding-platform";
 
@@ -29,39 +28,6 @@ const createMockApplication = (
   updatedAt: new Date().toISOString(),
 });
 
-describe("isValidEvaluation", () => {
-  it("should return true for valid evaluation object", () => {
-    expect(isValidEvaluation({ final_score: 85 })).toBe(true);
-    expect(isValidEvaluation({ final_score: 0 })).toBe(true);
-    expect(isValidEvaluation({ final_score: 100 })).toBe(true);
-  });
-
-  it("should return false for null", () => {
-    expect(isValidEvaluation(null)).toBe(false);
-  });
-
-  it("should return false for non-object types", () => {
-    expect(isValidEvaluation("string")).toBe(false);
-    expect(isValidEvaluation(123)).toBe(false);
-    expect(isValidEvaluation([])).toBe(false);
-  });
-
-  it("should return false when final_score is missing", () => {
-    expect(isValidEvaluation({})).toBe(false);
-    expect(isValidEvaluation({ score: 85 })).toBe(false);
-  });
-
-  it("should return false when final_score is not a number", () => {
-    expect(isValidEvaluation({ final_score: "85" })).toBe(false);
-    expect(isValidEvaluation({ final_score: null })).toBe(false);
-    expect(isValidEvaluation({ final_score: undefined })).toBe(false);
-  });
-
-  it("should return false when final_score is NaN", () => {
-    expect(isValidEvaluation({ final_score: NaN })).toBe(false);
-  });
-});
-
 describe("getAIScoreBase", () => {
   beforeEach(() => {
     mockConsoleWarn.mockClear();
@@ -82,14 +48,24 @@ describe("getAIScoreBase", () => {
       expect(score).toBe(4.5);
     });
 
-    it("should extract valid final_score from internalAIEvaluation", () => {
+    it("should extract valid total_score from internalAIEvaluation", () => {
       const application = createMockApplication(undefined, {
-        evaluation: JSON.stringify({ final_score: 7.2 }),
+        evaluation: JSON.stringify({ total_score: 7.2 }),
         promptId: "internal-prompt",
       });
 
       const score = getAIScoreBase(application, "internalAIEvaluation");
       expect(score).toBe(7.2);
+    });
+
+    it("should also extract final_score from internalAIEvaluation", () => {
+      const application = createMockApplication(undefined, {
+        evaluation: JSON.stringify({ final_score: 8.5 }),
+        promptId: "internal-prompt",
+      });
+
+      const score = getAIScoreBase(application, "internalAIEvaluation");
+      expect(score).toBe(8.5);
     });
 
     it("should handle integer scores", () => {
@@ -195,7 +171,7 @@ describe("getAIScoreBase", () => {
       const score = getAIScoreBase(application, "aiEvaluation");
       expect(score).toBeNull();
       expect(mockConsoleWarn).toHaveBeenCalledWith(
-        "aiEvaluation evaluation missing or invalid final_score field:",
+        expect.stringContaining("aiEvaluation evaluation missing valid score field"),
         {}
       );
     });
@@ -209,7 +185,7 @@ describe("getAIScoreBase", () => {
       const score = getAIScoreBase(application, "aiEvaluation");
       expect(score).toBeNull();
       expect(mockConsoleWarn).toHaveBeenCalledWith(
-        "aiEvaluation evaluation missing or invalid final_score field:",
+        expect.stringContaining("aiEvaluation evaluation missing valid score field"),
         { score: 4.5 }
       );
     });
@@ -285,7 +261,7 @@ describe("getAIScoreBase", () => {
           promptId: "ai-prompt",
         },
         {
-          evaluation: JSON.stringify({ final_score: 75 }),
+          evaluation: JSON.stringify({ total_score: 75 }),
           promptId: "internal-prompt",
         }
       );
@@ -295,6 +271,16 @@ describe("getAIScoreBase", () => {
 
       expect(aiScore).toBe(50);
       expect(internalScore).toBe(75);
+    });
+
+    it("should prefer final_score over total_score when both present", () => {
+      const application = createMockApplication({
+        evaluation: JSON.stringify({ final_score: 80, total_score: 90 }),
+        promptId: "test-prompt",
+      });
+
+      const score = getAIScoreBase(application, "aiEvaluation");
+      expect(score).toBe(80);
     });
   });
 });
