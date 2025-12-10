@@ -72,6 +72,7 @@ describe("ApplicationList - AI Score Column", () => {
           sortBy="status"
           sortOrder="asc"
           onSortChange={jest.fn()}
+          showAIScoreColumn={true}
         />
       );
 
@@ -91,6 +92,7 @@ describe("ApplicationList - AI Score Column", () => {
           sortBy="status"
           sortOrder="asc"
           onSortChange={mockOnSortChange}
+          showAIScoreColumn={true}
         />
       );
 
@@ -113,6 +115,7 @@ describe("ApplicationList - AI Score Column", () => {
           sortBy="aiEvaluationScore"
           sortOrder="desc"
           onSortChange={jest.fn()}
+          showAIScoreColumn={true}
         />
       );
 
@@ -139,6 +142,7 @@ describe("ApplicationList - AI Score Column", () => {
           applications={applications}
           sortBy="status"
           sortOrder="asc"
+          showAIScoreColumn={true}
         />
       );
 
@@ -166,6 +170,7 @@ describe("ApplicationList - AI Score Column", () => {
           applications={applications}
           sortBy="status"
           sortOrder="asc"
+          showAIScoreColumn={true}
         />
       );
 
@@ -199,6 +204,7 @@ describe("ApplicationList - AI Score Column", () => {
           applications={applications}
           sortBy="status"
           sortOrder="asc"
+          showAIScoreColumn={true}
         />
       );
 
@@ -222,6 +228,7 @@ describe("ApplicationList - AI Score Column", () => {
           applications={applications}
           sortBy="status"
           sortOrder="asc"
+          showAIScoreColumn={true}
         />
       );
 
@@ -247,6 +254,7 @@ describe("ApplicationList - AI Score Column", () => {
           applications={applications}
           sortBy="status"
           sortOrder="asc"
+          showAIScoreColumn={true}
         />
       );
 
@@ -282,6 +290,7 @@ describe("ApplicationList - AI Score Column", () => {
           onApplicationSelect={jest.fn()}
           sortBy="status"
           sortOrder="asc"
+          showAIScoreColumn={true}
         />
       );
 
@@ -309,6 +318,7 @@ describe("ApplicationList - AI Score Column", () => {
           onApplicationHover={mockOnApplicationHover}
           sortBy="status"
           sortOrder="asc"
+          showAIScoreColumn={true}
         />
       );
 

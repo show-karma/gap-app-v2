@@ -1,11 +1,19 @@
-import { formatAIScore, getAIScore } from "@/components/FundingPlatform/helper/getAIScore";
+import {
+  formatAIScoreBase,
+  getAIResponseBase,
+  getAIScoreBase,
+  isValidEvaluation,
+} from "@/components/FundingPlatform/helper/getAIScoreBase";
 import type { IFundingApplication } from "@/types/funding-platform";
 
 // Mock console.warn to avoid noise in tests
 const mockConsoleWarn = jest.spyOn(console, "warn").mockImplementation();
 
 // Helper to create a basic application object
-const createMockApplication = (aiEvaluation?: any): IFundingApplication => ({
+const createMockApplication = (
+  aiEvaluation?: any,
+  internalAIEvaluation?: any
+): IFundingApplication => ({
   id: "test-id",
   programId: "test-program",
   chainID: 11155111,
@@ -16,11 +24,45 @@ const createMockApplication = (aiEvaluation?: any): IFundingApplication => ({
   referenceNumber: "APP-TEST-123",
   submissionIP: "127.0.0.1",
   aiEvaluation,
+  internalAIEvaluation,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 });
 
-describe("getAIScore", () => {
+describe("isValidEvaluation", () => {
+  it("should return true for valid evaluation object", () => {
+    expect(isValidEvaluation({ final_score: 85 })).toBe(true);
+    expect(isValidEvaluation({ final_score: 0 })).toBe(true);
+    expect(isValidEvaluation({ final_score: 100 })).toBe(true);
+  });
+
+  it("should return false for null", () => {
+    expect(isValidEvaluation(null)).toBe(false);
+  });
+
+  it("should return false for non-object types", () => {
+    expect(isValidEvaluation("string")).toBe(false);
+    expect(isValidEvaluation(123)).toBe(false);
+    expect(isValidEvaluation([])).toBe(false);
+  });
+
+  it("should return false when final_score is missing", () => {
+    expect(isValidEvaluation({})).toBe(false);
+    expect(isValidEvaluation({ score: 85 })).toBe(false);
+  });
+
+  it("should return false when final_score is not a number", () => {
+    expect(isValidEvaluation({ final_score: "85" })).toBe(false);
+    expect(isValidEvaluation({ final_score: null })).toBe(false);
+    expect(isValidEvaluation({ final_score: undefined })).toBe(false);
+  });
+
+  it("should return false when final_score is NaN", () => {
+    expect(isValidEvaluation({ final_score: NaN })).toBe(false);
+  });
+});
+
+describe("getAIScoreBase", () => {
   beforeEach(() => {
     mockConsoleWarn.mockClear();
   });
@@ -30,14 +72,24 @@ describe("getAIScore", () => {
   });
 
   describe("Valid score extraction", () => {
-    it("should extract valid final_score from AI evaluation", () => {
+    it("should extract valid final_score from aiEvaluation", () => {
       const application = createMockApplication({
         evaluation: JSON.stringify({ final_score: 4.5 }),
         promptId: "test-prompt",
       });
 
-      const score = getAIScore(application);
+      const score = getAIScoreBase(application, "aiEvaluation");
       expect(score).toBe(4.5);
+    });
+
+    it("should extract valid final_score from internalAIEvaluation", () => {
+      const application = createMockApplication(undefined, {
+        evaluation: JSON.stringify({ final_score: 7.2 }),
+        promptId: "internal-prompt",
+      });
+
+      const score = getAIScoreBase(application, "internalAIEvaluation");
+      expect(score).toBe(7.2);
     });
 
     it("should handle integer scores", () => {
@@ -46,7 +98,7 @@ describe("getAIScore", () => {
         promptId: "test-prompt",
       });
 
-      const score = getAIScore(application);
+      const score = getAIScoreBase(application, "aiEvaluation");
       expect(score).toBe(3);
     });
 
@@ -56,7 +108,7 @@ describe("getAIScore", () => {
         promptId: "test-prompt",
       });
 
-      const score = getAIScore(application);
+      const score = getAIScoreBase(application, "aiEvaluation");
       expect(score).toBe(0);
     });
 
@@ -69,22 +121,22 @@ describe("getAIScore", () => {
           promptId: "test-prompt",
         });
 
-        const score = getAIScore(application);
+        const score = getAIScoreBase(application, "aiEvaluation");
         expect(score).toBe(scoreValue);
       });
     });
   });
 
   describe("Missing or invalid data handling", () => {
-    it("should return null when aiEvaluation is undefined", () => {
+    it("should return null when evaluation is undefined", () => {
       const application = createMockApplication(undefined);
-      const score = getAIScore(application);
+      const score = getAIScoreBase(application, "aiEvaluation");
       expect(score).toBeNull();
     });
 
-    it("should return null when aiEvaluation is null", () => {
+    it("should return null when evaluation is null", () => {
       const application = createMockApplication(null);
-      const score = getAIScore(application);
+      const score = getAIScoreBase(application, "aiEvaluation");
       expect(score).toBeNull();
     });
 
@@ -92,7 +144,7 @@ describe("getAIScore", () => {
       const application = createMockApplication({
         promptId: "test-prompt",
       });
-      const score = getAIScore(application);
+      const score = getAIScoreBase(application, "aiEvaluation");
       expect(score).toBeNull();
     });
 
@@ -101,7 +153,7 @@ describe("getAIScore", () => {
         evaluation: "",
         promptId: "test-prompt",
       });
-      const score = getAIScore(application);
+      const score = getAIScoreBase(application, "aiEvaluation");
       expect(score).toBeNull();
     });
 
@@ -110,9 +162,8 @@ describe("getAIScore", () => {
         evaluation: { final_score: 4.5 }, // Object instead of string
         promptId: "test-prompt",
       });
-      const score = getAIScore(application);
+      const score = getAIScoreBase(application, "aiEvaluation");
       expect(score).toBeNull();
-      // New implementation silently returns null without warning for non-string evaluation
     });
   });
 
@@ -123,7 +174,7 @@ describe("getAIScore", () => {
         promptId: "test-prompt",
       });
 
-      const score = getAIScore(application);
+      const score = getAIScoreBase(application, "aiEvaluation");
       expect(score).toBeNull();
       expect(mockConsoleWarn).toHaveBeenCalledWith(
         "Failed to parse aiEvaluation for application:",
@@ -141,7 +192,7 @@ describe("getAIScore", () => {
         promptId: "test-prompt",
       });
 
-      const score = getAIScore(application);
+      const score = getAIScoreBase(application, "aiEvaluation");
       expect(score).toBeNull();
       expect(mockConsoleWarn).toHaveBeenCalledWith(
         "aiEvaluation evaluation missing or invalid final_score field:",
@@ -155,7 +206,7 @@ describe("getAIScore", () => {
         promptId: "test-prompt",
       });
 
-      const score = getAIScore(application);
+      const score = getAIScoreBase(application, "aiEvaluation");
       expect(score).toBeNull();
       expect(mockConsoleWarn).toHaveBeenCalledWith(
         "aiEvaluation evaluation missing or invalid final_score field:",
@@ -171,7 +222,7 @@ describe("getAIScore", () => {
         promptId: "test-prompt",
       });
 
-      const score = getAIScore(application);
+      const score = getAIScoreBase(application, "aiEvaluation");
       expect(score).toBeNull();
     });
 
@@ -181,7 +232,7 @@ describe("getAIScore", () => {
         promptId: "test-prompt",
       });
 
-      const score = getAIScore(application);
+      const score = getAIScoreBase(application, "aiEvaluation");
       expect(score).toBeNull();
     });
 
@@ -191,7 +242,7 @@ describe("getAIScore", () => {
         promptId: "test-prompt",
       });
 
-      const score = getAIScore(application);
+      const score = getAIScoreBase(application, "aiEvaluation");
       expect(score).toBeNull();
     });
   });
@@ -203,8 +254,8 @@ describe("getAIScore", () => {
         promptId: "test-prompt",
       });
 
-      const score = getAIScore(application);
-      expect(score).toBeNull(); // New implementation returns null for out-of-range scores
+      const score = getAIScoreBase(application, "aiEvaluation");
+      expect(score).toBeNull();
       expect(mockConsoleWarn).toHaveBeenCalledWith(
         "aiEvaluation score outside expected range (0-100):",
         -1
@@ -217,62 +268,104 @@ describe("getAIScore", () => {
         promptId: "test-prompt",
       });
 
-      const score = getAIScore(application);
-      expect(score).toBeNull(); // New implementation returns null for out-of-range scores
+      const score = getAIScoreBase(application, "aiEvaluation");
+      expect(score).toBeNull();
       expect(mockConsoleWarn).toHaveBeenCalledWith(
         "aiEvaluation score outside expected range (0-100):",
         150
       );
     });
   });
+
+  describe("Source-specific behavior", () => {
+    it("should extract from correct source based on parameter", () => {
+      const application = createMockApplication(
+        {
+          evaluation: JSON.stringify({ final_score: 50 }),
+          promptId: "ai-prompt",
+        },
+        {
+          evaluation: JSON.stringify({ final_score: 75 }),
+          promptId: "internal-prompt",
+        }
+      );
+
+      const aiScore = getAIScoreBase(application, "aiEvaluation");
+      const internalScore = getAIScoreBase(application, "internalAIEvaluation");
+
+      expect(aiScore).toBe(50);
+      expect(internalScore).toBe(75);
+    });
+  });
 });
 
-describe("formatAIScore", () => {
-  it("should format whole numbers without decimals", () => {
+describe("getAIResponseBase", () => {
+  it("should return evaluation string for aiEvaluation", () => {
+    const evaluationString = JSON.stringify({ final_score: 85 });
     const application = createMockApplication({
-      evaluation: JSON.stringify({ final_score: 3 }),
+      evaluation: evaluationString,
       promptId: "test-prompt",
     });
 
-    const formatted = formatAIScore(application);
-    expect(formatted).toBe("3");
+    const response = getAIResponseBase(application, "aiEvaluation");
+    expect(response).toBe(evaluationString);
+  });
+
+  it("should return evaluation string for internalAIEvaluation", () => {
+    const evaluationString = JSON.stringify({ final_score: 90 });
+    const application = createMockApplication(undefined, {
+      evaluation: evaluationString,
+      promptId: "internal-prompt",
+    });
+
+    const response = getAIResponseBase(application, "internalAIEvaluation");
+    expect(response).toBe(evaluationString);
+  });
+
+  it("should return null when evaluation is missing", () => {
+    const application = createMockApplication(undefined);
+    const response = getAIResponseBase(application, "aiEvaluation");
+    expect(response).toBeNull();
+  });
+
+  it("should return null when evaluation is not a string", () => {
+    const application = createMockApplication({
+      evaluation: { final_score: 85 },
+      promptId: "test-prompt",
+    });
+
+    const response = getAIResponseBase(application, "aiEvaluation");
+    expect(response).toBeNull();
+  });
+
+  it("should return null when evaluation is empty string", () => {
+    const application = createMockApplication({
+      evaluation: "",
+      promptId: "test-prompt",
+    });
+
+    const response = getAIResponseBase(application, "aiEvaluation");
+    expect(response).toBe("");
+  });
+});
+
+describe("formatAIScoreBase", () => {
+  it("should format whole numbers without decimals", () => {
+    expect(formatAIScoreBase(3)).toBe("3");
+    expect(formatAIScoreBase(100)).toBe("100");
   });
 
   it("should format decimal numbers with 1 decimal place", () => {
-    const application = createMockApplication({
-      evaluation: JSON.stringify({ final_score: 3.7 }),
-      promptId: "test-prompt",
-    });
-
-    const formatted = formatAIScore(application);
-    expect(formatted).toBe("3.7");
+    expect(formatAIScoreBase(3.7)).toBe("3.7");
+    expect(formatAIScoreBase(85.5)).toBe("85.5");
   });
 
   it('should show "0" for zero score', () => {
-    const application = createMockApplication({
-      evaluation: JSON.stringify({ final_score: 0 }),
-      promptId: "test-prompt",
-    });
-
-    const formatted = formatAIScore(application);
-    expect(formatted).toBe("0");
+    expect(formatAIScoreBase(0)).toBe("0");
   });
 
-  it("should return empty string for missing score", () => {
-    const application = createMockApplication(undefined);
-
-    const formatted = formatAIScore(application);
-    expect(formatted).toBe("");
-  });
-
-  it("should return empty string for invalid score", () => {
-    const application = createMockApplication({
-      evaluation: "invalid json",
-      promptId: "test-prompt",
-    });
-
-    const formatted = formatAIScore(application);
-    expect(formatted).toBe("");
+  it("should return empty string for null score", () => {
+    expect(formatAIScoreBase(null)).toBe("");
   });
 
   it("should handle edge case formatting", () => {
@@ -285,13 +378,7 @@ describe("formatAIScore", () => {
     ];
 
     testCases.forEach(({ score, expected }) => {
-      const application = createMockApplication({
-        evaluation: JSON.stringify({ final_score: score }),
-        promptId: "test-prompt",
-      });
-
-      const formatted = formatAIScore(application);
-      expect(formatted).toBe(expected);
+      expect(formatAIScoreBase(score)).toBe(expected);
     });
   });
 });
