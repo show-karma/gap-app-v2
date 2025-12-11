@@ -175,6 +175,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                         </label>
                         <div className={isSubmitting ? "opacity-50 pointer-events-none" : ""}>
                           <MarkdownEditor
+                            id="reason"
                             value={reason}
                             onChange={setReason}
                             placeholder={

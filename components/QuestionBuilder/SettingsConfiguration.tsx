@@ -54,6 +54,8 @@ export function SettingsConfiguration({
       donationRound: schema.settings?.donationRound ?? false,
       successPageContent: schema.settings?.successPageContent ?? "",
       showCommentsOnPublicPage: schema.settings?.showCommentsOnPublicPage ?? false,
+      approvalEmailTemplate: schema.settings?.approvalEmailTemplate ?? "",
+      rejectionEmailTemplate: schema.settings?.rejectionEmailTemplate ?? "",
     },
   });
 
@@ -74,6 +76,8 @@ export function SettingsConfiguration({
           donationRound: data.donationRound ?? false,
           successPageContent: data.successPageContent,
           showCommentsOnPublicPage: data.showCommentsOnPublicPage ?? false,
+          approvalEmailTemplate: data.approvalEmailTemplate,
+          rejectionEmailTemplate: data.rejectionEmailTemplate,
         },
       };
 
@@ -209,18 +213,11 @@ export function SettingsConfiguration({
               </label>
               <div className={readOnly ? "opacity-50 pointer-events-none" : ""}>
                 <MarkdownEditor
-                  value={schema.settings?.approvalEmailTemplate || ""}
+                  value={watch("approvalEmailTemplate") || ""}
                   onChange={(newValue: string) => {
-                    if (!readOnly && onUpdate) {
-                      const updatedSchema: FormSchema = {
-                        ...schema,
-                        settings: {
-                          ...(schema.settings || {}),
-                          approvalEmailTemplate: newValue || undefined,
-                        },
-                      };
-                      onUpdate(updatedSchema);
-                    }
+                    setValue("approvalEmailTemplate", newValue || "", {
+                      shouldValidate: true,
+                    });
                   }}
                   placeholderText={`Subject: Congratulations! Your application has been approved 🎉\n\nCongratulations! Your application has been approved for the {{programName}} program.\n\n**Reference Number:** {{referenceNumber}}\n\n{{reason}}\n\nWe're excited to support your journey!`}
                   height={400}
@@ -243,18 +240,11 @@ export function SettingsConfiguration({
               </label>
               <div className={readOnly ? "opacity-50 pointer-events-none" : ""}>
                 <MarkdownEditor
-                  value={schema.settings?.rejectionEmailTemplate || ""}
+                  value={watch("rejectionEmailTemplate") || ""}
                   onChange={(newValue: string) => {
-                    if (!readOnly && onUpdate) {
-                      const updatedSchema: FormSchema = {
-                        ...schema,
-                        settings: {
-                          ...(schema.settings || {}),
-                          rejectionEmailTemplate: newValue || undefined,
-                        },
-                      };
-                      onUpdate(updatedSchema);
-                    }
+                    setValue("rejectionEmailTemplate", newValue || "", {
+                      shouldValidate: true,
+                    });
                   }}
                   placeholderText={`Subject: Update on Your Application\n\nAfter careful review, we regret to inform you that your application has not been selected for funding at this time.\n\n**Reference Number:** {{referenceNumber}}\n\n{{reason}}\n\nWe appreciate your interest and encourage you to apply for future opportunities.`}
                   height={400}

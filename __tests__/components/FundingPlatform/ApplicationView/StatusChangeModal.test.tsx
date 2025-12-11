@@ -646,7 +646,7 @@ describe("StatusChangeModal", () => {
       expect(editor).toHaveValue(mockProgramConfig.formSchema.settings.approvalEmailTemplate);
     });
 
-    it("should not overwrite existing reason when template is available", () => {
+    it("should reapply template after modal is closed and reopened", () => {
       const { rerender } = render(
         <StatusChangeModal
           {...defaultProps}
@@ -680,7 +680,7 @@ describe("StatusChangeModal", () => {
         />
       );
 
-      // Should prepopulate again since reason was reset
+      // Should prepopulate again since reason was reset when modal closed
       const newEditor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
       expect(newEditor.value).toBe(mockProgramConfig.formSchema.settings.approvalEmailTemplate);
     });
