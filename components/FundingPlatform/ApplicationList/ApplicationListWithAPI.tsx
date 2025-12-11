@@ -110,8 +110,33 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   const { data: program } = useProgram(programId);
 
   // Fetch reviewers for the program
-  const { data: programReviewers = [] } = useProgramReviewers(programId, chainId);
-  const { data: milestoneReviewers = [] } = useMilestoneReviewers(programId, chainId);
+  const {
+    data: programReviewers = [],
+    isLoading: isLoadingProgramReviewers,
+    isError: isErrorProgramReviewers,
+    error: programReviewersError,
+  } = useProgramReviewers(programId, chainId);
+  const {
+    data: milestoneReviewers = [],
+    isLoading: isLoadingMilestoneReviewers,
+    isError: isErrorMilestoneReviewers,
+    error: milestoneReviewersError,
+  } = useMilestoneReviewers(programId, chainId);
+
+  // Log errors for reviewer fetching (non-blocking, UI still works)
+  useEffect(() => {
+    if (isErrorProgramReviewers) {
+      console.error("Failed to fetch program reviewers:", programReviewersError);
+    }
+    if (isErrorMilestoneReviewers) {
+      console.error("Failed to fetch milestone reviewers:", milestoneReviewersError);
+    }
+  }, [
+    isErrorProgramReviewers,
+    isErrorMilestoneReviewers,
+    programReviewersError,
+    milestoneReviewersError,
+  ]);
 
   // Determine column visibility based on configured prompts
   const { showAIScoreColumn, showInternalAIScoreColumn } = useMemo(
@@ -224,6 +249,12 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     },
     [sortBy, sortOrder]
   );
+
+  // Memoize reviewer assignment change callback to prevent unnecessary re-renders
+  const handleReviewerAssignmentChange = useCallback(() => {
+    // Refetch applications when reviewers are assigned
+    refetch();
+  }, [refetch]);
 
   // Show error state
   if (error) {
@@ -440,10 +471,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           showInternalAIScoreColumn={showInternalAIScoreColumn}
           programReviewers={programReviewers}
           milestoneReviewers={milestoneReviewers}
-          onReviewerAssignmentChange={() => {
-            // Refetch applications when reviewers are assigned
-            refetch();
-          }}
+          onReviewerAssignmentChange={handleReviewerAssignmentChange}
         />
       </InfiniteScroll>
     </div>

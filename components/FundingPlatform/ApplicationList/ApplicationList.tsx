@@ -71,6 +71,10 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   // Show all applications (no internal pagination for infinite scroll)
   const paginatedApplications = applications;
 
+  // Determine if reviewer columns should be shown
+  const showAppReviewersColumn = programReviewers.length > 0;
+  const showMilestoneReviewersColumn = milestoneReviewers.length > 0;
+
   const handleStatusChangeClick = (
     applicationId: string,
     newStatus: string,
@@ -193,12 +197,16 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                   currentSortDirection={sortOrder}
                   onSort={onSortChange}
                 />
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                  App Reviewers
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                  Milestone Reviewers
-                </th>
+                {showAppReviewersColumn && (
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    App Reviewers
+                  </th>
+                )}
+                {showMilestoneReviewersColumn && (
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    Milestone Reviewers
+                  </th>
+                )}
                 {showStatusActions && (
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                     Actions
@@ -252,24 +260,28 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                     {formatDate(application.updatedAt)}
                   </td>
-                  <td className="px-4 py-4 text-sm">
-                    <ReviewerAssignmentDropdown
-                      applicationId={application.referenceNumber}
-                      availableReviewers={programReviewers}
-                      assignedReviewerAddresses={application.appReviewers || []}
-                      reviewerType="app"
-                      onAssignmentChange={onReviewerAssignmentChange}
-                    />
-                  </td>
-                  <td className="px-4 py-4 text-sm">
-                    <ReviewerAssignmentDropdown
-                      applicationId={application.referenceNumber}
-                      availableReviewers={milestoneReviewers}
-                      assignedReviewerAddresses={application.milestoneReviewers || []}
-                      reviewerType="milestone"
-                      onAssignmentChange={onReviewerAssignmentChange}
-                    />
-                  </td>
+                  {showAppReviewersColumn && (
+                    <td className="px-4 py-4 text-sm">
+                      <ReviewerAssignmentDropdown
+                        applicationId={application.referenceNumber}
+                        availableReviewers={programReviewers}
+                        assignedReviewerAddresses={application.appReviewers || []}
+                        reviewerType="app"
+                        onAssignmentChange={onReviewerAssignmentChange}
+                      />
+                    </td>
+                  )}
+                  {showMilestoneReviewersColumn && (
+                    <td className="px-4 py-4 text-sm">
+                      <ReviewerAssignmentDropdown
+                        applicationId={application.referenceNumber}
+                        availableReviewers={milestoneReviewers}
+                        assignedReviewerAddresses={application.milestoneReviewers || []}
+                        reviewerType="milestone"
+                        onAssignmentChange={onReviewerAssignmentChange}
+                      />
+                    </td>
+                  )}
                   {showStatusActions && onStatusChange && (
                     <td className="px-4 py-4 whitespace-nowrap text-sm">
                       <TableStatusActionButtons
