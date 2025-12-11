@@ -7,9 +7,8 @@ jest.mock("@/utilities/retries", () => ({
   retryUntilConditionMet: jest.fn(),
 }));
 
-const mockGetProjectGrants = jest.fn();
 jest.mock("@/services/project-grants.service", () => ({
-  getProjectGrants: mockGetProjectGrants,
+  getProjectGrants: jest.fn(),
 }));
 
 import {
@@ -18,11 +17,14 @@ import {
   validateGrantCompletion,
 } from "@/utilities/grantCompletionHelpers";
 
-// Get the mocked function after jest.mock
+// Get the mocked functions after jest.mock
 const { retryUntilConditionMet } = require("@/utilities/retries");
 const mockRetryUntilConditionMet = retryUntilConditionMet as jest.MockedFunction<
   typeof retryUntilConditionMet
 >;
+
+const { getProjectGrants } = require("@/services/project-grants.service");
+const mockGetProjectGrants = getProjectGrants as jest.MockedFunction<typeof getProjectGrants>;
 
 describe("grantCompletionHelpers", () => {
   describe("validateGrantCompletion", () => {
