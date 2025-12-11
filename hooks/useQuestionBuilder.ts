@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { AxiosError } from "axios";
 import toast from "react-hot-toast";
 import { fundingPlatformService } from "@/services/fundingPlatformService";
 import type { IFundingProgramConfig } from "@/types/funding-platform";
@@ -110,7 +111,7 @@ function createFormSchemaHook(
         });
         toast.success(successMessage);
       },
-      onError: (error: any) => {
+      onError: (error: AxiosError<{ message?: string }>) => {
         console.error(`Failed to save ${schemaType} schema:`, error);
         // Extract specific error message from API response (e.g., validation errors)
         const apiErrorMessage = error.response?.data?.message;
