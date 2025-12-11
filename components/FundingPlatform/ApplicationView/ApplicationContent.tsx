@@ -430,6 +430,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
           status={pendingStatus}
           isSubmitting={isUpdatingStatus}
           isReasonRequired={pendingStatus === "revision_requested"}
+          programConfig={isFundingProgramConfig(program) ? program : undefined}
         />
       </>
     );

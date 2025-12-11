@@ -225,7 +225,7 @@ export function SettingsConfiguration({
                   className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Custom email subject. Leave empty to use default: "Congratulations! Your application has been approved - {`{programName}`}". Available placeholders: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{programName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>
+                  Custom email subject. Leave empty to use default: "Congratulations! Your application has been approved - {"{{programName}}"}". Available placeholders: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{programName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>
                 </p>
               </div>
               <div className="space-y-2">
@@ -273,7 +273,7 @@ export function SettingsConfiguration({
                   className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Custom email subject. Leave empty to use default: "Thanks for Applying: Resources for {`{programName}`}". Available placeholders: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{programName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>
+                  Custom email subject. Leave empty to use default: "Thanks for Applying: Resources for {"{{programName}}"}". Available placeholders: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{programName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>
                 </p>
               </div>
               <div className="space-y-2">
