@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { type SettingsConfigFormData, settingsConfigSchema } from "@/schemas/settingsConfigSchema";
 import type { FormSchema } from "@/types/question-builder";
 import { envVars } from "@/utilities/enviromentVars";
+import { formatDate } from "@/utilities/formatDate";
 import { fundingPlatformDomains } from "@/utilities/fundingPlatformDomains";
 import { ExternalLink } from "../Utilities/ExternalLink";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
@@ -33,6 +34,26 @@ const getApplyUrlByCommunityId = (communityId: string, programId: string) => {
   }
 };
 
+// Convert local datetime-local value to UTC ISO string
+const convertLocalToUTC = (localDatetime: string | undefined): string | undefined => {
+  if (!localDatetime) return undefined;
+
+  const localDate = new Date(localDatetime);
+  if (isNaN(localDate.getTime())) return undefined;
+
+  return formatDate(localDate, "ISO");
+};
+
+// Convert UTC ISO string to local datetime-local format (YYYY-MM-DDTHH:mm)
+const convertUTCToLocal = (utcDatetime: string | undefined): string => {
+  if (!utcDatetime) return "";
+
+  const date = new Date(utcDatetime);
+  if (isNaN(date.getTime())) return "";
+
+  return formatDate(date, "local", "datetime-local");
+};
+
 export function SettingsConfiguration({
   schema,
   onUpdate,
@@ -41,6 +62,7 @@ export function SettingsConfiguration({
   readOnly = false,
 }: SettingsConfigurationProps) {
   const { communityId } = useParams() as { communityId: string };
+
   const {
     register,
     watch,
@@ -50,7 +72,7 @@ export function SettingsConfiguration({
     resolver: zodResolver(settingsConfigSchema),
     defaultValues: {
       privateApplications: schema.settings?.privateApplications ?? true,
-      applicationDeadline: schema.settings?.applicationDeadline ?? "",
+      applicationDeadline: convertUTCToLocal(schema.settings?.applicationDeadline),
       donationRound: schema.settings?.donationRound ?? false,
       successPageContent: schema.settings?.successPageContent ?? "",
       showCommentsOnPublicPage: schema.settings?.showCommentsOnPublicPage ?? false,
@@ -70,7 +92,7 @@ export function SettingsConfiguration({
           confirmationMessage:
             schema.settings?.confirmationMessage || "Thank you for your submission!",
           privateApplications: data.privateApplications ?? true,
-          applicationDeadline: data.applicationDeadline,
+          applicationDeadline: convertLocalToUTC(data.applicationDeadline),
           donationRound: data.donationRound ?? false,
           successPageContent: data.successPageContent,
           showCommentsOnPublicPage: data.showCommentsOnPublicPage ?? false,
