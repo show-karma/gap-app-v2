@@ -2,13 +2,7 @@
 
 import { type FC, useMemo } from "react";
 import { type DropdownItem, MultiSelectDropdown } from "@/components/Utilities/MultiSelectDropdown";
-import { useReviewerAssignment } from "@/hooks/useReviewerAssignment";
-
-// Constants for reviewer types
-const REVIEWER_TYPES = {
-  APP: "app",
-  MILESTONE: "milestone",
-} as const;
+import { type ReviewerType, useReviewerAssignment } from "@/hooks/useReviewerAssignment";
 
 /**
  * Shared base interface for reviewer types
@@ -27,7 +21,7 @@ interface ReviewerAssignmentDropdownProps {
   applicationId: string;
   availableReviewers: ReviewerBase[];
   assignedReviewerAddresses: string[];
-  reviewerType: "app" | "milestone";
+  reviewerType: ReviewerType;
   onAssignmentChange?: () => void;
 }
 
@@ -63,20 +57,12 @@ export const ReviewerAssignmentDropdown: FC<ReviewerAssignmentDropdownProps> = (
     [assignedReviewerAddresses]
   );
 
-  const handleReviewerChange = async (selectedAddresses: string[]) => {
-    await assignReviewers(selectedAddresses);
-  };
-
   return (
     <MultiSelectDropdown
       items={dropdownItems}
       selectedIds={normalizedAssignedAddresses}
-      onChange={handleReviewerChange}
-      placeholder={
-        isLoading
-          ? "Updating..."
-          : `Select ${reviewerType === REVIEWER_TYPES.APP ? "app" : "milestone"} reviewers...`
-      }
+      onChange={assignReviewers}
+      placeholder={isLoading ? "Updating..." : `Select ${reviewerType} reviewers...`}
       searchPlaceholder="Search reviewers..."
       className="min-w-[200px]"
       disabled={isLoading}

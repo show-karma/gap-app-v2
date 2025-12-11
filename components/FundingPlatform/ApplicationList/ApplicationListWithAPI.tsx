@@ -109,34 +109,9 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   const { config } = useProgramConfig(programId, chainId);
   const { data: program } = useProgram(programId);
 
-  // Fetch reviewers for the program
-  const {
-    data: programReviewers = [],
-    isLoading: isLoadingProgramReviewers,
-    isError: isErrorProgramReviewers,
-    error: programReviewersError,
-  } = useProgramReviewers(programId, chainId);
-  const {
-    data: milestoneReviewers = [],
-    isLoading: isLoadingMilestoneReviewers,
-    isError: isErrorMilestoneReviewers,
-    error: milestoneReviewersError,
-  } = useMilestoneReviewers(programId, chainId);
-
-  // Log errors for reviewer fetching (non-blocking, UI still works)
-  useEffect(() => {
-    if (isErrorProgramReviewers) {
-      console.error("Failed to fetch program reviewers:", programReviewersError);
-    }
-    if (isErrorMilestoneReviewers) {
-      console.error("Failed to fetch milestone reviewers:", milestoneReviewersError);
-    }
-  }, [
-    isErrorProgramReviewers,
-    isErrorMilestoneReviewers,
-    programReviewersError,
-    milestoneReviewersError,
-  ]);
+  // Fetch reviewers for the program (errors are handled gracefully - columns won't show if fetch fails)
+  const { data: programReviewers = [] } = useProgramReviewers(programId, chainId);
+  const { data: milestoneReviewers = [] } = useMilestoneReviewers(programId, chainId);
 
   // Determine column visibility based on configured prompts
   const { showAIScoreColumn, showInternalAIScoreColumn } = useMemo(

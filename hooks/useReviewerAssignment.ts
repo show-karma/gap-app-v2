@@ -3,16 +3,18 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { applicationReviewersService } from "@/services/application-reviewers.service";
 
-// Constants for reviewer types
-const REVIEWER_TYPES = {
-  APP: "app",
-  MILESTONE: "milestone",
-} as const;
+/**
+ * Enum for reviewer types
+ */
+export enum ReviewerType {
+  APP = "app",
+  MILESTONE = "milestone",
+}
 
-const REVIEWER_TYPE_LABELS = {
-  [REVIEWER_TYPES.APP]: "App",
-  [REVIEWER_TYPES.MILESTONE]: "Milestone",
-} as const;
+const REVIEWER_TYPE_LABELS: Record<ReviewerType, string> = {
+  [ReviewerType.APP]: "App",
+  [ReviewerType.MILESTONE]: "Milestone",
+};
 
 // Type guard for API error response
 interface ApiErrorResponse {
@@ -51,7 +53,7 @@ const getErrorMessage = (error: unknown): string => {
 
 interface UseReviewerAssignmentOptions {
   applicationId: string;
-  reviewerType: "app" | "milestone";
+  reviewerType: ReviewerType;
   onAssignmentChange?: () => void;
 }
 
@@ -71,7 +73,7 @@ export const useReviewerAssignment = ({
     setIsLoading(true);
     try {
       const request =
-        reviewerType === REVIEWER_TYPES.APP
+        reviewerType === ReviewerType.APP
           ? { appReviewerAddresses: selectedAddresses }
           : { milestoneReviewerAddresses: selectedAddresses };
 
@@ -97,7 +99,7 @@ export const useReviewerAssignment = ({
     } catch (error) {
       console.error("Failed to update reviewers:", error);
       toast.error(getErrorMessage(error));
-      throw error; // Re-throw to allow component to handle if needed
+      // Error is already handled via toast, no need to re-throw
     } finally {
       setIsLoading(false);
     }

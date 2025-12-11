@@ -2,6 +2,7 @@
 
 import { type FC, useState } from "react";
 import SortableTableHeader from "@/components/Utilities/SortableTableHeader";
+import { ReviewerType } from "@/hooks/useReviewerAssignment";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
 import type { MilestoneReviewer } from "@/services/milestone-reviewers.service";
 import type { ProgramReviewer } from "@/services/program-reviewers.service";
@@ -266,7 +267,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                         applicationId={application.referenceNumber}
                         availableReviewers={programReviewers}
                         assignedReviewerAddresses={application.appReviewers || []}
-                        reviewerType="app"
+                        reviewerType={ReviewerType.APP}
                         onAssignmentChange={onReviewerAssignmentChange}
                       />
                     </td>
@@ -277,7 +278,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                         applicationId={application.referenceNumber}
                         availableReviewers={milestoneReviewers}
                         assignedReviewerAddresses={application.milestoneReviewers || []}
-                        reviewerType="milestone"
+                        reviewerType={ReviewerType.MILESTONE}
                         onAssignmentChange={onReviewerAssignmentChange}
                       />
                     </td>

@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { toast } from "react-hot-toast";
+import { ReviewerType } from "@/hooks/useReviewerAssignment";
 import { applicationReviewersService } from "@/services/application-reviewers.service";
 import type { MilestoneReviewer } from "@/services/milestone-reviewers.service";
 import type { ProgramReviewer } from "@/services/program-reviewers.service";
@@ -108,7 +109,7 @@ describe("ReviewerAssignmentDropdown", () => {
       applicationId?: string;
       availableReviewers?: ProgramReviewer[] | MilestoneReviewer[];
       assignedReviewerAddresses?: string[];
-      reviewerType?: "app" | "milestone";
+      reviewerType?: ReviewerType;
       onAssignmentChange?: () => void;
     } = {}
   ) => {
@@ -116,7 +117,7 @@ describe("ReviewerAssignmentDropdown", () => {
       applicationId = "APP-12345-ABCDE",
       availableReviewers = mockProgramReviewers,
       assignedReviewerAddresses = [],
-      reviewerType = "app",
+      reviewerType = ReviewerType.APP,
       onAssignmentChange,
     } = props;
 
@@ -135,14 +136,14 @@ describe("ReviewerAssignmentDropdown", () => {
 
   describe("Rendering", () => {
     it("should render dropdown with correct placeholder for app reviewers", () => {
-      renderComponent({ reviewerType: "app" });
+      renderComponent({ reviewerType: ReviewerType.APP });
 
       expect(screen.getByTestId("multi-select-dropdown")).toBeInTheDocument();
       expect(screen.getByTestId("placeholder")).toHaveTextContent("Select app reviewers...");
     });
 
     it("should render dropdown with correct placeholder for milestone reviewers", () => {
-      renderComponent({ reviewerType: "milestone" });
+      renderComponent({ reviewerType: ReviewerType.MILESTONE });
 
       expect(screen.getByTestId("placeholder")).toHaveTextContent("Select milestone reviewers...");
     });
@@ -225,7 +226,7 @@ describe("ReviewerAssignmentDropdown", () => {
 
   describe("Reviewer Assignment", () => {
     it("should call assignReviewers when reviewers are selected", async () => {
-      renderComponent({ reviewerType: "app" });
+      renderComponent({ reviewerType: ReviewerType.APP });
 
       const option = screen.getByTestId("option-0x1111111111111111111111111111111111111111");
       fireEvent.click(option);
@@ -239,7 +240,7 @@ describe("ReviewerAssignmentDropdown", () => {
 
     it("should call assignReviewers with milestone reviewers when type is milestone", async () => {
       renderComponent({
-        reviewerType: "milestone",
+        reviewerType: ReviewerType.MILESTONE,
         availableReviewers: mockMilestoneReviewers,
       });
 
@@ -254,7 +255,7 @@ describe("ReviewerAssignmentDropdown", () => {
     });
 
     it("should show success toast on successful assignment", async () => {
-      renderComponent({ reviewerType: "app" });
+      renderComponent({ reviewerType: ReviewerType.APP });
 
       const option = screen.getByTestId("option-0x1111111111111111111111111111111111111111");
       fireEvent.click(option);
@@ -266,7 +267,7 @@ describe("ReviewerAssignmentDropdown", () => {
 
     it("should show success toast for milestone reviewers", async () => {
       renderComponent({
-        reviewerType: "milestone",
+        reviewerType: ReviewerType.MILESTONE,
         availableReviewers: mockMilestoneReviewers,
       });
 
@@ -280,7 +281,7 @@ describe("ReviewerAssignmentDropdown", () => {
 
     it("should call onAssignmentChange callback on success", async () => {
       const onAssignmentChange = jest.fn();
-      renderComponent({ reviewerType: "app", onAssignmentChange });
+      renderComponent({ reviewerType: ReviewerType.APP, onAssignmentChange });
 
       const option = screen.getByTestId("option-0x1111111111111111111111111111111111111111");
       fireEvent.click(option);
@@ -291,7 +292,7 @@ describe("ReviewerAssignmentDropdown", () => {
     });
 
     it("should handle multiple reviewer selection", async () => {
-      renderComponent({ reviewerType: "app" });
+      renderComponent({ reviewerType: ReviewerType.APP });
 
       const option1 = screen.getByTestId("option-0x1111111111111111111111111111111111111111");
       const option2 = screen.getByTestId("option-0x2222222222222222222222222222222222222222");
@@ -325,7 +326,7 @@ describe("ReviewerAssignmentDropdown", () => {
       const error = new Error("Failed to assign reviewers");
       mockAssignReviewers.mockRejectedValue(error);
 
-      renderComponent({ reviewerType: "app" });
+      renderComponent({ reviewerType: ReviewerType.APP });
 
       const option = screen.getByTestId("option-0x1111111111111111111111111111111111111111");
       fireEvent.click(option);
@@ -352,7 +353,7 @@ describe("ReviewerAssignmentDropdown", () => {
       };
       mockAssignReviewers.mockRejectedValue(error);
 
-      renderComponent({ reviewerType: "app" });
+      renderComponent({ reviewerType: ReviewerType.APP });
 
       const option = screen.getByTestId("option-0x1111111111111111111111111111111111111111");
       fireEvent.click(option);
@@ -383,7 +384,7 @@ describe("ReviewerAssignmentDropdown", () => {
       };
       mockAssignReviewers.mockRejectedValue(error);
 
-      renderComponent({ reviewerType: "app" });
+      renderComponent({ reviewerType: ReviewerType.APP });
 
       const option = screen.getByTestId("option-0x1111111111111111111111111111111111111111");
       fireEvent.click(option);
@@ -404,7 +405,7 @@ describe("ReviewerAssignmentDropdown", () => {
       };
       mockAssignReviewers.mockRejectedValue(error);
 
-      renderComponent({ reviewerType: "app" });
+      renderComponent({ reviewerType: ReviewerType.APP });
 
       const option = screen.getByTestId("option-0x1111111111111111111111111111111111111111");
       fireEvent.click(option);
@@ -425,7 +426,7 @@ describe("ReviewerAssignmentDropdown", () => {
       };
       mockAssignReviewers.mockRejectedValue(error);
 
-      renderComponent({ reviewerType: "app" });
+      renderComponent({ reviewerType: ReviewerType.APP });
 
       const option = screen.getByTestId("option-0x1111111111111111111111111111111111111111");
       fireEvent.click(option);
@@ -439,7 +440,7 @@ describe("ReviewerAssignmentDropdown", () => {
       const error = new Error("Network error");
       mockAssignReviewers.mockRejectedValue(error);
 
-      renderComponent({ reviewerType: "app" });
+      renderComponent({ reviewerType: ReviewerType.APP });
 
       const option = screen.getByTestId("option-0x1111111111111111111111111111111111111111");
       fireEvent.click(option);
@@ -454,7 +455,7 @@ describe("ReviewerAssignmentDropdown", () => {
       const error = new Error("Failed");
       mockAssignReviewers.mockRejectedValue(error);
 
-      renderComponent({ reviewerType: "app", onAssignmentChange });
+      renderComponent({ reviewerType: ReviewerType.APP, onAssignmentChange });
 
       const option = screen.getByTestId("option-0x1111111111111111111111111111111111111111");
       fireEvent.click(option);
@@ -498,7 +499,7 @@ describe("ReviewerAssignmentDropdown", () => {
       const assignedAddresses = ["0x1111111111111111111111111111111111111111"];
       renderComponent({
         assignedReviewerAddresses: assignedAddresses,
-        reviewerType: "app",
+        reviewerType: ReviewerType.APP,
       });
 
       // Click to remove (toggle off)
@@ -517,7 +518,7 @@ describe("ReviewerAssignmentDropdown", () => {
     it("should invalidate application queries after successful assignment", async () => {
       const invalidateQueries = jest.spyOn(queryClient, "invalidateQueries");
 
-      renderComponent({ reviewerType: "app" });
+      renderComponent({ reviewerType: ReviewerType.APP });
 
       const option = screen.getByTestId("option-0x1111111111111111111111111111111111111111");
       fireEvent.click(option);
