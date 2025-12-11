@@ -227,7 +227,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
     }
 
     try {
-      const [data, error] = await fetchData(
+      const [data, error, , status] = await fetchData(
         INDEXER.PROJECT.PAYOUT_ADDRESS.UPDATE(project.uid),
         "PATCH",
         {
@@ -273,7 +273,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
 
       if (error) {
         // Use the error message from the API, with fallbacks for different status codes
-        const errorMessage = error.message || getDefaultErrorMessage(error.status);
+        const errorMessage = error || getDefaultErrorMessage(status);
         setError(errorMessage);
         throw new Error(errorMessage);
       }
@@ -307,7 +307,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
     setError(null);
 
     try {
-      const [data, error] = await fetchData(
+      const [data, error, , status] = await fetchData(
         INDEXER.PROJECT.PAYOUT_ADDRESS.UPDATE(project.uid),
         "PATCH",
         {
@@ -352,7 +352,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
 
       if (error) {
         // Use the error message from the API, with fallbacks for different status codes
-        const errorMessage = error.message || getDefaultErrorMessage(error.status);
+        const errorMessage = error || getDefaultErrorMessage(status);
         setError(errorMessage);
         throw new Error(errorMessage);
       }

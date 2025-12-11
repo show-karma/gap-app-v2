@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { GrantsAccordion } from "@/components/GrantsAccordion";
 import { Button } from "@/components/Utilities/Button";
-import { useGrantCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunitiesStore } from "@/store/communities";
@@ -80,8 +80,8 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
   const setIsCommunityAdmin = useCommunityAdminStore((state) => state.setIsCommunityAdmin);
 
   // Use React Query hook to check admin status with Zustand sync
-  useGrantCommunityAdmin(grant?.community?.uid || grant?.data?.communityUID, address, {
-    setIsCommunityAdmin,
+  useIsCommunityAdmin(grant?.community?.uid || grant?.data?.communityUID, address, {
+    zustandSync: { setIsCommunityAdmin },
   });
 
   const zustandProject = useProjectStore((state) => state.project);

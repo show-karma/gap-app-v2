@@ -1,12 +1,12 @@
 "use client";
 import { AutoSizer, Grid } from "react-virtualized";
 import useMediaQuery from "@/hooks/useMediaQuery";
-import type { ProjectV2 } from "@/types/community";
+import type { Project } from "@/types/community";
 import { projectV2ToGrant } from "@/utilities/adapters/projectV2ToGrant";
 import { GrantCard } from "../GrantCard";
 
 interface ProjectsGridProps {
-  projects: ProjectV2[];
+  projects: Project[];
 }
 
 export function ProjectsGrid({ projects }: ProjectsGridProps) {

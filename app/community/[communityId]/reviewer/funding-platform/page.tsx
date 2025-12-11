@@ -22,6 +22,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
@@ -450,18 +451,24 @@ export default function ReviewerFundingPlatformPage() {
                 {/* Program Header */}
                 <div className="">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 text-ellipsis line-clamp-2">
-                    {program.name || program.metadata?.title}
+                    {program.metadata?.title || program.name}
                   </h3>
+                  <MarkdownPreview
+                    source={
+                      program.metadata?.shortDescription ||
+                      (program.metadata?.description as string)
+                    }
+                    className="text-sm mb-3 overflow-hidden text-ellipsis line-clamp-2"
+                  />
 
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 overflow-hidden text-ellipsis line-clamp-2 h-[46px]">
-                    {program.metadata?.description}
-                  </p>
                   <div className="flex flex-row gap-2 items-center text-xs text-gray-500 dark:text-gray-400 bg-orange-100 dark:bg-orange-900/20 p-2 rounded-md">
                     <CalendarIcon className="w-5 h-5 text-orange-700 dark:text-orange-300" />
                     <span className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
                       Deadline:{" "}
                       {program.applicationConfig?.formSchema?.settings?.applicationDeadline
-                        ? formatDate(program.applicationConfig.formSchema.settings.applicationDeadline)
+                        ? formatDate(
+                            program.applicationConfig.formSchema.settings.applicationDeadline
+                          )
                         : "N/A"}
                     </span>
                   </div>

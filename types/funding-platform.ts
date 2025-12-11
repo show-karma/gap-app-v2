@@ -27,6 +27,15 @@ export interface ApplicationComment {
   updatedAt: string | Date;
 }
 
+// Milestone Data Structure
+export interface IMilestoneData {
+  title: string;
+  description: string;
+  dueDate: string;
+  fundingRequested?: string; // Optional - funding amount requested for this milestone
+  completionCriteria?: string; // Optional - criteria to consider milestone complete
+}
+
 // Form Field Types (unchanged)
 export interface IFormField {
   id: string; // Added ID field for V2

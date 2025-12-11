@@ -1,4 +1,4 @@
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { CommunityDetails } from "@/types/community";
 import type {
   CreateProgramFormData,
   ProgramApprovalRequest,
@@ -20,7 +20,7 @@ export class ProgramRegistryService {
    */
   static buildProgramMetadata(
     formData: CreateProgramFormData,
-    community: ICommunityResponse
+    community: CommunityDetails
   ): ProgramMetadata {
     return {
       title: formData.name,

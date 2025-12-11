@@ -6,6 +6,7 @@ import { Controller, type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import { MilestoneInput } from "@/components/FundingPlatform/FormFields/MilestoneInput";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import type { IFormField, IFormSchema } from "@/types/funding-platform";
@@ -182,39 +183,50 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
           fieldSchema = z.string();
           break;
         case "number": {
-          let numberSchema: z.ZodTypeAny = z.string();
+          // Number fields should accept numbers, not strings
+          // The Controller will convert string input to number in onChange
+          let numberSchema: z.ZodTypeAny;
+
           if (field.required) {
-            numberSchema = (numberSchema as z.ZodString).min(1, `${field.label} is required`);
+            numberSchema = z
+              .union([z.number(), z.undefined(), z.null()])
+              .refine((val) => val !== undefined && val !== null, {
+                message: `${field.label} is required`,
+              });
           } else {
-            numberSchema = (numberSchema as z.ZodString).optional().or(z.literal(""));
+            numberSchema = z.union([z.number(), z.null(), z.undefined()]);
           }
-          numberSchema = (numberSchema as z.ZodString).refine(
-            (val: string) => {
-              if (!val || val === "") return !field.required;
-              return !Number.isNaN(Number(val));
+
+          // Validate that the value is a valid number (not NaN)
+          numberSchema = (numberSchema as z.ZodUnion<any>).refine(
+            (val: unknown) => {
+              if (val === null || val === undefined) return !field.required;
+              return typeof val === "number" && !Number.isNaN(val);
             },
             { message: "Please enter a valid number" }
           );
+
+          // Add min/max validation
           if (field.validation?.min !== undefined) {
             numberSchema = (numberSchema as z.ZodEffects<any>).refine(
-              (val: string) => {
-                if (!val || val === "") return !field.required;
-                const num = Number(val);
-                return !Number.isNaN(num) && num >= field.validation!.min!;
+              (val: unknown) => {
+                if (val === null || val === undefined) return !field.required;
+                return typeof val === "number" && val >= field.validation!.min!;
               },
               { message: `Minimum value is ${field.validation.min}` }
             );
           }
+
           if (field.validation?.max !== undefined) {
             numberSchema = (numberSchema as z.ZodEffects<any>).refine(
-              (val: string) => {
-                if (!val || val === "") return !field.required;
-                const num = Number(val);
-                return !Number.isNaN(num) && num <= field.validation!.max!;
+              (val: unknown) => {
+                if (val === null || val === undefined) return !field.required;
+                return typeof val === "number" && val <= field.validation!.max!;
               },
               { message: `Maximum value is ${field.validation.max}` }
             );
           }
+
           fieldSchema = numberSchema;
           break;
         }
@@ -251,28 +263,46 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
         case "date":
           fieldSchema = z.string();
           break;
-        case "milestone":
+        case "milestone": {
+          // Define milestone object schema
+          const milestoneObjectSchema = z.object({
+            title: z.string().min(1, "Milestone title is required"),
+            description: z.string().min(1, "Milestone description is required"),
+            dueDate: z.string().min(1, "Due date is required"),
+            fundingRequested: z.string().optional(),
+            completionCriteria: z.string().optional(),
+          });
+
+          // Build array schema with min/max validations
+          let milestoneArraySchema: z.ZodTypeAny = z.array(milestoneObjectSchema);
+
           if (field.required) {
             if (field.validation?.minMilestones) {
-              fieldSchema = z
-                .array(z.any())
-                .min(
-                  field.validation.minMilestones,
-                  `Please add at least ${field.validation.minMilestones} milestone(s)`
-                );
+              milestoneArraySchema = (milestoneArraySchema as z.ZodArray<any>).min(
+                field.validation.minMilestones,
+                `Please add at least ${field.validation.minMilestones} milestone(s)`
+              );
             } else {
-              fieldSchema = z.array(z.any()).min(1, `${field.label} is required`);
+              milestoneArraySchema = (milestoneArraySchema as z.ZodArray<any>).min(
+                1,
+                `${field.label} is required`
+              );
             }
             if (field.validation?.maxMilestones) {
-              fieldSchema = (fieldSchema as z.ZodArray<any>).max(
+              milestoneArraySchema = (milestoneArraySchema as z.ZodArray<any>).max(
                 field.validation.maxMilestones,
                 `Maximum ${field.validation.maxMilestones} milestone(s) allowed`
               );
             }
           } else {
-            fieldSchema = z.array(z.any()).optional().or(z.array(z.any()).length(0));
+            milestoneArraySchema = (milestoneArraySchema as z.ZodArray<any>)
+              .optional()
+              .or(z.array(milestoneObjectSchema).length(0));
           }
+
+          fieldSchema = milestoneArraySchema;
           break;
+        }
         default:
           fieldSchema = z.string();
           break;
@@ -308,6 +338,11 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
       const fieldKey = field.id || fieldName;
       if (field.type === "checkbox") {
         defaults[fieldKey] = [];
+      } else if (field.type === "milestone") {
+        defaults[fieldKey] = [];
+      } else if (field.type === "number") {
+        // Number fields should default to undefined, not empty string
+        defaults[fieldKey] = undefined;
       } else {
         defaults[fieldKey] = "";
       }
@@ -452,6 +487,18 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             // Handle checkbox fields (arrays)
             if (field.type === "checkbox") {
               formData[fieldKey] = Array.isArray(value) ? value : [value];
+            } else if (field.type === "milestone") {
+              // Handle milestone fields (arrays of objects)
+              formData[fieldKey] = Array.isArray(value) ? value : [];
+            } else if (field.type === "number") {
+              // Handle number fields - convert to number, preserve undefined/null
+              if (value === null || value === undefined || value === "") {
+                formData[fieldKey] = undefined;
+              } else {
+                const numValue = typeof value === "string" ? Number(value) : value;
+                formData[fieldKey] =
+                  typeof numValue === "number" && !Number.isNaN(numValue) ? numValue : undefined;
+              }
             } else {
               // Convert all other values to strings
               if (Array.isArray(value)) {
@@ -472,6 +519,10 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             // Set default values for unmatched fields
             if (field.type === "checkbox") {
               formData[fieldKey] = [];
+            } else if (field.type === "milestone") {
+              formData[fieldKey] = [];
+            } else if (field.type === "number") {
+              formData[fieldKey] = undefined;
             } else {
               formData[fieldKey] = "";
             }
@@ -668,15 +719,76 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             <label htmlFor={fieldName} className={labelStyle}>
               {field.label} {field.required && <span className="text-red-500">*</span>}
             </label>
-            <input
-              type="number"
-              id={fieldName}
-              className={cn(inputStyle, error && "border-red-500 dark:border-red-500")}
-              placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
-              {...register(fieldKey)}
+            <Controller
+              name={fieldKey}
+              control={control}
+              render={({ field: { onChange, onBlur, value }, fieldState }) => {
+                // Convert number value to string for display in input
+                // HTML number inputs work with strings internally
+                const displayValue = value !== undefined && value !== null ? String(value) : "";
+
+                return (
+                  <input
+                    type="number"
+                    id={fieldName}
+                    className={cn(
+                      inputStyle,
+                      (error || fieldState.error) && "border-red-500 dark:border-red-500"
+                    )}
+                    placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
+                    value={displayValue}
+                    onChange={(e) => {
+                      const inputValue = e.target.value;
+                      // Convert empty string to undefined
+                      if (inputValue === "" || inputValue === null) {
+                        onChange(undefined);
+                        return;
+                      }
+                      // Convert string to number
+                      const numValue = Number(inputValue);
+                      // Only accept valid numbers (not NaN)
+                      // This prevents strings like "abc" from being stored
+                      if (!Number.isNaN(numValue)) {
+                        onChange(numValue);
+                      }
+                      // If NaN, don't update the form value
+                      // The input will still show what user typed, but form state stays valid
+                    }}
+                    onBlur={(e) => {
+                      // On blur, ensure final value is valid
+                      const inputValue = e.target.value;
+                      if (inputValue === "" || inputValue === null) {
+                        onChange(undefined);
+                      } else {
+                        const numValue = Number(inputValue);
+                        // If invalid on blur, set to undefined to trigger validation
+                        if (Number.isNaN(numValue)) {
+                          onChange(undefined);
+                        }
+                      }
+                      onBlur();
+                    }}
+                    min={field.validation?.min}
+                    max={field.validation?.max}
+                    data-field-id={field.id || fieldName}
+                  />
+                );
+              }}
             />
             {error && <p className="text-sm text-red-400 mt-1">{errorMessage}</p>}
           </div>
+        );
+
+      case "milestone":
+        return (
+          <MilestoneInput
+            key={index}
+            field={field}
+            control={control}
+            fieldKey={fieldKey}
+            error={error}
+            isLoading={isLoading || submitting}
+          />
         );
 
       default:

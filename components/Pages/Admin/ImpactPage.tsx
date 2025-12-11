@@ -4,12 +4,11 @@ import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/ka
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAccount } from "wagmi";
 import { CommunityImpactCharts } from "@/components/Pages/Communities/Impact/ImpactCharts";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useStaff } from "@/hooks/useStaff";
 import { zeroUID } from "@/utilities/commons";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
@@ -22,7 +21,6 @@ type Tab = "metrics" | "impact";
 
 export default function ProgramImpactPage() {
   const router = useRouter();
-  const { address } = useAccount();
   const params = useParams();
   const communityId = params.communityId as string;
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
@@ -31,8 +29,7 @@ export default function ProgramImpactPage() {
 
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: adminLoading } = useIsCommunityAdmin(
-    community?.uid,
-    address
+    community?.uid
   );
   const { isStaff, isLoading: isStaffLoading } = useStaff();
 

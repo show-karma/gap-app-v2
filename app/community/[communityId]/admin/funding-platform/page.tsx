@@ -25,9 +25,10 @@ import { CreateProgramModal } from "@/components/FundingPlatform/CreateProgramMo
 import { FundingPlatformStatsCard } from "@/components/FundingPlatform/Dashboard/card";
 import { Button } from "@/components/Utilities/Button";
 import { LoadingOverlay } from "@/components/Utilities/LoadingOverlay";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useStaff } from "@/hooks/useStaff";
 import { type FundingProgram, fundingPlatformService } from "@/services/fundingPlatformService";
 import { layoutTheme } from "@/src/helper/theme";
@@ -171,9 +172,10 @@ export default function FundingPlatformAdminPage() {
       const searchLower = searchTerm.toLowerCase();
       const matchesSearch =
         searchTerm === "" ||
-        program.name?.toLowerCase().includes(searchLower) ||
         program.metadata?.title?.toLowerCase().includes(searchLower) ||
+        program.name?.toLowerCase().includes(searchLower) ||
         program.metadata?.description?.toLowerCase().includes(searchLower) ||
+        program.metadata?.shortDescription?.toLowerCase().includes(searchLower) ||
         program.programId?.toLowerCase().includes(searchLower);
 
       // Enabled/Disabled filter
@@ -588,11 +590,15 @@ export default function FundingPlatformAdminPage() {
                 {/* Program Title and Description */}
                 <div className="mb-3">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 text-ellipsis line-clamp-2">
-                    {program.name || program.metadata?.title}
+                    {program.metadata?.title || program.name}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 overflow-hidden text-ellipsis line-clamp-2">
-                    {program.metadata?.description}
-                  </p>
+                  <MarkdownPreview
+                    source={
+                      program.metadata?.shortDescription ||
+                      (program.metadata?.description as string)
+                    }
+                    className="text-sm mb-3 overflow-hidden text-ellipsis line-clamp-2"
+                  />
                 </div>
 
                 {/* Compact Stats Row */}
@@ -623,7 +629,9 @@ export default function FundingPlatformAdminPage() {
                   <span className="text-orange-700 dark:text-orange-300">
                     Deadline:{" "}
                     {program.applicationConfig?.formSchema?.settings?.applicationDeadline
-                      ? formatDate(program.applicationConfig.formSchema.settings.applicationDeadline)
+                      ? formatDate(
+                          program.applicationConfig.formSchema.settings.applicationDeadline
+                        )
                       : "N/A"}
                   </span>
                 </div>

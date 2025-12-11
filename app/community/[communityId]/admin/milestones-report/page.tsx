@@ -2,11 +2,10 @@ import { notFound } from "next/navigation";
 import { ReportMilestonePage } from "@/components/Pages/Admin/ReportMilestonePage";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { zeroUID } from "@/utilities/commons";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultMetadata } from "@/utilities/meta";
-import { getCommunityData } from "@/utilities/queries/getCommunityData";
+import { getCommunityDetails } from "@/utilities/queries/v2/community";
 
 export const metadata = defaultMetadata;
 
@@ -30,10 +29,12 @@ const getGrantPrograms = async (communityId: string): Promise<GrantProgram[]> =>
 export default async function Page(props: Props) {
   const { communityId } = await props.params;
 
-  const community = await getCommunityData(communityId);
-  if (!community || community?.uid === zeroUID) {
+  const community = await getCommunityDetails(communityId);
+
+  if (!community) {
     notFound();
   }
+
   const grantPrograms = await getGrantPrograms(communityId);
 
   return <ReportMilestonePage community={community} grantPrograms={grantPrograms} />;
