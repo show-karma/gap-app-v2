@@ -4,6 +4,7 @@ import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { AIAnalysisTab } from "@/components/FundingPlatform/ApplicationView/AIAnalysisTab";
 import ApplicationHeader from "@/components/FundingPlatform/ApplicationView/ApplicationHeader";
@@ -135,9 +136,16 @@ export default function ApplicationDetailPage() {
     setIsUpdatingStatus(true);
     try {
       await handleStatusChange(pendingStatus, reason);
+      // Success: close modal and clear state
       setIsStatusModalOpen(false);
       setPendingStatus("");
+    } catch (error) {
+      // Error: keep modal open so user can retry
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update application status";
+      toast.error(errorMessage);
     } finally {
+      // Always clear loading state
       setIsUpdatingStatus(false);
     }
   };
