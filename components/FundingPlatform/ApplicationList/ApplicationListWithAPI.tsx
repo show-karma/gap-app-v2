@@ -225,12 +225,6 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     [sortBy, sortOrder]
   );
 
-  // Memoize reviewer assignment change callback to prevent unnecessary re-renders
-  const handleReviewerAssignmentChange = useCallback(() => {
-    // Refetch applications when reviewers are assigned
-    refetch();
-  }, [refetch]);
-
   // Show error state
   if (error) {
     return (
@@ -446,7 +440,6 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           showInternalAIScoreColumn={showInternalAIScoreColumn}
           programReviewers={programReviewers}
           milestoneReviewers={milestoneReviewers}
-          onReviewerAssignmentChange={handleReviewerAssignmentChange}
         />
       </InfiniteScroll>
     </div>
