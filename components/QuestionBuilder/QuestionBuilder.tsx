@@ -511,7 +511,7 @@ export function QuestionBuilder({
         />
         <MarkdownEditor
           value={currentSchema.description || ""}
-          onChange={(value: string) => handleDescriptionChange(value)}
+          onChange={(value?: string) => handleDescriptionChange(value ?? "")}
           className="text-sm bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-600 dark:text-gray-400 placeholder-gray-500"
           placeholderText="Form Description"
           height={100}
@@ -522,7 +522,7 @@ export function QuestionBuilder({
   };
 
   return (
-    <div className={`flex flex-col h-full${className}`}>
+    <div className={`flex flex-col h-full ${className}`.trim()}>
       {/* Header - Tabs only */}
       <div className="border-b border-gray-200 dark:border-gray-700 sm:px-3 md:px-4 px-6 py-2">
         <div className="flex flex-row flex-wrap bg-gray-100 dark:bg-gray-700 p-1 rounded-lg w-fit">
