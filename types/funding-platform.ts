@@ -78,7 +78,9 @@ export interface IFormSchema {
     applicationDeadline?: string;
     donationRound?: boolean;
     approvalEmailTemplate?: string; // Markdown/HTML template for approval emails with variable placeholders
+    approvalEmailSubject?: string; // Custom subject for approval emails with variable placeholders (e.g., {{programName}})
     rejectionEmailTemplate?: string; // Markdown/HTML template for rejection emails with variable placeholders
+    rejectionEmailSubject?: string; // Custom subject for rejection emails with variable placeholders (e.g., {{programName}})
   };
 }
 
