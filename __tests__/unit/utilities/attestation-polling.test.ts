@@ -3,19 +3,17 @@
  * @description Tests polling utilities for grant and milestone completion
  */
 
-import * as projectApiModule from "@/services/project.service";
 import { pollForGrantCompletion, pollForMilestoneStatus } from "@/utilities/attestation-polling";
 import * as retriesModule from "@/utilities/retries";
 
 // Mock dependencies
 jest.mock("@/utilities/retries");
-jest.mock("@/services/project.service", () => ({
-  getProjectData: jest.fn(),
+jest.mock("@/services/project-grants.service", () => ({
+  getProjectGrants: jest.fn(),
 }));
 
-const mockGetProjectData = projectApiModule.getProjectData as jest.MockedFunction<
-  typeof projectApiModule.getProjectData
->;
+const { getProjectGrants } = require("@/services/project-grants.service");
+const mockGetProjectGrants = getProjectGrants as jest.MockedFunction<typeof getProjectGrants>;
 
 const mockRetryUntilConditionMet = retriesModule.retryUntilConditionMet as jest.MockedFunction<
   typeof retriesModule.retryUntilConditionMet
@@ -39,10 +37,8 @@ describe("pollForGrantCompletion", () => {
         await conditionFn();
       });
 
-      const mockProject = {
-        grants: [{ uid: "grant-1", completed: { completedAt: Date.now() } }],
-      };
-      mockGetProjectData.mockResolvedValue(mockProject as any);
+      const mockGrants = [{ uid: "grant-1", completed: { completedAt: Date.now() } }];
+      mockGetProjectGrants.mockResolvedValue(mockGrants as any);
 
       await pollForGrantCompletion({
         gapClient: mockGapClient,
@@ -63,10 +59,8 @@ describe("pollForGrantCompletion", () => {
         await conditionFn();
       });
 
-      const mockProject = {
-        grants: [{ uid: "grant-1", completed: true }],
-      };
-      mockGetProjectData.mockResolvedValue(mockProject as any);
+      const mockGrants = [{ uid: "grant-1", completed: true }];
+      mockGetProjectGrants.mockResolvedValue(mockGrants as any);
 
       await pollForGrantCompletion({
         gapClient: mockGapClient,
@@ -89,10 +83,8 @@ describe("pollForGrantCompletion", () => {
         await conditionFn();
       });
 
-      const mockProject = {
-        grants: [{ uid: "grant-1", completed: true }],
-      };
-      mockGetProjectData.mockResolvedValue(mockProject as any);
+      const mockGrants = [{ uid: "grant-1", completed: true }];
+      mockGetProjectGrants.mockResolvedValue(mockGrants as any);
 
       await pollForGrantCompletion({
         gapClient: mockGapClient,
@@ -115,7 +107,7 @@ describe("pollForGrantCompletion", () => {
         await conditionFn();
       });
 
-      mockGetProjectData.mockResolvedValue(null as any);
+      mockGetProjectGrants.mockResolvedValue(null as any);
 
       await pollForGrantCompletion({
         gapClient: mockGapClient,
@@ -133,10 +125,8 @@ describe("pollForGrantCompletion", () => {
         await conditionFn();
       });
 
-      const mockProject = {
-        grants: [{ uid: "other-grant", completed: true }],
-      };
-      mockGetProjectData.mockResolvedValue(mockProject as any);
+      const mockGrants = [{ uid: "other-grant", completed: true }];
+      mockGetProjectGrants.mockResolvedValue(mockGrants as any);
 
       await pollForGrantCompletion({
         gapClient: mockGapClient,
@@ -154,10 +144,8 @@ describe("pollForGrantCompletion", () => {
         await conditionFn();
       });
 
-      const mockProject = {
-        grants: [{ uid: "grant-1", completed: null }],
-      };
-      mockGetProjectData.mockResolvedValue(mockProject as any);
+      const mockGrants = [{ uid: "grant-1", completed: null }];
+      mockGetProjectGrants.mockResolvedValue(mockGrants as any);
 
       await pollForGrantCompletion({
         gapClient: mockGapClient,
@@ -175,10 +163,8 @@ describe("pollForGrantCompletion", () => {
         await conditionFn();
       });
 
-      const mockProject = {
-        grants: [{ uid: "Grant-1", completed: true }],
-      };
-      mockGetProjectData.mockResolvedValue(mockProject as any);
+      const mockGrants = [{ uid: "Grant-1", completed: true }];
+      mockGetProjectGrants.mockResolvedValue(mockGrants as any);
 
       await pollForGrantCompletion({
         gapClient: mockGapClient,
@@ -210,20 +196,18 @@ describe("pollForMilestoneStatus", () => {
         await conditionFn();
       });
 
-      const mockProject = {
-        grants: [
-          {
-            details: { programId: "program-1" },
-            milestones: [
-              {
-                uid: "milestone-1",
-                verified: true,
-              },
-            ],
-          },
-        ],
-      };
-      mockGetProjectData.mockResolvedValue(mockProject as any);
+      const mockGrants = [
+        {
+          details: { programId: "program-1" },
+          milestones: [
+            {
+              uid: "milestone-1",
+              verified: [{ verifier: "0x123" }], // V2: verified is an array
+            },
+          ],
+        },
+      ];
+      mockGetProjectGrants.mockResolvedValue(mockGrants as any);
 
       await pollForMilestoneStatus({
         gapClient: mockGapClient,
@@ -244,20 +228,18 @@ describe("pollForMilestoneStatus", () => {
         await conditionFn();
       });
 
-      const mockProject = {
-        grants: [
-          {
-            details: { programId: "program-1" },
-            milestones: [
-              {
-                uid: "milestone-1",
-                verified: true,
-              },
-            ],
-          },
-        ],
-      };
-      mockGetProjectData.mockResolvedValue(mockProject as any);
+      const mockGrants = [
+        {
+          details: { programId: "program-1" },
+          milestones: [
+            {
+              uid: "milestone-1",
+              verified: [{ verifier: "0x123" }], // V2: verified is an array
+            },
+          ],
+        },
+      ];
+      mockGetProjectGrants.mockResolvedValue(mockGrants as any);
 
       await pollForMilestoneStatus({
         gapClient: mockGapClient,
@@ -280,21 +262,19 @@ describe("pollForMilestoneStatus", () => {
         await conditionFn();
       });
 
-      const mockProject = {
-        grants: [
-          {
-            details: { programId: "program-1" },
-            milestones: [
-              {
-                uid: "milestone-1",
-                completed: true,
-                verified: true,
-              },
-            ],
-          },
-        ],
-      };
-      mockGetProjectData.mockResolvedValue(mockProject as any);
+      const mockGrants = [
+        {
+          details: { programId: "program-1" },
+          milestones: [
+            {
+              uid: "milestone-1",
+              completed: true,
+              verified: [{ verifier: "0x123" }], // V2: verified is an array
+            },
+          ],
+        },
+      ];
+      mockGetProjectGrants.mockResolvedValue(mockGrants as any);
 
       await pollForMilestoneStatus({
         gapClient: mockGapClient,
@@ -315,21 +295,19 @@ describe("pollForMilestoneStatus", () => {
         await conditionFn();
       });
 
-      const mockProject = {
-        grants: [
-          {
-            details: { programId: "program-1" },
-            milestones: [
-              {
-                uid: "milestone-1",
-                completed: true,
-                verified: [],
-              },
-            ],
-          },
-        ],
-      };
-      mockGetProjectData.mockResolvedValue(mockProject as any);
+      const mockGrants = [
+        {
+          details: { programId: "program-1" },
+          milestones: [
+            {
+              uid: "milestone-1",
+              completed: true,
+              verified: [],
+            },
+          ],
+        },
+      ];
+      mockGetProjectGrants.mockResolvedValue(mockGrants as any);
 
       await pollForMilestoneStatus({
         gapClient: mockGapClient,
@@ -350,21 +328,19 @@ describe("pollForMilestoneStatus", () => {
         await conditionFn();
       });
 
-      const mockProject = {
-        grants: [
-          {
-            details: { programId: "program-1" },
-            milestones: [
-              {
-                uid: "milestone-1",
-                completed: false,
-                verified: true,
-              },
-            ],
-          },
-        ],
-      };
-      mockGetProjectData.mockResolvedValue(mockProject as any);
+      const mockGrants = [
+        {
+          details: { programId: "program-1" },
+          milestones: [
+            {
+              uid: "milestone-1",
+              completed: false,
+              verified: [{ verifier: "0x123" }], // V2: verified is an array
+            },
+          ],
+        },
+      ];
+      mockGetProjectGrants.mockResolvedValue(mockGrants as any);
 
       await pollForMilestoneStatus({
         gapClient: mockGapClient,
@@ -387,7 +363,7 @@ describe("pollForMilestoneStatus", () => {
         await conditionFn();
       });
 
-      mockGetProjectData.mockResolvedValue(null as any);
+      mockGetProjectGrants.mockResolvedValue([] as any);
 
       await pollForMilestoneStatus({
         gapClient: mockGapClient,
@@ -408,10 +384,8 @@ describe("pollForMilestoneStatus", () => {
         await conditionFn();
       });
 
-      const mockProject = {
-        grants: [{ details: { programId: "other-program" } }],
-      };
-      mockGetProjectData.mockResolvedValue(mockProject as any);
+      const mockGrants = [{ details: { programId: "other-program" } }];
+      mockGetProjectGrants.mockResolvedValue(mockGrants as any);
 
       await pollForMilestoneStatus({
         gapClient: mockGapClient,
@@ -432,15 +406,13 @@ describe("pollForMilestoneStatus", () => {
         await conditionFn();
       });
 
-      const mockProject = {
-        grants: [
-          {
-            details: { programId: "program-1" },
-            milestones: [{ uid: "other-milestone" }],
-          },
-        ],
-      };
-      mockGetProjectData.mockResolvedValue(mockProject as any);
+      const mockGrants = [
+        {
+          details: { programId: "program-1" },
+          milestones: [{ uid: "other-milestone" }],
+        },
+      ];
+      mockGetProjectGrants.mockResolvedValue(mockGrants as any);
 
       await pollForMilestoneStatus({
         gapClient: mockGapClient,
@@ -463,20 +435,18 @@ describe("pollForMilestoneStatus", () => {
         await conditionFn();
       });
 
-      const mockProject = {
-        grants: [
-          {
-            details: { programId: "program-1" },
-            milestones: [
-              {
-                uid: "milestone-1",
-                verified: true,
-              },
-            ],
-          },
-        ],
-      };
-      mockGetProjectData.mockResolvedValue(mockProject as any);
+      const mockGrants = [
+        {
+          details: { programId: "program-1" },
+          milestones: [
+            {
+              uid: "milestone-1",
+              verified: [{ verifier: "0x123" }], // V2: verified is an array
+            },
+          ],
+        },
+      ];
+      mockGetProjectGrants.mockResolvedValue(mockGrants as any);
 
       await pollForMilestoneStatus({
         gapClient: mockGapClient,
