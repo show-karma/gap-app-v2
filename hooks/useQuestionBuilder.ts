@@ -110,9 +110,11 @@ function createFormSchemaHook(
         });
         toast.success(successMessage);
       },
-      onError: (error) => {
+      onError: (error: any) => {
         console.error(`Failed to save ${schemaType} schema:`, error);
-        toast.error(errorMessage);
+        // Extract specific error message from API response (e.g., validation errors)
+        const apiErrorMessage = error.response?.data?.message;
+        toast.error(apiErrorMessage || errorMessage);
       },
     });
 
