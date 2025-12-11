@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { CommunityDetailsResponse } from "@/types/v2/community";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 interface UseCommunityDetailsOptions {
   enabled?: boolean;
@@ -34,7 +35,7 @@ export const useCommunityDetails = (
   options?: UseCommunityDetailsOptions
 ) => {
   const query = useQuery<CommunityDetailsResponse | null, Error>({
-    queryKey: ["community-details-v2", communityUIDorSlug],
+    queryKey: QUERY_KEYS.COMMUNITY.DETAILS_V2(communityUIDorSlug),
     queryFn: () => getCommunityDetails(communityUIDorSlug!),
     enabled: !!communityUIDorSlug && options?.enabled !== false,
     staleTime: 5 * 60 * 1000, // 5 minutes

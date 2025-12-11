@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { type UnifiedSearchResponse, unifiedSearch } from "@/services/unified-search.service";
+import type { Community } from "@/types/v2/community";
 import { groupSimilarCommunities } from "@/utilities/communityHelpers";
 import { PAGES } from "@/utilities/pages";
 
@@ -84,7 +85,7 @@ export function NavbarSearch({ onSelectItem }: NavbarSearchProps = {}) {
     onSelectItem?.();
   };
 
-  const groupedCommunities = groupSimilarCommunities(results.communities);
+  const groupedCommunities = groupSimilarCommunities(results.communities as Community[]);
   const totalResults = results.projects.length + groupedCommunities.length;
 
   return (

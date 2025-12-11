@@ -121,7 +121,7 @@ export const SearchList: React.FC<Props> = ({
     );
   };
 
-  const groupedCommunities = groupSimilarCommunities(data.communities);
+  const groupedCommunities = groupSimilarCommunities(data.communities as Community[]);
 
   return (
     isOpen && (
@@ -146,7 +146,7 @@ export const SearchList: React.FC<Props> = ({
         {data.projects.length > 0 &&
           data.projects.map((project) =>
             renderItem(
-              project,
+              project as ProjectResponse,
               project.details?.title || "Untitled Project",
               PAGES.PROJECT.GRANTS(project.details?.slug || project.uid),
               "project"

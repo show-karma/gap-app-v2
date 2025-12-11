@@ -24,17 +24,33 @@ export interface ProjectTrack {
   createdAt: string;
 }
 
-// V2 API response types
+// API response types (dates are strings from API)
+interface TrackAPIResponse {
+  id: string;
+  name: string;
+  description?: string | null;
+  communityUID: string;
+  isArchived: boolean;
+  createdAt: string;
+  updatedAt: string;
+  programId?: string;
+  isActive?: boolean;
+}
+
 interface GetTracksV2Response {
-  tracks: Track[];
+  tracks: TrackAPIResponse[];
 }
 
 interface GetProjectTracksV2Response {
   tracks: ProjectTrack[];
 }
 
+interface ProjectByTrackAPIResponse {
+  projects: unknown[];
+}
+
 // Helper to map track from API response
-const mapTrackResponse = (track: any): Track => ({
+const mapTrackResponse = (track: TrackAPIResponse): Track => ({
   ...track,
   createdAt: new Date(track.createdAt),
   updatedAt: new Date(track.updatedAt),
@@ -62,7 +78,7 @@ export const trackService = {
       }
 
       return (data.tracks || []).map(mapTrackResponse);
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorManager("Error fetching tracks", error);
       throw error;
     }
@@ -86,7 +102,7 @@ export const trackService = {
       }
 
       return (data.tracks || []).map(mapTrackResponse);
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorManager(`Error fetching tracks for program ${programId}`, error);
       throw error;
     }
@@ -95,7 +111,7 @@ export const trackService = {
   // Create a new track (V2)
   createTrack: async (name: string, description: string, communityUID: string): Promise<Track> => {
     try {
-      const [data, error] = await fetchData<Track>(
+      const [data, error] = await fetchData<TrackAPIResponse>(
         INDEXER.V2.TRACKS.CREATE(),
         "POST",
         {
@@ -114,7 +130,7 @@ export const trackService = {
       }
 
       return mapTrackResponse(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorManager("Error creating track", error);
       throw error;
     }
@@ -128,7 +144,7 @@ export const trackService = {
     _communityUID?: string // Not needed for V2
   ): Promise<Track> => {
     try {
-      const [data, error] = await fetchData<Track>(
+      const [data, error] = await fetchData<TrackAPIResponse>(
         INDEXER.V2.TRACKS.UPDATE(id),
         "PUT",
         {
@@ -146,7 +162,7 @@ export const trackService = {
       }
 
       return mapTrackResponse(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorManager("Error updating track", error);
       throw error;
     }
@@ -155,7 +171,7 @@ export const trackService = {
   // Archive a track (V2)
   archiveTrack: async (id: string, _communityUID?: string): Promise<Track> => {
     try {
-      const [data, error] = await fetchData<Track>(
+      const [data, error] = await fetchData<TrackAPIResponse>(
         INDEXER.V2.TRACKS.ARCHIVE(id),
         "DELETE",
         {},
@@ -170,7 +186,7 @@ export const trackService = {
       }
 
       return mapTrackResponse(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorManager("Error archiving track", error);
       throw error;
     }
@@ -196,7 +212,7 @@ export const trackService = {
       if (error) {
         throw new Error(error);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorManager("Error assigning tracks to program", error);
       throw error;
     }
@@ -222,7 +238,7 @@ export const trackService = {
       if (error) {
         throw new Error(error);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorManager("Error removing track from program", error);
       throw error;
     }
@@ -249,7 +265,7 @@ export const trackService = {
           )
         )
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorManager("Error removing tracks from program in batch", error);
       throw error;
     }
@@ -273,7 +289,7 @@ export const trackService = {
       }
 
       return data.tracks || [];
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorManager(`Error fetching tracks for project ${projectId}`, error);
       throw error;
     }
@@ -300,7 +316,7 @@ export const trackService = {
       if (error) {
         throw new Error(error);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorManager("Error assigning tracks to project", error);
       throw error;
     }
@@ -326,7 +342,7 @@ export const trackService = {
       if (error) {
         throw new Error(error);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorManager("Error unassigning tracks from project", error);
       throw error;
     }
@@ -337,9 +353,9 @@ export const trackService = {
     communityId: string,
     programId: string,
     trackId?: string
-  ): Promise<any[]> => {
+  ): Promise<unknown[]> => {
     try {
-      const [data, error] = await fetchData(
+      const [data, error] = await fetchData<ProjectByTrackAPIResponse>(
         INDEXER.V2.TRACKS.PROJECTS_BY_TRACK(communityId, programId, trackId),
         "GET",
         {},
@@ -354,7 +370,7 @@ export const trackService = {
       }
 
       return data.projects || [];
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorManager("Error fetching projects by track", error);
       throw error;
     }

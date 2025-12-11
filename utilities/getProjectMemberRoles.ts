@@ -47,7 +47,6 @@ export const getProjectMemberRoles = async (project: ProjectResponse, projectIns
   if (project?.owner && !roles[project.owner.toLowerCase()]) {
     roles[project.owner.toLowerCase()] = "Owner";
   }
-  console.log("roles", roles);
 
   return roles;
 };

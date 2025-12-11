@@ -28,6 +28,10 @@ export const QUERY_KEYS = {
   },
   COMMUNITY: {
     DETAILS: (communityUIDorSlug?: string) => ["communityDetails", communityUIDorSlug] as const,
+    DETAILS_V2: (communityUIDorSlug?: string) =>
+      ["community-details-v2", communityUIDorSlug] as const,
+    PROJECTS: (slug: string, options?: unknown) =>
+      ["community-projects-v2", slug, options] as const,
     IS_ADMIN: (
       communityUid?: string,
       chainId?: number,

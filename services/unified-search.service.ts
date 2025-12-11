@@ -9,9 +9,31 @@ import type { ProjectResponse } from "@/types/v2/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
+/**
+ * Search result types - these represent the minimal data returned from search
+ * They are compatible with the full ProjectResponse and Community types
+ */
+export type SearchProjectResult = Pick<ProjectResponse, "uid" | "chainID" | "createdAt"> & {
+  details: {
+    title?: string;
+    slug?: string;
+    description?: string;
+    logoUrl?: string;
+  };
+};
+
+export type SearchCommunityResult = Pick<Community, "uid" | "chainID" | "createdAt"> & {
+  details: {
+    name?: string;
+    slug?: string;
+    description?: string;
+    imageURL?: string;
+  };
+};
+
 export interface UnifiedSearchResponse {
-  projects: ProjectResponse[];
-  communities: Community[];
+  projects: SearchProjectResult[];
+  communities: SearchCommunityResult[];
 }
 
 interface UnifiedSearchApiResponse {
@@ -49,7 +71,7 @@ const transformSearchResponse = (apiResponse: UnifiedSearchApiResponse): Unified
 
   return {
     projects: projects.map((p) => ({
-      uid: p.uid,
+      uid: p.uid as `0x${string}`,
       chainID: p.chainID,
       details: {
         title: p.title || undefined,
@@ -58,9 +80,9 @@ const transformSearchResponse = (apiResponse: UnifiedSearchApiResponse): Unified
         logoUrl: p.logoUrl || undefined,
       },
       createdAt: p.createdAt,
-    })) as ProjectResponse[],
+    })),
     communities: communities.map((c) => ({
-      uid: c.uid,
+      uid: c.uid as `0x${string}`,
       chainID: c.chainID,
       details: {
         name: c.name || undefined,
@@ -69,7 +91,7 @@ const transformSearchResponse = (apiResponse: UnifiedSearchApiResponse): Unified
         imageURL: c.imageUrl || undefined,
       },
       createdAt: c.createdAt,
-    })) as Community[],
+    })),
   };
 };
 
@@ -91,7 +113,10 @@ export const unifiedSearch = async (
   const [data, error] = await fetchData<UnifiedSearchApiResponse>(INDEXER.V2.SEARCH(query, limit));
 
   if (error || !data) {
-    errorManager(`Error in unified search: ${error}`, error);
+    errorManager(
+      `Error in unified search for query "${query}" with limit ${limit}: ${error}`,
+      error
+    );
     return { projects: [], communities: [] };
   }
 

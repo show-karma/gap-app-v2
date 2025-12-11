@@ -109,9 +109,9 @@ export const pollForMilestoneStatus = async ({
       const updatedMilestone = updatedGrant.milestones?.find((m) => m.uid === milestoneUid);
       if (!updatedMilestone) return false;
 
-      // V2: verified is an array of verifications
-      const isVerified =
-        Array.isArray(updatedMilestone.verified) && updatedMilestone.verified.length > 0;
+      const isVerified = updatedMilestone.verified?.find(
+        (v) => v.attester?.toLowerCase() === userAddress.toLowerCase()
+      );
 
       // If checking completion, ensure both are indexed
       if (checkCompletion) {
