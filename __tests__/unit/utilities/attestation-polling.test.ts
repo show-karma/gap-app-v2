@@ -202,7 +202,7 @@ describe("pollForMilestoneStatus", () => {
           milestones: [
             {
               uid: "milestone-1",
-              verified: [{ verifier: "0x123" }], // V2: verified is an array
+              verified: [{ attester: "0x123" }], // V2: verified is an array
             },
           ],
         },
@@ -234,7 +234,7 @@ describe("pollForMilestoneStatus", () => {
           milestones: [
             {
               uid: "milestone-1",
-              verified: [{ verifier: "0x123" }], // V2: verified is an array
+              verified: [{ attester: "0x123" }], // V2: verified is an array
             },
           ],
         },
@@ -269,7 +269,7 @@ describe("pollForMilestoneStatus", () => {
             {
               uid: "milestone-1",
               completed: true,
-              verified: [{ verifier: "0x123" }], // V2: verified is an array
+              verified: [{ attester: "0x123" }], // V2: verified is an array
             },
           ],
         },
@@ -335,7 +335,7 @@ describe("pollForMilestoneStatus", () => {
             {
               uid: "milestone-1",
               completed: false,
-              verified: [{ verifier: "0x123" }], // V2: verified is an array
+              verified: [{ attester: "0x123" }], // V2: verified is an array
             },
           ],
         },
@@ -441,7 +441,7 @@ describe("pollForMilestoneStatus", () => {
           milestones: [
             {
               uid: "milestone-1",
-              verified: [{ verifier: "0x123" }], // V2: verified is an array
+              verified: [{ attester: "0x123" }], // V2: verified is an array
             },
           ],
         },
