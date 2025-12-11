@@ -148,8 +148,8 @@ export function SettingsConfiguration({
               className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Set a deadline for when applications will no longer be accepted. The deadline will be
-              saved in UTC. Leave empty for no deadline.
+              Set a deadline for when applications will no longer be accepted. Leave empty for no
+              deadline.
             </p>
           </div>
 
