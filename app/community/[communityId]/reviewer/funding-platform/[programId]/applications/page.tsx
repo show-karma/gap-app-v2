@@ -6,9 +6,9 @@ import { useMemo } from "react";
 import { ApplicationListWithAPI } from "@/components/FundingPlatform";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useCommunityAdminAccess } from "@/hooks/communities";
 import { useApplication, useApplicationStatus } from "@/hooks/useFundingPlatform";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useStaff } from "@/hooks/useStaff";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
 import { layoutTheme } from "@/src/helper/theme";
 import type { IFundingApplication } from "@/types/funding-platform";
@@ -66,7 +66,7 @@ export default function ReviewerApplicationsPage() {
     action: "read",
   });
 
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { hasAccess, isLoading: isLoadingAdmin } = useCommunityAdminAccess(communityId);
 
   // Reviewers with view permission can comment (used in ApplicationListWithAPI internally)
   // const canComment = canView; // Not directly used here but reviewers can comment in the application detail view
@@ -100,7 +100,7 @@ export default function ReviewerApplicationsPage() {
     return Promise.reject(new Error("Reviewers cannot change application status"));
   };
 
-  if (isLoadingPermission || isStaffLoading) {
+  if (isLoadingPermission || isLoadingAdmin) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />
@@ -108,7 +108,7 @@ export default function ReviewerApplicationsPage() {
     );
   }
 
-  if (!canView && !isStaff) {
+  if (!canView && !hasAccess) {
     return (
       <div className={layoutTheme.padding}>
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">

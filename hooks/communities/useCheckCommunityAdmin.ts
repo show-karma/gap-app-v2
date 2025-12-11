@@ -51,8 +51,6 @@ export const useCheckCommunityAdmin = (
       return await isCommunityAdminOf(community, checkAddress, signer);
     },
     enabled: !!community && !!checkAddress && !!isAuth && options?.enabled !== false,
-    staleTime: 1000 * 60 * 1, // 1 minute
-    gcTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     refetchOnReconnect: false,
