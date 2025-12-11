@@ -483,3 +483,10 @@ body .react-hot-toast * {
 .markdown-editor-wrapper .w-md-editor-text textarea {
   padding-right: 0.5rem !important;
 }
+
+/* Remove default Tailwind forms plugin focus ring from MarkdownEditor textarea */
+.markdown-editor-wrapper .w-md-editor-text-input:focus {
+  --tw-ring-color: transparent;
+  border-color: inherit;
+  box-shadow: none;
+}
