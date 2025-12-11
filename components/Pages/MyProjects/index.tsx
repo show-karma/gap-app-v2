@@ -105,21 +105,13 @@ export default function MyProjects() {
               <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">My Projects</h1>
               <ProjectDialog
                 buttonElement={{
-                  icon: (
-                    <img
-                      className="h-5 w-5 text-white"
-                      alt="Create"
-                      src="/icons/arrow-right-2.svg"
-                    />
-                  ),
-                  iconSide: "right",
                   text: "Create Project",
                   styleClass:
                     "flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-2 bg-brand-darkblue dark:bg-gray-700 px-5 py-2.5 text-base font-semibold text-white hover:bg-brand-darkblue",
                 }}
               />
             </div>
-          {isLoading ? (
+            {isLoading ? (
               <div className="flex flex-col gap-4 justify-start">
                 <div className="grid grid-cols-4 gap-7 pb-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
                   {loadingArray.map((item) => (
