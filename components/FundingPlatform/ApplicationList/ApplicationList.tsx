@@ -262,7 +262,11 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                     {formatDate(application.updatedAt)}
                   </td>
                   {showAppReviewersColumn && (
-                    <td className="px-4 py-4 text-sm">
+                    <td
+                      className="px-4 py-4 text-sm"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
                       <ReviewerAssignmentDropdown
                         applicationId={application.referenceNumber}
                         availableReviewers={programReviewers}
@@ -273,7 +277,11 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                     </td>
                   )}
                   {showMilestoneReviewersColumn && (
-                    <td className="px-4 py-4 text-sm">
+                    <td
+                      className="px-4 py-4 text-sm"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
                       <ReviewerAssignmentDropdown
                         applicationId={application.referenceNumber}
                         availableReviewers={milestoneReviewers}
