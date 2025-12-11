@@ -211,10 +211,11 @@ export default function ReviewerApplicationDetailPage() {
                   View and verify milestone completions for this approved application
                 </p>
               </div>
-              <Link href={milestoneReviewUrl}>
-                <Button className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white">
-                  View Milestones
-                </Button>
+              <Link
+                href={milestoneReviewUrl}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium transition-colors"
+              >
+                View Milestones
               </Link>
             </div>
           </div>

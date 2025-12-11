@@ -244,16 +244,8 @@ describe("ApplicationTab", () => {
   });
 
   describe("View Mode Control", () => {
-    it("calls onViewModeChange when controlled", async () => {
+    it("renders correctly with controlled viewMode prop", () => {
       const mockOnViewModeChange = jest.fn();
-
-      // Mock versions to enable toggle
-      jest.doMock("@/hooks/useFundingPlatform", () => ({
-        useApplicationVersions: () => ({
-          versions: [{ id: "v1", version: 1 }],
-          isLoading: false,
-        }),
-      }));
 
       render(
         <ApplicationTab
@@ -264,7 +256,6 @@ describe("ApplicationTab", () => {
         />
       );
 
-      // Component should render without errors
       expect(screen.getByTestId("application-data-view")).toBeInTheDocument();
     });
   });

@@ -18,6 +18,7 @@ import { DiscussionTab } from "@/components/FundingPlatform/ApplicationView/Disc
 import EditApplicationModal from "@/components/FundingPlatform/ApplicationView/EditApplicationModal";
 import HeaderActions from "@/components/FundingPlatform/ApplicationView/HeaderActions";
 import MoreActionsDropdown from "@/components/FundingPlatform/ApplicationView/MoreActionsDropdown";
+import StatusChangeModal from "@/components/FundingPlatform/ApplicationView/StatusChangeModal";
 import { TabPanel } from "@/components/FundingPlatform/ApplicationView/TabPanel";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -71,6 +72,11 @@ export default function ApplicationDetailPage() {
   // Edit modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+  // Status change modal state
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState("");
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
   // Fetch application data
   const {
     application,
@@ -116,10 +122,32 @@ export default function ApplicationDetailPage() {
     });
   };
 
-  // Handle status change click (opens modal)
+  // Handle status change click - opens confirmation modal
   const handleStatusChangeClick = (status: string) => {
-    // Pass to ApplicationContent which handles the modal
-    handleStatusChange(status);
+    setPendingStatus(status);
+    setIsStatusModalOpen(true);
+  };
+
+  // Handle status change confirmation from modal
+  const handleStatusChangeConfirm = async (reason?: string) => {
+    if (!pendingStatus) return;
+
+    setIsUpdatingStatus(true);
+    try {
+      await handleStatusChange(pendingStatus, reason);
+      setIsStatusModalOpen(false);
+      setPendingStatus("");
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  // Handle status modal close
+  const handleStatusModalClose = () => {
+    if (!isUpdatingStatus) {
+      setIsStatusModalOpen(false);
+      setPendingStatus("");
+    }
   };
 
   // Handle comment operations
@@ -268,7 +296,7 @@ export default function ApplicationDetailPage() {
               <HeaderActions
                 currentStatus={application.status as any}
                 onStatusChange={handleStatusChangeClick}
-                isUpdating={false}
+                isUpdating={isUpdatingStatus}
               />
             ) : undefined
           }
@@ -296,10 +324,11 @@ export default function ApplicationDetailPage() {
                   View and verify milestone completions for this approved application
                 </p>
               </div>
-              <Link href={milestoneReviewUrl}>
-                <Button className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white">
-                  View Milestones
-                </Button>
+              <Link
+                href={milestoneReviewUrl}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium transition-colors"
+              >
+                View Milestones
               </Link>
             </div>
           </div>
@@ -388,6 +417,16 @@ export default function ApplicationDetailPage() {
           onSuccess={handleEditSuccess}
         />
       )}
+
+      {/* Status Change Modal */}
+      <StatusChangeModal
+        isOpen={isStatusModalOpen}
+        onClose={handleStatusModalClose}
+        onConfirm={handleStatusChangeConfirm}
+        status={pendingStatus}
+        isSubmitting={isUpdatingStatus}
+        isReasonRequired={pendingStatus === "revision_requested" || pendingStatus === "rejected"}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowPathIcon,
   ChatBubbleLeftRightIcon,
   CheckCircleIcon,
   ClockIcon,
@@ -78,6 +79,11 @@ const statusConfig = {
     color: "text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900",
     label: "Rejected",
   },
+  resubmitted: {
+    icon: ArrowPathIcon,
+    color: "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900",
+    label: "Resubmitted",
+  },
 };
 
 const labelMap = {
@@ -86,6 +92,7 @@ const labelMap = {
   revision_requested: "Revision Requested",
   approved: "Approved",
   rejected: "Rejected",
+  resubmitted: "Resubmitted",
 };
 
 /**

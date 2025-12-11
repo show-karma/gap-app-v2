@@ -330,7 +330,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
     }
 
     return (
-      <div className="space-y-5">
+      <dl className="space-y-5">
         {Object.entries(dataToRender).map(([key, value]) => (
           <div key={key} className="border-b border-gray-100 dark:border-gray-700 pb-4">
             <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
@@ -341,7 +341,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
             </dd>
           </div>
         ))}
-      </div>
+      </dl>
     );
   };
 
