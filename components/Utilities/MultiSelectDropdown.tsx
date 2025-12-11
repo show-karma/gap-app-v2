@@ -11,7 +11,7 @@ import { cn } from "@/utilities/tailwind";
 export interface DropdownItem {
   id: string;
   label: string;
-  value?: any;
+  value?: unknown;
 }
 
 interface MultiSelectDropdownProps {
@@ -25,6 +25,7 @@ interface MultiSelectDropdownProps {
   disabled?: boolean;
   required?: boolean;
   error?: string;
+  isLoading?: boolean; // Optional loading state prop
 }
 
 export const MultiSelectDropdown = ({
@@ -38,10 +39,20 @@ export const MultiSelectDropdown = ({
   disabled = false,
   required = false,
   error,
+  isLoading = false,
 }: MultiSelectDropdownProps) => {
+  const isDisabled = disabled || isLoading;
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Maintain local state for selected IDs to handle rapid clicks
+  // Sync with prop when it changes
+  const [localSelectedIds, setLocalSelectedIds] = useState<string[]>(selectedIds);
+
+  useEffect(() => {
+    setLocalSelectedIds(selectedIds);
+  }, [selectedIds]);
 
   // Filter items based on search term
   const filteredItems = items.filter((item) =>
@@ -62,32 +73,55 @@ export const MultiSelectDropdown = ({
     };
   }, []);
 
+  // Close dropdown when loading starts
+  useEffect(() => {
+    if (isLoading && isOpen) {
+      setIsOpen(false);
+    }
+  }, [isLoading, isOpen]);
+
   // Toggle an item selection
   const toggleItem = (id: string) => {
-    if (selectedIds.includes(id)) {
-      onChange(selectedIds.filter((selectedId) => selectedId !== id));
-    } else {
-      onChange([...selectedIds, id]);
-    }
+    if (isDisabled) return;
+    const newSelectedIds = localSelectedIds.includes(id)
+      ? localSelectedIds.filter((selectedId) => selectedId !== id)
+      : [...localSelectedIds, id];
+
+    // Update local state immediately for responsive UI
+    setLocalSelectedIds(newSelectedIds);
+    // Notify parent
+    onChange(newSelectedIds);
   };
 
   // Remove a selected item
   const removeItem = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    onChange(selectedIds.filter((selectedId) => selectedId !== id));
+    if (!isDisabled) {
+      const newSelectedIds = localSelectedIds.filter((selectedId) => selectedId !== id);
+      setLocalSelectedIds(newSelectedIds);
+      onChange(newSelectedIds);
+    }
   };
 
   // Clear all selected items
   const clearAll = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onChange([]);
+    if (!isDisabled) {
+      setLocalSelectedIds([]);
+      onChange([]);
+    }
   };
 
   // Get selected item labels for display
-  const selectedItems = items.filter((item) => selectedIds.includes(item.id));
+  const selectedItems = items.filter((item) => localSelectedIds.includes(item.id));
 
   return (
-    <div className={`relative w-full ${className}`} ref={dropdownRef}>
+    // biome-ignore lint/a11y/noStaticElementInteractions: This div only stops event propagation, it's not interactive
+    <div
+      className={`relative w-full ${className}`}
+      ref={dropdownRef}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
       {label && (
         <div className="block text-sm font-bold text-black dark:text-zinc-100 mb-1">
           {label} {required && <span className="text-red-500">*</span>}
@@ -98,12 +132,12 @@ export const MultiSelectDropdown = ({
         type="button"
         className={cn(
           "relative flex min-h-[40px] w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-left text-sm outline-none transition-all dark:border-zinc-700 dark:bg-zinc-800",
-          isOpen && "border-brand-blue dark:border-brand-blue",
+          isOpen && !isDisabled && "border-brand-blue dark:border-brand-blue",
           error && "border-red-500 dark:border-red-500",
-          disabled && "cursor-not-allowed opacity-50"
+          isDisabled && "cursor-not-allowed opacity-50"
         )}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
+        onClick={() => !isDisabled && setIsOpen(!isOpen)}
+        disabled={isDisabled}
       >
         <div className="flex flex-wrap gap-1">
           {selectedItems.length > 0 ? (
@@ -114,7 +148,12 @@ export const MultiSelectDropdown = ({
               >
                 <span>{item.label}</span>
                 <XMarkIcon
-                  className="h-3 w-3 cursor-pointer text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  className={cn(
+                    "h-3 w-3 text-gray-500 dark:text-zinc-400",
+                    isDisabled
+                      ? "cursor-not-allowed opacity-50"
+                      : "cursor-pointer hover:text-gray-700 dark:hover:text-zinc-200"
+                  )}
                   onClick={(e) => removeItem(item.id, e)}
                 />
               </div>
@@ -124,25 +163,40 @@ export const MultiSelectDropdown = ({
           )}
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           {selectedItems.length > 0 && (
             <button
               type="button"
               onClick={clearAll}
-              className="text-xs text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+              onMouseDown={(e) => e.stopPropagation()} // Prevent dropdown from opening when clicking Clear
+              disabled={isDisabled}
+              className={cn(
+                "text-xs px-2 py-1 rounded-md font-medium transition-all",
+                isDisabled
+                  ? "text-gray-400 dark:text-zinc-600 cursor-not-allowed bg-gray-100 dark:bg-zinc-800"
+                  : "text-gray-700 dark:text-zinc-300 bg-gray-100 hover:bg-gray-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 border border-gray-200 dark:border-zinc-600"
+              )}
+              title="Clear all selections"
             >
               Clear
             </button>
           )}
+          {isLoading && (
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 dark:border-zinc-600 dark:border-t-zinc-300 flex-shrink-0" />
+          )}
           <ChevronDownIcon
-            className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+            className={cn(
+              "h-4 w-4 transition-transform flex-shrink-0",
+              isOpen && "rotate-180",
+              isDisabled && "opacity-50"
+            )}
           />
         </div>
       </button>
 
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
 
-      {isOpen && !disabled && (
+      {isOpen && !isDisabled && (
         <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
           <div className="p-2">
             <div className="relative">
@@ -164,13 +218,17 @@ export const MultiSelectDropdown = ({
                   type="button"
                   key={item.id}
                   className={cn(
-                    "w-full flex cursor-pointer items-center justify-between rounded-md px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 bg-transparent border-none text-left",
-                    selectedIds.includes(item.id) && "bg-gray-100 dark:bg-zinc-700"
+                    "w-full flex items-center justify-between rounded-md px-3 py-2 text-sm bg-transparent border-none text-left mb-1 last:mb-0",
+                    isDisabled
+                      ? "cursor-not-allowed opacity-50"
+                      : "cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700",
+                    localSelectedIds.includes(item.id) && "bg-gray-100 dark:bg-zinc-700"
                   )}
                   onClick={() => toggleItem(item.id)}
+                  disabled={isDisabled}
                 >
                   <span>{item.label}</span>
-                  {selectedIds.includes(item.id) && (
+                  {localSelectedIds.includes(item.id) && (
                     <CheckIcon className="h-4 w-4 text-brand-blue" />
                   )}
                 </button>

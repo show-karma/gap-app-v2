@@ -3,6 +3,8 @@
 import { type FC, useState } from "react";
 import SortableTableHeader from "@/components/Utilities/SortableTableHeader";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
+import type { MilestoneReviewer } from "@/services/milestone-reviewers.service";
+import type { ProgramReviewer } from "@/services/program-reviewers.service";
 import type { IApplicationListProps, IFundingApplication } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
@@ -10,6 +12,7 @@ import StatusChangeModal from "../ApplicationView/StatusChangeModal";
 import { formatAIScore } from "../helper/getAIScore";
 import { formatInternalAIScore } from "../helper/getInternalAIScore";
 import { getProjectTitle } from "../helper/getProjecTitle";
+import { ReviewerAssignmentDropdown } from "./ReviewerAssignmentDropdown";
 import { TableStatusActionButtons } from "./TableStatusActionButtons";
 
 interface IApplicationListComponentProps extends IApplicationListProps {
@@ -23,6 +26,9 @@ interface IApplicationListComponentProps extends IApplicationListProps {
   onSortChange?: (sortBy: string) => void;
   showAIScoreColumn?: boolean;
   showInternalAIScoreColumn?: boolean;
+  programReviewers?: ProgramReviewer[];
+  milestoneReviewers?: MilestoneReviewer[];
+  onReviewerAssignmentChange?: () => void;
 }
 
 const statusColors = {
@@ -53,6 +59,9 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   onSortChange,
   showAIScoreColumn = false,
   showInternalAIScoreColumn = false,
+  programReviewers = [],
+  milestoneReviewers = [],
+  onReviewerAssignmentChange,
 }) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
@@ -184,6 +193,12 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                   currentSortDirection={sortOrder}
                   onSort={onSortChange}
                 />
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                  App Reviewers
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                  Milestone Reviewers
+                </th>
                 {showStatusActions && (
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                     Actions
@@ -236,6 +251,24 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                     {formatDate(application.updatedAt)}
+                  </td>
+                  <td className="px-4 py-4 text-sm">
+                    <ReviewerAssignmentDropdown
+                      applicationId={application.referenceNumber}
+                      availableReviewers={programReviewers}
+                      assignedReviewerAddresses={application.appReviewers || []}
+                      reviewerType="app"
+                      onAssignmentChange={onReviewerAssignmentChange}
+                    />
+                  </td>
+                  <td className="px-4 py-4 text-sm">
+                    <ReviewerAssignmentDropdown
+                      applicationId={application.referenceNumber}
+                      availableReviewers={milestoneReviewers}
+                      assignedReviewerAddresses={application.milestoneReviewers || []}
+                      reviewerType="milestone"
+                      onAssignmentChange={onReviewerAssignmentChange}
+                    />
                   </td>
                   {showStatusActions && onStatusChange && (
                     <td className="px-4 py-4 whitespace-nowrap text-sm">
