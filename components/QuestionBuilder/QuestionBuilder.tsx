@@ -467,76 +467,80 @@ export function QuestionBuilder({
     }
   };
 
+  const renderSaveButton = () => {
+    if (readOnly) return null;
+    return (
+      <div className="flex justify-end pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+        <Button
+          onClick={handleSave}
+          className={`py-2 ${
+            needsEmailValidation()
+              ? "bg-yellow-600 hover:bg-yellow-700"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
+          title={needsEmailValidation() ? "Add an email field before saving" : undefined}
+        >
+          {needsEmailValidation() && <ExclamationTriangleIcon className="w-4 h-4 mr-2" />}
+          {isPostApprovalMode ? "Save Post Approval Form" : "Save Form"}
+        </Button>
+      </div>
+    );
+  };
+
+  const renderFormTitleDescription = () => {
+    if (readOnly) {
+      return (
+        <div className="mb-6 p-1">
+          <div className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            {currentSchema.title}
+          </div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            <MarkdownPreview source={currentSchema.description || ""} />
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="mb-6 p-1 space-y-3">
+        <input
+          type="text"
+          value={currentSchema.title}
+          onChange={(e) => handleTitleChange(e.target.value)}
+          className="text-xl font-bold bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-900 dark:text-white placeholder-gray-400 w-full px-3 py-2"
+          placeholder="Form Title"
+        />
+        <MarkdownEditor
+          value={currentSchema.description || ""}
+          onChange={(value?: string) => handleDescriptionChange(value ?? "")}
+          className="text-sm bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-600 dark:text-gray-400 placeholder-gray-500"
+          placeholderText="Form Description"
+          height={100}
+          minHeight={100}
+        />
+      </div>
+    );
+  };
+
   return (
-    <div className={`flex flex-col h-full${className}`}>
-      {/* Header */}
+    <div className={`flex flex-col h-full ${className}`.trim()}>
+      {/* Header - Tabs only */}
       <div className="border-b border-gray-200 dark:border-gray-700 sm:px-3 md:px-4 px-6 py-2">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between flex-wrap gap-4">
-          <div className="flex flex-col gap-2 mb-4 sm:mb-0">
-            {readOnly ? (
-              <>
-                <div className="text-xl font-bold text-gray-900 dark:text-white px-3 py-2">
-                  {schema.title}
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400 px-3 py-1">
-                  <MarkdownPreview source={schema.description || ""} />
-                </div>
-              </>
-            ) : (
-              <>
-                <input
-                  type="text"
-                  value={currentSchema.title}
-                  onChange={(e) => handleTitleChange(e.target.value)}
-                  className="text-xl font-bold bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-900 dark:text-white placeholder-gray-400"
-                  placeholder="Form Title"
-                />
-                <MarkdownEditor
-                  value={currentSchema.description || ""}
-                  onChange={(value: string) => handleDescriptionChange(value)}
-                  className="mt-1 text-sm bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-600 dark:text-gray-400 placeholder-gray-500"
-                  placeholderText="Form Description"
-                  height={100}
-                  minHeight={100}
-                />
-              </>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3 flex-row flex-wrap">
-            <div className="flex flex-row flex-wrap bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
-              {TAB_CONFIG.map(({ key, icon: Icon, label }) => (
-                <button
-                  key={key}
-                  onClick={() => handleTabChange(key)}
-                  className={getTabButtonClassName(activeTab === key)}
-                >
-                  <Icon className="w-4 h-4 mr-2" />
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {!readOnly && (
-              <Button
-                onClick={handleSave}
-                className={`py-2 ${
-                  needsEmailValidation()
-                    ? "bg-yellow-600 hover:bg-yellow-700"
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
-                title={needsEmailValidation() ? "Add an email field before saving" : undefined}
-              >
-                {needsEmailValidation() && <ExclamationTriangleIcon className="w-4 h-4 mr-2" />}
-                {isPostApprovalMode ? "Save Post Approval Form" : "Save Form"}
-              </Button>
-            )}
-          </div>
+        <div className="flex flex-row flex-wrap bg-gray-100 dark:bg-gray-700 p-1 rounded-lg w-fit">
+          {TAB_CONFIG.map(({ key, icon: Icon, label }) => (
+            <button
+              key={key}
+              onClick={() => handleTabChange(key)}
+              className={getTabButtonClassName(activeTab === key)}
+            >
+              <Icon className="w-4 h-4 mr-2" />
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden  sm:px-3 md:px-4 px-6 py-2">
+      <div className="flex-1 overflow-hidden sm:px-3 md:px-4 px-6 py-4">
         {activeTab === "build" || activeTab === "post-approval" ? (
           <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Field Types Panel */}
@@ -551,6 +555,9 @@ export function QuestionBuilder({
 
             {/* Form Builder */}
             <div className={readOnly ? "" : "lg:col-span-2 overflow-y-auto"}>
+              {/* Form Title and Description - Only in Build/Post-Approval tabs */}
+              {renderFormTitleDescription()}
+
               <div className="space-y-4">
                 {/* Email Field Warning - only for main application form */}
                 {needsEmailValidation() && (
@@ -749,6 +756,9 @@ export function QuestionBuilder({
                     )}
                   </div>
                 )}
+
+                {/* Save Button at bottom of Build/Post-Approval tab */}
+                {renderSaveButton()}
               </div>
             </div>
           </div>
@@ -761,6 +771,8 @@ export function QuestionBuilder({
                 programId={programId}
                 readOnly={readOnly}
               />
+              {/* Save Button at bottom of Settings tab */}
+              {renderSaveButton()}
             </div>
           </div>
         ) : activeTab === "ai-config" ? (
@@ -773,6 +785,8 @@ export function QuestionBuilder({
                 chainId={chainId}
                 readOnly={readOnly}
               />
+              {/* Save Button at bottom of AI Config tab */}
+              {renderSaveButton()}
             </div>
           </div>
         ) : activeTab === "reviewers" ? (
