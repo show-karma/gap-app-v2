@@ -77,6 +77,8 @@ export interface IFormSchema {
     confirmationMessage?: string;
     applicationDeadline?: string;
     donationRound?: boolean;
+    approvalEmailTemplate?: string; // Markdown/HTML template for approval emails with variable placeholders
+    rejectionEmailTemplate?: string; // Markdown/HTML template for rejection emails with variable placeholders
   };
 }
 

@@ -16,6 +16,7 @@ import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import type { IFundingApplication, ProgramWithFormSchema, IFundingProgramConfig } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
+import { isFundingProgramConfig } from "@/utilities/type-guards";
 import { getProjectTitle } from "../helper/getProjecTitle";
 import { AIEvaluationDisplay } from "./AIEvaluation";
 import AIEvaluationButton from "./AIEvaluationButton";
@@ -544,7 +545,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
         isReasonRequired={pendingStatus === "revision_requested"}
-        programConfig={program as IFundingProgramConfig | undefined}
+        programConfig={isFundingProgramConfig(program) ? program : undefined}
       />
     </>
   );

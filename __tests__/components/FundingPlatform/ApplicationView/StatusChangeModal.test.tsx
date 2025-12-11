@@ -89,12 +89,13 @@ jest.mock("@/components/Utilities/Button", () => ({
 
 // Mock MarkdownEditor component
 jest.mock("@/components/Utilities/MarkdownEditor", () => ({
-  MarkdownEditor: ({ value, onChange, placeholderText }: any) => (
+  MarkdownEditor: ({ value, onChange, placeholder, placeholderText, disabled }: any) => (
     <textarea
       data-testid="markdown-editor"
       value={value}
       onChange={(e) => onChange?.(e.target.value)}
-      placeholder={placeholderText}
+      placeholder={placeholder || placeholderText}
+      disabled={disabled}
       aria-label="Reason"
     />
   ),
@@ -388,7 +389,7 @@ describe("StatusChangeModal", () => {
       render(<StatusChangeModal {...defaultProps} status="rejected" />);
 
       expect(
-        screen.getByText(/this reason will be recorded and may be shared with the applicant/i)
+        screen.getByText(/this content will be sent to the applicant via email/i)
       ).toBeInTheDocument();
     });
 
@@ -396,7 +397,7 @@ describe("StatusChangeModal", () => {
       render(<StatusChangeModal {...defaultProps} status="approved" />);
 
       expect(
-        screen.getByText(/this reason will be recorded in the status history/i)
+        screen.getByText(/this content will be sent to the applicant via email/i)
       ).toBeInTheDocument();
     });
 

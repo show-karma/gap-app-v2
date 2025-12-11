@@ -2,7 +2,7 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { type FC, Fragment, useState, useEffect } from "react";
+import { type FC, Fragment, useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import type { IFundingProgramConfig } from "@/types/funding-platform";
@@ -42,7 +42,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
 }) => {
   const [reason, setReason] = useState("");
 
-  const getTemplateContent = (): string => {
+  const getTemplateContent = useCallback((): string => {
     if (!programConfig?.formSchema?.settings) return "";
     
     if (status === "approved" && programConfig.formSchema.settings.approvalEmailTemplate) {
@@ -52,19 +52,23 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
       return programConfig.formSchema.settings.rejectionEmailTemplate;
     }
     return "";
-  };
+  }, [programConfig?.formSchema?.settings, status]);
 
   useEffect(() => {
     if (isOpen) {
       const templateContent = getTemplateContent();
-      if (templateContent && !reason) {
+      if (templateContent) {
+        // Prepopulate with template when modal opens or status changes
         setReason(templateContent);
-      } else if (!templateContent) {
+      } else {
+        // Clear reason if no template available
         setReason("");
       }
+    } else {
+      // Reset reason when modal closes
+      setReason("");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, status, programConfig]);
+  }, [isOpen, getTemplateContent]);
 
   const isReasonActuallyRequired =
     isReasonRequired || status === "revision_requested" || status === "rejected";

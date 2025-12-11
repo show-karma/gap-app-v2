@@ -215,7 +215,7 @@ export function SettingsConfiguration({
                       const updatedSchema: FormSchema = {
                         ...schema,
                         settings: {
-                          ...schema.settings,
+                          ...(schema.settings || {}),
                           approvalEmailTemplate: newValue || undefined,
                         },
                       };
@@ -249,7 +249,7 @@ export function SettingsConfiguration({
                       const updatedSchema: FormSchema = {
                         ...schema,
                         settings: {
-                          ...schema.settings,
+                          ...(schema.settings || {}),
                           rejectionEmailTemplate: newValue || undefined,
                         },
                       };
