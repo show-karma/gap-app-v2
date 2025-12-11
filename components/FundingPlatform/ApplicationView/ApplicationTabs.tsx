@@ -1,12 +1,12 @@
 "use client";
 
-import { Tab, Transition } from "@headlessui/react";
 import {
   ChatBubbleLeftRightIcon,
   DocumentTextIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
-import { type FC, Fragment, type ReactNode } from "react";
+import { type FC, type ReactNode, useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/utilities/tailwind";
 
 export interface TabConfig {
@@ -30,56 +30,60 @@ export const ApplicationTabs: FC<ApplicationTabsProps> = ({
   onChange,
   connectedToHeader = false,
 }) => {
+  const defaultTab = tabs[defaultIndex]?.id || tabs[0]?.id;
+  const [activeTab, setActiveTab] = useState(defaultTab);
+
+  const handleValueChange = (value: string) => {
+    setActiveTab(value);
+    if (onChange) {
+      const index = tabs.findIndex((tab) => tab.id === value);
+      if (index !== -1) {
+        onChange(index);
+      }
+    }
+  };
+
   return (
-    <Tab.Group defaultIndex={defaultIndex} onChange={onChange}>
-      <Tab.List
+    <Tabs value={activeTab} onValueChange={handleValueChange} className="w-full">
+      <TabsList
         className={cn(
-          "flex space-x-1 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-800 px-2 sm:px-4",
-          connectedToHeader ? "border-l border-r" : "rounded-t-lg border-l border-r border-t"
+          "flex w-full justify-start space-x-1 h-auto p-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-800 px-2 sm:px-4",
+          connectedToHeader
+            ? "border-l border-r rounded-none"
+            : "rounded-t-lg border-l border-r border-t"
         )}
         aria-label="Application sections"
       >
         {tabs.map((tab) => (
-          <Tab
+          <TabsTrigger
             key={tab.id}
-            className={({ selected }) =>
-              cn(
-                "flex items-center justify-center gap-2 px-3 sm:px-4 py-3 text-sm font-medium outline-none transition-colors",
-                "border-b-2 -mb-px focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-                selected
-                  ? "border-primary text-primary dark:text-primary"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200"
-              )
-            }
+            value={tab.id}
+            className={cn(
+              "flex items-center justify-center gap-2 px-3 sm:px-4 py-3 text-sm font-medium rounded-none",
+              "border-b-2 -mb-px bg-transparent shadow-none",
+              "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+              "data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:dark:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none",
+              "data-[state=inactive]:border-transparent data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-700 data-[state=inactive]:hover:border-gray-300 data-[state=inactive]:dark:text-gray-400 data-[state=inactive]:dark:hover:text-gray-200"
+            )}
             aria-label={tab.label}
           >
             <tab.icon className="w-5 h-5" aria-hidden="true" />
             <span className="hidden sm:inline">{tab.label}</span>
-          </Tab>
+          </TabsTrigger>
         ))}
-      </Tab.List>
-      <Tab.Panels className="bg-white dark:bg-zinc-800 rounded-b-lg border border-t-0 border-gray-200 dark:border-gray-700">
+      </TabsList>
+      <div className="bg-white dark:bg-zinc-800 rounded-b-lg border border-t-0 border-gray-200 dark:border-gray-700">
         {tabs.map((tab) => (
-          <Tab.Panel key={tab.id} as={Fragment}>
-            {({ selected }) => (
-              <Transition
-                as="div"
-                show={selected}
-                enter="transition-opacity duration-150 ease-out"
-                enterFrom="opacity-0"
-                enterTo="opacity-100"
-                leave="transition-opacity duration-100 ease-in"
-                leaveFrom="opacity-100"
-                leaveTo="opacity-0"
-                className="outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
-              >
-                {tab.content}
-              </Transition>
-            )}
-          </Tab.Panel>
+          <TabsContent
+            key={tab.id}
+            value={tab.id}
+            className="mt-0 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+          >
+            {tab.content}
+          </TabsContent>
         ))}
-      </Tab.Panels>
-    </Tab.Group>
+      </div>
+    </Tabs>
   );
 };
 

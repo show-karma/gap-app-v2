@@ -65,16 +65,14 @@ describe("ApplicationTabs", () => {
       render(<ApplicationTabs tabs={defaultTabs} />);
 
       const applicationTab = screen.getByRole("tab", { name: /application/i });
-      expect(applicationTab.className).toContain("border-primary");
-      expect(applicationTab.className).toContain("text-primary");
+      expect(applicationTab).toHaveAttribute("data-state", "active");
     });
 
     it("applies unselected styles to non-active tabs", () => {
       render(<ApplicationTabs tabs={defaultTabs} />);
 
       const aiAnalysisTab = screen.getByRole("tab", { name: /ai analysis/i });
-      expect(aiAnalysisTab.className).toContain("border-transparent");
-      expect(aiAnalysisTab.className).toContain("text-gray-500");
+      expect(aiAnalysisTab).toHaveAttribute("data-state", "inactive");
     });
   });
 
@@ -125,7 +123,7 @@ describe("ApplicationTabs", () => {
       render(<ApplicationTabs tabs={defaultTabs} defaultIndex={1} />);
 
       const aiAnalysisTab = screen.getByRole("tab", { name: /ai analysis/i });
-      expect(aiAnalysisTab.className).toContain("border-primary");
+      expect(aiAnalysisTab).toHaveAttribute("data-state", "active");
 
       expect(screen.getByTestId("ai-analysis-content")).toBeInTheDocument();
     });
@@ -134,7 +132,7 @@ describe("ApplicationTabs", () => {
       render(<ApplicationTabs tabs={defaultTabs} />);
 
       const applicationTab = screen.getByRole("tab", { name: /application/i });
-      expect(applicationTab.className).toContain("border-primary");
+      expect(applicationTab).toHaveAttribute("data-state", "active");
     });
   });
 
@@ -204,11 +202,18 @@ describe("ApplicationTabs", () => {
       expect(tabList.className).toContain("bg-white");
     });
 
-    it("applies rounded top corners to tab list", () => {
+    it("applies rounded top corners to tab list when not connected to header", () => {
       render(<ApplicationTabs tabs={defaultTabs} />);
 
       const tabList = screen.getByRole("tablist");
       expect(tabList.className).toContain("rounded-t-lg");
+    });
+
+    it("removes rounded top corners when connected to header", () => {
+      render(<ApplicationTabs tabs={defaultTabs} connectedToHeader={true} />);
+
+      const tabList = screen.getByRole("tablist");
+      expect(tabList.className).toContain("rounded-none");
     });
   });
 });
