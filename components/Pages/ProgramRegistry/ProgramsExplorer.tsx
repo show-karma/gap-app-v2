@@ -11,6 +11,12 @@ import { type Dispatch, useEffect, useState } from "react";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 import { type GrantProgram, ProgramList } from "@/components/Pages/ProgramRegistry/ProgramList";
+import {
+  getProgramIdForUrl,
+  normalizeGrantTypes,
+  normalizeGrantTypesArray,
+  parseProgramIdAndChainId,
+} from "@/components/Pages/ProgramRegistry/programUtils";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { errorManager } from "@/components/Utilities/errorManager";
 import Pagination from "@/components/Utilities/Pagination";
@@ -145,12 +151,11 @@ export const ProgramsExplorer = () => {
       if (error) {
         throw new Error(error);
       }
-      res.programs.forEach((program: GrantProgram) => {
-        if (typeof program.metadata?.grantTypes === "string") {
-          program.metadata.grantTypes = [program.metadata.grantTypes];
-        }
-      });
-      return res;
+      const normalizedPrograms = normalizeGrantTypesArray(res.programs as GrantProgram[]);
+      return {
+        ...res,
+        programs: normalizedPrograms,
+      };
     },
   });
   const grantPrograms = data?.programs || [];
@@ -163,14 +168,17 @@ export const ProgramsExplorer = () => {
   useEffect(() => {
     const searchProgramById = async (id: string) => {
       try {
+        const { programId: parsedProgramId, chainId: parsedChainId } = parseProgramIdAndChainId(
+          id,
+          registryHelper.supportedNetworks
+        );
+
         const [data, _error] = await fetchData(
-          INDEXER.REGISTRY.FIND_BY_ID(id, registryHelper.supportedNetworks)
+          INDEXER.REGISTRY.FIND_BY_ID(parsedProgramId, parsedChainId)
         );
         if (data) {
-          setSelectedProgram(data);
-          if (typeof data.metadata?.grantTypes === "string") {
-            data.metadata.grantTypes = [data.metadata.grantTypes];
-          }
+          const normalizedData = normalizeGrantTypes(data);
+          setSelectedProgram(normalizedData);
         }
       } catch (error: any) {
         errorManager(`Error while searching for program by id`, error);
@@ -308,7 +316,7 @@ export const ProgramsExplorer = () => {
                         grantPrograms={grantPrograms}
                         selectProgram={(program) => {
                           setSelectedProgram(program);
-                          setProgramId(program._id.$oid || program.programId || "");
+                          setProgramId(getProgramIdForUrl(program));
                         }}
                       />
                     </div>
