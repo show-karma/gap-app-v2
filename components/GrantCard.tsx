@@ -81,22 +81,19 @@ const GrantCardContent = ({
   const demoteAllHeadings = rewriteHeadingsToLevel(4);
 
   return (
-    <div
-      className="flex flex-col items-start justify-between w-full h-full relative"
-      id="grant-card"
-    >
+    <div className="flex flex-col items-start justify-between w-full relative" id="grant-card">
       {actionSlot ? <div className="absolute bottom-1 left-1 z-20">{actionSlot}</div> : null}
       <LoadingIndicator />
       <div
         className={cn(
-          `w-full flex flex-col gap-1 transition-all duration-300 ${
+          `w-full flex flex-col gap-0.5 transition-all duration-300 ${
             pending ? "scale-95 blur-sm opacity-50" : ""
           }`,
           actionSlot ? "px-1" : ""
         )}
       >
         <div
-          className={cn("h-[4px] w-full rounded-full mb-2.5")}
+          className={cn("h-[4px] w-full rounded-full mb-1.5")}
           style={{
             background: pickColor(index),
           }}
@@ -108,7 +105,7 @@ const GrantCardContent = ({
             actionSlot ? "px-0" : ""
           )}
         >
-          <div className="flex flex-row items-center justify-between mb-1">
+          <div className="flex flex-row items-center justify-between mb-0.5">
             <div className={cn("flex flex-row items-center gap-2", actionSlot ? "mt-1" : "")}>
               <div className="flex justify-center">
                 <ProfilePicture
@@ -128,16 +125,16 @@ const GrantCardContent = ({
             </div>
           </div>
           {actionSlot ? null : (
-            <p className="mb-2 text-sm font-medium text-gray-400 dark:text-zinc-400 max-2xl:text-[13px]">
+            <p className="mb-1 text-sm font-medium text-gray-400 dark:text-zinc-400 max-2xl:text-[13px]">
               Created on {formatDate(grant.createdAt)}
             </p>
           )}
           {communityId && hasTrackIds && (
-            <div className="mb-2">
+            <div className="mb-1">
               <TrackTags communityId={communityId} trackIds={selectedTrackIds} />
             </div>
           )}
-          <div className="flex flex-col gap-1 flex-1 h-[64px]">
+          <div className="flex flex-col gap-1 flex-1 h-[48px]">
             <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-3">
               <MarkdownPreview
                 source={grant.project?.details?.data?.description?.slice(0, 200)}
@@ -158,7 +155,7 @@ const GrantCardContent = ({
         const showCategories = !hideCategories && hasCategories;
         if (!showStats && !showCategories) return null;
         return (
-          <div className="w-full flex flex-col gap-2 my-2">
+          <div className="w-full flex flex-col gap-1 my-1 mt-4">
             {showStats && (
               <div className="flex w-full flex-row flex-wrap justify-start gap-1">
                 <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50   dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
@@ -220,7 +217,7 @@ export const GrantCard = ({
       href={href}
       prefetch={false}
       className={cn(
-        "flex h-full w-full max-w-[620px] max-sm:w-[320px] relative rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80",
+        "flex h-full w-full max-w-[620px] max-sm:w-[320px] relative rounded-2xl border border-zinc-200 p-2 transition-all duration-300 ease-in-out hover:opacity-80",
         cardClassName
       )}
     >
