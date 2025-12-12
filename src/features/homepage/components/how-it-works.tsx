@@ -3,10 +3,10 @@
 import { Check } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
+import { CreateProjectButton } from "./create-project-button";
 
 interface StepCardProps {
   text: string;
@@ -51,8 +51,8 @@ function StepCard({ text, size, showIcon = true }: StepCardProps) {
 }
 
 const ROTATION_INTERVAL = 2000;
-const TRANSITION_DURATION = 450;
-const STACK_LAYERS = 3;
+const TRANSITION_DURATION = 700;
+const STACK_LAYERS = 4;
 const STACK_CARD_HEIGHT = 240;
 const STACK_GAP = 16;
 
@@ -127,31 +127,21 @@ interface RotatingOutcomeStackProps {
 }
 
 function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [previousIndex, setPreviousIndex] = useState<number | null>(null);
-  const intervalRef = useRef<number | null>(null);
   const hasMultipleItems = items.length > 1;
-  const [stackOrder, setStackOrder] = useState<number[]>(() =>
-    Array.from({ length: STACK_LAYERS }, (_, idx) => idx)
-  );
-
-  const resetStackOrder = useCallback(() => {
-    setStackOrder(Array.from({ length: STACK_LAYERS }, (_, idx) => idx));
-  }, []);
-
-  const rotateStackOrderForward = useCallback((order: number[]) => {
-    if (order.length <= 1) {
-      return order;
+  const [order, setOrder] = useState<number[]>(() => {
+    // Initialize with first 4 items (or wrap around if less than 4)
+    const initialOrder: number[] = [];
+    for (let i = 0; i < STACK_LAYERS && i < items.length; i++) {
+      initialOrder.push(i);
     }
-    const next = [...order];
-    const first = next.shift()!;
-    next.push(first);
-    return next;
-  }, []);
-
-  useEffect(() => {
-    resetStackOrder();
-  }, [resetStackOrder]);
+    // If we have fewer items than layers, repeat items
+    while (initialOrder.length < STACK_LAYERS) {
+      initialOrder.push(initialOrder.length % items.length);
+    }
+    return initialOrder;
+  });
+  const [isAnimating, setIsAnimating] = useState(false);
+  const intervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!hasMultipleItems) {
@@ -159,12 +149,17 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
     }
 
     intervalRef.current = window.setInterval(() => {
-      setCurrentIndex((prevIndex) => {
-        const nextIndex = (prevIndex + 1) % items.length;
-        setPreviousIndex(prevIndex);
-        setStackOrder((prevOrder) => rotateStackOrderForward(prevOrder));
-        return nextIndex;
-      });
+      setIsAnimating(true);
+
+      setTimeout(() => {
+        setOrder((prev) => {
+          const newOrder = [...prev];
+          const first = newOrder.shift()!;
+          newOrder.push(first);
+          return newOrder;
+        });
+        setIsAnimating(false);
+      }, TRANSITION_DURATION);
     }, ROTATION_INTERVAL);
 
     return () => {
@@ -173,60 +168,81 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
         intervalRef.current = null;
       }
     };
-  }, [hasMultipleItems, items.length, rotateStackOrderForward]);
+  }, [hasMultipleItems, items.length]);
 
-  const handleExitComplete = useCallback(() => {
-    setPreviousIndex(null);
-  }, []);
-
-  const activeText = items[currentIndex] ?? "";
+  // The card that will enter at the back (currently front card)
+  const enteringCardIndex = order[0];
 
   return (
-    <div
-      className="relative w-full mt-3"
-      style={{ height: STACK_CARD_HEIGHT + STACK_GAP * STACK_LAYERS }}
-    >
-      {stackOrder.map((position, index) => {
-        const layerIndex = position + 1;
-        const bottomOffset = layerIndex * STACK_GAP;
-        const scaleValue = 1 - layerIndex * 0.05;
-        const opacityValue = 1 - layerIndex * 0.35;
-        const zIndexValue = STACK_LAYERS - position;
+    <div className="relative w-full mt-3 overflow-visible" style={{ height: "288px" }}>
+      {order.map((cardIndex, stackPosition) => {
+        const cardText = items[cardIndex] ?? "";
+        const isLeaving = isAnimating && stackPosition === 0;
+
+        // During animation, cards 1-3 shift forward one position
+        let scale: number;
+        let y: number;
+        let opacity: number;
+        let filter: string;
+
+        if (isLeaving) {
+          scale = 1.075;
+          y = 40;
+          opacity = 0;
+          filter = "blur(20px)";
+        } else {
+          const targetPos = isAnimating ? stackPosition - 1 : stackPosition;
+          scale = 1 - targetPos * 0.075;
+          y = -(targetPos * 40);
+          opacity = Math.max(0, 1 - targetPos * 0.2);
+          filter = "blur(0px)";
+        }
+
+        const zIndex = isLeaving ? 5 : isAnimating ? 4 - (stackPosition - 1) : 4 - stackPosition;
 
         return (
           <div
-            key={`stack-${index}`}
-            className="absolute inset-x-0 flex justify-center pointer-events-none"
+            key={`card-${cardIndex}-${stackPosition}`}
+            className="absolute left-0 right-0 bottom-0 rounded-xl border-2 border-border bg-background px-6 py-6 flex flex-col justify-between gap-6 transition-all ease-out origin-bottom pointer-events-none"
             style={{
-              bottom: bottomOffset,
-              transform: `scale(${scaleValue})`,
-              opacity: opacityValue,
-              zIndex: zIndexValue,
-              transition: `bottom ${TRANSITION_DURATION}ms ease-out, transform ${TRANSITION_DURATION}ms ease-out, opacity ${TRANSITION_DURATION}ms ease-out`,
-              willChange: "bottom, transform, opacity",
+              transform: `scale(${scale}) translateY(${y}px)`,
+              opacity,
+              filter,
+              zIndex,
+              height: `${STACK_CARD_HEIGHT}px`,
+              transitionDuration: `${TRANSITION_DURATION}ms`,
             }}
           >
-            <div className="w-full" style={{ height: STACK_CARD_HEIGHT }}>
-              <div className="h-full w-full rounded-xl border-2 border-border bg-background" />
+            <div className="w-10 h-10 rounded-full bg-green-100 border-4 border-green-50 flex items-center justify-center flex-shrink-0">
+              <Check className="w-5 h-5 text-green-600" />
             </div>
+            <p className="text-xl font-semibold text-foreground leading-tight tracking-[-0.02em]">
+              {cardText}
+            </p>
           </div>
         );
       })}
 
-      {previousIndex !== null && items[previousIndex] !== undefined && (
-        <ExitingOutcomeCard
-          key={`prev-${previousIndex}`}
-          text={items[previousIndex]}
-          duration={TRANSITION_DURATION}
-          onExited={handleExitComplete}
-        />
-      )}
-
-      <ActiveOutcomeCard
-        key={`active-${currentIndex}`}
-        text={activeText}
-        duration={TRANSITION_DURATION}
-      />
+      {/* Entering card - rendered separately during animation */}
+      <div
+        key={`entering-${enteringCardIndex}`}
+        className="absolute left-0 right-0 bottom-0 rounded-xl border-2 border-border bg-background px-6 py-6 flex flex-col justify-between gap-6 transition-all ease-out origin-bottom pointer-events-none"
+        style={{
+          transform: `scale(${isAnimating ? 1 - 3 * 0.075 : 1 - 4 * 0.075}) translateY(${isAnimating ? -(3 * 40) : -(4 * 40)}px)`,
+          opacity: isAnimating ? Math.max(0, 1 - 3 * 0.2) : 0,
+          filter: "blur(0px)",
+          zIndex: 0,
+          height: `${STACK_CARD_HEIGHT}px`,
+          transitionDuration: `${TRANSITION_DURATION}ms`,
+        }}
+      >
+        <div className="w-10 h-10 rounded-full bg-green-100 border-4 border-green-50 flex items-center justify-center flex-shrink-0">
+          <Check className="w-5 h-5 text-green-600" />
+        </div>
+        <p className="text-xl font-semibold text-foreground leading-tight tracking-[-0.02em]">
+          {items[enteringCardIndex]}
+        </p>
+      </div>
     </div>
   );
 }
@@ -283,7 +299,7 @@ export function HowItWorks() {
 
       <div className="mt-12 flex flex-col lg:flex-row lg:items-center gap-6 w-full">
         <p className="text-base text-muted-foreground">Ready to get started?</p>
-        <Button>Create Project</Button>
+        <CreateProjectButton />
       </div>
     </section>
   );

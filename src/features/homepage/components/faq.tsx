@@ -1,6 +1,7 @@
 import { MessageCircleMore } from "lucide-react";
 import Image from "next/image";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FAQAccordion } from "@/src/components/shared/faq-accordion";
 import { marketingLayoutTheme } from "@/src/helper/theme";
@@ -75,9 +76,10 @@ We’re actively working on **gasless transactions**, so soon you’ll be able t
 export function FAQ() {
   return (
     <section className={cn(marketingLayoutTheme.padding, "py-16 w-full")}>
-      <div className="flex flex-col items-center gap-4 mb-12 max-w-4xl mx-auto">
-        <h2 className="section-title text-foreground text-center">Frequently asked questions</h2>
-        <p className="text-xl font-normal text-muted-foreground text-center leading-[30px] tracking-normal">
+      <div className="flex flex-col items-start gap-4 mb-10 max-w-4xl mx-auto">
+        <Badge variant="secondary">FAQs</Badge>
+        <h2 className="section-title text-foreground">Frequently asked questions</h2>
+        <p className="text-xl font-normal text-muted-foreground leading-[30px] tracking-normal">
           Everything you need to know about the product.
         </p>
       </div>
@@ -87,43 +89,13 @@ export function FAQ() {
       </div>
 
       <div className="max-w-4xl mx-auto">
-        <div className="bg-secondary rounded-2xl p-8 flex flex-col items-center gap-8 min-h-[286px]">
-          <div className="flex items-end gap-0">
-            <div className="relative w-12 h-12 rounded-full border-[1.5px] border-background bg-emerald-300 -mr-4 z-0 overflow-hidden">
-              <Image
-                src="/images/homepage/user4.png"
-                alt="User avatar"
-                width={48}
-                height={48}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="relative w-14 h-14 rounded-full border-[1.5px] border-background bg-purple-300 z-10 overflow-hidden">
-              <Image
-                src="/images/homepage/user5.png"
-                alt="User avatar"
-                width={56}
-                height={56}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="relative w-12 h-12 rounded-full border-[1.5px] border-background bg-gray-300 -ml-4 z-0 overflow-hidden">
-              <Image
-                src="/images/homepage/user6.png"
-                alt="User avatar"
-                width={48}
-                height={48}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-
+        <div className="bg-secondary rounded-2xl px-8 py-10 flex flex-col items-center gap-8">
           <div className="flex flex-col items-center gap-2">
             <h3 className="text-xl font-medium text-foreground text-center leading-[30px] tracking-normal">
               Still have questions?
             </h3>
-            <p className="text-lg font-normal text-muted-foreground text-center leading-7 tracking-normal">
-              Can't find the answer you're looking for? Please chat to our friendly team.
+            <p className="font-normal text-muted-foreground text-center leading-7 tracking-normal">
+              Can't find the answer you're looking for? Please reach out to our team.
             </p>
           </div>
 
@@ -131,7 +103,7 @@ export function FAQ() {
             <ExternalLink href={SOCIALS.TELEGRAM}>
               <Button
                 variant="default"
-                className="px-6 py-2.5 text-sm font-medium bg-foreground text-background hover:bg-foreground/90 border-0 shadow"
+                className="px-4 py-2.5 text-sm font-medium bg-foreground text-background hover:bg-foreground/90 border-0 shadow"
               >
                 <MessageCircleMore className="w-4 h-4" />
                 Ask in Telegram
@@ -140,7 +112,7 @@ export function FAQ() {
             <ExternalLink href={SOCIALS.DISCORD}>
               <Button
                 variant="default"
-                className="px-6 py-2.5 text-sm font-medium bg-foreground text-background hover:bg-foreground/90 border-0 shadow"
+                className="px-4 py-2.5 text-sm font-medium bg-foreground text-background hover:bg-foreground/90 border-0 shadow"
               >
                 <MessageCircleMore className="w-4 h-4" />
                 Ask in Discord

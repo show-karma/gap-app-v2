@@ -40,11 +40,15 @@ export function Hero() {
             Ecosystems use Karma to fund projects transparently. Builders use it to share progress,
             earn reputation, and get discovered for more opportunities.
           </p>
-          <div className="flex flex-col md:flex-row gap-3 md:gap-3">
-            <CreateProjectButton />
+          <div className="relative flex flex-col mt-4 md:flex-row gap-3 md:gap-3">
+            {/* Blurred gradient background */}
+            <div className="absolute -left-2 -right-1 -bottom-1 h-[60%] bg-gradient-to-r from-purple-300 to-emerald-300 opacity-80 blur-md" />
+            <div className="relative z-0">
+              <CreateProjectButton styleClass="h-auto px-5 py-3 text-sm font-medium w-max bg-primary text-primary-foreground hover:bg-primary/90 border-0 shadow" />
+            </div>
             <Button
               variant="outline"
-              className="px-4 py-2.5 text-sm font-medium border border-border-3"
+              className="h-auto px-5 py-3 text-sm font-medium border border-black/15 bg-white/10 hover:bg-white/20 relative z-0 backdrop-blur-sm"
               asChild
             >
               <Link href={PAGES.FUNDERS}>Run a funding program</Link>
