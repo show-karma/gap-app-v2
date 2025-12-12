@@ -4,6 +4,7 @@ import type {
   CommunityProjectsResponse,
   CommunityStats,
 } from "@/types/community";
+import type { Category } from "@/types/impactMeasurement";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
@@ -140,7 +141,7 @@ export const getCommunityProjects = async (
  * Automatically merges outputs into impact_segments to avoid duplication.
  * Uses React cache() for request deduplication.
  */
-export const getCommunityCategories = cache(async (communityId: string): Promise<Array<any>> => {
+export const getCommunityCategories = cache(async (communityId: string): Promise<Category[]> => {
   try {
     const [data] = await fetchData(INDEXER.COMMUNITY.CATEGORIES(communityId));
 
@@ -149,11 +150,11 @@ export const getCommunityCategories = cache(async (communityId: string): Promise
     }
 
     // Merge outputs into impact_segments to avoid duplication
-    const categoriesWithMergedSegments = data.map((category: any) => {
+    const categoriesWithMergedSegments = data.map((category: Category) => {
       const outputsNotDuplicated = category.outputs?.filter(
-        (output: any) =>
+        (output) =>
           !category.impact_segments?.some(
-            (segment: any) => segment.id === output.id || segment.name === output.name
+            (segment) => segment.id === output.id || segment.name === output.name
           )
       );
 
@@ -161,10 +162,10 @@ export const getCommunityCategories = cache(async (communityId: string): Promise
         ...category,
         impact_segments: [
           ...(category.impact_segments || []),
-          ...(outputsNotDuplicated || []).map((output: any) => ({
+          ...(outputsNotDuplicated || []).map((output) => ({
             id: output.id,
             name: output.name,
-            description: output.description,
+            description: "",
             impact_indicators: [],
             type: output.type,
           })),
