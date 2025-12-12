@@ -104,7 +104,7 @@
     "millify": "^6.1.0",
     "mixpanel-browser": "^2.49.0",
     "moment": "^2.30.1",
-    "next": "15.4.8",
+    "next": "15.4.10",
     "next-nprogress-bar": "^2.3.12",
     "next-remove-imports": "^1.0.12",
     "next-sitemap": "^4.2.3",
