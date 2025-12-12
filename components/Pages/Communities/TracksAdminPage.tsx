@@ -10,10 +10,9 @@ import { useAccount } from "wagmi";
 import { CreateTrackModal } from "@/components/Pages/Communities/Tracks/CreateTrackModal";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useAuth } from "@/hooks/useAuth";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
-import { useStaff } from "@/hooks/useStaff";
 import {
   useArchiveTrack,
   useAssignTracksToProgram,
@@ -52,9 +51,7 @@ export const TracksAdminPage = ({
 
   const _signer = useSigner();
 
-  // Check if user is admin of this community
-  const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(community?.uid);
-  const { isStaff } = useStaff();
+  const { hasAccess, isLoading: loading } = useCommunityAdminAccess(community?.uid);
 
   // React Query hooks
   const {
@@ -188,7 +185,7 @@ export const TracksAdminPage = ({
     );
   }
 
-  if (!isAdmin && !isStaff) {
+  if (!hasAccess) {
     return (
       <div className="flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
         <p className="text-gray-600 dark:text-gray-300 text-center">
