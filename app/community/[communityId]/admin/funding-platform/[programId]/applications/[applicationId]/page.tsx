@@ -23,7 +23,7 @@ import StatusChangeModal from "@/components/FundingPlatform/ApplicationView/Stat
 import { TabPanel } from "@/components/FundingPlatform/ApplicationView/TabPanel";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import {
   useApplication,
   useApplicationComments,
@@ -32,9 +32,7 @@ import {
   useDeleteApplication,
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
-import { useStaff } from "@/hooks/useStaff";
 import { layoutTheme } from "@/src/helper/theme";
-import { useOwnerStore } from "@/store";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import type { IFundingApplication } from "@/types/funding-platform";
 import { MESSAGES } from "@/utilities/messages";
@@ -56,10 +54,7 @@ export default function ApplicationDetailPage() {
   const [programId, chainId] = combinedProgramId.split("_");
   const parsedChainId = parseInt(chainId, 10);
 
-  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
-  const hasAccess = isCommunityAdmin || isOwner || isStaff;
+  const { hasAccess, isLoading: isLoadingAdmin, checks } = useCommunityAdminAccess(communityId);
 
   // Get current user address
   const { address: currentUserAddress } = useAccount();
@@ -251,7 +246,7 @@ export default function ApplicationDetailPage() {
     hasAccess && application && !["approved", "rejected"].includes(application.status);
 
   // Check loading states
-  if (isLoadingAdmin || isStaffLoading || isLoadingApplication) {
+  if (isLoadingAdmin || isLoadingApplication) {
     return (
       <div className="flex w-full items-center justify-center min-h-screen">
         <Spinner />
@@ -312,7 +307,7 @@ export default function ApplicationDetailPage() {
             <MoreActionsDropdown
               referenceNumber={application.referenceNumber}
               onDeleteClick={handleDeleteClick}
-              canDelete={isCommunityAdmin}
+              canDelete={hasAccess}
               isDeleting={isDeleting}
               onEditClick={handleEditClick}
               canEdit={hasAccess && canEditApplication(application)}

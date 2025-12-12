@@ -12,14 +12,13 @@ import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Spinner } from "@/components/Utilities/Spinner";
 import TablePagination from "@/components/Utilities/TablePagination";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import {
   type AttestationBatchUpdateItem,
   useBatchUpdatePayouts,
 } from "@/hooks/useCommunityPayouts";
 import { useGrants } from "@/hooks/useGrants";
-import { useStaff } from "@/hooks/useStaff";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -86,11 +85,7 @@ export default function PayoutsAdminPage() {
     error: communityError,
   } = useCommunityDetails(communityId);
 
-  // Check if user is admin of this community
-  const { isCommunityAdmin: isAdmin, isLoading: loadingAdmin } = useIsCommunityAdmin(
-    community?.uid
-  );
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { hasAccess, isLoading: loadingAdmin } = useCommunityAdminAccess(community?.uid);
 
   // Extract the actual programId from the composite value (programId_chainId)
   const actualProgramId = selectedProgramId?.split("_")[0] || null;
@@ -413,7 +408,7 @@ export default function PayoutsAdminPage() {
   }, [communityError, router]);
 
   // Loading state
-  if (loadingAdmin || isStaffLoading || isLoadingGrants || isLoadingCommunity) {
+  if (loadingAdmin || isLoadingGrants || isLoadingCommunity) {
     return (
       <div className="flex w-full items-center justify-center h-96">
         <Spinner />
@@ -422,7 +417,7 @@ export default function PayoutsAdminPage() {
   }
 
   // Not authorized state
-  if (!isAdmin && !isStaff) {
+  if (!hasAccess) {
     return (
       <div className="flex w-full items-center justify-center h-96">
         <p className="text-lg">{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}</p>

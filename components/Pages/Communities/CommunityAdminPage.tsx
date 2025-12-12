@@ -12,8 +12,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/Utilities/Button";
 import { Skeleton } from "@/components/Utilities/Skeleton";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
-import { useStaff } from "@/hooks/useStaff";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import type { CommunityDetails } from "@/types/community";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -70,9 +69,7 @@ export const CommunityAdminPage = ({
   communityId: string;
   community: CommunityDetails;
 }) => {
-  // Check if user is admin of this community
-  const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(community?.uid);
-  const { isStaff } = useStaff();
+  const { hasAccess, isLoading: loading } = useCommunityAdminAccess(community?.uid);
 
   const slug = community?.details?.slug || communityId;
 
@@ -84,7 +81,7 @@ export const CommunityAdminPage = ({
 
       {loading ? (
         <LoadingSkeleton />
-      ) : isAdmin || isStaff ? (
+      ) : hasAccess ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <AdminButton
             href={PAGES.ADMIN.EDIT_CATEGORIES(slug)}
