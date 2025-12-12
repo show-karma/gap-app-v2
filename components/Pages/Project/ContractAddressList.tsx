@@ -16,6 +16,7 @@ interface ContractAddressListProps {
   onVerify?: (index: number) => void;
   supportedNetworks: readonly string[];
   error?: string | null;
+  readOnly?: boolean;
 }
 
 export const ContractAddressList: FC<ContractAddressListProps> = ({
@@ -28,6 +29,7 @@ export const ContractAddressList: FC<ContractAddressListProps> = ({
   onVerify,
   supportedNetworks,
   error,
+  readOnly = false,
 }) => {
   return (
     <div className="max-h-[60vh] flex flex-col gap-4 mt-8 overflow-y-auto">
@@ -48,16 +50,19 @@ export const ContractAddressList: FC<ContractAddressListProps> = ({
             onRemove={onRemove}
             onVerify={onVerify}
             supportedNetworks={supportedNetworks}
+            readOnly={readOnly}
           />
         );
       })}
-      <Button
-        onClick={onAdd}
-        className="flex items-center justify-center text-white gap-2 border border-brand-blue bg-brand-blue hover:opacity-90"
-      >
-        <PlusIcon className="h-5 w-5" />
-        Add Another Contract
-      </Button>
+      {!readOnly && (
+        <Button
+          onClick={onAdd}
+          className="flex items-center justify-center text-white gap-2 border border-brand-blue bg-brand-blue hover:opacity-90"
+        >
+          <PlusIcon className="h-5 w-5" />
+          Add Another Contract
+        </Button>
+      )}
       {error && <p className="text-red-500 mt-2">{error}</p>}
     </div>
   );

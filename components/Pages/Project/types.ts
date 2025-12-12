@@ -21,6 +21,7 @@ export interface LinkContractAddressesButtonProps {
   "data-link-contracts-button"?: string;
   buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
   onClose?: () => void;
+  readOnly?: boolean;
 }
 
 export interface ContractAddressItemProps {
@@ -33,4 +34,5 @@ export interface ContractAddressItemProps {
   onRemove: (index: number) => void;
   onVerify?: (index: number) => void;
   supportedNetworks: readonly string[];
+  readOnly?: boolean;
 }
