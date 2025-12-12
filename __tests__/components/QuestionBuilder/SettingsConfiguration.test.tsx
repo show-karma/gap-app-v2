@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { SettingsConfiguration } from "@/components/QuestionBuilder/SettingsConfiguration";
 import type { FormSchema } from "@/types/question-builder";
 
@@ -6,7 +6,7 @@ import type { FormSchema } from "@/types/question-builder";
 jest.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({ value, onChange, placeholderText, placeholder, disabled, id }: any) => (
     <textarea
-      data-testid={`markdown-editor-${id || 'default'}`}
+      data-testid={`markdown-editor-${id || "default"}`}
       value={value}
       onChange={(e) => onChange?.(e.target.value)}
       placeholder={placeholder || placeholderText}
@@ -35,11 +35,9 @@ describe("SettingsConfiguration - Email Templates", () => {
 
   describe("Approval Email Template", () => {
     it("should render approval email template editor", () => {
-      render(
-        <SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />
-      );
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
-      expect(screen.getByText("Approval Email Template")).toBeInTheDocument();
+      expect(screen.getByText("Approval Email Body")).toBeInTheDocument();
     });
 
     it("should display existing approval email template value", () => {
@@ -50,30 +48,28 @@ describe("SettingsConfiguration - Email Templates", () => {
         },
       };
 
-      render(
-        <SettingsConfiguration schema={schemaWithTemplate} onUpdate={mockOnUpdate} />
-      );
+      render(<SettingsConfiguration schema={schemaWithTemplate} onUpdate={mockOnUpdate} />);
 
       const editors = screen.getAllByTestId(/markdown-editor/);
-      const approvalEditor = editors.find((editor) => 
-        (editor as HTMLTextAreaElement).value === "Custom approval template"
+      const approvalEditor = editors.find(
+        (editor) => (editor as HTMLTextAreaElement).value === "Custom approval template"
       );
       expect(approvalEditor).toBeInTheDocument();
       expect(approvalEditor).toHaveValue("Custom approval template");
     });
 
     it("should call onUpdate when approval email template changes", () => {
-      render(
-        <SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />
-      );
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
       const editors = screen.getAllByTestId(/markdown-editor/);
       // Find the approval editor by checking which one has the approval placeholder
       // The approval placeholder contains "Congratulations" or "approved"
-      const approvalEditor = Array.from(editors).find((editor) => {
-        const placeholder = editor.getAttribute("data-placeholder") || editor.getAttribute("placeholder") || "";
-        return placeholder.includes("Congratulations") || placeholder.includes("approved");
-      }) || editors[0];
+      const approvalEditor =
+        Array.from(editors).find((editor) => {
+          const placeholder =
+            editor.getAttribute("data-placeholder") || editor.getAttribute("placeholder") || "";
+          return placeholder.includes("Congratulations") || placeholder.includes("approved");
+        }) || editors[0];
 
       // Clear any previous calls from useEffect/watch
       mockOnUpdate.mockClear();
@@ -91,23 +87,19 @@ describe("SettingsConfiguration - Email Templates", () => {
     });
 
     it("should show placeholder text for approval email template", () => {
-      render(
-        <SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />
-      );
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
       const editors = screen.getAllByTestId(/markdown-editor/);
       expect(editors.length).toBeGreaterThan(0);
       // At least one editor should have a placeholder
-      const editorsWithPlaceholder = editors.filter((editor) => 
-        editor.hasAttribute("placeholder") || editor.hasAttribute("data-placeholder")
+      const editorsWithPlaceholder = editors.filter(
+        (editor) => editor.hasAttribute("placeholder") || editor.hasAttribute("data-placeholder")
       );
       expect(editorsWithPlaceholder.length).toBeGreaterThan(0);
     });
 
     it("should show available placeholders information", () => {
-      render(
-        <SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />
-      );
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
       expect(screen.getAllByText(/Available placeholders:/).length).toBeGreaterThan(0);
       expect(screen.getAllByText(/{{applicantName}}/).length).toBeGreaterThan(0);
@@ -116,9 +108,7 @@ describe("SettingsConfiguration - Email Templates", () => {
     });
 
     it("should not show projectName or postApprovalFormDescription in placeholders", () => {
-      render(
-        <SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />
-      );
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
       const placeholderTexts = screen.getAllByText(/Available placeholders:/);
       // Check all placeholder texts (both approval and rejection sections)
@@ -132,11 +122,9 @@ describe("SettingsConfiguration - Email Templates", () => {
 
   describe("Rejection Email Template", () => {
     it("should render rejection email template editor", () => {
-      render(
-        <SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />
-      );
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
-      expect(screen.getByText("Rejection Email Template")).toBeInTheDocument();
+      expect(screen.getByText("Rejection Email Body")).toBeInTheDocument();
     });
 
     it("should display existing rejection email template value", () => {
@@ -147,30 +135,31 @@ describe("SettingsConfiguration - Email Templates", () => {
         },
       };
 
-      render(
-        <SettingsConfiguration schema={schemaWithTemplate} onUpdate={mockOnUpdate} />
-      );
+      render(<SettingsConfiguration schema={schemaWithTemplate} onUpdate={mockOnUpdate} />);
 
       const editors = screen.getAllByTestId(/markdown-editor/);
-      const rejectionEditor = editors.find((editor) => 
-        (editor as HTMLTextAreaElement).value === "Custom rejection template"
+      const rejectionEditor = editors.find(
+        (editor) => (editor as HTMLTextAreaElement).value === "Custom rejection template"
       );
       expect(rejectionEditor).toBeInTheDocument();
       expect(rejectionEditor).toHaveValue("Custom rejection template");
     });
 
     it("should call onUpdate when rejection email template changes", () => {
-      render(
-        <SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />
-      );
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
       const editors = screen.getAllByTestId(/markdown-editor/);
       // Find the rejection editor by checking which one has the rejection placeholder
       // The rejection placeholder contains "Update on Your Application"
-      const rejectionEditor = Array.from(editors).find((editor) => {
-        const placeholder = editor.getAttribute("data-placeholder") || editor.getAttribute("placeholder") || "";
-        return placeholder.includes("Update on Your Application") || placeholder.includes("regret to inform");
-      }) || (editors.length > 1 ? editors[1] : editors[0]);
+      const rejectionEditor =
+        Array.from(editors).find((editor) => {
+          const placeholder =
+            editor.getAttribute("data-placeholder") || editor.getAttribute("placeholder") || "";
+          return (
+            placeholder.includes("Update on Your Application") ||
+            placeholder.includes("regret to inform")
+          );
+        }) || (editors.length > 1 ? editors[1] : editors[0]);
 
       // Clear any previous calls from useEffect/watch
       mockOnUpdate.mockClear();
@@ -188,9 +177,7 @@ describe("SettingsConfiguration - Email Templates", () => {
     });
 
     it("should show placeholder text for rejection email template", () => {
-      render(
-        <SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />
-      );
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
       const editors = screen.getAllByTestId(/markdown-editor/);
       expect(editors.length).toBeGreaterThan(0);
@@ -202,34 +189,20 @@ describe("SettingsConfiguration - Email Templates", () => {
 
   describe("Email Templates Section", () => {
     it("should render email templates section with heading", () => {
-      render(
-        <SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />
-      );
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
       expect(screen.getByText("Email Templates")).toBeInTheDocument();
     });
 
     it("should show description about email templates", () => {
-      render(
-        <SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />
-      );
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
-      expect(
-        screen.getByText(/Customize the emails sent to applicants/)
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(/application info section of the email/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Customize the emails sent to applicants/)).toBeInTheDocument();
+      expect(screen.getByText(/application info section of the email/)).toBeInTheDocument();
     });
 
     it("should disable editors when readOnly is true", () => {
-      render(
-        <SettingsConfiguration
-          schema={mockSchema}
-          onUpdate={mockOnUpdate}
-          readOnly={true}
-        />
-      );
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} readOnly={true} />);
 
       const editors = screen.getAllByTestId(/markdown-editor/);
       editors.forEach((editor) => {
@@ -239,11 +212,7 @@ describe("SettingsConfiguration - Email Templates", () => {
 
     it("should enable editors when readOnly is false", () => {
       render(
-        <SettingsConfiguration
-          schema={mockSchema}
-          onUpdate={mockOnUpdate}
-          readOnly={false}
-        />
+        <SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} readOnly={false} />
       );
 
       const editors = screen.getAllByTestId(/markdown-editor/);
@@ -264,18 +233,14 @@ describe("SettingsConfiguration - Email Templates", () => {
         },
       };
 
-      render(
-        <SettingsConfiguration
-          schema={schemaWithOtherSettings}
-          onUpdate={mockOnUpdate}
-        />
-      );
+      render(<SettingsConfiguration schema={schemaWithOtherSettings} onUpdate={mockOnUpdate} />);
 
       const editors = screen.getAllByTestId(/markdown-editor/);
       // Find the approval editor by its current value
-      const approvalEditor = editors.find((editor) => 
-        (editor as HTMLTextAreaElement).value === "Old approval template"
-      ) || editors[0];
+      const approvalEditor =
+        editors.find(
+          (editor) => (editor as HTMLTextAreaElement).value === "Old approval template"
+        ) || editors[0];
 
       // Clear any previous calls from useEffect/watch
       mockOnUpdate.mockClear();
@@ -307,18 +272,14 @@ describe("SettingsConfiguration - Email Templates", () => {
         },
       };
 
-      render(
-        <SettingsConfiguration
-          schema={schemaWithOtherSettings}
-          onUpdate={mockOnUpdate}
-        />
-      );
+      render(<SettingsConfiguration schema={schemaWithOtherSettings} onUpdate={mockOnUpdate} />);
 
       const editors = screen.getAllByTestId(/markdown-editor/);
       // Find the rejection editor by its current value
-      const rejectionEditor = editors.find((editor) => 
-        (editor as HTMLTextAreaElement).value === "Old rejection template"
-      ) || editors[editors.length > 1 ? 1 : 0];
+      const rejectionEditor =
+        editors.find(
+          (editor) => (editor as HTMLTextAreaElement).value === "Old rejection template"
+        ) || editors[editors.length > 1 ? 1 : 0];
 
       // Clear any previous calls from useEffect/watch
       mockOnUpdate.mockClear();
@@ -341,4 +302,3 @@ describe("SettingsConfiguration - Email Templates", () => {
     });
   });
 });
-
