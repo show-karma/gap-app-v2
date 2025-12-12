@@ -1,22 +1,17 @@
 "use client";
 import { Disclosure } from "@headlessui/react";
 import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import { useAccount } from "wagmi";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
-import { useAuth } from "@/hooks/useAuth";
+import {
+  useCommunityAdminAccess,
+  useCommunityCategories,
+  useCommunityDetails,
+} from "@/hooks/communities";
 import type { Category } from "@/types/impactMeasurement";
-import { zeroUID } from "@/utilities/commons";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
@@ -30,8 +25,7 @@ export default function ManageIndicatorsPage() {
   const router = useRouter();
   const params = useParams();
   const communityId = params.communityId as string;
-  // Call API
-  const [categories, setCategories] = useState<Category[]>([]);
+
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [viewMode, setViewMode] = useState<"category" | "indicators">("category");
   const [viewType, setViewType] = useState<"all" | "output" | "outcome">("all");
@@ -40,115 +34,46 @@ export default function ManageIndicatorsPage() {
   );
   const [_searchQuery, _setSearchQuery] = useState<string>("");
 
-  const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
-  const [community, setCommunity] = useState<ICommunityResponse | undefined>(undefined); // Data returned from the API
-  const _signer = useSigner();
+  const {
+    data: community,
+    isLoading: communityLoading,
+    isError: communityError,
+  } = useCommunityDetails(communityId);
+
+  const {
+    data: categories = [],
+    isLoading: categoriesLoading,
+    refetch: refetchCategories,
+  } = useCommunityCategories(communityId, {
+    enabled: !!community,
+  });
 
   const { hasAccess, isLoading: adminLoading } = useCommunityAdminAccess(community?.uid);
 
   useEffect(() => {
-    const fetchDetails = async () => {
-      if (!communityId) return;
-      setLoading(true);
-      try {
-        const { data: result } = await gapIndexerApi.communityBySlug(communityId);
-        if (!result || result.uid === zeroUID) throw new Error("Community not found");
-        setCommunity(result);
-      } catch (error: any) {
-        errorManager(`Error fetching community ${communityId}`, error, {
-          community: communityId,
-        });
-        console.error("Error fetching data:", error);
-        if (error.message === "Community not found" || error.message.includes("422")) {
-          router.push(PAGES.NOT_FOUND);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDetails();
-  }, [communityId, router]);
-
-  const getCategories = useCallback(
-    async (isSilent: boolean = false) => {
-      if (!isSilent) {
-        setLoading(true);
-      }
-
-      try {
-        const [data] = await fetchData(
-          INDEXER.COMMUNITY.CATEGORIES((community?.details?.data?.slug || community?.uid) as string)
-        );
-        if (data) {
-          const categoriesWithoutOutputs = data.map((category: Category) => {
-            const outputsNotDuplicated = category.outputs?.filter(
-              (output) =>
-                !category.impact_segments?.some(
-                  (segment) => segment.id === output.id || segment.name === output.name
-                )
-            );
-            return {
-              ...category,
-              impact_segments: [
-                ...(category.impact_segments || []),
-                ...(outputsNotDuplicated || []).map((output: any) => {
-                  return {
-                    id: output.id,
-                    name: output.name,
-                    description: output.description,
-                    impact_indicators: [],
-                    type: output.type,
-                  };
-                }),
-              ],
-            };
-          });
-          return categoriesWithoutOutputs;
-        }
-      } catch (error: any) {
-        errorManager(`Error fetching categories of community ${communityId}`, error, {
-          community: communityId,
-        });
-        console.error(error);
-        return [];
-      } finally {
-        if (!isSilent) {
-          setLoading(false);
-        }
-      }
-    },
-    [community, communityId]
-  );
+    if (community === null && !communityLoading) {
+      router.push(PAGES.NOT_FOUND);
+    }
+  }, [community, communityLoading, router]);
 
   useEffect(() => {
-    if (community?.uid) {
-      setLoading(true);
-      getCategories()
-        .then((res) => {
-          setCategories(res);
-          if (res && res.length > 0) {
-            setSelectedCategory(res[0]);
-          }
-        })
-        .catch(() => {
-          setCategories([]);
-        });
+    if (categories.length > 0 && !selectedCategory) {
+      setSelectedCategory(categories[0]);
     }
-  }, [community?.uid, getCategories]);
+  }, [categories, selectedCategory]);
+
+  const isLoading = communityLoading || categoriesLoading || adminLoading;
 
   return (
     <div className="mt-4 flex gap-8 flex-row max-lg:flex-col w-full mb-10">
-      {loading || adminLoading ? (
+      {isLoading ? (
         <div className="flex w-full min-h-screen h-full items-center justify-center">
           <Spinner />
         </div>
       ) : hasAccess ? (
         <div className="flex w-full flex-1 flex-col items-center gap-8">
           <div className="w-full flex flex-row items-center justify-between max-w-full">
-            <Link
-              href={PAGES.ADMIN.ROOT(community?.details?.data?.slug || (community?.uid as string))}
-            >
+            <Link href={PAGES.ADMIN.ROOT(community?.details?.slug || (community?.uid as string))}>
               <Button className="flex flex-row items-center gap-2 px-4 py-2 font-semibold text-base  bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
                 <ChevronLeftIcon className="h-5 w-5" />
                 Return to admin page
@@ -317,24 +242,14 @@ export default function ManageIndicatorsPage() {
                     selectedCategory={selectedCategory}
                     viewType={viewType}
                     setViewType={setViewType}
-                    onRefreshCategory={() => {
-                      setLoading(true);
-                      getCategories()
-                        .then((res) => {
-                          setCategories(res);
-                          if (res && res.length > 0) {
-                            const currentCategory = res.find(
-                              (c: Category) => c.id === selectedCategory.id
-                            );
-                            setSelectedCategory(currentCategory || res[0]);
-                          }
-                        })
-                        .catch(() => {
-                          setCategories([]);
-                        })
-                        .finally(() => {
-                          setLoading(false);
-                        });
+                    onRefreshCategory={async () => {
+                      const { data: refreshedCategories } = await refetchCategories();
+                      if (refreshedCategories && refreshedCategories.length > 0) {
+                        const currentCategory = refreshedCategories.find(
+                          (c: Category) => c.id === selectedCategory.id
+                        );
+                        setSelectedCategory(currentCategory || refreshedCategories[0]);
+                      }
                     }}
                     communityId={community?.uid as string}
                   />

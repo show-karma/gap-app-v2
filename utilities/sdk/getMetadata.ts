@@ -2,6 +2,7 @@ import type { Hex } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { envVars } from "../enviromentVars";
 import { gapIndexerApi } from "../gapIndexerApi";
+import { getCommunityDetails } from "../queries/v2/community";
 
 export const getMetadata = async <T>(
   type: "project" | "community" | "grant",
@@ -18,11 +19,8 @@ export const getMetadata = async <T>(
       return project as T;
     }
     if (type === "community") {
-      const community = await gapIndexerApi
-        .communityBySlug(uid)
-        .then((res) => res.data)
-        .catch(() => undefined);
-      return community as T;
+      const community = await getCommunityDetails(uid);
+      return (community || undefined) as T;
     }
     if (type === "grant") {
       const grant = await gapIndexerApi
