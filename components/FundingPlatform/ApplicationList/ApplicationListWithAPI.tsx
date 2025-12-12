@@ -165,9 +165,21 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   }, [filters, sortBy, sortOrder, pathname, router, searchParams]);
 
   const handleStatusChange = useCallback(
-    async (applicationId: string, status: string, note?: string) => {
+    async (
+      applicationId: string,
+      status: string,
+      note?: string,
+      approvedAmount?: string,
+      approvedCurrency?: string
+    ) => {
       try {
-        await updateApplicationStatus({ applicationId, status, note });
+        await updateApplicationStatus({
+          applicationId,
+          status,
+          note,
+          approvedAmount,
+          approvedCurrency,
+        });
         // Refetch to get updated data
         refetch();
         // Call parent's onStatusChange if provided

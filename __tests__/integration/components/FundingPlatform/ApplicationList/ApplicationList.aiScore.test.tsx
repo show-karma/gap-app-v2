@@ -1,4 +1,6 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
+import type React from "react";
 import ApplicationList from "@/components/FundingPlatform/ApplicationList/ApplicationList";
 import type { IFundingApplication } from "@/types/funding-platform";
 
@@ -56,6 +58,24 @@ const createMockApplication = (overrides?: Partial<IFundingApplication>): IFundi
 });
 
 describe("ApplicationList - AI Score Column", () => {
+  const createTestQueryClient = () =>
+    new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          gcTime: 0,
+        },
+        mutations: {
+          retry: false,
+        },
+      },
+    });
+
+  const renderWithQueryClient = (ui: React.ReactElement) => {
+    const queryClient = createTestQueryClient();
+    return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -64,7 +84,7 @@ describe("ApplicationList - AI Score Column", () => {
     it("should render AI Score column header", () => {
       const applications = [createMockApplication()];
 
-      render(
+      renderWithQueryClient(
         <ApplicationList
           programId="test-program"
           chainID={11155111}
@@ -84,7 +104,7 @@ describe("ApplicationList - AI Score Column", () => {
       const mockOnSortChange = jest.fn();
       const applications = [createMockApplication()];
 
-      render(
+      renderWithQueryClient(
         <ApplicationList
           programId="test-program"
           chainID={11155111}
@@ -107,7 +127,7 @@ describe("ApplicationList - AI Score Column", () => {
     it("should pass correct sorting props to AI Score header", () => {
       const applications = [createMockApplication()];
 
-      render(
+      renderWithQueryClient(
         <ApplicationList
           programId="test-program"
           chainID={11155111}
@@ -135,7 +155,7 @@ describe("ApplicationList - AI Score Column", () => {
         createMockApplication({ referenceNumber: "APP-003" }),
       ];
 
-      render(
+      renderWithQueryClient(
         <ApplicationList
           programId="test-program"
           chainID={11155111}
@@ -163,7 +183,7 @@ describe("ApplicationList - AI Score Column", () => {
 
       const applications = [createMockApplication()];
 
-      const { container } = render(
+      const { container } = renderWithQueryClient(
         <ApplicationList
           programId="test-program"
           chainID={11155111}
@@ -197,7 +217,7 @@ describe("ApplicationList - AI Score Column", () => {
 
       const applications = [createMockApplication()];
 
-      const { container } = render(
+      const { container } = renderWithQueryClient(
         <ApplicationList
           programId="test-program"
           chainID={11155111}
@@ -221,7 +241,7 @@ describe("ApplicationList - AI Score Column", () => {
 
       const applications = [createMockApplication()];
 
-      const { container } = render(
+      const { container } = renderWithQueryClient(
         <ApplicationList
           programId="test-program"
           chainID={11155111}
@@ -247,7 +267,7 @@ describe("ApplicationList - AI Score Column", () => {
 
       const applications = [createMockApplication()];
 
-      render(
+      renderWithQueryClient(
         <ApplicationList
           programId="test-program"
           chainID={11155111}
@@ -282,7 +302,7 @@ describe("ApplicationList - AI Score Column", () => {
 
       const applications = [createMockApplication()];
 
-      const { container } = render(
+      const { container } = renderWithQueryClient(
         <ApplicationList
           programId="test-program"
           chainID={11155111}
@@ -310,7 +330,7 @@ describe("ApplicationList - AI Score Column", () => {
 
       const applications = [createMockApplication()];
 
-      const { container } = render(
+      const { container } = renderWithQueryClient(
         <ApplicationList
           programId="test-program"
           chainID={11155111}
@@ -331,7 +351,7 @@ describe("ApplicationList - AI Score Column", () => {
 
   describe("Loading and Empty States", () => {
     it("should not render AI Score column when loading", () => {
-      render(
+      renderWithQueryClient(
         <ApplicationList
           programId="test-program"
           chainID={11155111}
@@ -347,7 +367,7 @@ describe("ApplicationList - AI Score Column", () => {
     });
 
     it("should not render AI Score header when no applications", () => {
-      render(
+      renderWithQueryClient(
         <ApplicationList
           programId="test-program"
           chainID={11155111}
