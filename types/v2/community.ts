@@ -17,13 +17,13 @@ export interface CommunityDetailsResponse {
   chainID: number;
   details: {
     name: string;
-    description: string;
+    description?: string;
     slug: string;
-    logoUrl: string;
+    logoUrl?: string;
     imageURL?: string;
   };
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // V2 type alias - Community now refers to the strict V2 response

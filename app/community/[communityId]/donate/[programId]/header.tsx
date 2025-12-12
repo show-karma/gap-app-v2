@@ -33,7 +33,7 @@ export const DonationHeader = ({ community, programId, program }: DonationHeader
           <Image
             height={48}
             width={48}
-            src={community.details?.logoUrl}
+            src={community.details?.logoUrl || community.details?.imageURL || ""}
             alt={community.details?.name}
             className="h-12 w-12 min-w-12 min-h-12 rounded-full border border-white"
           />

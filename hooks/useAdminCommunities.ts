@@ -7,36 +7,9 @@ import type { Community } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-// V2 API response types
-interface AdminCommunityV2 {
-  uid: `0x${string}`;
-  chainID: number;
-  details: {
-    name: string;
-    slug: string;
-    description: string | null;
-    imageURL: string | null;
-  };
-}
-
 interface GetAdminCommunitiesV2Response {
-  communities: AdminCommunityV2[];
+  communities: Community[];
 }
-
-// Map V2 response to Community type
-const mapV2ToCommunity = (community: AdminCommunityV2): Community => ({
-  uid: community.uid,
-  chainID: community.chainID,
-  details: {
-    name: community.details.name,
-    slug: community.details.slug,
-    description: community.details.description ?? "",
-    logoUrl: community.details.imageURL ?? "",
-    imageURL: community.details.imageURL ?? undefined,
-  },
-  createdAt: "",
-  updatedAt: "",
-});
 
 const fetchAdminCommunities = async (): Promise<Community[]> => {
   const [data, error] = await fetchData<GetAdminCommunitiesV2Response>(
@@ -53,7 +26,14 @@ const fetchAdminCommunities = async (): Promise<Community[]> => {
     throw new Error(error || "Failed to fetch admin communities");
   }
 
-  return (data.communities || []).map(mapV2ToCommunity);
+  // Map imageURL to logoUrl for consistency
+  return (data.communities || []).map((community) => ({
+    ...community,
+    details: {
+      ...community.details,
+      logoUrl: community.details.imageURL,
+    },
+  }));
 };
 
 export const useAdminCommunities = (address?: string) => {
