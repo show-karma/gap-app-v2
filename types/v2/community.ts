@@ -12,17 +12,6 @@ export interface CommunityDetails {
   }>;
 }
 
-export interface Community {
-  uid: `0x${string}`;
-  chainID: number;
-  details?: CommunityDetails;
-  slug?: string;
-  name?: string;
-  imageURL?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
 export interface CommunityDetailsResponse {
   uid: `0x${string}`;
   chainID: number;
@@ -31,10 +20,14 @@ export interface CommunityDetailsResponse {
     description: string;
     slug: string;
     logoUrl: string;
+    imageURL?: string;
   };
   createdAt: string;
   updatedAt: string;
 }
+
+// V2 type alias - Community now refers to the strict V2 response
+export type Community = CommunityDetailsResponse;
 
 export interface ProjectUpdatesBreakdown {
   projectMilestones: number;

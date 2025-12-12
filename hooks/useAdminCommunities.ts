@@ -30,9 +30,12 @@ const mapV2ToCommunity = (community: AdminCommunityV2): Community => ({
   details: {
     name: community.details.name,
     slug: community.details.slug,
-    description: community.details.description ?? undefined,
+    description: community.details.description ?? "",
+    logoUrl: community.details.imageURL ?? "",
     imageURL: community.details.imageURL ?? undefined,
   },
+  createdAt: "",
+  updatedAt: "",
 });
 
 const fetchAdminCommunities = async (): Promise<Community[]> => {
