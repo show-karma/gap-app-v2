@@ -165,7 +165,7 @@ export const getCommunityCategories = cache(async (communityId: string): Promise
           ...(outputsNotDuplicated || []).map((output) => ({
             id: output.id,
             name: output.name,
-            description: "",
+            description: output.description,
             impact_indicators: [],
             type: output.type,
           })),
