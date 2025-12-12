@@ -41,6 +41,10 @@ export const INDEXER = {
       COMMENTS: (referenceNumber: string) => `/v2/applications/${referenceNumber}/comments`,
       DELETE: (referenceNumber: string) => `/v2/funding-applications/${referenceNumber}`,
     },
+    PROGRAM: {
+      FUNDING_DETAILS: (programId: string, chainId: number) =>
+        `/v2/program/funding-details?programId=${programId}&chainId=${chainId}`,
+    },
   },
   PROGRAMS: {
     TRACKS: (programId: string) => `/tracks/programs/${programId}/tracks`,

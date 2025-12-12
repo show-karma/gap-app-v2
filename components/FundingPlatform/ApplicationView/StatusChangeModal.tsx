@@ -2,6 +2,7 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { useQuery } from "@tanstack/react-query";
 import debounce from "lodash.debounce";
 import { type FC, Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
@@ -62,7 +63,6 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   const [approvedCurrency, setApprovedCurrency] = useState("");
   const [amountError, setAmountError] = useState<string | null>(null);
   const [currencyError, setCurrencyError] = useState<string | null>(null);
-  const [isLoadingCurrency, setIsLoadingCurrency] = useState(false);
   const [isCurrencyFromAPI, setIsCurrencyFromAPI] = useState(false);
 
   // When status is "approved", amount and currency are required
@@ -128,6 +128,15 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   }, []);
 
   // Fetch funding details when modal opens and status is "approved"
+  const fundingDetailsQuery = useQuery({
+    queryKey: ["program-funding-details", programId, chainId],
+    queryFn: () => fundingPlatformService.programs.getFundingDetails(programId!, chainId!),
+    enabled: isOpen && isApprovalStatus && !!programId && !!chainId,
+  });
+
+  const isLoadingCurrency = fundingDetailsQuery.isLoading;
+
+  // Handle funding details data when it arrives
   useEffect(() => {
     // Reset all form fields when modal closes
     if (!isOpen) {
@@ -135,57 +144,36 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
       return;
     }
 
-    let isCancelled = false;
-
-    const fetchFundingDetails = async () => {
-      if (isApprovalStatus && programId && chainId) {
-        setIsLoadingCurrency(true);
-        try {
-          const fundingDetails = await fundingPlatformService.programs.getFundingDetails(
-            programId,
-            chainId
-          );
-          // Only update state if component is still mounted and modal is still open
-          if (!isCancelled && isOpen) {
-            const currency = extractCurrency(fundingDetails);
-            if (currency) {
-              // Normalize currency (trim and uppercase) to match validation requirements
-              const normalizedCurrency = currency.trim().toUpperCase();
-              setApprovedCurrency(normalizedCurrency);
-              setIsCurrencyFromAPI(true);
-              // Validate and clear any currency errors
-              if (isApprovalStatus) {
-                // Inline validation to avoid dependency array issues
-                const currencyRegex = /^[A-Z]+$/;
-                if (currencyRegex.test(normalizedCurrency)) {
-                  setCurrencyError(null);
-                } else {
-                  setCurrencyError("Currency must be a valid code (e.g., USD, ETH, USDC)");
-                }
-              }
-            }
-          }
-        } catch (error) {
-          console.error("Failed to fetch funding details:", error);
-          // If currency can't be loaded, leave field empty for manual entry
-          if (!isCancelled && isOpen) {
-            setIsCurrencyFromAPI(false);
-          }
-        } finally {
-          if (!isCancelled) {
-            setIsLoadingCurrency(false);
-          }
+    // Process funding details when query succeeds
+    if (fundingDetailsQuery.data && isOpen && isApprovalStatus) {
+      const currency = extractCurrency(fundingDetailsQuery.data);
+      if (currency) {
+        // Normalize currency (trim and uppercase) to match validation requirements
+        const normalizedCurrency = currency.trim().toUpperCase();
+        setApprovedCurrency(normalizedCurrency);
+        setIsCurrencyFromAPI(true);
+        // Validate and clear any currency errors
+        const currencyRegex = /^[A-Z]+$/;
+        if (currencyRegex.test(normalizedCurrency)) {
+          setCurrencyError(null);
+        } else {
+          setCurrencyError("Currency must be a valid code (e.g., USD, ETH, USDC)");
         }
       }
-    };
+    }
 
-    fetchFundingDetails();
-
-    // Cleanup function to prevent state updates on unmounted component
-    return () => {
-      isCancelled = true;
-    };
-  }, [isOpen, isApprovalStatus, programId, chainId, resetFormState]);
+    // Handle error case - if currency can't be loaded, leave field empty for manual entry
+    if (fundingDetailsQuery.isError && isOpen && isApprovalStatus) {
+      console.error("Failed to fetch funding details:", fundingDetailsQuery.error);
+      setIsCurrencyFromAPI(false);
+    }
+  }, [
+    isOpen,
+    isApprovalStatus,
+    fundingDetailsQuery.data,
+    fundingDetailsQuery.isError,
+    resetFormState,
+  ]);
 
   // Cleanup debounced function on unmount
   useEffect(() => {

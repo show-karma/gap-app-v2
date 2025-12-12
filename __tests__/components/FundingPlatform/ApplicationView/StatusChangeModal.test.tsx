@@ -1,4 +1,6 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type React from "react";
 import StatusChangeModal from "@/components/FundingPlatform/ApplicationView/StatusChangeModal";
 
 // Note: react-hot-toast is no longer used in StatusChangeModal, but keeping mock for other components
@@ -115,6 +117,30 @@ describe("StatusChangeModal", () => {
     isReasonRequired: false,
   };
 
+  // Create a QueryClient for testing
+  const createTestQueryClient = () =>
+    new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          gcTime: 0,
+        },
+        mutations: {
+          retry: false,
+        },
+      },
+    });
+
+  // Wrapper component with QueryClientProvider
+  let testQueryClient: QueryClient;
+  const renderWithQueryClient = (ui: React.ReactElement) => {
+    testQueryClient = createTestQueryClient();
+    return {
+      ...render(<QueryClientProvider client={testQueryClient}>{ui}</QueryClientProvider>),
+      queryClient: testQueryClient,
+    };
+  };
+
   // Helper function to enter currency in text input
   const enterCurrency = async (currency: string) => {
     const currencyInput = screen.getByLabelText(/approved currency/i) as HTMLInputElement;
@@ -141,38 +167,38 @@ describe("StatusChangeModal", () => {
 
   describe("Rendering", () => {
     it("should render modal when isOpen is true", () => {
-      render(<StatusChangeModal {...defaultProps} />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} />);
 
       expect(screen.getByTestId("dialog")).toBeInTheDocument();
       expect(screen.getByText("Approve")).toBeInTheDocument();
     });
 
     it("should not render modal when isOpen is false", () => {
-      render(<StatusChangeModal {...defaultProps} isOpen={false} />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} isOpen={false} />);
 
       expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
     });
 
     it("should display correct label for revision_requested status", () => {
-      render(<StatusChangeModal {...defaultProps} status="revision_requested" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="revision_requested" />);
 
       expect(screen.getByText("Request Revision")).toBeInTheDocument();
     });
 
     it("should display correct label for rejected status", () => {
-      render(<StatusChangeModal {...defaultProps} status="rejected" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="rejected" />);
 
       expect(screen.getByText("Reject")).toBeInTheDocument();
     });
 
     it("should display correct label for pending status", () => {
-      render(<StatusChangeModal {...defaultProps} status="pending" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="pending" />);
 
       expect(screen.getByText("Set as Pending")).toBeInTheDocument();
     });
 
     it("should display reason textarea", () => {
-      render(<StatusChangeModal {...defaultProps} />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} />);
 
       const textarea = screen.getByLabelText(/reason/i);
       expect(textarea).toBeInTheDocument();
@@ -181,7 +207,7 @@ describe("StatusChangeModal", () => {
 
   describe("Reason Validation - Critical Missing Coverage", () => {
     it("should require reason for revision_requested status (isReasonActuallyRequired)", () => {
-      render(<StatusChangeModal {...defaultProps} status="revision_requested" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="revision_requested" />);
 
       const confirmButton = screen.getByTestId("confirm-button");
       expect(confirmButton).toBeDisabled();
@@ -194,7 +220,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should require reason for rejected status (isReasonActuallyRequired)", () => {
-      render(<StatusChangeModal {...defaultProps} status="rejected" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="rejected" />);
 
       const confirmButton = screen.getByTestId("confirm-button");
       expect(confirmButton).toBeDisabled();
@@ -205,7 +231,9 @@ describe("StatusChangeModal", () => {
     });
 
     it("should not require reason for approved status when isReasonRequired is false", async () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" isReasonRequired={false} />);
+      renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} status="approved" isReasonRequired={false} />
+      );
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
@@ -225,7 +253,9 @@ describe("StatusChangeModal", () => {
     });
 
     it("should require reason when isReasonRequired prop is true", () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" isReasonRequired={true} />);
+      renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} status="approved" isReasonRequired={true} />
+      );
 
       const confirmButton = screen.getByTestId("confirm-button");
       expect(confirmButton).toBeDisabled();
@@ -237,7 +267,7 @@ describe("StatusChangeModal", () => {
 
     it("should prevent submission with empty reason when required (handleConfirm validation)", () => {
       const onConfirm = jest.fn();
-      render(
+      renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="revision_requested" onConfirm={onConfirm} />
       );
 
@@ -252,7 +282,9 @@ describe("StatusChangeModal", () => {
 
     it("should prevent submission with whitespace-only reason when required", () => {
       const onConfirm = jest.fn();
-      render(<StatusChangeModal {...defaultProps} status="rejected" onConfirm={onConfirm} />);
+      renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} status="rejected" onConfirm={onConfirm} />
+      );
 
       const textarea = screen.getByLabelText(/reason/i);
       fireEvent.change(textarea, { target: { value: "   " } });
@@ -266,7 +298,7 @@ describe("StatusChangeModal", () => {
 
     it("should allow submission with valid reason when required", () => {
       const onConfirm = jest.fn();
-      render(
+      renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="revision_requested" onConfirm={onConfirm} />
       );
 
@@ -283,7 +315,9 @@ describe("StatusChangeModal", () => {
 
     it("should allow submission without reason when not required", async () => {
       const onConfirm = jest.fn();
-      render(<StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />);
+      renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
+      );
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
@@ -304,7 +338,9 @@ describe("StatusChangeModal", () => {
 
   describe("Reason Field Reset - Missing Coverage", () => {
     it("should reset reason field on close (handleClose)", () => {
-      const { rerender } = render(<StatusChangeModal {...defaultProps} />);
+      const { rerender, queryClient } = renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} />
+      );
 
       const textarea = screen.getByLabelText(/reason/i) as HTMLTextAreaElement;
       fireEvent.change(textarea, { target: { value: "Test reason" } });
@@ -317,7 +353,11 @@ describe("StatusChangeModal", () => {
       expect(defaultProps.onClose).toHaveBeenCalled();
 
       // Reopen modal
-      rerender(<StatusChangeModal {...defaultProps} isOpen={true} />);
+      rerender(
+        <QueryClientProvider client={queryClient}>
+          <StatusChangeModal {...defaultProps} isOpen={true} />
+        </QueryClientProvider>
+      );
 
       const newTextarea = screen.getByLabelText(/reason/i) as HTMLTextAreaElement;
       expect(newTextarea.value).toBe("");
@@ -325,7 +365,9 @@ describe("StatusChangeModal", () => {
 
     it("should reset reason field after successful confirmation", async () => {
       const onConfirm = jest.fn();
-      const { rerender } = render(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
+      const { rerender, queryClient } = renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} onConfirm={onConfirm} />
+      );
 
       const textarea = screen.getByLabelText(/reason/i) as HTMLTextAreaElement;
       fireEvent.change(textarea, { target: { value: "Test reason" } });
@@ -347,7 +389,11 @@ describe("StatusChangeModal", () => {
 
       // After confirmation, reason should be reset (component resets state)
       // This tests the setReason("") call in handleConfirm
-      rerender(<StatusChangeModal {...defaultProps} isOpen={true} />);
+      rerender(
+        <QueryClientProvider client={queryClient}>
+          <StatusChangeModal {...defaultProps} isOpen={true} />
+        </QueryClientProvider>
+      );
       const newTextarea = screen.getByLabelText(/reason/i) as HTMLTextAreaElement;
       expect(newTextarea.value).toBe("");
     });
@@ -356,7 +402,9 @@ describe("StatusChangeModal", () => {
   describe("Submission State Handling - Missing Coverage", () => {
     it("should disable close when isSubmitting is true (handleClose check)", () => {
       const onClose = jest.fn();
-      render(<StatusChangeModal {...defaultProps} onClose={onClose} isSubmitting={true} />);
+      renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} onClose={onClose} isSubmitting={true} />
+      );
 
       const cancelButtons = screen.getAllByTestId("cancel-button");
       expect(cancelButtons.length).toBeGreaterThan(0);
@@ -374,7 +422,9 @@ describe("StatusChangeModal", () => {
 
     it("should prevent close during submission", () => {
       const onClose = jest.fn();
-      render(<StatusChangeModal {...defaultProps} onClose={onClose} isSubmitting={true} />);
+      renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} onClose={onClose} isSubmitting={true} />
+      );
 
       const cancelButtons = screen.getAllByTestId("cancel-button");
       // Click the actual Cancel button (not the Processing... button)
@@ -388,21 +438,21 @@ describe("StatusChangeModal", () => {
     });
 
     it('should show "Processing..." text when isSubmitting is true', () => {
-      render(<StatusChangeModal {...defaultProps} isSubmitting={true} />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} isSubmitting={true} />);
 
       expect(screen.getByText("Processing...")).toBeInTheDocument();
       expect(screen.queryByText("Confirm")).not.toBeInTheDocument();
     });
 
     it("should disable confirm button when isSubmitting is true", () => {
-      render(<StatusChangeModal {...defaultProps} isSubmitting={true} />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} isSubmitting={true} />);
 
       const confirmButton = screen.getByTestId("confirm-button");
       expect(confirmButton).toBeDisabled();
     });
 
     it("should disable textarea when isSubmitting is true", () => {
-      render(<StatusChangeModal {...defaultProps} isSubmitting={true} />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} isSubmitting={true} />);
 
       const textarea = screen.getByLabelText(/reason/i);
       expect(textarea).toBeDisabled();
@@ -411,28 +461,28 @@ describe("StatusChangeModal", () => {
 
   describe("Status-specific Behavior", () => {
     it("should show correct placeholder for revision_requested", () => {
-      render(<StatusChangeModal {...defaultProps} status="revision_requested" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="revision_requested" />);
 
       const textarea = screen.getByLabelText(/reason/i);
       expect(textarea).toHaveAttribute("placeholder", "Explain what needs to be revised...");
     });
 
     it("should show correct placeholder for rejected", () => {
-      render(<StatusChangeModal {...defaultProps} status="rejected" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="rejected" />);
 
       const textarea = screen.getByLabelText(/reason/i);
       expect(textarea).toHaveAttribute("placeholder", "Explain why the application is rejected...");
     });
 
     it("should show correct placeholder for other statuses", () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const textarea = screen.getByLabelText(/reason/i);
       expect(textarea).toHaveAttribute("placeholder", "Add any notes about this decision...");
     });
 
     it("should show correct help text for revision_requested", () => {
-      render(<StatusChangeModal {...defaultProps} status="revision_requested" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="revision_requested" />);
 
       expect(
         screen.getByText(/the applicant will see this message and can update their application/i)
@@ -440,7 +490,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should show correct help text for rejected", () => {
-      render(<StatusChangeModal {...defaultProps} status="rejected" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="rejected" />);
 
       expect(
         screen.getByText(/this reason will be recorded and may be shared with the applicant/i)
@@ -448,7 +498,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should show correct help text for other statuses", () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       expect(
         screen.getByText(/this reason will be recorded in the status history/i)
@@ -456,14 +506,14 @@ describe("StatusChangeModal", () => {
     });
 
     it("should apply correct button styling for approved status", () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const confirmButton = screen.getByTestId("confirm-button");
       expect(confirmButton.className).toContain("bg-green-600");
     });
 
     it("should apply correct button styling for rejected status", () => {
-      render(<StatusChangeModal {...defaultProps} status="rejected" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="rejected" />);
 
       const confirmButton = screen.getByTestId("confirm-button");
       expect(confirmButton.className).toContain("bg-red-600");
@@ -473,7 +523,7 @@ describe("StatusChangeModal", () => {
   describe("User Interactions", () => {
     it("should call onConfirm with reason when provided", async () => {
       const onConfirm = jest.fn();
-      render(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
       const textarea = screen.getByLabelText(/reason/i);
       fireEvent.change(textarea, { target: { value: "Approved because it meets criteria" } });
@@ -496,7 +546,7 @@ describe("StatusChangeModal", () => {
 
     it("should call onConfirm with undefined when reason not provided and not required", async () => {
       const onConfirm = jest.fn();
-      render(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
@@ -516,7 +566,7 @@ describe("StatusChangeModal", () => {
 
     it("should call onClose when cancel button is clicked", () => {
       const onClose = jest.fn();
-      render(<StatusChangeModal {...defaultProps} onClose={onClose} />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} onClose={onClose} />);
 
       const cancelButtons = screen.getAllByTestId("cancel-button");
       const cancelButton = cancelButtons.find((btn) => btn.textContent === "Cancel");
@@ -529,7 +579,7 @@ describe("StatusChangeModal", () => {
 
     it("should call onClose when close icon is clicked", () => {
       const onClose = jest.fn();
-      render(<StatusChangeModal {...defaultProps} onClose={onClose} />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} onClose={onClose} />);
 
       const closeIcon = screen.getByTestId("xmark-icon");
       const closeButton = closeIcon.closest("button");
@@ -544,7 +594,9 @@ describe("StatusChangeModal", () => {
 
   describe("Icon Colors by Status", () => {
     it("should show green icon for approved status", () => {
-      const { container } = render(<StatusChangeModal {...defaultProps} status="approved" />);
+      const { container } = renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} status="approved" />
+      );
 
       const icon = screen.getByTestId("warning-icon");
       // Check that icon has green color class
@@ -552,14 +604,14 @@ describe("StatusChangeModal", () => {
     });
 
     it("should show red icon for rejected status", () => {
-      render(<StatusChangeModal {...defaultProps} status="rejected" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="rejected" />);
 
       const icon = screen.getByTestId("warning-icon");
       expect(icon.getAttribute("class")).toContain("text-red-600");
     });
 
     it("should show yellow icon for other statuses", () => {
-      render(<StatusChangeModal {...defaultProps} status="revision_requested" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="revision_requested" />);
 
       const icon = screen.getByTestId("warning-icon");
       expect(icon.getAttribute("class")).toContain("text-yellow-600");
@@ -568,7 +620,7 @@ describe("StatusChangeModal", () => {
 
   describe("Edge Cases", () => {
     it("should handle unknown status gracefully", () => {
-      render(<StatusChangeModal {...defaultProps} status="unknown_status" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="unknown_status" />);
 
       expect(screen.getByText("Change Status")).toBeInTheDocument();
       expect(screen.getByText("Change the status of this application.")).toBeInTheDocument();
@@ -577,7 +629,7 @@ describe("StatusChangeModal", () => {
     it("should handle very long reason text", async () => {
       const longReason = "A".repeat(1000);
       const onConfirm = jest.fn();
-      render(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
       const textarea = screen.getByLabelText(/reason/i);
       fireEvent.change(textarea, { target: { value: longReason } });
@@ -601,7 +653,7 @@ describe("StatusChangeModal", () => {
     it("should handle special characters in reason", async () => {
       const specialReason = 'Reason with <script>alert("xss")</script> & special chars';
       const onConfirm = jest.fn();
-      render(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
       const textarea = screen.getByLabelText(/reason/i);
       fireEvent.change(textarea, { target: { value: specialReason } });
@@ -625,7 +677,7 @@ describe("StatusChangeModal", () => {
 
   describe("Currency Field - New Features", () => {
     it("should show currency input field for approved status", () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const currencyInput = screen.getByLabelText(/approved currency/i);
       expect(currencyInput).toBeInTheDocument();
@@ -633,13 +685,13 @@ describe("StatusChangeModal", () => {
     });
 
     it("should not show currency field for non-approved statuses", () => {
-      render(<StatusChangeModal {...defaultProps} status="rejected" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="rejected" />);
 
       expect(screen.queryByLabelText(/approved currency/i)).not.toBeInTheDocument();
     });
 
     it("should require currency for approved status", async () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
@@ -654,7 +706,7 @@ describe("StatusChangeModal", () => {
         currency: "ETH",
       });
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -681,7 +733,7 @@ describe("StatusChangeModal", () => {
       const { fundingPlatformService } = require("@/services/fundingPlatformService");
       fundingPlatformService.programs.getFundingDetails.mockRejectedValue(new Error("API Error"));
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -703,7 +755,7 @@ describe("StatusChangeModal", () => {
       const { fundingPlatformService } = require("@/services/fundingPlatformService");
       fundingPlatformService.programs.getFundingDetails.mockRejectedValue(new Error("API Error"));
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -734,7 +786,9 @@ describe("StatusChangeModal", () => {
   describe("Amount Validation", () => {
     it("should show error for invalid amount on form submission", async () => {
       const onConfirm = jest.fn();
-      render(<StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />);
+      renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
+      );
 
       const amountInput = screen.getByLabelText(/approved amount/i) as HTMLInputElement;
       const confirmButton = screen.getByTestId("confirm-button");
@@ -763,7 +817,9 @@ describe("StatusChangeModal", () => {
 
     it("should accept valid amount", async () => {
       const onConfirm = jest.fn();
-      render(<StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />);
+      renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
+      );
 
       const amountInput = screen.getByLabelText(/approved amount/i) as HTMLInputElement;
 
@@ -790,7 +846,7 @@ describe("StatusChangeModal", () => {
 
   describe("Currency Validation - Edge Cases", () => {
     it("should accept single letter currency code", async () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
@@ -813,7 +869,7 @@ describe("StatusChangeModal", () => {
         currency: "USDGLO",
       });
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -843,7 +899,7 @@ describe("StatusChangeModal", () => {
         currency: "eth", // lowercase
       });
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -864,7 +920,7 @@ describe("StatusChangeModal", () => {
         currency: "  USDC  ", // with whitespace
       });
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -885,7 +941,7 @@ describe("StatusChangeModal", () => {
         currency: "USD123", // contains numbers
       });
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -918,7 +974,7 @@ describe("StatusChangeModal", () => {
         data: { currency: "ETH" },
       });
 
-      const { unmount } = render(
+      const { unmount } = renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -939,7 +995,7 @@ describe("StatusChangeModal", () => {
         fundingDetails: { currency: "USDC" },
       });
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -957,7 +1013,7 @@ describe("StatusChangeModal", () => {
 
   describe("Amount Validation - Edge Cases", () => {
     it("should reject zero amount", async () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "0" } });
@@ -971,7 +1027,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should reject negative amount", async () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "-100" } });
@@ -986,7 +1042,9 @@ describe("StatusChangeModal", () => {
 
     it("should accept decimal amounts", async () => {
       const onConfirm = jest.fn();
-      render(<StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />);
+      renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
+      );
 
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1234.56" } });
@@ -1004,7 +1062,9 @@ describe("StatusChangeModal", () => {
 
     it("should accept very small decimal amounts", async () => {
       const onConfirm = jest.fn();
-      render(<StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />);
+      renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
+      );
 
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "0.0001" } });
@@ -1022,7 +1082,9 @@ describe("StatusChangeModal", () => {
 
     it("should accept very large amounts", async () => {
       const onConfirm = jest.fn();
-      render(<StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />);
+      renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
+      );
 
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "999999999999.99" } });
@@ -1039,7 +1101,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should reject non-numeric amount", async () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "abc" } });
@@ -1053,7 +1115,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should reject empty amount", async () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       await enterCurrency("USD");
 
@@ -1062,7 +1124,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should reject Infinity", async () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "Infinity" } });
@@ -1077,7 +1139,9 @@ describe("StatusChangeModal", () => {
 
     it("should trim whitespace from amount", async () => {
       const onConfirm = jest.fn();
-      render(<StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />);
+      renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
+      );
 
       const amountInput = screen.getByLabelText(/approved amount/i);
       // Enter amount with whitespace - Number.parseFloat handles this, and validation should pass
@@ -1101,7 +1165,7 @@ describe("StatusChangeModal", () => {
 
   describe("Form State Management", () => {
     it("should clear currency error when valid currency is entered", async () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
@@ -1121,7 +1185,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should clear amount error when valid amount is entered", async () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i) as HTMLInputElement;
 
@@ -1142,7 +1206,9 @@ describe("StatusChangeModal", () => {
     });
 
     it("should reset all form fields when modal closes", () => {
-      const { rerender } = render(<StatusChangeModal {...defaultProps} status="approved" />);
+      const { rerender, queryClient } = renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} status="approved" />
+      );
 
       const amountInput = screen.getByLabelText(/approved amount/i);
       const reasonTextarea = screen.getByLabelText(/reason/i);
@@ -1151,10 +1217,18 @@ describe("StatusChangeModal", () => {
       fireEvent.change(reasonTextarea, { target: { value: "Test reason" } });
 
       // Close modal
-      rerender(<StatusChangeModal {...defaultProps} isOpen={false} />);
+      rerender(
+        <QueryClientProvider client={queryClient}>
+          <StatusChangeModal {...defaultProps} isOpen={false} />
+        </QueryClientProvider>
+      );
 
       // Reopen modal
-      rerender(<StatusChangeModal {...defaultProps} isOpen={true} />);
+      rerender(
+        <QueryClientProvider client={queryClient}>
+          <StatusChangeModal {...defaultProps} isOpen={true} />
+        </QueryClientProvider>
+      );
 
       const newAmountInput = screen.getByLabelText(/approved amount/i) as HTMLInputElement;
       const newReasonTextarea = screen.getByLabelText(/reason/i) as HTMLTextAreaElement;
@@ -1169,7 +1243,7 @@ describe("StatusChangeModal", () => {
         currency: "ETH",
       });
 
-      const { rerender } = render(
+      const { rerender, queryClient } = renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1185,24 +1259,28 @@ describe("StatusChangeModal", () => {
 
       // Close modal
       rerender(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programId="test-program"
-          chainId={1}
-          isOpen={false}
-        />
+        <QueryClientProvider client={queryClient}>
+          <StatusChangeModal
+            {...defaultProps}
+            status="approved"
+            programId="test-program"
+            chainId={1}
+            isOpen={false}
+          />
+        </QueryClientProvider>
       );
 
       // Reopen modal
       rerender(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programId="test-program"
-          chainId={1}
-          isOpen={true}
-        />
+        <QueryClientProvider client={queryClient}>
+          <StatusChangeModal
+            {...defaultProps}
+            status="approved"
+            programId="test-program"
+            chainId={1}
+            isOpen={true}
+          />
+        </QueryClientProvider>
       );
 
       // Currency should be reset (or reloaded from API)
@@ -1216,7 +1294,7 @@ describe("StatusChangeModal", () => {
 
   describe("Accessibility", () => {
     it("should have proper ARIA attributes on amount input", () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i);
       expect(amountInput).toHaveAttribute("id", "approvedAmount");
@@ -1224,7 +1302,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should have proper ARIA attributes on currency input", () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const currencyInput = screen.getByLabelText(/approved currency/i);
       expect(currencyInput).toHaveAttribute("id", "approvedCurrency");
@@ -1232,7 +1310,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should have proper ARIA attributes on reason textarea", () => {
-      render(<StatusChangeModal {...defaultProps} />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} />);
 
       const reasonTextarea = screen.getByLabelText(/reason/i);
       expect(reasonTextarea).toHaveAttribute("id", "reason");
@@ -1241,7 +1319,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should mark amount input as invalid when error exists", async () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i) as HTMLInputElement;
 
@@ -1267,7 +1345,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should mark currency as invalid when error exists", async () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
@@ -1283,7 +1361,7 @@ describe("StatusChangeModal", () => {
     it("should have role='alert' on error messages", () => {
       // This test verifies that error messages have the role="alert" attribute
       // We can't easily test debounced validation timing, so we verify the structure
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       // Check that the error message container has role="alert" when error exists
       // The actual error will appear after debounced validation, but we verify the structure
@@ -1308,7 +1386,7 @@ describe("StatusChangeModal", () => {
 
       fundingPlatformService.programs.getFundingDetails.mockReturnValue(promise);
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1341,7 +1419,7 @@ describe("StatusChangeModal", () => {
 
       fundingPlatformService.programs.getFundingDetails.mockReturnValue(promise);
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1372,7 +1450,7 @@ describe("StatusChangeModal", () => {
         new Error("Network error")
       );
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1402,7 +1480,7 @@ describe("StatusChangeModal", () => {
     it("should not fetch currency when programId or chainId is missing", async () => {
       const { fundingPlatformService } = require("@/services/fundingPlatformService");
 
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       // Should not call API
       expect(fundingPlatformService.programs.getFundingDetails).not.toHaveBeenCalled();
@@ -1411,7 +1489,7 @@ describe("StatusChangeModal", () => {
     it("should not fetch currency for non-approved statuses", async () => {
       const { fundingPlatformService } = require("@/services/fundingPlatformService");
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="rejected"
@@ -1428,7 +1506,9 @@ describe("StatusChangeModal", () => {
   describe("Currency Normalization", () => {
     it("should normalize currency to uppercase when passed to onConfirm", async () => {
       const onConfirm = jest.fn();
-      render(<StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />);
+      renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
+      );
 
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
@@ -1452,7 +1532,7 @@ describe("StatusChangeModal", () => {
         currency: "  eth  ", // whitespace and lowercase
       });
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"

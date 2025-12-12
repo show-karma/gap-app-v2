@@ -14,6 +14,8 @@ import type {
 } from "@/types/funding-platform";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 // Base API configuration
 const API_BASE = envVars.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
@@ -149,10 +151,13 @@ export const fundingProgramsAPI = {
     fundingDetails?: { currency?: string };
     details?: { currency?: string };
   }> {
-    const response = await apiClient.get(
-      `/v2/program/funding-details?programId=${programId}&chainId=${chainId}`
-    );
-    return response.data;
+    const [data, error] = await fetchData(INDEXER.V2.PROGRAM.FUNDING_DETAILS(programId, chainId));
+
+    if (error) {
+      throw new Error(error);
+    }
+
+    return data;
   },
 
   /**
