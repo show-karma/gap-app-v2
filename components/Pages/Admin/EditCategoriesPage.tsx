@@ -8,14 +8,13 @@ import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useAuth } from "@/hooks/useAuth";
 import { useCategories } from "@/hooks/useCategories";
 import { useCommunityGrants } from "@/hooks/useCommunityGrants";
 import { type SimplifiedGrant, useGrants } from "@/hooks/useGrants";
 import { useGrantsTable } from "@/hooks/useGrantsTable";
-import { useStaff } from "@/hooks/useStaff";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -48,9 +47,7 @@ export default function EditCategoriesPage() {
     error: communityError,
   } = useCommunityDetails(communityId);
 
-  // Check if user is admin of this community
-  const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(community?.uid);
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { hasAccess, isLoading: loading } = useCommunityAdminAccess(community?.uid);
 
   useEffect(() => {
     if (
@@ -134,7 +131,7 @@ export default function EditCategoriesPage() {
     }
   };
 
-  if (loading || isStaffLoading || isLoadingGrants) {
+  if (loading || isLoadingGrants) {
     return (
       <div className="flex w-full items-center justify-center">
         <Spinner />
@@ -142,7 +139,7 @@ export default function EditCategoriesPage() {
     );
   }
 
-  if (!isAdmin && !isStaff) {
+  if (!hasAccess) {
     return (
       <div className="flex w-full items-center justify-center">
         <p>{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}</p>

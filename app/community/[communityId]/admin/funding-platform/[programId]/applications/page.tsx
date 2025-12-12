@@ -7,17 +7,15 @@ import { useMemo } from "react";
 import { ApplicationListWithAPI } from "@/components/FundingPlatform";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import {
   useApplication,
   useApplicationStatus,
   useFundingApplications,
 } from "@/hooks/useFundingPlatform";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useStaff } from "@/hooks/useStaff";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
 import { layoutTheme } from "@/src/helper/theme";
-import { useOwnerStore } from "@/store";
 import type { IFundingApplication } from "@/types/funding-platform";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -65,9 +63,8 @@ export default function ApplicationsPage() {
 
   // State no longer needed for sidesheet
 
-  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { hasAccess: hasAdminAccess, isLoading: isLoadingAdmin } =
+    useCommunityAdminAccess(communityId);
 
   // Check if user is a reviewer for this program
   const { hasPermission: canView, isLoading: isLoadingPermission } = usePermissions({
@@ -96,8 +93,8 @@ export default function ApplicationsPage() {
   const { updateStatusAsync } = useApplicationStatus(programId, parsedChainId);
 
   // Admin, owner, staff have full access; reviewers have view and comment access
-  const hasAccess = isCommunityAdmin || isOwner || isStaff || canView;
-  const isAdmin = isCommunityAdmin || isOwner || isStaff;
+  const hasAccess = hasAdminAccess || canView;
+  const isAdmin = hasAdminAccess;
   const isReviewer = canView && !isAdmin;
 
   const handleBackClick = () => {
@@ -119,7 +116,7 @@ export default function ApplicationsPage() {
     return updateStatusAsync({ applicationId, status, note });
   };
 
-  if (isLoadingAdmin || isStaffLoading || isLoadingPermission) {
+  if (isLoadingAdmin || isLoadingPermission) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />

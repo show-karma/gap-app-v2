@@ -27,12 +27,10 @@ import { Button } from "@/components/Utilities/Button";
 import { LoadingOverlay } from "@/components/Utilities/LoadingOverlay";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
-import { useStaff } from "@/hooks/useStaff";
 import { type FundingProgram, fundingPlatformService } from "@/services/fundingPlatformService";
 import { layoutTheme } from "@/src/helper/theme";
-import { useOwnerStore } from "@/store";
 import { envVars } from "@/utilities/enviromentVars";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
@@ -59,11 +57,7 @@ export default function FundingPlatformAdminPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
-
-  const hasAccess = isCommunityAdmin || isOwner || isStaff;
+  const { hasAccess, isLoading: isLoadingAdmin } = useCommunityAdminAccess(communityId);
 
   const {
     programs,
@@ -209,7 +203,7 @@ export default function FundingPlatformAdminPage() {
     router.push(newUrl, { scroll: false });
   }, [searchTerm, enabledFilter, communityId, router]);
 
-  if (isLoadingAdmin || isStaffLoading || isLoadingPrograms) {
+  if (isLoadingAdmin || isLoadingPrograms) {
     return (
       <div className="flex w-full items-center justify-center min-h-[400px]">
         <Spinner />
