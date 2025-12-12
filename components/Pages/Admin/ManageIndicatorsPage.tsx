@@ -44,7 +44,7 @@ export default function ManageIndicatorsPage() {
     data: categories = [],
     isLoading: categoriesLoading,
     refetch: refetchCategories,
-  } = useCommunityCategories(communityId, {
+  } = useCommunityCategories(community?.details?.slug || community?.uid || communityId, {
     enabled: !!community,
   });
 
