@@ -2,17 +2,24 @@
 
 import { ArrowLeftIcon, EyeIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useAccount } from "wagmi";
-import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent";
-import CommentsSection from "@/components/FundingPlatform/ApplicationView/CommentsSection";
+import { AIAnalysisTab } from "@/components/FundingPlatform/ApplicationView/AIAnalysisTab";
+import ApplicationHeader from "@/components/FundingPlatform/ApplicationView/ApplicationHeader";
+import { ApplicationTab } from "@/components/FundingPlatform/ApplicationView/ApplicationTab";
+import {
+  ApplicationTabs,
+  type TabConfig,
+  TabIcons,
+} from "@/components/FundingPlatform/ApplicationView/ApplicationTabs";
+import { DiscussionTab } from "@/components/FundingPlatform/ApplicationView/DiscussionTab";
+import { TabPanel } from "@/components/FundingPlatform/ApplicationView/TabPanel";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import {
   useApplication,
   useApplicationComments,
-  useApplicationStatus,
   useApplicationVersions,
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
@@ -24,9 +31,10 @@ import { PAGES } from "@/utilities/pages";
 /**
  * Reviewer Application Detail Page
  * Allows reviewers to view full application details and add comments
- * Reuses the same components as admin page but with reviewer permissions
+ * Uses the same tab-based layout as admin page but with reviewer permissions
  */
 export default function ReviewerApplicationDetailPage() {
+  const router = useRouter();
   const {
     communityId,
     programId: combinedProgramId,
@@ -51,7 +59,7 @@ export default function ReviewerApplicationDetailPage() {
   // Get current user address for comments
   const { address: currentUserAddress } = useAccount();
 
-  // View mode state for ApplicationContent
+  // View mode state for ApplicationTab
   const [applicationViewMode, setApplicationViewMode] = useState<"details" | "changes">("details");
 
   // Fetch application data
@@ -62,11 +70,7 @@ export default function ReviewerApplicationDetailPage() {
   } = useApplication(applicationId);
 
   // Fetch program config
-  const { data: program, config } = useProgramConfig(programId, parsedChainId);
-
-  // Use the application status hook (reviewers won't use this but needed for component)
-  // Using the hook even though reviewers don't change status to avoid breaking component expectations
-  useApplicationStatus(programId, parsedChainId);
+  const { data: program } = useProgramConfig(programId, parsedChainId);
 
   // Use the comments hook - reviewers can view and add comments
   const {
@@ -85,12 +89,6 @@ export default function ReviewerApplicationDetailPage() {
 
   // Get version selection from store
   const { selectVersion } = useApplicationVersionsStore();
-
-  // Handle status change - reviewers cannot change status
-  const handleStatusChange = async (_status: string, _note?: string) => {
-    // Reviewers cannot change status
-    return Promise.reject(new Error("Reviewers cannot change application status"));
-  };
 
   // Handle comment operations - reviewers can add and edit their own comments
   const handleCommentAdd = async (content: string) => {
@@ -121,6 +119,10 @@ export default function ReviewerApplicationDetailPage() {
     }, 100);
   };
 
+  const handleBackClick = () => {
+    router.push(PAGES.REVIEWER.APPLICATIONS(communityId, programId, parsedChainId));
+  };
+
   // Memoized milestone review URL - only returns URL if approved and has projectUID
   const milestoneReviewUrl = useMemo(() => {
     if (application?.status?.toLowerCase() === "approved" && application?.projectUID) {
@@ -146,13 +148,10 @@ export default function ReviewerApplicationDetailPage() {
           <p className="text-red-700 dark:text-red-300">
             You don&apos;t have permission to view this application.
           </p>
-          <Link
-            href={PAGES.REVIEWER.APPLICATIONS(communityId, programId, parsedChainId)}
-            className="flex gap-2 items-center text-black text-sm font-semibold dark:text-white border border-black dark:border-white rounded-md px-2 py-2"
-          >
+          <Button onClick={handleBackClick} variant="secondary" className="flex items-center mt-4">
             <ArrowLeftIcon className="w-4 h-4 mr-2" />
             Back to Applications
-          </Link>
+          </Button>
         </div>
       </div>
     );
@@ -163,13 +162,10 @@ export default function ReviewerApplicationDetailPage() {
     return (
       <div className="min-h-screen">
         <div className={layoutTheme.padding}>
-          <Link
-            href={PAGES.REVIEWER.APPLICATIONS(communityId, programId, parsedChainId)}
-            className="flex gap-2 items-center text-black text-sm font-semibold dark:text-white border border-black dark:border-white rounded-md px-2 py-2"
-          >
+          <Button onClick={handleBackClick} variant="secondary" className="flex items-center mb-4">
             <ArrowLeftIcon className="w-4 h-4 mr-2" />
             Back to Applications
-          </Link>
+          </Button>
           <p className="text-gray-500">Application not found.</p>
         </div>
       </div>
@@ -177,99 +173,115 @@ export default function ReviewerApplicationDetailPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Header with Reviewer Badge */}
-      <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 max-sm:gap-1 max-sm:flex-col max-sm:items-start">
-              <Link
-                href={PAGES.REVIEWER.APPLICATIONS(communityId, programId, parsedChainId)}
-                className="flex gap-2 items-center text-black text-sm font-semibold dark:text-white border border-black dark:border-white rounded-md px-2 py-2"
-              >
-                <ArrowLeftIcon className="w-4 h-4 mr-2" />
-                Back to Applications
-              </Link>
-              <div className="flex flex-col gap-0">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Application Details
-                </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Application ID: {application.referenceNumber}
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+      {/* Main Content */}
+      <div className="px-4 sm:px-6 lg:px-8 py-6">
+        {/* Back Button with Reviewer Badge */}
+        <div className="mb-4 flex items-center justify-between">
+          <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
+            <ArrowLeftIcon className="w-4 h-4 mr-2" />
+            Back to Applications
+          </Button>
+
+          {/* Reviewer Access Badge */}
+          <div className="flex items-center px-3 py-1.5 bg-blue-100 dark:bg-blue-900/50 rounded-full border border-blue-200 dark:border-blue-800">
+            <EyeIcon className="w-4 h-4 text-blue-700 dark:text-blue-300 mr-2" aria-hidden="true" />
+            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+              Reviewer Access
+            </span>
+          </div>
+        </div>
+
+        {/* Application Header - No status actions for reviewers */}
+        <ApplicationHeader
+          application={application}
+          program={program}
+          connectedToTabs={!milestoneReviewUrl}
+        />
+
+        {/* Milestone Review Link - Only shown if application is approved and has projectUID */}
+        {milestoneReviewUrl && (
+          <div className="my-6 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-1">
+                <h3 className="text-sm font-semibold text-green-900 dark:text-green-100">
+                  Review Project Milestones
+                </h3>
+                <p className="text-xs text-green-700 dark:text-green-300">
+                  View and verify milestone completions for this approved application
                 </p>
               </div>
-            </div>
-
-            {/* Reviewer Access Badge */}
-            <div className="flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900 rounded-full">
-              <EyeIcon className="w-4 h-4 text-blue-700 dark:text-blue-300 mr-2" />
-              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                Reviewer Access
-              </span>
+              <Link
+                href={milestoneReviewUrl}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium transition-colors"
+              >
+                View Milestones
+              </Link>
             </div>
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* Two Column Layout - Same as Admin */}
-      <div className="px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Column - Application Content (Read-only for reviewers) */}
-          <div className="space-y-6">
-            {/* Milestone Review Link - Only shown if application is approved and has projectUID */}
-            {milestoneReviewUrl && (
-              <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col gap-1">
-                    <h3 className="text-sm font-semibold text-green-900 dark:text-green-100">
-                      Review Project Milestones
-                    </h3>
-                    <p className="text-xs text-green-700 dark:text-green-300">
-                      View and verify milestone completions for this approved application
-                    </p>
-                  </div>
-                  <Link href={milestoneReviewUrl}>
-                    <Button className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white">
-                      View Milestones
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            <ApplicationContent
-              application={application}
-              program={program}
-              showStatusActions={false} // Reviewers cannot change status
-              showAIEvaluationButton={false} // Reviewers cannot run AI evaluation
-              showInternalEvaluation={true} // Reviewers can view internal evaluation
-              onStatusChange={handleStatusChange}
-              viewMode={applicationViewMode}
-              onViewModeChange={setApplicationViewMode}
-              onRefresh={refetchApplication}
-            />
-          </div>
-
-          {/* Right Column - Comments (Reviewers can add comments) */}
-          <div>
-            <CommentsSection
-              applicationId={application.referenceNumber}
-              application={application}
-              comments={comments}
-              statusHistory={application.statusHistory}
-              versionHistory={versions}
-              currentStatus={application.status}
-              isAdmin={false} // Not admin, but can comment
-              currentUserAddress={currentUserAddress}
-              onCommentAdd={handleCommentAdd}
-              onCommentEdit={handleCommentEdit}
-              onCommentDelete={handleCommentDelete}
-              onVersionClick={handleVersionClick}
-              isLoading={isLoadingComments}
-              formSchema={config?.formSchema}
-            />
-          </div>
-        </div>
+        {/* Tab-based Layout */}
+        <ApplicationTabs
+          connectedToHeader={!milestoneReviewUrl}
+          tabs={
+            [
+              {
+                id: "application",
+                label: "Application",
+                icon: TabIcons.Application,
+                content: (
+                  <TabPanel>
+                    <ApplicationTab
+                      application={application}
+                      program={program}
+                      viewMode={applicationViewMode}
+                      onViewModeChange={setApplicationViewMode}
+                    />
+                  </TabPanel>
+                ),
+              },
+              {
+                id: "ai-analysis",
+                label: "AI Analysis",
+                icon: TabIcons.AIAnalysis,
+                content: (
+                  <TabPanel>
+                    <AIAnalysisTab
+                      application={application}
+                      program={program}
+                      onEvaluationComplete={refetchApplication}
+                      canRunEvaluation={false} // Reviewers cannot run evaluations
+                    />
+                  </TabPanel>
+                ),
+              },
+              {
+                id: "discussion",
+                label: "Discussion",
+                icon: TabIcons.Discussion,
+                content: (
+                  <TabPanel padded={false}>
+                    <DiscussionTab
+                      applicationId={application.referenceNumber}
+                      comments={comments}
+                      statusHistory={application.statusHistory}
+                      versionHistory={versions}
+                      currentStatus={application.status}
+                      isAdmin={false} // Not admin, but can comment
+                      currentUserAddress={currentUserAddress}
+                      onCommentAdd={handleCommentAdd}
+                      onCommentEdit={handleCommentEdit}
+                      onCommentDelete={handleCommentDelete}
+                      onVersionClick={handleVersionClick}
+                      isLoading={isLoadingComments}
+                    />
+                  </TabPanel>
+                ),
+              },
+            ] satisfies TabConfig[]
+          }
+        />
       </div>
     </div>
   );

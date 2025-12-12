@@ -4,6 +4,7 @@ import type {
   CommunityProjectsResponse,
   CommunityStats,
 } from "@/types/community";
+import type { Category } from "@/types/impactMeasurement";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
@@ -132,16 +133,47 @@ export const getCommunityProjects = async (
   }
 };
 
-export const getCommunityCategories = cache(async (communityId: string): Promise<string[]> => {
+/**
+ * Fetches community categories with impact segments merged from outputs
+ *
+ * @remarks
+ * Returns empty array on error instead of throwing.
+ * Automatically merges outputs into impact_segments to avoid duplication.
+ * Uses React cache() for request deduplication.
+ */
+export const getCommunityCategories = cache(async (communityId: string): Promise<Category[]> => {
   try {
     const [data] = await fetchData(INDEXER.COMMUNITY.CATEGORIES(communityId));
 
-    if (data?.length) {
-      const categoriesToOrder = data.map((category: { name: string }) => category.name);
-      return categoriesToOrder.sort((a: string, b: string) => a.localeCompare(b, "en"));
+    if (!data?.length) {
+      return [];
     }
 
-    return [];
+    // Merge outputs into impact_segments to avoid duplication
+    const categoriesWithMergedSegments = data.map((category: Category) => {
+      const outputsNotDuplicated = category.outputs?.filter(
+        (output) =>
+          !category.impact_segments?.some(
+            (segment) => segment.id === output.id || segment.name === output.name
+          )
+      );
+
+      return {
+        ...category,
+        impact_segments: [
+          ...(category.impact_segments || []),
+          ...(outputsNotDuplicated || []).map((output) => ({
+            id: output.id,
+            name: output.name,
+            description: output.description,
+            impact_indicators: [],
+            type: output.type,
+          })),
+        ],
+      };
+    });
+
+    return categoriesWithMergedSegments;
   } catch (_error) {
     return [];
   }
