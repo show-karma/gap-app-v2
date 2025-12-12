@@ -31,14 +31,14 @@ function FeatureCard({
   const hasChecklist = checklist && checklist.length > 0;
   const isDouble = size === "double";
 
-  // Different image heights based on imageSize prop - reduced heights
-  const imageHeightClasses = {
-    small: "h-[120px] lg:h-[140px]",
-    medium: "h-[160px] lg:h-[180px]",
-    large: "h-[200px] lg:h-[220px]",
+  // Minimum heights based on imageSize prop - allows flexibility while ensuring minimum size
+  const imageMinHeightClasses = {
+    small: "min-h-[120px] lg:min-h-[140px]",
+    medium: "min-h-[160px] lg:min-h-[180px]",
+    large: "min-h-[200px] lg:min-h-[220px]",
   };
 
-  // Use custom dimensions if provided, otherwise use imageSize classes
+  // Use custom dimensions if provided
   const imageStyle =
     imageWidth && imageHeight
       ? { width: `${imageWidth}px`, height: `${imageHeight}px` }
@@ -52,12 +52,12 @@ function FeatureCard({
         isDouble ? "lg:col-span-2" : ""
       )}
     >
-      <CardContent className="p-5 lg:p-0 flex flex-col h-full">
+      <CardContent className="p-0 flex flex-col h-full">
         {hasChecklist ? (
           // Side-by-side layout for cards with checklists (image on right)
-          <div className="flex flex-col lg:flex-row lg:items-start gap-6 h-full">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:gap-6 h-full">
             {/* Left side - Text content */}
-            <div className="flex flex-col justify-between gap-4 lg:w-1/2 px-5 pt-5 pb-5 lg:pl-5 lg:pr-0 h-full">
+            <div className="flex flex-col justify-between gap-4 lg:w-1/2 p-5 lg:pl-5 lg:pr-0 h-full">
               {/* Title and description together */}
               <div className="flex flex-col gap-1">
                 <h3 className="text-sm font-semibold text-foreground">{title}</h3>
@@ -74,15 +74,21 @@ function FeatureCard({
                 ))}
               </ul>
             </div>
-            {/* Right side - Image */}
+            {/* Right side - Image - extends to edge */}
             {image && (
-              <div className="flex items-center justify-center flex-shrink-0 lg:w-1/2 lg:h-full h-[200px] overflow-hidden">
-                <div className="relative w-full h-full">
+              <div className="flex items-center justify-center flex-shrink-0 lg:w-1/2 h-full overflow-hidden p-0">
+                <div
+                  className={cn(
+                    "relative w-full h-full",
+                    imageMinHeightClasses[imageSize],
+                    "lg:min-h-0"
+                  )}
+                >
                   <ThemeImage
                     src={image}
                     alt={title}
                     fill
-                    className="object-contain lg:object-cover"
+                    className="object-cover object-top"
                     sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   />
                 </div>
@@ -95,20 +101,19 @@ function FeatureCard({
             {imagePosition === "bottom" ? (
               <>
                 {/* Text content on top (image on bottom) */}
-                <div className="flex flex-col gap-1 w-full px-5 pt-5 pb-0">
+                <div className="flex flex-col gap-1 w-full p-5 pb-0">
                   <h3 className="text-sm font-semibold text-foreground">{title}</h3>
                   <p className="text-sm font-medium text-muted-foreground leading-relaxed">
                     {description}
                   </p>
                 </div>
-                {/* Image on bottom */}
+                {/* Image on bottom - extends to full width */}
                 {image && (
-                  <div className="flex items-center justify-center w-full overflow-hidden">
+                  <div className="flex items-center justify-center w-full h-full overflow-hidden p-0">
                     <div
                       className={cn(
-                        "relative",
-                        imageStyle ? "" : "w-full",
-                        imageStyle ? "" : imageHeightClasses[imageSize]
+                        "relative w-full h-full",
+                        imageStyle ? "" : imageMinHeightClasses[imageSize]
                       )}
                       style={imageStyle}
                     >
@@ -118,7 +123,7 @@ function FeatureCard({
                         fill={!imageStyle}
                         width={imageWidth}
                         height={imageHeight}
-                        className="object-contain lg:object-cover"
+                        className="object-cover object-top"
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                       />
                     </div>
@@ -127,14 +132,13 @@ function FeatureCard({
               </>
             ) : (
               <>
-                {/* Image on top */}
+                {/* Image on top - extends to full width */}
                 {image && (
-                  <div className="flex items-center justify-center w-full overflow-hidden">
+                  <div className="flex items-center justify-center w-full h-full overflow-hidden p-0">
                     <div
                       className={cn(
-                        "relative",
-                        imageStyle ? "" : "w-full",
-                        imageStyle ? "" : imageHeightClasses[imageSize]
+                        "relative w-full h-full",
+                        imageStyle ? "" : imageMinHeightClasses[imageSize]
                       )}
                       style={imageStyle}
                     >
@@ -144,14 +148,14 @@ function FeatureCard({
                         fill={!imageStyle}
                         width={imageWidth}
                         height={imageHeight}
-                        className="object-contain lg:object-cover"
+                        className="object-cover object-bottom"
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                       />
                     </div>
                   </div>
                 )}
                 {/* Text content below (image on top) */}
-                <div className="flex flex-col gap-1 w-full px-5 pt-0 pb-5">
+                <div className="flex flex-col gap-1 w-full p-5 pt-0">
                   <h3 className="text-sm font-semibold text-foreground">{title}</h3>
                   <p className="text-sm font-medium text-muted-foreground leading-relaxed">
                     {description}
@@ -204,7 +208,7 @@ const features = [
     description:
       "Automatically track activity from GitHub, smart contracts, and other sources by easily linking your repos and contracts.",
     image: "/images/homepage/builder-features-04.png",
-    imageSize: "small" as const,
+    imageSize: "medium" as const,
     size: "default" as const,
   },
   {
