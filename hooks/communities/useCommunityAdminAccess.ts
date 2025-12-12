@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useStaff } from "@/hooks/useStaff";
 import { useOwnerStore } from "@/store";
+import { useContractOwner } from "../useContractOwner";
 
 interface UseCommunityAdminAccessResult {
   hasAccess: boolean;
@@ -34,7 +35,7 @@ interface UseCommunityAdminAccessResult {
  */
 export const useCommunityAdminAccess = (communityId?: string): UseCommunityAdminAccessResult => {
   const { isCommunityAdmin, isLoading: isCheckingAdmin } = useIsCommunityAdmin(communityId);
-  const isOwner = useOwnerStore((state) => state.isOwner);
+  const { isOwner, isOwnerLoading } = useOwnerStore();
   const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   // Memoize computed values
@@ -44,7 +45,7 @@ export const useCommunityAdminAccess = (communityId?: string): UseCommunityAdmin
   );
 
   const isLoading = useMemo(
-    () => isCheckingAdmin || isStaffLoading,
+    () => isCheckingAdmin || isStaffLoading || isOwnerLoading,
     [isCheckingAdmin, isStaffLoading]
   );
 
