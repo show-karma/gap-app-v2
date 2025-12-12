@@ -55,7 +55,7 @@ export const useCommunityAdminAccess = (communityId?: string): UseCommunityAdmin
   );
 
   return {
-    hasAccess: true,
+    hasAccess,
     isLoading,
     checks,
   };
