@@ -2,8 +2,10 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { type FC, Fragment, useState } from "react";
+import { type FC, Fragment, useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import type { IFundingProgramConfig } from "@/types/funding-platform";
 
 interface StatusChangeModalProps {
   isOpen: boolean;
@@ -12,6 +14,7 @@ interface StatusChangeModalProps {
   status: string;
   isSubmitting?: boolean;
   isReasonRequired?: boolean;
+  programConfig?: IFundingProgramConfig | null;
 }
 
 const statusLabels: Record<string, string> = {
@@ -35,10 +38,38 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   status,
   isSubmitting = false,
   isReasonRequired = false,
+  programConfig,
 }) => {
   const [reason, setReason] = useState("");
 
-  // Make reason required for revision_requested and rejected statuses
+  const getTemplateContent = useCallback((): string => {
+    if (!programConfig?.formSchema?.settings) return "";
+
+    if (status === "approved" && programConfig.formSchema.settings.approvalEmailTemplate) {
+      return programConfig.formSchema.settings.approvalEmailTemplate;
+    }
+    if (status === "rejected" && programConfig.formSchema.settings.rejectionEmailTemplate) {
+      return programConfig.formSchema.settings.rejectionEmailTemplate;
+    }
+    return "";
+  }, [programConfig?.formSchema?.settings, status]);
+
+  useEffect(() => {
+    if (isOpen) {
+      const templateContent = getTemplateContent();
+      if (templateContent) {
+        // Prepopulate with template when modal opens or status changes
+        setReason(templateContent);
+      } else {
+        // Clear reason if no template available
+        setReason("");
+      }
+    } else {
+      // Reset reason when modal closes
+      setReason("");
+    }
+  }, [isOpen, getTemplateContent]);
+
   const isReasonActuallyRequired =
     isReasonRequired || status === "revision_requested" || status === "rejected";
 
@@ -142,28 +173,33 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                             "(Optional)"
                           )}
                         </label>
-                        <textarea
-                          id="reason"
-                          name="reason"
-                          rows={4}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
-                          placeholder={
-                            status === "revision_requested"
-                              ? "Explain what needs to be revised..."
-                              : status === "rejected"
-                                ? "Explain why the application is rejected..."
-                                : "Add any notes about this decision..."
-                          }
-                          value={reason}
-                          onChange={(e) => setReason(e.target.value)}
-                          disabled={isSubmitting}
-                        />
+                        <div className={isSubmitting ? "opacity-50 pointer-events-none" : ""}>
+                          <MarkdownEditor
+                            id="reason"
+                            value={reason}
+                            onChange={setReason}
+                            placeholder={
+                              status === "revision_requested"
+                                ? "Explain what needs to be revised..."
+                                : status === "rejected"
+                                  ? "Explain why the application is rejected..."
+                                  : status === "approved"
+                                    ? "Add any notes about this decision..."
+                                    : "Add any notes about this decision..."
+                            }
+                            height={300}
+                            minHeight={250}
+                            disabled={isSubmitting}
+                          />
+                        </div>
                         <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                           {status === "revision_requested"
                             ? "The applicant will see this message and can update their application."
                             : status === "rejected"
-                              ? "This reason will be recorded and may be shared with the applicant."
-                              : "This reason will be recorded in the status history."}
+                              ? "This content will be sent to the applicant via email."
+                              : status === "approved"
+                                ? "This content will be sent to the applicant via email."
+                                : "This reason will be recorded in the status history."}
                         </p>
                       </div>
                     </div>

@@ -6,10 +6,7 @@ import { useEffect, useState } from "react";
 import { CommunityImpactCharts } from "@/components/Pages/Communities/Impact/ImpactCharts";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
-import { useStaff } from "@/hooks/useStaff";
-import { zeroUID } from "@/utilities/commons";
+import { useCommunityAdminAccess, useCommunityDetails } from "@/hooks/communities";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -23,32 +20,29 @@ export default function ProgramImpactPage() {
   const communityId = params.communityId as string;
   const [activeTab, setActiveTab] = useState<Tab>("metrics");
 
-  const { data: community, isLoading: loading } = useCommunityDetails(communityId);
-
-  // Check if user is admin of this community
-  const { isCommunityAdmin: isAdmin, isLoading: adminLoading } = useIsCommunityAdmin(
-    community?.uid
-  );
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { data: community, isLoading: communityLoading } = useCommunityDetails(communityId);
+  const { hasAccess, isLoading: adminLoading } = useCommunityAdminAccess(community?.uid);
 
   useEffect(() => {
-    if (!loading && (community === null || community?.uid === zeroUID)) {
+    if (community === null && !communityLoading) {
       router.push(PAGES.NOT_FOUND);
     }
-  }, [community, loading, router]);
+  }, [community, communityLoading, router]);
 
   const tabs = [
     { id: "metrics", label: "Output Metrics" },
     { id: "impact", label: "Program Impact" },
   ];
 
+  const isLoading = communityLoading || adminLoading;
+
   return (
     <div className="mt-12 flex flex-row max-lg:flex-col-reverse w-full">
-      {loading || adminLoading || isStaffLoading ? (
+      {isLoading ? (
         <div className="flex w-full min-h-screen h-full items-center justify-center">
           <Spinner />
         </div>
-      ) : isAdmin || isStaff ? (
+      ) : hasAccess ? (
         <div className="flex w-full flex-1 flex-col items-center gap-8">
           <div className="w-full flex flex-row items-center justify-between max-w-4xl">
             <Link href={PAGES.ADMIN.ROOT(community?.details?.slug || (community?.uid as string))}>

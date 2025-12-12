@@ -597,13 +597,13 @@ function ChatWithKarmaCoPilot({
 
 function _ProjectCardSkeleton() {
   return (
-    <div className="flex-shrink-0 w-[320px] h-[240px] rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2">
+    <div className="flex-shrink-0 w-[320px] h-[240px] rounded-2xl border border-zinc-200 p-2">
       <div className="w-full flex flex-col gap-1">
         <div className="h-[4px] w-full rounded-full bg-gray-200 dark:bg-zinc-800 mb-2.5 animate-pulse" />
         <div className="flex w-full flex-col px-3">
           <div className="h-6 w-3/4 mb-1 bg-gray-200 dark:bg-zinc-800 rounded animate-pulse" />
           <div className="h-4 w-1/2 mb-2 bg-gray-200 dark:bg-zinc-800 rounded animate-pulse" />
-          <div className="flex flex-col gap-1 h-[64px]">
+          <div className="flex flex-col gap-1 h-[48px]">
             <div className="h-4 w-full bg-gray-200 dark:bg-zinc-800 rounded animate-pulse" />
             <div className="h-4 w-full bg-gray-200 dark:bg-zinc-800 rounded animate-pulse" />
             <div className="h-4 w-2/3 bg-gray-200 dark:bg-zinc-800 rounded animate-pulse" />

@@ -172,6 +172,9 @@
       "includes": ["**/globals.css"],
       "formatter": {
         "enabled": false
+      },
+      "linter": {
+        "enabled": false
       }
     }
   ],

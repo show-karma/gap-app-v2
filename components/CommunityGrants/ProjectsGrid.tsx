@@ -26,7 +26,7 @@ export function ProjectsGrid({ projects }: ProjectsGridProps) {
             : Math.min(calculatedColumns, MAX_COLUMNS_SMALL)
           : 1;
         const columnWidth = Math.floor(width / columnCounter);
-        const height = Math.ceil(projects.length / columnCounter) * 360;
+        const height = Math.ceil(projects.length / columnCounter) * 280;
 
         return (
           <Grid
@@ -34,7 +34,7 @@ export function ProjectsGrid({ projects }: ProjectsGridProps) {
             height={height + 60}
             width={width}
             rowCount={Math.ceil(projects.length / columnCounter)}
-            rowHeight={360}
+            rowHeight={280}
             columnWidth={columnWidth}
             columnCount={columnCounter}
             cellRenderer={({ columnIndex, key, rowIndex, style }) => {

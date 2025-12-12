@@ -26,6 +26,7 @@ import { isFundingProgramGrant } from "@/utilities/funding-programs";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { getCommunityDetails } from "@/utilities/queries/v2/community";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { FundingProgramFields } from "./CompletionRequirements/FundingProgramFields";
@@ -83,9 +84,9 @@ export const GrantCompletion: FC = () => {
             const communityId =
               typeof grant.community === "string" ? grant.community : grant.community.uid;
 
-            const [communityData, error] = await fetchData(INDEXER.COMMUNITY.V2.GET(communityId));
-            if (!error && communityData) {
-              const communityName = communityData.details?.name || "";
+            const community = await getCommunityDetails(communityId);
+            if (community) {
+              const communityName = community.details?.name || "";
               setIsFundingProgram(isFundingProgramGrant(communityName, grantName));
             }
           } catch (error) {

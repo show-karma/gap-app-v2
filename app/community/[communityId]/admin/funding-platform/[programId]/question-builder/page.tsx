@@ -5,12 +5,10 @@ import FormBuilderErrorBoundary from "@/components/ErrorBoundary/FormBuilderErro
 import { QuestionBuilder } from "@/components/QuestionBuilder";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
 import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
-import { useStaff } from "@/hooks/useStaff";
 import { layoutTheme } from "@/src/helper/theme";
-import { useOwnerStore } from "@/store";
 import type { FormSchema } from "@/types/question-builder";
 import { MESSAGES } from "@/utilities/messages";
 
@@ -25,11 +23,7 @@ export default function QuestionBuilderPage() {
   const [programId, chainId] = combinedProgramId.split("_");
   const parsedChainId = parseInt(chainId, 10);
 
-  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
-
-  const hasAccess = isCommunityAdmin || isOwner || isStaff;
+  const { hasAccess, isLoading: isLoadingAdmin } = useCommunityAdminAccess(communityId);
 
   const {
     schema: existingSchema,
@@ -61,7 +55,7 @@ export default function QuestionBuilderPage() {
     router.push(`/community/${communityId}/admin/funding-platform`);
   };
 
-  if (isLoadingAdmin || isStaffLoading || isLoadingSchema || isLoadingPostApprovalSchema) {
+  if (isLoadingAdmin || isLoadingSchema || isLoadingPostApprovalSchema) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />
@@ -125,20 +119,12 @@ export default function QuestionBuilderPage() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-3">
-              {(isUpdating || isUpdatingPostApproval) && (
-                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                  <Spinner />
-                  <span className="ml-2">Saving...</span>
-                </div>
-              )}
-
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300">
-                  Form Builder
-                </span>
+            {(isUpdating || isUpdatingPostApproval) && (
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <Spinner />
+                <span className="ml-2">Saving...</span>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

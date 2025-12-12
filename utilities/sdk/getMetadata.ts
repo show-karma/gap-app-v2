@@ -1,7 +1,9 @@
 import type { Hex } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
+import type { CommunityDetailsResponse } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { getCommunityDetails } from "../queries/v2/community";
 
 export const getMetadata = async <T>(
   type: "project" | "community",
@@ -14,9 +16,8 @@ export const getMetadata = async <T>(
       return project as T;
     }
     if (type === "community") {
-      const [community, error] = await fetchData(INDEXER.COMMUNITY.V2.GET(uid));
-      if (error || !community) return undefined;
-      return community as T;
+      const community = await getCommunityDetails(uid);
+      return (community || undefined) as T;
     }
 
     return undefined;

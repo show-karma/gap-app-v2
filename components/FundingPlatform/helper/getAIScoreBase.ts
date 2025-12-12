@@ -1,22 +1,35 @@
 import type { IFundingApplication } from "@/types/funding-platform";
 
 /**
- * Type guard for AI evaluation object
- */
-export const isValidEvaluation = (evaluation: unknown): evaluation is { final_score: number } => {
-  return (
-    evaluation !== null &&
-    typeof evaluation === "object" &&
-    "final_score" in evaluation &&
-    typeof (evaluation as Record<string, unknown>).final_score === "number" &&
-    !Number.isNaN((evaluation as Record<string, unknown>).final_score)
-  );
-};
-
-/**
  * Evaluation source type for different AI evaluation types
  */
 export type EvaluationSource = "aiEvaluation" | "internalAIEvaluation";
+
+/**
+ * Supported score field names in evaluation objects
+ * Different AI prompts may use different field names for the score
+ */
+const SCORE_FIELDS = ["final_score", "total_score"] as const;
+
+/**
+ * Extracts score from evaluation object, checking multiple possible field names
+ * @returns The score value and field name, or null if no valid score found
+ */
+function extractScore(evaluation: unknown): { score: number; field: string } | null {
+  if (evaluation === null || typeof evaluation !== "object") {
+    return null;
+  }
+
+  const evalObj = evaluation as Record<string, unknown>;
+
+  for (const field of SCORE_FIELDS) {
+    if (field in evalObj && typeof evalObj[field] === "number" && !Number.isNaN(evalObj[field])) {
+      return { score: evalObj[field] as number, field };
+    }
+  }
+
+  return null;
+}
 
 /**
  * Gets evaluation data from application based on source
@@ -52,13 +65,17 @@ export const getAIScoreBase = (
 
   try {
     const evaluation = JSON.parse(evaluationData);
+    const result = extractScore(evaluation);
 
-    if (!isValidEvaluation(evaluation)) {
-      console.warn(`${source} evaluation missing or invalid final_score field:`, evaluation);
+    if (!result) {
+      console.warn(
+        `${source} evaluation missing valid score field (checked: ${SCORE_FIELDS.join(", ")}):`,
+        evaluation
+      );
       return null;
     }
 
-    const score = evaluation.final_score;
+    const { score } = result;
     if (score < 0 || score > 100) {
       console.warn(`${source} score outside expected range (0-100):`, score);
       return null;

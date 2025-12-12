@@ -1,5 +1,5 @@
 type TimeZoneFormat = "UTC" | "ISO" | "local";
-type DateFormatOption = "MMM D, YYYY" | "h:mm a" | "DDD, MMM DD";
+type DateFormatOption = "MMM D, YYYY" | "h:mm a" | "DDD, MMM DD" | "datetime-local";
 
 /**
  * Normalizes a Unix timestamp to milliseconds.
@@ -29,8 +29,7 @@ export const formatDate = (
   }
 
   // Auto-detect and normalize Unix timestamps (seconds vs milliseconds)
-  const normalizedDate =
-    typeof date === "number" && date > 0 ? normalizeTimestamp(date) : date;
+  const normalizedDate = typeof date === "number" && date > 0 ? normalizeTimestamp(date) : date;
 
   const d = new Date(normalizedDate);
 
@@ -96,6 +95,10 @@ export const formatDate = (
     }
 
     return `${monthNames[month]} ${day}, ${year}. ${timeString}`;
+  }
+
+  if (formatOption === "datetime-local") {
+    return `${year}-${pad(month + 1)}-${pad(day)}T${pad(hours)}:${pad(minutes)}`;
   }
 
   return d.toISOString();

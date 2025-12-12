@@ -101,6 +101,16 @@ export default function MyProjects() {
       <div className="mt-5 w-full gap-5">
         {isConnected && isAuth ? (
           <div className="flex flex-col gap-4">
+            <div className="flex flex-row items-center justify-between mb-6">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">My Projects</h1>
+              <ProjectDialog
+                buttonElement={{
+                  text: "Create Project",
+                  styleClass:
+                    "flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-2 bg-brand-darkblue dark:bg-gray-700 px-5 py-2.5 text-base font-semibold text-white hover:bg-brand-darkblue",
+                }}
+              />
+            </div>
             {isLoading ? (
               <div className="flex flex-col gap-4 justify-start">
                 <div className="grid grid-cols-4 gap-7 pb-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
@@ -125,11 +135,11 @@ export default function MyProjects() {
                     return (
                       <div
                         key={index}
-                        className="h-full bg-white dark:bg-zinc-900 dark:border-gray-900 border border-gray-200 rounded-xl   pb-5 w-full transition-all ease-in-out duration-200"
+                        className="h-full dark:border-gray-900 border border-gray-200 rounded-xl pb-5 w-full transition-all ease-in-out duration-200"
                       >
                         <Link
                           href={PAGES.PROJECT.OVERVIEW(card.details?.slug || card.uid)}
-                          className="w-full flex flex-1 flex-col justify-start gap-3"
+                          className="w-full flex flex-1 flex-col justify-between gap-3"
                         >
                           <div className="px-2 w-full mt-2.5">
                             <div
@@ -177,7 +187,7 @@ export default function MyProjects() {
                             </div>
                           </div>
 
-                          <div className="px-5 flex min-h-[24px] w-full flex-row gap-2">
+                          <div className="px-5 flex min-h-[24px] w-full flex-row gap-2 mt-4">
                             {total ? (
                               <div className="flex h-7 items-center justify-start rounded-2xl bg-slate-50 px-3 py-1">
                                 <p className="text-center text-sm font-semibold leading-tight text-slate-600">

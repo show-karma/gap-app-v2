@@ -33,7 +33,7 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
     <Link
       id="project-card"
       href={PAGES.PROJECT.OVERVIEW(project?.slug || project?.uid)}
-      className="flex h-full w-full max-w-full max-sm:w-[320px] relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
+      className="flex w-full max-w-full max-sm:w-[320px] relative flex-col items-start justify-between gap-1 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
     >
       <div className="w-full flex flex-col gap-1 ">
         <div
@@ -62,7 +62,7 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
           <p className="mb-2 text-sm font-medium text-gray-400  dark:text-zinc-400  max-2xl:text-[13px]">
             Created on {formatDate(project.createdAt)}
           </p>
-          <div className="flex flex-col gap-1 flex-1 h-[60px]">
+          <div className="flex flex-col gap-1 flex-1 h-[48px]">
             <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-3">
               <MarkdownPreview source={project?.description?.slice(0, 160)} />
             </div>
