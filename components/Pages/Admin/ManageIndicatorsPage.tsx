@@ -43,6 +43,7 @@ export default function ManageIndicatorsPage() {
   const {
     data: categories = [],
     isLoading: categoriesLoading,
+    isError: categoriesError,
     refetch: refetchCategories,
   } = useCommunityCategories(community?.details?.slug || community?.uid || communityId, {
     enabled: !!community,
@@ -70,15 +71,48 @@ export default function ManageIndicatorsPage() {
         <div className="flex w-full min-h-screen h-full items-center justify-center">
           <Spinner />
         </div>
+      ) : communityError || categoriesError ? (
+        <div className="flex w-full min-h-screen h-full items-center justify-center">
+          <div className="text-center max-w-md">
+            <div className="bg-red-100 dark:bg-red-900/20 p-4 rounded-full mb-4 inline-block">
+              <svg
+                className="h-12 w-12 text-red-600 dark:text-red-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">
+              Failed to load data
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              {communityError
+                ? "Unable to load community information. Please try again later."
+                : "Unable to load categories. Please try again later."}
+            </p>
+            <Button onClick={() => router.push("/communities")}>Return to Communities</Button>
+          </div>
+        </div>
       ) : hasAccess ? (
         <div className="flex w-full flex-1 flex-col items-center gap-8">
           <div className="w-full flex flex-row items-center justify-between max-w-full">
-            <Link href={PAGES.ADMIN.ROOT(community?.details?.slug || (community?.uid as string))}>
-              <Button className="flex flex-row items-center gap-2 px-4 py-2 font-semibold text-base  bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
-                <ChevronLeftIcon className="h-5 w-5" />
-                Return to admin page
-              </Button>
-            </Link>
+            {(community?.details?.slug || community?.uid) && (
+              <Link
+                href={PAGES.ADMIN.ROOT(community.details?.slug ?? community.uid ?? communityId)}
+              >
+                <Button className="flex flex-row items-center gap-2 px-4 py-2 font-semibold text-base  bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
+                  <ChevronLeftIcon className="h-5 w-5" />
+                  Return to admin page
+                </Button>
+              </Link>
+            )}
           </div>
 
           {categories.length === 0 ? (
