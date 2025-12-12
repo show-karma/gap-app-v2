@@ -21,10 +21,10 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { isFundingProgramGrant } from "@/utilities/funding-programs";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { getCommunityDetails } from "@/utilities/queries/v2/community";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { FundingProgramFields } from "./CompletionRequirements/FundingProgramFields";
@@ -82,9 +82,9 @@ export const GrantCompletion: FC = () => {
             const communityId =
               typeof grant.community === "string" ? grant.community : grant.community.uid;
 
-            const response = await gapIndexerApi.communityBySlug(communityId);
-            if (response.data) {
-              const communityName = response.data.details?.data?.name || "";
+            const community = await getCommunityDetails(communityId);
+            if (community) {
+              const communityName = community.details?.name || "";
               setIsFundingProgram(isFundingProgramGrant(communityName, grantName));
             }
           } catch (error) {
