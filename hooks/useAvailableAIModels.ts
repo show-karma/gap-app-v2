@@ -65,6 +65,6 @@ export function useAvailableAIModels() {
     gcTime: 1000 * 60 * 60 * 24, // 24 hours
     retry: 2,
     // Only refetch on mount if data is stale or missing
-    refetchOnMount: "always",
+    refetchOnMount: true,
   });
 }
