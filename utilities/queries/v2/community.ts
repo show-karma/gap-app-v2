@@ -132,16 +132,47 @@ export const getCommunityProjects = async (
   }
 };
 
-export const getCommunityCategories = cache(async (communityId: string): Promise<string[]> => {
+/**
+ * Fetches community categories with impact segments merged from outputs
+ *
+ * @remarks
+ * Returns empty array on error instead of throwing.
+ * Automatically merges outputs into impact_segments to avoid duplication.
+ * Uses React cache() for request deduplication.
+ */
+export const getCommunityCategories = cache(async (communityId: string): Promise<Array<any>> => {
   try {
     const [data] = await fetchData(INDEXER.COMMUNITY.CATEGORIES(communityId));
 
-    if (data?.length) {
-      const categoriesToOrder = data.map((category: { name: string }) => category.name);
-      return categoriesToOrder.sort((a: string, b: string) => a.localeCompare(b, "en"));
+    if (!data?.length) {
+      return [];
     }
 
-    return [];
+    // Merge outputs into impact_segments to avoid duplication
+    const categoriesWithMergedSegments = data.map((category: any) => {
+      const outputsNotDuplicated = category.outputs?.filter(
+        (output: any) =>
+          !category.impact_segments?.some(
+            (segment: any) => segment.id === output.id || segment.name === output.name
+          )
+      );
+
+      return {
+        ...category,
+        impact_segments: [
+          ...(category.impact_segments || []),
+          ...(outputsNotDuplicated || []).map((output: any) => ({
+            id: output.id,
+            name: output.name,
+            description: output.description,
+            impact_indicators: [],
+            type: output.type,
+          })),
+        ],
+      };
+    });
+
+    return categoriesWithMergedSegments;
   } catch (_error) {
     return [];
   }
