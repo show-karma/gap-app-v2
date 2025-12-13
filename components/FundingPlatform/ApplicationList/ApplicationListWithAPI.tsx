@@ -13,6 +13,8 @@ import {
   useFundingApplications,
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
+import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
+import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import { useProgram } from "@/hooks/usePrograms";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
 import type { IFundingApplication } from "@/types/funding-platform";
@@ -106,6 +108,10 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   // Fetch program config and program data to determine AI column visibility
   const { config } = useProgramConfig(programId, chainId);
   const { data: program } = useProgram(programId);
+
+  // Fetch reviewers for the program (errors are handled gracefully - columns won't show if fetch fails)
+  const { data: programReviewers = [] } = useProgramReviewers(programId, chainId);
+  const { data: milestoneReviewers = [] } = useMilestoneReviewers(programId, chainId);
 
   // Determine column visibility based on configured prompts
   const { showAIScoreColumn, showInternalAIScoreColumn } = useMemo(
@@ -432,6 +438,8 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           onSortChange={handleSortChange}
           showAIScoreColumn={showAIScoreColumn}
           showInternalAIScoreColumn={showInternalAIScoreColumn}
+          programReviewers={programReviewers}
+          milestoneReviewers={milestoneReviewers}
         />
       </InfiniteScroll>
     </div>

@@ -139,6 +139,8 @@ export interface IFundingApplication {
     promptId?: string;
     evaluatedAt?: string | Date;
   };
+  appReviewers?: string[]; // Array of program reviewer addresses assigned to this application
+  milestoneReviewers?: string[]; // Array of milestone reviewer addresses assigned to this application
   createdAt: string | Date;
   updatedAt: string | Date;
 }

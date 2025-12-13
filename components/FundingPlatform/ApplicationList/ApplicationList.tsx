@@ -2,7 +2,10 @@
 
 import { type FC, useState } from "react";
 import SortableTableHeader from "@/components/Utilities/SortableTableHeader";
+import { ReviewerType } from "@/hooks/useReviewerAssignment";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
+import type { MilestoneReviewer } from "@/services/milestone-reviewers.service";
+import type { ProgramReviewer } from "@/services/program-reviewers.service";
 import type { IApplicationListProps, IFundingApplication } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
@@ -10,6 +13,7 @@ import StatusChangeModal from "../ApplicationView/StatusChangeModal";
 import { formatAIScore } from "../helper/getAIScore";
 import { formatInternalAIScore } from "../helper/getInternalAIScore";
 import { getProjectTitle } from "../helper/getProjecTitle";
+import { ReviewerAssignmentDropdown } from "./ReviewerAssignmentDropdown";
 import { TableStatusActionButtons } from "./TableStatusActionButtons";
 
 interface IApplicationListComponentProps extends IApplicationListProps {
@@ -23,6 +27,9 @@ interface IApplicationListComponentProps extends IApplicationListProps {
   onSortChange?: (sortBy: string) => void;
   showAIScoreColumn?: boolean;
   showInternalAIScoreColumn?: boolean;
+  programReviewers?: ProgramReviewer[];
+  milestoneReviewers?: MilestoneReviewer[];
+  onReviewerAssignmentChange?: () => void;
 }
 
 const statusColors = {
@@ -53,6 +60,9 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   onSortChange,
   showAIScoreColumn = false,
   showInternalAIScoreColumn = false,
+  programReviewers = [],
+  milestoneReviewers = [],
+  onReviewerAssignmentChange,
 }) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
@@ -61,6 +71,10 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
 
   // Show all applications (no internal pagination for infinite scroll)
   const paginatedApplications = applications;
+
+  // Determine if reviewer columns should be shown
+  const showAppReviewersColumn = programReviewers.length > 0;
+  const showMilestoneReviewersColumn = milestoneReviewers.length > 0;
 
   const handleStatusChangeClick = (
     applicationId: string,
@@ -184,6 +198,16 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                   currentSortDirection={sortOrder}
                   onSort={onSortChange}
                 />
+                {showAppReviewersColumn && (
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    App Reviewers
+                  </th>
+                )}
+                {showMilestoneReviewersColumn && (
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    Milestone Reviewers
+                  </th>
+                )}
                 {showStatusActions && (
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                     Actions
@@ -237,6 +261,36 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                     {formatDate(application.updatedAt)}
                   </td>
+                  {showAppReviewersColumn && (
+                    <td
+                      className="px-4 py-4 text-sm"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      <ReviewerAssignmentDropdown
+                        applicationId={application.referenceNumber}
+                        availableReviewers={programReviewers}
+                        assignedReviewerAddresses={application.appReviewers || []}
+                        reviewerType={ReviewerType.APP}
+                        onAssignmentChange={onReviewerAssignmentChange}
+                      />
+                    </td>
+                  )}
+                  {showMilestoneReviewersColumn && (
+                    <td
+                      className="px-4 py-4 text-sm"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      <ReviewerAssignmentDropdown
+                        applicationId={application.referenceNumber}
+                        availableReviewers={milestoneReviewers}
+                        assignedReviewerAddresses={application.milestoneReviewers || []}
+                        reviewerType={ReviewerType.MILESTONE}
+                        onAssignmentChange={onReviewerAssignmentChange}
+                      />
+                    </td>
+                  )}
                   {showStatusActions && onStatusChange && (
                     <td className="px-4 py-4 whitespace-nowrap text-sm">
                       <TableStatusActionButtons
