@@ -15,6 +15,11 @@ import { ManageProgramList } from "@/components/Pages/ProgramRegistry/ManageProg
 import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import {
+  getProgramIdForUrl,
+  normalizeGrantTypesArray,
+  parseProgramIdAndChainId,
+} from "@/components/Pages/ProgramRegistry/programUtils";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import Pagination from "@/components/Utilities/Pagination";
@@ -159,17 +164,21 @@ export const ManagePrograms = () => {
   useEffect(() => {
     const searchProgramById = async (id: string) => {
       try {
+        const { programId: parsedProgramId, chainId: parsedChainId } = parseProgramIdAndChainId(
+          id,
+          registryHelper.supportedNetworks
+        );
+
         const [data, error] = await fetchData(
-          INDEXER.REGISTRY.FIND_BY_ID(id, registryHelper.supportedNetworks)
+          INDEXER.REGISTRY.FIND_BY_ID(parsedProgramId, parsedChainId)
         );
         if (error) throw Error(error);
         if (data) {
-          data.forEach((program: GrantProgram) => {
-            if (typeof program.metadata?.grantTypes === "string") {
-              program.metadata.grantTypes = [program.metadata.grantTypes];
-            }
-          });
-          setSelectedProgram(data);
+          // Handle both array and single object responses
+          const programs = Array.isArray(data) ? data : [data];
+          const normalizedPrograms = normalizeGrantTypesArray(programs as GrantProgram[]);
+          // Use first program if array, otherwise use the single program
+          setSelectedProgram(normalizedPrograms[0] || null);
         }
       } catch (error: any) {
         errorManager(`Error while searching for program by id`, error);
@@ -208,13 +217,9 @@ export const ManagePrograms = () => {
 
       const [res, error] = await fetchData(url);
       if (!error && res) {
-        res.programs.forEach((program: GrantProgram) => {
-          if (typeof program.metadata?.grantTypes === "string") {
-            program.metadata.grantTypes = [program.metadata.grantTypes];
-          }
-        });
+        const normalizedPrograms = normalizeGrantTypesArray(res.programs as GrantProgram[]);
         return {
-          programs: res.programs as GrantProgram[],
+          programs: normalizedPrograms,
           count: res.count as number,
         };
       } else {
@@ -498,7 +503,7 @@ export const ManagePrograms = () => {
                                 setProgramToEdit(program);
                               }}
                               selectProgram={(program: GrantProgram) => {
-                                setProgramId(program._id.$oid || program.programId || "");
+                                setProgramId(getProgramIdForUrl(program));
                                 setSelectedProgram(program);
                               }}
                               isAllowed={isAllowed}
@@ -512,7 +517,7 @@ export const ManagePrograms = () => {
                                 setProgramToEdit(program);
                               }}
                               selectProgram={(program: GrantProgram) => {
-                                setProgramId(program._id.$oid || program.programId || "");
+                                setProgramId(getProgramIdForUrl(program));
                                 setSelectedProgram(program);
                               }}
                               isAllowed={isAllowed}

@@ -86,6 +86,7 @@ export type GrantProgram = {
   updatedAt: string;
   admins?: string[];
   langfusePromptId?: string;
+  refToGrant?: string;
 };
 
 interface ProgramListProps {
