@@ -11,16 +11,14 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { appNetwork } from "@/utilities/network";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { errorManager } from "../Utilities/errorManager";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { Button } from "../ui/button";
@@ -93,29 +91,26 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
 
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const createCommunity = async (data: SchemaType) => {
     if (!gap) return;
-    let gapClient = gap;
-    setIsLoading(true); // Set loading state to true
+    setIsLoading(true);
 
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      // Setup chain and wallet (uses gasless smart wallet if available)
+      const setup = await setupChainAndWallet({
         targetChainId: selectedChain,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      gapClient = newGapClient;
+      const { gapClient, walletSigner, chainId: actualChainId } = setup;
 
       const newCommunity = new Community({
         data: {
@@ -130,12 +125,6 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         data.slug = await gapClient.generateSlug(data.slug as string);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
       const sanitizedData = sanitizeObject({
         name: data.name,
         description: description as string,
@@ -166,7 +155,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                   retries = 0;
                   changeStepperStep("indexed");
                   toast.success("Community created successfully!");
-                  closeModal(); // Close the dialog upon successful submission
+                  closeModal();
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -179,7 +168,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
               });
           }
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorManager(
         `Error creating community`,
         error,
@@ -188,11 +177,11 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
           address: address,
         },
         {
-          error: "Failed to create community.",
+          error: "Failed to create community. Please try again.",
         }
       );
     } finally {
-      setIsLoading(false); // Reset loading state
+      setIsLoading(false);
       setIsStepper(false);
     }
   };
