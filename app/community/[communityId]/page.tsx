@@ -7,7 +7,7 @@ import {
   getCommunityDetails,
   getCommunityProjects,
   getCommunityStats,
-} from "@/utilities/queries/v2/community";
+} from "@/utilities/queries/v2/getCommunityData";
 
 type Props = {
   params: Promise<{

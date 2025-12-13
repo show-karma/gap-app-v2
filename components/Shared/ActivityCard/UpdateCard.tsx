@@ -9,6 +9,7 @@ import Link from "next/link";
 import type { FC } from "react";
 import { useUpdateActions } from "@/hooks/useUpdateActions";
 import { useProjectStore } from "@/store";
+import type { ConversionGrantUpdate } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
 import { ReadMore } from "@/utilities/ReadMore";
@@ -24,7 +25,25 @@ type UpdateType =
   | IGrantUpdate
   | IMilestoneResponse
   | IProjectImpact
+  | IProjectMilestoneResponse
+  | ConversionGrantUpdate;
+
+type UpdateWithTitle =
+  | IProjectUpdate
+  | IGrantUpdate
+  | IMilestoneResponse
   | IProjectMilestoneResponse;
+
+const hasTitle = (update: UpdateType): update is UpdateWithTitle => {
+  return update.type !== "ProjectImpact" && update.data !== undefined && "title" in update.data;
+};
+
+const getUpdateTitle = (update: UpdateType): string | null => {
+  if (hasTitle(update)) {
+    return update.data.title;
+  }
+  return null;
+};
 
 interface UpdateCardProps {
   update: UpdateType;
@@ -67,7 +86,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
     if (update.type === "ProjectImpact") {
       return (
         <Link
-          href={PAGES.PROJECT.IMPACT.ROOT(project?.details?.data.slug || project?.uid || "")}
+          href={PAGES.PROJECT.IMPACT.ROOT(project?.details?.slug || project?.uid || "")}
           className="underline text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
         >
           See impact
@@ -108,7 +127,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
     if (update.type === "Milestone" || update.type === "ProjectMilestone") {
       const milestoneData = update.data as any;
       if (milestoneData.endsAt) {
-        return formatDate(milestoneData.endsAt * 1000);
+        return formatDate(milestoneData.endsAt);
       }
       if (milestoneData.endDate) {
         return formatDate(milestoneData.endDate);
@@ -151,14 +170,11 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
             index={index}
           />
           {/* Title */}
-          {update.type !== "ProjectImpact" &&
-            update.data &&
-            "title" in update.data &&
-            update.data.title && (
-              <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">
-                {update.data.title}
-              </p>
-            )}
+          {hasTitle(update) && update.data.title && (
+            <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">
+              {update.data.title}
+            </p>
+          )}
           {/* Date range for activities */}
           {(startDate || endDate) && (
             <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
@@ -219,7 +235,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
               activityType={update.type}
               deleteTitle={
                 <p className="font-normal">
-                  Are you sure you want to delete <b>{update.data.title}</b> update?
+                  Are you sure you want to delete <b>{getUpdateTitle(update) || "this"}</b> update?
                 </p>
               }
             />

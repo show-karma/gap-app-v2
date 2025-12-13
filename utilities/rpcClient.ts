@@ -71,13 +71,7 @@ const polygonClient = createPublicClient({
   transport: http(envVars.RPC.POLYGON),
 });
 
-type RpcClientNetwork =
-  | TNetwork
-  | "base"
-  | "polygon"
-  | "optimismSepolia"
-  | "sepolia"
-  | "baseSepolia";
+type RpcClientNetwork = TNetwork | "base" | "polygon";
 
 type RpcClientValue =
   | typeof optimismClient
@@ -103,9 +97,9 @@ export const rpcClient: Partial<Record<RpcClientNetwork, RpcClientValue>> = {
   base: baseClient,
   polygon: polygonClient,
   //   testnets
-  optimismSepolia: optimismSepoliaClient,
+  "optimism-sepolia": optimismSepoliaClient,
   sepolia: sepoliaClient,
-  baseSepolia: baseSepoliaClient,
+  "base-sepolia": baseSepoliaClient,
 };
 
 export const getRPCUrlByChainId = (chainId: number): string | undefined => {

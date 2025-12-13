@@ -1,17 +1,16 @@
 import type { IFundingApplication } from "@/types/funding-platform";
 
-// Mock the API client factory - must be hoisted before imports
+// Mock fetchData for GET requests
+jest.mock("@/utilities/fetchData");
+
+// Mock the API client factory for delete operations
 jest.mock("@/utilities/auth/api-client", () => {
-  const mockGet = jest.fn();
   const mockDelete = jest.fn();
 
   return {
     createAuthenticatedApiClient: jest.fn(() => ({
-      get: mockGet,
       delete: mockDelete,
     })),
-    // Export mocks for test access
-    __mockGet: mockGet,
     __mockDelete: mockDelete,
   };
 });
@@ -22,13 +21,13 @@ jest.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
+import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 // Import service and mock utilities
 import { deleteApplication, fetchApplicationByProjectUID } from "../funding-applications";
 
-const { __mockGet: mockGet, __mockDelete: mockDelete } = jest.requireMock(
-  "@/utilities/auth/api-client"
-);
+const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+const { __mockDelete: mockDelete } = jest.requireMock("@/utilities/auth/api-client");
 
 describe("funding-applications service", () => {
   beforeEach(() => {
@@ -57,70 +56,67 @@ describe("funding-applications service", () => {
     };
 
     it("should fetch application successfully", async () => {
-      mockGet.mockResolvedValue({ data: mockApplication });
+      mockFetchData.mockResolvedValue([mockApplication, null, null, 200]);
 
       const result = await fetchApplicationByProjectUID("project-456");
 
       expect(result).toEqual(mockApplication);
-      expect(mockGet).toHaveBeenCalledWith(INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("project-456"));
-      expect(mockGet).toHaveBeenCalledTimes(1);
+      expect(mockFetchData).toHaveBeenCalledWith(
+        INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("project-456")
+      );
+      expect(mockFetchData).toHaveBeenCalledTimes(1);
     });
 
     it("should return null for 404 errors", async () => {
-      mockGet.mockRejectedValue({
-        response: { status: 404 },
-      });
+      mockFetchData.mockResolvedValue([null, "404 not found", null, 404]);
 
       const result = await fetchApplicationByProjectUID("nonexistent-project");
 
       expect(result).toBeNull();
-      expect(mockGet).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("nonexistent-project")
       );
     });
 
     it("should throw error for non-404 errors", async () => {
-      const error = {
-        response: { status: 500, statusText: "Internal Server Error" },
-        message: "Server error",
-      };
-      mockGet.mockRejectedValue(error);
+      mockFetchData.mockResolvedValue([null, "Server error", null, 500]);
 
-      await expect(fetchApplicationByProjectUID("project-123")).rejects.toEqual(error);
-    });
-
-    it("should throw error for network errors", async () => {
-      const networkError = new Error("Network error");
-      mockGet.mockRejectedValue(networkError);
-
-      await expect(fetchApplicationByProjectUID("project-123")).rejects.toThrow("Network error");
+      await expect(fetchApplicationByProjectUID("project-123")).rejects.toThrow("Server error");
     });
 
     it("should handle different project UIDs", async () => {
-      mockGet.mockResolvedValue({ data: mockApplication });
+      mockFetchData.mockResolvedValue([mockApplication, null, null, 200]);
 
       await fetchApplicationByProjectUID("project-abc");
       await fetchApplicationByProjectUID("project-xyz");
 
-      expect(mockGet).toHaveBeenCalledTimes(2);
-      expect(mockGet).toHaveBeenNthCalledWith(
+      expect(mockFetchData).toHaveBeenCalledTimes(2);
+      expect(mockFetchData).toHaveBeenNthCalledWith(
         1,
         INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("project-abc")
       );
-      expect(mockGet).toHaveBeenNthCalledWith(
+      expect(mockFetchData).toHaveBeenNthCalledWith(
         2,
         INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("project-xyz")
       );
     });
 
     it("should use correct API endpoint", async () => {
-      mockGet.mockResolvedValue({ data: mockApplication });
+      mockFetchData.mockResolvedValue([mockApplication, null, null, 200]);
 
       await fetchApplicationByProjectUID("test-project");
 
       const expectedEndpoint = INDEXER.V2.APPLICATIONS.BY_PROJECT_UID("test-project");
-      expect(mockGet).toHaveBeenCalledWith(expectedEndpoint);
+      expect(mockFetchData).toHaveBeenCalledWith(expectedEndpoint);
       expect(expectedEndpoint).toBe("/v2/funding-applications/project/test-project");
+    });
+
+    it("should return null when data is null but no error", async () => {
+      mockFetchData.mockResolvedValue([null, null, null, 200]);
+
+      const result = await fetchApplicationByProjectUID("project-123");
+
+      expect(result).toBeNull();
     });
   });
 
@@ -218,43 +214,27 @@ describe("funding-applications service", () => {
 
   describe("Edge Cases and Additional Coverage", () => {
     describe("fetchApplicationByProjectUID - 404 handling edge cases", () => {
-      it("should return null when error.response.status is 404 (explicit check)", async () => {
-        mockGet.mockRejectedValue({
-          response: { status: 404 },
-        });
+      it("should return null when error contains '404'", async () => {
+        mockFetchData.mockResolvedValue([null, "404 not found", null, 404]);
 
         const result = await fetchApplicationByProjectUID("nonexistent");
 
         expect(result).toBeNull();
-        // Verify the specific 404 check path (line 18-20 in source)
-        expect(mockGet).toHaveBeenCalled();
+        expect(mockFetchData).toHaveBeenCalled();
       });
 
-      it("should handle 404 with missing response.data", async () => {
-        mockGet.mockRejectedValue({
-          response: { status: 404, data: undefined },
-        });
+      it("should return null when error contains 'not found'", async () => {
+        mockFetchData.mockResolvedValue([null, "Resource not found", null, 404]);
 
         const result = await fetchApplicationByProjectUID("nonexistent");
 
         expect(result).toBeNull();
       });
 
-      it("should throw error when error.response exists but status is not 404", async () => {
-        const error = {
-          response: { status: 403 },
-          message: "Forbidden",
-        };
-        mockGet.mockRejectedValue(error);
+      it("should throw error when error does not contain 404 or not found", async () => {
+        mockFetchData.mockResolvedValue([null, "Forbidden", null, 403]);
 
-        await expect(fetchApplicationByProjectUID("project-123")).rejects.toEqual(error);
-      });
-
-      it("should throw error when error.response is undefined", async () => {
-        const error = new Error("Network error");
-        mockGet.mockRejectedValue(error);
-
-        await expect(fetchApplicationByProjectUID("project-123")).rejects.toThrow("Network error");
+        await expect(fetchApplicationByProjectUID("project-123")).rejects.toThrow("Forbidden");
       });
     });
 
@@ -348,8 +328,7 @@ describe("funding-applications service", () => {
 
     describe("Network failure scenarios", () => {
       it("should handle timeout errors", async () => {
-        const timeoutError = new Error("timeout of 30000ms exceeded");
-        mockGet.mockRejectedValue(timeoutError);
+        mockFetchData.mockResolvedValue([null, "timeout of 30000ms exceeded", null, 408]);
 
         await expect(fetchApplicationByProjectUID("project-timeout")).rejects.toThrow(
           "timeout of 30000ms exceeded"

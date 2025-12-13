@@ -3,7 +3,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import type { ProgramImpactData, ProgramImpactDataResponse } from "@/types/programs";
 import fetchData from "../fetchData";
 import { INDEXER } from "../indexer";
-import { getCommunityDetails } from "../queries/v2/community";
+import { getCommunityDetails } from "../queries/v2/getCommunityData";
 
 export async function getProgramsImpact(
   communityId: string,

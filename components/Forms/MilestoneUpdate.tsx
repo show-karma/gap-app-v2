@@ -2,12 +2,9 @@
 
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type {
-  IMilestoneCompleted,
-  IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { IMilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
-import { type FC, useEffect, useState } from "react";
+import { type FC, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
@@ -18,10 +15,12 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useGap } from "@/hooks/useGap";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useStepper } from "@/store/modals/txStepper";
+import type { GrantMilestone } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -36,9 +35,21 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { errorManager } from "../Utilities/errorManager";
 
 interface MilestoneUpdateFormProps {
-  milestone: IMilestoneResponse;
+  milestone: GrantMilestone;
   isEditing: boolean;
-  previousData?: IMilestoneCompleted["data"];
+  previousData?: {
+    type?: string;
+    reason?: string;
+    proofOfWork?: string;
+    deliverables?:
+      | string
+      | Array<{
+          name?: string;
+          proof?: string;
+          description?: string;
+        }>;
+    completionPercentage?: string | number;
+  };
   cancelEditing: (value: boolean) => void;
   afterSubmit?: () => void;
   setIsUpdating?: (value: boolean) => void;
@@ -95,7 +106,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const _isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
-  const refreshProject = useProjectStore((state) => state.refreshProject);
   const { openShareDialog, closeShareDialog } = useShareDialogStore();
   const router = useRouter();
 
@@ -103,24 +113,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const { data: milestoneImpactData } = useMilestoneImpactAnswers({
     milestoneUID: milestone.uid,
   });
-
-  // Transform milestone impact data to form format
-  const transformMilestoneImpactToOutputs = (impactData: any[]) => {
-    if (!impactData || impactData.length === 0) return [];
-
-    return impactData.map((metric: any) => ({
-      outputId: metric.id || "",
-      value: metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].value : "",
-      proof:
-        metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].proof || "" : "",
-      startDate:
-        metric.datapoints && metric.datapoints.length > 0
-          ? metric.datapoints[0].startDate || ""
-          : "",
-      endDate:
-        metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].endDate || "" : "",
-    }));
-  };
 
   const {
     register,
@@ -144,18 +136,31 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   // Update form values when milestone impact data is loaded
   useEffect(() => {
     if (milestoneImpactData && milestoneImpactData.length > 0) {
-      const transformedOutputs = transformMilestoneImpactToOutputs(milestoneImpactData);
+      const transformedOutputs = milestoneImpactData.map((metric: any) => ({
+        outputId: metric.id || "",
+        value: metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].value : "",
+        proof:
+          metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].proof || "" : "",
+        startDate:
+          metric.datapoints && metric.datapoints.length > 0
+            ? metric.datapoints[0].startDate || ""
+            : "",
+        endDate:
+          metric.datapoints && metric.datapoints.length > 0
+            ? metric.datapoints[0].endDate || ""
+            : "",
+      }));
       setValue("outputs", transformedOutputs, { shouldValidate: true });
     }
-  }, [milestoneImpactData, setValue, transformMilestoneImpactToOutputs]);
+  }, [milestoneImpactData, setValue]);
 
   const openDialog = () => {
     openShareDialog({
       modalShareText: `You did it! 🎉 Another milestone down, more impact ahead. Your onchain trail is growing — keep stacking progress.`,
       modalShareSecondText: ` `,
       shareText: SHARE_TEXTS.MILESTONE_COMPLETED(
-        grant?.details?.data?.title as string,
-        (project?.details?.data?.slug || project?.uid) as string,
+        grant?.details?.title as string,
+        (project?.details?.slug || project?.uid) as string,
         grant?.uid as string
       ),
     });
@@ -165,22 +170,28 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const { changeStepperStep, setIsStepper } = useStepper();
   const project = useProjectStore((state) => state.project);
 
+  // Fetch grants using dedicated hook
+  const { grants, refetch: refetchGrants } = useProjectGrants(project?.uid || "");
+
   // Get grant and community information for OutputsSection
-  const grantInstance = project?.grants?.find((g) => g.uid === milestone.refUID);
+  const grantInstance = useMemo(
+    () => grants.find((g) => g.uid === milestone.refUID),
+    [grants, milestone.refUID]
+  );
   const selectedCommunities = grantInstance?.community
     ? [
         {
           uid: grantInstance.community.uid,
-          name: grantInstance.community.details?.data?.name || "",
+          name: grantInstance.community.details?.name || "",
           details: grantInstance.community.details,
         },
       ]
     : [];
-  const selectedPrograms = grantInstance?.details?.data?.programId
+  const selectedPrograms = grantInstance?.details?.programId
     ? [
         {
-          programId: grantInstance.details.data.programId,
-          title: grantInstance.details.data.title || "",
+          programId: grantInstance.details.programId,
+          title: grantInstance.details.title || "",
           chainID: grantInstance.chainID,
         },
       ]
@@ -227,7 +238,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     }
   };
 
-  const completeMilestone = async (milestone: IMilestoneResponse, data: SchemaType) => {
+  const completeMilestone = async (milestone: GrantMilestone, data: SchemaType) => {
     let gapClient = gap;
     setIsSubmitLoading(true);
     try {
@@ -236,7 +247,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         chainId: actualChainId,
         gapClient: updatedGapClient,
       } = await ensureCorrectChain({
-        targetChainId: milestone.chainID,
+        targetChainId: milestone.chainID || 0,
         currentChainId: chain?.id,
         switchChainAsync,
       });
@@ -257,8 +268,11 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
+      if (!milestone.refUID) {
+        throw new Error("Cannot find grant: milestone has no refUID");
+      }
       const grantInstance = fetchedProject.grants.find(
-        (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
+        (g) => g.uid.toLowerCase() === milestone.refUID!.toLowerCase()
       );
       if (!grantInstance) return;
       const milestoneInstance = grantInstance.milestones.find(
@@ -288,46 +302,43 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
             );
           }
           while (retries > 0) {
-            await refreshProject()
-              .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants.find((g) => g.uid === milestone.refUID);
+            try {
+              const { data: fetchedGrants } = await refetchGrants();
+              const foundGrant = (fetchedGrants || []).find((g) => g.uid === milestone.refUID);
 
-                const fetchedMilestone = foundGrant?.milestones.find(
-                  (u: any) => u.uid === milestone.uid
+              const fetchedMilestone = foundGrant?.milestones?.find((u) => u.uid === milestone.uid);
+
+              const isCompleted = fetchedMilestone?.completed;
+
+              if (isCompleted) {
+                retries = 0;
+                changeStepperStep("indexed");
+                toast.success(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
+
+                // Send outputs and deliverables data
+                await sendOutputsAndDeliverables(milestone.uid, data);
+
+                afterSubmit?.();
+                openDialog();
+                cancelEditing(false);
+                parentSetIsUpdating?.(false);
+                router.push(
+                  PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                    project?.uid as string,
+                    grantInstance.uid,
+                    "milestones-and-updates"
+                  )
                 );
-
-                const isCompleted = fetchedMilestone?.completed;
-
-                if (isCompleted) {
-                  retries = 0;
-                  changeStepperStep("indexed");
-                  toast.success(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
-
-                  // Send outputs and deliverables data
-                  await sendOutputsAndDeliverables(milestone.uid, data);
-
-                  afterSubmit?.();
-                  openDialog();
-                  cancelEditing(false);
-                  parentSetIsUpdating?.(false);
-                  router.push(
-                    PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                      fetchedProject?.uid as string,
-                      grantInstance.uid,
-                      "milestones-and-updates"
-                    )
-                  );
-                  router.refresh();
-                }
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              })
-              .catch(async () => {
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              });
+                router.refresh();
+              }
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            } catch {
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            }
           }
         });
     } catch (error) {
@@ -350,7 +361,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     }
   };
 
-  const updateMilestoneCompletion = async (milestone: IMilestoneResponse, data: SchemaType) => {
+  const updateMilestoneCompletion = async (milestone: GrantMilestone, data: SchemaType) => {
     let gapClient = gap;
     setIsSubmitLoading(true);
     try {
@@ -359,7 +370,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         chainId: actualChainId,
         gapClient: newGapClient,
       } = await ensureCorrectChain({
-        targetChainId: milestone.chainID,
+        targetChainId: milestone.chainID || 0,
         currentChainId: chain?.id,
         switchChainAsync,
       });
@@ -380,8 +391,11 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
+      if (!milestone.refUID) {
+        throw new Error("Cannot update milestone completion: milestone has no refUID");
+      }
       const grantInstance = fetchedProject.grants.find(
-        (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
+        (g) => g.uid.toLowerCase() === milestone.refUID!.toLowerCase()
       );
       if (!grantInstance) return;
       const milestoneInstance = grantInstance.milestones.find(
@@ -411,43 +425,40 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
             );
           }
           while (retries > 0) {
-            await refreshProject()
-              .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants.find((g) => g.uid === milestone.refUID);
+            try {
+              const { data: fetchedGrants } = await refetchGrants();
+              const foundGrant = (fetchedGrants || []).find((g) => g.uid === milestone.refUID);
 
-                const fetchedMilestone = foundGrant?.milestones.find(
-                  (u: any) => u.uid === milestone.uid
+              const fetchedMilestone = foundGrant?.milestones?.find((u) => u.uid === milestone.uid);
+
+              if (
+                new Date(milestone?.completed?.updatedAt || 0).getTime() <
+                new Date(fetchedMilestone?.completed?.updatedAt || 0).getTime()
+              ) {
+                retries = 0;
+                changeStepperStep("indexed");
+                toast.success(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS);
+
+                // Send outputs and deliverables data
+                await sendOutputsAndDeliverables(milestone.uid, data);
+
+                closeShareDialog();
+                PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                  project?.uid as string,
+                  grantInstance.uid,
+                  "milestones-and-updates"
                 );
-
-                if (
-                  new Date(milestone?.completed?.updatedAt) <
-                  new Date(fetchedMilestone?.completed?.updatedAt)
-                ) {
-                  retries = 0;
-                  changeStepperStep("indexed");
-                  toast.success(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS);
-
-                  // Send outputs and deliverables data
-                  await sendOutputsAndDeliverables(milestone.uid, data);
-
-                  closeShareDialog();
-                  PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                    fetchedProject?.uid as string,
-                    grantInstance.uid,
-                    "milestones-and-updates"
-                  );
-                  cancelEditing(false);
-                  parentSetIsUpdating?.(false);
-                }
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              })
-              .catch(async () => {
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              });
+                cancelEditing(false);
+                parentSetIsUpdating?.(false);
+              }
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            } catch {
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            }
           }
         });
     } catch (error) {
@@ -478,8 +489,12 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     }
   };
 
-  const grant = project?.grants.find(
-    (item) => item.uid.toLowerCase() === milestone.refUID?.toLowerCase()
+  const grant = useMemo(
+    () =>
+      milestone.refUID
+        ? grants.find((item) => item.uid.toLowerCase() === milestone.refUID!.toLowerCase())
+        : undefined,
+    [grants, milestone.refUID]
   );
 
   return (

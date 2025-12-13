@@ -28,7 +28,7 @@ export default function Page() {
             <h4 className="text-2xl font-bold text-black dark:text-zinc-100">Add milestone</h4>
             <Link
               href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                project?.details?.data?.slug || project?.uid || "",
+                project?.details?.slug || project?.uid || "",
                 grant.uid,
                 "milestones-and-updates"
               )}

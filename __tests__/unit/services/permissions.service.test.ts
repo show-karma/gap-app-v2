@@ -1,8 +1,7 @@
-import axios, { type AxiosInstance } from "axios";
+import type { AxiosInstance } from "axios";
 import { TokenManager } from "@/utilities/auth/token-manager";
 
 // Mock dependencies BEFORE importing the service
-jest.mock("axios");
 jest.mock("@/utilities/auth/token-manager");
 jest.mock("@/utilities/enviromentVars", () => ({
   envVars: {
@@ -10,13 +9,14 @@ jest.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
+// Mock fetchData for GET requests
+jest.mock("@/utilities/fetchData");
+
 // Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
-// Use proper typing with jest.Mocked to maintain type safety
 var mockAxiosInstance: jest.Mocked<AxiosInstance>;
 
-// Mock api-client - the factory runs at hoist time, so we initialize the mock here
+// Mock api-client for batch POST operations
 jest.mock("@/utilities/auth/api-client", () => {
-  // Initialize mock instance inline in the factory with proper typing
   const instance = {
     get: jest.fn(),
     post: jest.fn(),
@@ -35,7 +35,6 @@ jest.mock("@/utilities/auth/api-client", () => {
     deleteUri: jest.fn(),
   } as unknown as jest.Mocked<AxiosInstance>;
 
-  // Assign to the outer variable so tests can access it
   mockAxiosInstance = instance;
 
   return {
@@ -45,18 +44,17 @@ jest.mock("@/utilities/auth/api-client", () => {
 
 // Import the service AFTER all mocks are set up
 import { type PermissionCheckOptions, PermissionsService } from "@/services/permissions.service";
+// Import fetchData mock
+import fetchData from "@/utilities/fetchData";
 
-const _mockedAxios = axios as jest.Mocked<typeof axios>;
+const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
 
 describe("PermissionsService", () => {
   let service: PermissionsService;
 
   beforeEach(() => {
-    // Clear all mock calls but keep the mock implementations
     jest.clearAllMocks();
-    mockAxiosInstance.get.mockClear();
     mockAxiosInstance.post.mockClear();
-    mockAxiosInstance.delete.mockClear();
 
     // Mock TokenManager
     (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue("test-token");
@@ -77,13 +75,11 @@ describe("PermissionsService", () => {
         permissions: ["review_applications", "update_application_status"],
       };
 
-      mockAxiosInstance.get.mockResolvedValue({ data: mockResponse });
+      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
 
       const result = await service.checkPermission(options);
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith(
-        "/v2/funding-program-configs/program-1/1/check-permission?action=review_applications"
-      );
+      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("program-1"));
       expect(result).toEqual(mockResponse);
     });
 
@@ -98,13 +94,11 @@ describe("PermissionsService", () => {
         permissions: ["view", "read"],
       };
 
-      mockAxiosInstance.get.mockResolvedValue({ data: mockResponse });
+      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
 
       const result = await service.checkPermission(options);
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith(
-        "/v2/funding-program-configs/program-1/1/check-permission?"
-      );
+      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("check-permission"));
       expect(result).toEqual(mockResponse);
     });
 
@@ -140,7 +134,7 @@ describe("PermissionsService", () => {
         permissions: [],
       };
 
-      mockAxiosInstance.get.mockResolvedValue({ data: mockResponse });
+      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
 
       const result = await service.checkPermission(options);
 
@@ -166,11 +160,11 @@ describe("PermissionsService", () => {
         ],
       };
 
-      mockAxiosInstance.get.mockResolvedValue({ data: mockResponse });
+      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
 
       const result = await service.getUserPermissions();
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith("/v2/user/permissions?");
+      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("permissions"));
       expect(result).toEqual(mockResponse);
     });
 
@@ -185,11 +179,11 @@ describe("PermissionsService", () => {
         ],
       };
 
-      mockAxiosInstance.get.mockResolvedValue({ data: mockResponse });
+      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
 
       const result = await service.getUserPermissions("program-1");
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith("/v2/user/permissions?resource=program-1");
+      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("resource=program-1"));
       expect(result).toEqual(mockResponse);
     });
 
@@ -198,7 +192,7 @@ describe("PermissionsService", () => {
         permissions: [],
       };
 
-      mockAxiosInstance.get.mockResolvedValue({ data: mockResponse });
+      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
 
       const result = await service.getUserPermissions();
 
@@ -229,18 +223,16 @@ describe("PermissionsService", () => {
         },
       ];
 
-      mockAxiosInstance.get.mockResolvedValue({ data: mockPrograms });
+      mockFetchData.mockResolvedValue([mockPrograms, null, null, 200]);
 
       const result = await service.getReviewerPrograms();
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith(
-        "/v2/funding-program-configs/my-reviewer-programs"
-      );
+      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("my-reviewer-programs"));
       expect(result).toEqual(mockPrograms);
     });
 
     it("should return empty array when user is not a reviewer", async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: [] });
+      mockFetchData.mockResolvedValue([[], null, null, 200]);
 
       const result = await service.getReviewerPrograms();
 
@@ -260,7 +252,7 @@ describe("PermissionsService", () => {
         },
       ];
 
-      mockAxiosInstance.get.mockResolvedValue({ data: mockPrograms });
+      mockFetchData.mockResolvedValue([mockPrograms, null, null, 200]);
 
       const result = await service.hasRole("reviewer");
 
@@ -268,7 +260,7 @@ describe("PermissionsService", () => {
     });
 
     it("should return false if user has no reviewer programs", async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: [] });
+      mockFetchData.mockResolvedValue([[], null, null, 200]);
 
       const result = await service.hasRole("reviewer");
 
@@ -286,7 +278,7 @@ describe("PermissionsService", () => {
         ],
       };
 
-      mockAxiosInstance.get.mockResolvedValue({ data: mockResponse });
+      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
 
       const result = await service.hasRole("admin", "program-1");
 
@@ -304,7 +296,7 @@ describe("PermissionsService", () => {
         ],
       };
 
-      mockAxiosInstance.get.mockResolvedValue({ data: mockResponse });
+      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
 
       const result = await service.hasRole("admin", "program-1");
 
@@ -330,7 +322,7 @@ describe("PermissionsService", () => {
         ],
       };
 
-      mockAxiosInstance.get.mockResolvedValue({ data: mockResponse });
+      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
 
       const result = await service.canPerformAction("program-1", "approve");
 
@@ -348,7 +340,7 @@ describe("PermissionsService", () => {
         ],
       };
 
-      mockAxiosInstance.get.mockResolvedValue({ data: mockResponse });
+      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
 
       const result = await service.canPerformAction("program-1", "delete");
 
@@ -366,7 +358,7 @@ describe("PermissionsService", () => {
         ],
       };
 
-      mockAxiosInstance.get.mockResolvedValue({ data: mockResponse });
+      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
 
       const result = await service.canPerformAction("program-1", "view");
 
@@ -426,18 +418,14 @@ describe("PermissionsService", () => {
       // Batch endpoint fails
       mockAxiosInstance.post.mockRejectedValue(new Error("Batch endpoint not available"));
 
-      // Individual calls succeed
-      mockAxiosInstance.get
-        .mockResolvedValueOnce({
-          data: { hasPermission: true, permissions: ["review"] },
-        })
-        .mockResolvedValueOnce({
-          data: { hasPermission: false, permissions: [] },
-        });
+      // Individual calls succeed via fetchData
+      mockFetchData
+        .mockResolvedValueOnce([{ hasPermission: true, permissions: ["review"] }, null, null, 200])
+        .mockResolvedValueOnce([{ hasPermission: false, permissions: [] }, null, null, 200]);
 
       const result = await service.checkMultiplePermissions(programIds);
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(2);
+      expect(mockFetchData).toHaveBeenCalledTimes(2);
       expect(result.size).toBe(2);
     });
 
@@ -451,11 +439,9 @@ describe("PermissionsService", () => {
       mockAxiosInstance.post.mockRejectedValue(new Error("Not available"));
 
       // First call succeeds, second fails
-      mockAxiosInstance.get
-        .mockResolvedValueOnce({
-          data: { hasPermission: true, permissions: ["review"] },
-        })
-        .mockRejectedValueOnce(new Error("Permission check failed"));
+      mockFetchData
+        .mockResolvedValueOnce([{ hasPermission: true, permissions: ["review"] }, null, null, 200])
+        .mockResolvedValueOnce([null, "Permission check failed", null, 500]);
 
       const result = await service.checkMultiplePermissions(programIds);
 

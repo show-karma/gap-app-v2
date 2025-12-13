@@ -144,18 +144,14 @@ describe("MilestoneCard", () => {
         grant: {
           uid: "grant-123",
           details: {
-            data: {
-              title: "Test Grant Program",
-              programId: "program-123",
-            },
+            title: "Test Grant Program",
+            programId: "program-123",
           },
           community: {
             details: {
-              data: {
-                name: "Test Community",
-                slug: "test-community",
-                imageURL: "https://example.com/community.jpg",
-              },
+              name: "Test Community",
+              slug: "test-community",
+              imageURL: "https://example.com/community.jpg",
             },
           },
         },
@@ -428,18 +424,14 @@ describe("MilestoneCard", () => {
               grant: {
                 uid: "grant-123",
                 details: {
-                  data: {
-                    title: "Test Grant Program",
-                    programId: "program-123",
-                  },
+                  title: "Test Grant Program",
+                  programId: "program-123",
                 },
                 community: {
                   details: {
-                    data: {
-                      name: "Test Community",
-                      slug: "test-community",
-                      imageURL: "https://example.com/community.jpg",
-                    },
+                    name: "Test Community",
+                    slug: "test-community",
+                    imageURL: "https://example.com/community.jpg",
                   },
                 },
               },
@@ -479,18 +471,14 @@ describe("MilestoneCard", () => {
               grant: {
                 uid: "grant-123",
                 details: {
-                  data: {
-                    title: "Test Grant Program",
-                    programId: "program-123",
-                  },
+                  title: "Test Grant Program",
+                  programId: "program-123",
                 },
                 community: {
                   details: {
-                    data: {
-                      name: "Test Community",
-                      slug: "test-community",
-                      imageURL: "https://example.com/community.jpg",
-                    },
+                    name: "Test Community",
+                    slug: "test-community",
+                    imageURL: "https://example.com/community.jpg",
                   },
                 },
               },
@@ -530,18 +518,14 @@ describe("MilestoneCard", () => {
               grant: {
                 uid: "grant-123",
                 details: {
-                  data: {
-                    title: "Test Grant Program",
-                    programId: "program-123",
-                  },
+                  title: "Test Grant Program",
+                  programId: "program-123",
                 },
                 community: {
                   details: {
-                    data: {
-                      name: "Test Community",
-                      slug: "test-community",
-                      imageURL: "https://example.com/community.jpg",
-                    },
+                    name: "Test Community",
+                    slug: "test-community",
+                    imageURL: "https://example.com/community.jpg",
                   },
                 },
               },
@@ -650,18 +634,14 @@ describe("MilestoneCard", () => {
               grant: {
                 uid: "grant-123",
                 details: {
-                  data: {
-                    title: "Test Grant Program",
-                    programId: "program-123",
-                  },
+                  title: "Test Grant Program",
+                  programId: "program-123",
                 },
                 community: {
                   details: {
-                    data: {
-                      name: "Test Community",
-                      slug: "test-community",
-                      imageURL: "https://example.com/community.jpg",
-                    },
+                    name: "Test Community",
+                    slug: "test-community",
+                    imageURL: "https://example.com/community.jpg",
                   },
                 },
               },
@@ -711,18 +691,14 @@ describe("MilestoneCard", () => {
               grant: {
                 uid: "grant-123",
                 details: {
-                  data: {
-                    title: "Test Grant Program",
-                    programId: "program-123",
-                  },
+                  title: "Test Grant Program",
+                  programId: "program-123",
                 },
                 community: {
                   details: {
-                    data: {
-                      name: "Test Community",
-                      slug: "test-community",
-                      imageURL: "https://example.com/community.jpg",
-                    },
+                    name: "Test Community",
+                    slug: "test-community",
+                    imageURL: "https://example.com/community.jpg",
                   },
                 },
               },
@@ -772,18 +748,14 @@ describe("MilestoneCard", () => {
               grant: {
                 uid: "grant-123",
                 details: {
-                  data: {
-                    title: "Test Grant Program",
-                    programId: "program-123",
-                  },
+                  title: "Test Grant Program",
+                  programId: "program-123",
                 },
                 community: {
                   details: {
-                    data: {
-                      name: "Test Community",
-                      slug: "test-community",
-                      imageURL: "https://example.com/community.jpg",
-                    },
+                    name: "Test Community",
+                    slug: "test-community",
+                    imageURL: "https://example.com/community.jpg",
                   },
                 },
               },
@@ -863,11 +835,9 @@ describe("MilestoneCard", () => {
               ...(mockGrantMilestone.source as any).grantMilestone.grant,
               community: {
                 details: {
-                  data: {
-                    name: "Test Community",
-                    slug: "test-community",
-                    imageURL: null,
-                  },
+                  name: "Test Community",
+                  slug: "test-community",
+                  imageURL: null,
                 },
               },
             },
@@ -890,10 +860,8 @@ describe("MilestoneCard", () => {
             grant: {
               ...(mockGrantMilestone.source as any).grantMilestone.grant,
               details: {
-                data: {
-                  title: "",
-                  programId: "program-123",
-                },
+                title: "",
+                programId: "program-123",
               },
             },
           },

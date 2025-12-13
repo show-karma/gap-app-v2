@@ -2,7 +2,7 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { type FC, Fragment, useState, useEffect, useCallback } from "react";
+import { type FC, Fragment, useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import type { IFundingProgramConfig } from "@/types/funding-platform";
@@ -44,7 +44,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
 
   const getTemplateContent = useCallback((): string => {
     if (!programConfig?.formSchema?.settings) return "";
-    
+
     if (status === "approved" && programConfig.formSchema.settings.approvalEmailTemplate) {
       return programConfig.formSchema.settings.approvalEmailTemplate;
     }

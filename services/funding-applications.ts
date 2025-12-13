@@ -1,25 +1,29 @@
 import type { IFundingApplication } from "@/types/funding-platform";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
+import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
+// Keep apiClient for delete operations
 const apiClient = createAuthenticatedApiClient(API_URL, 30000);
 
 export async function fetchApplicationByProjectUID(
   projectUID: string
 ): Promise<IFundingApplication | null> {
-  try {
-    const response = await apiClient.get<IFundingApplication>(
-      INDEXER.V2.APPLICATIONS.BY_PROJECT_UID(projectUID)
-    );
-    return response.data;
-  } catch (error: any) {
-    if (error.response?.status === 404) {
+  const [data, error] = await fetchData<IFundingApplication>(
+    INDEXER.V2.APPLICATIONS.BY_PROJECT_UID(projectUID)
+  );
+
+  if (error) {
+    // Return null for 404 (no application found)
+    if (error.includes("404") || error.includes("not found")) {
       return null;
     }
-    throw error;
+    throw new Error(error);
   }
+
+  return data || null;
 }
 
 export async function deleteApplication(referenceNumber: string): Promise<void> {

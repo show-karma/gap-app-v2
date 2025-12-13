@@ -7,7 +7,6 @@ import {
   MagnifyingGlassIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
-import type { Community } from "@show-karma/karma-gap-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { blo } from "blo";
 import Link from "next/link";
@@ -28,11 +27,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useGap } from "@/hooks/useGap";
 import { useStaff } from "@/hooks/useStaff";
+import { getCommunities } from "@/services/communities.service";
 import { layoutTheme } from "@/src/helper/theme";
 import { useOwnerStore } from "@/store";
 import { useCommunitiesStore } from "@/store/communities";
+import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import fetchData from "@/utilities/fetchData";
@@ -73,7 +73,6 @@ export default function CommunitiesToAdminPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const { gap } = useGap();
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isStaff, isLoading: isStaffLoading } = useStaff();
   const { communities: userAdminCommunities, isLoading: isLoadingUserCommunities } =
@@ -84,9 +83,7 @@ export default function CommunitiesToAdminPage() {
   const hasAccess = isStaffOrOwner || hasAdminCommunities;
 
   const fetchCommunitiesData = useCallback(async (): Promise<CommunitiesData> => {
-    if (!gap) throw new Error("Gap not initialized");
-
-    const result = await gap.fetch.communities();
+    const result = await getCommunities({ limit: 1000 });
     result.sort((a, b) => (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid));
 
     const fetchPromises = result.map(async (community) => {
@@ -112,12 +109,12 @@ export default function CommunitiesToAdminPage() {
     setAllCommunities(result || []);
     setCommunityAdmins(communityAdmins || []);
     return { communities: result, admins: communityAdmins };
-  }, [gap]);
+  }, []);
 
   const { isLoading, refetch } = useQuery({
     queryKey: ["communities", "admins"],
     queryFn: fetchCommunitiesData,
-    enabled: !!gap && hasAccess,
+    enabled: hasAccess,
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -388,7 +385,7 @@ export default function CommunitiesToAdminPage() {
                       {/* Header with image and name */}
                       <div className="flex items-center gap-4 mb-4">
                         <img
-                          src={community.details?.imageURL || blo(community.uid)}
+                          src={community.details?.imageURL || blo(community.uid as `0x${string}`)}
                           className="h-16 w-16 rounded-lg object-cover flex-shrink-0"
                           alt={community.details?.name || community.uid}
                         />

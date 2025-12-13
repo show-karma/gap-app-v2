@@ -1,7 +1,6 @@
 import { ChevronDownIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as Accordion from "@radix-ui/react-accordion";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -14,6 +13,7 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useIndicators } from "@/hooks/useIndicators";
 import type { Category, ImpactIndicator, ImpactSegment } from "@/types/impactMeasurement";
+import type { Community } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -55,7 +55,7 @@ interface Output {
 interface ManageCategoriesOutputsProps {
   categories: Category[];
   setCategories: (categories: Category[]) => void;
-  community: ICommunityResponse | undefined;
+  community: Community | undefined;
   refreshCategories: (isSilent?: boolean) => Promise<any>;
 }
 
@@ -545,7 +545,7 @@ export const ManageCategoriesOutputs = ({
           <div className="flex flex-row gap-10 items-center">
             <Link
               href={PAGES.ADMIN.MANAGE_INDICATORS(
-                community?.details?.data?.slug || (community?.uid as string)
+                community?.details?.slug || (community?.uid as string)
               )}
             >
               <Button className="px-10 py-8 bg-brand-blue hover:bg-brand-blue rounded-md transition-all ease-in-out duration-200">

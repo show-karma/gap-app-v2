@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FC, useEffect } from "react";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunitiesStore } from "@/store/communities";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
@@ -20,15 +21,18 @@ export const EmptyGrantsSection: FC = () => {
   const isAuthorized = isProjectAdmin || isOwner || isCommunityAdmin || isCommunityAdminOfSome;
   const router = useRouter();
 
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(project?.uid || "");
+
   useEffect(() => {
-    if (project?.grants?.length === 0) {
+    if (grants.length === 0) {
       if (isAuthorized) {
         router.push(
-          PAGES.PROJECT.SCREENS.NEW_GRANT((project?.details?.data?.slug || project?.uid) as string)
+          PAGES.PROJECT.SCREENS.NEW_GRANT((project?.details?.slug || project?.uid) as string)
         );
       }
     }
-  }, [isAuthorized, project, router]);
+  }, [isAuthorized, project, router, grants]);
 
   if (!isAuthorized) {
     return (
@@ -59,7 +63,7 @@ export const EmptyGrantsSection: FC = () => {
           Go ahead and create your first funding
         </p>
         <Link
-          href={PAGES.PROJECT.SCREENS.NEW_GRANT(project?.details?.data.slug || project?.uid || "")}
+          href={PAGES.PROJECT.SCREENS.NEW_GRANT(project?.details?.slug || project?.uid || "")}
           className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 bg-blue-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-blue-600"
         >
           <img src="/icons/plus.svg" alt="Add" className="relative h-5 w-5" />

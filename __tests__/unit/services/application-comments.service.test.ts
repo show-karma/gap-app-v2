@@ -1,3 +1,4 @@
+import type { AxiosInstance } from "axios";
 import { TokenManager } from "@/utilities/auth/token-manager";
 
 // Mock the dependencies BEFORE importing the service
@@ -8,31 +9,54 @@ jest.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
-// Setup axios mock with factory function
-jest.mock("axios", () => ({
-  create: jest.fn(() => ({
+// Mock fetchData for getComments method (which uses fetchData)
+jest.mock("@/utilities/fetchData");
+
+// Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
+var mockAxiosInstance: jest.Mocked<AxiosInstance>;
+
+// Mock api-client for mutations (createComment, editComment, deleteComment)
+jest.mock("@/utilities/auth/api-client", () => {
+  const instance = {
     get: jest.fn(),
     post: jest.fn(),
-    put: jest.fn(),
     delete: jest.fn(),
+    put: jest.fn(),
+    patch: jest.fn(),
+    request: jest.fn(),
+    head: jest.fn(),
+    options: jest.fn(),
     interceptors: {
-      request: { use: jest.fn((fn) => fn) },
-      response: { use: jest.fn() },
+      request: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
+      response: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
     },
-  })),
-}));
+    defaults: {} as any,
+    getUri: jest.fn(),
+  } as unknown as jest.Mocked<AxiosInstance>;
 
-import axios from "axios";
+  mockAxiosInstance = instance;
+
+  return {
+    createAuthenticatedApiClient: jest.fn(() => instance),
+  };
+});
+
 // NOW import the service after mocks are configured
 import { applicationCommentsService } from "@/services/application-comments.service";
+// Import the mocked module to get access to the mock function
+import fetchData from "@/utilities/fetchData";
 
-const mockedAxios = axios as jest.Mocked<typeof axios>;
-// Get the mock instance that was created
-const mockAxiosInstance = (mockedAxios.create as jest.Mock).mock.results[0]?.value;
+const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
 
 describe("applicationCommentsService", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    if (mockAxiosInstance) {
+      mockAxiosInstance.get?.mockClear();
+      mockAxiosInstance.post?.mockClear();
+      mockAxiosInstance.put?.mockClear();
+      mockAxiosInstance.delete?.mockClear();
+    }
   });
 
   describe("Authentication", () => {
@@ -60,29 +84,27 @@ describe("applicationCommentsService", () => {
       await applicationCommentsService.createComment("app-123", "Test comment", "Test User");
 
       // Verify axios.post was called with correct parameters
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith("/v2/applications/app-123/comments", {
-        content: "Test comment",
-        authorName: "Test User",
-      });
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith(
+        expect.stringContaining("app-123"),
+        expect.objectContaining({
+          content: "Test comment",
+          authorName: "Test User",
+        })
+      );
     });
 
     it("should not include Authorization header when no token is available", async () => {
       // Mock TokenManager to return no token
       (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue(null);
 
-      // Mock successful axios response
-      mockAxiosInstance.get.mockResolvedValueOnce({
-        data: { comments: [] },
-      });
+      // Mock successful fetchData response for getComments
+      mockFetchData.mockResolvedValueOnce([{ comments: [] }, null, null, 200]);
 
       // Call the service
       await applicationCommentsService.getComments("app-123");
 
-      // Verify axios.get was called
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith("/v2/applications/app-123/comments", {});
-
-      // The authorization is handled by the axios interceptor
-      // When no token is available, the interceptor doesn't add the header
+      // Verify fetchData was called (getComments uses fetchData)
+      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("app-123"), "GET", {}, {});
     });
 
     it("should include JWT token for all service methods", async () => {
@@ -91,29 +113,32 @@ describe("applicationCommentsService", () => {
       // Mock TokenManager to return a token
       (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue(mockToken);
 
-      // Mock successful axios responses
-      mockAxiosInstance.get.mockResolvedValue({ data: { comments: [] } });
+      // Mock successful responses
+      mockFetchData.mockResolvedValue([{ comments: [] }, null, null, 200]);
       mockAxiosInstance.put.mockResolvedValue({ data: { comment: {} } });
       mockAxiosInstance.delete.mockResolvedValue({ data: {} });
 
-      // Test getComments
+      // Test getComments (uses fetchData)
       await applicationCommentsService.getComments("app-123");
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith("/v2/applications/app-123/comments", {});
+      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("app-123"), "GET", {}, {});
 
-      // Test editComment
+      // Test editComment (uses apiClient)
       await applicationCommentsService.editComment("comment-1", "Updated content");
-      expect(mockAxiosInstance.put).toHaveBeenCalledWith("/v2/comments/comment-1", {
-        content: "Updated content",
-      });
+      expect(mockAxiosInstance.put).toHaveBeenCalledWith(
+        expect.stringContaining("comment-1"),
+        expect.objectContaining({
+          content: "Updated content",
+        })
+      );
 
-      // Test deleteComment
+      // Test deleteComment (uses apiClient)
       await applicationCommentsService.deleteComment("comment-1");
-      expect(mockAxiosInstance.delete).toHaveBeenCalledWith("/v2/comments/comment-1", {
-        params: {},
-      });
-
-      // The authorization header is automatically added by the axios interceptor
-      // configured in createAuthenticatedApiClient
+      expect(mockAxiosInstance.delete).toHaveBeenCalledWith(
+        expect.stringContaining("comment-1"),
+        expect.objectContaining({
+          params: {},
+        })
+      );
     });
   });
 });

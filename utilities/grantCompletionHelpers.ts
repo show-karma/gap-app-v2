@@ -1,24 +1,19 @@
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { retryUntilConditionMet } from "@/utilities/retries";
 
 /**
- * Factory function to create a check function for grant completion existence
+ * Factory function to create a check function for grant completion existence.
+ * Uses direct service calls for polling to check indexer sync status.
  */
-export const createCheckIfCompletionExists = (
-  grantUID: string,
-  refreshProject: () => Promise<IProjectResponse | null | undefined>
-) => {
+export const createCheckIfCompletionExists = (grantUID: string, projectIdOrSlug: string) => {
   return async (callbackFn?: () => void) => {
     await retryUntilConditionMet(
       async () => {
-        const fetchedProject = await refreshProject();
-        // If project doesn't exist or has no grants, consider completion as removed
-        if (!fetchedProject || !fetchedProject.grants) {
+        const fetchedGrants = await getProjectGrants(projectIdOrSlug);
+        if (!fetchedGrants.length) {
           return true;
         }
-        const foundGrant = fetchedProject.grants.find((g) => g.uid === grantUID);
-        // If grant doesn't exist, consider completion as removed
-        // Otherwise check if completion exists
+        const foundGrant = fetchedGrants.find((g) => g.uid === grantUID);
         return !foundGrant?.completed;
       },
       () => {

@@ -1,11 +1,11 @@
 "use client";
-import type { Community } from "@show-karma/karma-gap-sdk";
 import { blo } from "blo";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useGap } from "@/hooks/useGap";
+import { getCommunities } from "@/services/communities.service";
 import { layoutTheme } from "@/src/helper/theme";
 import { useOwnerStore } from "@/store/owner";
+import type { Community } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -33,13 +33,11 @@ export default function CommunityStats() {
   const [communityStats, setCommunityStats] = useState<Record<string, CommunityStatsData>>({});
   const [isLoading, setIsLoading] = useState(true);
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { gap } = useGap();
 
-  const fetchCommunities = async () => {
+  const fetchCommunitiesData = useCallback(async () => {
     try {
-      if (!gap) throw new Error("Gap not initialized");
       setIsLoading(true);
-      const result = await gap.fetch.communities();
+      const result = await getCommunities({ limit: 1000 });
       result.sort((a, b) => (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid));
       setAllCommunities(result);
       return result;
@@ -49,16 +47,15 @@ export default function CommunityStats() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const fetchCommunityStats = async (communities: Community[]) => {
+  const fetchCommunityStats = useCallback(async (communities: Community[]) => {
     try {
       const statsPromises = communities.map(async (community) => {
         const [data, error]: any = await fetchData(
           INDEXER.COMMUNITY.STATS(community.uid as string)
         );
         if (error) {
-          console.error(`Failed to fetch stats for ${community.uid}`, error);
           return { uid: community.uid, stats: {} };
         }
         return { uid: community.uid, stats: data };
@@ -102,15 +99,15 @@ export default function CommunityStats() {
       });
       setCommunityStats(statsMap);
     } catch (_error) {}
-  };
+  }, []);
 
   useEffect(() => {
-    fetchCommunities().then((communities) => {
+    fetchCommunitiesData().then((communities) => {
       if (communities) {
         fetchCommunityStats(communities);
       }
     });
-  }, [fetchCommunities, fetchCommunityStats]);
+  }, [fetchCommunitiesData, fetchCommunityStats]);
 
   return (
     <div className={layoutTheme.padding}>
@@ -166,7 +163,9 @@ export default function CommunityStats() {
                           <tr className="divide-x">
                             <td className="px-2 py-2">
                               <img
-                                src={community.details?.imageURL || blo(community.uid)}
+                                src={
+                                  community.details?.imageURL || blo(community.uid as `0x${string}`)
+                                }
                                 className="h-[64px] w-[100px] object-cover"
                                 alt={community.details?.name || community.uid}
                               />

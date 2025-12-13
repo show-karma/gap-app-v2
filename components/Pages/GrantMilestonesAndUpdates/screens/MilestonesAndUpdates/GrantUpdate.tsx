@@ -1,9 +1,5 @@
 import { ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
-import type {
-  IGrantUpdate,
-  IGrantUpdateStatus,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { type FC, useEffect, useState } from "react";
+import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
@@ -12,9 +8,12 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
+import type { GrantUpdate as GrantUpdateType } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -26,7 +25,6 @@ import { retryUntilConditionMet } from "@/utilities/retries";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { VerifiedBadge } from "./VerifiedBadge";
 import { VerifyGrantUpdateDialog } from "./VerifyGrantUpdateDialog";
 
 interface UpdateTagProps {
@@ -65,21 +63,23 @@ interface GrantUpdateProps {
   description: string;
   index: number;
   date: Date | number;
-  update: IGrantUpdate;
+  update: GrantUpdateType;
 }
 
 export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, date, update }) => {
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
   const [isDeletingGrantUpdate, setIsDeletingGrantUpdate] = useState(false);
-  const _selectedProject = useProjectStore((state) => state.project);
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
   const { project, isProjectOwner } = useProjectStore();
+  const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();
+
+  // Fetch grants using dedicated hook
+  const { grants, refetch: refetchGrants } = useProjectGrants(projectIdOrSlug);
 
   const undoGrantUpdate = async () => {
     let gapClient = gap;
@@ -123,16 +123,17 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
           async () => {
-            const fetchedProject = await refreshProject();
-            const grant = fetchedProject?.grants?.find(
+            const fetchedGrants = await getProjectGrants(projectIdOrSlug);
+            const foundGrant = fetchedGrants.find(
               (item) => item.uid.toLowerCase() === update.refUID.toLowerCase()
             );
-            const stillExists = grant?.updates?.find(
+            const stillExists = foundGrant?.updates?.find(
               (grantUpdate) => grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
             );
             return !stillExists;
           },
-          () => {
+          async () => {
+            await refetchGrants();
             callbackFn?.();
           }
         );
@@ -203,39 +204,48 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
 
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
-  const [verifiedUpdate, setVerifiedUpdate] = useState<IGrantUpdateStatus[]>(
-    update?.verified || []
+  const [isVerified, setIsVerified] = useState<boolean>(
+    Array.isArray(update?.verified) && update.verified.length > 0
   );
 
-  const addVerifiedUpdate = (newVerified: IGrantUpdateStatus) => {
-    setVerifiedUpdate([...verifiedUpdate, newVerified]);
+  const markAsVerified = () => {
+    setIsVerified(true);
   };
-
-  useEffect(() => {
-    setVerifiedUpdate(update?.verified || []);
-  }, [update]);
 
   /*
    * Check if the grant update was created after the launch date of the feature
    * @returns {boolean}
    */
   const checkProofLaunch = () => {
-    return new Date("2024-08-30") <= new Date(update?.createdAt);
+    return new Date("2024-08-30") <= new Date(update?.createdAt ?? new Date());
   };
 
   const isAfterProofLaunch = checkProofLaunch();
 
-  const grant = project?.grants.find((g) => g.uid.toLowerCase() === update.refUID.toLowerCase());
+  const grant = grants.find((g) => g.uid?.toLowerCase() === update.refUID?.toLowerCase());
 
   return (
     <div className="flex w-full flex-1 max-w-full flex-col gap-4 rounded-lg border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700 bg-white p-4 transition-all duration-200 ease-in-out  max-sm:px-2">
       <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
         <div className="flex flex-row gap-3 items-center flex-wrap">
           <UpdateTag index={index} />
-          {verifiedUpdate.length ? (
-            <VerifiedBadge verifications={verifiedUpdate} title={`Update ${index} - Reviews`} />
+          {isVerified ? (
+            <div className="flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-green-700 dark:bg-green-900 dark:text-green-300">
+              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span className="text-xs font-bold">Verified</span>
+            </div>
           ) : null}
-          <VerifyGrantUpdateDialog grantUpdate={update} addVerifiedUpdate={addVerifiedUpdate} />
+          <VerifyGrantUpdateDialog
+            grantUpdate={update}
+            onVerified={markAsVerified}
+            isVerified={isVerified}
+          />
         </div>
         <div className="flex flex-row gap-3 items-center flex-wrap">
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
@@ -246,7 +256,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
               <ExternalLink
                 href={shareOnX(
                   SHARE_TEXTS.GRANT_UPDATE(
-                    grant?.details?.data?.title as string,
+                    grant?.details?.title as string,
                     project?.uid as string,
                     update.uid
                   )
@@ -259,7 +269,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
                 isLoading={isDeletingGrantUpdate}
                 title={
                   <p className="font-normal">
-                    Are you sure you want to delete <b>{update.data.title}</b> update?
+                    Are you sure you want to delete <b>{update.title ?? ""}</b> update?
                   </p>
                 }
                 buttonElement={{
@@ -281,25 +291,25 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
         <ReadMore readLessText="Read less update" readMoreText="Read full update">
           {description}
         </ReadMore>
-        {isAfterProofLaunch && update?.data.proofOfWork ? (
+        {isAfterProofLaunch && update?.proofOfWork ? (
           <div className="flex flex-row items-center gap-1 flex-1 max-w-full flex-wrap max-sm:mt-4">
             <p className="text-sm w-full min-w-max max-w-max font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
               Proof of work:
             </p>
             <ExternalLink
               href={
-                update?.data.proofOfWork.includes("http")
-                  ? update?.data.proofOfWork
-                  : `https://${update?.data.proofOfWork}`
+                update?.proofOfWork.includes("http")
+                  ? update?.proofOfWork
+                  : `https://${update?.proofOfWork}`
               }
               className="flex flex-row w-max max-w-full gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent break-all line-clamp-3"
             >
-              {update?.data.proofOfWork.includes("http")
-                ? `${update?.data.proofOfWork.slice(0, 80)}${
-                    update?.data.proofOfWork.slice(0, 80).length >= 80 ? "..." : ""
+              {update?.proofOfWork.includes("http")
+                ? `${update?.proofOfWork.slice(0, 80)}${
+                    update?.proofOfWork.slice(0, 80).length >= 80 ? "..." : ""
                   }`
-                : `https://${update?.data.proofOfWork.slice(0, 80)}${
-                    update?.data.proofOfWork.slice(0, 80).length >= 80 ? "..." : ""
+                : `https://${update?.proofOfWork.slice(0, 80)}${
+                    update?.proofOfWork.slice(0, 80).length >= 80 ? "..." : ""
                   }`}
             </ExternalLink>
           </div>

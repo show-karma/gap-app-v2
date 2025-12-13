@@ -55,7 +55,7 @@ export const useContactInfo = (projectId: string | undefined, isAuthorized?: boo
         return null;
       }
     },
-    enabled: !!projectId && isAuthorized,
+    enabled: !!projectId && (isAuthorized ?? isDefaultAuthorized),
     ...defaultQueryOptions,
   });
 };

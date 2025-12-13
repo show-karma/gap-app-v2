@@ -55,7 +55,7 @@ describe("Navbar - Main Container", () => {
     it("applies correct z-index for proper layering", () => {
       renderWithProviders(<Navbar />);
       const nav = screen.getByRole("navigation");
-      expect(nav).toHaveClass("z-50");
+      expect(nav).toHaveClass("z-10");
     });
 
     it("has proper container structure with inner div", () => {

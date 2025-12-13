@@ -29,7 +29,7 @@ function GrantGenieRecommendations({ projectId }: { projectId: string }) {
     fetchData(INDEXER.PROJECT.GRANTS_GENIE(projectId), "GET", {}, {}, {}, undefined).then(
       ([res, error]) => {
         setIsLoading(false);
-        setError(error);
+        setError(error ? true : false);
         if (error) {
           toast.error("Failed to fetch recommendations");
           return;

@@ -4,8 +4,8 @@
 
 import { Popover, Transition } from "@headlessui/react";
 import type { Hex } from "@show-karma/karma-gap-sdk";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
+import type { Community } from "@/types/v2/community";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatNumberPercentage } from "@/utilities/formatNumber";
 import { isDelegateOf } from "@/utilities/karma";
@@ -15,7 +15,7 @@ import { errorManager } from "./Utilities/errorManager";
 interface VotingPowerPopoverProps {
   reviewer: string | Hex;
   children: ReactNode;
-  community: ICommunityResponse;
+  community: Community;
 }
 
 export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
@@ -31,14 +31,14 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
 
   useEffect(() => {
     const getVotingPower = async () => {
-      if (!community.details?.data?.slug) return;
+      if (!community.details?.slug) return;
       setIsFetching(true);
       const daoDictionary: Record<string, string> = {
         arb: "arbitrum",
       };
       try {
         const data = await isDelegateOf(
-          daoDictionary[community.details?.data?.slug] || community.details?.data?.slug,
+          daoDictionary[community.details?.slug] || community.details?.slug,
           reviewer
         );
 
@@ -50,7 +50,7 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
       } catch (error: any) {
         errorManager(`Error fetching voting power for reviewer ${reviewer}`, error, {
           reviewer,
-          community: daoDictionary[community.details?.data?.slug] || community.details?.data?.slug,
+          community: daoDictionary[community.details?.slug] || community.details?.slug,
         });
         setVotingPower(null);
         setIsDelegate(false);
@@ -61,7 +61,7 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
     if (canFetch) {
       getVotingPower();
     }
-  }, [canFetch, community.details?.data?.slug, reviewer]);
+  }, [canFetch, community.details?.slug, reviewer]);
 
   return (
     <div className="w-full max-w-md">
@@ -96,7 +96,7 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
                       </p>
                       <div className="px-4 flex flex-col gap-2 items-center rounded-lg transition duration-150 ease-in-out hover:bg-gray-50 focus:outline-none focus-visible:ring focus-visible:ring-orange-500/50">
                         <p className="text-base font-medium text-gray-900 w-full">
-                          Delegate of {community.details?.data?.name}:{" "}
+                          Delegate of {community.details?.name}:{" "}
                           <span>{isDelegate ? "Yes" : "No"}</span>
                         </p>
                         <div className="flex flex-row gap-3 text-base font-medium  text-gray-900">

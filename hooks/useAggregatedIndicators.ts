@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { getCommunityDetails } from "@/utilities/queries/v2/community";
+import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 
 export interface AggregatedIndicator {
   id: string;

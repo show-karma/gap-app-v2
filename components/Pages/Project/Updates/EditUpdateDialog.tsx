@@ -1,13 +1,9 @@
-import { Dialog, Transition } from "@headlessui/react";
-import dynamic from "next/dynamic";
-import { Fragment, useEffect, useState } from "react";
-import { cn } from "@/utilities/tailwind";
-import { ProjectUpdateFormBlock } from "./ProjectUpdateFormBlock";
+"use client";
 
-// Dynamic import for the EditImpactFormBlock with proper typing
-const EditImpactFormBlock = dynamic(() => import("./EditImpactFormBlock"), {
-  ssr: false,
-});
+import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import EditImpactFormBlock from "./EditImpactFormBlock";
+import { ProjectUpdateFormBlock } from "./ProjectUpdateFormBlock";
 
 interface EditUpdateDialogProps {
   isOpen: boolean;
@@ -33,56 +29,30 @@ export const EditUpdateDialog = ({
     }
   }, [isOpen, updateId, currentUpdateId]);
 
-  return (
-    <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-[11]" onClose={onClose}>
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
-        </Transition.Child>
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      onClose();
+    }
+  };
 
-        <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
-              enterTo="opacity-100 scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
-            >
-              <Dialog.Panel
-                className={cn(
-                  "w-full max-w-3xl transform overflow-hidden rounded-lg bg-white dark:bg-zinc-800 p-6",
-                  "shadow-xl transition-all"
-                )}
-              >
-                {updateType === "ProjectImpact" ? (
-                  <EditImpactFormBlock
-                    key={`impact-form-${currentUpdateId}`}
-                    onClose={onClose}
-                    impactId={currentUpdateId}
-                  />
-                ) : (
-                  <ProjectUpdateFormBlock
-                    key={`update-form-${currentUpdateId}`}
-                    onClose={onClose}
-                    updateId={currentUpdateId}
-                  />
-                )}
-              </Dialog.Panel>
-            </Transition.Child>
-          </div>
-        </div>
-      </Dialog>
-    </Transition>
+  return (
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700">
+        <DialogTitle></DialogTitle>
+        {updateType === "ProjectImpact" ? (
+          <EditImpactFormBlock
+            key={`impact-form-${currentUpdateId}`}
+            onClose={onClose}
+            impactId={currentUpdateId}
+          />
+        ) : (
+          <ProjectUpdateFormBlock
+            key={`update-form-${currentUpdateId}`}
+            onClose={onClose}
+            updateId={currentUpdateId}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };

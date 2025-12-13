@@ -33,12 +33,9 @@ export function ProjectBlocks() {
       },
     ];
 
-    const havePitchDeck = !!project?.details?.data.links?.find((link) => link.type === "pitchDeck")
-      ?.url;
-    const haveDemoVideo = !!project?.details?.data.links?.find((link) => link.type === "demoVideo")
-      ?.url;
-    const haveWebsite = !!project?.details?.data.links?.find((link) => link.type === "website")
-      ?.url;
+    const havePitchDeck = !!project?.details?.links?.find((link) => link.type === "pitchDeck")?.url;
+    const haveDemoVideo = !!project?.details?.links?.find((link) => link.type === "demoVideo")?.url;
+    const haveWebsite = !!project?.details?.links?.find((link) => link.type === "website")?.url;
 
     if (!havePitchDeck || !haveDemoVideo) {
       blocks.push({
@@ -54,11 +51,9 @@ export function ProjectBlocks() {
         iconSrc: "/icons/website.svg",
         title: "Website",
         description: "Visit the website of the project",
-        link: project?.details?.data.links
-          ?.find((link) => link.type === "website")
-          ?.url.includes("http")
-          ? project?.details?.data.links?.find((link) => link.type === "website")?.url
-          : `https://${project?.details?.data.links?.find((link) => link.type === "website")?.url}`,
+        link: project?.details?.links?.find((link) => link.type === "website")?.url.includes("http")
+          ? project?.details?.links?.find((link) => link.type === "website")?.url
+          : `https://${project?.details?.links?.find((link) => link.type === "website")?.url}`,
         bg: "bg-[#FFE6D5]",
       });
     }
@@ -68,13 +63,11 @@ export function ProjectBlocks() {
         title: "Read Pitch Deck",
         description: "Read the pitch deck of the project",
         bg: "bg-[#ECE9FE]",
-        link: project?.details?.data.links
+        link: project?.details?.links
           ?.find((link) => link.type === "pitchDeck")
           ?.url.includes("http")
-          ? project?.details?.data.links?.find((link) => link.type === "pitchDeck")?.url
-          : `https://${
-              project?.details?.data.links?.find((link) => link.type === "pitchDeck")?.url
-            }`,
+          ? project?.details?.links?.find((link) => link.type === "pitchDeck")?.url
+          : `https://${project?.details?.links?.find((link) => link.type === "pitchDeck")?.url}`,
       });
     }
     if (haveDemoVideo) {
@@ -83,13 +76,11 @@ export function ProjectBlocks() {
         title: "Watch Demo Video",
         description: "Watch the demo video of the project",
         bg: "bg-[#FDE3FF]",
-        link: project?.details?.data.links
+        link: project?.details?.links
           ?.find((link) => link.type === "demoVideo")
           ?.url.includes("http")
-          ? project?.details?.data.links?.find((link) => link.type === "demoVideo")?.url
-          : `https://${
-              project?.details?.data.links?.find((link) => link.type === "demoVideo")?.url
-            }`,
+          ? project?.details?.links?.find((link) => link.type === "demoVideo")?.url
+          : `https://${project?.details?.links?.find((link) => link.type === "demoVideo")?.url}`,
       });
     }
 

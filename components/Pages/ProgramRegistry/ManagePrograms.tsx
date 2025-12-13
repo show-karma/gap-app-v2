@@ -218,7 +218,7 @@ export const ManagePrograms = () => {
           count: res.count as number,
         };
       } else {
-        throw Error(error);
+        throw Error(error || "Unknown error");
       }
     } catch (error: any) {
       errorManager(`Error while fetching grant programs`, error);

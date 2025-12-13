@@ -325,13 +325,14 @@ jest.mock("@/store/modals/contributorProfile", () => ({
   })),
 }));
 
-// Mock gapIndexerApi for search functionality
+// Mock unified search service for search functionality
 // This mock will be controlled by tests via module mocking
 export const mockSearchFunction = jest.fn();
 
-jest.mock("@/utilities/gapIndexerApi", () => ({
-  gapIndexerApi: {
-    search: mockSearchFunction,
+jest.mock("@/services/unified-search.service", () => ({
+  unifiedSearch: (...args: any[]) => {
+    const { mockSearchFunction } = require("@/__tests__/navbar/setup");
+    return mockSearchFunction(...args);
   },
 }));
 

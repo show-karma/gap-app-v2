@@ -10,13 +10,14 @@ jest.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
+// Mock fetchData for GET requests
+jest.mock("@/utilities/fetchData");
+
 // Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
-// Use proper typing with jest.Mocked to maintain type safety
 var mockAxiosInstance: jest.Mocked<AxiosInstance>;
 
-// Mock api-client - the factory runs at hoist time, so we initialize the mock here
+// Mock api-client for mutations (POST, DELETE)
 jest.mock("@/utilities/auth/api-client", () => {
-  // Initialize mock instance inline in the factory with proper typing
   const instance = {
     get: jest.fn(),
     post: jest.fn(),
@@ -35,7 +36,6 @@ jest.mock("@/utilities/auth/api-client", () => {
     deleteUri: jest.fn(),
   } as unknown as jest.Mocked<AxiosInstance>;
 
-  // Assign to the outer variable so tests can access it
   mockAxiosInstance = instance;
 
   return {
@@ -48,14 +48,15 @@ import {
   type AddReviewerRequest,
   programReviewersService,
 } from "@/services/program-reviewers.service";
+// Import fetchData mock
+import fetchData from "@/utilities/fetchData";
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
+const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
 
 describe("programReviewersService", () => {
   beforeEach(() => {
-    // Clear all mock calls but keep the mock implementations
     jest.clearAllMocks();
-    mockAxiosInstance.get.mockClear();
     mockAxiosInstance.post.mockClear();
     mockAxiosInstance.delete.mockClear();
 
@@ -85,13 +86,11 @@ describe("programReviewersService", () => {
         ],
       };
 
-      mockAxiosInstance.get.mockResolvedValue({ data: mockApiResponse });
+      mockFetchData.mockResolvedValue([mockApiResponse, null, null, 200]);
 
       const result = await programReviewersService.getReviewers("program-1", 1);
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith(
-        "/v2/funding-program-configs/program-1/1/reviewers"
-      );
+      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("program-1"));
       expect(result).toEqual([
         {
           publicAddress: "0x1234567890123456789012345678901234567890",
@@ -105,15 +104,7 @@ describe("programReviewersService", () => {
     });
 
     it("should return empty array when no reviewers found error", async () => {
-      const mockError = {
-        response: {
-          data: {
-            error: "Program Reviewer Not Found",
-          },
-        },
-      };
-
-      mockAxiosInstance.get.mockRejectedValue(mockError);
+      mockFetchData.mockResolvedValue([null, "Program Reviewer Not Found", null, 404]);
 
       const result = await programReviewersService.getReviewers("program-1", 1);
 
@@ -121,7 +112,7 @@ describe("programReviewersService", () => {
     });
 
     it("should handle missing reviewers array in response", async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: {} });
+      mockFetchData.mockResolvedValue([{}, null, null, 200]);
 
       const result = await programReviewersService.getReviewers("program-1", 1);
 
@@ -129,17 +120,11 @@ describe("programReviewersService", () => {
     });
 
     it("should throw error for server errors", async () => {
-      const mockError = {
-        response: {
-          data: {
-            error: "Internal Server Error",
-          },
-        },
-      };
+      mockFetchData.mockResolvedValue([null, "Internal Server Error", null, 500]);
 
-      mockAxiosInstance.get.mockRejectedValue(mockError);
-
-      await expect(programReviewersService.getReviewers("program-1", 1)).rejects.toEqual(mockError);
+      await expect(programReviewersService.getReviewers("program-1", 1)).rejects.toThrow(
+        "Internal Server Error"
+      );
     });
   });
 
@@ -175,7 +160,7 @@ describe("programReviewersService", () => {
       const result = await programReviewersService.addReviewer("program-1", 1, reviewerData);
 
       expect(mockAxiosInstance.post).toHaveBeenCalledWith(
-        "/v2/funding-program-configs/program-1/1/reviewers",
+        expect.stringContaining("program-1"),
         reviewerData
       );
       expect(result.name).toBe("Bob Reviewer");

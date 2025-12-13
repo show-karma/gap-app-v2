@@ -8,8 +8,8 @@ import { ShoppingCartIcon as ShoppingCartIconCustom } from "@/components/Icons/S
 import { useCommunityProjectsPaginated } from "@/hooks/useCommunityProjectsPaginated";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import { useDonationCart } from "@/store";
-import type { CommunityProjectsResponse } from "@/types/community";
-import { projectV2ToGrant } from "@/utilities/adapters/projectV2ToGrant";
+import type { CommunityProjectsResponse } from "@/types/v2/community";
+import { projectToGrant } from "@/utilities/adapters/v2/projectToGrant";
 import { GrantCard } from "./GrantCard";
 import { CardListSkeleton } from "./Pages/Communities/Loading";
 
@@ -90,7 +90,7 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
                                 <GrantCard
                                   index={rowIndex * columnCounter + columnIndex}
                                   key={project.uid}
-                                  grant={projectV2ToGrant(project)}
+                                  grant={projectToGrant(project)}
                                   hideStats
                                   hideCategories
                                   cardClassName="rounded-lg"

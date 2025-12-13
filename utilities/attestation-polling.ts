@@ -1,4 +1,6 @@
 import type { GAP } from "@show-karma/karma-gap-sdk";
+import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { retryUntilConditionMet } from "@/utilities/retries";
 
 interface PollForGrantCompletionParams {
@@ -35,12 +37,9 @@ export const pollForGrantCompletion = async ({
 }: PollForGrantCompletionParams): Promise<void> => {
   await retryUntilConditionMet(
     async () => {
-      const updatedProject = await gapClient.fetch.projectById(projectUid);
-      if (!updatedProject) return false;
+      const grants = await getProjectGrants(projectUid);
 
-      const completedGrant = updatedProject.grants?.find(
-        (g) => g.uid.toLowerCase() === grantUid.toLowerCase()
-      );
+      const completedGrant = grants?.find((g) => g.uid.toLowerCase() === grantUid.toLowerCase());
 
       return !!completedGrant?.completed;
     },
@@ -103,27 +102,24 @@ export const pollForMilestoneStatus = async ({
 }: PollForMilestoneStatusParams): Promise<void> => {
   await retryUntilConditionMet(
     async () => {
-      const updatedProject = await gapClient.fetch.projectById(projectUid);
-      if (!updatedProject) return false;
-
-      const updatedGrant = updatedProject.grants.find((g) => g.details?.programId === programId);
+      const grants = await getProjectGrants(projectUid);
+      const updatedGrant = grants.find((g) => g.details?.programId === programId);
       if (!updatedGrant) return false;
 
       const updatedMilestone = updatedGrant.milestones?.find((m) => m.uid === milestoneUid);
       if (!updatedMilestone) return false;
 
-      const isVerified = updatedMilestone.verified?.find(
-        (v) => v.attester?.toLowerCase() === userAddress.toLowerCase()
-      );
-
-      // If checking completion, ensure both are indexed
+      // If checking completion, ensure both completion and verification from specific user
       if (checkCompletion) {
         const isCompleted = updatedMilestone.completed;
+        const isVerified = updatedMilestone.verified?.find(
+          (v) => v.attester?.toLowerCase() === userAddress.toLowerCase()
+        );
         return !!(isCompleted && isVerified);
       }
 
-      // Otherwise just check verification
-      return !!isVerified;
+      // When only checking verification, check if ANY verification exists (regardless of user)
+      return !!(updatedMilestone.verified && updatedMilestone.verified.length > 0);
     },
     undefined,
     maxRetries,

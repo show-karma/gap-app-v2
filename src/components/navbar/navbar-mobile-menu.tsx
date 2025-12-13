@@ -1,18 +1,7 @@
 "use client";
 
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/solid";
-import {
-  CheckCircle2,
-  ChevronRight,
-  CircleHelp,
-  FolderKanban,
-  LogOutIcon,
-  PhoneCall,
-  Settings,
-  ShieldCheck,
-  ToggleLeft,
-  ToggleRight,
-} from "lucide-react";
+import { CircleHelp, LogOutIcon, ToggleLeft, ToggleRight } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useState } from "react";

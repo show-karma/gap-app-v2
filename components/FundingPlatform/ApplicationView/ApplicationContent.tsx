@@ -13,7 +13,11 @@ import toast from "react-hot-toast";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useApplicationVersions } from "@/hooks/useFundingPlatform";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
-import type { IFundingApplication, ProgramWithFormSchema, IFundingProgramConfig } from "@/types/funding-platform";
+import type {
+  IFundingApplication,
+  IFundingProgramConfig,
+  ProgramWithFormSchema,
+} from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { isFundingProgramConfig } from "@/utilities/type-guards";

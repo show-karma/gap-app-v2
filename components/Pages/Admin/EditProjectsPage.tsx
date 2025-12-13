@@ -14,8 +14,8 @@ import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAc
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
 import { useCommunityGrants } from "@/hooks/useCommunityGrants";
-import { useCommunityProjectsV2 } from "@/hooks/useCommunityProjectsV2";
 import { useCommunityRegions } from "@/hooks/useCommunityRegions";
+import { useCommunityProjectsV2 } from "@/hooks/v2/useCommunityProjects";
 import type { Project } from "@/types/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";

@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { trackService } from "@/services/tracks";
-import { fetchProjectsByTrack, fetchTrackById } from "@/utilities/sdk/tracks";
+import { fetchTrackById } from "@/utilities/sdk/tracks";
 
 // Query keys
 export const TRACK_QUERY_KEYS = {
@@ -11,7 +11,10 @@ export const TRACK_QUERY_KEYS = {
   community: (communityUID: string) =>
     [...TRACK_QUERY_KEYS.all, "community", communityUID] as const,
   program: (programId: string) => [...TRACK_QUERY_KEYS.all, "program", programId] as const,
-  project: (projectId: string) => [...TRACK_QUERY_KEYS.all, "project", projectId] as const,
+  project: (projectId: string, programId: string) =>
+    [...TRACK_QUERY_KEYS.all, "project", projectId, programId] as const,
+  projectsByTrack: (communityId: string, programId: string, trackId?: string) =>
+    [...TRACK_QUERY_KEYS.all, "projects-by-track", communityId, programId, trackId] as const,
 };
 
 /**
@@ -72,8 +75,15 @@ export const useUpdateTrack = (communityUID: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, name, description }: { id: string; name: string; description?: string }) =>
-      trackService.updateTrack(id, name, description, communityUID),
+    mutationFn: ({
+      id,
+      name,
+      description,
+    }: {
+      id: string;
+      name: string;
+      description?: string | null;
+    }) => trackService.updateTrack(id, name, description ?? undefined, communityUID),
     onSuccess: () => {
       toast.success("Track updated successfully");
       queryClient.invalidateQueries({
@@ -182,36 +192,32 @@ export const useRemoveTracksFromProgramBatch = (programId: string, communityUID:
 };
 
 /**
- * Hook to fetch tracks for a project
+ * Hook to fetch tracks for a project (V2)
+ * @param projectId - The project ID
+ * @param programId - The program ID
  */
-export const useTracksForProject = (projectId: string, _communityUID: string) => {
+export const useTracksForProject = (projectId: string, programId: string) => {
   return useQuery({
-    queryKey: TRACK_QUERY_KEYS.project(projectId),
-    queryFn: () => trackService.getProjectTracks(projectId),
-    enabled: !!projectId,
+    queryKey: TRACK_QUERY_KEYS.project(projectId, programId),
+    queryFn: () => trackService.getProjectTracks(projectId, programId),
+    enabled: !!projectId && !!programId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
 /**
- * Hook to assign tracks to a project
+ * Hook to assign tracks to a project (V2)
  */
-export const useAssignTracksToProject = (projectId: string, communityUID: string) => {
+export const useAssignTracksToProject = (projectId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      trackIds,
-      programId,
-    }: {
-      trackIds: string[];
-      programId: string;
-      communityUID: string;
-    }) => trackService.assignTracksToProject(projectId, trackIds, programId, communityUID),
-    onSuccess: () => {
+    mutationFn: ({ trackIds, programId }: { trackIds: string[]; programId: string }) =>
+      trackService.assignTracksToProject(projectId, trackIds, programId),
+    onSuccess: (_, variables) => {
       toast.success("Tracks assigned to project successfully");
       queryClient.invalidateQueries({
-        queryKey: TRACK_QUERY_KEYS.project(projectId),
+        queryKey: TRACK_QUERY_KEYS.project(projectId, variables.programId),
       });
     },
     onError: (error: Error) => {
@@ -221,22 +227,18 @@ export const useAssignTracksToProject = (projectId: string, communityUID: string
 };
 
 /**
- * Hook to unassign tracks from a project
+ * Hook to unassign tracks from a project (V2)
  */
 export const useUnassignTracksFromProject = (projectId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ trackIds, programId }: { trackIds: string[]; programId: string }) => {
-      // Since we don't have a direct method for this, we'll use a noop function
-      // The API doesn't expose this functionality yet
-      console.warn("Unassign tracks from project not yet implemented in the service");
-      return Promise.resolve();
-    },
-    onSuccess: () => {
+    mutationFn: ({ trackIds, programId }: { trackIds: string[]; programId: string }) =>
+      trackService.unassignTracksFromProject(programId, projectId, trackIds),
+    onSuccess: (_, variables) => {
       toast.success("Tracks removed from project successfully");
       queryClient.invalidateQueries({
-        queryKey: TRACK_QUERY_KEYS.project(projectId),
+        queryKey: TRACK_QUERY_KEYS.project(projectId, variables.programId),
       });
     },
     onError: (error: Error) => {
@@ -245,12 +247,12 @@ export const useUnassignTracksFromProject = (projectId: string) => {
   });
 };
 /**
- * Hook to fetch projects by track
+ * Hook to fetch projects by track (V2)
  */
 export const useProjectsByTrack = (communityId: string, programId: string, trackId?: string) => {
   return useQuery({
-    queryKey: ["projects-by-track", communityId, programId, trackId],
-    queryFn: () => fetchProjectsByTrack(communityId, programId, trackId),
+    queryKey: TRACK_QUERY_KEYS.projectsByTrack(communityId, programId, trackId),
+    queryFn: () => trackService.getProjectsByTrack(communityId, programId, trackId),
     enabled: !!communityId && !!programId,
   });
 };

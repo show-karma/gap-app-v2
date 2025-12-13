@@ -8,9 +8,9 @@ import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import { adminTransferOwnership } from "@/services/project.service";
 import { useProjectStore } from "@/store";
 import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
-import fetchData from "@/utilities/fetchData";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
@@ -61,15 +61,7 @@ export const AdminTransferOwnershipDialog: FC = () => {
     try {
       const sanitizedAddress = sanitizeInput(data.newOwner);
 
-      const [_, error] = await fetchData(
-        `/attestations/transfer-ownership/${project.uid}/${project.chainID}/${sanitizedAddress}`,
-        "POST",
-        {}
-      );
-
-      if (error) {
-        throw error;
-      }
+      await adminTransferOwnership(project.uid, project.chainID, sanitizedAddress);
 
       await refreshProject();
       toast.success(
@@ -78,12 +70,12 @@ export const AdminTransferOwnershipDialog: FC = () => {
       closeModal();
     } catch (error: any) {
       errorManager(
-        `Error requesting ownership transfer from ${project.recipient} to ${data.newOwner}`,
+        `Error requesting ownership transfer from ${project.owner} to ${data.newOwner}`,
         error,
         {
           address: address,
-          project: project?.details?.data?.slug || project?.uid,
-          oldOwner: project?.recipient,
+          project: project?.details?.slug || project?.uid,
+          oldOwner: project?.owner,
           newOwner: data.newOwner,
         },
         {

@@ -2,28 +2,31 @@
 "use client";
 
 import { PencilSquareIcon, ShareIcon } from "@heroicons/react/24/outline";
-import type {
-  IMilestoneCompleted,
-  IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { IMilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, useState } from "react";
 import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Button } from "@/components/ui/button";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
+import type { GrantMilestone } from "@/types/v2/grant";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 
 interface NotUpdatingCaseProps {
-  milestone: IMilestoneResponse;
+  milestone: GrantMilestone;
   isAuthorized: boolean;
   setIsUpdating: (value: boolean) => void;
 }
 
 const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({ milestone, isAuthorized, setIsUpdating }) => {
   const project = useProjectStore((state) => state.project);
-  const grant = project?.grants.find((g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase());
+
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(project?.uid || "");
+
+  const grant = grants.find((g) => g.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? ""));
 
   if (!isAuthorized) {
     return undefined;
@@ -36,8 +39,8 @@ const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({ milestone, isAuthorized, se
             className="flex items-center justify-center gap-2 rounded border border-gray-300 bg-transparent px-4 py-2.5 hover:bg-gray-50"
             href={shareOnX(
               SHARE_TEXTS.MILESTONE_PENDING(
-                grant?.details?.data?.title as string,
-                (project?.details?.data?.slug || project?.uid) as string,
+                grant?.details?.title as string,
+                (project?.details?.slug || project?.uid) as string,
                 grant?.uid as string
               )
             )}
@@ -59,7 +62,7 @@ const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({ milestone, isAuthorized, se
 };
 
 interface UpdateMilestoneProps {
-  milestone: IMilestoneResponse;
+  milestone: GrantMilestone;
   isEditing: boolean;
   previousData?: IMilestoneCompleted["data"];
   cancelEditing: (value: boolean) => void;

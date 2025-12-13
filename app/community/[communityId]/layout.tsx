@@ -6,7 +6,7 @@ import { layoutTheme } from "@/src/helper/theme";
 import { envVars } from "@/utilities/enviromentVars";
 import { defaultMetadata } from "@/utilities/meta";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import { getCommunityDetails } from "@/utilities/queries/v2/community";
+import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 import { cn } from "@/utilities/tailwind";
 
 type Params = Promise<{

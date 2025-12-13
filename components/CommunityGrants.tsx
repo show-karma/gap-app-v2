@@ -6,7 +6,7 @@ import { useCommunityProjectsInfinite } from "@/hooks/useCommunityProjectsInfini
 import { useProjectFilters } from "@/hooks/useProjectFilters";
 import { useCommunityStore } from "@/store/community";
 import type { MaturityStageOptions, SortByOptions } from "@/types";
-import type { CommunityProjectsResponse, CommunityStats } from "@/types/community";
+import type { CommunityProjectsResponse, CommunityStats } from "@/types/v2/community";
 import { CategoryFilter } from "./CommunityGrants/CategoryFilter";
 import { MaturityStageFilter } from "./CommunityGrants/MaturityStageFilter";
 import { ProjectsGrid } from "./CommunityGrants/ProjectsGrid";

@@ -8,9 +8,9 @@ import type {
 } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { getProject } from "@/services/project.service";
 import type { TxStepperSteps } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 
 function _getErrorMessage(error: unknown): string {
@@ -100,7 +100,7 @@ export const updateProject = async (
 
     closeModal();
 
-    const projectBefore = await gapIndexerApi.projectBySlug(project.uid).then((res) => res.data);
+    const projectBefore = await getProject(project.uid);
 
     await project.details?.attest(signer, changeStepperStep).then(async (res) => {
       let retries = 1000;
@@ -111,10 +111,8 @@ export const updateProject = async (
       }
       while (retries > 0) {
         // eslint-disable-next-line no-await-in-loop
-        const fetchedProject = await gapIndexerApi
-          .projectBySlug(project.uid)
-          .then((res) => res.data);
-        if (fetchedProject.details?.uid !== projectBefore.details?.uid) {
+        const fetchedProject = await getProject(project.uid);
+        if (fetchedProject?.details.lastDetailsUpdate !== projectBefore?.updatedAt) {
           retries = 0;
           changeStepperStep("indexed");
 

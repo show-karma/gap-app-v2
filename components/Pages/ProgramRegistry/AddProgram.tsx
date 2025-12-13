@@ -2,7 +2,6 @@
 import { ChevronLeftIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -24,15 +23,16 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { getCommunities } from "@/services/communities.service";
 import { useStepper } from "@/store/modals/txStepper";
 import { useRegistryStore } from "@/store/registry";
+import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { appNetwork } from "@/utilities/network";
@@ -180,23 +180,16 @@ export default function AddProgram({
     });
   const { gap } = useGap();
 
-  const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>([]);
+  const [allCommunities, setAllCommunities] = useState<Community[]>([]);
 
   useEffect(() => {
-    const fetchCommunities = async () => {
-      try {
-        if (!gap || !gapIndexerApi) throw new Error("Gap not initialized");
-        const result = await gapIndexerApi.communities();
-        setAllCommunities(result.data);
-        return result;
-      } catch (_error: any) {
-        setAllCommunities([]);
-        return undefined;
-      }
+    const fetchCommunitiesData = async () => {
+      const communities = await getCommunities();
+      setAllCommunities(communities);
     };
 
-    if (allCommunities.length === 0) fetchCommunities();
-  }, [allCommunities, gap]);
+    if (allCommunities.length === 0) fetchCommunitiesData();
+  }, [allCommunities]);
 
   const {
     register,
@@ -797,7 +790,7 @@ export default function AddProgram({
                     Communities related
                   </label>
                   <CommunitiesSelect
-                    onSelectFunction={(community: ICommunityResponse) => {
+                    onSelectFunction={(community: Community) => {
                       onChangeGeneric(community?.uid, "communityRef");
                     }}
                     list={allCommunities}

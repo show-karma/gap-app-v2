@@ -1,15 +1,13 @@
 "use client";
 
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
-import type { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-// eslint-disable-next-line import/no-extraneous-dependencies
 import debounce from "lodash.debounce";
 import { type FC, useState } from "react";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { type UnifiedSearchResponse, unifiedSearch } from "@/services/unified-search.service";
 import { SearchList } from "./SearchList";
 
 export const Searchbar: FC = () => {
-  const [results, setResults] = useState<ISearchResponse>({
+  const [results, setResults] = useState<UnifiedSearchResponse>({
     communities: [],
     projects: [],
   });
@@ -31,8 +29,12 @@ export const Searchbar: FC = () => {
 
     setIsLoading(true);
     setIsSearchListOpen(true);
-    const result = await gapIndexerApi.search(value);
-    setResults(result.data);
+    try {
+      const result = await unifiedSearch(value);
+      setResults(result);
+    } catch {
+      setResults({ communities: [], projects: [] });
+    }
     return setIsLoading(false);
   }, 500);
 

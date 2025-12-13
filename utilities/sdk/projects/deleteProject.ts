@@ -1,7 +1,7 @@
 import type { GAP, Project, SignerOrProvider } from "@show-karma/karma-gap-sdk";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
-import type { Hex } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { getProject } from "@/services/project.service";
 import type { TxStepperSteps } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -18,7 +18,6 @@ export const deleteProject = async (
     if (!gap) return;
     await project.revoke(signer, changeStepperStep).then(async (res) => {
       let retries = 1000;
-      let fetchedProject: Project | null = null;
       changeStepperStep("indexing");
       const txHash = res?.tx[0]?.hash;
       if (txHash) {
@@ -26,10 +25,7 @@ export const deleteProject = async (
       }
       while (retries > 0) {
         // eslint-disable-next-line no-await-in-loop
-        fetchedProject = await (project.details?.slug
-          ? gap.fetch.projectBySlug(project.details.slug)
-          : gap.fetch.projectById(project.uid as Hex)
-        ).catch(() => null);
+        const fetchedProject = await getProject(project.details?.slug || project.uid);
         if (!fetchedProject) {
           retries = 0;
           changeStepperStep("indexed");

@@ -1,50 +1,24 @@
-import type {
-  IGrantResponse,
-  IGrantUpdate,
-  IMilestoneResponse,
-  IProjectImpact,
-  IProjectMilestoneResponse,
-  IProjectUpdate,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+/**
+ * Re-export all types from V2 roadmap
+ * This file exists for backward compatibility with existing imports.
+ * New code should import directly from @/types/v2/roadmap
+ */
 
-// Create a unified milestone type that can represent both project and grant milestones
-export type UnifiedMilestone = {
-  uid: string; // Unique identifier
-  type: "project" | "grant" | "update" | "impact" | "activity" | "grant_update" | "milestone"; // Type of milestone or update
-  title: string;
-  description?: string;
-  completed:
-    | boolean
-    | {
-        createdAt: string;
-        data: {
-          proofOfWork?: string;
-          reason?: string;
-          type?: string;
-        };
-      };
-  createdAt: string;
-  startsAt?: number;
-  endsAt?: number; // For sorting
-  source: {
-    projectMilestone?: IProjectMilestoneResponse;
-    grantMilestone?: {
-      milestone: IMilestoneResponse;
-      grant: IGrantResponse;
-    };
-    type?: string;
-    update?: IProjectUpdate | IGrantUpdate | IProjectImpact;
-  };
-  chainID: number;
-  refUID: string;
-  updateData?: IProjectUpdate | IGrantUpdate | IProjectImpact; // Original update data for rendering
-  mergedGrants?: Array<{
-    grantUID: string;
-    milestoneUID: string;
-    grantTitle?: string;
-    communityName?: string;
-    communityImage?: string;
-    chainID: number;
-    programId?: string;
-  }>;
-};
+// Re-export with legacy aliases for backward compatibility
+export type {
+  FundingApplicationMilestoneCompletion as V2FundingApplicationMilestoneCompletion,
+  FundingAssociation as V2FundingAssociation,
+  GrantInfo as V2GrantInfo,
+  GrantMilestoneCompletionDetails as V2GrantMilestoneCompletionDetails,
+  GrantMilestoneVerificationDetails as V2GrantMilestoneVerificationDetails,
+  GrantMilestoneWithDetails as V2GrantMilestone,
+  GrantUpdateWithDetails as V2GrantUpdate,
+  IndicatorAssociation as V2IndicatorAssociation,
+  ProjectMilestone as V2ProjectMilestone,
+  ProjectMilestoneCompletionDetails as V2ProjectMilestoneCompletionDetails,
+  ProjectUpdate as V2ProjectUpdate,
+  ProjectUpdateAssociations as V2ProjectUpdateAssociations,
+  ProjectUpdateDeliverable as V2ProjectUpdateDeliverable,
+  UpdatesApiResponse as V2UpdatesApiResponse,
+} from "@/types/v2/roadmap";
+export * from "@/types/v2/roadmap";

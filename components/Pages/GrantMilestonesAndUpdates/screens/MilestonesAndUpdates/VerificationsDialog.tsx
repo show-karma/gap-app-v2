@@ -14,8 +14,9 @@ import { useGrant } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCont
 import { TabContent, Tabs, TabTrigger } from "@/components/Utilities/Tabs";
 import { useENS } from "@/store/ens";
 import { useProjectStore } from "@/store/project";
+import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { INDEXER } from "@/utilities/indexer";
 
 interface VerificationsDialogProps {
   verifications: (IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus)[];
@@ -66,7 +67,7 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   const _project = useProjectStore((state) => state.project);
   const grant = useGrant();
 
-  const communityUid = useMemo(() => grant?.data.communityUID, [grant]);
+  const communityUid = useMemo(() => grant?.data?.communityUID || grant?.communityUID, [grant]);
   const [communityAdmins, setCommunityAdmins] = useState<string[]>();
 
   const { populateEns } = useENS();
@@ -75,14 +76,20 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   }, [verifications, populateEns]);
 
   useEffect(() => {
-    if (communityUid) {
-      gapIndexerApi
-        .communityAdmins(communityUid)
-        .then((data) => {
-          setCommunityAdmins(data.data.admins.map((admin) => admin.user.id.toLowerCase()));
-        })
-        .catch(() => null);
-    }
+    const fetchCommunityAdmins = async () => {
+      if (!communityUid) return;
+
+      const [data, error] = await fetchData<{
+        id: string;
+        admins: Array<{ user: { id: string } }>;
+      }>(INDEXER.COMMUNITY.ADMINS(communityUid), "GET", {}, {}, {}, false);
+
+      if (!error && data?.admins) {
+        setCommunityAdmins(data.admins.map((admin) => admin.user.id.toLowerCase()));
+      }
+    };
+
+    fetchCommunityAdmins();
   }, [communityUid]);
 
   const adminVerifications = verifications.filter((item) =>

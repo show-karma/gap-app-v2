@@ -68,6 +68,13 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
+      // Verify member exists in V2 project structure
+      const v2Member = project.members?.find(
+        (item) => item.address.toLowerCase() === memberAddress.toLowerCase()
+      );
+      if (!v2Member) throw new Error("Member not found");
+
+      // Get SDK project to access member.revoke() method
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) throw new Error("Project not found");
@@ -81,7 +88,8 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
         while (retries > 0) {
           const refreshedProject = await refreshProject();
           const currentMember = refreshedProject?.members.find(
-            (item) => item.recipient.toLowerCase() === memberAddress.toLowerCase()
+            (item: { address: string; role: string; joinedAt: string }) =>
+              item.address.toLowerCase() === memberAddress.toLowerCase()
           );
           queryClient.invalidateQueries({
             queryKey: ["memberRoles", project?.uid],
@@ -133,7 +141,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
         `Error removing member ${memberAddress}`,
         error,
         {
-          project: project?.details?.data?.slug || project?.uid,
+          project: project?.details?.slug || project?.uid,
           member: memberAddress,
           address: address,
         },

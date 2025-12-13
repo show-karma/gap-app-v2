@@ -8,15 +8,14 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -79,7 +78,7 @@ export const ProjectObjectiveForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const { changeStepperStep, setIsStepper } = useStepper();
 
-  const { refetch } = useAllMilestones(projectId as string);
+  const { refetch } = useProjectUpdates(projectId as string);
 
   const createObjective = async (data: ObjectiveType) => {
     if (!gap) return;
@@ -156,9 +155,7 @@ export const ProjectObjectiveForm = ({
                   toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
                   await refetch();
                   stateHandler?.(false);
-                  router.push(
-                    PAGES.PROJECT.UPDATES(project?.details?.data.slug || project?.uid || "")
-                  );
+                  router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -222,9 +219,7 @@ export const ProjectObjectiveForm = ({
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),
       };
-      const fetchedMilestones = await gapIndexerApi
-        .projectMilestones(projectId)
-        .then((res) => res.data);
+      const fetchedMilestones = await getProjectObjectives(projectId);
       if (!fetchedMilestones || !gapClient?.network) return;
       const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient?.network);
       const objectiveInstance = objectivesInstances.find(

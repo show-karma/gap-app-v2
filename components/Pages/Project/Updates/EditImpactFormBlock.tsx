@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -15,6 +15,8 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
+import { getProjectImpacts } from "@/services/project-impacts.service";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -52,11 +54,17 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const router = useRouter();
 
-  // Find the impact to edit
-  const impactToEdit = project?.impacts?.find((imp) => imp.uid === impactId);
+  // Fetch impacts using dedicated hook
+  const { impacts, refetch: refetchImpacts } = useProjectImpacts(projectIdOrSlug);
+
+  // Find the impact to edit from dedicated API data
+  const impactToEdit = useMemo(() => {
+    if (!impactId || !impacts.length) return null;
+    return impacts.find((imp) => imp.uid === impactId);
+  }, [impactId, impacts]);
 
   const {
     register,
@@ -80,17 +88,17 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
 
   // Load existing impact data
   useEffect(() => {
-    if (impactToEdit) {
+    if (impactToEdit?.data) {
       setWork(impactToEdit.data.work || "");
       setImpact(impactToEdit.data.impact || "");
       setProof(impactToEdit.data.proof || "");
 
-      if (impactToEdit.data.startedAt) {
-        setValue("startedAt", new Date(impactToEdit.data.startedAt * 1000));
+      if (impactToEdit.data.startDate) {
+        setValue("startedAt", new Date(impactToEdit.data.startDate * 1000));
       }
 
-      if (impactToEdit.data.completedAt) {
-        setValue("completedAt", new Date(impactToEdit.data.completedAt * 1000));
+      if (impactToEdit.data.endDate) {
+        setValue("completedAt", new Date(impactToEdit.data.endDate * 1000));
       }
     }
   }, [impactToEdit, setValue]);
@@ -168,25 +176,26 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
         }
         changeStepperStep("indexing");
+        const attestUID = updatedImpact.uid;
         while (retries > 0) {
-          await refreshProject()
-            .then(async (fetchedProject) => {
-              const attestUID = updatedImpact.uid;
-              const foundImpact = fetchedProject?.impacts?.find((imp) => imp.uid === attestUID);
+          try {
+            const fetchedImpacts = await getProjectImpacts(projectIdOrSlug);
+            const foundImpact = fetchedImpacts.find((imp) => imp.uid === attestUID);
 
-              if (foundImpact) {
-                retries = 0;
-                changeStepperStep("indexed");
-                toast.success("Impact updated successfully");
-                if (onClose) {
-                  onClose();
-                }
-                router.refresh();
+            if (foundImpact) {
+              retries = 0;
+              await refetchImpacts();
+              changeStepperStep("indexed");
+              toast.success("Impact updated successfully");
+              if (onClose) {
+                onClose();
               }
-            })
-            .catch(() => {
-              retries -= 1;
-            });
+              router.refresh();
+            }
+          } catch {
+            // Ignore polling errors, continue retrying
+          }
+          retries -= 1;
           await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       });

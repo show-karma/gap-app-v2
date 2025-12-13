@@ -23,6 +23,7 @@ import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useMemberRoles } from "@/hooks/useMemberRoles";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useActivityTabStore } from "@/store/activityTab";
 import { useENS } from "@/store/ens";
@@ -56,8 +57,11 @@ function ProjectPage() {
   const isAuthorized = isProjectOwner || isContractOwner;
   const _isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;
   const { project: projectInstance } = useProjectInstance(
-    project?.details?.data.slug || project?.uid || ""
+    project?.details?.slug || project?.uid || ""
   );
+
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(project?.uid || "");
   const { teamProfiles } = useTeamProfiles(project);
   const { address } = useAccount();
   const { openModal } = useContributorProfileModalStore();
@@ -74,7 +78,10 @@ function ProjectPage() {
 
   useEffect(() => {
     if (project?.members) {
-      populateEns(project?.members?.map((v) => v.recipient));
+      const addresses = project.members
+        .map((v) => v.address)
+        .filter((address): address is string => !!address);
+      populateEns(addresses);
     }
   }, [project?.members, populateEns]);
 
@@ -84,29 +91,29 @@ function ProjectPage() {
     const members: Member[] = [];
     if (project?.members) {
       project.members.forEach((member) => {
-        if (!members.find((m) => m.recipient === member.recipient)) {
+        if (!members.find((m) => m.recipient === member.address)) {
           members.push({
-            uid: member.uid,
-            recipient: member.recipient,
+            uid: member.address,
+            recipient: member.address,
             details: {
-              name: member?.details?.name,
+              name: undefined,
             },
           });
         }
       });
     }
-    const alreadyHasOwner = project?.members.find(
-      (member) => member.recipient.toLowerCase() === project.recipient.toLowerCase()
+    const alreadyHasOwner = project?.members?.find(
+      (member) => member.address?.toLowerCase() === project?.owner?.toLowerCase()
     );
-    if (!alreadyHasOwner) {
+    if (!alreadyHasOwner && project?.owner) {
       members.push({
-        uid: project?.recipient || "",
-        recipient: project?.recipient || "",
+        uid: project.owner,
+        recipient: project.owner,
       });
     }
     // sort by owner
     members.sort((a, _b) => {
-      return a.recipient.toLowerCase() === project?.recipient?.toLowerCase() ? -1 : 1;
+      return a.recipient.toLowerCase() === project?.owner?.toLowerCase() ? -1 : 1;
     });
     return members;
   };
@@ -262,8 +269,8 @@ function ProjectPage() {
   };
 
   useEffect(() => {
-    const isAlreadyMember = project?.members.some(
-      (member) => member.recipient.toLowerCase() === address?.toLowerCase()
+    const isAlreadyMember = project?.members?.some(
+      (member) => member.address?.toLowerCase() === address?.toLowerCase()
     );
     if (isAlreadyMember) return;
     checkCodeValidation().then((isValid) => {
@@ -304,11 +311,11 @@ function ProjectPage() {
             >
               <div className="flex flex-col gap-2">
                 <p className="text-black dark:text-zinc-300 dark:bg-zinc-800 text-2xl font-bold bg-[#EFF4FF] rounded-lg px-2 py-1 flex justify-center items-center min-h-[40px]  min-w-[40px] w-max h-max">
-                  {project?.grants.length || 0}
+                  {grants.length}
                 </p>
                 <div className="flex flex-row gap-2">
                   <p className="font-normal text-brand-gray text-sm dark:text-zinc-300">
-                    {pluralize("Grant", project?.grants.length || 0)}
+                    {pluralize("Grant", grants.length)}
                   </p>
                   <img src={"/icons/funding.png"} alt="Grants" className="w-5 h-5" />
                 </div>
@@ -324,11 +331,11 @@ function ProjectPage() {
             >
               <div className="flex flex-col gap-2">
                 <p className="text-black dark:text-zinc-300 dark:bg-zinc-800 text-2xl font-bold bg-[#EFF4FF] rounded-lg px-2 py-1 flex justify-center items-center min-h-[40px]  min-w-[40px] w-max h-max">
-                  {formatCurrency(project?.endorsements.length || 0)}
+                  {formatCurrency(project?.endorsements?.length || 0)}
                 </p>
                 <div className="flex flex-row gap-2">
                   <p className="font-normal text-brand-gray text-sm dark:text-zinc-300">
-                    {pluralize("Endorsement", project?.endorsements.length || 0)}
+                    {pluralize("Endorsement", project?.endorsements?.length || 0)}
                   </p>
                   <img src={"/icons/endorsements.png"} alt="Endorsements" className="w-5 h-5" />
                 </div>

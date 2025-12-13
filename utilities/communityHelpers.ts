@@ -1,12 +1,12 @@
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { Community } from "@/types/v2/community";
 
-const CHAIN_SUFFIXES = ["-op", "-arb", "-base", "-celo", "-sei"]; // Add more chain suffixes as needed
+const CHAIN_SUFFIXES = ["-op", "-arb", "-base", "-celo", "-sei"];
 
-export function groupSimilarCommunities(communities: ICommunityResponse[]): ICommunityResponse[] {
-  const groupedCommunities: { [key: string]: ICommunityResponse } = {};
+export function groupSimilarCommunities(communities: Community[]): Community[] {
+  const groupedCommunities: { [key: string]: Community } = {};
 
   communities.forEach((community) => {
-    const name = community.details?.data?.name;
+    const name = community.details?.name;
     if (!name) return;
 
     let baseName = name;

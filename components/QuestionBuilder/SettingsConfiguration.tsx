@@ -216,117 +216,167 @@ export function SettingsConfiguration({
           </div>
         </div>
 
-          <hr className="my-4" />
+        <hr className="my-4" />
 
-          {/* Email Templates Section */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Email Templates
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Customize the emails sent to applicants when their applications are approved or rejected.
-              Use placeholders like <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{programName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{reason}}"}</code>, etc.
-              Note: Project name and application details are already shown in the application info section of the email.
-            </p>
+        {/* Email Templates Section */}
+        <div className="space-y-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Email Templates</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Customize the emails sent to applicants when their applications are approved or
+            rejected. Use placeholders like{" "}
+            <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>
+            , <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{programName}}"}</code>
+            , <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{reason}}"}</code>,
+            etc. Note: Project name and application details are already shown in the application
+            info section of the email.
+          </p>
 
-            {/* Approval Email Template */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label
-                  htmlFor="approvalEmailSubject"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Approval Email Subject
-                </label>
-                <input
-                  {...register("approvalEmailSubject")}
-                  type="text"
-                  id="approvalEmailSubject"
-                  disabled={readOnly}
-                  placeholder="Congratulations! Your application has been approved - {{programName}}"
-                  className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Custom email subject. Leave empty to use default: "Congratulations! Your application has been approved - {"{{programName}}"}". Available placeholders: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{programName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>
-                </p>
-              </div>
-              <div className="space-y-2">
-                <label
-                  htmlFor="approvalEmailTemplate"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Approval Email Body
-                </label>
-                <div className={readOnly ? "opacity-50 pointer-events-none" : ""}>
-                  <MarkdownEditor
-                    value={watch("approvalEmailTemplate") || ""}
-                    onChange={(newValue: string) => {
-                      setValue("approvalEmailTemplate", newValue || "", {
-                        shouldValidate: true,
-                      });
-                    }}
-                    placeholderText={`Congratulations! Your application has been approved for the {{programName}} program.\n\n**Reference Number:** {{referenceNumber}}\n\n{{reason}}\n\nWe're excited to support your journey!`}
-                    height={400}
-                    minHeight={350}
-                    disabled={readOnly}
-                  />
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Available placeholders: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{programName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{referenceNumber}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{dashboardLink}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{reason}}"}</code>
-                </p>
-              </div>
+          {/* Approval Email Template */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label
+                htmlFor="approvalEmailSubject"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Approval Email Subject
+              </label>
+              <input
+                {...register("approvalEmailSubject")}
+                type="text"
+                id="approvalEmailSubject"
+                disabled={readOnly}
+                placeholder="Congratulations! Your application has been approved - {{programName}}"
+                className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Custom email subject. Leave empty to use default: "Congratulations! Your application
+                has been approved - {"{{programName}}"}". Available placeholders:{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{programName}}"}
+                </code>
+                ,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{applicantName}}"}
+                </code>
+              </p>
             </div>
-
-            {/* Rejection Email Template */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label
-                  htmlFor="rejectionEmailSubject"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Rejection Email Subject
-                </label>
-                <input
-                  {...register("rejectionEmailSubject")}
-                  type="text"
-                  id="rejectionEmailSubject"
+            <div className="space-y-2">
+              <label
+                htmlFor="approvalEmailTemplate"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Approval Email Body
+              </label>
+              <div className={readOnly ? "opacity-50 pointer-events-none" : ""}>
+                <MarkdownEditor
+                  value={watch("approvalEmailTemplate") || ""}
+                  onChange={(newValue: string) => {
+                    setValue("approvalEmailTemplate", newValue || "", {
+                      shouldValidate: true,
+                    });
+                  }}
+                  placeholderText={`Congratulations! Your application has been approved for the {{programName}} program.\n\n**Reference Number:** {{referenceNumber}}\n\n{{reason}}\n\nWe're excited to support your journey!`}
+                  height={400}
+                  minHeight={350}
                   disabled={readOnly}
-                  placeholder="Thanks for Applying: Resources for {{programName}}"
-                  className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Custom email subject. Leave empty to use default: "Thanks for Applying: Resources for {"{{programName}}"}". Available placeholders: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{programName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>
-                </p>
               </div>
-              <div className="space-y-2">
-                <label
-                  htmlFor="rejectionEmailTemplate"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Rejection Email Body
-                </label>
-                <div className={readOnly ? "opacity-50 pointer-events-none" : ""}>
-                  <MarkdownEditor
-                    value={watch("rejectionEmailTemplate") || ""}
-                    onChange={(newValue: string) => {
-                      setValue("rejectionEmailTemplate", newValue || "", {
-                        shouldValidate: true,
-                      });
-                    }}
-                    placeholderText={`After careful review, we regret to inform you that your application has not been selected for funding at this time.\n\n**Reference Number:** {{referenceNumber}}\n\n{{reason}}\n\nWe appreciate your interest and encourage you to apply for future opportunities.`}
-                    height={400}
-                    minHeight={350}
-                    disabled={readOnly}
-                  />
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Available placeholders: <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{programName}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{referenceNumber}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{dashboardLink}}"}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{reason}}"}</code>
-                </p>
-              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Available placeholders:{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{applicantName}}"}
+                </code>
+                ,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{programName}}"}
+                </code>
+                ,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{referenceNumber}}"}
+                </code>
+                ,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{dashboardLink}}"}
+                </code>
+                , <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{reason}}"}</code>
+              </p>
             </div>
           </div>
 
-          <hr className="my-4" />
+          {/* Rejection Email Template */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label
+                htmlFor="rejectionEmailSubject"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Rejection Email Subject
+              </label>
+              <input
+                {...register("rejectionEmailSubject")}
+                type="text"
+                id="rejectionEmailSubject"
+                disabled={readOnly}
+                placeholder="Thanks for Applying: Resources for {{programName}}"
+                className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Custom email subject. Leave empty to use default: "Thanks for Applying: Resources
+                for {"{{programName}}"}". Available placeholders:{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{programName}}"}
+                </code>
+                ,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{applicantName}}"}
+                </code>
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label
+                htmlFor="rejectionEmailTemplate"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Rejection Email Body
+              </label>
+              <div className={readOnly ? "opacity-50 pointer-events-none" : ""}>
+                <MarkdownEditor
+                  value={watch("rejectionEmailTemplate") || ""}
+                  onChange={(newValue: string) => {
+                    setValue("rejectionEmailTemplate", newValue || "", {
+                      shouldValidate: true,
+                    });
+                  }}
+                  placeholderText={`After careful review, we regret to inform you that your application has not been selected for funding at this time.\n\n**Reference Number:** {{referenceNumber}}\n\n{{reason}}\n\nWe appreciate your interest and encourage you to apply for future opportunities.`}
+                  height={400}
+                  minHeight={350}
+                  disabled={readOnly}
+                />
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Available placeholders:{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{applicantName}}"}
+                </code>
+                ,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{programName}}"}
+                </code>
+                ,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{referenceNumber}}"}
+                </code>
+                ,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{dashboardLink}}"}
+                </code>
+                , <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{reason}}"}</code>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <hr className="my-4" />
 
         <div className="space-y-6">
           {/* Show Comments on Public Page */}

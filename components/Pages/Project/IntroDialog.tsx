@@ -68,7 +68,7 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
       if (!project || !data.email || !data.message) return;
 
       const [response, error] = await fetchData(
-        INDEXER.PROJECT.REQUEST_INTRO(project.details?.data.slug as string),
+        INDEXER.PROJECT.REQUEST_INTRO(project.details?.slug as string),
         "POST",
         {
           email: data.email,
@@ -132,7 +132,7 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
                 >
                   Request Intro to{" "}
                   <b>
-                    {project?.details?.data?.title ||
+                    {project?.details?.title ||
                       (project?.uid ? shortAddress(project?.uid as string) : "this project")}{" "}
                   </b>
                   team
