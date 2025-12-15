@@ -447,8 +447,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
           status={pendingStatus}
           isSubmitting={isUpdatingStatus}
           isReasonRequired={pendingStatus === "revision_requested"}
-          programId={application.programId}
-          chainId={application.chainID}
+          application={application}
           programConfig={isFundingProgramConfig(program) ? program : undefined}
         />
       </>
@@ -671,8 +670,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
         isReasonRequired={pendingStatus === "revision_requested"}
-        programId={application.programId}
-        chainId={application.chainID}
+        application={application}
         programConfig={isFundingProgramConfig(program) ? program : undefined}
       />
     </>

@@ -140,6 +140,13 @@ jest.mock("@/components/Utilities/MarkdownEditor", () => ({
 }));
 
 describe("StatusChangeModal", () => {
+  const mockApplication = {
+    programId: "test-program",
+    chainID: 1,
+    referenceNumber: "APP-12345",
+    id: "app-123",
+  } as any;
+
   const defaultProps = {
     isOpen: true,
     onClose: jest.fn(),
@@ -747,19 +754,14 @@ describe("StatusChangeModal", () => {
       expect(confirmButton).toBeDisabled();
     });
 
-    it("should auto-load currency from API when programId and chainId are provided", async () => {
+    it("should auto-load currency from API when application is provided", async () => {
       const { fundingPlatformService } = require("@/services/fundingPlatformService");
       fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
         currency: "ETH",
       });
 
       renderWithQueryClient(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programId="test-program"
-          chainId={1}
-        />
+        <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
       );
 
       // When currency is auto-loaded, it shows as a read-only input, not a Select
@@ -781,15 +783,14 @@ describe("StatusChangeModal", () => {
       fundingPlatformService.programs.getFundingDetails.mockRejectedValue(new Error("API Error"));
 
       renderWithQueryClient(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programId="test-program"
-          chainId={1}
-        />
+        <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
       );
 
       await waitFor(() => {
+        // Should show warning message
+        expect(
+          screen.getByText(/Currency auto-load failed. Please select manually./i)
+        ).toBeInTheDocument();
         const currencyInput = screen.getByLabelText(/approved currency/i) as HTMLInputElement;
         expect(currencyInput).toBeInTheDocument();
         expect(currencyInput.value).toBe("");
@@ -803,12 +804,7 @@ describe("StatusChangeModal", () => {
       fundingPlatformService.programs.getFundingDetails.mockRejectedValue(new Error("API Error"));
 
       renderWithQueryClient(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programId="test-program"
-          chainId={1}
-        />
+        <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
       );
 
       await waitFor(() => {
@@ -920,8 +916,7 @@ describe("StatusChangeModal", () => {
         <StatusChangeModal
           {...defaultProps}
           status="approved"
-          programId="test-program"
-          chainId={1}
+          application={mockApplication}
           onConfirm={onConfirm}
         />
       );
@@ -947,12 +942,7 @@ describe("StatusChangeModal", () => {
       });
 
       renderWithQueryClient(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programId="test-program"
-          chainId={1}
-        />
+        <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
       );
 
       await waitFor(() => {
@@ -968,12 +958,7 @@ describe("StatusChangeModal", () => {
       });
 
       renderWithQueryClient(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programId="test-program"
-          chainId={1}
-        />
+        <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
       );
 
       await waitFor(() => {
@@ -989,12 +974,7 @@ describe("StatusChangeModal", () => {
       });
 
       renderWithQueryClient(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programId="test-program"
-          chainId={1}
-        />
+        <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
       );
 
       await waitFor(() => {
@@ -1022,12 +1002,7 @@ describe("StatusChangeModal", () => {
       });
 
       const { unmount } = renderWithQueryClient(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programId="test-program"
-          chainId={1}
-        />
+        <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
       );
 
       await waitFor(() => {
@@ -1043,12 +1018,7 @@ describe("StatusChangeModal", () => {
       });
 
       renderWithQueryClient(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programId="test-program"
-          chainId={1}
-        />
+        <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
       );
 
       await waitFor(() => {
@@ -1291,12 +1261,7 @@ describe("StatusChangeModal", () => {
       });
 
       const { rerender, queryClient } = renderWithQueryClient(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programId="test-program"
-          chainId={1}
-        />
+        <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
       );
 
       await waitFor(() => {
@@ -1310,8 +1275,7 @@ describe("StatusChangeModal", () => {
           <StatusChangeModal
             {...defaultProps}
             status="approved"
-            programId="test-program"
-            chainId={1}
+            application={mockApplication}
             isOpen={false}
           />
         </QueryClientProvider>
@@ -1323,8 +1287,7 @@ describe("StatusChangeModal", () => {
           <StatusChangeModal
             {...defaultProps}
             status="approved"
-            programId="test-program"
-            chainId={1}
+            application={mockApplication}
             isOpen={true}
           />
         </QueryClientProvider>
@@ -1434,12 +1397,7 @@ describe("StatusChangeModal", () => {
       fundingPlatformService.programs.getFundingDetails.mockReturnValue(promise);
 
       renderWithQueryClient(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programId="test-program"
-          chainId={1}
-        />
+        <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
       );
 
       // Check for loading placeholder
@@ -1467,12 +1425,7 @@ describe("StatusChangeModal", () => {
       fundingPlatformService.programs.getFundingDetails.mockReturnValue(promise);
 
       renderWithQueryClient(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programId="test-program"
-          chainId={1}
-        />
+        <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
       );
 
       // During loading, input should be disabled
@@ -1498,12 +1451,7 @@ describe("StatusChangeModal", () => {
       );
 
       renderWithQueryClient(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programId="test-program"
-          chainId={1}
-        />
+        <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
       );
 
       await waitFor(() => {
@@ -1524,12 +1472,12 @@ describe("StatusChangeModal", () => {
       });
     });
 
-    it("should not fetch currency when programId or chainId is missing", async () => {
+    it("should not fetch currency when application is missing", async () => {
       const { fundingPlatformService } = require("@/services/fundingPlatformService");
 
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
-      // Should not call API
+      // Should not call API when application is not provided
       expect(fundingPlatformService.programs.getFundingDetails).not.toHaveBeenCalled();
     });
 
@@ -1537,12 +1485,7 @@ describe("StatusChangeModal", () => {
       const { fundingPlatformService } = require("@/services/fundingPlatformService");
 
       renderWithQueryClient(
-        <StatusChangeModal
-          {...defaultProps}
-          status="rejected"
-          programId="test-program"
-          chainId={1}
-        />
+        <StatusChangeModal {...defaultProps} status="rejected" application={mockApplication} />
       );
 
       // Should not call API for non-approved status
@@ -1580,12 +1523,7 @@ describe("StatusChangeModal", () => {
       });
 
       renderWithQueryClient(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programId="test-program"
-          chainId={1}
-        />
+        <StatusChangeModal {...defaultProps} status="approved" application={mockApplication} />
       );
 
       await waitFor(() => {

@@ -65,8 +65,9 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string>("");
   const [pendingApplicationId, setPendingApplicationId] = useState<string>("");
-  const [pendingProgramId, setPendingProgramId] = useState<string>("");
-  const [pendingChainId, setPendingChainId] = useState<number | undefined>(undefined);
+  const [pendingApplication, setPendingApplication] = useState<IFundingApplication | undefined>(
+    undefined
+  );
 
   // Show all applications (no internal pagination for infinite scroll)
   const paginatedApplications = applications;
@@ -77,14 +78,13 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
     e: React.MouseEvent
   ) => {
     e.stopPropagation();
-    // Find the application to get programId and chainID
+    // Find the application to pass to modal
     const application = applications.find(
       (app) => app.referenceNumber === applicationId || app.id === applicationId
     );
     setPendingApplicationId(applicationId);
     setPendingStatus(newStatus);
-    setPendingProgramId(application?.programId || "");
-    setPendingChainId(application?.chainID);
+    setPendingApplication(application);
     setStatusModalOpen(true);
   };
 
@@ -107,8 +107,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
         setStatusModalOpen(false);
         setPendingStatus("");
         setPendingApplicationId("");
-        setPendingProgramId("");
-        setPendingChainId(undefined);
+        setPendingApplication(undefined);
         if (pendingStatus === "approved") {
           toast.success("Application approved successfully!");
         } else {
@@ -296,14 +295,12 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
           setStatusModalOpen(false);
           setPendingStatus("");
           setPendingApplicationId("");
-          setPendingProgramId("");
-          setPendingChainId(undefined);
+          setPendingApplication(undefined);
         }}
         onConfirm={handleStatusChangeConfirm}
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
-        programId={pendingProgramId}
-        chainId={pendingChainId}
+        application={pendingApplication}
       />
     </div>
   );

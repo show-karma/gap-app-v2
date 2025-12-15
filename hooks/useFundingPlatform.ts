@@ -722,7 +722,7 @@ export const useApplicationStatus = (programId?: string, chainId?: number) => {
       approvedCurrency?: string;
     }) =>
       fundingApplicationsAPI.updateApplicationStatus(applicationId, {
-        status: status as any,
+        status: status as FundingApplicationStatusV2,
         reason: note || "",
         approvedAmount,
         approvedCurrency,

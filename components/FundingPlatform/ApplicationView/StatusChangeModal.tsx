@@ -9,7 +9,7 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { fundingPlatformService } from "@/services/fundingPlatformService";
-import type { IFundingProgramConfig } from "@/types/funding-platform";
+import type { IFundingApplication, IFundingProgramConfig } from "@/types/funding-platform";
 
 interface StatusChangeModalProps {
   isOpen: boolean;
@@ -18,8 +18,7 @@ interface StatusChangeModalProps {
   status: string;
   isSubmitting?: boolean;
   isReasonRequired?: boolean;
-  programId?: string;
-  chainId?: number;
+  application?: IFundingApplication;
   programConfig?: IFundingProgramConfig | null;
 }
 
@@ -59,8 +58,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   status,
   isSubmitting = false,
   isReasonRequired = false,
-  programId,
-  chainId,
+  application,
   programConfig,
 }) => {
   const [reason, setReason] = useState("");
@@ -69,6 +67,10 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   const [amountError, setAmountError] = useState<string | null>(null);
   const [currencyError, setCurrencyError] = useState<string | null>(null);
   const [isCurrencyFromAPI, setIsCurrencyFromAPI] = useState(false);
+
+  // Extract programId and chainId from application object
+  const programId = application?.programId;
+  const chainId = application?.chainID;
 
   // When status is "approved", amount and currency are required
   const isApprovalStatus = status === "approved";
@@ -197,8 +199,8 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
     // Handle error case - if currency can't be loaded, leave field empty for manual entry
     if (fundingDetailsQuery.isError && isOpen && isApprovalStatus) {
       errorManager("Failed to fetch funding details", fundingDetailsQuery.error, {
-        programId,
-        chainId,
+        programId: application?.programId,
+        chainId: application?.chainID,
       });
       setIsCurrencyFromAPI(false);
     }
@@ -208,8 +210,8 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
     fundingDetailsQuery.data,
     fundingDetailsQuery.isError,
     fundingDetailsQuery.error,
-    programId,
-    chainId,
+    application?.programId,
+    application?.chainID,
     resetFormState,
   ]);
 
@@ -399,7 +401,12 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                                 type="number"
                                 step="any"
                                 min="0"
-                                aria-describedby={amountError ? "amount-error" : undefined}
+                                aria-describedby={[
+                                  amountError ? "amount-error" : null,
+                                  "amount-description",
+                                ]
+                                  .filter(Boolean)
+                                  .join(" ")}
                                 aria-invalid={!!amountError}
                                 className={`block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 ${amountError ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
                                 placeholder="0.00"
@@ -407,6 +414,9 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                                 onChange={(e) => handleAmountChange(e.target.value)}
                                 disabled={isSubmitting}
                               />
+                              <div id="amount-description" className="sr-only">
+                                Enter the approved funding amount as a positive number
+                              </div>
                               {amountError && (
                                 <p
                                   id="amount-error"
@@ -419,6 +429,14 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                             </div>
 
                             <div>
+                              {fundingDetailsQuery.isError && (
+                                <div className="mb-2 flex items-start gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-2 dark:border-yellow-900/50 dark:bg-yellow-900/20">
+                                  <ExclamationTriangleIcon className="w-4 h-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                                  <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                                    Currency auto-load failed. Please select manually.
+                                  </p>
+                                </div>
+                              )}
                               <label
                                 htmlFor="approvedCurrency"
                                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"

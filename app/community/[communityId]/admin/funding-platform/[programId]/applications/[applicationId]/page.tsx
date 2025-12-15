@@ -446,8 +446,7 @@ export default function ApplicationDetailPage() {
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
         isReasonRequired={pendingStatus === "revision_requested" || pendingStatus === "rejected"}
-        programId={application?.programId}
-        chainId={application?.chainID}
+        application={application}
         programConfig={isFundingProgramConfig(program) ? program : undefined}
       />
     </div>
