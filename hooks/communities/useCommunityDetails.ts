@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import type { CommunityDetailsResponse } from "@/types/community";
 import { getCommunityDetails } from "@/utilities/queries/v2/community";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 

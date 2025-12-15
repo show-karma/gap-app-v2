@@ -2,7 +2,7 @@
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { useMilestone } from "@/hooks/useMilestone";
-import type { UnifiedMilestone } from "@/types/roadmap";
+import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { cn } from "@/utilities/tailwind";
 
 // Common button styling

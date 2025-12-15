@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import { getProject } from "@/services/project.service";
 import { getProjectGrants } from "@/services/project-grants.service";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import type { ProjectResponse } from "@/types/v2/project";
 
 interface CartItem {
@@ -31,7 +31,7 @@ export function usePayoutAddressManager(items: CartItem[], communityId?: string)
    * - Priority: communityId-specific > first available > grant > owner
    */
   const resolvePayoutAddress = useCallback(
-    (project: ProjectResponse, grants: GrantResponse[]): string | undefined => {
+    (project: ProjectResponse, grants: Grant[]): string | undefined => {
       const payout = project.payoutAddress as string | Record<string, string> | undefined;
 
       let candidateAddress: string | undefined;

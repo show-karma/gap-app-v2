@@ -1,4 +1,4 @@
-// V2 Grant API Response types
+import type { Community } from "./community";
 
 export type GrantScreen =
   | "milestones-and-updates"
@@ -143,15 +143,7 @@ export interface GrantCompleted {
   };
 }
 
-import type { CommunityDetails } from "./community";
-
-export interface CommunityResponse {
-  uid: string;
-  chainID: number;
-  details?: CommunityDetails;
-}
-
-export interface GrantResponse {
+export interface Grant {
   uid: string;
   chainID: number;
   type?: string;
@@ -171,7 +163,7 @@ export interface GrantResponse {
   /** Array of grant updates. May be undefined if not fetched. Default to [] when missing. */
   updates?: GrantUpdate[];
   completed?: GrantCompleted | null;
-  community?: CommunityResponse;
+  community?: Community;
   project?: {
     uid: string;
     chainID?: number;

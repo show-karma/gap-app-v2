@@ -1,18 +1,4 @@
-// Community API Response types
-
-export interface CommunityDetails {
-  name: string;
-  description?: string;
-  imageURL?: string;
-  logoUrl?: string;
-  slug?: string;
-  links?: Array<{
-    url: string;
-    type: string;
-  }>;
-}
-
-export interface CommunityDetailsResponse {
+export interface Community {
   uid: `0x${string}`;
   chainID: number;
   details: {
@@ -25,9 +11,6 @@ export interface CommunityDetailsResponse {
   createdAt?: string;
   updatedAt?: string;
 }
-
-// V2 type alias - Community now refers to the strict V2 response
-export type Community = CommunityDetailsResponse;
 
 export interface ProjectUpdatesBreakdown {
   projectMilestones: number;
@@ -48,7 +31,7 @@ export interface CommunityStats {
   averageCompletion: number;
 }
 
-export interface Project {
+export interface CommunityProject {
   uid: string;
   details: {
     title: string;
@@ -81,8 +64,8 @@ export interface Project {
   createdAt: string;
 }
 
-export interface CommunityProjectsResponse {
-  payload: Project[];
+export interface CommunityProjects {
+  payload: CommunityProject[];
   pagination: {
     totalCount: number;
     page: number;
@@ -94,9 +77,3 @@ export interface CommunityProjectsResponse {
     hasPrevPage: boolean;
   };
 }
-
-// Aliases for backward compatibility during migration
-export type CommunityDetailsV2 = CommunityDetailsResponse;
-export type CommunityStatsV2 = CommunityStats;
-export type ProjectV2 = Project;
-export type CommunityProjectsV2Response = CommunityProjectsResponse;

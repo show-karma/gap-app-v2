@@ -6,7 +6,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "
 import pluralize from "pluralize";
 import { type FC, useEffect, useRef, useState } from "react";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import { cn } from "@/utilities/tailwind";
 
 export const GrantTitleDropdown: FC<{
@@ -18,7 +18,7 @@ export const GrantTitleDropdown: FC<{
     }
   ) => void;
   selectedProgram: GrantProgram | null;
-  grantToEdit: GrantResponse | undefined;
+  grantToEdit: Grant | undefined;
   list: GrantProgram[];
   type: string;
   chainId: number;

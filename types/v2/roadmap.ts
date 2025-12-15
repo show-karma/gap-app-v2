@@ -3,9 +3,8 @@
 import type {
   IGrantUpdate,
   IProjectImpact,
-  IProjectMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import type { GrantMilestone, GrantResponse } from "./grant";
+import type { GrantMilestone } from "./grant";
 
 // =============================================================================
 // API Response Types (mirrors gap-indexer GetUpdatesApiResponse)
@@ -251,19 +250,3 @@ export type UnifiedMilestone = {
     programId?: string;
   }>;
 };
-
-// Aliases for backward compatibility during migration
-export type V2ProjectUpdateDeliverable = ProjectUpdateDeliverable;
-export type V2FundingAssociation = FundingAssociation;
-export type V2IndicatorAssociation = IndicatorAssociation;
-export type V2ProjectUpdateAssociations = ProjectUpdateAssociations;
-export type V2ProjectUpdate = ProjectUpdate;
-export type V2ProjectMilestoneCompletionDetails = ProjectMilestoneCompletionDetails;
-export type V2ProjectMilestone = ProjectMilestone;
-export type V2GrantMilestoneCompletionDetails = GrantMilestoneCompletionDetails;
-export type V2GrantMilestoneVerificationDetails = GrantMilestoneVerificationDetails;
-export type V2FundingApplicationMilestoneCompletion = FundingApplicationMilestoneCompletion;
-export type V2GrantInfo = GrantInfo;
-export type V2GrantMilestone = GrantMilestoneWithDetails;
-export type V2GrantUpdate = GrantUpdateWithDetails;
-export type V2UpdatesApiResponse = UpdatesApiResponse;

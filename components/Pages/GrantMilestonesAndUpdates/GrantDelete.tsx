@@ -11,7 +11,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -23,7 +23,7 @@ import { shortAddress } from "@/utilities/shortAddress";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 interface GrantDeleteProps {
-  grant: GrantResponse;
+  grant: Grant;
 }
 
 export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {

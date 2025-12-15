@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PROJECT_NAME } from "@/constants/brand";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import type { ProjectResponse } from "@/types/v2/project";
 import { envVars } from "../enviromentVars";
 import { cleanMarkdownForPlainText } from "../markdown";
@@ -139,19 +139,19 @@ export const generateProjectFundingMetadata = (
 };
 
 // Helper to get grant title (V2 API structure)
-const getGrantTitle = (grant: GrantResponse): string => {
+const getGrantTitle = (grant: Grant): string => {
   return grant.details?.title || "";
 };
 
 // Helper to get grant description (V2 API structure)
-const getGrantDescription = (grant: GrantResponse): string => {
+const getGrantDescription = (grant: Grant): string => {
   return grant.details?.description || "";
 };
 
 // Grant-specific metadata generators
 export const generateGrantOverviewMetadata = (
   project: ProjectResponse,
-  grant: GrantResponse,
+  grant: Grant,
   projectId: string
 ): Metadata => {
   const projectTitle = getProjectTitle(project);
@@ -165,7 +165,7 @@ export const generateGrantOverviewMetadata = (
 
 export const generateGrantMilestonesMetadata = (
   project: ProjectResponse,
-  grant: GrantResponse,
+  grant: Grant,
   projectId: string
 ): Metadata => {
   const projectTitle = getProjectTitle(project);
@@ -179,7 +179,7 @@ export const generateGrantMilestonesMetadata = (
 
 export const generateGrantImpactCriteriaMetadata = (
   project: ProjectResponse,
-  grant: GrantResponse,
+  grant: Grant,
   projectId: string
 ): Metadata => {
   const projectTitle = getProjectTitle(project);
@@ -235,7 +235,7 @@ export const createMetadataFromContext = (
 // Grant-specific metadata composition functions
 export const createGrantMetadataFromContext = (
   project: ProjectResponse | null,
-  grant: GrantResponse | null,
+  grant: Grant | null,
   projectId: string,
   _grantUid?: string,
   metadataType: "overview" | "milestones" | "impact-criteria" = "overview"

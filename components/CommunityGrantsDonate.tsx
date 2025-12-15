@@ -8,13 +8,13 @@ import { ShoppingCartIcon as ShoppingCartIconCustom } from "@/components/Icons/S
 import { useCommunityProjectsPaginated } from "@/hooks/useCommunityProjectsPaginated";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import { useDonationCart } from "@/store";
-import type { CommunityProjectsResponse } from "@/types/v2/community";
+import type { CommunityProjects } from "@/types/v2/community";
 import { projectToGrant } from "@/utilities/adapters/v2/projectToGrant";
 import { GrantCard } from "./GrantCard";
 import { CardListSkeleton } from "./Pages/Communities/Loading";
 
 interface CommunityGrantsDonateProps {
-  initialProjects: CommunityProjectsResponse;
+  initialProjects: CommunityProjects;
 }
 
 export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonateProps) => {

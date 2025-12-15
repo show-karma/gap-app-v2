@@ -1,10 +1,10 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getProjectGrants } from "@/services/project-grants.service";
-import type { GrantMilestone, GrantResponse } from "@/types/v2/grant";
+import type { Grant, GrantMilestone } from "@/types/v2/grant";
 
 export async function getGrantMilestones(
   projectId: string
-): Promise<{ milestone: GrantMilestone; grant: GrantResponse }[]> {
+): Promise<{ milestone: GrantMilestone; grant: Grant }[]> {
   try {
     // Fetch grants using V2 endpoint
     const grants = await getProjectGrants(projectId);
@@ -16,7 +16,7 @@ export async function getGrantMilestones(
     // Collect all grant milestones with their parent grant information
     const allGrantMilestones: {
       milestone: GrantMilestone;
-      grant: GrantResponse;
+      grant: Grant;
     }[] = [];
 
     grants.forEach((grant) => {

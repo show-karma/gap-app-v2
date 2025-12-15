@@ -1,5 +1,7 @@
 // Project API Response types
 
+import type { Grant } from "./grant";
+
 export interface ProjectDetails {
   title: string;
   description?: string;
@@ -38,26 +40,7 @@ export interface ProjectResponse {
   chainID: number;
   owner: `0x${string}`;
   payoutAddress?: string;
-  details: {
-    title: string;
-    description: string;
-    problem?: string;
-    solution?: string;
-    missionSummary?: string;
-    locationOfImpact?: string;
-    slug: string;
-    logoUrl?: string;
-    businessModel?: string;
-    stageIn?: string;
-    raisedMoney?: string;
-    pathToTake?: string;
-    tags?: string[];
-    links?: Array<{
-      url: string;
-      type: string;
-    }>;
-    lastDetailsUpdate?: string;
-  };
+  details: ProjectDetails;
   external?: {
     gitcoin?: any[];
     oso?: any[];
@@ -85,14 +68,11 @@ export interface ProjectResponse {
   updatedAt?: string;
 }
 
-// Alias for backward compatibility during migration
-export type ProjectV2Response = ProjectResponse;
-
 /**
  * Extended ProjectResponse that includes grants data.
  * Used for specific endpoints that return projects with embedded grants (e.g., /v2/user/projects)
  * Note: Most endpoints should fetch grants separately using getProjectGrants()
  */
 export interface ProjectWithGrantsResponse extends ProjectResponse {
-  grants?: import("@/types/v2/grant").GrantResponse[];
+  grants?: Grant[];
 }

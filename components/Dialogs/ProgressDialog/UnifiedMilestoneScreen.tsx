@@ -22,7 +22,7 @@ import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { useStepper } from "@/store/modals/txStepper";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
@@ -216,7 +216,7 @@ export const UnifiedMilestoneScreen = () => {
 
     try {
       // Group grants by chain ID to process each network separately
-      const grantsByChain: Record<number, { grant: GrantResponse; index: number }[]> = {};
+      const grantsByChain: Record<number, { grant: Grant; index: number }[]> = {};
 
       // Build the groups by chain
       selectedGrantIds.forEach((grantId, index) => {
@@ -478,7 +478,7 @@ export const UnifiedMilestoneScreen = () => {
       acc[chainId].grants.push(grant);
       return acc;
     },
-    {} as Record<number, { chainId: number; chainName: string; grants: GrantResponse[] }>
+    {} as Record<number, { chainId: number; chainName: string; grants: Grant[] }>
   );
 
   return (

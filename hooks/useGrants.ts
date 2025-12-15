@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import { reduceText } from "@/utilities/reduceText";
 import { type GrantsFilter, getGrants } from "@/utilities/sdk/communities/getGrants";
 
@@ -47,7 +47,7 @@ export const useGrants = (communityId: string, options?: UseGrantsOptions) => {
           options?.paginationOps
         );
         if (fetchedGrants) {
-          const grants = (fetchedGrants as unknown as GrantResponse[]).map((grant) => ({
+          const grants = (fetchedGrants as unknown as Grant[]).map((grant) => ({
             grant: grant.details?.title || grant.uid || "",
             project: grant.project?.details?.title || "",
             description: reduceText(grant.details?.description || ""),

@@ -1,14 +1,14 @@
 import pluralize from "pluralize";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import { normalizeTimestamp } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { GrantUpdate } from "./GrantUpdate";
 import { MilestoneDetails } from "./MilestoneDetails";
 
 interface MilestonesListProps {
-  grant: GrantResponse;
+  grant: Grant;
 }
 
 type Tab = "completed" | "pending" | "all";

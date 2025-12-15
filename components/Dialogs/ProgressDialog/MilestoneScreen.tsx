@@ -4,14 +4,14 @@ import { MilestoneForm } from "@/components/Forms/Milestone";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import { Dropdown } from "./Dropdown";
 import { NoGrant } from "./NoGrant";
 
 export const MilestoneScreen = () => {
   const { project } = useProjectStore();
   const { closeProgressModal } = useProgressModalStore();
-  const [selectedGrant, setSelectedGrant] = useState<GrantResponse | undefined>();
+  const [selectedGrant, setSelectedGrant] = useState<Grant | undefined>();
 
   // Fetch grants using dedicated hook
   const { grants } = useProjectGrants(project?.uid || "");

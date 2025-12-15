@@ -6,7 +6,7 @@ import Image from "next/image";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useProjectStore } from "@/store";
-import type { UnifiedMilestone } from "@/types/roadmap";
+import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { PAGES } from "@/utilities/pages";
 
 // Shared UI component for rendering grant items

@@ -8,12 +8,12 @@ import { Button } from "@/components/Utilities/Button";
 import { PROJECT_NAME } from "@/constants/brand";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 interface GrantLinkExternalAddressButtonProps {
-  grant: GrantResponse & { external: Record<string, string[]> };
+  grant: Grant & { external: Record<string, string[]> };
 }
 
 export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonProps> = ({

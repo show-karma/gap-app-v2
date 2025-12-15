@@ -9,7 +9,7 @@ import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -46,7 +46,7 @@ export function useGrant() {
    * @param oldGrant The grant to update
    * @param data The updated data
    */
-  const updateGrant = async (oldGrant: GrantResponse, data: Partial<typeof formData>) => {
+  const updateGrant = async (oldGrant: Grant, data: Partial<typeof formData>) => {
     if (!address || !oldGrant?.refUID || !selectedProject) return;
     const _gapClient = gap;
     try {

@@ -1,5 +1,5 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -8,15 +8,15 @@ import { INDEXER } from "@/utilities/indexer";
  *
  * NOTE: Grants and Funding Applications are different concepts
  * - Funding Applications: /v2/funding-applications/project/${projectUID} (returns IFundingApplication)
- * - Grants: /v2/projects/:idOrSlug/grants (returns GrantResponse[])
+ * - Grants: /v2/projects/:idOrSlug/grants (returns Grant[])
  *
  * V2 endpoint: /v2/projects/:idOrSlug/grants
  * - Returns grants with milestones, updates, and completion data
  * - Dates are returned as ISO strings (not MongoDB objects)
  * - Supports both UID and slug identifiers
  */
-export const getProjectGrants = async (projectIdOrSlug: string): Promise<GrantResponse[]> => {
-  const [data, error] = await fetchData<GrantResponse | GrantResponse[]>(
+export const getProjectGrants = async (projectIdOrSlug: string): Promise<Grant[]> => {
+  const [data, error] = await fetchData<Grant | Grant[]>(
     INDEXER.V2.PROJECTS.GRANTS(projectIdOrSlug)
   );
 

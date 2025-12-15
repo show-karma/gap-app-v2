@@ -1,8 +1,8 @@
 import { type FC, useCallback, useEffect, useState } from "react";
 import { VerifiedBadge } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
 import { VerifyMilestoneUpdateDialog } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifyMilestoneUpdateDialog";
-import type { UnifiedMilestone } from "@/types/roadmap";
 import type { GrantMilestone } from "@/types/v2/grant";
+import type { UnifiedMilestone } from "@/types/v2/roadmap";
 
 interface MilestoneVerificationSectionProps {
   milestone: GrantMilestone | UnifiedMilestone;

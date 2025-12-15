@@ -8,7 +8,7 @@ import { useQueryState } from "nuqs";
 import { Fragment, useMemo } from "react";
 import { ActivityCard } from "@/components/Shared/ActivityCard";
 import { useOwnerStore, useProjectStore } from "@/store";
-import type { UnifiedMilestone } from "@/types/roadmap";
+import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import type { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { cn } from "@/utilities/tailwind";
 import { ObjectivesSub } from "../Pages/Project/Objective/ObjectivesSub";

@@ -4,11 +4,11 @@ import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { useGrantCompletion } from "@/hooks/useGrantCompletion";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 
 interface GrantCompleteButtonForReviewerProps {
   project: { uid: string };
-  grant: GrantResponse;
+  grant: Grant;
   text?: string;
   onComplete?: () => void;
 }

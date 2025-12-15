@@ -20,7 +20,7 @@ import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useStepper } from "@/store/modals/txStepper";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -65,7 +65,7 @@ const inputStyleDefault =
 type UpdateType = z.infer<typeof updateSchema>;
 
 interface GrantUpdateFormProps {
-  grant: GrantResponse;
+  grant: Grant;
   labelStyleProps?: string;
   inputStyleProps?: string;
   afterSubmit?: () => void;
@@ -119,7 +119,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
 
   const router = useRouter();
 
-  const createGrantUpdate = async (grantToUpdate: GrantResponse, data: UpdateType) => {
+  const createGrantUpdate = async (grantToUpdate: Grant, data: UpdateType) => {
     let gapClient = gap;
     if (!address || !project) return;
     try {

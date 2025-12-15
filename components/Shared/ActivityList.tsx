@@ -6,7 +6,7 @@ import type {
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC } from "react";
-import type { ConversionGrantUpdate, UnifiedMilestone } from "@/types/roadmap";
+import type { ConversionGrantUpdate, UnifiedMilestone } from "@/types/v2/roadmap";
 import { ActivityCard } from "./ActivityCard";
 
 // SdkUpdateType must match the type in ActivityCard.tsx

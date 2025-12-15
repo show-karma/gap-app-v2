@@ -1,6 +1,6 @@
 import type { IProjectDetails } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
@@ -77,15 +77,15 @@ export interface ProjectData {
 export interface ProjectGrantMilestonesResponse {
   project: ProjectData;
   grantMilestones: GrantMilestoneWithCompletion[];
-  grant?: GrantResponse; // Grant data with completed status
+  grant?: Grant; // Grant data with completed status
 }
 
 async function fetchGrantByProgramId(
   projectUid: string,
   programId: string
-): Promise<GrantResponse | undefined> {
+): Promise<Grant | undefined> {
   const grantsEndpoint = INDEXER.V2.PROJECTS.GRANTS(projectUid);
-  const [grants, error] = await fetchData<GrantResponse[]>(grantsEndpoint);
+  const [grants, error] = await fetchData<Grant[]>(grantsEndpoint);
 
   if (error || !grants) {
     errorManager("Error fetching grant", error, { projectUid, programId });

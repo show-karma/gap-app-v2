@@ -1,19 +1,19 @@
 import { create } from "zustand";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getProjectGrants } from "@/services/project-grants.service";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 
 interface GrantStore {
-  grant: GrantResponse | undefined;
-  setGrant: (grant: GrantResponse | undefined) => void;
+  grant: Grant | undefined;
+  setGrant: (grant: Grant | undefined) => void;
   loading: boolean;
   setLoading: (loading: boolean) => void;
-  refreshGrant: () => Promise<GrantResponse | undefined>;
+  refreshGrant: () => Promise<Grant | undefined>;
 }
 
 export const useGrantStore = create<GrantStore>((set, get) => ({
   grant: undefined,
-  setGrant: (grant: GrantResponse | undefined) => set({ grant }),
+  setGrant: (grant: Grant | undefined) => set({ grant }),
   loading: true,
   setLoading: (loading: boolean) => set({ loading }),
   refreshGrant: async () => {
@@ -27,7 +27,7 @@ export const useGrantStore = create<GrantStore>((set, get) => ({
         throw new Error("Cannot refresh grant: no project identifier available");
       }
 
-      // Fetch grants using V2 endpoint which returns proper V2 GrantResponse format
+      // Fetch grants using V2 endpoint which returns proper V2 Grant format
       const grants = await getProjectGrants(projectIdOrSlug);
       const refreshedGrant = grants.find((g) => g.uid.toLowerCase() === grant.uid.toLowerCase());
 

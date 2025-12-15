@@ -3,7 +3,7 @@
 
 import Link, { useLinkStatus } from "next/link";
 import pluralize from "pluralize";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { rewriteHeadingsToLevel } from "@/utilities/markdown";
@@ -16,7 +16,7 @@ import { ProfilePicture } from "./Utilities/ProfilePicture";
 import { Spinner } from "./Utilities/Spinner";
 
 interface GrantCardProps {
-  grant: GrantResponse;
+  grant: Grant;
   index: number;
   hideStats?: boolean;
   hideCategories?: boolean;
@@ -40,7 +40,7 @@ export const pickColor = (index: number) => {
   return cardColors[index % cardColors.length];
 };
 
-const updatesLength = (milestones: GrantResponse["milestones"], updatesCount: number) =>
+const updatesLength = (milestones: Grant["milestones"], updatesCount: number) =>
   (milestones?.filter((milestone) => milestone.completed)?.length ?? 0) + updatesCount;
 
 // Loading indicator component that uses useLinkStatus

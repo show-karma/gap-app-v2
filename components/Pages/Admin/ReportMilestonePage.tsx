@@ -18,7 +18,7 @@ import TablePagination from "@/components/Utilities/TablePagination";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useAuth } from "@/hooks/useAuth";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
-import type { CommunityDetailsResponse } from "@/types/community";
+import type { Community } from "@/types/v2/community";
 import { downloadCommunityReport } from "@/utilities/downloadReports";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -105,7 +105,7 @@ const itemsPerPage = 50;
 const skeletonArray = Array.from({ length: 12 }, (_, index) => index);
 
 interface ReportMilestonePageProps {
-  community: CommunityDetailsResponse;
+  community: Community;
   grantPrograms: GrantProgram[];
 }
 

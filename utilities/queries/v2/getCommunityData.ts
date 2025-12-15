@@ -1,29 +1,23 @@
 import { cache } from "react";
 import type { Category } from "@/types/impactMeasurement";
-import type {
-  CommunityDetailsResponse,
-  CommunityProjectsResponse,
-  CommunityStats,
-} from "@/types/v2/community";
+import type { Community, CommunityProjects, CommunityStats } from "@/types/v2/community";
 import { zeroUID } from "@/utilities/commons";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-export const getCommunityDetails = cache(
-  async (slug: string): Promise<CommunityDetailsResponse | null> => {
-    try {
-      const [data] = await fetchData(INDEXER.COMMUNITY.V2.GET(slug));
+export const getCommunityDetails = cache(async (slug: string): Promise<Community | null> => {
+  try {
+    const [data] = await fetchData(INDEXER.COMMUNITY.V2.GET(slug));
 
-      if (!data || data?.uid === zeroUID || !data?.details?.name) {
-        return null;
-      }
-
-      return data as CommunityDetailsResponse;
-    } catch (_error) {
+    if (!data || data?.uid === zeroUID || !data?.details?.name) {
       return null;
     }
+
+    return data as Community;
+  } catch (_error) {
+    return null;
   }
-);
+});
 
 export const getCommunityStats = cache(async (slug: string): Promise<CommunityStats> => {
   try {
@@ -80,12 +74,12 @@ export const getCommunityProjects = async (
     selectedProgramId?: string;
     selectedTrackIds?: string[];
   } = {}
-): Promise<CommunityProjectsResponse> => {
+): Promise<CommunityProjects> => {
   try {
     const [data] = await fetchData(INDEXER.COMMUNITY.V2.PROJECTS(slug, options));
 
     if (data) {
-      return data as CommunityProjectsResponse;
+      return data as CommunityProjects;
     }
 
     return {

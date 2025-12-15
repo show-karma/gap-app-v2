@@ -8,7 +8,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 // import { MilestonesList } from "./MilestonesList";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import type { ProjectResponse } from "@/types/v2/project";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -27,7 +27,7 @@ export const EmptyMilestone = ({
   grant,
   project,
 }: {
-  grant?: GrantResponse;
+  grant?: Grant;
   project?: ProjectResponse;
 }) => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);

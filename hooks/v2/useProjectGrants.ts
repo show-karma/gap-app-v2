@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { getProjectGrants } from "@/services/project-grants.service";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 /**
@@ -20,7 +20,7 @@ export function useProjectGrants(projectIdOrSlug: string) {
     isLoading,
     error,
     refetch: originalRefetch,
-  } = useQuery<GrantResponse[]>({
+  } = useQuery<Grant[]>({
     queryKey,
     queryFn: () => getProjectGrants(projectIdOrSlug),
     enabled: !!projectIdOrSlug,

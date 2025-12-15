@@ -1,10 +1,10 @@
 import { useMemo } from "react";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import { formatPercentage } from "@/utilities/formatNumber";
 
 type TProps = {
   // TODO: this should be refactored in the source components to pass Grant only
-  grant: GrantResponse;
+  grant: Grant;
   className?: string;
 };
 

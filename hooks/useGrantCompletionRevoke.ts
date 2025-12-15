@@ -10,7 +10,7 @@ import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useStepper } from "@/store/modals/txStepper";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import type { ProjectResponse } from "@/types/v2/project";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
@@ -25,7 +25,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 interface UseGrantCompletionRevokeProps {
-  grant: GrantResponse;
+  grant: Grant;
   project: ProjectResponse;
 }
 

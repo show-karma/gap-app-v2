@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { CommunityDetailsResponse } from "@/types/v2/community";
+import type { Community } from "@/types/v2/community";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
@@ -34,7 +34,7 @@ export const useCommunityDetails = (
   communityUIDorSlug?: string,
   options?: UseCommunityDetailsOptions
 ) => {
-  const query = useQuery<CommunityDetailsResponse | null, Error>({
+  const query = useQuery<Community | null, Error>({
     queryKey: QUERY_KEYS.COMMUNITY.DETAILS_V2(communityUIDorSlug),
     queryFn: () => getCommunityDetails(communityUIDorSlug!),
     enabled: !!communityUIDorSlug && options?.enabled !== false,

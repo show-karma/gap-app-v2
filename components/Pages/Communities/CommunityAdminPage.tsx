@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/Utilities/Button";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
-import type { CommunityDetailsResponse } from "@/types/community";
+import type { Community } from "@/types/v2/community";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -67,7 +67,7 @@ export const CommunityAdminPage = ({
   community,
 }: {
   communityId: string;
-  community: CommunityDetailsResponse;
+  community: Community;
 }) => {
   const { hasAccess, isLoading: loading } = useCommunityAdminAccess(community?.uid);
 

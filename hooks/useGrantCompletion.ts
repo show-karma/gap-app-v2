@@ -4,7 +4,7 @@ import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useWallet } from "@/hooks/useWallet";
 import { useStepper } from "@/store/modals/txStepper";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { Grant } from "@/types/v2/grant";
 import { pollForGrantCompletion } from "@/utilities/attestation-polling";
 // Import the utilities we created
 import { setupChainAndWallet } from "@/utilities/chain-wallet-setup";
@@ -18,7 +18,7 @@ interface UseGrantCompletionParams {
 }
 
 interface UseGrantCompletionReturn {
-  completeGrant: (grant: GrantResponse, project: { uid: string }) => Promise<void>;
+  completeGrant: (grant: Grant, project: { uid: string }) => Promise<void>;
   isCompleting: boolean;
 }
 
@@ -52,7 +52,7 @@ export const useGrantCompletion = ({
   const { switchChainAsync } = useWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
 
-  const completeGrant = async (grant: GrantResponse, project: { uid: string }) => {
+  const completeGrant = async (grant: Grant, project: { uid: string }) => {
     if (!address || !project || !grant) {
       toast.error("Please connect your wallet");
       return;

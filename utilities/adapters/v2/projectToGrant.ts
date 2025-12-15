@@ -1,7 +1,7 @@
-import type { Project } from "@/types/v2/community";
-import type { GrantResponse } from "@/types/v2/grant";
+import type { CommunityProject } from "@/types/v2/community";
+import type { Grant } from "@/types/v2/grant";
 
-export const projectToGrant = (project: Project): GrantResponse => {
+export const projectToGrant = (project: CommunityProject): Grant => {
   return {
     uid: project.uid,
     createdAt: project.createdAt,
@@ -71,8 +71,5 @@ export const projectToGrant = (project: Project): GrantResponse => {
     decodedDataJson: "",
     isOffchain: false,
     schemaId: "",
-  } as unknown as GrantResponse;
+  } as unknown as Grant;
 };
-
-// Alias for backward compatibility during migration
-export const projectV2ToGrant = projectToGrant;
