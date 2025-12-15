@@ -65,7 +65,8 @@ describe("WhereBuildersGrow Component", () => {
     const { container } = renderWithProviders(<WhereBuildersGrow />);
 
     const section = container.querySelector("section");
-    const innerDiv = section?.querySelector("div");
+    // SectionContainer is the first div, the inner div with items-center is nested inside
+    const innerDiv = section?.querySelector("div.items-center");
 
     expect(innerDiv).toHaveClass("items-center");
   });
