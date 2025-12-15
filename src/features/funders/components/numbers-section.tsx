@@ -9,6 +9,13 @@ export interface Statistic {
   description: string;
 }
 
+const gradientTextStyle = {
+  backgroundImage: "linear-gradient(180deg, #6A6A6A 5.77%, #D0D0D0 100%)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  backgroundClip: "text",
+} as const;
+
 const statistics: Statistic[] = [
   {
     number: "30+",
@@ -88,23 +95,13 @@ export function NumbersSection() {
                   <div className="flex items-baseline gap-1">
                     <span
                       className={cn("font-semibold text-[60px] leading-[72px] tracking-[-0.02em]")}
-                      style={{
-                        backgroundImage: "linear-gradient(180deg, #6A6A6A 5.77%, #D0D0D0 100%)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                      }}
+                      style={gradientTextStyle}
                     >
                       4x
                     </span>
                     <span
                       className={cn("text-lg font-medium leading-[72px]")}
-                      style={{
-                        backgroundImage: "linear-gradient(180deg, #6A6A6A 5.77%, #D0D0D0 100%)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                      }}
+                      style={gradientTextStyle}
                     >
                       faster
                     </span>
@@ -112,12 +109,7 @@ export function NumbersSection() {
                 ) : (
                   <div
                     className={cn("font-semibold text-[60px] leading-[72px] tracking-[-0.02em]")}
-                    style={{
-                      backgroundImage: "linear-gradient(180deg, #6A6A6A 5.77%, #D0D0D0 100%)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }}
+                    style={gradientTextStyle}
                   >
                     {stat.number}
                   </div>

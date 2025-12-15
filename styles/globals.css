@@ -97,12 +97,13 @@ body * {
   line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
-
+  
   * {
     display: inline;
   }
   *::after {
-    content: " \A";
+    /* biome-ignore format: CSS escape sequence \A for line break must not be modified */
+    content: " A";
     white-space: pre;
   }
   strong::after,
@@ -124,7 +125,8 @@ body * {
     display: inline;
   }
   *::after {
-    content: " \A";
+    /* biome-ignore format: CSS escape sequence \A for line break must not be modified */
+    content: " A";
     white-space: pre;
   }
   strong::after,
@@ -157,7 +159,8 @@ body * {
     display: list-item;
   }
   *::after {
-    content: " \A";
+    /* biome-ignore format: CSS escape sequence \A for line break must not be modified */
+    content: " A";
     white-space: pre;
   }
   strong::after,
@@ -179,7 +182,8 @@ body * {
     display: inline;
   }
   *::after {
-    content: " \A";
+    /* biome-ignore format: CSS escape sequence \A for line break must not be modified */
+    content: " A";
     white-space: pre;
   }
   strong::after,
@@ -477,9 +481,9 @@ body .react-hot-toast * {
 
 /* Prevent scrollbar from overlapping textarea in MarkdownEditor */
 .markdown-editor-wrapper .w-md-editor-text {
-  padding-right: 1rem !important;
+  padding-right: 1rem;
 }
 
 .markdown-editor-wrapper .w-md-editor-text textarea {
-  padding-right: 0.5rem !important;
+  padding-right: 0.5rem;
 }

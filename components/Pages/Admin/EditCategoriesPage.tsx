@@ -10,7 +10,6 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
-import { useAuth } from "@/hooks/useAuth";
 import { useCategories } from "@/hooks/useCategories";
 import { useCommunityGrants } from "@/hooks/useCommunityGrants";
 import { type SimplifiedGrant, useGrants } from "@/hooks/useGrants";

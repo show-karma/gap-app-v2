@@ -13,7 +13,6 @@ import { blo } from "blo";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { isAddress } from "viem";
-import { useAccount } from "wagmi";
 import CommunityStats from "@/components/CommunityStats";
 import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
 import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog";
@@ -215,7 +214,7 @@ export default function CommunitiesToAdminPage() {
     return `0x${address.replace("0x", "")}` as `0x${string}`;
   };
 
-  function shortenHex(hexString: string) {
+  function _shortenHex(hexString: string) {
     const firstPart = hexString.substring(0, 6);
     const lastPart = hexString.substring(hexString.length - 6);
 

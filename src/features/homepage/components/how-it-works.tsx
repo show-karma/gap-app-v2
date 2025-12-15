@@ -1,13 +1,13 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionContainer } from "@/src/components/shared/section-container";
+import { CreateProjectButton } from "@/src/features/homepage/components/create-project-button";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
-import { CreateProjectButton } from "./create-project-button";
 
 interface StepCardProps {
   text: string;
@@ -67,9 +67,26 @@ interface RotatingOutcomeStackProps {
   items: string[];
 }
 
+// Helper component for card content to reduce duplication
+function OutcomeCardContent({ text }: { text: string }) {
+  return (
+    <>
+      <div className="w-10 h-10 rounded-full bg-green-100 border-4 border-green-50 flex items-center justify-center flex-shrink-0">
+        <Check className="w-5 h-5 text-green-600" />
+      </div>
+      <p className="text-xl font-semibold text-foreground leading-tight tracking-[-0.02em]">
+        {text}
+      </p>
+    </>
+  );
+}
+
 function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
   const hasMultipleItems = items.length > 1;
   const [order, setOrder] = useState<number[]>(() => {
+    if (items.length === 0) {
+      return [];
+    }
     // Initialize with first 4 items (or wrap around if less than 4)
     const initialOrder: number[] = [];
     for (let i = 0; i < ANIMATION_CONFIG.stackLayers && i < items.length; i++) {
@@ -83,9 +100,22 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
   });
   const [isAnimating, setIsAnimating] = useState(false);
   const intervalRef = useRef<number | null>(null);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
-    if (!hasMultipleItems) {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mediaQuery.matches);
+
+    const handleChange = (e: MediaQueryListEvent) => {
+      setPrefersReducedMotion(e.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  useEffect(() => {
+    if (!hasMultipleItems || prefersReducedMotion) {
       return undefined;
     }
 
@@ -109,7 +139,7 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
         intervalRef.current = null;
       }
     };
-  }, [hasMultipleItems, items.length]);
+  }, [hasMultipleItems, prefersReducedMotion]);
 
   // The card that will enter at the back (currently front card)
   const enteringCardIndex = order[0];
@@ -118,6 +148,7 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
     <div
       className="relative w-full mt-3 overflow-visible"
       style={{ height: `${ANIMATION_CONFIG.containerHeight}px` }}
+      aria-live="polite"
     >
       {order.map((cardIndex, stackPosition) => {
         const cardText = items[cardIndex] ?? "";
@@ -161,12 +192,7 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
               transitionDuration: `${ANIMATION_CONFIG.transitionDuration}ms`,
             }}
           >
-            <div className="w-10 h-10 rounded-full bg-green-100 border-4 border-green-50 flex items-center justify-center flex-shrink-0">
-              <Check className="w-5 h-5 text-green-600" />
-            </div>
-            <p className="text-xl font-semibold text-foreground leading-tight tracking-[-0.02em]">
-              {cardText}
-            </p>
+            <OutcomeCardContent text={cardText} />
           </div>
         );
       })}
@@ -194,12 +220,7 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
           transitionDuration: `${ANIMATION_CONFIG.transitionDuration}ms`,
         }}
       >
-        <div className="w-10 h-10 rounded-full bg-green-100 border-4 border-green-50 flex items-center justify-center flex-shrink-0">
-          <Check className="w-5 h-5 text-green-600" />
-        </div>
-        <p className="text-xl font-semibold text-foreground leading-tight tracking-[-0.02em]">
-          {items[enteringCardIndex]}
-        </p>
+        <OutcomeCardContent text={items[enteringCardIndex] ?? ""} />
       </div>
     </div>
   );

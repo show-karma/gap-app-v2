@@ -251,10 +251,6 @@ export function MilestonesReviewPage({
 
       try {
         await deleteMilestoneAsync(milestone);
-      } catch (error) {
-        // Error is already handled in the hook (toast + errorManager)
-        // Re-throw so DeleteDialog can handle it (it will log and keep modal open)
-        throw error;
       } finally {
         setDeletingMilestoneId(null);
       }

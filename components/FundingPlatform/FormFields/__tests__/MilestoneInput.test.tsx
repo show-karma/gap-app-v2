@@ -6,9 +6,9 @@
  * fundingRequested and completionCriteria
  */
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { useForm } from "react-hook-form";
-import type { IFormField, IMilestoneData } from "@/types/funding-platform";
+import type { IFormField } from "@/types/funding-platform";
 import { MilestoneInput } from "../MilestoneInput";
 
 // Wrapper component to provide form context

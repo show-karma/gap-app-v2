@@ -1,11 +1,11 @@
 import { ArrowRightIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import { SectionContainer } from "@/src/components/shared/section-container";
+import { LiveFundingOpportunitiesCarousel } from "@/src/features/homepage/components/live-funding-opportunities-carousel";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { getLiveFundingOpportunities } from "@/src/services/funding/getLiveFundingOpportunities";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { LiveFundingOpportunitiesCarousel } from "./live-funding-opportunities-carousel";
 
 export async function LiveFundingOpportunities() {
   const programs = await getLiveFundingOpportunities();

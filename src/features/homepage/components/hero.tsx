@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { SectionContainer } from "@/src/components/shared/section-container";
 import { InfiniteMovingCards } from "@/src/components/ui/infinite-moving-cards";
 import { ThemeImage } from "@/src/components/ui/theme-image";
+import { CreateProjectButton } from "@/src/features/homepage/components/create-project-button";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { CreateProjectButton } from "./create-project-button";
 
 const users = [
   "/images/homepage/user1.jpg",
@@ -44,7 +44,10 @@ export function Hero() {
             </p>
             <div className="relative flex flex-col mt-4 md:flex-row gap-3 md:gap-3">
               {/* Blurred gradient background */}
-              <div className="absolute -left-2 -right-1 -bottom-1 h-[30%] md:h-[60%] bg-gradient-to-r from-purple-300 to-emerald-300 opacity-40 md:opacity-80 blur-md" />
+              <div
+                className="pointer-events-none absolute -left-2 -right-1 -bottom-1 h-[30%] md:h-[60%] bg-gradient-to-r from-purple-300 to-emerald-300 opacity-40 md:opacity-80 blur-md"
+                aria-hidden="true"
+              />
               <div className="relative z-0">
                 <CreateProjectButton styleClass="h-auto px-5 py-3 text-sm font-medium w-max bg-primary text-primary-foreground hover:bg-primary/90 border-0 shadow" />
               </div>
@@ -59,11 +62,7 @@ export function Hero() {
             <div className="flex flex-row items-center justify-start gap-10 md:gap-4 mt-6">
               <div className="flex flex-row items-center justify-start gap-2">
                 {users.map((user, index) => {
-                  const zIndexClasses = {
-                    0: "z-[4]",
-                    1: "z-[5]",
-                    2: "z-[6]",
-                  } as Record<number, string>;
+                  const zIndex = `z-[${4 + index}]`;
 
                   return (
                     <Image
@@ -75,7 +74,7 @@ export function Hero() {
                       className={cn(
                         "rounded-full w-7 h-7 bg-background border border-border",
                         index !== users.length - 1 && "-mr-5",
-                        zIndexClasses[index]
+                        zIndex
                       )}
                     />
                   );
@@ -92,10 +91,7 @@ export function Hero() {
               </div>
             </div>
           </div>
-          <div
-            className="hidden sm:flex flex-1 w-full max-w-[420px] min-w-0 relative rounded-3xl overflow-hidden"
-            style={{ aspectRatio: "1/1" }}
-          >
+          <div className="hidden sm:flex flex-1 w-full max-w-[420px] min-w-0 relative rounded-3xl overflow-hidden aspect-square">
             <ThemeImage
               src="/images/homepage/builder-hero.png"
               alt="Builder Hero"

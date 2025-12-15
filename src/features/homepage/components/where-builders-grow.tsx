@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SectionContainer } from "@/src/components/shared/section-container";
+import { CreateProjectButton } from "@/src/features/homepage/components/create-project-button";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { CreateProjectButton } from "./create-project-button";
 
 export function WhereBuildersGrow() {
   return (
@@ -17,7 +17,10 @@ export function WhereBuildersGrow() {
           </p>
           <div className="relative flex flex-col md:flex-row gap-3 md:gap-3">
             {/* Blurred gradient background */}
-            <div className="absolute -left-2 -right-1 -bottom-1 h-[60%] bg-gradient-to-r from-purple-300 to-emerald-300 opacity-80 blur-md" />
+            <div
+              className="pointer-events-none absolute -left-2 -right-1 -bottom-1 h-[60%] bg-gradient-to-r from-purple-300 to-emerald-300 opacity-80 blur-md"
+              aria-hidden="true"
+            />
             <div className="relative z-0">
               <CreateProjectButton styleClass="h-auto px-5 py-3 text-sm font-medium w-max bg-primary text-primary-foreground hover:bg-primary/90 border-0 shadow" />
             </div>
