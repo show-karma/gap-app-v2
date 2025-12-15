@@ -51,77 +51,17 @@ function StepCard({ text, size, showIcon = true }: StepCardProps) {
   );
 }
 
-const ROTATION_INTERVAL = 2000;
-const TRANSITION_DURATION = 700;
-const STACK_LAYERS = 4;
-const STACK_CARD_HEIGHT = 240;
-const STACK_GAP = 16;
-
-interface AnimatedOutcomeCardProps {
-  text: string;
-  duration: number;
-}
-
-function ActiveOutcomeCard({ text, duration }: AnimatedOutcomeCardProps) {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => setVisible(true));
-    return () => cancelAnimationFrame(raf);
-  }, []);
-
-  return (
-    <div
-      className={cn(
-        "absolute left-0 right-0 bottom-0 z-20 rounded-xl border-2 border-border bg-background px-6 py-6 flex flex-col justify-between gap-6 transition-all",
-        visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
-      )}
-      style={{ transitionDuration: `${duration}ms`, height: `${STACK_CARD_HEIGHT}px` }}
-    >
-      <div className="w-10 h-10 rounded-full bg-green-100 border-4 border-green-50 flex items-center justify-center flex-shrink-0">
-        <Check className="w-5 h-5 text-green-600" />
-      </div>
-      <p className="text-xl font-semibold text-foreground leading-tight tracking-[-0.02em]">
-        {text}
-      </p>
-    </div>
-  );
-}
-
-interface ExitingOutcomeCardProps extends AnimatedOutcomeCardProps {
-  onExited: () => void;
-}
-
-function ExitingOutcomeCard({ text, duration, onExited }: ExitingOutcomeCardProps) {
-  const [leaving, setLeaving] = useState(false);
-
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => setLeaving(true));
-    const timeout = window.setTimeout(onExited, duration);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      window.clearTimeout(timeout);
-    };
-  }, [duration, onExited]);
-
-  return (
-    <div
-      className={cn(
-        "absolute left-0 right-0 bottom-0 z-10 rounded-xl border-2 border-border bg-background px-6 py-6 flex flex-col justify-between gap-6 transition-all",
-        leaving ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
-      )}
-      style={{ transitionDuration: `${duration}ms`, height: `${STACK_CARD_HEIGHT}px` }}
-    >
-      <div className="w-10 h-10 rounded-full bg-green-100 border-4 border-green-50 flex items-center justify-center flex-shrink-0">
-        <Check className="w-5 h-5 text-green-600" />
-      </div>
-      <p className="text-xl font-semibold text-foreground leading-tight tracking-[-0.02em]">
-        {text}
-      </p>
-    </div>
-  );
-}
+const ANIMATION_CONFIG = {
+  rotationInterval: 2000,
+  transitionDuration: 700,
+  stackLayers: 4,
+  cardHeight: 240,
+  stackGap: 16,
+  containerHeight: 288, // STACK_CARD_HEIGHT + STACK_GAP + some padding
+  scaleStep: 0.075, // How much each card scales down (1 - position * 0.075)
+  translateStep: 40, // How much each card moves up (position * 40px)
+  opacityStep: 0.2, // How much opacity decreases per layer (1 - position * 0.2)
+} as const;
 
 interface RotatingOutcomeStackProps {
   items: string[];
@@ -132,11 +72,11 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
   const [order, setOrder] = useState<number[]>(() => {
     // Initialize with first 4 items (or wrap around if less than 4)
     const initialOrder: number[] = [];
-    for (let i = 0; i < STACK_LAYERS && i < items.length; i++) {
+    for (let i = 0; i < ANIMATION_CONFIG.stackLayers && i < items.length; i++) {
       initialOrder.push(i);
     }
     // If we have fewer items than layers, repeat items
-    while (initialOrder.length < STACK_LAYERS) {
+    while (initialOrder.length < ANIMATION_CONFIG.stackLayers) {
       initialOrder.push(initialOrder.length % items.length);
     }
     return initialOrder;
@@ -160,8 +100,8 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
           return newOrder;
         });
         setIsAnimating(false);
-      }, TRANSITION_DURATION);
-    }, ROTATION_INTERVAL);
+      }, ANIMATION_CONFIG.transitionDuration);
+    }, ANIMATION_CONFIG.rotationInterval);
 
     return () => {
       if (intervalRef.current) {
@@ -175,7 +115,10 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
   const enteringCardIndex = order[0];
 
   return (
-    <div className="relative w-full mt-3 overflow-visible" style={{ height: "288px" }}>
+    <div
+      className="relative w-full mt-3 overflow-visible"
+      style={{ height: `${ANIMATION_CONFIG.containerHeight}px` }}
+    >
       {order.map((cardIndex, stackPosition) => {
         const cardText = items[cardIndex] ?? "";
         const isLeaving = isAnimating && stackPosition === 0;
@@ -187,19 +130,23 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
         let filter: string;
 
         if (isLeaving) {
-          scale = 1.075;
-          y = 40;
+          scale = 1 + ANIMATION_CONFIG.scaleStep; // Slightly larger when leaving
+          y = ANIMATION_CONFIG.translateStep;
           opacity = 0;
           filter = "blur(20px)";
         } else {
           const targetPos = isAnimating ? stackPosition - 1 : stackPosition;
-          scale = 1 - targetPos * 0.075;
-          y = -(targetPos * 40);
-          opacity = Math.max(0, 1 - targetPos * 0.2);
+          scale = 1 - targetPos * ANIMATION_CONFIG.scaleStep;
+          y = -(targetPos * ANIMATION_CONFIG.translateStep);
+          opacity = Math.max(0, 1 - targetPos * ANIMATION_CONFIG.opacityStep);
           filter = "blur(0px)";
         }
 
-        const zIndex = isLeaving ? 5 : isAnimating ? 4 - (stackPosition - 1) : 4 - stackPosition;
+        const zIndex = isLeaving
+          ? 5
+          : isAnimating
+            ? ANIMATION_CONFIG.stackLayers - (stackPosition - 1)
+            : ANIMATION_CONFIG.stackLayers - stackPosition;
 
         return (
           <div
@@ -210,8 +157,8 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
               opacity,
               filter,
               zIndex,
-              height: `${STACK_CARD_HEIGHT}px`,
-              transitionDuration: `${TRANSITION_DURATION}ms`,
+              height: `${ANIMATION_CONFIG.cardHeight}px`,
+              transitionDuration: `${ANIMATION_CONFIG.transitionDuration}ms`,
             }}
           >
             <div className="w-10 h-10 rounded-full bg-green-100 border-4 border-green-50 flex items-center justify-center flex-shrink-0">
@@ -229,12 +176,22 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
         key={`entering-${enteringCardIndex}`}
         className="absolute left-0 right-0 bottom-0 rounded-xl border-2 border-border bg-background px-6 py-6 flex flex-col justify-between gap-6 transition-all ease-out origin-bottom pointer-events-none"
         style={{
-          transform: `scale(${isAnimating ? 1 - 3 * 0.075 : 1 - 4 * 0.075}) translateY(${isAnimating ? -(3 * 40) : -(4 * 40)}px)`,
-          opacity: isAnimating ? Math.max(0, 1 - 3 * 0.2) : 0,
+          transform: `scale(${
+            isAnimating
+              ? 1 - (ANIMATION_CONFIG.stackLayers - 1) * ANIMATION_CONFIG.scaleStep
+              : 1 - ANIMATION_CONFIG.stackLayers * ANIMATION_CONFIG.scaleStep
+          }) translateY(${
+            isAnimating
+              ? -(ANIMATION_CONFIG.stackLayers - 1) * ANIMATION_CONFIG.translateStep
+              : -ANIMATION_CONFIG.stackLayers * ANIMATION_CONFIG.translateStep
+          }px)`,
+          opacity: isAnimating
+            ? Math.max(0, 1 - (ANIMATION_CONFIG.stackLayers - 1) * ANIMATION_CONFIG.opacityStep)
+            : 0,
           filter: "blur(0px)",
           zIndex: 0,
-          height: `${STACK_CARD_HEIGHT}px`,
-          transitionDuration: `${TRANSITION_DURATION}ms`,
+          height: `${ANIMATION_CONFIG.cardHeight}px`,
+          transitionDuration: `${ANIMATION_CONFIG.transitionDuration}ms`,
         }}
       >
         <div className="w-10 h-10 rounded-full bg-green-100 border-4 border-green-50 flex items-center justify-center flex-shrink-0">
