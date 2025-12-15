@@ -12,6 +12,13 @@ export const INDEXER = {
     APPROVE: "/registry/approve",
     UPDATE: (id: string, chainId: number) => `/registry/${id}/${chainId}/updateMetadata`,
     CREATE: "/registry/offchain/create",
+    // V2 endpoints
+    V2: {
+      CREATE: "/v2/program-registry",
+      UPDATE: (programId: string, chainId: number) => `/v2/program-registry/${programId}/${chainId}`,
+      APPROVE: "/v2/program-registry/approve",
+      GET_BY_ID: (programId: string, chainId: number) => `/v2/program-registry/${programId}/${chainId}`,
+    },
   },
   PROJECTS: {
     GET_ALL: (offset: number, limit: number, sortField: string, sortOrder: "asc" | "desc") =>
