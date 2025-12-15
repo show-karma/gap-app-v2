@@ -33,6 +33,7 @@ import { useMergeModalStore } from "@/store/modals/merge";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
 import { useStepper } from "@/store/modals/txStepper";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { MESSAGES } from "@/utilities/messages";
@@ -201,7 +202,7 @@ export const ProjectOptionsMenu = () => {
               buttonElement={null}
               buttonClassName={buttonClassName}
               project={
-                project as IProjectResponse & {
+                project as ProjectResponse & {
                   external: Record<string, string[]>;
                 }
               }
