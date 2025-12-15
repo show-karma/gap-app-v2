@@ -21,17 +21,20 @@ import { useAccount } from "wagmi";
 import { AdminTransferOwnershipDialog } from "@/components/Dialogs/AdminTransferOwnershipDialog";
 import { GithubIcon } from "@/components/Icons";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAuth } from "@/hooks/useAuth";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useGap } from "@/hooks/useGap";
 import { useStaff } from "@/hooks/useStaff";
 import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
 import { useGrantGenieModalStore } from "@/store/modals/genie";
 import { useMergeModalStore } from "@/store/modals/merge";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
 import { useStepper } from "@/store/modals/txStepper";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { MESSAGES } from "@/utilities/messages";
@@ -71,12 +74,14 @@ export const ProjectOptionsMenu = () => {
   const projectId = params.projectId as string;
   const [isDeleting, setIsDeleting] = useState(false);
   const [showLinkContractsDialog, setShowLinkContractsDialog] = useState(false);
+  const [showViewContractsDialog, setShowViewContractsDialog] = useState(false);
   const [showLinkGithubDialog, setShowLinkGithubDialog] = useState(false);
   const [showLinkOSODialog, setShowLinkOSODialog] = useState(false);
   const [showLinkDivviDialog, setShowLinkDivviDialog] = useState(false);
   const [showSetPayoutDialog, setShowSetPayoutDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { address, chain } = useAccount();
+  const { authenticated: isAuthenticated } = useAuth();
   const { switchChainAsync } = useWallet();
   const router = useRouter();
   const { gap } = useGap();
@@ -91,12 +96,17 @@ export const ProjectOptionsMenu = () => {
   const { isProjectOwner } = useProjectStore();
   const { data: contactsInfo } = useContactInfo(projectId);
   const { isOwner: isContractOwner } = useOwnerStore();
-  const isAuthorized = isProjectOwner || isContractOwner;
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
   const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   // Event handlers to reset state when dialogs close
   const handleLinkContractsDialogClose = () => {
     setShowLinkContractsDialog(false);
+  };
+
+  const handleViewContractsDialogClose = () => {
+    setShowViewContractsDialog(false);
   };
 
   const handleLinkGithubDialogClose = () => {
@@ -189,6 +199,15 @@ export const ProjectOptionsMenu = () => {
               onClose={handleLinkContractsDialogClose}
             />
           )}
+          {showViewContractsDialog && (
+            <LinkContractAddressButton
+              buttonElement={null}
+              buttonClassName={buttonClassName}
+              project={project}
+              onClose={handleViewContractsDialogClose}
+              readOnly={true}
+            />
+          )}
           {showLinkGithubDialog && (
             <LinkGithubRepoButton
               buttonElement={null}
@@ -238,7 +257,7 @@ export const ProjectOptionsMenu = () => {
         </>
       )}
 
-      {!isStaffLoading && (isAuthorized || isStaff) && (
+      {!isStaffLoading && (isAuthorized || isStaff || isAuthenticated) && (
         <Menu as="div" className={`relative inline-block text-left z-1`}>
           <div>
             <Menu.Button className="w-max bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-2 rounded-lg">
@@ -409,6 +428,21 @@ export const ProjectOptionsMenu = () => {
                       )}
                     </Menu.Item>
                   </>
+                )}
+                {/* Non-authorized but logged-in users: View Contracts only */}
+                {!isAuthorized && !isStaff && isAuthenticated && project && (
+                  <Menu.Item>
+                    {({ active }) => (
+                      <button
+                        type="button"
+                        onClick={() => setShowViewContractsDialog(true)}
+                        className={buttonClassName}
+                      >
+                        <LinkIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
+                        View Contracts
+                      </button>
+                    )}
+                  </Menu.Item>
                 )}
               </div>
             </Menu.Items>

@@ -11,6 +11,7 @@ import { SUPPORTED_CONTRACT_NETWORKS } from "@/constants/contract-networks";
 import { useContractAddressPairs } from "@/hooks/useContractAddressPairs";
 import { useContractAddressSave } from "@/hooks/useContractAddressSave";
 import { useContractAddressValidation } from "@/hooks/useContractAddressValidation";
+import { useStaff } from "@/hooks/useStaff";
 import { validateNetworkAddressPair } from "@/schemas/contractAddress";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
@@ -25,11 +26,17 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
   "data-link-contracts-button": dataAttr,
   buttonElement,
   onClose,
+  readOnly: readOnlyProp,
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const refreshProject = useProjectStore((state) => state.refreshProject);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
+  const { isStaff } = useStaff();
+  const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin || isStaff;
+
+  // Compute effective read-only mode: external prop OR lack of authorization
+  const isReadOnly = readOnlyProp ?? !isAuthorized;
   const [isOpen, setIsOpen] = useState(false);
   const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
@@ -149,6 +156,9 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
         updateVerified(contractToVerify.network, contractToVerify.address, result);
       }
 
+      // Refresh the project store to get updated verification data
+      refreshProject();
+
       // Also invalidate queries to keep cache in sync
       queryClient.invalidateQueries({
         queryKey: ["project-instance", project.uid],
@@ -157,13 +167,20 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
         queryKey: ["project-instance", project.details?.slug],
       });
     },
-    [contractToVerify, updateVerified, queryClient, project.uid, project.details?.slug]
+    [
+      contractToVerify,
+      updateVerified,
+      refreshProject,
+      queryClient,
+      project.uid,
+      project.details?.slug,
+    ]
   );
 
   // Define a function to handle dialog close
   const handleClose = useCallback(() => {
-    // Check for unsaved changes
-    if (hasUnsavedChanges) {
+    // Skip unsaved changes check in read-only mode
+    if (!isReadOnly && hasUnsavedChanges) {
       setShowUnsavedWarning(true);
       return;
     }
@@ -172,7 +189,7 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
     if (buttonElement === null && onClose) {
       onClose();
     }
-  }, [hasUnsavedChanges, buttonElement, onClose]);
+  }, [isReadOnly, hasUnsavedChanges, buttonElement, onClose]);
 
   // Force close without checking for unsaved changes
   const handleForceClose = useCallback(() => {
@@ -217,10 +234,6 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
       .length;
   }, [pairs]);
 
-  if (!isAuthorized) {
-    return null;
-  }
-
   return (
     <>
       {buttonElement !== null && (
@@ -242,8 +255,12 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
       <ContractAddressDialog
         isOpen={isOpen}
         onClose={handleClose}
-        title="Link Contract Addresses"
-        description="Add one or more contract addresses for the project. This will enable the project to retrieve its on-chain metrics for impact tracking."
+        title={isReadOnly ? "Contract Addresses" : "Link Contract Addresses"}
+        description={
+          isReadOnly
+            ? "View linked contract addresses for this project. You can verify contracts you deployed."
+            : "Add one or more contract addresses for the project. This will enable the project to retrieve its on-chain metrics for impact tracking."
+        }
       >
         <ContractAddressList
           pairs={pairs}
@@ -255,15 +272,18 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
           onVerify={handleVerify}
           supportedNetworks={SUPPORTED_CONTRACT_NETWORKS}
           error={error}
+          readOnly={isReadOnly}
         />
         <div className="flex flex-row gap-4 mt-10 justify-end">
-          <Button
-            onClick={handleSave}
-            disabled={isLoading || hasValidationErrors}
-            className="bg-brand-blue text-white hover:opacity-90"
-          >
-            {isLoading ? "Saving..." : "Save All"}
-          </Button>
+          {!isReadOnly && (
+            <Button
+              onClick={handleSave}
+              disabled={isLoading || hasValidationErrors}
+              className="bg-brand-blue text-white hover:opacity-90"
+            >
+              {isLoading ? "Saving..." : "Save All"}
+            </Button>
+          )}
           <Button
             className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
             onClick={handleClose}
