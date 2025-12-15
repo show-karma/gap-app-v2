@@ -3,17 +3,12 @@
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import type {
-  IGrantUpdate,
-  IProjectImpact,
-  IProjectUpdate,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { Fragment, useMemo } from "react";
 import { ActivityCard } from "@/components/Shared/ActivityCard";
 import { useOwnerStore, useProjectStore } from "@/store";
-import type { UnifiedMilestone } from "@/types/roadmap";
+import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import type { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { cn } from "@/utilities/tailwind";
 import { ObjectivesSub } from "../Pages/Project/Objective/ObjectivesSub";
@@ -86,15 +81,15 @@ export const MilestonesList = ({
         mergedMap.set(milestone.uid, {
           ...milestone,
           uid: milestone.uid || "",
-          chainID: milestone.source.projectMilestone?.chainID || 0,
-          refUID: milestone.source.projectMilestone?.uid || "",
+          chainID: milestone.chainID || 0,
+          refUID: milestone.source.projectMilestone?.uid || milestone.refUID || "",
         });
         return;
       }
 
       // Create a unique key based on title, description, and dates
-      const startDate = milestone.source.grantMilestone?.milestone.data.startsAt;
-      const endDate = milestone.source.grantMilestone?.milestone.data.endsAt;
+      const startDate = milestone.startsAt;
+      const endDate = milestone.endsAt;
 
       const key = `${milestone.title}|${milestone.description || ""}|${
         startDate || ""
@@ -107,28 +102,40 @@ export const MilestonesList = ({
         if (!existingMilestone.mergedGrants) {
           // Initialize mergedGrants if this is the first duplicate
           const firstGrant = existingMilestone.source.grantMilestone;
+          const firstGrantDetails = firstGrant?.grant.details as
+            | { title?: string; programId?: string }
+            | undefined;
+          const firstCommunityDetails = firstGrant?.grant.community?.details as
+            | { name?: string; imageURL?: string }
+            | undefined;
           existingMilestone.mergedGrants = [
             {
               grantUID: firstGrant?.grant.uid || "",
-              grantTitle: firstGrant?.grant.details?.data.title,
-              communityName: firstGrant?.grant.community?.details?.data.name,
-              communityImage: firstGrant?.grant.community?.details?.data.imageURL,
+              grantTitle: firstGrantDetails?.title,
+              communityName: firstCommunityDetails?.name,
+              communityImage: firstCommunityDetails?.imageURL,
               chainID: firstGrant?.grant.chainID || 0,
               milestoneUID: firstGrant?.milestone.uid || "",
-              programId: firstGrant?.grant.details?.data.programId,
+              programId: firstGrantDetails?.programId,
             },
           ];
         }
 
         // Add the current grant to the merged list
+        const currentGrantDetails = milestone.source.grantMilestone?.grant.details as
+          | { title?: string; programId?: string }
+          | undefined;
+        const currentCommunityDetails = milestone.source.grantMilestone?.grant.community?.details as
+          | { name?: string; imageURL?: string }
+          | undefined;
         existingMilestone.mergedGrants.push({
           grantUID: milestone.source.grantMilestone?.grant.uid || "",
-          grantTitle: milestone.source.grantMilestone?.grant.details?.data.title,
-          communityName: milestone.source.grantMilestone?.grant.community?.details?.data.name,
-          communityImage: milestone.source.grantMilestone?.grant.community?.details?.data.imageURL,
+          grantTitle: currentGrantDetails?.title,
+          communityName: currentCommunityDetails?.name,
+          communityImage: currentCommunityDetails?.imageURL,
           chainID: milestone.source.grantMilestone?.grant.chainID || 0,
           milestoneUID: milestone.source.grantMilestone?.milestone.uid || "",
-          programId: milestone.source.grantMilestone?.grant.details?.data.programId,
+          programId: currentGrantDetails?.programId,
         });
 
         // Sort the merged grants alphabetically
@@ -153,9 +160,7 @@ export const MilestonesList = ({
     return Array.from(mergedMap.values());
   };
 
-  // Type guard function to check if an item is an update
   const isUpdateType = (item: UnifiedMilestone): boolean => {
-    // Consider all non-milestone types as "updates" for rendering purposes
     return (
       item.type === "update" ||
       item.type === "impact" ||
@@ -164,13 +169,15 @@ export const MilestonesList = ({
     );
   };
 
-  // Type guard function to check if an update data exists
-  const hasUpdateData = (
-    item: UnifiedMilestone
-  ): item is UnifiedMilestone & {
-    updateData: IProjectUpdate | IGrantUpdate | IProjectImpact;
-  } => {
-    return isUpdateType(item) && !!item.updateData;
+  const hasProjectUpdate = (item: UnifiedMilestone): boolean => {
+    return item.type === "activity" && !!item.projectUpdate;
+  };
+
+  const hasSdkUpdate = (item: UnifiedMilestone): boolean => {
+    return (
+      (item.type === "grant_update" && !!item.grantUpdate) ||
+      (item.type === "impact" && !!item.projectImpact)
+    );
   };
 
   // Memoize the filtered and unified milestones for better performance
@@ -308,12 +315,22 @@ export const MilestonesList = ({
         </div>
         {unifiedMilestones && unifiedMilestones.length > 0 ? (
           unifiedMilestones.map((item, index) =>
-            hasUpdateData(item) ? (
+            hasProjectUpdate(item) && item.projectUpdate ? (
               <ActivityCard
                 key={`update-${item.uid}-${index}`}
                 activity={{
+                  type: "projectUpdate",
+                  data: item.projectUpdate,
+                  index: index,
+                }}
+                isAuthorized={isAuthorized}
+              />
+            ) : hasSdkUpdate(item) ? (
+              <ActivityCard
+                key={`sdk-update-${item.uid}-${index}`}
+                activity={{
                   type: "update",
-                  data: item.updateData,
+                  data: item.grantUpdate || item.projectImpact!,
                   index: index,
                 }}
                 isAuthorized={isAuthorized}

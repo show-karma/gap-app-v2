@@ -32,36 +32,101 @@ export const INDEXER = {
   V2: {
     PROJECTS: {
       GET: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}`,
+      SEARCH: (query: string, limit?: number) =>
+        `/v2/projects?q=${encodeURIComponent(query)}${limit ? `&limit=${limit}` : ""}`,
+      GRANTS: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/grants`,
       GRANT_MILESTONES: (projectUid: string, programId: string) =>
         `/v2/projects/${projectUid}/grants/${programId}/milestones`,
       UPDATES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/updates`,
+      MILESTONES: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/milestones`,
+      IMPACTS: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/impacts`,
     },
     APPLICATIONS: {
       BY_PROJECT_UID: (projectUID: string) => `/v2/funding-applications/project/${projectUID}`,
-      COMMENTS: (referenceNumber: string) => `/v2/applications/${referenceNumber}/comments`,
+      COMMENTS: (applicationId: string) => `/v2/applications/${applicationId}/comments`,
       DELETE: (referenceNumber: string) => `/v2/funding-applications/${referenceNumber}`,
     },
-    PROGRAM: {
-      FUNDING_DETAILS: (programId: string, chainId: number) =>
-        `/v2/program/funding-details?programId=${programId}&chainId=${chainId}`,
+    SEARCH: (query: string, limit: number = 10) =>
+      `/v2/search?q=${encodeURIComponent(query)}&limit=${limit}`,
+    FUNDING_DETAILS: (programId: string, chainId: number) =>
+      `/v2/program/funding-details?programId=${programId}&chainId=${chainId}`,
+    FUNDING_PROGRAMS: {
+      BY_COMMUNITY: (communityId: string) => `/v2/funding-program-configs/community/${communityId}`,
+      GET: (programId: string, chainId: number) =>
+        `/v2/funding-program-configs/${programId}/${chainId}`,
+      LIST: (community?: string) =>
+        `/v2/funding-program-configs${community ? `?community=${community}` : ""}`,
+      ENABLED: () => `/v2/funding-program-configs/enabled`,
+      REVIEWERS: (programId: string, chainID: number) =>
+        `/v2/funding-program-configs/${programId}/${chainID}/reviewers`,
+      CHECK_PERMISSION: (programId: string, chainID: number, action?: string) => {
+        const params = new URLSearchParams();
+        if (action) params.append("action", action);
+        return `/v2/funding-program-configs/${programId}/${chainID}/check-permission?${params.toString()}`;
+      },
+      MY_REVIEWER_PROGRAMS: () => `/v2/funding-program-configs/my-reviewer-programs`,
+    },
+    FUNDING_APPLICATIONS: {
+      GET: (applicationId: string) => `/v2/funding-applications/${applicationId}`,
+      BY_PROGRAM: (programId: string, chainId: number) =>
+        `/v2/funding-applications/program/${programId}/${chainId}`,
+      BY_EMAIL: (programId: string, chainId: number, email: string) =>
+        `/v2/funding-applications/program/${programId}/${chainId}/by-email?email=${encodeURIComponent(email)}`,
+      STATISTICS: (programId: string, chainId: number) =>
+        `/v2/funding-applications/program/${programId}/${chainId}/statistics`,
+      EXPORT: (programId: string, chainId: number) =>
+        `/v2/funding-applications/program/${programId}/${chainId}/export`,
+      ADMIN_EXPORT: (programId: string, chainId: number) =>
+        `/v2/funding-applications/admin/${programId}/${chainId}/export`,
+      VERSIONS_TIMELINE: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}/versions/timeline`,
+    },
+    USER: {
+      PERMISSIONS: (resource?: string) => {
+        const params = new URLSearchParams();
+        if (resource) params.append("resource", resource);
+        return `/v2/user/permissions?${params.toString()}`;
+      },
+      ADMIN_COMMUNITIES: () => `/v2/user/communities/admin`,
+      PROJECTS: (page?: number, limit?: number) => {
+        const params = new URLSearchParams();
+        if (page !== undefined) params.set("page", page.toString());
+        if (limit !== undefined) params.set("limit", limit.toString());
+        return `/v2/user/projects${params.toString() ? `?${params.toString()}` : ""}`;
+      },
+    },
+    MILESTONE_REVIEWERS: {
+      LIST: (programId: string, chainID: number) =>
+        `/v2/programs/${programId}/${chainID}/milestone-reviewers`,
+    },
+    TRACKS: {
+      LIST: (communityUID: string, includeArchived?: boolean) => {
+        const params = new URLSearchParams({ communityUID });
+        if (includeArchived) params.set("includeArchived", "true");
+        return `/v2/tracks?${params.toString()}`;
+      },
+      BY_ID: (id: string) => `/v2/tracks/${id}`,
+      CREATE: () => `/v2/tracks`,
+      UPDATE: (id: string) => `/v2/tracks/${id}`,
+      ARCHIVE: (id: string) => `/v2/tracks/${id}`,
+      PROGRAM_TRACKS: (programId: string) => `/v2/programs/${programId}/tracks`,
+      ASSIGN_TO_PROGRAM: (programId: string) => `/v2/programs/${programId}/tracks`,
+      UNASSIGN_FROM_PROGRAM: (programId: string, trackId: string) =>
+        `/v2/programs/${programId}/tracks/${trackId}`,
+      PROJECT_TRACKS: (projectId: string, programId: string) =>
+        `/v2/projects/${projectId}/programs/${programId}/tracks`,
+      ASSIGN_TO_PROJECT: (projectId: string) => `/v2/projects/${projectId}/tracks`,
+      UNASSIGN_FROM_PROJECT: (programId: string, projectId: string) =>
+        `/v2/programs/${programId}/projects/${projectId}/tracks`,
+      PROJECTS_BY_TRACK: (communityId: string, programId: string, trackId?: string) => {
+        const base = `/v2/communities/${communityId}/programs/${programId}/projects`;
+        return trackId ? `${base}?trackId=${trackId}` : base;
+      },
     },
   },
   PROGRAMS: {
-    TRACKS: (programId: string) => `/tracks/programs/${programId}/tracks`,
-    TRACKS_ASSIGN: (programId: string) => `/tracks/programs/${programId}/tracks`,
-    TRACKS_REMOVE: (programId: string, trackId: string, communityUID: string) =>
-      `/tracks/programs/${programId}/tracks/${trackId}?communityUID=${communityUID}`,
-    TRACKS_REMOVE_BATCH: (programId: string) => `/tracks/programs/${programId}/tracks`,
     GET: (programId: string) => `/programs/${programId}`,
     COMMUNITY: (communityId: string) => `/communities/${communityId}/programs`,
-  },
-  TRACKS: {
-    ALL: (communityUID: string, includeArchived: boolean = false) =>
-      `/tracks?communityUID=${communityUID}${includeArchived ? "&includeArchived=true" : ""}`,
-    BY_ID: (id: string) => `/tracks/${id}`,
-    CREATE: () => `/tracks`,
-    UPDATE: (id: string) => `/tracks/${id}`,
-    ARCHIVE: (id: string, communityUID: string) => `/tracks/${id}?communityUID=${communityUID}`,
   },
   PROJECT: {
     EXTERNAL: {
@@ -75,7 +140,6 @@ export const INDEXER = {
       VERIFY_SIGNATURE: () => `/v2/projects/contracts/verify-signature`,
     },
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
-    GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
     FUNDEDBY: (address: string) => `/projects/fundedby/${address}`,
     GRANTS_GENIE: (projectId: string) => `/projects/${projectId}/grants-genie`,
@@ -149,7 +213,6 @@ export const INDEXER = {
   COMMUNITY: {
     LIST: ({ page, limit, includeStats }: { page: number; limit: number; includeStats: boolean }) =>
       `/v2/communities/?page=${page}&limit=${limit}&includeStats=${includeStats}`,
-    GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
     CATEGORIES: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
     REGIONS: (idOrSlug: string) => `/v2/communities/${idOrSlug}/regions`,
     V2: {
@@ -216,18 +279,7 @@ export const INDEXER = {
     REPORT: {
       GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/report`,
     },
-    GRANT_TITLES: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/grant-titles`,
-    GRANT_CATEGORIES: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/grant-categories`,
-    GRANT_PROGRAMS: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/grant-programs`,
-    GRANT_PROGRAMS_STATS: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/grant-programs/stats`,
-    GRANT_PROGRAMS_STATS_TOTAL: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/grant-programs/stats/total`,
     PROGRAMS: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/programs`,
-    PROGRAMS_IMPACT: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/programs/impact`,
     ALL_PROGRAMS_IMPACT_AGGREGATE: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/programs/impact-aggregate`,
     PROJECT_DISCOVERY: (communityIdOrSlug: string) =>
@@ -285,11 +337,6 @@ export const INDEXER = {
     },
   },
   GRANTS: {
-    GET_ZK_GROUP: (chainID: string, communityUID: string, grantUID: string, scope: string) =>
-      `/semaphores/groups/check?chainID=${chainID}&communityUID=${communityUID}&grantUID=${grantUID}&scope=${scope}`,
-    BY_UID: (grantUID: string) => `/grants/${grantUID}`,
-    UPDATE_EXTERNAL_ID: `/grants/external-id/update`,
-    REMOVE_EXTERNAL_ID: `/grants/external-id/delete`,
     EXTERNAL_ADDRESS: {
       UPDATE: (grantUID: string) => `/grants/${grantUID}/external/update`,
     },

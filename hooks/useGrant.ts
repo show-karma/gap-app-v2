@@ -1,17 +1,18 @@
 "use client";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { useGrantFormStore } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant/store";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
+import type { Grant } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -28,7 +29,7 @@ export function useGrant() {
   const { switchChainAsync } = useWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
   const selectedProject = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { refetch: refetchGrants } = useProjectGrants(selectedProject?.uid || "");
   const router = useRouter();
   const {
     clearMilestonesForms,
@@ -45,7 +46,7 @@ export function useGrant() {
    * @param oldGrant The grant to update
    * @param data The updated data
    */
-  const updateGrant = async (oldGrant: IGrantResponse, data: Partial<typeof formData>) => {
+  const updateGrant = async (oldGrant: Grant, data: Partial<typeof formData>) => {
     if (!address || !oldGrant?.refUID || !selectedProject) return;
     const _gapClient = gap;
     try {
@@ -98,10 +99,8 @@ export function useGrant() {
       if (!walletClient) return;
 
       const walletSigner = await walletClientToSigner(walletClient);
-      const oldProjectData = await gapIndexerApi
-        .projectBySlug(oldGrant.refUID)
-        .then((res) => res.data);
-      const oldGrantData = oldProjectData?.grants?.find(
+      const oldGrants = await getProjectGrants(oldGrant.refUID).catch(() => []);
+      const oldGrantData = oldGrants?.find(
         (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
       );
 
@@ -115,18 +114,14 @@ export function useGrant() {
             await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, oldGrant.chainID), "POST", {});
           }
           while (retries > 0) {
-            const fetchedProject = await gapIndexerApi
-              .projectBySlug(oldGrant.refUID)
-              .then((res) => res.data)
-              .catch(() => null);
-            const fetchedGrant = fetchedProject?.grants.find(
+            const fetchedGrants = await getProjectGrants(
+              oldGrant.refUID || oldGrant.projectUID || ""
+            ).catch(() => []);
+            const fetchedGrant = fetchedGrants?.find(
               (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
             );
 
-            if (
-              new Date(fetchedGrant?.details?.updatedAt) >
-              new Date(oldGrantData?.details?.updatedAt)
-            ) {
+            if (new Date(fetchedGrant?.updatedAt || 0) > new Date(oldGrantData?.updatedAt || 0)) {
               clearMilestonesForms();
               // Reset form data and go back to step 1 for a new grant
               resetFormData();
@@ -136,10 +131,10 @@ export function useGrant() {
               retries = 0;
               toast.success(MESSAGES.GRANT.UPDATE.SUCCESS);
               changeStepperStep("indexed");
-              await refreshProject().then(() => {
+              await refetchGrants().then(() => {
                 router.push(
                   PAGES.PROJECT.GRANT(
-                    selectedProject.details?.data?.slug || selectedProject.uid,
+                    selectedProject.details?.slug || selectedProject.uid,
                     oldGrant.uid
                   )
                 );

@@ -7,7 +7,7 @@ import { useProjectInstance } from "./useProjectInstance";
 export const useMemberRoles = () => {
   const project = useProjectStore((state) => state.project);
   const { project: projectInstance } = useProjectInstance(
-    project?.details?.data.slug || project?.uid || ""
+    project?.details?.slug || project?.uid || ""
   );
 
   return useQuery<Record<string, Member["role"]>>({

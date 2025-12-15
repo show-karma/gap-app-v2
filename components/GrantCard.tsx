@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link, { useLinkStatus } from "next/link";
 import pluralize from "pluralize";
+import type { Grant } from "@/types/v2/grant";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { rewriteHeadingsToLevel } from "@/utilities/markdown";
@@ -16,7 +16,7 @@ import { ProfilePicture } from "./Utilities/ProfilePicture";
 import { Spinner } from "./Utilities/Spinner";
 
 interface GrantCardProps {
-  grant: IGrantResponse;
+  grant: Grant;
   index: number;
   hideStats?: boolean;
   hideCategories?: boolean;
@@ -40,8 +40,8 @@ export const pickColor = (index: number) => {
   return cardColors[index % cardColors.length];
 };
 
-const updatesLength = (milestones: IGrantResponse["milestones"], updatesLength: number) =>
-  milestones.filter((milestone) => milestone.completed).length + updatesLength;
+const updatesLength = (milestones: Grant["milestones"], updatesCount: number) =>
+  (milestones?.filter((milestone) => milestone.completed)?.length ?? 0) + updatesCount;
 
 // Loading indicator component that uses useLinkStatus
 const LoadingIndicator = () => {
@@ -68,9 +68,9 @@ const GrantCardContent = ({
 }: GrantCardProps) => {
   const { pending } = useLinkStatus();
 
-  const selectedTrackIds = grant.details?.data?.selectedTrackIds as string[] | undefined;
-  const communityId = grant.data?.communityUID;
-  const programId = grant.details?.data?.programId;
+  const selectedTrackIds = grant.details?.selectedTrackIds as string[] | undefined;
+  const communityId = grant.communityUID;
+  const programId = grant.details?.programId;
 
   // Extract the base programId if it includes a chainId suffix (format: programId_chainId)
   const _baseProgramId = programId?.includes("_") ? programId.split("_")[0] : programId;
@@ -109,18 +109,18 @@ const GrantCardContent = ({
             <div className={cn("flex flex-row items-center gap-2", actionSlot ? "mt-1" : "")}>
               <div className="flex justify-center">
                 <ProfilePicture
-                  imageURL={grant.project?.details?.data?.imageURL}
+                  imageURL={grant.project?.details?.logoUrl}
                   name={grant.project?.uid || grant.refUID || ""}
                   size="32"
                   className="h-8 w-8 min-w-8 min-h-8 border border-white shadow-sm"
-                  alt={grant.project?.details?.data?.title || "Project"}
+                  alt={grant.project?.details?.title || "Project"}
                 />
               </div>
               <p
                 id="grant-project-title"
                 className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm flex-1"
               >
-                {grant.project?.details?.data?.title || grant.uid}
+                {grant.project?.details?.title || grant.uid}
               </p>
             </div>
           </div>
@@ -137,7 +137,7 @@ const GrantCardContent = ({
           <div className="flex flex-col gap-1 flex-1 h-[48px]">
             <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-3">
               <MarkdownPreview
-                source={grant.project?.details?.data?.description?.slice(0, 200)}
+                source={grant.project?.details?.description?.slice(0, 200)}
                 allowElement={(element) => {
                   // Prevent rendering links to avoid nested <a> tags
                   return element.tagName !== "a";
@@ -160,8 +160,8 @@ const GrantCardContent = ({
               <div className="flex w-full flex-row flex-wrap justify-start gap-1">
                 <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50   dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
                   <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-                    {formatCurrency(grant.milestones?.length)}{" "}
-                    {pluralize("Milestone", grant.milestones?.length)}
+                    {formatCurrency(grant.milestones?.length || 0)}{" "}
+                    {pluralize("Milestone", grant.milestones?.length || 0)}
                   </p>
                 </div>
 
@@ -174,8 +174,11 @@ const GrantCardContent = ({
 
                 <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-600 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
                   <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-                    {formatCurrency(updatesLength(grant.milestones, grant.updates.length))}{" "}
-                    {pluralize("Update", updatesLength(grant.milestones, grant.updates.length))}
+                    {formatCurrency(updatesLength(grant.milestones, grant.updates?.length ?? 0))}{" "}
+                    {pluralize(
+                      "Update",
+                      updatesLength(grant.milestones, grant.updates?.length ?? 0)
+                    )}
                   </p>
                 </div>
               </div>
@@ -210,7 +213,7 @@ export const GrantCard = ({
   actionSlot,
   cardClassName,
 }: GrantCardProps) => {
-  const href = PAGES.PROJECT.OVERVIEW(grant.project?.details?.data?.slug || grant.refUID || "");
+  const href = PAGES.PROJECT.OVERVIEW(grant.project?.details?.slug || grant.refUID || "");
 
   return (
     <Link

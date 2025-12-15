@@ -1,5 +1,6 @@
 import type { GAP } from "@show-karma/karma-gap-sdk";
-import type { Hex } from "viem";
+import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getProjectGrants } from "@/services/project-grants.service";
 
 interface FetchGrantInstanceParams {
   gapClient: GAP;
@@ -8,12 +9,12 @@ interface FetchGrantInstanceParams {
 }
 
 /**
- * Fetch project and find grant instance by UID
+ * Fetch grants and find grant instance by UID
  * Reusable for any grant operation
  *
  * @param params - Parameters for fetching grant instance
- * @returns Grant instance from the SDK
- * @throws Error if project or grant not found
+ * @returns Grant instance
+ * @throws Error if grant not found
  *
  * @example
  * ```typescript
@@ -32,20 +33,38 @@ export const fetchGrantInstance = async ({
   projectUid,
   grantUid,
 }: FetchGrantInstanceParams) => {
-  const fetchedProject = await gapClient.fetch.projectById(projectUid as Hex);
+  const grants = await getProjectGrants(projectUid);
 
-  if (!fetchedProject) {
-    throw new Error(
-      "Failed to fetch project data. The project may have been deleted or you may not have permission to access it."
-    );
+  const grantInstance = grants?.find((g) => g.uid.toLowerCase() === grantUid.toLowerCase());
+
+  if (!grantInstance) {
+    throw new Error("Grant not found in project. Please refresh the page and try again.");
   }
 
-  const grantInstance = fetchedProject.grants.find(
+  return grantInstance;
+};
+
+/**
+ * Get SDK Grant class instance for attestation operations
+ * This is needed because V2 data types don't have attestation methods
+ */
+export const getSDKGrantInstance = async ({
+  gapClient,
+  projectUid,
+  grantUid,
+}: FetchGrantInstanceParams) => {
+  const fetchedProject = await gapClient.fetch.projectById(projectUid);
+
+  if (!fetchedProject) {
+    throw new Error("Failed to fetch project from SDK");
+  }
+
+  const grantInstance = fetchedProject.grants?.find(
     (g) => g.uid.toLowerCase() === grantUid.toLowerCase()
   );
 
   if (!grantInstance) {
-    throw new Error("Grant not found in project. Please refresh the page and try again.");
+    throw new Error("Grant not found in SDK project");
   }
 
   return grantInstance;
@@ -85,12 +104,8 @@ export const fetchMilestoneInstance = async ({
   programId,
   milestoneUid,
 }: FetchMilestoneInstanceParams) => {
-  const fetchedProject = await gapClient.fetch.projectById(projectUid);
-  if (!fetchedProject) {
-    throw new Error("Failed to fetch project data");
-  }
-
-  const grantInstance = fetchedProject.grants.find((g) => g.details?.programId === programId);
+  const grants = await getProjectGrants(projectUid);
+  const grantInstance = grants.find((g) => g.details?.programId === programId);
 
   if (!grantInstance) {
     throw new Error("Grant not found");

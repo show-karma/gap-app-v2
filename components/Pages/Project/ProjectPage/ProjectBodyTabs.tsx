@@ -29,11 +29,11 @@ export const InformationBlock: FC = () => {
             side="left"
             words={200}
           >
-            {project?.details?.data?.description || ""}
+            {project?.details?.description || ""}
           </ReadMore>
         </div>
       </div>
-      {project?.details?.data?.missionSummary && (
+      {project?.details?.missionSummary && (
         <div className="flex flex-row gap-2 items-start justify-start">
           <TargetIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px]  text-black dark:text-zinc-100" />
           <div className="flex flex-col gap-1 justify-start items-start">
@@ -45,13 +45,13 @@ export const InformationBlock: FC = () => {
               side="left"
               words={200}
             >
-              {project?.details?.data?.missionSummary || ""}
+              {project?.details?.missionSummary || ""}
             </ReadMore>
           </div>
         </div>
       )}
 
-      {project?.details?.data?.problem && (
+      {project?.details?.problem && (
         <div className="flex flex-row gap-2 items-start justify-start">
           <ExclamationTriangleIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
           <div className="flex flex-col gap-1 justify-start items-start">
@@ -63,12 +63,12 @@ export const InformationBlock: FC = () => {
               side="left"
               words={200}
             >
-              {project?.details?.data?.problem || ""}
+              {project?.details?.problem || ""}
             </ReadMore>
           </div>
         </div>
       )}
-      {project?.details?.data?.solution && (
+      {project?.details?.solution && (
         <div className="flex flex-row gap-2 items-start justify-start">
           <CheckCircleIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
           <div className="flex flex-col gap-1 justify-start items-start">
@@ -80,12 +80,12 @@ export const InformationBlock: FC = () => {
               side="left"
               words={200}
             >
-              {project?.details?.data?.solution || ""}
+              {project?.details?.solution || ""}
             </ReadMore>
           </div>
         </div>
       )}
-      {project?.details?.data?.locationOfImpact && (
+      {project?.details?.locationOfImpact && (
         <div className="flex flex-row gap-2 items-start justify-start">
           <MapPinIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
           <div className="flex flex-col gap-1 justify-start items-start">
@@ -99,15 +99,15 @@ export const InformationBlock: FC = () => {
               side="left"
               words={200}
             >
-              {project?.details?.data?.locationOfImpact || ""}
+              {project?.details?.locationOfImpact || ""}
             </ReadMore>
           </div>
         </div>
       )}
-      {project?.details?.data?.businessModel ||
-      project?.details?.data?.pathToTake ||
-      project?.details?.data?.stageIn ||
-      project?.details?.data?.raisedMoney ? (
+      {project?.details?.businessModel ||
+      project?.details?.pathToTake ||
+      project?.details?.stageIn ||
+      project?.details?.raisedMoney ? (
         <div className="flex flex-col px-6 py-6 gap-6 border-[#DCDFEA] border rounded-xl">
           <div className="flex flex-row gap-2 items-start justify-start">
             <BusinessModelIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
@@ -122,36 +122,36 @@ export const InformationBlock: FC = () => {
                 side="left"
                 words={200}
               >
-                {project?.details?.data?.businessModel || ""}
+                {project?.details?.businessModel || ""}
               </ReadMore>
             </div>
           </div>
 
           <div className="flex flex-row  max-sm:flex-col gap-10 max-sm:gap-4 items-center max-sm:items-start justify-start flex-wrap">
-            {project?.details?.data?.pathToTake ? (
+            {project?.details?.pathToTake ? (
               <div className="flex flex-row gap-2 max-sm:flex-col items-start justify-start">
                 <div className="flex flex-row gap-3 justify-start items-start">
                   <PathIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
                   <p className="font-bold leading-normal text-black dark:text-zinc-100">Path</p>
                 </div>
                 <p className="font-normal text-base leading-normal text-black dark:text-zinc-100">
-                  {project?.details?.data?.pathToTake}
+                  {project?.details?.pathToTake}
                 </p>
               </div>
             ) : null}
-            {project?.details?.data?.stageIn ? (
+            {project?.details?.stageIn ? (
               <div className="flex flex-row gap-2 max-sm:flex-col items-start justify-start">
                 <div className="flex flex-row gap-3 justify-start items-start">
                   <StageIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
                   <p className="font-bold leading-normal text-black dark:text-zinc-100">Stage</p>
                 </div>
                 <p className="font-normal text-base leading-normal text-black dark:text-zinc-100">
-                  {project?.details?.data?.stageIn}
+                  {project?.details?.stageIn}
                 </p>
               </div>
             ) : null}
           </div>
-          {project?.details?.data?.raisedMoney ? (
+          {project?.details?.raisedMoney ? (
             <div className="flex flex-row gap-2 max-sm:flex-col items-start justify-start">
               <div className="flex flex-row gap-3 justify-start items-start">
                 <FundsRaisedIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
@@ -160,7 +160,7 @@ export const InformationBlock: FC = () => {
                 </p>
               </div>
               <p className="font-normal text-base leading-normal text-black dark:text-zinc-100">
-                {project?.details?.data?.raisedMoney}
+                {project?.details?.raisedMoney}
               </p>
             </div>
           ) : null}

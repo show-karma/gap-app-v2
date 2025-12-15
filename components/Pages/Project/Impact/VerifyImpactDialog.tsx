@@ -18,6 +18,8 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
+import { getProjectImpacts } from "@/services/project-impacts.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -69,7 +71,8 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({ impact, addVer
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
   const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const projectIdOrSlug = project?.details?.slug || project?.uid || "";
+  const { refetch: refetchImpacts } = useProjectImpacts(projectIdOrSlug);
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -128,19 +131,22 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({ impact, addVer
           }
           let retries = 1000;
           changeStepperStep("indexing");
-          let fetchedProject = null;
           while (retries > 0) {
-            fetchedProject = await gapClient!.fetch
-              .projectById(project.uid as Hex)
-              .catch(() => null);
-            if (
-              fetchedProject?.impacts?.find((impact) =>
-                impact.verified?.find((v) => v.attester?.toLowerCase() === address?.toLowerCase())
-              )
-            ) {
-              retries = 0;
-              changeStepperStep("indexed");
-              await refreshProject();
+            try {
+              const polledImpacts = await getProjectImpacts(projectIdOrSlug);
+              if (
+                polledImpacts.find((polledImpact) =>
+                  polledImpact.verified?.find(
+                    (v: any) => v.attester?.toLowerCase() === address?.toLowerCase()
+                  )
+                )
+              ) {
+                retries = 0;
+                await refetchImpacts();
+                changeStepperStep("indexed");
+              }
+            } catch {
+              // Ignore polling errors, continue retrying
             }
             retries -= 1;
             // eslint-disable-next-line no-await-in-loop, no-promise-executor-return

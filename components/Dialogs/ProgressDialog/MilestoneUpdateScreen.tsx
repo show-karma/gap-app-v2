@@ -1,23 +1,23 @@
 "use client";
-import type {
-  IGrantResponse,
-  IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Image from "next/image";
 import { useState } from "react";
 import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
 import { Button } from "@/components/Utilities/Button";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
+import type { Grant, GrantMilestone } from "@/types/v2/grant";
 import { Dropdown } from "./Dropdown";
 import { NoGrant } from "./NoGrant";
 
 export const MilestoneUpdateScreen = () => {
   const { project } = useProjectStore();
   const { closeProgressModal } = useProgressModalStore();
-  const [selectedGrant, setSelectedGrant] = useState<IGrantResponse | undefined>();
-  const [selectedMilestone, setSelectedMilestone] = useState<IMilestoneResponse | undefined>();
-  const grants: IGrantResponse[] = project?.grants || [];
+  const [selectedGrant, setSelectedGrant] = useState<Grant | undefined>();
+  const [selectedMilestone, setSelectedMilestone] = useState<GrantMilestone | undefined>();
+
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(project?.uid || "");
   const { setProgressModalScreen } = useProgressModalStore();
 
   if (!grants.length && project) {
@@ -34,14 +34,14 @@ export const MilestoneUpdateScreen = () => {
         <div className="text-sm font-bold text-black dark:text-zinc-100">Select Grant</div>
         <Dropdown
           list={grants.map((grant) => ({
-            value: grant.details?.data.title || "",
+            value: grant.details?.title || "",
             id: grant.uid,
             timestamp: grant.createdAt,
           }))}
           onSelectFunction={(value: string) => {
             const newGrant = grants.find((grant) => grant.uid === value);
             setSelectedGrant(newGrant);
-            const availableMilestones = newGrant?.milestones.filter(
+            const availableMilestones = newGrant?.milestones?.filter(
               (milestone) => !milestone.completed
             );
             if (availableMilestones && availableMilestones.length > 0) {
@@ -58,7 +58,7 @@ export const MilestoneUpdateScreen = () => {
   };
 
   const MilestoneSelection = () => {
-    const possibleMilestones = selectedGrant?.milestones.filter(
+    const possibleMilestones = selectedGrant?.milestones?.filter(
       (milestone) => !milestone.completed
     );
     return (
@@ -67,7 +67,7 @@ export const MilestoneUpdateScreen = () => {
         {possibleMilestones?.length ? (
           <Dropdown
             list={possibleMilestones.map((milestone) => ({
-              value: milestone.data.title || "",
+              value: milestone.title || "",
               id: milestone.uid,
               timestamp: milestone.createdAt,
             }))}
