@@ -159,7 +159,11 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         await onStatusChange(pendingStatus, reason, approvedAmount, approvedCurrency);
         setStatusModalOpen(false);
         setPendingStatus("");
-        toast.success(`Application status updated to ${formatStatus(pendingStatus)}`);
+        if (pendingStatus === "approved") {
+          toast.success("Application approved successfully!");
+        } else {
+          toast.success(`Application status updated to ${formatStatus(pendingStatus)}`);
+        }
       } catch (error) {
         console.error("Failed to update status:", error);
         toast.error("Failed to update application status");

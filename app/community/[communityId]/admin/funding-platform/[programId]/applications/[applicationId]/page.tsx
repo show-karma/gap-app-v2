@@ -146,6 +146,11 @@ export default function ApplicationDetailPage() {
       // Success: close modal and clear state
       setIsStatusModalOpen(false);
       setPendingStatus("");
+      if (pendingStatus === "approved") {
+        toast.success("Application approved successfully!");
+      } else {
+        toast.success(`Application status updated to ${pendingStatus}`);
+      }
     } catch (error) {
       // Error: keep modal open so user can retry
       const errorMessage =

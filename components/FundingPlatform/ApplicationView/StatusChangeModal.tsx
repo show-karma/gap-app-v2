@@ -13,7 +13,7 @@ import type { IFundingProgramConfig } from "@/types/funding-platform";
 interface StatusChangeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (reason?: string, approvedAmount?: string, approvedCurrency?: string) => void;
+  onConfirm: (reason?: string, approvedAmount?: string, approvedCurrency?: string) => Promise<void>;
   status: string;
   isSubmitting?: boolean;
   isReasonRequired?: boolean;
@@ -165,7 +165,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
     enabled: isOpen && isApprovalStatus && !!programId && !!chainId,
   });
 
-  const isLoadingCurrency = fundingDetailsQuery.isLoading;
+  const isLoadingCurrency = fundingDetailsQuery.isPending;
 
   // Handle funding details data when it arrives
   useEffect(() => {
@@ -181,15 +181,13 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
       if (currency) {
         // Normalize currency (trim and uppercase) to match validation requirements
         const normalizedCurrency = currency.trim().toUpperCase();
-        setApprovedCurrency(normalizedCurrency);
-        setIsCurrencyFromAPI(true);
-        // Validate and clear any currency errors
         const currencyRegex = /^[A-Z]+$/;
-        if (currencyRegex.test(normalizedCurrency)) {
-          setCurrencyError(null);
-        } else {
-          setCurrencyError("Currency must be a valid code (e.g., USD, ETH, USDC)");
-        }
+        const isValid = currencyRegex.test(normalizedCurrency);
+        // Avoid overwriting manual user input if they already started typing
+        setApprovedCurrency((current) => (current.trim() ? current : normalizedCurrency));
+        // Only disable field if currency is valid - if invalid, allow manual editing
+        setIsCurrencyFromAPI(isValid);
+        setCurrencyError(isValid ? null : "Currency must be a valid code (e.g., USD, ETH, USDC)");
       }
     }
 
@@ -228,6 +226,8 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   const handleCurrencyChange = (value: string) => {
     // Don't normalize while typing - only normalize on blur/submit for better UX
     setApprovedCurrency(value);
+    // Allow editing when user manually changes the currency
+    setIsCurrencyFromAPI(false);
     if (isApprovalStatus) {
       const trimmedValue = value.trim();
       if (!trimmedValue) {
@@ -243,7 +243,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     // If reason is required but not provided, don't proceed
     if (isReasonActuallyRequired && !reason.trim()) {
       return;
@@ -264,12 +264,12 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
       }
     }
 
-    onConfirm(
+    await onConfirm(
       reason || undefined,
       isApprovalStatus ? approvedAmount.trim() : undefined,
       isApprovalStatus ? approvedCurrency.trim().toUpperCase() : undefined
     );
-    resetFormState();
+    // Form will be reset when modal closes (handled by parent on success or via handleClose)
   };
 
   const handleClose = useCallback(() => {

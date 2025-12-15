@@ -1,6 +1,7 @@
 "use client";
 
 import { type FC, useState } from "react";
+import toast from "react-hot-toast";
 import SortableTableHeader from "@/components/Utilities/SortableTableHeader";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
 import type { IApplicationListProps, IFundingApplication } from "@/types/funding-platform";
@@ -106,9 +107,15 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
         setStatusModalOpen(false);
         setPendingStatus("");
         setPendingApplicationId("");
+        if (pendingStatus === "approved") {
+          toast.success("Application approved successfully!");
+        } else {
+          toast.success(`Application status updated to ${pendingStatus}`);
+        }
       } catch (error) {
         console.error("Failed to update status:", error);
         setIsUpdatingStatus(false);
+        toast.error("Failed to update application status");
       }
     }
   };
