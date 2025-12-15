@@ -37,34 +37,32 @@ export interface UnifiedSearchResponse {
 }
 
 interface UnifiedSearchApiResponse {
-  data: {
-    projects: Array<{
-      uid: string;
-      chainID: number;
-      title: string | null;
-      slug: string | null;
-      description: string | null;
-      logoUrl: string | null;
-      createdAt: string;
-    }>;
-    communities: Array<{
-      uid: string;
-      chainID: number;
-      name: string | null;
-      slug: string | null;
-      description: string | null;
-      imageUrl: string | null;
-      createdAt: string;
-    }>;
-  };
+  projects: Array<{
+    uid: string;
+    chainID: number;
+    title: string | null;
+    slug: string | null;
+    description: string | null;
+    logoUrl: string | null;
+    createdAt: string;
+  }>;
+  communities: Array<{
+    uid: string;
+    chainID: number;
+    name: string | null;
+    slug: string | null;
+    description: string | null;
+    imageUrl: string | null;
+    createdAt: string;
+  }>;
 }
 
 /**
  * Transform API response to match existing UnifiedSearchResponse format
- * Updated to use V2 API response format: { data: { projects, communities } }
+ * API returns: { projects: [...], communities: [...] }
  */
 const transformSearchResponse = (apiResponse: UnifiedSearchApiResponse): UnifiedSearchResponse => {
-  const { projects, communities } = apiResponse.data;
+  const { projects, communities } = apiResponse;
 
   return {
     projects: projects.map((p) => ({
