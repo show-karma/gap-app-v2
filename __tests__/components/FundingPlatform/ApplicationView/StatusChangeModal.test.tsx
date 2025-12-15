@@ -143,7 +143,7 @@ describe("StatusChangeModal", () => {
   const defaultProps = {
     isOpen: true,
     onClose: jest.fn(),
-    onConfirm: jest.fn(),
+    onConfirm: jest.fn().mockResolvedValue(undefined),
     status: "approved",
     isSubmitting: false,
     isReasonRequired: false,
@@ -175,9 +175,16 @@ describe("StatusChangeModal", () => {
 
   // Helper function to enter currency in text input
   const enterCurrency = async (currency: string) => {
-    const currencyInput = screen.getByLabelText(/approved currency/i) as HTMLInputElement;
-    expect(currencyInput).toBeInTheDocument();
-    expect(currencyInput).not.toBeDisabled();
+    // Wait for the currency field to become enabled (query might be loading)
+    const currencyInput = await waitFor(
+      () => {
+        const input = screen.getByLabelText(/approved currency/i) as HTMLInputElement;
+        expect(input).toBeInTheDocument();
+        expect(input).not.toBeDisabled();
+        return input;
+      },
+      { timeout: 2000 }
+    );
 
     fireEvent.change(currencyInput, { target: { value: currency } });
 
@@ -298,7 +305,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should prevent submission with empty reason when required (handleConfirm validation)", () => {
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="revision_requested" onConfirm={onConfirm} />
       );
@@ -313,7 +320,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should prevent submission with whitespace-only reason when required", () => {
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="rejected" onConfirm={onConfirm} />
       );
@@ -329,7 +336,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should allow submission with valid reason when required", () => {
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="revision_requested" onConfirm={onConfirm} />
       );
@@ -346,7 +353,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should allow submission without reason when not required", async () => {
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
       );
@@ -396,7 +403,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should reset reason field after successful confirmation", async () => {
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       const { rerender, queryClient } = renderWithQueryClient(
         <StatusChangeModal {...defaultProps} onConfirm={onConfirm} />
       );
@@ -415,15 +422,23 @@ describe("StatusChangeModal", () => {
       await waitFor(() => {
         expect(confirmButton).not.toBeDisabled();
       });
-      fireEvent.click(confirmButton);
+      await fireEvent.click(confirmButton);
 
       expect(onConfirm).toHaveBeenCalled();
 
-      // After confirmation, reason should be reset (component resets state)
-      // This tests the setReason("") call in handleConfirm
+      // After confirmation, the form should reset when modal closes
+      // The parent component closes the modal after successful confirmation
+      // This tests that resetFormState is called when isOpen becomes false
       rerender(
         <QueryClientProvider client={queryClient}>
-          <StatusChangeModal {...defaultProps} isOpen={true} />
+          <StatusChangeModal {...defaultProps} isOpen={false} onConfirm={onConfirm} />
+        </QueryClientProvider>
+      );
+
+      // Now reopen the modal - form should be reset
+      rerender(
+        <QueryClientProvider client={queryClient}>
+          <StatusChangeModal {...defaultProps} isOpen={true} onConfirm={onConfirm} />
         </QueryClientProvider>
       );
       const newEditor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
@@ -554,7 +569,7 @@ describe("StatusChangeModal", () => {
 
   describe("User Interactions", () => {
     it("should call onConfirm with reason when provided", async () => {
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
       const editor = screen.getByTestId("markdown-editor");
@@ -577,7 +592,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should call onConfirm with undefined when reason not provided and not required", async () => {
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
       // Fill in required amount and currency fields for approved status
@@ -660,7 +675,7 @@ describe("StatusChangeModal", () => {
 
     it("should handle very long reason text", async () => {
       const longReason = "A".repeat(1000);
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
       const editor = screen.getByTestId("markdown-editor");
@@ -684,7 +699,7 @@ describe("StatusChangeModal", () => {
 
     it("should handle special characters in reason", async () => {
       const specialReason = 'Reason with <script>alert("xss")</script> & special chars';
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
       const editor = screen.getByTestId("markdown-editor");
@@ -817,7 +832,7 @@ describe("StatusChangeModal", () => {
 
   describe("Amount Validation", () => {
     it("should show error for invalid amount on form submission", async () => {
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
       );
@@ -848,7 +863,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should accept valid amount", async () => {
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
       );
@@ -895,7 +910,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should accept long currency codes (e.g., USDGLO)", async () => {
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       const { fundingPlatformService } = require("@/services/fundingPlatformService");
       fundingPlatformService.programs.getFundingDetails.mockResolvedValue({
         currency: "USDGLO",
@@ -1073,7 +1088,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should accept decimal amounts", async () => {
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
       );
@@ -1093,7 +1108,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should accept very small decimal amounts", async () => {
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
       );
@@ -1113,7 +1128,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should accept very large amounts", async () => {
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
       );
@@ -1170,7 +1185,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should trim whitespace from amount", async () => {
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
       );
@@ -1537,7 +1552,7 @@ describe("StatusChangeModal", () => {
 
   describe("Currency Normalization", () => {
     it("should normalize currency to uppercase when passed to onConfirm", async () => {
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal {...defaultProps} status="approved" onConfirm={onConfirm} />
       );
@@ -1817,7 +1832,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should pass prepopulated content to onConfirm when submitted", async () => {
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
@@ -2077,7 +2092,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should pass prepopulated content to onConfirm when submitted", async () => {
-      const onConfirm = jest.fn();
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}

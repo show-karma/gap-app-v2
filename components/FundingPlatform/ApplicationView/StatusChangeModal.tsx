@@ -165,7 +165,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
     enabled: isOpen && isApprovalStatus && !!programId && !!chainId,
   });
 
-  const isLoadingCurrency = fundingDetailsQuery.isPending;
+  const isLoadingCurrency = fundingDetailsQuery.isPending && fundingDetailsQuery.isEnabled;
 
   // Handle funding details data when it arrives
   useEffect(() => {
