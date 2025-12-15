@@ -25,7 +25,7 @@ export const NoGrant = () => {
         type="button"
         className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 bg-blue-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-blue-600"
         onClick={() => {
-          router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(project.details?.data.slug || project.uid));
+          router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(project.details?.slug || project.uid));
           router.refresh();
           closeProgressModal();
         }}

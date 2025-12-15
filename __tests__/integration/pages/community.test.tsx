@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 
-jest.mock("@/utilities/queries/v2/community", () => ({
+jest.mock("@/utilities/queries/v2/getCommunityData", () => ({
   getCommunityDetails: jest.fn(),
   getCommunityStats: jest.fn(),
   getCommunityProjects: jest.fn(),
@@ -45,7 +45,7 @@ describe("Community Page", () => {
       getCommunityStats,
       getCommunityProjects,
       getCommunityCategories,
-    } = require("@/utilities/queries/v2/community");
+    } = require("@/utilities/queries/v2/getCommunityData");
 
     getCommunityDetails.mockResolvedValue(mockCommunityDetails);
     getCommunityStats.mockResolvedValue(mockCommunityStats);

@@ -1,36 +1,37 @@
 import type { ApplicationComment } from "@/types/funding-platform";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
-// Create axios instance with authentication
+// Keep apiClient for mutations (POST, PUT, DELETE)
 const apiClient = createAuthenticatedApiClient(API_URL, 30000);
-
-// Add response interceptor for error handling
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error("Comment API Error:", error.response?.data || error.message);
-    throw error;
-  }
-);
 
 export const applicationCommentsService = {
   /**
    * Get comments for an application
    */
   async getComments(applicationId: string, isAdmin?: boolean): Promise<ApplicationComment[]> {
-    const params: any = {};
+    const params: Record<string, string> = {};
     if (isAdmin) {
       params.admin = "true";
     }
 
-    const response = await apiClient.get(`/v2/applications/${applicationId}/comments`, {
-      ...params,
-    });
+    const [data, error] = await fetchData<{ comments: ApplicationComment[] }>(
+      INDEXER.V2.APPLICATIONS.COMMENTS(applicationId),
+      "GET",
+      {},
+      params
+    );
 
-    return response.data.comments;
+    if (error || !data) {
+      console.error("Comment API Error:", error);
+      throw new Error(error || "Failed to fetch comments");
+    }
+
+    return data.comments;
   },
 
   /**
@@ -41,7 +42,7 @@ export const applicationCommentsService = {
     content: string,
     authorName?: string
   ): Promise<ApplicationComment> {
-    const response = await apiClient.post(`/v2/applications/${applicationId}/comments`, {
+    const response = await apiClient.post(INDEXER.V2.APPLICATIONS.COMMENTS(applicationId), {
       content,
       authorName,
     });

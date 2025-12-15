@@ -1,30 +1,19 @@
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
+import { getProject } from "@/services/project.service";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { zeroUID } from "@/utilities/commons";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { getProjectData } from "../api/project";
+import { PAGES } from "../pages";
 
-export const getProjectCachedData = cache(async (projectId: string): Promise<IProjectResponse> => {
-  let project: IProjectResponse | undefined;
-
-  try {
-    const projectData = await getProjectData(projectId, {
-      cache: "reload",
-      next: { revalidate: 60 },
-    });
-
-    project = projectData;
-  } catch (_error) {
-    notFound();
-  }
+export const getProjectCachedData = cache(async (projectId: string): Promise<ProjectResponse> => {
+  const project = await getProject(projectId);
 
   if (!project || project.uid === zeroUID) {
     notFound();
   }
 
   const isUid = /^0x[0-9a-fA-F]{64}$/.test(projectId);
-  const canonicalSlug = project?.details?.data?.slug;
+  const canonicalSlug = project?.details?.slug;
 
   if (!isUid && canonicalSlug && canonicalSlug.toLowerCase() !== projectId.toLowerCase()) {
     redirect(`/project/${canonicalSlug}`);
@@ -32,18 +21,12 @@ export const getProjectCachedData = cache(async (projectId: string): Promise<IPr
 
   if (
     project?.pointers?.length &&
-    project.pointers[0]?.data?.ogProjectUID &&
-    project.pointers[0].data.ogProjectUID !== project.uid
+    project.pointers[0]?.originalProjectUID &&
+    project.pointers[0].originalProjectUID !== project.uid
   ) {
-    const original = await gapIndexerApi
-      .projectBySlug(project.pointers[0].data.ogProjectUID)
-      .then((res) => res.data)
-      .catch(() => null);
-
-    const originalSlug = original?.details?.data?.slug;
-
-    if (original && originalSlug && originalSlug !== projectId) {
-      redirect(`/project/${originalSlug}`);
+    const original = await getProject(project.pointers[0].originalProjectUID);
+    if (original && original?.details.slug && original?.details.slug !== projectId) {
+      redirect(PAGES.PROJECT.OVERVIEW(original?.details.slug as string));
     }
   }
 

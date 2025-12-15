@@ -10,10 +10,9 @@ import { useAccount } from "wagmi";
 import { CreateTrackModal } from "@/components/Pages/Communities/Tracks/CreateTrackModal";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useAuth } from "@/hooks/useAuth";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
-import { useStaff } from "@/hooks/useStaff";
 import {
   useArchiveTrack,
   useAssignTracksToProgram,
@@ -24,7 +23,7 @@ import {
   useUpdateTrack,
 } from "@/hooks/useTracks";
 import type { Track } from "@/services/tracks";
-import type { CommunityDetails } from "@/types/community";
+import type { Community } from "@/types/v2/community";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -36,7 +35,7 @@ export const TracksAdminPage = ({
   community,
 }: {
   communityId: string;
-  community: CommunityDetails;
+  community: Community;
 }) => {
   const { address, isConnected } = useAccount();
   const { authenticated: isAuth } = useAuth();
@@ -52,9 +51,7 @@ export const TracksAdminPage = ({
 
   const _signer = useSigner();
 
-  // Check if user is admin of this community
-  const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(community?.uid);
-  const { isStaff } = useStaff();
+  const { hasAccess, isLoading: loading } = useCommunityAdminAccess(community?.uid);
 
   // React Query hooks
   const {
@@ -188,7 +185,7 @@ export const TracksAdminPage = ({
     );
   }
 
-  if (!isAdmin && !isStaff) {
+  if (!hasAccess) {
     return (
       <div className="flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
         <p className="text-gray-600 dark:text-gray-300 text-center">
@@ -204,7 +201,7 @@ export const TracksAdminPage = ({
   return (
     <div className="max-w-full w-full">
       <div className="w-full flex flex-row items-center justify-between max-w-4xl mb-4">
-        <Link href={PAGES.ADMIN.ROOT(community?.details?.slug || community?.uid)}>
+        <Link href={PAGES.ADMIN.ROOT(community?.details?.slug || (community?.uid as string))}>
           <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
             <ChevronLeftIcon className="h-5 w-5" />
             Return to admin page

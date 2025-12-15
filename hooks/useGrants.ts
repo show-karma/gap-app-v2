@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
+import type { Grant } from "@/types/v2/grant";
 import { reduceText } from "@/utilities/reduceText";
 import { type GrantsFilter, getGrants } from "@/utilities/sdk/communities/getGrants";
 
@@ -10,11 +11,12 @@ export type SimplifiedGrant = {
   description: string;
   createdOn: string;
   categories: string[];
+  regions: string[];
   grantChainId: number;
   uid: string;
   projectUid: string;
   projectSlug: string;
-  projectChainId: number;
+  projectChainId?: number;
   programId: string;
   payoutAddress?: string;
   payoutAmount?: string;
@@ -41,21 +43,21 @@ export const useGrants = (communityId: string, options?: UseGrantsOptions) => {
       try {
         const { grants: fetchedGrants, pageInfo } = await getGrants(
           communityId as Hex,
-          { ...options?.filter, sortBy: options?.sortBy as any },
+          { ...options?.filter, sortBy: options?.sortBy as GrantsFilter["sortBy"] },
           options?.paginationOps
         );
         if (fetchedGrants) {
-          const grants = fetchedGrants.map((grant) => ({
-            grant: grant.details?.data?.title || grant.uid || "",
-            project: grant.project?.details?.data?.title || "",
-            description: reduceText(grant.details?.data?.description || ""),
+          const grants = (fetchedGrants as unknown as Grant[]).map((grant) => ({
+            grant: grant.details?.title || grant.uid || "",
+            project: grant.project?.details?.title || "",
+            description: reduceText(grant.details?.description || ""),
             categories: grant.categories || [],
             regions: grant.regions || [],
             uid: grant.uid,
             projectUid: grant.project?.uid || "",
-            projectSlug: grant.project?.details?.data?.slug || "",
+            projectSlug: grant.project?.details?.slug || "",
             createdOn: grant.createdAt || "",
-            programId: grant.details?.data?.programId || "",
+            programId: grant.details?.programId || "",
             chainId: grant.chainID,
             payoutAddress: grant.project?.payoutAddress,
             payoutAmount: grant.amount,

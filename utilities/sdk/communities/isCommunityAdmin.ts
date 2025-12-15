@@ -1,7 +1,7 @@
 import { GAP, type SignerOrProvider } from "@show-karma/karma-gap-sdk";
 import type { Hex } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
-import type { CommunityDetails } from "@/types/community";
+import type { Community } from "@/types/v2/community";
 
 /**
  * Check if a user is an admin of a community
@@ -12,7 +12,7 @@ import type { CommunityDetails } from "@/types/community";
  * @returns boolean - true if admin, false if not admin or if check fails
  */
 export const isCommunityAdminOf = async (
-  community: CommunityDetails,
+  community: Community,
   address: string | Hex,
   signer?: SignerOrProvider
 ): Promise<boolean> => {

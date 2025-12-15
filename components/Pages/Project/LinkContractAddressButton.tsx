@@ -164,7 +164,7 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
         queryKey: ["project-instance", project.uid],
       });
       queryClient.invalidateQueries({
-        queryKey: ["project-instance", project.details?.data?.slug],
+        queryKey: ["project-instance", project.details?.slug],
       });
     },
     [
@@ -173,7 +173,7 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
       refreshProject,
       queryClient,
       project.uid,
-      project.details?.data?.slug,
+      project.details?.slug,
     ]
   );
 

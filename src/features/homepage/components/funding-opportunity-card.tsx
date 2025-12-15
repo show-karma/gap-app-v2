@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { FundingProgram } from "@/services/fundingPlatformService";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
+import { getProgramStatusInfo } from "@/utilities/funding-programs";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
@@ -31,23 +32,25 @@ function getProgramStatus(program: FundingProgram): {
   variant: "default" | "secondary" | "destructive" | "outline";
   endsSoon: boolean;
 } {
-  const endsAt = program.metadata?.endsAt;
-  const isEnabled = program.applicationConfig?.isEnabled;
+  const statusInfo = getProgramStatusInfo(program);
 
-  if (!isEnabled) {
-    return { label: "Closed", variant: "secondary", endsSoon: false };
+  const statusToVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+    open: "default",
+    closed: "secondary",
+    "coming-soon": "outline",
+    "deadline-passed": "secondary",
+  };
+
+  let label = statusInfo.label;
+  if (statusInfo.endsSoon) {
+    label = "Ends soon";
   }
 
-  if (endsAt) {
-    const daysUntilEnd = Math.ceil(
-      (new Date(endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-    );
-    if (daysUntilEnd <= 7 && daysUntilEnd > 0) {
-      return { label: "Ends soon", variant: "destructive", endsSoon: true };
-    }
-  }
-
-  return { label: "Open for Applications", variant: "default", endsSoon: false };
+  return {
+    label,
+    variant: statusInfo.endsSoon ? "destructive" : statusToVariant[statusInfo.status],
+    endsSoon: statusInfo.endsSoon,
+  };
 }
 
 function getCommunityImage(program: FundingProgram, theme: string | undefined): string | null {

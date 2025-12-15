@@ -15,9 +15,11 @@ interface CommunityMilestoneCardProps {
 
 const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({ milestone }) => {
   const isCompleted = milestone.status === "completed";
-  const projectSlug = milestone.project.details.data.slug;
-  const projectTitle = milestone.project.details.data.title;
-  const grantTitle = milestone.grant?.details?.data?.title || "Project Milestone";
+  const projectDetails = milestone.project.details as { slug?: string; title?: string } | undefined;
+  const projectSlug = projectDetails?.slug;
+  const projectTitle = projectDetails?.title;
+  const grantDetails = milestone.grant?.details as { title?: string } | undefined;
+  const grantTitle = grantDetails?.title || "Project Milestone";
 
   return (
     <div className="flex flex-col w-full gap-2.5 md:gap-5">

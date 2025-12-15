@@ -1,8 +1,8 @@
 "use client";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { MaturityStageOptions, SortByOptions, StatusOptions } from "@/types";
-import type { CommunityProjectsResponse } from "@/types/community";
-import { getCommunityProjects } from "@/utilities/queries/v2/community";
+import type { CommunityProjects } from "@/types/v2/community";
+import { getCommunityProjects } from "@/utilities/queries/v2/getCommunityData";
 
 const getStatusFromMaturityStage = (stage: MaturityStageOptions): StatusOptions | undefined => {
   if (stage === "all") return undefined;
@@ -50,7 +50,7 @@ export function useCommunityProjectsInfinite({
     trackIds,
   ];
 
-  return useInfiniteQuery<CommunityProjectsResponse, Error>({
+  return useInfiniteQuery<CommunityProjects, Error>({
     queryKey,
     queryFn: async ({ pageParam = 1 }) => {
       const response = await getCommunityProjects(communityId, {
