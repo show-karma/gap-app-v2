@@ -1,8 +1,4 @@
 "use client";
-import type {
-  IGrantResponse,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { GrantCompletionCard } from "@/components/Pages/Grants/MilestonesAndUpdates";
@@ -12,6 +8,8 @@ import { useOwnerStore, useProjectStore } from "@/store";
 // import { MilestonesList } from "./MilestonesList";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
+import type { Grant } from "@/types/v2/grant";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 
@@ -29,8 +27,8 @@ export const EmptyMilestone = ({
   grant,
   project,
 }: {
-  grant?: IGrantResponse;
-  project?: IProjectResponse;
+  grant?: Grant;
+  project?: ProjectResponse;
 }) => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
@@ -66,7 +64,7 @@ export const EmptyMilestone = ({
           <div className="flex w-max flex-row flex-wrap gap-6 max-sm:w-full max-sm:flex-col">
             <Link
               href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                project?.details?.data.slug || project?.uid || "",
+                project?.details?.slug || project?.uid || "",
                 grant?.uid || "",
                 "create-milestone"
               )}
@@ -95,8 +93,8 @@ export const MilestonesAndUpdates = () => {
   return (
     <div className="space-y-5">
       {grant?.completed &&
-      (grant?.completed.data.title ||
-        grant?.completed.data.text ||
+      (grant?.completed?.data?.title ||
+        grant?.completed?.data?.text ||
         grant?.completed?.data?.proofOfWork) ? (
         <GrantCompletionCard completion={grant?.completed} />
       ) : null}
@@ -113,7 +111,7 @@ export const MilestonesAndUpdates = () => {
                     {isAuthorized && (
                       <Link
                         href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                          project?.details?.data.slug || project?.uid || "",
+                          project?.details?.slug || project?.uid || "",
                           grant?.uid || "",
                           "create-milestone"
                         )}

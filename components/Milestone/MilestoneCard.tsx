@@ -5,7 +5,7 @@ import { useState } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
-import type { UnifiedMilestone } from "@/types/roadmap";
+import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
 import { ReadMore } from "@/utilities/ReadMore";
@@ -74,19 +74,28 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
 
   // grant milestone-specific properties
   const grantMilestone = milestone.source.grantMilestone;
-  const grantTitle = grantMilestone?.grant.details?.data.title;
-  const programId = grantMilestone?.grant.details?.data.programId;
-  const communityData = grantMilestone?.grant.community?.details?.data;
+  const grantDetails = grantMilestone?.grant.details as
+    | { title?: string; programId?: string }
+    | undefined;
+  const grantTitle = grantDetails?.title;
+  const programId = grantDetails?.programId;
+  const communityData = grantMilestone?.grant.community?.details as
+    | { name?: string; slug?: string; imageURL?: string }
+    | undefined;
   const endsAt = milestone.endsAt;
 
   // completion information
   const completionReason =
-    projectMilestone?.completed?.data?.reason || grantMilestone?.milestone.completed?.data?.reason;
+    projectMilestone?.completed?.data?.reason ||
+    grantMilestone?.completionDetails?.description ||
+    grantMilestone?.milestone.completed?.data?.reason;
   const completionProof =
     projectMilestone?.completed?.data?.proofOfWork ||
+    grantMilestone?.completionDetails?.proofOfWork ||
     grantMilestone?.milestone.completed?.data?.proofOfWork;
   const completionDeliverables =
     (projectMilestone?.completed?.data as any)?.deliverables ||
+    grantMilestone?.completionDetails?.deliverables ||
     (grantMilestone?.milestone.completed?.data as any)?.deliverables;
 
   // Determine border color and tag based on milestone type and status
@@ -196,7 +205,7 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
         {/* Due date */}
         {type === "grant" && endsAt ? (
           <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-            <span>Due by {formatDate(endsAt * 1000)}</span>
+            <span>Due by {formatDate(endsAt)}</span>
           </div>
         ) : null}
 
@@ -307,7 +316,7 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
                     >
                       <div className="flex flex-col gap-1">
                         <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                          {metric.name || metric.indicator?.data?.title || "Untitled Indicator"}
+                          {metric.name || metric.indicator?.name || "Untitled Indicator"}
                         </p>
                         {metric.datapoints && metric.datapoints.length > 0 && (
                           <div className="flex flex-col gap-1">

@@ -13,6 +13,7 @@ import { useProjectMembers } from "@/hooks/useProjectMembers";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectSocials } from "@/hooks/useProjectSocials";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { layoutTheme } from "@/src/helper/theme";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
@@ -37,6 +38,9 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
 
   const { project } = useProject(projectId);
 
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(project?.uid || projectId);
+
   // Start hook for permissions
   useProjectPermissions();
 
@@ -47,12 +51,12 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
   useTeamProfiles(project);
 
   // Use custom hooks for socials and members
-  const socials = useProjectSocials(project?.details?.data.links);
+  const socials = useProjectSocials(project?.details?.links);
   useProjectMembers(project);
 
   const customLinks = React.useMemo(() => {
-    return project?.details?.data.links?.filter(isCustomLink) || [];
-  }, [project?.details?.data.links]);
+    return project?.details?.links?.filter(isCustomLink) || [];
+  }, [project?.details?.links]);
 
   const { isIntroModalOpen } = useIntroModalStore();
   const { isEndorsementOpen } = useEndorsementStore();
@@ -74,23 +78,23 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
         >
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
             <ProfilePicture
-              imageURL={project?.details?.data?.imageURL}
+              imageURL={project?.details?.logoUrl}
               name={project?.uid || ""}
               size="56"
               className="hidden sm:block h-14 w-14 min-w-14 min-h-14 shrink-0 border-2 border-white shadow-lg"
-              alt={project?.details?.data?.title || "Project"}
+              alt={project?.details?.title || "Project"}
             />
             <div className="flex flex-col gap-3 items-center sm:items-start">
               <div className="flex flex-row gap-3 items-center">
                 <ProfilePicture
-                  imageURL={project?.details?.data?.imageURL}
+                  imageURL={project?.details?.logoUrl}
                   name={project?.uid || ""}
                   size="48"
                   className="sm:hidden h-12 w-12 min-w-12 min-h-12 shrink-0 border-2 border-white shadow-lg"
-                  alt={project?.details?.data?.title || "Project"}
+                  alt={project?.details?.title || "Project"}
                 />
                 <h1 className={"text-xl font-bold leading-tight line-clamp-2 sm:text-3xl"}>
-                  {project?.details?.data?.title}
+                  {project?.details?.title}
                 </h1>
               </div>
               {(socials.length > 0 || customLinks.length > 0) && (
@@ -133,14 +137,14 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
                   )}
                 </div>
               )}
-              {project?.details?.data?.tags?.length ? (
+              {project?.details?.tags?.length ? (
                 <div className="flex items-center gap-1 flex-wrap justify-center sm:justify-start">
-                  {project?.details?.data?.tags?.map((tag) => (
+                  {project?.details?.tags?.map((tag) => (
                     <span
-                      key={tag.name}
+                      key={tag}
                       className="rounded bg-gray-100 px-2 py-1 text-sm font-normal text-slate-700"
                     >
-                      {tag.name}
+                      {tag}
                     </span>
                   ))}
                 </div>
@@ -171,10 +175,7 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
         </div>
         <div className="mt-4 max-sm:px-4">
           <div className={cn(layoutTheme.padding, "py-0")}>
-            <ProjectNavigator
-              hasContactInfo={hasContactInfo}
-              grantsLength={project?.grants?.length || 0}
-            />
+            <ProjectNavigator hasContactInfo={hasContactInfo} grantsLength={grants.length} />
           </div>
         </div>
       </div>

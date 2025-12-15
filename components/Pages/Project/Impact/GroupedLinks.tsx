@@ -1,19 +1,13 @@
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useEffect, useRef, useState } from "react";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useProjectStore } from "@/store";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { linkName, mapLinks } from "./utils/links";
-
-export interface ProjectWithExternal extends IProjectResponse {
-  external?: {
-    network_addresses?: string[];
-  };
-}
 
 export const GroupedLinks = ({ proofs }: { proofs: string[] }) => {
   const { project } = useProjectStore();
-  const links = mapLinks(proofs, (project as ProjectWithExternal)?.external?.network_addresses);
+  const links = mapLinks(proofs, (project as ProjectResponse)?.external?.network_addresses);
   const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
   const dropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});
 

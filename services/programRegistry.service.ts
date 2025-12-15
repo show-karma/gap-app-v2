@@ -1,4 +1,3 @@
-import type { CommunityDetails } from "@/types/community";
 import type {
   CreateProgramFormData,
   ProgramApprovalRequest,
@@ -6,6 +5,7 @@ import type {
   ProgramCreationResult,
   ProgramMetadata,
 } from "@/types/program-registry";
+import type { Community } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -20,7 +20,7 @@ export class ProgramRegistryService {
    */
   static buildProgramMetadata(
     formData: CreateProgramFormData,
-    community: CommunityDetails
+    community: Community
   ): ProgramMetadata {
     return {
       title: formData.name,

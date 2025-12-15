@@ -1,6 +1,8 @@
 import axios from "axios";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import {
   validateEmail,
   validateReviewerData as validateReviewerDataUtil,
@@ -10,17 +12,8 @@ import {
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
-// Create axios instance with authentication
+// Keep apiClient for mutations (POST, DELETE)
 const apiClient = createAuthenticatedApiClient(API_URL, 30000);
-
-// Add response interceptor for error handling
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error("Milestone Reviewers API Error:", error.response?.data || error.message);
-    throw error;
-  }
-);
 
 /**
  * User profile information
@@ -77,34 +70,28 @@ export const milestoneReviewersService = {
    * Get all milestone reviewers for a program
    */
   async getReviewers(programId: string, chainID: number): Promise<MilestoneReviewer[]> {
-    try {
-      const response = await apiClient.get<MilestoneReviewerResponse[]>(
-        `/v2/programs/${programId}/${chainID}/milestone-reviewers`
-      );
+    const [data, error] = await fetchData<MilestoneReviewerResponse[]>(
+      INDEXER.V2.MILESTONE_REVIEWERS.LIST(programId, chainID)
+    );
 
-      // Map the API response to the expected format
-      return (response.data || []).map((reviewer) => ({
-        publicAddress: reviewer.publicAddress,
-        name: reviewer.userProfile?.name || "",
-        email: reviewer.userProfile?.email || "",
-        telegram: reviewer.userProfile?.telegram || "",
-        assignedAt: reviewer.assignedAt,
-        assignedBy: reviewer.assignedBy,
-      }));
-    } catch (error) {
+    if (error) {
       // Handle "No reviewers found" as an empty list, not an error
-      if (error && typeof error === "object" && "response" in error) {
-        const apiError = error as { response?: { data?: { error?: string; message?: string } } };
-        if (
-          apiError.response?.data?.error === "Milestone Reviewer Not Found" ||
-          apiError.response?.data?.message?.includes("No reviewers found")
-        ) {
-          return [];
-        }
+      if (error.includes("Milestone Reviewer Not Found") || error.includes("No reviewers found")) {
+        return [];
       }
-      // Re-throw other errors
-      throw error;
+      console.error("Milestone Reviewers API Error:", error);
+      throw new Error(error);
     }
+
+    // Map the API response to the expected format
+    return (data || []).map((reviewer) => ({
+      publicAddress: reviewer.publicAddress,
+      name: reviewer.userProfile?.name || "",
+      email: reviewer.userProfile?.email || "",
+      telegram: reviewer.userProfile?.telegram || "",
+      assignedAt: reviewer.assignedAt,
+      assignedBy: reviewer.assignedBy,
+    }));
   },
 
   /**
@@ -117,7 +104,7 @@ export const milestoneReviewersService = {
   ): Promise<MilestoneReviewer> {
     const response = await apiClient.post<{
       reviewer?: MilestoneReviewerResponse;
-    }>(`/v2/programs/${programId}/${chainID}/milestone-reviewers`, reviewerData);
+    }>(INDEXER.V2.MILESTONE_REVIEWERS.LIST(programId, chainID), reviewerData);
 
     // Map the API response to the expected format
     const reviewer = response.data?.reviewer;

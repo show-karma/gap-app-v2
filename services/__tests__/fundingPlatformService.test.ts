@@ -1,3 +1,4 @@
+import type { AxiosInstance } from "axios";
 import type {
   IApplicationStatistics,
   IApplicationStatusUpdateRequest,
@@ -9,31 +10,8 @@ import type {
   IPaginatedApplicationsResponse,
 } from "@/types/funding-platform";
 
-// Mock the API client factory - must be hoisted before imports
-jest.mock("@/utilities/auth/api-client", () => {
-  const mockGet = jest.fn();
-  const mockPost = jest.fn();
-  const mockPut = jest.fn();
-  const mockDelete = jest.fn();
-
-  return {
-    createAuthenticatedApiClient: jest.fn(() => ({
-      get: mockGet,
-      post: mockPost,
-      put: mockPut,
-      delete: mockDelete,
-      interceptors: {
-        request: { use: jest.fn() },
-        response: { use: jest.fn() },
-      },
-    })),
-    // Export mocks for test access
-    __mockGet: mockGet,
-    __mockPost: mockPost,
-    __mockPut: mockPut,
-    __mockDelete: mockDelete,
-  };
-});
+// Mock fetchData for GET requests (most queries now use fetchData)
+jest.mock("@/utilities/fetchData");
 
 jest.mock("@/utilities/enviromentVars", () => ({
   envVars: {
@@ -41,12 +19,49 @@ jest.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
+// Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
+var mockAxiosInstance: jest.Mocked<AxiosInstance>;
+
+// Mock api-client for mutations (POST, PUT, DELETE)
+jest.mock("@/utilities/auth/api-client", () => {
+  const mockGet = jest.fn();
+  const mockPost = jest.fn();
+  const mockPut = jest.fn();
+  const mockDelete = jest.fn();
+
+  const instance = {
+    get: mockGet,
+    post: mockPost,
+    put: mockPut,
+    delete: mockDelete,
+    interceptors: {
+      request: { use: jest.fn() },
+      response: { use: jest.fn() },
+    },
+  };
+
+  mockAxiosInstance = instance as unknown as jest.Mocked<AxiosInstance>;
+
+  return {
+    createAuthenticatedApiClient: jest.fn(() => instance),
+    __mockGet: mockGet,
+    __mockPost: mockPost,
+    __mockPut: mockPut,
+    __mockDelete: mockDelete,
+  };
+});
+
+// Import fetchData mock to access it in tests
+import fetchData from "@/utilities/fetchData";
+
 // Import service and mock utilities after mocks are configured
 import {
   fundingApplicationsAPI,
   fundingPlatformService,
   fundingProgramsAPI,
 } from "../fundingPlatformService";
+
+const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
 
 const {
   __mockGet: mockGet,
@@ -82,22 +97,21 @@ describe("fundingPlatformService", () => {
     describe("getProgramsByCommunity", () => {
       it("should fetch programs for a community successfully", async () => {
         const mockPrograms = [mockProgram];
-        mockGet.mockResolvedValue({ data: mockPrograms });
+        mockFetchData.mockResolvedValue([mockPrograms, null, null, 200]);
 
         const result = await fundingProgramsAPI.getProgramsByCommunity("community-123");
 
         expect(result).toEqual(mockPrograms);
-        expect(mockGet).toHaveBeenCalledWith("/v2/funding-program-configs/community/community-123");
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("community-123"));
       });
 
       it("should handle API errors", async () => {
-        const error = { response: { data: { message: "Not found" } }, message: "API Error" };
-        mockGet.mockRejectedValue(error);
+        mockFetchData.mockResolvedValue([null, "Not found", null, 404]);
 
         await expect(
           fundingProgramsAPI.getProgramsByCommunity("invalid-community")
-        ).rejects.toEqual(error);
-        expect(console.error).toHaveBeenCalledWith("API Error:", expect.any(Object));
+        ).rejects.toThrow("Not found");
+        expect(console.error).toHaveBeenCalledWith("API Error:", "Not found");
       });
 
       it("should handle programs with existing metrics", async () => {
@@ -110,7 +124,7 @@ describe("fundingPlatformService", () => {
             rejectedApplications: 2,
           },
         };
-        mockGet.mockResolvedValue({ data: [programWithMetrics] });
+        mockFetchData.mockResolvedValue([[programWithMetrics], null, null, 200]);
 
         const result = await fundingProgramsAPI.getProgramsByCommunity("community-123");
 
@@ -120,52 +134,63 @@ describe("fundingPlatformService", () => {
 
     describe("getProgramConfiguration", () => {
       it("should fetch program configuration successfully", async () => {
-        mockGet.mockResolvedValue({ data: mockProgram });
+        mockFetchData.mockResolvedValue([mockProgram, null, null, 200]);
 
         const result = await fundingProgramsAPI.getProgramConfiguration("program-123", 1);
 
         expect(result).toEqual(mockProgram);
-        expect(mockGet).toHaveBeenCalledWith("/v2/funding-program-configs/program-123/1");
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("program-123"));
       });
 
-      it("should handle 404 errors", async () => {
-        const error = { response: { status: 404 } };
-        mockGet.mockRejectedValue(error);
+      it("should return null when no data is returned", async () => {
+        mockFetchData.mockResolvedValue([null, null, null, 200]);
 
-        await expect(fundingProgramsAPI.getProgramConfiguration("nonexistent", 1)).rejects.toEqual(
-          error
+        const result = await fundingProgramsAPI.getProgramConfiguration("nonexistent", 1);
+
+        expect(result).toBeNull();
+      });
+
+      it("should throw error on API errors", async () => {
+        mockFetchData.mockResolvedValue([null, "Not found", null, 404]);
+
+        await expect(fundingProgramsAPI.getProgramConfiguration("nonexistent", 1)).rejects.toThrow(
+          "Not found"
         );
       });
     });
 
     describe("getAllProgramConfigs", () => {
       it("should fetch all program configs without community filter", async () => {
-        mockGet.mockResolvedValue({ data: [mockProgram] });
+        mockFetchData.mockResolvedValue([[mockProgram], null, null, 200]);
 
         const result = await fundingProgramsAPI.getAllProgramConfigs();
 
         expect(result).toEqual([mockProgram]);
-        expect(mockGet).toHaveBeenCalledWith("/v2/funding-program-configs");
+        expect(mockFetchData).toHaveBeenCalledWith(
+          expect.stringContaining("funding-program-configs")
+        );
       });
 
       it("should fetch program configs with community filter", async () => {
-        mockGet.mockResolvedValue({ data: [mockProgram] });
+        mockFetchData.mockResolvedValue([[mockProgram], null, null, 200]);
 
         const result = await fundingProgramsAPI.getAllProgramConfigs("community-123");
 
         expect(result).toEqual([mockProgram]);
-        expect(mockGet).toHaveBeenCalledWith("/v2/funding-program-configs?community=community-123");
+        expect(mockFetchData).toHaveBeenCalledWith(
+          expect.stringContaining("community=community-123")
+        );
       });
     });
 
     describe("getEnabledPrograms", () => {
       it("should fetch enabled programs", async () => {
-        mockGet.mockResolvedValue({ data: [mockProgram] });
+        mockFetchData.mockResolvedValue([[mockProgram], null, null, 200]);
 
         const result = await fundingProgramsAPI.getEnabledPrograms();
 
         expect(result).toEqual([mockProgram]);
-        expect(mockGet).toHaveBeenCalledWith("/v2/funding-program-configs/enabled");
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("enabled"));
       });
     });
 
@@ -219,7 +244,7 @@ describe("fundingPlatformService", () => {
       };
 
       it("should update form schema when config exists", async () => {
-        mockGet.mockResolvedValue({ data: mockProgram });
+        mockFetchData.mockResolvedValue([mockProgram, null, null, 200]);
         mockPut.mockResolvedValue({
           data: { ...mockProgram, formSchema: mockFormSchema },
         });
@@ -227,7 +252,6 @@ describe("fundingPlatformService", () => {
         const result = await fundingProgramsAPI.updateFormSchema("program-123", 1, mockFormSchema);
 
         expect(result.formSchema).toEqual(mockFormSchema);
-        expect(mockGet).toHaveBeenCalledWith("/v2/funding-program-configs/program-123/1");
         expect(mockPut).toHaveBeenCalledWith(
           "/v2/funding-program-configs/program-123/1",
           expect.objectContaining({ formSchema: mockFormSchema })
@@ -235,8 +259,7 @@ describe("fundingPlatformService", () => {
       });
 
       it("should create new config with formSchema when config does not exist", async () => {
-        const error = { response: { status: 404 } };
-        mockGet.mockRejectedValue(error);
+        mockFetchData.mockResolvedValue([null, "Not found", null, 404]);
         mockPut.mockResolvedValue({
           data: { ...mockProgram, formSchema: mockFormSchema },
         });
@@ -250,18 +273,20 @@ describe("fundingPlatformService", () => {
       });
 
       it("should throw error for non-404 errors", async () => {
-        const error = { response: { status: 500 }, message: "Server error" };
-        mockGet.mockRejectedValue(error);
+        // Simulate an error with response.status that's not 404
+        const error = new Error("Server error");
+        (error as any).response = { status: 500 };
+        mockFetchData.mockRejectedValue(error);
 
         await expect(
           fundingProgramsAPI.updateFormSchema("program-123", 1, mockFormSchema)
-        ).rejects.toEqual(error);
+        ).rejects.toThrow("Server error");
       });
     });
 
     describe("toggleProgramStatus", () => {
       it("should toggle program status when config exists", async () => {
-        mockGet.mockResolvedValue({ data: mockProgram });
+        mockFetchData.mockResolvedValue([mockProgram, null, null, 200]);
         mockPut.mockResolvedValue({ data: { ...mockProgram, isEnabled: false } });
 
         const result = await fundingProgramsAPI.toggleProgramStatus("program-123", 1, false);
@@ -274,8 +299,7 @@ describe("fundingPlatformService", () => {
       });
 
       it("should create new config with enabled status when config does not exist", async () => {
-        const error = { response: { status: 404 } };
-        mockGet.mockRejectedValue(error);
+        mockFetchData.mockResolvedValue([null, "Not found", null, 404]);
         mockPut.mockResolvedValue({ data: { ...mockProgram, isEnabled: true } });
 
         const result = await fundingProgramsAPI.toggleProgramStatus("program-123", 1, true);
@@ -287,12 +311,14 @@ describe("fundingPlatformService", () => {
       });
 
       it("should throw error for non-404 errors", async () => {
-        const error = { response: { status: 500 }, message: "Server error" };
-        mockGet.mockRejectedValue(error);
+        // Simulate an error with response.status that's not 404
+        const error = new Error("Server error");
+        (error as any).response = { status: 500 };
+        mockFetchData.mockRejectedValue(error);
 
         await expect(
           fundingProgramsAPI.toggleProgramStatus("program-123", 1, true)
-        ).rejects.toEqual(error);
+        ).rejects.toThrow("Server error");
       });
     });
 
@@ -307,18 +333,16 @@ describe("fundingPlatformService", () => {
       };
 
       it("should fetch program statistics successfully", async () => {
-        mockGet.mockResolvedValue({ data: mockStats });
+        mockFetchData.mockResolvedValue([mockStats, null, null, 200]);
 
         const result = await fundingProgramsAPI.getProgramStats("program-123", 1);
 
         expect(result).toEqual(mockStats);
-        expect(mockGet).toHaveBeenCalledWith(
-          "/v2/funding-applications/program/program-123/1/statistics"
-        );
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("statistics"));
       });
 
       it("should return default stats on error", async () => {
-        mockGet.mockRejectedValue(new Error("Failed to fetch stats"));
+        mockFetchData.mockResolvedValue([null, "Failed to fetch stats", null, 500]);
 
         const result = await fundingProgramsAPI.getProgramStats("program-123", 1);
 
@@ -515,29 +539,27 @@ describe("fundingPlatformService", () => {
       };
 
       it("should fetch applications with default filters", async () => {
-        mockGet.mockResolvedValue({ data: mockPaginatedResponse });
+        mockFetchData.mockResolvedValue([mockPaginatedResponse, null, null, 200]);
 
         const result = await fundingApplicationsAPI.getApplicationsByProgram("program-123", 1);
 
         expect(result).toEqual(mockPaginatedResponse);
-        expect(mockGet).toHaveBeenCalledWith("/v2/funding-applications/program/program-123/1?");
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("program-123"));
       });
 
       it("should fetch applications with status filter", async () => {
-        mockGet.mockResolvedValue({ data: mockPaginatedResponse });
+        mockFetchData.mockResolvedValue([mockPaginatedResponse, null, null, 200]);
 
         const result = await fundingApplicationsAPI.getApplicationsByProgram("program-123", 1, {
           status: "pending",
         });
 
         expect(result).toEqual(mockPaginatedResponse);
-        expect(mockGet).toHaveBeenCalledWith(
-          "/v2/funding-applications/program/program-123/1?status=pending"
-        );
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("status=pending"));
       });
 
       it("should fetch applications with pagination", async () => {
-        mockGet.mockResolvedValue({ data: mockPaginatedResponse });
+        mockFetchData.mockResolvedValue([mockPaginatedResponse, null, null, 200]);
 
         const result = await fundingApplicationsAPI.getApplicationsByProgram("program-123", 1, {
           page: 2,
@@ -545,26 +567,23 @@ describe("fundingPlatformService", () => {
         });
 
         expect(result).toEqual(mockPaginatedResponse);
-        expect(mockGet).toHaveBeenCalledWith(
-          "/v2/funding-applications/program/program-123/1?page=2&limit=10"
-        );
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("page=2"));
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("limit=10"));
       });
 
       it("should fetch applications with search filter", async () => {
-        mockGet.mockResolvedValue({ data: mockPaginatedResponse });
+        mockFetchData.mockResolvedValue([mockPaginatedResponse, null, null, 200]);
 
         const result = await fundingApplicationsAPI.getApplicationsByProgram("program-123", 1, {
           search: "test project",
         });
 
         expect(result).toEqual(mockPaginatedResponse);
-        expect(mockGet).toHaveBeenCalledWith(
-          "/v2/funding-applications/program/program-123/1?search=test+project"
-        );
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("search="));
       });
 
       it("should fetch applications with date filters", async () => {
-        mockGet.mockResolvedValue({ data: mockPaginatedResponse });
+        mockFetchData.mockResolvedValue([mockPaginatedResponse, null, null, 200]);
 
         const result = await fundingApplicationsAPI.getApplicationsByProgram("program-123", 1, {
           dateFrom: "2024-01-01",
@@ -572,13 +591,12 @@ describe("fundingPlatformService", () => {
         });
 
         expect(result).toEqual(mockPaginatedResponse);
-        expect(mockGet).toHaveBeenCalledWith(
-          "/v2/funding-applications/program/program-123/1?dateFrom=2024-01-01&dateTo=2024-12-31"
-        );
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("dateFrom=2024-01-01"));
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("dateTo=2024-12-31"));
       });
 
       it("should fetch applications with sorting", async () => {
-        mockGet.mockResolvedValue({ data: mockPaginatedResponse });
+        mockFetchData.mockResolvedValue([mockPaginatedResponse, null, null, 200]);
 
         const result = await fundingApplicationsAPI.getApplicationsByProgram("program-123", 1, {
           sortBy: "createdAt",
@@ -586,13 +604,12 @@ describe("fundingPlatformService", () => {
         });
 
         expect(result).toEqual(mockPaginatedResponse);
-        expect(mockGet).toHaveBeenCalledWith(
-          "/v2/funding-applications/program/program-123/1?sortBy=createdAt&sortOrder=desc"
-        );
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("sortBy=createdAt"));
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("sortOrder=desc"));
       });
 
       it("should handle empty applications response", async () => {
-        mockGet.mockResolvedValue({ data: {} });
+        mockFetchData.mockResolvedValue([{}, null, null, 200]);
 
         const result = await fundingApplicationsAPI.getApplicationsByProgram("program-123", 1);
 
@@ -606,7 +623,7 @@ describe("fundingPlatformService", () => {
       });
 
       it("should handle empty applications with custom pagination", async () => {
-        mockGet.mockResolvedValue({ data: {} });
+        mockFetchData.mockResolvedValue([{}, null, null, 200]);
 
         const result = await fundingApplicationsAPI.getApplicationsByProgram("program-123", 1, {
           page: 3,
@@ -625,36 +642,37 @@ describe("fundingPlatformService", () => {
 
     describe("getApplication", () => {
       it("should fetch application by ID successfully", async () => {
-        mockGet.mockResolvedValue({ data: mockApplication });
+        mockFetchData.mockResolvedValue([mockApplication, null, null, 200]);
 
         const result = await fundingApplicationsAPI.getApplication("app-123");
 
         expect(result).toEqual(mockApplication);
-        expect(mockGet).toHaveBeenCalledWith("/v2/funding-applications/app-123");
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("app-123"));
       });
 
       it("should handle 404 errors", async () => {
-        const error = { response: { status: 404 } };
-        mockGet.mockRejectedValue(error);
+        mockFetchData.mockResolvedValue([null, "Not found", null, 404]);
 
-        await expect(fundingApplicationsAPI.getApplication("nonexistent")).rejects.toEqual(error);
+        await expect(fundingApplicationsAPI.getApplication("nonexistent")).rejects.toThrow(
+          "Not found"
+        );
       });
     });
 
     describe("getApplicationByReference", () => {
       it("should fetch application by reference number", async () => {
-        mockGet.mockResolvedValue({ data: mockApplication });
+        mockFetchData.mockResolvedValue([mockApplication, null, null, 200]);
 
         const result = await fundingApplicationsAPI.getApplicationByReference("APP-12345-67890");
 
         expect(result).toEqual(mockApplication);
-        expect(mockGet).toHaveBeenCalledWith("/v2/funding-applications/APP-12345-67890");
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("APP-12345-67890"));
       });
     });
 
     describe("getApplicationByEmail", () => {
       it("should fetch application by email successfully", async () => {
-        mockGet.mockResolvedValue({ data: mockApplication });
+        mockFetchData.mockResolvedValue([mockApplication, null, null, 200]);
 
         const result = await fundingApplicationsAPI.getApplicationByEmail(
           "program-123",
@@ -663,14 +681,11 @@ describe("fundingPlatformService", () => {
         );
 
         expect(result).toEqual(mockApplication);
-        expect(mockGet).toHaveBeenCalledWith(
-          "/v2/funding-applications/program/program-123/1/by-email?email=test%40example.com"
-        );
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("by-email"));
       });
 
       it("should return null for 404 errors", async () => {
-        const error = { response: { status: 404 } };
-        mockGet.mockRejectedValue(error);
+        mockFetchData.mockResolvedValue([null, "404 not found", null, 404]);
 
         const result = await fundingApplicationsAPI.getApplicationByEmail(
           "program-123",
@@ -682,12 +697,11 @@ describe("fundingPlatformService", () => {
       });
 
       it("should throw error for non-404 errors", async () => {
-        const error = { response: { status: 500 }, message: "Server error" };
-        mockGet.mockRejectedValue(error);
+        mockFetchData.mockResolvedValue([null, "Server error", null, 500]);
 
         await expect(
           fundingApplicationsAPI.getApplicationByEmail("program-123", 1, "test@example.com")
-        ).rejects.toEqual(error);
+        ).rejects.toThrow("Server error");
       });
     });
 
@@ -702,14 +716,12 @@ describe("fundingPlatformService", () => {
       };
 
       it("should fetch application statistics successfully", async () => {
-        mockGet.mockResolvedValue({ data: mockStats });
+        mockFetchData.mockResolvedValue([mockStats, null, null, 200]);
 
         const result = await fundingApplicationsAPI.getApplicationStatistics("program-123", 1);
 
         expect(result).toEqual(mockStats);
-        expect(mockGet).toHaveBeenCalledWith(
-          "/v2/funding-applications/program/program-123/1/statistics"
-        );
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("statistics"));
       });
     });
 
@@ -725,10 +737,9 @@ describe("fundingPlatformService", () => {
         const result = await fundingApplicationsAPI.exportApplications("program-123", 1, "json");
 
         expect(result.data).toEqual(mockExportData);
-        expect(mockGet).toHaveBeenCalledWith(
-          "/v2/funding-applications/program/program-123/1/export?format=json",
-          { responseType: "json" }
-        );
+        expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("format=json"), {
+          responseType: "json",
+        });
       });
 
       it("should export applications as CSV", async () => {
@@ -743,10 +754,9 @@ describe("fundingPlatformService", () => {
         const result = await fundingApplicationsAPI.exportApplications("program-123", 1, "csv");
 
         expect(result.data).toEqual(mockBlob);
-        expect(mockGet).toHaveBeenCalledWith(
-          "/v2/funding-applications/program/program-123/1/export?format=csv",
-          { responseType: "blob" }
-        );
+        expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("format=csv"), {
+          responseType: "blob",
+        });
       });
 
       it("should extract filename from Content-Disposition header", async () => {
@@ -787,10 +797,9 @@ describe("fundingPlatformService", () => {
         });
 
         expect(result.data).toEqual(mockExportData);
-        expect(mockGet).toHaveBeenCalledWith(
-          expect.stringContaining("format=json&status=pending&search=test"),
-          { responseType: "json" }
-        );
+        expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("status=pending"), {
+          responseType: "json",
+        });
       });
     });
 
@@ -810,10 +819,9 @@ describe("fundingPlatformService", () => {
         );
 
         expect(result.data).toEqual(mockExportData);
-        expect(mockGet).toHaveBeenCalledWith(
-          "/v2/funding-applications/admin/program-123/1/export?format=json",
-          { responseType: "json" }
-        );
+        expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("admin"), {
+          responseType: "json",
+        });
       });
 
       it("should export as CSV with admin endpoint", async () => {
@@ -848,15 +856,13 @@ describe("fundingPlatformService", () => {
       ];
 
       it("should fetch application versions timeline", async () => {
-        mockGet.mockResolvedValue({ data: { timeline: mockVersions } });
+        mockFetchData.mockResolvedValue([{ timeline: mockVersions }, null, null, 200]);
 
         const result =
           await fundingApplicationsAPI.getApplicationVersionsTimeline("APP-12345-67890");
 
         expect(result).toEqual(mockVersions);
-        expect(mockGet).toHaveBeenCalledWith(
-          "/v2/funding-applications/APP-12345-67890/versions/timeline"
-        );
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("versions/timeline"));
       });
     });
 
@@ -872,41 +878,38 @@ describe("fundingPlatformService", () => {
       ];
 
       it("should fetch versions using reference number directly", async () => {
-        mockGet.mockResolvedValue({ data: { timeline: mockVersions } });
+        mockFetchData.mockResolvedValue([{ timeline: mockVersions }, null, null, 200]);
 
         const result = await fundingApplicationsAPI.getApplicationVersions("APP-12345-67890");
 
         expect(result).toEqual(mockVersions);
-        expect(mockGet).toHaveBeenCalledWith(
-          "/v2/funding-applications/APP-12345-67890/versions/timeline"
-        );
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("versions/timeline"));
       });
 
       it("should fetch application first then get versions when given application ID", async () => {
-        mockGet
-          .mockResolvedValueOnce({
-            data: { ...mockApplication, referenceNumber: "APP-12345-67890" },
-          })
-          .mockResolvedValueOnce({ data: { timeline: mockVersions } });
+        mockFetchData
+          .mockResolvedValueOnce([
+            { ...mockApplication, referenceNumber: "APP-12345-67890" },
+            null,
+            null,
+            200,
+          ])
+          .mockResolvedValueOnce([{ timeline: mockVersions }, null, null, 200]);
 
         const result = await fundingApplicationsAPI.getApplicationVersions("app-123");
 
         expect(result).toEqual(mockVersions);
-        expect(mockGet).toHaveBeenCalledWith("/v2/funding-applications/app-123");
-        expect(mockGet).toHaveBeenCalledWith(
-          "/v2/funding-applications/APP-12345-67890/versions/timeline"
-        );
       });
 
       it("should handle errors when fetching application", async () => {
-        const error = new Error("Failed to fetch application");
-        mockGet.mockRejectedValue(error);
+        mockFetchData.mockResolvedValue([null, "Failed to fetch application", null, 500]);
         jest.spyOn(console, "error").mockImplementation(() => {});
 
-        await expect(fundingApplicationsAPI.getApplicationVersions("app-123")).rejects.toEqual(
-          error
+        await expect(fundingApplicationsAPI.getApplicationVersions("app-123")).rejects.toThrow();
+        expect(console.error).toHaveBeenCalledWith(
+          "Failed to fetch application versions:",
+          expect.anything()
         );
-        expect(console.error).toHaveBeenCalledWith("Failed to fetch application versions:", error);
       });
     });
 

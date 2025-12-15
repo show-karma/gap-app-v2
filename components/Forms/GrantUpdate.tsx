@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GrantUpdate } from "@show-karma/karma-gap-sdk";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
 import { useState } from "react";
@@ -15,10 +14,13 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useStepper } from "@/store/modals/txStepper";
+import type { Grant } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -63,7 +65,7 @@ const inputStyleDefault =
 type UpdateType = z.infer<typeof updateSchema>;
 
 interface GrantUpdateFormProps {
-  grant: IGrantResponse;
+  grant: Grant;
   labelStyleProps?: string;
   inputStyleProps?: string;
   afterSubmit?: () => void;
@@ -83,7 +85,8 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const projectIdOrSlug = project?.details?.slug || project?.uid || "";
+  const { refetch: refetchGrants } = useProjectGrants(projectIdOrSlug);
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
 
   const {
@@ -116,7 +119,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
 
   const router = useRouter();
 
-  const createGrantUpdate = async (grantToUpdate: IGrantResponse, data: UpdateType) => {
+  const createGrantUpdate = async (grantToUpdate: Grant, data: UpdateType) => {
     let gapClient = gap;
     if (!address || !project) return;
     try {
@@ -154,8 +157,8 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
       });
       const grantUpdate = new GrantUpdate({
         data: sanitizedGrantUpdate,
-        recipient: grantToUpdate.recipient,
-        refUID: grantToUpdate.uid,
+        recipient: (grantToUpdate.recipient || address) as `0x${string}`,
+        refUID: grantToUpdate.uid as `0x${string}`,
         schema: gapClient.findSchema("GrantDetails"),
       });
 
@@ -166,46 +169,44 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grantToUpdate.chainID), "POST", {});
         }
         changeStepperStep("indexing");
+        const attestUID = grantUpdate.uid;
         while (retries > 0) {
-          await refreshProject()
-            .then(async (fetchedProject) => {
-              const attestUID = grantUpdate.uid;
-              const updatedGrant = fetchedProject?.grants.find((g) => g.uid === grantToUpdate.uid);
+          try {
+            const fetchedGrants = await getProjectGrants(projectIdOrSlug);
+            const updatedGrant = fetchedGrants.find((g) => g.uid === grantToUpdate.uid);
 
-              const alreadyExists = updatedGrant?.updates.find((u: any) => u.uid === attestUID);
-              if (alreadyExists) {
-                retries = 0;
-                changeStepperStep("indexed");
-                afterSubmit?.();
-                toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
-                router.push(
-                  PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                    project.uid,
-                    grantToUpdate.uid,
-                    "milestones-and-updates"
-                  )
-                );
-                openShareDialog({
-                  modalShareText: `🎉 Update posted for your ${grant.details?.data?.title}!`,
-                  modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building—we’re here for it. 💪`,
-                  shareText: SHARE_TEXTS.GRANT_UPDATE(
-                    grant.details?.data?.title as string,
-                    project.uid,
-                    grantToUpdate.uid
-                  ),
-                });
+            const alreadyExists = updatedGrant?.updates?.find((u) => u.uid === attestUID);
+            if (alreadyExists) {
+              retries = 0;
+              await refetchGrants();
+              changeStepperStep("indexed");
+              afterSubmit?.();
+              toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
+              router.push(
+                PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                  project.uid,
+                  grantToUpdate.uid,
+                  "milestones-and-updates"
+                )
+              );
+              openShareDialog({
+                modalShareText: `🎉 Update posted for your ${grant.details?.title}!`,
+                modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building—we're here for it. 💪`,
+                shareText: SHARE_TEXTS.GRANT_UPDATE(
+                  grant.details?.title as string,
+                  project.uid,
+                  grantToUpdate.uid
+                ),
+              });
 
-                router.refresh();
-              }
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            })
-            .catch(async () => {
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            });
+              router.refresh();
+            }
+          } catch {
+            // Ignore polling errors, continue retrying
+          }
+          retries -= 1;
+          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+          await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       });
     } catch (error) {

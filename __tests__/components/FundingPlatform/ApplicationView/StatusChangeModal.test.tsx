@@ -533,8 +533,10 @@ describe("StatusChangeModal", () => {
     const mockProgramConfig = {
       formSchema: {
         settings: {
-          approvalEmailTemplate: "Congratulations! Your application for {{programName}} has been approved. {{reason}}",
-          rejectionEmailTemplate: "Unfortunately, your application for {{programName}} was not selected. {{reason}}",
+          approvalEmailTemplate:
+            "Congratulations! Your application for {{programName}} has been approved. {{reason}}",
+          rejectionEmailTemplate:
+            "Unfortunately, your application for {{programName}} was not selected. {{reason}}",
         },
       },
     };
@@ -656,7 +658,7 @@ describe("StatusChangeModal", () => {
       );
 
       const editor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
-      
+
       // User edits the prepopulated template
       fireEvent.change(editor, { target: { value: "Custom edited reason" } });
       expect(editor.value).toBe("Custom edited reason");

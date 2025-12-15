@@ -1,14 +1,14 @@
 "use client";
 
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { useGrantCompletion } from "@/hooks/useGrantCompletion";
+import type { Grant } from "@/types/v2/grant";
 
 interface GrantCompleteButtonForReviewerProps {
   project: { uid: string };
-  grant: IGrantResponse;
+  grant: Grant;
   text?: string;
   onComplete?: () => void;
 }

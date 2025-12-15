@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { GrantImpactCriteria } from "@/components/Pages/Grants/ImpactCriteria";
 import { PROJECT_NAME } from "@/constants/brand";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { defaultMetadata } from "@/utilities/meta";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
@@ -29,28 +29,31 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     icons: defaultMetadata.icons,
   };
   if (grantUid) {
-    const grantInfo = await gapIndexerApi
-      .grantBySlug(grantUid as `0x${string}`)
-      .then((res) => res.data)
-      .catch(() => notFound());
-    if (grantInfo) {
-      const pageMetadata = {
-        title: `Impact Criteria for ${grantInfo?.details?.data?.title} Grant | ${projectInfo?.details?.data?.title} | ${PROJECT_NAME}`,
-        description: `Impact criteria defined by ${projectInfo?.details?.data?.title} for ${grantInfo?.details?.data?.title} grant.`,
-      };
+    // Fetch grants using V2 endpoint and find the specific grant
+    const grants = await getProjectGrants(projectId);
+    const grantInfo = grants.find((g) => g.uid.toLowerCase() === grantUid.toLowerCase());
 
-      metadata = {
-        ...metadata,
-        title: pageMetadata.title || pageMetadata.title || "",
-        description: pageMetadata.description || pageMetadata.description || "",
-      };
+    if (!grantInfo) {
+      notFound();
     }
+
+    const grantTitle = grantInfo.details?.title;
+
+    const pageMetadata = {
+      title: `Impact Criteria for ${grantTitle} Grant | ${projectInfo?.details?.title} | ${PROJECT_NAME}`,
+      description: `Impact criteria defined by ${projectInfo?.details?.title} for ${grantTitle} grant.`,
+    };
+
+    metadata = {
+      ...metadata,
+      title: pageMetadata.title || "",
+      description: pageMetadata.description || "",
+    };
   } else {
     metadata = {
       ...metadata,
-      title: `${projectInfo?.details?.data?.title} | ${PROJECT_NAME}`,
-      description:
-        cleanMarkdownForPlainText(projectInfo?.details?.data?.description || "", 80) || "",
+      title: `${projectInfo?.details?.title} | ${PROJECT_NAME}`,
+      description: cleanMarkdownForPlainText(projectInfo?.details?.description || "", 80) || "",
     };
   }
 
