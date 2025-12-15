@@ -64,7 +64,7 @@ describe("getContractKey", () => {
     });
 
     it("should handle very long addresses", () => {
-      const longAddress = "0x" + "a".repeat(100);
+      const longAddress = `0x${"a".repeat(100)}`;
       const result = getContractKey("ethereum", longAddress);
       expect(result).toBe(`ethereum:${longAddress}`);
     });

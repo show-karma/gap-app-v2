@@ -1615,7 +1615,12 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   return (
     <>
       {buttonElement ? (
-        <Button type="button" onClick={openModal} id="new-project-button">
+        <Button
+          type="button"
+          onClick={openModal}
+          id="new-project-button"
+          className={buttonElement.styleClass}
+        >
           {buttonElement.iconSide === "left" && buttonElement.icon}
           {buttonElement.text}
           {buttonElement.iconSide === "right" && buttonElement.icon}

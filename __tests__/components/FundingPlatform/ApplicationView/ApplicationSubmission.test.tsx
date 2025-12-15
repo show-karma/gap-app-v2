@@ -857,7 +857,7 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
         expect(mockOnSubmit).toHaveBeenCalled();
         const submittedData = mockOnSubmit.mock.calls[0][0];
         const teamSizeValue = submittedData["Team Size"];
-        const budgetValue = submittedData["Budget"];
+        const budgetValue = submittedData.Budget;
         // Values should be numbers, not strings
         expect(typeof teamSizeValue).toBe("number");
         expect(teamSizeValue).toBe(50);

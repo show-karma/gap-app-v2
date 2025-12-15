@@ -2,7 +2,7 @@
 
 import { TrashIcon } from "@heroicons/react/24/solid";
 import type { FC } from "react";
-import type { Control, FieldError, UseFormRegister } from "react-hook-form";
+import type { Control, FieldError } from "react-hook-form";
 import { Controller, useFieldArray } from "react-hook-form";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";

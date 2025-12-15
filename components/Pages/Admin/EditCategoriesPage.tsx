@@ -10,7 +10,6 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
-import { useAuth } from "@/hooks/useAuth";
 import { useCategories } from "@/hooks/useCategories";
 import { useCommunityGrants } from "@/hooks/useCommunityGrants";
 import { type SimplifiedGrant, useGrants } from "@/hooks/useGrants";
@@ -39,7 +38,6 @@ export default function EditCategoriesPage() {
   const communityId = params.communityId as string;
   const [selectedCategories, setSelectedCategories] = useState<Record<string, string[]>>({});
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const _signer = useSigner();
 
   const {
     data: community,
