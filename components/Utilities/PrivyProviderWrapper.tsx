@@ -44,10 +44,8 @@ export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperP
           walletList: [
             "detected_wallets",
             "metamask",
-            "wallet_connect_qr",
             "rainbow",
             "rabby_wallet",
-            "wallet_connect",
           ],
         },
         loginMethods: ["email", "google", "wallet"],
