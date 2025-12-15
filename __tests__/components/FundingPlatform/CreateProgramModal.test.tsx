@@ -4,7 +4,7 @@
  * covering UI rendering, form validation, user interactions, and submission
  */
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type React from "react";
 import { CreateProgramModal } from "@/components/FundingPlatform/CreateProgramModal";

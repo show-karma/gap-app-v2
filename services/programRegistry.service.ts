@@ -162,7 +162,7 @@ export class ProgramRegistryService {
       isValid: "accepted",
     };
 
-    const [approveResponse, approveError] = await fetchData(
+    const [_approveResponse, approveError] = await fetchData(
       INDEXER.REGISTRY.APPROVE,
       "POST",
       request,

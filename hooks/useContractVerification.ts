@@ -143,7 +143,7 @@ export const useContractVerification = () => {
         if (error.name === "UserRejectedRequestError" || error.code === 4001) {
           throw new Error("Signature request was cancelled. Please try again when ready.");
         }
-        throw new Error("Failed to sign message: " + (error.message || "Unknown error"));
+        throw new Error(`Failed to sign message: ${error.message || "Unknown error"}`);
       }
 
       // Step 5: Verify signature on backend

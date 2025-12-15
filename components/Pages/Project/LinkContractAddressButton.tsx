@@ -103,7 +103,7 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
   const handleVerify = useCallback(
     (index: number) => {
       const pair = pairs[index];
-      if (pair && pair.network && pair.address) {
+      if (pair?.network && pair.address) {
         setContractToVerify({
           index,
           network: pair.network,

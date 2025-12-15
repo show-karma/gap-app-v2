@@ -108,22 +108,22 @@ export function NavbarDesktopNavigation() {
             </NavigationMenuList>
           </NavigationMenu>
         ) : (
-          <div className="flex flex-row items-center gap-2">
-            <Button variant="secondary" size="sm" asChild>
+          <div className="flex flex-row items-center ml-2 gap-2">
+            <Button variant="outline" size="sm" asChild>
               <Link href={PAGES.MY_PROJECTS}>My projects</Link>
             </Button>
             {hasReviewerRole && (
-              <Button variant="secondary" size="sm" asChild>
+              <Button variant="outline" size="sm" asChild>
                 <Link href={PAGES.MY_REVIEWS}>Review</Link>
               </Button>
             )}
             {hasAdminAccess && (
-              <Button variant="secondary" size="sm" asChild>
+              <Button variant="outline" size="sm" asChild>
                 <Link href={PAGES.ADMIN.LIST}>Admin</Link>
               </Button>
             )}
             {isRegistryAllowed && (
-              <Button variant="secondary" size="sm" asChild>
+              <Button variant="outline" size="sm" asChild>
                 <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>Manage Programs</Link>
               </Button>
             )}
