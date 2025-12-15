@@ -109,16 +109,34 @@ jest.mock("@/components/Utilities/Button", () => ({
 
 // Mock MarkdownEditor component
 jest.mock("@/components/Utilities/MarkdownEditor", () => ({
-  MarkdownEditor: ({ value, onChange, placeholder, placeholderText, disabled }: any) => (
-    <textarea
-      data-testid="markdown-editor"
-      value={value}
-      onChange={(e) => onChange?.(e.target.value)}
-      placeholder={placeholder || placeholderText}
-      disabled={disabled}
-      aria-label="Reason"
-    />
-  ),
+  MarkdownEditor: ({
+    value,
+    onChange,
+    placeholder,
+    placeholderText,
+    disabled,
+    id,
+    height,
+    minHeight,
+    "aria-describedby": ariaDescribedBy,
+    ...props
+  }: any) => {
+    // Filter out non-DOM props (height, minHeight are not DOM attributes)
+    return (
+      <textarea
+        data-testid="markdown-editor"
+        id={id}
+        name={id}
+        value={value}
+        onChange={(e) => onChange?.(e.target.value)}
+        placeholder={placeholder || placeholderText}
+        disabled={disabled}
+        aria-label="Reason"
+        aria-describedby={ariaDescribedBy}
+        {...props}
+      />
+    );
+  },
 }));
 
 describe("StatusChangeModal", () => {
@@ -1584,7 +1602,7 @@ describe("StatusChangeModal", () => {
     };
 
     it("should prepopulate approval email template when status is approved", () => {
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1597,7 +1615,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should prepopulate rejection email template when status is rejected", () => {
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="rejected"
@@ -1610,7 +1628,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should not prepopulate when status is not approved or rejected", () => {
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="revision_requested"
@@ -1623,7 +1641,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should not prepopulate when programConfig is not provided", () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const editor = screen.getByTestId("markdown-editor");
       expect(editor).toHaveValue("");
@@ -1634,7 +1652,7 @@ describe("StatusChangeModal", () => {
         formSchema: null,
       };
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1651,7 +1669,7 @@ describe("StatusChangeModal", () => {
         formSchema: {},
       };
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1664,7 +1682,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should prepopulate only when modal opens and reason is empty", () => {
-      const { rerender } = render(
+      const { rerender, queryClient } = renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1678,12 +1696,14 @@ describe("StatusChangeModal", () => {
 
       // Open modal
       rerender(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programConfig={mockProgramConfig as any}
-          isOpen={true}
-        />
+        <QueryClientProvider client={queryClient}>
+          <StatusChangeModal
+            {...defaultProps}
+            status="approved"
+            programConfig={mockProgramConfig as any}
+            isOpen={true}
+          />
+        </QueryClientProvider>
       );
 
       const editor = screen.getByTestId("markdown-editor");
@@ -1691,7 +1711,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should reapply template after modal is closed and reopened", () => {
-      const { rerender } = render(
+      const { rerender, queryClient } = renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1707,21 +1727,25 @@ describe("StatusChangeModal", () => {
 
       // Close and reopen modal
       rerender(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programConfig={mockProgramConfig as any}
-          isOpen={false}
-        />
+        <QueryClientProvider client={queryClient}>
+          <StatusChangeModal
+            {...defaultProps}
+            status="approved"
+            programConfig={mockProgramConfig as any}
+            isOpen={false}
+          />
+        </QueryClientProvider>
       );
 
       rerender(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programConfig={mockProgramConfig as any}
-          isOpen={true}
-        />
+        <QueryClientProvider client={queryClient}>
+          <StatusChangeModal
+            {...defaultProps}
+            status="approved"
+            programConfig={mockProgramConfig as any}
+            isOpen={true}
+          />
+        </QueryClientProvider>
       );
 
       // Should prepopulate again since reason was reset when modal closed
@@ -1730,7 +1754,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should prepopulate when status changes from one to another", () => {
-      const { rerender } = render(
+      const { rerender, queryClient } = renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1743,11 +1767,13 @@ describe("StatusChangeModal", () => {
 
       // Change to rejected status
       rerender(
-        <StatusChangeModal
-          {...defaultProps}
-          status="rejected"
-          programConfig={mockProgramConfig as any}
-        />
+        <QueryClientProvider client={queryClient}>
+          <StatusChangeModal
+            {...defaultProps}
+            status="rejected"
+            programConfig={mockProgramConfig as any}
+          />
+        </QueryClientProvider>
       );
 
       editor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
@@ -1763,7 +1789,7 @@ describe("StatusChangeModal", () => {
         },
       };
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1776,7 +1802,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should use MarkdownEditor component instead of textarea", () => {
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1790,9 +1816,9 @@ describe("StatusChangeModal", () => {
       expect(editor.tagName).toBe("TEXTAREA");
     });
 
-    it("should pass prepopulated content to onConfirm when submitted", () => {
+    it("should pass prepopulated content to onConfirm when submitted", async () => {
       const onConfirm = jest.fn();
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1804,11 +1830,22 @@ describe("StatusChangeModal", () => {
       const editor = screen.getByTestId("markdown-editor");
       const confirmButton = screen.getByTestId("confirm-button");
 
+      // Fill in required amount and currency fields for approved status
+      const amountInput = screen.getByLabelText(/approved amount/i);
+      fireEvent.change(amountInput, { target: { value: "1000" } });
+
+      // Select currency from dropdown
+      await enterCurrency("USD");
+
       // Template is prepopulated, user can edit it
       fireEvent.change(editor, { target: { value: "Edited template content" } });
+
+      await waitFor(() => {
+        expect(confirmButton).not.toBeDisabled();
+      });
       fireEvent.click(confirmButton);
 
-      expect(onConfirm).toHaveBeenCalledWith("Edited template content");
+      expect(onConfirm).toHaveBeenCalledWith("Edited template content", "1000", "USD");
     });
   });
 
@@ -1825,7 +1862,7 @@ describe("StatusChangeModal", () => {
     };
 
     it("should prepopulate approval email template when status is approved", () => {
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1838,7 +1875,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should prepopulate rejection email template when status is rejected", () => {
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="rejected"
@@ -1851,7 +1888,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should not prepopulate when status is not approved or rejected", () => {
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="revision_requested"
@@ -1864,7 +1901,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should not prepopulate when programConfig is not provided", () => {
-      render(<StatusChangeModal {...defaultProps} status="approved" />);
+      renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       const editor = screen.getByTestId("markdown-editor");
       expect(editor).toHaveValue("");
@@ -1875,7 +1912,7 @@ describe("StatusChangeModal", () => {
         formSchema: null,
       };
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1892,7 +1929,7 @@ describe("StatusChangeModal", () => {
         formSchema: {},
       };
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1905,7 +1942,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should prepopulate only when modal opens and reason is empty", () => {
-      const { rerender } = render(
+      const { rerender, queryClient } = renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1919,12 +1956,14 @@ describe("StatusChangeModal", () => {
 
       // Open modal
       rerender(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programConfig={mockProgramConfig as any}
-          isOpen={true}
-        />
+        <QueryClientProvider client={queryClient}>
+          <StatusChangeModal
+            {...defaultProps}
+            status="approved"
+            programConfig={mockProgramConfig as any}
+            isOpen={true}
+          />
+        </QueryClientProvider>
       );
 
       const editor = screen.getByTestId("markdown-editor");
@@ -1932,7 +1971,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should reapply template after modal is closed and reopened", () => {
-      const { rerender } = render(
+      const { rerender, queryClient } = renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1948,21 +1987,25 @@ describe("StatusChangeModal", () => {
 
       // Close and reopen modal
       rerender(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programConfig={mockProgramConfig as any}
-          isOpen={false}
-        />
+        <QueryClientProvider client={queryClient}>
+          <StatusChangeModal
+            {...defaultProps}
+            status="approved"
+            programConfig={mockProgramConfig as any}
+            isOpen={false}
+          />
+        </QueryClientProvider>
       );
 
       rerender(
-        <StatusChangeModal
-          {...defaultProps}
-          status="approved"
-          programConfig={mockProgramConfig as any}
-          isOpen={true}
-        />
+        <QueryClientProvider client={queryClient}>
+          <StatusChangeModal
+            {...defaultProps}
+            status="approved"
+            programConfig={mockProgramConfig as any}
+            isOpen={true}
+          />
+        </QueryClientProvider>
       );
 
       // Should prepopulate again since reason was reset when modal closed
@@ -1971,7 +2014,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should prepopulate when status changes from one to another", () => {
-      const { rerender } = render(
+      const { rerender, queryClient } = renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -1984,11 +2027,13 @@ describe("StatusChangeModal", () => {
 
       // Change to rejected status
       rerender(
-        <StatusChangeModal
-          {...defaultProps}
-          status="rejected"
-          programConfig={mockProgramConfig as any}
-        />
+        <QueryClientProvider client={queryClient}>
+          <StatusChangeModal
+            {...defaultProps}
+            status="rejected"
+            programConfig={mockProgramConfig as any}
+          />
+        </QueryClientProvider>
       );
 
       editor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
@@ -2004,7 +2049,7 @@ describe("StatusChangeModal", () => {
         },
       };
 
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -2017,7 +2062,7 @@ describe("StatusChangeModal", () => {
     });
 
     it("should use MarkdownEditor component instead of textarea", () => {
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -2031,9 +2076,9 @@ describe("StatusChangeModal", () => {
       expect(editor.tagName).toBe("TEXTAREA");
     });
 
-    it("should pass prepopulated content to onConfirm when submitted", () => {
+    it("should pass prepopulated content to onConfirm when submitted", async () => {
       const onConfirm = jest.fn();
-      render(
+      renderWithQueryClient(
         <StatusChangeModal
           {...defaultProps}
           status="approved"
@@ -2045,11 +2090,22 @@ describe("StatusChangeModal", () => {
       const editor = screen.getByTestId("markdown-editor");
       const confirmButton = screen.getByTestId("confirm-button");
 
+      // Fill in required amount and currency fields for approved status
+      const amountInput = screen.getByLabelText(/approved amount/i);
+      fireEvent.change(amountInput, { target: { value: "1000" } });
+
+      // Select currency from dropdown
+      await enterCurrency("USD");
+
       // Template is prepopulated, user can edit it
       fireEvent.change(editor, { target: { value: "Edited template content" } });
+
+      await waitFor(() => {
+        expect(confirmButton).not.toBeDisabled();
+      });
       fireEvent.click(confirmButton);
 
-      expect(onConfirm).toHaveBeenCalledWith("Edited template content");
+      expect(onConfirm).toHaveBeenCalledWith("Edited template content", "1000", "USD");
     });
   });
 });

@@ -526,6 +526,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                               height={300}
                               minHeight={250}
                               disabled={isSubmitting}
+                              aria-describedby="reason-description"
                             />
                           </div>
                           <p

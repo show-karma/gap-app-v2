@@ -5,7 +5,7 @@ import {
   DocumentTextIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
-import { type FC, type ReactNode, useEffect, useState } from "react";
+import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/utilities/tailwind";
 
@@ -37,13 +37,16 @@ export const ApplicationTabs: FC<ApplicationTabsProps> = ({
   const defaultTab = tabs[validDefaultIndex]?.id || tabs[0]?.id || "";
 
   const [activeTab, setActiveTab] = useState(defaultTab);
+  const prevDefaultTabRef = useRef(defaultTab);
 
   // Update activeTab when defaultTab changes (e.g., when tabs array changes)
+  // Only update if defaultTab actually changed, not when user manually changes tabs
   useEffect(() => {
-    if (defaultTab && defaultTab !== activeTab) {
+    if (defaultTab && defaultTab !== prevDefaultTabRef.current) {
       setActiveTab(defaultTab);
+      prevDefaultTabRef.current = defaultTab;
     }
-  }, [defaultTab, activeTab]);
+  }, [defaultTab]);
 
   // Handle empty tabs array defensively (after hooks)
   if (tabs.length === 0) {
