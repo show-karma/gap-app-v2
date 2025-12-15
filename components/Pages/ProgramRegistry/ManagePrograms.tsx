@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import Pagination from "@/components/Utilities/Pagination";
+import { ProgramRegistryService } from "@/services/programRegistry.service";
 import { useAuth } from "@/hooks/useAuth";
 import { useRegistryStore } from "@/store/registry";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
@@ -271,23 +272,22 @@ export const ManagePrograms = () => {
       pending: "pending",
     };
     try {
-      const id = program._id.$oid;
+      // V2 approve endpoint uses domain identifier (programId + chainId)
+      const programId = program.programId;
+      const chainId = program.chainID || registryHelper.supportedNetworks;
 
-      const request = fetchData(
-        INDEXER.REGISTRY.APPROVE,
-        "POST",
-        {
-          id,
-          isValid: value,
-        },
-        {},
-        {},
-        true
-      ).then(([res, error]) => {
-        if (error) throw Error(error);
-        return res;
-      });
-      await toast.promise(request, {
+      if (!programId) {
+        throw new Error("Program ID not found. Cannot approve program.");
+      }
+
+      if (!chainId) {
+        throw new Error("Chain ID not found. Cannot approve program.");
+      }
+
+      // Use V2 approve endpoint with domain identifier
+      const approvePromise = ProgramRegistryService.approveProgram(programId, chainId, value);
+
+      await toast.promise(approvePromise, {
         loading: `Changing program ${program.metadata?.title} to ${value}...`,
         success: `Program changed to ${value} successfully`,
         error: `Error while changing program ${program.metadata?.title} to ${value}.`,
@@ -295,8 +295,8 @@ export const ManagePrograms = () => {
 
       await refreshPrograms();
     } catch (error: any) {
-      errorManager(`Error ${messageDict[value]} program ${program._id.$oid}`, error, {
-        program: program._id.$oid,
+      errorManager(`Error ${messageDict[value]} program ${program.programId}`, error, {
+        programId: program.programId,
         isValid: value,
         address,
       });

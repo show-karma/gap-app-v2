@@ -243,8 +243,9 @@ export function ProgramDetailsTab({
       return;
     }
 
-    const programDbId = ProgramRegistryService.extractProgramId(program!);
-    if (!programDbId) {
+    // V2 uses programId (domain identifier), not MongoDB _id
+    const programIdToUpdate = programId || ProgramRegistryService.extractProgramId(program!);
+    if (!programIdToUpdate) {
       errorManager("Program missing ID", new Error("Program ID not found"), {
         programId,
         chainId,
@@ -258,18 +259,12 @@ export function ProgramDetailsTab({
     try {
       const metadata = buildUpdateMetadata(data, program!.metadata);
 
-      const [, error] = await fetchData(
-        INDEXER.REGISTRY.UPDATE(programDbId, chainId),
-        "PUT",
-        { metadata },
-        {},
-        {},
-        true
+      // Use V2 update endpoint
+      await ProgramRegistryService.updateProgram(
+        programIdToUpdate,
+        chainId,
+        metadata
       );
-
-      if (error) {
-        throw new Error(error);
-      }
 
       toast.success("Program updated successfully!");
       await refetchProgramData();

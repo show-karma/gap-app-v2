@@ -19,6 +19,14 @@ export const INDEXER = {
     CREATE: "/registry/offchain/create",
     MANAGERS: (profileId: string, chainId: number) =>
       `/registry/profile/${profileId}/${chainId}/members`,
+    V2: {
+      CREATE: "/v2/program-registry",
+      UPDATE: (programId: string) => `/v2/program-registry/${programId}`,
+      APPROVE: "/v2/program-registry/approve",
+      GET_BY_ID: (programId: string) => `/v2/program-registry/${programId}`,
+      SEARCH: "/v2/program-registry/search",
+      FILTERS: "/v2/program-registry/filters",
+    },
   },
   PROJECTS: {
     GET_ALL: (offset: number, limit: number, sortField: string, sortOrder: "asc" | "desc") =>

@@ -62,12 +62,22 @@ export class ProgramRegistryService {
 
   /**
    * Extract program ID from various response formats
-   * Handles different API response structures
+   * Handles different API response structures (V1 and V2)
    */
   static extractProgramId(response: unknown): string | undefined {
     if (!response) return undefined;
 
-    // Handle different response formats:
+    // V2 format: { programId: "..." }
+    if (
+      typeof response === "object" &&
+      response !== null &&
+      "programId" in response &&
+      typeof (response as { programId?: unknown }).programId === "string"
+    ) {
+      return (response as { programId: string }).programId;
+    }
+
+    // Handle different V1 response formats:
     // 1. { _id: { $oid: "..." } }
     if (
       typeof response === "object" &&
@@ -109,21 +119,52 @@ export class ProgramRegistryService {
   }
 
   /**
-   * Create a program
+   * Extract MongoDB ID (for approve endpoint which still uses _id)
+   */
+  static extractMongoId(response: unknown): string | undefined {
+    if (!response) return undefined;
+
+    // V2 format: { id: "..." } (MongoDB _id)
+    if (
+      typeof response === "object" &&
+      response !== null &&
+      "id" in response &&
+      typeof (response as { id?: unknown }).id === "string"
+    ) {
+      return (response as { id: string }).id;
+    }
+
+    // V1 format: { _id: { $oid: "..." } }
+    if (
+      typeof response === "object" &&
+      response !== null &&
+      "_id" in response &&
+      typeof (response as { _id?: { $oid?: string } })._id === "object" &&
+      (response as { _id: { $oid?: string } })._id?.$oid
+    ) {
+      return (response as { _id: { $oid: string } })._id.$oid;
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Create a program (V2 endpoint)
    */
   static async createProgram(
     owner: string,
     chainId: number,
     metadata: ProgramMetadata
   ): Promise<ProgramCreationResult> {
-    const request: ProgramCreationRequest = {
-      owner,
+    // V2 endpoint expects: { chainId, metadata }
+    // owner comes from JWT session
+    const request = {
       chainId,
       metadata,
     };
 
     const [createResponse, createError] = await fetchData(
-      INDEXER.REGISTRY.CREATE,
+      INDEXER.REGISTRY.V2.CREATE,
       "POST",
       request,
       {},
@@ -135,7 +176,14 @@ export class ProgramRegistryService {
       throw new Error(createError);
     }
 
+    // V2 response: { programId: "...", isValid: true | null, ... }
     const programId = ProgramRegistryService.extractProgramId(createResponse);
+    const isValid = 
+      typeof createResponse === "object" &&
+      createResponse !== null &&
+      "isValid" in createResponse
+        ? (createResponse as { isValid?: unknown }).isValid
+        : null;
 
     if (!programId) {
       // If we can't get the ID immediately, return success but indicate manual approval needed
@@ -146,24 +194,59 @@ export class ProgramRegistryService {
       };
     }
 
+    // If program is auto-approved (isValid: true), no manual approval needed
+    const requiresManualApproval = isValid !== true;
+
     return {
       programId,
       success: true,
-      requiresManualApproval: false,
+      requiresManualApproval,
     };
   }
 
   /**
-   * Approve a program
+   * Update a program (V2 endpoint)
    */
-  static async approveProgram(programId: string): Promise<void> {
-    const request: ProgramApprovalRequest = {
-      id: programId,
-      isValid: "accepted",
+  static async updateProgram(
+    programId: string,
+    chainId: number,
+    metadata: ProgramMetadata
+  ): Promise<void> {
+    const request = {
+      metadata,
+    };
+
+    const [, updateError] = await fetchData(
+      INDEXER.REGISTRY.V2.UPDATE(programId, chainId),
+      "PUT",
+      request,
+      {},
+      {},
+      true
+    );
+
+    if (updateError) {
+      throw new Error(updateError);
+    }
+  }
+
+  /**
+   * Approve/reject/pending a program (V2 endpoint)
+   * Uses domain identifier (programId + chainId) instead of MongoDB _id
+   */
+  static async approveProgram(
+    programId: string,
+    chainId: number,
+    isValid: "accepted" | "rejected" | "pending" = "accepted"
+  ): Promise<void> {
+    const request = {
+      programId,
+      chainId,
+      isValid,
     };
 
     const [_approveResponse, approveError] = await fetchData(
-      INDEXER.REGISTRY.APPROVE,
+      INDEXER.REGISTRY.V2.APPROVE,
       "POST",
       request,
       {},
