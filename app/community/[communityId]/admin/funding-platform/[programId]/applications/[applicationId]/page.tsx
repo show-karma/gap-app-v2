@@ -37,6 +37,7 @@ import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import type { IFundingApplication } from "@/types/funding-platform";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { isFundingProgramConfig } from "@/utilities/type-guards";
 
 export default function ApplicationDetailPage() {
   const router = useRouter();
@@ -132,12 +133,16 @@ export default function ApplicationDetailPage() {
   };
 
   // Handle status change confirmation from modal
-  const handleStatusChangeConfirm = async (reason?: string) => {
+  const handleStatusChangeConfirm = async (
+    reason?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => {
     if (!pendingStatus) return;
 
     setIsUpdatingStatus(true);
     try {
-      await handleStatusChange(pendingStatus, reason);
+      await handleStatusChange(pendingStatus, reason, approvedAmount, approvedCurrency);
       // Success: close modal and clear state
       setIsStatusModalOpen(false);
       setPendingStatus("");
@@ -436,6 +441,9 @@ export default function ApplicationDetailPage() {
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
         isReasonRequired={pendingStatus === "revision_requested" || pendingStatus === "rejected"}
+        programId={application?.programId}
+        chainId={application?.chainID}
+        programConfig={isFundingProgramConfig(program) ? program : undefined}
       />
     </div>
   );

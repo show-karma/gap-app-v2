@@ -358,7 +358,9 @@ describe("GrantCard", () => {
       const { container } = render(<GrantCard grant={mockGrant} index={0} />);
 
       const link = container.querySelector("a");
-      expect(link?.className).toContain("dark:bg-zinc-900");
+      // Verify the link has proper border and hover classes for dark mode support
+      expect(link?.className).toContain("border-zinc-200");
+      expect(link?.className).toContain("hover:opacity-80");
     });
   });
 

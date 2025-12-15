@@ -107,6 +107,20 @@ jest.mock("@/components/Utilities/Button", () => ({
   },
 }));
 
+// Mock MarkdownEditor component
+jest.mock("@/components/Utilities/MarkdownEditor", () => ({
+  MarkdownEditor: ({ value, onChange, placeholder, placeholderText, disabled }: any) => (
+    <textarea
+      data-testid="markdown-editor"
+      value={value}
+      onChange={(e) => onChange?.(e.target.value)}
+      placeholder={placeholder || placeholderText}
+      disabled={disabled}
+      aria-label="Reason"
+    />
+  ),
+}));
+
 describe("StatusChangeModal", () => {
   const defaultProps = {
     isOpen: true,
@@ -197,11 +211,11 @@ describe("StatusChangeModal", () => {
       expect(screen.getByText("Set as Pending")).toBeInTheDocument();
     });
 
-    it("should display reason textarea", () => {
+    it("should display reason MarkdownEditor", () => {
       renderWithQueryClient(<StatusChangeModal {...defaultProps} />);
 
-      const textarea = screen.getByLabelText(/reason/i);
-      expect(textarea).toBeInTheDocument();
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toBeInTheDocument();
     });
   });
 
@@ -212,8 +226,8 @@ describe("StatusChangeModal", () => {
       const confirmButton = screen.getByTestId("confirm-button");
       expect(confirmButton).toBeDisabled();
 
-      const textarea = screen.getByLabelText(/reason/i);
-      expect(textarea).toBeInTheDocument();
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toBeInTheDocument();
       // Check for required asterisk in label
       const label = screen.getByText(/reason/i);
       expect(label.textContent).toMatch(/\*/);
@@ -286,8 +300,8 @@ describe("StatusChangeModal", () => {
         <StatusChangeModal {...defaultProps} status="rejected" onConfirm={onConfirm} />
       );
 
-      const textarea = screen.getByLabelText(/reason/i);
-      fireEvent.change(textarea, { target: { value: "   " } });
+      const editor = screen.getByTestId("markdown-editor");
+      fireEvent.change(editor, { target: { value: "   " } });
 
       const confirmButton = screen.getByTestId("confirm-button");
       expect(confirmButton).toBeDisabled();
@@ -302,8 +316,8 @@ describe("StatusChangeModal", () => {
         <StatusChangeModal {...defaultProps} status="revision_requested" onConfirm={onConfirm} />
       );
 
-      const textarea = screen.getByLabelText(/reason/i);
-      fireEvent.change(textarea, { target: { value: "Please update section 3" } });
+      const editor = screen.getByTestId("markdown-editor");
+      fireEvent.change(editor, { target: { value: "Please update section 3" } });
 
       const confirmButton = screen.getByTestId("confirm-button");
       expect(confirmButton).not.toBeDisabled();
@@ -342,9 +356,9 @@ describe("StatusChangeModal", () => {
         <StatusChangeModal {...defaultProps} />
       );
 
-      const textarea = screen.getByLabelText(/reason/i) as HTMLTextAreaElement;
-      fireEvent.change(textarea, { target: { value: "Test reason" } });
-      expect(textarea.value).toBe("Test reason");
+      const editor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
+      fireEvent.change(editor, { target: { value: "Test reason" } });
+      expect(editor.value).toBe("Test reason");
 
       // Close modal
       const cancelButton = screen.getByTestId("cancel-button");
@@ -359,8 +373,8 @@ describe("StatusChangeModal", () => {
         </QueryClientProvider>
       );
 
-      const newTextarea = screen.getByLabelText(/reason/i) as HTMLTextAreaElement;
-      expect(newTextarea.value).toBe("");
+      const newEditor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
+      expect(newEditor.value).toBe("");
     });
 
     it("should reset reason field after successful confirmation", async () => {
@@ -369,8 +383,8 @@ describe("StatusChangeModal", () => {
         <StatusChangeModal {...defaultProps} onConfirm={onConfirm} />
       );
 
-      const textarea = screen.getByLabelText(/reason/i) as HTMLTextAreaElement;
-      fireEvent.change(textarea, { target: { value: "Test reason" } });
+      const editor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
+      fireEvent.change(editor, { target: { value: "Test reason" } });
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
@@ -394,8 +408,8 @@ describe("StatusChangeModal", () => {
           <StatusChangeModal {...defaultProps} isOpen={true} />
         </QueryClientProvider>
       );
-      const newTextarea = screen.getByLabelText(/reason/i) as HTMLTextAreaElement;
-      expect(newTextarea.value).toBe("");
+      const newEditor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
+      expect(newEditor.value).toBe("");
     });
   });
 
@@ -451,11 +465,11 @@ describe("StatusChangeModal", () => {
       expect(confirmButton).toBeDisabled();
     });
 
-    it("should disable textarea when isSubmitting is true", () => {
+    it("should disable MarkdownEditor when isSubmitting is true", () => {
       renderWithQueryClient(<StatusChangeModal {...defaultProps} isSubmitting={true} />);
 
-      const textarea = screen.getByLabelText(/reason/i);
-      expect(textarea).toBeDisabled();
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toBeDisabled();
     });
   });
 
@@ -463,22 +477,22 @@ describe("StatusChangeModal", () => {
     it("should show correct placeholder for revision_requested", () => {
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="revision_requested" />);
 
-      const textarea = screen.getByLabelText(/reason/i);
-      expect(textarea).toHaveAttribute("placeholder", "Explain what needs to be revised...");
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveAttribute("placeholder", "Explain what needs to be revised...");
     });
 
     it("should show correct placeholder for rejected", () => {
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="rejected" />);
 
-      const textarea = screen.getByLabelText(/reason/i);
-      expect(textarea).toHaveAttribute("placeholder", "Explain why the application is rejected...");
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveAttribute("placeholder", "Explain why the application is rejected...");
     });
 
     it("should show correct placeholder for other statuses", () => {
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
-      const textarea = screen.getByLabelText(/reason/i);
-      expect(textarea).toHaveAttribute("placeholder", "Add any notes about this decision...");
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveAttribute("placeholder", "Add any notes about this decision...");
     });
 
     it("should show correct help text for revision_requested", () => {
@@ -493,7 +507,7 @@ describe("StatusChangeModal", () => {
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="rejected" />);
 
       expect(
-        screen.getByText(/this reason will be recorded and may be shared with the applicant/i)
+        screen.getByText(/this content will be sent to the applicant via email/i)
       ).toBeInTheDocument();
     });
 
@@ -501,7 +515,7 @@ describe("StatusChangeModal", () => {
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="approved" />);
 
       expect(
-        screen.getByText(/this reason will be recorded in the status history/i)
+        screen.getByText(/this content will be sent to the applicant via email/i)
       ).toBeInTheDocument();
     });
 
@@ -525,8 +539,8 @@ describe("StatusChangeModal", () => {
       const onConfirm = jest.fn();
       renderWithQueryClient(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
-      const textarea = screen.getByLabelText(/reason/i);
-      fireEvent.change(textarea, { target: { value: "Approved because it meets criteria" } });
+      const editor = screen.getByTestId("markdown-editor");
+      fireEvent.change(editor, { target: { value: "Approved because it meets criteria" } });
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
@@ -631,8 +645,8 @@ describe("StatusChangeModal", () => {
       const onConfirm = jest.fn();
       renderWithQueryClient(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
-      const textarea = screen.getByLabelText(/reason/i);
-      fireEvent.change(textarea, { target: { value: longReason } });
+      const editor = screen.getByTestId("markdown-editor");
+      fireEvent.change(editor, { target: { value: longReason } });
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
@@ -655,8 +669,8 @@ describe("StatusChangeModal", () => {
       const onConfirm = jest.fn();
       renderWithQueryClient(<StatusChangeModal {...defaultProps} onConfirm={onConfirm} />);
 
-      const textarea = screen.getByLabelText(/reason/i);
-      fireEvent.change(textarea, { target: { value: specialReason } });
+      const editor = screen.getByTestId("markdown-editor");
+      fireEvent.change(editor, { target: { value: specialReason } });
 
       // Fill in required amount and currency fields for approved status
       const amountInput = screen.getByLabelText(/approved amount/i);
@@ -1554,6 +1568,488 @@ describe("StatusChangeModal", () => {
       await waitFor(() => {
         expect(confirmButton).not.toBeDisabled();
       });
+    });
+  });
+
+  describe("Email Template Prepopulation", () => {
+    const mockProgramConfig = {
+      formSchema: {
+        settings: {
+          approvalEmailTemplate:
+            "Congratulations! Your application for {{programName}} has been approved. {{reason}}",
+          rejectionEmailTemplate:
+            "Unfortunately, your application for {{programName}} was not selected. {{reason}}",
+        },
+      },
+    };
+
+    it("should prepopulate approval email template when status is approved", () => {
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveValue(mockProgramConfig.formSchema.settings.approvalEmailTemplate);
+    });
+
+    it("should prepopulate rejection email template when status is rejected", () => {
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="rejected"
+          programConfig={mockProgramConfig as any}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveValue(mockProgramConfig.formSchema.settings.rejectionEmailTemplate);
+    });
+
+    it("should not prepopulate when status is not approved or rejected", () => {
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="revision_requested"
+          programConfig={mockProgramConfig as any}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveValue("");
+    });
+
+    it("should not prepopulate when programConfig is not provided", () => {
+      render(<StatusChangeModal {...defaultProps} status="approved" />);
+
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveValue("");
+    });
+
+    it("should not prepopulate when programConfig.formSchema is missing", () => {
+      const configWithoutSchema = {
+        formSchema: null,
+      };
+
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={configWithoutSchema as any}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveValue("");
+    });
+
+    it("should not prepopulate when programConfig.formSchema.settings is missing", () => {
+      const configWithoutSettings = {
+        formSchema: {},
+      };
+
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={configWithoutSettings as any}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveValue("");
+    });
+
+    it("should prepopulate only when modal opens and reason is empty", () => {
+      const { rerender } = render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+          isOpen={false}
+        />
+      );
+
+      // Modal closed, editor not rendered
+      expect(screen.queryByTestId("markdown-editor")).not.toBeInTheDocument();
+
+      // Open modal
+      rerender(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+          isOpen={true}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveValue(mockProgramConfig.formSchema.settings.approvalEmailTemplate);
+    });
+
+    it("should reapply template after modal is closed and reopened", () => {
+      const { rerender } = render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
+
+      // User edits the prepopulated template
+      fireEvent.change(editor, { target: { value: "Custom edited reason" } });
+      expect(editor.value).toBe("Custom edited reason");
+
+      // Close and reopen modal
+      rerender(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+          isOpen={false}
+        />
+      );
+
+      rerender(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+          isOpen={true}
+        />
+      );
+
+      // Should prepopulate again since reason was reset when modal closed
+      const newEditor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
+      expect(newEditor.value).toBe(mockProgramConfig.formSchema.settings.approvalEmailTemplate);
+    });
+
+    it("should prepopulate when status changes from one to another", () => {
+      const { rerender } = render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+        />
+      );
+
+      let editor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
+      expect(editor.value).toBe(mockProgramConfig.formSchema.settings.approvalEmailTemplate);
+
+      // Change to rejected status
+      rerender(
+        <StatusChangeModal
+          {...defaultProps}
+          status="rejected"
+          programConfig={mockProgramConfig as any}
+        />
+      );
+
+      editor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
+      expect(editor.value).toBe(mockProgramConfig.formSchema.settings.rejectionEmailTemplate);
+    });
+
+    it("should handle empty template strings gracefully", () => {
+      const configWithEmptyTemplate = {
+        formSchema: {
+          settings: {
+            approvalEmailTemplate: "",
+          },
+        },
+      };
+
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={configWithEmptyTemplate as any}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveValue("");
+    });
+
+    it("should use MarkdownEditor component instead of textarea", () => {
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+        />
+      );
+
+      // Should use MarkdownEditor (mocked as textarea with data-testid="markdown-editor")
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toBeInTheDocument();
+      expect(editor.tagName).toBe("TEXTAREA");
+    });
+
+    it("should pass prepopulated content to onConfirm when submitted", () => {
+      const onConfirm = jest.fn();
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+          onConfirm={onConfirm}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor");
+      const confirmButton = screen.getByTestId("confirm-button");
+
+      // Template is prepopulated, user can edit it
+      fireEvent.change(editor, { target: { value: "Edited template content" } });
+      fireEvent.click(confirmButton);
+
+      expect(onConfirm).toHaveBeenCalledWith("Edited template content");
+    });
+  });
+
+  describe("Email Template Prepopulation", () => {
+    const mockProgramConfig = {
+      formSchema: {
+        settings: {
+          approvalEmailTemplate:
+            "Congratulations! Your application for {{programName}} has been approved. {{reason}}",
+          rejectionEmailTemplate:
+            "Unfortunately, your application for {{programName}} was not selected. {{reason}}",
+        },
+      },
+    };
+
+    it("should prepopulate approval email template when status is approved", () => {
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveValue(mockProgramConfig.formSchema.settings.approvalEmailTemplate);
+    });
+
+    it("should prepopulate rejection email template when status is rejected", () => {
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="rejected"
+          programConfig={mockProgramConfig as any}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveValue(mockProgramConfig.formSchema.settings.rejectionEmailTemplate);
+    });
+
+    it("should not prepopulate when status is not approved or rejected", () => {
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="revision_requested"
+          programConfig={mockProgramConfig as any}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveValue("");
+    });
+
+    it("should not prepopulate when programConfig is not provided", () => {
+      render(<StatusChangeModal {...defaultProps} status="approved" />);
+
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveValue("");
+    });
+
+    it("should not prepopulate when programConfig.formSchema is missing", () => {
+      const configWithoutSchema = {
+        formSchema: null,
+      };
+
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={configWithoutSchema as any}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveValue("");
+    });
+
+    it("should not prepopulate when programConfig.formSchema.settings is missing", () => {
+      const configWithoutSettings = {
+        formSchema: {},
+      };
+
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={configWithoutSettings as any}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveValue("");
+    });
+
+    it("should prepopulate only when modal opens and reason is empty", () => {
+      const { rerender } = render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+          isOpen={false}
+        />
+      );
+
+      // Modal closed, editor not rendered
+      expect(screen.queryByTestId("markdown-editor")).not.toBeInTheDocument();
+
+      // Open modal
+      rerender(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+          isOpen={true}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveValue(mockProgramConfig.formSchema.settings.approvalEmailTemplate);
+    });
+
+    it("should reapply template after modal is closed and reopened", () => {
+      const { rerender } = render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
+
+      // User edits the prepopulated template
+      fireEvent.change(editor, { target: { value: "Custom edited reason" } });
+      expect(editor.value).toBe("Custom edited reason");
+
+      // Close and reopen modal
+      rerender(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+          isOpen={false}
+        />
+      );
+
+      rerender(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+          isOpen={true}
+        />
+      );
+
+      // Should prepopulate again since reason was reset when modal closed
+      const newEditor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
+      expect(newEditor.value).toBe(mockProgramConfig.formSchema.settings.approvalEmailTemplate);
+    });
+
+    it("should prepopulate when status changes from one to another", () => {
+      const { rerender } = render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+        />
+      );
+
+      let editor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
+      expect(editor.value).toBe(mockProgramConfig.formSchema.settings.approvalEmailTemplate);
+
+      // Change to rejected status
+      rerender(
+        <StatusChangeModal
+          {...defaultProps}
+          status="rejected"
+          programConfig={mockProgramConfig as any}
+        />
+      );
+
+      editor = screen.getByTestId("markdown-editor") as HTMLTextAreaElement;
+      expect(editor.value).toBe(mockProgramConfig.formSchema.settings.rejectionEmailTemplate);
+    });
+
+    it("should handle empty template strings gracefully", () => {
+      const configWithEmptyTemplate = {
+        formSchema: {
+          settings: {
+            approvalEmailTemplate: "",
+          },
+        },
+      };
+
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={configWithEmptyTemplate as any}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toHaveValue("");
+    });
+
+    it("should use MarkdownEditor component instead of textarea", () => {
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+        />
+      );
+
+      // Should use MarkdownEditor (mocked as textarea with data-testid="markdown-editor")
+      const editor = screen.getByTestId("markdown-editor");
+      expect(editor).toBeInTheDocument();
+      expect(editor.tagName).toBe("TEXTAREA");
+    });
+
+    it("should pass prepopulated content to onConfirm when submitted", () => {
+      const onConfirm = jest.fn();
+      render(
+        <StatusChangeModal
+          {...defaultProps}
+          status="approved"
+          programConfig={mockProgramConfig as any}
+          onConfirm={onConfirm}
+        />
+      );
+
+      const editor = screen.getByTestId("markdown-editor");
+      const confirmButton = screen.getByTestId("confirm-button");
+
+      // Template is prepopulated, user can edit it
+      fireEvent.change(editor, { target: { value: "Edited template content" } });
+      fireEvent.click(confirmButton);
+
+      expect(onConfirm).toHaveBeenCalledWith("Edited template content");
     });
   });
 });

@@ -5,7 +5,7 @@ import {
   DocumentTextIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
-import { type FC, type ReactNode, useState } from "react";
+import { type FC, type ReactNode, useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/utilities/tailwind";
 
@@ -30,8 +30,31 @@ export const ApplicationTabs: FC<ApplicationTabsProps> = ({
   onChange,
   connectedToHeader = false,
 }) => {
-  const defaultTab = tabs[defaultIndex]?.id || tabs[0]?.id;
+  // Hooks must be called unconditionally before any early returns
+  // Validate defaultIndex is within bounds
+  const validDefaultIndex =
+    tabs.length > 0 && defaultIndex >= 0 && defaultIndex < tabs.length ? defaultIndex : 0;
+  const defaultTab = tabs[validDefaultIndex]?.id || tabs[0]?.id || "";
+
   const [activeTab, setActiveTab] = useState(defaultTab);
+
+  // Update activeTab when defaultTab changes (e.g., when tabs array changes)
+  useEffect(() => {
+    if (defaultTab && defaultTab !== activeTab) {
+      setActiveTab(defaultTab);
+    }
+  }, [defaultTab, activeTab]);
+
+  // Handle empty tabs array defensively (after hooks)
+  if (tabs.length === 0) {
+    return null;
+  }
+
+  if (!defaultTab) {
+    throw new Error(
+      "ApplicationTabs: Unable to determine default tab. Tabs array may be malformed."
+    );
+  }
 
   const handleValueChange = (value: string) => {
     setActiveTab(value);

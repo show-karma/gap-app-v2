@@ -6,7 +6,9 @@ import { useQuery } from "@tanstack/react-query";
 import debounce from "lodash.debounce";
 import { type FC, Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { fundingPlatformService } from "@/services/fundingPlatformService";
+import type { IFundingProgramConfig } from "@/types/funding-platform";
 
 interface StatusChangeModalProps {
   isOpen: boolean;
@@ -17,6 +19,7 @@ interface StatusChangeModalProps {
   isReasonRequired?: boolean;
   programId?: string;
   chainId?: number;
+  programConfig?: IFundingProgramConfig | null;
 }
 
 const statusLabels: Record<string, string> = {
@@ -57,6 +60,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   isReasonRequired = false,
   programId,
   chainId,
+  programConfig,
 }) => {
   const [reason, setReason] = useState("");
   const [approvedAmount, setApprovedAmount] = useState("");
@@ -68,7 +72,34 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   // When status is "approved", amount and currency are required
   const isApprovalStatus = status === "approved";
 
-  // Make reason required for revision_requested and rejected statuses
+  const getTemplateContent = useCallback((): string => {
+    if (!programConfig?.formSchema?.settings) return "";
+
+    if (status === "approved" && programConfig.formSchema.settings.approvalEmailTemplate) {
+      return programConfig.formSchema.settings.approvalEmailTemplate;
+    }
+    if (status === "rejected" && programConfig.formSchema.settings.rejectionEmailTemplate) {
+      return programConfig.formSchema.settings.rejectionEmailTemplate;
+    }
+    return "";
+  }, [programConfig?.formSchema?.settings, status]);
+
+  useEffect(() => {
+    if (isOpen) {
+      const templateContent = getTemplateContent();
+      if (templateContent) {
+        // Prepopulate with template when modal opens or status changes
+        setReason(templateContent);
+      } else {
+        // Clear reason if no template available
+        setReason("");
+      }
+    } else {
+      // Reset reason when modal closes
+      setReason("");
+    }
+  }, [isOpen, getTemplateContent]);
+
   const isReasonActuallyRequired =
     isReasonRequired || status === "revision_requested" || status === "rejected";
 
@@ -272,7 +303,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={handleClose}>
+      <Dialog as="div" className="relative z-50" open={isOpen} onClose={handleClose}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -361,11 +392,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                                 min="0"
                                 aria-describedby={amountError ? "amount-error" : undefined}
                                 aria-invalid={!!amountError}
-                                className={`block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 ${
-                                  amountError
-                                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                                    : ""
-                                }`}
+                                className={`block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 ${amountError ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
                                 placeholder="0.00"
                                 value={approvedAmount}
                                 onChange={(e) => handleAmountChange(e.target.value)}
@@ -482,25 +509,25 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                               "(Optional)"
                             )}
                           </label>
-                          <textarea
-                            id="reason"
-                            name="reason"
-                            rows={4}
-                            aria-describedby="reason-description"
-                            aria-invalid={isReasonActuallyRequired && !reason.trim()}
-                            aria-required={isReasonActuallyRequired}
-                            className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
-                            placeholder={
-                              status === "revision_requested"
-                                ? "Explain what needs to be revised..."
-                                : status === "rejected"
-                                  ? "Explain why the application is rejected..."
-                                  : "Add any notes about this decision..."
-                            }
-                            value={reason}
-                            onChange={(e) => setReason(e.target.value)}
-                            disabled={isSubmitting}
-                          />
+                          <div className={isSubmitting ? "opacity-50 pointer-events-none" : ""}>
+                            <MarkdownEditor
+                              id="reason"
+                              value={reason}
+                              onChange={setReason}
+                              placeholder={
+                                status === "revision_requested"
+                                  ? "Explain what needs to be revised..."
+                                  : status === "rejected"
+                                    ? "Explain why the application is rejected..."
+                                    : status === "approved"
+                                      ? "Add any notes about this decision..."
+                                      : "Add any notes about this decision..."
+                              }
+                              height={300}
+                              minHeight={250}
+                              disabled={isSubmitting}
+                            />
+                          </div>
                           <p
                             id="reason-description"
                             className="mt-2 text-xs text-gray-500 dark:text-gray-400"
@@ -508,8 +535,10 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                             {status === "revision_requested"
                               ? "The applicant will see this message and can update their application."
                               : status === "rejected"
-                                ? "This reason will be recorded and may be shared with the applicant."
-                                : "This reason will be recorded in the status history."}
+                                ? "This content will be sent to the applicant via email."
+                                : status === "approved"
+                                  ? "This content will be sent to the applicant via email."
+                                  : "This reason will be recorded in the status history."}
                           </p>
                         </div>
                       </div>
