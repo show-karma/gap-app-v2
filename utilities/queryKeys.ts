@@ -48,4 +48,7 @@ export const QUERY_KEYS = {
       title: string;
     }) => ["duplicate-grant-check", params] as const,
   },
+  SETTINGS: {
+    AVAILABLE_AI_MODELS: ["available-ai-models"] as const,
+  },
 };

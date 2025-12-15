@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 const DEFAULT_MODELS = ["gpt-5.2"] as const;
 const API_ENDPOINT = "/v2/settings/available-ai-models";
@@ -59,7 +60,7 @@ async function fetchAvailableAIModels(): Promise<string[]> {
  */
 export function useAvailableAIModels() {
   return useQuery({
-    queryKey: ["available-ai-models"],
+    queryKey: QUERY_KEYS.SETTINGS.AVAILABLE_AI_MODELS,
     queryFn: fetchAvailableAIModels,
     staleTime: 1000 * 60 * 60, // 1 hour - models don't change frequently
     gcTime: 1000 * 60 * 60 * 24, // 24 hours

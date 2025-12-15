@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useAvailableAIModels } from "@/hooks/useAvailableAIModels";
@@ -57,6 +57,9 @@ export function AIPromptConfiguration({
     return availableModels[0] || "gpt-5.2";
   }, [schema.aiConfig?.aiModel, availableModels]);
 
+  // Track if initial sync has been performed to prevent overwriting user selections
+  const hasInitialSyncedRef = useRef(false);
+
   const {
     register,
     handleSubmit,
@@ -77,11 +80,24 @@ export function AIPromptConfiguration({
   });
 
   // Update form value when availableModels loads and current value is invalid
+  // Prevents race conditions: only updates invalid values, preserving valid user selections
   useEffect(() => {
     if (!isLoadingModels && availableModels.length > 0) {
       const currentValue = getValues("aiModel");
-      if (!currentValue || !availableModels.includes(currentValue)) {
+      const isCurrentValueInvalid = !currentValue || !availableModels.includes(currentValue);
+
+      // Only update if value is invalid (not in availableModels list)
+      // This handles:
+      // - Initial load with invalid value
+      // - Value becoming invalid after availableModels changes
+      // - But preserves valid user selections (won't overwrite if value is in the list)
+      if (isCurrentValueInvalid) {
         setValue("aiModel", defaultModel, { shouldValidate: false });
+      }
+
+      // Mark as synced after first check
+      if (!hasInitialSyncedRef.current) {
+        hasInitialSyncedRef.current = true;
       }
     }
   }, [availableModels, isLoadingModels, defaultModel, getValues, setValue]);
