@@ -1,6 +1,5 @@
 "use client";
 import { LinkIcon } from "@heroicons/react/24/solid";
-import type { Community } from "@show-karma/karma-gap-sdk";
 import { blo } from "blo";
 import debounce from "lodash.debounce";
 import Link from "next/link";
@@ -14,6 +13,7 @@ import { useCommunityConfig, useCommunityConfigMutation } from "@/hooks/useCommu
 import { layoutTheme } from "@/src/helper/theme";
 import { useCommunitiesStore } from "@/store/communities";
 import { useOwnerStore } from "@/store/owner";
+import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { formatDate } from "@/utilities/formatDate";
@@ -180,7 +180,7 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
     <tr className="divide-x">
       <td className="min-w-[80px]">
         <img
-          src={community.details?.imageURL || blo(community.uid)}
+          src={community.details?.imageURL || blo(community.uid as `0x${string}`)}
           className="h-[64px] w-[100px] object-cover"
           alt={community.details?.name || community.uid}
         />

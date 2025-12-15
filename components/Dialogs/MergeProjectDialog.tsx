@@ -4,10 +4,6 @@ import { Dialog, Transition } from "@headlessui/react";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { ProjectPointer } from "@show-karma/karma-gap-sdk";
-import type {
-  IProjectResponse,
-  ISearchResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/navigation";
 import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
@@ -17,13 +13,14 @@ import { z } from "zod";
 import { useGap } from "@/hooks/useGap";
 import { useStaff } from "@/hooks/useStaff";
 import { useWallet } from "@/hooks/useWallet";
+import { searchProjects } from "@/services/project-search.service";
 import { useProjectStore } from "@/store";
 import { useMergeModalStore } from "@/store/modals/merge";
 import { useStepper } from "@/store/modals/txStepper";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -46,13 +43,10 @@ type MergeProjectProps = {
 function SearchProject({
   setPrimaryProject,
 }: {
-  setPrimaryProject: (value: IProjectResponse) => void;
+  setPrimaryProject: (value: ProjectResponse) => void;
 }) {
   const { project: currentProject } = useProjectStore();
-  const [results, setResults] = useState<ISearchResponse>({
-    communities: [],
-    projects: [],
-  });
+  const [results, setResults] = useState<ProjectResponse[]>([]);
   const [isSearchListOpen, setIsSearchListOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -65,27 +59,24 @@ function SearchProject({
   const debouncedSearch = debounce(async (value: string) => {
     const sanitizedValue = sanitizeInput(value);
     if (sanitizedValue.length < 3) {
-      setResults({ communities: [], projects: [] });
+      setResults([]);
       return setIsSearchListOpen(false);
     }
 
     setIsLoading(true);
     setIsSearchListOpen(true);
-    const result = await gapIndexerApi.search(sanitizedValue);
-    const projectsData = result.data.projects.filter(
+
+    // Use V2 search service which returns ProjectResponse[]
+    const projectsData = await searchProjects(sanitizedValue);
+    const filteredProjects = projectsData.filter(
       (project) => project?.uid?.toLowerCase() !== currentProject?.uid?.toLowerCase()
     );
 
-    const finalData = {
-      communities: [],
-      projects: projectsData,
-    };
-
-    setResults(finalData);
+    setResults(filteredProjects);
     return setIsLoading(false);
   }, 500);
 
-  const renderItem = (item: IProjectResponse, _href: string) => {
+  const renderItem = (item: ProjectResponse, _href: string) => {
     const handleSelect = () => {
       setPrimaryProject(item);
       closeSearchList();
@@ -95,18 +86,18 @@ function SearchProject({
       <button key={item.uid} type="button" onClick={handleSelect} className="w-full text-left">
         <div className=":last:border-b-0 cursor-pointer select-none border-b border-slate-100 px-4 py-2 transition hover:bg-slate-200 dark:hover:bg-zinc-700">
           <div className="flex justify-between max-w-full text-ellipsis text-black dark:text-zinc-100">
-            <span className="font-bold">{item?.details?.data.title}</span>
-            <span>{item?.details?.data.slug}</span>
+            <span className="font-bold">{item?.details?.title}</span>
+            <span>{item?.details?.slug}</span>
           </div>
           <div className="text-gray-500 dark:text-gray-200">
             <div className="mt-3 flex items-center">
               <small className="mr-2">By</small>
               <div className="flex flex-row gap-1 items-center font-medium">
                 <EthereumAddressToENSAvatar
-                  address={item.recipient}
+                  address={item.owner}
                   className="w-4 h-4  rounded-full border-1 border-gray-100 dark:border-zinc-900"
                 />
-                <EthereumAddressToENSName address={item.recipient} />
+                <EthereumAddressToENSName address={item.owner} />
               </div>
             </div>
           </div>
@@ -123,16 +114,14 @@ function SearchProject({
         placeholder="Search for the primary project"
         className="w-full min-w-[160px] bg-transparent placeholder:text-gray-400 px-1 py-2 text-gray-600 dark:text-gray-200 border-none border-b-zinc-800 outline-none focus:ring-0"
         onChange={(e) => debouncedSearch(e.target.value)}
-        onFocus={() =>
-          [...results.projects, ...results.communities].length > 0 && setIsSearchListOpen(true)
-        }
+        onFocus={() => results.length > 0 && setIsSearchListOpen(true)}
         onBlur={() => closeSearchList()}
       />
       {isSearchListOpen && (
         <div className="absolute left-0 top-10 mt-3 max-h-32 min-w-full overflow-y-scroll rounded-md bg-white dark:bg-zinc-800 py-4 border border-zinc-200">
-          {results.projects.length > 0 &&
-            results.projects.map((project) =>
-              renderItem(project, PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid))
+          {results.length > 0 &&
+            results.map((project) =>
+              renderItem(project, PAGES.PROJECT.GRANTS(project.details?.slug || project.uid))
             )}
 
           {isLoading && (
@@ -140,7 +129,7 @@ function SearchProject({
               <Spinner />
             </div>
           )}
-          {!isLoading && results.projects.length === 0 && (
+          {!isLoading && results.length === 0 && (
             <div className="flex flex-col items-center text-center">
               <div className="w-full text-center">No results found.</div>
             </div>
@@ -165,7 +154,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   },
 }) => {
   const { isMergeModalOpen: isOpen, setIsMergeModalOpen: setIsOpen } = useMergeModalStore();
-  const [primaryProject, setPrimaryProject] = useState<IProjectResponse | null>(null);
+  const [primaryProject, setPrimaryProject] = useState<ProjectResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [validAddress, setValidAddress] = useState(true);
 
@@ -220,8 +209,8 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
           ogProjectUID,
           type: "project-pointer",
         },
-        recipient: project.recipient,
-        refUID: project.uid,
+        recipient: project.owner as `0x${string}`,
+        refUID: project.uid as `0x${string}`,
         schema: gapClient.findSchema("ProjectPointer"),
       });
 
@@ -236,11 +225,13 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
           await refreshProject()
             .then(async (fetchedProject) => {
               const attestUID = projectPointer.uid;
-              const alreadyExists = fetchedProject?.pointers.find((g) => g.uid === attestUID);
+              const alreadyExists = fetchedProject?.pointers?.find(
+                (g: { uid: string }) => g.uid === attestUID
+              );
 
               if (alreadyExists) {
                 retries = 0;
-                router.push(`/project/${primaryProject?.details?.data?.slug}`);
+                router.push(PAGES.PROJECT.OVERVIEW(primaryProject?.details?.slug as string));
                 router.refresh();
                 changeStepperStep("indexed");
                 toast.success(MESSAGES.PROJECT_POINTER_FORM.SUCCESS);
@@ -261,8 +252,8 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         `Error creating project pointer`,
         error,
         {
-          project: project?.details?.data?.slug || project?.uid,
-          primaryProject: primaryProject?.details?.data?.slug || primaryProject?.uid,
+          project: project?.details?.slug || project?.uid,
+          primaryProject: primaryProject?.details?.slug || primaryProject?.uid,
           address: address,
         },
         {
@@ -330,12 +321,12 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                         : null}
                     </p>
                     {project &&
-                      project.symlinks.length === 0 &&
+                      (!project?.symlinks || project.symlinks.length === 0) &&
                       (primaryProject ? (
                         <div>
                           <p className="mb-2">Selected Primary Project:</p>
-                          <p className="font-bold text-2xl">{`${primaryProject?.details?.data.title}`}</p>
-                          <p className="text-md">{`/${primaryProject?.details?.data.slug}`}</p>
+                          <p className="font-bold text-2xl">{`${primaryProject?.details?.title}`}</p>
+                          <p className="text-md">{`/${primaryProject?.details?.slug}`}</p>
                         </div>
                       ) : (
                         <div>Select a primary project to merge with.</div>
@@ -349,13 +340,13 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                     </p>
 
                     <p className="text-zinc-500 mb-2">
-                      {project && project?.pointers?.length > 0
+                      {(project?.pointers?.length ?? 0) > 0
                         ? `This project has already been merged.
                                                 Are you sure you want to add another pointer to this project?`
                         : null}
                     </p>
                   </div>
-                  {project?.symlinks?.length === 0 && (
+                  {(!project?.symlinks || project.symlinks.length === 0) && (
                     <SearchProject setPrimaryProject={setPrimaryProject} />
                   )}
                   <div className="flex flex-row gap-4 justify-end">
@@ -366,7 +357,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                     >
                       Cancel
                     </Button>
-                    {project?.symlinks?.length === 0 && (
+                    {(!project?.symlinks || project.symlinks.length === 0) && (
                       <Button
                         className=" bg-red-600 border-black  hover:bg-red-600 hover:text-white"
                         onClick={async () => {

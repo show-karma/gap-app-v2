@@ -1,14 +1,15 @@
-export interface CommunityDetails {
-  uid: string;
+export interface Community {
+  uid: `0x${string}`;
   chainID: number;
   details: {
     name: string;
-    description: string;
+    description?: string;
     slug: string;
-    logoUrl: string;
+    logoUrl?: string;
+    imageURL?: string;
   };
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ProjectUpdatesBreakdown {
@@ -30,7 +31,7 @@ export interface CommunityStats {
   averageCompletion: number;
 }
 
-export interface Project {
+export interface CommunityProject {
   uid: string;
   details: {
     title: string;
@@ -63,8 +64,8 @@ export interface Project {
   createdAt: string;
 }
 
-export interface CommunityProjectsResponse {
-  payload: Project[];
+export interface CommunityProjects {
+  payload: CommunityProject[];
   pagination: {
     totalCount: number;
     page: number;

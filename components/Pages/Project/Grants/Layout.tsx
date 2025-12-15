@@ -3,7 +3,6 @@
 
 import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -11,12 +10,15 @@ import { useAccount } from "wagmi";
 import { GrantsAccordion } from "@/components/GrantsAccordion";
 import { Button } from "@/components/Utilities/Button";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
+import { useProject } from "@/hooks/useProject";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunitiesStore } from "@/store/communities";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
 import type { GrantScreen } from "@/types";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { GrantCompleteButton } from "../../GrantMilestonesAndUpdates/GrantCompleteButton";
@@ -28,7 +30,7 @@ import { ProjectGrantsLayoutLoading } from "../Loading/Grants/Layout";
 
 interface GrantsLayoutProps {
   children: React.ReactNode;
-  fetchedProject?: IProjectResponse;
+  fetchedProject?: ProjectResponse;
 }
 
 interface Tab {
@@ -64,7 +66,9 @@ const getScreen = (pathname: string): GrantScreen | undefined => {
 export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) => {
   const pathname = usePathname();
   const screen = getScreen(pathname);
-  const grantIdFromQueryParam = useParams().grantUid as string;
+  const params = useParams();
+  const projectIdFromUrl = params.projectId as string;
+  const grantIdFromQueryParam = params.grantUid as string;
   const [currentTab, setCurrentTab] = useState("overview");
   const { grant, setGrant, loading, setLoading } = useGrantStore();
   const { project: storedProject } = useProjectStore();
@@ -86,13 +90,23 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
 
   const zustandProject = useProjectStore((state) => state.project);
 
-  const project = storedProject || fetchedProject || zustandProject;
+  // Fetch project using the hook if not already available in store
+  const { project: fetchedProjectFromHook, isLoading: isLoadingProject } =
+    useProject(projectIdFromUrl);
+
+  // Use project from store first, then fallback to fetched project
+  const project = storedProject || fetchedProject || zustandProject || fetchedProjectFromHook;
+
+  // Fetch grants using dedicated hook - use projectIdFromUrl as fallback if project.uid is not available
+  const { grants, isLoading: isLoadingGrants } = useProjectGrants(
+    project?.uid || projectIdFromUrl || ""
+  );
 
   useEffect(() => {
     if (!project || !screen) return;
 
     if (!(isAuthorized || isCommunityAdminOfSome) && authorizedViews.includes(screen)) {
-      router.replace(PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid || ""));
+      router.replace(PAGES.PROJECT.GRANTS(project.details?.slug || project.uid || ""));
       setCurrentTab("overview");
       return;
     }
@@ -103,37 +117,48 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
   }, [screen, isAuthorized, isCommunityAdminOfSome, project, currentTab, router]);
 
   useEffect(() => {
-    if (project) {
-      setLoading(true);
-      if (grantIdFromQueryParam) {
-        const grantFound = project?.grants?.find(
-          (grant) => grant.uid?.toLowerCase() === grantIdFromQueryParam?.toLowerCase()
-        );
-        if (grantFound) {
-          setGrant(grantFound);
-          setLoading(false);
-          return;
-        }
-      }
-      setGrant(project?.grants?.[0]);
+    // Only run when we have project and grants have finished loading
+    if (!project || isLoadingGrants) return;
+
+    // If there are no grants, just clear the loading state
+    if (grants.length === 0) {
+      setGrant(undefined);
       setLoading(false);
+      return;
     }
-  }, [project, grantIdFromQueryParam, setGrant, setLoading]);
+
+    // Set loading while we find the grant
+    setLoading(true);
+
+    if (grantIdFromQueryParam) {
+      const grantFound = grants.find(
+        (g) => g.uid?.toLowerCase() === grantIdFromQueryParam?.toLowerCase()
+      );
+      if (grantFound) {
+        setGrant(grantFound);
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Default to first grant
+    setGrant(grants[0]);
+    setLoading(false);
+  }, [project, grants, isLoadingGrants, grantIdFromQueryParam, setGrant, setLoading]);
 
   // If no project data is available, show loading
   if (!project) {
     return <ProjectGrantsLayoutLoading>{children}</ProjectGrantsLayoutLoading>;
   }
 
-  const navigation =
-    project?.grants?.map((item) => ({
-      uid: item.uid,
-      name: item.details?.data?.title || "",
-      href: PAGES.PROJECT.GRANT(project.details?.data?.slug || project.uid, item.uid),
-      icon: item.community?.details?.data?.imageURL || "",
-      current: item.uid === grantIdFromQueryParam || item.uid === grant?.uid,
-      completed: item.completed,
-    })) || [];
+  const navigation = grants.map((item) => ({
+    uid: item.uid,
+    name: item.details?.title || "",
+    href: PAGES.PROJECT.GRANT(project?.details?.slug || project?.uid || "", item.uid),
+    icon: item.community?.details?.imageURL || "",
+    current: item.uid === grantIdFromQueryParam || item.uid === grant?.uid,
+    completed: item.completed,
+  }));
 
   const defaultTabs: {
     name: string;
@@ -164,13 +189,13 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
 
   const tabs: Tab[] = defaultTabs;
 
-  if (loading || (!grant && project.grants?.length > 0)) {
+  if (loading || isLoadingProject || isLoadingGrants || (!grant && grants.length > 0)) {
     return <ProjectGrantsLayoutLoading>{children}</ProjectGrantsLayoutLoading>;
   }
 
   return (
     <div className="flex max-lg:flex-col">
-      {project?.grants.length ? (
+      {grants.length > 0 ? (
         <div className="w-full max-w-[320px] max-lg:max-w-full py-5 border-none max-lg:w-full max-lg:px-0">
           <div className=" lg:hidden">
             <GrantsAccordion>
@@ -178,7 +203,7 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
                 <div key={item.uid}>
                   <Link
                     href={PAGES.PROJECT.GRANT(
-                      project.details?.data.slug || project?.uid || "",
+                      project.details?.slug || project?.uid || "",
                       item.uid
                     )}
                     className={cn(
@@ -203,7 +228,7 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
                 <div className="mt-4">
                   <Link
                     href={PAGES.PROJECT.SCREENS.NEW_GRANT(
-                      project?.details?.data.slug || project?.uid || ""
+                      project?.details?.slug || project?.uid || ""
                     )}
                     className="flex h-max w-full  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-2 text-sm font-semibold text-white   max-sm:w-full"
                   >
@@ -247,7 +272,7 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
                   onClick={() => {
                     if (project) {
                       router.push(
-                        PAGES.PROJECT.SCREENS.NEW_GRANT(project.details?.data.slug || project.uid)
+                        PAGES.PROJECT.SCREENS.NEW_GRANT(project.details?.slug || project.uid)
                       );
                       router.refresh();
                     }
@@ -265,7 +290,7 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
                   <Link
                     id="project-grant"
                     href={PAGES.PROJECT.GRANT(
-                      project.details?.data.slug || project?.uid || "",
+                      project.details?.slug || project?.uid || "",
                       item.uid
                     )}
                     className={cn(
@@ -304,17 +329,17 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
       ) : null}
       <div className="flex-1 pl-5 pt-5 pb-20 max-lg:px-0 max-lg:pt-0">
         {/* Grants tabs start */}
-        {project?.grants.length && currentTab !== "new" ? (
+        {grants.length > 0 && currentTab !== "new" ? (
           <>
             <div className="flex flex-row gap-4 justify-between max-md:flex-col border-b border-b-zinc-900 dark:border-b-zinc-200 pb-2 mb-4">
               <div className="flex flex-row gap-2 items-center">
                 <div className="text-xl font-semibold text-black dark:text-zinc-100">
-                  {grant?.details?.data.title}
+                  {grant?.details?.title}
                 </div>
                 {isAuthorized && grant && project ? (
                   <Link
                     href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                      project.details?.data.slug || project?.uid || "",
+                      project.details?.slug || project?.uid || "",
                       grant?.uid as string,
                       "edit"
                     )}
@@ -344,7 +369,7 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
                     <Link
                       key={tab.name}
                       href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                        project.details?.data.slug || project?.uid || "",
+                        project.details?.slug || project?.uid || "",
                         grant?.uid as string,
                         tab.tabName === "overview" ? "" : tab.tabName
                       )}
@@ -364,7 +389,7 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
           </>
         ) : null}
         {/* Grants tabs end */}
-        {project?.grants.length || currentTab === "new" ? (
+        {grants.length > 0 || currentTab === "new" ? (
           <div className="flex flex-col py-5">
             <GrantContext.Provider value={grant}>{children}</GrantContext.Provider>
           </div>

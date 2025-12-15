@@ -88,21 +88,19 @@ interface ProjectUpdate {
 
 interface ProjectDetails {
   uid: string;
-  data: {
-    title: string;
-    description?: string;
-    problem: string;
-    missionSummary: string;
-    locationOfImpact: string;
-    imageURL: string;
-    links: any; // Define specific type if known
-    slug: string;
-    tags: string[];
-    businessModel: string;
-    stageInLife: string;
-    raisedMoney: string;
-    createdAt: string;
-  };
+  title: string;
+  description?: string;
+  problem?: string;
+  missionSummary?: string;
+  locationOfImpact?: string;
+  imageURL?: string;
+  links?: any;
+  slug?: string;
+  tags?: string[];
+  businessModel?: string;
+  stageInLife?: string;
+  raisedMoney?: string;
+  createdAt?: string;
 }
 
 interface ProjectInProgram {
@@ -642,21 +640,21 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             <div className="flex flex-row items-center gap-2 mb-1">
               <div className="flex justify-center">
                 <ProfilePicture
-                  imageURL={project.projectDetails.data?.imageURL}
+                  imageURL={project.projectDetails?.imageURL}
                   name={project.projectUID || ""}
                   size="32"
                   className="h-8 w-8 min-w-8 min-h-8 border border-white shadow-sm"
-                  alt={project.projectDetails.data?.title || "Project"}
+                  alt={project.projectDetails?.title || "Project"}
                 />
               </div>
               <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm flex-1">
-                {project.projectDetails.data?.title?.slice(0, 200)}
+                {project.projectDetails?.title?.slice(0, 200)}
               </p>
             </div>
 
             <div className="flex flex-col gap-1 flex-1 h-[64px] w-full max-w-full">
               <div className="line-clamp-2 w-full break-normal text-sm font-normal text-black dark:text-zinc-100 max-2xl:text-sm">
-                {sanitizeMarkdown(project.projectDetails.data?.description?.slice(0, 200) || "")}
+                {sanitizeMarkdown(project.projectDetails?.description?.slice(0, 200) || "")}
               </div>
             </div>
           </div>
@@ -706,7 +704,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       <div className="px-2 w-max">
         <button
           className="hover:text-gray-300 dark:hover:text-zinc-300 rounded-full transition-colors"
-          aria-label={`Ask about ${project.projectDetails.data?.title}`}
+          aria-label={`Ask about ${project.projectDetails?.title}`}
         >
           <ChevronRightIcon className="w-6 h-6 min-h-6 min-w-6 text-gray-500 dark:text-zinc-400" />
         </button>
@@ -760,7 +758,7 @@ function ChatScreen({
       projects: projects,
       projectsInProgram: projects.map((project) => ({
         uid: project.projectUID,
-        projectTitle: project.projectDetails.data?.title,
+        projectTitle: project.projectDetails?.title,
       })),
       programId: selectedProgram.programId,
       chainId: selectedProgram.chainID.toString(),
@@ -917,7 +915,7 @@ export const CommunityProjectEvaluatorPage = () => {
       setIsLoadingProjects(true);
       const [projects, error] = (await fetchData(
         INDEXER.PROJECTS.BY_PROGRAM(programId, chainId, communityId)
-      )) as [Project[], Error | null];
+      )) as [Project[], string | null, any, number];
       if (error) {
         console.error("Error fetching projects:", error);
         return;

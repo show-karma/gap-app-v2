@@ -28,6 +28,10 @@ export const QUERY_KEYS = {
   },
   COMMUNITY: {
     DETAILS: (communityUIDorSlug?: string) => ["communityDetails", communityUIDorSlug] as const,
+    DETAILS_V2: (communityUIDorSlug?: string) =>
+      ["community-details-v2", communityUIDorSlug] as const,
+    PROJECTS: (slug: string, options?: unknown) =>
+      ["community-projects-v2", slug, options] as const,
     CATEGORIES: (communityUIDorSlug?: string) =>
       ["communityCategories", communityUIDorSlug] as const,
     IS_ADMIN: (
@@ -41,11 +45,18 @@ export const QUERY_KEYS = {
       ["community-project-updates", communityId, filter, page] as const,
   },
   GRANTS: {
+    DUPLICATE_CHECK_BASE: ["duplicate-grant-check"] as const,
     DUPLICATE_CHECK: (params: {
       projectUid?: string;
       programId?: string;
       community: string;
       title: string;
     }) => ["duplicate-grant-check", params] as const,
+  },
+  PROJECT: {
+    UPDATES: (projectIdOrSlug: string) => ["project-updates", projectIdOrSlug] as const,
+    IMPACTS: (projectIdOrSlug: string) => ["project-impacts", projectIdOrSlug] as const,
+    MILESTONES: (projectIdOrSlug: string) => ["project-milestones", projectIdOrSlug] as const,
+    GRANTS: (projectIdOrSlug: string) => ["project-grants", projectIdOrSlug] as const,
   },
 };

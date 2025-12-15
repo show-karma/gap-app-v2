@@ -1,14 +1,14 @@
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useWallet } from "@/hooks/useWallet";
 import { useStepper } from "@/store/modals/txStepper";
+import type { Grant } from "@/types/v2/grant";
 import { pollForGrantCompletion } from "@/utilities/attestation-polling";
 // Import the utilities we created
 import { setupChainAndWallet } from "@/utilities/chain-wallet-setup";
-import { fetchGrantInstance } from "@/utilities/grant-helpers";
+import { getSDKGrantInstance } from "@/utilities/grant-helpers";
 import { notifyIndexerForGrant } from "@/utilities/indexer-notification";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
@@ -18,7 +18,7 @@ interface UseGrantCompletionParams {
 }
 
 interface UseGrantCompletionReturn {
-  completeGrant: (grant: IGrantResponse, project: { uid: string }) => Promise<void>;
+  completeGrant: (grant: Grant, project: { uid: string }) => Promise<void>;
   isCompleting: boolean;
 }
 
@@ -52,7 +52,7 @@ export const useGrantCompletion = ({
   const { switchChainAsync } = useWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
 
-  const completeGrant = async (grant: IGrantResponse, project: { uid: string }) => {
+  const completeGrant = async (grant: Grant, project: { uid: string }) => {
     if (!address || !project || !grant) {
       toast.error("Please connect your wallet");
       return;
@@ -78,8 +78,8 @@ export const useGrantCompletion = ({
 
       const { gapClient, walletSigner } = setup;
 
-      // Step 2: Fetch grant instance (using utility)
-      const grantInstance = await fetchGrantInstance({
+      // Step 2: Fetch SDK grant instance for attestation (using utility)
+      const grantInstance = await getSDKGrantInstance({
         gapClient,
         projectUid: project.uid,
         grantUid: grant.uid,
