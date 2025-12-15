@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";

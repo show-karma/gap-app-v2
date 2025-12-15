@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { UnifiedSearchResponse } from "@/services/unified-search.service";
 import { useMobileStore } from "@/store/mobile";
 import type { Community } from "@/types/v2/community";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { groupSimilarCommunities } from "@/utilities/communityHelpers";
 import { PAGES } from "@/utilities/pages";
 import { ProfilePicture } from "../Utilities/ProfilePicture";

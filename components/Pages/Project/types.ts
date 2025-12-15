@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 
 export interface NetworkAddressPair {
   network: string;

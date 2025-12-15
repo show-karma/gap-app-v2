@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { NetworkAddressPair } from "@/components/Pages/Project/types";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 
 interface UseContractAddressPairsProps {
   project: ProjectResponse;

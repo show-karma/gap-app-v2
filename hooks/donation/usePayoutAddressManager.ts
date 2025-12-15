@@ -4,7 +4,7 @@ import { isAddress } from "viem";
 import { getProject } from "@/services/project.service";
 import { getProjectGrants } from "@/services/project-grants.service";
 import type { Grant } from "@/types/v2/grant";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 
 interface CartItem {
   uid: string;

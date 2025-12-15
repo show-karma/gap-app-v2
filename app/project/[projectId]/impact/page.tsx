@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import type { Hex } from "viem";
 import ImpactWrapper from "@/components/Pages/Project/Impact/ImpactWrapper";
 import { PROJECT_NAME } from "@/constants/brand";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";

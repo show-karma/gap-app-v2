@@ -3,7 +3,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
 import { getProject } from "@/services/project.service";
 import { getProjectGrants } from "@/services/project-grants.service";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { useGrantStore } from "./grant";
 

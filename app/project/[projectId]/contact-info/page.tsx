@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import type { Hex } from "viem";
 import ContactInfoPage from "@/components/Pages/Project/ContactInfoPage";
 import { PROJECT_NAME } from "@/constants/brand";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";

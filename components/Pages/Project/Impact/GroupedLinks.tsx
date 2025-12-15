@@ -2,7 +2,7 @@ import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { useEffect, useRef, useState } from "react";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useProjectStore } from "@/store";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { linkName, mapLinks } from "./utils/links";
 
 export const GroupedLinks = ({ proofs }: { proofs: string[] }) => {

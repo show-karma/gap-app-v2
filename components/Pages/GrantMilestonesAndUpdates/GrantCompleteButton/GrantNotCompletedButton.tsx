@@ -1,6 +1,6 @@
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { PAGES } from "@/utilities/pages";
 
 interface GrantNotCompletedButtonProps {

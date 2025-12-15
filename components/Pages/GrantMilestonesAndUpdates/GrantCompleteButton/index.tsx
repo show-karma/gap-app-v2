@@ -5,7 +5,7 @@ import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import type { Grant } from "@/types/v2/grant";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { GrantCompletedButton } from "./GrantCompletedButton";
 import { GrantNotCompletedButton } from "./GrantNotCompletedButton";
 

@@ -7,7 +7,7 @@ import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { MESSAGES } from "@/utilities/messages";
 import { RoadmapListLoading } from "../Loading/Roadmap";

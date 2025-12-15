@@ -17,7 +17,7 @@ import { searchProjects } from "@/services/project-search.service";
 import { useProjectStore } from "@/store";
 import { useMergeModalStore } from "@/store/modals/merge";
 import { useStepper } from "@/store/modals/txStepper";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";

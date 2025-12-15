@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { getProject } from "@/services/project.service";
 import { useProjectStore } from "@/store";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
 export const useProject = (projectId: string) => {

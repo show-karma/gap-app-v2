@@ -49,7 +49,7 @@ import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useStepper } from "@/store/modals/txStepper";
 import { useOwnerStore } from "@/store/owner";
 import type { Contact } from "@/types/project";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";

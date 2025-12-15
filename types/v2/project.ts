@@ -35,7 +35,7 @@ export interface ProjectPointer {
   createdAt: string;
 }
 
-export interface ProjectResponse {
+export interface Project {
   uid: `0x${string}`;
   chainID: number;
   owner: `0x${string}`;
@@ -69,10 +69,10 @@ export interface ProjectResponse {
 }
 
 /**
- * Extended ProjectResponse that includes grants data.
+ * Extended Project that includes grants data.
  * Used for specific endpoints that return projects with embedded grants (e.g., /v2/user/projects)
  * Note: Most endpoints should fetch grants separately using getProjectGrants()
  */
-export interface ProjectWithGrantsResponse extends ProjectResponse {
+export interface ProjectWithGrantsResponse extends Project {
   grants?: Grant[];
 }

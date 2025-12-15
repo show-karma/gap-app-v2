@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PROJECT_NAME } from "@/constants/brand";
 import type { Grant } from "@/types/v2/grant";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { envVars } from "../enviromentVars";
 import { cleanMarkdownForPlainText } from "../markdown";
 import { defaultMetadata } from "../meta";

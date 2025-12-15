@@ -1,7 +1,7 @@
 import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 import type { SignerOrProvider } from "@show-karma/karma-gap-sdk/core/types";
 import { errorManager } from "@/components/Utilities/errorManager";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { getRPCClient } from "./rpcClient";
 
 export interface Member {

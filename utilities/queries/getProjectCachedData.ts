@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { getProject } from "@/services/project.service";
-import type { ProjectResponse } from "@/types/v2/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { zeroUID } from "@/utilities/commons";
 import { PAGES } from "../pages";
 
