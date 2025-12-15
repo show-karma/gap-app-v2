@@ -96,7 +96,7 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
                 <input
                   type="text"
                   value={pair.address}
-                  onChange={(e) => !readOnly && onAddressChange(index, e.target.value)}
+                  onChange={(e) => onAddressChange(index, e.target.value)}
                   readOnly={readOnly}
                   className={`flex-1 text-sm rounded-md bg-transparent border-b focus:outline-none ${
                     readOnly

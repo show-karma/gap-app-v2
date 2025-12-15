@@ -27,6 +27,7 @@ import { useGap } from "@/hooks/useGap";
 import { useStaff } from "@/hooks/useStaff";
 import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
 import { useGrantGenieModalStore } from "@/store/modals/genie";
 import { useMergeModalStore } from "@/store/modals/merge";
@@ -95,7 +96,8 @@ export const ProjectOptionsMenu = () => {
   const { isProjectOwner } = useProjectStore();
   const { data: contactsInfo } = useContactInfo(projectId);
   const { isOwner: isContractOwner } = useOwnerStore();
-  const isAuthorized = isProjectOwner || isContractOwner;
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
   const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   // Event handlers to reset state when dialogs close
@@ -201,11 +203,7 @@ export const ProjectOptionsMenu = () => {
             <LinkContractAddressButton
               buttonElement={null}
               buttonClassName={buttonClassName}
-              project={
-                project as ProjectResponse & {
-                  external: Record<string, string[]>;
-                }
-              }
+              project={project}
               onClose={handleViewContractsDialogClose}
               readOnly={true}
             />
