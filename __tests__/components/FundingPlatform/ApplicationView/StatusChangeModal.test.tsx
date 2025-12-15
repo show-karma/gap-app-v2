@@ -278,8 +278,8 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
-      // Select currency from dropdown
-      enterCurrency("USD");
+      // Select currency
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -362,8 +362,8 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
-      // Select currency from dropdown
-      enterCurrency("USD");
+      // Select currency
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -415,8 +415,8 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
-      // Select currency from dropdown
-      enterCurrency("USD");
+      // Select currency
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -579,8 +579,8 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
-      // Select currency from dropdown
-      enterCurrency("USD");
+      // Select currency
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -599,8 +599,8 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
-      // Select currency from dropdown
-      enterCurrency("USD");
+      // Select currency
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -685,8 +685,8 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
-      // Select currency from dropdown
-      enterCurrency("USD");
+      // Select currency
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {
@@ -709,8 +709,8 @@ describe("StatusChangeModal", () => {
       const amountInput = screen.getByLabelText(/approved amount/i);
       fireEvent.change(amountInput, { target: { value: "1000" } });
 
-      // Select currency from dropdown
-      enterCurrency("USD");
+      // Select currency
+      await enterCurrency("USD");
 
       const confirmButton = screen.getByTestId("confirm-button");
       await waitFor(() => {

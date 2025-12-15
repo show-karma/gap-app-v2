@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import debounce from "lodash.debounce";
 import { type FC, Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { fundingPlatformService } from "@/services/fundingPlatformService";
 import type { IFundingProgramConfig } from "@/types/funding-platform";
@@ -195,7 +196,10 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
 
     // Handle error case - if currency can't be loaded, leave field empty for manual entry
     if (fundingDetailsQuery.isError && isOpen && isApprovalStatus) {
-      console.error("Failed to fetch funding details:", fundingDetailsQuery.error);
+      errorManager("Failed to fetch funding details", fundingDetailsQuery.error, {
+        programId,
+        chainId,
+      });
       setIsCurrencyFromAPI(false);
     }
   }, [
@@ -203,6 +207,9 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
     isApprovalStatus,
     fundingDetailsQuery.data,
     fundingDetailsQuery.isError,
+    fundingDetailsQuery.error,
+    programId,
+    chainId,
     resetFormState,
   ]);
 
