@@ -159,13 +159,15 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   }, []);
 
   // Fetch funding details when modal opens and status is "approved"
+  const isFundingDetailsEnabled = isOpen && isApprovalStatus && !!programId && !!chainId;
+
   const fundingDetailsQuery = useQuery({
     queryKey: ["program-funding-details", programId, chainId],
     queryFn: () => fundingPlatformService.programs.getFundingDetails(programId!, chainId!),
-    enabled: isOpen && isApprovalStatus && !!programId && !!chainId,
+    enabled: isFundingDetailsEnabled,
   });
 
-  const isLoadingCurrency = fundingDetailsQuery.isPending && fundingDetailsQuery.isEnabled;
+  const isLoadingCurrency = fundingDetailsQuery.isPending && isFundingDetailsEnabled;
 
   // Handle funding details data when it arrives
   useEffect(() => {

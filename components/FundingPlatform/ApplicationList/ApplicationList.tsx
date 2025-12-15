@@ -107,6 +107,8 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
         setStatusModalOpen(false);
         setPendingStatus("");
         setPendingApplicationId("");
+        setPendingProgramId("");
+        setPendingChainId(undefined);
         if (pendingStatus === "approved") {
           toast.success("Application approved successfully!");
         } else {
