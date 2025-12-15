@@ -1,21 +1,21 @@
 "use client";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
 import Image from "next/image";
 import pluralize from "pluralize";
 import { type FC, useState } from "react";
 import { ChevronDown } from "@/components/Icons/ChevronDown";
+import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
 
 interface CommunitiesSelectProps {
-  onSelectFunction: (value: ICommunityResponse) => void;
+  onSelectFunction: (value: Community) => void;
   selected: string[];
-  list: ICommunityResponse[];
+  list: Community[];
   type: string;
   buttonClassname?: string;
   shouldSort?: boolean;
@@ -75,8 +75,8 @@ export const CommunitiesSelect: FC<CommunitiesSelectProps> = ({
                 <div className="flex flex-row gap-2 items-center justify-start w-full">
                   <div className="min-w-5 min-h-5 w-5 h-5 m-0">
                     <Image
-                      src={community.details?.data?.imageURL || "/placeholder.png"}
-                      alt={community.details?.data?.name || "Community"}
+                      src={community.details?.imageURL || "/placeholder.png"}
+                      alt={community.details?.name || "Community"}
                       width={20}
                       height={20}
                       className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full"
@@ -84,7 +84,7 @@ export const CommunitiesSelect: FC<CommunitiesSelectProps> = ({
                   </div>
                   <div className="flex flex-row gap-1  items-center justify-start  flex-1">
                     <p className="line-clamp-2 text-sm max-w-full break-normal">
-                      {community.details?.data?.name || shortAddress(community.uid)}
+                      {community.details?.name || shortAddress(community.uid)}
                     </p>
                     <div className="flex flex-row gap-1 items-center">
                       <p className="w-max text-[7px]">on</p>

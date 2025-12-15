@@ -1,5 +1,4 @@
 import { TrashIcon } from "@heroicons/react/24/outline";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
@@ -9,8 +8,10 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
+import type { Grant } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -22,7 +23,7 @@ import { shortAddress } from "@/utilities/shortAddress";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 interface GrantDeleteProps {
-  grant: IGrantResponse;
+  grant: Grant;
 }
 
 export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
@@ -31,11 +32,10 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
 
-  const refreshProject = useProjectStore((state) => state.refreshProject);
-
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const { project, isProjectOwner } = useProjectStore();
+  const { refetch: refetchGrants, grants } = useProjectGrants(project?.uid || "");
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { gap } = useGap();
@@ -81,15 +81,13 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
           async () => {
-            const fetchedProject = await refreshProject();
-            const stillExist = fetchedProject?.grants.find(
+            const { data: fetchedGrants } = await refetchGrants();
+            const stillExist = fetchedGrants?.find(
               (g) => g.uid?.toLowerCase() === grantUID?.toLowerCase()
             );
             if (!stillExist) {
-              if (fetchedProject?.grants && fetchedProject?.grants?.length > 0) {
-                router.push(
-                  PAGES.PROJECT.GRANTS(project?.uid || project?.details?.data.slug || "")
-                );
+              if (fetchedGrants && fetchedGrants.length > 0) {
+                router.push(PAGES.PROJECT.GRANTS(project?.uid || project?.details?.slug || ""));
               }
             }
 
@@ -150,11 +148,11 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
       }
     } catch (error: any) {
       errorManager(
-        MESSAGES.GRANT.DELETE.ERROR(grant.details?.data?.title || shortAddress(grant.uid)),
+        MESSAGES.GRANT.DELETE.ERROR(grant.details?.title || shortAddress(grant.uid)),
         error,
         { grantUID: grant.uid, address },
         {
-          error: MESSAGES.GRANT.DELETE.ERROR(grant.details?.data?.title || shortAddress(grant.uid)),
+          error: MESSAGES.GRANT.DELETE.ERROR(grant.details?.title || shortAddress(grant.uid)),
         }
       );
     } finally {
@@ -174,8 +172,8 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
       }}
       title={
         <p className="font-normal">
-          Are you sure you want to delete{" "}
-          <b>{grant.details?.data?.title || shortAddress(grant.uid)}</b> grant?
+          Are you sure you want to delete <b>{grant.details?.title || shortAddress(grant.uid)}</b>{" "}
+          grant?
         </p>
       }
     />

@@ -14,7 +14,10 @@ import { formatDate } from "@/utilities/formatDate";
 import { VerificationsDialog } from "./VerificationsDialog";
 
 interface VerifiedBadgeProps {
-  verifications: IMilestoneCompleted[] | IGrantUpdateStatus[] | IProjectImpactStatus[];
+  // V2: Simple boolean verification
+  isVerified?: boolean;
+  // Legacy: Array of verification records
+  verifications?: IMilestoneCompleted[] | IGrantUpdateStatus[] | IProjectImpactStatus[];
   title: string;
 }
 
@@ -65,7 +68,27 @@ const _BlockieTooltip = ({
   );
 };
 
-export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ verifications, title }) => {
+export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ isVerified, verifications, title }) => {
+  // V2: If isVerified is true, just show a simple verified badge
+  if (isVerified === true) {
+    return (
+      <div className="flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 dark:bg-green-900">
+        <span className="text-sm font-medium text-green-700 dark:text-green-300">Verified</span>
+      </div>
+    );
+  }
+
+  // Legacy: Array-based verifications
+  if (!verifications || verifications.length === 0) return null;
+
+  return <VerifiedBadgeLegacy verifications={verifications} title={title} />;
+};
+
+// Legacy component for array-based verifications
+const VerifiedBadgeLegacy: FC<{
+  verifications: IMilestoneCompleted[] | IGrantUpdateStatus[] | IProjectImpactStatus[];
+  title: string;
+}> = ({ verifications, title }) => {
   const [orderedSort, setOrderedSort] = useState<
     (IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus)[]
   >([]);

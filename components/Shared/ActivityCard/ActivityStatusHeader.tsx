@@ -3,7 +3,7 @@ import type {
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC } from "react";
-import type { UnifiedMilestone } from "@/types/roadmap";
+import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { ActivityStatus } from "./ActivityStatus";
 import type { ActivityType } from "./ActivityTypes";
 import { GrantAssociation } from "./GrantAssociation";

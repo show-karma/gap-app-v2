@@ -2,18 +2,18 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { CheckCircleIcon, LinkIcon } from "@heroicons/react/24/outline";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC } from "react";
 import { Fragment, useEffect, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { PROJECT_NAME } from "@/constants/brand";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
+import type { Grant } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 interface GrantLinkExternalAddressButtonProps {
-  grant: IGrantResponse & { external: Record<string, string[]> };
+  grant: Grant & { external: Record<string, string[]> };
 }
 
 export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonProps> = ({
@@ -23,7 +23,7 @@ export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonPr
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
-  const isEnabledForCommunity = grant.community?.details?.data?.slug === "octant";
+  const isEnabledForCommunity = grant.community?.details?.slug === "octant";
   const [isOpen, setIsOpen] = useState(false);
   const [editedAddress, setEditedAddress] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -109,9 +109,8 @@ export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonPr
                     <h2 className="text-2xl font-bold leading-6">Link Octant Address</h2>
                     <p className="text-md text-gray-500 dark:text-gray-400 mt-2">
                       Please add the Ethereum account address you used for the &quot;
-                      {grant.details?.data?.title}&quot; in Octant. This will enable Octant to
-                      retrieve your {PROJECT_NAME} profile data and display it within the Octant
-                      app.
+                      {grant.details?.title}&quot; in Octant. This will enable Octant to retrieve
+                      your {PROJECT_NAME} profile data and display it within the Octant app.
                     </p>
                   </Dialog.Title>
                   <div className="max-h-[60vh] flex flex-col gap-2 mt-8 overflow-y-auto">

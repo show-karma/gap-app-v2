@@ -5,7 +5,7 @@ import { Fragment } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Button } from "@/components/Utilities/Button";
 import { useMilestone } from "@/hooks/useMilestone";
-import type { UnifiedMilestone } from "@/types/roadmap";
+import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { cn } from "@/utilities/tailwind";
 
 // Common button styling

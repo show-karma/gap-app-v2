@@ -2,7 +2,7 @@
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { useMilestone } from "@/hooks/useMilestone";
-import type { UnifiedMilestone } from "@/types/roadmap";
+import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { cn } from "@/utilities/tailwind";
 
 // Common button styling
@@ -36,7 +36,7 @@ export const GrantMilestoneSimpleOptionsMenu = ({
           <TrashIcon className={"h-5 w-5 text-[#D92D20] dark:text-red-500"} aria-hidden="true" />
         ),
         text: "",
-        styleClass: cn(buttonClassName, "text-[#D92D20] dark:text-red-500 w-max p-0"),
+        styleClass: cn(buttonClassName, "text-[#D92D20] dark:text-red-500 w-max"),
       }}
     />
   );

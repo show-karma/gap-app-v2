@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CommunityProjectEvaluatorPage } from "@/components/Pages/Communities/CommunityProjectEvaluatorPage";
-import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultMetadata } from "@/utilities/meta";
+import { getCommunityDetails } from "@/utilities/queries/v2/community";
 
 type Params = Promise<{
   communityId: string;
@@ -26,15 +25,13 @@ export async function generateMetadata({
   const { programId } = await searchParams;
   let communityName = communityId;
 
-  try {
-    const { data } = await gapIndexerApi.communityBySlug(communityId);
-    communityName = data?.details?.data?.name || communityId;
-    if (!data || data?.uid === zeroUID || !data?.details?.data?.name) {
-      notFound();
-    }
-  } catch {
+  const community = await getCommunityDetails(communityId);
+
+  if (!community || !community.details?.name) {
     notFound();
   }
+
+  communityName = community.details.name;
 
   let dynamicMetadata = {
     title: `Karma AI - ${communityName} community grants`,

@@ -6,16 +6,14 @@ import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useDeleteMilestone } from "@/hooks/useDeleteMilestone";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
 import { useIsReviewer, useReviewerPrograms } from "@/hooks/usePermissions";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
-import { useStaff } from "@/hooks/useStaff";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { updateMilestoneVerification } from "@/services/milestones";
-import { useOwnerStore } from "@/store";
 import { PAGES } from "@/utilities/pages";
 import { CommentsAndActivity } from "./CommentsAndActivity";
 import { GrantCompleteButtonForReviewer } from "./GrantCompleteButtonForReviewer";
@@ -40,10 +38,11 @@ export function MilestonesReviewPage({
   const [deletingMilestoneId, setDeletingMilestoneId] = useState<string | null>(null);
 
   const { address } = useAccount();
-  const { isCommunityAdmin, isLoading: isLoadingCommunityAdmin } = useIsCommunityAdmin(communityId);
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
+  const {
+    hasAccess: hasAdminAccess,
+    isLoading: isLoadingAdminAccess,
+    checks,
+  } = useCommunityAdminAccess(communityId);
 
   // Extract programId and chainId from combined format (e.g., "959_42161")
   const { parsedProgramId, parsedChainId } = useMemo(() => {
@@ -74,15 +73,15 @@ export function MilestonesReviewPage({
   // Determine if user can verify milestones (must be before early returns)
   // Only milestone reviewers, admins, contract owners, and staff can verify/complete/sync
   const canVerifyMilestones = useMemo(
-    () => isCommunityAdmin || isContractOwner || isStaff || isMilestoneReviewer || false,
-    [isCommunityAdmin, isContractOwner, isStaff, isMilestoneReviewer]
+    () => hasAdminAccess || isMilestoneReviewer || false,
+    [hasAdminAccess, isMilestoneReviewer]
   );
 
   // Determine if user can delete milestones
   // Contract owners, community admins, staff, and milestone reviewers can delete milestones
   const canDeleteMilestones = useMemo(
-    () => isCommunityAdmin || isContractOwner || isStaff || isMilestoneReviewer || false,
-    [isCommunityAdmin, isContractOwner, isStaff, isMilestoneReviewer]
+    () => hasAdminAccess || isMilestoneReviewer || false,
+    [hasAdminAccess, isMilestoneReviewer]
   );
 
   // Delete milestone hook with proper React Query mutation/query relationship
@@ -117,18 +116,16 @@ export function MilestonesReviewPage({
   const backButtonConfig = useMemo(() => {
     // Only show back to application if came from application page
     if (referrer === "application" && referenceNumber) {
-      const appUrl =
-        isCommunityAdmin || isContractOwner || isStaff
-          ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) +
-            `/${referenceNumber}`
-          : isReviewer && parsedChainId
-            ? PAGES.REVIEWER.APPLICATION_DETAIL(
-                communityId,
-                parsedProgramId,
-                parsedChainId,
-                referenceNumber
-              )
-            : null;
+      const appUrl = hasAdminAccess
+        ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
+        : isReviewer && parsedChainId
+          ? PAGES.REVIEWER.APPLICATION_DETAIL(
+              communityId,
+              parsedProgramId,
+              parsedChainId,
+              referenceNumber
+            )
+          : null;
 
       if (appUrl) {
         return { url: appUrl, label: "Back to Application" };
@@ -143,9 +140,7 @@ export function MilestonesReviewPage({
   }, [
     referrer,
     referenceNumber,
-    isCommunityAdmin,
-    isContractOwner,
-    isStaff,
+    hasAdminAccess,
     isReviewer,
     communityId,
     programId,
@@ -156,18 +151,16 @@ export function MilestonesReviewPage({
   // Memoized milestone review URL - only returns URL if application is approved
   const milestoneReviewUrl = useMemo(() => {
     if (fundingApplication?.status?.toLowerCase() === "approved" && referenceNumber) {
-      const appUrl =
-        isCommunityAdmin || isContractOwner || isStaff
-          ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) +
-            `/${referenceNumber}`
-          : isReviewer && parsedChainId
-            ? PAGES.REVIEWER.APPLICATION_DETAIL(
-                communityId,
-                parsedProgramId,
-                parsedChainId,
-                referenceNumber
-              )
-            : null;
+      const appUrl = hasAdminAccess
+        ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
+        : isReviewer && parsedChainId
+          ? PAGES.REVIEWER.APPLICATION_DETAIL(
+              communityId,
+              parsedProgramId,
+              parsedChainId,
+              referenceNumber
+            )
+          : null;
 
       return appUrl;
     }
@@ -175,9 +168,7 @@ export function MilestonesReviewPage({
   }, [
     fundingApplication?.status,
     referenceNumber,
-    isCommunityAdmin,
-    isContractOwner,
-    isStaff,
+    hasAdminAccess,
     isReviewer,
     communityId,
     programId,
@@ -259,13 +250,7 @@ export function MilestonesReviewPage({
   );
 
   // Show loading while checking authorization
-  if (
-    isLoading ||
-    isLoadingCommunityAdmin ||
-    isOwnerLoading ||
-    isLoadingReviewer ||
-    isStaffLoading
-  ) {
+  if (isLoading || isLoadingReviewer || isLoadingAdminAccess) {
     return (
       <div className="min-h-screen">
         <div className="px-4 sm:px-6 lg:px-8 py-6">
@@ -280,7 +265,7 @@ export function MilestonesReviewPage({
   }
 
   // Check authorization: user must be logged in AND (community admin OR contract owner OR program reviewer OR staff)
-  const isAuthorized = address && (isCommunityAdmin || isContractOwner || isReviewer || isStaff);
+  const isAuthorized = address && (hasAdminAccess || isReviewer);
 
   if (!isAuthorized) {
     return (

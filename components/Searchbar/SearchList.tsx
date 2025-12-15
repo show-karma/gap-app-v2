@@ -1,15 +1,13 @@
 "use client";
-import type {
-  ICommunityResponse,
-  IProjectResponse,
-  ISearchResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
+import type { UnifiedSearchResponse } from "@/services/unified-search.service";
 import { useMobileStore } from "@/store/mobile";
-import { groupSimilarCommunities } from "@/utilities/communityHelpers"; // You'll need to create this utility function
+import type { Community } from "@/types/v2/community";
+import type { Project as ProjectResponse } from "@/types/v2/project";
+import { groupSimilarCommunities } from "@/utilities/communityHelpers";
 import { PAGES } from "@/utilities/pages";
 import { ProfilePicture } from "../Utilities/ProfilePicture";
 /* eslint-disable @next/next/no-img-element */
@@ -18,7 +16,7 @@ import { ProfilePicture } from "../Utilities/ProfilePicture";
 import { Spinner } from "../Utilities/Spinner";
 
 interface Props {
-  data: ISearchResponse; // Will be modular in the future
+  data: UnifiedSearchResponse;
   isOpen: boolean;
   isLoading: boolean;
   closeSearchList: () => void;
@@ -79,15 +77,15 @@ export const SearchList: React.FC<Props> = ({
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
   const renderItem = (
-    item: IProjectResponse | ICommunityResponse,
+    item: ProjectResponse | Community,
     title: string,
     href: string,
     type: "project" | "community"
   ) => {
     const imageURL =
       type === "project"
-        ? (item as IProjectResponse).details?.data?.imageURL
-        : (item as ICommunityResponse).details?.data?.imageURL;
+        ? (item as ProjectResponse).details?.logoUrl
+        : (item as Community).details?.imageURL;
 
     return (
       <button
@@ -123,7 +121,7 @@ export const SearchList: React.FC<Props> = ({
     );
   };
 
-  const groupedCommunities = groupSimilarCommunities(data.communities);
+  const groupedCommunities = groupSimilarCommunities(data.communities as Community[]);
 
   return (
     isOpen && (
@@ -139,8 +137,8 @@ export const SearchList: React.FC<Props> = ({
           groupedCommunities.map((community) =>
             renderItem(
               community,
-              community.details?.data?.name || "Untitled Community",
-              PAGES.COMMUNITY.ALL_GRANTS(community.details?.data.slug || community.uid),
+              community.details?.name || "Untitled Community",
+              PAGES.COMMUNITY.ALL_GRANTS(community.details?.slug || community.uid),
               "community"
             )
           )}
@@ -148,9 +146,9 @@ export const SearchList: React.FC<Props> = ({
         {data.projects.length > 0 &&
           data.projects.map((project) =>
             renderItem(
-              project,
-              project.details?.data.title || "Untitled Project",
-              PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid),
+              project as ProjectResponse,
+              project.details?.title || "Untitled Project",
+              PAGES.PROJECT.GRANTS(project.details?.slug || project.uid),
               "project"
             )
           )}

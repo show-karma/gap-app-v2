@@ -48,6 +48,7 @@ export interface Category {
   outputs?: {
     id: string;
     name: string;
+    description: string;
     categoryId: string;
     type: "output" | "outcome";
   }[];

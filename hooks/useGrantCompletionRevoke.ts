@@ -1,8 +1,4 @@
 import { GAP } from "@show-karma/karma-gap-sdk";
-import type {
-  IGrantResponse,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
@@ -10,9 +6,12 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useStepper } from "@/store/modals/txStepper";
+import type { Grant } from "@/types/v2/grant";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -26,8 +25,8 @@ import { MESSAGES } from "@/utilities/messages";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 interface UseGrantCompletionRevokeProps {
-  grant: IGrantResponse;
-  project: IProjectResponse;
+  grant: Grant;
+  project: ProjectResponse;
 }
 
 /**
@@ -48,7 +47,8 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const projectIdOrSlug = project?.details?.slug || project?.uid || "";
+  const { refetch: refetchGrants } = useProjectGrants(projectIdOrSlug);
   const { refreshGrant } = useGrantStore();
   const { isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
@@ -64,7 +64,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
 
     try {
       // Validate chainID before proceeding
-      const chainID = grant.completed.chainID || grant.chainID;
+      const chainID = grant.chainID;
       if (!chainID) {
         throw new Error(
           `Chain ID not found for grant ${grant.uid}. Cannot proceed with revocation.`
@@ -76,7 +76,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
         throw new Error("Grant completion UID not found");
       }
 
-      const checkIfCompletionExists = createCheckIfCompletionExists(grant.uid, refreshProject);
+      const checkIfCompletionExists = createCheckIfCompletionExists(grant.uid, projectIdOrSlug);
 
       if (!isOnChainAuthorized) {
         // Use off-chain revocation for users without on-chain authorization
@@ -99,6 +99,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
             loading: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.LOADING,
           },
         });
+        await refetchGrants();
         await refreshGrant();
         return;
       }
@@ -172,6 +173,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
         await checkIfCompletionExists(() => {
           changeStepperStep("indexed");
         });
+        await refetchGrants();
         await refreshGrant();
         toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS);
       } catch (onChainError: any) {
@@ -199,6 +201,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
         });
 
         if (success) {
+          await refetchGrants();
           await refreshGrant();
         } else {
           // Both methods failed - throw the original error

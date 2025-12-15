@@ -7,7 +7,7 @@ import {
   getCommunityDetails,
   getCommunityProjects,
   getCommunityStats,
-} from "@/utilities/queries/v2/community";
+} from "@/utilities/queries/v2/getCommunityData";
 
 type Props = {
   params: Promise<{
@@ -22,12 +22,17 @@ export default async function Page(props: Props) {
     return undefined;
   }
 
-  const [communityDetails, communityStats, categoriesOptions, initialProjects] = await Promise.all([
+  const [communityDetails, communityStats, categories, initialProjects] = await Promise.all([
     getCommunityDetails(communityId),
     getCommunityStats(communityId),
     getCommunityCategories(communityId),
     getCommunityProjects(communityId, { page: 1, limit: 12 }),
   ]);
+
+  // Extract category names for the filter
+  const categoriesOptions = categories
+    .map((cat) => cat.name)
+    .sort((a, b) => a.localeCompare(b, "en"));
 
   // Layout handles notFound, but TypeScript needs this check
   if (!communityDetails) {

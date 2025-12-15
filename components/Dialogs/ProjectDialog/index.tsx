@@ -12,7 +12,6 @@ import {
   Project,
   ProjectDetails,
 } from "@show-karma/karma-gap-sdk";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/navigation";
 import { type FC, Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
@@ -42,17 +41,19 @@ import { useAuth } from "@/hooks/useAuth";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { getProject } from "@/services/project.service";
+import { searchProjects } from "@/services/project-search.service";
 import { useProjectStore } from "@/store";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useStepper } from "@/store/modals/txStepper";
 import { useOwnerStore } from "@/store/owner";
 import type { Contact } from "@/types/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { gapSupportedNetworks } from "@/utilities/network";
@@ -152,7 +153,7 @@ type ProjectDialogProps = {
     iconSide?: "left" | "right";
     styleClass: string;
   } | null;
-  projectToUpdate?: IProjectResponse;
+  projectToUpdate?: ProjectResponse;
   previousContacts?: Contact[];
   useEditModalStore?: boolean; // New prop to control which modal state to use
 };
@@ -168,61 +169,48 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   previousContacts,
   useEditModalStore = false, // Default to false for create mode
 }) => {
-  const dataToUpdate = useMemo(
-    () =>
-      projectToUpdate
-        ? {
-            chainID: projectToUpdate?.chainID,
-            description: projectToUpdate?.details?.data?.description || "",
-            title: projectToUpdate?.details?.data?.title || "",
-            problem: projectToUpdate?.details?.data?.problem,
-            solution: projectToUpdate?.details?.data?.solution,
-            missionSummary: projectToUpdate?.details?.data?.missionSummary,
-            locationOfImpact: projectToUpdate?.details?.data?.locationOfImpact,
-            imageURL: projectToUpdate?.details?.data?.imageURL,
-            twitter: projectToUpdate?.details?.data?.links?.find((link) => link.type === "twitter")
-              ?.url,
-            github: projectToUpdate?.details?.data?.links?.find((link) => link.type === "github")
-              ?.url,
-            discord: projectToUpdate?.details?.data?.links?.find((link) => link.type === "discord")
-              ?.url,
-            website: projectToUpdate?.details?.data?.links?.find((link) => link.type === "website")
-              ?.url,
-            linkedin: projectToUpdate?.details?.data?.links?.find(
-              (link) => link.type === "linkedin"
-            )?.url,
-            pitchDeck: projectToUpdate?.details?.data?.links?.find(
-              (link) => link.type === "pitchDeck"
-            )?.url,
-            demoVideo: projectToUpdate?.details?.data?.links?.find(
-              (link) => link.type === "demoVideo"
-            )?.url,
-            farcaster: projectToUpdate?.details?.data?.links?.find(
-              (link) => link.type === "farcaster"
-            )?.url,
-            profilePicture: projectToUpdate?.details?.data?.imageURL,
-            tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
-            recipient: projectToUpdate?.recipient,
-            businessModel: projectToUpdate?.details?.data?.businessModel,
-            stageIn: projectToUpdate?.details?.data?.stageIn,
-            raisedMoney: projectToUpdate?.details?.data?.raisedMoney,
-            pathToTake: projectToUpdate?.details?.data?.pathToTake,
-          }
-        : undefined,
-    [projectToUpdate]
-  );
+  const dataToUpdate = useMemo(() => {
+    if (!projectToUpdate) return undefined;
+
+    const { details } = projectToUpdate;
+    const links = details?.links || [];
+    const getLinkUrl = (type: string) => links.find((l) => l.type === type)?.url || "";
+
+    return {
+      chainID: projectToUpdate.chainID,
+      description: details?.description || "",
+      title: details?.title || "",
+      problem: details?.problem,
+      solution: details?.solution,
+      missionSummary: details?.missionSummary,
+      locationOfImpact: details?.locationOfImpact,
+      imageURL: details?.logoUrl,
+      twitter: getLinkUrl("twitter"),
+      github: getLinkUrl("github"),
+      discord: getLinkUrl("discord"),
+      website: getLinkUrl("website"),
+      linkedin: getLinkUrl("linkedin"),
+      pitchDeck: getLinkUrl("pitchDeck"),
+      demoVideo: getLinkUrl("demoVideo"),
+      farcaster: getLinkUrl("farcaster"),
+      profilePicture: details?.logoUrl,
+      tags: details?.tags,
+      recipient: projectToUpdate.owner,
+      businessModel: details?.businessModel,
+      stageIn: details?.stageIn,
+      raisedMoney: details?.raisedMoney,
+      pathToTake: details?.pathToTake,
+    };
+  }, [projectToUpdate]);
 
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
   const [customLinks, setCustomLinks] = useState<CustomLink[]>(() => {
-    // Initialize custom links from project data if editing
-    if (projectToUpdate?.details?.data?.links) {
-      return projectToUpdate.details.data.links.filter(isCustomLink).map((link, index) => ({
-        id: `custom-${index}`,
-        name: link.name || "",
-        url: link.url,
-      }));
-    }
-    return [];
+    const links = projectToUpdate?.details?.links || [];
+    return links.filter(isCustomLink).map((link: any, index: number) => ({
+      id: `custom-${index}`,
+      name: link.name || "",
+      url: link.url,
+    }));
   });
 
   // Logo upload state management
@@ -366,8 +354,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         };
         reset(updateData);
         // Reset logo state to project's existing logo
-        if (projectToUpdate.details?.data?.imageURL) {
-          setLogoPreviewUrl(projectToUpdate.details.data.imageURL);
+        const imageURL = projectToUpdate.details?.logoUrl;
+        if (imageURL) {
+          setLogoPreviewUrl(imageURL);
         } else {
           setLogoPreviewUrl(null);
         }
@@ -688,14 +677,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});
         }
-        let fetchedProject: Project | null = null;
+        let fetchedProject: ProjectResponse | null = null;
         changeStepperStep("indexing");
         while (retries > 0) {
           // eslint-disable-next-line no-await-in-loop
-          fetchedProject = await (slug
-            ? gapClient.fetch.projectBySlug(slug)
-            : gapClient.fetch.projectById(project.uid as Hex)
-          ).catch(() => null);
+          fetchedProject = await getProject(slug || project.uid);
           if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
             if (data.github) {
               const githubFromField = data.github.includes("http")
@@ -735,29 +721,26 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               }
             }
 
-            await fetchData(
+            const [, subscriptionError] = await fetchData(
               INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
               "POST",
               { contacts },
               {},
               {},
               true
-            ).then(([_res, error]) => {
-              if (error) {
-                toast.error(
-                  "Something went wrong with contact info save. Please try again later.",
-                  {
-                    className: "z-[9999]",
-                  }
-                );
-              }
-              retries = 0;
-              toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
-              router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
-              router.refresh();
-              changeStepperStep("indexed");
-              return;
-            });
+            );
+
+            if (subscriptionError) {
+              toast.error("Something went wrong with contact info save. Please try again later.", {
+                className: "z-[9999]",
+              });
+            }
+
+            toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
+            changeStepperStep("indexed");
+            router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
+            router.refresh();
+            break;
           }
           retries -= 1;
           // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -947,7 +930,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       });
     } catch (error: any) {
       errorManager(
-        `Error updating project ${projectToUpdate?.details?.data?.slug || projectToUpdate?.uid}`,
+        `Error updating project ${projectToUpdate?.details?.slug || projectToUpdate?.uid}`,
         error,
         { ...data, address },
         {
@@ -995,22 +978,22 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const [isSearchingProject, setIsSearchingProject] = useState(false);
-  const [existingProjects, setExistingProjects] = useState<IProjectResponse[]>([]);
+  const [existingProjects, setExistingProjects] = useState<ProjectResponse[]>([]);
 
   const searchByExistingName = debounce(async (value: string) => {
     if (
       value.length < 3 ||
       (projectToUpdate &&
-        value.toLowerCase() === projectToUpdate?.details?.data?.title?.toLowerCase())
+        value.toLowerCase() === (projectToUpdate as ProjectResponse).details?.title?.toLowerCase())
     ) {
       return;
     }
     try {
       setIsSearchingProject(true);
-      const result = await gapIndexerApi.searchProjects(value).then((res) => res.data);
+      const result = await searchProjects(value);
       const hasEqualTitle =
-        result.filter((item) => item.details?.data.title.toLowerCase() === value.toLowerCase())
-          .length > 0;
+        result.filter((item) => item.details?.title?.toLowerCase() === value.toLowerCase()).length >
+        0;
       if (hasEqualTitle) {
         setExistingProjects(result);
         setError("title", {

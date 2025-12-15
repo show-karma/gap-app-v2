@@ -21,31 +21,34 @@ export const ProjectNavigator = ({
   const pathname = usePathname();
   const projectId = useParams().projectId as string;
   const project = useProjectStore((state) => state.project);
+
+  // Memoize publicTabs to prevent recreation on every render
   const publicTabs = useMemo(
     () => [
       {
         name: "Project",
-        href: PAGES.PROJECT.OVERVIEW(project?.details?.data?.slug || projectId),
+        href: PAGES.PROJECT.OVERVIEW(project?.details?.slug || projectId),
       },
       {
         name: "Updates",
-        href: PAGES.PROJECT.UPDATES(project?.details?.data?.slug || projectId),
+        href: PAGES.PROJECT.UPDATES(project?.details?.slug || projectId),
       },
       {
         name: "Funding",
-        href: PAGES.PROJECT.GRANTS(project?.details?.data?.slug || projectId),
+        href: PAGES.PROJECT.GRANTS(project?.details?.slug || projectId),
       },
       {
         name: "Impact",
-        href: PAGES.PROJECT.IMPACT.ROOT(project?.details?.data?.slug || projectId),
+        href: PAGES.PROJECT.IMPACT.ROOT(project?.details?.slug || projectId),
       },
       {
         name: "Team",
-        href: PAGES.PROJECT.TEAM(project?.details?.data?.slug || projectId),
+        href: PAGES.PROJECT.TEAM(project?.details?.slug || projectId),
       },
     ],
-    [project?.details?.data?.slug, projectId]
+    [project?.details?.slug, projectId]
   );
+
   const [tabs, setTabs] = useState<typeof publicTabs>(publicTabs);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
@@ -59,7 +62,7 @@ export const ProjectNavigator = ({
           ...publicTabs,
           {
             name: "Contact Info",
-            href: PAGES.PROJECT.CONTACT_INFO(project?.details?.data.slug || projectId),
+            href: PAGES.PROJECT.CONTACT_INFO(project?.details?.slug || projectId),
           },
         ]);
       } else {
@@ -67,7 +70,7 @@ export const ProjectNavigator = ({
       }
     };
     mountTabs();
-  }, [isAuthorized, project, projectId, publicTabs]);
+  }, [isAuthorized, project?.details?.slug, projectId, publicTabs]);
 
   const { setIsProgressModalOpen } = useProgressModalStore();
   return (

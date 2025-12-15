@@ -13,13 +13,18 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { getProjectGrants } from "@/services/project-grants.service";
+import { getProjectImpacts } from "@/services/project-impacts.service";
+import { getProjectUpdates } from "@/services/project-updates.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
+import type { ConversionGrantUpdate } from "@/types/v2/roadmap";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
@@ -31,7 +36,8 @@ type UpdateType =
   | IGrantUpdate
   | IMilestoneResponse
   | IProjectImpact
-  | IProjectMilestoneResponse;
+  | IProjectMilestoneResponse
+  | ConversionGrantUpdate;
 
 export const useUpdateActions = (update: UpdateType) => {
   const [isDeletingUpdate, setIsDeletingUpdate] = useState(false);
@@ -41,7 +47,7 @@ export const useUpdateActions = (update: UpdateType) => {
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { project, isProjectOwner } = useProjectStore();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isOnChainAuthorized = isProjectOwner || isOwner;
   const projectId = useParams().projectId as string;
@@ -55,7 +61,7 @@ export const useUpdateActions = (update: UpdateType) => {
       await Promise.all([
         // Milestone-related queries
         queryClient.invalidateQueries({
-          queryKey: ["all-milestones", projectId],
+          queryKey: QUERY_KEYS.PROJECT.UPDATES(projectId),
         }),
         queryClient.invalidateQueries({
           queryKey: ["projectMilestones", project?.uid],
@@ -65,10 +71,16 @@ export const useUpdateActions = (update: UpdateType) => {
           queryKey: ["project", project?.uid],
         }),
         queryClient.invalidateQueries({
-          queryKey: ["project", project?.details?.data?.slug],
+          queryKey: ["project", project?.details?.slug],
         }),
-        // Refresh the project data from the store
-        refreshProject(),
+        // Grant-related queries
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PROJECT.GRANTS(projectIdOrSlug),
+        }),
+        // Impact-related queries
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PROJECT.IMPACTS(projectIdOrSlug),
+        }),
       ]);
 
       // Force a router refresh to update components that use direct API calls
@@ -83,12 +95,19 @@ export const useUpdateActions = (update: UpdateType) => {
     let gapClient = gap;
     try {
       setIsDeletingUpdate(true);
+      const updateChainID = "chainID" in update ? update.chainID : undefined;
+      if (!updateChainID) {
+        errorManager("Cannot delete update: missing chain ID", new Error("Missing chainID"));
+        setIsDeletingUpdate(false);
+        return;
+      }
+
       const {
         success,
         chainId: actualChainId,
         gapClient: newGapClient,
       } = await ensureCorrectChain({
-        targetChainId: update.chainID,
+        targetChainId: updateChainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
@@ -163,23 +182,23 @@ export const useUpdateActions = (update: UpdateType) => {
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
           async () => {
-            const fetchedProject = await refreshProject();
             let stillExists = false;
 
             switch (update.type) {
-              case "ProjectUpdate":
-                stillExists = !!fetchedProject?.updates?.find(
-                  (upd) => ((upd as any)?._uid || upd.uid) === update.uid
-                );
+              case "ProjectUpdate": {
+                const fetchedUpdates = await getProjectUpdates(projectIdOrSlug);
+                stillExists = !!fetchedUpdates.projectUpdates.find((upd) => upd.uid === update.uid);
                 break;
-              case "ProjectImpact":
-                stillExists = !!fetchedProject?.impacts?.find(
-                  (impact) => impact.uid === update.uid
-                );
+              }
+              case "ProjectImpact": {
+                const fetchedImpacts = await getProjectImpacts(projectIdOrSlug);
+                stillExists = !!fetchedImpacts.find((imp) => imp.uid === update.uid);
                 break;
+              }
               case "GrantUpdate": {
-                const grant = fetchedProject?.grants?.find(
-                  (grant) => grant.uid.toLowerCase() === update.refUID.toLowerCase()
+                const fetchedGrants = await getProjectGrants(projectIdOrSlug);
+                const grant = fetchedGrants.find(
+                  (g) => g.uid.toLowerCase() === update.refUID.toLowerCase()
                 );
                 stillExists = !!grant?.updates?.find(
                   (grantUpdate) => grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
@@ -190,7 +209,8 @@ export const useUpdateActions = (update: UpdateType) => {
 
             return !stillExists;
           },
-          () => {
+          async () => {
+            await refreshDataAfterDeletion();
             callbackFn?.();
           }
         );
@@ -270,25 +290,25 @@ export const useUpdateActions = (update: UpdateType) => {
   const getShareText = () => {
     const shareDictionary = {
       ProjectUpdate: SHARE_TEXTS.PROJECT_ACTIVITY(
-        project?.details?.data?.title as string,
+        project?.details?.title as string,
         project?.uid as string
       ),
       GrantUpdate: SHARE_TEXTS.GRANT_UPDATE(
-        project?.details?.data?.title as string,
+        project?.details?.title as string,
         project?.uid as string,
         update.uid
       ),
       ProjectMilestone: SHARE_TEXTS.GRANT_UPDATE(
-        project?.details?.data?.title as string,
+        project?.details?.title as string,
         project?.uid as string,
         update.uid
       ),
       ProjectImpact: SHARE_TEXTS.PROJECT_ACTIVITY(
-        project?.details?.data?.title as string,
+        project?.details?.title as string,
         project?.uid as string
       ),
       Milestone: SHARE_TEXTS.PROJECT_ACTIVITY(
-        project?.details?.data?.title as string,
+        project?.details?.title as string,
         project?.uid as string
       ),
     };

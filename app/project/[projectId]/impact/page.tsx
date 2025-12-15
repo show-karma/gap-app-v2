@@ -1,11 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { Hex } from "viem";
 import ImpactWrapper from "@/components/Pages/Project/Impact/ImpactWrapper";
 import { PROJECT_NAME } from "@/constants/brand";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
@@ -19,15 +19,15 @@ type Params = Promise<{
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { projectId } = await params;
 
-  const projectInfo = await getMetadata<IProjectResponse>("project", projectId as Hex);
+  const projectInfo = await getMetadata<ProjectResponse>("project", projectId as Hex);
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
     notFound();
   }
 
   return {
-    title: `Impact of ${projectInfo.details?.data?.title} | ${PROJECT_NAME}`,
-    description: cleanMarkdownForPlainText(projectInfo.details?.data?.description || "", 80) || "",
+    title: `Impact of ${projectInfo.details?.title} | ${PROJECT_NAME}`,
+    description: cleanMarkdownForPlainText(projectInfo.details?.description || "", 80) || "",
     twitter: {
       creator: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
@@ -35,18 +35,18 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       images: [
         {
           url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
-          alt: `Impact of ${projectInfo.details?.data?.title} | ${PROJECT_NAME}`,
+          alt: `Impact of ${projectInfo.details?.title} | ${PROJECT_NAME}`,
         },
       ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
-      title: `Impact of ${projectInfo.details?.data?.title} | ${PROJECT_NAME}`,
-      description: cleanMarkdownForPlainText(projectInfo.details?.data?.description || "", 80),
+      title: `Impact of ${projectInfo.details?.title} | ${PROJECT_NAME}`,
+      description: cleanMarkdownForPlainText(projectInfo.details?.description || "", 80),
       images: [
         {
           url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
-          alt: `Impact of ${projectInfo.details?.data?.title} | ${PROJECT_NAME}`,
+          alt: `Impact of ${projectInfo.details?.title} | ${PROJECT_NAME}`,
         },
       ],
     },
