@@ -37,6 +37,7 @@ import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import type { IFundingApplication } from "@/types/funding-platform";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { isFundingProgramConfig } from "@/utilities/type-guards";
 
 export default function ApplicationDetailPage() {
   const router = useRouter();
@@ -429,6 +430,7 @@ export default function ApplicationDetailPage() {
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
         isReasonRequired={pendingStatus === "revision_requested" || pendingStatus === "rejected"}
+        programConfig={isFundingProgramConfig(program) ? program : undefined}
       />
     </div>
   );

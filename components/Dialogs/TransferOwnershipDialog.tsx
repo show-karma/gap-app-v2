@@ -112,11 +112,11 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
       closeModal();
     } catch (error: any) {
       errorManager(
-        `Error transferring ownership from ${project.recipient} to ${newOwner}`,
+        `Error transferring ownership from ${project.owner} to ${newOwner}`,
         error,
         {
-          project: project?.details?.data?.slug || project?.uid,
-          oldOwner: project?.recipient,
+          project: project?.details?.slug || project?.uid,
+          oldOwner: project?.owner,
           newOwner,
           address: address,
         },

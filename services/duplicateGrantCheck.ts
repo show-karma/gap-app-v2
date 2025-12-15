@@ -1,4 +1,5 @@
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { getProjectGrants } from "@/services/project-grants.service";
 
 export interface DuplicateCheckParams {
   projectUid?: string;
@@ -18,20 +19,18 @@ export async function checkForDuplicateGrant(params: DuplicateCheckParams): Prom
       return false;
     }
 
-    // Fetch fresh project data
-    const freshProject = await gapIndexerApi
-      .projectBySlug(params.projectUid)
-      .then((res) => res.data);
+    // Fetch fresh grants using V2 API
+    const grants = await getProjectGrants(params.projectUid);
 
-    if (!freshProject?.grants) {
+    if (grants.length === 0) {
       return false;
     }
 
     // Check for duplicate based on grant type
-    const duplicate = freshProject.grants.some((grant) => {
+    const duplicate = grants.some((grant) => {
       if (params.programId) {
         // For program grants: match by programId (base part before underscore)
-        const existingProgramId = grant.details?.data?.programId;
+        const existingProgramId = grant.details?.programId;
         if (!existingProgramId) return false;
 
         const selectedProgramId = params.programId.split("_")[0];
@@ -40,8 +39,8 @@ export async function checkForDuplicateGrant(params: DuplicateCheckParams): Prom
         return existingProgramIdBase === selectedProgramId;
       } else {
         // For regular grants: match by community AND title
-        const existingCommunity = grant.data?.communityUID;
-        const existingTitle = grant.details?.data?.title;
+        const existingCommunity = grant.communityUID;
+        const existingTitle = grant.details?.title;
 
         return (
           existingCommunity === params.community &&
@@ -52,7 +51,10 @@ export async function checkForDuplicateGrant(params: DuplicateCheckParams): Prom
 
     return duplicate;
   } catch (error) {
-    console.error("Error checking for duplicate grant:", error);
+    errorManager("Error checking for duplicate grant", error, {
+      context: "duplicateGrantCheck.service",
+      projectUid: params.projectUid,
+    });
     return false;
   }
 }

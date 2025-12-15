@@ -1,6 +1,6 @@
 import { registryService } from "@/services/registry.service";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import { getCommunityDetails } from "@/utilities/queries/v2/community";
+import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 import { DonationHeader } from "./header";
 
 type Params = Promise<{

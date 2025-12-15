@@ -13,9 +13,14 @@ import toast from "react-hot-toast";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useApplicationVersions } from "@/hooks/useFundingPlatform";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
-import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
+import type {
+  IFundingApplication,
+  IFundingProgramConfig,
+  ProgramWithFormSchema,
+} from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
+import { isFundingProgramConfig } from "@/utilities/type-guards";
 import { getProjectTitle } from "../helper/getProjecTitle";
 import { AIEvaluationDisplay } from "./AIEvaluation";
 import AIEvaluationButton from "./AIEvaluationButton";
@@ -429,6 +434,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
           status={pendingStatus}
           isSubmitting={isUpdatingStatus}
           isReasonRequired={pendingStatus === "revision_requested"}
+          programConfig={isFundingProgramConfig(program) ? program : undefined}
         />
       </>
     );
@@ -650,6 +656,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
         isReasonRequired={pendingStatus === "revision_requested"}
+        programConfig={isFundingProgramConfig(program) ? program : undefined}
       />
     </>
   );

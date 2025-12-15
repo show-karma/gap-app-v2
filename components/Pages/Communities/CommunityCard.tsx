@@ -43,7 +43,7 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
   return (
     <div
       ref={cardRef}
-      className="flex flex-col p-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 ease-in-out w-full min-w-0"
+      className="flex flex-col p-4 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 ease-in-out w-full min-w-0"
       style={{ height: "318px" }}
     >
       <div className="flex justify-center mb-3 min-h-[72px] h-18 mx-auto">

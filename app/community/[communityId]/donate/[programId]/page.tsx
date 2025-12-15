@@ -1,6 +1,6 @@
 import { CommunityGrantsDonate } from "@/components/CommunityGrantsDonate";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import { getCommunityProjects } from "@/utilities/queries/v2/community";
+import { getCommunityProjects } from "@/utilities/queries/v2/getCommunityData";
 
 type Props = {
   params: Promise<{

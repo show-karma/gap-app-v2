@@ -4,9 +4,7 @@ import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import pluralize from "pluralize";
 import { PROJECT_NAME } from "@/constants/brand";
-import { getTotalProjects } from "@/utilities/karma/totalProjects";
-import { getCommunityDetails } from "@/utilities/queries/v2/community";
-import { getGrants } from "@/utilities/sdk";
+import { getCommunityDetails, getCommunityStats } from "@/utilities/queries/v2/getCommunityData";
 // App router includes @vercel/og.
 // No need to install it.
 
@@ -15,28 +13,17 @@ export async function GET(
   context: { params: Promise<{ communityId: string }> }
 ) {
   const communityId = (await context.params).communityId;
-  const [community, grantsData, projects] = await Promise.all([
+  const [community, communityStats] = await Promise.all([
     getCommunityDetails(communityId),
-    getGrants(
-      communityId as `0x${string}`,
-      {
-        sortBy: "recent",
-        status: "all",
-        categories: [],
-      },
-      {
-        page: 1,
-        pageLimit: 1,
-      }
-    ),
-    getTotalProjects(communityId),
+    getCommunityStats(communityId),
   ]);
 
   if (!community) {
     return new Response("Not found", { status: 404 });
   }
 
-  const grants = grantsData.pageInfo?.totalItems || 0;
+  const grants = communityStats.totalGrants;
+  const projects = communityStats.totalProjects;
 
   const stats = [
     {

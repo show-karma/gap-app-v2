@@ -5,13 +5,13 @@ import Link from "next/link";
 import pluralize from "pluralize";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { useDonationCart } from "@/store";
-import type { CommunityDetails } from "@/types/community";
+import type { Community } from "@/types/v2/community";
 import { communityColors } from "@/utilities/communityColors";
 import { PAGES } from "@/utilities/pages";
 import { ReadMore } from "@/utilities/ReadMore";
 
 interface DonationHeaderProps {
-  community: CommunityDetails;
+  community: Community;
   programId: string;
   program: GrantProgram;
 }
@@ -25,14 +25,13 @@ export const DonationHeader = ({ community, programId, program }: DonationHeader
           className="flex mt-4 flex-row items-center justify-center p-3 rounded-xl w-[72px] h-[72px]"
           style={{
             backgroundColor:
-              communityColors[(community as CommunityDetails)?.uid?.toLowerCase() || "black"] ||
-              "#000000",
+              communityColors[(community as Community)?.uid?.toLowerCase() || "black"] || "#000000",
           }}
         >
           <Image
             height={48}
             width={48}
-            src={community.details?.logoUrl}
+            src={community.details?.logoUrl || community.details?.imageURL || ""}
             alt={community.details?.name}
             className="h-12 w-12 min-w-12 min-h-12 rounded-full border border-white"
           />

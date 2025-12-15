@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { useAccount } from "wagmi";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { PAGES } from "@/utilities/pages";
@@ -10,6 +11,9 @@ import { FilteredOutputsAndOutcomes, filterIndicators } from "../Impact/Filtered
 
 export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate }) => {
   const { project, isProjectOwner } = useProjectStore();
+
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(project?.uid || "");
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
@@ -40,10 +44,12 @@ export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate })
     if (!project || !activity?.data?.grants || activity?.data?.grants?.length === 0) return [];
 
     // Find grants that match the activity's grants
-    return project.grants.filter((grant) =>
-      activity?.data?.grants?.some((grantId) => grantId.toLowerCase() === grant.uid.toLowerCase())
+    return grants.filter((grant) =>
+      activity?.data?.grants?.some(
+        (grantId: string) => grantId.toLowerCase() === grant.uid.toLowerCase()
+      )
     );
-  }, [project, activity?.data?.grants]);
+  }, [project, grants, activity?.data?.grants]);
 
   if (
     !activity.data?.deliverables?.length &&
@@ -127,7 +133,7 @@ export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate })
           <FilteredOutputsAndOutcomes indicatorIds={indicatorIds} indicatorNames={indicatorNames} />
 
           {/* Grants Section */}
-          {relatedGrants?.length > 0 ? (
+          {relatedGrants && relatedGrants.length > 0 ? (
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
               <p className="text-sm font-bold text-black dark:text-zinc-100 mb-3">Related Grants</p>
 
@@ -150,14 +156,14 @@ export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate })
                     </svg>
                     <ExternalLink
                       href={PAGES.PROJECT.GRANT(
-                        project?.details?.data.slug || (project?.uid as string),
+                        project?.details?.slug || (project?.uid as string),
                         grant.uid
                       )}
                       className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                      aria-label={`View grant: ${grant.details?.data?.title || grant.uid}`}
+                      aria-label={`View grant: ${grant.details?.title || grant.uid}`}
                       tabIndex={0}
                     >
-                      {grant.details?.data?.title || grant.uid}
+                      {grant.details?.title || grant.uid}
                     </ExternalLink>
                   </div>
                 ))}

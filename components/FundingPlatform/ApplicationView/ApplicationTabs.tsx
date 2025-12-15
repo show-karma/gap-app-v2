@@ -30,8 +30,22 @@ export const ApplicationTabs: FC<ApplicationTabsProps> = ({
   onChange,
   connectedToHeader = false,
 }) => {
-  const defaultTab = tabs[defaultIndex]?.id || tabs[0]?.id;
+  // Validate defaultIndex is within bounds
+  const validDefaultIndex = defaultIndex >= 0 && defaultIndex < tabs.length ? defaultIndex : 0;
+  const defaultTab = tabs[validDefaultIndex]?.id || tabs[0]?.id;
+
   const [activeTab, setActiveTab] = useState(defaultTab);
+
+  // Handle empty tabs array defensively
+  if (tabs.length === 0) {
+    return null;
+  }
+
+  if (!defaultTab) {
+    throw new Error(
+      "ApplicationTabs: Unable to determine default tab. Tabs array may be malformed."
+    );
+  }
 
   const handleValueChange = (value: string) => {
     setActiveTab(value);

@@ -21,7 +21,7 @@ const pickColor = (index: number) => {
 
 const ProjectCardSkeleton = ({ index }: { index: number }) => {
   return (
-    <div className="flex h-[240px] w-full max-w-full relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80">
+    <div className="flex h-[240px] w-full max-w-full relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 p-2 transition-all duration-300 ease-in-out hover:opacity-80">
       <div className="w-full flex flex-col gap-1 ">
         <div
           className="h-[4px] w-full rounded-full mb-2.5"
@@ -38,7 +38,7 @@ const ProjectCardSkeleton = ({ index }: { index: number }) => {
             </p>
             <Skeleton className="w-20 h-4" />
           </div>
-          <div className="flex flex-col gap-1 flex-1 h-[64px]">
+          <div className="flex flex-col gap-1 flex-1 h-[48px]">
             <Skeleton className="w-full h-3" />
             <Skeleton className="w-full h-3" />
             <Skeleton className="w-1/3 h-3" />
@@ -46,7 +46,7 @@ const ProjectCardSkeleton = ({ index }: { index: number }) => {
         </div>
       </div>
 
-      <div className="flex w-full flex-col flex-wrap justify-start gap-1">
+      <div className="flex w-full flex-col flex-wrap justify-start gap-1 mt-4">
         <Skeleton className="flex h-6 w-full items-center justify-start rounded-full px-3 py-1 max-2xl:px-2" />
         <Skeleton className="flex h-6 w-full items-center justify-start rounded-full px-3 py-1 max-2xl:px-2" />
       </div>

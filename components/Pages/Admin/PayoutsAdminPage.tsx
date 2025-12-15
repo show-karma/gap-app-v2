@@ -136,7 +136,7 @@ export default function PayoutsAdminPage() {
         grantName: grant.grant,
         grantProgramId: grant.programId,
         grantChainId: grant.grantChainId,
-        projectChainId: grant.projectChainId,
+        projectChainId: grant.projectChainId || grant.grantChainId,
         currentPayoutAddress: currentPayoutAddress,
         currentAmount: grant.payoutAmount || "",
       });

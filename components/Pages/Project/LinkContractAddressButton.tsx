@@ -154,10 +154,10 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
         queryKey: ["project-instance", project.uid],
       });
       queryClient.invalidateQueries({
-        queryKey: ["project-instance", project.details?.data?.slug],
+        queryKey: ["project-instance", project.details?.slug],
       });
     },
-    [contractToVerify, updateVerified, queryClient, project.uid, project.details?.data?.slug]
+    [contractToVerify, updateVerified, queryClient, project.uid, project.details?.slug]
   );
 
   // Define a function to handle dialog close

@@ -3,10 +3,6 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { ArrowRightIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type {
-  IMilestoneCompleted,
-  IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, Fragment, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -17,8 +13,10 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
+import type { GrantMilestone } from "@/types/v2/grant";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -28,8 +26,9 @@ import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 type VerifyMilestoneUpdateDialogProps = {
-  milestone: IMilestoneResponse;
-  addVerifiedMilestone: (newVerified: IMilestoneCompleted) => void;
+  milestone: GrantMilestone;
+  onVerified: () => void;
+  isVerified: boolean;
 };
 
 const schema = z.object({
@@ -40,7 +39,8 @@ type SchemaType = z.infer<typeof schema>;
 
 export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> = ({
   milestone,
-  addVerifiedMilestone,
+  onVerified,
+  isVerified,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -63,14 +63,13 @@ export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> =
   }
   const { address, isConnected, chain } = useAccount();
 
-  const hasVerifiedThis = milestone?.verified?.find(
-    (v) => v.attester?.toLowerCase() === address?.toLowerCase()
-  );
+  // V2: verified is now a boolean
+  const hasVerifiedThis = isVerified;
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
   const { changeStepperStep, setIsStepper } = useStepper();
   const project = useProjectStore((state) => state.project);
+  const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     let gapClient = gap;
@@ -82,7 +81,7 @@ export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> =
         chainId: actualChainId,
         gapClient: newGapClient,
       } = await ensureCorrectChain({
-        targetChainId: milestone.chainID,
+        targetChainId: milestone.chainID || 0,
         currentChainId: chain?.id,
         switchChainAsync,
       });
@@ -103,7 +102,7 @@ export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> =
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
       const grantInstance = fetchedProject.grants.find(
-        (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
+        (g) => g.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? "")
       );
       if (!grantInstance) return;
       const milestoneInstance = grantInstance.milestones?.find(
@@ -130,32 +129,32 @@ export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> =
             );
           }
           while (retries > 0) {
-            await refreshProject()
-              .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants.find((g) => g.uid === milestone.refUID);
+            try {
+              const { data: fetchedGrants } = await refetchGrants();
+              const foundGrant = (fetchedGrants || []).find((g) => g.uid === milestone.refUID);
 
-                const fetchedMilestone = foundGrant?.milestones.find(
-                  (u: any) => u.uid === milestone.uid
-                );
+              const fetchedMilestone = foundGrant?.milestones?.find((u) => u.uid === milestone.uid);
 
-                const alreadyExists = fetchedMilestone?.verified?.find(
-                  (v: any) => v.attester?.toLowerCase() === address?.toLowerCase()
-                );
+              // V2: verified is an array of verifications
+              const alreadyExists =
+                fetchedMilestone &&
+                Array.isArray(fetchedMilestone.verified) &&
+                fetchedMilestone.verified.length > 0;
 
-                if (alreadyExists) {
-                  retries = 0;
-                  changeStepperStep("indexed");
-                  toast.success(MESSAGES.MILESTONES.VERIFY.SUCCESS);
-                }
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              })
-              .catch(async () => {
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              });
+              if (alreadyExists) {
+                retries = 0;
+                changeStepperStep("indexed");
+                toast.success(MESSAGES.MILESTONES.VERIFY.SUCCESS);
+                onVerified();
+              }
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            } catch {
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            }
           }
         });
       closeModal();
