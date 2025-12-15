@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { SectionContainer } from "@/src/components/shared/section-container";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 import { CreateProjectButton } from "./create-project-button";
@@ -271,36 +272,38 @@ export function HowItWorks() {
 
   return (
     <section className={cn(marketingLayoutTheme.padding, "py-16 w-full")}>
-      {/* Header */}
-      <div className="flex flex-col items-start gap-4">
-        <Badge variant="secondary">How It Works</Badge>
-        <div className="flex flex-col">
-          <h2 className={cn("section-title text-foreground mb-8 lg:mb-0")}>
-            One profile.
-            <br />
-            <span className="text-muted-foreground">Unlimited possibilities.</span>
-          </h2>
+      <SectionContainer>
+        {/* Header */}
+        <div className="flex flex-col items-start gap-4">
+          <Badge variant="secondary">How It Works</Badge>
+          <div className="flex flex-col">
+            <h2 className={cn("section-title text-foreground mb-8 lg:mb-0")}>
+              One profile.
+              <br />
+              <span className="text-muted-foreground">Unlimited possibilities.</span>
+            </h2>
+          </div>
         </div>
-      </div>
 
-      {/* Flow Diagram */}
-      <div className="flex flex-col lg:flex-row lg:justify-between items-start gap-2 lg:gap-2 w-full relative lg:-mt-12">
-        {/* Connector line - vertical on mobile, horizontal on desktop */}
-        <div className="absolute left-1/2 lg:left-0 top-0 lg:top-auto lg:bottom-[80px] -translate-x-1/2 lg:translate-x-0 w-px lg:w-[calc(100%-2rem)] h-full lg:h-[2px] bg-border z-0" />
+        {/* Flow Diagram */}
+        <div className="flex flex-col lg:flex-row lg:justify-between items-start gap-2 lg:gap-2 w-full relative lg:-mt-12">
+          {/* Connector line - vertical on mobile, horizontal on desktop */}
+          <div className="absolute left-1/2 lg:left-0 top-0 lg:top-auto lg:bottom-[80px] -translate-x-1/2 lg:translate-x-0 w-px lg:w-[calc(100%-2rem)] h-full lg:h-[2px] bg-border z-0" />
 
-        {/* Step Cards */}
-        <div className="flex flex-col lg:flex-row lg:justify-between items-end gap-4 lg:gap-4 flex-1 w-full lg:w-auto relative z-10">
-          {steps.map((step, index) => (
-            <StepCard key={index} text={step.text} size={step.size} />
-          ))}
-          <RotatingOutcomeCard items={outcomes} />
+          {/* Step Cards */}
+          <div className="flex flex-col lg:flex-row lg:justify-between items-end gap-4 lg:gap-4 flex-1 w-full lg:w-auto relative z-10">
+            {steps.map((step, index) => (
+              <StepCard key={index} text={step.text} size={step.size} />
+            ))}
+            <RotatingOutcomeCard items={outcomes} />
+          </div>
         </div>
-      </div>
 
-      <div className="mt-12 flex flex-col lg:flex-row lg:items-center gap-6 w-full">
-        <p className="text-base text-muted-foreground">Ready to get started?</p>
-        <CreateProjectButton />
-      </div>
+        <div className="mt-12 flex flex-col lg:flex-row lg:items-center gap-6 w-full">
+          <p className="text-base text-muted-foreground">Ready to get started?</p>
+          <CreateProjectButton />
+        </div>
+      </SectionContainer>
     </section>
   );
 }

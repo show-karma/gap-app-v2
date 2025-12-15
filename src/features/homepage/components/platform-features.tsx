@@ -1,6 +1,7 @@
 import { SquareCheckBig } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { SectionContainer } from "@/src/components/shared/section-container";
 import { ThemeImage } from "@/src/components/ui/theme-image";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
@@ -233,36 +234,38 @@ const features = [
 export function PlatformFeatures() {
   return (
     <section className={cn(marketingLayoutTheme.padding, "py-16 w-full")}>
-      {/* Header */}
-      <div className="flex flex-col items-start gap-4 mb-12">
-        <Badge variant="secondary">Our Platform</Badge>
-        <h2 className={cn("section-title text-foreground max-w-4xl")}>
-          Karma connects builders <br />
-          <span>to funding opportunities</span>
-        </h2>
-        <p className="text-base md:text-lg text-muted-foreground max-w-3xl">
-          We support builders across their lifecycle to access funding opportunities, grow their
-          reputation and track their progress easily.
-        </p>
-      </div>
+      <SectionContainer>
+        {/* Header */}
+        <div className="flex flex-col items-start gap-4 mb-12">
+          <Badge variant="secondary">Our Platform</Badge>
+          <h2 className={cn("section-title text-foreground max-w-4xl")}>
+            Karma connects builders <br />
+            <span>to funding opportunities</span>
+          </h2>
+          <p className="text-base md:text-lg text-muted-foreground max-w-3xl">
+            We support builders across their lifecycle to access funding opportunities, grow their
+            reputation and track their progress easily.
+          </p>
+        </div>
 
-      {/* Feature Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {features.map((feature, index) => (
-          <FeatureCard
-            key={index}
-            title={feature.title}
-            description={feature.description}
-            image={feature.image}
-            checklist={feature.checklist}
-            imageSize={feature.imageSize}
-            size={feature.size}
-            imageWidth={feature.imageWidth}
-            imageHeight={feature.imageHeight}
-            imagePosition={feature.imagePosition}
-          />
-        ))}
-      </div>
+        {/* Feature Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {features.map((feature, index) => (
+            <FeatureCard
+              key={index}
+              title={feature.title}
+              description={feature.description}
+              image={feature.image}
+              checklist={feature.checklist}
+              imageSize={feature.imageSize}
+              size={feature.size}
+              imageWidth={feature.imageWidth}
+              imageHeight={feature.imageHeight}
+              imagePosition={feature.imagePosition}
+            />
+          ))}
+        </div>
+      </SectionContainer>
     </section>
   );
 }
