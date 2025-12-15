@@ -13,6 +13,7 @@ import { Suspense } from "react";
 import { Toaster } from "react-hot-toast";
 import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
 import { OnboardingDialog } from "@/components/Dialogs/OnboardingDialog";
+import { ProgressModal } from "@/components/Dialogs/ProgressModal";
 import { StepperDialog } from "@/components/Dialogs/StepperDialog";
 import { ProgressBarWrapper } from "@/components/ProgressBarWrapper";
 import HotjarAnalytics from "@/components/Utilities/HotjarAnalytics";
@@ -54,10 +55,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 duration: 4000,
               }}
               containerStyle={{
-                maxWidth: "500px",
+                top: 20,
+                right: 20,
               }}
             />
             <StepperDialog />
+            <ProgressModal />
             <Suspense fallback={null}>
               <ContributorProfileDialog />
             </Suspense>

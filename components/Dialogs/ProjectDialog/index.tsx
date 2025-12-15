@@ -46,7 +46,7 @@ import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useProjectStore } from "@/store";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProgressModal } from "@/store/modals/progressModal";
 import { useOwnerStore } from "@/store/owner";
 import type { Contact } from "@/types/project";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
@@ -252,9 +252,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [isChangingNetwork, setIsChangingNetwork] = useState(false);
   const router = useRouter();
   const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
   const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
   const [walletSigner, setWalletSigner] = useState<any>(null);
   const [_faucetFunded, setFaucetFunded] = useState(false);
   // Flag to prevent form reset when reopening after an error
@@ -685,15 +685,18 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
       // Use the gasless signer from setupChainAndWallet
       closeModal();
-      changeStepperStep("preparing");
-      await project.attest(signer as any, changeStepperStep).then(async (res) => {
+
+      // Attest first (Privy popups appear here), then show progress modal
+      await project.attest(signer as any).then(async (res) => {
+        // Show progress modal after Privy popups complete
+        showLoading("Indexing project...");
+
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});
         }
         let fetchedProject: Project | null = null;
-        changeStepperStep("indexing");
         while (retries > 0) {
           // eslint-disable-next-line no-await-in-loop
           fetchedProject = await (slug
@@ -756,10 +759,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 );
               }
               retries = 0;
-              toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
-              router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
-              router.refresh();
-              changeStepperStep("indexed");
+              showSuccess("Project created!");
+              // Brief delay to show success, then redirect
+              setTimeout(() => {
+                closeProgressModal();
+                router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
+                router.refresh();
+              }, 1500);
               return;
             });
           }
@@ -771,17 +777,16 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
       reset();
       setStep(0);
-      setIsStepper(false);
       setContacts([]);
       setCustomLinks([]);
     } catch (error: any) {
+      closeProgressModal();
       errorManager(
         MESSAGES.PROJECT.CREATE.ERROR(data.title),
         error,
         { address, data },
         { error: MESSAGES.PROJECT.CREATE.ERROR(data.title) }
       );
-      setIsStepper(false);
       setShouldResetOnOpen(false);
       openModal();
     } finally {
@@ -827,7 +832,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const shouldRefresh = dataToUpdate.title === data.title;
       const fetchedProject = await getProjectById(projectToUpdate.uid);
       if (!fetchedProject) return;
-      changeStepperStep("preparing");
+
+      // Close modal before update (Privy popups will appear during updateProject)
+      closeModal();
 
       // Promote temporary logo to permanent before project update
       let finalImageURL = data.profilePicture || "";
@@ -924,20 +931,26 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         socialData,
         walletSigner,
         gapClient,
-        changeStepperStep,
-        closeModal
+        () => {}, // No-op since we're using progress modal
+        () => {}  // No-op since modal is already closed
       ).then(async (res) => {
-        toast.success(MESSAGES.PROJECT.UPDATE.SUCCESS);
+        // Show success after update completes
+        showSuccess("Project updated!");
         setStep(0);
-        if (shouldRefresh) {
-          refreshProject();
-        } else {
-          const project = res.details?.slug || res.uid;
-          router.push(PAGES.PROJECT.OVERVIEW(project));
-          router.refresh();
-        }
+        // Brief delay to show success, then redirect
+        setTimeout(() => {
+          closeProgressModal();
+          if (shouldRefresh) {
+            refreshProject();
+          } else {
+            const project = res.details?.slug || res.uid;
+            router.push(PAGES.PROJECT.OVERVIEW(project));
+            router.refresh();
+          }
+        }, 1500);
       });
     } catch (error: any) {
+      closeProgressModal();
       errorManager(
         `Error updating project ${projectToUpdate?.details?.data?.slug || projectToUpdate?.uid}`,
         error,
@@ -948,7 +961,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       openModal();
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
       setCustomLinks([]);
     }
   };

@@ -12,7 +12,7 @@ import { z } from "zod";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProgressModal } from "@/store/modals/progressModal";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -90,8 +90,8 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
   const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
 
   const createCommunity = async (data: SchemaType) => {
     if (!gap) return;
@@ -131,9 +131,16 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         imageURL: data.imageURL as string,
         slug: data.slug as string,
       });
+
+      // Close modal before attestation (Privy popups will appear during attest)
+      closeModal();
+
       await newCommunity
-        .attest(walletSigner as any, sanitizedData, changeStepperStep)
+        .attest(walletSigner as any, sanitizedData)
         .then(async (res) => {
+          // Show progress modal after Privy popups complete
+          showLoading("Indexing community...");
+
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newCommunity.chainID), "POST", {});
@@ -144,7 +151,6 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
             {}
           );
           let retries = 1000;
-          changeStepperStep("indexing");
           while (retries > 0) {
             await refreshCommunities()
               .then(async (fetchedCommunities) => {
@@ -153,9 +159,11 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                 );
                 if (createdCommunityExists) {
                   retries = 0;
-                  changeStepperStep("indexed");
-                  toast.success("Community created successfully!");
-                  closeModal();
+                  showSuccess("Community created!");
+                  // Brief delay to show success, then close
+                  setTimeout(() => {
+                    closeProgressModal();
+                  }, 1500);
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -169,6 +177,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
           }
         });
     } catch (error: unknown) {
+      closeProgressModal();
       errorManager(
         `Error creating community`,
         error,
@@ -182,7 +191,6 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
       );
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 
