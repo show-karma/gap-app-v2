@@ -62,4 +62,11 @@ export const QUERY_KEYS = {
     MILESTONES: (projectIdOrSlug: string) => ["project-milestones", projectIdOrSlug] as const,
     GRANTS: (projectIdOrSlug: string) => ["project-grants", projectIdOrSlug] as const,
   },
+  FUNDING_PLATFORM: {
+    APPLICATIONS: (programId: string, chainId: number, filters?: unknown) =>
+      ["applications", programId, chainId, filters] as const,
+    APPLICATION: (applicationId: string) => ["funding-application", applicationId] as const,
+    APPLICATION_STATS: (programId: string, chainId: number) =>
+      ["application-stats", programId, chainId] as const,
+  },
 };

@@ -30,7 +30,7 @@ jest.mock("@/components/Utilities/SortableTableHeader", () => {
     onSort?: (sortKey: string) => void;
   }) {
     return (
-      <th data-testid={`header-${sortKey}`}>
+      <th scope="col" data-testid={`header-${sortKey}`}>
         <button onClick={() => onSort?.(sortKey)}>{label}</button>
       </th>
     );
@@ -294,6 +294,28 @@ describe("ApplicationList - AI Score Column", () => {
       expect(statusIndex).toBeLessThan(aiScoreIndex);
       expect(aiScoreIndex).toBeLessThan(createdDateIndex);
     });
+
+    it("should have proper accessibility attributes on table headers", () => {
+      const applications = [createMockApplication()];
+
+      const { container } = renderWithQueryClient(
+        <ApplicationList
+          programId="test-program"
+          chainID={11155111}
+          applications={applications}
+          sortBy="status"
+          sortOrder="asc"
+          showAIScoreColumn={true}
+        />
+      );
+
+      const headers = Array.from(container.querySelectorAll("thead th"));
+      // All headers should have scope="col" for accessibility
+      headers.forEach((header) => {
+        expect(header).toHaveAttribute("scope", "col");
+      });
+      expect(headers.length).toBeGreaterThan(0);
+    });
   });
 
   describe("Integration with Application Selection", () => {
@@ -540,6 +562,81 @@ describe("ApplicationList - AI Score Column", () => {
       expect(milestoneReviewersHeader?.querySelector(".animate-spin")).not.toBeInTheDocument();
       expect(appReviewersHeader?.querySelector("svg")).not.toBeInTheDocument();
       expect(milestoneReviewersHeader?.querySelector("svg")).not.toBeInTheDocument();
+    });
+
+    it("should hide reviewer columns when programReviewers and milestoneReviewers are empty arrays", () => {
+      const applications = [createMockApplication()];
+
+      const { container } = renderWithQueryClient(
+        <ApplicationList
+          programId="test-program"
+          chainID={11155111}
+          applications={applications}
+          sortBy="status"
+          sortOrder="asc"
+          programReviewers={[]}
+          milestoneReviewers={[]}
+        />
+      );
+
+      const headers = Array.from(container.querySelectorAll("thead th"));
+      const appReviewersHeader = headers.find((header) =>
+        header.textContent?.includes("App Reviewers")
+      );
+      const milestoneReviewersHeader = headers.find((header) =>
+        header.textContent?.includes("Milestone Reviewers")
+      );
+
+      expect(appReviewersHeader).toBeUndefined();
+      expect(milestoneReviewersHeader).toBeUndefined();
+    });
+
+    it("should have aria-label on reviewer column headers when visible", () => {
+      const applications = [createMockApplication()];
+      const mockProgramReviewers = [
+        {
+          publicAddress: "0x1111111111111111111111111111111111111111",
+          name: "John Doe",
+          email: "john@example.com",
+          assignedAt: "2024-01-01T00:00:00Z",
+        },
+      ];
+      const mockMilestoneReviewers = [
+        {
+          publicAddress: "0x2222222222222222222222222222222222222222",
+          name: "Jane Smith",
+          email: "jane@example.com",
+          assignedAt: "2024-01-02T00:00:00Z",
+        },
+      ];
+
+      const { container } = renderWithQueryClient(
+        <ApplicationList
+          programId="test-program"
+          chainID={11155111}
+          applications={applications}
+          sortBy="status"
+          sortOrder="asc"
+          programReviewers={mockProgramReviewers}
+          milestoneReviewers={mockMilestoneReviewers}
+        />
+      );
+
+      const headers = container.querySelectorAll("thead th");
+      const appReviewersHeader = Array.from(headers).find((header) =>
+        header.textContent?.includes("App Reviewers")
+      );
+      const milestoneReviewersHeader = Array.from(headers).find((header) =>
+        header.textContent?.includes("Milestone Reviewers")
+      );
+
+      expect(appReviewersHeader).toBeInTheDocument();
+      expect(appReviewersHeader).toHaveAttribute("aria-label", "Application Reviewers");
+      expect(appReviewersHeader).toHaveAttribute("scope", "col");
+
+      expect(milestoneReviewersHeader).toBeInTheDocument();
+      expect(milestoneReviewersHeader).toHaveAttribute("aria-label", "Milestone Reviewers");
+      expect(milestoneReviewersHeader).toHaveAttribute("scope", "col");
     });
   });
 });

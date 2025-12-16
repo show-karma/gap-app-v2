@@ -75,10 +75,10 @@ export const MultiSelectDropdown = ({
 
   // Close dropdown when loading starts
   useEffect(() => {
-    if (isLoading && isOpen) {
+    if (isLoading) {
       setIsOpen(false);
     }
-  }, [isLoading, isOpen]);
+  }, [isLoading]);
 
   // Toggle an item selection
   const toggleItem = (id: string) => {
