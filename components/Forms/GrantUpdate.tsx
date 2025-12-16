@@ -194,7 +194,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
                 modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building—we're here for it. 💪`,
                 shareText: SHARE_TEXTS.GRANT_UPDATE(
                   grant.details?.title as string,
-                  project.uid,
+                  (project.details?.slug || project.uid) as string,
                   grantToUpdate.uid
                 ),
               });
