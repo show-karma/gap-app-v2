@@ -204,6 +204,8 @@ export interface IApplicationUpdateRequest {
 export interface IApplicationStatusUpdateRequest {
   status: FundingApplicationStatusV2;
   reason: string;
+  approvedAmount?: string; // Required when status is "approved"
+  approvedCurrency?: string; // Required when status is "approved"
 }
 
 export interface IPaginatedApplicationsResponse {
@@ -269,7 +271,13 @@ export interface IApplicationListComponentProps {
   applications: IFundingApplication[];
   isLoading: boolean;
   onApplicationSelect?: (application: IFundingApplication) => void;
-  onStatusChange?: (applicationId: string, status: string, note?: string) => void;
+  onStatusChange?: (
+    applicationId: string,
+    status: string,
+    note?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => void;
   showStatusActions?: boolean;
 }
 

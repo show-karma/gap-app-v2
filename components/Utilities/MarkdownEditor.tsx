@@ -31,6 +31,7 @@ interface MarkdownEditorProps {
   overflow?: boolean;
   id?: string;
   "data-field-id"?: string;
+  "aria-describedby"?: string;
   /** Maximum character length (default: 50000) */
   maxLength?: number;
   /** Show character count (default: false) */
@@ -92,6 +93,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   overflow = false,
   id,
   "data-field-id": dataFieldId,
+  "aria-describedby": ariaDescribedBy,
   maxLength = DEFAULT_MAX_LENGTH,
   showCharacterCount = false,
   enablePreviewToggle = true,
@@ -233,6 +235,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
             disabled: isEditorDisabled,
             id,
             maxLength,
+            "aria-describedby": ariaDescribedBy,
           }}
           highlightEnable={false}
         />

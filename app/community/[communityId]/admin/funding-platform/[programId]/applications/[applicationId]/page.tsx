@@ -110,12 +110,19 @@ export default function ApplicationDetailPage() {
   const { selectVersion } = useApplicationVersionsStore();
 
   // Handle status change
-  const handleStatusChange = async (status: string, note?: string) => {
+  const handleStatusChange = async (
+    status: string,
+    note?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => {
     if (!application) return;
     await updateStatusAsync({
       applicationId: application.referenceNumber,
       status,
       note,
+      approvedAmount,
+      approvedCurrency,
     });
   };
 
@@ -126,15 +133,24 @@ export default function ApplicationDetailPage() {
   };
 
   // Handle status change confirmation from modal
-  const handleStatusChangeConfirm = async (reason?: string) => {
+  const handleStatusChangeConfirm = async (
+    reason?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => {
     if (!pendingStatus) return;
 
     setIsUpdatingStatus(true);
     try {
-      await handleStatusChange(pendingStatus, reason);
+      await handleStatusChange(pendingStatus, reason, approvedAmount, approvedCurrency);
       // Success: close modal and clear state
       setIsStatusModalOpen(false);
       setPendingStatus("");
+      if (pendingStatus === "approved") {
+        toast.success("Application approved successfully!");
+      } else {
+        toast.success(`Application status updated to ${pendingStatus}`);
+      }
     } catch (error) {
       // Error: keep modal open so user can retry
       const errorMessage =
@@ -430,6 +446,7 @@ export default function ApplicationDetailPage() {
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
         isReasonRequired={pendingStatus === "revision_requested" || pendingStatus === "rejected"}
+        application={application}
         programConfig={isFundingProgramConfig(program) ? program : undefined}
       />
     </div>

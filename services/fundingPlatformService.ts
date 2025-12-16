@@ -142,6 +142,27 @@ export const fundingProgramsAPI = {
   },
 
   /**
+   * Get funding details for a program
+   */
+  async getFundingDetails(
+    programId: string,
+    chainId: number
+  ): Promise<{
+    currency?: string;
+    data?: { currency?: string };
+    fundingDetails?: { currency?: string };
+    details?: { currency?: string };
+  }> {
+    const [data, error] = await fetchData(INDEXER.V2.FUNDING_DETAILS(programId, chainId));
+
+    if (error) {
+      throw new Error(error);
+    }
+
+    return data;
+  },
+
+  /**
    * Get program configuration including form schema
    */
   async getProgramConfiguration(
