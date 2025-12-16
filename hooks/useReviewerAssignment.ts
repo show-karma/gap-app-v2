@@ -1,5 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { applicationReviewersService } from "@/services/application-reviewers.service";
 
@@ -67,18 +66,18 @@ export const useReviewerAssignment = ({
   onAssignmentChange,
 }: UseReviewerAssignmentOptions) => {
   const queryClient = useQueryClient();
-  const [isLoading, setIsLoading] = useState(false);
+  const reviewerLabel = REVIEWER_TYPE_LABELS[reviewerType];
 
-  const assignReviewers = async (selectedAddresses: string[]) => {
-    setIsLoading(true);
-    try {
+  const mutation = useMutation({
+    mutationFn: async (selectedAddresses: string[]) => {
       const request =
         reviewerType === ReviewerType.APP
           ? { appReviewerAddresses: selectedAddresses }
           : { milestoneReviewerAddresses: selectedAddresses };
 
-      await applicationReviewersService.assignReviewers(applicationId, request);
-
+      return applicationReviewersService.assignReviewers(applicationId, request);
+    },
+    onSuccess: async () => {
       // Invalidate application queries using specific query key prefixes
       await queryClient.invalidateQueries({
         predicate: (query) => {
@@ -93,20 +92,24 @@ export const useReviewerAssignment = ({
         },
       });
 
-      const reviewerLabel = REVIEWER_TYPE_LABELS[reviewerType];
       toast.success(`${reviewerLabel} reviewers updated successfully`);
       onAssignmentChange?.();
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Failed to update reviewers:", error);
       toast.error(getErrorMessage(error));
-      // Error is already handled via toast, no need to re-throw
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+  });
 
   return {
-    assignReviewers,
-    isLoading,
+    assignReviewers: async (selectedAddresses: string[]) => {
+      try {
+        await mutation.mutateAsync(selectedAddresses);
+      } catch (error) {
+        // Error is already handled in onError callback, just prevent unhandled rejection
+        // The error toast is shown via onError handler
+      }
+    },
+    isLoading: mutation.isPending,
   };
 };

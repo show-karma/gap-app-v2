@@ -80,6 +80,7 @@ export const INDEXER = {
         `/v2/funding-applications/admin/${programId}/${chainId}/export`,
       VERSIONS_TIMELINE: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/versions/timeline`,
+      REVIEWERS: (applicationId: string) => `/v2/funding-applications/${applicationId}/reviewers`,
     },
     USER: {
       PERMISSIONS: (resource?: string) => {

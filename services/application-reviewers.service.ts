@@ -1,19 +1,5 @@
-import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
-import { envVars } from "@/utilities/enviromentVars";
-
-const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
-
-// Create axios instance with authentication
-const apiClient = createAuthenticatedApiClient(API_URL, 30000);
-
-// Add response interceptor for error handling
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error("Application Reviewers API Error:", error.response?.data || error.message);
-    throw error;
-  }
-);
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 /**
  * Assign reviewers to an application request
@@ -34,7 +20,18 @@ export const applicationReviewersService = {
     applicationId: string,
     request: AssignApplicationReviewersRequest
   ): Promise<void> {
-    await apiClient.put(`/v2/funding-applications/${applicationId}/reviewers`, request);
+    const [, error] = await fetchData(
+      INDEXER.V2.FUNDING_APPLICATIONS.REVIEWERS(applicationId),
+      "PUT",
+      request,
+      {},
+      {},
+      true
+    );
+
+    if (error) {
+      throw new Error(error);
+    }
   },
 
   /**
@@ -44,35 +41,33 @@ export const applicationReviewersService = {
     appReviewers: string[];
     milestoneReviewers: string[];
   }> {
-    try {
-      const response = await apiClient.get<{
-        appReviewers?: string[];
-        milestoneReviewers?: string[];
-      }>(`/v2/funding-applications/${applicationId}/reviewers`);
+    const [data, error, , status] = await fetchData<{
+      appReviewers?: string[];
+      milestoneReviewers?: string[];
+    }>(INDEXER.V2.FUNDING_APPLICATIONS.REVIEWERS(applicationId));
 
-      return {
-        appReviewers: response.data.appReviewers || [],
-        milestoneReviewers: response.data.milestoneReviewers || [],
-      };
-    } catch (error) {
-      // Handle "No reviewers found" as empty arrays, not an error
-      if (error && typeof error === "object" && "response" in error) {
-        const apiError = error as {
-          response?: { status?: number; data?: { error?: string; message?: string } };
+    // Handle "No reviewers found" as empty arrays, not an error
+    if (error || status === 404) {
+      // Check if it's a "not found" error
+      if (
+        status === 404 ||
+        (typeof error === "string" &&
+          (error.includes("404") ||
+            error.includes("Application Reviewers Not Found") ||
+            error.includes("No reviewers found")))
+      ) {
+        return {
+          appReviewers: [],
+          milestoneReviewers: [],
         };
-        if (
-          apiError.response?.status === 404 ||
-          apiError.response?.data?.error === "Application Reviewers Not Found" ||
-          apiError.response?.data?.message?.includes("No reviewers found")
-        ) {
-          return {
-            appReviewers: [],
-            milestoneReviewers: [],
-          };
-        }
       }
       // Re-throw other errors
-      throw error;
+      throw new Error(error || "Failed to fetch reviewers");
     }
+
+    return {
+      appReviewers: data?.appReviewers || [],
+      milestoneReviewers: data?.milestoneReviewers || [],
+    };
   },
 };
