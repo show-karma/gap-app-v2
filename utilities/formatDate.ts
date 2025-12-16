@@ -1,12 +1,42 @@
 type TimeZoneFormat = "UTC" | "ISO" | "local";
-type DateFormatOption = "MMM D, YYYY" | "h:mm a" | "DDD, MMM DD";
+type DateFormatOption = "MMM D, YYYY" | "h:mm a" | "DDD, MMM DD" | "datetime-local";
+
+/**
+ * Normalizes a Unix timestamp to milliseconds.
+ * Handles both seconds (10 digits) and milliseconds (13 digits) formats.
+ *
+ * @param timestamp - Unix timestamp in seconds or milliseconds
+ * @returns Timestamp in milliseconds suitable for JavaScript Date constructor
+ */
+export const normalizeTimestamp = (timestamp: number): number => {
+  // Check digit count to determine if seconds or milliseconds
+  // Seconds timestamps (10 digits): 1000000000 to 9999999999 (year 2001-2286)
+  // Milliseconds timestamps (13 digits): 1000000000000+ (year 2001+)
+  const digitCount = Math.floor(Math.log10(Math.abs(timestamp))) + 1;
+  const isUnixSeconds = digitCount <= 10;
+
+  return isUnixSeconds ? timestamp * 1000 : timestamp;
+};
 
 export const formatDate = (
-  date: number | Date | string,
+  date: number | Date | string | undefined | null,
   timeZoneFormat: TimeZoneFormat = "local",
   formatOption: DateFormatOption = "MMM D, YYYY"
 ): string => {
-  const d = new Date(date);
+  // Handle undefined/null input
+  if (date === undefined || date === null) {
+    return "";
+  }
+
+  // Auto-detect and normalize Unix timestamps (seconds vs milliseconds)
+  const normalizedDate = typeof date === "number" && date > 0 ? normalizeTimestamp(date) : date;
+
+  const d = new Date(normalizedDate);
+
+  // Handle invalid dates
+  if (isNaN(d.getTime())) {
+    return "";
+  }
 
   const pad = (num: number): string => num.toString().padStart(2, "0");
 
@@ -65,6 +95,10 @@ export const formatDate = (
     }
 
     return `${monthNames[month]} ${day}, ${year}. ${timeString}`;
+  }
+
+  if (formatOption === "datetime-local") {
+    return `${year}-${pad(month + 1)}-${pad(day)}T${pad(hours)}:${pad(minutes)}`;
   }
 
   return d.toISOString();

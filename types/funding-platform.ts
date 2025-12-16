@@ -77,6 +77,10 @@ export interface IFormSchema {
     confirmationMessage?: string;
     applicationDeadline?: string;
     donationRound?: boolean;
+    approvalEmailTemplate?: string; // Markdown/HTML template for approval emails with variable placeholders
+    approvalEmailSubject?: string; // Custom subject for approval emails with variable placeholders (e.g., {{programName}})
+    rejectionEmailTemplate?: string; // Markdown/HTML template for rejection emails with variable placeholders
+    rejectionEmailSubject?: string; // Custom subject for rejection emails with variable placeholders (e.g., {{programName}})
   };
 }
 
@@ -202,6 +206,8 @@ export interface IApplicationUpdateRequest {
 export interface IApplicationStatusUpdateRequest {
   status: FundingApplicationStatusV2;
   reason: string;
+  approvedAmount?: string; // Required when status is "approved"
+  approvedCurrency?: string; // Required when status is "approved"
 }
 
 export interface IPaginatedApplicationsResponse {
@@ -267,7 +273,13 @@ export interface IApplicationListComponentProps {
   applications: IFundingApplication[];
   isLoading: boolean;
   onApplicationSelect?: (application: IFundingApplication) => void;
-  onStatusChange?: (applicationId: string, status: string, note?: string) => void;
+  onStatusChange?: (
+    applicationId: string,
+    status: string,
+    note?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => void;
   showStatusActions?: boolean;
 }
 

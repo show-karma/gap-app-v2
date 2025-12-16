@@ -1,22 +1,9 @@
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useCallback, useEffect, useState } from "react";
 import type { NetworkAddressPair } from "@/components/Pages/Project/types";
-
-interface VerifiedContract {
-  network: string;
-  address: string;
-  verified: boolean;
-  verifiedAt?: string;
-  verifiedBy?: string;
-}
-
-interface ProjectExternalData extends Record<string, unknown> {
-  network_addresses?: string[];
-  network_addresses_verified?: VerifiedContract[];
-}
+import type { Project as ProjectResponse } from "@/types/v2/project";
 
 interface UseContractAddressPairsProps {
-  project: IProjectResponse & { external: ProjectExternalData };
+  project: ProjectResponse;
 }
 
 export const useContractAddressPairs = ({ project }: UseContractAddressPairsProps) => {

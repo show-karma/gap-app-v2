@@ -1,9 +1,5 @@
 "use client";
 
-import type {
-  IGrantResponse,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,19 +9,15 @@ import type { Track } from "@/services/tracks";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
+import type { Grant } from "@/types/v2/grant";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { ReadMore } from "@/utilities/ReadMore";
 import { ProjectGrantsMilestonesListLoading } from "../../Project/Loading/Grants/MilestonesAndUpdate";
 
-const EmptyMilestone = ({
-  grant,
-  project,
-}: {
-  grant?: IGrantResponse;
-  project?: IProjectResponse;
-}) => {
+const EmptyMilestone = ({ grant, project }: { grant?: Grant; project?: ProjectResponse }) => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
@@ -60,7 +52,7 @@ const EmptyMilestone = ({
           <div className="flex w-max flex-row flex-wrap gap-6 max-sm:w-full max-sm:flex-col">
             <Link
               href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                project?.details?.data.slug || project?.uid || "",
+                project?.details?.slug || project?.uid || "",
                 grant?.uid || "",
                 "create-milestone"
               )}
@@ -77,14 +69,14 @@ const EmptyMilestone = ({
 };
 
 interface GrantCompletionCardProps {
-  completion: IGrantResponse["completed"] | undefined;
-  grant?: IGrantResponse;
+  completion: Grant["completed"] | undefined;
+  grant?: Grant;
 }
 
 export const GrantCompletionCard = ({ completion, grant }: GrantCompletionCardProps) => {
   // Get program ID for fetching tracks
-  const programId = grant?.details?.data?.programId
-    ? `${grant.details.data.programId}_${grant.chainID}`
+  const programId = grant?.details?.programId
+    ? `${grant.details.programId}_${grant.chainID}`
     : undefined;
 
   const { data: tracks = [] } = useTracksForProgram(programId as string);
@@ -109,7 +101,7 @@ export const GrantCompletionCard = ({ completion, grant }: GrantCompletionCardPr
           <div className="flex w-full flex-row justify-between  px-4 max-lg:mb-4 max-lg:flex-col">
             <div className="flex flex-col gap-3">
               <h4 className="text-base font-bold leading-normal text-gray-700">
-                {completion.data.title}
+                {completion.data?.title}
               </h4>
             </div>
             <div className="flex flex-row items-center justify-center gap-4 max-lg:justify-start">
@@ -125,10 +117,10 @@ export const GrantCompletionCard = ({ completion, grant }: GrantCompletionCardPr
               <p className="text-sm font-semibold text-gray-700 dark:text-gray-100">
                 Completion Summary
               </p>
-              {completion.data.text && (
+              {completion.data?.text && (
                 <div className="max-lg:max-w-xl max-sm:max-w-[300px]">
                   <ReadMore readLessText="Read less" readMoreText="Read full">
-                    {completion.data.text}
+                    {completion.data?.text}
                   </ReadMore>
                 </div>
               )}
@@ -249,7 +241,7 @@ export default function MilestonesAndUpdates() {
                       {isAuthorized && (
                         <Link
                           href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                            project?.details?.data.slug || project?.uid || "",
+                            project?.details?.slug || project?.uid || "",
                             grant?.uid || "",
                             "create-milestone"
                           )}

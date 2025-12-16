@@ -1,6 +1,7 @@
 "use client";
 
 import { type FC, useState } from "react";
+import toast from "react-hot-toast";
 import SortableTableHeader from "@/components/Utilities/SortableTableHeader";
 import { ReviewerType } from "@/hooks/useReviewerAssignment";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
@@ -19,7 +20,13 @@ import { TableStatusActionButtons } from "./TableStatusActionButtons";
 interface IApplicationListComponentProps extends IApplicationListProps {
   applications: IFundingApplication[];
   isLoading?: boolean;
-  onStatusChange?: (applicationId: string, status: string, note?: string) => Promise<void>;
+  onStatusChange?: (
+    applicationId: string,
+    status: string,
+    note?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => Promise<void>;
   onExport?: () => void;
   showStatusActions?: boolean;
   sortBy?: IApplicationFilters["sortBy"];
@@ -68,6 +75,9 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string>("");
   const [pendingApplicationId, setPendingApplicationId] = useState<string>("");
+  const [pendingApplication, setPendingApplication] = useState<IFundingApplication | undefined>(
+    undefined
+  );
 
   // Show all applications (no internal pagination for infinite scroll)
   const paginatedApplications = applications;
@@ -82,23 +92,45 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
     e: React.MouseEvent
   ) => {
     e.stopPropagation();
+    // Find the application to pass to modal
+    const application = applications.find(
+      (app) => app.referenceNumber === applicationId || app.id === applicationId
+    );
     setPendingApplicationId(applicationId);
     setPendingStatus(newStatus);
+    setPendingApplication(application);
     setStatusModalOpen(true);
   };
 
-  const handleStatusChangeConfirm = async (reason?: string) => {
+  const handleStatusChangeConfirm = async (
+    reason?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => {
     if (onStatusChange && pendingApplicationId && pendingStatus) {
       try {
         setIsUpdatingStatus(true);
-        await onStatusChange(pendingApplicationId, pendingStatus, reason);
+        await onStatusChange(
+          pendingApplicationId,
+          pendingStatus,
+          reason,
+          approvedAmount,
+          approvedCurrency
+        );
         setIsUpdatingStatus(false);
         setStatusModalOpen(false);
         setPendingStatus("");
         setPendingApplicationId("");
+        setPendingApplication(undefined);
+        if (pendingStatus === "approved") {
+          toast.success("Application approved successfully!");
+        } else {
+          toast.success(`Application status updated to ${pendingStatus}`);
+        }
       } catch (error) {
         console.error("Failed to update status:", error);
         setIsUpdatingStatus(false);
+        toast.error("Failed to update application status");
       }
     }
   };
@@ -317,10 +349,12 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
           setStatusModalOpen(false);
           setPendingStatus("");
           setPendingApplicationId("");
+          setPendingApplication(undefined);
         }}
         onConfirm={handleStatusChangeConfirm}
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
+        application={pendingApplication}
       />
     </div>
   );

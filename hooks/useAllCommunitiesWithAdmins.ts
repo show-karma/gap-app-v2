@@ -1,7 +1,7 @@
-import type { Community } from "@show-karma/karma-gap-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useGap } from "@/hooks/useGap";
+import { getCommunities } from "@/services/communities.service";
+import type { Community } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -15,10 +15,8 @@ interface AllCommunitiesWithAdminsData {
   communityAdmins: CommunityAdmin[];
 }
 
-const fetchAllCommunitiesWithAdmins = async (gap: any): Promise<AllCommunitiesWithAdminsData> => {
-  if (!gap) throw new Error("Gap not initialized");
-
-  const result = await gap.fetch.communities();
+const fetchAllCommunitiesWithAdmins = async (): Promise<AllCommunitiesWithAdminsData> => {
+  const result = await getCommunities({ limit: 1000 });
   result.sort((a: Community, b: Community) =>
     (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid)
   );
@@ -50,19 +48,16 @@ const fetchAllCommunitiesWithAdmins = async (gap: any): Promise<AllCommunitiesWi
 };
 
 export const useAllCommunitiesWithAdmins = () => {
-  const { gap } = useGap();
-
   return useQuery<AllCommunitiesWithAdminsData, Error>({
     queryKey: ["all-communities-with-admins"],
     queryFn: async () => {
       try {
-        return await fetchAllCommunitiesWithAdmins(gap);
+        return await fetchAllCommunitiesWithAdmins();
       } catch (error: any) {
         errorManager("Error fetching all communities", error);
         throw error;
       }
     },
-    enabled: !!gap,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 2,
   });

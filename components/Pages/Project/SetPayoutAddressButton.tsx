@@ -2,7 +2,6 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronDownIcon, CurrencyDollarIcon } from "@heroicons/react/24/outline";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import debounce from "lodash.debounce";
 import type { FC, ReactNode } from "react";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
@@ -11,8 +10,10 @@ import { isAddress } from "viem";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -20,9 +21,7 @@ import { MESSAGES } from "@/utilities/messages";
 // Updated interface to handle new JSON payoutAddress structure
 interface SetPayoutAddressButtonProps {
   buttonClassName?: string;
-  project: IProjectResponse & {
-    payoutAddress?: string | { [communityUID: string]: string };
-  };
+  project: ProjectResponse;
   "data-set-payout-button"?: string;
   buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
   onClose?: () => void;
@@ -47,6 +46,9 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const setProject = useProjectStore((state) => state.setProject);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(project?.uid || "");
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
   const { address } = useAccount();
 
@@ -61,29 +63,29 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
 
   // Get communities where this project has grants
   const communities: CommunityOption[] = useMemo(() => {
-    if (!project?.grants) return [];
+    if (!grants.length) return [];
 
     const communityMap = new Map<string, CommunityOption>();
 
-    project.grants.forEach((grant) => {
+    grants.forEach((grant) => {
       if (grant.community?.uid) {
         const communityUID = grant.community.uid;
         const payoutAddresses =
-          typeof project.payoutAddress === "object" && project.payoutAddress
+          typeof project?.payoutAddress === "object" && project?.payoutAddress
             ? (project.payoutAddress as { [key: string]: string })
             : {};
 
         communityMap.set(communityUID, {
           uid: communityUID,
-          name: grant.community.details?.data?.name || "Unknown Community",
-          imageURL: grant.community.details?.data?.imageURL,
+          name: grant.community.details?.name || "Unknown Community",
+          imageURL: grant.community.details?.imageURL,
           currentPayoutAddress: payoutAddresses[communityUID],
         });
       }
     });
 
     return Array.from(communityMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [project?.grants, project?.payoutAddress]);
+  }, [grants, project?.payoutAddress]);
 
   // Helper function for default error messages based on status code
   const getDefaultErrorMessage = (status: number): string => {
@@ -189,7 +191,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
     debounce((address: string) => {
       validatePayoutAddress(address);
     }, 300),
-    [validatePayoutAddress]
+    []
   );
 
   // Cleanup debounced function on unmount
@@ -393,18 +395,17 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
     return false;
   }, [project?.payoutAddress]);
 
-  if (!isAuthorized) {
-    return null;
-  }
+  // When buttonElement !== null, we're showing a button - hide if not authorized or no communities
+  // When buttonElement === null, we're auto-opening dialog from menu - always render
+  const shouldHideButton = !isAuthorized || communities.length === 0;
 
-  // Don't show if no communities with grants
-  if (communities.length === 0) {
+  if (buttonElement !== null && shouldHideButton) {
     return null;
   }
 
   return (
     <>
-      {buttonElement !== null && (
+      {buttonElement !== null && !shouldHideButton && (
         <Button
           onClick={() => setIsOpen(true)}
           className={buttonClassName}
@@ -452,161 +453,175 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                       : "Set an Ethereum address to receive payouts for this project in specific communities."}
                   </p>
 
-                  <div className="mt-8">
-                    {/* Community Selection */}
-                    <div className="flex flex-col gap-4">
-                      <div className="relative">
-                        <label
-                          htmlFor="community-dropdown"
-                          className="text-md font-bold text-gray-900 dark:text-zinc-100 mb-2 block"
-                        >
-                          Select Community
-                        </label>
-                        <button
-                          id="community-dropdown"
-                          type="button"
-                          className="flex items-center justify-between p-3 bg-gray-100 dark:bg-zinc-700 rounded-lg cursor-pointer border border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 transition-colors w-full text-left"
-                          onClick={() => setShowDropdown(!showDropdown)}
-                        >
-                          <div className="flex items-center space-x-3">
-                            {selectedCommunity ? (
-                              <>
-                                {selectedCommunity.imageURL && (
-                                  <img
-                                    src={selectedCommunity.imageURL}
-                                    alt={selectedCommunity.name}
-                                    className="w-8 h-8 rounded-full object-cover"
-                                  />
-                                )}
-                                <div className="flex flex-col">
-                                  <span className="text-gray-900 dark:text-gray-100 font-medium">
-                                    {selectedCommunity.name}
-                                  </span>
-                                  {selectedCommunity.currentPayoutAddress && (
-                                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                                      Current: {selectedCommunity.currentPayoutAddress}
-                                    </span>
+                  {/* Show message when no communities are available */}
+                  {communities.length === 0 ? (
+                    <div className="mt-8 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg">
+                      <p className="text-amber-800 dark:text-amber-200 text-sm">
+                        This project doesn't have any grants yet. Payout addresses can only be set
+                        for communities where you have an active grant.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="mt-8">
+                      {/* Community Selection */}
+                      <div className="flex flex-col gap-4">
+                        <div className="relative">
+                          <label
+                            htmlFor="community-dropdown"
+                            className="text-md font-bold text-gray-900 dark:text-zinc-100 mb-2 block"
+                          >
+                            Select Community
+                          </label>
+                          <button
+                            id="community-dropdown"
+                            type="button"
+                            className="flex items-center justify-between p-3 bg-gray-100 dark:bg-zinc-700 rounded-lg cursor-pointer border border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 transition-colors w-full text-left"
+                            onClick={() => setShowDropdown(!showDropdown)}
+                          >
+                            <div className="flex items-center space-x-3">
+                              {selectedCommunity ? (
+                                <>
+                                  {selectedCommunity.imageURL && (
+                                    <img
+                                      src={selectedCommunity.imageURL}
+                                      alt={selectedCommunity.name}
+                                      className="w-8 h-8 rounded-full object-cover"
+                                    />
                                   )}
-                                </div>
-                              </>
-                            ) : (
-                              <span className="text-gray-500 dark:text-gray-400">
-                                Select a community...
-                              </span>
-                            )}
-                          </div>
-                          <ChevronDownIcon
-                            className={`h-5 w-5 text-gray-400 transition-transform ${
-                              showDropdown ? "rotate-180" : ""
-                            }`}
-                          />
-                        </button>
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-900 dark:text-gray-100 font-medium">
+                                      {selectedCommunity.name}
+                                    </span>
+                                    {selectedCommunity.currentPayoutAddress && (
+                                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                                        Current: {selectedCommunity.currentPayoutAddress}
+                                      </span>
+                                    )}
+                                  </div>
+                                </>
+                              ) : (
+                                <span className="text-gray-500 dark:text-gray-400">
+                                  Select a community...
+                                </span>
+                              )}
+                            </div>
+                            <ChevronDownIcon
+                              className={`h-5 w-5 text-gray-400 transition-transform ${
+                                showDropdown ? "rotate-180" : ""
+                              }`}
+                            />
+                          </button>
 
-                        {/* Dropdown */}
-                        {showDropdown && (
-                          <div className="absolute z-50 w-full mt-1 bg-white dark:bg-zinc-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                            {communities.map((community) => (
-                              <button
-                                key={community.uid}
-                                type="button"
-                                className="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-zinc-600 cursor-pointer transition-colors w-full text-left"
-                                onClick={() => {
-                                  setSelectedCommunity(community);
-                                  setShowDropdown(false);
-                                }}
-                              >
-                                {community.imageURL && (
-                                  <img
-                                    src={community.imageURL}
-                                    alt={community.name}
-                                    className="w-8 h-8 rounded-full object-cover"
-                                  />
-                                )}
-                                <div className="flex flex-col flex-1">
-                                  <span className="text-gray-900 dark:text-gray-100 font-medium">
-                                    {community.name}
-                                  </span>
-                                  {community.currentPayoutAddress ? (
-                                    <span className="text-sm text-green-600 dark:text-green-400">
-                                      ✓ {community.currentPayoutAddress}
-                                    </span>
-                                  ) : (
-                                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                                      No payout address set
-                                    </span>
+                          {/* Dropdown */}
+                          {showDropdown && (
+                            <div className="absolute z-50 w-full mt-1 bg-white dark:bg-zinc-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                              {communities.map((community) => (
+                                <button
+                                  key={community.uid}
+                                  type="button"
+                                  className="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-zinc-600 cursor-pointer transition-colors w-full text-left"
+                                  onClick={() => {
+                                    setSelectedCommunity(community);
+                                    setShowDropdown(false);
+                                  }}
+                                >
+                                  {community.imageURL && (
+                                    <img
+                                      src={community.imageURL}
+                                      alt={community.name}
+                                      className="w-8 h-8 rounded-full object-cover"
+                                    />
                                   )}
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                                  <div className="flex flex-col flex-1">
+                                    <span className="text-gray-900 dark:text-gray-100 font-medium">
+                                      {community.name}
+                                    </span>
+                                    {community.currentPayoutAddress ? (
+                                      <span className="text-sm text-green-600 dark:text-green-400">
+                                        ✓ {community.currentPayoutAddress}
+                                      </span>
+                                    ) : (
+                                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                                        No payout address set
+                                      </span>
+                                    )}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
 
-                      {/* Payout Address Input - only show when community is selected */}
-                      {selectedCommunity && (
-                        <div className="flex flex-col">
-                          <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full">
-                              <span className="text-md font-bold capitalize whitespace-nowrap shrink-0">
-                                Payout Address
-                              </span>
-                              <div className="flex w-full items-center gap-2">
-                                <input
-                                  type="text"
-                                  value={payoutAddress}
-                                  onChange={(e) => handleAddressChange(e.target.value)}
-                                  className="text-sm rounded-md w-full flex-1 text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
-                                  placeholder="0x1234567890abcdef1234567890abcdef12345678"
-                                />
-                                <div className="flex items-center shrink-0">
-                                  {isValidated && payoutAddress.trim() && (
-                                    <div className="relative group">
-                                      <CheckIcon
-                                        className="h-9 w-10 text-green-500 p-2 border border-green-500 rounded-md"
-                                        aria-label="Valid address"
-                                      />
-                                      <div className="absolute bottom-1/2 right-full transform translate-y-1/2 mr-2 px-3 py-1 bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                                        Valid Ethereum address
+                        {/* Payout Address Input - only show when community is selected */}
+                        {selectedCommunity && (
+                          <div className="flex flex-col">
+                            <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg">
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full">
+                                <span className="text-md font-bold capitalize whitespace-nowrap shrink-0">
+                                  Payout Address
+                                </span>
+                                <div className="flex w-full items-center gap-2">
+                                  <input
+                                    type="text"
+                                    value={payoutAddress}
+                                    onChange={(e) => handleAddressChange(e.target.value)}
+                                    className="text-sm rounded-md w-full flex-1 text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
+                                    placeholder="0x1234567890abcdef1234567890abcdef12345678"
+                                  />
+                                  <div className="flex items-center shrink-0">
+                                    {isValidated && payoutAddress.trim() && (
+                                      <div className="relative group">
+                                        <CheckIcon
+                                          className="h-9 w-10 text-green-500 p-2 border border-green-500 rounded-md"
+                                          aria-label="Valid address"
+                                        />
+                                        <div className="absolute bottom-1/2 right-full transform translate-y-1/2 mr-2 px-3 py-1 bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                          Valid Ethereum address
+                                        </div>
                                       </div>
-                                    </div>
-                                  )}
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
+                            {validationError && (
+                              <p className="text-red-500 text-sm mt-1 ml-4">{validationError}</p>
+                            )}
                           </div>
-                          {validationError && (
-                            <p className="text-red-500 text-sm mt-1 ml-4">{validationError}</p>
-                          )}
-                        </div>
-                      )}
+                        )}
+                      </div>
+                      {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
                     </div>
-                    {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
-                  </div>
+                  )}
                   <div className="flex flex-col sm:flex-row gap-4 mt-10 justify-end">
-                    <Button
-                      onClick={handleSave}
-                      disabled={
-                        isLoading ||
-                        !selectedCommunity ||
-                        (payoutAddress.trim() && !isValidated) ||
-                        validationError !== null
-                      }
-                      className="w-full sm:w-auto"
-                    >
-                      {isLoading
-                        ? "Saving..."
-                        : selectedCommunity?.currentPayoutAddress
-                          ? "Update Payout Address"
-                          : "Set Payout Address"}
-                    </Button>
-                    {selectedCommunity?.currentPayoutAddress && (
-                      <Button
-                        onClick={handleRemove}
-                        disabled={isLoading}
-                        className="w-full sm:w-auto bg-red-500 text-white hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                      >
-                        {isLoading ? "Removing..." : "Remove Payout Address"}
-                      </Button>
+                    {communities.length > 0 && (
+                      <>
+                        <Button
+                          onClick={handleSave}
+                          disabled={
+                            isLoading ||
+                            !selectedCommunity ||
+                            (payoutAddress.trim() && !isValidated) ||
+                            validationError !== null
+                          }
+                          className="w-full sm:w-auto"
+                        >
+                          {isLoading
+                            ? "Saving..."
+                            : selectedCommunity?.currentPayoutAddress
+                              ? "Update Payout Address"
+                              : "Set Payout Address"}
+                        </Button>
+                        {selectedCommunity?.currentPayoutAddress && (
+                          <Button
+                            onClick={handleRemove}
+                            disabled={isLoading}
+                            className="w-full sm:w-auto bg-red-500 text-white hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                          >
+                            {isLoading ? "Removing..." : "Remove Payout Address"}
+                          </Button>
+                        )}
+                      </>
                     )}
                     <Button
                       variant="secondary"
@@ -614,7 +629,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                       onClick={handleClose}
                       type="button"
                     >
-                      Cancel
+                      {communities.length === 0 ? "Close" : "Cancel"}
                     </Button>
                   </div>
                 </Dialog.Panel>

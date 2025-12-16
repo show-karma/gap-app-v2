@@ -14,10 +14,13 @@ import type {
 } from "@/types/funding-platform";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 // Base API configuration
 const API_BASE = envVars.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
 
+// Keep apiClient for mutations and special cases (blob downloads)
 const apiClient = createAuthenticatedApiClient(API_BASE, 30000);
 
 export interface IApplicationFilters {
@@ -110,17 +113,18 @@ export const fundingProgramsAPI = {
    * Get all grant programs for a community
    */
   async getProgramsByCommunity(communityId: string): Promise<FundingProgram[]> {
-    // First get the configurations
-    const configs = await apiClient
-      .get<FundingProgram[]>(`/v2/funding-program-configs/community/${communityId}`)
-      .catch((error) => {
-        console.error("API Error:", error.response?.data || error.message);
-        throw error;
-      });
+    const [configs, error] = await fetchData<FundingProgram[]>(
+      INDEXER.V2.FUNDING_PROGRAMS.BY_COMMUNITY(communityId)
+    );
+
+    if (error || !configs) {
+      console.error("API Error:", error);
+      throw new Error(error || "Failed to fetch programs");
+    }
 
     // Transform to FundingProgram format for backward compatibility
     const programs = await Promise.all(
-      configs.data.map(async (config) => {
+      configs.map(async (config) => {
         // Check if stats already exist from backend
         if (config.metrics) {
           // Stats already provided by backend, no need to fetch separately
@@ -138,33 +142,72 @@ export const fundingProgramsAPI = {
   },
 
   /**
+   * Get funding details for a program
+   */
+  async getFundingDetails(
+    programId: string,
+    chainId: number
+  ): Promise<{
+    currency?: string;
+    data?: { currency?: string };
+    fundingDetails?: { currency?: string };
+    details?: { currency?: string };
+  }> {
+    const [data, error] = await fetchData(INDEXER.V2.FUNDING_DETAILS(programId, chainId));
+
+    if (error) {
+      throw new Error(error);
+    }
+
+    return data;
+  },
+
+  /**
    * Get program configuration including form schema
    */
   async getProgramConfiguration(
     programId: string,
     chainId: number
   ): Promise<FundingProgram | null> {
-    const response = await apiClient.get(
-      `/v2/funding-program-configs/${programId}/${chainId.toString()}`
+    const [data, error] = await fetchData<FundingProgram>(
+      INDEXER.V2.FUNDING_PROGRAMS.GET(programId, chainId)
     );
-    return response.data;
+
+    if (error) {
+      throw new Error(error);
+    }
+
+    return data || null;
   },
 
   /**
    * Get all program configurations with optional community filter
    */
   async getAllProgramConfigs(community?: string): Promise<IFundingProgramConfig[]> {
-    const params = community ? `?community=${community}` : "";
-    const response = await apiClient.get(`/v2/funding-program-configs${params}`);
-    return response.data;
+    const [data, error] = await fetchData<IFundingProgramConfig[]>(
+      INDEXER.V2.FUNDING_PROGRAMS.LIST(community)
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to fetch program configs");
+    }
+
+    return data;
   },
 
   /**
    * Get only enabled programs
    */
   async getEnabledPrograms(): Promise<IFundingProgramConfig[]> {
-    const response = await apiClient.get("/v2/funding-program-configs/enabled");
-    return response.data;
+    const [data, error] = await fetchData<IFundingProgramConfig[]>(
+      INDEXER.V2.FUNDING_PROGRAMS.ENABLED()
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to fetch enabled programs");
+    }
+
+    return data;
   },
 
   /**
@@ -173,7 +216,7 @@ export const fundingProgramsAPI = {
    */
   async getEnabledProgramsServer(): Promise<FundingProgram[]> {
     const baseURL = API_BASE;
-    const response = await fetch(`${baseURL}/v2/funding-program-configs/enabled`, {
+    const response = await fetch(`${baseURL}${INDEXER.V2.FUNDING_PROGRAMS.ENABLED()}`, {
       next: { revalidate: 300 }, // Revalidate every 5 minutes
       headers: {
         "Content-Type": "application/json",
@@ -352,35 +395,55 @@ export const fundingApplicationsAPI = {
     if (filters.sortBy) params.append("sortBy", filters.sortBy);
     if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
 
-    const response = await apiClient.get(
-      `/v2/funding-applications/program/${programId}/${chainId.toString()}?${params}`
+    const [data, error] = await fetchData<IPaginatedApplicationsResponse>(
+      `${INDEXER.V2.FUNDING_APPLICATIONS.BY_PROGRAM(programId, chainId)}?${params}`
     );
-    if (!response.data.applications) {
-      response.data.applications = [];
-      response.data.pagination = {
+
+    if (error || !data) {
+      throw new Error(error || "Failed to fetch applications");
+    }
+
+    if (!data.applications) {
+      data.applications = [];
+      data.pagination = {
         page: filters.page || 1,
         limit: filters.limit || 25,
         total: 0,
         totalPages: 0,
       };
     }
-    return response.data;
+
+    return data;
   },
 
   /**
    * Get a specific application by ID
    */
   async getApplication(applicationId: string): Promise<IFundingApplication> {
-    const response = await apiClient.get(`/v2/funding-applications/${applicationId}`);
-    return response.data;
+    const [data, error] = await fetchData<IFundingApplication>(
+      INDEXER.V2.FUNDING_APPLICATIONS.GET(applicationId)
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to fetch application");
+    }
+
+    return data;
   },
 
   /**
    * Get application by reference number
    */
   async getApplicationByReference(referenceNumber: string): Promise<IFundingApplication> {
-    const response = await apiClient.get(`/v2/funding-applications/${referenceNumber}`);
-    return response.data;
+    const [data, error] = await fetchData<IFundingApplication>(
+      INDEXER.V2.FUNDING_APPLICATIONS.GET(referenceNumber)
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to fetch application");
+    }
+
+    return data;
   },
 
   /**
@@ -391,19 +454,19 @@ export const fundingApplicationsAPI = {
     chainId: number,
     email: string
   ): Promise<IFundingApplication | null> {
-    try {
-      const response = await apiClient.get(
-        `/v2/funding-applications/program/${programId}/${chainId.toString()}/by-email?email=${encodeURIComponent(
-          email
-        )}`
-      );
-      return response.data;
-    } catch (error: any) {
-      if (error.response?.status === 404) {
+    const [data, error] = await fetchData<IFundingApplication>(
+      INDEXER.V2.FUNDING_APPLICATIONS.BY_EMAIL(programId, chainId, email)
+    );
+
+    if (error) {
+      // Return null for 404 (no application found)
+      if (error.includes("404") || error.includes("not found")) {
         return null;
       }
-      throw error;
+      throw new Error(error);
     }
+
+    return data || null;
   },
 
   /**
@@ -413,11 +476,15 @@ export const fundingApplicationsAPI = {
     programId: string,
     chainId: number
   ): Promise<IApplicationStatistics> {
-    const response = await apiClient.get(
-      `/v2/funding-applications/program/${programId}/${chainId.toString()}/statistics`
+    const [data, error] = await fetchData<IApplicationStatistics>(
+      INDEXER.V2.FUNDING_APPLICATIONS.STATISTICS(programId, chainId)
     );
 
-    return response.data;
+    if (error || !data) {
+      throw new Error(error || "Failed to fetch statistics");
+    }
+
+    return data;
   },
 
   /**
@@ -452,7 +519,7 @@ export const fundingApplicationsAPI = {
 
     if (contentDisposition) {
       const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-      if (filenameMatch && filenameMatch[1]) {
+      if (filenameMatch?.[1]) {
         filename = filenameMatch[1].replace(/['"]/g, "");
       }
     }
@@ -491,7 +558,7 @@ export const fundingApplicationsAPI = {
 
     if (contentDisposition) {
       const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-      if (filenameMatch && filenameMatch[1]) {
+      if (filenameMatch?.[1]) {
         filename = filenameMatch[1].replace(/['"]/g, "");
       }
     }
@@ -504,10 +571,15 @@ export const fundingApplicationsAPI = {
    * Uses the reference number to get the version history timeline
    */
   async getApplicationVersionsTimeline(referenceNumber: string): Promise<IApplicationVersion[]> {
-    const response = await apiClient.get<IApplicationVersionTimeline>(
-      `/v2/funding-applications/${referenceNumber}/versions/timeline`
+    const [data, error] = await fetchData<IApplicationVersionTimeline>(
+      INDEXER.V2.FUNDING_APPLICATIONS.VERSIONS_TIMELINE(referenceNumber)
     );
-    return response.data.timeline;
+
+    if (error || !data) {
+      throw new Error(error || "Failed to fetch version timeline");
+    }
+
+    return data.timeline;
   },
 
   /**

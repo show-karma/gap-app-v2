@@ -89,7 +89,7 @@ export const useDeleteMilestone = ({
 
       return { previousData };
     },
-    onSuccess: (data, milestone, context) => {
+    onSuccess: (data, _milestone, _context) => {
       const { milestone: deletedMilestone, result } = data;
 
       toast.success(`Milestone "${deletedMilestone.title}" deleted successfully`);

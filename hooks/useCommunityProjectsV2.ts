@@ -1,27 +1,2 @@
-import { useQuery } from "@tanstack/react-query";
-import type { CommunityProjectsResponse } from "@/types/community";
-import { getCommunityProjects } from "@/utilities/queries/v2/community";
-
-interface UseCommunityProjectsOptions {
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  categories?: string;
-  status?: string;
-  selectedProgramId?: string;
-  selectedTrackIds?: string[];
-}
-
-export const useCommunityProjects = (slug: string, options?: UseCommunityProjectsOptions) => {
-  return useQuery<CommunityProjectsResponse, Error>({
-    queryKey: ["community-projects", slug, options],
-    queryFn: () => getCommunityProjects(slug, options || {}),
-    enabled: !!slug,
-    retry: false,
-  });
-};
-
-/**
- * @deprecated Use useCommunityProjects instead
- */
-export const useCommunityProjectsV2 = useCommunityProjects;
+// Re-export from canonical location
+export { useCommunityProjects, useCommunityProjectsV2 } from "@/hooks/v2/useCommunityProjects";

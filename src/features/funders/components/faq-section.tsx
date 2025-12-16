@@ -1,4 +1,5 @@
 import { FAQAccordion } from "@/src/components/shared/faq-accordion";
+import { SectionContainer } from "@/src/components/shared/section-container";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 
@@ -57,16 +58,18 @@ You’re free to **mix and match modules** and expand as your program evolves.`,
 export function FAQSection() {
   return (
     <section className={cn(marketingLayoutTheme.padding, "py-16 w-full")}>
-      <div className="flex flex-col items-center gap-4 max-w-4xl mx-auto px-4">
-        <h2 className="section-title text-foreground text-center">Frequently asked questions</h2>
-        <p className="text-base md:text-xl font-normal text-muted-foreground text-center leading-[24px] md:leading-[30px] tracking-normal">
-          Everything you need to know about the product and billing.
-        </p>
-      </div>
+      <SectionContainer>
+        <div className="flex flex-col items-center gap-4 max-w-4xl mx-auto px-4">
+          <h2 className="section-title text-foreground text-center">Frequently asked questions</h2>
+          <p className="text-base md:text-xl font-normal text-muted-foreground text-center leading-[24px] md:leading-[30px] tracking-normal">
+            Everything you need to know about the product and billing.
+          </p>
+        </div>
 
-      <div className="max-w-4xl mx-auto mb-8 md:mb-12 px-4 mt-10">
-        <FAQAccordion items={faqItems} />
-      </div>
+        <div className="max-w-4xl mx-auto mb-8 md:mb-12 px-4 mt-10">
+          <FAQAccordion items={faqItems} />
+        </div>
+      </SectionContainer>
     </section>
   );
 }

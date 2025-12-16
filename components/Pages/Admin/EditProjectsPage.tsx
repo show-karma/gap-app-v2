@@ -10,14 +10,13 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
 import TablePagination from "@/components/Utilities/TablePagination";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useAuth } from "@/hooks/useAuth";
 import { useCommunityGrants } from "@/hooks/useCommunityGrants";
-import { useCommunityProjectsV2 } from "@/hooks/useCommunityProjectsV2";
 import { useCommunityRegions } from "@/hooks/useCommunityRegions";
-import { useStaff } from "@/hooks/useStaff";
-import type { Project } from "@/types/community";
+import { useCommunityProjectsV2 } from "@/hooks/v2/useCommunityProjects";
+import type { CommunityProject } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -29,7 +28,7 @@ import { RegionCreationDialog } from "./RegionCreationDialog";
 export const metadata = defaultMetadata;
 
 interface ProjectsTableProps {
-  projects: Project[];
+  projects: CommunityProject[];
   regions: any[];
   selectedRegions: Record<string, string>;
   optimisticRegions: Record<string, string>;
@@ -177,9 +176,7 @@ export default function EditProjectsPage() {
     error: communityError,
   } = useCommunityDetails(communityId);
 
-  // Check if user is admin of this community
-  const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(community?.uid);
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { hasAccess, isLoading: isLoadingAdmin } = useCommunityAdminAccess(community?.uid);
 
   useEffect(() => {
     if (
@@ -287,7 +284,7 @@ export default function EditProjectsPage() {
 
   // Auto-save implemented in handleRegionChange, no need for separate save function
 
-  if (loading || isStaffLoading || isLoadingProjects) {
+  if (isLoadingAdmin || isLoadingProjects) {
     return (
       <div className="flex w-full items-center justify-center">
         <Spinner />
@@ -295,7 +292,7 @@ export default function EditProjectsPage() {
     );
   }
 
-  if (!isAdmin && !isStaff) {
+  if (!hasAccess) {
     return (
       <div className="flex w-full items-center justify-center">
         <p>{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}</p>

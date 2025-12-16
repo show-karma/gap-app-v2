@@ -1,10 +1,10 @@
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useMemo } from "react";
+import type { Grant } from "@/types/v2/grant";
 import { formatPercentage } from "@/utilities/formatNumber";
 
 type TProps = {
   // TODO: this should be refactored in the source components to pass Grant only
-  grant: IGrantResponse;
+  grant: Grant;
   className?: string;
 };
 
@@ -12,12 +12,14 @@ export const GrantPercentage: React.FC<TProps> = ({ grant, className }) => {
   const percentage = useMemo(() => {
     if (grant.updates && grant.updates.length > 0) {
       const sortedUpdates = [...grant.updates].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
       );
 
       for (const update of sortedUpdates) {
-        if (update.data.completionPercentage) {
-          const manualPercentage = Number(update.data.completionPercentage);
+        // Check both flat completionPercentage and nested data.completionPercentage
+        const completionPct = update.completionPercentage || update.data?.completionPercentage;
+        if (completionPct) {
+          const manualPercentage = Number(completionPct);
           if (!Number.isNaN(manualPercentage)) {
             return formatPercentage(manualPercentage);
           }

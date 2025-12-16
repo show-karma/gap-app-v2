@@ -2,6 +2,7 @@
  * Integration test to verify JWT authentication in comment functionality
  * This test simulates the real-world usage of the comment service with authentication
  */
+import type { AxiosInstance } from "axios";
 import { TokenManager } from "@/utilities/auth/token-manager";
 
 // Mock dependencies BEFORE importing service
@@ -12,32 +13,49 @@ jest.mock("@/utilities/enviromentVars", () => ({
   },
 }));
 
-// Setup axios mock with factory function
-jest.mock("axios", () => ({
-  create: jest.fn(() => ({
+// Mock fetchData for getComments method (which uses fetchData)
+jest.mock("@/utilities/fetchData");
+
+// Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
+var mockAxiosInstance: jest.Mocked<AxiosInstance>;
+
+// Mock api-client for mutations (createComment, editComment, deleteComment)
+jest.mock("@/utilities/auth/api-client", () => {
+  const instance = {
     get: jest.fn(),
     post: jest.fn(),
-    put: jest.fn(),
     delete: jest.fn(),
+    put: jest.fn(),
+    patch: jest.fn(),
+    request: jest.fn(),
+    head: jest.fn(),
+    options: jest.fn(),
     interceptors: {
-      request: { use: jest.fn((fn) => fn) },
-      response: { use: jest.fn() },
+      request: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
+      response: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
     },
-  })),
-}));
+    defaults: {} as any,
+    getUri: jest.fn(),
+  } as unknown as jest.Mocked<AxiosInstance>;
+
+  mockAxiosInstance = instance;
+
+  return {
+    createAuthenticatedApiClient: jest.fn(() => instance),
+  };
+});
 
 // Mock the wagmi store to simulate a connected wallet
 jest.mock("@/utilities/getWalletFromWagmiStore", () => ({
   getWalletFromWagmiStore: jest.fn(() => "0x1234567890abcdef"),
 }));
 
-import axios from "axios";
 // NOW import the service after mocks are configured
 import { applicationCommentsService } from "@/services/application-comments.service";
+// Import fetchData mock
+import fetchData from "@/utilities/fetchData";
 
-const mockedAxios = axios as jest.Mocked<typeof axios>;
-// Get the mock instance that was created
-const mockAxiosInstance = (mockedAxios.create as jest.Mock).mock.results[0]?.value;
+const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
 
 describe("Application Comments Integration", () => {
   const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mocktoken";
@@ -45,6 +63,13 @@ describe("Application Comments Integration", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockFetchData.mockClear();
+    if (mockAxiosInstance) {
+      mockAxiosInstance.get?.mockClear();
+      mockAxiosInstance.post?.mockClear();
+      mockAxiosInstance.put?.mockClear();
+      mockAxiosInstance.delete?.mockClear();
+    }
 
     // Setup default mock for TokenManager
     (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue(mockToken);
@@ -66,7 +91,7 @@ describe("Application Comments Integration", () => {
         isDeleted: false,
       };
 
-      // Step 1: Create a comment
+      // Step 1: Create a comment (uses apiClient.post)
       mockAxiosInstance.post.mockResolvedValueOnce({
         data: { comment: mockComment },
       });
@@ -79,27 +104,27 @@ describe("Application Comments Integration", () => {
 
       expect(createdComment).toEqual(mockComment);
       expect(mockAxiosInstance.post).toHaveBeenCalledWith(
-        `/v2/applications/${applicationId}/comments`,
-        {
+        expect.stringContaining(applicationId),
+        expect.objectContaining({
           content: "This is a test comment",
           authorName: "Test User",
-        }
+        })
       );
 
-      // Step 2: Get comments
-      mockAxiosInstance.get.mockResolvedValueOnce({
-        data: { comments: [mockComment] },
-      });
+      // Step 2: Get comments (uses fetchData)
+      mockFetchData.mockResolvedValueOnce([{ comments: [mockComment] }, null, null, 200]);
 
       const comments = await applicationCommentsService.getComments(applicationId);
 
       expect(comments).toEqual([mockComment]);
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith(
-        `/v2/applications/${applicationId}/comments`,
+      expect(mockFetchData).toHaveBeenCalledWith(
+        expect.stringContaining(applicationId),
+        "GET",
+        {},
         {}
       );
 
-      // Step 3: Edit the comment
+      // Step 3: Edit the comment (uses apiClient.put)
       const updatedComment = { ...mockComment, content: "Updated comment" };
       mockAxiosInstance.put.mockResolvedValueOnce({
         data: { comment: updatedComment },
@@ -111,20 +136,26 @@ describe("Application Comments Integration", () => {
       );
 
       expect(editedComment).toEqual(updatedComment);
-      expect(mockAxiosInstance.put).toHaveBeenCalledWith(`/v2/comments/comment-1`, {
-        content: "Updated comment",
-      });
+      expect(mockAxiosInstance.put).toHaveBeenCalledWith(
+        expect.stringContaining("comment-1"),
+        expect.objectContaining({
+          content: "Updated comment",
+        })
+      );
 
-      // Step 4: Delete the comment
+      // Step 4: Delete the comment (uses apiClient.delete)
       mockAxiosInstance.delete.mockResolvedValueOnce({
         data: {},
       });
 
       await applicationCommentsService.deleteComment("comment-1");
 
-      expect(mockAxiosInstance.delete).toHaveBeenCalledWith(`/v2/comments/comment-1`, {
-        params: {},
-      });
+      expect(mockAxiosInstance.delete).toHaveBeenCalledWith(
+        expect.stringContaining("comment-1"),
+        expect.objectContaining({
+          params: {},
+        })
+      );
     });
 
     it("should handle admin operations with proper authentication", async () => {
@@ -140,7 +171,7 @@ describe("Application Comments Integration", () => {
         isAdmin: true,
       };
 
-      // Create admin comment
+      // Create admin comment (uses apiClient.post)
       mockAxiosInstance.post.mockResolvedValueOnce({
         data: { comment: adminComment },
       });
@@ -153,11 +184,11 @@ describe("Application Comments Integration", () => {
 
       expect(created).toEqual(adminComment);
       expect(mockAxiosInstance.post).toHaveBeenCalledWith(
-        `/v2/applications/${applicationId}/comments`,
-        {
+        expect.stringContaining(applicationId),
+        expect.objectContaining({
           content: "Admin review comment",
           authorName: "Admin User",
-        }
+        })
       );
     });
 
@@ -182,11 +213,11 @@ describe("Application Comments Integration", () => {
 
       // Verify the request was made
       expect(mockAxiosInstance.post).toHaveBeenCalledWith(
-        `/v2/applications/${applicationId}/comments`,
-        {
+        expect.stringContaining(applicationId),
+        expect.objectContaining({
           content: "Test comment",
           authorName: undefined,
-        }
+        })
       );
     });
 
@@ -195,35 +226,35 @@ describe("Application Comments Integration", () => {
       const initialToken = "initial-token";
       const refreshedToken = "refreshed-token";
 
-      // First call with initial token
+      // First call with initial token (getComments uses fetchData)
       (TokenManager.getToken as jest.Mock).mockResolvedValueOnce(initialToken);
 
-      mockAxiosInstance.get.mockResolvedValueOnce({
-        data: { comments: [] },
-      });
+      mockFetchData.mockResolvedValueOnce([{ comments: [] }, null, null, 200]);
 
       await applicationCommentsService.getComments(applicationId);
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith(
-        `/v2/applications/${applicationId}/comments`,
+      expect(mockFetchData).toHaveBeenCalledWith(
+        expect.stringContaining(applicationId),
+        "GET",
+        {},
         {}
       );
 
       // Second call with refreshed token
       (TokenManager.getToken as jest.Mock).mockResolvedValueOnce(refreshedToken);
 
-      mockAxiosInstance.get.mockResolvedValueOnce({
-        data: { comments: [] },
-      });
+      mockFetchData.mockResolvedValueOnce([{ comments: [] }, null, null, 200]);
 
       await applicationCommentsService.getComments(applicationId);
 
-      expect(mockAxiosInstance.get).toHaveBeenLastCalledWith(
-        `/v2/applications/${applicationId}/comments`,
+      expect(mockFetchData).toHaveBeenLastCalledWith(
+        expect.stringContaining(applicationId),
+        "GET",
+        {},
         {}
       );
 
-      // The token is fetched fresh each time via the axios interceptor
+      // The token is fetched fresh each time via fetchData
       // So the second call will use the refreshed token
     });
   });

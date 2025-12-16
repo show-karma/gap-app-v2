@@ -45,7 +45,7 @@ export async function middleware(request: NextRequest) {
       const communitiesJson: Community[] = await communitiesFetched.json();
       const communitiesArray = communitiesJson.map((community) => ({
         uid: community.uid,
-        slug: community.details?.data?.slug,
+        slug: community.details?.slug,
       }));
 
       const findCommunity = communitiesArray.find(

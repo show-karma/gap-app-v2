@@ -35,6 +35,16 @@ jest.mock("@/components/Shared/ActivityCard/MilestoneCard", () => ({
   ),
 }));
 
+// Mock ProjectUpdateCard to avoid SDK import issues
+jest.mock("@/components/Shared/ActivityCard/ProjectUpdateCard", () => ({
+  ProjectUpdateCard: ({ update, index, isAuthorized }: any) => (
+    <div data-testid="project-update-card">
+      <div data-testid="update-index">{index}</div>
+      <div data-testid="update-authorized">{isAuthorized ? "true" : "false"}</div>
+    </div>
+  ),
+}));
+
 describe("ActivityCard", () => {
   const mockUpdate = {
     type: "update" as const,

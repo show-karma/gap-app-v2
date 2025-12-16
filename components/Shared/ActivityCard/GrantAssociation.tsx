@@ -4,8 +4,9 @@ import type {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Image from "next/image";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useProjectStore } from "@/store";
-import type { UnifiedMilestone } from "@/types/roadmap";
+import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { PAGES } from "@/utilities/pages";
 
 // Shared UI component for rendering grant items
@@ -54,6 +55,9 @@ export const GrantAssociation = ({
   const containerClass = `flex flex-row w-max flex-wrap gap-2 ${className}`;
   const { project } = useProjectStore();
 
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(project?.uid || "");
+
   // Handle milestone data
   if (milestone) {
     const { type } = milestone;
@@ -64,9 +68,14 @@ export const GrantAssociation = ({
     }
 
     const grantMilestone = milestone.source.grantMilestone;
-    const grantTitle = grantMilestone?.grant.details?.data.title;
-    const programId = grantMilestone?.grant.details?.data.programId;
-    const communityData = grantMilestone?.grant.community?.details?.data;
+    const grantDetails = grantMilestone?.grant.details as
+      | { title?: string; programId?: string }
+      | undefined;
+    const grantTitle = grantDetails?.title;
+    const programId = grantDetails?.programId;
+    const communityData = grantMilestone?.grant.community?.details as
+      | { name?: string; slug?: string; imageURL?: string }
+      | undefined;
 
     if (!grantTitle && (!milestone.mergedGrants || milestone.mergedGrants.length === 0)) {
       return null;
@@ -122,43 +131,41 @@ export const GrantAssociation = ({
     return null;
   }
 
-  const grant = project?.grants?.find(
-    (grant) => grant.uid?.toLowerCase() === update.refUID?.toLowerCase()
-  );
+  const grant = grants.find((g) => g.uid?.toLowerCase() === update.refUID?.toLowerCase());
 
-  const multipleGrants = project?.grants.filter((grant) =>
+  const multipleGrants = grants.filter((g) =>
     (update as IProjectUpdate)?.data?.grants?.some(
-      (grantId: string) => grantId.toLowerCase() === grant.uid.toLowerCase()
+      (grantId: string) => grantId.toLowerCase() === g.uid.toLowerCase()
     )
   );
 
-  if (!grant && !multipleGrants?.length) return null;
+  if (!grant && !multipleGrants.length) return null;
 
   return (
     <div className={containerClass}>
-      {multipleGrants?.length ? (
+      {multipleGrants.length ? (
         multipleGrants.map((individualGrant) => (
           <GrantItem
-            key={`${individualGrant.uid}-${individualGrant.details?.data.title}-${update.uid}-${update.data?.title}-${index}`}
+            key={`${individualGrant.uid}-${individualGrant.details?.title}-${update.uid}-${update.title}-${index}`}
             href={PAGES.COMMUNITY.ALL_GRANTS(
-              individualGrant.community?.details?.data?.slug || "",
-              individualGrant.details?.data.programId
+              individualGrant.community?.details?.slug || "",
+              individualGrant.details?.programId
             )}
-            title={individualGrant.details?.data.title || "Untitled Grant"}
-            communityImage={individualGrant.community?.details?.data?.imageURL}
-            communityName={individualGrant.community?.details?.data?.name}
-            keyPrefix={`${individualGrant.uid}-${individualGrant.details?.data.title}-${update.uid}-${update.data?.title}-${index}`}
+            title={individualGrant.details?.title || "Untitled Grant"}
+            communityImage={individualGrant.community?.details?.imageURL}
+            communityName={individualGrant.community?.details?.name}
+            keyPrefix={`${individualGrant.uid}-${individualGrant.details?.title}-${update.uid}-${update.title}-${index}`}
           />
         ))
       ) : grant ? (
         <GrantItem
           href={PAGES.COMMUNITY.ALL_GRANTS(
-            grant.community?.details?.data?.slug || grant?.community?.uid || "",
-            grant?.details?.data.programId || ""
+            grant.community?.details?.slug || grant?.community?.uid || "",
+            grant?.details?.programId || ""
           )}
-          title={grant?.details?.data.title || "Untitled Grant"}
-          communityImage={grant.community?.details?.data?.imageURL}
-          communityName={grant.community?.details?.data?.name}
+          title={grant?.details?.title || "Untitled Grant"}
+          communityImage={grant.community?.details?.imageURL}
+          communityName={grant.community?.details?.name}
           keyPrefix={`single-update-grant-${update.uid}-${index}`}
         />
       ) : null}

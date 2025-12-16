@@ -1,9 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useAvailableAIModels } from "@/hooks/useAvailableAIModels";
 import { useProgram } from "@/hooks/usePrograms";
 import type { FormSchema } from "@/types/question-builder";
 
@@ -38,10 +39,26 @@ export function AIPromptConfiguration({
   // Fetch program data for default langfusePromptId
   const { data: program } = useProgram(programId || "");
 
+  // Fetch available AI models from backend
+  const { data: availableModels = ["gpt-5.2"], isLoading: isLoadingModels } =
+    useAvailableAIModels();
+
   // Get default langfusePromptId from program registry if not set in schema
   const defaultLangfusePromptId =
     schema.aiConfig?.langfusePromptId || program?.langfusePromptId || "";
   const recommendedPrompt = "";
+
+  // Get default model - use schema value if valid, otherwise use first available model
+  const defaultModel = useMemo(() => {
+    const schemaModel = schema.aiConfig?.aiModel;
+    if (schemaModel && availableModels.includes(schemaModel)) {
+      return schemaModel;
+    }
+    return availableModels[0] || "gpt-5.2";
+  }, [schema.aiConfig?.aiModel, availableModels]);
+
+  // Track if initial sync has been performed to prevent overwriting user selections
+  const hasInitialSyncedRef = useRef(false);
 
   const {
     register,
@@ -55,12 +72,35 @@ export function AIPromptConfiguration({
     defaultValues: {
       // systemPrompt: schema.aiConfig?.systemPrompt || '',
       // detailedPrompt: schema.aiConfig?.detailedPrompt || '',
-      aiModel: schema.aiConfig?.aiModel || "gpt-4o",
+      aiModel: defaultModel,
       enableRealTimeEvaluation: schema.aiConfig?.enableRealTimeEvaluation || false,
       langfusePromptId: defaultLangfusePromptId || recommendedPrompt,
       internalLangfusePromptId: schema.aiConfig?.internalLangfusePromptId || "",
     },
   });
+
+  // Update form value when availableModels loads and current value is invalid
+  // Prevents race conditions: only updates invalid values, preserving valid user selections
+  useEffect(() => {
+    if (!isLoadingModels && availableModels.length > 0) {
+      const currentValue = getValues("aiModel");
+      const isCurrentValueInvalid = !currentValue || !availableModels.includes(currentValue);
+
+      // Only update if value is invalid (not in availableModels list)
+      // This handles:
+      // - Initial load with invalid value
+      // - Value becoming invalid after availableModels changes
+      // - But preserves valid user selections (won't overwrite if value is in the list)
+      if (isCurrentValueInvalid) {
+        setValue("aiModel", defaultModel, { shouldValidate: false });
+      }
+
+      // Mark as synced after first check
+      if (!hasInitialSyncedRef.current) {
+        hasInitialSyncedRef.current = true;
+      }
+    }
+  }, [availableModels, isLoadingModels, defaultModel, getValues, setValue]);
 
   const watchedValues = watch();
   const currentLangfusePromptId = watchedValues.langfusePromptId || "";
@@ -87,7 +127,7 @@ export function AIPromptConfiguration({
         aiConfig: {
           // systemPrompt: data.systemPrompt || '',
           // detailedPrompt: data.detailedPrompt || '',
-          aiModel: data.aiModel || "gpt-4o",
+          aiModel: data.aiModel || availableModels[0] || "gpt-5.2",
           enableRealTimeEvaluation: data.enableRealTimeEvaluation || false,
           langfusePromptId: data.langfusePromptId || "",
           internalLangfusePromptId: data.internalLangfusePromptId || "",
@@ -97,7 +137,7 @@ export function AIPromptConfiguration({
     });
 
     return () => subscription.unsubscribe();
-  }, [watch, onUpdate, schema, readOnly]);
+  }, [watch, onUpdate, schema, readOnly, availableModels]);
 
   return (
     <div
@@ -124,13 +164,18 @@ export function AIPromptConfiguration({
           <select
             id="ai-model"
             {...register("aiModel")}
-            disabled={readOnly}
-            className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
+            disabled={readOnly || isLoadingModels}
+            className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 ${readOnly || isLoadingModels ? "opacity-50 cursor-not-allowed" : ""}`}
           >
-            <option value="gpt-4o">GPT-4o (Recommended)</option>
-            <option value="gpt-5">GPT-5 (Latest)</option>
-            <option value="gpt-5-nano">GPT-5 Nano (Fastest)</option>
-            <option value="gpt-5-mini">GPT-5 Mini (Reasoning)</option>
+            {isLoadingModels ? (
+              <option value="">Loading models...</option>
+            ) : (
+              availableModels.map((model) => (
+                <option key={model} value={model}>
+                  {model}
+                </option>
+              ))
+            )}
           </select>
           {errors.aiModel && <p className="text-red-500 text-sm mt-1">{errors.aiModel.message}</p>}
         </div>
