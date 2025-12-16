@@ -61,8 +61,7 @@ export const INDEXER = {
       `/v2/program/funding-details?programId=${programId}&chainId=${chainId}`,
     FUNDING_PROGRAMS: {
       BY_COMMUNITY: (communityId: string) => `/v2/funding-program-configs/community/${communityId}`,
-      GET: (programId: string, chainId: number) =>
-        `/v2/funding-program-configs/${programId}/${chainId}`,
+      GET: (programId: string) => `/v2/funding-program-configs/${programId}`,
       LIST: (community?: string) =>
         `/v2/funding-program-configs${community ? `?community=${community}` : ""}`,
       ENABLED: () => `/v2/funding-program-configs/enabled`,
@@ -77,16 +76,16 @@ export const INDEXER = {
     },
     FUNDING_APPLICATIONS: {
       GET: (applicationId: string) => `/v2/funding-applications/${applicationId}`,
-      BY_PROGRAM: (programId: string, chainId: number) =>
-        `/v2/funding-applications/program/${programId}/${chainId}`,
-      BY_EMAIL: (programId: string, chainId: number, email: string) =>
-        `/v2/funding-applications/program/${programId}/${chainId}/by-email?email=${encodeURIComponent(email)}`,
-      STATISTICS: (programId: string, chainId: number) =>
-        `/v2/funding-applications/program/${programId}/${chainId}/statistics`,
-      EXPORT: (programId: string, chainId: number) =>
-        `/v2/funding-applications/program/${programId}/${chainId}/export`,
-      ADMIN_EXPORT: (programId: string, chainId: number) =>
-        `/v2/funding-applications/admin/${programId}/${chainId}/export`,
+      BY_PROGRAM: (programId: string) =>
+        `/v2/funding-applications/program/${programId}`,
+      BY_EMAIL: (programId: string, email: string) =>
+        `/v2/funding-applications/program/${programId}/by-email?email=${encodeURIComponent(email)}`,
+      STATISTICS: (programId: string) =>
+        `/v2/funding-applications/program/${programId}/statistics`,
+      EXPORT: (programId: string) =>
+        `/v2/funding-applications/program/${programId}/export`,
+      ADMIN_EXPORT: (programId: string) =>
+        `/v2/funding-applications/admin/${programId}/export`,
       VERSIONS_TIMELINE: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/versions/timeline`,
       REVIEWERS: (applicationId: string) => `/v2/funding-applications/${applicationId}/reviewers`,

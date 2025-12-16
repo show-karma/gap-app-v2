@@ -193,7 +193,6 @@ export interface IApplicationListProps {
 // V2 Request/Response Types
 export interface IApplicationSubmitRequest {
   programId: string;
-  chainID: number;
   applicantEmail: string;
   applicationData: Record<string, any>;
 }

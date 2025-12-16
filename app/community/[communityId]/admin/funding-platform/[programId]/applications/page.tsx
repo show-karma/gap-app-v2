@@ -29,9 +29,9 @@ export default function ApplicationsPage() {
     programId: string;
   };
 
-  // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split("_");
-  const parsedChainId = parseInt(chainId, 10);
+  // Use programId as-is (may be "programId" or "programId_chainId" format)
+  // Backend handles both formats
+  const programId = combinedProgramId;
 
   // Parse initial filters from URL
   const initialFilters = useMemo((): IApplicationFilters => {
@@ -82,7 +82,6 @@ export default function ApplicationsPage() {
   // Use the funding applications hook to get applications data
   const { applications: _applications } = useFundingApplications(
     programId,
-    parsedChainId,
     initialFilters
   );
 
@@ -90,7 +89,7 @@ export default function ApplicationsPage() {
   const { prefetchApplication } = useApplication(null);
 
   // Use the custom application status hook
-  const { updateStatusAsync } = useApplicationStatus(programId, parsedChainId);
+  const { updateStatusAsync } = useApplicationStatus(programId);
 
   // Admin, owner, staff have full access; reviewers have view and comment access
   const hasAccess = hasAdminAccess || canView;

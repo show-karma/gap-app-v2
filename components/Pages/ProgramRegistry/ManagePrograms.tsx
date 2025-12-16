@@ -272,20 +272,15 @@ export const ManagePrograms = () => {
       pending: "pending",
     };
     try {
-      // V2 approve endpoint uses domain identifier (programId + chainId)
+      // V2 approve endpoint uses programId only
       const programId = program.programId;
-      const chainId = program.chainID || registryHelper.supportedNetworks;
 
       if (!programId) {
         throw new Error("Program ID not found. Cannot approve program.");
       }
 
-      if (!chainId) {
-        throw new Error("Chain ID not found. Cannot approve program.");
-      }
-
-      // Use V2 approve endpoint with domain identifier
-      const approvePromise = ProgramRegistryService.approveProgram(programId, chainId, value);
+      // Use V2 approve endpoint with programId only
+      const approvePromise = ProgramRegistryService.approveProgram(programId, value);
 
       await toast.promise(approvePromise, {
         loading: `Changing program ${program.metadata?.title} to ${value}...`,

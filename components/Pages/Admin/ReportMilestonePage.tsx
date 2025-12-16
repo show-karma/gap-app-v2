@@ -88,7 +88,11 @@ const fetchReports = async (
   sortOrder = "desc",
   selectedProgramIds: string[] = []
 ) => {
-  const queryProgramIds = selectedProgramIds.join(",");
+  // Normalize programIds (remove chainId suffix if present) before sending to API
+  const normalizedProgramIds = selectedProgramIds.map((id) =>
+    id.includes("_") ? id.split("_")[0] : id
+  );
+  const queryProgramIds = normalizedProgramIds.join(",");
   const encodedProgramIds = encodeURIComponent(queryProgramIds);
   const [data]: any = await fetchData(
     `${INDEXER.COMMUNITY.REPORT.GET(

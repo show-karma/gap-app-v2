@@ -943,9 +943,14 @@ export const CommunityProjectEvaluatorPage = () => {
     setSelectedProgram(program);
     setProjects([]); // Clear previous projects
 
-    // Update URL with the selected program ID
+    // Normalize programId (remove chainId suffix if present) before setting in URL
+    const normalizedProgramId = program.programId.includes("_")
+      ? program.programId.split("_")[0]
+      : program.programId;
+
+    // Update URL with the normalized program ID
     const newSearchParams = new URLSearchParams(searchParams);
-    newSearchParams.set("programId", program.programId);
+    newSearchParams.set("programId", normalizedProgramId);
     router.push(`${window.location.pathname}?${newSearchParams.toString()}`);
 
     getProjectsByProgram(program.programId, Number(program.chainID), communityId);

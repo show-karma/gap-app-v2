@@ -437,7 +437,6 @@ export default function AddProgram({
       // Use V2 update endpoint
       await ProgramRegistryService.updateProgram(
         programIdToUpdate,
-        chainSelected as number,
         metadata
       );
       toast.success("Program updated successfully!");

@@ -78,16 +78,13 @@ export default function FundingPlatformAdminPage() {
 
   const handleToggleProgram = async (
     programId: string,
-    chainId: number,
     currentEnabled: boolean
   ) => {
-    const programKey = `${programId}_${chainId}`;
-    setTogglingPrograms((prev) => new Set(prev).add(programKey));
+    setTogglingPrograms((prev) => new Set(prev).add(programId));
 
     try {
       await fundingPlatformService.programs.toggleProgramStatus(
         programId,
-        chainId,
         !currentEnabled
       );
       toast.success(`Program ${!currentEnabled ? "enabled" : "disabled"} successfully`);
@@ -99,7 +96,7 @@ export default function FundingPlatformAdminPage() {
     } finally {
       setTogglingPrograms((prev) => {
         const newSet = new Set(prev);
-        newSet.delete(programKey);
+        newSet.delete(programId);
         return newSet;
       });
     }
@@ -497,7 +494,6 @@ export default function FundingPlatformAdminPage() {
                           if (program.applicationConfig) {
                             handleToggleProgram(
                               program.programId,
-                              program.chainID,
                               program.applicationConfig?.isEnabled || false
                             );
                           }

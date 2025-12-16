@@ -23,8 +23,7 @@ import { getAIColumnVisibility } from "../helper/getAIColumnVisibility";
 import { ApplicationList } from "./ApplicationList";
 
 interface IApplicationListWithAPIProps {
-  programId: string;
-  chainId: number;
+  programId: string; // May be in format "programId" or "programId_chainId"
   onApplicationSelect?: (application: IFundingApplication) => void;
   onApplicationHover?: (applicationId: string) => void;
   showStatusActions?: boolean;
@@ -35,7 +34,6 @@ interface IApplicationListWithAPIProps {
 
 const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   programId,
-  chainId,
   onApplicationSelect,
   onApplicationHover,
   showStatusActions = false,
@@ -94,7 +92,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     updateApplicationStatus,
     isUpdatingStatus,
     refetch,
-  } = useFundingApplications(programId, chainId, { ...filters, sortBy, sortOrder });
+  } = useFundingApplications(programId, { ...filters, sortBy, sortOrder });
 
   // Load more function for infinite scroll
   const loadMore = useCallback(() => {
@@ -103,10 +101,10 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const { exportApplications, isExporting } = useApplicationExport(programId, chainId, isAdmin);
+  const { exportApplications, isExporting } = useApplicationExport(programId, isAdmin);
 
   // Fetch program config and program data to determine AI column visibility
-  const { config } = useProgramConfig(programId, chainId);
+  const { config } = useProgramConfig(programId);
   const { data: program } = useProgram(programId);
 
   // Fetch reviewers for the program
