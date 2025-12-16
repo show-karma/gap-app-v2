@@ -219,13 +219,10 @@ export const MultiSelectDropdown = ({
                   key={item.id}
                   className={cn(
                     "w-full flex items-center justify-between rounded-md px-3 py-2 text-sm bg-transparent border-none text-left mb-1 last:mb-0",
-                    isDisabled
-                      ? "cursor-not-allowed opacity-50"
-                      : "cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700",
+                    "cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700",
                     localSelectedIds.includes(item.id) && "bg-gray-100 dark:bg-zinc-700"
                   )}
                   onClick={() => toggleItem(item.id)}
-                  disabled={isDisabled}
                 >
                   <span>{item.label}</span>
                   {localSelectedIds.includes(item.id) && (

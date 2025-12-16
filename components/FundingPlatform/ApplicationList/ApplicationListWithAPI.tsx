@@ -109,9 +109,17 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   const { config } = useProgramConfig(programId, chainId);
   const { data: program } = useProgram(programId);
 
-  // Fetch reviewers for the program (errors are handled gracefully - columns won't show if fetch fails)
-  const { data: programReviewers = [] } = useProgramReviewers(programId, chainId);
-  const { data: milestoneReviewers = [] } = useMilestoneReviewers(programId, chainId);
+  // Fetch reviewers for the program
+  const {
+    data: programReviewers = [],
+    isLoading: isLoadingProgramReviewers,
+    isError: isProgramReviewersError,
+  } = useProgramReviewers(programId, chainId);
+  const {
+    data: milestoneReviewers = [],
+    isLoading: isLoadingMilestoneReviewers,
+    isError: isMilestoneReviewersError,
+  } = useMilestoneReviewers(programId, chainId);
 
   // Determine column visibility based on configured prompts
   const { showAIScoreColumn, showInternalAIScoreColumn } = useMemo(
@@ -452,6 +460,10 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           showInternalAIScoreColumn={showInternalAIScoreColumn}
           programReviewers={programReviewers}
           milestoneReviewers={milestoneReviewers}
+          isLoadingProgramReviewers={isLoadingProgramReviewers}
+          isProgramReviewersError={isProgramReviewersError}
+          isLoadingMilestoneReviewers={isLoadingMilestoneReviewers}
+          isMilestoneReviewersError={isMilestoneReviewersError}
         />
       </InfiniteScroll>
     </div>

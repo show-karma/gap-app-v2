@@ -1,5 +1,6 @@
 "use client";
 
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import SortableTableHeader from "@/components/Utilities/SortableTableHeader";
@@ -36,6 +37,10 @@ interface IApplicationListComponentProps extends IApplicationListProps {
   showInternalAIScoreColumn?: boolean;
   programReviewers?: ProgramReviewer[];
   milestoneReviewers?: MilestoneReviewer[];
+  isLoadingProgramReviewers?: boolean;
+  isProgramReviewersError?: boolean;
+  isLoadingMilestoneReviewers?: boolean;
+  isMilestoneReviewersError?: boolean;
   onReviewerAssignmentChange?: () => void;
 }
 
@@ -69,6 +74,10 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   showInternalAIScoreColumn = false,
   programReviewers = [],
   milestoneReviewers = [],
+  isLoadingProgramReviewers = false,
+  isProgramReviewersError = false,
+  isLoadingMilestoneReviewers = false,
+  isMilestoneReviewersError = false,
   onReviewerAssignmentChange,
 }) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -232,12 +241,34 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                 />
                 {showAppReviewersColumn && (
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                    App Reviewers
+                    <div className="flex items-center gap-2">
+                      <span>App Reviewers</span>
+                      {isLoadingProgramReviewers && (
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
+                      )}
+                      {isProgramReviewersError && (
+                        <ExclamationCircleIcon
+                          className="h-4 w-4 text-yellow-500"
+                          title="Failed to load reviewers. The column may not display correctly."
+                        />
+                      )}
+                    </div>
                   </th>
                 )}
                 {showMilestoneReviewersColumn && (
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                    Milestone Reviewers
+                    <div className="flex items-center gap-2">
+                      <span>Milestone Reviewers</span>
+                      {isLoadingMilestoneReviewers && (
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
+                      )}
+                      {isMilestoneReviewersError && (
+                        <ExclamationCircleIcon
+                          className="h-4 w-4 text-yellow-500"
+                          title="Failed to load reviewers. The column may not display correctly."
+                        />
+                      )}
+                    </div>
                   </th>
                 )}
                 {showStatusActions && (
