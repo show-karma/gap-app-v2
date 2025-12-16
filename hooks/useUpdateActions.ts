@@ -291,25 +291,25 @@ export const useUpdateActions = (update: UpdateType) => {
     const shareDictionary = {
       ProjectUpdate: SHARE_TEXTS.PROJECT_ACTIVITY(
         project?.details?.title as string,
-        project?.uid as string
+        (project?.details?.slug || project?.uid) as string
       ),
       GrantUpdate: SHARE_TEXTS.GRANT_UPDATE(
         project?.details?.title as string,
-        project?.uid as string,
+        (project?.details?.slug || project?.uid) as string,
         update.uid
       ),
       ProjectMilestone: SHARE_TEXTS.GRANT_UPDATE(
         project?.details?.title as string,
-        project?.uid as string,
+        (project?.details?.slug || project?.uid) as string,
         update.uid
       ),
       ProjectImpact: SHARE_TEXTS.PROJECT_ACTIVITY(
         project?.details?.title as string,
-        project?.uid as string
+        (project?.details?.slug || project?.uid) as string
       ),
       Milestone: SHARE_TEXTS.PROJECT_ACTIVITY(
         project?.details?.title as string,
-        project?.uid as string
+        (project?.details?.slug || project?.uid) as string
       ),
     };
 

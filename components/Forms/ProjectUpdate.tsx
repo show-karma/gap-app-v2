@@ -665,7 +665,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                   modalShareSecondText: `That's how progress gets done! Your update is now live onchain—one step closer to greatness. Keep the vibes high and the milestones rolling! 🚀🔥`,
                   shareText: SHARE_TEXTS.PROJECT_ACTIVITY(
                     project?.details?.title as string,
-                    project?.uid as string
+                    (project?.details?.slug || project?.uid) as string
                   ),
                 });
               }

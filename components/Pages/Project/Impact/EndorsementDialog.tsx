@@ -142,7 +142,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
               modalShareText: `Well played! Project ${project?.details?.title} now has your epic endorsement 🎯🐉!`,
               shareText: SHARE_TEXTS.PROJECT_ENDORSEMENT(
                 project?.details?.title as string,
-                project?.uid as string
+                (project?.details?.slug || project?.uid) as string
               ),
               modalShareSecondText: ` `,
             });
