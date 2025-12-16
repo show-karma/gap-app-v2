@@ -262,7 +262,6 @@ export function ProgramDetailsTab({
       // Use V2 update endpoint
       await ProgramRegistryService.updateProgram(
         programIdToUpdate,
-        chainId,
         metadata
       );
 

@@ -145,11 +145,10 @@ export const fundingProgramsAPI = {
    * Get program configuration including form schema
    */
   async getProgramConfiguration(
-    programId: string,
-    chainId: number
+    programId: string
   ): Promise<FundingProgram | null> {
     const [data, error] = await fetchData<FundingProgram>(
-      INDEXER.V2.FUNDING_PROGRAMS.GET(programId, chainId)
+      INDEXER.V2.FUNDING_PROGRAMS.GET(programId)
     );
 
     if (error) {
@@ -216,12 +215,11 @@ export const fundingProgramsAPI = {
    */
   async createProgramConfiguration(
     programId: string,
-    chainId: number,
     config: Partial<IFundingProgramConfig | null>
   ): Promise<IFundingProgramConfig> {
     // If config exists, use POST to update
     const response = await apiClient.post(
-      `/v2/funding-program-configs/${programId}/${chainId.toString()}`,
+      `/v2/funding-program-configs/${programId}`,
       config
     );
     return response.data;
@@ -232,12 +230,11 @@ export const fundingProgramsAPI = {
    */
   async updateProgramConfiguration(
     programId: string,
-    chainId: number,
     config: Partial<IFundingProgramConfig | null>
   ): Promise<IFundingProgramConfig> {
     // If config exists, use PUT to update
     const response = await apiClient.put(
-      `/v2/funding-program-configs/${programId}/${chainId.toString()}`,
+      `/v2/funding-program-configs/${programId}`,
       config
     );
     return response.data;
@@ -248,22 +245,21 @@ export const fundingProgramsAPI = {
    */
   async updateFormSchema(
     programId: string,
-    chainId: number,
     formSchema: IFormSchema
   ): Promise<IFundingProgramConfig> {
     try {
-      const existingConfig = await this.getProgramConfiguration(programId, chainId);
+      const existingConfig = await this.getProgramConfiguration(programId);
       const updatedConfig = {
         ...existingConfig,
         formSchema: formSchema,
       };
 
       // Use updateProgramConfiguration which handles POST/PUT logic
-      return this.updateProgramConfiguration(programId, chainId, updatedConfig);
+      return this.updateProgramConfiguration(programId, updatedConfig);
     } catch (error: any) {
       // If config doesn't exist, create new one with formSchema
       if (error.response?.status === 404 || !error.response) {
-        return this.updateProgramConfiguration(programId, chainId, {
+        return this.updateProgramConfiguration(programId, {
           formSchema,
         });
       }
@@ -276,19 +272,18 @@ export const fundingProgramsAPI = {
    */
   async toggleProgramStatus(
     programId: string,
-    chainId: number,
     enabled: boolean
   ): Promise<IFundingProgramConfig> {
     try {
-      const existingConfig = await this.getProgramConfiguration(programId, chainId);
-      return this.updateProgramConfiguration(programId, chainId, {
+      const existingConfig = await this.getProgramConfiguration(programId);
+      return this.updateProgramConfiguration(programId, {
         ...existingConfig,
         isEnabled: enabled,
       });
     } catch (error: any) {
       // If config doesn't exist, create new one with enabled status
       if (error.response?.status === 404 || !error.response) {
-        return this.updateProgramConfiguration(programId, chainId, {
+        return this.updateProgramConfiguration(programId, {
           isEnabled: enabled,
         });
       }
@@ -299,9 +294,9 @@ export const fundingProgramsAPI = {
   /**
    * Get program statistics (backward compatibility)
    */
-  async getProgramStats(programId: string, chainId: number): Promise<IApplicationStatistics> {
+  async getProgramStats(programId: string): Promise<IApplicationStatistics> {
     try {
-      const stats = await fundingApplicationsAPI.getApplicationStatistics(programId, chainId);
+      const stats = await fundingApplicationsAPI.getApplicationStatistics(programId);
       return stats;
     } catch (error) {
       console.warn(`Failed to fetch stats for program ${programId}:`, error);
@@ -324,7 +319,7 @@ export const fundingApplicationsAPI = {
    */
   async submitApplication(request: IApplicationSubmitRequest): Promise<IFundingApplication> {
     const response = await apiClient.post(
-      `/v2/funding-applications/${request.programId}/${request.chainID.toString()}`,
+      `/v2/funding-applications/${request.programId}`,
       request
     );
     return response.data;
@@ -360,7 +355,6 @@ export const fundingApplicationsAPI = {
    */
   async getApplicationsByProgram(
     programId: string,
-    chainId: number,
     filters: IApplicationFilters = {}
   ): Promise<IPaginatedApplicationsResponse> {
     const params = new URLSearchParams();
@@ -375,7 +369,7 @@ export const fundingApplicationsAPI = {
     if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
 
     const [data, error] = await fetchData<IPaginatedApplicationsResponse>(
-      `${INDEXER.V2.FUNDING_APPLICATIONS.BY_PROGRAM(programId, chainId)}?${params}`
+      `${INDEXER.V2.FUNDING_APPLICATIONS.BY_PROGRAM(programId)}?${params}`
     );
 
     if (error || !data) {
@@ -430,11 +424,10 @@ export const fundingApplicationsAPI = {
    */
   async getApplicationByEmail(
     programId: string,
-    chainId: number,
     email: string
   ): Promise<IFundingApplication | null> {
     const [data, error] = await fetchData<IFundingApplication>(
-      INDEXER.V2.FUNDING_APPLICATIONS.BY_EMAIL(programId, chainId, email)
+      INDEXER.V2.FUNDING_APPLICATIONS.BY_EMAIL(programId, email)
     );
 
     if (error) {
@@ -452,11 +445,10 @@ export const fundingApplicationsAPI = {
    * Get application statistics for a program
    */
   async getApplicationStatistics(
-    programId: string,
-    chainId: number
+    programId: string
   ): Promise<IApplicationStatistics> {
     const [data, error] = await fetchData<IApplicationStatistics>(
-      INDEXER.V2.FUNDING_APPLICATIONS.STATISTICS(programId, chainId)
+      INDEXER.V2.FUNDING_APPLICATIONS.STATISTICS(programId)
     );
 
     if (error || !data) {
@@ -471,7 +463,6 @@ export const fundingApplicationsAPI = {
    */
   async exportApplications(
     programId: string,
-    chainId: number,
     format: ExportFormat = "json",
     filters: IApplicationFilters = {}
   ): Promise<{ data: any; filename?: string }> {
@@ -486,7 +477,7 @@ export const fundingApplicationsAPI = {
     if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
 
     const response = await apiClient.get(
-      `/v2/funding-applications/program/${programId}/${chainId.toString()}/export?${params}`,
+      `/v2/funding-applications/program/${programId}/export?${params}`,
       {
         responseType: format === "csv" ? "blob" : "json",
       }
@@ -511,7 +502,6 @@ export const fundingApplicationsAPI = {
    */
   async exportApplicationsAdmin(
     programId: string,
-    chainId: number,
     format: ExportFormat = "json",
     filters: IApplicationFilters = {}
   ): Promise<{ data: any; filename?: string }> {
@@ -526,7 +516,7 @@ export const fundingApplicationsAPI = {
     if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
 
     const response = await apiClient.get(
-      `/v2/funding-applications/admin/${programId}/${chainId.toString()}/export?${params}`,
+      `/v2/funding-applications/admin/${programId}/export?${params}`,
       {
         responseType: format === "csv" ? "blob" : "json",
       }

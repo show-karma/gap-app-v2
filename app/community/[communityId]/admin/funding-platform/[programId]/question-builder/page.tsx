@@ -19,9 +19,9 @@ export default function QuestionBuilderPage() {
     programId: string;
   };
 
-  // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split("_");
-  const parsedChainId = parseInt(chainId, 10);
+  // Use programId as-is (may be "programId" or "programId_chainId" format)
+  // Backend handles both formats
+  const programId = combinedProgramId;
 
   const { hasAccess, isLoading: isLoadingAdmin } = useCommunityAdminAccess(communityId);
 
@@ -31,7 +31,7 @@ export default function QuestionBuilderPage() {
     error: schemaError,
     updateSchema,
     isUpdating,
-  } = useQuestionBuilderSchema(programId, parsedChainId);
+  } = useQuestionBuilderSchema(programId);
 
   const {
     schema: existingPostApprovalSchema,
@@ -39,9 +39,9 @@ export default function QuestionBuilderPage() {
     error: postApprovalSchemaError,
     updateSchema: updatePostApprovalSchema,
     isUpdating: isUpdatingPostApproval,
-  } = usePostApprovalSchema(programId, parsedChainId);
+  } = usePostApprovalSchema(programId);
 
-  const { config: existingConfig } = useProgramConfig(programId, parsedChainId);
+  const { config: existingConfig } = useProgramConfig(programId);
 
   const handleSchemaChange = (schema: FormSchema) => {
     updateSchema({ schema, existingConfig: existingConfig || null });

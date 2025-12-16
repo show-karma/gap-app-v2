@@ -51,9 +51,9 @@ export default function ApplicationDetailPage() {
     applicationId: string;
   };
 
-  // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split("_");
-  const parsedChainId = parseInt(chainId, 10);
+  // Use programId as-is (may be "programId" or "programId_chainId" format)
+  // Backend handles both formats
+  const programId = combinedProgramId;
 
   const { hasAccess, isLoading: isLoadingAdmin, checks } = useCommunityAdminAccess(communityId);
 
@@ -82,10 +82,10 @@ export default function ApplicationDetailPage() {
   } = useApplication(applicationId);
 
   // Fetch program config
-  const { data: program, config } = useProgramConfig(programId, parsedChainId);
+  const { data: program, config } = useProgramConfig(programId);
 
   // Use the application status hook
-  const { updateStatusAsync } = useApplicationStatus(programId, parsedChainId);
+  const { updateStatusAsync } = useApplicationStatus(programId);
 
   // Use the comments hook
   const {

@@ -209,7 +209,6 @@ export class ProgramRegistryService {
    */
   static async updateProgram(
     programId: string,
-    chainId: number,
     metadata: ProgramMetadata
   ): Promise<void> {
     const request = {
@@ -217,7 +216,7 @@ export class ProgramRegistryService {
     };
 
     const [, updateError] = await fetchData(
-      INDEXER.REGISTRY.V2.UPDATE(programId, chainId),
+      INDEXER.REGISTRY.V2.UPDATE(programId),
       "PUT",
       request,
       {},
@@ -232,16 +231,14 @@ export class ProgramRegistryService {
 
   /**
    * Approve/reject/pending a program (V2 endpoint)
-   * Uses domain identifier (programId + chainId) instead of MongoDB _id
+   * Uses programId only (chainId removed from endpoint)
    */
   static async approveProgram(
     programId: string,
-    chainId: number,
     isValid: "accepted" | "rejected" | "pending" = "accepted"
   ): Promise<void> {
     const request = {
       programId,
-      chainId,
       isValid,
     };
 
