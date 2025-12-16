@@ -3,15 +3,22 @@ import type { Hex } from "viem";
 export const INDEXER = {
   ATTESTATION_LISTENER: (hash: Hex | string, chainId: number) =>
     `/attestations/index-by-transaction/${hash}/${chainId}`,
+  ATTESTATIONS: {
+    GET: (uid: string, chainId?: number) =>
+      `/attestations/${uid}${chainId ? `?chainId=${chainId}` : ""}`,
+  },
   PROFILE: {
     GET: (address: string) => `/user/${address}`,
   },
   REGISTRY: {
     GET_ALL: "/registry",
     FIND_BY_ID: (id: string, chainId: number) => `/registry/find/${id}/${chainId}`,
+    GET_ALL_PENDING: "/registry/pending",
     APPROVE: "/registry/approve",
     UPDATE: (id: string, chainId: number) => `/registry/${id}/${chainId}/updateMetadata`,
     CREATE: "/registry/offchain/create",
+    MANAGERS: (profileId: string, chainId: number) =>
+      `/registry/profile/${profileId}/${chainId}/members`,
   },
   PROJECTS: {
     GET_ALL: (offset: number, limit: number, sortField: string, sortOrder: "asc" | "desc") =>
@@ -41,6 +48,8 @@ export const INDEXER = {
     },
     SEARCH: (query: string, limit: number = 10) =>
       `/v2/search?q=${encodeURIComponent(query)}&limit=${limit}`,
+    FUNDING_DETAILS: (programId: string, chainId: number) =>
+      `/v2/program/funding-details?programId=${programId}&chainId=${chainId}`,
     FUNDING_PROGRAMS: {
       BY_COMMUNITY: (communityId: string) => `/v2/funding-program-configs/community/${communityId}`,
       GET: (programId: string, chainId: number) =>

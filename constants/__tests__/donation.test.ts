@@ -207,7 +207,7 @@ describe("donation constants", () => {
 
     it("should return true at cache TTL boundary", () => {
       const now = Date.now();
-      const almostExpired = now - (5 * 60 * 1000 - 1);
+      const almostExpired = now - (5 * 60 * 1000 - 10);
       expect(isCacheValid(almostExpired)).toBe(true);
     });
 

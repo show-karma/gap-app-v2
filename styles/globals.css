@@ -103,7 +103,7 @@ body * {
   }
   *::after {
     /* biome-ignore format: CSS escape sequence \A for line break must not be modified */
-    content: " A";
+    content: " \A";
     white-space: pre;
   }
   strong::after,
@@ -126,7 +126,7 @@ body * {
   }
   *::after {
     /* biome-ignore format: CSS escape sequence \A for line break must not be modified */
-    content: " A";
+    content: " \A";
     white-space: pre;
   }
   strong::after,
@@ -160,7 +160,7 @@ body * {
   }
   *::after {
     /* biome-ignore format: CSS escape sequence \A for line break must not be modified */
-    content: " A";
+    content: " \A";
     white-space: pre;
   }
   strong::after,
@@ -183,7 +183,7 @@ body * {
   }
   *::after {
     /* biome-ignore format: CSS escape sequence \A for line break must not be modified */
-    content: " A";
+    content: " \A";
     white-space: pre;
   }
   strong::after,
