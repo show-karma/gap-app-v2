@@ -131,7 +131,7 @@ export const MultiSelectDropdown = ({
       <button
         type="button"
         className={cn(
-          "relative flex min-h-[40px] w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-left text-sm outline-none transition-all dark:border-zinc-700 dark:bg-zinc-800",
+          "relative flex min-h-[40px] w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-left text-sm outline-none transition-all dark:border-zinc-700 dark:bg-zinc-800",
           isOpen && !isDisabled && "border-brand-blue dark:border-brand-blue",
           error && "border-red-500 dark:border-red-500",
           isDisabled && "cursor-not-allowed opacity-50"
@@ -139,17 +139,17 @@ export const MultiSelectDropdown = ({
         onClick={() => !isDisabled && setIsOpen(!isOpen)}
         disabled={isDisabled}
       >
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-1 min-w-0 flex-wrap gap-1">
           {selectedItems.length > 0 ? (
             selectedItems.map((item) => (
               <div
                 key={item.id}
                 className="flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1 text-xs dark:bg-zinc-700"
               >
-                <span>{item.label}</span>
+                <span className="truncate max-w-[200px]">{item.label}</span>
                 <XMarkIcon
                   className={cn(
-                    "h-3 w-3 text-gray-500 dark:text-zinc-400",
+                    "h-3 w-3 flex-shrink-0 text-gray-500 dark:text-zinc-400",
                     isDisabled
                       ? "cursor-not-allowed opacity-50"
                       : "cursor-pointer hover:text-gray-700 dark:hover:text-zinc-200"
@@ -163,7 +163,7 @@ export const MultiSelectDropdown = ({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-shrink-0 items-center gap-2">
           {selectedItems.length > 0 && (
             <button
               type="button"
