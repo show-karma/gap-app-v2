@@ -190,7 +190,5 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
   );
 };
 
-const ApplicationList = React.memo(ApplicationListComponent);
+export const ApplicationList = React.memo(ApplicationListComponent);
 ApplicationList.displayName = "ApplicationList";
-
-export default ApplicationList;

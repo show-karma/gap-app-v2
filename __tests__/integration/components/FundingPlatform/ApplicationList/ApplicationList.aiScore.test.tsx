@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
 import type React from "react";
-import ApplicationList from "@/components/FundingPlatform/ApplicationList/ApplicationList";
+import { ApplicationList } from "@/components/FundingPlatform/ApplicationList/ApplicationList";
 import type { IFundingApplication } from "@/types/funding-platform";
 
 // Mock the helper functions

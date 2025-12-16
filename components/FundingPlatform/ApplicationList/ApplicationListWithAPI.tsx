@@ -20,7 +20,7 @@ import type { IApplicationFilters } from "@/services/fundingPlatformService";
 import type { IFundingApplication } from "@/types/funding-platform";
 import formatCurrency from "@/utilities/formatCurrency";
 import { getAIColumnVisibility } from "../helper/getAIColumnVisibility";
-import ApplicationList from "./ApplicationList";
+import { ApplicationList } from "./ApplicationList";
 
 interface IApplicationListWithAPIProps {
   programId: string;
