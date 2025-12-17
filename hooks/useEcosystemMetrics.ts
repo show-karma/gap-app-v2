@@ -19,8 +19,8 @@ export function useEcosystemMetrics(params?: GetEcosystemMetricsParams, enabled:
   ];
 
   const queryFn = async (): Promise<EcosystemMetricsResponse | null> => {
-    if (!communityId) return null;
-    return await getEcosystemMetrics(communityId as string, params);
+    if (!communityId || Array.isArray(communityId)) return null;
+    return await getEcosystemMetrics(communityId, params);
   };
 
   return useQuery<EcosystemMetricsResponse | null>({

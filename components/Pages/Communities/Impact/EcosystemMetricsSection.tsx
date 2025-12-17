@@ -3,71 +3,18 @@ import { AreaChart, Card } from "@tremor/react";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useEcosystemMetrics } from "@/hooks/useEcosystemMetrics";
-import type { EcosystemMetric, EcosystemMetricsResponse } from "@/types/ecosystem-metrics";
-import formatCurrency from "@/utilities/formatCurrency";
+import type { EcosystemMetric } from "@/types/ecosystem-metrics";
 import { formatDate } from "@/utilities/formatDate";
+import {
+  formatChartValue,
+  formatMetricValue,
+  isValidEcosystemMetricsResponse,
+  prepareChartDataForMetric,
+} from "./ecosystemMetricsUtils";
 import { type TimeframeOption, TimeframeSelector } from "./TimeframeSelector";
-
-const formatMetricValue = (value: string, unit: string): string => {
-  const numValue = parseFloat(value);
-  if (Number.isNaN(numValue)) return value;
-
-  // Handle very small numbers (less than 0.0001) with more precision
-  if (numValue > 0 && numValue < 0.0001) {
-    // Use scientific notation or more decimal places for very small numbers
-    if (numValue < 0.000001) {
-      return `${numValue.toExponential(2)} ${unit}`;
-    }
-    // For slightly larger small numbers, show more decimal places
-    return `${numValue.toFixed(8).replace(/\.?0+$/, "")} ${unit}`;
-  }
-
-  // Use standard formatting for normal-sized numbers
-  return `${formatCurrency(numValue)} ${unit}`;
-};
-
-const formatChartValue = (value: number, unit: string): string => {
-  // Handle very small numbers for chart tooltips
-  if (value > 0 && value < 0.0001) {
-    if (value < 0.000001) {
-      return `${value.toExponential(2)} ${unit}`;
-    }
-    return `${value.toFixed(8).replace(/\.?0+$/, "")} ${unit}`;
-  }
-  return `${formatCurrency(value)} ${unit}`;
-};
-
-const prepareChartDataForMetric = (metric: EcosystemMetric) => {
-  if (!metric.datapoints || metric.datapoints.length === 0) {
-    return [];
-  }
-
-  // Sort datapoints by date ascending
-  const sortedDatapoints = [...metric.datapoints].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
-
-  // Build chart data
-  return sortedDatapoints.map((dp) => ({
-    date: formatDate(new Date(dp.date), "UTC"),
-    [metric.name]: parseFloat(dp.value) || 0,
-  }));
-};
 
 // Only show ecosystem metrics for Filecoin community
 const FILECOIN_COMMUNITY_SLUGS = ["filecoin", "fil"];
-
-// Type guard to validate ecosystem metrics response
-function isValidEcosystemMetricsResponse(data: unknown): data is EcosystemMetricsResponse {
-  return (
-    data !== null &&
-    typeof data === "object" &&
-    "communityUID" in data &&
-    typeof (data as { communityUID: unknown }).communityUID === "string" &&
-    "metrics" in data &&
-    Array.isArray((data as { metrics: unknown }).metrics)
-  );
-}
 
 // Chart skeleton component for loading state
 const ChartSkeleton = () => {
