@@ -136,7 +136,8 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
       // Filter to programs in this community that user is milestone reviewer for
       const programCommunityId = program.communitySlug || program.communityUID;
       if (programCommunityId === communityId && program.isMilestoneReviewer) {
-        allowedSet.add(`${program.programId}_${program.chainID}`);
+        // Use normalized programId (without chainId suffix)
+        allowedSet.add(program.programId);
       }
     });
 
@@ -162,16 +163,26 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
   const [sortOrder, setSortOrder] = useState("desc");
   const [selectedProgramIds, setSelectedProgramIds] = useQueryState("programIds", {
     defaultValue: [] as string[],
-    serialize: (value) => value?.join(","),
-    parse: (value) => (value ? value.split(",") : null),
+    serialize: (value) => {
+      // Normalize programIds (remove chainId suffix if present) before serializing to URL
+      const normalized = value?.map((id) => (id.includes("_") ? id.split("_")[0] : id)) ?? [];
+      return normalized.join(",");
+    },
+    parse: (value) => {
+      // Normalize programIds when reading from URL (remove chainId suffix if present)
+      if (!value) return null;
+      return value.split(",").map((id) => (id.includes("_") ? id.split("_")[0] : id));
+    },
   });
 
   const programOptions = useMemo(() => {
     const allPrograms = grantPrograms
       .filter((program) => program.programId && program.chainID !== undefined)
       .map((program) => {
-        const value = `${program.programId}_${program.chainID}`;
+        // Use normalized programId (without chainId suffix)
+        const value = program.programId;
         const title = program.metadata?.title?.trim();
+        // Show program name and programId (without chainId)
         const label = title ? `${title} (${value})` : value;
         return { value, label };
       });
@@ -200,8 +211,11 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
       return [];
     }
 
-    // Validate all program IDs
-    const validation = validateProgramIdentifiers(ids);
+    // Normalize programIds (remove chainId suffix if present)
+    const normalizedIds = ids.map((id) => (id.includes("_") ? id.split("_")[0] : id));
+
+    // Validate all program IDs (after normalization)
+    const validation = validateProgramIdentifiers(normalizedIds);
 
     // Log errors if any invalid IDs found
     if (validation.errors.length > 0) {
@@ -212,8 +226,8 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
       });
     }
 
-    // Only return valid IDs (reconstruct from validated components)
-    return validation.validIds.map(({ programId, chainID }) => `${programId}_${chainID}`);
+    // Return normalized programIds (without chainId suffix)
+    return validation.validIds.map(({ programId }) => programId);
   }, [selectedProgramIds]);
 
   // Show warning when invalid program IDs are detected
