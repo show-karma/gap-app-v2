@@ -3,7 +3,7 @@
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import debounce from "lodash.debounce";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
-import type { Control, FieldError } from "react-hook-form";
+import type { Control, FieldError, FieldErrorsImpl, Merge } from "react-hook-form";
 import { Controller, useWatch } from "react-hook-form";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useProject } from "@/hooks/useProject";
@@ -14,9 +14,11 @@ import { cn } from "@/utilities/tailwind";
 
 interface KarmaProfileLinkInputProps {
   field: IFormField;
-  control: Control<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Generic form control type for flexible form integration
+  control: Control<Record<string, any>>;
   fieldKey: string;
-  error?: FieldError | any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Accepts various react-hook-form error types
+  error?: FieldError | Merge<FieldError, FieldErrorsImpl<any>>;
   isLoading?: boolean;
 }
 
@@ -262,7 +264,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
             {/* Error Message */}
             {error && (
               <p className="text-sm text-red-500 mt-1">
-                {error.message || "This field is required"}
+                {typeof error.message === "string" ? error.message : "This field is required"}
               </p>
             )}
           </div>

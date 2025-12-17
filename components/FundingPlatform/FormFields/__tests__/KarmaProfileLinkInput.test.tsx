@@ -223,12 +223,14 @@ describe("KarmaProfileLinkInput Component", () => {
       const projectOption = screen.getByText("Test Project");
       fireEvent.click(projectOption);
 
-      // Should display the selected project in the confirmation area
-      // The project title should still be visible (in the selected state display)
+      // After selection, the input is cleared and the selected project is shown in a separate display
       await waitFor(() => {
-        // The input should now show the project title
-        expect(input).toHaveValue("Test Project");
+        // The input should be cleared after selection
+        expect(input).toHaveValue("");
       });
+
+      // The project title should be visible in the selected project display card
+      expect(screen.getByText("Test Project")).toBeInTheDocument();
     });
 
     it("should clear selection when X button is clicked", async () => {

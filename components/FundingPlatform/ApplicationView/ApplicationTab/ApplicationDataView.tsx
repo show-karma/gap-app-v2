@@ -2,41 +2,11 @@
 
 import type { FC, JSX } from "react";
 import { useMemo } from "react";
+import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProjectLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { useProject } from "@/hooks/useProject";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
-import { envVars } from "@/utilities/enviromentVars";
+import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
-
-// Sub-component for displaying karma_profile_link with project name
-const KarmaProjectLink: FC<{ uid: string }> = ({ uid }) => {
-  const { project, isLoading } = useProject(uid);
-
-  if (isLoading) {
-    return <span className="text-gray-500 animate-pulse">Loading project...</span>;
-  }
-
-  const displayName = project?.details?.title || `${uid.slice(0, 10)}...`;
-
-  return (
-    <a
-      href={`${envVars.KARMA_BASE_URL}/project/${uid}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
-    >
-      {displayName}
-      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-        />
-      </svg>
-    </a>
-  );
-};
 
 export interface ApplicationDataViewProps {
   application: IFundingApplication;
@@ -44,34 +14,15 @@ export interface ApplicationDataViewProps {
 }
 
 export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application, program }) => {
-  // Resolve form schema from program object
-  const formSchema = (program as any)?.applicationConfig?.formSchema || program?.formSchema;
+  // Resolve form schema from program object (handles both direct formSchema and nested applicationConfig.formSchema)
+  const programAny = program as Record<string, unknown> | null | undefined;
+  const formSchema =
+    (programAny?.applicationConfig as Record<string, unknown> | undefined)?.formSchema ||
+    programAny?.formSchema;
 
-  // Create field labels mapping from program schema
-  const fieldLabels: Record<string, string> = {};
-  if (formSchema?.fields) {
-    formSchema.fields.forEach((field: any) => {
-      if (field.id && field.label) {
-        fieldLabels[field.id] = field.label;
-      }
-    });
-  }
-
-  // Create field type mapping from program schema (maps field.id and field.label -> field.type)
-  const fieldTypeMap = useMemo(() => {
-    const types: Record<string, string> = {};
-    if (formSchema?.fields) {
-      formSchema.fields.forEach((field: any) => {
-        if (field.id && field.type) {
-          types[field.id] = field.type;
-        }
-        if (field.label && field.type) {
-          types[field.label] = field.type;
-        }
-      });
-    }
-    return types;
-  }, [formSchema]);
+  // Create field labels and type mappings from program schema
+  const fieldLabels = useMemo(() => createFieldLabelsMap(formSchema), [formSchema]);
+  const fieldTypeMap = useMemo(() => createFieldTypeMap(formSchema), [formSchema]);
 
   const renderFieldValue = (value: any, fieldKey?: string): JSX.Element => {
     if (Array.isArray(value)) {

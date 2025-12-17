@@ -191,11 +191,10 @@ describe("useProjectSearch", () => {
       });
 
       await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
         expect(result.current.projects).toEqual([]);
+        expect(result.current.isError).toBe(false);
       });
-
-      expect(result.current.isLoading).toBe(false);
-      expect(result.current.isError).toBe(false);
     });
   });
 
