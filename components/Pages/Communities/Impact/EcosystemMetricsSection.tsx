@@ -175,7 +175,7 @@ export const EcosystemMetricsSection = () => {
         </div>
 
         {/* Loading Skeletons - show 2 skeleton cards */}
-        <div className={`grid grid-cols-2 gap-6 max-md:flex max-md:flex-col`}>
+        <div className="grid grid-cols-2 gap-6 max-md:flex max-md:flex-col">
           <ChartSkeleton />
           <ChartSkeleton />
         </div>
@@ -247,7 +247,7 @@ export const EcosystemMetricsSection = () => {
       </div>
 
       {/* Individual Metric Cards with Charts - in 2x2 grid like activities/outputs */}
-      <div className={`grid grid-cols-2 gap-6 max-md:flex max-md:flex-col`}>
+      <div className="grid grid-cols-2 gap-6 max-md:flex max-md:flex-col">
         {metrics.map((metric, index) => (
           <MetricCard key={metric.id} metric={metric} color={colors[index % colors.length]} />
         ))}
