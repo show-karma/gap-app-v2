@@ -36,39 +36,6 @@ export async function getEcosystemMetrics(
       return null;
     }
 
-    // #region agent log
-    fetch("http://127.0.0.1:7243/ingest/db28d8a4-4dd0-431b-a175-d7cd91606f2f", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "getEcosystemMetrics.ts:39",
-        message: "API response received",
-        data: {
-          hasData: !!data,
-          totalMetrics: (data as any)?.totalMetrics,
-          metricsLength: (data as any)?.metrics?.length,
-          metrics: (data as any)?.metrics?.map((m: any) => ({
-            id: m.id,
-            name: m.name,
-            datapointCount: m.datapointCount,
-            hasLatestValue: !!m.latestValue,
-            latestValue: m.latestValue,
-            latestDate: m.latestDate,
-            datapointsLength: m.datapoints?.length,
-            firstDatapointDate: m.datapoints?.[0]?.date,
-            lastDatapointDate: m.datapoints?.[m.datapoints?.length - 1]?.date,
-          })),
-          dateRange: (data as any)?.dateRange,
-          params,
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "G",
-      }),
-    }).catch(() => {});
-    // #endregion
-
     return data as EcosystemMetricsResponse;
   } catch (error) {
     console.error("Error fetching ecosystem metrics:", error);

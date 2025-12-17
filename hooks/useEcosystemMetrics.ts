@@ -7,7 +7,7 @@ import {
   getEcosystemMetrics,
 } from "@/utilities/registry/getEcosystemMetrics";
 
-export function useEcosystemMetrics(params?: GetEcosystemMetricsParams) {
+export function useEcosystemMetrics(params?: GetEcosystemMetricsParams, enabled: boolean = true) {
   const { communityId } = useParams();
 
   const queryKey = [
@@ -26,7 +26,7 @@ export function useEcosystemMetrics(params?: GetEcosystemMetricsParams) {
   return useQuery<EcosystemMetricsResponse | null>({
     queryKey,
     queryFn,
-    enabled: !!communityId,
+    enabled: enabled && !!communityId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
