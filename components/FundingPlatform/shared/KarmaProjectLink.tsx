@@ -9,10 +9,19 @@ interface KarmaProjectLinkProps {
 }
 
 export const KarmaProjectLink: FC<KarmaProjectLinkProps> = ({ uid }) => {
-  const { project, isLoading } = useProject(uid);
+  const { project, isLoading, isError } = useProject(uid);
 
   if (isLoading) {
     return <span className="text-gray-500 animate-pulse">Loading project...</span>;
+  }
+
+  if (isError) {
+    return (
+      <span className="text-red-600 dark:text-red-400 inline-flex items-center gap-1">
+        <span>Failed to load project</span>
+        <span className="text-xs text-gray-500">({uid.slice(0, 10)}...)</span>
+      </span>
+    );
   }
 
   const displayName = project?.details?.title || `${uid.slice(0, 10)}...`;

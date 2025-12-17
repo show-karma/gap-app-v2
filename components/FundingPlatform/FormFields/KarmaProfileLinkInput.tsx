@@ -46,7 +46,9 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
     typeof formValue === "string" &&
     /^0x[a-fA-F0-9]{64}$/.test(formValue);
 
-  const { project: existingProject } = useProject(shouldFetchProject ? formValue : "");
+  const { project: existingProject, isError: existingProjectError } = useProject(
+    shouldFetchProject ? formValue : ""
+  );
 
   // Determine which project to display (user-selected takes priority over existing)
   const displayProject =
@@ -210,6 +212,18 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                       {displayProject.details?.slug || displayProject.uid}
                     </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Error State - when linked project couldn't be loaded */}
+              {existingProjectError && !displayProject && hasValue && (
+                <div className="mt-2 flex items-center gap-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-red-700 dark:text-red-400">
+                      Failed to load linked project
+                    </p>
+                    <p className="text-xs text-red-600 dark:text-red-500 truncate">UID: {value}</p>
                   </div>
                 </div>
               )}
