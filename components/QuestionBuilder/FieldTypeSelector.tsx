@@ -72,7 +72,7 @@ export const fieldTypes = [
   {
     type: "karma_profile_link" as const,
     label: "Karma profile link",
-    icon: "🔗",
+    icon: "🔍",
     description: "Search and select an existing Karma project profile",
   },
 ];
