@@ -11,6 +11,7 @@ import { useProjectSearch } from "@/hooks/useProjectSearch";
 import type { SearchProjectResult } from "@/services/unified-search.service";
 import type { IFormField } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
+import { PROJECT_UID_REGEX } from "@/utilities/validation";
 
 interface KarmaProfileLinkInputProps {
   field: IFormField;
@@ -44,7 +45,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
     !selectedProject &&
     formValue &&
     typeof formValue === "string" &&
-    /^0x[a-fA-F0-9]{64}$/.test(formValue);
+    PROJECT_UID_REGEX.test(formValue);
 
   const { project: existingProject, isError: existingProjectError } = useProject(
     shouldFetchProject ? formValue : ""

@@ -24,6 +24,7 @@ import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schem
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { isFundingProgramConfig } from "@/utilities/type-guards";
+import { isValidProjectUid } from "@/utilities/validation";
 import { getProjectTitle } from "../helper/getProjecTitle";
 import { AIEvaluationDisplay } from "./AIEvaluation";
 import AIEvaluationButton from "./AIEvaluationButton";
@@ -315,11 +316,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
 
     // Handle Karma profile link fields (use field type from schema)
     const fieldType = fieldKey ? fieldTypeMap[fieldKey] : undefined;
-    if (
-      fieldType === "karma_profile_link" &&
-      typeof value === "string" &&
-      /^0x[a-fA-F0-9]{64}$/.test(value)
-    ) {
+    if (fieldType === "karma_profile_link" && isValidProjectUid(value)) {
       return <KarmaProjectLink uid={value} />;
     }
 
