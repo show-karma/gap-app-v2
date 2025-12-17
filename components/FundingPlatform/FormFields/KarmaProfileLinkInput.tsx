@@ -3,7 +3,6 @@
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import debounce from "lodash.debounce";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import type { Control, FieldError } from "react-hook-form";
 import { Controller, useWatch } from "react-hook-form";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
@@ -32,38 +31,36 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedProject, setSelectedProject] = useState<SearchProjectResult | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [inputRect, setInputRect] = useState<DOMRect | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const inputContainerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Watch the form value at top level (required for hooks rules)
   const formValue = useWatch({ control, name: fieldKey });
 
-  // Fetch existing project details for edit mode (at top level)
+  // Fetch existing project details for edit mode display
   const shouldFetchProject =
     !selectedProject &&
     formValue &&
     typeof formValue === "string" &&
     /^0x[a-fA-F0-9]{64}$/.test(formValue);
+
   const { project: existingProject } = useProject(shouldFetchProject ? formValue : "");
 
-  // Sync existing project to local state when loaded
-  useEffect(() => {
-    if (existingProject && !selectedProject && !searchQuery) {
-      setSelectedProject({
-        uid: existingProject.uid,
-        chainID: existingProject.chainID,
-        createdAt: existingProject.createdAt || "",
-        details: {
-          title: existingProject.details?.title || "Untitled Project",
-          slug: existingProject.details?.slug || "",
-          logoUrl: existingProject.details?.logoUrl || undefined,
-        },
-      });
-      setSearchQuery(existingProject.details?.title || "");
-    }
-  }, [existingProject, selectedProject, searchQuery]);
+  // Determine which project to display (user-selected takes priority over existing)
+  const displayProject =
+    selectedProject ||
+    (existingProject
+      ? {
+          uid: existingProject.uid,
+          chainID: existingProject.chainID,
+          createdAt: existingProject.createdAt || "",
+          details: {
+            title: existingProject.details?.title || "Untitled Project",
+            slug: existingProject.details?.slug || "",
+            logoUrl: existingProject.details?.logoUrl || undefined,
+          },
+        }
+      : null);
 
   // Use the React Query hook
   const {
@@ -94,12 +91,10 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(target) &&
-        dropdownRef.current &&
-        !dropdownRef.current.contains(target)
-      ) {
+      const isInsideContainer = containerRef.current?.contains(target);
+      const isInsideDropdown = dropdownRef.current?.contains(target);
+
+      if (!isInsideContainer && !isInsideDropdown) {
         setIsDropdownOpen(false);
       }
     };
@@ -113,34 +108,12 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
     };
   }, [isDropdownOpen]);
 
-  // Note: Dropdown only opens on focus, not automatically when results load
-  // This prevents the dropdown from showing when loading existing data in edit mode
-
-  // Update input rect when dropdown opens
+  // Open dropdown when search results arrive
   useEffect(() => {
-    if (isDropdownOpen && inputContainerRef.current) {
-      setInputRect(inputContainerRef.current.getBoundingClientRect());
+    if (projects.length > 0 && debouncedQuery.length >= 3) {
+      setIsDropdownOpen(true);
     }
-  }, [isDropdownOpen]);
-
-  // Update position on scroll/resize
-  useEffect(() => {
-    if (!isDropdownOpen) return;
-
-    const updatePosition = () => {
-      if (inputContainerRef.current) {
-        setInputRect(inputContainerRef.current.getBoundingClientRect());
-      }
-    };
-
-    window.addEventListener("scroll", updatePosition, true);
-    window.addEventListener("resize", updatePosition);
-
-    return () => {
-      window.removeEventListener("scroll", updatePosition, true);
-      window.removeEventListener("resize", updatePosition);
-    };
-  }, [isDropdownOpen]);
+  }, [projects, debouncedQuery]);
 
   const handleInputChange = (value: string) => {
     setSearchQuery(value);
@@ -149,7 +122,8 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
 
   const handleSelectProject = (project: SearchProjectResult, onChange: (value: string) => void) => {
     setSelectedProject(project);
-    setSearchQuery(project.details?.title || "");
+    setSearchQuery("");
+    setDebouncedQuery("");
     setIsDropdownOpen(false);
     onChange(project.uid);
   };
@@ -168,7 +142,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
       control={control}
       render={({ field: { onChange, value } }) => {
         const hasValue = value && typeof value === "string" && value.length > 0;
-        const showSelectedState = selectedProject || hasValue;
+        const showClearButton = displayProject || hasValue;
 
         return (
           <div className="flex w-full flex-col" ref={containerRef}>
@@ -181,7 +155,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{field.description}</p>
             )}
 
-            <div className="relative mt-2" ref={inputContainerRef}>
+            <div className="relative mt-2">
               {/* Search Input */}
               <div className="relative flex items-center">
                 <MagnifyingGlassIcon className="absolute left-3 w-5 h-5 text-gray-400 pointer-events-none z-10" />
@@ -206,7 +180,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                   )}
                   placeholder={field.placeholder || "Search for your Karma project..."}
                 />
-                {showSelectedState && (
+                {showClearButton && (
                   <button
                     type="button"
                     onClick={() => handleClear(onChange)}
@@ -219,79 +193,70 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
               </div>
 
               {/* Selected Project Display */}
-              {selectedProject && (
+              {displayProject && (
                 <div className="mt-2 flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                   <ProfilePicture
-                    imageURL={selectedProject.details?.logoUrl}
-                    name={selectedProject.uid || ""}
+                    imageURL={displayProject.details?.logoUrl}
+                    name={displayProject.uid || ""}
                     className="w-10 h-10 flex-shrink-0"
-                    alt={selectedProject.details?.title || "Project"}
+                    alt={displayProject.details?.title || "Project"}
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 dark:text-white truncate">
-                      {selectedProject.details?.title || "Untitled Project"}
+                      {displayProject.details?.title || "Untitled Project"}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {selectedProject.details?.slug || selectedProject.uid}
+                      {displayProject.details?.slug || displayProject.uid}
                     </p>
                   </div>
                 </div>
               )}
 
-              {/* Dropdown with Search Results - Rendered via Portal */}
-              {isDropdownOpen &&
-                typeof document !== "undefined" &&
-                createPortal(
-                  <div
-                    ref={dropdownRef}
-                    style={{
-                      position: "fixed",
-                      top: inputRect ? inputRect.bottom + 4 : 0,
-                      left: inputRect?.left ?? 0,
-                      width: inputRect?.width ?? "auto",
-                    }}
-                    className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg z-[9999] max-h-64 overflow-y-auto"
-                  >
-                    {isSearching || isFetching ? (
-                      <div className="flex items-center justify-center py-6">
-                        <div className="w-6 h-6 border-2 border-gray-300 dark:border-gray-600 border-t-blue-500 rounded-full animate-spin" />
-                      </div>
-                    ) : projects.length === 0 ? (
-                      <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                        {debouncedQuery.length < 3
-                          ? "Type at least 3 characters to search"
-                          : "No projects found"}
-                      </div>
-                    ) : (
-                      <div className="py-1">
-                        {projects.map((project) => (
-                          <button
-                            key={project.uid}
-                            type="button"
-                            onClick={() => handleSelectProject(project, onChange)}
-                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors text-left"
-                          >
-                            <ProfilePicture
-                              imageURL={project.details?.logoUrl}
-                              name={project.uid || ""}
-                              className="w-10 h-10 flex-shrink-0"
-                              alt={project.details?.title || "Project"}
-                            />
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-gray-900 dark:text-white truncate">
-                                {project.details?.title || "Untitled Project"}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                {project.details?.slug || `${project.uid.slice(0, 10)}...`}
-                              </p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>,
-                  document.body
-                )}
+              {/* Dropdown with Search Results */}
+              {isDropdownOpen && (
+                <div
+                  ref={dropdownRef}
+                  className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg z-[9999] max-h-64 overflow-y-auto"
+                >
+                  {isSearching || isFetching ? (
+                    <div className="flex items-center justify-center py-6">
+                      <div className="w-6 h-6 border-2 border-gray-300 dark:border-gray-600 border-t-blue-500 rounded-full animate-spin" />
+                    </div>
+                  ) : projects.length === 0 ? (
+                    <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                      {debouncedQuery.length < 3
+                        ? "Type at least 3 characters to search"
+                        : "No projects found"}
+                    </div>
+                  ) : (
+                    <div className="py-1">
+                      {projects.map((project) => (
+                        <button
+                          key={project.uid}
+                          type="button"
+                          onClick={() => handleSelectProject(project, onChange)}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors text-left"
+                        >
+                          <ProfilePicture
+                            imageURL={project.details?.logoUrl}
+                            name={project.uid || ""}
+                            className="w-10 h-10 flex-shrink-0"
+                            alt={project.details?.title || "Project"}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 dark:text-white truncate">
+                              {project.details?.title || "Untitled Project"}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              {project.details?.slug || `${project.uid.slice(0, 10)}...`}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Error Message */}
