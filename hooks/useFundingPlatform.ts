@@ -308,7 +308,8 @@ export const useFundingApplications = (
     isFetchingNextPage: applicationsQuery.isFetchingNextPage,
     hasNextPage: applicationsQuery.hasNextPage,
     fetchNextPage: applicationsQuery.fetchNextPage,
-    error: applicationsQuery.error || statsQuery.error,
+    error: applicationsQuery.error, // Only show error if applications query fails, stats are optional
+    statsError: statsQuery.error, // Separate error for stats (non-blocking)
     submitApplication: submitApplicationMutation.mutate,
     updateApplicationStatus: updateStatusMutation.mutate,
     isSubmitting: submitApplicationMutation.isPending,
@@ -643,7 +644,7 @@ export const useApplicationExport = (
         setIsExporting(false);
       }
     },
-    [programId, chainId, isAdmin]
+    [programId, isAdmin]
   );
 
   return {

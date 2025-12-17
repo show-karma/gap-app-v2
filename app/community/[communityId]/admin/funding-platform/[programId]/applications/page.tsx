@@ -12,6 +12,7 @@ import {
   useApplication,
   useApplicationStatus,
   useFundingApplications,
+  useProgramConfig,
 } from "@/hooks/useFundingPlatform";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
@@ -29,9 +30,16 @@ export default function ApplicationsPage() {
     programId: string;
   };
 
-  // Use programId as-is (may be "programId" or "programId_chainId" format)
-  // Backend handles both formats
-  const programId = combinedProgramId;
+  // Extract programId and chainId from URL parameter
+  // URL may contain "programId" or "programId_chainId" format
+  // For backward compatibility with V1 endpoints (permissions still need chainID)
+  const [normalizedProgramId, chainIdStr] = combinedProgramId.includes("_")
+    ? combinedProgramId.split("_")
+    : [combinedProgramId, null];
+  
+  const programId = normalizedProgramId;
+  // Extract chainId if present in composite format, otherwise try to get from program config
+  const parsedChainId = chainIdStr ? parseInt(chainIdStr, 10) : undefined;
 
   // Parse initial filters from URL
   const initialFilters = useMemo((): IApplicationFilters => {
@@ -66,17 +74,24 @@ export default function ApplicationsPage() {
   const { hasAccess: hasAdminAccess, isLoading: isLoadingAdmin } =
     useCommunityAdminAccess(communityId);
 
-  // Check if user is a reviewer for this program
+  // Fetch program config to get chainID if not in URL (for V2 endpoints that use programId only)
+  const { data: programConfig } = useProgramConfig(programId);
+  const chainID = parsedChainId ?? programConfig?.chainID;
+
+  // Check if user is a reviewer for this program (only if chainID is available)
+  // Note: V2 permissions endpoint still requires chainID for now
   const { hasPermission: canView, isLoading: isLoadingPermission } = usePermissions({
     programId,
-    chainID: parsedChainId,
+    chainID,
     action: "read",
+    enabled: !!chainID, // Only check permissions if chainID is available
   });
 
   const { hasPermission: _canComment } = usePermissions({
     programId,
-    chainID: parsedChainId,
+    chainID,
     action: "comment",
+    enabled: !!chainID, // Only check permissions if chainID is available
   });
 
   // Use the funding applications hook to get applications data
@@ -183,7 +198,7 @@ export default function ApplicationsPage() {
       <div className="sm:px-3 md:px-4 px-6 py-2 flex-1 ">
         <ApplicationListWithAPI
           programId={programId}
-          chainId={parsedChainId}
+          chainId={chainID}
           showStatusActions={isAdmin}
           onApplicationSelect={handleApplicationSelect}
           onApplicationHover={handleApplicationHover}

@@ -444,7 +444,6 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
       >
         <ApplicationList
           programId={programId}
-          chainID={chainId}
           applications={applications}
           isLoading={isLoading && applications.length === 0}
           onApplicationSelect={onApplicationSelect}

@@ -90,7 +90,7 @@ interface QuestionBuilderProps {
   onSave?: (schema: FormSchema) => void;
   className?: string;
   programId: string;
-  chainId: number;
+  chainId?: number; // Optional - V2 endpoints use programId only
   communityId: string;
   readOnly?: boolean;
   initialPostApprovalSchema?: FormSchema;

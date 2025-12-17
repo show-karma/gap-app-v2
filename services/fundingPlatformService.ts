@@ -432,7 +432,16 @@ export const fundingApplicationsAPI = {
     );
 
     if (error || !data) {
-      throw new Error(error || "Failed to fetch statistics");
+      // Return default stats instead of throwing - stats are optional
+      console.warn(`Failed to fetch statistics for program ${programId}:`, error);
+      return {
+        totalApplications: 0,
+        pendingApplications: 0,
+        approvedApplications: 0,
+        rejectedApplications: 0,
+        revisionRequestedApplications: 0,
+        underReviewApplications: 0,
+      };
     }
 
     return data;
