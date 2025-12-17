@@ -19,6 +19,7 @@ import type {
   ProgramWithFormSchema,
 } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
+import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
 import { isFundingProgramConfig } from "@/utilities/type-guards";
 import { getProjectTitle } from "../helper/getProjecTitle";
@@ -184,7 +185,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
     return null;
   };
 
-  const renderFieldValue = (value: any): JSX.Element => {
+  const renderFieldValue = (value: any, fieldKey?: string): JSX.Element => {
     if (Array.isArray(value)) {
       // Check if it's an array of milestones
       const isMilestoneArray =
@@ -319,6 +320,28 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
       );
     }
 
+    // Handle Karma profile link fields (check field ID, not just value format)
+    const isKarmaProfileField =
+      fieldKey?.toLowerCase().includes("karma_profile_link") ||
+      fieldKey?.toLowerCase().includes("karma_profile");
+    if (isKarmaProfileField && typeof value === "string" && /^0x[a-fA-F0-9]{64}$/.test(value)) {
+      return (
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-sm bg-zinc-100 dark:bg-zinc-700 px-2 py-1 rounded">
+            {shortAddress(value)}
+          </span>
+          <a
+            href={`/project/${value}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
+          >
+            View Project
+          </a>
+        </div>
+      );
+    }
+
     // Default: render as markdown
     return (
       <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -342,7 +365,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
               {fieldLabels[key] || key.replace(/_/g, " ")}
             </dt>
             <dd className="text-base text-gray-900 dark:text-gray-100">
-              {renderFieldValue(value)}
+              {renderFieldValue(value, key)}
             </dd>
           </div>
         ))}

@@ -69,6 +69,12 @@ export const fieldTypes = [
     description:
       "Dynamic milestone management with title, description, due dates, funding requested, and completion criteria",
   },
+  {
+    type: "karma_profile_link" as const,
+    label: "Karma profile link",
+    icon: "🔗",
+    description: "Search and select an existing Karma project profile",
+  },
 ];
 
 export function FieldTypeSelector({
