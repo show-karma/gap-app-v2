@@ -22,6 +22,11 @@ import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { registryHelper } from "./helper";
 
+/**
+ * @deprecated Use FundingProgramResponse from @/src/features/funding-map/types/funding-program instead
+ */
+export type GrantProgram = FundingProgramResponse;
+
 interface ProgramListProps {
   grantPrograms: FundingProgramResponse[];
   selectProgram: (program: FundingProgramResponse) => void;
