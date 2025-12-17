@@ -70,16 +70,6 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application,
         }
       });
     }
-    console.log("[ApplicationDataView] fieldTypeMap created:", {
-      schemaFieldCount: formSchema?.fields?.length ?? 0,
-      mappedKeys: Object.keys(types),
-      types,
-      schemaFields: formSchema?.fields?.map((f: any) => ({
-        id: f.id,
-        label: f.label,
-        type: f.type,
-      })),
-    });
     return types;
   }, [formSchema]);
 
@@ -157,13 +147,6 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application,
 
     // Handle Karma profile link fields (use field type from schema)
     const fieldType = fieldKey ? fieldTypeMap[fieldKey] : undefined;
-    console.log("[ApplicationDataView] Field type lookup:", {
-      fieldKey,
-      fieldType,
-      valueType: typeof value,
-      isKarmaProfileLink: fieldType === "karma_profile_link",
-      valuePreview: typeof value === "string" ? value.slice(0, 20) : value,
-    });
     if (
       fieldType === "karma_profile_link" &&
       typeof value === "string" &&
@@ -189,11 +172,6 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application,
       </div>
     );
   }
-
-  console.log("[ApplicationDataView] Rendering application data:", {
-    applicationDataKeys: Object.keys(dataToRender || {}),
-    fieldTypeMapKeys: Object.keys(fieldTypeMap),
-  });
 
   return (
     <div className="space-y-6">

@@ -182,16 +182,6 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         }
       });
     }
-    console.log("[ApplicationContent] fieldTypeMap created:", {
-      schemaFieldCount: formSchema?.fields?.length ?? 0,
-      mappedKeys: Object.keys(types),
-      types,
-      schemaFields: formSchema?.fields?.map((f: any) => ({
-        id: f.id,
-        label: f.label,
-        type: f.type,
-      })),
-    });
     return types;
   }, [formSchema]);
 
@@ -380,13 +370,6 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
 
     // Handle Karma profile link fields (use field type from schema)
     const fieldType = fieldKey ? fieldTypeMap[fieldKey] : undefined;
-    console.log("[ApplicationContent] Field type lookup:", {
-      fieldKey,
-      fieldType,
-      valueType: typeof value,
-      isKarmaProfileLink: fieldType === "karma_profile_link",
-      valuePreview: typeof value === "string" ? value.slice(0, 20) : value,
-    });
     if (
       fieldType === "karma_profile_link" &&
       typeof value === "string" &&
@@ -405,11 +388,6 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
 
   const renderApplicationData = (): JSX.Element => {
     const dataToRender = application.applicationData;
-
-    console.log("[ApplicationContent] renderApplicationData:", {
-      applicationDataKeys: Object.keys(dataToRender || {}),
-      fieldTypeMapKeys: Object.keys(fieldTypeMap),
-    });
 
     if (!dataToRender || Object.keys(dataToRender).length === 0) {
       return <p className="text-gray-500 dark:text-gray-400">No application data available</p>;
