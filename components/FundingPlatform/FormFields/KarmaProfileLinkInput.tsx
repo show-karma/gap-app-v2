@@ -3,9 +3,11 @@
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import debounce from "lodash.debounce";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Control, FieldError } from "react-hook-form";
-import { Controller } from "react-hook-form";
+import { Controller, useWatch } from "react-hook-form";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { useProject } from "@/hooks/useProject";
 import { useProjectSearch } from "@/hooks/useProjectSearch";
 import type { SearchProjectResult } from "@/services/unified-search.service";
 import type { IFormField } from "@/types/funding-platform";
@@ -30,7 +32,38 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedProject, setSelectedProject] = useState<SearchProjectResult | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [inputRect, setInputRect] = useState<DOMRect | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputContainerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Watch the form value at top level (required for hooks rules)
+  const formValue = useWatch({ control, name: fieldKey });
+
+  // Fetch existing project details for edit mode (at top level)
+  const shouldFetchProject =
+    !selectedProject &&
+    formValue &&
+    typeof formValue === "string" &&
+    /^0x[a-fA-F0-9]{64}$/.test(formValue);
+  const { project: existingProject } = useProject(shouldFetchProject ? formValue : "");
+
+  // Sync existing project to local state when loaded
+  useEffect(() => {
+    if (existingProject && !selectedProject && !searchQuery) {
+      setSelectedProject({
+        uid: existingProject.uid,
+        chainID: existingProject.chainID,
+        createdAt: existingProject.createdAt || "",
+        details: {
+          title: existingProject.details?.title || "Untitled Project",
+          slug: existingProject.details?.slug || "",
+          logoUrl: existingProject.details?.logoUrl || undefined,
+        },
+      });
+      setSearchQuery(existingProject.details?.title || "");
+    }
+  }, [existingProject, selectedProject, searchQuery]);
 
   // Use the React Query hook
   const {
@@ -60,7 +93,13 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
   // Handle click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(target) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(target)
+      ) {
         setIsDropdownOpen(false);
       }
     };
@@ -74,16 +113,53 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
     };
   }, [isDropdownOpen]);
 
-  // Open dropdown when results are available
+  // Note: Dropdown only opens on focus, not automatically when results load
+  // This prevents the dropdown from showing when loading existing data in edit mode
+
+  // Update input rect when dropdown opens
   useEffect(() => {
-    if (projects.length > 0 && debouncedQuery.length >= 3) {
-      setIsDropdownOpen(true);
+    if (isDropdownOpen && inputContainerRef.current) {
+      setInputRect(inputContainerRef.current.getBoundingClientRect());
     }
-  }, [projects, debouncedQuery]);
+  }, [isDropdownOpen]);
+
+  // Update position on scroll/resize
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+
+    const updatePosition = () => {
+      if (inputContainerRef.current) {
+        setInputRect(inputContainerRef.current.getBoundingClientRect());
+      }
+    };
+
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [isDropdownOpen]);
 
   const handleInputChange = (value: string) => {
     setSearchQuery(value);
     debouncedSetQuery(value);
+  };
+
+  const handleSelectProject = (project: SearchProjectResult, onChange: (value: string) => void) => {
+    setSelectedProject(project);
+    setSearchQuery(project.details?.title || "");
+    setIsDropdownOpen(false);
+    onChange(project.uid);
+  };
+
+  const handleClear = (onChange: (value: string) => void) => {
+    setSelectedProject(null);
+    setSearchQuery("");
+    setDebouncedQuery("");
+    setIsDropdownOpen(false);
+    onChange("");
   };
 
   return (
@@ -91,23 +167,6 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
       name={fieldKey}
       control={control}
       render={({ field: { onChange, value } }) => {
-        const handleSelectProject = (project: SearchProjectResult) => {
-          setSelectedProject(project);
-          setSearchQuery(project.details?.title || "");
-          setIsDropdownOpen(false);
-          onChange(project.uid);
-        };
-
-        const handleClear = () => {
-          setSelectedProject(null);
-          setSearchQuery("");
-          setDebouncedQuery("");
-          setIsDropdownOpen(false);
-          onChange("");
-        };
-
-        // When editing an application with an existing value but no selected project info,
-        // just show the UID value
         const hasValue = value && typeof value === "string" && value.length > 0;
         const showSelectedState = selectedProject || hasValue;
 
@@ -122,7 +181,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{field.description}</p>
             )}
 
-            <div className="relative mt-2">
+            <div className="relative mt-2" ref={inputContainerRef}>
               {/* Search Input */}
               <div className="relative flex items-center">
                 <MagnifyingGlassIcon className="absolute left-3 w-5 h-5 text-gray-400 pointer-events-none z-10" />
@@ -150,7 +209,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                 {showSelectedState && (
                   <button
                     type="button"
-                    onClick={handleClear}
+                    onClick={() => handleClear(onChange)}
                     disabled={isLoading}
                     className="absolute right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
                   >
@@ -179,48 +238,60 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                 </div>
               )}
 
-              {/* Dropdown with Search Results */}
-              {isDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                  {isSearching || isFetching ? (
-                    <div className="flex items-center justify-center py-6">
-                      <div className="w-6 h-6 border-2 border-gray-300 dark:border-gray-600 border-t-blue-500 rounded-full animate-spin" />
-                    </div>
-                  ) : projects.length === 0 ? (
-                    <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                      {debouncedQuery.length < 3
-                        ? "Type at least 3 characters to search"
-                        : "No projects found"}
-                    </div>
-                  ) : (
-                    <div className="py-1">
-                      {projects.map((project) => (
-                        <button
-                          key={project.uid}
-                          type="button"
-                          onClick={() => handleSelectProject(project)}
-                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors text-left"
-                        >
-                          <ProfilePicture
-                            imageURL={project.details?.logoUrl}
-                            name={project.uid || ""}
-                            className="w-10 h-10 flex-shrink-0"
-                            alt={project.details?.title || "Project"}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 dark:text-white truncate">
-                              {project.details?.title || "Untitled Project"}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                              {project.details?.slug || `${project.uid.slice(0, 10)}...`}
-                            </p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* Dropdown with Search Results - Rendered via Portal */}
+              {isDropdownOpen &&
+                typeof document !== "undefined" &&
+                createPortal(
+                  <div
+                    ref={dropdownRef}
+                    style={{
+                      position: "fixed",
+                      top: inputRect ? inputRect.bottom + 4 : 0,
+                      left: inputRect?.left ?? 0,
+                      width: inputRect?.width ?? "auto",
+                    }}
+                    className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg z-[9999] max-h-64 overflow-y-auto"
+                  >
+                    {isSearching || isFetching ? (
+                      <div className="flex items-center justify-center py-6">
+                        <div className="w-6 h-6 border-2 border-gray-300 dark:border-gray-600 border-t-blue-500 rounded-full animate-spin" />
+                      </div>
+                    ) : projects.length === 0 ? (
+                      <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                        {debouncedQuery.length < 3
+                          ? "Type at least 3 characters to search"
+                          : "No projects found"}
+                      </div>
+                    ) : (
+                      <div className="py-1">
+                        {projects.map((project) => (
+                          <button
+                            key={project.uid}
+                            type="button"
+                            onClick={() => handleSelectProject(project, onChange)}
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors text-left"
+                          >
+                            <ProfilePicture
+                              imageURL={project.details?.logoUrl}
+                              name={project.uid || ""}
+                              className="w-10 h-10 flex-shrink-0"
+                              alt={project.details?.title || "Project"}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900 dark:text-white truncate">
+                                {project.details?.title || "Untitled Project"}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                {project.details?.slug || `${project.uid.slice(0, 10)}...`}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>,
+                  document.body
+                )}
             </div>
 
             {/* Error Message */}

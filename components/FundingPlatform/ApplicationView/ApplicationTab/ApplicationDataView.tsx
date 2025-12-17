@@ -1,9 +1,42 @@
 "use client";
 
 import type { FC, JSX } from "react";
+import { useMemo } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { useProject } from "@/hooks/useProject";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
+import { envVars } from "@/utilities/enviromentVars";
 import { formatDate } from "@/utilities/formatDate";
+
+// Sub-component for displaying karma_profile_link with project name
+const KarmaProjectLink: FC<{ uid: string }> = ({ uid }) => {
+  const { project, isLoading } = useProject(uid);
+
+  if (isLoading) {
+    return <span className="text-gray-500 animate-pulse">Loading project...</span>;
+  }
+
+  const displayName = project?.details?.title || `${uid.slice(0, 10)}...`;
+
+  return (
+    <a
+      href={`${envVars.KARMA_BASE_URL}/project/${uid}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+    >
+      {displayName}
+      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+        />
+      </svg>
+    </a>
+  );
+};
 
 export interface ApplicationDataViewProps {
   application: IFundingApplication;
@@ -24,7 +57,33 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application,
     });
   }
 
-  const renderFieldValue = (value: any): JSX.Element => {
+  // Create field type mapping from program schema (maps field.id and field.label -> field.type)
+  const fieldTypeMap = useMemo(() => {
+    const types: Record<string, string> = {};
+    if (formSchema?.fields) {
+      formSchema.fields.forEach((field: any) => {
+        if (field.id && field.type) {
+          types[field.id] = field.type;
+        }
+        if (field.label && field.type) {
+          types[field.label] = field.type;
+        }
+      });
+    }
+    console.log("[ApplicationDataView] fieldTypeMap created:", {
+      schemaFieldCount: formSchema?.fields?.length ?? 0,
+      mappedKeys: Object.keys(types),
+      types,
+      schemaFields: formSchema?.fields?.map((f: any) => ({
+        id: f.id,
+        label: f.label,
+        type: f.type,
+      })),
+    });
+    return types;
+  }, [formSchema]);
+
+  const renderFieldValue = (value: any, fieldKey?: string): JSX.Element => {
     if (Array.isArray(value)) {
       // Check if it's an array of milestones
       const isMilestoneArray =
@@ -96,6 +155,23 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application,
       );
     }
 
+    // Handle Karma profile link fields (use field type from schema)
+    const fieldType = fieldKey ? fieldTypeMap[fieldKey] : undefined;
+    console.log("[ApplicationDataView] Field type lookup:", {
+      fieldKey,
+      fieldType,
+      valueType: typeof value,
+      isKarmaProfileLink: fieldType === "karma_profile_link",
+      valuePreview: typeof value === "string" ? value.slice(0, 20) : value,
+    });
+    if (
+      fieldType === "karma_profile_link" &&
+      typeof value === "string" &&
+      /^0x[a-fA-F0-9]{64}$/.test(value)
+    ) {
+      return <KarmaProjectLink uid={value} />;
+    }
+
     // Default: render as markdown
     return (
       <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -114,6 +190,11 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application,
     );
   }
 
+  console.log("[ApplicationDataView] Rendering application data:", {
+    applicationDataKeys: Object.keys(dataToRender || {}),
+    fieldTypeMapKeys: Object.keys(fieldTypeMap),
+  });
+
   return (
     <div className="space-y-6">
       {Object.entries(dataToRender).map(([key, value]) => (
@@ -124,7 +205,9 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application,
           <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
             {fieldLabels[key] || key.replace(/_/g, " ")}
           </dt>
-          <dd className="text-base text-gray-900 dark:text-gray-100">{renderFieldValue(value)}</dd>
+          <dd className="text-base text-gray-900 dark:text-gray-100">
+            {renderFieldValue(value, key)}
+          </dd>
         </div>
       ))}
     </div>
