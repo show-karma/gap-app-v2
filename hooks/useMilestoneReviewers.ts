@@ -8,16 +8,16 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
  * Comprehensive hook for managing milestone reviewers
  * Includes query and mutations for add/remove operations
  */
-export function useMilestoneReviewers(programId: string, chainID: number) {
+export function useMilestoneReviewers(programId: string) {
   const queryClient = useQueryClient();
 
   // Query for fetching milestone reviewers
   const query = useQuery({
-    queryKey: QUERY_KEYS.REVIEWERS.MILESTONE(programId, chainID),
+    queryKey: QUERY_KEYS.REVIEWERS.MILESTONE(programId),
     queryFn: async () => {
-      return milestoneReviewersService.getReviewers(programId, chainID);
+      return milestoneReviewersService.getReviewers(programId);
     },
-    enabled: !!programId && !!chainID,
+    enabled: !!programId,
   });
 
   // Mutation for adding a milestone reviewer
@@ -34,7 +34,7 @@ export function useMilestoneReviewers(programId: string, chainID: number) {
         throw new Error(validation.errors.join(", "));
       }
 
-      return milestoneReviewersService.addReviewer(programId, chainID, {
+      return milestoneReviewersService.addReviewer(programId, {
         publicAddress: data.publicAddress,
         name: data.name,
         email: data.email,
@@ -43,7 +43,7 @@ export function useMilestoneReviewers(programId: string, chainID: number) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.REVIEWERS.MILESTONE(programId, chainID),
+        queryKey: QUERY_KEYS.REVIEWERS.MILESTONE(programId),
       });
       toast.success("Milestone reviewer added successfully");
     },
@@ -58,11 +58,11 @@ export function useMilestoneReviewers(programId: string, chainID: number) {
   // Mutation for removing a milestone reviewer
   const removeMutation = useMutation({
     mutationFn: async (publicAddress: string) => {
-      return milestoneReviewersService.removeReviewer(programId, chainID, publicAddress);
+      return milestoneReviewersService.removeReviewer(programId, publicAddress);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.REVIEWERS.MILESTONE(programId, chainID),
+        queryKey: QUERY_KEYS.REVIEWERS.MILESTONE(programId),
       });
       toast.success("Milestone reviewer removed successfully");
     },

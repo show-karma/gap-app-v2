@@ -200,13 +200,12 @@ describe("fundingPlatformService", () => {
 
         const result = await fundingProgramsAPI.createProgramConfiguration(
           "program-123",
-          1,
           mockProgram
         );
 
         expect(result).toEqual(mockProgram);
         expect(mockPost).toHaveBeenCalledWith(
-          "/v2/funding-program-configs/program-123/1",
+          "/v2/funding-program-configs/program-123",
           mockProgram
         );
       });
@@ -219,13 +218,12 @@ describe("fundingPlatformService", () => {
 
         const result = await fundingProgramsAPI.updateProgramConfiguration(
           "program-123",
-          1,
           updatedProgram
         );
 
         expect(result).toEqual(updatedProgram);
         expect(mockPut).toHaveBeenCalledWith(
-          "/v2/funding-program-configs/program-123/1",
+          "/v2/funding-program-configs/program-123",
           updatedProgram
         );
       });
@@ -249,11 +247,11 @@ describe("fundingPlatformService", () => {
           data: { ...mockProgram, formSchema: mockFormSchema },
         });
 
-        const result = await fundingProgramsAPI.updateFormSchema("program-123", 1, mockFormSchema);
+        const result = await fundingProgramsAPI.updateFormSchema("program-123", mockFormSchema);
 
         expect(result.formSchema).toEqual(mockFormSchema);
         expect(mockPut).toHaveBeenCalledWith(
-          "/v2/funding-program-configs/program-123/1",
+          "/v2/funding-program-configs/program-123",
           expect.objectContaining({ formSchema: mockFormSchema })
         );
       });
@@ -264,22 +262,21 @@ describe("fundingPlatformService", () => {
           data: { ...mockProgram, formSchema: mockFormSchema },
         });
 
-        const result = await fundingProgramsAPI.updateFormSchema("program-123", 1, mockFormSchema);
+        const result = await fundingProgramsAPI.updateFormSchema("program-123", mockFormSchema);
 
         expect(result.formSchema).toEqual(mockFormSchema);
-        expect(mockPut).toHaveBeenCalledWith("/v2/funding-program-configs/program-123/1", {
+        expect(mockPut).toHaveBeenCalledWith("/v2/funding-program-configs/program-123", {
           formSchema: mockFormSchema,
         });
       });
 
       it("should throw error for non-404 errors", async () => {
-        // Simulate an error with response.status that's not 404
         const error = new Error("Server error");
         (error as any).response = { status: 500 };
         mockFetchData.mockRejectedValue(error);
 
         await expect(
-          fundingProgramsAPI.updateFormSchema("program-123", 1, mockFormSchema)
+          fundingProgramsAPI.updateFormSchema("program-123", mockFormSchema)
         ).rejects.toThrow("Server error");
       });
     });
@@ -289,11 +286,11 @@ describe("fundingPlatformService", () => {
         mockFetchData.mockResolvedValue([mockProgram, null, null, 200]);
         mockPut.mockResolvedValue({ data: { ...mockProgram, isEnabled: false } });
 
-        const result = await fundingProgramsAPI.toggleProgramStatus("program-123", 1, false);
+        const result = await fundingProgramsAPI.toggleProgramStatus("program-123", false);
 
         expect(result.isEnabled).toBe(false);
         expect(mockPut).toHaveBeenCalledWith(
-          "/v2/funding-program-configs/program-123/1",
+          "/v2/funding-program-configs/program-123",
           expect.objectContaining({ isEnabled: false })
         );
       });
@@ -302,22 +299,21 @@ describe("fundingPlatformService", () => {
         mockFetchData.mockResolvedValue([null, "Not found", null, 404]);
         mockPut.mockResolvedValue({ data: { ...mockProgram, isEnabled: true } });
 
-        const result = await fundingProgramsAPI.toggleProgramStatus("program-123", 1, true);
+        const result = await fundingProgramsAPI.toggleProgramStatus("program-123", true);
 
         expect(result.isEnabled).toBe(true);
-        expect(mockPut).toHaveBeenCalledWith("/v2/funding-program-configs/program-123/1", {
+        expect(mockPut).toHaveBeenCalledWith("/v2/funding-program-configs/program-123", {
           isEnabled: true,
         });
       });
 
       it("should throw error for non-404 errors", async () => {
-        // Simulate an error with response.status that's not 404
         const error = new Error("Server error");
         (error as any).response = { status: 500 };
         mockFetchData.mockRejectedValue(error);
 
         await expect(
-          fundingProgramsAPI.toggleProgramStatus("program-123", 1, true)
+          fundingProgramsAPI.toggleProgramStatus("program-123", true)
         ).rejects.toThrow("Server error");
       });
     });
@@ -381,7 +377,6 @@ describe("fundingPlatformService", () => {
     describe("submitApplication", () => {
       const submitRequest: IApplicationSubmitRequest = {
         programId: "program-123",
-        chainID: 1,
         applicantEmail: "test@example.com",
         applicationData: {},
       };
@@ -393,7 +388,7 @@ describe("fundingPlatformService", () => {
 
         expect(result).toEqual(mockApplication);
         expect(mockPost).toHaveBeenCalledWith(
-          "/v2/funding-applications/program-123/1",
+          "/v2/funding-applications/program-123",
           submitRequest
         );
       });

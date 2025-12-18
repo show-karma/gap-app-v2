@@ -14,7 +14,6 @@ const apiClient = createAuthenticatedApiClient(API_URL, 30000);
  */
 export interface PermissionCheckOptions {
   programId?: string;
-  chainID?: number;
   action?: string;
   role?: string;
 }
@@ -57,14 +56,14 @@ export class PermissionsService {
    * Check if a user has permission for a specific action
    */
   async checkPermission(options: PermissionCheckOptions): Promise<PermissionCheckResponse> {
-    const { programId, chainID, action } = options;
+    const { programId, action } = options;
 
-    if (!programId || !chainID) {
-      throw new Error("Program ID and Chain ID are required for permission check");
+    if (!programId) {
+      throw new Error("Program ID is required for permission check");
     }
 
     const [data, error] = await fetchData<PermissionCheckResponse>(
-      INDEXER.V2.FUNDING_PROGRAMS.CHECK_PERMISSION(programId, chainID, action)
+      INDEXER.V2.FUNDING_PROGRAMS.CHECK_PERMISSION(programId, action)
     );
 
     if (error || !data) {
@@ -140,7 +139,7 @@ export class PermissionsService {
    * Falls back to parallel individual calls if batch endpoint doesn't exist
    */
   async checkMultiplePermissions(
-    programIds: Array<{ programId: string; chainID: number; action?: string }>
+    programIds: Array<{ programId: string; action?: string }>
   ): Promise<Map<string, PermissionCheckResponse>> {
     const results = new Map<string, PermissionCheckResponse>();
 
@@ -149,7 +148,6 @@ export class PermissionsService {
       const response = await apiClient.post<{
         permissions: Array<{
           programId: string;
-          chainID: number;
           hasPermission: boolean;
           permissions: string[];
         }>;
@@ -159,21 +157,20 @@ export class PermissionsService {
 
       // Map results
       response.data.permissions.forEach((item) => {
-        const key = `${item.programId}-${item.chainID}`;
-        results.set(key, {
+        results.set(item.programId, {
           hasPermission: item.hasPermission,
           permissions: item.permissions,
         });
       });
     } catch (_error) {
-      const promises = programIds.map(async ({ programId, chainID, action }) => {
+      const promises = programIds.map(async ({ programId, action }) => {
         try {
-          const result = await this.checkPermission({ programId, chainID, action });
-          return { key: `${programId}-${chainID}`, result };
+          const result = await this.checkPermission({ programId, action });
+          return { key: programId, result };
         } catch (err) {
-          console.error(`Error checking permission for ${programId}-${chainID}:`, err);
+          console.error(`Error checking permission for ${programId}:`, err);
           return {
-            key: `${programId}-${chainID}`,
+            key: programId,
             result: { hasPermission: false, permissions: [] },
           };
         }

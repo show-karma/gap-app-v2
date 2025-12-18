@@ -8,16 +8,16 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
  * Comprehensive hook for managing program reviewers
  * Includes query and mutations for add/remove operations
  */
-export function useProgramReviewers(programId: string, chainID: number) {
+export function useProgramReviewers(programId: string) {
   const queryClient = useQueryClient();
 
   // Query for fetching program reviewers
   const query = useQuery({
-    queryKey: QUERY_KEYS.REVIEWERS.PROGRAM(programId, chainID),
+    queryKey: QUERY_KEYS.REVIEWERS.PROGRAM(programId),
     queryFn: async () => {
-      return programReviewersService.getReviewers(programId, chainID);
+      return programReviewersService.getReviewers(programId);
     },
-    enabled: !!programId && !!chainID,
+    enabled: !!programId,
   });
 
   // Mutation for adding a program reviewer
@@ -34,7 +34,7 @@ export function useProgramReviewers(programId: string, chainID: number) {
         throw new Error(validation.errors.join(", "));
       }
 
-      return programReviewersService.addReviewer(programId, chainID, {
+      return programReviewersService.addReviewer(programId, {
         publicAddress: data.publicAddress,
         name: data.name,
         email: data.email,
@@ -43,7 +43,7 @@ export function useProgramReviewers(programId: string, chainID: number) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.REVIEWERS.PROGRAM(programId, chainID),
+        queryKey: QUERY_KEYS.REVIEWERS.PROGRAM(programId),
       });
       toast.success("Program reviewer added successfully");
     },
@@ -58,11 +58,11 @@ export function useProgramReviewers(programId: string, chainID: number) {
   // Mutation for removing a program reviewer
   const removeMutation = useMutation({
     mutationFn: async (publicAddress: string) => {
-      return programReviewersService.removeReviewer(programId, chainID, publicAddress);
+      return programReviewersService.removeReviewer(programId, publicAddress);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.REVIEWERS.PROGRAM(programId, chainID),
+        queryKey: QUERY_KEYS.REVIEWERS.PROGRAM(programId),
       });
       toast.success("Program reviewer removed successfully");
     },

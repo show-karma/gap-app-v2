@@ -88,7 +88,7 @@ describe("programReviewersService", () => {
 
       mockFetchData.mockResolvedValue([mockApiResponse, null, null, 200]);
 
-      const result = await programReviewersService.getReviewers("program-1", 1);
+      const result = await programReviewersService.getReviewers("program-1");
 
       expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("program-1"));
       expect(result).toEqual([
@@ -106,7 +106,7 @@ describe("programReviewersService", () => {
     it("should return empty array when no reviewers found error", async () => {
       mockFetchData.mockResolvedValue([null, "Program Reviewer Not Found", null, 404]);
 
-      const result = await programReviewersService.getReviewers("program-1", 1);
+      const result = await programReviewersService.getReviewers("program-1");
 
       expect(result).toEqual([]);
     });
@@ -114,7 +114,7 @@ describe("programReviewersService", () => {
     it("should handle missing reviewers array in response", async () => {
       mockFetchData.mockResolvedValue([{}, null, null, 200]);
 
-      const result = await programReviewersService.getReviewers("program-1", 1);
+      const result = await programReviewersService.getReviewers("program-1");
 
       expect(result).toEqual([]);
     });
@@ -122,7 +122,7 @@ describe("programReviewersService", () => {
     it("should throw error for server errors", async () => {
       mockFetchData.mockResolvedValue([null, "Internal Server Error", null, 500]);
 
-      await expect(programReviewersService.getReviewers("program-1", 1)).rejects.toThrow(
+      await expect(programReviewersService.getReviewers("program-1")).rejects.toThrow(
         "Internal Server Error"
       );
     });
@@ -157,7 +157,7 @@ describe("programReviewersService", () => {
 
       mockAxiosInstance.post.mockResolvedValue({ data: mockApiResponse });
 
-      const result = await programReviewersService.addReviewer("program-1", 1, reviewerData);
+      const result = await programReviewersService.addReviewer("program-1", reviewerData);
 
       expect(mockAxiosInstance.post).toHaveBeenCalledWith(
         expect.stringContaining("program-1"),
@@ -176,7 +176,7 @@ describe("programReviewersService", () => {
 
       mockAxiosInstance.post.mockResolvedValue({ data: {} });
 
-      const result = await programReviewersService.addReviewer("program-1", 1, reviewerData);
+      const result = await programReviewersService.addReviewer("program-1", reviewerData);
 
       expect(result.publicAddress).toBe(reviewerData.publicAddress);
       expect(result.name).toBe(reviewerData.name);
@@ -190,12 +190,11 @@ describe("programReviewersService", () => {
 
       await programReviewersService.removeReviewer(
         "program-1",
-        1,
         "0x1234567890123456789012345678901234567890"
       );
 
       expect(mockAxiosInstance.delete).toHaveBeenCalledWith(
-        "/v2/funding-program-configs/program-1/1/reviewers/0x1234567890123456789012345678901234567890"
+        "/v2/funding-program-configs/program-1/reviewers/0x1234567890123456789012345678901234567890"
       );
     });
   });
@@ -234,7 +233,7 @@ describe("programReviewersService", () => {
         },
       });
 
-      const result = await programReviewersService.addMultipleReviewers("program-1", 1, reviewers);
+      const result = await programReviewersService.addMultipleReviewers("program-1", reviewers);
 
       expect(result.added).toHaveLength(2);
       expect(result.errors).toHaveLength(0);
@@ -287,7 +286,7 @@ describe("programReviewersService", () => {
           },
         });
 
-      const result = await programReviewersService.addMultipleReviewers("program-1", 1, reviewers);
+      const result = await programReviewersService.addMultipleReviewers("program-1", reviewers);
 
       expect(result.added).toHaveLength(1);
       expect(result.errors).toHaveLength(1);

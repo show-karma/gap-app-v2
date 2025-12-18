@@ -73,41 +73,39 @@ describe("queryKeys", () => {
   describe("REVIEWERS", () => {
     describe("PROGRAM", () => {
       it("should generate correct query key", () => {
-        const key = QUERY_KEYS.REVIEWERS.PROGRAM("program-123", 10);
-        expect(key).toEqual(["program-reviewers", "program-123", 10]);
+        const key = QUERY_KEYS.REVIEWERS.PROGRAM("program-123");
+        expect(key).toEqual(["program-reviewers", "program-123"]);
       });
 
       it("should return as const tuple", () => {
-        const key = QUERY_KEYS.REVIEWERS.PROGRAM("prog-1", 1);
+        const key = QUERY_KEYS.REVIEWERS.PROGRAM("prog-1");
         expect(Array.isArray(key)).toBe(true);
-        expect(key.length).toBe(3);
+        expect(key.length).toBe(2);
       });
 
-      it("should handle different chain IDs", () => {
-        const key1 = QUERY_KEYS.REVIEWERS.PROGRAM("program-1", 1);
-        const key2 = QUERY_KEYS.REVIEWERS.PROGRAM("program-1", 10);
+      it("should handle different program IDs", () => {
+        const key1 = QUERY_KEYS.REVIEWERS.PROGRAM("program-1");
+        const key2 = QUERY_KEYS.REVIEWERS.PROGRAM("program-2");
         expect(key1).not.toEqual(key2);
       });
     });
 
     describe("MILESTONE", () => {
       it("should generate correct query key", () => {
-        const key = QUERY_KEYS.REVIEWERS.MILESTONE("program-123", 42161);
-        expect(key).toEqual(["milestone-reviewers", "program-123", 42161]);
+        const key = QUERY_KEYS.REVIEWERS.MILESTONE("program-123");
+        expect(key).toEqual(["milestone-reviewers", "program-123"]);
       });
 
       it("should return as const tuple", () => {
-        const key = QUERY_KEYS.REVIEWERS.MILESTONE("prog-1", 1);
+        const key = QUERY_KEYS.REVIEWERS.MILESTONE("prog-1");
         expect(Array.isArray(key)).toBe(true);
-        expect(key.length).toBe(3);
+        expect(key.length).toBe(2);
       });
 
-      it("should handle different program and chain combinations", () => {
-        const key1 = QUERY_KEYS.REVIEWERS.MILESTONE("program-a", 1);
-        const key2 = QUERY_KEYS.REVIEWERS.MILESTONE("program-b", 1);
-        const key3 = QUERY_KEYS.REVIEWERS.MILESTONE("program-a", 10);
+      it("should handle different program IDs", () => {
+        const key1 = QUERY_KEYS.REVIEWERS.MILESTONE("program-a");
+        const key2 = QUERY_KEYS.REVIEWERS.MILESTONE("program-b");
         expect(key1).not.toEqual(key2);
-        expect(key1).not.toEqual(key3);
       });
     });
   });
@@ -236,7 +234,7 @@ describe("queryKeys", () => {
     it("should generate unique keys for different entities", () => {
       const milestoneKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES("id", "prog");
       const applicationKey = QUERY_KEYS.APPLICATIONS.BY_PROJECT_UID("id");
-      const reviewerKey = QUERY_KEYS.REVIEWERS.PROGRAM("id", 1);
+      const reviewerKey = QUERY_KEYS.REVIEWERS.PROGRAM("id");
 
       expect(milestoneKey[0]).not.toBe(applicationKey[0]);
       expect(milestoneKey[0]).not.toBe(reviewerKey[0]);
@@ -246,7 +244,7 @@ describe("queryKeys", () => {
     it("should have consistent naming patterns", () => {
       expect(QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES("a", "b")[0]).toContain("milestone");
       expect(QUERY_KEYS.APPLICATIONS.BY_PROJECT_UID("a")[0]).toContain("application");
-      expect(QUERY_KEYS.REVIEWERS.PROGRAM("a", 1)[0]).toContain("reviewer");
+      expect(QUERY_KEYS.REVIEWERS.PROGRAM("a")[0]).toContain("reviewer");
       expect(QUERY_KEYS.CONTRACTS.VALIDATION.ALL[0]).toContain("validation");
       expect(QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("a", "b", 1)[0]).toContain("community");
       expect(QUERY_KEYS.GRANTS.DUPLICATE_CHECK({ community: "a", title: "b" })[0]).toContain(
@@ -257,7 +255,7 @@ describe("queryKeys", () => {
     it("should always return tuples (arrays)", () => {
       expect(Array.isArray(QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES("a", "b"))).toBe(true);
       expect(Array.isArray(QUERY_KEYS.APPLICATIONS.BY_PROJECT_UID("a"))).toBe(true);
-      expect(Array.isArray(QUERY_KEYS.REVIEWERS.PROGRAM("a", 1))).toBe(true);
+      expect(Array.isArray(QUERY_KEYS.REVIEWERS.PROGRAM("a"))).toBe(true);
       expect(Array.isArray(QUERY_KEYS.CONTRACTS.VALIDATION.ALL)).toBe(true);
       expect(
         Array.isArray(QUERY_KEYS.CONTRACTS.VALIDATION.VALIDATE({ address: "a", network: "b" }))

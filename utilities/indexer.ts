@@ -54,12 +54,12 @@ export const INDEXER = {
       LIST: (community?: string) =>
         `/v2/funding-program-configs${community ? `?community=${community}` : ""}`,
       ENABLED: () => `/v2/funding-program-configs/enabled`,
-      REVIEWERS: (programId: string, chainID: number) =>
-        `/v2/funding-program-configs/${programId}/${chainID}/reviewers`,
-      CHECK_PERMISSION: (programId: string, chainID: number, action?: string) => {
+      REVIEWERS: (programId: string) =>
+        `/v2/funding-program-configs/${programId}/reviewers`,
+      CHECK_PERMISSION: (programId: string, action?: string) => {
         const params = new URLSearchParams();
         if (action) params.append("action", action);
-        return `/v2/funding-program-configs/${programId}/${chainID}/check-permission?${params.toString()}`;
+        return `/v2/funding-program-configs/${programId}/check-permission?${params.toString()}`;
       },
       MY_REVIEWER_PROGRAMS: () => `/v2/funding-program-configs/my-reviewer-programs`,
     },
@@ -93,8 +93,8 @@ export const INDEXER = {
       },
     },
     MILESTONE_REVIEWERS: {
-      LIST: (programId: string, chainID: number) =>
-        `/v2/programs/${programId}/${chainID}/milestone-reviewers`,
+      LIST: (programId: string) =>
+        `/v2/programs/${programId}/milestone-reviewers`,
     },
     TRACKS: {
       LIST: (communityUID: string, includeArchived?: boolean) => {
