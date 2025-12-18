@@ -177,7 +177,9 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
 
   const programOptions = useMemo(() => {
     const allPrograms = grantPrograms
-      .filter((program) => program.programId && program.chainID !== undefined)
+      .filter((program): program is typeof program & { programId: string } => 
+        typeof program.programId === 'string' && program.programId.length > 0
+      )
       .map((program) => {
         // Use normalized programId (without chainId suffix)
         const value = program.programId;
@@ -596,7 +598,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
                                 href={PAGES.ADMIN.PROJECT_MILESTONES(
                                   communityId,
                                   report.projectUid,
-                                  report.programId
+                                  report.programId.includes("_") ? report.programId.split("_")[0] : report.programId
                                 )}
                                 target="_blank"
                                 rel="noopener noreferrer"

@@ -55,8 +55,7 @@ export function MilestonesReviewPage({
 
   // Check if user is a reviewer for this program
   const { isReviewer, isLoading: isLoadingReviewer } = useIsReviewer(
-    parsedProgramId,
-    parsedChainId
+    parsedProgramId
   );
 
   // Check if user is a milestone reviewer for this program
@@ -65,7 +64,6 @@ export function MilestonesReviewPage({
     return reviewerPrograms?.some(
       (program) =>
         program.programId === parsedProgramId &&
-        program.chainID === parsedChainId &&
         program.isMilestoneReviewer === true
     );
   }, [reviewerPrograms, parsedProgramId, parsedChainId]);
@@ -118,11 +116,10 @@ export function MilestonesReviewPage({
     if (referrer === "application" && referenceNumber) {
       const appUrl = hasAdminAccess
         ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
-        : isReviewer && parsedChainId
+        : isReviewer
           ? PAGES.REVIEWER.APPLICATION_DETAIL(
               communityId,
               parsedProgramId,
-              parsedChainId,
               referenceNumber
             )
           : null;
@@ -153,11 +150,10 @@ export function MilestonesReviewPage({
     if (fundingApplication?.status?.toLowerCase() === "approved" && referenceNumber) {
       const appUrl = hasAdminAccess
         ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
-        : isReviewer && parsedChainId
+        : isReviewer
           ? PAGES.REVIEWER.APPLICATION_DETAIL(
               communityId,
               parsedProgramId,
-              parsedChainId,
               referenceNumber
             )
           : null;

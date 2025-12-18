@@ -14,7 +14,7 @@ import { cn } from "@/utilities/tailwind";
 
 interface IApplicationSubmissionProps {
   programId: string;
-  chainId: number;
+  chainId?: number;
   formSchema: IFormSchema;
   onSubmit?: (applicationData: Record<string, any>) => Promise<void>;
   onCancel?: () => void;

@@ -71,13 +71,11 @@ export const useFundingPrograms = (communityId: string) => {
   const createProgramConfigurationMutation = useMutation({
     mutationFn: ({
       programId,
-      chainId,
       config,
     }: {
       programId: string;
-      chainId: number;
       config: Omit<IFundingProgramConfig, "id" | "createdAt" | "updatedAt">;
-    }) => fundingPlatformService.programs.createProgramConfiguration(programId, chainId, config),
+    }) => fundingPlatformService.programs.createProgramConfiguration(programId, config),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programs(communityId) });
       toast.success("Program created successfully");
@@ -377,7 +375,7 @@ export const useFormSchemaManager = (programId: string, chainId: number) => {
   const [isDirty, setIsDirty] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  const { config, updateFormSchema, isUpdating } = useProgramConfig(programId, chainId);
+  const { config, updateFormSchema, isUpdating } = useProgramConfig(programId);
 
   const saveSchema = useCallback(
     (schema: IFormSchema) => {
@@ -437,10 +435,10 @@ export const useApplicationSubmissionV2 = (programId: string, chainId: number) =
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 }),
+        queryKey: QUERY_KEYS.applications(programId, { limit: 25 }),
       });
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.applicationStats(programId, chainId),
+        queryKey: QUERY_KEYS.applicationStats(programId),
       });
       toast.success(`Application submitted successfully! Reference: ${data.referenceNumber}`);
     },
@@ -723,10 +721,10 @@ export const useApplicationStatus = (programId?: string, chainId?: number) => {
       // Invalidate and refetch application data
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(variables.applicationId) });
 
-      // Invalidate applications list if programId and chainId are provided
-      if (programId && chainId) {
+      // Invalidate applications list if programId is provided
+      if (programId) {
         queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 }),
+          queryKey: QUERY_KEYS.applications(programId, { limit: 25 }),
         });
       }
 
