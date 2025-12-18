@@ -3,7 +3,7 @@ import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
 import { SingleProjectDonateModal } from "@/components/Donation/SingleProject/SingleProjectDonateModal";
 import { Button } from "@/components/Utilities/Button";
@@ -144,9 +144,9 @@ export const ProjectNavigator = ({
           onClose={() => setIsDonateModalOpen(false)}
           project={{
             uid: project.uid,
-            title: project.details.data.title || "",
+            title: project.details.title || "",
             payoutAddress: project.payoutAddress as Hex,
-            imageURL: project.details?.data.imageURL,
+            imageURL: project.details?.logoUrl,
             chainID: project.chainID,
           }}
         />

@@ -15,6 +15,7 @@ import type { CreateDonationRequest } from "@/hooks/donation/types";
 import { useCreateDonation } from "@/hooks/donation/useCreateDonation";
 import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances";
 import { useDonationTransfer } from "@/hooks/useDonationTransfer";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useProjectStore } from "@/store";
 import { DonationType, PaymentMethod } from "@/types/donations";
 import type { DonationPayment } from "@/utilities/donations/donationExecution";
@@ -65,10 +66,12 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
     const supportedChains = useMemo(() => getAllSupportedChains(), []);
     const { balanceByTokenKey } = useCrossChainBalances(currentChainId ?? null, supportedChains);
 
+    const { grants } = useProjectGrants(fullProject?.uid || "");
+
     const communityContract = useMemo(() => {
-      if (!fullProject?.grants || fullProject.grants.length === 0) return undefined;
-      return fullProject.grants[0]?.community?.uid;
-    }, [fullProject?.grants]);
+      if (!grants || grants.length === 0) return undefined;
+      return grants[0]?.community?.uid;
+    }, [grants]);
 
     const resolvedPayoutAddress = useMemo(
       () =>
