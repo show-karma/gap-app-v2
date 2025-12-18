@@ -72,3 +72,32 @@ export function isValidEcosystemMetricsResponse(data: unknown): data is Ecosyste
     Array.isArray((data as { metrics: unknown }).metrics)
   );
 }
+
+export type TimeframeOption = "1_month" | "3_months" | "6_months" | "1_year";
+
+export function calculateDateRange(
+  timeframe: TimeframeOption
+): { startDate: string; endDate: string } | undefined {
+  const endDate = new Date();
+  const startDate = new Date();
+
+  switch (timeframe) {
+    case "1_month":
+      startDate.setMonth(startDate.getMonth() - 1);
+      break;
+    case "3_months":
+      startDate.setMonth(startDate.getMonth() - 3);
+      break;
+    case "6_months":
+      startDate.setMonth(startDate.getMonth() - 6);
+      break;
+    case "1_year":
+      startDate.setFullYear(startDate.getFullYear() - 1);
+      break;
+  }
+
+  return {
+    startDate: startDate.toISOString().split("T")[0],
+    endDate: endDate.toISOString().split("T")[0],
+  };
+}

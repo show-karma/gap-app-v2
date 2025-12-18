@@ -4,6 +4,7 @@
  */
 
 import {
+  calculateDateRange,
   formatChartValue,
   formatMetricValue,
   prepareChartDataForMetric,
@@ -53,6 +54,13 @@ describe("formatMetricValue", () => {
     mockFormatCurrency.mockReturnValue("-$100.00");
     expect(formatMetricValue("-100", "FIL")).toBe("-$100.00 FIL");
   });
+
+  it("should handle negative small numbers in formatMetricValue", () => {
+    mockFormatCurrency.mockReturnValue("-$0.00");
+    const result = formatMetricValue("-0.00005", "FIL");
+    // Should use formatCurrency for negative numbers, even if small
+    expect(result).toBe("-$0.00 FIL");
+  });
 });
 
 describe("formatChartValue", () => {
@@ -84,6 +92,16 @@ describe("formatChartValue", () => {
   it("should handle negative numbers", () => {
     mockFormatCurrency.mockReturnValue("-$100.00");
     expect(formatChartValue(-100, "FIL")).toBe("-$100.00 FIL");
+  });
+
+  it("should use scientific notation for extremely small numbers in formatChartValue", () => {
+    const result = formatChartValue(0.0000005, "FIL");
+    expect(result).toMatch(/^[\d.]+e-\d+ FIL$/);
+  });
+
+  it("should use fixed decimal places for small numbers in formatChartValue", () => {
+    const result = formatChartValue(0.00005, "FIL");
+    expect(result).toMatch(/^0\.0{4,7}5+ FIL$/);
   });
 });
 
@@ -253,21 +271,50 @@ describe("prepareChartDataForMetric", () => {
     expect(result[0]["Test Metric"]).toBe(200);
     expect(result[0].date).toBe("2024-01-01");
   });
+});
 
-  it("should handle negative small numbers in formatMetricValue", () => {
-    mockFormatCurrency.mockReturnValue("-$0.00");
-    const result = formatMetricValue("-0.00005", "FIL");
-    // Should use formatCurrency for negative numbers, even if small
-    expect(result).toBe("-$0.00 FIL");
+describe("calculateDateRange", () => {
+  let mockNow: Date;
+
+  beforeEach(() => {
+    mockNow = new Date("2024-01-15T10:00:00Z");
+    jest.useFakeTimers();
+    jest.setSystemTime(mockNow);
   });
 
-  it("should use scientific notation for extremely small numbers in formatChartValue", () => {
-    const result = formatChartValue(0.0000005, "FIL");
-    expect(result).toMatch(/^[\d.]+e-\d+ FIL$/);
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
-  it("should use fixed decimal places for small numbers in formatChartValue", () => {
-    const result = formatChartValue(0.00005, "FIL");
-    expect(result).toMatch(/^0\.0{4,7}5+ FIL$/);
+  it("should calculate 1 month range correctly", () => {
+    const result = calculateDateRange("1_month");
+    expect(result).toEqual({
+      startDate: "2023-12-15",
+      endDate: "2024-01-15",
+    });
+  });
+
+  it("should calculate 3 months range correctly", () => {
+    const result = calculateDateRange("3_months");
+    expect(result).toEqual({
+      startDate: "2023-10-15",
+      endDate: "2024-01-15",
+    });
+  });
+
+  it("should calculate 6 months range correctly", () => {
+    const result = calculateDateRange("6_months");
+    expect(result).toEqual({
+      startDate: "2023-07-15",
+      endDate: "2024-01-15",
+    });
+  });
+
+  it("should calculate 1 year range correctly", () => {
+    const result = calculateDateRange("1_year");
+    expect(result).toEqual({
+      startDate: "2023-01-15",
+      endDate: "2024-01-15",
+    });
   });
 });

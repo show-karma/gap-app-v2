@@ -6,7 +6,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import { useParams } from "next/navigation";
-import React from "react";
 import { EcosystemMetricsSection } from "@/components/Pages/Communities/Impact/EcosystemMetricsSection";
 import { useEcosystemMetrics } from "@/hooks/useEcosystemMetrics";
 import type { EcosystemMetricsResponse } from "@/types/ecosystem-metrics";
@@ -40,6 +39,19 @@ jest.mock("@/components/Pages/Communities/Impact/TimeframeSelector", () => ({
 const mockUseEcosystemMetrics = useEcosystemMetrics as jest.MockedFunction<
   typeof useEcosystemMetrics
 >;
+
+// Typed mock helper for better type safety and maintainability
+type MockUseEcosystemMetricsReturn = ReturnType<typeof useEcosystemMetrics>;
+
+const createMockReturn = (
+  overrides: Partial<MockUseEcosystemMetricsReturn> = {}
+): MockUseEcosystemMetricsReturn => ({
+  data: null,
+  isLoading: false,
+  error: null,
+  isError: false,
+  ...overrides,
+});
 const mockUseParams = useParams as jest.MockedFunction<typeof useParams>;
 
 describe("EcosystemMetricsSection", () => {
@@ -100,12 +112,7 @@ describe("EcosystemMetricsSection", () => {
 
   it("should render nothing for non-Filecoin communities", () => {
     mockUseParams.mockReturnValue({ communityId: "ethereum" });
-    mockUseEcosystemMetrics.mockReturnValue({
-      data: null,
-      isLoading: false,
-      error: null,
-      isError: false,
-    } as any);
+    mockUseEcosystemMetrics.mockReturnValue(createMockReturn());
 
     const wrapper = createWrapper();
     const { container } = render(<EcosystemMetricsSection />, { wrapper });
@@ -114,12 +121,7 @@ describe("EcosystemMetricsSection", () => {
   });
 
   it("should render loading skeletons when loading", () => {
-    mockUseEcosystemMetrics.mockReturnValue({
-      data: null,
-      isLoading: true,
-      error: null,
-      isError: false,
-    } as any);
+    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ isLoading: true }));
 
     const wrapper = createWrapper();
     render(<EcosystemMetricsSection />, { wrapper });
@@ -129,12 +131,12 @@ describe("EcosystemMetricsSection", () => {
   });
 
   it("should render nothing on error", () => {
-    mockUseEcosystemMetrics.mockReturnValue({
-      data: null,
-      isLoading: false,
-      error: new Error("Failed to fetch"),
-      isError: true,
-    } as any);
+    mockUseEcosystemMetrics.mockReturnValue(
+      createMockReturn({
+        error: new Error("Failed to fetch"),
+        isError: true,
+      })
+    );
 
     const wrapper = createWrapper();
     const { container } = render(<EcosystemMetricsSection />, { wrapper });
@@ -149,12 +151,7 @@ describe("EcosystemMetricsSection", () => {
       totalMetrics: 0,
     };
 
-    mockUseEcosystemMetrics.mockReturnValue({
-      data: emptyResponse,
-      isLoading: false,
-      error: null,
-      isError: false,
-    } as any);
+    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: emptyResponse }));
 
     const wrapper = createWrapper();
     render(<EcosystemMetricsSection />, { wrapper });
@@ -164,12 +161,7 @@ describe("EcosystemMetricsSection", () => {
   });
 
   it("should render metrics when data is available", async () => {
-    mockUseEcosystemMetrics.mockReturnValue({
-      data: mockMetricsResponse,
-      isLoading: false,
-      error: null,
-      isError: false,
-    } as any);
+    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: mockMetricsResponse }));
 
     const wrapper = createWrapper();
     render(<EcosystemMetricsSection />, { wrapper });
@@ -184,12 +176,7 @@ describe("EcosystemMetricsSection", () => {
   });
 
   it("should render metric cards with charts", async () => {
-    mockUseEcosystemMetrics.mockReturnValue({
-      data: mockMetricsResponse,
-      isLoading: false,
-      error: null,
-      isError: false,
-    } as any);
+    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: mockMetricsResponse }));
 
     const wrapper = createWrapper();
     render(<EcosystemMetricsSection />, { wrapper });
@@ -200,12 +187,7 @@ describe("EcosystemMetricsSection", () => {
   });
 
   it("should render metric descriptions when available", async () => {
-    mockUseEcosystemMetrics.mockReturnValue({
-      data: mockMetricsResponse,
-      isLoading: false,
-      error: null,
-      isError: false,
-    } as any);
+    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: mockMetricsResponse }));
 
     const wrapper = createWrapper();
     render(<EcosystemMetricsSection />, { wrapper });
@@ -217,12 +199,7 @@ describe("EcosystemMetricsSection", () => {
   });
 
   it("should render latest values and dates", async () => {
-    mockUseEcosystemMetrics.mockReturnValue({
-      data: mockMetricsResponse,
-      isLoading: false,
-      error: null,
-      isError: false,
-    } as any);
+    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: mockMetricsResponse }));
 
     const wrapper = createWrapper();
     render(<EcosystemMetricsSection />, { wrapper });
@@ -237,12 +214,7 @@ describe("EcosystemMetricsSection", () => {
 
   it("should handle case-insensitive community ID matching", () => {
     mockUseParams.mockReturnValue({ communityId: "FIL" });
-    mockUseEcosystemMetrics.mockReturnValue({
-      data: mockMetricsResponse,
-      isLoading: false,
-      error: null,
-      isError: false,
-    } as any);
+    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: mockMetricsResponse }));
 
     const wrapper = createWrapper();
     render(<EcosystemMetricsSection />, { wrapper });
@@ -251,12 +223,7 @@ describe("EcosystemMetricsSection", () => {
   });
 
   it("should render nothing when data is null", () => {
-    mockUseEcosystemMetrics.mockReturnValue({
-      data: null,
-      isLoading: false,
-      error: null,
-      isError: false,
-    } as any);
+    mockUseEcosystemMetrics.mockReturnValue(createMockReturn());
 
     const wrapper = createWrapper();
     const { container } = render(<EcosystemMetricsSection />, { wrapper });
@@ -265,12 +232,7 @@ describe("EcosystemMetricsSection", () => {
   });
 
   it("should render nothing when data is invalid (fails type guard)", () => {
-    mockUseEcosystemMetrics.mockReturnValue({
-      data: { invalid: "data" } as any,
-      isLoading: false,
-      error: null,
-      isError: false,
-    } as any);
+    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: { invalid: "data" } as any }));
 
     const wrapper = createWrapper();
     const { container } = render(<EcosystemMetricsSection />, { wrapper });
@@ -285,12 +247,7 @@ describe("EcosystemMetricsSection", () => {
       totalMetrics: 1,
     };
 
-    mockUseEcosystemMetrics.mockReturnValue({
-      data: singleMetricResponse,
-      isLoading: false,
-      error: null,
-      isError: false,
-    } as any);
+    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: singleMetricResponse }));
 
     const wrapper = createWrapper();
     render(<EcosystemMetricsSection />, { wrapper });
@@ -320,12 +277,7 @@ describe("EcosystemMetricsSection", () => {
       totalMetrics: 1,
     };
 
-    mockUseEcosystemMetrics.mockReturnValue({
-      data: metricWithNullValue,
-      isLoading: false,
-      error: null,
-      isError: false,
-    } as any);
+    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: metricWithNullValue }));
 
     const wrapper = createWrapper();
     render(<EcosystemMetricsSection />, { wrapper });
@@ -333,101 +285,5 @@ describe("EcosystemMetricsSection", () => {
     await waitFor(() => {
       expect(screen.getByText("N/A")).toBeInTheDocument();
     });
-  });
-
-  it("should calculate date range correctly for 3_months timeframe", () => {
-    // Mock useState to return "3_months" as initial timeframe
-    const originalUseState = React.useState;
-    jest.spyOn(React, "useState").mockImplementationOnce(() => ["3_months", jest.fn()]);
-
-    mockUseEcosystemMetrics.mockReturnValue({
-      data: mockMetricsResponse,
-      isLoading: false,
-      error: null,
-      isError: false,
-    } as any);
-
-    const wrapper = createWrapper();
-    render(<EcosystemMetricsSection />, { wrapper });
-
-    // The hook should be called with date range for 3 months ago
-    const expectedStartDate = new Date();
-    expectedStartDate.setMonth(expectedStartDate.getMonth() - 3);
-    const expectedEndDate = new Date();
-
-    expect(mockUseEcosystemMetrics).toHaveBeenCalledWith(
-      {
-        startDate: expectedStartDate.toISOString().split("T")[0],
-        endDate: expectedEndDate.toISOString().split("T")[0],
-      },
-      true
-    );
-
-    // Restore original useState
-    React.useState = originalUseState;
-  });
-
-  it("should calculate date range correctly for 6_months timeframe", () => {
-    // Mock useState to return "6_months" as initial timeframe
-    const originalUseState = React.useState;
-    jest.spyOn(React, "useState").mockImplementationOnce(() => ["6_months", jest.fn()]);
-
-    mockUseEcosystemMetrics.mockReturnValue({
-      data: mockMetricsResponse,
-      isLoading: false,
-      error: null,
-      isError: false,
-    } as any);
-
-    const wrapper = createWrapper();
-    render(<EcosystemMetricsSection />, { wrapper });
-
-    // The hook should be called with date range for 6 months ago
-    const expectedStartDate = new Date();
-    expectedStartDate.setMonth(expectedStartDate.getMonth() - 6);
-    const expectedEndDate = new Date();
-
-    expect(mockUseEcosystemMetrics).toHaveBeenCalledWith(
-      {
-        startDate: expectedStartDate.toISOString().split("T")[0],
-        endDate: expectedEndDate.toISOString().split("T")[0],
-      },
-      true
-    );
-
-    // Restore original useState
-    React.useState = originalUseState;
-  });
-
-  it("should calculate date range correctly for 1_year timeframe", () => {
-    // Mock useState to return "1_year" as initial timeframe
-    const originalUseState = React.useState;
-    jest.spyOn(React, "useState").mockImplementationOnce(() => ["1_year", jest.fn()]);
-
-    mockUseEcosystemMetrics.mockReturnValue({
-      data: mockMetricsResponse,
-      isLoading: false,
-      error: null,
-      isError: false,
-    } as any);
-
-    const wrapper = createWrapper();
-    render(<EcosystemMetricsSection />, { wrapper });
-
-    // The hook should be called with date range for 1 year ago
-    const expectedStartDate = new Date();
-    expectedStartDate.setFullYear(expectedStartDate.getFullYear() - 1);
-    const expectedEndDate = new Date();
-
-    expect(mockUseEcosystemMetrics).toHaveBeenCalledWith(
-      {
-        startDate: expectedStartDate.toISOString().split("T")[0],
-        endDate: expectedEndDate.toISOString().split("T")[0],
-      },
-      true
-    );
-
-    // Restore original useState
-    React.useState = originalUseState;
   });
 });

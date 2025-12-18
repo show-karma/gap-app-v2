@@ -6,12 +6,14 @@ import { useEcosystemMetrics } from "@/hooks/useEcosystemMetrics";
 import type { EcosystemMetric } from "@/types/ecosystem-metrics";
 import { formatDate } from "@/utilities/formatDate";
 import {
+  calculateDateRange,
   formatChartValue,
   formatMetricValue,
   isValidEcosystemMetricsResponse,
   prepareChartDataForMetric,
+  type TimeframeOption,
 } from "./ecosystemMetricsUtils";
-import { type TimeframeOption, TimeframeSelector } from "./TimeframeSelector";
+import { TimeframeSelector } from "./TimeframeSelector";
 
 // Only show ecosystem metrics for Filecoin community
 const FILECOIN_COMMUNITY_SLUGS = ["filecoin", "fil"];
@@ -123,29 +125,7 @@ export const EcosystemMetricsSection = () => {
   // Memoize date range calculation based on timeframe
   const dateRange = useMemo(() => {
     if (!isFilecoin) return undefined;
-
-    const endDate = new Date();
-    const startDate = new Date();
-
-    switch (selectedTimeframe) {
-      case "1_month":
-        startDate.setMonth(startDate.getMonth() - 1);
-        break;
-      case "3_months":
-        startDate.setMonth(startDate.getMonth() - 3);
-        break;
-      case "6_months":
-        startDate.setMonth(startDate.getMonth() - 6);
-        break;
-      case "1_year":
-        startDate.setFullYear(startDate.getFullYear() - 1);
-        break;
-    }
-
-    return {
-      startDate: startDate.toISOString().split("T")[0],
-      endDate: endDate.toISOString().split("T")[0],
-    };
+    return calculateDateRange(selectedTimeframe);
   }, [isFilecoin, selectedTimeframe]);
 
   // Only fetch metrics for Filecoin community
