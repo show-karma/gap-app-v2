@@ -163,9 +163,11 @@ describe("Hero Component", () => {
       const section = container.querySelector("section");
       expect(section).toBeInTheDocument();
 
-      // Hero image should be hidden on mobile (has hidden md:flex class)
-      const heroImage = screen.getByAltText("Builder Hero");
-      expect(heroImage).toHaveClass("hidden");
+      // Hero image container should be hidden on mobile (has hidden sm:flex class)
+      // The image itself is wrapped in a div with those classes
+      const heroImageContainer = container.querySelector('div[class*="hidden"][class*="sm:flex"]');
+      expect(heroImageContainer).toBeInTheDocument();
+      expect(heroImageContainer).toHaveClass("hidden");
     });
 
     it("should adapt layout to tablet viewport", () => {
@@ -198,12 +200,14 @@ describe("Hero Component", () => {
     });
 
     it("should show hero image on desktop but hide on mobile", () => {
-      renderWithProviders(<Hero />);
+      const { container } = renderWithProviders(<Hero />);
 
       const heroImage = screen.getByAltText("Builder Hero");
       expect(heroImage).toBeInTheDocument();
-      // Image has "hidden md:flex" classes - hidden on mobile, flex on md+
-      expect(heroImage).toHaveClass("hidden", "md:flex");
+      // Image container has "hidden sm:flex" classes - hidden below sm breakpoint, flex on sm+
+      const heroImageContainer = heroImage.closest('div[class*="hidden"][class*="sm:flex"]');
+      expect(heroImageContainer).toBeInTheDocument();
+      expect(heroImageContainer).toHaveClass("hidden", "sm:flex");
     });
   });
 

@@ -1,14 +1,11 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 
-jest.mock("@/utilities/queries/getCommunityData", () => ({
+jest.mock("@/utilities/queries/v2/getCommunityData", () => ({
+  getCommunityDetails: jest.fn(),
+  getCommunityStats: jest.fn(),
+  getCommunityProjects: jest.fn(),
   getCommunityCategories: jest.fn(),
-}));
-
-jest.mock("@/utilities/queries/getCommunityDataV2", () => ({
-  getCommunityDetailsV2: jest.fn(),
-  getCommunityStatsV2: jest.fn(),
-  getCommunityProjectsV2: jest.fn(),
 }));
 
 jest.mock("@/utilities/pagesOnRoot", () => ({
@@ -44,16 +41,16 @@ describe("Community Page", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     const {
-      getCommunityDetailsV2,
-      getCommunityStatsV2,
-      getCommunityProjectsV2,
-    } = require("@/utilities/queries/getCommunityDataV2");
-    const { getCommunityCategories } = require("@/utilities/queries/getCommunityData");
+      getCommunityDetails,
+      getCommunityStats,
+      getCommunityProjects,
+      getCommunityCategories,
+    } = require("@/utilities/queries/v2/getCommunityData");
 
-    getCommunityDetailsV2.mockResolvedValue(mockCommunityDetails);
-    getCommunityStatsV2.mockResolvedValue(mockCommunityStats);
+    getCommunityDetails.mockResolvedValue(mockCommunityDetails);
+    getCommunityStats.mockResolvedValue(mockCommunityStats);
     getCommunityCategories.mockResolvedValue(mockCategories);
-    getCommunityProjectsV2.mockResolvedValue(mockProjects);
+    getCommunityProjects.mockResolvedValue(mockProjects);
   });
 
   it("renders the community page with correct components", async () => {

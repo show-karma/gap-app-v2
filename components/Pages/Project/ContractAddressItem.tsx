@@ -22,6 +22,7 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
     onRemove,
     onVerify,
     supportedNetworks,
+    readOnly = false,
   }) => {
     // Local state for real-time format validation
     const [formatError, setFormatError] = useState<string | null>(null);
@@ -78,24 +79,33 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
                 Contract {index + 1}
               </span>
               <div className="flex-1 flex space-x-4">
-                <SearchDropdown
-                  onSelectFunction={(value) => onNetworkChange(index, value)}
-                  selected={pair.network ? [pair.network] : []}
-                  list={[...supportedNetworks]}
-                  type="network"
-                  prefixUnselected="Select"
-                  buttonClassname="flex-1"
-                />
+                {readOnly ? (
+                  <div className="flex-1 px-3 py-2 text-sm capitalize text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-zinc-600 rounded-md">
+                    {pair.network || "No network"}
+                  </div>
+                ) : (
+                  <SearchDropdown
+                    onSelectFunction={(value) => onNetworkChange(index, value)}
+                    selected={pair.network ? [pair.network] : []}
+                    list={[...supportedNetworks]}
+                    type="network"
+                    prefixUnselected="Select"
+                    buttonClassname="flex-1"
+                  />
+                )}
                 <input
                   type="text"
                   value={pair.address}
                   onChange={(e) => onAddressChange(index, e.target.value)}
+                  readOnly={readOnly}
                   className={`flex-1 text-sm rounded-md bg-transparent border-b focus:outline-none ${
-                    hasError
-                      ? "text-red-600 dark:text-red-400 border-red-500 focus:border-red-600"
-                      : "text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 focus:border-blue-500"
+                    readOnly
+                      ? "text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 cursor-default"
+                      : hasError
+                        ? "text-red-600 dark:text-red-400 border-red-500 focus:border-red-600"
+                        : "text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 focus:border-blue-500"
                   }`}
-                  placeholder="Enter contract address (0x...)"
+                  placeholder={readOnly ? "" : "Enter contract address (0x...)"}
                   aria-label={`Contract address ${index + 1}`}
                   aria-invalid={hasError}
                   aria-describedby={hasError ? `contract-error-${index}` : undefined}
@@ -121,6 +131,7 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
                       </div>
                       {onVerify && (
                         <button
+                          type="button"
                           onClick={() => onVerify(index)}
                           className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
                           aria-label={`Verify contract ${index + 1}`}
@@ -134,7 +145,7 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
               )}
             </div>
           </div>
-          {canRemove && (
+          {canRemove && !readOnly && (
             <Button
               onClick={() => onRemove(index)}
               className="p-2 text-red-500 hover:text-red-700 bg-transparent dark:bg-transparent hover:bg-transparent dark:hover:bg-transparent"

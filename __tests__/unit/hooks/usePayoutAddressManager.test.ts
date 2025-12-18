@@ -15,10 +15,12 @@ jest.mock("viem", () => ({
   isAddress: jest.fn(),
 }));
 
-jest.mock("@/utilities/gapIndexerApi", () => ({
-  gapIndexerApi: {
-    projectBySlug: jest.fn(),
-  },
+jest.mock("@/services/project.service", () => ({
+  getProject: jest.fn(),
+}));
+
+jest.mock("@/services/project-grants.service", () => ({
+  getProjectGrants: jest.fn(),
 }));
 
 describe("usePayoutAddressManager", () => {
@@ -39,15 +41,19 @@ describe("usePayoutAddressManager", () => {
     },
   ];
 
+  // V2 flat structure - payoutAddress is at root level, not inside details
   const mockProjectResponse = {
-    data: {
-      uid: "project-1",
+    uid: "project-1",
+    owner: mockValidAddress,
+    payoutAddress: mockValidAddress,
+    details: {
       title: "Project 1",
-      payoutAddress: mockValidAddress,
-      recipient: mockValidAddress,
-      grants: [],
+      slug: "project-1-slug",
+      description: "Test project",
     },
   };
+
+  const mockGrantsResponse: any[] = [];
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -56,6 +62,12 @@ describe("usePayoutAddressManager", () => {
     mockIsAddress.mockImplementation((addr: string) => addr === mockValidAddress);
 
     (toast.error as jest.Mock).mockImplementation(() => {});
+
+    // Setup default mocks for V2 services
+    const { getProject } = require("@/services/project.service");
+    const { getProjectGrants } = require("@/services/project-grants.service");
+    getProject.mockResolvedValue(mockProjectResponse);
+    getProjectGrants.mockResolvedValue(mockGrantsResponse);
   });
 
   afterEach(async () => {
@@ -74,18 +86,22 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should not fetch when no items provided", () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
 
       renderHook(() => usePayoutAddressManager([], undefined));
 
-      expect(gapIndexerApi.projectBySlug).not.toHaveBeenCalled();
+      expect(getProject).not.toHaveBeenCalled();
+      expect(getProjectGrants).not.toHaveBeenCalled();
     });
   });
 
   describe("fetching payout addresses", () => {
     it("should fetch payout addresses for all items", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockResolvedValue(mockProjectResponse);
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockResolvedValue(mockProjectResponse);
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const { result } = renderHook(() => usePayoutAddressManager(mockItems, undefined));
 
@@ -95,27 +111,32 @@ describe("usePayoutAddressManager", () => {
         expect(result.current.isFetchingPayouts).toBe(false);
       });
 
-      expect(gapIndexerApi.projectBySlug).toHaveBeenCalledTimes(2);
-      expect(gapIndexerApi.projectBySlug).toHaveBeenCalledWith("project-1-slug");
-      expect(gapIndexerApi.projectBySlug).toHaveBeenCalledWith("project-2-slug");
+      expect(getProject).toHaveBeenCalledTimes(2);
+      expect(getProject).toHaveBeenCalledWith("project-1-slug");
+      expect(getProject).toHaveBeenCalledWith("project-2-slug");
+      expect(getProjectGrants).toHaveBeenCalledTimes(2);
     });
 
     it("should use uid as fallback when slug is missing", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockResolvedValue(mockProjectResponse);
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockResolvedValue(mockProjectResponse);
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const itemWithoutSlug = { uid: "project-3", title: "Project 3" };
 
       renderHook(() => usePayoutAddressManager([itemWithoutSlug], undefined));
 
       await waitFor(() => {
-        expect(gapIndexerApi.projectBySlug).toHaveBeenCalledWith("project-3");
+        expect(getProject).toHaveBeenCalledWith("project-3");
       });
     });
 
     it("should store resolved payout addresses", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockResolvedValue(mockProjectResponse);
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockResolvedValue(mockProjectResponse);
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const { result } = renderHook(() => usePayoutAddressManager(mockItems, undefined));
 
@@ -125,8 +146,10 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should handle fetch error gracefully", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockRejectedValue(new Error("Network error"));
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockRejectedValue(new Error("Network error"));
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const { result } = renderHook(() => usePayoutAddressManager(mockItems, undefined));
 
@@ -142,13 +165,13 @@ describe("usePayoutAddressManager", () => {
 
   describe("resolvePayoutAddress", () => {
     it("should resolve string payout address", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockResolvedValue({
-        data: {
-          ...mockProjectResponse.data,
-          payoutAddress: mockValidAddress,
-        },
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockResolvedValue({
+        ...mockProjectResponse,
+        payoutAddress: mockValidAddress,
       });
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
 
@@ -158,16 +181,16 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should resolve object payout address (community-specific)", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockResolvedValue({
-        data: {
-          ...mockProjectResponse.data,
-          payoutAddress: {
-            "community-1": mockValidAddress,
-            "community-2": "0x9876543210987654321098765432109876543210",
-          },
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockResolvedValue({
+        ...mockProjectResponse,
+        payoutAddress: {
+          "community-1": mockValidAddress,
+          "community-2": "0x9876543210987654321098765432109876543210",
         },
       });
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const mockIsAddress = isAddress as unknown as jest.Mock;
       mockIsAddress.mockReturnValue(true);
@@ -180,17 +203,17 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should use first available address from object when community ID not provided", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
       const firstAddress = "0x9876543210987654321098765432109876543210";
-      gapIndexerApi.projectBySlug.mockResolvedValue({
-        data: {
-          ...mockProjectResponse.data,
-          payoutAddress: {
-            "community-1": firstAddress,
-            "community-2": mockValidAddress,
-          },
+      getProject.mockResolvedValue({
+        ...mockProjectResponse,
+        payoutAddress: {
+          "community-1": firstAddress,
+          "community-2": mockValidAddress,
         },
       });
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const mockIsAddress = isAddress as unknown as jest.Mock;
       mockIsAddress.mockReturnValue(true);
@@ -204,22 +227,19 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should fallback to grant payout address", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockResolvedValue({
-        data: {
-          ...mockProjectResponse.data,
-          payoutAddress: undefined,
-          grants: [
-            {
-              details: {
-                data: {
-                  payoutAddress: mockValidAddress,
-                },
-              },
-            },
-          ],
-        },
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockResolvedValue({
+        ...mockProjectResponse,
+        payoutAddress: undefined,
       });
+      getProjectGrants.mockResolvedValue([
+        {
+          details: {
+            payoutAddress: mockValidAddress,
+          },
+        },
+      ]);
 
       const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
 
@@ -228,16 +248,15 @@ describe("usePayoutAddressManager", () => {
       });
     });
 
-    it("should fallback to recipient address", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockResolvedValue({
-        data: {
-          ...mockProjectResponse.data,
-          payoutAddress: undefined,
-          recipient: mockValidAddress,
-          grants: [],
-        },
+    it("should fallback to owner address", async () => {
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockResolvedValue({
+        ...mockProjectResponse,
+        owner: mockValidAddress,
+        payoutAddress: undefined,
       });
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
 
@@ -247,13 +266,13 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should reject invalid addresses", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockResolvedValue({
-        data: {
-          ...mockProjectResponse.data,
-          payoutAddress: mockInvalidAddress,
-        },
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockResolvedValue({
+        ...mockProjectResponse,
+        payoutAddress: mockInvalidAddress,
       });
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const mockIsAddress = isAddress as unknown as jest.Mock;
       mockIsAddress.mockReturnValue(false);
@@ -267,15 +286,14 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should handle missing payout address", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockResolvedValue({
-        data: {
-          ...mockProjectResponse.data,
-          payoutAddress: undefined,
-          recipient: undefined,
-          grants: [],
-        },
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockResolvedValue({
+        ...mockProjectResponse,
+        owner: undefined,
+        payoutAddress: undefined,
       });
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
 
@@ -288,20 +306,20 @@ describe("usePayoutAddressManager", () => {
 
   describe("missing payouts tracking", () => {
     it("should track projects with missing payout addresses", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
 
-      gapIndexerApi.projectBySlug
+      getProject
         .mockResolvedValueOnce({
-          data: { ...mockProjectResponse.data, payoutAddress: mockValidAddress },
+          ...mockProjectResponse,
+          payoutAddress: mockValidAddress,
         })
         .mockResolvedValueOnce({
-          data: {
-            ...mockProjectResponse.data,
-            payoutAddress: undefined,
-            recipient: undefined,
-            grants: [],
-          },
+          ...mockProjectResponse,
+          owner: undefined,
+          payoutAddress: undefined,
         });
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const { result } = renderHook(() => usePayoutAddressManager(mockItems, undefined));
 
@@ -311,15 +329,14 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should clear missing payouts when items change", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockResolvedValue({
-        data: {
-          ...mockProjectResponse.data,
-          payoutAddress: undefined,
-          recipient: undefined,
-          grants: [],
-        },
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockResolvedValue({
+        ...mockProjectResponse,
+        owner: undefined,
+        payoutAddress: undefined,
       });
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const { result, rerender } = renderHook(
         ({ items }) => usePayoutAddressManager(items, undefined),
@@ -331,7 +348,8 @@ describe("usePayoutAddressManager", () => {
       });
 
       // Update to valid addresses
-      gapIndexerApi.projectBySlug.mockResolvedValue(mockProjectResponse);
+      getProject.mockResolvedValue(mockProjectResponse);
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       // Create a new array reference to trigger the effect
       rerender({ items: [...mockItems] });
@@ -344,8 +362,10 @@ describe("usePayoutAddressManager", () => {
 
   describe("payoutStatusByProject", () => {
     it("should provide status for each project", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockResolvedValue(mockProjectResponse);
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockResolvedValue(mockProjectResponse);
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const { result } = renderHook(() => usePayoutAddressManager(mockItems, undefined));
 
@@ -358,9 +378,13 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should mark status as loading during fetch", () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockImplementation(
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve(mockProjectResponse), 1000))
+      );
+      getProjectGrants.mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve(mockGrantsResponse), 1000))
       );
 
       const { result } = renderHook(() => usePayoutAddressManager(mockItems, undefined));
@@ -369,15 +393,14 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should mark status as missing when payout address not found", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockResolvedValue({
-        data: {
-          ...mockProjectResponse.data,
-          payoutAddress: undefined,
-          recipient: undefined,
-          grants: [],
-        },
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockResolvedValue({
+        ...mockProjectResponse,
+        owner: undefined,
+        payoutAddress: undefined,
       });
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
 
@@ -415,22 +438,30 @@ describe("usePayoutAddressManager", () => {
 
   describe("cleanup", () => {
     it("should ignore results after unmount", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
 
       let resolvePromise: (value: any) => void;
       const promise = new Promise((resolve) => {
         resolvePromise = resolve;
       });
 
-      gapIndexerApi.projectBySlug.mockReturnValue(promise);
+      let resolveGrantsPromise: (value: any) => void;
+      const grantsPromise = new Promise((resolve) => {
+        resolveGrantsPromise = resolve;
+      });
+
+      getProject.mockReturnValue(promise);
+      getProjectGrants.mockReturnValue(grantsPromise);
 
       const { result, unmount } = renderHook(() => usePayoutAddressManager(mockItems, undefined));
 
       // Unmount before promise resolves
       unmount();
 
-      // Resolve the promise after unmount
+      // Resolve the promises after unmount
       resolvePromise!(mockProjectResponse);
+      resolveGrantsPromise!(mockGrantsResponse);
 
       // Wait a bit
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -450,8 +481,10 @@ describe("usePayoutAddressManager", () => {
 
   describe("edge cases", () => {
     it("should handle items with special characters in slug", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockResolvedValue(mockProjectResponse);
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockResolvedValue(mockProjectResponse);
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const specialItem = {
         uid: "project-special",
@@ -462,18 +495,19 @@ describe("usePayoutAddressManager", () => {
       renderHook(() => usePayoutAddressManager([specialItem], undefined));
 
       await waitFor(() => {
-        expect(gapIndexerApi.projectBySlug).toHaveBeenCalledWith("project-with-special-chars-!@#$");
+        expect(getProject).toHaveBeenCalledWith("project-with-special-chars-!@#$");
       });
     });
 
     it("should handle empty payout address object", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockResolvedValue({
-        data: {
-          ...mockProjectResponse.data,
-          payoutAddress: {},
-        },
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockResolvedValue({
+        ...mockProjectResponse,
+        owner: undefined,
+        payoutAddress: {},
       });
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
 
@@ -483,17 +517,18 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should handle payout address object with invalid values", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockResolvedValue({
-        data: {
-          ...mockProjectResponse.data,
-          payoutAddress: {
-            "community-1": null,
-            "community-2": undefined,
-            "community-3": "",
-          },
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockResolvedValue({
+        ...mockProjectResponse,
+        owner: undefined,
+        payoutAddress: {
+          "community-1": null,
+          "community-2": undefined,
+          "community-3": "",
         },
       });
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const { result } = renderHook(() => usePayoutAddressManager([mockItems[0]], undefined));
 
@@ -503,8 +538,10 @@ describe("usePayoutAddressManager", () => {
     });
 
     it("should handle concurrent item updates", async () => {
-      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-      gapIndexerApi.projectBySlug.mockResolvedValue(mockProjectResponse);
+      const { getProject } = require("@/services/project.service");
+      const { getProjectGrants } = require("@/services/project-grants.service");
+      getProject.mockResolvedValue(mockProjectResponse);
+      getProjectGrants.mockResolvedValue(mockGrantsResponse);
 
       const { rerender } = renderHook(({ items }) => usePayoutAddressManager(items, undefined), {
         initialProps: { items: [mockItems[0]] },
@@ -515,7 +552,7 @@ describe("usePayoutAddressManager", () => {
       rerender({ items: [mockItems[1]] });
 
       await waitFor(() => {
-        expect(gapIndexerApi.projectBySlug).toHaveBeenCalled();
+        expect(getProject).toHaveBeenCalled();
       });
 
       // Should not throw errors

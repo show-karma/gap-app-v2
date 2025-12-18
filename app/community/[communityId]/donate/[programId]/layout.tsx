@@ -1,6 +1,6 @@
 import { registryService } from "@/services/registry.service";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import { getCommunityDetailsV2 } from "@/utilities/queries/getCommunityDataV2";
+import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 import { DonationHeader } from "./header";
 
 type Params = Promise<{
@@ -16,14 +16,11 @@ export default async function Layout(props: { children: React.ReactNode; params:
     return undefined;
   }
 
-  const community = await getCommunityDetailsV2(communityId);
+  const community = await getCommunityDetails(communityId);
   if (!community) return undefined;
 
-  const programSplitted = programId.split("_");
-  const programIsolatedId = programSplitted[0];
-  const programWithoutChain = parseInt(programSplitted[1], 10);
-
-  const program = await registryService.searchProgramById(programIsolatedId, programWithoutChain);
+  // registryService.searchProgramById now handles programId_chainID format parsing internally
+  const program = await registryService.searchProgramById(programId);
   if (!program) return undefined;
 
   return (

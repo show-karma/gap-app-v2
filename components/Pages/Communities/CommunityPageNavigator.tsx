@@ -1,11 +1,10 @@
 "use client";
 import { ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
-import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { FolderIcon } from "@/components/Icons/Folder";
 import { Target2Icon } from "@/components/Icons/Target2";
-import { getCommunityBySlug } from "@/utilities/gapIndexerApi/getCommunityBySlug";
+import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
@@ -74,10 +73,7 @@ export const CommunityPageNavigator = () => {
   const communityId = params.communityId as string;
   const pathname = usePathname();
   const programId = searchParams.get("programId");
-  const { data: community } = useQuery({
-    queryKey: ["community", communityId],
-    queryFn: () => getCommunityBySlug(communityId),
-  });
+  const { data: community } = useCommunityDetails(communityId);
 
   const isAdminPage = pathname.includes("/admin");
   if (isAdminPage) return null;
@@ -98,7 +94,7 @@ export const CommunityPageNavigator = () => {
                 : "text-brand-darkblue dark:text-zinc-400"
             )}
           />
-          {title(community?.details?.data.name || "")}
+          {title(community?.details?.name || "")}
           {showNewTag ? <NewTag /> : null}
         </Link>
       ))}

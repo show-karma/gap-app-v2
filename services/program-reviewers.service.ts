@@ -1,6 +1,8 @@
 import axios from "axios";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import {
   validateEmail,
   validateReviewerData as validateReviewerDataUtil,
@@ -10,17 +12,8 @@ import {
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
-// Create axios instance with authentication
+// Keep apiClient for mutations (POST, DELETE)
 const apiClient = createAuthenticatedApiClient(API_URL, 30000);
-
-// Add response interceptor for error handling
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error("Program Reviewers API Error:", error.response?.data || error.message);
-    throw error;
-  }
-);
 
 /**
  * User profile information
@@ -77,34 +70,28 @@ export const programReviewersService = {
    * Get all reviewers for a program
    */
   async getReviewers(programId: string, chainID: number): Promise<ProgramReviewer[]> {
-    try {
-      const response = await apiClient.get<{ reviewers: ProgramReviewerResponse[] }>(
-        `/v2/funding-program-configs/${programId}/${chainID}/reviewers`
-      );
+    const [data, error] = await fetchData<{ reviewers: ProgramReviewerResponse[] }>(
+      INDEXER.V2.FUNDING_PROGRAMS.REVIEWERS(programId, chainID)
+    );
 
-      // Map the API response to the expected format
-      return (response.data.reviewers || []).map((reviewer) => ({
-        publicAddress: reviewer.publicAddress,
-        name: reviewer.userProfile?.name || "",
-        email: reviewer.userProfile?.email || "",
-        telegram: reviewer.userProfile?.telegram || "",
-        assignedAt: reviewer.assignedAt,
-        assignedBy: reviewer.assignedBy,
-      }));
-    } catch (error) {
+    if (error) {
       // Handle "No reviewers found" as an empty list, not an error
-      if (error && typeof error === "object" && "response" in error) {
-        const apiError = error as { response?: { data?: { error?: string; message?: string } } };
-        if (
-          apiError.response?.data?.error === "Program Reviewer Not Found" ||
-          apiError.response?.data?.message?.includes("No reviewers found")
-        ) {
-          return [];
-        }
+      if (error.includes("Program Reviewer Not Found") || error.includes("No reviewers found")) {
+        return [];
       }
-      // Re-throw other errors
-      throw error;
+      console.error("Program Reviewers API Error:", error);
+      throw new Error(error);
     }
+
+    // Map the API response to the expected format
+    return (data?.reviewers || []).map((reviewer) => ({
+      publicAddress: reviewer.publicAddress,
+      name: reviewer.userProfile?.name || "",
+      email: reviewer.userProfile?.email || "",
+      telegram: reviewer.userProfile?.telegram || "",
+      assignedAt: reviewer.assignedAt,
+      assignedBy: reviewer.assignedBy,
+    }));
   },
 
   /**
@@ -116,7 +103,7 @@ export const programReviewersService = {
     reviewerData: AddReviewerRequest
   ): Promise<ProgramReviewer> {
     const response = await apiClient.post<{ reviewer?: ProgramReviewerResponse }>(
-      `/v2/funding-program-configs/${programId}/${chainID}/reviewers`,
+      INDEXER.V2.FUNDING_PROGRAMS.REVIEWERS(programId, chainID),
       reviewerData
     );
 

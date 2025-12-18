@@ -1,9 +1,11 @@
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
-// Create axios instance with authentication
+// Keep apiClient for POST operations
 const apiClient = createAuthenticatedApiClient(API_URL, 30000);
 
 // Add response interceptor for error handling
@@ -11,6 +13,16 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     console.error("Contract API Error:", error.response?.data || error.message);
+
+    // Extract the API error message if available, otherwise use a user-friendly message
+    const apiErrorMessage = error.response?.data?.message;
+    if (apiErrorMessage) {
+      // Create a new error with the API message
+      const enhancedError = new Error(apiErrorMessage);
+      (enhancedError as Error & { originalError?: unknown }).originalError = error;
+      throw enhancedError;
+    }
+
     throw error;
   }
 );
@@ -78,11 +90,16 @@ export class ContractsService {
    * @returns Deployer information
    */
   async lookupDeployer(network: string, contractAddress: string): Promise<DeployerInfo> {
-    const response = await apiClient.get<DeployerInfo>(`/v2/projects/contracts/deployer`, {
-      params: { network, contractAddress },
-    });
+    const [data, error] = await fetchData<DeployerInfo>(
+      INDEXER.PROJECT.CONTRACTS.DEPLOYER(network, contractAddress)
+    );
 
-    return response.data;
+    if (error || !data) {
+      console.error("Contract API Error:", error);
+      throw new Error(error || "Failed to lookup deployer");
+    }
+
+    return data;
   }
 
   /**
@@ -99,7 +116,7 @@ export class ContractsService {
     userAddress: string
   ): Promise<VerificationMessage> {
     const response = await apiClient.post<VerificationMessage>(
-      `/v2/projects/contracts/verify-message`,
+      INDEXER.PROJECT.CONTRACTS.VERIFY_MESSAGE(),
       { network, contractAddress, userAddress }
     );
 
@@ -113,7 +130,7 @@ export class ContractsService {
    */
   async verifyContractSignature(params: VerifySignatureParams): Promise<VerificationResult> {
     const response = await apiClient.post<VerificationResult>(
-      `/v2/projects/contracts/verify-signature`,
+      INDEXER.PROJECT.CONTRACTS.VERIFY_SIGNATURE(),
       params
     );
 
@@ -133,7 +150,7 @@ export class ContractsService {
     excludeProjectId?: string
   ): Promise<ContractValidationResponse> {
     const response = await apiClient.post<ContractValidationResponse>(
-      `/v2/projects/contracts/address-availability`,
+      INDEXER.PROJECT.CONTRACTS.CHECK_ADDRESS(),
       {
         address,
         network,

@@ -68,11 +68,11 @@ const socialMediaLinks = [
   },
 ];
 
-const formatAddress = (addr: string) => {
+const _formatAddress = (addr: string) => {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 };
 
-const formatAddressLong = (addr: string) => {
+const _formatAddressLong = (addr: string) => {
   return `${addr.slice(0, 10)}...${addr.slice(-6)}`;
 };
 

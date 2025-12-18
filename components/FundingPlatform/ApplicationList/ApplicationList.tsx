@@ -1,6 +1,7 @@
 "use client";
 
 import { type FC, useState } from "react";
+import toast from "react-hot-toast";
 import SortableTableHeader from "@/components/Utilities/SortableTableHeader";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
 import type { IApplicationListProps, IFundingApplication } from "@/types/funding-platform";
@@ -8,18 +9,27 @@ import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import StatusChangeModal from "../ApplicationView/StatusChangeModal";
 import { formatAIScore } from "../helper/getAIScore";
+import { formatInternalAIScore } from "../helper/getInternalAIScore";
 import { getProjectTitle } from "../helper/getProjecTitle";
 import { TableStatusActionButtons } from "./TableStatusActionButtons";
 
 interface IApplicationListComponentProps extends IApplicationListProps {
   applications: IFundingApplication[];
   isLoading?: boolean;
-  onStatusChange?: (applicationId: string, status: string, note?: string) => Promise<void>;
+  onStatusChange?: (
+    applicationId: string,
+    status: string,
+    note?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => Promise<void>;
   onExport?: () => void;
   showStatusActions?: boolean;
   sortBy?: IApplicationFilters["sortBy"];
   sortOrder?: IApplicationFilters["sortOrder"];
   onSortChange?: (sortBy: string) => void;
+  showAIScoreColumn?: boolean;
+  showInternalAIScoreColumn?: boolean;
 }
 
 const statusColors = {
@@ -48,11 +58,16 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   sortBy,
   sortOrder,
   onSortChange,
+  showAIScoreColumn = false,
+  showInternalAIScoreColumn = false,
 }) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string>("");
   const [pendingApplicationId, setPendingApplicationId] = useState<string>("");
+  const [pendingApplication, setPendingApplication] = useState<IFundingApplication | undefined>(
+    undefined
+  );
 
   // Show all applications (no internal pagination for infinite scroll)
   const paginatedApplications = applications;
@@ -63,23 +78,45 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
     e: React.MouseEvent
   ) => {
     e.stopPropagation();
+    // Find the application to pass to modal
+    const application = applications.find(
+      (app) => app.referenceNumber === applicationId || app.id === applicationId
+    );
     setPendingApplicationId(applicationId);
     setPendingStatus(newStatus);
+    setPendingApplication(application);
     setStatusModalOpen(true);
   };
 
-  const handleStatusChangeConfirm = async (reason?: string) => {
+  const handleStatusChangeConfirm = async (
+    reason?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => {
     if (onStatusChange && pendingApplicationId && pendingStatus) {
       try {
         setIsUpdatingStatus(true);
-        await onStatusChange(pendingApplicationId, pendingStatus, reason);
+        await onStatusChange(
+          pendingApplicationId,
+          pendingStatus,
+          reason,
+          approvedAmount,
+          approvedCurrency
+        );
         setIsUpdatingStatus(false);
         setStatusModalOpen(false);
         setPendingStatus("");
         setPendingApplicationId("");
+        setPendingApplication(undefined);
+        if (pendingStatus === "approved") {
+          toast.success("Application approved successfully!");
+        } else {
+          toast.success(`Application status updated to ${pendingStatus}`);
+        }
       } catch (error) {
         console.error("Failed to update status:", error);
         setIsUpdatingStatus(false);
+        toast.error("Failed to update application status");
       }
     }
   };
@@ -147,13 +184,24 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                   currentSortDirection={sortOrder}
                   onSort={onSortChange}
                 />
-                <SortableTableHeader
-                  label="AI Score"
-                  sortKey="aiEvaluationScore"
-                  currentSortKey={sortBy}
-                  currentSortDirection={sortOrder}
-                  onSort={onSortChange}
-                />
+                {showAIScoreColumn && (
+                  <SortableTableHeader
+                    label="AI Score"
+                    sortKey="aiEvaluationScore"
+                    currentSortKey={sortBy}
+                    currentSortDirection={sortOrder}
+                    onSort={onSortChange}
+                  />
+                )}
+                {showInternalAIScoreColumn && (
+                  <SortableTableHeader
+                    label="Internal AI Score"
+                    sortKey="internalAIEvaluationScore"
+                    currentSortKey={sortBy}
+                    currentSortDirection={sortOrder}
+                    onSort={onSortChange}
+                  />
+                )}
                 <SortableTableHeader
                   label="Created Date"
                   sortKey="createdAt"
@@ -205,9 +253,16 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                   <td className="px-4 py-4 whitespace-nowrap">
                     {getStatusBadge(application.status)}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 text-center">
-                    <span className="font-medium">{formatAIScore(application)}</span>
-                  </td>
+                  {showAIScoreColumn && (
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 text-center">
+                      <span className="font-medium">{formatAIScore(application)}</span>
+                    </td>
+                  )}
+                  {showInternalAIScoreColumn && (
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 text-center">
+                      <span className="font-medium">{formatInternalAIScore(application)}</span>
+                    </td>
+                  )}
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                     {formatDate(application.createdAt)}
                   </td>
@@ -240,10 +295,12 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
           setStatusModalOpen(false);
           setPendingStatus("");
           setPendingApplicationId("");
+          setPendingApplication(undefined);
         }}
         onConfirm={handleStatusChangeConfirm}
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
+        application={pendingApplication}
       />
     </div>
   );

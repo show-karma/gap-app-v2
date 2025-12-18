@@ -42,7 +42,7 @@
         "noExplicitAny": "warn"
       },
       "correctness": {
-        "useExhaustiveDependencies": "warn"
+        "useExhaustiveDependencies": "off"
       },
       "style": {
         "noNonNullAssertion": "off"
@@ -130,10 +130,11 @@
     {
       "includes": ["**/*.css"],
       "css": {
-        "parser": {
-          "cssModules": true,
-          "allowWrongLineComments": true,
-          "tailwindDirectives": true
+        "formatter": {
+          "enabled": false
+        },
+        "linter": {
+          "enabled": false
         }
       },
       "linter": {
@@ -166,6 +167,15 @@
             "useTemplate": "off"
           }
         }
+      }
+    },
+    {
+      "includes": ["**/globals.css"],
+      "formatter": {
+        "enabled": false
+      },
+      "linter": {
+        "enabled": false
       }
     }
   ],

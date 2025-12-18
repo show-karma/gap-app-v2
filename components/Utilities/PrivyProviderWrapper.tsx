@@ -42,16 +42,9 @@ export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperP
           logo: "https://karmahq.xyz/logo/karma-logo-light.svg",
           landingHeader: `Connect to ${PROJECT_NAME}`,
           showWalletLoginFirst: false,
-          walletList: [
-            "detected_wallets",
-            "metamask",
-            "wallet_connect_qr",
-            "rainbow",
-            "rabby_wallet",
-            "wallet_connect",
-          ],
+          walletList: ["detected_wallets", "metamask", "rainbow", "rabby_wallet", "wallet_connect"],
         },
-        loginMethods: ["wallet"],
+        loginMethods: ["email", "google", "wallet"],
         defaultChain: defaultChain,
         supportedChains: appNetwork,
         externalWallets: {

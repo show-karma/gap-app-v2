@@ -3,7 +3,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Milestone } from "@show-karma/karma-gap-sdk";
 import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { Transaction } from "ethers";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -16,12 +15,14 @@ import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { useStepper } from "@/store/modals/txStepper";
+import type { Grant } from "@/types/v2/grant";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
@@ -73,17 +74,19 @@ const milestoneSchema = z.object({
 type MilestoneFormData = z.infer<typeof milestoneSchema>;
 
 export const UnifiedMilestoneScreen = () => {
-  const { project, refreshProject } = useProjectStore();
+  const { project } = useProjectStore();
   const { closeProgressModal } = useProgressModalStore();
   const [selectedGrantIds, setSelectedGrantIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const grants: IGrantResponse[] = project?.grants || [];
+
+  // Fetch grants using dedicated hook
+  const { grants, refetch: refetchGrants } = useProjectGrants(project?.uid || "");
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
   const { projectId } = useParams();
-  const { refetch } = useAllMilestones(projectId as string);
+  const { refetch: refetchUpdates } = useProjectUpdates(projectId as string);
   const router = useRouter();
 
   const {
@@ -104,7 +107,7 @@ export const UnifiedMilestoneScreen = () => {
 
   const grantOptions = grants.map((grant) => ({
     value: grant.uid,
-    label: `${grant.details?.data.title || "Untitled Grant"}`,
+    label: `${grant.details?.title || "Untitled Grant"}`,
     chainId: grant.chainID,
   }));
 
@@ -194,8 +197,8 @@ export const UnifiedMilestoneScreen = () => {
   // Function to attempt multiple refetches with delays between attempts
   const tryRefetch = async (attempts = 3, delayMs = 2000) => {
     for (let i = 0; i < attempts; i++) {
-      await refetch();
-      await refreshProject();
+      await refetchUpdates();
+      await refetchGrants();
       if (i < attempts - 1) {
         await sleep(delayMs);
       }
@@ -213,7 +216,7 @@ export const UnifiedMilestoneScreen = () => {
 
     try {
       // Group grants by chain ID to process each network separately
-      const grantsByChain: Record<number, { grant: IGrantResponse; index: number }[]> = {};
+      const grantsByChain: Record<number, { grant: Grant; index: number }[]> = {};
 
       // Build the groups by chain
       selectedGrantIds.forEach((grantId, index) => {
@@ -286,7 +289,7 @@ export const UnifiedMilestoneScreen = () => {
           });
 
           const milestoneToAttest = new Milestone({
-            refUID: grant.uid,
+            refUID: grant.uid as `0x${string}`,
             schema: gapClient.findSchema("Milestone"),
             recipient: address as `0x${string}`,
             data: milestone,
@@ -333,7 +336,7 @@ export const UnifiedMilestoneScreen = () => {
 
           const milestoneToAttest = new Milestone({
             // We'll use the first grant as reference, but it will be attested to all selected grants
-            refUID: firstGrant.uid,
+            refUID: firstGrant.uid as `0x${string}`,
             schema: gapClient.findSchema("Milestone"),
             recipient: address as `0x${string}`,
             data: milestone,
@@ -407,7 +410,7 @@ export const UnifiedMilestoneScreen = () => {
 
       changeStepperStep("indexed");
 
-      router.push(PAGES.PROJECT.UPDATES(project?.details?.data.slug || project?.uid || ""));
+      router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
       closeProgressModal();
     } catch (error) {
       errorManager("Error creating grant milestones", error);
@@ -475,7 +478,7 @@ export const UnifiedMilestoneScreen = () => {
       acc[chainId].grants.push(grant);
       return acc;
     },
-    {} as Record<number, { chainId: number; chainName: string; grants: IGrantResponse[] }>
+    {} as Record<number, { chainId: number; chainName: string; grants: Grant[] }>
   );
 
   return (

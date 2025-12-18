@@ -12,6 +12,7 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { getProject } from "@/services/project.service";
 import { useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
@@ -62,16 +63,14 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         }
 
         const [_, error] = await fetchData(
-          INDEXER.PROJECT.ENDORSEMENT.NOTIFY(
-            project.details?.data?.slug || (project.uid as string)
-          ),
+          INDEXER.PROJECT.ENDORSEMENT.NOTIFY(project.details?.slug || (project.uid as string)),
           "POST",
           {
             email: contact.email,
             name: contact.name,
             endorsementId: endorsement.uid,
             endorserAddress: address,
-            projectTitle: project.details?.data?.title || project.uid,
+            projectTitle: project.details?.title || project.uid,
             comment: comment || undefined,
           }
         );
@@ -129,24 +128,21 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         }
         let retries = 1000;
         refreshProject();
-        let fetchedProject: Project | null = null;
         changeStepperStep("indexing");
         while (retries > 0) {
-          fetchedProject = await gapClient!.fetch.projectById(project.uid as Hex).catch(() => null);
-          if (fetchedProject?.endorsements?.find((end) => end.uid === endorsement.uid)) {
+          const polledProject = await getProject(project.uid);
+          if (polledProject?.endorsements?.find((end: any) => end.uid === endorsement.uid)) {
             retries = 0;
             changeStepperStep("indexed");
 
             await notifyProjectOwner(endorsement);
 
-            router.push(
-              PAGES.PROJECT.OVERVIEW((project.details?.data?.slug || project?.uid) as string)
-            );
+            router.push(PAGES.PROJECT.OVERVIEW((project.details?.slug || project?.uid) as string));
             openShareDialog({
-              modalShareText: `Well played! Project ${project?.details?.data?.title} now has your epic endorsement 🎯🐉!`,
+              modalShareText: `Well played! Project ${project?.details?.title} now has your epic endorsement 🎯🐉!`,
               shareText: SHARE_TEXTS.PROJECT_ENDORSEMENT(
-                project?.details?.data?.title as string,
-                project?.uid as string
+                project?.details?.title as string,
+                (project?.details?.slug || project?.uid) as string
               ),
               modalShareSecondText: ` `,
             });
@@ -202,7 +198,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
                 >
                   You are endorsing{" "}
                   <b>
-                    {project?.details?.data?.title ||
+                    {project?.details?.title ||
                       (project?.uid ? shortAddress(project?.uid as string) : "this project")}
                   </b>
                 </Dialog.Title>

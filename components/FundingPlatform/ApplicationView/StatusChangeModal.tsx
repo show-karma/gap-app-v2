@@ -2,16 +2,24 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { type FC, Fragment, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import debounce from "lodash.debounce";
+import { type FC, Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { fundingPlatformService } from "@/services/fundingPlatformService";
+import type { IFundingApplication, IFundingProgramConfig } from "@/types/funding-platform";
 
 interface StatusChangeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (reason?: string) => void;
+  onConfirm: (reason?: string, approvedAmount?: string, approvedCurrency?: string) => Promise<void>;
   status: string;
   isSubmitting?: boolean;
   isReasonRequired?: boolean;
+  application?: IFundingApplication;
+  programConfig?: IFundingProgramConfig | null;
 }
 
 const statusLabels: Record<string, string> = {
@@ -28,6 +36,21 @@ const statusDescriptions: Record<string, string> = {
   pending: "Set this application back to pending",
 };
 
+// Helper to extract currency from API response (handles multiple possible response structures)
+const extractCurrency = (fundingDetails: {
+  currency?: string;
+  data?: { currency?: string };
+  fundingDetails?: { currency?: string };
+  details?: { currency?: string };
+}): string | undefined => {
+  return (
+    fundingDetails?.currency ||
+    fundingDetails?.data?.currency ||
+    fundingDetails?.fundingDetails?.currency ||
+    fundingDetails?.details?.currency
+  );
+};
+
 const StatusChangeModal: FC<StatusChangeModalProps> = ({
   isOpen,
   onClose,
@@ -35,32 +58,263 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   status,
   isSubmitting = false,
   isReasonRequired = false,
+  application,
+  programConfig,
 }) => {
   const [reason, setReason] = useState("");
+  const [approvedAmount, setApprovedAmount] = useState("");
+  const [approvedCurrency, setApprovedCurrency] = useState("");
+  const [amountError, setAmountError] = useState<string | null>(null);
+  const [currencyError, setCurrencyError] = useState<string | null>(null);
+  const [isCurrencyFromAPI, setIsCurrencyFromAPI] = useState(false);
 
-  // Make reason required for revision_requested and rejected statuses
+  // Extract programId and chainId from application object
+  const programId = application?.programId;
+  const chainId = application?.chainID;
+
+  // When status is "approved", amount and currency are required
+  const isApprovalStatus = status === "approved";
+
+  const getTemplateContent = useCallback((): string => {
+    if (!programConfig?.formSchema?.settings) return "";
+
+    if (status === "approved" && programConfig.formSchema.settings.approvalEmailTemplate) {
+      return programConfig.formSchema.settings.approvalEmailTemplate;
+    }
+    if (status === "rejected" && programConfig.formSchema.settings.rejectionEmailTemplate) {
+      return programConfig.formSchema.settings.rejectionEmailTemplate;
+    }
+    return "";
+  }, [programConfig?.formSchema?.settings, status]);
+
+  useEffect(() => {
+    if (isOpen) {
+      const templateContent = getTemplateContent();
+      if (templateContent) {
+        // Prepopulate with template when modal opens or status changes
+        setReason(templateContent);
+      } else {
+        // Clear reason if no template available
+        setReason("");
+      }
+    } else {
+      // Reset reason when modal closes
+      setReason("");
+    }
+  }, [isOpen, getTemplateContent]);
+
   const isReasonActuallyRequired =
     isReasonRequired || status === "revision_requested" || status === "rejected";
 
-  const handleConfirm = () => {
+  // Validate approved amount
+  const validateAmount = useCallback((value: string): boolean => {
+    if (!value || value.trim() === "") {
+      return false;
+    }
+    const trimmedValue = value.trim();
+    const num = Number.parseFloat(trimmedValue);
+    return !Number.isNaN(num) && num > 0 && Number.isFinite(num);
+  }, []);
+
+  // Validate approved currency with format check
+  const validateCurrency = useCallback((value: string): boolean => {
+    if (!value || value.trim() === "") {
+      return false;
+    }
+    // Validate currency code format: uppercase letters only (length doesn't matter)
+    const currencyRegex = /^[A-Z]+$/;
+    return currencyRegex.test(value.trim().toUpperCase());
+  }, []);
+
+  // Debounced validation for amount input - use ref to persist across renders
+  const debouncedAmountValidationRef = useRef<ReturnType<typeof debounce> | null>(null);
+
+  const debouncedAmountValidation = useMemo(() => {
+    // Cancel previous debounced function if it exists
+    if (debouncedAmountValidationRef.current) {
+      debouncedAmountValidationRef.current.cancel();
+    }
+
+    const debounced = debounce((value: string) => {
+      if (isApprovalStatus) {
+        if (!value || value.trim() === "") {
+          setAmountError("Approved amount is required");
+        } else if (!validateAmount(value)) {
+          setAmountError("Approved amount must be a valid positive number");
+        } else {
+          setAmountError(null);
+        }
+      }
+    }, 300);
+
+    debouncedAmountValidationRef.current = debounced;
+    return debounced;
+  }, [isApprovalStatus, validateAmount]);
+
+  // Helper to reset form state
+  const resetFormState = useCallback(() => {
+    setReason("");
+    setApprovedAmount("");
+    setApprovedCurrency("");
+    setAmountError(null);
+    setCurrencyError(null);
+    setIsCurrencyFromAPI(false);
+  }, []);
+
+  // Fetch funding details when modal opens and status is "approved"
+  const isFundingDetailsEnabled = isOpen && isApprovalStatus && !!programId && !!chainId;
+
+  const fundingDetailsQuery = useQuery({
+    queryKey: ["program-funding-details", programId, chainId],
+    queryFn: () => fundingPlatformService.programs.getFundingDetails(programId!, chainId!),
+    enabled: isFundingDetailsEnabled,
+  });
+
+  const isLoadingCurrency = fundingDetailsQuery.isPending && isFundingDetailsEnabled;
+
+  // Handle funding details data when it arrives
+  useEffect(() => {
+    // Reset all form fields when modal closes
+    if (!isOpen) {
+      resetFormState();
+      return;
+    }
+
+    // Process funding details when query succeeds
+    if (fundingDetailsQuery.data && isOpen && isApprovalStatus) {
+      const currency = extractCurrency(fundingDetailsQuery.data);
+      if (currency) {
+        // Normalize currency (trim and uppercase) to match validation requirements
+        const normalizedCurrency = currency.trim().toUpperCase();
+        const currencyRegex = /^[A-Z]+$/;
+        const isValid = currencyRegex.test(normalizedCurrency);
+        // Avoid overwriting manual user input if they already started typing
+        setApprovedCurrency((current) => (current.trim() ? current : normalizedCurrency));
+        // Only disable field if currency is valid - if invalid, allow manual editing
+        setIsCurrencyFromAPI(isValid);
+        setCurrencyError(isValid ? null : "Currency must be a valid code (e.g., USD, ETH, USDC)");
+      }
+    }
+
+    // Handle error case - if currency can't be loaded, leave field empty for manual entry
+    if (fundingDetailsQuery.isError && isOpen && isApprovalStatus) {
+      errorManager("Failed to fetch funding details", fundingDetailsQuery.error, {
+        programId: application?.programId,
+        chainId: application?.chainID,
+      });
+      setIsCurrencyFromAPI(false);
+    }
+  }, [
+    isOpen,
+    isApprovalStatus,
+    fundingDetailsQuery.data,
+    fundingDetailsQuery.isError,
+    fundingDetailsQuery.error,
+    application?.programId,
+    application?.chainID,
+    resetFormState,
+  ]);
+
+  // Cleanup debounced function on unmount
+  useEffect(() => {
+    return () => {
+      if (debouncedAmountValidationRef.current) {
+        debouncedAmountValidationRef.current.cancel();
+      }
+    };
+  }, []);
+
+  const handleAmountChange = (value: string) => {
+    setApprovedAmount(value);
+    // Clear error immediately on change for better UX
+    if (value && value.trim() !== "" && validateAmount(value)) {
+      setAmountError(null);
+    }
+    // Debounce validation to avoid excessive error messages while typing
+    debouncedAmountValidation(value);
+  };
+
+  const handleCurrencyChange = (value: string) => {
+    // Don't normalize while typing - only normalize on blur/submit for better UX
+    setApprovedCurrency(value);
+    // Allow editing when user manually changes the currency
+    setIsCurrencyFromAPI(false);
+    if (isApprovalStatus) {
+      const trimmedValue = value.trim();
+      if (!trimmedValue) {
+        setCurrencyError("Approved currency is required");
+      } else {
+        const normalizedValue = trimmedValue.toUpperCase();
+        if (!validateCurrency(normalizedValue)) {
+          setCurrencyError("Currency must be a valid code (e.g., USD, ETH, USDC)");
+        } else {
+          setCurrencyError(null);
+        }
+      }
+    }
+  };
+
+  const handleConfirm = async () => {
     // If reason is required but not provided, don't proceed
     if (isReasonActuallyRequired && !reason.trim()) {
       return;
     }
-    onConfirm(reason || undefined);
-    setReason("");
+
+    // If status is approved, validate amount and currency
+    if (isApprovalStatus) {
+      const amountValid = validateAmount(approvedAmount);
+      const currencyValid = validateCurrency(approvedCurrency);
+
+      if (!amountValid) {
+        setAmountError("Approved amount is required and must be a valid positive number");
+        return;
+      }
+      if (!currencyValid) {
+        setCurrencyError("Approved currency is required");
+        return;
+      }
+    }
+
+    await onConfirm(
+      reason || undefined,
+      isApprovalStatus ? approvedAmount.trim() : undefined,
+      isApprovalStatus ? approvedCurrency.trim().toUpperCase() : undefined
+    );
+    // Form will be reset when modal closes (handled by parent on success or via handleClose)
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (!isSubmitting) {
-      setReason("");
+      if (debouncedAmountValidationRef.current) {
+        debouncedAmountValidationRef.current.cancel();
+      }
+      resetFormState();
       onClose();
     }
-  };
+  }, [isSubmitting, resetFormState, onClose]);
+
+  // Check if form is valid for submission - memoized to react to state changes
+  const isFormValid = useMemo(() => {
+    if (isSubmitting) return false;
+    if (isReasonActuallyRequired && !reason.trim()) return false;
+    if (isApprovalStatus) {
+      return validateAmount(approvedAmount) && validateCurrency(approvedCurrency);
+    }
+    return true;
+  }, [
+    isSubmitting,
+    isReasonActuallyRequired,
+    reason,
+    isApprovalStatus,
+    approvedAmount,
+    approvedCurrency,
+    validateAmount,
+    validateCurrency,
+  ]);
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={handleClose}>
+      <Dialog as="div" className="relative z-50" open={isOpen} onClose={handleClose}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -130,41 +384,191 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                         {statusDescriptions[status] || "Change the status of this application."}
                       </p>
 
-                      <div className="mt-4">
-                        <label
-                          htmlFor="reason"
-                          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                        >
-                          Reason{" "}
-                          {isReasonActuallyRequired ? (
-                            <span className="text-red-500">*</span>
-                          ) : (
-                            "(Optional)"
-                          )}
-                        </label>
-                        <textarea
-                          id="reason"
-                          name="reason"
-                          rows={4}
-                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
-                          placeholder={
-                            status === "revision_requested"
-                              ? "Explain what needs to be revised..."
+                      <div className="mt-4 space-y-4">
+                        {/* Approved Amount and Currency Fields - Only show when approving */}
+                        {isApprovalStatus && (
+                          <div className="space-y-4">
+                            <div>
+                              <label
+                                htmlFor="approvedAmount"
+                                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                              >
+                                Approved Amount <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                id="approvedAmount"
+                                name="approvedAmount"
+                                type="number"
+                                step="any"
+                                min="0"
+                                aria-describedby={[
+                                  amountError ? "amount-error" : null,
+                                  "amount-description",
+                                ]
+                                  .filter(Boolean)
+                                  .join(" ")}
+                                aria-invalid={!!amountError}
+                                className={`block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 ${amountError ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
+                                placeholder="0.00"
+                                value={approvedAmount}
+                                onChange={(e) => handleAmountChange(e.target.value)}
+                                disabled={isSubmitting}
+                              />
+                              <div id="amount-description" className="sr-only">
+                                Enter the approved funding amount as a positive number
+                              </div>
+                              {amountError && (
+                                <p
+                                  id="amount-error"
+                                  role="alert"
+                                  className="mt-1 text-xs text-red-600 dark:text-red-400"
+                                >
+                                  {amountError}
+                                </p>
+                              )}
+                            </div>
+
+                            <div>
+                              {fundingDetailsQuery.isError && (
+                                <div className="mb-2 flex items-start gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-2 dark:border-yellow-900/50 dark:bg-yellow-900/20">
+                                  <ExclamationTriangleIcon className="w-4 h-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                                  <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                                    Currency auto-load failed. Please select manually.
+                                  </p>
+                                </div>
+                              )}
+                              <label
+                                htmlFor="approvedCurrency"
+                                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                              >
+                                Approved Currency <span className="text-red-500">*</span>
+                              </label>
+                              {isLoadingCurrency ? (
+                                <input
+                                  id="approvedCurrency"
+                                  name="approvedCurrency"
+                                  type="text"
+                                  aria-describedby="currency-info"
+                                  aria-invalid={false}
+                                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 cursor-not-allowed"
+                                  value=""
+                                  placeholder="Loading currency..."
+                                  readOnly
+                                  disabled
+                                />
+                              ) : isCurrencyFromAPI ? (
+                                <input
+                                  id="approvedCurrency"
+                                  name="approvedCurrency"
+                                  type="text"
+                                  aria-describedby="currency-info"
+                                  aria-invalid={false}
+                                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 cursor-not-allowed"
+                                  value={approvedCurrency}
+                                  readOnly
+                                  disabled
+                                />
+                              ) : (
+                                <input
+                                  id="approvedCurrency"
+                                  name="approvedCurrency"
+                                  type="text"
+                                  aria-describedby={
+                                    currencyError ? "currency-error" : "currency-info"
+                                  }
+                                  aria-invalid={!!currencyError}
+                                  className={`block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 ${
+                                    currencyError
+                                      ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                                      : ""
+                                  }`}
+                                  placeholder="e.g., USD, ETH, USDC"
+                                  value={approvedCurrency}
+                                  onChange={(e) => handleCurrencyChange(e.target.value)}
+                                  disabled={isSubmitting}
+                                />
+                              )}
+                              {currencyError && (
+                                <p
+                                  id="currency-error"
+                                  role="alert"
+                                  className="mt-1 text-xs text-red-600 dark:text-red-400"
+                                >
+                                  {currencyError}
+                                </p>
+                              )}
+                              {isLoadingCurrency ? (
+                                <p
+                                  id="currency-info"
+                                  className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                                >
+                                  Loading currency from program funding details...
+                                </p>
+                              ) : isCurrencyFromAPI ? (
+                                <p
+                                  id="currency-info"
+                                  className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                                >
+                                  Currency automatically loaded from program funding details
+                                </p>
+                              ) : (
+                                <p
+                                  id="currency-info"
+                                  className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                                >
+                                  Enter the currency code (e.g., USD, ETH, USDC)
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Reason Field */}
+                        <div>
+                          <label
+                            htmlFor="reason"
+                            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                          >
+                            Reason{" "}
+                            {isReasonActuallyRequired ? (
+                              <span className="text-red-500">*</span>
+                            ) : (
+                              "(Optional)"
+                            )}
+                          </label>
+                          <div className={isSubmitting ? "opacity-50 pointer-events-none" : ""}>
+                            <MarkdownEditor
+                              id="reason"
+                              value={reason}
+                              onChange={setReason}
+                              placeholder={
+                                status === "revision_requested"
+                                  ? "Explain what needs to be revised..."
+                                  : status === "rejected"
+                                    ? "Explain why the application is rejected..."
+                                    : status === "approved"
+                                      ? "Add any notes about this decision..."
+                                      : "Add any notes about this decision..."
+                              }
+                              height={300}
+                              minHeight={250}
+                              disabled={isSubmitting}
+                              aria-describedby="reason-description"
+                            />
+                          </div>
+                          <p
+                            id="reason-description"
+                            className="mt-2 text-xs text-gray-500 dark:text-gray-400"
+                          >
+                            {status === "revision_requested"
+                              ? "The applicant will see this message and can update their application."
                               : status === "rejected"
-                                ? "Explain why the application is rejected..."
-                                : "Add any notes about this decision..."
-                          }
-                          value={reason}
-                          onChange={(e) => setReason(e.target.value)}
-                          disabled={isSubmitting}
-                        />
-                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                          {status === "revision_requested"
-                            ? "The applicant will see this message and can update their application."
-                            : status === "rejected"
-                              ? "This reason will be recorded and may be shared with the applicant."
-                              : "This reason will be recorded in the status history."}
-                        </p>
+                                ? "This content will be sent to the applicant via email."
+                                : status === "approved"
+                                  ? "This content will be sent to the applicant via email."
+                                  : "This reason will be recorded in the status history."}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -173,7 +577,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                   <Button
                     onClick={handleConfirm}
-                    disabled={isSubmitting || (isReasonActuallyRequired && !reason.trim())}
+                    disabled={!isFormValid}
                     className={`w-full sm:w-auto sm:ml-3 ${
                       status === "approved"
                         ? "bg-green-600 hover:bg-green-700"

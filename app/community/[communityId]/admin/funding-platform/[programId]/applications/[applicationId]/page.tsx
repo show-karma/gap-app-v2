@@ -1,15 +1,29 @@
 "use client";
 
-import { ArrowLeftIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent";
-import CommentsSection from "@/components/FundingPlatform/ApplicationView/CommentsSection";
+import { AIAnalysisTab } from "@/components/FundingPlatform/ApplicationView/AIAnalysisTab";
+import ApplicationHeader from "@/components/FundingPlatform/ApplicationView/ApplicationHeader";
+import { ApplicationTab } from "@/components/FundingPlatform/ApplicationView/ApplicationTab";
+import {
+  ApplicationTabs,
+  type TabConfig,
+  TabIcons,
+} from "@/components/FundingPlatform/ApplicationView/ApplicationTabs";
 import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView/DeleteApplicationModal";
+import { DiscussionTab } from "@/components/FundingPlatform/ApplicationView/DiscussionTab";
+import EditApplicationModal from "@/components/FundingPlatform/ApplicationView/EditApplicationModal";
+import HeaderActions from "@/components/FundingPlatform/ApplicationView/HeaderActions";
+import MoreActionsDropdown from "@/components/FundingPlatform/ApplicationView/MoreActionsDropdown";
+import StatusChangeModal from "@/components/FundingPlatform/ApplicationView/StatusChangeModal";
+import { TabPanel } from "@/components/FundingPlatform/ApplicationView/TabPanel";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import {
   useApplication,
   useApplicationComments,
@@ -18,13 +32,12 @@ import {
   useDeleteApplication,
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
-import { useStaff } from "@/hooks/useStaff";
 import { layoutTheme } from "@/src/helper/theme";
-import { useOwnerStore } from "@/store";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
+import type { IFundingApplication } from "@/types/funding-platform";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { isFundingProgramConfig } from "@/utilities/type-guards";
 
 export default function ApplicationDetailPage() {
   const router = useRouter();
@@ -42,10 +55,7 @@ export default function ApplicationDetailPage() {
   const [programId, chainId] = combinedProgramId.split("_");
   const parsedChainId = parseInt(chainId, 10);
 
-  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
-  const hasAccess = isCommunityAdmin || isOwner || isStaff;
+  const { hasAccess, isLoading: isLoadingAdmin, checks } = useCommunityAdminAccess(communityId);
 
   // Get current user address
   const { address: currentUserAddress } = useAccount();
@@ -56,6 +66,14 @@ export default function ApplicationDetailPage() {
   // Delete modal state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+  // Edit modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Status change modal state
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState("");
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
   // Fetch application data
   const {
     application,
@@ -64,7 +82,7 @@ export default function ApplicationDetailPage() {
   } = useApplication(applicationId);
 
   // Fetch program config
-  const { data: program } = useProgramConfig(programId, parsedChainId);
+  const { data: program, config } = useProgramConfig(programId, parsedChainId);
 
   // Use the application status hook
   const { updateStatusAsync } = useApplicationStatus(programId, parsedChainId);
@@ -76,6 +94,7 @@ export default function ApplicationDetailPage() {
     createCommentAsync,
     editCommentAsync,
     deleteCommentAsync,
+    refetch: refetchComments,
   } = useApplicationComments(applicationId, hasAccess);
 
   // Use the delete application hook
@@ -85,19 +104,70 @@ export default function ApplicationDetailPage() {
   const applicationIdentifier = application?.referenceNumber || application?.id || applicationId;
 
   // Fetch versions using React Query
-  const { versions } = useApplicationVersions(applicationIdentifier);
+  const { versions, refetch: refetchVersions } = useApplicationVersions(applicationIdentifier);
 
   // Get version selection from store
   const { selectVersion } = useApplicationVersionsStore();
 
   // Handle status change
-  const handleStatusChange = async (status: string, note?: string) => {
+  const handleStatusChange = async (
+    status: string,
+    note?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => {
     if (!application) return;
     await updateStatusAsync({
       applicationId: application.referenceNumber,
       status,
       note,
+      approvedAmount,
+      approvedCurrency,
     });
+  };
+
+  // Handle status change click - opens confirmation modal
+  const handleStatusChangeClick = (status: string) => {
+    setPendingStatus(status);
+    setIsStatusModalOpen(true);
+  };
+
+  // Handle status change confirmation from modal
+  const handleStatusChangeConfirm = async (
+    reason?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => {
+    if (!pendingStatus) return;
+
+    setIsUpdatingStatus(true);
+    try {
+      await handleStatusChange(pendingStatus, reason, approvedAmount, approvedCurrency);
+      // Success: close modal and clear state
+      setIsStatusModalOpen(false);
+      setPendingStatus("");
+      if (pendingStatus === "approved") {
+        toast.success("Application approved successfully!");
+      } else {
+        toast.success(`Application status updated to ${pendingStatus}`);
+      }
+    } catch (error) {
+      // Error: keep modal open so user can retry
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update application status";
+      toast.error(errorMessage);
+    } finally {
+      // Always clear loading state
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  // Handle status modal close
+  const handleStatusModalClose = () => {
+    if (!isUpdatingStatus) {
+      setIsStatusModalOpen(false);
+      setPendingStatus("");
+    }
   };
 
   // Handle comment operations
@@ -138,6 +208,29 @@ export default function ApplicationDetailPage() {
     setIsDeleteModalOpen(false);
   };
 
+  // Helper function to check if editing is allowed
+  // NOTE: This is a UI-only check. The backend API MUST enforce these same restrictions
+  // to prevent unauthorized edits. The backend should reject edit requests for applications
+  // with status 'under_review' or 'approved' regardless of client-side checks.
+  const canEditApplication = (app: IFundingApplication) => {
+    const restrictedStatuses = ["under_review", "approved"];
+    return !restrictedStatuses.includes(app.status.toLowerCase());
+  };
+
+  // Handle edit application
+  const handleEditClick = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditClose = () => {
+    setIsEditModalOpen(false);
+  };
+
+  const handleEditSuccess = async () => {
+    // Refetch all data in parallel for better performance
+    await Promise.all([refetchApplication(), refetchVersions(), refetchComments()]);
+  };
+
   const handleVersionClick = (versionId: string) => {
     // Select the version to view
     selectVersion(versionId, versions);
@@ -165,8 +258,12 @@ export default function ApplicationDetailPage() {
     return null;
   }, [application?.status, application?.projectUID, communityId, combinedProgramId]);
 
+  // Check if status actions should be shown (not finalized)
+  const showStatusActions =
+    hasAccess && application && !["approved", "rejected"].includes(application.status);
+
   // Check loading states
-  if (isLoadingAdmin || isStaffLoading || isLoadingApplication) {
+  if (isLoadingAdmin || isLoadingApplication) {
     return (
       <div className="flex w-full items-center justify-center min-h-screen">
         <Spinner />
@@ -199,97 +296,124 @@ export default function ApplicationDetailPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 max-sm:gap-1 max-sm:flex-col max-sm:items-start">
-              <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
-                <ArrowLeftIcon className="w-4 h-4 mr-2" />
-                Back to Applications
-              </Button>
-              <div className="flex flex-col gap-0">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Application Details
-                </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Application ID: {application.referenceNumber}
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+      {/* Main Content */}
+      <div className="px-4 sm:px-6 lg:px-8 py-6">
+        {/* Back Button */}
+        <div className="mb-4">
+          <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
+            <ArrowLeftIcon className="w-4 h-4 mr-2" />
+            Back to Applications
+          </Button>
+        </div>
+        {/* Application Header Card with Actions - connects to tabs when no milestone link */}
+        <ApplicationHeader
+          application={application}
+          program={program}
+          connectedToTabs={!milestoneReviewUrl}
+          statusActions={
+            showStatusActions ? (
+              <HeaderActions
+                currentStatus={application.status as any}
+                onStatusChange={handleStatusChangeClick}
+                isUpdating={isUpdatingStatus}
+              />
+            ) : undefined
+          }
+          moreActions={
+            <MoreActionsDropdown
+              referenceNumber={application.referenceNumber}
+              onDeleteClick={handleDeleteClick}
+              canDelete={hasAccess}
+              isDeleting={isDeleting}
+              onEditClick={handleEditClick}
+              canEdit={hasAccess && canEditApplication(application)}
+            />
+          }
+        />
+
+        {/* Milestone Review Link - Only shown if application is approved and has projectUID */}
+        {milestoneReviewUrl && (
+          <div className="my-6 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-1">
+                <h3 className="text-sm font-semibold text-green-900 dark:text-green-100">
+                  Review Project Milestones
+                </h3>
+                <p className="text-xs text-green-700 dark:text-green-300">
+                  View and verify milestone completions for this approved application
                 </p>
               </div>
-            </div>
-            {/* Delete button - Only show for community admins */}
-            {isCommunityAdmin && (
-              <Button
-                onClick={handleDeleteClick}
-                disabled={isDeleting}
-                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
+              <Link
+                href={milestoneReviewUrl}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium transition-colors"
               >
-                <TrashIcon className="w-4 h-4" />
-                Delete Application
-              </Button>
-            )}
+                View Milestones
+              </Link>
+            </div>
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* Two Column Layout */}
-      <div className="px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Column - Application Content and AI Evaluation */}
-          <div className="space-y-6">
-            {/* Milestone Review Link - Only shown if application is approved and has projectUID */}
-            {milestoneReviewUrl && (
-              <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col gap-1">
-                    <h3 className="text-sm font-semibold text-green-900 dark:text-green-100">
-                      Review Project Milestones
-                    </h3>
-                    <p className="text-xs text-green-700 dark:text-green-300">
-                      View and verify milestone completions for this approved application
-                    </p>
-                  </div>
-                  <Link href={milestoneReviewUrl}>
-                    <Button className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white">
-                      View Milestones
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            <ApplicationContent
-              application={application}
-              program={program}
-              showStatusActions={hasAccess}
-              showAIEvaluationButton={hasAccess}
-              showInternalEvaluation={hasAccess}
-              onStatusChange={handleStatusChange}
-              viewMode={applicationViewMode}
-              onViewModeChange={setApplicationViewMode}
-              onRefresh={refetchApplication}
-            />
-          </div>
-
-          {/* Right Column - Comments */}
-          <div className="space-y-6">
-            <CommentsSection
-              applicationId={application.referenceNumber}
-              comments={comments}
-              statusHistory={application.statusHistory}
-              versionHistory={versions}
-              currentStatus={application.status}
-              isAdmin={hasAccess}
-              currentUserAddress={currentUserAddress}
-              onCommentAdd={handleCommentAdd}
-              onCommentEdit={handleCommentEdit}
-              onCommentDelete={handleCommentDelete}
-              onVersionClick={handleVersionClick}
-              isLoading={isLoadingComments}
-            />
-          </div>
-        </div>
+        {/* Tab-based Layout */}
+        <ApplicationTabs
+          connectedToHeader={!milestoneReviewUrl}
+          tabs={
+            [
+              {
+                id: "application",
+                label: "Application",
+                icon: TabIcons.Application,
+                content: (
+                  <TabPanel>
+                    <ApplicationTab
+                      application={application}
+                      program={program}
+                      viewMode={applicationViewMode}
+                      onViewModeChange={setApplicationViewMode}
+                    />
+                  </TabPanel>
+                ),
+              },
+              {
+                id: "ai-analysis",
+                label: "AI Analysis",
+                icon: TabIcons.AIAnalysis,
+                content: (
+                  <TabPanel>
+                    <AIAnalysisTab
+                      application={application}
+                      program={program}
+                      onEvaluationComplete={refetchApplication}
+                    />
+                  </TabPanel>
+                ),
+              },
+              {
+                id: "discussion",
+                label: "Discussion",
+                icon: TabIcons.Discussion,
+                content: (
+                  <TabPanel padded={false}>
+                    <DiscussionTab
+                      applicationId={application.referenceNumber}
+                      comments={comments}
+                      statusHistory={application.statusHistory}
+                      versionHistory={versions}
+                      currentStatus={application.status}
+                      isAdmin={hasAccess}
+                      currentUserAddress={currentUserAddress}
+                      onCommentAdd={handleCommentAdd}
+                      onCommentEdit={handleCommentEdit}
+                      onCommentDelete={handleCommentDelete}
+                      onVersionClick={handleVersionClick}
+                      isLoading={isLoadingComments}
+                    />
+                  </TabPanel>
+                ),
+              },
+            ] satisfies TabConfig[]
+          }
+        />
       </div>
 
       {/* Delete Confirmation Modal */}
@@ -299,6 +423,31 @@ export default function ApplicationDetailPage() {
         onConfirm={handleDeleteConfirm}
         referenceNumber={application.referenceNumber}
         isDeleting={isDeleting}
+      />
+
+      {/* Edit Application Modal */}
+      {application && (
+        <EditApplicationModal
+          isOpen={isEditModalOpen}
+          onClose={handleEditClose}
+          application={application}
+          programId={programId}
+          chainId={parsedChainId}
+          formSchema={config?.formSchema}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+
+      {/* Status Change Modal */}
+      <StatusChangeModal
+        isOpen={isStatusModalOpen}
+        onClose={handleStatusModalClose}
+        onConfirm={handleStatusChangeConfirm}
+        status={pendingStatus}
+        isSubmitting={isUpdatingStatus}
+        isReasonRequired={pendingStatus === "revision_requested" || pendingStatus === "rejected"}
+        application={application}
+        programConfig={isFundingProgramConfig(program) ? program : undefined}
       />
     </div>
   );

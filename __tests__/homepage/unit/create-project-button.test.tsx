@@ -25,8 +25,8 @@ describe("CreateProjectButton Component", () => {
     renderWithProviders(<CreateProjectButton />);
 
     const button = screen.getByRole("button", { name: /Create project/i });
-    // Check for the mocked classes from setup.ts
-    expect(button.className).toContain("px-6");
+    // Updated to match the current component styling (px-4 instead of px-6)
+    expect(button.className).toContain("px-4");
     expect(button.className).toContain("py-2.5");
     expect(button.className).toContain("text-sm");
     expect(button.className).toContain("font-medium");

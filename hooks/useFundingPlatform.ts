@@ -272,14 +272,20 @@ export const useFundingApplications = (
       applicationId,
       status,
       note,
+      approvedAmount,
+      approvedCurrency,
     }: {
       applicationId: string;
       status: string;
       note?: string;
+      approvedAmount?: string;
+      approvedCurrency?: string;
     }) =>
       fundingPlatformService.applications.updateApplicationStatus(applicationId, {
         status: status as FundingApplicationStatusV2,
         reason: note || "",
+        approvedAmount,
+        approvedCurrency,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -332,10 +338,22 @@ export const useFundingApplication = (applicationId: string) => {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ status, note }: { status: string; note?: string }) =>
+    mutationFn: ({
+      status,
+      note,
+      approvedAmount,
+      approvedCurrency,
+    }: {
+      status: string;
+      note?: string;
+      approvedAmount?: string;
+      approvedCurrency?: string;
+    }) =>
       fundingPlatformService.applications.updateApplicationStatus(applicationId, {
         status: status as FundingApplicationStatusV2,
         reason: note || "",
+        approvedAmount,
+        approvedCurrency,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(applicationId) });
@@ -476,13 +494,25 @@ export const useApplicationUpdateV2 = () => {
     },
     onError: (error: any) => {
       console.error("Failed to update application:", error);
-      const message = error.response?.data?.message || "Failed to update application";
-      toast.error(message);
+
+      if (error.response?.status === 403) {
+        const message =
+          error.response?.data?.message || "You do not have permission to edit this application";
+        toast.error(message);
+      } else if (error.response?.status === 400) {
+        const message =
+          error.response?.data?.message || "Validation error. Please check your input.";
+        toast.error(message);
+      } else {
+        const message = error.response?.data?.message || "Failed to update application";
+        toast.error(message);
+      }
     },
   });
 
   return {
     updateApplication: updateMutation.mutate,
+    updateApplicationAsync: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,
     error: updateMutation.error,
   };
@@ -520,10 +550,16 @@ export const useApplicationStatusV2 = (applicationId?: string) => {
   });
 
   return {
-    updateStatus: (appId: string, status: FundingApplicationStatusV2, reason: string) =>
+    updateStatus: (
+      appId: string,
+      status: FundingApplicationStatusV2,
+      reason: string,
+      approvedAmount?: string,
+      approvedCurrency?: string
+    ) =>
       updateStatusMutation.mutate({
         applicationId: appId,
-        request: { status, reason },
+        request: { status, reason, approvedAmount, approvedCurrency },
       }),
     isUpdating: updateStatusMutation.isPending,
     error: updateStatusMutation.error,
@@ -676,14 +712,20 @@ export const useApplicationStatus = (programId?: string, chainId?: number) => {
       applicationId,
       status,
       note,
+      approvedAmount,
+      approvedCurrency,
     }: {
       applicationId: string;
       status: string;
       note?: string;
+      approvedAmount?: string;
+      approvedCurrency?: string;
     }) =>
       fundingApplicationsAPI.updateApplicationStatus(applicationId, {
-        status: status as any,
+        status: status as FundingApplicationStatusV2,
         reason: note || "",
+        approvedAmount,
+        approvedCurrency,
       }),
     onSuccess: (_, variables) => {
       // Invalidate and refetch application data

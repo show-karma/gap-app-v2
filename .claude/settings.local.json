@@ -40,7 +40,8 @@
       "Bash(npx next lint:*)",
       "Bash(test:*)",
       "Bash(python3:*)",
-      "WebSearch"
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run test:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

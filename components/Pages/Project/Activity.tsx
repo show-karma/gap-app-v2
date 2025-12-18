@@ -1,67 +1,84 @@
 import { Tab } from "@headlessui/react";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ActivityList } from "@/components/Shared/ActivityList";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
+import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
+import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
-import type { UnifiedMilestone } from "@/types/roadmap";
+import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { cn } from "@/utilities/tailwind";
 
 export const ProjectActivity = () => {
-  const { project, isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectStore();
   const { projectId } = useParams();
-  const { milestones = [] } = useAllMilestones(projectId as string);
+
+  // Use dedicated hooks for updates and impacts
+  const { milestones = [] } = useProjectUpdates(projectId as string);
+  const { impacts = [] } = useProjectImpacts(projectId as string);
+
   const [selectedTab, setSelectedTab] = useState(0);
 
-  // Combine all types of updates like in the original Updates.tsx
-  const getAllUpdates = () => {
-    const updates = project?.updates || [];
-    const grantUpdates: any[] = [];
-    const grantMilestones: any[] = [];
-    const impacts = project?.impacts || [];
+  // Convert impacts to match expected format and combine with milestones
+  const allUpdates = useMemo(() => {
+    const impactItems = impacts.map((impact) => ({
+      uid: impact.uid,
+      type: "impact" as const,
+      title: impact.data?.work || "Impact",
+      description: impact.data?.impact,
+      createdAt: impact.createdAt || new Date().toISOString(),
+      completed: false,
+      chainID: 0,
+      refUID: impact.refUID,
+      source: { type: "impact" },
+    }));
 
-    project?.grants?.forEach((grant) => {
-      grantUpdates.push(...(grant.updates || []));
-      grantMilestones.push(...(grant.milestones || []));
-    });
-
-    return [...updates, ...grantUpdates, ...grantMilestones, ...impacts];
-  };
-
-  const allUpdates = getAllUpdates();
+    return [...milestones, ...impactItems];
+  }, [milestones, impacts]);
   const isAuthorized = isProjectAdmin;
+
+  // Count items by type for tabs
+  const updatesCount = useMemo(
+    () =>
+      allUpdates.filter(
+        (item) => item.type === "activity" || item.type === "grant_update" || item.type === "impact"
+      ).length,
+    [allUpdates]
+  );
+
+  const milestonesCount = useMemo(
+    () =>
+      allUpdates.filter(
+        (item) => item.type === "milestone" || item.type === "grant" || item.type === "project"
+      ).length,
+    [allUpdates]
+  );
 
   // Tabs for filtering different activity types
   const tabs = [
-    { name: "All", count: allUpdates.length + (milestones?.length || 0) },
-    { name: "Updates", count: allUpdates.length },
-    { name: "Milestones", count: milestones?.length || 0 },
+    { name: "All", count: allUpdates.length },
+    { name: "Updates", count: updatesCount },
+    { name: "Milestones", count: milestonesCount },
   ];
 
-  // Filter activities based on selected tab
-  const getFilteredActivities = () => {
+  // Filter activities based on selected tab - pass everything through milestones prop
+  // since allUpdates is actually UnifiedMilestone[]
+  const filteredMilestones = useMemo((): UnifiedMilestone[] => {
     switch (selectedTab) {
       case 0: // All
-        return {
-          updates: allUpdates,
-          milestones: (milestones as UnifiedMilestone[]) || [],
-        };
+        return allUpdates as UnifiedMilestone[];
       case 1: // Updates only
-        return { updates: allUpdates, milestones: [] };
+        return allUpdates.filter(
+          (item) =>
+            item.type === "activity" || item.type === "grant_update" || item.type === "impact"
+        ) as UnifiedMilestone[];
       case 2: // Milestones only
-        return {
-          updates: [],
-          milestones: (milestones as UnifiedMilestone[]) || [],
-        };
+        return allUpdates.filter(
+          (item) => item.type === "milestone" || item.type === "grant" || item.type === "project"
+        ) as UnifiedMilestone[];
       default:
-        return {
-          updates: allUpdates,
-          milestones: (milestones as UnifiedMilestone[]) || [],
-        };
+        return allUpdates as UnifiedMilestone[];
     }
-  };
-
-  const { updates: filteredUpdates, milestones: filteredMilestones } = getFilteredActivities();
+  }, [selectedTab, allUpdates]);
 
   return (
     <div className="w-full flex flex-col gap-8">
@@ -100,11 +117,7 @@ export const ProjectActivity = () => {
                 "ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none"
               )}
             >
-              <ActivityList
-                updates={filteredUpdates}
-                milestones={filteredMilestones}
-                isAuthorized={isAuthorized}
-              />
+              <ActivityList milestones={filteredMilestones} isAuthorized={isAuthorized} />
             </Tab.Panel>
           ))}
         </Tab.Panels>

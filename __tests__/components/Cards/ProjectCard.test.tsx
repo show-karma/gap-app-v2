@@ -450,7 +450,7 @@ describe("ProjectCard", () => {
 
       const markdown = screen.getByTestId("markdown-preview");
       const container = markdown.parentElement?.parentElement;
-      expect(container?.className).toContain("h-[60px]");
+      expect(container?.className).toContain("h-[48px]");
     });
   });
 

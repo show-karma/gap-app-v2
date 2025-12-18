@@ -5,25 +5,19 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ProgramScoresUpload } from "@/components/Pages/Admin/ProgramScoresUpload";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useCommunityDetails } from "@/hooks/useCommunityDetails";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
+import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
-import { useStaff } from "@/hooks/useStaff";
-import { useOwnerStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
 
 export default function ProgramScoresPage() {
   const { communityId } = useParams() as { communityId: string };
 
-  const { isCommunityAdmin, isLoading: isCheckingAdmin } = useIsCommunityAdmin(communityId);
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
-
-  const hasAccess = isCommunityAdmin || isOwner || isStaff;
+  const { hasAccess, isLoading: isCheckingAccess } = useCommunityAdminAccess(communityId);
   const { data: programs, isLoading: isProgramsLoading } = useCommunityPrograms(communityId);
   const { data: community, isLoading: isCommunityLoading } = useCommunityDetails(communityId);
 
-  if (isCheckingAdmin || isStaffLoading || isProgramsLoading || isCommunityLoading) {
+  if (isCheckingAccess || isProgramsLoading || isCommunityLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Spinner />

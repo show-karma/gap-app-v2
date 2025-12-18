@@ -11,13 +11,14 @@ import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerif
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { useMilestone } from "@/hooks/useMilestone";
 import { useMilestoneActions } from "@/hooks/useMilestoneActions";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
+import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
-import type { UnifiedMilestone } from "@/types/roadmap";
+import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { ReadMore } from "@/utilities/ReadMore";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
@@ -85,7 +86,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
   const { title, description, completed, type } = milestone;
   const { project } = useProjectStore();
   const { projectId } = useParams();
-  const { refetch } = useAllMilestones(projectId as string);
+  const { refetch } = useProjectUpdates(projectId as string);
 
   // Fetch milestone impact data (outputs/metrics) if milestone is completed
   const { data: milestoneImpactData } = useMilestoneImpactAnswers({
@@ -100,9 +101,14 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
 
   // grant milestone-specific properties
   const grantMilestone = milestone.source.grantMilestone;
-  const grantTitle = grantMilestone?.grant.details?.data.title;
-  const _programId = grantMilestone?.grant.details?.data.programId;
-  const _communityData = grantMilestone?.grant.community?.details?.data;
+  const grantDetails = grantMilestone?.grant.details as
+    | { title?: string; programId?: string }
+    | undefined;
+  const grantTitle = grantDetails?.title;
+  const _programId = grantDetails?.programId;
+  const _communityData = grantMilestone?.grant.community?.details as
+    | { name?: string; imageURL?: string }
+    | undefined;
   const endsAt = milestone.endsAt;
 
   // completion information
@@ -115,8 +121,18 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
     projectMilestone?.completed?.createdAt || grantMilestone?.milestone.completed?.createdAt;
   const completionAttester =
     projectMilestone?.completed?.attester || grantMilestone?.milestone.completed?.attester;
-  const _verifiedMilestones =
-    projectMilestone?.verified?.length || grantMilestone?.milestone.verified?.length;
+  // V2: verified is an array for both grant and project milestones
+  const isVerified =
+    Boolean(
+      projectMilestone?.verified &&
+        Array.isArray(projectMilestone.verified) &&
+        projectMilestone.verified.length > 0
+    ) ||
+    Boolean(
+      grantMilestone?.milestone.verified &&
+        Array.isArray(grantMilestone.milestone.verified) &&
+        grantMilestone.milestone.verified.length > 0
+    );
   const completionDeliverables =
     (projectMilestone?.completed?.data as any)?.deliverables ||
     (grantMilestone?.milestone.completed?.data as any)?.deliverables;
@@ -152,7 +168,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
               // Invalidate all relevant caches
               await Promise.all([
                 queryClient.invalidateQueries({
-                  queryKey: ["all-milestones", projectId],
+                  queryKey: QUERY_KEYS.PROJECT.UPDATES(projectId as string),
                 }),
                 queryClient.invalidateQueries({
                   queryKey: ["projectMilestones", project?.uid],
@@ -179,7 +195,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
               // Refresh the activities list when canceling editing
               await Promise.all([
                 queryClient.invalidateQueries({
-                  queryKey: ["all-milestones", projectId],
+                  queryKey: QUERY_KEYS.PROJECT.UPDATES(projectId as string),
                 }),
                 queryClient.invalidateQueries({
                   queryKey: ["projectMilestones", project?.uid],
@@ -220,7 +236,9 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
                 Proof of Work:
               </p>
               <a
-                href={completionProof}
+                href={
+                  completionProof.includes("http") ? completionProof : `https://${completionProof}`
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-brand-blue hover:underline break-all"
@@ -250,7 +268,11 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
                     )}
                     {deliverable.proof && (
                       <a
-                        href={deliverable.proof}
+                        href={
+                          deliverable.proof.includes("http")
+                            ? deliverable.proof
+                            : `https://${deliverable.proof}`
+                        }
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-brand-blue hover:underline text-sm break-all"
@@ -273,7 +295,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
                 >
                   <div className="flex flex-col gap-1">
                     <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                      {metric.name || metric.indicator?.data?.title || "Untitled Indicator"}
+                      {metric.name || metric.indicator?.name || "Untitled Indicator"}
                     </p>
                     {metric.datapoints && metric.datapoints.length > 0 && (
                       <div className="flex flex-col gap-1">
@@ -285,7 +307,11 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
                         </p>
                         {metric.datapoints[0].proof && (
                           <a
-                            href={metric.datapoints[0].proof}
+                            href={
+                              metric.datapoints[0].proof.includes("http")
+                                ? metric.datapoints[0].proof
+                                : `https://${metric.datapoints[0].proof}`
+                            }
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-brand-blue hover:underline text-sm break-all"
@@ -302,7 +328,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
           ) : null}
         </div>
         <ActivityAttribution
-          date={completionDate}
+          date={completionDate || ""}
           attester={completionAttester}
           actions={
             isAuthorized ? (
@@ -314,12 +340,12 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
                     type === "grant" && grantMilestone
                       ? SHARE_TEXTS.MILESTONE_COMPLETED(
                           grantTitle || "Grant",
-                          (project?.details?.data?.slug || project?.uid) as string,
+                          (project?.details?.slug || project?.uid) as string,
                           grantMilestone.grant.uid
                         )
                       : SHARE_TEXTS.PROJECT_ACTIVITY(
                           title,
-                          (project?.details?.data?.slug || project?.uid) as string
+                          (project?.details?.slug || project?.uid) as string
                         )
                   )}
                   className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent hover:opacity-75  h-6 w-6 items-center justify-center"
@@ -360,7 +386,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
           <div className="flex flex-col gap-3 w-full">
             <ActivityStatusHeader
               activityType="Milestone"
-              dueDate={type === "grant" && endsAt ? formatDate(endsAt * 1000) : null}
+              dueDate={type === "grant" && endsAt ? formatDate(endsAt) : null}
               showCompletionStatus={true}
               completed={!!completed}
               completionStatusClassName="text-xs px-2 py-1"

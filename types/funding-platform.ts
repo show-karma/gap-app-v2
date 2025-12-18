@@ -27,6 +27,15 @@ export interface ApplicationComment {
   updatedAt: string | Date;
 }
 
+// Milestone Data Structure
+export interface IMilestoneData {
+  title: string;
+  description: string;
+  dueDate: string;
+  fundingRequested?: string; // Optional - funding amount requested for this milestone
+  completionCriteria?: string; // Optional - criteria to consider milestone complete
+}
+
 // Form Field Types (unchanged)
 export interface IFormField {
   id: string; // Added ID field for V2
@@ -47,7 +56,8 @@ export interface IFormField {
   options?: string[];
   validation?: {
     min?: number;
-    max?: number;
+    max?: number; // For number fields
+    maxLength?: number; // For text/textarea fields (character limit)
     pattern?: string;
     message?: string;
     maxMilestones?: number;
@@ -67,6 +77,10 @@ export interface IFormSchema {
     confirmationMessage?: string;
     applicationDeadline?: string;
     donationRound?: boolean;
+    approvalEmailTemplate?: string; // Markdown/HTML template for approval emails with variable placeholders
+    approvalEmailSubject?: string; // Custom subject for approval emails with variable placeholders (e.g., {{programName}})
+    rejectionEmailTemplate?: string; // Markdown/HTML template for rejection emails with variable placeholders
+    rejectionEmailSubject?: string; // Custom subject for rejection emails with variable placeholders (e.g., {{programName}})
   };
 }
 
@@ -108,6 +122,7 @@ export interface IFundingApplication {
   programId: string;
   chainID: number; // Changed from chainId to chainID to match V2
   applicantEmail: string; // Changed from applicantAddress to applicantEmail
+  ownerAddress: string; // Wallet address of the person who submitted the application
   applicationData: Record<string, any>;
   postApprovalData?: Record<string, any>; // Optional post-approval data
   status: FundingApplicationStatusV2;
@@ -189,6 +204,8 @@ export interface IApplicationUpdateRequest {
 export interface IApplicationStatusUpdateRequest {
   status: FundingApplicationStatusV2;
   reason: string;
+  approvedAmount?: string; // Required when status is "approved"
+  approvedCurrency?: string; // Required when status is "approved"
 }
 
 export interface IPaginatedApplicationsResponse {
@@ -254,7 +271,13 @@ export interface IApplicationListComponentProps {
   applications: IFundingApplication[];
   isLoading: boolean;
   onApplicationSelect?: (application: IFundingApplication) => void;
-  onStatusChange?: (applicationId: string, status: string, note?: string) => void;
+  onStatusChange?: (
+    applicationId: string,
+    status: string,
+    note?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => void;
   showStatusActions?: boolean;
 }
 

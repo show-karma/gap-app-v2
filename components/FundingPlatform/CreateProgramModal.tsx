@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { z } from "zod";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,45 +18,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import { Textarea } from "@/components/ui/textarea";
+import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
-import { useCommunityDetails } from "@/hooks/useCommunityDetails";
+import { type CreateProgramFormSchema, createProgramSchema } from "@/schemas/programFormSchema";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
 import type { CreateProgramFormData } from "@/types/program-registry";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
-
-const createProgramSchema = z.object({
-  name: z
-    .string()
-    .min(3, { message: "Program name must be at least 3 characters" })
-    .max(50, { message: "Program name must be at most 50 characters" }),
-  description: z.string().min(3, { message: "Description is required" }),
-  shortDescription: z
-    .string()
-    .max(100, { message: "Short description must be at most 100 characters" })
-    .min(1, { message: "Short description is required" }),
-  dates: z
-    .object({
-      endsAt: z.date().optional(),
-      startsAt: z.date().optional(),
-    })
-    .refine(
-      (data) => {
-        if (!data.endsAt || !data.startsAt) return true;
-        const endsAt = data.endsAt.getTime() / 1000;
-        const startsAt = data.startsAt.getTime() / 1000;
-        return startsAt ? startsAt <= endsAt : true;
-      },
-      {
-        message: "Start date must be before the end date",
-        path: ["startsAt"],
-      }
-    ),
-  budget: z.coerce.number().min(0, { message: "Budget must be a positive number" }).optional(),
-});
-
-type CreateProgramFormSchema = z.infer<typeof createProgramSchema>;
 
 interface CreateProgramModalProps {
   isOpen: boolean;
@@ -148,7 +116,7 @@ export function CreateProgramModal({
       try {
         await ProgramRegistryService.approveProgram(result.programId);
         toast.success("Program created and approved successfully!");
-      } catch (approveError: any) {
+      } catch (approveError: unknown) {
         console.error("Error during auto-approval:", approveError);
         toast.success(
           "Program created successfully, but auto-approval failed. Please approve it manually from the manage programs page.",
@@ -159,8 +127,8 @@ export function CreateProgramModal({
       reset();
       onSuccess();
       onClose();
-    } catch (error: any) {
-      const errorMessage = error.message;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage?.includes("already exists")) {
         toast.error("A program with this name already exists");
       } else {
@@ -226,46 +194,56 @@ export function CreateProgramModal({
             </div>
 
             {/* Program Description */}
-            <div className="flex w-full flex-col gap-1">
-              <Label htmlFor="program-description">
-                Program Description <span className="text-destructive">*</span>
-              </Label>
-              <Textarea
-                id="program-description"
-                className="min-h-[120px] max-h-[240px] resize-y"
-                placeholder="Please provide a description of this program"
-                {...register("description")}
-                disabled={isSubmitting}
-              />
-              {errors.description && (
-                <p className="text-sm text-destructive">{errors.description.message}</p>
+            <Controller
+              name="description"
+              control={control}
+              render={({ field: { onChange, onBlur, value }, fieldState }) => (
+                <MarkdownEditor
+                  label="Program Description"
+                  placeholder="Please provide a description of this program"
+                  value={value || ""}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  error={fieldState.error?.message}
+                  isRequired
+                  isDisabled={isSubmitting}
+                  id="program-description"
+                  height={200}
+                  minHeight={150}
+                />
               )}
-            </div>
+            />
 
             {/* Short Description */}
-            <div className="flex w-full flex-col gap-1">
-              <Label htmlFor="short-description">
-                Program Short Description <span className="text-destructive">*</span>
-                <span className="text-xs text-muted-foreground ml-2 font-normal">
-                  (100 characters max)
-                </span>
-              </Label>
-              <Input
-                id="short-description"
-                placeholder="Brief description (max 100 characters)"
-                maxLength={100}
-                {...register("shortDescription")}
-                disabled={isSubmitting}
-              />
-              <div className="flex justify-between items-center">
-                {errors.shortDescription && (
-                  <p className="text-sm text-destructive">{errors.shortDescription.message}</p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  {watch("shortDescription")?.length || 0}/100
-                </p>
-              </div>
-            </div>
+            <Controller
+              name="shortDescription"
+              control={control}
+              render={({ field: { onChange, onBlur, value }, fieldState }) => (
+                <div className="flex w-full flex-col gap-1">
+                  <MarkdownEditor
+                    label="Program Short Description"
+                    description="100 characters max"
+                    placeholder="Brief description (max 100 characters)"
+                    value={value || ""}
+                    onChange={(val) => {
+                      if (val.length <= 100) {
+                        onChange(val);
+                      }
+                    }}
+                    onBlur={onBlur}
+                    error={fieldState.error?.message}
+                    isRequired
+                    isDisabled={isSubmitting}
+                    id="short-description"
+                    height={120}
+                    minHeight={100}
+                  />
+                  <p className="text-xs text-muted-foreground text-right">
+                    {value?.length || 0}/100
+                  </p>
+                </div>
+              )}
+            />
 
             {/* Dates */}
             <div className="grid grid-cols-2 gap-4">

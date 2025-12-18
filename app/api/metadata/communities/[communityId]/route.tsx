@@ -4,9 +4,7 @@ import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import pluralize from "pluralize";
 import { PROJECT_NAME } from "@/constants/brand";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { getTotalProjects } from "@/utilities/karma/totalProjects";
-import { getGrants } from "@/utilities/sdk";
+import { getCommunityDetails, getCommunityStats } from "@/utilities/queries/v2/getCommunityData";
 // App router includes @vercel/og.
 // No need to install it.
 
@@ -15,31 +13,17 @@ export async function GET(
   context: { params: Promise<{ communityId: string }> }
 ) {
   const communityId = (await context.params).communityId;
-  const [community, grantsData, projects] = await Promise.all([
-    gapIndexerApi
-      .communityBySlug(communityId)
-      .then((res) => res.data)
-      .catch(() => null),
-    getGrants(
-      communityId as `0x${string}`,
-      {
-        sortBy: "recent",
-        status: "all",
-        categories: [],
-      },
-      {
-        page: 1,
-        pageLimit: 1,
-      }
-    ),
-    getTotalProjects(communityId),
+  const [community, communityStats] = await Promise.all([
+    getCommunityDetails(communityId),
+    getCommunityStats(communityId),
   ]);
 
   if (!community) {
     return new Response("Not found", { status: 404 });
   }
 
-  const grants = grantsData.pageInfo?.totalItems || 0;
+  const grants = communityStats.totalGrants;
+  const projects = communityStats.totalProjects;
 
   const stats = [
     {
@@ -73,10 +57,10 @@ export async function GET(
         }}
       >
         <div tw="flex flex-col items-start justify-start w-[520px] pb-[40px]">
-          {community?.details?.data.imageURL ? (
+          {community?.details?.logoUrl ? (
             <img
-              alt={community?.details?.data.name}
-              src={community?.details?.data.imageURL}
+              alt={community?.details?.name}
+              src={community?.details?.logoUrl}
               width={120}
               height={120}
               tw="rounded-full object-contain"
@@ -86,10 +70,10 @@ export async function GET(
             />
           ) : null}
           <span tw="text-white text-5xl font-extrabold font-body w-full text-start flex flex-col items-start justify-start mt-10 mb-1">
-            {community?.details?.data.name}
+            {community?.details?.name}
           </span>
           <p tw="text-white text-2xl font-normal font-body mt-4 break-normal text-wrap whitespace-nowrap">
-            {`Discover how ${community?.details?.data.name} is fueling innovation: ${projects}+ projects supported through grants!`}
+            {`Discover how ${community?.details?.name} is fueling innovation: ${projects}+ projects supported through grants!`}
           </p>
           <div tw="flex flex-row items-center justify-end w-full pr-[80px]">
             <img
