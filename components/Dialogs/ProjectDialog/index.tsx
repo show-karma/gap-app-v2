@@ -669,7 +669,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       const walletSigner = await walletClientToSigner(walletClient);
-      closeModal();
       changeStepperStep("preparing");
       await project.attest(walletSigner, changeStepperStep).then(async (res) => {
         let retries = 1000;
@@ -738,6 +737,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
             toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
             changeStepperStep("indexed");
+            closeModal();
             router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
             router.refresh();
             break;
@@ -766,8 +766,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }
       );
       setIsStepper(false);
-      // Don't reset form on error - keep user's data
-      openModal();
+      // Don't reset form on error - keep user's data (modal stays open)
     } finally {
       setIsLoading(false);
     }
