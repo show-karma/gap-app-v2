@@ -186,7 +186,7 @@ export function CreateProgramModal({
               </Label>
               <Input
                 id="program-name"
-                placeholder="Ex: Super cool Program"
+                placeholder="Ex: Builder Growth Program"
                 {...register("name")}
                 disabled={isSubmitting}
               />

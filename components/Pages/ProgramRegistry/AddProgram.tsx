@@ -580,7 +580,7 @@ export default function AddProgram({
                   <input
                     id="program-name"
                     className={inputStyle}
-                    placeholder="Ex: Super cool Program"
+                    placeholder="Ex: Builder Growth Program"
                     {...register("name")}
                   />
                   <p className="text-base text-red-400">{errors.name?.message}</p>
