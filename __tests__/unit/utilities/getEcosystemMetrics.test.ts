@@ -19,7 +19,7 @@ jest.mock("@/utilities/indexer", () => ({
           if (params?.endDate) urlParams.append("endDate", params.endDate);
           if (params?.metricNames) urlParams.append("metricNames", params.metricNames);
           const queryString = urlParams.toString();
-          return `/communities/${communityId}/ecosystem-metrics${queryString ? `?${queryString}` : ""}`;
+          return `/v2/communities/${communityId}/ecosystem-metrics${queryString ? `?${queryString}` : ""}`;
         }),
       },
     },
@@ -69,7 +69,7 @@ describe("getEcosystemMetrics", () => {
     const result = await getEcosystemMetrics("filecoin");
 
     expect(result).toEqual(mockValidResponse);
-    expect(mockFetchData).toHaveBeenCalledWith("/communities/filecoin/ecosystem-metrics");
+    expect(mockFetchData).toHaveBeenCalledWith("/v2/communities/filecoin/ecosystem-metrics");
   });
 
   it("should include query parameters when provided", async () => {
@@ -84,7 +84,7 @@ describe("getEcosystemMetrics", () => {
     await getEcosystemMetrics("filecoin", params);
 
     expect(mockFetchData).toHaveBeenCalledWith(
-      "/communities/filecoin/ecosystem-metrics?startDate=2024-01-01&endDate=2024-01-31&metricNames=Storage+Capacity"
+      "/v2/communities/filecoin/ecosystem-metrics?startDate=2024-01-01&endDate=2024-01-31&metricNames=Storage+Capacity"
     );
   });
 
@@ -148,7 +148,7 @@ describe("getEcosystemMetrics", () => {
 
     await getEcosystemMetrics("filecoin", {});
 
-    expect(mockFetchData).toHaveBeenCalledWith("/communities/filecoin/ecosystem-metrics");
+    expect(mockFetchData).toHaveBeenCalledWith("/v2/communities/filecoin/ecosystem-metrics");
   });
 
   it("should handle partial params", async () => {
@@ -157,7 +157,7 @@ describe("getEcosystemMetrics", () => {
     await getEcosystemMetrics("filecoin", { startDate: "2024-01-01" });
 
     expect(mockFetchData).toHaveBeenCalledWith(
-      "/communities/filecoin/ecosystem-metrics?startDate=2024-01-01"
+      "/v2/communities/filecoin/ecosystem-metrics?startDate=2024-01-01"
     );
   });
 });

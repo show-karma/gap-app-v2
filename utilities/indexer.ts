@@ -250,7 +250,7 @@ export const INDEXER = {
         if (params?.endDate) urlParams.append("endDate", params.endDate);
         if (params?.metricNames) urlParams.append("metricNames", params.metricNames);
         const queryString = urlParams.toString();
-        return `/communities/${communityIdOrSlug}/ecosystem-metrics${queryString ? `?${queryString}` : ""}`;
+        return `/v2/communities/${communityIdOrSlug}/ecosystem-metrics${queryString ? `?${queryString}` : ""}`;
       },
       PROJECTS: (
         slug: string,
