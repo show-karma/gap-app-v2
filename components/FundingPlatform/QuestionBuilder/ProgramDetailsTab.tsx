@@ -329,7 +329,7 @@ export function ProgramDetailsTab({
             </Label>
             <Input
               id="program-name"
-              placeholder="Ex: Super cool Program"
+              placeholder="Ex: Builder Growth Program"
               {...register("name")}
               disabled={isDisabled}
               aria-invalid={errors.name ? "true" : "false"}
