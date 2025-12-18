@@ -45,8 +45,13 @@ export const prepareChartDataForMetric = (metric: EcosystemMetric) => {
     return [];
   }
 
-  // Sort datapoints by date ascending
-  const sortedDatapoints = [...metric.datapoints].sort(
+  // Filter out datapoints with invalid dates and sort by date ascending
+  const validDatapoints = metric.datapoints.filter((dp) => {
+    const date = new Date(dp.date);
+    return !Number.isNaN(date.getTime());
+  });
+
+  const sortedDatapoints = [...validDatapoints].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 

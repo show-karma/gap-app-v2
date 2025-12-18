@@ -6,6 +6,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import { useParams } from "next/navigation";
+import React from "react";
 import { EcosystemMetricsSection } from "@/components/Pages/Communities/Impact/EcosystemMetricsSection";
 import { useEcosystemMetrics } from "@/hooks/useEcosystemMetrics";
 import type { EcosystemMetricsResponse } from "@/types/ecosystem-metrics";
@@ -297,5 +298,136 @@ describe("EcosystemMetricsSection", () => {
     await waitFor(() => {
       expect(screen.getByText("1 metric")).toBeInTheDocument();
     });
+  });
+
+  it("should display N/A when latestValue is null", async () => {
+    const metricWithNullValue: EcosystemMetricsResponse = {
+      communityUID: "filecoin-uid",
+      metrics: [
+        {
+          id: "metric-1",
+          name: "Storage Capacity",
+          description: "Total storage capacity in the network",
+          unitOfMeasure: "PiB",
+          sourceField: null,
+          metadata: null,
+          datapoints: [{ date: "2024-01-01", value: "100", proof: null }],
+          latestValue: null, // This should trigger the "N/A" fallback
+          latestDate: "2024-01-01",
+          datapointCount: 1,
+        },
+      ],
+      totalMetrics: 1,
+    };
+
+    mockUseEcosystemMetrics.mockReturnValue({
+      data: metricWithNullValue,
+      isLoading: false,
+      error: null,
+      isError: false,
+    } as any);
+
+    const wrapper = createWrapper();
+    render(<EcosystemMetricsSection />, { wrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText("N/A")).toBeInTheDocument();
+    });
+  });
+
+  it("should calculate date range correctly for 3_months timeframe", () => {
+    // Mock useState to return "3_months" as initial timeframe
+    const originalUseState = React.useState;
+    jest.spyOn(React, "useState").mockImplementationOnce(() => ["3_months", jest.fn()]);
+
+    mockUseEcosystemMetrics.mockReturnValue({
+      data: mockMetricsResponse,
+      isLoading: false,
+      error: null,
+      isError: false,
+    } as any);
+
+    const wrapper = createWrapper();
+    render(<EcosystemMetricsSection />, { wrapper });
+
+    // The hook should be called with date range for 3 months ago
+    const expectedStartDate = new Date();
+    expectedStartDate.setMonth(expectedStartDate.getMonth() - 3);
+    const expectedEndDate = new Date();
+
+    expect(mockUseEcosystemMetrics).toHaveBeenCalledWith(
+      {
+        startDate: expectedStartDate.toISOString().split("T")[0],
+        endDate: expectedEndDate.toISOString().split("T")[0],
+      },
+      true
+    );
+
+    // Restore original useState
+    React.useState = originalUseState;
+  });
+
+  it("should calculate date range correctly for 6_months timeframe", () => {
+    // Mock useState to return "6_months" as initial timeframe
+    const originalUseState = React.useState;
+    jest.spyOn(React, "useState").mockImplementationOnce(() => ["6_months", jest.fn()]);
+
+    mockUseEcosystemMetrics.mockReturnValue({
+      data: mockMetricsResponse,
+      isLoading: false,
+      error: null,
+      isError: false,
+    } as any);
+
+    const wrapper = createWrapper();
+    render(<EcosystemMetricsSection />, { wrapper });
+
+    // The hook should be called with date range for 6 months ago
+    const expectedStartDate = new Date();
+    expectedStartDate.setMonth(expectedStartDate.getMonth() - 6);
+    const expectedEndDate = new Date();
+
+    expect(mockUseEcosystemMetrics).toHaveBeenCalledWith(
+      {
+        startDate: expectedStartDate.toISOString().split("T")[0],
+        endDate: expectedEndDate.toISOString().split("T")[0],
+      },
+      true
+    );
+
+    // Restore original useState
+    React.useState = originalUseState;
+  });
+
+  it("should calculate date range correctly for 1_year timeframe", () => {
+    // Mock useState to return "1_year" as initial timeframe
+    const originalUseState = React.useState;
+    jest.spyOn(React, "useState").mockImplementationOnce(() => ["1_year", jest.fn()]);
+
+    mockUseEcosystemMetrics.mockReturnValue({
+      data: mockMetricsResponse,
+      isLoading: false,
+      error: null,
+      isError: false,
+    } as any);
+
+    const wrapper = createWrapper();
+    render(<EcosystemMetricsSection />, { wrapper });
+
+    // The hook should be called with date range for 1 year ago
+    const expectedStartDate = new Date();
+    expectedStartDate.setFullYear(expectedStartDate.getFullYear() - 1);
+    const expectedEndDate = new Date();
+
+    expect(mockUseEcosystemMetrics).toHaveBeenCalledWith(
+      {
+        startDate: expectedStartDate.toISOString().split("T")[0],
+        endDate: expectedEndDate.toISOString().split("T")[0],
+      },
+      true
+    );
+
+    // Restore original useState
+    React.useState = originalUseState;
   });
 });

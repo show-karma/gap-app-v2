@@ -226,4 +226,48 @@ describe("prepareChartDataForMetric", () => {
     expect(result[0]).toHaveProperty("Custom Metric Name");
     expect(result[0]["Custom Metric Name"]).toBe(100);
   });
+
+  it("should filter out datapoints with invalid date strings", () => {
+    const metric: EcosystemMetric = {
+      id: "metric-1",
+      name: "Test Metric",
+      description: "Test",
+      unitOfMeasure: "FIL",
+      sourceField: null,
+      metadata: null,
+      datapoints: [
+        { date: "invalid-date", value: "100", proof: null },
+        { date: "2024-01-01", value: "200", proof: null },
+      ],
+      latestValue: "200",
+      latestDate: "2024-01-01",
+      datapointCount: 2,
+    };
+
+    mockFormatDate.mockReturnValue("2024-01-01");
+
+    const result = prepareChartDataForMetric(metric);
+
+    // Should filter out invalid dates and only return valid ones
+    expect(result).toHaveLength(1);
+    expect(result[0]["Test Metric"]).toBe(200);
+    expect(result[0].date).toBe("2024-01-01");
+  });
+
+  it("should handle negative small numbers in formatMetricValue", () => {
+    mockFormatCurrency.mockReturnValue("-$0.00");
+    const result = formatMetricValue("-0.00005", "FIL");
+    // Should use formatCurrency for negative numbers, even if small
+    expect(result).toBe("-$0.00 FIL");
+  });
+
+  it("should use scientific notation for extremely small numbers in formatChartValue", () => {
+    const result = formatChartValue(0.0000005, "FIL");
+    expect(result).toMatch(/^[\d.]+e-\d+ FIL$/);
+  });
+
+  it("should use fixed decimal places for small numbers in formatChartValue", () => {
+    const result = formatChartValue(0.00005, "FIL");
+    expect(result).toMatch(/^0\.0{4,7}5+ FIL$/);
+  });
 });

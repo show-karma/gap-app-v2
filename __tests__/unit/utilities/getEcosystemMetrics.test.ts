@@ -5,7 +5,6 @@
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 import { getEcosystemMetrics } from "@/utilities/registry/getEcosystemMetrics";
 
 jest.mock("@/utilities/fetchData");
@@ -35,6 +34,7 @@ describe("getEcosystemMetrics", () => {
     jest.clearAllMocks();
     jest.spyOn(console, "log").mockImplementation(() => {});
     jest.spyOn(console, "error").mockImplementation(() => {});
+    jest.spyOn(console, "info").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -94,7 +94,7 @@ describe("getEcosystemMetrics", () => {
     const result = await getEcosystemMetrics("filecoin");
 
     expect(result).toBeNull();
-    expect(console.log).toHaveBeenCalledWith(
+    expect(console.info).toHaveBeenCalledWith(
       expect.stringContaining("Ecosystem metrics endpoint not found (404)")
     );
     expect(mockErrorManager).not.toHaveBeenCalled();

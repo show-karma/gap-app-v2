@@ -21,7 +21,7 @@ export async function getEcosystemMetrics(
       // If it's a 404, the endpoint might not exist yet - return null gracefully
       // For other errors, log but still return null so component can handle gracefully
       if (status === 404) {
-        console.log(
+        console.info(
           `Ecosystem metrics endpoint not found (404) for ${communityIdOrSlug}. This is expected if the endpoint is not yet implemented.`
         );
       } else {
