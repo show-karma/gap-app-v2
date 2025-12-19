@@ -193,7 +193,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
   {
     symbol: "USDC",
     name: "USD Coin",
-    address: "0xA0b86a33E6417c8f2bbD1c7E2e1a6D8Eb6F0aB0F",
+    address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
     decimals: 6,
     chainId: 1,
     chainName: "Ethereum",

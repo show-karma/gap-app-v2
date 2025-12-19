@@ -27,10 +27,7 @@ const apiClient = createAuthenticatedApiClient(API_URL, 30000);
  * ```
  */
 export const signMoonPayUrl = async (url: string): Promise<string> => {
-  const response = await apiClient.post<{ url: string }, { data: SignMoonPayUrlResponse }>(
-    `/v2/onramp/moonpay/sign`,
-    { url }
-  );
+  const response = await apiClient.post<SignMoonPayUrlResponse>(`/v2/onramp/moonpay/sign`, { url });
 
   return response.data.signature;
 };
