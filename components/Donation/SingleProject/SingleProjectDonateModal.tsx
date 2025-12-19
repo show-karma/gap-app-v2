@@ -135,10 +135,6 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
                 </span>
               )}
             </Button>
-
-            <p className="text-center text-xs text-gray-500 dark:text-gray-400">
-              100% of your donation goes directly to the project
-            </p>
           </div>
         </DialogContent>
       </Dialog>
