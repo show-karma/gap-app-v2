@@ -19,24 +19,27 @@ export const DonationHistoryItem = React.memo<DonationHistoryItemProps>(({ donat
   const statusColor = useMemo(() => {
     switch (donation.status) {
       case "completed":
-        return "text-green-600";
+        return "text-green-600 dark:text-green-400";
       case "pending":
-        return "text-yellow-600";
+        return "text-yellow-600 dark:text-yellow-400";
       case "failed":
-        return "text-red-600";
+        return "text-red-600 dark:text-red-400";
       default:
-        return "text-gray-600";
+        return "text-gray-600 dark:text-gray-400";
     }
   }, [donation.status]);
 
   return (
-    <div className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+    <div className="p-4 border rounded-lg hover:bg-gray-50 dark:border-zinc-700 dark:hover:bg-zinc-800/50 transition-colors">
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <Link href={`/project/${donation.projectUID}`} className="font-medium hover:underline">
+          <Link
+            href={`/project/${donation.projectUID}`}
+            className="font-medium hover:underline dark:text-zinc-100"
+          >
             Project {donation.projectUID.slice(0, 8)}...
           </Link>
-          <div className="text-sm text-gray-600 mt-1">
+          <div className="text-sm text-gray-600 dark:text-zinc-400 mt-1">
             {donation.amount} {donation.tokenSymbol}
             {donation.fiatAmount && (
               <span className="ml-2">
@@ -48,7 +51,7 @@ export const DonationHistoryItem = React.memo<DonationHistoryItemProps>(({ donat
 
         <div className="text-right">
           <div className={`text-sm font-medium ${statusColor}`}>{donation.status}</div>
-          <div className="text-xs text-gray-500 mt-1">{formattedDate}</div>
+          <div className="text-xs text-gray-500 dark:text-zinc-500 mt-1">{formattedDate}</div>
         </div>
       </div>
 
@@ -57,11 +60,11 @@ export const DonationHistoryItem = React.memo<DonationHistoryItemProps>(({ donat
           href={explorerUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-blue-600 hover:underline"
+          className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
         >
           View Transaction
         </a>
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-gray-400 dark:text-zinc-500">
           {donation.donationType === "fiat" ? "Card Payment" : "Crypto"}
         </span>
       </div>

@@ -19,6 +19,14 @@ export const PaymentMethodSelector = React.memo<PaymentMethodSelectorProps>(
         <button
           type="button"
           onClick={handleCryptoSelect}
+          aria-pressed={selected === PaymentMethod.CRYPTO}
+          aria-label="Pay with cryptocurrency"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleCryptoSelect();
+            }
+          }}
           className={`flex-1 p-4 rounded-xl border-2 transition-all duration-200 ${
             selected === PaymentMethod.CRYPTO
               ? "border-brand-blue bg-brand-lightblue dark:bg-blue-900/20 shadow-sm"
@@ -60,6 +68,14 @@ export const PaymentMethodSelector = React.memo<PaymentMethodSelectorProps>(
         <button
           type="button"
           onClick={handleFiatSelect}
+          aria-pressed={selected === PaymentMethod.FIAT}
+          aria-label="Pay with card"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleFiatSelect();
+            }
+          }}
           className={`flex-1 p-4 rounded-xl border-2 transition-all duration-200 ${
             selected === PaymentMethod.FIAT
               ? "border-brand-blue bg-brand-lightblue dark:bg-blue-900/20 shadow-sm"
