@@ -91,7 +91,6 @@ export const ApplicationTabs: FC<ApplicationTabsProps> = ({
               "data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:dark:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none",
               "data-[state=inactive]:border-transparent data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-700 data-[state=inactive]:hover:border-gray-300 data-[state=inactive]:dark:text-gray-400 data-[state=inactive]:dark:hover:text-gray-200"
             )}
-            aria-label={tab.label}
           >
             <tab.icon className="w-5 h-5" aria-hidden="true" />
             <span className="hidden sm:inline">{tab.label}</span>

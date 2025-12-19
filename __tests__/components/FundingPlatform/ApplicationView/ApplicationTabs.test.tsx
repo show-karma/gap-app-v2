@@ -176,6 +176,22 @@ describe("ApplicationTabs", () => {
       expect(screen.getAllByRole("tab")).toHaveLength(3);
     });
 
+    it("has aria-label on TabsList for screen readers", () => {
+      render(<ApplicationTabs tabs={defaultTabs} />);
+
+      const tabList = screen.getByRole("tablist");
+      expect(tabList).toHaveAttribute("aria-label", "Application sections");
+    });
+
+    it("tabs are accessible by their visible text content", () => {
+      render(<ApplicationTabs tabs={defaultTabs} />);
+
+      // Tabs should be accessible by their visible text, not aria-label
+      expect(screen.getByRole("tab", { name: /application/i })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /ai analysis/i })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /discussion/i })).toBeInTheDocument();
+    });
+
     it("tabs have unique keys based on id", () => {
       const { container } = render(<ApplicationTabs tabs={defaultTabs} />);
 
