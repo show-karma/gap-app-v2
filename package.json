@@ -48,7 +48,6 @@
     "@heroicons/react": "^2.0.18",
     "@hookform/resolvers": "^3.3.4",
     "@hotjar/browser": "^1.0.9",
-    "@moonpay/moonpay-react": "^1.10.2",
     "@next/bundle-analyzer": "15.4.10",
     "@next/third-parties": "15.4.10",
     "@privy-io/react-auth": "^3.7.0",
