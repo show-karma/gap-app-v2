@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/utilities/tailwind";
 import type { FundingProgramResponse } from "../types/funding-program";
+import { isValidImageUrl } from "../utils/image-utils";
 import { FundingMapDescription } from "./funding-map-description";
 
 interface FundingMapCardProps {
@@ -11,8 +12,17 @@ interface FundingMapCardProps {
   onClick?: () => void;
 }
 
-function isValidImageUrl(img: unknown): img is string {
-  return typeof img === "string" && img.length > 0 && !img.includes("[object");
+/**
+ * Determines if the program needs a pending review indicator (ring).
+ * Shows ring for programs that are pending validation and still active.
+ */
+function isPendingReview(program: FundingProgramResponse): boolean {
+  const isValidated = program.isValid;
+  const isInactive = program.metadata?.status === "inactive";
+  const hasEnded = program.metadata?.endsAt && program.metadata.endsAt < new Date().toISOString();
+
+  // Show ring only for programs that are not validated, not inactive, and not ended
+  return !isValidated && !isInactive && !hasEnded;
 }
 
 export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
@@ -36,11 +46,7 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
     <Card
       className={cn(
         "flex flex-col gap-4 border-border p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer",
-        program.isValid ||
-          program.metadata?.status === "inactive" ||
-          (program.metadata?.endsAt && program.metadata?.endsAt < new Date().toISOString())
-          ? ""
-          : "ring-1 ring-gray-200"
+        isPendingReview(program) && "ring-1 ring-gray-200"
       )}
       onClick={onClick}
     >

@@ -104,7 +104,6 @@ export const FUNDING_PLATFORM_PAGES = (tenantId: string, _domain?: string) => {
     ? `${FUNDING_PLATFORM_DOMAINS.shared.dev}/${tenantId}`
     : `${FUNDING_PLATFORM_DOMAINS.shared.prod}/${tenantId}`;
   const domain = _domain || sharedDomain;
-  console.log("domain", domain);
   return {
     HOME: `${domain}/`,
     PROGRAM_PAGE: (programId: string) => `${domain}/programs/${programId}`,

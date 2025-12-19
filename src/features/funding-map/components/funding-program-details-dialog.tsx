@@ -28,16 +28,13 @@ import { cn } from "@/utilities/tailwind";
 import { NETWORK_IMAGES } from "../constants/filter-options";
 import type { FundingProgramMetadata, FundingProgramResponse } from "../types/funding-program";
 import { FUNDING_PLATFORM_DOMAINS } from "../utils/funding-platform-domains";
+import { isValidImageUrl } from "../utils/image-utils";
 
 interface FundingProgramDetailsDialogProps {
   program: FundingProgramResponse | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isLoading?: boolean;
-}
-
-function isValidImageUrl(img: unknown): img is string {
-  return typeof img === "string" && img.length > 0 && !img.includes("[object");
 }
 
 function formatBudgetValue(budget: string | undefined): string | null {
@@ -65,13 +62,15 @@ function getApplyUrl(program: FundingProgramResponse): string | null {
   if (program.isOnKarma && program.programId) {
     const communitySlug = program.communities?.[0]?.slug;
     if (communitySlug) {
-      const hasExclusiveDomain =
+      const exclusiveDomain =
         FUNDING_PLATFORM_DOMAINS[communitySlug as keyof typeof FUNDING_PLATFORM_DOMAINS];
-      const isDev = envVars.isDev;
-      return FUNDING_PLATFORM_PAGES(
-        communitySlug,
-        isDev ? hasExclusiveDomain.dev : hasExclusiveDomain.prod
-      ).PROGRAM_PAGE(program.programId);
+      // Use exclusive domain if available, otherwise fall through to shared domain
+      const domain = exclusiveDomain
+        ? envVars.isDev
+          ? exclusiveDomain.dev
+          : exclusiveDomain.prod
+        : undefined;
+      return FUNDING_PLATFORM_PAGES(communitySlug, domain).PROGRAM_PAGE(program.programId);
     }
   }
   // Fallback to grantsSite from social links
