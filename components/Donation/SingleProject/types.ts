@@ -9,14 +9,6 @@ export interface SingleProjectDonationState {
   paymentMethod: PaymentMethod;
 }
 
-export interface DonateButtonProps {
-  projectId: string;
-  projectTitle: string;
-  payoutAddress: Hex;
-  chainID?: number;
-  className?: string;
-}
-
 export interface SingleProjectDonateModalProps {
   isOpen: boolean;
   onClose: () => void;
