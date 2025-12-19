@@ -13,6 +13,8 @@ import {
 import { SUPPORTED_TOKENS } from "@/constants/supportedTokens";
 import { useSingleProjectDonation } from "@/hooks/donation/useSingleProjectDonation";
 import { PaymentMethod } from "@/types/donations";
+import { resolvePayoutAddress } from "@/utilities/address";
+import { shortAddress } from "@/utilities/shortAddress";
 import { TokenSelector } from "../TokenSelector";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
 import type { SingleProjectDonateModalProps } from "./types";
@@ -71,7 +73,7 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
               Support this project
             </DialogTitle>
             <DialogDescription className="text-sm text-gray-500 dark:text-gray-400 truncate">
-              {project.title}
+              {project.title} ({shortAddress(resolvePayoutAddress(project.payoutAddress))})
             </DialogDescription>
           </DialogHeader>
 
