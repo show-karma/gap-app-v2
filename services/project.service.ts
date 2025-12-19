@@ -39,12 +39,9 @@ export const getProject = async (projectIdOrSlug: string): Promise<ProjectRespon
   );
 
   if (error) {
-    // Don't report 404s to Sentry - they're expected when users visit non-existent project URLs
-    if (status !== 404) {
-      errorManager(`Project API Error: ${error}`, error, {
-        context: "project.service",
-      });
-    }
+    errorManager(`Project API Error: ${error}`, error, {
+      context: "project.service",
+    });
     return null;
   }
 
