@@ -53,12 +53,9 @@ export const fundingProgramsService = {
   /**
    * Fetch a single funding program by ID
    */
-  async getById(
-    programId: string,
-    chainId: number = FUNDING_MAP_DEFAULT_CHAIN_ID
-  ): Promise<FundingProgramResponse | null> {
+  async getById(programId: string): Promise<FundingProgramResponse | null> {
     const [data, error] = await fetchData<FundingProgramResponse>(
-      INDEXER.V2.REGISTRY.GET_BY_ID(programId, chainId)
+      INDEXER.V2.REGISTRY.GET_BY_ID(programId)
     );
 
     if (error || !data) {

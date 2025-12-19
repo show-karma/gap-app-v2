@@ -145,9 +145,9 @@ export const INDEXER = {
         `/v2/programs/${programId}/milestone-reviewers`,
     },
     REGISTRY: {
-      GET_ALL: "/v2/registry",
-      GET_BY_ID: (programId: string, chainId: number) => `/v2/registry/${programId}/${chainId}`,
-      GET_FILTERS: "/v2/registry/filters",
+      GET_ALL: "/v2/program-registry/search",
+      GET_BY_ID: (programId: string) => `/v2/program-registry/${programId}`,
+      GET_FILTERS: "/v2/program-registry/filters",
     },
     TRACKS: {
       LIST: (communityUID: string, includeArchived?: boolean) => {
