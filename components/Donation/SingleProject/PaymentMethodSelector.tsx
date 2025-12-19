@@ -10,10 +10,6 @@ export const PaymentMethodSelector = React.memo<PaymentMethodSelectorProps>(
       onSelect(PaymentMethod.CRYPTO);
     }, [onSelect]);
 
-    const handleFiatSelect = useCallback(() => {
-      onSelect(PaymentMethod.FIAT);
-    }, [onSelect]);
-
     return (
       <div className="flex gap-3">
         <button
@@ -67,29 +63,16 @@ export const PaymentMethodSelector = React.memo<PaymentMethodSelectorProps>(
         </button>
         <button
           type="button"
-          onClick={handleFiatSelect}
-          aria-pressed={selected === PaymentMethod.FIAT}
-          aria-label="Pay with card"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              handleFiatSelect();
-            }
-          }}
-          className={`flex-1 p-4 rounded-xl border-2 transition-all duration-200 ${
-            selected === PaymentMethod.FIAT
-              ? "border-brand-blue bg-brand-lightblue dark:bg-blue-900/20 shadow-sm"
-              : "border-gray-200 dark:border-zinc-700 hover:border-gray-300 dark:hover:border-zinc-600"
-          }`}
+          disabled
+          aria-disabled="true"
+          aria-label="Pay with card - Coming soon"
+          className="flex-1 p-4 rounded-xl border-2 border-gray-200 dark:border-zinc-700 opacity-60 cursor-not-allowed relative"
         >
+          <span className="absolute top-2 right-2 text-[10px] bg-gray-200 dark:bg-zinc-600 text-gray-600 dark:text-zinc-300 px-1.5 py-0.5 rounded-full font-medium">
+            Coming soon
+          </span>
           <div className="flex flex-col items-center gap-2">
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                selected === PaymentMethod.FIAT
-                  ? "bg-brand-blue text-white"
-                  : "bg-gray-100 dark:bg-zinc-700 text-gray-500 dark:text-gray-400"
-              }`}
-            >
+            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 dark:bg-zinc-700 text-gray-400 dark:text-gray-500">
               <svg
                 className="w-5 h-5"
                 fill="none"
@@ -105,16 +88,8 @@ export const PaymentMethodSelector = React.memo<PaymentMethodSelectorProps>(
               </svg>
             </div>
             <div>
-              <div
-                className={`font-semibold text-sm ${
-                  selected === PaymentMethod.FIAT
-                    ? "text-brand-blue dark:text-blue-400"
-                    : "text-gray-700 dark:text-gray-300"
-                }`}
-              >
-                Card
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Credit / Debit</div>
+              <div className="font-semibold text-sm text-gray-400 dark:text-gray-500">Card</div>
+              <div className="text-xs text-gray-400 dark:text-gray-500">Credit / Debit</div>
             </div>
           </div>
         </button>

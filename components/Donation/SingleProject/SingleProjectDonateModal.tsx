@@ -1,13 +1,11 @@
 "use client";
 
 import React, { useCallback } from "react";
-import type { Hex } from "viem";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SUPPORTED_TOKENS } from "@/constants/supportedTokens";
 import { useSingleProjectDonation } from "@/hooks/donation/useSingleProjectDonation";
 import { PaymentMethod } from "@/types/donations";
-import { FiatOnrampModal } from "../FiatOnramp/FiatOnrampModal";
 import { TokenSelector } from "../TokenSelector";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
 import type { SingleProjectDonateModalProps } from "./types";
@@ -15,21 +13,16 @@ import type { SingleProjectDonateModalProps } from "./types";
 export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps>(
   ({ isOpen, onClose, project }) => {
     const {
-      address,
       paymentMethod,
       selectedToken,
       amount,
-      showOnrampModal,
       balanceByTokenKey,
-      resolvedPayoutAddress,
       isExecuting,
       canProceed,
-      // fullProject, // Unused
       handlePaymentMethodChange,
       handleAmountChange,
       handleProceed,
       setSelectedToken,
-      setShowOnrampModal,
     } = useSingleProjectDonation(project, onClose);
 
     const handleOpenChange = useCallback(
@@ -108,12 +101,7 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
                 htmlFor="donation-amount"
                 className="block text-sm font-semibold text-gray-700 dark:text-gray-300"
               >
-                Amount{" "}
-                {paymentMethod === PaymentMethod.FIAT
-                  ? "(USD)"
-                  : selectedToken
-                    ? `(${selectedToken.symbol})`
-                    : ""}
+                Amount {selectedToken ? `(${selectedToken.symbol})` : ""}
               </label>
               <div className="relative">
                 <input
@@ -126,11 +114,6 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
                   min="0"
                   className="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3.5 text-lg font-medium text-gray-900 placeholder:text-gray-400 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 transition-all dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:focus:border-blue-400"
                 />
-                {paymentMethod === PaymentMethod.FIAT && (
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
-                    USD
-                  </span>
-                )}
               </div>
             </div>
 
@@ -160,7 +143,7 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
                     </svg>
                     Processing...
                   </span>
-                ) : paymentMethod === PaymentMethod.CRYPTO ? (
+                ) : (
                   <span className="flex items-center justify-center gap-2">
                     <svg
                       className="w-5 h-5"
@@ -177,23 +160,6 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
                     </svg>
                     Send Donation
                   </span>
-                ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                      />
-                    </svg>
-                    Pay with Card
-                  </span>
                 )}
               </Button>
             </div>
@@ -203,21 +169,6 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
             </p>
           </div>
         </DialogContent>
-
-        {showOnrampModal && (
-          <FiatOnrampModal
-            isOpen={showOnrampModal}
-            onClose={() => setShowOnrampModal(false)}
-            project={{
-              uid: project.uid,
-              title: project.title,
-              payoutAddress: resolvedPayoutAddress as Hex,
-              chainID: project.chainID || 42161, // Fallback chain ID
-            }}
-            donorAddress={address as Hex | undefined}
-            fiatAmount={Number.isNaN(parseFloat(amount)) ? 0 : parseFloat(amount)}
-          />
-        )}
       </Dialog>
     );
   }

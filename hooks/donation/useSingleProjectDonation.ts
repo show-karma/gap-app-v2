@@ -28,7 +28,6 @@ export const useSingleProjectDonation = (
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CRYPTO);
   const [selectedToken, setSelectedToken] = useState<SupportedToken | null>(null);
   const [amount, setAmount] = useState("");
-  const [showOnrampModal, setShowOnrampModal] = useState(false);
 
   const supportedChains = useMemo(() => getAllSupportedChains(), []);
   const { balanceByTokenKey } = useCrossChainBalances(currentChainId ?? null, supportedChains);
@@ -63,20 +62,9 @@ export const useSingleProjectDonation = (
   }, [amount]);
 
   const canProceed = useMemo(() => {
-    if (paymentMethod === PaymentMethod.CRYPTO) {
-      return selectedToken && isValidAmount && address;
-    }
-    return isValidAmount;
-  }, [paymentMethod, selectedToken, isValidAmount, address]);
-
-  const processFiat = useCallback(() => {
-    if (!resolvedPayoutAddress) {
-      toast.error("Cannot proceed: No valid payout address found for this project.");
-      return;
-    }
-    setShowOnrampModal(true);
-    onClose();
-  }, [resolvedPayoutAddress, onClose]);
+    // Only crypto is supported now
+    return selectedToken && isValidAmount && address;
+  }, [selectedToken, isValidAmount, address]);
 
   const saveDonation = useCallback(
     async (result: { hash: string }, payment: DonationPayment) => {
@@ -154,29 +142,19 @@ export const useSingleProjectDonation = (
 
   const handleProceed = useCallback(() => {
     if (!canProceed) return;
-
-    if (paymentMethod === PaymentMethod.FIAT) {
-      processFiat();
-    } else {
-      processCrypto();
-    }
-  }, [canProceed, paymentMethod, processFiat, processCrypto]);
+    processCrypto();
+  }, [canProceed, processCrypto]);
 
   return {
-    address,
     paymentMethod,
     selectedToken,
     amount,
-    showOnrampModal,
     balanceByTokenKey,
-    resolvedPayoutAddress,
     isExecuting,
     canProceed,
-    fullProject,
     handlePaymentMethodChange,
     handleAmountChange,
     handleProceed,
     setSelectedToken,
-    setShowOnrampModal,
   };
 };
