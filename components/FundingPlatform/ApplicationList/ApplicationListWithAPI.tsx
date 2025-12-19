@@ -13,12 +13,14 @@ import {
   useFundingApplications,
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
+import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
+import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import { useProgram } from "@/hooks/usePrograms";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
 import type { IFundingApplication } from "@/types/funding-platform";
 import formatCurrency from "@/utilities/formatCurrency";
 import { getAIColumnVisibility } from "../helper/getAIColumnVisibility";
-import ApplicationList from "./ApplicationList";
+import { ApplicationList } from "./ApplicationList";
 
 interface IApplicationListWithAPIProps {
   programId: string;
@@ -106,6 +108,18 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   // Fetch program config and program data to determine AI column visibility
   const { config } = useProgramConfig(programId, chainId);
   const { data: program } = useProgram(programId);
+
+  // Fetch reviewers for the program
+  const {
+    data: programReviewers = [],
+    isLoading: isLoadingProgramReviewers,
+    isError: isProgramReviewersError,
+  } = useProgramReviewers(programId, chainId);
+  const {
+    data: milestoneReviewers = [],
+    isLoading: isLoadingMilestoneReviewers,
+    isError: isMilestoneReviewersError,
+  } = useMilestoneReviewers(programId, chainId);
 
   // Determine column visibility based on configured prompts
   const { showAIScoreColumn, showInternalAIScoreColumn } = useMemo(
@@ -444,6 +458,12 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           onSortChange={handleSortChange}
           showAIScoreColumn={showAIScoreColumn}
           showInternalAIScoreColumn={showInternalAIScoreColumn}
+          programReviewers={programReviewers}
+          milestoneReviewers={milestoneReviewers}
+          isLoadingProgramReviewers={isLoadingProgramReviewers}
+          isProgramReviewersError={isProgramReviewersError}
+          isLoadingMilestoneReviewers={isLoadingMilestoneReviewers}
+          isMilestoneReviewersError={isMilestoneReviewersError}
         />
       </InfiniteScroll>
     </div>

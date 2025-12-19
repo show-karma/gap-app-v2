@@ -33,8 +33,18 @@ const SortableTableHeader: FC<ISortableTableHeaderProps> = ({
     }
   };
 
+  const ariaSort =
+    sortable && sortKey && isActive
+      ? currentSortDirection === "asc"
+        ? "ascending"
+        : currentSortDirection === "desc"
+          ? "descending"
+          : "none"
+      : undefined;
+
   return (
     <th
+      scope="col"
       className={cn(
         "px-4 py-3 text-left text-xs font-medium uppercase tracking-wider",
         "text-gray-600 dark:text-gray-400",
@@ -44,6 +54,8 @@ const SortableTableHeader: FC<ISortableTableHeaderProps> = ({
         isActive && "text-gray-900 dark:text-white",
         className
       )}
+      aria-sort={ariaSort}
+      aria-label={sortable && sortKey ? `${label}, sortable column` : label}
       onClick={handleClick}
     >
       <div className="flex items-center gap-1">

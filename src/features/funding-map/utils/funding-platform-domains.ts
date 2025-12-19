@@ -1,4 +1,4 @@
-export const fundingPlatformDomains = {
+export const FUNDING_PLATFORM_DOMAINS = {
   optimism: {
     dev: "https://testapp.opgrants.io",
     prod: "https://app.opgrants.io",
@@ -8,7 +8,7 @@ export const fundingPlatformDomains = {
     prod: "https://app.filpgf.io",
   },
   polygon: {
-    dev: "https://founders.polygon.technology",
+    dev: "https://testapp.karmahq.xyz/polygon",
     prod: "https://founders.polygon.technology",
   },
   scroll: {
@@ -20,3 +20,17 @@ export const fundingPlatformDomains = {
     prod: "https://app.karmahq.xyz",
   },
 };
+
+export const FUNDING_PLATFORM_TENANT_IDS = [
+  "optimism",
+  "arbitrum",
+  "celo",
+  "polygon",
+  "scroll",
+  "karma",
+  "celopg",
+  "regen-coordination",
+  "localism-fund",
+  "filecoin",
+  "for-the-world",
+] as const;

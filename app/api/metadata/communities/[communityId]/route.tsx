@@ -4,7 +4,10 @@ import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import pluralize from "pluralize";
 import { PROJECT_NAME } from "@/constants/brand";
-import { getCommunityDetails, getCommunityStats } from "@/utilities/queries/v2/getCommunityData";
+import {
+  getCommunityDetails,
+  getCommunityStats,
+} from "@/utilities/queries/v2/getCommunityData";
 // App router includes @vercel/og.
 // No need to install it.
 

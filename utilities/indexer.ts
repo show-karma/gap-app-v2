@@ -32,6 +32,7 @@ export const INDEXER = {
   V2: {
     PROJECTS: {
       GET: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}`,
+      SLUG_CHECK: (slug: string) => `/v2/projects/slug/check/${slug}`,
       SEARCH: (query: string, limit?: number) =>
         `/v2/projects?q=${encodeURIComponent(query)}${limit ? `&limit=${limit}` : ""}`,
       GRANTS: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/grants`,
@@ -80,6 +81,7 @@ export const INDEXER = {
         `/v2/funding-applications/admin/${programId}/${chainId}/export`,
       VERSIONS_TIMELINE: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/versions/timeline`,
+      REVIEWERS: (applicationId: string) => `/v2/funding-applications/${applicationId}/reviewers`,
     },
     USER: {
       PERMISSIONS: (resource?: string) => {
@@ -98,6 +100,11 @@ export const INDEXER = {
     MILESTONE_REVIEWERS: {
       LIST: (programId: string, chainID: number) =>
         `/v2/programs/${programId}/${chainID}/milestone-reviewers`,
+    },
+    REGISTRY: {
+      GET_ALL: "/v2/registry",
+      GET_BY_ID: (programId: string, chainId: number) => `/v2/registry/${programId}/${chainId}`,
+      GET_FILTERS: "/v2/registry/filters",
     },
     TRACKS: {
       LIST: (communityUID: string, includeArchived?: boolean) => {
