@@ -35,9 +35,6 @@ importers:
       '@hotjar/browser':
         specifier: ^1.0.9
         version: 1.0.9
-      '@moonpay/moonpay-react':
-        specifier: ^1.10.6
-        version: 1.10.6(react@19.2.1)
       '@next/bundle-analyzer':
         specifier: 15.4.10
         version: 15.4.10(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -2179,11 +2176,6 @@ packages:
 
   '@mixpanel/rrweb@2.0.0-alpha.18.1':
     resolution: {integrity: sha512-LH2wmwLPSAtq7j3iqxm32cFwDCp0xqLiXKDJq1B7WWGowNfrGOfVjqZ4ftf5dXMm0w2UNpx8tWfi+9Tt4YMt0g==}
-
-  '@moonpay/moonpay-react@1.10.6':
-    resolution: {integrity: sha512-o+fa3FDKITbOTlkKToT49865ZGKkoGT1/eI0XJnYh9KSNMz3oo2PuwDKJHqLLZ5qE642ZAebksWdEElRySD43Q==}
-    peerDependencies:
-      react: '>=16'
 
   '@msgpack/msgpack@3.1.2':
     resolution: {integrity: sha512-JEW4DEtBzfe8HvUYecLU9e6+XJnKDlUAIve8FvPzF3Kzs6Xo/KuZkZJsDH0wJXl/qEZbeeE7edxDNY3kMs39hQ==}
@@ -15186,10 +15178,6 @@ snapshots:
       '@xstate/fsm': 1.6.5
       base64-arraybuffer: 1.0.2
       mitt: 3.0.1
-
-  '@moonpay/moonpay-react@1.10.6(react@19.2.1)':
-    dependencies:
-      react: 19.2.1
 
   '@msgpack/msgpack@3.1.2': {}
 
