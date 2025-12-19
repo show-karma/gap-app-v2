@@ -1,3 +1,4 @@
+import type { FundingProgramMetadata } from "@/src/features/funding-map/types/funding-program";
 import type {
   ExportFormat,
   FundingApplicationStatusV2,
@@ -47,49 +48,7 @@ export type FundingProgram = {
   programId: string;
   chainID: number;
   name: string;
-  metadata: {
-    tags?: string[];
-    type?: string;
-    title?: string;
-    logoImg?: string;
-    website?: string;
-    startsAt?: string;
-    endsAt?: string;
-    socialLinks?: {
-      blog?: string;
-      forum?: string;
-      twitter?: string;
-      discord?: string;
-      website?: string;
-      orgWebsite?: string;
-      grantsSite?: string;
-      telegram?: string;
-    };
-    bugBounty?: string;
-    bounties?: string[];
-    bannerImg?: string;
-    createdAt?: number;
-    minGrantSize?: string;
-    maxGrantSize?: string;
-    categories?: string[];
-    ecosystems?: string[];
-    organizations?: string[];
-    networks?: string[];
-    grantTypes?: string[];
-    credentials?: {};
-    description?: string;
-    shortDescription?: string;
-    logoImgData?: string;
-    grantsToDate?: number;
-    bannerImgData?: string;
-    programBudget?: string;
-    projectTwitter?: string;
-    applicantsNumber?: number;
-    amountDistributedToDate?: string;
-    platformsUsed?: string[];
-    status: string;
-    communityRef?: string[];
-  };
+  metadata: FundingProgramMetadata;
   applicationConfig: IFundingProgramConfig;
   communitySlug?: string;
   communityName?: string;

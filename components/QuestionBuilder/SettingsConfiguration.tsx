@@ -6,10 +6,10 @@ import { useParams } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { type SettingsConfigFormData, settingsConfigSchema } from "@/schemas/settingsConfigSchema";
+import { FUNDING_PLATFORM_DOMAINS } from "@/src/features/funding-map/utils/funding-platform-domains";
 import type { FormSchema } from "@/types/question-builder";
 import { envVars } from "@/utilities/enviromentVars";
 import { formatDate } from "@/utilities/formatDate";
-import { fundingPlatformDomains } from "@/utilities/fundingPlatformDomains";
 import { ExternalLink } from "../Utilities/ExternalLink";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 
@@ -22,15 +22,15 @@ interface SettingsConfigurationProps {
 }
 
 const getApplyUrlByCommunityId = (communityId: string, programId: string) => {
-  if (communityId in fundingPlatformDomains) {
-    const domain = fundingPlatformDomains[communityId as keyof typeof fundingPlatformDomains];
+  if (communityId in FUNDING_PLATFORM_DOMAINS) {
+    const domain = FUNDING_PLATFORM_DOMAINS[communityId as keyof typeof FUNDING_PLATFORM_DOMAINS];
     return envVars.isDev
       ? `${domain.dev}/browse-applications?programId=${programId}`
       : `${domain.prod}/browse-applications?programId=${programId}`;
   } else {
     return envVars.isDev
-      ? `${fundingPlatformDomains.shared.dev}/${communityId}/browse-applications?programId=${programId}`
-      : `${fundingPlatformDomains.shared.prod}/${communityId}/browse-applications?programId=${programId}`;
+      ? `${FUNDING_PLATFORM_DOMAINS.shared.dev}/${communityId}/browse-applications?programId=${programId}`
+      : `${FUNDING_PLATFORM_DOMAINS.shared.prod}/${communityId}/browse-applications?programId=${programId}`;
   }
 };
 
