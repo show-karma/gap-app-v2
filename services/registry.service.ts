@@ -1,4 +1,3 @@
-import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
@@ -6,13 +5,14 @@ import { INDEXER } from "@/utilities/indexer";
 
 export const registryService = {
   searchProgramById: async (
-    id: string,
-    chainId: number = registryHelper.supportedNetworks
+    id: string
   ): Promise<GrantProgram | undefined> => {
     try {
-      const [data, error] = await fetchData(INDEXER.REGISTRY.FIND_BY_ID(id, chainId));
+      // Use V2 endpoint which doesn't require chainId
+      const [res, error] = await fetchData(INDEXER.REGISTRY.V2.GET_BY_ID(id));
       if (error) throw Error(error);
-      return data;
+      // V2 API wraps response in { data: program }
+      return res?.data;
     } catch (error: any) {
       errorManager(`Error while searching for program by id`, error);
     }

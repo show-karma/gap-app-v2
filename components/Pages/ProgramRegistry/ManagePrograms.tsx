@@ -160,17 +160,17 @@ export const ManagePrograms = () => {
   useEffect(() => {
     const searchProgramById = async (id: string) => {
       try {
-        const [data, error] = await fetchData(
-          INDEXER.REGISTRY.FIND_BY_ID(id, registryHelper.supportedNetworks)
+        const [res, error] = await fetchData(
+          INDEXER.REGISTRY.V2.GET_BY_ID(id)
         );
         if (error) throw Error(error);
-        if (data) {
-          data.forEach((program: GrantProgram) => {
-            if (typeof program.metadata?.grantTypes === "string") {
-              program.metadata.grantTypes = [program.metadata.grantTypes];
-            }
-          });
-          setSelectedProgram(data);
+        if (res && res.data) {
+          // V2 API wraps response in { data: program }
+          const program = res.data;
+          if (typeof program.metadata?.grantTypes === "string") {
+            program.metadata.grantTypes = [program.metadata.grantTypes];
+          }
+          setSelectedProgram(program);
         }
       } catch (error: any) {
         errorManager(`Error while searching for program by id`, error);
@@ -188,35 +188,37 @@ export const ManagePrograms = () => {
 
   const getGrantPrograms = async () => {
     try {
-      const baseUrl = INDEXER.REGISTRY.GET_ALL;
-      const queryParams = `?isValid=${tab}&limit=${pageSize}&offset=${(page - 1) * pageSize}`;
-      const searchParam = searchInput ? `&name=${searchInput}` : "";
-      const networkParam = selectedNetworks.length ? `&networks=${selectedNetworks.join(",")}` : "";
-      const ecosystemParam = selectedEcosystems.length
-        ? `&ecosystems=${selectedEcosystems.join(",")}`
-        : "";
+      // Map frontend tab values to V2 API isValid values
+      const isValidMap: Record<string, "true" | "false" | "null"> = {
+        pending: "null",
+        accepted: "true",
+        rejected: "false",
+      };
 
-      const grantTypeParam = selectedGrantTypes.length
-        ? `&grantTypes=${selectedGrantTypes.join(",")}`
-        : "";
-
-      const sortParams = `&sortField=${sortField}&sortOrder=${sortOrder}`;
-      const filterParams = networkParam + ecosystemParam + grantTypeParam + sortParams;
-      const ownerParam = address && !isRegistryAdmin ? `&owners=${address}` : "";
-      const url = isRegistryAdmin
-        ? `${baseUrl}${queryParams}${searchParam}${filterParams}`
-        : `${baseUrl}${queryParams}${ownerParam}${searchParam}${filterParams}`;
+      const url = INDEXER.REGISTRY.V2.GET_ALL({
+        page,
+        limit: pageSize,
+        isValid: isValidMap[tab as keyof typeof isValidMap],
+        name: searchInput || undefined,
+        networks: selectedNetworks.length ? selectedNetworks.join(",") : undefined,
+        ecosystems: selectedEcosystems.length ? selectedEcosystems.join(",") : undefined,
+        grantTypes: selectedGrantTypes.length ? selectedGrantTypes.join(",") : undefined,
+        sortField: sortField as "createdAt" | "updatedAt" | "name" | "programId",
+        sortOrder: sortOrder as "asc" | "desc",
+        owners: (address && !isRegistryAdmin) ? address : undefined,
+      });
 
       const [res, error] = await fetchData(url);
-      if (!error && res) {
-        res.programs.forEach((program: GrantProgram) => {
+      if (!error && res && res.data) {
+        // V2 API wraps response in { data: { programs, total } }
+        res.data.programs.forEach((program: GrantProgram) => {
           if (typeof program.metadata?.grantTypes === "string") {
             program.metadata.grantTypes = [program.metadata.grantTypes];
           }
         });
         return {
-          programs: res.programs as GrantProgram[],
-          count: res.count as number,
+          programs: res.data.programs as GrantProgram[],
+          count: res.data.total as number,
         };
       } else {
         throw Error(error || "Unknown error");
@@ -493,7 +495,8 @@ export const ManagePrograms = () => {
                                 setProgramToEdit(program);
                               }}
                               selectProgram={(program: GrantProgram) => {
-                                setProgramId(program._id.$oid || program.programId || "");
+                                // V2 API returns 'id' as string, V1 returned '_id: { $oid: "..." }'
+                                setProgramId(program.id || program._id?.$oid || program.programId || "");
                                 setSelectedProgram(program);
                               }}
                               isAllowed={isAllowed}
@@ -507,7 +510,8 @@ export const ManagePrograms = () => {
                                 setProgramToEdit(program);
                               }}
                               selectProgram={(program: GrantProgram) => {
-                                setProgramId(program._id.$oid || program.programId || "");
+                                // V2 API returns 'id' as string, V1 returned '_id: { $oid: "..." }'
+                                setProgramId(program.id || program._id?.$oid || program.programId || "");
                                 setSelectedProgram(program);
                               }}
                               isAllowed={isAllowed}

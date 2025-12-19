@@ -22,7 +22,7 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { registryHelper } from "./helper";
 
 export type GrantProgram = {
-  _id: {
+  _id?: {
     $oid: string;
   };
   id?: string;

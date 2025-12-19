@@ -308,7 +308,8 @@ export const ProgramsExplorer = () => {
                         grantPrograms={grantPrograms}
                         selectProgram={(program) => {
                           setSelectedProgram(program);
-                          setProgramId(program._id.$oid || program.programId || "");
+                          // V2 API returns 'id' as string, V1 returned '_id: { $oid: "..." }'
+                          setProgramId(program.id || program._id?.$oid || program.programId || "");
                         }}
                       />
                     </div>
