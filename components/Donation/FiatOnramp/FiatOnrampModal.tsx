@@ -3,6 +3,7 @@
 import { MoonPayBuyWidget } from "@moonpay/moonpay-react";
 import { AlertTriangle, CreditCard, RefreshCw } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -54,7 +55,7 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
 
     const handleClose = useCallback(() => {
       onClose();
-    }, [onClose, isProcessing]);
+    }, [onClose]);
 
     const handleTransactionCreated = useCallback(
       async (props: MoonPayTransactionProps) => {
@@ -65,11 +66,16 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
         // Use ref to get the current donorAddress (prevents stale closure on logout)
         const currentDonorAddress = donorAddressRef.current;
         if (currentDonorAddress && props.id) {
-          await registerMoonPayDonor({
-            moonpayTransactionId: props.id,
-            donorAddress: currentDonorAddress,
-            projectUid: project.uid,
-          });
+          try {
+            await registerMoonPayDonor({
+              moonpayTransactionId: props.id,
+              donorAddress: currentDonorAddress,
+              projectUid: project.uid,
+            });
+          } catch (error) {
+            console.error("Failed to register MoonPay donor:", error);
+            toast.error("Donation processing warning: Could not register donor details");
+          }
         }
       },
       [project.uid]
@@ -79,7 +85,7 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
       setIsProcessing(false);
     }, []);
 
-    const allowedCurrencies = getAllowedMoonPayCurrencies();
+    const allowedCurrencies = useMemo(() => getAllowedMoonPayCurrencies(), []);
 
     const truncateAddress = (address: string) => `${address.slice(0, 6)}...${address.slice(-4)}`;
 

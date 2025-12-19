@@ -36,7 +36,9 @@ export const getMoonPayCurrencyCode = (crypto: string, network: string): string 
 };
 
 export const isMoonPaySupported = (symbol: string, chainId: number): boolean => {
-  const token = SUPPORTED_TOKENS.find((t) => t.symbol === symbol && t.chainId === chainId);
+  const token = SUPPORTED_TOKENS.find(
+    (t) => t.symbol.toUpperCase() === symbol.toUpperCase() && t.chainId === chainId
+  );
   return token?.moonPay?.supported ?? false;
 };
 
