@@ -21,19 +21,17 @@ import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { errorManager } from "../Utilities/errorManager";
 
 const milestoneSchema = z.object({
@@ -102,6 +100,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const { gap } = useGap();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const project = useProjectStore((state) => state.project);
@@ -117,7 +116,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
     setIsLoading(true);
     if (!address) return;
     if (!gap) throw new Error("Please, connect a wallet");
-    let gapClient = gap;
     const milestone = sanitizeObject({
       title: data.title,
       description: data.description || "",
@@ -127,22 +125,18 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
     });
 
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      gapClient = newGapClient;
+      const { walletSigner, gapClient, chainId: actualChainId } = setup;
 
       const milestoneToAttest = new Milestone({
         refUID: uid,
@@ -150,13 +144,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         recipient: (recipient as Hex) || address,
         data: milestone,
       });
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
       await milestoneToAttest.attest(walletSigner as any, changeStepperStep).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;

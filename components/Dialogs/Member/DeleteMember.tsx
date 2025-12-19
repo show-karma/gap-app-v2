@@ -13,12 +13,10 @@ import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { getProjectById } from "@/utilities/sdk";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 const _DeleteDialog = dynamic(() =>
   import("@/components/DeleteDialog").then((mod) => mod.DeleteDialog)
@@ -36,39 +34,28 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
   const { project } = useProjectStore();
   const { changeStepperStep, setIsStepper } = useStepper();
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { performOffChainRevoke } = useOffChainRevoke();
 
   const deleteMember = async () => {
     // await deleteMemberFromProject(memberAddress);
-    let gapClient = gap;
     if (!address || !project) return;
     try {
       setIsDeleting(true);
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+
+      const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsDeleting(false);
         return;
       }
 
-      gapClient = newGapClient;
-      // Replace direct getWalletClient call with safeGetWalletClient
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { walletSigner, gapClient, chainId: actualChainId } = setup;
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) throw new Error("Project not found");
       const member = fetchedProject.members.find(

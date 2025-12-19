@@ -11,14 +11,12 @@ import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import fetchData from "@/utilities/fetchData";
 import { getProjectMemberRoles } from "@/utilities/getProjectMemberRoles";
 import { INDEXER } from "@/utilities/indexer";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 interface DemoteMemberDialogProps {
   memberAddress: string;
@@ -32,6 +30,7 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({ memberAddress 
   const { teamProfiles } = useTeamProfiles(project);
   const { changeStepperStep, setIsStepper } = useStepper();
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const openModal = () => setIsOpen(true);
@@ -42,28 +41,19 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({ memberAddress 
     try {
       setIsDemoting(true);
       setIsStepper(true);
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient,
-      } = await ensureCorrectChain({
+
+      const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsDemoting(false);
         return;
       }
 
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { walletSigner, gapClient, chainId: actualChainId } = setup;
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) throw new Error("Project not found");
 

@@ -16,15 +16,13 @@ import { useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { shortAddress } from "@/utilities/shortAddress";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 type EndorsementDialogProps = {};
 
@@ -35,6 +33,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
   const [comment, setComment] = useState<string>("");
   const project = useProjectStore((state) => state.project);
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
   const { gap } = useGap();
   const { chain } = useAccount();
   const { address } = useAccount();
@@ -86,34 +85,21 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
   };
 
   const handleFunction = async () => {
-    let gapClient = gap;
     setIsLoading(true);
     try {
       if (!project) return;
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      gapClient = newGapClient;
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient || !address) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { walletSigner, gapClient, chainId: actualChainId } = setup;
       const endorsement = new ProjectEndorsement({
         data: sanitizeObject({
           comment,

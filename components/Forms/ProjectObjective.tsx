@@ -13,8 +13,7 @@ import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
@@ -22,7 +21,6 @@ import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
@@ -53,6 +51,7 @@ export const ProjectObjectiveForm = ({
   const { address, chain } = useAccount();
   const { project } = useProjectStore();
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
   const params = useParams();
   const projectId = params.projectId as string;
   const router = useRouter();
@@ -83,25 +82,20 @@ export const ProjectObjectiveForm = ({
 
   const createObjective = async (data: ObjectiveType) => {
     if (!gap) return;
-    let gapClient = gap;
     setIsLoading(true);
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: project?.chainID as number,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      gapClient = newGapClient;
+      const { walletSigner, gapClient, chainId: actualChainId } = setup;
       const newObjective = new ProjectMilestone({
         data: sanitizeObject({
           title: data.title,
@@ -112,14 +106,6 @@ export const ProjectObjectiveForm = ({
         refUID: project?.uid,
         recipient: (address || "0x0000000000000000000000000000000000000000") as `0x${string}`,
       });
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      if (!walletClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),
@@ -192,32 +178,20 @@ export const ProjectObjectiveForm = ({
 
   const updateObjective = async (data: ObjectiveType) => {
     if (!gap) return;
-    let gapClient = gap;
     setIsLoading(true);
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: project?.chainID as number,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      gapClient = newGapClient;
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { walletSigner, gapClient, chainId: actualChainId } = setup;
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),

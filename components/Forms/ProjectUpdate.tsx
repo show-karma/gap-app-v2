@@ -26,8 +26,7 @@ import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useStepper } from "@/store/modals/txStepper";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { sendImpactAnswers } from "@/utilities/impact";
@@ -37,7 +36,6 @@ import { PAGES } from "@/utilities/pages";
 import { getIndicatorsByCommunity } from "@/utilities/queries/getIndicatorsByCommunity";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { ExternalLink } from "../Utilities/ExternalLink";
 import { errorManager } from "../Utilities/errorManager";
 import { type CategorizedIndicator, OutputsSection } from "./Outputs";
@@ -244,6 +242,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const { address } = useAccount();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
@@ -522,30 +521,18 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       const projectUid = project.uid;
       const projectSlug = project.details?.data?.slug;
 
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: chainId,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      gapClient = newGapClient;
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { walletSigner, gapClient, chainId: actualChainId } = setup;
       const schema = gapClient.findSchema("ProjectUpdate");
 
       if (!schema) {
