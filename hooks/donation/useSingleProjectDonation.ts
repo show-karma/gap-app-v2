@@ -53,7 +53,11 @@ export const useSingleProjectDonation = (
   }, []);
 
   const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setAmount(e.target.value);
+    const value = e.target.value;
+    // Only allow numbers and a single decimal point
+    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+      setAmount(value);
+    }
   }, []);
 
   const isValidAmount = useMemo(() => {

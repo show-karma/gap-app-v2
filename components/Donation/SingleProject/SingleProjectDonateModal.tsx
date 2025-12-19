@@ -107,12 +107,11 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
               </label>
               <input
                 id="donation-amount"
-                type="number"
+                type="text"
+                inputMode="decimal"
                 placeholder="0.00"
                 value={amount}
                 onChange={handleAmountChange}
-                step="0.01"
-                min="0"
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
               />
             </div>
