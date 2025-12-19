@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
 import type React from "react";
-import ApplicationList from "@/components/FundingPlatform/ApplicationList/ApplicationList";
+import { ApplicationList } from "@/components/FundingPlatform/ApplicationList/ApplicationList";
 import type { IFundingApplication } from "@/types/funding-platform";
 
 // Mock the helper functions
@@ -30,12 +30,17 @@ jest.mock("@/components/Utilities/SortableTableHeader", () => {
     onSort?: (sortKey: string) => void;
   }) {
     return (
-      <th data-testid={`header-${sortKey}`}>
+      <th scope="col" data-testid={`header-${sortKey}`}>
         <button onClick={() => onSort?.(sortKey)}>{label}</button>
       </th>
     );
   };
 });
+
+// Mock ReviewerAssignmentDropdown
+jest.mock("@/components/FundingPlatform/ApplicationList/ReviewerAssignmentDropdown", () => ({
+  ReviewerAssignmentDropdown: () => <div data-testid="reviewer-assignment-dropdown" />,
+}));
 
 import { formatAIScore } from "@/components/FundingPlatform/helper/getAIScore";
 
@@ -289,6 +294,28 @@ describe("ApplicationList - AI Score Column", () => {
       expect(statusIndex).toBeLessThan(aiScoreIndex);
       expect(aiScoreIndex).toBeLessThan(createdDateIndex);
     });
+
+    it("should have proper accessibility attributes on table headers", () => {
+      const applications = [createMockApplication()];
+
+      const { container } = renderWithQueryClient(
+        <ApplicationList
+          programId="test-program"
+          chainID={11155111}
+          applications={applications}
+          sortBy="status"
+          sortOrder="asc"
+          showAIScoreColumn={true}
+        />
+      );
+
+      const headers = Array.from(container.querySelectorAll("thead th"));
+      // All headers should have scope="col" for accessibility
+      headers.forEach((header) => {
+        expect(header).toHaveAttribute("scope", "col");
+      });
+      expect(headers.length).toBeGreaterThan(0);
+    });
   });
 
   describe("Integration with Application Selection", () => {
@@ -381,6 +408,235 @@ describe("ApplicationList - AI Score Column", () => {
       // When there are no applications, the table (including headers) is not rendered
       expect(screen.queryByText("AI Score")).not.toBeInTheDocument();
       expect(screen.getByText("No applications found.")).toBeInTheDocument();
+    });
+  });
+
+  describe("Reviewer Column Loading and Error States", () => {
+    const mockProgramReviewers = [
+      {
+        publicAddress: "0x1111111111111111111111111111111111111111",
+        name: "John Doe",
+        email: "john@example.com",
+        assignedAt: "2024-01-01T00:00:00Z",
+      },
+    ];
+
+    const mockMilestoneReviewers = [
+      {
+        publicAddress: "0x2222222222222222222222222222222222222222",
+        name: "Jane Smith",
+        email: "jane@example.com",
+        assignedAt: "2024-01-02T00:00:00Z",
+      },
+    ];
+
+    it("should show loading spinner in App Reviewers column header when isLoadingProgramReviewers is true", () => {
+      const applications = [createMockApplication()];
+
+      const { container } = renderWithQueryClient(
+        <ApplicationList
+          programId="test-program"
+          chainID={11155111}
+          applications={applications}
+          sortBy="status"
+          sortOrder="asc"
+          programReviewers={mockProgramReviewers}
+          isLoadingProgramReviewers={true}
+        />
+      );
+
+      const headers = container.querySelectorAll("thead th");
+      const appReviewersHeader = Array.from(headers).find((header) =>
+        header.textContent?.includes("App Reviewers")
+      );
+
+      expect(appReviewersHeader).toBeInTheDocument();
+      expect(appReviewersHeader?.querySelector(".animate-spin")).toBeInTheDocument();
+    });
+
+    it("should show loading spinner in Milestone Reviewers column header when isLoadingMilestoneReviewers is true", () => {
+      const applications = [createMockApplication()];
+
+      const { container } = renderWithQueryClient(
+        <ApplicationList
+          programId="test-program"
+          chainID={11155111}
+          applications={applications}
+          sortBy="status"
+          sortOrder="asc"
+          milestoneReviewers={mockMilestoneReviewers}
+          isLoadingMilestoneReviewers={true}
+        />
+      );
+
+      const headers = container.querySelectorAll("thead th");
+      const milestoneReviewersHeader = Array.from(headers).find((header) =>
+        header.textContent?.includes("Milestone Reviewers")
+      );
+
+      expect(milestoneReviewersHeader).toBeInTheDocument();
+      expect(milestoneReviewersHeader?.querySelector(".animate-spin")).toBeInTheDocument();
+    });
+
+    it("should show error indicator in App Reviewers column header when isProgramReviewersError is true", () => {
+      const applications = [createMockApplication()];
+
+      const { container } = renderWithQueryClient(
+        <ApplicationList
+          programId="test-program"
+          chainID={11155111}
+          applications={applications}
+          sortBy="status"
+          sortOrder="asc"
+          programReviewers={mockProgramReviewers}
+          isProgramReviewersError={true}
+        />
+      );
+
+      const headers = container.querySelectorAll("thead th");
+      const appReviewersHeader = Array.from(headers).find((header) =>
+        header.textContent?.includes("App Reviewers")
+      );
+
+      expect(appReviewersHeader).toBeInTheDocument();
+      // Check for the error icon (ExclamationCircleIcon)
+      const errorIcon = appReviewersHeader?.querySelector("svg");
+      expect(errorIcon).toBeInTheDocument();
+      expect(errorIcon).toHaveClass("text-yellow-500");
+    });
+
+    it("should show error indicator in Milestone Reviewers column header when isMilestoneReviewersError is true", () => {
+      const applications = [createMockApplication()];
+
+      const { container } = renderWithQueryClient(
+        <ApplicationList
+          programId="test-program"
+          chainID={11155111}
+          applications={applications}
+          sortBy="status"
+          sortOrder="asc"
+          milestoneReviewers={mockMilestoneReviewers}
+          isMilestoneReviewersError={true}
+        />
+      );
+
+      const headers = container.querySelectorAll("thead th");
+      const milestoneReviewersHeader = Array.from(headers).find((header) =>
+        header.textContent?.includes("Milestone Reviewers")
+      );
+
+      expect(milestoneReviewersHeader).toBeInTheDocument();
+      // Check for the error icon (ExclamationCircleIcon)
+      const errorIcon = milestoneReviewersHeader?.querySelector("svg");
+      expect(errorIcon).toBeInTheDocument();
+      expect(errorIcon).toHaveClass("text-yellow-500");
+    });
+
+    it("should render reviewer columns normally when loading/error props are not provided (backward compatibility)", () => {
+      const applications = [createMockApplication()];
+
+      const { container } = renderWithQueryClient(
+        <ApplicationList
+          programId="test-program"
+          chainID={11155111}
+          applications={applications}
+          sortBy="status"
+          sortOrder="asc"
+          programReviewers={mockProgramReviewers}
+          milestoneReviewers={mockMilestoneReviewers}
+        />
+      );
+
+      const headers = container.querySelectorAll("thead th");
+      const appReviewersHeader = Array.from(headers).find((header) =>
+        header.textContent?.includes("App Reviewers")
+      );
+      const milestoneReviewersHeader = Array.from(headers).find((header) =>
+        header.textContent?.includes("Milestone Reviewers")
+      );
+
+      expect(appReviewersHeader).toBeInTheDocument();
+      expect(milestoneReviewersHeader).toBeInTheDocument();
+      // Should not show loading spinner or error icon when props are not provided
+      expect(appReviewersHeader?.querySelector(".animate-spin")).not.toBeInTheDocument();
+      expect(milestoneReviewersHeader?.querySelector(".animate-spin")).not.toBeInTheDocument();
+      expect(appReviewersHeader?.querySelector("svg")).not.toBeInTheDocument();
+      expect(milestoneReviewersHeader?.querySelector("svg")).not.toBeInTheDocument();
+    });
+
+    it("should hide reviewer columns when programReviewers and milestoneReviewers are empty arrays", () => {
+      const applications = [createMockApplication()];
+
+      const { container } = renderWithQueryClient(
+        <ApplicationList
+          programId="test-program"
+          chainID={11155111}
+          applications={applications}
+          sortBy="status"
+          sortOrder="asc"
+          programReviewers={[]}
+          milestoneReviewers={[]}
+        />
+      );
+
+      const headers = Array.from(container.querySelectorAll("thead th"));
+      const appReviewersHeader = headers.find((header) =>
+        header.textContent?.includes("App Reviewers")
+      );
+      const milestoneReviewersHeader = headers.find((header) =>
+        header.textContent?.includes("Milestone Reviewers")
+      );
+
+      expect(appReviewersHeader).toBeUndefined();
+      expect(milestoneReviewersHeader).toBeUndefined();
+    });
+
+    it("should have aria-label on reviewer column headers when visible", () => {
+      const applications = [createMockApplication()];
+      const mockProgramReviewers = [
+        {
+          publicAddress: "0x1111111111111111111111111111111111111111",
+          name: "John Doe",
+          email: "john@example.com",
+          assignedAt: "2024-01-01T00:00:00Z",
+        },
+      ];
+      const mockMilestoneReviewers = [
+        {
+          publicAddress: "0x2222222222222222222222222222222222222222",
+          name: "Jane Smith",
+          email: "jane@example.com",
+          assignedAt: "2024-01-02T00:00:00Z",
+        },
+      ];
+
+      const { container } = renderWithQueryClient(
+        <ApplicationList
+          programId="test-program"
+          chainID={11155111}
+          applications={applications}
+          sortBy="status"
+          sortOrder="asc"
+          programReviewers={mockProgramReviewers}
+          milestoneReviewers={mockMilestoneReviewers}
+        />
+      );
+
+      const headers = container.querySelectorAll("thead th");
+      const appReviewersHeader = Array.from(headers).find((header) =>
+        header.textContent?.includes("App Reviewers")
+      );
+      const milestoneReviewersHeader = Array.from(headers).find((header) =>
+        header.textContent?.includes("Milestone Reviewers")
+      );
+
+      expect(appReviewersHeader).toBeInTheDocument();
+      expect(appReviewersHeader).toHaveAttribute("aria-label", "Application Reviewers");
+      expect(appReviewersHeader).toHaveAttribute("scope", "col");
+
+      expect(milestoneReviewersHeader).toBeInTheDocument();
+      expect(milestoneReviewersHeader).toHaveAttribute("aria-label", "Milestone Reviewers");
+      expect(milestoneReviewersHeader).toHaveAttribute("scope", "col");
     });
   });
 });

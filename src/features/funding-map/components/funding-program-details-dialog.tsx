@@ -38,7 +38,7 @@ interface FundingProgramDetailsDialogProps {
 }
 
 function formatBudgetValue(budget: string | undefined): string | null {
-  if (!budget) return null;
+  if (!budget || Number(budget) === 0) return null;
   const numBudget = Number(budget);
   if (Number.isNaN(numBudget)) return budget;
   return `$${formatCurrency(numBudget)}`;
@@ -246,7 +246,7 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
   const budget = formatBudgetValue(metadata?.programBudget);
   const grantSize = formatGrantSize(metadata?.minGrantSize, metadata?.maxGrantSize);
   const amountDistributed = formatBudgetValue(metadata?.amountDistributedToDate);
-  const grantsIssued = metadata?.grantsToDate;
+  const grantsIssued = metadata?.grantsToDate ? metadata?.grantsToDate : null;
   const bugBounty = normalizeUrl(metadata?.bugBounty);
 
   const hasStats = budget || grantSize || amountDistributed || grantsIssued;
@@ -384,14 +384,14 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
         )}
 
         {/* Stats Card */}
-        {hasStats && (
+        {hasStats ? (
           <div className="rounded-xl bg-blue-50 dark:bg-zinc-700 divide-y divide-blue-100 dark:divide-zinc-600">
             <StatRow label="Budget" value={budget} />
             <StatRow label="Grant Size" value={grantSize} />
             <StatRow label="Amount Distributed to Date" value={amountDistributed} />
             <StatRow label="Grants Issued to Date" value={grantsIssued?.toString() ?? ""} />
           </div>
-        )}
+        ) : null}
 
         {/* Actions Row */}
         <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
