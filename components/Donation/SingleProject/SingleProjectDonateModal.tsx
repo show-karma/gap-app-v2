@@ -1,183 +1,36 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
-import toast from "react-hot-toast";
-import { type Hex, isAddress } from "viem";
-import { useAccount, useChainId, useSwitchChain } from "wagmi";
+import React, { useCallback } from "react";
+import type { Hex } from "viem";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import {
-  getAllSupportedChains,
-  SUPPORTED_TOKENS,
-  type SupportedToken,
-} from "@/constants/supportedTokens";
-import type { CreateDonationRequest } from "@/hooks/donation/types";
-import { useCreateDonation } from "@/hooks/donation/useCreateDonation";
-import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances";
-import { useDonationTransfer } from "@/hooks/useDonationTransfer";
-import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
-import { useProjectStore } from "@/store";
-import { DonationType, PaymentMethod } from "@/types/donations";
-import type { DonationPayment } from "@/utilities/donations/donationExecution";
+import { SUPPORTED_TOKENS } from "@/constants/supportedTokens";
+import { useSingleProjectDonation } from "@/hooks/donation/useSingleProjectDonation";
+import { PaymentMethod } from "@/types/donations";
 import { FiatOnrampModal } from "../FiatOnramp/FiatOnrampModal";
 import { TokenSelector } from "../TokenSelector";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
 import type { SingleProjectDonateModalProps } from "./types";
 
-function resolvePayoutAddress(
-  payoutAddress: Hex | string | Record<string, string> | undefined,
-  communityContract?: string
-): string {
-  if (!payoutAddress) return "";
-
-  if (typeof payoutAddress === "string") {
-    return isAddress(payoutAddress) ? payoutAddress : "";
-  }
-
-  if (typeof payoutAddress === "object") {
-    if (communityContract && payoutAddress[communityContract]) {
-      const addr = payoutAddress[communityContract];
-      return typeof addr === "string" && isAddress(addr) ? addr : "";
-    }
-
-    const firstValidAddress = Object.values(payoutAddress).find(
-      (addr) => typeof addr === "string" && isAddress(addr)
-    );
-    return firstValidAddress || "";
-  }
-
-  return "";
-}
-
 export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps>(
   ({ isOpen, onClose, project }) => {
-    const { address } = useAccount();
-    const currentChainId = useChainId();
-    const { switchChainAsync } = useSwitchChain();
-    const { executeDonations, isExecuting } = useDonationTransfer();
-    const { mutateAsync: createDonation } = useCreateDonation();
-    const fullProject = useProjectStore((state) => state.project);
-
-    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CRYPTO);
-    const [selectedToken, setSelectedToken] = useState<SupportedToken | null>(null);
-    const [amount, setAmount] = useState("");
-    const [showOnrampModal, setShowOnrampModal] = useState(false);
-
-    const supportedChains = useMemo(() => getAllSupportedChains(), []);
-    const { balanceByTokenKey } = useCrossChainBalances(currentChainId ?? null, supportedChains);
-
-    const { grants } = useProjectGrants(fullProject?.uid || "");
-
-    const communityContract = useMemo(() => {
-      if (!grants || grants.length === 0) return undefined;
-      return grants[0]?.community?.uid;
-    }, [grants]);
-
-    const resolvedPayoutAddress = useMemo(
-      () =>
-        resolvePayoutAddress(
-          project.payoutAddress as Hex | string | Record<string, string>,
-          communityContract
-        ),
-      [project.payoutAddress, communityContract]
-    );
-
-    const handlePaymentMethodChange = useCallback((method: PaymentMethod) => {
-      setPaymentMethod(method);
-    }, []);
-
-    const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-      setAmount(e.target.value);
-    }, []);
-
-    const isValidAmount = useMemo(() => {
-      const numAmount = parseFloat(amount);
-      return !isNaN(numAmount) && numAmount > 0;
-    }, [amount]);
-
-    const canProceed = useMemo(() => {
-      if (paymentMethod === PaymentMethod.CRYPTO) {
-        return selectedToken && isValidAmount && address;
-      }
-      return isValidAmount;
-    }, [paymentMethod, selectedToken, isValidAmount, address]);
-
-    const handleProceed = useCallback(async () => {
-      if (!canProceed) return;
-
-      if (paymentMethod === PaymentMethod.FIAT) {
-        setShowOnrampModal(true);
-        onClose();
-        return;
-      }
-
-      if (!selectedToken || !address) return;
-
-      const payment: DonationPayment = {
-        projectId: project.uid,
-        amount,
-        token: selectedToken,
-        chainId: selectedToken.chainId,
-      };
-
-      try {
-        if (currentChainId !== selectedToken.chainId) {
-          await switchChainAsync({ chainId: selectedToken.chainId });
-        }
-
-        const results = await executeDonations([payment], () => resolvedPayoutAddress);
-
-        const successfulResult = results.find(
-          (r) => r.status === "success" && r.projectId === project.uid
-        );
-
-        if (successfulResult) {
-          const donationRequest: CreateDonationRequest = {
-            uid: `${successfulResult.hash}-${project.uid}`,
-            chainID: selectedToken.chainId,
-            donorAddress: address,
-            projectUID: project.uid,
-            payoutAddress: resolvedPayoutAddress,
-            amount,
-            tokenSymbol: selectedToken.symbol,
-            tokenAddress: selectedToken.isNative ? undefined : selectedToken.address,
-            transactionHash: successfulResult.hash,
-            donationType: DonationType.CRYPTO,
-            metadata: {
-              tokenDecimals: selectedToken.decimals,
-              tokenName: selectedToken.name,
-              chainName: selectedToken.chainName,
-            },
-          };
-
-          try {
-            await createDonation(donationRequest);
-          } catch (error) {
-            console.error("Failed to persist donation to backend:", error);
-          }
-
-          toast.success("Donation completed successfully!");
-          onClose();
-        } else {
-          toast.error("Donation failed. Please try again.");
-        }
-      } catch (error) {
-        console.error("Donation execution failed:", error);
-        toast.error(error instanceof Error ? error.message : "Donation failed");
-      }
-    }, [
-      canProceed,
+    const {
+      address,
       paymentMethod,
       selectedToken,
-      address,
-      project,
       amount,
-      currentChainId,
-      switchChainAsync,
-      executeDonations,
-      createDonation,
-      onClose,
-    ]);
+      showOnrampModal,
+      balanceByTokenKey,
+      resolvedPayoutAddress,
+      isExecuting,
+      canProceed,
+      // fullProject, // Unused
+      handlePaymentMethodChange,
+      handleAmountChange,
+      handleProceed,
+      setSelectedToken,
+      setShowOnrampModal,
+    } = useSingleProjectDonation(project, onClose);
 
     const handleOpenChange = useCallback(
       (open: boolean) => {
@@ -359,10 +212,10 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
               uid: project.uid,
               title: project.title,
               payoutAddress: resolvedPayoutAddress as Hex,
-              chainID: project.chainID || fullProject?.chainID || 42161,
+              chainID: project.chainID || 42161, // Fallback chain ID
             }}
             donorAddress={address as Hex | undefined}
-            fiatAmount={parseFloat(amount)}
+            fiatAmount={Number.isNaN(parseFloat(amount)) ? 0 : parseFloat(amount)}
           />
         )}
       </Dialog>
