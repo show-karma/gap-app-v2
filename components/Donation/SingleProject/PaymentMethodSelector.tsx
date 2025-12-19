@@ -68,9 +68,6 @@ export const PaymentMethodSelector = React.memo<PaymentMethodSelectorProps>(
           aria-label="Pay with card - Coming soon"
           className="flex-1 p-4 rounded-xl border-2 border-gray-200 dark:border-zinc-700 opacity-60 cursor-not-allowed relative"
         >
-          <span className="absolute top-2 right-2 text-[10px] bg-gray-200 dark:bg-zinc-600 text-gray-600 dark:text-zinc-300 px-1.5 py-0.5 rounded-full font-medium">
-            Coming soon
-          </span>
           <div className="flex flex-col items-center gap-2">
             <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 dark:bg-zinc-700 text-gray-400 dark:text-gray-500">
               <svg
@@ -90,6 +87,9 @@ export const PaymentMethodSelector = React.memo<PaymentMethodSelectorProps>(
             <div>
               <div className="font-semibold text-sm text-gray-400 dark:text-gray-500">Card</div>
               <div className="text-xs text-gray-400 dark:text-gray-500">Credit / Debit</div>
+              <span className="text-[10px] bg-gray-200 dark:bg-zinc-600 text-gray-600 dark:text-zinc-300 px-1.5 py-0.5 rounded-full font-medium">
+                Coming soon
+              </span>
             </div>
           </div>
         </button>
