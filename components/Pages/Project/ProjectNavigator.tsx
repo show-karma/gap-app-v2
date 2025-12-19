@@ -112,7 +112,7 @@ export const ProjectNavigator = ({
             Post an update
           </Button>
         )}
-        {project?.payoutAddress && project?.details && (
+        {project?.payoutAddress && project?.details && !isAuthorized && (
           <ProminentDonateButton
             project={{
               uid: project.uid,
