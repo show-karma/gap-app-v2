@@ -30,25 +30,25 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import { type FundingProgram, fundingPlatformService } from "@/services/fundingPlatformService";
+import { FUNDING_PLATFORM_DOMAINS } from "@/src/features/funding-map/utils/funding-platform-domains";
 import { layoutTheme } from "@/src/helper/theme";
 import { envVars } from "@/utilities/enviromentVars";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
-import { fundingPlatformDomains } from "@/utilities/fundingPlatformDomains";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
 const getApplyUrlByCommunityId = (communityId: string, programId: string) => {
-  if (communityId in fundingPlatformDomains) {
-    const domain = fundingPlatformDomains[communityId as keyof typeof fundingPlatformDomains];
+  if (communityId in FUNDING_PLATFORM_DOMAINS) {
+    const domain = FUNDING_PLATFORM_DOMAINS[communityId as keyof typeof FUNDING_PLATFORM_DOMAINS];
     return envVars.isDev
       ? `${domain.dev}/programs/${programId}/apply`
       : `${domain.prod}/programs/${programId}/apply`;
   } else {
     return envVars.isDev
-      ? `${fundingPlatformDomains.shared.dev}/${communityId}/programs/${programId}/apply`
-      : `${fundingPlatformDomains.shared.prod}/${communityId}/programs/${programId}/apply`;
+      ? `${FUNDING_PLATFORM_DOMAINS.shared.dev}/${communityId}/programs/${programId}/apply`
+      : `${FUNDING_PLATFORM_DOMAINS.shared.prod}/${communityId}/programs/${programId}/apply`;
   }
 };
 

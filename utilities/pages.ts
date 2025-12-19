@@ -1,3 +1,6 @@
+import { FUNDING_PLATFORM_DOMAINS } from "@/src/features/funding-map/utils/funding-platform-domains";
+import { envVars } from "./enviromentVars";
+
 export const PAGES = {
   HOME: `/`,
   NOT_FOUND: `/not-found`,
@@ -17,8 +20,6 @@ export const PAGES = {
     PROJECT_DISCOVERY: (community: string) => `/community/${community}/impact/project-discovery`,
     UPDATES: (community: string) => `/community/${community}/updates`,
     RECEIVEPROJECTUPDATES: (community: string) => `/community/${community}/receive-project-updates`,
-    FUNDING_PLATFORM_APPLY: (community: string, programId: string) =>
-      `/community/${community}/funding-platform/${programId}/apply`,
   },
   MY_PROJECTS: `/my-projects`,
   MY_REVIEWS: `/my-reviews`,
@@ -96,4 +97,21 @@ export const PAGES = {
     APPLY: (communitySlug: string, programId: string) =>
       `${PAGES.FUNDING_APP}/${communitySlug}/programs/${programId}/apply`,
   },
+};
+
+export const FUNDING_PLATFORM_PAGES = (tenantId: string, _domain?: string) => {
+  const sharedDomain = envVars.isDev
+    ? `${FUNDING_PLATFORM_DOMAINS.shared.dev}/${tenantId}`
+    : `${FUNDING_PLATFORM_DOMAINS.shared.prod}/${tenantId}`;
+  const domain = _domain || sharedDomain;
+  return {
+    HOME: `${domain}/`,
+    PROGRAM_PAGE: (programId: string) => `${domain}/programs/${programId}`,
+    PROGRAM_APPLY: (programId: string) => `${domain}/programs/${programId}/apply`,
+    PROGRAM_APPLICATION: (applicationId: string) => `${domain}/applications/${applicationId}`,
+    PROGRAMS_BROWSE_APPLICATIONS: (programId?: string) =>
+      programId
+        ? `${domain}/browse-applications?programId=${programId}`
+        : `${domain}/browse-applications`,
+  };
 };

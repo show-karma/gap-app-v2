@@ -100,6 +100,11 @@ export const INDEXER = {
       LIST: (programId: string, chainID: number) =>
         `/v2/programs/${programId}/${chainID}/milestone-reviewers`,
     },
+    REGISTRY: {
+      GET_ALL: "/v2/registry",
+      GET_BY_ID: (programId: string, chainId: number) => `/v2/registry/${programId}/${chainId}`,
+      GET_FILTERS: "/v2/registry/filters",
+    },
     TRACKS: {
       LIST: (communityUID: string, includeArchived?: boolean) => {
         const params = new URLSearchParams({ communityUID });
