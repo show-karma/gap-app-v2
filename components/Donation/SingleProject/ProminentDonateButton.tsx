@@ -2,17 +2,11 @@
 
 import { Heart } from "lucide-react";
 import { useState } from "react";
-import type { Hex } from "viem";
 import { SingleProjectDonateModal } from "@/components/Donation/SingleProject/SingleProjectDonateModal";
+import type { SingleProjectDonateModalProps } from "./types";
 
 interface ProminentDonateButtonProps {
-  project: {
-    uid: string;
-    title: string;
-    payoutAddress: Hex;
-    imageURL?: string;
-    chainID?: number;
-  };
+  project: SingleProjectDonateModalProps["project"];
 }
 
 export function ProminentDonateButton({ project }: ProminentDonateButtonProps) {

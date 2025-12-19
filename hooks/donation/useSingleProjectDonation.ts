@@ -67,8 +67,8 @@ export const useSingleProjectDonation = (
 
   const canProceed = useMemo(() => {
     // Only crypto is supported now
-    return selectedToken && isValidAmount && address;
-  }, [selectedToken, isValidAmount, address]);
+    return selectedToken && isValidAmount && address && resolvedPayoutAddress.length > 0;
+  }, [selectedToken, isValidAmount, address, resolvedPayoutAddress]);
 
   const saveDonation = useCallback(
     async (result: { hash: string }, payment: DonationPayment) => {
@@ -100,7 +100,7 @@ export const useSingleProjectDonation = (
   );
 
   const processCrypto = useCallback(async () => {
-    if (!selectedToken || !address) return;
+    if (!selectedToken || !address || !resolvedPayoutAddress) return;
 
     const payment: DonationPayment = {
       projectId: project.uid,
