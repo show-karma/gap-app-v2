@@ -517,16 +517,23 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
   const createProject = async (data: SchemaType): Promise<void> => {
     try {
+      console.log("[ProjectDialog] createProject started");
       setIsLoading(true);
       if (!isConnected || !isAuth) {
+        console.log("[ProjectDialog] Not connected or not auth, calling login");
         login?.();
         return;
       }
-      if (!address || !gap) return;
+      if (!address || !gap) {
+        console.log("[ProjectDialog] No address or gap client", { address, gap: !!gap });
+        return;
+      }
 
       const chainSelected = data.chainID;
+      console.log("[ProjectDialog] Chain selected:", chainSelected);
 
       // Setup chain and wallet (uses gasless smart wallet if available)
+      console.log("[ProjectDialog] Calling setupChainAndWallet...");
       const setup = await setupChainAndWallet({
         targetChainId: chainSelected,
         currentChainId: chain?.id,
@@ -534,9 +541,16 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       });
 
       if (!setup) {
+        console.log("[ProjectDialog] setupChainAndWallet returned null");
         setIsLoading(false);
         return;
       }
+
+      console.log("[ProjectDialog] setupChainAndWallet success:", {
+        chainId: setup.chainId,
+        isGasless: setup.isGasless,
+        signerAddress: await setup.walletSigner.getAddress?.().catch(() => "unknown"),
+      });
 
       const { gapClient, walletSigner: signer, chainId } = setup;
 
@@ -684,10 +698,18 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
 
       // Use the gasless signer from setupChainAndWallet
+      console.log("[ProjectDialog] About to close modal and call attest");
+      console.log("[ProjectDialog] Project object:", {
+        uid: project.uid,
+        recipient: project.recipient,
+        detailsTitle: project.details?.data?.title,
+      });
       closeModal();
 
       // Attest first (Privy popups appear here), then show progress modal
+      console.log("[ProjectDialog] Calling project.attest() with signer...");
       await project.attest(signer as any).then(async (res) => {
+        console.log("[ProjectDialog] project.attest() SUCCESS!", res);
         // Show progress modal after Privy popups complete
         showLoading("Indexing project...");
 
@@ -775,11 +797,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }
       });
 
+      console.log("[ProjectDialog] Resetting form after success");
       reset();
       setStep(0);
       setContacts([]);
       setCustomLinks([]);
     } catch (error: any) {
+      console.error("[ProjectDialog] CATCH BLOCK - Error caught:", error);
+      console.error("[ProjectDialog] Error message:", error?.message);
+      console.error("[ProjectDialog] Error stack:", error?.stack);
       closeProgressModal();
       errorManager(
         MESSAGES.PROJECT.CREATE.ERROR(data.title),
@@ -790,6 +816,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setShouldResetOnOpen(false);
       openModal();
     } finally {
+      console.log("[ProjectDialog] FINALLY block - setting isLoading to false");
       setIsLoading(false);
     }
   };

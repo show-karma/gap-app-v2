@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
 import type { GAP } from "@show-karma/karma-gap-sdk";
 import type { Signer } from "ethers";
+import { useCallback, useMemo } from "react";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
-import { useGaslessSigner } from "./useGaslessSigner";
+import { useZeroDevSigner } from "./useZeroDevSigner";
 
 interface SetupChainAndWalletParams {
   targetChainId: number;
@@ -25,15 +25,19 @@ interface UseSetupChainAndWalletResult {
     params: SetupChainAndWalletParams
   ) => Promise<SetupChainAndWalletResult | null>;
 
-  /** Whether the smart wallet is ready for gasless transactions. */
+  /** Whether gasless transactions are available for the current user/chain. */
   isSmartWalletReady: boolean;
 
-  /** The smart wallet address if available. */
+  /** The wallet address that will be used for attestations. */
   smartWalletAddress: string | null;
 }
 
 /**
  * Hook for setting up chain and wallet for attestation operations.
+ *
+ * Uses ZeroDev for gasless transactions when available:
+ * - Email/Google/passkey users: Gasless via ZeroDev kernel accounts
+ * - MetaMask users: Currently pays gas (EIP-7702 support coming soon)
  *
  * @example
  * const { setupChainAndWallet } = useSetupChainAndWallet();
@@ -48,8 +52,7 @@ interface UseSetupChainAndWalletResult {
  * await entity.attest(setup.walletSigner, callback);
  */
 export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
-  const { getAttestationSigner, isSmartWalletReady, smartWalletAddress } =
-    useGaslessSigner();
+  const { getAttestationSigner, isGaslessAvailable, attestationAddress } = useZeroDevSigner();
 
   const setupChainAndWallet = useCallback(
     async ({
@@ -57,34 +60,49 @@ export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
       currentChainId,
       switchChainAsync,
     }: SetupChainAndWalletParams): Promise<SetupChainAndWalletResult | null> => {
+      console.log("[setupChainAndWallet] Starting with:", { targetChainId, currentChainId });
+
       const { success, chainId, gapClient } = await ensureCorrectChain({
         targetChainId,
         currentChainId,
         switchChainAsync,
       });
 
+      console.log("[setupChainAndWallet] ensureCorrectChain result:", { success, chainId, gapClient: !!gapClient });
+
       if (!success || !gapClient) {
+        console.log("[setupChainAndWallet] Chain setup failed, returning null");
         return null;
       }
 
+      console.log("[setupChainAndWallet] Calling getAttestationSigner...");
       const walletSigner = await getAttestationSigner(chainId);
+      console.log("[setupChainAndWallet] Got signer:", !!walletSigner);
+
+      // Try to verify the signer works
+      try {
+        const signerAddress = await walletSigner.getAddress();
+        console.log("[setupChainAndWallet] Signer address verified:", signerAddress);
+      } catch (e) {
+        console.error("[setupChainAndWallet] Failed to get signer address:", e);
+      }
 
       return {
         gapClient,
         walletSigner,
         chainId,
-        isGasless: isSmartWalletReady,
+        isGasless: isGaslessAvailable,
       };
     },
-    [getAttestationSigner, isSmartWalletReady]
+    [getAttestationSigner, isGaslessAvailable]
   );
 
   return useMemo(
     () => ({
       setupChainAndWallet,
-      isSmartWalletReady,
-      smartWalletAddress,
+      isSmartWalletReady: isGaslessAvailable,
+      smartWalletAddress: attestationAddress,
     }),
-    [setupChainAndWallet, isSmartWalletReady, smartWalletAddress]
+    [setupChainAndWallet, isGaslessAvailable, attestationAddress]
   );
 }
