@@ -46,11 +46,23 @@ export function FundingMapFilters() {
         <Badge
           variant="outline"
           className={cn(
-            "flex cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1 transition-colors",
+            "flex cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             filters.onlyOnKarma &&
               "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-800"
           )}
+          tabIndex={0}
+          role="button"
+          aria-label="Toggle only on Karma"
+          aria-pressed={filters.onlyOnKarma}
           onClick={() => setOnlyOnKarma(!filters.onlyOnKarma)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              if (e.key === " ") {
+                e.preventDefault();
+              }
+              setOnlyOnKarma(!filters.onlyOnKarma);
+            }
+          }}
         >
           <div
             className={cn(

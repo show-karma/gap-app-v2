@@ -1,5 +1,6 @@
 import { BadgeCheck } from "lucide-react";
 import Image from "next/image";
+import type { KeyboardEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/utilities/tailwind";
@@ -42,13 +43,27 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
 
   const categories = metadata?.categories;
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      // Prevent Space from scrolling the page
+      if (event.key === " ") {
+        event.preventDefault();
+      }
+      onClick?.();
+    }
+  };
+
   return (
     <Card
       className={cn(
-        "flex flex-col gap-4 border-border p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer",
+        "flex flex-col gap-4 border-border p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         isPendingReview(program) && "ring-1 ring-gray-200"
       )}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="button"
+      aria-label={`View funding program: ${title ?? "Untitled program"}`}
     >
       <div className="flex flex-col gap-3">
         <div className="relative flex w-full flex-row items-start justify-between gap-2">

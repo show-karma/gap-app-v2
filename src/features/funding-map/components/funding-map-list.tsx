@@ -127,6 +127,7 @@ function hasActiveFilters(filters: ReturnType<typeof useFundingFilters>["filters
     filters.ecosystems.length > 0 ||
     filters.networks.length > 0 ||
     filters.grantTypes.length > 0 ||
-    filters.onlyOnKarma
+    filters.onlyOnKarma ||
+    filters.organizationFilter !== null
   );
 }

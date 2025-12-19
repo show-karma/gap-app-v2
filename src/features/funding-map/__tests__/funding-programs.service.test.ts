@@ -290,10 +290,10 @@ describe("fundingProgramsService", () => {
       expect(result.chainId).toBe(10);
     });
 
-    it("should use default chainId when parsing fails", () => {
+    it("should use default chainId when parsing fails and keep full programId", () => {
       const result = fundingProgramsService.parseProgramIdAndChainId("program-123_invalid");
 
-      expect(result.programId).toBe("program-123");
+      expect(result.programId).toBe("program-123_invalid");
       expect(result.chainId).toBe(FUNDING_MAP_DEFAULT_CHAIN_ID);
     });
 
@@ -304,10 +304,19 @@ describe("fundingProgramsService", () => {
       expect(result.chainId).toBe(42161);
     });
 
-    it("should handle programId with multiple underscores", () => {
+    it("should handle programId with multiple underscores by splitting on the last underscore", () => {
       const result = fundingProgramsService.parseProgramIdAndChainId("program_with_underscores_10");
 
-      expect(result.programId).toBe("program");
+      expect(result.programId).toBe("program_with_underscores");
+      expect(result.chainId).toBe(10);
+    });
+
+    it("should use default chainId when last segment after underscore is not a valid number", () => {
+      const result = fundingProgramsService.parseProgramIdAndChainId(
+        "program_with_underscores_invalid"
+      );
+
+      expect(result.programId).toBe("program_with_underscores_invalid");
       expect(result.chainId).toBe(FUNDING_MAP_DEFAULT_CHAIN_ID);
     });
 

@@ -71,18 +71,25 @@ export const fundingProgramsService = {
   /**
    * Parse a program ID that may contain chain ID
    * Format: "programId" or "programId_chainId"
+   * Splits on the LAST underscore to support program IDs containing underscores
    */
   parseProgramIdAndChainId(
     id: string,
     defaultChainId: number = FUNDING_MAP_DEFAULT_CHAIN_ID
   ): { programId: string; chainId: number } {
-    if (id.includes("_")) {
-      const [programId, chainIdStr] = id.split("_");
-      const chainId = parseInt(chainIdStr, 10);
-      return {
-        programId,
-        chainId: Number.isNaN(chainId) ? defaultChainId : chainId,
-      };
+    const lastUnderscoreIndex = id.lastIndexOf("_");
+
+    if (lastUnderscoreIndex !== -1) {
+      const potentialChainIdStr = id.substring(lastUnderscoreIndex + 1);
+      const potentialChainId = parseInt(potentialChainIdStr, 10);
+
+      // Only split if what follows the last underscore is a valid numeric chainId
+      if (!Number.isNaN(potentialChainId) && potentialChainIdStr === String(potentialChainId)) {
+        return {
+          programId: id.substring(0, lastUnderscoreIndex),
+          chainId: potentialChainId,
+        };
+      }
     }
 
     return {

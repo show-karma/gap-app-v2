@@ -31,30 +31,14 @@ export function FundingMapSidebar() {
         <div className="flex flex-col gap-5 rounded-xl p-5">
           <Bell className="h-6 w-6 text-foreground" />
           <p className="font-medium text-foreground">Be the first to know a new program launches</p>
-          <div className="flex flex-col gap-4">
-            {/* Mobile: vertical, taller */}
-            <div className="block md:hidden">
-              <iframe
-                src="https://paragraph.com/@karmahq/embed?minimal=true&vertical=true"
-                width="100%"
-                height="90"
-                frameBorder="0"
-                scrolling="no"
-                title="Subscribe to KarmaHQ via Paragraph (mobile)"
-              />
-            </div>
-            {/* Desktop: horizontal, shorter */}
-            <div className="hidden md:block">
-              <iframe
-                src="https://paragraph.com/@karmahq/embed?minimal=true&vertical=true"
-                width="100%"
-                height="90"
-                frameBorder="0"
-                scrolling="no"
-                title="Subscribe to KarmaHQ via Paragraph (desktop)"
-              />
-            </div>
-          </div>
+          <iframe
+            src="https://paragraph.com/@karmahq/embed?minimal=true&vertical=true"
+            width="100%"
+            height="90"
+            frameBorder="0"
+            scrolling="no"
+            title="Subscribe to KarmaHQ via Paragraph"
+          />
         </div>
 
         <div className="px-5">
