@@ -48,7 +48,7 @@ export function LiveFundingOpportunitiesSkeleton() {
         <div className="flex items-center justify-between mb-8">
           <h2 className={cn("section-title text-foreground")}>Live Funding Opportunities</h2>
           <Link
-            href={PAGES.FUNDING_APP}
+            href={PAGES.REGISTRY.ROOT}
             className="flex items-center gap-2 text-sm font-medium leading-[1.5] tracking-[0.005em] align-middle text-muted-foreground hover:text-primary transition-colors"
           >
             View all
