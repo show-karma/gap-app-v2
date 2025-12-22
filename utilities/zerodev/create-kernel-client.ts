@@ -13,43 +13,100 @@ import {
   http,
   type WalletClient,
   toHex,
+  type Hex,
   type SignableMessage,
+  keccak256,
+  toRlp,
+  concatHex,
+  numberToHex,
 } from "viem";
 import { envVars } from "../enviromentVars";
-import { ENTRYPOINT, getZeroDevConfig, isChainSupportedForGasless, KERNEL_VERSION } from "./config";
+import { ENTRYPOINT, getZeroDevConfig, isChainSupportedForGasless, KERNEL_VERSION, getKernelImplementationAddress } from "./config";
 
 // Use simple type for kernel client to avoid complex ZeroDev SDK type issues
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type KernelClient = any;
+
+/**
+ * Hash an EIP-7702 authorization according to the spec.
+ * The hash is: keccak256(0x05 || rlp([chainId, contractAddress, nonce]))
+ */
+function hashAuthorization(authorization: {
+  contractAddress: `0x${string}`;
+  chainId: number;
+  nonce: number;
+}): `0x${string}` {
+  const { contractAddress, chainId, nonce } = authorization;
+  const MAGIC = "0x05" as `0x${string}`;
+  const rlpEncoded = toRlp([
+    chainId ? numberToHex(chainId) : "0x",
+    contractAddress,
+    nonce ? numberToHex(nonce) : "0x",
+  ]);
+  const data = concatHex([MAGIC, rlpEncoded]);
+  return keccak256(data);
+}
 
 interface CreateKernelSignerOptions {
   chainId: number;
   signer: Account;
 }
 
+// LocalAccount with EIP-7702 signAuthorization support
+type LocalAccountWithEIP7702 = LocalAccount & {
+  signAuthorization?: (authorization: {
+    contractAddress: `0x${string}`;
+    chainId: number;
+    nonce?: number;
+  }) => Promise<{
+    contractAddress: `0x${string}`;
+    chainId: number;
+    nonce: number;
+    r: `0x${string}`;
+    s: `0x${string}`;
+    yParity: number;
+  }>;
+};
+
 /**
  * Creates a ZeroDev-compatible signer from a Privy embedded wallet.
  * This wraps the Privy wallet's signing functions to properly handle
- * the raw bytes format that ZeroDev uses for user operation signing.
+ * the raw bytes format that ZeroDev uses for user operation signing,
+ * and includes EIP-7702 signAuthorization support.
  */
 export async function createPrivySignerForZeroDev(
   embeddedWallet: {
     address: string;
     switchChain: (chainId: number) => Promise<void>;
     getEthereumProvider: () => Promise<any>;
+    walletClientType?: string;
   },
   chainId: number
-): Promise<LocalAccount> {
+): Promise<LocalAccountWithEIP7702> {
   const provider = await embeddedWallet.getEthereumProvider();
-
   const address = embeddedWallet.address as `0x${string}`;
+  const isPrivyEmbedded = embeddedWallet.walletClientType === "privy";
 
-  // Create a LocalAccount that properly handles signMessage with raw bytes
-  const account: LocalAccount = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const account: any = {
     address,
     type: "local",
-    publicKey: "0x" as `0x${string}`, // Not used by ZeroDev
+    publicKey: "0x" as `0x${string}`,
     source: "custom",
+
+    // Raw hash signing - required for EIP-7702
+    sign: async ({ hash }: { hash: `0x${string}` }): Promise<`0x${string}`> => {
+      console.log("[ZeroDev] sign (raw) called with hash:", hash);
+      if (!isPrivyEmbedded) {
+        throw new Error("Raw signing is only supported for Privy embedded wallets");
+      }
+      const signature = await provider.request({
+        method: "secp256k1_sign",
+        params: [hash],
+      });
+      console.log("[ZeroDev] Raw signature received:", signature);
+      return signature as `0x${string}`;
+    },
 
     // Sign message - handles both string and raw bytes formats
     signMessage: async ({ message }: { message: SignableMessage }): Promise<`0x${string}`> => {
@@ -57,11 +114,9 @@ export async function createPrivySignerForZeroDev(
 
       let messageToSign: string;
 
-      // Handle different message formats
       if (typeof message === "string") {
         messageToSign = message;
       } else if (message && typeof message === "object" && "raw" in message) {
-        // ZeroDev passes { raw: Uint8Array | Hex } for user operation hashes
         const raw = message.raw;
         if (raw instanceof Uint8Array) {
           messageToSign = toHex(raw);
@@ -74,8 +129,6 @@ export async function createPrivySignerForZeroDev(
 
       console.log("[ZeroDev] Signing message:", messageToSign);
 
-      // Use personal_sign with the raw hash
-      // Note: personal_sign expects hex-encoded data for raw bytes
       const signature = await provider.request({
         method: "personal_sign",
         params: [messageToSign, address],
@@ -85,7 +138,7 @@ export async function createPrivySignerForZeroDev(
       return signature as `0x${string}`;
     },
 
-    // Sign typed data - not typically needed for basic kernel operations
+    // Sign typed data
     signTypedData: async (typedData: any): Promise<`0x${string}`> => {
       console.log("[ZeroDev] signTypedData called");
       const signature = await provider.request({
@@ -95,9 +148,83 @@ export async function createPrivySignerForZeroDev(
       return signature as `0x${string}`;
     },
 
-    // Sign transaction - not used by ZeroDev (it uses user operations)
+    // Sign transaction - not used by ZeroDev
     signTransaction: async (): Promise<`0x${string}`> => {
       throw new Error("signTransaction not supported - use user operations");
+    },
+
+    // EIP-7702 authorization signing
+    signAuthorization: async (authorization: {
+      contractAddress?: `0x${string}`;
+      address?: `0x${string}`;
+      chainId?: number;
+      nonce?: number;
+    }): Promise<{
+      contractAddress: `0x${string}`;
+      address: `0x${string}`;
+      chainId: number;
+      nonce: number;
+      r: `0x${string}`;
+      s: `0x${string}`;
+      v: bigint;
+      yParity: number;
+    }> => {
+      // Get target address, defaulting to kernel implementation
+      const targetAddress: `0x${string}` = authorization.contractAddress
+        || authorization.address
+        || getKernelImplementationAddress();
+
+      if (!authorization.contractAddress && !authorization.address) {
+        console.log("[ZeroDev] No address provided, using kernel implementation:", targetAddress);
+      }
+
+      const authChainId = authorization.chainId ?? chainId;
+      const authNonce = authorization.nonce ?? 0;
+
+      console.log("[ZeroDev] signAuthorization called:", {
+        targetAddress,
+        chainId: authChainId,
+        nonce: authNonce,
+        signerAddress: address
+      });
+
+      if (!isPrivyEmbedded) {
+        throw new Error("EIP-7702 signAuthorization is only supported for Privy embedded wallets");
+      }
+
+      const hash = hashAuthorization({
+        contractAddress: targetAddress,
+        chainId: authChainId,
+        nonce: authNonce,
+      });
+
+      console.log("[ZeroDev] Authorization hash:", hash);
+
+      const signature = await provider.request({
+        method: "secp256k1_sign",
+        params: [hash],
+      }) as string;
+
+      console.log("[ZeroDev] Authorization signature:", signature);
+
+      const r = `0x${signature.slice(2, 66)}` as `0x${string}`;
+      const s = `0x${signature.slice(66, 130)}` as `0x${string}`;
+      const vRaw = parseInt(signature.slice(130, 132), 16);
+      const yParity = vRaw >= 27 ? vRaw - 27 : vRaw;
+      const v = BigInt(yParity + 27);
+
+      console.log("[ZeroDev] Authorization parsed:", { r, s, yParity, v: v.toString() });
+
+      return {
+        contractAddress: targetAddress,
+        address: targetAddress,
+        chainId: authChainId,
+        nonce: authNonce,
+        r,
+        s,
+        v,
+        yParity,
+      };
     },
   };
 
@@ -216,16 +343,19 @@ export async function createKernelClientForEmbeddedWallet({
 }
 
 /**
- * Creates a ZeroDev kernel account client for an EIP-7702 upgraded EOA.
- * This is used for MetaMask users who have enabled smart account mode.
+ * Creates a ZeroDev kernel account client using EIP-7702.
+ * This upgrades the EOA to a smart account while keeping the SAME address.
+ * Works for Privy embedded wallets that support secp256k1_sign.
  *
- * @returns Kernel account client that preserves the original EOA address
+ * @returns Kernel account client that uses the original EOA address for transactions
  */
-export async function createKernelClientFor7702({
+export async function createKernelClientWithEIP7702({
   chainId,
-  walletClient,
-  authorization,
-}: CreateKernel7702SignerOptions): Promise<KernelClient | null> {
+  signer,
+}: {
+  chainId: number;
+  signer: LocalAccountWithEIP7702;
+}): Promise<KernelClient | null> {
   const config = getZeroDevConfig(chainId);
   if (!config) {
     console.warn(`[ZeroDev] Chain ${chainId} not supported for gasless transactions`);
@@ -238,8 +368,8 @@ export async function createKernelClientFor7702({
     return null;
   }
 
-  if (!walletClient.account) {
-    console.warn("[ZeroDev] Wallet client has no account");
+  if (!signer.signAuthorization) {
+    console.warn("[ZeroDev] Signer does not support EIP-7702 signAuthorization");
     return null;
   }
 
@@ -249,14 +379,32 @@ export async function createKernelClientFor7702({
       transport: http(rpcUrl),
     });
 
-    // Create kernel account with EIP-7702 authorization
+    const implementationAddress = getKernelImplementationAddress();
+    console.log("[ZeroDev] Kernel implementation address:", implementationAddress);
+
+    // Sign the EIP-7702 authorization
+    console.log("[ZeroDev] Signing EIP-7702 authorization...");
+    const authorization = await signer.signAuthorization({
+      contractAddress: implementationAddress,
+      chainId,
+      nonce: 0,
+    });
+    console.log("[ZeroDev] Authorization signed:", authorization);
+
+    console.log("[ZeroDev] Creating kernel account with EIP-7702...");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const kernelAccount = await createKernelAccount(publicClient as any, {
-      eip7702Account: walletClient.account as any,
+      eip7702Account: signer as any,
       eip7702Auth: authorization as any,
       entryPoint: ENTRYPOINT,
       kernelVersion: KERNEL_VERSION,
     } as any);
+
+    console.log("[ZeroDev] EIP-7702 Kernel account created:", {
+      accountAddress: kernelAccount.address,
+      signerAddress: signer.address,
+      sameAddress: kernelAccount.address === signer.address,
+    });
 
     // Create paymaster client
     const paymasterClient = createZeroDevPaymasterClient({
@@ -272,9 +420,11 @@ export async function createKernelClientFor7702({
       bundlerTransport: http(config.bundlerRpc),
     });
 
+    console.log("[ZeroDev] EIP-7702 Kernel client created successfully");
+
     return kernelClient as KernelClient;
   } catch (error) {
-    console.error("[ZeroDev] Failed to create 7702 kernel client:", error);
+    console.error("[ZeroDev] Failed to create EIP-7702 kernel client:", error);
     return null;
   }
 }

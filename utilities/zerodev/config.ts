@@ -133,3 +133,13 @@ export function getZeroDevConfig(chainId: number): ZeroDevChainConfig | null {
   }
   return config;
 }
+
+/**
+ * Get the kernel implementation address for EIP-7702.
+ * This is the address of the kernel contract that the EOA will delegate to.
+ */
+export function getKernelImplementationAddress(): `0x${string}` {
+  // Kernel v3.3 implementation address (same across most EVM chains)
+  // This is the deployed Kernel contract that EOAs delegate to via EIP-7702
+  return "0xd3082872F8B06073A021b4602e022d5A070d7cfC" as `0x${string}`;
+}

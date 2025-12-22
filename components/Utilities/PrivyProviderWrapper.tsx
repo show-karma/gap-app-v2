@@ -1,7 +1,6 @@
 "use client";
 
 import { PrivyProvider } from "@privy-io/react-auth";
-import { SmartWalletsProvider } from "@privy-io/react-auth/smart-wallets";
 import { WagmiProvider } from "@privy-io/wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PROJECT_NAME } from "@/constants/brand";
@@ -53,7 +52,7 @@ export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperP
         },
         embeddedWallets: {
           ethereum: {
-            createOnLogin: "all-users",
+            createOnLogin: "users-without-wallets",
           },
         },
         loginMethods: ["email", "google", "wallet"],
@@ -67,11 +66,9 @@ export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperP
         walletConnectCloudProjectId: envVars.PROJECT_ID || undefined,
       }}
     >
-      <SmartWalletsProvider>
-        <QueryClientProvider client={queryClient}>
-          <WagmiProvider config={privyConfig}>{children}</WagmiProvider>
-        </QueryClientProvider>
-      </SmartWalletsProvider>
+      <QueryClientProvider client={queryClient}>
+        <WagmiProvider config={privyConfig}>{children}</WagmiProvider>
+      </QueryClientProvider>
     </PrivyProvider>
   );
 }

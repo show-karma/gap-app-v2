@@ -25,19 +25,24 @@ interface UseSetupChainAndWalletResult {
     params: SetupChainAndWalletParams
   ) => Promise<SetupChainAndWalletResult | null>;
 
-  /** Whether gasless transactions are available for the current user/chain. */
+  /** Whether gasless transactions are available (embedded wallet only). */
   isSmartWalletReady: boolean;
 
   /** The wallet address that will be used for attestations. */
   smartWalletAddress: string | null;
+
+  /** Whether user has an embedded wallet (email/Google login) */
+  hasEmbeddedWallet: boolean;
+
+  /** Whether user has an external wallet (MetaMask, etc.) */
+  hasExternalWallet: boolean;
 }
 
 /**
  * Hook for setting up chain and wallet for attestation operations.
  *
- * Uses ZeroDev for gasless transactions when available:
- * - Email/Google/passkey users: Gasless via ZeroDev kernel accounts
- * - MetaMask users: Currently pays gas (EIP-7702 support coming soon)
+ * Gasless transactions (EIP-7702) are only available for embedded wallet users
+ * (email/Google/passkey login). MetaMask users pay their own gas.
  *
  * @example
  * const { setupChainAndWallet } = useSetupChainAndWallet();
@@ -52,7 +57,13 @@ interface UseSetupChainAndWalletResult {
  * await entity.attest(setup.walletSigner, callback);
  */
 export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
-  const { getAttestationSigner, isGaslessAvailable, attestationAddress } = useZeroDevSigner();
+  const {
+    getAttestationSigner,
+    isGaslessAvailable,
+    attestationAddress,
+    hasEmbeddedWallet,
+    hasExternalWallet,
+  } = useZeroDevSigner();
 
   const setupChainAndWallet = useCallback(
     async ({
@@ -102,7 +113,9 @@ export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
       setupChainAndWallet,
       isSmartWalletReady: isGaslessAvailable,
       smartWalletAddress: attestationAddress,
+      hasEmbeddedWallet,
+      hasExternalWallet,
     }),
-    [setupChainAndWallet, isGaslessAvailable, attestationAddress]
+    [setupChainAndWallet, isGaslessAvailable, attestationAddress, hasEmbeddedWallet, hasExternalWallet]
   );
 }
