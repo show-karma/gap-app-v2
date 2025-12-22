@@ -26,6 +26,11 @@ jest.mock("@/src/services/funding/getLiveFundingOpportunities", () => ({
 jest.mock("@/utilities/pages", () => ({
   PAGES: {
     FUNDING_APP: "/funding-map",
+    REGISTRY: {
+      ROOT: "/funding-map",
+      ADD_PROGRAM: "/funding-map/add-program",
+      MANAGE_PROGRAMS: "/funding-map/manage-programs",
+    },
   },
 }));
 
