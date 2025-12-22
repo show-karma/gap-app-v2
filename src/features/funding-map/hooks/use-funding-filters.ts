@@ -103,7 +103,7 @@ export function useFundingFilters() {
 
   const [onlyOnKarma, setOnlyOnKarma] = useQueryState(
     "onlyOnKarma",
-    parseAsBoolean.withDefault(false).withOptions({ clearOnDefault: true })
+    parseAsBoolean.withDefault(true).withOptions({ clearOnDefault: true })
   );
 
   // Organization filter - stores as "community:uid" or "organization:name"
@@ -229,7 +229,7 @@ export function useFundingFilters() {
     setEcosystems([]);
     setNetworks([]);
     setGrantTypes([]);
-    setOnlyOnKarma(false);
+    setOnlyOnKarma(true);
     setOrganizationFilterRaw("");
   }, [
     setSearch,
