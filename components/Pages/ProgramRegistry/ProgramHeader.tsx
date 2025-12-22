@@ -12,7 +12,7 @@ export const ProgramHeader = () => {
     <div className="flex flex-col w-full gap-3">
       <div className="flex flex-[3] flex-col gap-3 items-start justify-start text-left max-lg:gap-1">
         <h1 className="text-2xl tracking-[-0.72px] 2xl:text-4xl font-bold text-start text-black dark:text-white max-lg:tracking-normal">
-          {`The best grant program directory you’ll find`}
+          {`Find funding for your project`}
         </h1>
         <p className="text-start text-lg max-lg:text-base max-w-5xl text-black dark:text-white">
           Explore our curated list of grant programs for innovators and creators: from tech pioneers
