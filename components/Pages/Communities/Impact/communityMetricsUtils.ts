@@ -11,9 +11,11 @@
  * - AggregateCategoryRow.tsx: prepareChartData() for aggregated indicators
  */
 
+import { format, subMonths, subYears } from "date-fns";
 import type { CommunityMetric, CommunityMetricsResponse } from "@/types/community-metrics";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
+import type { TimeframeOption } from "./TimeframeSelector";
 
 /**
  * Formats very small numbers (< 0.0001) with appropriate precision
@@ -143,8 +145,6 @@ export function isValidCommunityMetricsResponse(data: unknown): data is Communit
   );
 }
 
-export type TimeframeOption = "all" | "1_month" | "3_months" | "6_months" | "1_year";
-
 export function calculateDateRange(
   timeframe: TimeframeOption
 ): { startDate: string; endDate: string } | undefined {
@@ -154,25 +154,28 @@ export function calculateDateRange(
   }
 
   const endDate = new Date();
-  const startDate = new Date();
+  // Set to start of day in UTC to avoid timezone issues
+  endDate.setUTCHours(0, 0, 0, 0);
+
+  let startDate: Date;
 
   switch (timeframe) {
     case "1_month":
-      startDate.setMonth(startDate.getMonth() - 1);
+      startDate = subMonths(endDate, 1);
       break;
     case "3_months":
-      startDate.setMonth(startDate.getMonth() - 3);
+      startDate = subMonths(endDate, 3);
       break;
     case "6_months":
-      startDate.setMonth(startDate.getMonth() - 6);
+      startDate = subMonths(endDate, 6);
       break;
     case "1_year":
-      startDate.setFullYear(startDate.getFullYear() - 1);
+      startDate = subYears(endDate, 1);
       break;
   }
 
   return {
-    startDate: startDate.toISOString().split("T")[0],
-    endDate: endDate.toISOString().split("T")[0],
+    startDate: format(startDate, "yyyy-MM-dd"),
+    endDate: format(endDate, "yyyy-MM-dd"),
   };
 }

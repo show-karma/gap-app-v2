@@ -24,9 +24,8 @@ import {
   calculateDateRange,
   isValidCommunityMetricsResponse,
   prepareCommunityMetricsChartData,
-  type TimeframeOption,
 } from "./communityMetricsUtils";
-import { TimeframeSelector } from "./TimeframeSelector";
+import { type TimeframeOption, TimeframeSelector } from "./TimeframeSelector";
 
 // Only show community metrics for Filecoin community
 const FILECOIN_COMMUNITY_SLUGS = ["filecoin", "fil"];
