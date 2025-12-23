@@ -1,6 +1,7 @@
 type TimeZoneFormat = "UTC" | "ISO" | "local";
 type DateFormatOption =
   | "MMM D, YYYY"
+  | "MMM D, YYYY, h:mm a UTC"
   | "h:mm a"
   | "DDD, MMM DD"
   | "datetime-local"
@@ -75,6 +76,14 @@ export const formatDate = (
 
   if (formatOption === "MMM D, YYYY") {
     return `${monthNames[month]} ${day}, ${year}`;
+  }
+
+  if (formatOption === "MMM D, YYYY, h:mm a UTC") {
+    const utcHours = d.getUTCHours();
+    const utcMinutes = d.getUTCMinutes();
+    const ampm = utcHours >= 12 ? "pm" : "am";
+    const formattedHours = utcHours % 12 || 12;
+    return `${monthNames[d.getUTCMonth()]} ${d.getUTCDate()} ${d.getUTCFullYear()}, ${formattedHours}:${pad(utcMinutes)} ${ampm} UTC`;
   }
 
   if (formatOption === "DDD, MMM DD") {
