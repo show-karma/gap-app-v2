@@ -622,7 +622,9 @@ export default function FundingPlatformAdminPage() {
                   <CalendarIcon className="w-4 h-4 text-orange-700 dark:text-orange-300" />
                   <span className="text-orange-700 dark:text-orange-300">
                     Deadline:{" "}
-                    {program.metadata?.endsAt ? formatDate(program.metadata.endsAt) : "N/A"}
+                    {program.metadata?.endsAt
+                      ? formatDate(program.metadata.endsAt, "UTC", "YYYY-MM-DD, HH:mm UTC")
+                      : "N/A"}
                   </span>
                 </div>
 
