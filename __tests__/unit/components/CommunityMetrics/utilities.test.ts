@@ -1,15 +1,15 @@
 /**
- * @file Tests for ecosystem metrics utility functions
- * @description Tests for formatMetricValue, formatChartValue, and prepareChartDataForMetric
+ * @file Tests for community metrics utility functions
+ * @description Tests for formatMetricValue, formatChartValue, and prepareCommunityMetricsChartData
  */
 
 import {
   calculateDateRange,
   formatChartValue,
   formatMetricValue,
-  prepareChartDataForMetric,
-} from "@/components/Pages/Communities/Impact/ecosystemMetricsUtils";
-import type { EcosystemMetric } from "@/types/ecosystem-metrics";
+  prepareCommunityMetricsChartData,
+} from "@/components/Pages/Communities/Impact/communityMetricsUtils";
+import type { CommunityMetric } from "@/types/community-metrics";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 
@@ -105,14 +105,14 @@ describe("formatChartValue", () => {
   });
 });
 
-describe("prepareChartDataForMetric", () => {
+describe("prepareCommunityMetricsChartData", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockFormatDate.mockImplementation((date) => date.toISOString().split("T")[0]);
   });
 
   it("should return empty array for metric with no datapoints", () => {
-    const metric: EcosystemMetric = {
+    const metric: CommunityMetric = {
       id: "metric-1",
       name: "Test Metric",
       description: "Test",
@@ -125,11 +125,11 @@ describe("prepareChartDataForMetric", () => {
       datapointCount: 0,
     };
 
-    expect(prepareChartDataForMetric(metric)).toEqual([]);
+    expect(prepareCommunityMetricsChartData(metric)).toEqual([]);
   });
 
   it("should return empty array for metric with null datapoints", () => {
-    const metric: EcosystemMetric = {
+    const metric: CommunityMetric = {
       id: "metric-1",
       name: "Test Metric",
       description: "Test",
@@ -142,11 +142,11 @@ describe("prepareChartDataForMetric", () => {
       datapointCount: 0,
     };
 
-    expect(prepareChartDataForMetric(metric)).toEqual([]);
+    expect(prepareCommunityMetricsChartData(metric)).toEqual([]);
   });
 
   it("should sort datapoints by date ascending", () => {
-    const metric: EcosystemMetric = {
+    const metric: CommunityMetric = {
       id: "metric-1",
       name: "Test Metric",
       description: "Test",
@@ -163,16 +163,20 @@ describe("prepareChartDataForMetric", () => {
       datapointCount: 3,
     };
 
-    const result = prepareChartDataForMetric(metric);
+    const result = prepareCommunityMetricsChartData(metric);
 
     expect(result).toHaveLength(3);
     expect(result[0].date).toBe("2024-01-01");
+    expect(result[0]["Test Metric"]).toBe(100); // Raw value
     expect(result[1].date).toBe("2024-01-02");
+    expect(result[1]["Test Metric"]).toBe(200); // Raw value
     expect(result[2].date).toBe("2024-01-03");
+    expect(result[2]["Test Metric"]).toBe(300); // Raw value
+    // Moving average will be undefined for < 30 datapoints
   });
 
   it("should format chart data correctly", () => {
-    const metric: EcosystemMetric = {
+    const metric: CommunityMetric = {
       id: "metric-1",
       name: "Storage Capacity",
       description: "Test",
@@ -190,16 +194,22 @@ describe("prepareChartDataForMetric", () => {
 
     mockFormatDate.mockReturnValueOnce("2024-01-01").mockReturnValueOnce("2024-01-02");
 
-    const result = prepareChartDataForMetric(metric);
+    const result = prepareCommunityMetricsChartData(metric);
 
-    expect(result).toEqual([
-      { date: "2024-01-01", "Storage Capacity": 100 },
-      { date: "2024-01-02", "Storage Capacity": 200 },
-    ]);
+    expect(result).toHaveLength(2);
+    expect(result[0]).toMatchObject({
+      date: "2024-01-01",
+      "Storage Capacity": 100, // Raw value
+    });
+    expect(result[1]).toMatchObject({
+      date: "2024-01-02",
+      "Storage Capacity": 200, // Raw value
+    });
+    // Moving average will be undefined for < 30 datapoints
   });
 
   it("should handle invalid numeric values by defaulting to 0", () => {
-    const metric: EcosystemMetric = {
+    const metric: CommunityMetric = {
       id: "metric-1",
       name: "Test Metric",
       description: "Test",
@@ -217,14 +227,15 @@ describe("prepareChartDataForMetric", () => {
 
     mockFormatDate.mockReturnValueOnce("2024-01-01").mockReturnValueOnce("2024-01-02");
 
-    const result = prepareChartDataForMetric(metric);
+    const result = prepareCommunityMetricsChartData(metric);
 
-    expect(result[0]["Test Metric"]).toBe(0);
-    expect(result[1]["Test Metric"]).toBe(100);
+    expect(result[0]["Test Metric"]).toBe(0); // Raw value defaults to 0
+    expect(result[1]["Test Metric"]).toBe(100); // Raw value
+    // Moving average will be undefined for < 30 datapoints
   });
 
   it("should use metric name as the key in chart data", () => {
-    const metric: EcosystemMetric = {
+    const metric: CommunityMetric = {
       id: "metric-1",
       name: "Custom Metric Name",
       description: "Test",
@@ -239,14 +250,15 @@ describe("prepareChartDataForMetric", () => {
 
     mockFormatDate.mockReturnValue("2024-01-01");
 
-    const result = prepareChartDataForMetric(metric);
+    const result = prepareCommunityMetricsChartData(metric);
 
-    expect(result[0]).toHaveProperty("Custom Metric Name");
+    expect(result[0]).toHaveProperty("Custom Metric Name"); // Raw value
     expect(result[0]["Custom Metric Name"]).toBe(100);
+    // Moving average will be undefined for < 30 datapoints
   });
 
   it("should filter out datapoints with invalid date strings", () => {
-    const metric: EcosystemMetric = {
+    const metric: CommunityMetric = {
       id: "metric-1",
       name: "Test Metric",
       description: "Test",
@@ -264,12 +276,13 @@ describe("prepareChartDataForMetric", () => {
 
     mockFormatDate.mockReturnValue("2024-01-01");
 
-    const result = prepareChartDataForMetric(metric);
+    const result = prepareCommunityMetricsChartData(metric);
 
     // Should filter out invalid dates and only return valid ones
     expect(result).toHaveLength(1);
-    expect(result[0]["Test Metric"]).toBe(200);
+    expect(result[0]["Test Metric"]).toBe(200); // Raw value
     expect(result[0].date).toBe("2024-01-01");
+    // Moving average will be undefined for < 30 datapoints
   });
 });
 

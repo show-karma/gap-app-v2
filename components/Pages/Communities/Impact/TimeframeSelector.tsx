@@ -4,15 +4,16 @@ import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 
-export type TimeframeOption = "1_month" | "3_months" | "6_months" | "1_year";
+export type TimeframeOption = "all" | "1_month" | "3_months" | "6_months" | "1_year";
 
 export interface TimeframeConfig {
   label: string;
   value: TimeframeOption;
-  months: number;
+  months?: number;
 }
 
 export const timeframeOptions: TimeframeConfig[] = [
+  { label: "All", value: "all" },
   { label: "1 Month", value: "1_month", months: 1 },
   { label: "3 Months", value: "3_months", months: 3 },
   { label: "6 Months", value: "6_months", months: 6 },
@@ -63,6 +64,7 @@ export function TimeframeSelector({
             {timeframeOptions.map((option) => (
               <button
                 key={option.value}
+                type="button"
                 onClick={() => {
                   onTimeframeChange(option.value);
                   setIsOpen(false);

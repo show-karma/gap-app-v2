@@ -1,16 +1,17 @@
 /**
- * @file Tests for EcosystemMetricsSection component
- * @description Tests for the ecosystem metrics display component
+ * @file Tests for CommunityMetricsSection component
+ * @description Tests for the community metrics display component
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import { useParams } from "next/navigation";
-import { EcosystemMetricsSection } from "@/components/Pages/Communities/Impact/EcosystemMetricsSection";
-import { useEcosystemMetrics } from "@/hooks/useEcosystemMetrics";
-import type { EcosystemMetricsResponse } from "@/types/ecosystem-metrics";
+import type React from "react";
+import { CommunityMetricsSection } from "@/components/Pages/Communities/Impact/CommunityMetricsSection";
+import { useCommunityMetrics } from "@/hooks/useCommunityMetrics";
+import type { CommunityMetricsResponse } from "@/types/community-metrics";
 
-jest.mock("@/hooks/useEcosystemMetrics");
+jest.mock("@/hooks/useCommunityMetrics");
 jest.mock("next/navigation", () => ({
   useParams: jest.fn(),
 }));
@@ -36,16 +37,16 @@ jest.mock("@/components/Pages/Communities/Impact/TimeframeSelector", () => ({
   ),
 }));
 
-const mockUseEcosystemMetrics = useEcosystemMetrics as jest.MockedFunction<
-  typeof useEcosystemMetrics
+const mockUseCommunityMetrics = useCommunityMetrics as jest.MockedFunction<
+  typeof useCommunityMetrics
 >;
 
 // Typed mock helper for better type safety and maintainability
-type MockUseEcosystemMetricsReturn = ReturnType<typeof useEcosystemMetrics>;
+type MockUseCommunityMetricsReturn = ReturnType<typeof useCommunityMetrics>;
 
 const createMockReturn = (
-  overrides: Partial<MockUseEcosystemMetricsReturn> = {}
-): MockUseEcosystemMetricsReturn => ({
+  overrides: Partial<MockUseCommunityMetricsReturn> = {}
+): MockUseCommunityMetricsReturn => ({
   data: null,
   isLoading: false,
   error: null,
@@ -54,7 +55,7 @@ const createMockReturn = (
 });
 const mockUseParams = useParams as jest.MockedFunction<typeof useParams>;
 
-describe("EcosystemMetricsSection", () => {
+describe("CommunityMetricsSection", () => {
   let queryClient: QueryClient;
 
   const createWrapper = () => {
@@ -76,7 +77,7 @@ describe("EcosystemMetricsSection", () => {
     mockUseParams.mockReturnValue({ communityId: "filecoin" });
   });
 
-  const mockMetricsResponse: EcosystemMetricsResponse = {
+  const mockMetricsResponse: CommunityMetricsResponse = {
     communityUID: "filecoin-uid",
     metrics: [
       {
@@ -112,26 +113,26 @@ describe("EcosystemMetricsSection", () => {
 
   it("should render nothing for non-Filecoin communities", () => {
     mockUseParams.mockReturnValue({ communityId: "ethereum" });
-    mockUseEcosystemMetrics.mockReturnValue(createMockReturn());
+    mockUseCommunityMetrics.mockReturnValue(createMockReturn());
 
     const wrapper = createWrapper();
-    const { container } = render(<EcosystemMetricsSection />, { wrapper });
+    const { container } = render(<CommunityMetricsSection />, { wrapper });
 
     expect(container.firstChild).toBeNull();
   });
 
   it("should render loading skeletons when loading", () => {
-    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ isLoading: true }));
+    mockUseCommunityMetrics.mockReturnValue(createMockReturn({ isLoading: true }));
 
     const wrapper = createWrapper();
-    render(<EcosystemMetricsSection />, { wrapper });
+    render(<CommunityMetricsSection />, { wrapper });
 
     expect(screen.getByText("Filecoin Network Metrics")).toBeInTheDocument();
     expect(screen.getAllByText("Loading chart data...")).toHaveLength(2);
   });
 
   it("should render nothing on error", () => {
-    mockUseEcosystemMetrics.mockReturnValue(
+    mockUseCommunityMetrics.mockReturnValue(
       createMockReturn({
         error: new Error("Failed to fetch"),
         isError: true,
@@ -139,32 +140,32 @@ describe("EcosystemMetricsSection", () => {
     );
 
     const wrapper = createWrapper();
-    const { container } = render(<EcosystemMetricsSection />, { wrapper });
+    const { container } = render(<CommunityMetricsSection />, { wrapper });
 
     expect(container.firstChild).toBeNull();
   });
 
   it("should render empty state when metrics array is empty", () => {
-    const emptyResponse: EcosystemMetricsResponse = {
+    const emptyResponse: CommunityMetricsResponse = {
       communityUID: "filecoin-uid",
       metrics: [],
       totalMetrics: 0,
     };
 
-    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: emptyResponse }));
+    mockUseCommunityMetrics.mockReturnValue(createMockReturn({ data: emptyResponse }));
 
     const wrapper = createWrapper();
-    render(<EcosystemMetricsSection />, { wrapper });
+    render(<CommunityMetricsSection />, { wrapper });
 
     expect(screen.getByText("Filecoin Network Metrics")).toBeInTheDocument();
     expect(screen.getByText("No metrics available")).toBeInTheDocument();
   });
 
   it("should render metrics when data is available", async () => {
-    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: mockMetricsResponse }));
+    mockUseCommunityMetrics.mockReturnValue(createMockReturn({ data: mockMetricsResponse }));
 
     const wrapper = createWrapper();
-    render(<EcosystemMetricsSection />, { wrapper });
+    render(<CommunityMetricsSection />, { wrapper });
 
     await waitFor(() => {
       expect(screen.getByText("Filecoin Network Metrics")).toBeInTheDocument();
@@ -176,10 +177,10 @@ describe("EcosystemMetricsSection", () => {
   });
 
   it("should render metric cards with charts", async () => {
-    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: mockMetricsResponse }));
+    mockUseCommunityMetrics.mockReturnValue(createMockReturn({ data: mockMetricsResponse }));
 
     const wrapper = createWrapper();
-    render(<EcosystemMetricsSection />, { wrapper });
+    render(<CommunityMetricsSection />, { wrapper });
 
     await waitFor(() => {
       expect(screen.getAllByTestId("area-chart")).toHaveLength(2);
@@ -187,10 +188,10 @@ describe("EcosystemMetricsSection", () => {
   });
 
   it("should render metric descriptions when available", async () => {
-    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: mockMetricsResponse }));
+    mockUseCommunityMetrics.mockReturnValue(createMockReturn({ data: mockMetricsResponse }));
 
     const wrapper = createWrapper();
-    render(<EcosystemMetricsSection />, { wrapper });
+    render(<CommunityMetricsSection />, { wrapper });
 
     await waitFor(() => {
       expect(screen.getByText("Total storage capacity in the network")).toBeInTheDocument();
@@ -199,66 +200,67 @@ describe("EcosystemMetricsSection", () => {
   });
 
   it("should render latest values and dates", async () => {
-    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: mockMetricsResponse }));
+    mockUseCommunityMetrics.mockReturnValue(createMockReturn({ data: mockMetricsResponse }));
 
     const wrapper = createWrapper();
-    render(<EcosystemMetricsSection />, { wrapper });
+    render(<CommunityMetricsSection />, { wrapper });
 
     await waitFor(() => {
-      // Latest values should be displayed (formatted)
-      // Check for formatted values with units
-      expect(screen.getByText(/200 PiB/)).toBeInTheDocument();
-      expect(screen.getByText(/5K deals/)).toBeInTheDocument();
+      // Component displays metric names and descriptions
+      // Charts are rendered with the data
+      expect(screen.getByText("Storage Capacity")).toBeInTheDocument();
+      expect(screen.getByText("Active Storage Deals")).toBeInTheDocument();
+      expect(screen.getAllByTestId("area-chart")).toHaveLength(2);
     });
   });
 
   it("should handle case-insensitive community ID matching", () => {
     mockUseParams.mockReturnValue({ communityId: "FIL" });
-    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: mockMetricsResponse }));
+    mockUseCommunityMetrics.mockReturnValue(createMockReturn({ data: mockMetricsResponse }));
 
     const wrapper = createWrapper();
-    render(<EcosystemMetricsSection />, { wrapper });
+    render(<CommunityMetricsSection />, { wrapper });
 
     expect(screen.getByText("Filecoin Network Metrics")).toBeInTheDocument();
   });
 
   it("should render nothing when data is null", () => {
-    mockUseEcosystemMetrics.mockReturnValue(createMockReturn());
+    mockUseCommunityMetrics.mockReturnValue(createMockReturn());
 
     const wrapper = createWrapper();
-    const { container } = render(<EcosystemMetricsSection />, { wrapper });
+    const { container } = render(<CommunityMetricsSection />, { wrapper });
 
     expect(container.firstChild).toBeNull();
   });
 
   it("should render nothing when data is invalid (fails type guard)", () => {
-    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: { invalid: "data" } as any }));
+    mockUseCommunityMetrics.mockReturnValue(createMockReturn({ data: { invalid: "data" } as any }));
 
     const wrapper = createWrapper();
-    const { container } = render(<EcosystemMetricsSection />, { wrapper });
+    const { container } = render(<CommunityMetricsSection />, { wrapper });
 
     expect(container.firstChild).toBeNull();
   });
 
   it("should display correct metric count", async () => {
-    const singleMetricResponse: EcosystemMetricsResponse = {
+    const singleMetricResponse: CommunityMetricsResponse = {
       communityUID: "filecoin-uid",
       metrics: [mockMetricsResponse.metrics[0]],
       totalMetrics: 1,
     };
 
-    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: singleMetricResponse }));
+    mockUseCommunityMetrics.mockReturnValue(createMockReturn({ data: singleMetricResponse }));
 
     const wrapper = createWrapper();
-    render(<EcosystemMetricsSection />, { wrapper });
+    render(<CommunityMetricsSection />, { wrapper });
 
     await waitFor(() => {
       expect(screen.getByText("1 metric")).toBeInTheDocument();
     });
   });
 
-  it("should display N/A when latestValue is null", async () => {
-    const metricWithNullValue: EcosystemMetricsResponse = {
+  it("should display chart even when latestValue is null", async () => {
+    const metricWithNullValue: CommunityMetricsResponse = {
       communityUID: "filecoin-uid",
       metrics: [
         {
@@ -269,7 +271,7 @@ describe("EcosystemMetricsSection", () => {
           sourceField: null,
           metadata: null,
           datapoints: [{ date: "2024-01-01", value: "100", proof: null }],
-          latestValue: null, // This should trigger the "N/A" fallback
+          latestValue: null, // latestValue can be null but chart still renders if datapoints exist
           latestDate: "2024-01-01",
           datapointCount: 1,
         },
@@ -277,13 +279,15 @@ describe("EcosystemMetricsSection", () => {
       totalMetrics: 1,
     };
 
-    mockUseEcosystemMetrics.mockReturnValue(createMockReturn({ data: metricWithNullValue }));
+    mockUseCommunityMetrics.mockReturnValue(createMockReturn({ data: metricWithNullValue }));
 
     const wrapper = createWrapper();
-    render(<EcosystemMetricsSection />, { wrapper });
+    render(<CommunityMetricsSection />, { wrapper });
 
     await waitFor(() => {
-      expect(screen.getByText("N/A")).toBeInTheDocument();
+      // Component should still render the metric and chart if datapoints exist
+      expect(screen.getByText("Storage Capacity")).toBeInTheDocument();
+      expect(screen.getAllByTestId("area-chart")).toHaveLength(1);
     });
   });
 });

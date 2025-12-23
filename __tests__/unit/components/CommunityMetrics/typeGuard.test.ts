@@ -1,24 +1,24 @@
 /**
- * @file Tests for ecosystem metrics type guard
- * @description Tests for isValidEcosystemMetricsResponse type guard function
+ * @file Tests for community metrics type guard
+ * @description Tests for isValidCommunityMetricsResponse type guard function
  */
 
-import { isValidEcosystemMetricsResponse } from "@/components/Pages/Communities/Impact/ecosystemMetricsUtils";
-import type { EcosystemMetricsResponse } from "@/types/ecosystem-metrics";
+import { isValidCommunityMetricsResponse } from "@/components/Pages/Communities/Impact/communityMetricsUtils";
+import type { CommunityMetricsResponse } from "@/types/community-metrics";
 
-describe("isValidEcosystemMetricsResponse", () => {
-  const validResponse: EcosystemMetricsResponse = {
+describe("isValidCommunityMetricsResponse", () => {
+  const validResponse: CommunityMetricsResponse = {
     communityUID: "filecoin-uid",
     metrics: [],
     totalMetrics: 0,
   };
 
-  it("should return true for valid EcosystemMetricsResponse", () => {
-    expect(isValidEcosystemMetricsResponse(validResponse)).toBe(true);
+  it("should return true for valid CommunityMetricsResponse", () => {
+    expect(isValidCommunityMetricsResponse(validResponse)).toBe(true);
   });
 
   it("should return true for valid response with metrics", () => {
-    const responseWithMetrics: EcosystemMetricsResponse = {
+    const responseWithMetrics: CommunityMetricsResponse = {
       communityUID: "filecoin-uid",
       metrics: [
         {
@@ -37,11 +37,11 @@ describe("isValidEcosystemMetricsResponse", () => {
       totalMetrics: 1,
     };
 
-    expect(isValidEcosystemMetricsResponse(responseWithMetrics)).toBe(true);
+    expect(isValidCommunityMetricsResponse(responseWithMetrics)).toBe(true);
   });
 
   it("should return true for valid response with dateRange", () => {
-    const responseWithDateRange: EcosystemMetricsResponse = {
+    const responseWithDateRange: CommunityMetricsResponse = {
       communityUID: "filecoin-uid",
       metrics: [],
       totalMetrics: 0,
@@ -51,22 +51,22 @@ describe("isValidEcosystemMetricsResponse", () => {
       },
     };
 
-    expect(isValidEcosystemMetricsResponse(responseWithDateRange)).toBe(true);
+    expect(isValidCommunityMetricsResponse(responseWithDateRange)).toBe(true);
   });
 
   it("should return false for null", () => {
-    expect(isValidEcosystemMetricsResponse(null)).toBe(false);
+    expect(isValidCommunityMetricsResponse(null)).toBe(false);
   });
 
   it("should return false for undefined", () => {
-    expect(isValidEcosystemMetricsResponse(undefined)).toBe(false);
+    expect(isValidCommunityMetricsResponse(undefined)).toBe(false);
   });
 
   it("should return false for non-object types", () => {
-    expect(isValidEcosystemMetricsResponse("string")).toBe(false);
-    expect(isValidEcosystemMetricsResponse(123)).toBe(false);
-    expect(isValidEcosystemMetricsResponse(true)).toBe(false);
-    expect(isValidEcosystemMetricsResponse([])).toBe(false);
+    expect(isValidCommunityMetricsResponse("string")).toBe(false);
+    expect(isValidCommunityMetricsResponse(123)).toBe(false);
+    expect(isValidCommunityMetricsResponse(true)).toBe(false);
+    expect(isValidCommunityMetricsResponse([])).toBe(false);
   });
 
   it("should return false for object without communityUID", () => {
@@ -74,7 +74,7 @@ describe("isValidEcosystemMetricsResponse", () => {
       metrics: [],
     };
 
-    expect(isValidEcosystemMetricsResponse(invalidResponse)).toBe(false);
+    expect(isValidCommunityMetricsResponse(invalidResponse)).toBe(false);
   });
 
   it("should return false for object with non-string communityUID", () => {
@@ -83,7 +83,7 @@ describe("isValidEcosystemMetricsResponse", () => {
       metrics: [],
     };
 
-    expect(isValidEcosystemMetricsResponse(invalidResponse)).toBe(false);
+    expect(isValidCommunityMetricsResponse(invalidResponse)).toBe(false);
   });
 
   it("should return false for object without metrics", () => {
@@ -91,7 +91,7 @@ describe("isValidEcosystemMetricsResponse", () => {
       communityUID: "filecoin-uid",
     };
 
-    expect(isValidEcosystemMetricsResponse(invalidResponse)).toBe(false);
+    expect(isValidCommunityMetricsResponse(invalidResponse)).toBe(false);
   });
 
   it("should return false for object with non-array metrics", () => {
@@ -100,7 +100,7 @@ describe("isValidEcosystemMetricsResponse", () => {
       metrics: "not-an-array",
     };
 
-    expect(isValidEcosystemMetricsResponse(invalidResponse)).toBe(false);
+    expect(isValidCommunityMetricsResponse(invalidResponse)).toBe(false);
   });
 
   it("should return false for object with null metrics", () => {
@@ -109,14 +109,14 @@ describe("isValidEcosystemMetricsResponse", () => {
       metrics: null,
     };
 
-    expect(isValidEcosystemMetricsResponse(invalidResponse)).toBe(false);
+    expect(isValidCommunityMetricsResponse(invalidResponse)).toBe(false);
   });
 
   it("should narrow type correctly after validation", () => {
     const unknownData: unknown = validResponse;
 
-    if (isValidEcosystemMetricsResponse(unknownData)) {
-      // TypeScript should now know this is EcosystemMetricsResponse
+    if (isValidCommunityMetricsResponse(unknownData)) {
+      // TypeScript should now know this is CommunityMetricsResponse
       expect(typeof unknownData.communityUID).toBe("string");
       expect(Array.isArray(unknownData.metrics)).toBe(true);
     } else {

@@ -1,11 +1,11 @@
 /**
- * @file Tests for getEcosystemMetrics utility function
- * @description Tests for fetching ecosystem metrics from the API
+ * @file Tests for getCommunityMetrics utility function
+ * @description Tests for fetching community metrics from the API
  */
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
-import { getEcosystemMetrics } from "@/utilities/registry/getEcosystemMetrics";
+import { getCommunityMetrics } from "@/utilities/registry/getCommunityMetrics";
 
 jest.mock("@/utilities/fetchData");
 jest.mock("@/components/Utilities/errorManager");
@@ -13,13 +13,13 @@ jest.mock("@/utilities/indexer", () => ({
   INDEXER: {
     COMMUNITY: {
       V2: {
-        ECOSYSTEM_METRICS: jest.fn((communityId, params) => {
+        COMMUNITY_METRICS: jest.fn((communityId, params) => {
           const urlParams = new URLSearchParams();
           if (params?.startDate) urlParams.append("startDate", params.startDate);
           if (params?.endDate) urlParams.append("endDate", params.endDate);
           if (params?.metricNames) urlParams.append("metricNames", params.metricNames);
           const queryString = urlParams.toString();
-          return `/v2/communities/${communityId}/ecosystem-metrics${queryString ? `?${queryString}` : ""}`;
+          return `/v2/communities/${communityId}/community-metrics${queryString ? `?${queryString}` : ""}`;
         }),
       },
     },
@@ -29,7 +29,7 @@ jest.mock("@/utilities/indexer", () => ({
 const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
 const mockErrorManager = errorManager as jest.MockedFunction<typeof errorManager>;
 
-describe("getEcosystemMetrics", () => {
+describe("getCommunityMetrics", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, "log").mockImplementation(() => {});
@@ -63,13 +63,13 @@ describe("getEcosystemMetrics", () => {
     totalMetrics: 1,
   };
 
-  it("should fetch ecosystem metrics successfully", async () => {
+  it("should fetch community metrics successfully", async () => {
     mockFetchData.mockResolvedValue([mockValidResponse, null, null, 200]);
 
-    const result = await getEcosystemMetrics("filecoin");
+    const result = await getCommunityMetrics("filecoin");
 
     expect(result).toEqual(mockValidResponse);
-    expect(mockFetchData).toHaveBeenCalledWith("/v2/communities/filecoin/ecosystem-metrics");
+    expect(mockFetchData).toHaveBeenCalledWith("/v2/communities/filecoin/community-metrics");
   });
 
   it("should include query parameters when provided", async () => {
@@ -81,21 +81,21 @@ describe("getEcosystemMetrics", () => {
       metricNames: "Storage Capacity",
     };
 
-    await getEcosystemMetrics("filecoin", params);
+    await getCommunityMetrics("filecoin", params);
 
     expect(mockFetchData).toHaveBeenCalledWith(
-      "/v2/communities/filecoin/ecosystem-metrics?startDate=2024-01-01&endDate=2024-01-31&metricNames=Storage+Capacity"
+      "/v2/communities/filecoin/community-metrics?startDate=2024-01-01&endDate=2024-01-31&metricNames=Storage+Capacity"
     );
   });
 
   it("should return null for 404 errors", async () => {
     mockFetchData.mockResolvedValue([null, new Error("Not Found"), null, 404]);
 
-    const result = await getEcosystemMetrics("filecoin");
+    const result = await getCommunityMetrics("filecoin");
 
     expect(result).toBeNull();
     expect(console.info).toHaveBeenCalledWith(
-      expect.stringContaining("Ecosystem metrics endpoint not found (404)")
+      expect.stringContaining("Community metrics endpoint not found (404)")
     );
     expect(mockErrorManager).not.toHaveBeenCalled();
   });
@@ -104,22 +104,22 @@ describe("getEcosystemMetrics", () => {
     const error = new Error("Server Error");
     mockFetchData.mockResolvedValue([null, error, null, 500]);
 
-    const result = await getEcosystemMetrics("filecoin");
+    const result = await getCommunityMetrics("filecoin");
 
     expect(result).toBeNull();
     expect(console.error).toHaveBeenCalledWith(
-      "Error fetching ecosystem metrics:",
+      "Error fetching community metrics:",
       error,
       "Status:",
       500
     );
-    expect(mockErrorManager).toHaveBeenCalledWith("Error fetching ecosystem metrics", error);
+    expect(mockErrorManager).toHaveBeenCalledWith("Error fetching community metrics", error);
   });
 
   it("should return null when data is null", async () => {
     mockFetchData.mockResolvedValue([null, null, null, 200]);
 
-    const result = await getEcosystemMetrics("filecoin");
+    const result = await getCommunityMetrics("filecoin");
 
     expect(result).toBeNull();
   });
@@ -127,7 +127,7 @@ describe("getEcosystemMetrics", () => {
   it("should return null when data is undefined", async () => {
     mockFetchData.mockResolvedValue([undefined, null, null, 200]);
 
-    const result = await getEcosystemMetrics("filecoin");
+    const result = await getCommunityMetrics("filecoin");
 
     expect(result).toBeNull();
   });
@@ -136,28 +136,28 @@ describe("getEcosystemMetrics", () => {
     const error = new Error("Network error");
     mockFetchData.mockRejectedValue(error);
 
-    const result = await getEcosystemMetrics("filecoin");
+    const result = await getCommunityMetrics("filecoin");
 
     expect(result).toBeNull();
-    expect(console.error).toHaveBeenCalledWith("Error fetching ecosystem metrics:", error);
-    expect(mockErrorManager).toHaveBeenCalledWith("Error fetching ecosystem metrics", error);
+    expect(console.error).toHaveBeenCalledWith("Error fetching community metrics:", error);
+    expect(mockErrorManager).toHaveBeenCalledWith("Error fetching community metrics", error);
   });
 
   it("should handle empty params object", async () => {
     mockFetchData.mockResolvedValue([mockValidResponse, null, null, 200]);
 
-    await getEcosystemMetrics("filecoin", {});
+    await getCommunityMetrics("filecoin", {});
 
-    expect(mockFetchData).toHaveBeenCalledWith("/v2/communities/filecoin/ecosystem-metrics");
+    expect(mockFetchData).toHaveBeenCalledWith("/v2/communities/filecoin/community-metrics");
   });
 
   it("should handle partial params", async () => {
     mockFetchData.mockResolvedValue([mockValidResponse, null, null, 200]);
 
-    await getEcosystemMetrics("filecoin", { startDate: "2024-01-01" });
+    await getCommunityMetrics("filecoin", { startDate: "2024-01-01" });
 
     expect(mockFetchData).toHaveBeenCalledWith(
-      "/v2/communities/filecoin/ecosystem-metrics?startDate=2024-01-01"
+      "/v2/communities/filecoin/community-metrics?startDate=2024-01-01"
     );
   });
 });

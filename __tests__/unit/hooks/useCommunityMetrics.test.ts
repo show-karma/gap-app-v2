@@ -1,27 +1,27 @@
 /**
- * @file Tests for useEcosystemMetrics hook
- * @description Tests for ecosystem metrics data fetching hook
+ * @file Tests for useCommunityMetrics hook
+ * @description Tests for community metrics data fetching hook
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import React from "react";
-import { useEcosystemMetrics } from "@/hooks/useEcosystemMetrics";
-import { getEcosystemMetrics } from "@/utilities/registry/getEcosystemMetrics";
+import { useCommunityMetrics } from "@/hooks/useCommunityMetrics";
+import { getCommunityMetrics } from "@/utilities/registry/getCommunityMetrics";
 
-jest.mock("@/utilities/registry/getEcosystemMetrics", () => ({
-  getEcosystemMetrics: jest.fn(),
+jest.mock("@/utilities/registry/getCommunityMetrics", () => ({
+  getCommunityMetrics: jest.fn(),
 }));
 
 jest.mock("next/navigation", () => ({
   useParams: jest.fn(() => ({ communityId: "filecoin" })),
 }));
 
-const mockGetEcosystemMetrics = getEcosystemMetrics as jest.MockedFunction<
-  typeof getEcosystemMetrics
+const mockGetCommunityMetrics = getCommunityMetrics as jest.MockedFunction<
+  typeof getCommunityMetrics
 >;
 
-describe("useEcosystemMetrics", () => {
+describe("useCommunityMetrics", () => {
   let queryClient: QueryClient;
 
   const createWrapper = () => {
@@ -64,11 +64,11 @@ describe("useEcosystemMetrics", () => {
     totalMetrics: 1,
   };
 
-  it("should fetch ecosystem metrics with communityId", async () => {
-    mockGetEcosystemMetrics.mockResolvedValue(mockMetricsResponse);
+  it("should fetch community metrics with communityId", async () => {
+    mockGetCommunityMetrics.mockResolvedValue(mockMetricsResponse);
 
     const wrapper = createWrapper();
-    const { result } = renderHook(() => useEcosystemMetrics(), { wrapper });
+    const { result } = renderHook(() => useCommunityMetrics(), { wrapper });
 
     expect(result.current.isLoading).toBe(true);
 
@@ -76,12 +76,12 @@ describe("useEcosystemMetrics", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(mockGetEcosystemMetrics).toHaveBeenCalledWith("filecoin", undefined);
+    expect(mockGetCommunityMetrics).toHaveBeenCalledWith("filecoin", undefined);
     expect(result.current.data).toEqual(mockMetricsResponse);
   });
 
   it("should fetch with date range parameters", async () => {
-    mockGetEcosystemMetrics.mockResolvedValue(mockMetricsResponse);
+    mockGetCommunityMetrics.mockResolvedValue(mockMetricsResponse);
 
     const params = {
       startDate: "2024-01-01",
@@ -89,23 +89,23 @@ describe("useEcosystemMetrics", () => {
     };
 
     const wrapper = createWrapper();
-    const { result } = renderHook(() => useEcosystemMetrics(params), { wrapper });
+    const { result } = renderHook(() => useCommunityMetrics(params), { wrapper });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(mockGetEcosystemMetrics).toHaveBeenCalledWith("filecoin", params);
+    expect(mockGetCommunityMetrics).toHaveBeenCalledWith("filecoin", params);
   });
 
   it("should not fetch when enabled is false", () => {
     const wrapper = createWrapper();
-    const { result } = renderHook(() => useEcosystemMetrics(undefined, false), {
+    const { result } = renderHook(() => useCommunityMetrics(undefined, false), {
       wrapper,
     });
 
     expect(result.current.isLoading).toBe(false);
-    expect(mockGetEcosystemMetrics).not.toHaveBeenCalled();
+    expect(mockGetCommunityMetrics).not.toHaveBeenCalled();
   });
 
   it("should not fetch when communityId is missing", () => {
@@ -113,18 +113,18 @@ describe("useEcosystemMetrics", () => {
     useParams.mockReturnValueOnce({ communityId: undefined });
 
     const wrapper = createWrapper();
-    const { result } = renderHook(() => useEcosystemMetrics(), { wrapper });
+    const { result } = renderHook(() => useCommunityMetrics(), { wrapper });
 
     expect(result.current.isLoading).toBe(false);
-    expect(mockGetEcosystemMetrics).not.toHaveBeenCalled();
+    expect(mockGetCommunityMetrics).not.toHaveBeenCalled();
   });
 
   it("should handle fetch error", async () => {
     const error = new Error("Failed to fetch metrics");
-    mockGetEcosystemMetrics.mockRejectedValue(error);
+    mockGetCommunityMetrics.mockRejectedValue(error);
 
     const wrapper = createWrapper();
-    const { result } = renderHook(() => useEcosystemMetrics(), { wrapper });
+    const { result } = renderHook(() => useCommunityMetrics(), { wrapper });
 
     await waitFor(() => {
       expect(result.current.isError).toBe(true);
@@ -134,10 +134,10 @@ describe("useEcosystemMetrics", () => {
   });
 
   it("should handle null response", async () => {
-    mockGetEcosystemMetrics.mockResolvedValue(null);
+    mockGetCommunityMetrics.mockResolvedValue(null);
 
     const wrapper = createWrapper();
-    const { result } = renderHook(() => useEcosystemMetrics(), { wrapper });
+    const { result } = renderHook(() => useCommunityMetrics(), { wrapper });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -153,13 +153,13 @@ describe("useEcosystemMetrics", () => {
       metricNames: "Storage Capacity",
     };
 
-    mockGetEcosystemMetrics.mockResolvedValue(mockMetricsResponse);
+    mockGetCommunityMetrics.mockResolvedValue(mockMetricsResponse);
 
     const wrapper = createWrapper();
-    renderHook(() => useEcosystemMetrics(params), { wrapper });
+    renderHook(() => useCommunityMetrics(params), { wrapper });
 
     const queryKey = [
-      "ecosystem-metrics",
+      "community-metrics",
       "filecoin",
       "2024-01-01",
       "2024-01-31",
@@ -171,21 +171,21 @@ describe("useEcosystemMetrics", () => {
   });
 
   it("should use 'all' in query key when params are undefined", () => {
-    mockGetEcosystemMetrics.mockResolvedValue(mockMetricsResponse);
+    mockGetCommunityMetrics.mockResolvedValue(mockMetricsResponse);
 
     const wrapper = createWrapper();
-    renderHook(() => useEcosystemMetrics(), { wrapper });
+    renderHook(() => useCommunityMetrics(), { wrapper });
 
-    const queryKey = ["ecosystem-metrics", "filecoin", "all", "all", "all"];
+    const queryKey = ["community-metrics", "filecoin", "all", "all", "all"];
 
     expect(queryClient.getQueryState(queryKey)).toBeDefined();
   });
 
   it("should cache data with staleTime of 5 minutes", async () => {
-    mockGetEcosystemMetrics.mockResolvedValue(mockMetricsResponse);
+    mockGetCommunityMetrics.mockResolvedValue(mockMetricsResponse);
 
     const wrapper = createWrapper();
-    const { result } = renderHook(() => useEcosystemMetrics(), { wrapper });
+    const { result } = renderHook(() => useCommunityMetrics(), { wrapper });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -193,7 +193,7 @@ describe("useEcosystemMetrics", () => {
 
     // Check that the query has staleTime configured
     const queryState = queryClient.getQueryState([
-      "ecosystem-metrics",
+      "community-metrics",
       "filecoin",
       "all",
       "all",

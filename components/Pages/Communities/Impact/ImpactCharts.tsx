@@ -5,7 +5,7 @@ import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
 import type { ProgramImpactDataResponse } from "@/types/programs";
 import { formatDate } from "@/utilities/formatDate";
 import { CategoryRow } from "./CategoryRow";
-import { EcosystemMetricsSection } from "./EcosystemMetricsSection";
+import { CommunityMetricsSection } from "./CommunityMetricsSection";
 import { ProgramBanner } from "./ProgramBanner";
 
 export const prepareChartData = (
@@ -59,7 +59,7 @@ export const CommunityImpactCharts = () => {
   return (
     <div className="flex flex-col gap-4 flex-1 mb-10">
       <ProgramBanner />
-      <EcosystemMetricsSection />
+      <CommunityMetricsSection />
       {isLoading ? (
         <div className="flex justify-center items-center h-full">
           <Spinner />
