@@ -75,7 +75,6 @@ export interface IFormSchema {
   settings?: {
     submitButtonText?: string;
     confirmationMessage?: string;
-    applicationDeadline?: string;
     donationRound?: boolean;
     approvalEmailTemplate?: string; // Markdown/HTML template for approval emails with variable placeholders
     approvalEmailSubject?: string; // Custom subject for approval emails with variable placeholders (e.g., {{programName}})
