@@ -45,18 +45,6 @@ export const formatMetricValue = (value: string, unit: string): string => {
 };
 
 /**
- * Formats a community metric chart value with its unit
- * @internal - Only for use within CommunityMetricsSection component
- */
-export const formatChartValue = (value: number, unit: string): string => {
-  // Handle very small numbers for chart tooltips
-  if (value > 0 && value < 0.0001) {
-    return formatSmallNumber(value, unit);
-  }
-  return `${formatCurrency(value)} ${unit}`;
-};
-
-/**
  * Calculates moving average for community metrics values
  * Used specifically for 30-day smoothing of community metrics charts
  * @param values Array of numeric values

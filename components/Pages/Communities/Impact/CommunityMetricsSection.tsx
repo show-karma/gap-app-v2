@@ -72,6 +72,9 @@ const MetricCard = ({ metric, color }: { metric: CommunityMetric; color: string 
   // Memoize expensive chart data calculation with chart config options
   // Apply 30-day moving average as per Filecoin Data Portal specification
   // NOTE: This uses prepareCommunityMetricsChartData which is specific to community metrics only
+  // Intentionally using specific metric properties (datapoints, name) as dependencies
+  // rather than the entire metric object to avoid unnecessary recalculations when
+  // the metric reference changes but the data hasn't
   const chartData = useMemo(
     () =>
       prepareCommunityMetricsChartData(metric, {
@@ -167,6 +170,9 @@ const MetricCard = ({ metric, color }: { metric: CommunityMetric; color: string 
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-gray-500 dark:text-gray-400 ml-2">{displayLabel}</p>
               </div>
+              {/* CSS opacity workaround for Tremor AreaChart - makes raw data (first series) 
+                  nearly invisible while keeping moving average prominent. 
+                  Note: This relies on Recharts DOM structure within Tremor. */}
               <div className="[&_svg_.recharts-area:first-child]:opacity-[0.12] [&_svg_.recharts-area:first-child_path]:opacity-[0.12] [&_svg_.recharts-area:first-child_polygon]:opacity-[0.12] [&_svg_.recharts-area:first-child_path]:fill-opacity-[0.12] [&_svg_.recharts-area:first-child_polygon]:fill-opacity-[0.12]">
                 <AreaChart
                   data={filteredChartData}

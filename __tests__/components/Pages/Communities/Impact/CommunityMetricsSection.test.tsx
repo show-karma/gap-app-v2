@@ -234,7 +234,11 @@ describe("CommunityMetricsSection", () => {
   });
 
   it("should render nothing when data is invalid (fails type guard)", () => {
-    mockUseCommunityMetrics.mockReturnValue(createMockReturn({ data: { invalid: "data" } as any }));
+    // Explicitly test type guard with object missing required 'metrics' array
+    const invalidData = { communityUID: "test", notMetrics: [] };
+    mockUseCommunityMetrics.mockReturnValue(
+      createMockReturn({ data: invalidData as unknown as CommunityMetricsResponse })
+    );
 
     const wrapper = createWrapper();
     const { container } = render(<CommunityMetricsSection />, { wrapper });

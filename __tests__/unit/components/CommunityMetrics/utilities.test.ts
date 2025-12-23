@@ -1,11 +1,10 @@
 /**
  * @file Tests for community metrics utility functions
- * @description Tests for formatMetricValue, formatChartValue, and prepareCommunityMetricsChartData
+ * @description Tests for formatMetricValue, prepareCommunityMetricsChartData, and calculateDateRange
  */
 
 import {
   calculateDateRange,
-  formatChartValue,
   formatMetricValue,
   prepareCommunityMetricsChartData,
 } from "@/components/Pages/Communities/Impact/communityMetricsUtils";
@@ -60,48 +59,6 @@ describe("formatMetricValue", () => {
     const result = formatMetricValue("-0.00005", "FIL");
     // Should use formatCurrency for negative numbers, even if small
     expect(result).toBe("-$0.00 FIL");
-  });
-});
-
-describe("formatChartValue", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockFormatCurrency.mockImplementation((val) => `$${val.toLocaleString()}`);
-  });
-
-  it("should use formatCurrency for normal-sized numbers", () => {
-    mockFormatCurrency.mockReturnValue("$1,000.00");
-    expect(formatChartValue(1000, "FIL")).toBe("$1,000.00 FIL");
-  });
-
-  it("should use scientific notation for very small numbers (< 0.000001)", () => {
-    const result = formatChartValue(0.0000005, "FIL");
-    expect(result).toMatch(/^[\d.]+e-\d+ FIL$/);
-  });
-
-  it("should use fixed decimal places for small numbers (0.000001 to 0.0001)", () => {
-    const result = formatChartValue(0.00005, "FIL");
-    expect(result).toMatch(/^0\.0{4,7}5+ FIL$/);
-  });
-
-  it("should handle zero", () => {
-    mockFormatCurrency.mockReturnValue("$0.00");
-    expect(formatChartValue(0, "FIL")).toBe("$0.00 FIL");
-  });
-
-  it("should handle negative numbers", () => {
-    mockFormatCurrency.mockReturnValue("-$100.00");
-    expect(formatChartValue(-100, "FIL")).toBe("-$100.00 FIL");
-  });
-
-  it("should use scientific notation for extremely small numbers in formatChartValue", () => {
-    const result = formatChartValue(0.0000005, "FIL");
-    expect(result).toMatch(/^[\d.]+e-\d+ FIL$/);
-  });
-
-  it("should use fixed decimal places for small numbers in formatChartValue", () => {
-    const result = formatChartValue(0.00005, "FIL");
-    expect(result).toMatch(/^0\.0{4,7}5+ FIL$/);
   });
 });
 
@@ -297,6 +254,11 @@ describe("calculateDateRange", () => {
 
   afterEach(() => {
     jest.useRealTimers();
+  });
+
+  it("should return undefined for 'all' timeframe", () => {
+    const result = calculateDateRange("all");
+    expect(result).toBeUndefined();
   });
 
   it("should calculate 1 month range correctly", () => {
