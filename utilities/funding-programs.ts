@@ -67,9 +67,8 @@ export function isProgramOpen(startsAt: string | undefined, endsAt: string | und
 export function isProgramEnabled(program: FundingProgram): boolean {
   const isEnabled = program.applicationConfig?.isEnabled ?? false;
   const hasFormConfig = !!program.applicationConfig?.formSchema;
-  const applicationDeadline = program.applicationConfig?.formSchema?.settings?.applicationDeadline;
-  const isApplicationDeadlinePassed = applicationDeadline
-    ? new Date(applicationDeadline) < new Date()
+  const isApplicationDeadlinePassed = program.metadata?.endsAt
+    ? new Date(program.metadata.endsAt) < new Date()
     : false;
 
   const isOpen =
@@ -88,9 +87,8 @@ export function isProgramEnabled(program: FundingProgram): boolean {
 export function getProgramStatusInfo(program: FundingProgram): ProgramStatusInfo {
   const isEnabled = program.applicationConfig?.isEnabled ?? false;
   const hasFormConfig = !!program.applicationConfig?.formSchema;
-  const applicationDeadline = program.applicationConfig?.formSchema?.settings?.applicationDeadline;
-  const isApplicationDeadlinePassed = applicationDeadline
-    ? new Date(applicationDeadline) < new Date()
+  const isApplicationDeadlinePassed = program.metadata?.endsAt
+    ? new Date(program.metadata.endsAt) < new Date()
     : false;
 
   const isOpen =
