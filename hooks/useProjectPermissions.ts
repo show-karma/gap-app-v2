@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectStore } from "@/store";
@@ -14,8 +13,9 @@ interface ProjectPermissionsResult {
 }
 
 export const useProjectPermissions = () => {
-  const { address, isConnected } = useAccount();
-  const { authenticated: isAuth } = useAuth();
+  // Use address from useAuth() instead of useAccount() to get the correct address
+  // for email/embedded wallet users (useAccount returns MetaMask if connected)
+  const { address, isConnected, authenticated: isAuth } = useAuth();
   const { project } = useProjectStore();
   const projectId = project?.details?.data.slug || project?.uid;
   const { project: projectInstance } = useProjectInstance(projectId);
