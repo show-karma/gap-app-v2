@@ -17,7 +17,7 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProgressModal } from "@/store/modals/progressModal";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -71,7 +71,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
 
   const onSubmit: SubmitHandler<UpdateType> = async (data, event) => {
     event?.preventDefault();
@@ -108,20 +108,23 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         refUID: project.uid,
         createdAt: new Date(),
       });
-      await newImpact.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await newImpact.attest(walletSigner as any).then(async (res) => {
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newImpact.chainID), "POST", {});
         }
         let retries = 1000;
-        changeStepperStep("indexing");
+        showLoading("Indexing impact...");
         let fetchedProject = null;
         while (retries > 0) {
           fetchedProject = await gapClient!.fetch.projectById(project.uid as Hex).catch(() => null);
           if (fetchedProject?.impacts?.find((impact) => impact.uid === newImpact.uid)) {
             retries = 0;
-            changeStepperStep("indexed");
-            changeTab(null);
+            showSuccess("Impact added!");
+            setTimeout(() => {
+              closeProgressModal();
+              changeTab(null);
+            }, 1500);
             await refreshProject();
           }
           retries -= 1;
@@ -130,6 +133,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         }
       });
     } catch (error: any) {
+      closeProgressModal();
       errorManager(
         MESSAGES.PROJECT.IMPACT.ERROR,
         error,
@@ -143,7 +147,6 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
       );
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 

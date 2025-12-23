@@ -15,7 +15,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProgressModal } from "@/store/modals/progressModal";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -45,7 +45,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
     setIsOpen(false);
   }
 
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
 
   const { openShareDialog } = useShareDialogStore();
 
@@ -108,7 +108,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         refUID: project?.uid,
         recipient: address as `0x${string}`,
       });
-      await endorsement.attest(walletSigner, changeStepperStep).then(async (res) => {
+      await endorsement.attest(walletSigner).then(async (res) => {
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, endorsement.chainID), "POST", {});
@@ -116,27 +116,30 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         let retries = 1000;
         refreshProject();
         let fetchedProject: Project | null = null;
-        changeStepperStep("indexing");
+        showLoading("Indexing endorsement...");
         while (retries > 0) {
           fetchedProject = await gapClient!.fetch.projectById(project.uid as Hex).catch(() => null);
           if (fetchedProject?.endorsements?.find((end) => end.uid === endorsement.uid)) {
             retries = 0;
-            changeStepperStep("indexed");
+            showSuccess("Endorsement added!");
 
             await notifyProjectOwner(endorsement);
 
-            router.push(
-              PAGES.PROJECT.OVERVIEW((project.details?.data?.slug || project?.uid) as string)
-            );
-            openShareDialog({
-              modalShareText: `Well played! Project ${project?.details?.data?.title} now has your epic endorsement 🎯🐉!`,
-              shareText: SHARE_TEXTS.PROJECT_ENDORSEMENT(
-                project?.details?.data?.title as string,
-                project?.uid as string
-              ),
-              modalShareSecondText: ` `,
-            });
-            router.refresh();
+            setTimeout(() => {
+              closeProgressModal();
+              router.push(
+                PAGES.PROJECT.OVERVIEW((project.details?.data?.slug || project?.uid) as string)
+              );
+              openShareDialog({
+                modalShareText: `Well played! Project ${project?.details?.data?.title} now has your epic endorsement 🎯🐉!`,
+                shareText: SHARE_TEXTS.PROJECT_ENDORSEMENT(
+                  project?.details?.data?.title as string,
+                  project?.uid as string
+                ),
+                modalShareSecondText: ` `,
+              });
+              router.refresh();
+            }, 1500);
           }
           retries -= 1;
           // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -145,13 +148,13 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
       });
       closeModal();
     } catch (error: any) {
+      closeProgressModal();
       errorManager(`Error of user ${address} endorsing project ${project?.uid}`, error, {
         projectUID: project?.uid,
         address,
       });
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 

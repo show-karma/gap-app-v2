@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProgressModal } from "@/store/modals/progressModal";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -48,7 +48,7 @@ export const MilestonesScreen: React.FC = () => {
   const { address, isConnected, connector, chain } = useAccount();
   const { authenticated: isAuth } = useAuth();
   const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
   const queryClient = useQueryClient();
 
   const pathname = usePathname();
@@ -191,85 +191,86 @@ export const MilestonesScreen: React.FC = () => {
       const walletSigner = await walletClientToSigner(walletClient);
 
       // Attest grant
-      setIsStepper(true);
-      await grant
-        .attest(walletSigner as any, selectedProject.chainID, changeStepperStep)
-        .then(async (res) => {
-          let retries = 1000;
-          changeStepperStep("indexing");
-          let fetchedProject = null;
-          const txHash = res?.tx[0]?.hash;
+      await grant.attest(walletSigner as any, selectedProject.chainID).then(async (res) => {
+        let retries = 1000;
+        let fetchedProject = null;
+        const txHash = res?.tx[0]?.hash;
 
-          if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID), "POST", {});
-          }
+        if (txHash) {
+          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID), "POST", {});
+        }
+        showLoading("Indexing grant...");
 
-          while (retries > 0) {
-            fetchedProject = await gapClient.fetch
-              .projectById(selectedProject.uid as Hex)
-              .catch(() => null);
+        while (retries > 0) {
+          fetchedProject = await gapClient.fetch
+            .projectById(selectedProject.uid as Hex)
+            .catch(() => null);
 
-            if (fetchedProject?.grants?.find((oldGrant) => oldGrant.uid === grant.uid)) {
-              clearMilestonesForms();
-              retries = 0;
-              toast.success(
-                flowType === "grant"
-                  ? MESSAGES.GRANT.CREATE.SUCCESS
-                  : "Successfully applied to funding program!"
-              );
-              changeStepperStep("indexed");
+          if (fetchedProject?.grants?.find((oldGrant) => oldGrant.uid === grant.uid)) {
+            clearMilestonesForms();
+            retries = 0;
+            toast.success(
+              flowType === "grant"
+                ? MESSAGES.GRANT.CREATE.SUCCESS
+                : "Successfully applied to funding program!"
+            );
+            showSuccess(flowType === "grant" ? "Grant created!" : "Application submitted!");
 
-              // Invalidate duplicate grant check query to refresh data
-              if (!isEditing) {
-                await queryClient.invalidateQueries({
-                  queryKey: ["duplicate-grant-check"],
+            // Invalidate duplicate grant check query to refresh data
+            if (!isEditing) {
+              await queryClient.invalidateQueries({
+                queryKey: ["duplicate-grant-check"],
+              });
+            }
+
+            // Reset form data and go back to step 1 for a new grant
+            resetFormData();
+            clearMilestonesForms();
+            setFormPriorities([]);
+            setCurrentStep(1);
+            setFlowType("grant"); // Reset to default flow type
+
+            // Redirect to grants page instead of specific grant
+            if (
+              flowType === "program" &&
+              newGrantData.selectedTrackIds &&
+              newGrantData.selectedTrackIds.length > 0 &&
+              newGrantData.programId
+            ) {
+              try {
+                const programIdParts = newGrantData.programId.split("_");
+                const programId = programIdParts[0];
+                const _chainID = parseInt(programIdParts[1] || communityNetworkId.toString(), 10);
+
+                await fetchData(INDEXER.PROJECTS.TRACKS(selectedProject.uid), "POST", {
+                  communityUID: newGrantData.community,
+                  trackIds: newGrantData.selectedTrackIds,
+                  programId,
                 });
+              } catch (trackError) {
+                console.error("Error assigning tracks to project:", trackError);
               }
+            }
 
-              // Reset form data and go back to step 1 for a new grant
-              resetFormData();
-              clearMilestonesForms();
-              setFormPriorities([]);
-              setCurrentStep(1);
-              setFlowType("grant"); // Reset to default flow type
-
-              // Redirect to grants page instead of specific grant
-              if (
-                flowType === "program" &&
-                newGrantData.selectedTrackIds &&
-                newGrantData.selectedTrackIds.length > 0 &&
-                newGrantData.programId
-              ) {
-                try {
-                  const programIdParts = newGrantData.programId.split("_");
-                  const programId = programIdParts[0];
-                  const _chainID = parseInt(programIdParts[1] || communityNetworkId.toString(), 10);
-
-                  await fetchData(INDEXER.PROJECTS.TRACKS(selectedProject.uid), "POST", {
-                    communityUID: newGrantData.community,
-                    trackIds: newGrantData.selectedTrackIds,
-                    programId,
-                  });
-                } catch (trackError) {
-                  console.error("Error assigning tracks to project:", trackError);
-                }
-              }
-
-              await refreshProject();
+            await refreshProject();
+            setTimeout(() => {
+              closeProgressModal();
               router.push(
                 PAGES.PROJECT.GRANT(
                   selectedProject.details?.data.slug || selectedProject.uid,
                   grant.uid
                 )
               );
-            }
-
-            retries -= 1;
-            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            }, 1500);
           }
-        });
+
+          retries -= 1;
+          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+      });
     } catch (error: any) {
+      closeProgressModal();
       errorManager(
         MESSAGES.GRANT.CREATE.ERROR(formData.title),
         error,
@@ -285,8 +286,6 @@ export const MilestonesScreen: React.FC = () => {
               : "Error applying to funding program",
         }
       );
-    } finally {
-      setIsStepper(false);
     }
   };
 

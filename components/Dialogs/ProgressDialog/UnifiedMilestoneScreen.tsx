@@ -21,7 +21,7 @@ import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProgressModal } from "@/store/modals/progressModal";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
@@ -81,7 +81,7 @@ export const UnifiedMilestoneScreen = () => {
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, close: closeSimpleProgressModal } = useProgressModal();
   const { projectId } = useParams();
   const { refetch } = useAllMilestones(projectId as string);
   const router = useRouter();
@@ -159,35 +159,36 @@ export const UnifiedMilestoneScreen = () => {
         text: sanitizeInput(data.description),
       };
 
-      await newObjective
-        .attest(walletSigner as any, sanitizedData, changeStepperStep)
-        .then(async (res) => {
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
-          } else {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(newObjective.uid, project.chainID),
-              "POST",
-              {}
-            );
-          }
+      await newObjective.attest(walletSigner as any, sanitizedData).then(async (res) => {
+        const txHash = res?.tx[0]?.hash;
+        if (txHash) {
+          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
+        } else {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(newObjective.uid, project.chainID),
+            "POST",
+            {}
+          );
+        }
 
-          changeStepperStep("indexing");
+        showLoading("Indexing milestone...");
 
-          // More robust refetch with multiple attempts
-          await tryRefetch();
+        // More robust refetch with multiple attempts
+        await tryRefetch();
 
-          toast.success("Roadmap milestone created successfully");
-          changeStepperStep("indexed");
+        toast.success("Roadmap milestone created successfully");
+        showSuccess("Milestone created!");
+        setTimeout(() => {
+          closeSimpleProgressModal();
           closeProgressModal();
-        });
+        }, 1500);
+      });
     } catch (error) {
+      closeSimpleProgressModal();
       errorManager("Error creating roadmap milestone", error);
       toast.error("Failed to create roadmap milestone");
     } finally {
       setIsSubmitting(false);
-      setIsStepper(false);
     }
   };
 
@@ -207,7 +208,6 @@ export const UnifiedMilestoneScreen = () => {
     if (!gap || !project || selectedGrantIds.length === 0) return;
 
     setIsSubmitting(true);
-    setIsStepper(true);
 
     const toastsToRemove: string[] = [];
 
@@ -247,7 +247,6 @@ export const UnifiedMilestoneScreen = () => {
         const chainGrants = grantsByChain[chainId];
         const chainName = chainNameDictionary(chainId);
 
-        changeStepperStep("preparing");
         // Notify user we're processing grants on this chain
         toast.loading(`Creating milestone`, {
           id: `chain-${chainId}`,
@@ -302,7 +301,7 @@ export const UnifiedMilestoneScreen = () => {
 
           const walletSigner = await walletClientToSigner(walletClient);
 
-          const result = await milestoneToAttest.attest(walletSigner as any, changeStepperStep);
+          const result = await milestoneToAttest.attest(walletSigner as any);
 
           // Handle indexer notification
           const txHash = result?.tx[0]?.hash;
@@ -375,8 +374,7 @@ export const UnifiedMilestoneScreen = () => {
           // Use the GapContract to submit all attestations in a single transaction
           const result = await GapContract.multiAttest(
             walletSigner as any,
-            allPayloads.map((p) => p[1]),
-            changeStepperStep
+            allPayloads.map((p) => p[1])
           );
 
           // Handle indexer notification for each tx
@@ -399,24 +397,27 @@ export const UnifiedMilestoneScreen = () => {
         }
       }
 
-      changeStepperStep("indexing");
+      showLoading("Indexing milestones...");
 
       // Wait a bit for indexing and perform multiple refetch attempts
       await sleep(1500);
       await tryRefetch();
 
-      changeStepperStep("indexed");
+      showSuccess("Milestones created!");
 
-      router.push(PAGES.PROJECT.UPDATES(project?.details?.data.slug || project?.uid || ""));
-      closeProgressModal();
+      setTimeout(() => {
+        closeSimpleProgressModal();
+        router.push(PAGES.PROJECT.UPDATES(project?.details?.data.slug || project?.uid || ""));
+        closeProgressModal();
+      }, 1500);
     } catch (error) {
+      closeSimpleProgressModal();
       errorManager("Error creating grant milestones", error);
       toastsToRemove.forEach((toastId) => {
         toast.remove(toastId);
       });
     } finally {
       setIsSubmitting(false);
-      setIsStepper(false);
     }
   };
 

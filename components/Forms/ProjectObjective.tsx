@@ -12,7 +12,7 @@ import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProgressModal } from "@/store/modals/progressModal";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
@@ -76,7 +76,7 @@ export const ProjectObjectiveForm = ({
 
   const { gap } = useGap();
   const [isLoading, setIsLoading] = useState(false);
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
 
   const { refetch } = useAllMilestones(projectId as string);
 
@@ -110,54 +110,56 @@ export const ProjectObjectiveForm = ({
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),
       };
-      await newObjective
-        .attest(walletSigner as any, sanitizedData, changeStepperStep)
-        .then(async (res) => {
-          const _fetchedObjectives = null;
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
-              "POST",
-              {}
-            );
-          } else {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(newObjective.uid, project?.chainID as number),
-              "POST",
-              {}
-            );
-          }
-          let retries = 1000;
-          changeStepperStep("indexing");
-          while (retries > 0) {
-            await getProjectObjectives(projectId)
-              .then(async (fetchedObjectives) => {
-                const attestUID = newObjective.uid;
-                const alreadyExists = fetchedObjectives.find((m) => m.uid === attestUID);
+      await newObjective.attest(walletSigner as any, sanitizedData).then(async (res) => {
+        const _fetchedObjectives = null;
+        const txHash = res?.tx[0]?.hash;
+        if (txHash) {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
+            "POST",
+            {}
+          );
+        } else {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(newObjective.uid, project?.chainID as number),
+            "POST",
+            {}
+          );
+        }
+        let retries = 1000;
+        showLoading("Indexing objective...");
+        while (retries > 0) {
+          await getProjectObjectives(projectId)
+            .then(async (fetchedObjectives) => {
+              const attestUID = newObjective.uid;
+              const alreadyExists = fetchedObjectives.find((m) => m.uid === attestUID);
 
-                if (alreadyExists) {
-                  retries = 0;
-                  changeStepperStep("indexed");
-                  toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
-                  await refetch();
-                  stateHandler?.(false);
+              if (alreadyExists) {
+                retries = 0;
+                showSuccess("Objective created!");
+                toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
+                await refetch();
+                stateHandler?.(false);
+                setTimeout(() => {
+                  closeProgressModal();
                   router.push(
                     PAGES.PROJECT.UPDATES(project?.details?.data.slug || project?.uid || "")
                   );
-                }
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              })
-              .catch(async () => {
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              });
-          }
-        });
+                }, 1500);
+              }
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            })
+            .catch(async () => {
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            });
+        }
+      });
     } catch (error) {
+      closeProgressModal();
       errorManager(
         MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR,
         error,
@@ -172,7 +174,6 @@ export const ProjectObjectiveForm = ({
       );
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 
@@ -206,51 +207,51 @@ export const ProjectObjectiveForm = ({
       );
       if (!objectiveInstance) return;
       objectiveInstance.setValues(sanitizedData);
-      await objectiveInstance
-        .attest(walletSigner as any, sanitizedData, changeStepperStep)
-        .then(async (res) => {
-          const _fetchedObjectives = null;
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
-              "POST",
-              {}
-            );
-          } else {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(objectiveInstance.uid, project?.chainID as number),
-              "POST",
-              {}
-            );
-          }
-          let retries = 1000;
-          changeStepperStep("indexing");
-          while (retries > 0) {
-            await getProjectObjectives(projectId)
-              .then(async (fetchedObjectives) => {
-                const attestUID = objectiveInstance.uid;
-                const alreadyExists = fetchedObjectives.find((m) => m.uid === attestUID);
+      await objectiveInstance.attest(walletSigner as any, sanitizedData).then(async (res) => {
+        const _fetchedObjectives = null;
+        const txHash = res?.tx[0]?.hash;
+        if (txHash) {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
+            "POST",
+            {}
+          );
+        } else {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(objectiveInstance.uid, project?.chainID as number),
+            "POST",
+            {}
+          );
+        }
+        let retries = 1000;
+        showLoading("Indexing objective...");
+        while (retries > 0) {
+          await getProjectObjectives(projectId)
+            .then(async (fetchedObjectives) => {
+              const attestUID = objectiveInstance.uid;
+              const alreadyExists = fetchedObjectives.find((m) => m.uid === attestUID);
 
-                if (alreadyExists) {
-                  retries = 0;
-                  changeStepperStep("indexed");
-                  toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
-                  await refetch();
-                  stateHandler?.(false);
-                }
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              })
-              .catch(async () => {
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              });
-          }
-        });
+              if (alreadyExists) {
+                retries = 0;
+                showSuccess("Objective updated!");
+                toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
+                await refetch();
+                stateHandler?.(false);
+                setTimeout(() => closeProgressModal(), 1500);
+              }
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            })
+            .catch(async () => {
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            });
+        }
+      });
     } catch (error) {
+      closeProgressModal();
       errorManager(
         MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR,
         error,
@@ -265,7 +266,6 @@ export const ProjectObjectiveForm = ({
       );
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 

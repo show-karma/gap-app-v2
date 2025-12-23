@@ -16,7 +16,7 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProgressModal } from "@/store/modals/progressModal";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -76,7 +76,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
   });
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
 
   // Load existing impact data
   useEffect(() => {
@@ -159,15 +159,13 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
         createdAt: impactInstance.createdAt,
       });
 
-      changeStepperStep("preparing");
-
-      await updatedImpact.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await updatedImpact.attest(walletSigner as any).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
         }
-        changeStepperStep("indexing");
+        showLoading("Indexing impact...");
         while (retries > 0) {
           await refreshProject()
             .then(async (fetchedProject) => {
@@ -176,12 +174,15 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
 
               if (foundImpact) {
                 retries = 0;
-                changeStepperStep("indexed");
+                showSuccess("Impact updated!");
                 toast.success("Impact updated successfully");
-                if (onClose) {
-                  onClose();
-                }
-                router.refresh();
+                setTimeout(() => {
+                  closeProgressModal();
+                  if (onClose) {
+                    onClose();
+                  }
+                  router.refresh();
+                }, 1500);
               }
             })
             .catch(() => {
@@ -191,11 +192,11 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
         }
       });
     } catch (error: any) {
+      closeProgressModal();
       errorManager(`Error updating impact ${impactId} from project ${project?.uid}`, error);
       toast.error("There was an error updating the impact. Please try again");
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 

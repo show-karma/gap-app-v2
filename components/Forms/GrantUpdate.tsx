@@ -18,7 +18,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProgressModal } from "@/store/modals/progressModal";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -107,7 +107,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
     });
   };
 
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
 
   const { gap } = useGap();
 
@@ -145,13 +145,13 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         schema: gapClient.findSchema("GrantDetails"),
       });
 
-      await grantUpdate.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await grantUpdate.attest(walletSigner as any).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grantToUpdate.chainID), "POST", {});
         }
-        changeStepperStep("indexing");
+        showLoading("Indexing update...");
         while (retries > 0) {
           await refreshProject()
             .then(async (fetchedProject) => {
@@ -161,27 +161,29 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
               const alreadyExists = updatedGrant?.updates.find((u: any) => u.uid === attestUID);
               if (alreadyExists) {
                 retries = 0;
-                changeStepperStep("indexed");
+                showSuccess("Update posted!");
                 afterSubmit?.();
                 toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
-                router.push(
-                  PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                    project.uid,
-                    grantToUpdate.uid,
-                    "milestones-and-updates"
-                  )
-                );
-                openShareDialog({
-                  modalShareText: `🎉 Update posted for your ${grant.details?.data?.title}!`,
-                  modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building—we’re here for it. 💪`,
-                  shareText: SHARE_TEXTS.GRANT_UPDATE(
-                    grant.details?.data?.title as string,
-                    project.uid,
-                    grantToUpdate.uid
-                  ),
-                });
-
-                router.refresh();
+                setTimeout(() => {
+                  closeProgressModal();
+                  router.push(
+                    PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                      project.uid,
+                      grantToUpdate.uid,
+                      "milestones-and-updates"
+                    )
+                  );
+                  openShareDialog({
+                    modalShareText: `🎉 Update posted for your ${grant.details?.data?.title}!`,
+                    modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building—we're here for it. 💪`,
+                    shareText: SHARE_TEXTS.GRANT_UPDATE(
+                      grant.details?.data?.title as string,
+                      project.uid,
+                      grantToUpdate.uid
+                    ),
+                  });
+                  router.refresh();
+                }, 1500);
               }
               retries -= 1;
               // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -195,6 +197,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         }
       });
     } catch (error) {
+      closeProgressModal();
       errorManager(
         `Error creating grant update for grant ${grantToUpdate.uid} from project ${project.uid}`,
         error,
@@ -213,8 +216,6 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
           error: MESSAGES.GRANT.GRANT_UPDATE.ERROR,
         }
       );
-    } finally {
-      setIsStepper(false);
     }
   };
 

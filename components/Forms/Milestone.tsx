@@ -25,7 +25,7 @@ import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProgressModal } from "@/store/modals/progressModal";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
@@ -106,7 +106,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const project = useProjectStore((state) => state.project);
   const projectUID = project?.uid;
 
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
 
   const router = useRouter();
 
@@ -144,7 +144,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         recipient: (recipient as Hex) || address,
         data: milestone,
       });
-      await milestoneToAttest.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await milestoneToAttest.attest(walletSigner as any).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
@@ -154,7 +154,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
             {}
           );
         }
-        changeStepperStep("indexing");
+        showLoading("Indexing milestone...");
         while (retries > 0) {
           await refreshProject()
             .then(async (fetchedProject) => {
@@ -164,17 +164,20 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
               );
               if (milestoneExists) {
                 retries = 0;
-                changeStepperStep("indexed");
+                showSuccess("Milestone created!");
                 toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
-                router.push(
-                  PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                    (fetchedProject?.details?.data.slug || fetchedProject?.uid) as string,
-                    fetchedGrant?.uid as string,
-                    "milestones-and-updates"
-                  )
-                );
-                router.refresh();
-                afterSubmit?.();
+                setTimeout(() => {
+                  closeProgressModal();
+                  router.push(
+                    PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                      (fetchedProject?.details?.data.slug || fetchedProject?.uid) as string,
+                      fetchedGrant?.uid as string,
+                      "milestones-and-updates"
+                    )
+                  );
+                  router.refresh();
+                  afterSubmit?.();
+                }, 1500);
               }
               retries -= 1;
               // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -189,6 +192,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
       });
     } catch (error) {
       console.error(error);
+      closeProgressModal();
       errorManager(
         MESSAGES.MILESTONES.CREATE.ERROR(data.title),
         error,
@@ -204,7 +208,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
       );
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 

@@ -24,7 +24,7 @@ import { useUnlinkedIndicators } from "@/hooks/useUnlinkedIndicators";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProgressModal } from "@/store/modals/progressModal";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import fetchData from "@/utilities/fetchData";
@@ -496,7 +496,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     setValue("outputs", outputsToSet);
   }, [editId, updateToEdit, indicatorsData, setValue]);
 
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
 
   const { openShareDialog } = useShareDialogStore();
 
@@ -616,13 +616,13 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
       const projectUpdate = new ProjectUpdate(projectUpdateData);
 
-      await projectUpdate.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await projectUpdate.attest(walletSigner as any).then(async (res) => {
         let retries = 1000;
-        changeStepperStep("indexing");
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, projectUpdate.chainID), "POST", {});
         }
+        showLoading("Indexing activity...");
         while (retries > 0) {
           await refreshProject()
             .then(async (fetchedProject) => {
@@ -631,19 +631,22 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
               if (alreadyExists) {
                 retries = 0;
-                changeStepperStep("indexed");
+                showSuccess("Activity posted!");
                 toast.success(MESSAGES.PROJECT_UPDATE_FORM.SUCCESS);
                 afterSubmit?.();
-                router.push(PAGES.PROJECT.UPDATES(projectSlug || projectUid));
-                router.refresh();
-                openShareDialog({
-                  modalShareText: `🎉 You just dropped an update for ${project?.details?.data?.title}!`,
-                  modalShareSecondText: `That's how progress gets done! Your update is now live onchain—one step closer to greatness. Keep the vibes high and the milestones rolling! 🚀🔥`,
-                  shareText: SHARE_TEXTS.PROJECT_ACTIVITY(
-                    project?.details?.data?.title as string,
-                    project?.uid as string
-                  ),
-                });
+                setTimeout(() => {
+                  closeProgressModal();
+                  router.push(PAGES.PROJECT.UPDATES(projectSlug || projectUid));
+                  router.refresh();
+                  openShareDialog({
+                    modalShareText: `🎉 You just dropped an update for ${project?.details?.data?.title}!`,
+                    modalShareSecondText: `That's how progress gets done! Your update is now live onchain—one step closer to greatness. Keep the vibes high and the milestones rolling! 🚀🔥`,
+                    shareText: SHARE_TEXTS.PROJECT_ACTIVITY(
+                      project?.details?.data?.title as string,
+                      project?.uid as string
+                    ),
+                  });
+                }, 1500);
               }
               retries -= 1;
               await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -655,6 +658,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         }
       });
     } catch (error) {
+      closeProgressModal();
       errorManager(
         `Error of user ${address} creating project activity for project ${project?.uid}`,
         error,
@@ -679,7 +683,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         }
       );
     } finally {
-      setIsStepper(false);
       setIsLoading(false);
     }
   };

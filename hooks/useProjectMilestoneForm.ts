@@ -8,7 +8,7 @@ import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProgressModal } from "@/store/modals/progressModal";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
@@ -42,7 +42,7 @@ export function useProjectMilestoneForm({
 
   const { gap } = useGap();
   const [isLoading, setIsLoading] = useState(false);
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
 
   const { refetch } = useQuery<IProjectMilestoneResponse[]>({
     queryKey: ["projectMilestones"],
@@ -81,53 +81,55 @@ export function useProjectMilestoneForm({
         text: sanitizeInput(data.text),
       };
 
-      await newMilestone
-        .attest(walletSigner as any, sanitizedData, changeStepperStep)
-        .then(async (res) => {
-          const _fetchedMilestones = null;
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
-              "POST",
-              {}
-            );
-          } else {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(newMilestone.uid, project?.chainID as number),
-              "POST",
-              {}
-            );
-          }
+      await newMilestone.attest(walletSigner as any, sanitizedData).then(async (res) => {
+        const _fetchedMilestones = null;
+        const txHash = res?.tx[0]?.hash;
+        if (txHash) {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
+            "POST",
+            {}
+          );
+        } else {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(newMilestone.uid, project?.chainID as number),
+            "POST",
+            {}
+          );
+        }
 
-          let retries = 1000;
-          changeStepperStep("indexing");
+        let retries = 1000;
+        showLoading("Indexing milestone...");
 
-          while (retries > 0) {
-            await getProjectObjectives(projectId)
-              .then(async (fetchedMilestones) => {
-                const attestUID = newMilestone.uid;
-                const alreadyExists = fetchedMilestones.find((m) => m.uid === attestUID);
+        while (retries > 0) {
+          await getProjectObjectives(projectId)
+            .then(async (fetchedMilestones) => {
+              const attestUID = newMilestone.uid;
+              const alreadyExists = fetchedMilestones.find((m) => m.uid === attestUID);
 
-                if (alreadyExists) {
-                  retries = 0;
-                  changeStepperStep("indexed");
-                  toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
-                  await refetch();
+              if (alreadyExists) {
+                retries = 0;
+                showSuccess("Milestone created!");
+                toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
+                await refetch();
+                setTimeout(() => {
+                  closeProgressModal();
                   onSuccess?.();
-                }
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              })
-              .catch(async () => {
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              });
-          }
-        });
+                }, 1500);
+              }
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            })
+            .catch(async () => {
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            });
+        }
+      });
     } catch (error) {
+      closeProgressModal();
       errorManager(MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR, error, {
         data,
         address,
@@ -136,7 +138,6 @@ export function useProjectMilestoneForm({
       toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR);
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 
@@ -179,54 +180,56 @@ export function useProjectMilestoneForm({
 
       milestoneInstance.setValues(sanitizedData);
 
-      await milestoneInstance
-        .attest(walletSigner as any, sanitizedData, changeStepperStep)
-        .then(async (res) => {
-          const _fetchedMilestones = null;
-          const txHash = res?.tx[0]?.hash;
+      await milestoneInstance.attest(walletSigner as any, sanitizedData).then(async (res) => {
+        const _fetchedMilestones = null;
+        const txHash = res?.tx[0]?.hash;
 
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
-              "POST",
-              {}
-            );
-          } else {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(milestoneInstance.uid, project?.chainID as number),
-              "POST",
-              {}
-            );
-          }
+        if (txHash) {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
+            "POST",
+            {}
+          );
+        } else {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(milestoneInstance.uid, project?.chainID as number),
+            "POST",
+            {}
+          );
+        }
 
-          let retries = 1000;
-          changeStepperStep("indexing");
+        let retries = 1000;
+        showLoading("Indexing milestone...");
 
-          while (retries > 0) {
-            await getProjectObjectives(projectId)
-              .then(async (fetchedMilestones) => {
-                const attestUID = milestoneInstance.uid;
-                const alreadyExists = fetchedMilestones.find((m) => m.uid === attestUID);
+        while (retries > 0) {
+          await getProjectObjectives(projectId)
+            .then(async (fetchedMilestones) => {
+              const attestUID = milestoneInstance.uid;
+              const alreadyExists = fetchedMilestones.find((m) => m.uid === attestUID);
 
-                if (alreadyExists) {
-                  retries = 0;
-                  changeStepperStep("indexed");
-                  toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.SUCCESS);
-                  await refetch();
+              if (alreadyExists) {
+                retries = 0;
+                showSuccess("Milestone updated!");
+                toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.SUCCESS);
+                await refetch();
+                setTimeout(() => {
+                  closeProgressModal();
                   onSuccess?.();
-                }
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              })
-              .catch(async () => {
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              });
-          }
-        });
+                }, 1500);
+              }
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            })
+            .catch(async () => {
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            });
+        }
+      });
     } catch (error) {
+      closeProgressModal();
       errorManager(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.ERROR, error, {
         data,
         address,
@@ -235,7 +238,6 @@ export function useProjectMilestoneForm({
       toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.ERROR);
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 

@@ -6,7 +6,7 @@ import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProgressModal } from "@/store/modals/progressModal";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -41,7 +41,7 @@ export function useGrantMilestoneForm({
 
   const { gap } = useGap();
   const [isLoading, setIsLoading] = useState(false);
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
   const router = useRouter();
 
   const createMilestoneForGrants = async (data: GrantMilestoneFormData, grantUIDs: string[]) => {
@@ -88,7 +88,7 @@ export function useGrantMilestoneForm({
         });
 
         // Attest the milestone
-        await milestoneToAttest.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+        await milestoneToAttest.attest(walletSigner as any).then(async (res) => {
           let retries = 1000;
           const txHash = res?.tx[0]?.hash;
 
@@ -100,7 +100,7 @@ export function useGrantMilestoneForm({
             );
           }
 
-          changeStepperStep("indexing");
+          showLoading("Indexing milestone...");
 
           while (retries > 0) {
             await refreshProject()
@@ -113,13 +113,16 @@ export function useGrantMilestoneForm({
 
                 if (milestoneExists) {
                   retries = 0;
-                  changeStepperStep("indexed");
+                  showSuccess("Milestone created!");
                   toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
 
                   // Only navigate on the last grant milestone creation
                   if (grantUID === grantUIDs[grantUIDs.length - 1] && destinationPath) {
-                    router.push(destinationPath);
-                    router.refresh();
+                    setTimeout(() => {
+                      closeProgressModal();
+                      router.push(destinationPath);
+                      router.refresh();
+                    }, 1500);
                   }
                 }
 
@@ -139,6 +142,7 @@ export function useGrantMilestoneForm({
       // Call onSuccess after all grant milestones are created
       onSuccess?.();
     } catch (error) {
+      closeProgressModal();
       errorManager(MESSAGES.MILESTONES.CREATE.ERROR(data.title), error, {
         data,
         address,
@@ -147,7 +151,6 @@ export function useGrantMilestoneForm({
       toast.error(MESSAGES.MILESTONES.CREATE.ERROR(data.title));
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 
