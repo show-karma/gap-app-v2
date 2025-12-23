@@ -136,9 +136,9 @@ const MetricCard = memo(({ metric, color }: { metric: CommunityMetric; color: st
   // Use extremely faint colors for raw data, bold colors for moving average
   // Raw data should be barely visible - use the lightest possible color
   const colors = useMemo(() => {
-    // Use "neutral" (extremely light gray, barely visible) for raw data
+    // Use "gray" (extremely light gray, barely visible) for raw data
     // Moving average uses the primary color (bold and prominent)
-    return ["neutral", color]; // [barely visible neutral for raw, bold primary color for moving average]
+    return ["gray", color]; // [barely visible gray for raw, bold primary color for moving average]
   }, [color]);
 
   // Get display label for y-axis and value formatting
@@ -172,9 +172,6 @@ const MetricCard = memo(({ metric, color }: { metric: CommunityMetric; color: st
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-gray-500 dark:text-gray-400 ml-2">{displayLabel}</p>
               </div>
-              {/* CSS opacity workaround for Tremor AreaChart - makes raw data (first series) 
-                  nearly invisible while keeping moving average prominent. 
-                  Note: This relies on Recharts DOM structure within Tremor. */}
               <div className="[&_svg_.recharts-area:first-child]:opacity-[0.12] [&_svg_.recharts-area:first-child_path]:opacity-[0.12] [&_svg_.recharts-area:first-child_polygon]:opacity-[0.12] [&_svg_.recharts-area:first-child_path]:fill-opacity-[0.12] [&_svg_.recharts-area:first-child_polygon]:fill-opacity-[0.12]">
                 <AreaChart
                   aria-label={`${metric.name} over time chart`}
@@ -242,7 +239,9 @@ export const CommunityMetricsSection = () => {
   const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeOption>("all");
 
   // Only render for Filecoin community
-  const isFilecoin = FILECOIN_COMMUNITY_SLUGS.includes((communityId as string)?.toLowerCase());
+  // Handle communityId type safety: useParams() returns string | string[] | undefined
+  const isFilecoin =
+    typeof communityId === "string" && FILECOIN_COMMUNITY_SLUGS.includes(communityId.toLowerCase());
 
   // Memoize date range calculation based on timeframe
   const dateRange = useMemo(() => {
