@@ -90,7 +90,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const { gap } = useGap();
-  const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
 
   const createCommunity = async (data: SchemaType) => {
@@ -118,7 +118,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         },
         schema: gapClient.findSchema("Community"),
         refUID: nullRef,
-        recipient: (address || "0x0000000000000000000000000000000000000000") as `0x${string}`,
+        recipient: (smartWalletAddress || address || "0x0000000000000000000000000000000000000000") as `0x${string}`,
         uid: nullRef,
       });
       if (await gapClient.fetch.slugExists(data.slug as string)) {

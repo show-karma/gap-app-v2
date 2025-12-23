@@ -35,7 +35,7 @@ export function useProjectMilestoneForm({
   const { address, chain } = useAccount();
   const { project } = useProjectStore();
   const { switchChainAsync } = useWallet();
-  const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const params = useParams();
   const projectId = params.projectId as string;
   const isEditing = !!previousMilestone;
@@ -74,7 +74,7 @@ export function useProjectMilestoneForm({
         }),
         schema: gapClient.findSchema("ProjectMilestone"),
         refUID: project?.uid,
-        recipient: (address as `0x${string}`) || "0x00",
+        recipient: (smartWalletAddress || address) as `0x${string}` || "0x00",
       });
       const sanitizedData = {
         title: sanitizeInput(data.title),

@@ -20,6 +20,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { Milestone } from "../Milestone";
 import { StepBlock } from "../StepBlock";
 import { useGrantFormStore } from "../store";
@@ -48,6 +49,7 @@ export const MilestonesScreen: React.FC = () => {
   const { address, isConnected, connector, chain } = useAccount();
   const { authenticated: isAuth } = useAuth();
   const { gap } = useGap();
+  const { smartWalletAddress } = useSetupChainAndWallet();
   const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
   const queryClient = useQueryClient();
 
@@ -118,7 +120,7 @@ export const MilestonesScreen: React.FC = () => {
         amount: formData.amount || "",
         milestones: milestonesData,
         community: formData.community || "",
-        recipient: formData.recipient || address,
+        recipient: formData.recipient || smartWalletAddress || address,
         startDate: formData.startDate ? formData.startDate.getTime() / 1000 : undefined,
         programId: formData.programId,
         questions: formData.questions || [],
@@ -132,7 +134,7 @@ export const MilestonesScreen: React.FC = () => {
         },
         refUID: selectedProject.uid,
         schema: gapClient.findSchema("Grant"),
-        recipient: (newGrantData.recipient as Hex) || address,
+        recipient: (newGrantData.recipient as Hex) || smartWalletAddress || address,
         uid: nullRef,
       });
 
@@ -142,7 +144,7 @@ export const MilestonesScreen: React.FC = () => {
         amount: newGrantData.amount || "",
         proposalURL: newGrantData.linkToProposal,
         assetAndChainId: ["0x0", 1],
-        payoutAddress: address,
+        payoutAddress: smartWalletAddress || address,
         questions: newGrantData.questions,
         description:
           newGrantData.description ||

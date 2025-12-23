@@ -30,6 +30,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { MultiSelect } from "../../../components/Utilities/MultiSelect";
 
 // Helper function to wait for a specified time
@@ -81,6 +82,7 @@ export const UnifiedMilestoneScreen = () => {
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
+  const { smartWalletAddress } = useSetupChainAndWallet();
   const { showLoading, showSuccess, close: closeSimpleProgressModal } = useProgressModal();
   const { projectId } = useParams();
   const { refetch } = useAllMilestones(projectId as string);
@@ -144,7 +146,7 @@ export const UnifiedMilestoneScreen = () => {
         }),
         schema: gapClient.findSchema("ProjectMilestone"),
         refUID: project.uid,
-        recipient: (address as `0x${string}`) || "0x00",
+        recipient: (smartWalletAddress || address) as `0x${string}` || "0x00",
       });
 
       const { walletClient, error } = await safeGetWalletClient(actualChainId);
@@ -287,7 +289,7 @@ export const UnifiedMilestoneScreen = () => {
           const milestoneToAttest = new Milestone({
             refUID: grant.uid,
             schema: gapClient.findSchema("Milestone"),
-            recipient: address as `0x${string}`,
+            recipient: (smartWalletAddress || address) as `0x${string}`,
             data: milestone,
           });
 
@@ -334,7 +336,7 @@ export const UnifiedMilestoneScreen = () => {
             // We'll use the first grant as reference, but it will be attested to all selected grants
             refUID: firstGrant.uid,
             schema: gapClient.findSchema("Milestone"),
-            recipient: address as `0x${string}`,
+            recipient: (smartWalletAddress || address) as `0x${string}`,
             data: milestone,
           });
 

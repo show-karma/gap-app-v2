@@ -49,7 +49,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   const { address } = useAccount();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [, changeTab] = useQueryState("tab");
@@ -102,8 +102,8 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
       });
       const newImpact = new ProjectImpact({
         data: dataToAttest,
-        recipient: address as `0x${string}`,
-        attester: address as `0x${string}`,
+        recipient: (smartWalletAddress || address) as `0x${string}`,
+        attester: (smartWalletAddress || address) as `0x${string}`,
         schema: gapClient!.findSchema("ProjectImpact"),
         refUID: project.uid,
         createdAt: new Date(),

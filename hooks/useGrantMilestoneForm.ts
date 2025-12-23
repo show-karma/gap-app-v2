@@ -36,7 +36,7 @@ export function useGrantMilestoneForm({
   const { address, chain } = useAccount();
   const { project, refreshProject } = useProjectStore();
   const { switchChainAsync } = useWallet();
-  const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const _isOwner = useOwnerStore((state) => state.isOwner);
 
   const { gap } = useGap();
@@ -83,7 +83,7 @@ export function useGrantMilestoneForm({
         const milestoneToAttest = new Milestone({
           refUID: grantUID as `0x${string}`,
           schema: gapClient.findSchema("Milestone"),
-          recipient: address as `0x${string}`,
+          recipient: (smartWalletAddress || address) as `0x${string}`,
           data: milestone,
         });
 

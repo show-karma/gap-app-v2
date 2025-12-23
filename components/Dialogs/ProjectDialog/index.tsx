@@ -253,7 +253,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const router = useRouter();
   const { gap } = useGap();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
-  const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
   const [walletSigner, setWalletSigner] = useState<any>(null);
   const [_faucetFunded, setFaucetFunded] = useState(false);
@@ -559,7 +559,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           project: true,
         },
         schema: gapClient.findSchema("Project"),
-        recipient: (data.recipient || address) as Hex,
+        recipient: (data.recipient || smartWalletAddress || address) as Hex,
         uid: nullRef,
       });
 
@@ -572,7 +572,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const { chainID, ...rest } = data;
       const newProjectInfo: NewProjectData = {
         ...rest,
-        members: [(data.recipient || address) as Hex],
+        members: [(data.recipient || smartWalletAddress || address) as Hex],
         links: [
           {
             type: "twitter",

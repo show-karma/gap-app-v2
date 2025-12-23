@@ -51,7 +51,7 @@ export const ProjectObjectiveForm = ({
   const { address, chain } = useAccount();
   const { project } = useProjectStore();
   const { switchChainAsync } = useWallet();
-  const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const params = useParams();
   const projectId = params.projectId as string;
   const router = useRouter();
@@ -104,7 +104,7 @@ export const ProjectObjectiveForm = ({
         }),
         schema: gapClient.findSchema("ProjectMilestone"),
         refUID: project?.uid,
-        recipient: (address || "0x0000000000000000000000000000000000000000") as `0x${string}`,
+        recipient: (smartWalletAddress || address || "0x0000000000000000000000000000000000000000") as `0x${string}`,
       });
       const sanitizedData = {
         title: sanitizeInput(data.title),

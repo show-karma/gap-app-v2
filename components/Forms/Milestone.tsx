@@ -100,7 +100,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const { gap } = useGap();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const project = useProjectStore((state) => state.project);
@@ -141,7 +141,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
       const milestoneToAttest = new Milestone({
         refUID: uid,
         schema: gapClient.findSchema("Milestone"),
-        recipient: (recipient as Hex) || address,
+        recipient: (recipient as Hex) || smartWalletAddress || address,
         data: milestone,
       });
       await milestoneToAttest.attest(walletSigner as any).then(async (res) => {

@@ -18,6 +18,7 @@ import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useGap } from "@/hooks/useGap";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useWallet } from "@/hooks/useWallet";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useProjectStore } from "@/store";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useProgressModal } from "@/store/modals/progressModal";
@@ -90,6 +91,7 @@ export const ContributorProfileDialog: FC = () => {
   const inviteCodeParam = searchParams?.get("invite-code");
   const { gap } = useGap();
   const { switchChainAsync } = useWallet();
+  const { smartWalletAddress } = useSetupChainAndWallet();
   const {
     register,
     setValue,
@@ -170,7 +172,7 @@ export const ContributorProfileDialog: FC = () => {
           twitter: data.twitter,
           farcaster: data.farcaster,
         },
-        recipient: address as `0x${string}`,
+        recipient: (smartWalletAddress || address) as `0x${string}`,
         schema: gapClient.findSchema("ContributorProfile"),
       });
       await contributorProfile.attest(walletSigner as any).then(async (res) => {

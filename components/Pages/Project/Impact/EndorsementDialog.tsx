@@ -33,7 +33,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
   const [comment, setComment] = useState<string>("");
   const project = useProjectStore((state) => state.project);
   const { switchChainAsync } = useWallet();
-  const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const { gap } = useGap();
   const { chain } = useAccount();
   const { address } = useAccount();
@@ -106,7 +106,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         }),
         schema: gapClient!.findSchema("ProjectEndorsement"),
         refUID: project?.uid,
-        recipient: address as `0x${string}`,
+        recipient: (smartWalletAddress || address) as `0x${string}`,
       });
       await endorsement.attest(walletSigner).then(async (res) => {
         const txHash = res?.tx[0]?.hash;
