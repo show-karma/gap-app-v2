@@ -6,6 +6,7 @@ import { Controller, type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import { KarmaProfileLinkInput } from "@/components/FundingPlatform/FormFields/KarmaProfileLinkInput";
 import { MilestoneInput } from "@/components/FundingPlatform/FormFields/MilestoneInput";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
@@ -301,6 +302,30 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
           }
 
           fieldSchema = milestoneArraySchema;
+          break;
+        }
+        case "karma_profile_link": {
+          // Karma profile link field stores a project UID (0x followed by 64 hex chars)
+          const uidPattern = /^0x[a-fA-F0-9]{64}$/;
+
+          if (field.required) {
+            fieldSchema = z
+              .string()
+              .min(1, `${field.label} is required`)
+              .regex(uidPattern, "Please select a valid project");
+          } else {
+            fieldSchema = z
+              .string()
+              .optional()
+              .or(z.literal(""))
+              .refine(
+                (val) => {
+                  if (!val || val === "") return true;
+                  return uidPattern.test(val);
+                },
+                { message: "Please select a valid project" }
+              );
+          }
           break;
         }
         default:
@@ -782,6 +807,18 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
       case "milestone":
         return (
           <MilestoneInput
+            key={index}
+            field={field}
+            control={control}
+            fieldKey={fieldKey}
+            error={error}
+            isLoading={isLoading || submitting}
+          />
+        );
+
+      case "karma_profile_link":
+        return (
+          <KarmaProfileLinkInput
             key={index}
             field={field}
             control={control}
