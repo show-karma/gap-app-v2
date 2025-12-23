@@ -140,6 +140,8 @@ export function isValidCommunityMetricsResponse(data: unknown): data is Communit
     typeof data === "object" &&
     "communityUID" in data &&
     typeof (data as { communityUID: unknown }).communityUID === "string" &&
+    "totalMetrics" in data &&
+    typeof (data as { totalMetrics: unknown }).totalMetrics === "number" &&
     "metrics" in data &&
     Array.isArray((data as { metrics: unknown }).metrics)
   );

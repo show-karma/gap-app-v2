@@ -15,7 +15,7 @@
 "use client";
 import { AreaChart, Card } from "@tremor/react";
 import { useParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { useCommunityMetrics } from "@/hooks/useCommunityMetrics";
 import type { CommunityMetric } from "@/types/community-metrics";
 import formatCurrency from "@/utilities/formatCurrency";
@@ -64,16 +64,14 @@ const ChartSkeleton = () => {
 };
 
 // Metric card component with memoized chart data
-const MetricCard = ({ metric, color }: { metric: CommunityMetric; color: string }) => {
+const MetricCard = memo(({ metric, color }: { metric: CommunityMetric; color: string }) => {
   // Get chart configuration for this metric
   const chartConfig = getChartConfigForMetric(metric.id);
 
   // Memoize expensive chart data calculation with chart config options
   // Apply 30-day moving average as per Filecoin Data Portal specification
   // NOTE: This uses prepareCommunityMetricsChartData which is specific to community metrics only
-  // Intentionally using specific metric properties (datapoints, name) as dependencies
-  // rather than the entire metric object to avoid unnecessary recalculations when
-  // the metric reference changes but the data hasn't
+  // Using full metric object for more reliable dependency tracking
   const chartData = useMemo(
     () =>
       prepareCommunityMetricsChartData(metric, {
@@ -81,7 +79,7 @@ const MetricCard = ({ metric, color }: { metric: CommunityMetric; color: string 
         applyMovingAverage: true, // All community metrics use 30-day moving average
         movingAverageWindow: 30,
       }),
-    [metric.datapoints, metric.name, chartConfig?.yTransform]
+    [metric, chartConfig?.yTransform]
   );
   const hasData = chartData.length > 0;
 
@@ -165,6 +163,11 @@ const MetricCard = ({ metric, color }: { metric: CommunityMetric; color: string 
           {/* Chart Card - matching AggregatedSegmentCard pattern */}
           {hasData ? (
             <Card className="bg-white dark:bg-zinc-700">
+              {/* Screen reader description for accessibility */}
+              <div id={`${metric.id}-chart-description`} className="sr-only">
+                Time series chart showing {metric.name}: {metric.description}. Displays both raw
+                data and 30-day moving average.
+              </div>
               {/* Y-axis label */}
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-gray-500 dark:text-gray-400 ml-2">{displayLabel}</p>
@@ -174,6 +177,8 @@ const MetricCard = ({ metric, color }: { metric: CommunityMetric; color: string 
                   Note: This relies on Recharts DOM structure within Tremor. */}
               <div className="[&_svg_.recharts-area:first-child]:opacity-[0.12] [&_svg_.recharts-area:first-child_path]:opacity-[0.12] [&_svg_.recharts-area:first-child_polygon]:opacity-[0.12] [&_svg_.recharts-area:first-child_path]:fill-opacity-[0.12] [&_svg_.recharts-area:first-child_polygon]:fill-opacity-[0.12]">
                 <AreaChart
+                  aria-label={`${metric.name} over time chart`}
+                  aria-describedby={`${metric.id}-chart-description`}
                   data={filteredChartData}
                   index="date"
                   categories={categories}
@@ -228,7 +233,9 @@ const MetricCard = ({ metric, color }: { metric: CommunityMetric; color: string 
       </div>
     </div>
   );
-};
+});
+
+MetricCard.displayName = "MetricCard";
 
 export const CommunityMetricsSection = () => {
   const { communityId } = useParams();

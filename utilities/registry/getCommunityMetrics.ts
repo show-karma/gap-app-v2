@@ -1,3 +1,4 @@
+import { isValidCommunityMetricsResponse } from "@/components/Pages/Communities/Impact/communityMetricsUtils";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { CommunityMetricsResponse } from "@/types/community-metrics";
 import fetchData from "../fetchData";
@@ -46,9 +47,15 @@ export async function getCommunityMetrics(
       return transformCommunityMetrics(data);
     }
 
-    // Fallback: try to use as-is (for backward compatibility during migration)
-    // This allows the old format to still work if needed
-    return data as CommunityMetricsResponse;
+    // Fallback: validate old format before using (for backward compatibility during migration)
+    // Use type guard instead of unsafe cast
+    if (isValidCommunityMetricsResponse(data)) {
+      return data;
+    }
+
+    // If data doesn't match expected format, log warning and return null
+    console.warn("Community metrics data does not match expected format. Returning null.", data);
+    return null;
   } catch (error) {
     console.error("Error fetching community metrics:", error);
     errorManager("Error fetching community metrics", error);
