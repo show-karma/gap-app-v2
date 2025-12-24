@@ -2,8 +2,10 @@ import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { UX_CONSTANTS } from "@/constants/donation";
+import type { SupportedToken } from "@/constants/supportedTokens";
 import { useDonationTransfer } from "@/hooks/useDonationTransfer";
 import { useDonationCart } from "@/store/donationCart";
+import { DonationType } from "@/types/donations";
 import {
   createCompletedDonations,
   type DonationPayment,
@@ -13,6 +15,8 @@ import {
   waitForWalletSync,
 } from "@/utilities/donations/donationExecution";
 import { parseDonationError } from "@/utilities/donations/errorMessages";
+import type { CreateDonationRequest } from "./types";
+import { useCreateDonation } from "./useCreateDonation";
 
 export function useDonationCheckout() {
   const { address, isConnected } = useAccount();
@@ -24,6 +28,8 @@ export function useDonationCheckout() {
     executionState,
     approvalInfo,
   } = useDonationTransfer();
+
+  const { mutateAsync: createDonation } = useCreateDonation();
 
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showStepsPreview, setShowStepsPreview] = useState(false);
@@ -122,9 +128,49 @@ export function useDonationCheckout() {
             donations: completedDonations,
             totalProjects: payments.length,
           };
+
           cartState.setLastCompletedSession(session);
-        } else {
-          console.warn("No completed donations to save in session");
+        }
+
+        // Persist successful donations to backend
+        const successfulResults = results.filter((result) => result.status === "success");
+
+        if (successfulResults.length > 0 && address) {
+          Promise.all(
+            successfulResults.map(async (result) => {
+              const payment = payments.find((p) => p.projectId === result.projectId);
+              if (!payment) return;
+
+              const donationRequest: CreateDonationRequest = {
+                uid: `${result.hash}-${payment.projectId}`,
+                chainID: payment.chainId,
+                donorAddress: address,
+                projectUID: payment.projectId,
+                payoutAddress: payoutAddresses[payment.projectId],
+                amount: payment.amount,
+                tokenSymbol: payment.token.symbol,
+                tokenAddress: payment.token.isNative ? undefined : payment.token.address,
+                transactionHash: result.hash,
+                donationType: DonationType.CRYPTO,
+                metadata: {
+                  tokenDecimals: payment.token.decimals,
+                  tokenName: payment.token.name,
+                  chainName: payment.token.chainName,
+                },
+              };
+
+              try {
+                await createDonation(donationRequest);
+              } catch (error) {
+                console.error(
+                  `Failed to persist donation to backend for project ${payment.projectId}:`,
+                  error
+                );
+              }
+            })
+          ).catch((error) => {
+            console.error("Error persisting donations to backend:", error);
+          });
         }
 
         // Handle post-execution

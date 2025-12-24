@@ -30,6 +30,13 @@ jest.mock("@/utilities/donations/errorMessages", () => ({
   })),
 }));
 
+jest.mock("@/hooks/donation/useCreateDonation", () => ({
+  useCreateDonation: jest.fn(() => ({
+    mutateAsync: jest.fn().mockResolvedValue({}),
+    isPending: false,
+  })),
+}));
+
 describe("useDonationCheckout", () => {
   const mockAddress = "0x1234567890123456789012345678901234567890";
 
