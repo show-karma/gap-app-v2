@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
+import { useStaff } from "@/hooks/useStaff";
+import { EnableDonationsButton } from "@/src/features/chain-payout-address";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useProgressModalStore } from "@/store/modals/progress";
 import formatCurrency from "@/utilities/formatCurrency";
 import { PAGES } from "@/utilities/pages";
@@ -53,8 +56,14 @@ export const ProjectNavigator = ({
 
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const { isStaff } = useStaff();
 
   const isAuthorized = isOwner || isProjectAdmin;
+  // Can set payout address: project member/owner/admin/staff
+  const canSetPayoutAddress =
+    isProjectOwner || isOwner || isProjectAdmin || isCommunityAdmin || isStaff;
   useEffect(() => {
     const mountTabs = () => {
       if (isAuthorized) {
@@ -101,6 +110,12 @@ export const ProjectNavigator = ({
         ))}
       </nav>
       <div className="flex flex-row gap-2 items-center mb-1">
+        {canSetPayoutAddress && (
+          <EnableDonationsButton
+            projectId={project?.uid || projectId}
+            currentAddresses={project?.chainPayoutAddress}
+          />
+        )}
         {isAuthorized && (
           <Button
             type="button"
