@@ -5,14 +5,6 @@ import { chainPayoutAddressService } from "../services/chain-payout-address.serv
 import type { ChainPayoutAddressMap } from "../types/chain-payout-address";
 
 /**
- * Query key factory for chain payout addresses
- */
-export const chainPayoutAddressKeys = {
-  all: ["chainPayoutAddress"] as const,
-  project: (projectId: string) => [...chainPayoutAddressKeys.all, projectId] as const,
-};
-
-/**
  * Hook for updating chain payout addresses
  *
  * @param projectId - Project UID or slug

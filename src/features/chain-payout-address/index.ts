@@ -4,12 +4,10 @@ export { SetChainPayoutAddressModal } from "./components/set-chain-payout-addres
 
 // Hooks
 export {
-  chainPayoutAddressKeys,
   getPayoutAddressForChain,
   hasConfiguredPayoutAddresses,
   useUpdateChainPayoutAddress,
 } from "./hooks/use-chain-payout-address";
-export { useChainPayoutAddressManager } from "./hooks/use-chain-payout-address-manager";
 
 // Services
 export { chainPayoutAddressService } from "./services/chain-payout-address.service";

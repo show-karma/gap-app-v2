@@ -10,6 +10,7 @@ import { isAddress } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
 import { useProjectStore } from "@/store";
+import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { PAYOUT_CHAINS } from "@/utilities/network";
 import {
   hasConfiguredPayoutAddresses,
@@ -186,25 +187,9 @@ export function SetChainPayoutAddressModal({
   // Check if form has any validation errors
   const hasErrors = Object.keys(validationErrors).length > 0;
 
-  // Get chain icon URL from /images/networks/
+  // Get chain icon URL using the shared utility with fallback
   const getChainIconUrl = (chainId: number): string => {
-    const chainIcons: Record<number, string> = {
-      1: "/images/networks/ethereum.svg",
-      10: "/images/networks/optimism.svg",
-      137: "/images/networks/polygon.svg",
-      42161: "/images/networks/arbitrum-one.svg",
-      8453: "/images/networks/base.svg",
-      42220: "/images/networks/celo.svg",
-      1329: "/images/networks/sei.svg",
-      1135: "/images/networks/lisk.svg",
-      534352: "/images/networks/scroll.svg",
-      // Testnets (use mainnet icons as fallback)
-      11155111: "/images/networks/ethereum.svg", // Sepolia
-      11155420: "/images/networks/optimism.svg", // Optimism Sepolia
-      84532: "/images/networks/base.svg", // Base Sepolia
-    };
-
-    return chainIcons[chainId] || "/images/networks/ethereum.svg";
+    return chainImgDictionary(chainId) || "/images/networks/ethereum.svg";
   };
 
   return (
@@ -252,7 +237,11 @@ export function SetChainPayoutAddressModal({
 
                 {/* Error message - displayed at top */}
                 {error && (
-                  <div className="mb-4 p-3 rounded-lg bg-red-600 border border-red-700">
+                  <div
+                    className="mb-4 p-3 rounded-lg bg-red-600 border border-red-700"
+                    role="alert"
+                    aria-live="polite"
+                  >
                     <p className="text-white text-sm font-medium">{error}</p>
                   </div>
                 )}
@@ -291,18 +280,31 @@ export function SetChainPayoutAddressModal({
                         <div className="flex-1 flex items-center gap-2">
                           <input
                             type="text"
+                            id={`address-${entry.chainId}`}
                             value={entry.address}
                             onChange={(e) => handleAddressChange(entry.chainId, e.target.value)}
                             className="flex-1 text-sm rounded-md px-3 py-2 text-gray-700 dark:text-gray-200 bg-white dark:bg-zinc-600 border border-gray-300 dark:border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             placeholder="0x..."
+                            aria-label={`Payout address for ${entry.chainName}`}
+                            aria-describedby={
+                              validationErrors[entry.chainId] ? `error-${entry.chainId}` : undefined
+                            }
+                            aria-invalid={!!validationErrors[entry.chainId]}
                           />
                           {entry.address.trim() && !validationErrors[entry.chainId] && (
-                            <CheckIcon className="h-5 w-5 text-green-500 flex-shrink-0" />
+                            <CheckIcon
+                              className="h-5 w-5 text-green-500 flex-shrink-0"
+                              aria-hidden="true"
+                            />
                           )}
                         </div>
                       </div>
                       {validationErrors[entry.chainId] && (
-                        <p className="text-red-500 text-xs ml-2">
+                        <p
+                          id={`error-${entry.chainId}`}
+                          className="text-red-500 text-xs ml-2"
+                          role="alert"
+                        >
                           {validationErrors[entry.chainId]}
                         </p>
                       )}
