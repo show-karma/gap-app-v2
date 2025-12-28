@@ -3,6 +3,8 @@ import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import type { Hex } from "viem";
+import { ProminentDonateButton } from "@/components/Donation/SingleProject/ProminentDonateButton";
 import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
