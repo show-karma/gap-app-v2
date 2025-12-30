@@ -13,18 +13,17 @@ import {
 import { cn } from "@/utilities/tailwind";
 import {
   FUNDING_MAP_CATEGORIES,
-  FUNDING_MAP_ECOSYSTEMS,
   FUNDING_MAP_GRANT_TYPES,
   FUNDING_MAP_STATUSES,
 } from "../constants/filter-options";
 import { useFundingFilters } from "../hooks/use-funding-filters";
+import { OnKarmaBadge } from "./on-karma-badge";
 import { OrganizationFilter } from "./organization-filter";
 
 export function FundingMapFilters() {
   const {
     filters,
     setStatus,
-    setEcosystems,
     setCategories,
     setGrantTypes,
     setOnlyOnKarma,
@@ -34,7 +33,6 @@ export function FundingMapFilters() {
 
   const hasActiveFilters =
     filters.status !== "Active" ||
-    filters.ecosystems.length > 0 ||
     filters.categories.length > 0 ||
     filters.grantTypes.length > 0 ||
     !filters.onlyOnKarma ||
@@ -46,9 +44,8 @@ export function FundingMapFilters() {
         <Badge
           variant="outline"
           className={cn(
-            "flex cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-            filters.onlyOnKarma &&
-              "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-800"
+            "cursor-pointer gap-1.5 rounded-full pr-1 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            filters.onlyOnKarma
           )}
           tabIndex={0}
           role="button"
@@ -72,7 +69,8 @@ export function FundingMapFilters() {
           >
             {filters.onlyOnKarma && <Check className="h-3 w-3 text-white" />}
           </div>
-          <span className="text-xs font-medium text-foreground">Only on Karma</span>
+          <span className="text-xs font-medium text-foreground">On Karma</span>
+          <OnKarmaBadge />
         </Badge>
 
         <Select value={filters.status} onValueChange={setStatus}>
@@ -82,7 +80,11 @@ export function FundingMapFilters() {
           </SelectTrigger>
           <SelectContent>
             {FUNDING_MAP_STATUSES.map((status) => (
-              <SelectItem key={status} value={status}>
+              <SelectItem
+                key={status}
+                value={status}
+                className="hover:bg-accent hover:text-accent-foreground"
+              >
                 {status}
               </SelectItem>
             ))}
@@ -90,24 +92,6 @@ export function FundingMapFilters() {
         </Select>
 
         <OrganizationFilter value={filters.organizationFilter} onChange={setOrganizationFilter} />
-
-        <Select
-          value={filters.ecosystems[0] || "any"}
-          onValueChange={(value) => setEcosystems(value === "any" ? [] : [value])}
-        >
-          <SelectTrigger className="h-8 w-auto gap-1 rounded-lg px-2.5 text-sm shadow-sm">
-            <span className="text-muted-foreground">Ecosystem:</span>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="max-h-60">
-            <SelectItem value="any">Any</SelectItem>
-            {FUNDING_MAP_ECOSYSTEMS.map((ecosystem) => (
-              <SelectItem key={ecosystem} value={ecosystem}>
-                {ecosystem}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
 
         <Select
           value={filters.categories[0] || "any"}
@@ -118,9 +102,15 @@ export function FundingMapFilters() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="any">Any</SelectItem>
+            <SelectItem value="any" className="hover:bg-accent hover:text-accent-foreground">
+              Any
+            </SelectItem>
             {FUNDING_MAP_CATEGORIES.map((category) => (
-              <SelectItem key={category} value={category}>
+              <SelectItem
+                key={category}
+                value={category}
+                className="hover:bg-accent hover:text-accent-foreground"
+              >
                 {category}
               </SelectItem>
             ))}
@@ -136,9 +126,15 @@ export function FundingMapFilters() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="any">Any</SelectItem>
+            <SelectItem value="any" className="hover:bg-accent hover:text-accent-foreground">
+              Any
+            </SelectItem>
             {FUNDING_MAP_GRANT_TYPES.map((type) => (
-              <SelectItem key={type} value={type}>
+              <SelectItem
+                key={type}
+                value={type}
+                className="hover:bg-accent hover:text-accent-foreground"
+              >
                 {type}
               </SelectItem>
             ))}

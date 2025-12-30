@@ -8,6 +8,7 @@ import { cn } from "@/utilities/tailwind";
 import type { FundingProgramResponse } from "../types/funding-program";
 import { isValidImageUrl } from "../utils/image-utils";
 import { FundingMapDescription } from "./funding-map-description";
+import { OnKarmaBadge } from "./on-karma-badge";
 
 interface FundingMapCardProps {
   program: FundingProgramResponse;
@@ -59,7 +60,7 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
   return (
     <Card
       className={cn(
-        "flex flex-col gap-4 border-border p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "flex flex-col gap-4 border-border p-5 shadow-sm transition-shadow hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         isPendingReview(program) && "ring-1 ring-gray-200"
       )}
       onClick={onClick}
@@ -70,38 +71,18 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
     >
       <div className="flex flex-col gap-3">
         <div className="relative flex w-full flex-row items-start justify-between gap-2">
-          <div className="flex flex-wrap gap-1 w-[calc(100%-96px)]">
-            {grantTypes
-              ?.filter((type): type is string => typeof type === "string")
-              .map((type) => (
-                <Badge
-                  key={type}
-                  variant="secondary"
-                  className="rounded-lg px-2 py-0.5 text-xs font-medium"
-                >
-                  {type}
-                </Badge>
-              ))}
-          </div>
-          {isOnKarma && (
-            <Badge
-              variant="secondary"
-              className="absolute top-0 right-0 flex flex-row w-max min-w-max items-center gap-1 rounded-lg bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/50"
-            >
-              <BadgeCheck className="h-3 w-3" />
-              On Karma
-            </Badge>
+          {endsAt && (
+            <div className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground">
+              <Calendar className="h-3 w-3" />
+              <span>
+                {hasEnded ? "Ended" : "Ends"} {endsAt}
+              </span>
+            </div>
           )}
+          {isOnKarma && <OnKarmaBadge className="flex-shrink-0" />}
         </div>
 
-        <h3
-          className={cn(
-            "text-lg font-semibold text-foreground",
-            !grantTypes || !grantTypes?.length ? "-mt-4" : ""
-          )}
-        >
-          {title}
-        </h3>
+        <h3 className="text-lg font-semibold text-foreground">{title}</h3>
 
         {(validCommunities.length > 0 || fallbackName) && (
           <div className="flex items-center gap-1.5">
@@ -150,14 +131,22 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
             ))}
         </div>
 
-        {endsAt && (
-          <div className="flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 w-fit">
-            <Calendar className="h-3 w-3" />
-            <span>
-              {hasEnded ? "Ended" : "Ends"} {endsAt}
-            </span>
+        <div className="relative flex-1 overflow-hidden">
+          <div className="flex flex-nowrap gap-1 overflow-x-auto scrollbar-hide">
+            {grantTypes
+              ?.filter((type): type is string => typeof type === "string")
+              .map((type) => (
+                <Badge
+                  key={type}
+                  variant="secondary"
+                  className="rounded-lg px-2 py-0.5 text-xs font-medium whitespace-nowrap"
+                >
+                  {type}
+                </Badge>
+              ))}
           </div>
-        )}
+          <div className="absolute top-0 right-0 h-full w-8 bg-gradient-to-l from-white dark:from-zinc-950 to-transparent pointer-events-none" />
+        </div>
       </div>
     </Card>
   );

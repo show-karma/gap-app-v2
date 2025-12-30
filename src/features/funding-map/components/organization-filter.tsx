@@ -73,11 +73,12 @@ export function OrganizationFilter({ value, onChange }: OrganizationFilterProps)
         className={cn(
           "h-8 flex items-center gap-1 rounded-lg px-2.5 text-sm shadow-sm",
           "bg-background border border-input hover:bg-accent hover:text-accent-foreground",
-          "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+          "focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0",
+          "active:outline-none",
           "disabled:cursor-not-allowed disabled:opacity-50"
         )}
       >
-        <span className="text-muted-foreground">Organization:</span>
+        <span className="text-muted-foreground">Ecosystem:</span>
         <span className="max-w-[150px] truncate">
           {isLoading ? "Loading..." : selectedOption?.name || "Any"}
         </span>
@@ -91,12 +92,12 @@ export function OrganizationFilter({ value, onChange }: OrganizationFilterProps)
         >
           <Command className="w-full">
             <CommandInput
-              placeholder="Search organization..."
-              className="h-9 w-full border-b border-border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
+              placeholder="Search ecosystem..."
+              className="h-9 w-full rounded-md border-0 text-sm focus:ring-0 focus-visible:ring-0 focus:border-0 focus-visible:border-0"
             />
             <CommandList className="max-h-[300px] overflow-y-auto p-1">
               <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
-                No organization found.
+                No ecosystem found.
               </CommandEmpty>
               <CommandGroup>
                 <CommandItem
