@@ -60,7 +60,7 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
   return (
     <Card
       className={cn(
-        "flex flex-col gap-4 border-border p-5 shadow-sm transition-shadow hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "flex flex-col justify-between border-border p-5 shadow-sm transition-shadow hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         isPendingReview(program) && "ring-1 ring-gray-200"
       )}
       onClick={onClick}
@@ -69,20 +69,21 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
       role="button"
       aria-label={`View funding program: ${title ?? "Untitled program"}`}
     >
-      <div className="flex flex-col gap-3">
-        <div className="relative flex w-full flex-row items-start justify-between gap-2">
-          {endsAt && (
-            <div className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground">
-              <Calendar className="h-3 w-3" />
-              <span>
-                {hasEnded ? "Ended" : "Ends"} {endsAt}
-              </span>
-            </div>
-          )}
-          {isOnKarma && <OnKarmaBadge className="flex-shrink-0" />}
+      <div className="flex flex-col gap-2 mb-4">
+        <div className="flex w-full flex-row items-start justify-between gap-2">
+          <div className="flex flex-col items-start gap-2">
+            {endsAt && (
+              <div className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium">
+                <Calendar className="h-3 w-3" />
+                <span>
+                  {hasEnded ? "Ended" : "Ends"} {endsAt}
+                </span>
+              </div>
+            )}
+            <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+          </div>
+          {isOnKarma && <OnKarmaBadge className="flex-shrink-0" showTooltip={true} />}
         </div>
-
-        <h3 className="text-lg font-semibold text-foreground">{title}</h3>
 
         {(validCommunities.length > 0 || fallbackName) && (
           <div className="flex items-center gap-1.5">
