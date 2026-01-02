@@ -34,8 +34,8 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
   const description = metadata?.description;
   const grantTypes = metadata?.grantTypes;
   const organizations = metadata?.organizations;
-  const startsAt = formatDate(metadata?.startsAt, "UTC", "MMM D, YYYY");
   const endsAt = formatDate(metadata?.endsAt, "UTC", "MMM D, YYYY");
+  const hasEnded = metadata?.endsAt && new Date(metadata.endsAt) < new Date();
 
   // Check if we have valid communities with names
   const validCommunities = communities?.filter((c) => c.name && c.name.trim().length > 0) ?? [];
@@ -150,16 +150,12 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
             ))}
         </div>
 
-        {(startsAt || endsAt) && (
+        {endsAt && (
           <div className="flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 w-fit">
             <Calendar className="h-3 w-3" />
-            {startsAt && endsAt ? (
-              <span>
-                {startsAt} - {endsAt}
-              </span>
-            ) : (
-              <span>{startsAt || endsAt}</span>
-            )}
+            <span>
+              {hasEnded ? "Ended" : "Ends"} {endsAt}
+            </span>
           </div>
         )}
       </div>
