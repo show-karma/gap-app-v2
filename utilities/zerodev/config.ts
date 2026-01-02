@@ -1,4 +1,4 @@
-import { getEntryPoint, KERNEL_V3_3 } from "@zerodev/sdk/constants";
+import { getEntryPoint, KERNEL_V3_3, KernelVersionToAddressesMap } from "@zerodev/sdk/constants";
 import type { Chain } from "viem";
 import {
   arbitrum,
@@ -14,9 +14,10 @@ import {
   sei,
   sepolia,
 } from "viem/chains";
+import { envVars } from "../enviromentVars";
 
 // ZeroDev Project ID from environment
-export const ZERODEV_PROJECT_ID = process.env.NEXT_PUBLIC_ZERODEV_PROJECT_ID || "";
+export const ZERODEV_PROJECT_ID = envVars.ZERODEV_PROJECT_ID || "";
 
 // EntryPoint v0.7 - using ZeroDev's helper to get the proper format
 export const ENTRYPOINT = getEntryPoint("0.7");
@@ -139,7 +140,7 @@ export function getZeroDevConfig(chainId: number): ZeroDevChainConfig | null {
  * This is the address of the kernel contract that the EOA will delegate to.
  */
 export function getKernelImplementationAddress(): `0x${string}` {
-  // Kernel v3.3 implementation address (same across most EVM chains)
-  // This is the deployed Kernel contract that EOAs delegate to via EIP-7702
-  return "0xd3082872F8B06073A021b4602e022d5A070d7cfC" as `0x${string}`;
+  // Get the implementation address from ZeroDev SDK for the kernel version we're using
+  const kernelAddresses = KernelVersionToAddressesMap[KERNEL_VERSION];
+  return kernelAddresses.accountImplementationAddress as `0x${string}`;
 }
