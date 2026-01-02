@@ -1,5 +1,11 @@
 type TimeZoneFormat = "UTC" | "ISO" | "local";
-type DateFormatOption = "MMM D, YYYY" | "h:mm a" | "DDD, MMM DD" | "datetime-local";
+type DateFormatOption =
+  | "MMM D, YYYY"
+  | "MMM D, YYYY, h:mm a UTC"
+  | "h:mm a"
+  | "DDD, MMM DD"
+  | "datetime-local"
+  | "YYYY-MM-DD, HH:mm UTC";
 
 /**
  * Normalizes a Unix timestamp to milliseconds.
@@ -72,6 +78,14 @@ export const formatDate = (
     return `${monthNames[month]} ${day}, ${year}`;
   }
 
+  if (formatOption === "MMM D, YYYY, h:mm a UTC") {
+    const utcHours = d.getUTCHours();
+    const utcMinutes = d.getUTCMinutes();
+    const ampm = utcHours >= 12 ? "pm" : "am";
+    const formattedHours = utcHours % 12 || 12;
+    return `${monthNames[d.getUTCMonth()]} ${d.getUTCDate()} ${d.getUTCFullYear()}, ${formattedHours}:${pad(utcMinutes)} ${ampm} UTC`;
+  }
+
   if (formatOption === "DDD, MMM DD") {
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const dayName = days[dayOfWeek];
@@ -99,6 +113,15 @@ export const formatDate = (
 
   if (formatOption === "datetime-local") {
     return `${year}-${pad(month + 1)}-${pad(day)}T${pad(hours)}:${pad(minutes)}`;
+  }
+
+  if (formatOption === "YYYY-MM-DD, HH:mm UTC") {
+    const utcYear = d.getUTCFullYear();
+    const utcMonth = d.getUTCMonth();
+    const utcDay = d.getUTCDate();
+    const utcHours = d.getUTCHours();
+    const utcMinutes = d.getUTCMinutes();
+    return `${utcYear}-${pad(utcMonth + 1)}-${pad(utcDay)}, ${pad(utcHours)}:${pad(utcMinutes)} UTC`;
   }
 
   return d.toISOString();

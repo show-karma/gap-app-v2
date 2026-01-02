@@ -4,6 +4,7 @@ import {
   BadgeCheck,
   Bug,
   Building2,
+  Calendar,
   ChevronDown,
   ChevronRight,
   ExternalLink,
@@ -37,6 +38,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { envVars } from "@/utilities/enviromentVars";
 import formatCurrency from "@/utilities/formatCurrency";
+import { formatDate } from "@/utilities/formatDate";
 import { FUNDING_PLATFORM_PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { NETWORK_IMAGES } from "../constants/filter-options";
@@ -352,6 +354,9 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
   const validCommunities = communities?.filter((c) => c.name && c.name.trim().length > 0) ?? [];
   const fallbackName = organizations?.join(", ") ?? "";
 
+  const startsAt = formatDate(metadata?.startsAt, "UTC", "MMM D, YYYY, h:mm a UTC");
+  const endsAt = formatDate(metadata?.endsAt, "UTC", "MMM D, YYYY, h:mm a UTC");
+
   // Only used for non-Karma programs as fallback
   const fallbackApplyUrl = normalizeUrl(metadata?.socialLinks?.grantsSite);
   const isActive = isProgramActive(program);
@@ -432,6 +437,22 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
                   <span className="text-sm font-medium text-foreground">{fallbackName}</span>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Program Dates */}
+          {(startsAt || endsAt) && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              {startsAt && endsAt ? (
+                <span>
+                  {startsAt} - {endsAt}
+                </span>
+              ) : startsAt ? (
+                <span>Starts: {startsAt}</span>
+              ) : (
+                <span>Ends: {endsAt}</span>
+              )}
             </div>
           )}
         </DialogHeader>

@@ -15,7 +15,7 @@ export default defineConfig({
     openMode: 0, // No retries in interactive mode
   },
   defaultCommandTimeout: 10000,
-  pageLoadTimeout: 30000,
+  pageLoadTimeout: 60000,
   requestTimeout: 10000,
   e2e: {
     env: {

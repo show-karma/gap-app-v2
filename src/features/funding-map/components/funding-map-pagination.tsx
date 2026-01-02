@@ -11,7 +11,7 @@ interface FundingMapPaginationProps {
 }
 
 export function FundingMapPagination({ totalCount }: FundingMapPaginationProps) {
-  const { filters, setPage } = useFundingFilters();
+  const { filters, setPage, setOnlyOnKarma } = useFundingFilters();
   const currentPage = filters.page;
   const totalPages = Math.ceil(totalCount / FUNDING_MAP_PAGE_SIZE);
 
@@ -26,19 +26,25 @@ export function FundingMapPagination({ totalCount }: FundingMapPaginationProps) 
 
   if (totalPages <= 1) {
     return (
-      <div className="flex w-full items-center justify-center py-12">
-        <p className="text-sm font-medium text-muted-foreground">
-          Showing {totalCount} result{totalCount !== 1 ? "s" : ""}
-        </p>
+      <div className="flex w-full flex-col items-center justify-center gap-2 py-12">
+        <ResultInfo
+          onlyOnKarma={filters.onlyOnKarma}
+          onShowAll={() => setOnlyOnKarma(false)}
+          resultText={`Showing ${totalCount} result${totalCount !== 1 ? "s" : ""}`}
+        />
       </div>
     );
   }
 
   return (
     <div className="flex w-full items-center justify-between py-12 max-md:flex-col-reverse max-md:gap-4">
-      <p className="text-sm font-medium text-muted-foreground">
-        Showing {startResult}-{endResult} of {totalCount} results
-      </p>
+      <div className="flex flex-col gap-1 max-md:items-center">
+        <ResultInfo
+          onlyOnKarma={filters.onlyOnKarma}
+          onShowAll={() => setOnlyOnKarma(false)}
+          resultText={`Showing ${startResult}-${endResult} of ${totalCount} results`}
+        />
+      </div>
 
       <div className="flex items-center gap-1">
         <Button
@@ -111,4 +117,28 @@ function PaginationButton({
       {page}
     </Button>
   );
+}
+
+function ResultInfo({
+  onlyOnKarma,
+  onShowAll,
+  resultText,
+}: {
+  onlyOnKarma: boolean;
+  onShowAll: () => void;
+  resultText: string;
+}) {
+  if (onlyOnKarma) {
+    return (
+      <button
+        type="button"
+        className="text-sm font-medium text-primary hover:underline"
+        onClick={onShowAll}
+      >
+        Show all programs
+      </button>
+    );
+  }
+
+  return <p className="text-sm font-medium text-muted-foreground">{resultText}</p>;
 }

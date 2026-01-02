@@ -465,7 +465,9 @@ export default function ReviewerFundingPlatformPage() {
                     <CalendarIcon className="w-5 h-5 text-orange-700 dark:text-orange-300" />
                     <span className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
                       Deadline:{" "}
-                      {program.metadata?.endsAt ? formatDate(program.metadata.endsAt) : "N/A"}
+                      {program.metadata?.endsAt
+                        ? formatDate(program.metadata.endsAt, "UTC", "YYYY-MM-DD, HH:mm UTC")
+                        : "N/A"}
                     </span>
                   </div>
 
