@@ -26,6 +26,42 @@ export const INDEXER = {
       GET_BY_ID: (programId: string) => `/v2/program-registry/${programId}`,
       SEARCH: "/v2/program-registry/search",
       FILTERS: "/v2/program-registry/filters",
+      GET_ALL: (params?: {
+        page?: number;
+        limit?: number;
+        isValid?: "true" | "false" | "null" | "accepted" | "rejected" | "pending" | "all";
+        offChain?: boolean;
+        chainID?: number;
+        name?: string;
+        networks?: string;
+        ecosystems?: string;
+        grantTypes?: string;
+        sortField?: "createdAt" | "updatedAt" | "name" | "programId";
+        sortOrder?: "asc" | "desc";
+        owners?: string;
+      }) => {
+        const queryParams = new URLSearchParams();
+        if (params?.page) queryParams.set("page", params.page.toString());
+        if (params?.limit) queryParams.set("limit", params.limit.toString());
+        if (params?.isValid) queryParams.set("isValid", params.isValid);
+        if (params?.offChain !== undefined) queryParams.set("offChain", params.offChain.toString());
+        if (params?.chainID) queryParams.set("chainID", params.chainID.toString());
+        if (params?.name) queryParams.set("name", params.name);
+        if (params?.networks) queryParams.set("networks", params.networks);
+        if (params?.ecosystems) queryParams.set("ecosystems", params.ecosystems);
+        if (params?.grantTypes) queryParams.set("grantTypes", params.grantTypes);
+        if (params?.sortField) queryParams.set("sortField", params.sortField);
+        if (params?.sortOrder) queryParams.set("sortOrder", params.sortOrder);
+        if (params?.owners) queryParams.set("owners", params.owners);
+        const query = queryParams.toString();
+        return `/v2/program-registry${query ? `?${query}` : ""}`;
+      },
+      GET_PENDING: (limit?: number, offset?: number) => {
+        const params = new URLSearchParams();
+        if (limit) params.set("limit", limit.toString());
+        if (offset) params.set("offset", offset.toString());
+        return `/v2/program-registry/pending${params.toString() ? `?${params.toString()}` : ""}`;
+      },
     },
   },
   PROJECTS: {
