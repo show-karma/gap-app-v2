@@ -9,6 +9,18 @@ interface FieldTypeSelectorProps {
 
 export const fieldTypes = [
   {
+    type: "email" as const,
+    label: "Email",
+    icon: "📧",
+    description: "Email address input",
+  },
+  {
+    type: "karma_profile_link" as const,
+    label: "Karma profile link",
+    icon: "🔍",
+    description: "Search and select an existing Karma project profile",
+  },
+  {
     type: "text" as const,
     label: "Text Input",
     icon: "📝",
@@ -45,12 +57,6 @@ export const fieldTypes = [
     description: "Numeric input",
   },
   {
-    type: "email" as const,
-    label: "Email",
-    icon: "📧",
-    description: "Email address input",
-  },
-  {
     type: "url" as const,
     label: "URL",
     icon: "🔗",
@@ -68,12 +74,6 @@ export const fieldTypes = [
     icon: "🎯",
     description:
       "Dynamic milestone management with title, description, due dates, funding requested, and completion criteria",
-  },
-  {
-    type: "karma_profile_link" as const,
-    label: "Karma profile link",
-    icon: "🔍",
-    description: "Search and select an existing Karma project profile",
   },
 ];
 
