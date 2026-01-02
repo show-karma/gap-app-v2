@@ -18,9 +18,8 @@ import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useStepper } from "@/store/modals/txStepper";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import type { Grant } from "@/types/v2/grant";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { isFundingProgramGrant } from "@/utilities/funding-programs";
 import { INDEXER } from "@/utilities/indexer";
@@ -28,7 +27,6 @@ import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { getCommunityDetails } from "@/utilities/queries/v2/community";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { FundingProgramFields } from "./CompletionRequirements/FundingProgramFields";
 import { TrackExplanations } from "./CompletionRequirements/TrackExplanations";
 
@@ -61,6 +59,8 @@ export const GrantCompletion: FC = () => {
 
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
+  const refreshProject = useProjectStore((state) => state.refreshProject);
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
 
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -126,57 +126,23 @@ export const GrantCompletion: FC = () => {
       trackExplanations?: Array<{ trackUID: string; explanation: string }>;
     }
   ) => {
-    let gapClient = gap;
-    let actualChainId: number;
+    // Setup chain and get gasless signer
+    const setup = await setupChainAndWallet({
+      targetChainId: grantToComplete.chainID,
+      currentChainId: chain?.id,
+      switchChainAsync,
+    });
 
-    // Step 1: Ensure correct chain
-    try {
-      const {
-        success,
-        chainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
-        targetChainId: grantToComplete.chainID,
-        currentChainId: chain?.id,
-        switchChainAsync,
-      });
-
-      if (!success) {
-        toast.error("Please switch to the correct network and try again");
-        setIsLoading(false);
-        return;
-      }
-
-      actualChainId = chainId;
-      gapClient = newGapClient;
-    } catch (error) {
-      errorManager("Failed to switch to correct chain", error, {
-        targetChainId: grantToComplete.chainID,
-        currentChainId: chain?.id,
-      });
-      toast.error("Failed to switch networks. Please switch manually in your wallet.");
+    if (!setup) {
+      toast.error("Failed to setup chain and wallet");
       setIsLoading(false);
       return;
     }
 
-    // Step 2: Connect wallet
-    let walletClient: any = null;
-    try {
-      const result = await safeGetWalletClient(actualChainId);
-      if (result.error || !result.walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: result.error });
-      }
-      walletClient = result.walletClient;
-    } catch (error) {
-      errorManager("Wallet connection failed", error, { chainId: actualChainId });
-      toast.error("Failed to connect wallet. Please check that your wallet is unlocked.");
-      setIsLoading(false);
-      return;
-    }
+    const { walletSigner, gapClient, chainId: actualChainId } = setup;
 
-    // Step 3: Execute transaction
+    // Execute transaction
     try {
-      const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) {
         const errorMsg =

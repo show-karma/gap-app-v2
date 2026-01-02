@@ -16,7 +16,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { searchProjects } from "@/services/project-search.service";
 import { useProjectStore } from "@/store";
 import { useMergeModalStore } from "@/store/modals/merge";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProgressModal } from "@/store/modals/progressModal";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
@@ -173,7 +173,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const _setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
   const { switchChainAsync } = useWallet();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
   const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   const createProjectPointer = async ({ ogProjectUID }: PointerType) => {
@@ -214,9 +214,10 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         schema: gapClient.findSchema("ProjectPointer"),
       });
 
-      await projectPointer.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await projectPointer.attest(walletSigner as any).then(async (res) => {
+        showLoading("Indexing project merge...");
+
         let retries = 1000;
-        changeStepperStep("indexing");
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
@@ -231,10 +232,13 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
 
               if (alreadyExists) {
                 retries = 0;
-                router.push(PAGES.PROJECT.OVERVIEW(primaryProject?.details?.slug as string));
-                router.refresh();
-                changeStepperStep("indexed");
+                showSuccess("Project merged!");
                 toast.success(MESSAGES.PROJECT_POINTER_FORM.SUCCESS);
+                setTimeout(() => {
+                  closeProgressModal();
+                  router.push(`/project/${primaryProject?.details?.slug}`);
+                  router.refresh();
+                }, 1500);
               }
               retries -= 1;
               // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -248,6 +252,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         }
       });
     } catch (error: any) {
+      closeProgressModal();
       errorManager(
         `Error creating project pointer`,
         error,
@@ -261,7 +266,6 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         }
       );
     } finally {
-      setIsStepper(false);
       setIsLoading(false);
     }
   };

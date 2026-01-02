@@ -43,6 +43,11 @@ export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperP
           showWalletLoginFirst: false,
           walletList: ["detected_wallets", "metamask", "rainbow", "rabby_wallet", "wallet_connect"],
         },
+        embeddedWallets: {
+          ethereum: {
+            createOnLogin: "users-without-wallets",
+          },
+        },
         loginMethods: ["email", "google", "wallet"],
         defaultChain: defaultChain,
         supportedChains: appNetwork,

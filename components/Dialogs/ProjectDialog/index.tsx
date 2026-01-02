@@ -41,18 +41,18 @@ import { useAuth } from "@/hooks/useAuth";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { checkSlugExists, getProject } from "@/services/project.service";
 import { searchProjects } from "@/services/project-search.service";
 import { useProjectStore } from "@/store";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProgressModal } from "@/store/modals/progressModal";
 import { useOwnerStore } from "@/store/owner";
 import type { Contact } from "@/types/project";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -240,10 +240,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [isChangingNetwork, setIsChangingNetwork] = useState(false);
   const router = useRouter();
   const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
+  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
+  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
   const [walletSigner, setWalletSigner] = useState<any>(null);
   const [_faucetFunded, setFaucetFunded] = useState(false);
+  // Flag to prevent form reset when reopening after an error
+  const [shouldResetOnOpen, setShouldResetOnOpen] = useState(true);
 
   const { register, handleSubmit, reset, watch, setValue, trigger, formState, setError } =
     useForm<SchemaType>({
@@ -328,6 +331,12 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   // Reset form when switching between create/edit modes or when modal opens
   useEffect(() => {
     if (isOpen) {
+      // Don't reset if reopening after an error (to preserve user's data)
+      if (!shouldResetOnOpen) {
+        setShouldResetOnOpen(true);
+        return;
+      }
+
       if (projectToUpdate) {
         // Edit mode - populate with existing data
         const updateData = dataToUpdate ?? {
@@ -400,7 +409,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setTempLogoKey(null);
       }
     }
-  }, [isOpen, projectToUpdate, reset, dataToUpdate]);
+  }, [isOpen, projectToUpdate, reset, dataToUpdate, shouldResetOnOpen]);
 
   function closeModal() {
     setIsOpen(false);
@@ -497,34 +506,49 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
   const createProject = async (data: SchemaType): Promise<void> => {
     try {
+      console.log("[ProjectDialog] createProject started");
       setIsLoading(true);
       if (!isConnected || !isAuth) {
+        console.log("[ProjectDialog] Not connected or not auth, calling login");
         login?.();
         return;
       }
-      if (!address) return;
-      if (!gap) return;
+      if (!address || !gap) {
+        console.log("[ProjectDialog] No address or gap client", { address, gap: !!gap });
+        return;
+      }
 
       const chainSelected = data.chainID;
+      console.log("[ProjectDialog] Chain selected:", chainSelected);
 
-      // Ensure we're on the correct chain
-      const { success, chainId, gapClient } = await ensureCorrectChain({
+      // Setup chain and wallet (uses gasless smart wallet if available)
+      console.log("[ProjectDialog] Calling setupChainAndWallet...");
+      const setup = await setupChainAndWallet({
         targetChainId: chainSelected,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
+        console.log("[ProjectDialog] setupChainAndWallet returned null");
         setIsLoading(false);
         return;
       }
+
+      console.log("[ProjectDialog] setupChainAndWallet success:", {
+        chainId: setup.chainId,
+        isGasless: setup.isGasless,
+        signerAddress: await setup.walletSigner.getAddress?.().catch(() => "unknown"),
+      });
+
+      const { gapClient, walletSigner: signer, chainId } = setup;
 
       const project = new Project({
         data: {
           project: true,
         },
         schema: gapClient.findSchema("Project"),
-        recipient: (data.recipient || address) as Hex,
+        recipient: (data.recipient || smartWalletAddress || address) as Hex,
         uid: nullRef,
       });
 
@@ -537,7 +561,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const { chainID, ...rest } = data;
       const newProjectInfo: NewProjectData = {
         ...rest,
-        members: [(data.recipient || address) as Hex],
+        members: [(data.recipient || smartWalletAddress || address) as Hex],
         links: [
           {
             type: "twitter",
@@ -662,22 +686,19 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         );
       }
 
-      // Use chainId from ensureCorrectChain result to ensure we're using the correct chain
-      const { walletClient, error } = await safeGetWalletClient(chainId);
+      // Use the gasless signer from setupChainAndWallet
+      closeModal();
 
-      if (error || !walletClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
-      changeStepperStep("preparing");
-      await project.attest(walletSigner, changeStepperStep).then(async (res) => {
+      // Attest first (Privy popups appear here), then show progress modal
+      await project.attest(signer as any).then(async (res) => {
+        // Show progress modal after Privy popups complete
+        showLoading("Indexing project...");
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});
         }
         let fetchedProject: ProjectResponse | null = null;
-        changeStepperStep("indexing");
 
         // First, poll using checkSlugExists to avoid 404 errors in Sentry
         const projectIdentifier = slug || project.uid;
@@ -750,33 +771,37 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           }
 
           toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
-          changeStepperStep("indexed");
-          closeModal();
-          router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
-          router.refresh();
+          showSuccess("Project created!");
+          setTimeout(() => {
+            closeProgressModal();
+            closeModal();
+            router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
+            router.refresh();
+          }, 1500);
         }
       });
 
+      console.log("[ProjectDialog] Resetting form after success");
       reset();
       setStep(0);
-      setIsStepper(false);
       setContacts([]);
       setCustomLinks([]);
     } catch (error: any) {
+      console.error("[ProjectDialog] CATCH BLOCK - Error caught:", error);
+      console.error("[ProjectDialog] Error message:", error?.message);
+      console.error("[ProjectDialog] Error stack:", error?.stack);
+      closeProgressModal();
       errorManager(
         MESSAGES.PROJECT.CREATE.ERROR(data.title),
         error,
-        {
-          address,
-          data,
-        },
-        {
-          error: MESSAGES.PROJECT.CREATE.ERROR(data.title),
-        }
+        { address, data },
+        { error: MESSAGES.PROJECT.CREATE.ERROR(data.title) }
       );
-      setIsStepper(false);
-      // Don't reset form on error - keep user's data (modal stays open)
+      // Don't reset form on error - keep user's data and reopen modal
+      setShouldResetOnOpen(false);
+      openModal();
     } finally {
+      console.log("[ProjectDialog] FINALLY block - setting isLoading to false");
       setIsLoading(false);
     }
   };
@@ -803,30 +828,25 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
       const targetChainId = projectToUpdate.chainID;
 
-      // Ensure we're on the correct chain
-      const { success, chainId, gapClient } = await ensureCorrectChain({
+      // Setup chain and wallet (uses gasless smart wallet if available)
+      const setup = await setupChainAndWallet({
         targetChainId,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
+      const { gapClient, walletSigner, chainId } = setup;
       const shouldRefresh = dataToUpdate.title === data.title;
-
-      // Use chainId from ensureCorrectChain result
-      const { walletClient, error } = await safeGetWalletClient(chainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await getProjectById(projectToUpdate.uid);
       if (!fetchedProject) return;
-      changeStepperStep("preparing");
+
+      // Close modal before update (Privy popups will appear during updateProject)
+      closeModal();
 
       // Promote temporary logo to permanent before project update
       let finalImageURL = data.profilePicture || "";
@@ -923,32 +943,36 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         socialData,
         walletSigner,
         gapClient,
-        changeStepperStep,
-        closeModal
+        () => {}, // No-op since we're using progress modal
+        () => {}  // No-op since modal is already closed
       ).then(async (res) => {
-        toast.success(MESSAGES.PROJECT.UPDATE.SUCCESS);
+        // Show success after update completes
+        showSuccess("Project updated!");
         setStep(0);
-        if (shouldRefresh) {
-          refreshProject();
-        } else {
-          const project = res.details?.slug || res.uid;
-          router.push(PAGES.PROJECT.OVERVIEW(project));
-          router.refresh();
-        }
+        // Brief delay to show success, then redirect
+        setTimeout(() => {
+          closeProgressModal();
+          if (shouldRefresh) {
+            refreshProject();
+          } else {
+            const project = res.details?.slug || res.uid;
+            router.push(PAGES.PROJECT.OVERVIEW(project));
+            router.refresh();
+          }
+        }, 1500);
       });
     } catch (error: any) {
+      closeProgressModal();
       errorManager(
         `Error updating project ${projectToUpdate?.details?.slug || projectToUpdate?.uid}`,
         error,
         { ...data, address },
-        {
-          error: MESSAGES.PROJECT.UPDATE.ERROR,
-        }
+        { error: MESSAGES.PROJECT.UPDATE.ERROR }
       );
+      setShouldResetOnOpen(false);
       openModal();
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
       setCustomLinks([]);
     }
   };

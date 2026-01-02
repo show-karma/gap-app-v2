@@ -17,9 +17,10 @@ import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useGap } from "@/hooks/useGap";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useWallet } from "@/hooks/useWallet";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useProjectStore } from "@/store";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProgressModal } from "@/store/modals/progressModal";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -89,6 +90,7 @@ export const ContributorProfileDialog: FC = () => {
   const inviteCodeParam = searchParams?.get("invite-code");
   const { gap } = useGap();
   const { switchChainAsync } = useWallet();
+  const { smartWalletAddress } = useSetupChainAndWallet();
   const {
     register,
     setValue,
@@ -102,7 +104,7 @@ export const ContributorProfileDialog: FC = () => {
   });
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
   const { authenticated: isAuth } = useAuth();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
@@ -169,10 +171,12 @@ export const ContributorProfileDialog: FC = () => {
           twitter: data.twitter,
           farcaster: data.farcaster,
         },
-        recipient: address as `0x${string}`,
+        recipient: (smartWalletAddress || address) as `0x${string}`,
         schema: gapClient.findSchema("ContributorProfile"),
       });
-      await contributorProfile.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await contributorProfile.attest(walletSigner as any).then(async (res) => {
+        showLoading("Indexing profile...");
+
         if (!isProjectMember && !isGlobal && inviteCodeParam) {
           const [_data, error] = await fetchData(
             INDEXER.PROJECT.INVITATION.ACCEPT_LINK(project?.uid as string),
@@ -184,7 +188,6 @@ export const ContributorProfileDialog: FC = () => {
           if (error) throw error;
         }
         let retries = 1000;
-        changeStepperStep("indexing");
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, targetChainId), "POST", {});
@@ -201,10 +204,13 @@ export const ContributorProfileDialog: FC = () => {
               // If the member is already in the project, update the profile
               if (hasMember) {
                 retries = 0;
-                changeStepperStep("indexed");
+                showSuccess("Joined team successfully!");
                 toast.success("Congrats! You have joined the team successfully");
                 refetchTeamProfiles();
-                closeModal();
+                setTimeout(() => {
+                  closeProgressModal();
+                  closeModal();
+                }, 1500);
               }
             });
           } else {
@@ -226,10 +232,13 @@ export const ContributorProfileDialog: FC = () => {
               );
               if (isUpdated) {
                 retries = 0;
-                changeStepperStep("indexed");
+                showSuccess("Profile updated!");
                 refetchTeamProfiles();
                 toast.success("Profile updated successfully");
-                closeModal();
+                setTimeout(() => {
+                  closeProgressModal();
+                  closeModal();
+                }, 1500);
               }
             }
           }
@@ -240,6 +249,7 @@ export const ContributorProfileDialog: FC = () => {
       });
       return;
     } catch (e) {
+      closeProgressModal();
       errorManager("Failed to accept invite", e, {
         projectId: project?.uid,
         inviteCode: inviteCodeParam,
@@ -247,7 +257,6 @@ export const ContributorProfileDialog: FC = () => {
       });
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 
