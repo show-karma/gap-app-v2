@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { SEARCH_CONSTANTS } from "@/constants/search";
 import { type SearchProjectResult, unifiedSearch } from "@/services/unified-search.service";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
@@ -30,12 +31,12 @@ export const useProjectSearch = (query: string, options?: UseProjectSearchOption
     ...defaultQueryOptions,
     queryKey: QUERY_KEYS.SEARCH.PROJECTS(query),
     queryFn: async () => {
-      const result = await unifiedSearch(query, 10);
+      const result = await unifiedSearch(query, SEARCH_CONSTANTS.RESULT_LIMIT);
       return result.projects;
     },
-    enabled: query.length >= 3 && options?.enabled !== false,
-    staleTime: 30 * 1000, // 30 seconds - search results can change frequently
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    enabled: query.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH && options?.enabled !== false,
+    staleTime: SEARCH_CONSTANTS.STALE_TIME_MS,
+    gcTime: SEARCH_CONSTANTS.GC_TIME_MS,
   });
 
   return {
