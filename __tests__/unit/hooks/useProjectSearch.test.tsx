@@ -171,9 +171,13 @@ describe("useProjectSearch", () => {
         wrapper,
       });
 
-      await waitFor(() => {
-        expect(result.current.isError).toBe(true);
-      });
+      // Wait longer to account for retry behavior from defaultQueryOptions
+      await waitFor(
+        () => {
+          expect(result.current.isError).toBe(true);
+        },
+        { timeout: 5000 }
+      );
 
       expect(result.current.projects).toEqual([]);
       expect(result.current.error).toBeDefined();
