@@ -17,7 +17,7 @@ export const useProjectPermissions = () => {
   // for email/embedded wallet users (useAccount returns MetaMask if connected)
   const { address, isConnected, authenticated: isAuth } = useAuth();
   const { project } = useProjectStore();
-  const projectId = project?.details?.data.slug || project?.uid;
+  const projectId = project?.details?.slug || project?.uid;
   const { project: projectInstance } = useProjectInstance(projectId);
 
   const { setIsProjectAdmin, setIsProjectOwner } = useProjectStore();
@@ -32,8 +32,20 @@ export const useProjectPermissions = () => {
       const rpcClient = await getRPCClient(projectInstance.chainID);
 
       const [isOwnerResult, isAdminResult] = await Promise.all([
-        projectInstance?.isOwner(rpcClient as any, address).catch(() => false),
-        projectInstance?.isAdmin(rpcClient as any, address).catch(() => false),
+        projectInstance?.isOwner(rpcClient as any, address).catch((error) => {
+          errorManager(
+            `Error checking owner permissions for user ${address} on project ${projectId}`,
+            error
+          );
+          return false;
+        }),
+        projectInstance?.isAdmin(rpcClient as any, address).catch((error) => {
+          errorManager(
+            `Error checking admin permissions for user ${address} on project ${projectId}`,
+            error
+          );
+          return false;
+        }),
       ]);
 
       return {

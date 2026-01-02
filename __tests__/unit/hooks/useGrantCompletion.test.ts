@@ -16,7 +16,7 @@ jest.mock("@/utilities/chain-wallet-setup", () => ({
 }));
 
 jest.mock("@/utilities/grant-helpers", () => ({
-  fetchGrantInstance: mockFetchGrantInstance,
+  getSDKGrantInstance: mockFetchGrantInstance,
 }));
 
 jest.mock("@/utilities/indexer-notification", () => ({

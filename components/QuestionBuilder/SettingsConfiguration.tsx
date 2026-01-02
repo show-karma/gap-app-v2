@@ -6,9 +6,10 @@ import { useParams } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { type SettingsConfigFormData, settingsConfigSchema } from "@/schemas/settingsConfigSchema";
+import { FUNDING_PLATFORM_DOMAINS } from "@/src/features/funding-map/utils/funding-platform-domains";
 import type { FormSchema } from "@/types/question-builder";
 import { envVars } from "@/utilities/enviromentVars";
-import { fundingPlatformDomains } from "@/utilities/fundingPlatformDomains";
+import { formatDate } from "@/utilities/formatDate";
 import { ExternalLink } from "../Utilities/ExternalLink";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 
@@ -21,16 +22,36 @@ interface SettingsConfigurationProps {
 }
 
 const getApplyUrlByCommunityId = (communityId: string, programId: string) => {
-  if (communityId in fundingPlatformDomains) {
-    const domain = fundingPlatformDomains[communityId as keyof typeof fundingPlatformDomains];
+  if (communityId in FUNDING_PLATFORM_DOMAINS) {
+    const domain = FUNDING_PLATFORM_DOMAINS[communityId as keyof typeof FUNDING_PLATFORM_DOMAINS];
     return envVars.isDev
       ? `${domain.dev}/browse-applications?programId=${programId}`
       : `${domain.prod}/browse-applications?programId=${programId}`;
   } else {
     return envVars.isDev
-      ? `${fundingPlatformDomains.shared.dev}/${communityId}/browse-applications?programId=${programId}`
-      : `${fundingPlatformDomains.shared.prod}/${communityId}/browse-applications?programId=${programId}`;
+      ? `${FUNDING_PLATFORM_DOMAINS.shared.dev}/${communityId}/browse-applications?programId=${programId}`
+      : `${FUNDING_PLATFORM_DOMAINS.shared.prod}/${communityId}/browse-applications?programId=${programId}`;
   }
+};
+
+// Convert local datetime-local value to UTC ISO string
+const convertLocalToUTC = (localDatetime: string | undefined): string | undefined => {
+  if (!localDatetime) return undefined;
+
+  const localDate = new Date(localDatetime);
+  if (isNaN(localDate.getTime())) return undefined;
+
+  return formatDate(localDate, "ISO");
+};
+
+// Convert UTC ISO string to local datetime-local format (YYYY-MM-DDTHH:mm)
+const convertUTCToLocal = (utcDatetime: string | undefined): string => {
+  if (!utcDatetime) return "";
+
+  const date = new Date(utcDatetime);
+  if (isNaN(date.getTime())) return "";
+
+  return formatDate(date, "local", "datetime-local");
 };
 
 export function SettingsConfiguration({
@@ -41,6 +62,7 @@ export function SettingsConfiguration({
   readOnly = false,
 }: SettingsConfigurationProps) {
   const { communityId } = useParams() as { communityId: string };
+
   const {
     register,
     watch,
@@ -50,10 +72,13 @@ export function SettingsConfiguration({
     resolver: zodResolver(settingsConfigSchema),
     defaultValues: {
       privateApplications: schema.settings?.privateApplications ?? true,
-      applicationDeadline: schema.settings?.applicationDeadline ?? "",
       donationRound: schema.settings?.donationRound ?? false,
       successPageContent: schema.settings?.successPageContent ?? "",
       showCommentsOnPublicPage: schema.settings?.showCommentsOnPublicPage ?? false,
+      approvalEmailTemplate: schema.settings?.approvalEmailTemplate ?? "",
+      approvalEmailSubject: schema.settings?.approvalEmailSubject ?? "",
+      rejectionEmailTemplate: schema.settings?.rejectionEmailTemplate ?? "",
+      rejectionEmailSubject: schema.settings?.rejectionEmailSubject ?? "",
     },
   });
 
@@ -70,10 +95,13 @@ export function SettingsConfiguration({
           confirmationMessage:
             schema.settings?.confirmationMessage || "Thank you for your submission!",
           privateApplications: data.privateApplications ?? true,
-          applicationDeadline: data.applicationDeadline,
           donationRound: data.donationRound ?? false,
           successPageContent: data.successPageContent,
           showCommentsOnPublicPage: data.showCommentsOnPublicPage ?? false,
+          approvalEmailTemplate: data.approvalEmailTemplate,
+          approvalEmailSubject: data.approvalEmailSubject,
+          rejectionEmailTemplate: data.rejectionEmailTemplate,
+          rejectionEmailSubject: data.rejectionEmailSubject,
         },
       };
 
@@ -110,27 +138,6 @@ export function SettingsConfiguration({
         <hr className="my-4" />
 
         <div className="space-y-6 py-4">
-          {/* Application Deadline */}
-          <div className="space-y-2">
-            <label
-              htmlFor="applicationDeadline"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Application Deadline
-            </label>
-            <input
-              {...register("applicationDeadline")}
-              type="datetime-local"
-              id="applicationDeadline"
-              disabled={readOnly}
-              className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Set a deadline for when applications will no longer be accepted. Leave empty for no
-              deadline.
-            </p>
-          </div>
-
           {/* Donation Round */}
           <div className="space-y-3">
             <div className="flex items-start space-x-3">
@@ -182,6 +189,166 @@ export function SettingsConfiguration({
                 minHeight={200}
                 disabled={readOnly}
               />
+            </div>
+          </div>
+        </div>
+
+        <hr className="my-4" />
+
+        {/* Email Templates Section */}
+        <div className="space-y-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Email Templates</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Customize the emails sent to applicants when their applications are approved or
+            rejected. Use placeholders like{" "}
+            <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>
+            , <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{programName}}"}</code>
+            , <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{reason}}"}</code>,
+            etc. Note: Project name and application details are already shown in the application
+            info section of the email.
+          </p>
+
+          {/* Approval Email Template */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label
+                htmlFor="approvalEmailSubject"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Approval Email Subject
+              </label>
+              <input
+                {...register("approvalEmailSubject")}
+                type="text"
+                id="approvalEmailSubject"
+                disabled={readOnly}
+                placeholder="Congratulations! Your application has been approved - {{programName}}"
+                className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Custom email subject. Leave empty to use default: "Congratulations! Your application
+                has been approved - {"{{programName}}"}". Available placeholders:{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{programName}}"}
+                </code>
+                ,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{applicantName}}"}
+                </code>
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label
+                htmlFor="approvalEmailTemplate"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Approval Email Body
+              </label>
+              <div className={readOnly ? "opacity-50 pointer-events-none" : ""}>
+                <MarkdownEditor
+                  value={watch("approvalEmailTemplate") || ""}
+                  onChange={(newValue: string) => {
+                    setValue("approvalEmailTemplate", newValue || "", {
+                      shouldValidate: true,
+                    });
+                  }}
+                  placeholderText={`Congratulations! Your application has been approved for the {{programName}} program.\n\n**Reference Number:** {{referenceNumber}}\n\n{{reason}}\n\nWe're excited to support your journey!`}
+                  height={400}
+                  minHeight={350}
+                  disabled={readOnly}
+                />
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Available placeholders:{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{applicantName}}"}
+                </code>
+                ,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{programName}}"}
+                </code>
+                ,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{referenceNumber}}"}
+                </code>
+                ,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{dashboardLink}}"}
+                </code>
+                , <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{reason}}"}</code>
+              </p>
+            </div>
+          </div>
+
+          {/* Rejection Email Template */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label
+                htmlFor="rejectionEmailSubject"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Rejection Email Subject
+              </label>
+              <input
+                {...register("rejectionEmailSubject")}
+                type="text"
+                id="rejectionEmailSubject"
+                disabled={readOnly}
+                placeholder="Thanks for Applying: Resources for {{programName}}"
+                className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Custom email subject. Leave empty to use default: "Thanks for Applying: Resources
+                for {"{{programName}}"}". Available placeholders:{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{programName}}"}
+                </code>
+                ,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{applicantName}}"}
+                </code>
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label
+                htmlFor="rejectionEmailTemplate"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Rejection Email Body
+              </label>
+              <div className={readOnly ? "opacity-50 pointer-events-none" : ""}>
+                <MarkdownEditor
+                  value={watch("rejectionEmailTemplate") || ""}
+                  onChange={(newValue: string) => {
+                    setValue("rejectionEmailTemplate", newValue || "", {
+                      shouldValidate: true,
+                    });
+                  }}
+                  placeholderText={`After careful review, we regret to inform you that your application has not been selected for funding at this time.\n\n**Reference Number:** {{referenceNumber}}\n\n{{reason}}\n\nWe appreciate your interest and encourage you to apply for future opportunities.`}
+                  height={400}
+                  minHeight={350}
+                  disabled={readOnly}
+                />
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Available placeholders:{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{applicantName}}"}
+                </code>
+                ,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{programName}}"}
+                </code>
+                ,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{referenceNumber}}"}
+                </code>
+                ,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                  {"{{dashboardLink}}"}
+                </code>
+                , <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{reason}}"}</code>
+              </p>
             </div>
           </div>
         </div>

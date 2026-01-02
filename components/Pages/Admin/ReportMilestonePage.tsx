@@ -2,7 +2,6 @@
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon, ChevronUpDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -16,11 +15,10 @@ import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import TablePagination from "@/components/Utilities/TablePagination";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useAuth } from "@/hooks/useAuth";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
-import { useStaff } from "@/hooks/useStaff";
-import { useOwnerStore } from "@/store";
+import type { Community } from "@/types/v2/community";
 import { downloadCommunityReport } from "@/utilities/downloadReports";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -107,7 +105,7 @@ const itemsPerPage = 50;
 const skeletonArray = Array.from({ length: 12 }, (_, index) => index);
 
 interface ReportMilestonePageProps {
-  community: ICommunityResponse;
+  community: Community;
   grantPrograms: GrantProgram[];
 }
 
@@ -116,9 +114,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
   const communityId = params.communityId as string;
   const { address, isConnected } = useAccount();
   const { authenticated: isAuth } = useAuth();
-  const { isCommunityAdmin: isAdmin } = useIsCommunityAdmin(community?.uid);
-  const { isStaff } = useStaff();
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const { hasAccess, checks } = useCommunityAdminAccess(community?.uid);
 
   // Get milestone reviewer programs for access control
   const { programs: reviewerPrograms } = useReviewerPrograms();
@@ -126,7 +122,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
   // Build set of allowed program IDs for milestone reviewers
   const allowedProgramIds = useMemo(() => {
     // Admins, staff and contract owners can see all programs
-    if (isAdmin || isContractOwner || isStaff) {
+    if (checks.isCommunityAdmin || checks.isOwner || checks.isStaff) {
       return null; // null means no filtering
     }
 
@@ -141,7 +137,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     });
 
     return allowedSet.size > 0 ? allowedSet : null;
-  }, [isAdmin, isContractOwner, isStaff, reviewerPrograms, communityId]);
+  }, [checks.isCommunityAdmin, checks.isOwner, checks.isStaff, reviewerPrograms, communityId]);
 
   const isAuthorized = useMemo(() => {
     if (!isConnected || !isAuth) {
@@ -149,13 +145,13 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     }
 
     // Admins, staff and contract owners have full access
-    if (isAdmin || isContractOwner || isStaff) {
+    if (hasAccess) {
       return true;
     }
 
     // Milestone reviewers have access if they have programs assigned
     return allowedProgramIds !== null && allowedProgramIds.size > 0;
-  }, [isConnected, isAuth, isAdmin, isContractOwner, isStaff, allowedProgramIds]);
+  }, [isConnected, isAuth, hasAccess, allowedProgramIds]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("totalMilestones");
@@ -610,9 +606,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
         </div>
       ) : (
         <div className="flex w-full items-center justify-center">
-          <p>
-            {MESSAGES.ADMIN.NOT_AUTHORIZED(community?.details?.data?.name || communityId || "")}
-          </p>
+          <p>{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.details?.name || communityId || "")}</p>
         </div>
       )}
     </div>

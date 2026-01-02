@@ -238,7 +238,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       const idAlreadyExists = existingContacts?.find((contact) => contact.id === data.id);
       if (!idAlreadyExists) {
         await fetchData(
-          INDEXER.SUBSCRIPTION.CREATE(project?.details?.data?.slug || (project?.uid as string)),
+          INDEXER.SUBSCRIPTION.CREATE(project?.details?.slug || (project?.uid as string)),
           "POST",
           { contacts: [data] },
           {},
@@ -260,10 +260,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         });
       } else {
         await fetchData(
-          INDEXER.SUBSCRIPTION.UPDATE(
-            project?.details?.data?.slug || (project?.uid as string),
-            data.id
-          ),
+          INDEXER.SUBSCRIPTION.UPDATE(project?.details?.slug || (project?.uid as string), data.id),
           "PUT",
           data,
           {},
@@ -286,7 +283,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         error,
         {
           address,
-          project: project?.details?.data?.slug || project?.uid,
+          project: project?.details?.slug || project?.uid,
           data,
         },
         {
@@ -312,7 +309,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         return;
       }
       await fetchData(
-        INDEXER.SUBSCRIPTION.DELETE(project?.details?.data?.slug || (project?.uid as string)),
+        INDEXER.SUBSCRIPTION.DELETE(project?.details?.slug || (project?.uid as string)),
         "DELETE",
         { contacts: [contactId] },
         {},
@@ -331,12 +328,12 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
     } catch (error: any) {
       errorManager(
         `Error deleting contact ${contactId} from project ${
-          project?.details?.data?.slug || project?.uid
+          project?.details?.slug || project?.uid
         }`,
         error,
         {
           address,
-          project: project?.details?.data?.slug || project?.uid,
+          project: project?.details?.slug || project?.uid,
           contactId,
         },
         {

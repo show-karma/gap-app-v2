@@ -17,84 +17,23 @@ import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { OrganizationIcon } from "@/components/Icons/Organization";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import type { FundingProgramResponse } from "@/src/features/funding-map/types/funding-program";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { registryHelper } from "./helper";
 
-export type GrantProgram = {
-  _id: {
-    $oid: string;
-  };
-  id?: string;
-  createdAtBlock?: string;
-  createdByAddress?: string;
-  trackedProjects?: number;
-  metadata?: {
-    tags?: string[];
-    type?: string;
-    title?: string;
-    logoImg?: string;
-    website?: string;
-    startsAt?: string;
-    endsAt?: string;
-    socialLinks?: {
-      blog?: string;
-      forum?: string;
-      twitter?: string;
-      discord?: string;
-      website?: string;
-      orgWebsite?: string;
-      grantsSite?: string;
-      telegram?: string;
-    };
-    bugBounty?: string;
-    bounties?: string[];
-    bannerImg?: string;
-    createdAt?: number;
-    minGrantSize?: string;
-    maxGrantSize?: string;
-    categories?: string[];
-    ecosystems?: string[];
-    organizations?: string[];
-    networks?: string[];
-    grantTypes?: string[];
-    credentials?: {};
-    description?: string;
-    shortDescription?: string;
-    logoImgData?: string;
-    grantsToDate?: number;
-    bannerImgData?: string;
-    programBudget?: string;
-    projectTwitter?: string;
-    applicantsNumber?: number;
-    amountDistributedToDate?: string;
-    platformsUsed?: string[];
-    status: string;
-    communityRef?: string[];
-  };
-  tags?: string[];
-  updatedAtBlock?: string;
-  projectNumber?: null;
-  projectType?: string;
-  registryAddress?: string;
-  anchorAddress?: string;
-  programId?: string;
-  chainID?: number;
-  isValid?: boolean;
-  txHash?: string;
-  createdAt: string;
-  updatedAt: string;
-  admins?: string[];
-  langfusePromptId?: string;
-};
+/**
+ * @deprecated Use FundingProgramResponse from @/src/features/funding-map/types/funding-program instead
+ */
+export type GrantProgram = FundingProgramResponse;
 
 interface ProgramListProps {
-  grantPrograms: GrantProgram[];
-  selectProgram: (program: GrantProgram) => void;
+  grantPrograms: FundingProgramResponse[];
+  selectProgram: (program: FundingProgramResponse) => void;
 }
 
 export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram }) => {
-  const columns = useMemo<ColumnDef<GrantProgram>[]>(
+  const columns = useMemo<ColumnDef<FundingProgramResponse>[]>(
     () => [
       {
         accessorFn: (row) => row,
@@ -561,7 +500,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
           </thead>
           <tbody className="divide-y divide-gray-200 ">
             {virtualizer.getVirtualItems().map((virtualRow, index) => {
-              const row = rows[virtualRow.index] as Row<GrantProgram>;
+              const row = rows[virtualRow.index] as Row<FundingProgramResponse>;
               return (
                 <tr
                   id="grant-program-row"

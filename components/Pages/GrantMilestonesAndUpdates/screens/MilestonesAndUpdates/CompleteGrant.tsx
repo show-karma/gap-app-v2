@@ -1,6 +1,5 @@
 "use client";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
@@ -14,16 +13,19 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useGap } from "@/hooks/useGap";
 import { useTracksForProgram } from "@/hooks/useTracks";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useStepper } from "@/store/modals/txStepper";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
+import type { Grant } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { isFundingProgramGrant } from "@/utilities/funding-programs";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { getCommunityDetails } from "@/utilities/queries/v2/community";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { FundingProgramFields } from "./CompletionRequirements/FundingProgramFields";
 import { TrackExplanations } from "./CompletionRequirements/TrackExplanations";
@@ -42,7 +44,7 @@ export const GrantCompletion: FC = () => {
   const [isFundingProgram, setIsFundingProgram] = useState(false);
 
   // Get tracks for the program to check if they exist
-  const programIdWithChain = grant?.details?.data?.programId;
+  const programIdWithChain = grant?.details?.programId;
   const { data: availableTracks = [] } = useTracksForProgram(programIdWithChain || "");
 
   // Validation states
@@ -59,6 +61,7 @@ export const GrantCompletion: FC = () => {
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
 
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
@@ -68,7 +71,7 @@ export const GrantCompletion: FC = () => {
     const checkFundingProgram = async () => {
       if (grant) {
         // First check by grant name
-        const grantName = grant?.details?.data?.title || "";
+        const grantName = grant?.details?.title || "";
         if (isFundingProgramGrant(undefined, grantName)) {
           setIsFundingProgram(false);
           return;
@@ -81,9 +84,9 @@ export const GrantCompletion: FC = () => {
             const communityId =
               typeof grant.community === "string" ? grant.community : grant.community.uid;
 
-            const response = await gapIndexerApi.communityBySlug(communityId);
-            if (response.data) {
-              const communityName = response.data.details?.data?.name || "";
+            const community = await getCommunityDetails(communityId);
+            if (community) {
+              const communityName = community.details?.name || "";
               setIsFundingProgram(isFundingProgramGrant(communityName, grantName));
             }
           } catch (error) {
@@ -100,21 +103,21 @@ export const GrantCompletion: FC = () => {
     };
 
     checkFundingProgram();
-  }, [grant?.community, grant?.details?.data?.title, grant]);
+  }, [grant?.community, grant?.details?.title, grant]);
 
   useEffect(() => {
-    if (grant?.details?.data?.selectedTrackIds) {
+    if (grant?.details?.selectedTrackIds) {
       setTrackExplanations(
-        grant.details.data.selectedTrackIds.map((trackId) => ({
+        grant.details.selectedTrackIds.map((trackId) => ({
           trackUID: trackId,
           explanation: "",
         }))
       );
     }
-  }, [grant?.details?.data?.selectedTrackIds]);
+  }, [grant?.details?.selectedTrackIds]);
 
   const markGrantAsComplete = async (
-    grantToComplete: IGrantResponse,
+    grantToComplete: Grant,
     data: {
       text?: string;
       title?: string;
@@ -184,7 +187,7 @@ export const GrantCompletion: FC = () => {
           const maxRetries = 40; // 60 seconds total (40 * 1.5s)
           let retries = maxRetries;
           changeStepperStep("indexing");
-          let fetchedProject = null;
+          const fetchedProject = null;
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(
@@ -194,24 +197,17 @@ export const GrantCompletion: FC = () => {
             );
           }
           while (retries > 0) {
-            fetchedProject = await gapClient!.fetch
-              .projectById(project?.uid as Hex)
-              .catch((err) => {
-                errorManager("Error polling for grant completion", err, {
-                  grantUID: grantToComplete.uid,
-                  retriesRemaining: retries,
-                });
-                return null;
-              });
-            const grant = fetchedProject?.grants?.find((g) => g.uid === grantToComplete.uid);
-            if (grant?.completed) {
+            // Fetch grants to check completion status
+            const polledGrants = await getProjectGrants(project?.uid as string);
+            const completedGrant = polledGrants.find((g) => g.uid === grantToComplete.uid);
+            if (completedGrant?.completed) {
               changeStepperStep("indexed");
               toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS);
-              await refreshProject().then(() => {
+              await refetchGrants().then(() => {
                 router.push(
                   PAGES.PROJECT.GRANT(
-                    project?.details?.data.slug || (project?.uid as Hex),
-                    grant?.uid as Hex
+                    project?.details?.slug || (project?.uid as Hex),
+                    completedGrant?.uid as Hex
                   )
                 );
                 router.refresh();
@@ -300,7 +296,7 @@ export const GrantCompletion: FC = () => {
     }
 
     setIsLoading(true);
-    await markGrantAsComplete(grant as IGrantResponse, {
+    await markGrantAsComplete(grant as Grant, {
       text: description,
       ...(isFundingProgram && {
         pitchDeckLink,
@@ -321,7 +317,7 @@ export const GrantCompletion: FC = () => {
           </h4>
           <Link
             href={PAGES.PROJECT.GRANT(
-              project?.details?.data.slug || (project?.uid as Hex),
+              project?.details?.slug || (project?.uid as Hex),
               grant?.uid as Hex
             )}
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"

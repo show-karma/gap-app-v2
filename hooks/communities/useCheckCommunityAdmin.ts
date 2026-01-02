@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
-import type { CommunityDetailsV2 } from "@/types/community";
+import type { Community } from "@/types/v2/community";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
@@ -25,7 +25,7 @@ interface UseCheckCommunityAdminOptions {
  * ```
  */
 export const useCheckCommunityAdmin = (
-  community?: CommunityDetailsV2 | null,
+  community?: Community | null,
   address?: string | Hex,
   options?: UseCheckCommunityAdminOptions
 ) => {
@@ -51,8 +51,6 @@ export const useCheckCommunityAdmin = (
       return await isCommunityAdminOf(community, checkAddress, signer);
     },
     enabled: !!community && !!checkAddress && !!isAuth && options?.enabled !== false,
-    staleTime: 1000 * 60 * 1, // 1 minute
-    gcTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     refetchOnReconnect: false,

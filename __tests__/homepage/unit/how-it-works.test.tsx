@@ -40,7 +40,10 @@ describe("HowItWorks Component", () => {
   it("should display all 3 step cards", () => {
     renderWithProviders(<HowItWorks />);
 
-    expect(screen.getByText("Create project")).toBeInTheDocument();
+    // "Create project" appears both in step card and as a button, so use getAllByText
+    const createProjectTexts = screen.getAllByText("Create project");
+    expect(createProjectTexts.length).toBeGreaterThan(0);
+    expect(createProjectTexts[0]).toBeInTheDocument();
     expect(screen.getByText("Apply and get funded")).toBeInTheDocument();
     expect(screen.getByText("Add milestones, metrics and updates")).toBeInTheDocument();
   });
@@ -48,9 +51,14 @@ describe("HowItWorks Component", () => {
   it("should render outcome cards", () => {
     renderWithProviders(<HowItWorks />);
 
-    // The rotating outcome stack displays one card at a time
-    // By default, the first outcome "Build reputation" should be visible
-    expect(screen.getByText("Build reputation")).toBeInTheDocument();
+    // The rotating outcome stack intentionally renders multiple stacked cards with the same text
+    // simultaneously (STACK_LAYERS = 4) for the animation effect. All cards exist in the DOM
+    // with different opacities/transforms. The first card (fully visible) contains "Build reputation".
+    // Use getAllByText since the component intentionally renders multiple instances.
+    const buildReputationTexts = screen.getAllByText("Build reputation");
+    expect(buildReputationTexts.length).toBeGreaterThan(0);
+    // At least one instance should be visible (the top card in the stack)
+    expect(buildReputationTexts[0]).toBeInTheDocument();
   });
 
   it("should display check circle icons for steps", () => {

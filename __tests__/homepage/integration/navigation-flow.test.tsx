@@ -21,6 +21,11 @@ jest.mock("@/utilities/pages", () => ({
     COMMUNITY: {
       ALL_GRANTS: (slug: string) => `/community/${slug}/grants`,
     },
+    REGISTRY: {
+      ROOT: "/funding-map",
+      ADD_PROGRAM: "/funding-map/add-program",
+      MANAGE_PROGRAMS: "/funding-map/manage-programs",
+    },
   },
 }));
 

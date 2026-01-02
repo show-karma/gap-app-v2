@@ -1,8 +1,8 @@
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { getProject } from "@/services/project.service";
 import { useProjectStore } from "@/store";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
 export const useProject = (projectId: string) => {
@@ -10,9 +10,12 @@ export const useProject = (projectId: string) => {
 
   const query = useQuery({
     queryKey: ["project", projectId],
-    queryFn: async (): Promise<IProjectResponse> => {
-      const response = await gapIndexerApi.projectBySlug(projectId);
-      return response.data;
+    queryFn: async (): Promise<ProjectResponse> => {
+      const data = await getProject(projectId);
+      if (!data) {
+        throw new Error("Project not found");
+      }
+      return data;
     },
     enabled: !!projectId,
     ...defaultQueryOptions,

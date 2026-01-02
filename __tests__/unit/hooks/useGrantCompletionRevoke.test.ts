@@ -97,7 +97,6 @@ jest.mock("@/store/modals/txStepper", () => ({
   })),
 }));
 
-const mockRefreshProject = jest.fn();
 const mockIsProjectOwner = jest.fn();
 const mockIsOwner = jest.fn();
 
@@ -106,20 +105,17 @@ jest.mock("@/store", () => ({
     // When called without selector or with destructuring pattern, return object
     if (!selector) {
       return {
-        refreshProject: mockRefreshProject,
         isProjectOwner: mockIsProjectOwner(),
       };
     }
     // When called with selector function
     if (typeof selector === "function") {
       const state = {
-        refreshProject: mockRefreshProject,
         isProjectOwner: mockIsProjectOwner(),
       };
       return selector(state);
     }
     return {
-      refreshProject: mockRefreshProject,
       isProjectOwner: mockIsProjectOwner(),
     };
   }),
@@ -135,6 +131,14 @@ jest.mock("@/store", () => ({
     }
     return { isOwner: mockIsOwner() };
   }),
+}));
+
+const mockRefetchGrants = jest.fn();
+jest.mock("@/hooks/v2/useProjectGrants", () => ({
+  useProjectGrants: jest.fn(() => ({
+    refetch: mockRefetchGrants,
+    grants: [],
+  })),
 }));
 
 const mockRefreshGrant = jest.fn();
@@ -216,6 +220,7 @@ describe("useGrantCompletionRevoke", () => {
     mockIsOwner.mockReturnValue(false);
     mockCreateCheckIfCompletionExists.mockReturnValue(mockCheckIfCompletionExists);
     mockCheckIfCompletionExists.mockResolvedValue(undefined);
+    mockRefetchGrants.mockResolvedValue(undefined);
   });
 
   describe("Initialization", () => {
@@ -303,10 +308,9 @@ describe("useGrantCompletionRevoke", () => {
       expect(mockErrorManager).toHaveBeenCalled();
     });
 
-    it("should use grant.chainID when completed.chainID is missing", async () => {
-      const grantWithChainIDOnGrant = {
+    it("should use grant.chainID for chain switching", async () => {
+      const grantWithChainID = {
         ...mockGrant,
-        completed: { ...mockGrant.completed, chainID: undefined },
         chainID: 42161,
       };
       mockIsProjectOwner.mockReturnValue(true);
@@ -330,7 +334,7 @@ describe("useGrantCompletionRevoke", () => {
 
       const { result } = renderHook(() =>
         useGrantCompletionRevoke({
-          grant: grantWithChainIDOnGrant,
+          grant: grantWithChainID,
           project: mockProject,
         })
       );

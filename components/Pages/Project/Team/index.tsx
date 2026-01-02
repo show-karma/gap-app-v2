@@ -14,10 +14,7 @@ export const Team = () => {
   //   check if it have some duplicated
   const members = project
     ? Array.from(
-        new Set([
-          project?.recipient,
-          ...(project?.members?.map((member) => member.recipient) || []),
-        ])
+        new Set([project?.owner, ...(project?.members?.map((member) => member.address) || [])])
       )
     : [];
 
@@ -25,7 +22,7 @@ export const Team = () => {
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
   const { project: projectInstance } = useProjectInstance(
-    project?.details?.data.slug || project?.uid || ""
+    project?.details?.slug || project?.uid || ""
   );
 
   const {

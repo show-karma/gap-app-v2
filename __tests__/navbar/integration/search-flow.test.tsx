@@ -39,7 +39,7 @@ describe("Search Flow Integration Tests", () => {
       const user = userEvent.setup();
       // Mock the search API to return mixed results
       // The SDK returns { data: {...} } structure
-      mockSearchFunction.mockResolvedValue({ data: mixedResults });
+      mockSearchFunction.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
 
@@ -62,29 +62,26 @@ describe("Search Flow Integration Tests", () => {
       const firstProject = mixedResults.projects[0];
       await waitFor(
         () => {
-          const projectLink = screen.getByText(firstProject.details.data.title);
+          const projectLink = screen.getByText(firstProject.details.title);
           expect(projectLink).toBeInTheDocument();
         },
         { timeout: 3000 }
       );
 
       // Verify results are links with correct hrefs
-      expect(screen.getByText(firstProject.details.data.title)).toBeInTheDocument();
+      expect(screen.getByText(firstProject.details.title)).toBeInTheDocument();
 
       // Click a result (simulate)
       const resultLink = screen.getByRole("link", {
-        name: new RegExp(firstProject.details.data.title, "i"),
+        name: new RegExp(firstProject.details.title, "i"),
       });
       // Component uses PAGES.PROJECT.GRANTS which adds /funding suffix
-      expect(resultLink).toHaveAttribute(
-        "href",
-        `/project/${firstProject.details.data.slug}/funding`
-      );
+      expect(resultLink).toHaveAttribute("href", `/project/${firstProject.details.slug}/funding`);
     });
 
     it("should show loading spinner during API call", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: mixedResults });
+      mockSearchFunction.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
 
@@ -102,14 +99,14 @@ describe("Search Flow Integration Tests", () => {
       // Verify results loaded
       const firstProject = mixedResults.projects[0];
       await waitFor(() => {
-        const projectLink = screen.queryByText(firstProject.details.data.title);
+        const projectLink = screen.queryByText(firstProject.details.title);
         expect(projectLink).toBeInTheDocument();
       });
     });
 
     it("should navigate and reset search after clicking result", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: mixedResults });
+      mockSearchFunction.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
 
@@ -122,13 +119,13 @@ describe("Search Flow Integration Tests", () => {
       // Wait for results
       await waitFor(() => {
         const firstProject = mixedResults.projects[0];
-        expect(screen.queryByText(firstProject.details.data.title)).toBeInTheDocument();
+        expect(screen.queryByText(firstProject.details.title)).toBeInTheDocument();
       });
 
       // Click result (Note: actual navigation would happen in E2E test)
       const firstProject = mixedResults.projects[0];
       const resultLink = screen.getByRole("link", {
-        name: new RegExp(firstProject.details.data.title, "i"),
+        name: new RegExp(firstProject.details.title, "i"),
       });
 
       await user.click(resultLink);
@@ -141,7 +138,7 @@ describe("Search Flow Integration Tests", () => {
   describe("2. Mobile Search Flow", () => {
     it("should complete search in mobile drawer", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: mixedResults });
+      mockSearchFunction.mockResolvedValue(mixedResults);
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
@@ -173,13 +170,13 @@ describe("Search Flow Integration Tests", () => {
 
       // Verify results appear in drawer
       const firstProject = mixedResults.projects[0];
-      const resultInDrawer = within(drawer).getByText(firstProject.details.data.title);
+      const resultInDrawer = within(drawer).getByText(firstProject.details.title);
       expect(resultInDrawer).toBeInTheDocument();
     });
 
     it("should close drawer after clicking search result", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: mixedResults });
+      mockSearchFunction.mockResolvedValue(mixedResults);
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
@@ -206,13 +203,13 @@ describe("Search Flow Integration Tests", () => {
       // Wait for results
       await waitFor(() => {
         const firstProject = mixedResults.projects[0];
-        expect(within(drawer).queryByText(firstProject.details.data.title)).toBeInTheDocument();
+        expect(within(drawer).queryByText(firstProject.details.title)).toBeInTheDocument();
       });
 
       // Click result using fireEvent to avoid setPointerCapture error in drawer
       const firstProject = mixedResults.projects[0];
       const resultLink = within(drawer).getByRole("link", {
-        name: new RegExp(firstProject.details.data.title, "i"),
+        name: new RegExp(firstProject.details.title, "i"),
       });
 
       fireEvent.click(resultLink);
@@ -228,7 +225,7 @@ describe("Search Flow Integration Tests", () => {
 
       // Verify search results are no longer visible (dropdown closed)
       await waitFor(() => {
-        expect(within(drawer).queryByText(firstProject.details.data.title)).not.toBeInTheDocument();
+        expect(within(drawer).queryByText(firstProject.details.title)).not.toBeInTheDocument();
       });
     });
   });
@@ -239,7 +236,7 @@ describe("Search Flow Integration Tests", () => {
       const mockHandler = jest.fn();
       mockSearchFunction.mockImplementation(() => {
         mockHandler();
-        return Promise.resolve({ data: projectsOnlyResults });
+        return Promise.resolve(projectsOnlyResults);
       });
 
       renderWithProviders(<NavbarSearch />);
@@ -260,7 +257,7 @@ describe("Search Flow Integration Tests", () => {
       // Results should appear
       const firstProject = projectsOnlyResults.projects[0];
       await waitFor(() => {
-        expect(screen.queryByText(firstProject.details.data.title)).toBeInTheDocument();
+        expect(screen.queryByText(firstProject.details.title)).toBeInTheDocument();
       });
     });
 
@@ -269,7 +266,7 @@ describe("Search Flow Integration Tests", () => {
       const mockHandler = jest.fn();
       mockSearchFunction.mockImplementation((query) => {
         mockHandler(query);
-        return Promise.resolve({ data: projectsOnlyResults });
+        return Promise.resolve(projectsOnlyResults);
       });
 
       renderWithProviders(<NavbarSearch />);
@@ -299,7 +296,7 @@ describe("Search Flow Integration Tests", () => {
       const mockHandler = jest.fn();
       mockSearchFunction.mockImplementation(() => {
         mockHandler();
-        return Promise.resolve({ data: emptySearchResults });
+        return Promise.resolve(emptySearchResults);
       });
 
       renderWithProviders(<NavbarSearch />);
@@ -319,7 +316,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should search when query reaches 3 characters", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: projectsOnlyResults });
+      mockSearchFunction.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
 
@@ -332,7 +329,7 @@ describe("Search Flow Integration Tests", () => {
       // Results should appear
       await waitFor(() => {
         const firstProject = projectsOnlyResults.projects[0];
-        expect(screen.queryByText(firstProject.details.data.title)).toBeInTheDocument();
+        expect(screen.queryByText(firstProject.details.title)).toBeInTheDocument();
       });
     });
   });
@@ -346,33 +343,31 @@ describe("Search Flow Integration Tests", () => {
       const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // First search - projects
-      mockSearchFunction.mockResolvedValue({ data: projectsOnlyResults });
+      mockSearchFunction.mockResolvedValue(projectsOnlyResults);
       await user.type(searchInput, searchQueries.short);
       await waitForDebounce();
 
       await waitFor(() => {
-        expect(
-          screen.getByText(projectsOnlyResults.projects[0].details.data.title)
-        ).toBeInTheDocument();
+        expect(screen.getByText(projectsOnlyResults.projects[0].details.title)).toBeInTheDocument();
       });
 
       // Clear search
       await user.clear(searchInput);
 
       // Second search - communities
-      mockSearchFunction.mockResolvedValue({ data: communitiesOnlyResults });
+      mockSearchFunction.mockResolvedValue(communitiesOnlyResults);
       await user.type(searchInput, searchQueries.ethereum);
       await waitForDebounce();
 
       await waitFor(() => {
         expect(
-          screen.getByText(communitiesOnlyResults.communities[0].details.data.name)
+          screen.getByText(communitiesOnlyResults.communities[0].details.name)
         ).toBeInTheDocument();
       });
 
       // Previous results should be replaced
       expect(
-        screen.queryByText(projectsOnlyResults.projects[0].details.data.title)
+        screen.queryByText(projectsOnlyResults.projects[0].details.title)
       ).not.toBeInTheDocument();
     });
 
@@ -384,13 +379,13 @@ describe("Search Flow Integration Tests", () => {
       const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // First search
-      mockSearchFunction.mockResolvedValue({ data: mixedResults });
+      mockSearchFunction.mockResolvedValue(mixedResults);
       await user.type(searchInput, searchQueries.medium);
       await waitForDebounce();
 
       await waitFor(() => {
         const firstProject = mixedResults.projects[0];
-        expect(screen.queryByText(firstProject.details.data.title)).toBeInTheDocument();
+        expect(screen.queryByText(firstProject.details.title)).toBeInTheDocument();
       });
 
       // Clear
@@ -408,7 +403,7 @@ describe("Search Flow Integration Tests", () => {
       // Fresh results should appear
       await waitFor(() => {
         const firstProject = mixedResults.projects[0];
-        expect(screen.queryByText(firstProject.details.data.title)).toBeInTheDocument();
+        expect(screen.queryByText(firstProject.details.title)).toBeInTheDocument();
       });
     });
   });
@@ -451,14 +446,14 @@ describe("Search Flow Integration Tests", () => {
       await user.clear(searchInput);
 
       // Second search - success
-      mockSearchFunction.mockResolvedValue({ data: projectsOnlyResults });
+      mockSearchFunction.mockResolvedValue(projectsOnlyResults);
       await user.type(searchInput, searchQueries.short);
       await waitForDebounce();
 
       // Should work normally
       await waitFor(() => {
         const firstProject = projectsOnlyResults.projects[0];
-        expect(screen.queryByText(firstProject.details.data.title)).toBeInTheDocument();
+        expect(screen.queryByText(firstProject.details.title)).toBeInTheDocument();
       });
     });
 
@@ -481,7 +476,7 @@ describe("Search Flow Integration Tests", () => {
   describe("6. Empty State Handling", () => {
     it("should show no results message for empty results", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: emptySearchResults });
+      mockSearchFunction.mockResolvedValue(emptySearchResults);
 
       renderWithProviders(<NavbarSearch />);
 
@@ -507,7 +502,7 @@ describe("Search Flow Integration Tests", () => {
       const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // First search - empty
-      mockSearchFunction.mockResolvedValue({ data: emptySearchResults });
+      mockSearchFunction.mockResolvedValue(emptySearchResults);
       await user.type(searchInput, "nonexistent");
       await waitForDebounce();
 
@@ -519,15 +514,13 @@ describe("Search Flow Integration Tests", () => {
       // Clear and search again
       await user.clear(searchInput);
 
-      mockSearchFunction.mockResolvedValue({ data: projectsOnlyResults });
+      mockSearchFunction.mockResolvedValue(projectsOnlyResults);
       await user.type(searchInput, searchQueries.short);
       await waitForDebounce();
 
       // Results should appear normally
       await waitFor(() => {
-        expect(
-          screen.getByText(projectsOnlyResults.projects[0].details.data.title)
-        ).toBeInTheDocument();
+        expect(screen.getByText(projectsOnlyResults.projects[0].details.title)).toBeInTheDocument();
       });
     });
   });
@@ -535,7 +528,7 @@ describe("Search Flow Integration Tests", () => {
   describe("7. Search Result Types", () => {
     it("should display projects only results correctly", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: projectsOnlyResults });
+      mockSearchFunction.mockResolvedValue(projectsOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
 
@@ -545,14 +538,12 @@ describe("Search Flow Integration Tests", () => {
       await waitForDebounce();
 
       await waitFor(() => {
-        expect(
-          screen.getByText(projectsOnlyResults.projects[0].details.data.title)
-        ).toBeInTheDocument();
+        expect(screen.getByText(projectsOnlyResults.projects[0].details.title)).toBeInTheDocument();
       });
 
       // Verify multiple projects displayed
       projectsOnlyResults.projects.slice(0, 3).forEach((project) => {
-        expect(screen.getByText(project.details.data.title)).toBeInTheDocument();
+        expect(screen.getByText(project.details.title)).toBeInTheDocument();
       });
 
       // No communities should be shown
@@ -561,7 +552,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should display communities only results correctly", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: communitiesOnlyResults });
+      mockSearchFunction.mockResolvedValue(communitiesOnlyResults);
 
       renderWithProviders(<NavbarSearch />);
 
@@ -572,7 +563,7 @@ describe("Search Flow Integration Tests", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText(communitiesOnlyResults.communities[0].details.data.name)
+          screen.getByText(communitiesOnlyResults.communities[0].details.name)
         ).toBeInTheDocument();
       });
 
@@ -583,7 +574,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should display mixed results (projects and communities)", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: mixedResults });
+      mockSearchFunction.mockResolvedValue(mixedResults);
 
       renderWithProviders(<NavbarSearch />);
 
@@ -594,10 +585,10 @@ describe("Search Flow Integration Tests", () => {
 
       // Should have both projects and communities
       await waitFor(() => {
-        expect(screen.getByText(mixedResults.projects[0].details.data.title)).toBeInTheDocument();
+        expect(screen.getByText(mixedResults.projects[0].details.title)).toBeInTheDocument();
       });
 
-      expect(screen.getByText(mixedResults.communities[0].details.data.name)).toBeInTheDocument();
+      expect(screen.getByText(mixedResults.communities[0].details.name)).toBeInTheDocument();
 
       // Community badges should be present
       const communityBadges = screen.getAllByText(/community/i);
@@ -606,7 +597,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should handle large result sets", async () => {
       const user = userEvent.setup();
-      mockSearchFunction.mockResolvedValue({ data: largeResultSet });
+      mockSearchFunction.mockResolvedValue(largeResultSet);
 
       renderWithProviders(<NavbarSearch />);
 
@@ -618,7 +609,7 @@ describe("Search Flow Integration Tests", () => {
       // Results should render (may be limited by component)
       await waitFor(() => {
         const firstProject = largeResultSet.projects[0];
-        expect(screen.queryByText(firstProject.details.data.title)).toBeInTheDocument();
+        expect(screen.queryByText(firstProject.details.title)).toBeInTheDocument();
       });
 
       // Component should handle large result set without performance issues

@@ -1,16 +1,47 @@
 "use client";
 
-import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC } from "react";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { formatDate } from "@/utilities/formatDate";
+import type { GrantMilestone } from "@/types/v2/grant";
+import { formatDate, normalizeTimestamp } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { MilestoneDelete } from "./MilestoneDelete";
 import { Updates } from "./Updates";
 
+/**
+ * Helper to get the completion object from a milestone.
+ * API may return completion as an object or an array.
+ * Ensures createdAt/updatedAt are preserved from the source.
+ */
+export const getCompletionData = (milestone: GrantMilestone) => {
+  const completed = milestone.completed;
+  if (!completed) return null;
+
+  // Handle array format (some API responses return array)
+  if (Array.isArray(completed)) {
+    if (completed.length === 0) return null;
+    const firstItem = completed[0];
+    // Merge createdAt/updatedAt from both sources - array item or array itself
+    return {
+      ...firstItem,
+      createdAt: firstItem?.createdAt ?? (completed as any).createdAt,
+      updatedAt: firstItem?.updatedAt ?? (completed as any).updatedAt,
+    };
+  }
+
+  return completed;
+};
+
+/**
+ * Helper to check if a milestone is completed.
+ */
+export const isMilestoneCompleted = (milestone: GrantMilestone): boolean => {
+  return getCompletionData(milestone) !== null;
+};
+
 interface MilestoneDateStatusProps {
-  milestone: IMilestoneResponse;
+  milestone: GrantMilestone;
 }
 
 const statusDictionary = {
@@ -47,8 +78,8 @@ const FlagIcon = () => {
 
 export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({ milestone }) => {
   const getMilestoneStatus = () => {
-    if (milestone.completed) return "completed";
-    if (milestone.data.endsAt < Date.now() / 1000) return "past due";
+    if (isMilestoneCompleted(milestone)) return "completed";
+    if (normalizeTimestamp(milestone.endsAt || 0) < Date.now()) return "past due";
     return "pending";
   };
 
@@ -57,11 +88,9 @@ export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({ milestone })
   return (
     <div className="flex max-w-full w-max max-lg:w-full flex-row items-center justify-center gap-4 max-lg:justify-start flex-wrap">
       <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
-        {milestone.data.startsAt
-          ? `${formatDate(milestone.data.startsAt * 1000)} - ${formatDate(
-              milestone.data.endsAt * 1000
-            )}`
-          : `Due on ${formatDate(milestone.data.endsAt * 1000)}`}
+        {milestone.startsAt
+          ? `${formatDate(milestone.startsAt)} - ${formatDate(milestone.endsAt)}`
+          : `Due on ${formatDate(milestone.endsAt)}`}
       </p>
       <div className={`flex items-center justify-start rounded-2xl px-2 py-1 ${statusBg[status]}`}>
         <p className="text-center text-xs font-medium leading-none text-white">
@@ -93,7 +122,7 @@ export const MilestoneTag: FC<MilestoneTagProps> = ({ index, priority }) => {
 };
 
 interface MilestoneDetailsProps {
-  milestone: IMilestoneResponse;
+  milestone: GrantMilestone;
   index: number;
 }
 
@@ -102,6 +131,11 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+
+  // Get normalized completion data (handles both object and array formats)
+  const completionData = getCompletionData(milestone);
+  const isCompleted = completionData !== null;
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex w-full flex-1 flex-col rounded-lg border border-zinc-200 bg-white dark:bg-zinc-800 transition-all duration-200 ease-in-out">
@@ -109,18 +143,18 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }
           className="flex w-full flex-col py-4"
           style={{
             borderBottom:
-              (isAuthorized && !milestone.completed) ||
-              milestone?.completed?.data?.reason ||
-              (isCommunityAdmin && !milestone?.completed)
+              (isAuthorized && !isCompleted) ||
+              completionData?.data?.reason ||
+              (isCommunityAdmin && !isCompleted)
                 ? "1px solid #CCCCCC"
                 : "none",
           }}
         >
           <div className="flex w-full flex-row items-start justify-between px-4 max-lg:mb-4 max-lg:flex-col">
             <div className="flex flex-col gap-3">
-              <MilestoneTag index={index} priority={milestone?.data?.priority} />
+              <MilestoneTag index={index} priority={milestone.priority} />
               <h4 className="text-base font-bold leading-normal text-black dark:text-zinc-100">
-                {milestone.data.title}
+                {milestone.title}
               </h4>
             </div>
             <div className="flex flex-row items-center justify-start gap-2">
@@ -136,13 +170,13 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }
               readLessText="Read less milestone description"
               readMoreText="Read full milestone description"
             >
-              {milestone.data.description}
+              {milestone.description || ""}
             </ReadMore>
           </div>
         </div>
-        {((isAuthorized && !milestone?.completed) ||
-          milestone?.completed?.data?.reason ||
-          milestone?.completed?.data?.proofOfWork) && (
+        {((isAuthorized && !isCompleted) ||
+          completionData?.data?.reason ||
+          completionData?.data?.proofOfWork) && (
           <div className="mx-6 mt-4 rounded-lg bg-transparent pb-4">
             <Updates milestone={milestone} />
           </div>

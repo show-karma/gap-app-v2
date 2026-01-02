@@ -1,0 +1,67 @@
+# Cursor Rules for gap-app-v2
+
+This file provides specific guidance for working with the gap-app-v2 Next.js frontend application.
+
+## Project Overview
+
+gap-app-v2 is the main Next.js 15.3.3 frontend application for Karma GAP, built with:
+- React 19
+- TailwindCSS 3.x
+- shadcn/ui components
+- Radix UI primitives
+- Tremor components
+- Zustand for state management
+- React Query for data fetching
+- Wagmi/RainbowKit for Web3 integration
+
+## Critical Rules
+
+### Component Library Migration
+
+**IMPORTANT**: We are migrating to exclusively use **shadcn components**. 
+
+- **DO**: Use shadcn/ui components for all new UI elements
+- **DO NOT**: Use headlessui components in new code
+- When refactoring existing code, prefer replacing headlessui components with shadcn equivalents
+- If you encounter headlessui imports, consider this a migration opportunity
+
+### Architecture Patterns
+
+1. **Server Components by Default**
+   - Use Server Components unless client interactivity is required
+   - Add `"use client"` directive only when necessary (state, effects, event handlers, Web3 hooks)
+
+2. **Import Paths**
+   - Always use absolute imports with `@/` prefix
+   - Example: `import { Button } from "@/components/ui/button"`
+
+3. **State Management**
+   - Use Zustand for global state
+   - Use React Query for server state
+   - Keep component state local when possible
+
+4. **Web3 Integration**
+   - Use Wagmi hooks for blockchain interactions
+   - Leverage RainbowKit for wallet connections
+   - Handle wallet states gracefully
+
+## Code Quality
+
+- Follow TypeScript best practices with explicit types
+- Maintain accessibility standards (WCAG 2.2 AA)
+- Write semantic HTML
+- Ensure responsive design across breakpoints
+- Test components thoroughly
+
+## Related Documentation
+
+For comprehensive guidelines, refer to the root repository documentation:
+- [System Architecture](../docs/architecture/system-architecture.md)
+- [UI/UX Best Practices](../docs/standards/ui-ux-best-practices.md)
+- [Code Quality Standards](../docs/standards/code-quality.md)
+- [Testing Strategy](../docs/testing/testing-strategy.md)
+
+---
+
+**Remember**: When in doubt about component choice, always prefer shadcn components over headlessui.
+

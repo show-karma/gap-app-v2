@@ -9,8 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { FundingProgram } from "@/services/fundingPlatformService";
+import { FUNDING_PLATFORM_DOMAINS } from "@/src/features/funding-map/utils/funding-platform-domains";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
-import { PAGES } from "@/utilities/pages";
+import { envVars } from "@/utilities/enviromentVars";
+import { getProgramStatusInfo } from "@/utilities/funding-programs";
+import { FUNDING_PLATFORM_PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
 interface FundingOpportunityCardProps {
@@ -31,23 +34,25 @@ function getProgramStatus(program: FundingProgram): {
   variant: "default" | "secondary" | "destructive" | "outline";
   endsSoon: boolean;
 } {
-  const endsAt = program.metadata?.endsAt;
-  const isEnabled = program.applicationConfig?.isEnabled;
+  const statusInfo = getProgramStatusInfo(program);
 
-  if (!isEnabled) {
-    return { label: "Closed", variant: "secondary", endsSoon: false };
+  const statusToVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+    open: "default",
+    closed: "secondary",
+    "coming-soon": "outline",
+    "deadline-passed": "secondary",
+  };
+
+  let label = statusInfo.label;
+  if (statusInfo.endsSoon) {
+    label = "Ends soon";
   }
 
-  if (endsAt) {
-    const daysUntilEnd = Math.ceil(
-      (new Date(endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-    );
-    if (daysUntilEnd <= 7 && daysUntilEnd > 0) {
-      return { label: "Ends soon", variant: "destructive", endsSoon: true };
-    }
-  }
-
-  return { label: "Open for Applications", variant: "default", endsSoon: false };
+  return {
+    label,
+    variant: statusInfo.endsSoon ? "destructive" : statusToVariant[statusInfo.status],
+    endsSoon: statusInfo.endsSoon,
+  };
 }
 
 function getCommunityImage(program: FundingProgram, theme: string | undefined): string | null {
@@ -74,6 +79,30 @@ function getCommunityImage(program: FundingProgram, theme: string | undefined): 
   return null;
 }
 
+function getProgramUrls(
+  communitySlug: string | undefined,
+  programId: string | undefined
+): { detailUrl: string | null; applyUrl: string | null } {
+  if (!communitySlug || !programId) {
+    return { detailUrl: null, applyUrl: null };
+  }
+
+  const exclusiveDomain =
+    FUNDING_PLATFORM_DOMAINS[communitySlug as keyof typeof FUNDING_PLATFORM_DOMAINS];
+  const domain = exclusiveDomain
+    ? envVars.isDev
+      ? exclusiveDomain.dev
+      : exclusiveDomain.prod
+    : undefined;
+
+  const pages = FUNDING_PLATFORM_PAGES(communitySlug, domain);
+
+  return {
+    detailUrl: pages.PROGRAM_PAGE(programId),
+    applyUrl: pages.PROGRAM_APPLY(programId),
+  };
+}
+
 export function FundingOpportunityCard({
   program,
   isFeatured = false,
@@ -84,14 +113,10 @@ export function FundingOpportunityCard({
   const budget = program.metadata?.programBudget;
   const communityName = program.communityName || program.communitySlug || "Unknown";
   const communityImage = getCommunityImage(program, theme) || program.metadata?.logoImg;
-  const programDetailUrl =
-    program.communitySlug && program.programId
-      ? PAGES.EXTERNAL_PROGRAM.DETAIL(program.communitySlug, program.programId)
-      : null;
-  const applyUrl =
-    program.communitySlug && program.programId
-      ? PAGES.EXTERNAL_PROGRAM.APPLY(program.communitySlug, program.programId)
-      : null;
+  const { detailUrl: programDetailUrl, applyUrl } = getProgramUrls(
+    program.communitySlug,
+    program.programId
+  );
 
   if (isFeatured) {
     // Mobile featured card with gradient background

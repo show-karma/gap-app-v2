@@ -1,4 +1,3 @@
-import type { CommunityDetailsV2 } from "@/types/community";
 import type {
   CreateProgramFormData,
   ProgramApprovalRequest,
@@ -6,6 +5,7 @@ import type {
   ProgramCreationResult,
   ProgramMetadata,
 } from "@/types/program-registry";
+import type { Community } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -20,7 +20,7 @@ export class ProgramRegistryService {
    */
   static buildProgramMetadata(
     formData: CreateProgramFormData,
-    community: CommunityDetailsV2
+    community: Community
   ): ProgramMetadata {
     return {
       title: formData.name,
@@ -162,7 +162,7 @@ export class ProgramRegistryService {
       isValid: "accepted",
     };
 
-    const [approveResponse, approveError] = await fetchData(
+    const [_approveResponse, approveError] = await fetchData(
       INDEXER.REGISTRY.APPROVE,
       "POST",
       request,

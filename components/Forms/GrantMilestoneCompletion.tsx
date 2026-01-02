@@ -7,7 +7,7 @@ import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useMilestone } from "@/hooks/useMilestone";
-import type { UnifiedMilestone } from "@/types/roadmap";
+import type { UnifiedMilestone } from "@/types/v2/roadmap";
 
 // Create form schema with zod
 const formSchema = z.object({

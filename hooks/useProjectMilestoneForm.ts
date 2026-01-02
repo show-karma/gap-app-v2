@@ -11,7 +11,6 @@ import { useProjectStore } from "@/store";
 import { useProgressModal } from "@/store/modals/progressModal";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -164,9 +163,7 @@ export function useProjectMilestoneForm({
         text: sanitizeInput(data.text),
       };
 
-      const fetchedMilestones = await gapIndexerApi
-        .projectMilestones(projectId)
-        .then((res) => res.data);
+      const fetchedMilestones = await getProjectObjectives(projectId);
 
       if (!fetchedMilestones || !gapClient?.network) return;
 

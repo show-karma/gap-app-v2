@@ -2,12 +2,12 @@
 import { CommunityGrants } from "@/components/CommunityGrants";
 import type { MaturityStageOptions, SortByOptions } from "@/types";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import { getCommunityCategories } from "@/utilities/queries/getCommunityData";
 import {
-  getCommunityDetailsV2,
-  getCommunityProjectsV2,
-  getCommunityStatsV2,
-} from "@/utilities/queries/getCommunityDataV2";
+  getCommunityCategories,
+  getCommunityDetails,
+  getCommunityProjects,
+  getCommunityStats,
+} from "@/utilities/queries/v2/getCommunityData";
 
 type Props = {
   params: Promise<{
@@ -22,12 +22,17 @@ export default async function Page(props: Props) {
     return undefined;
   }
 
-  const [communityDetails, communityStats, categoriesOptions, initialProjects] = await Promise.all([
-    getCommunityDetailsV2(communityId),
-    getCommunityStatsV2(communityId),
+  const [communityDetails, communityStats, categories, initialProjects] = await Promise.all([
+    getCommunityDetails(communityId),
+    getCommunityStats(communityId),
     getCommunityCategories(communityId),
-    getCommunityProjectsV2(communityId, { page: 1, limit: 12 }),
+    getCommunityProjects(communityId, { page: 1, limit: 12 }),
   ]);
+
+  // Extract category names for the filter
+  const categoriesOptions = categories
+    .map((cat) => cat.name)
+    .sort((a, b) => a.localeCompare(b, "en"));
 
   // Layout handles notFound, but TypeScript needs this check
   if (!communityDetails) {

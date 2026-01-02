@@ -3,7 +3,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as Popover from "@radix-ui/react-popover";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { type IProjectUpdate, ProjectUpdate } from "@show-karma/karma-gap-sdk";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { FC } from "react";
@@ -22,11 +21,14 @@ import { useGap } from "@/hooks/useGap";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useUnlinkedIndicators } from "@/hooks/useUnlinkedIndicators";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useProgressModal } from "@/store/modals/progressModal";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { sendImpactAnswers } from "@/utilities/impact";
@@ -104,7 +106,7 @@ const GrantSearchDropdown: FC<{
   onSelect: (grantId: string) => void;
   selected: string[];
   className?: string;
-  project?: IProjectResponse;
+  project?: ProjectResponse;
 }> = ({ grants, onSelect, selected, className, project }) => {
   const [open, setOpen] = useState(false);
 
@@ -155,6 +157,16 @@ const GrantSearchDropdown: FC<{
             style={{ width: "var(--radix-popover-trigger-width)" }}
           >
             <div className="py-1">
+              <div className="flex w-full h-full px-2 my-2">
+                <ExternalLink
+                  href={PAGES.PROJECT.SCREENS.NEW_GRANT(
+                    project?.details?.slug || project?.uid || ""
+                  )}
+                  className="text-sm h-full w-full px-2 py-2 rounded bg-zinc-700 text-white text-center hover:bg-zinc-600 transition-colors"
+                >
+                  Add Grant
+                </ExternalLink>
+              </div>
               {grants.map((grant) => (
                 <button
                   type="button"
@@ -176,15 +188,6 @@ const GrantSearchDropdown: FC<{
           </Popover.Content>
         </Popover.Portal>
       </Popover.Root>
-
-      <div className="flex w-full h-full">
-        <ExternalLink
-          href={PAGES.PROJECT.SCREENS.NEW_GRANT(project?.details?.data?.slug || project?.uid || "")}
-          className="text-sm h-full w-full px-2 py-2 rounded bg-zinc-700 text-white text-center hover:bg-zinc-600 transition-colors"
-        >
-          Add Grant
-        </ExternalLink>
-      </div>
     </div>
   );
 };
@@ -244,12 +247,20 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = propEditId || searchParams.get("editId");
   const [isEditMode, setIsEditMode] = useState(false);
   const queryClient = useQueryClient();
+
+  // Fetch updates using dedicated hook
+  const { rawData: projectUpdatesData, refetch: refetchUpdates } = useProjectUpdates(
+    project?.uid || ""
+  );
+  const projectUpdates = projectUpdatesData?.projectUpdates || [];
+
+  // Fetch grants using dedicated hook
+  const { grants: projectGrants } = useProjectGrants(project?.uid || "");
 
   const { register, handleSubmit, watch, control, setValue, formState, reset, setError } =
     useForm<UpdateType>({
@@ -266,7 +277,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const { errors, isSubmitting, isValid } = formState;
   const [isLoading, setIsLoading] = useState(false);
   const [grants, setGrants] = useState<GrantOption[]>([]);
-  const [outputs, setOutputs] = useState<ImpactIndicatorWithData[]>([]);
+  const [_outputs, setOutputs] = useState<ImpactIndicatorWithData[]>([]);
   const [selectedToCreate, setSelectedToCreate] = useState<number | undefined>(undefined);
 
   const { data: indicatorsData } = useImpactAnswers({
@@ -282,8 +293,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       const grant = grants.find((g) => g.value === grantId);
       if (grant?.communityUID) {
         // Get community name from project grants
-        const projectGrant = project?.grants?.find((g) => g.uid === grantId);
-        const communityName = projectGrant?.community?.details?.data?.name || "Unknown Community";
+        const projectGrant = projectGrants.find((g) => g.uid === grantId);
+        const communityName = projectGrant?.community?.details?.name || "Unknown Community";
         communities.set(grant.communityUID, {
           uid: grant.communityUID,
           name: communityName,
@@ -291,7 +302,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       }
     });
     return Array.from(communities.values());
-  }, [watchedGrantIds, grants, project?.grants]);
+  }, [watchedGrantIds, grants, projectGrants]);
 
   // Fetch community indicators for all selected communities
   const _communityIndicatorQueries = selectedCommunities.map((community) => ({
@@ -373,14 +384,14 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       if (!project) return;
 
       try {
-        // Handle grants data
-        const grantOptions = project.grants
+        // Handle grants data from dedicated hook
+        const grantOptions = projectGrants
           .filter((grant) => grant && typeof grant === "object")
           .map((grant) => ({
-            title: grant.details?.data?.title || grant.uid || "Untitled Grant",
+            title: grant.details?.title || grant.uid || "Untitled Grant",
             value: grant.uid || "",
             chain: grant.chainID || project.chainID,
-            communityUID: grant.community.uid || "",
+            communityUID: grant.community?.uid || "",
           }));
 
         setGrants((prev) => {
@@ -389,7 +400,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         });
 
         // Handle indicators data - project indicators are handled by categorizedIndicators
-        if (project.uid || project.details?.data?.slug) {
+        if (project.uid || project.details?.slug) {
           const indicators = indicatorsData;
           setOutputs((prev) => {
             if (!indicators) return prev;
@@ -408,9 +419,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
     fetchProjectData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [project?.uid, project?.grants, indicatorsData, address]);
+  }, [project?.uid, projectGrants, indicatorsData, address, project?.chainID, project]);
 
-  const updateToEdit = project?.updates.find((update) => update.uid === editId);
+  const updateToEdit = projectUpdates.find((update) => update.uid === editId);
 
   // Track if we've initialized the edit form to prevent infinite loops
   const editInitializedRef = useRef<string | null>(null);
@@ -426,28 +437,30 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
     setIsEditMode(true);
 
-    // Set form values from the update
-    setValue("title", updateToEdit.data.title || "");
-    setValue("text", updateToEdit.data.text || "");
+    // Set form values from the update (using new API response structure)
+    setValue("title", updateToEdit.title || "");
+    setValue("text", updateToEdit.description || "");
 
-    if (updateToEdit.data.startDate) {
-      setValue("startDate", new Date(updateToEdit.data.startDate));
+    if (updateToEdit.startDate) {
+      setValue("startDate", new Date(updateToEdit.startDate));
     }
 
-    if (updateToEdit.data.endDate) {
-      setValue("endDate", new Date(updateToEdit.data.endDate));
+    if (updateToEdit.endDate) {
+      setValue("endDate", new Date(updateToEdit.endDate));
     }
 
-    // Set grants if they exist
-    if (updateToEdit.data.grants && updateToEdit.data.grants.length > 0) {
-      setValue("grants", updateToEdit.data.grants);
+    // Set grants from funding associations if they exist
+    const fundingAssociations = updateToEdit.associations?.funding || [];
+    if (fundingAssociations.length > 0) {
+      setValue("grants", fundingAssociations.map((f) => f.uid || "").filter(Boolean));
     }
 
     // Set deliverables if they exist
-    if (updateToEdit.data.deliverables && updateToEdit.data.deliverables.length > 0) {
+    const deliverables = updateToEdit.associations?.deliverables || [];
+    if (deliverables.length > 0) {
       setValue(
         "deliverables",
-        updateToEdit.data.deliverables.map((deliverable) => ({
+        deliverables.map((deliverable) => ({
           name: deliverable.name || "",
           proof: deliverable.proof || "",
           description: deliverable.description || "",
@@ -464,34 +477,33 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     if (outputsInitializedRef.current === editId) return;
 
     // Only proceed if we have indicators to set and indicator data is loaded
-    if (
-      !updateToEdit.data.indicators ||
-      updateToEdit.data.indicators.length === 0 ||
-      indicatorsData.length === 0
-    ) {
+    const indicators = updateToEdit.associations?.indicators || [];
+    if (indicators.length === 0 || indicatorsData.length === 0) {
       return;
     }
 
     outputsInitializedRef.current = editId;
 
-    const outputsToSet = updateToEdit.data.indicators.map((indicator) => {
-      const matchingOutput = indicatorsData.find((out: any) => out.id === indicator.indicatorId);
-      const orderedDatapoints = matchingOutput?.datapoints.sort(
-        (a: any, b: any) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
-      );
-      const firstDatapoint = orderedDatapoints?.[0];
-      return {
-        outputId: indicator.indicatorId,
-        value: firstDatapoint?.value || 0,
-        proof: firstDatapoint?.proof || "",
-        startDate: firstDatapoint?.startDate
-          ? new Date(firstDatapoint.startDate).toISOString()
-          : undefined,
-        endDate: firstDatapoint?.endDate
-          ? new Date(firstDatapoint.endDate).toISOString()
-          : undefined,
-      };
-    });
+    const outputsToSet = indicators
+      .filter((indicator) => indicator.id) // Filter out indicators without id
+      .map((indicator) => {
+        const matchingOutput = indicatorsData.find((out: any) => out.id === indicator.id);
+        const orderedDatapoints = matchingOutput?.datapoints.sort(
+          (a: any, b: any) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
+        );
+        const firstDatapoint = orderedDatapoints?.[0];
+        return {
+          outputId: indicator.id as string, // id is guaranteed by filter
+          value: firstDatapoint?.value || 0,
+          proof: firstDatapoint?.proof || "",
+          startDate: firstDatapoint?.startDate
+            ? new Date(firstDatapoint.startDate).toISOString()
+            : undefined,
+          endDate: firstDatapoint?.endDate
+            ? new Date(firstDatapoint.endDate).toISOString()
+            : undefined,
+        };
+      });
 
     setValue("outputs", outputsToSet);
   }, [editId, updateToEdit, indicatorsData, setValue]);
@@ -512,14 +524,14 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     if (!address || !project) return;
 
     try {
-      if (!project?.chainID || !project.recipient || !project.uid) {
+      if (!project?.chainID || !project.owner || !project.uid) {
         throw new Error("Required project data is missing");
       }
 
       const chainId = project.chainID;
-      const recipient = project.recipient;
+      const recipient = project.owner;
       const projectUid = project.uid;
-      const projectSlug = project.details?.data?.slug;
+      const projectSlug = project.details?.slug;
 
       const setup = await setupChainAndWallet({
         targetChainId: chainId,
@@ -609,12 +621,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         schema,
       };
 
-      // If in edit mode, add the existing UID
-      if (isEditMode && editId) {
-        Object.assign(projectUpdateData, { uid: editId });
-      }
-
-      const projectUpdate = new ProjectUpdate(projectUpdateData);
+      const projectUpdate = new ProjectUpdate(projectUpdateData as any);
 
       await projectUpdate.attest(walletSigner as any).then(async (res) => {
         let retries = 1000;
@@ -624,37 +631,42 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         }
         showLoading("Indexing activity...");
         while (retries > 0) {
-          await refreshProject()
-            .then(async (fetchedProject) => {
-              const attestUID = projectUpdate.uid;
-              const alreadyExists = fetchedProject?.updates.find((g) => g.uid === attestUID);
+          try {
+            const attestUID = projectUpdate.uid;
+            const { data: updatesData } = await refetchUpdates();
+            const alreadyExists = updatesData?.projectUpdates.find((u) => u.uid === attestUID);
 
-              if (alreadyExists) {
-                retries = 0;
-                showSuccess("Activity posted!");
-                toast.success(MESSAGES.PROJECT_UPDATE_FORM.SUCCESS);
-                afterSubmit?.();
-                setTimeout(() => {
-                  closeProgressModal();
-                  router.push(PAGES.PROJECT.UPDATES(projectSlug || projectUid));
-                  router.refresh();
+            if (alreadyExists) {
+              retries = 0;
+              showSuccess(isEditMode ? "Activity updated!" : "Activity posted!");
+              toast.success(
+                isEditMode ? "Activity updated successfully!" : MESSAGES.PROJECT_UPDATE_FORM.SUCCESS
+              );
+              afterSubmit?.();
+              setTimeout(() => {
+                closeProgressModal();
+                router.push(PAGES.PROJECT.UPDATES(projectSlug || projectUid));
+                router.refresh();
+                // Only show share dialog for new activities, not edits
+                if (!isEditMode) {
                   openShareDialog({
-                    modalShareText: `🎉 You just dropped an update for ${project?.details?.data?.title}!`,
+                    modalShareText: `🎉 You just dropped an update for ${project?.details?.title}!`,
                     modalShareSecondText: `That's how progress gets done! Your update is now live onchain—one step closer to greatness. Keep the vibes high and the milestones rolling! 🚀🔥`,
                     shareText: SHARE_TEXTS.PROJECT_ACTIVITY(
-                      project?.details?.data?.title as string,
-                      project?.uid as string
+                      project?.details?.title as string,
+                      (project?.details?.slug || project?.uid) as string
                     ),
                   });
-                }, 1500);
-              }
+                }
+              }, 1500);
+            } else {
               retries -= 1;
               await new Promise((resolve) => setTimeout(resolve, 1500));
-            })
-            .catch(async () => {
-              retries -= 1;
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            });
+            }
+          } catch {
+            retries -= 1;
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
         }
       });
     } catch (error) {
@@ -712,7 +724,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     );
 
   const activityWithSameTitle =
-    Boolean(project?.updates.find((u) => u.data.title === watch("title"))) && !isEditMode;
+    Boolean(projectUpdates.find((u) => u.title === watch("title"))) && !isEditMode;
 
   const formValues = watch();
 
@@ -772,7 +784,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             {...register("title")}
             disabled={isEditMode}
             onChange={(e) => {
-              if (project?.updates.find((u) => u.data.title === e.target.value)) {
+              if (projectUpdates.find((u) => u.title === e.target.value)) {
                 setError("title", {
                   message: "You already have an activity with this title.",
                   type: "required",

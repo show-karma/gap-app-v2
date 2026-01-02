@@ -25,7 +25,7 @@ const getResponsiveColumns = (width: number) => {
 };
 
 const StatsSkeleton = () => (
-  <div className="flex flex-col items-center justify-center p-6 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-sm animate-pulse">
+  <div className="flex flex-col items-center justify-center p-6 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-sm animate-pulse">
     <div className="h-9 w-16 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
     <div className="h-5 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div>
   </div>
@@ -33,7 +33,7 @@ const StatsSkeleton = () => (
 
 const CommunityCardSkeleton = () => (
   <div
-    className="flex flex-col p-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-sm w-full animate-pulse"
+    className="flex flex-col p-4 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-sm w-full animate-pulse"
     style={{ height: "318px" }}
   >
     {/* Community Image Skeleton */}
@@ -77,7 +77,7 @@ const CommunityCardSkeleton = () => (
 
 const CardSkeleton = ({ index }: { index: number }) => {
   return (
-    <div className="flex h-[360px] w-full max-w-full relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80">
+    <div className="flex h-[240px] w-full max-w-full relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 p-2 transition-all duration-300 ease-in-out hover:opacity-80">
       <div className="w-full flex flex-col gap-1 ">
         <div
           className="h-[4px] w-full rounded-full mb-2.5"
@@ -119,7 +119,7 @@ export const CardListSkeleton = () => {
   const cardArray = Array.from({ length: 16 }, (_, index) => index);
 
   return (
-    <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(360px,1fr))] xl:grid-cols-3">
+    <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(240px,1fr))] xl:grid-cols-3">
       {cardArray.map((_, index) => (
         <CardSkeleton key={index} index={index} />
       ))}

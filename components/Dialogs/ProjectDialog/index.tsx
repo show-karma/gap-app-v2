@@ -12,7 +12,6 @@ import {
   Project,
   ProjectDetails,
 } from "@show-karma/karma-gap-sdk";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/navigation";
 import { type FC, Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
@@ -43,16 +42,18 @@ import { useContactInfo } from "@/hooks/useContactInfo";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
+import { checkSlugExists, getProject } from "@/services/project.service";
+import { searchProjects } from "@/services/project-search.service";
 import { useProjectStore } from "@/store";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useProgressModal } from "@/store/modals/progressModal";
 import { useOwnerStore } from "@/store/owner";
 import type { Contact } from "@/types/project";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { gapSupportedNetworks } from "@/utilities/network";
@@ -152,7 +153,7 @@ type ProjectDialogProps = {
     iconSide?: "left" | "right";
     styleClass: string;
   } | null;
-  projectToUpdate?: IProjectResponse;
+  projectToUpdate?: ProjectResponse;
   previousContacts?: Contact[];
   useEditModalStore?: boolean; // New prop to control which modal state to use
 };
@@ -168,61 +169,48 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   previousContacts,
   useEditModalStore = false, // Default to false for create mode
 }) => {
-  const dataToUpdate = useMemo(
-    () =>
-      projectToUpdate
-        ? {
-            chainID: projectToUpdate?.chainID,
-            description: projectToUpdate?.details?.data?.description || "",
-            title: projectToUpdate?.details?.data?.title || "",
-            problem: projectToUpdate?.details?.data?.problem,
-            solution: projectToUpdate?.details?.data?.solution,
-            missionSummary: projectToUpdate?.details?.data?.missionSummary,
-            locationOfImpact: projectToUpdate?.details?.data?.locationOfImpact,
-            imageURL: projectToUpdate?.details?.data?.imageURL,
-            twitter: projectToUpdate?.details?.data?.links?.find((link) => link.type === "twitter")
-              ?.url,
-            github: projectToUpdate?.details?.data?.links?.find((link) => link.type === "github")
-              ?.url,
-            discord: projectToUpdate?.details?.data?.links?.find((link) => link.type === "discord")
-              ?.url,
-            website: projectToUpdate?.details?.data?.links?.find((link) => link.type === "website")
-              ?.url,
-            linkedin: projectToUpdate?.details?.data?.links?.find(
-              (link) => link.type === "linkedin"
-            )?.url,
-            pitchDeck: projectToUpdate?.details?.data?.links?.find(
-              (link) => link.type === "pitchDeck"
-            )?.url,
-            demoVideo: projectToUpdate?.details?.data?.links?.find(
-              (link) => link.type === "demoVideo"
-            )?.url,
-            farcaster: projectToUpdate?.details?.data?.links?.find(
-              (link) => link.type === "farcaster"
-            )?.url,
-            profilePicture: projectToUpdate?.details?.data?.imageURL,
-            tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
-            recipient: projectToUpdate?.recipient,
-            businessModel: projectToUpdate?.details?.data?.businessModel,
-            stageIn: projectToUpdate?.details?.data?.stageIn,
-            raisedMoney: projectToUpdate?.details?.data?.raisedMoney,
-            pathToTake: projectToUpdate?.details?.data?.pathToTake,
-          }
-        : undefined,
-    [projectToUpdate]
-  );
+  const dataToUpdate = useMemo(() => {
+    if (!projectToUpdate) return undefined;
+
+    const { details } = projectToUpdate;
+    const links = details?.links || [];
+    const getLinkUrl = (type: string) => links.find((l) => l.type === type)?.url || "";
+
+    return {
+      chainID: projectToUpdate.chainID,
+      description: details?.description || "",
+      title: details?.title || "",
+      problem: details?.problem,
+      solution: details?.solution,
+      missionSummary: details?.missionSummary,
+      locationOfImpact: details?.locationOfImpact,
+      imageURL: details?.logoUrl,
+      twitter: getLinkUrl("twitter"),
+      github: getLinkUrl("github"),
+      discord: getLinkUrl("discord"),
+      website: getLinkUrl("website"),
+      linkedin: getLinkUrl("linkedin"),
+      pitchDeck: getLinkUrl("pitchDeck"),
+      demoVideo: getLinkUrl("demoVideo"),
+      farcaster: getLinkUrl("farcaster"),
+      profilePicture: details?.logoUrl,
+      tags: details?.tags,
+      recipient: projectToUpdate.owner,
+      businessModel: details?.businessModel,
+      stageIn: details?.stageIn,
+      raisedMoney: details?.raisedMoney,
+      pathToTake: details?.pathToTake,
+    };
+  }, [projectToUpdate]);
 
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
   const [customLinks, setCustomLinks] = useState<CustomLink[]>(() => {
-    // Initialize custom links from project data if editing
-    if (projectToUpdate?.details?.data?.links) {
-      return projectToUpdate.details.data.links.filter(isCustomLink).map((link, index) => ({
-        id: `custom-${index}`,
-        name: link.name || "",
-        url: link.url,
-      }));
-    }
-    return [];
+    const links = projectToUpdate?.details?.links || [];
+    return links.filter(isCustomLink).map((link: any, index: number) => ({
+      id: `custom-${index}`,
+      name: link.name || "",
+      url: link.url,
+    }));
   });
 
   // Logo upload state management
@@ -375,8 +363,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         };
         reset(updateData);
         // Reset logo state to project's existing logo
-        if (projectToUpdate.details?.data?.imageURL) {
-          setLogoPreviewUrl(projectToUpdate.details.data.imageURL);
+        const imageURL = projectToUpdate.details?.logoUrl;
+        if (imageURL) {
+          setLogoPreviewUrl(imageURL);
         } else {
           setLogoPreviewUrl(null);
         }
@@ -698,102 +687,97 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
 
       // Use the gasless signer from setupChainAndWallet
-      console.log("[ProjectDialog] About to close modal and call attest");
-      console.log("[ProjectDialog] Project object:", {
-        uid: project.uid,
-        recipient: project.recipient,
-        detailsTitle: project.details?.data?.title,
-      });
       closeModal();
 
       // Attest first (Privy popups appear here), then show progress modal
-      console.log("[ProjectDialog] Calling project.attest() with signer...");
       await project.attest(signer as any).then(async (res) => {
-        console.log("[ProjectDialog] project.attest() SUCCESS!", res);
         // Show progress modal after Privy popups complete
         showLoading("Indexing project...");
-
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});
         }
-        let fetchedProject: Project | null = null;
+        let fetchedProject: ProjectResponse | null = null;
+
+        // First, poll using checkSlugExists to avoid 404 errors in Sentry
+        const projectIdentifier = slug || project.uid;
         while (retries > 0) {
           // eslint-disable-next-line no-await-in-loop
-          fetchedProject = await (slug
-            ? gapClient.fetch.projectBySlug(slug)
-            : gapClient.fetch.projectById(project.uid as Hex)
-          ).catch(() => null);
-          if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
-            if (data.github) {
-              const githubFromField = data.github.includes("http")
-                ? data.github
-                : `https://${data.github}`;
-              const repoUrl = new URL(githubFromField);
-              const pathParts = repoUrl.pathname.split("/").filter(Boolean);
-              if (repoUrl.hostname.includes("github.com") && pathParts.length >= 2) {
-                const owner = pathParts[0];
-                const repoName = pathParts[1];
-
-                const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}`);
-
-                if (!response.ok) {
-                  toast.error("Failed to fetch GitHub repository");
-                  throw new Error("Failed to fetch GitHub repository");
-                }
-
-                const repoData = await response.json();
-                if (repoData.private) {
-                  toast.error("GitHub repository is private");
-                  throw new Error("GitHub repository is private");
-                }
-
-                const [_githubUpdateData, error] = await fetchData(
-                  INDEXER.PROJECT.EXTERNAL.UPDATE(fetchedProject.uid),
-                  "PUT",
-                  {
-                    target: "github",
-                    ids: [repoUrl.href],
-                  }
-                );
-                if (error) {
-                  toast.error("Failed to update GitHub repository");
-                  throw new Error("Failed to update GitHub repository");
-                }
-              }
-            }
-
-            await fetchData(
-              INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
-              "POST",
-              { contacts },
-              {},
-              {},
-              true
-            ).then(([_res, error]) => {
-              if (error) {
-                toast.error(
-                  "Something went wrong with contact info save. Please try again later.",
-                  {
-                    className: "z-[9999]",
-                  }
-                );
-              }
-              retries = 0;
-              showSuccess("Project created!");
-              // Brief delay to show success, then redirect
-              setTimeout(() => {
-                closeProgressModal();
-                router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
-                router.refresh();
-              }, 1500);
-              return;
-            });
+          const exists = await checkSlugExists(projectIdentifier);
+          if (exists) {
+            // Project is indexed, now fetch the full details
+            // eslint-disable-next-line no-await-in-loop
+            fetchedProject = await getProject(projectIdentifier);
+            break;
           }
           retries -= 1;
           // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
           await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+
+        if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
+          if (data.github) {
+            const githubFromField = data.github.includes("http")
+              ? data.github
+              : `https://${data.github}`;
+            const repoUrl = new URL(githubFromField);
+            const pathParts = repoUrl.pathname.split("/").filter(Boolean);
+            if (repoUrl.hostname.includes("github.com") && pathParts.length >= 2) {
+              const owner = pathParts[0];
+              const repoName = pathParts[1];
+
+              const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}`);
+
+              if (!response.ok) {
+                toast.error("Failed to fetch GitHub repository");
+                throw new Error("Failed to fetch GitHub repository");
+              }
+
+              const repoData = await response.json();
+              if (repoData.private) {
+                toast.error("GitHub repository is private");
+                throw new Error("GitHub repository is private");
+              }
+
+              const [_githubUpdateData, error] = await fetchData(
+                INDEXER.PROJECT.EXTERNAL.UPDATE(fetchedProject.uid),
+                "PUT",
+                {
+                  target: "github",
+                  ids: [repoUrl.href],
+                }
+              );
+              if (error) {
+                toast.error("Failed to update GitHub repository");
+                throw new Error("Failed to update GitHub repository");
+              }
+            }
+          }
+
+          const [, subscriptionError] = await fetchData(
+            INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
+            "POST",
+            { contacts },
+            {},
+            {},
+            true
+          );
+
+          if (subscriptionError) {
+            toast.error("Something went wrong with contact info save. Please try again later.", {
+              className: "z-[9999]",
+            });
+          }
+
+          toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
+          showSuccess("Project created!");
+          setTimeout(() => {
+            closeProgressModal();
+            closeModal();
+            router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
+            router.refresh();
+          }, 1500);
         }
       });
 
@@ -813,6 +797,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         { address, data },
         { error: MESSAGES.PROJECT.CREATE.ERROR(data.title) }
       );
+      // Don't reset form on error - keep user's data and reopen modal
       setShouldResetOnOpen(false);
       openModal();
     } finally {
@@ -979,7 +964,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     } catch (error: any) {
       closeProgressModal();
       errorManager(
-        `Error updating project ${projectToUpdate?.details?.data?.slug || projectToUpdate?.uid}`,
+        `Error updating project ${projectToUpdate?.details?.slug || projectToUpdate?.uid}`,
         error,
         { ...data, address },
         { error: MESSAGES.PROJECT.UPDATE.ERROR }
@@ -1025,22 +1010,22 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const [isSearchingProject, setIsSearchingProject] = useState(false);
-  const [existingProjects, setExistingProjects] = useState<IProjectResponse[]>([]);
+  const [existingProjects, setExistingProjects] = useState<ProjectResponse[]>([]);
 
   const searchByExistingName = debounce(async (value: string) => {
     if (
       value.length < 3 ||
       (projectToUpdate &&
-        value.toLowerCase() === projectToUpdate?.details?.data?.title?.toLowerCase())
+        value.toLowerCase() === (projectToUpdate as ProjectResponse).details?.title?.toLowerCase())
     ) {
       return;
     }
     try {
       setIsSearchingProject(true);
-      const result = await gapIndexerApi.searchProjects(value).then((res) => res.data);
+      const result = await searchProjects(value);
       const hasEqualTitle =
-        result.filter((item) => item.details?.data.title.toLowerCase() === value.toLowerCase())
-          .length > 0;
+        result.filter((item) => item.details?.title?.toLowerCase() === value.toLowerCase()).length >
+        0;
       if (hasEqualTitle) {
         setExistingProjects(result);
         setError("title", {
@@ -1662,7 +1647,12 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   return (
     <>
       {buttonElement ? (
-        <Button type="button" onClick={openModal} id="new-project-button">
+        <Button
+          type="button"
+          onClick={openModal}
+          id="new-project-button"
+          className={buttonElement.styleClass}
+        >
           {buttonElement.iconSide === "left" && buttonElement.icon}
           {buttonElement.text}
           {buttonElement.iconSide === "right" && buttonElement.icon}

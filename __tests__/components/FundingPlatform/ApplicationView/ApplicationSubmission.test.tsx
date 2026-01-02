@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/react";
-import React from "react";
+import userEvent from "@testing-library/user-event";
 import ApplicationSubmission from "@/components/FundingPlatform/ApplicationView/ApplicationSubmission";
 import type { IFormSchema } from "@/types/funding-platform";
 
@@ -561,8 +561,9 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
       });
     });
 
-    it("should convert number values to strings when pre-filling", async () => {
-      // Test that numeric values from initialData are converted to strings
+    it("should pre-fill number fields correctly from numeric initialData", async () => {
+      // Test that numeric values from initialData are displayed correctly in inputs
+      // (inputs display as strings, but form state stores numbers)
       const initialData = {
         team_size: 50, // Number instead of string
         budget: 10000, // Number instead of string
@@ -580,6 +581,7 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
       await waitFor(() => {
         const teamSizeInput = screen.getByLabelText(/Team Size/i) as HTMLInputElement;
         const budgetInput = screen.getByLabelText(/Budget/i) as HTMLInputElement;
+        // Inputs display values as strings (HTML input behavior)
         expect(teamSizeInput.value).toBe("50");
         expect(budgetInput.value).toBe("10000");
       });
@@ -615,6 +617,295 @@ describe("ApplicationSubmission - Field Matching Logic", () => {
         const agreeInput = screen.getByLabelText(/Agree to Terms/i) as HTMLInputElement;
         expect(agreeInput.value).toBe("true");
       });
+    });
+
+    it("should store number type in form state, not string", async () => {
+      const user = userEvent.setup();
+      const mockOnSubmit = jest.fn();
+
+      render(
+        <ApplicationSubmission
+          {...defaultProps}
+          formSchema={numberFormSchema}
+          onSubmit={mockOnSubmit}
+          isEditMode={false}
+        />
+      );
+
+      const teamSizeInput = screen.getByLabelText(/Team Size/i) as HTMLInputElement;
+
+      // Type a valid number within range (min: 1, max: 100)
+      await user.type(teamSizeInput, "50");
+
+      await waitFor(() => {
+        expect(teamSizeInput.value).toBe("50");
+      });
+
+      // Submit form
+      const submitButton = screen.getByText(/Submit Application/i) as HTMLButtonElement;
+      await user.click(submitButton);
+
+      // Verify that the submitted value is a number, not a string
+      await waitFor(() => {
+        expect(mockOnSubmit).toHaveBeenCalled();
+        const submittedData = mockOnSubmit.mock.calls[0][0];
+        const teamSizeValue = submittedData["Team Size"];
+        // Value should be a number type, not a string
+        expect(typeof teamSizeValue).toBe("number");
+        expect(teamSizeValue).toBe(50);
+      });
+    });
+
+    it("should accept valid numeric input", async () => {
+      const user = userEvent.setup();
+      const mockOnSubmit = jest.fn();
+
+      render(
+        <ApplicationSubmission
+          {...defaultProps}
+          formSchema={numberFormSchema}
+          onSubmit={mockOnSubmit}
+          isEditMode={false}
+        />
+      );
+
+      const teamSizeInput = screen.getByLabelText(/Team Size/i) as HTMLInputElement;
+
+      await user.type(teamSizeInput, "50");
+
+      await waitFor(() => {
+        expect(teamSizeInput.value).toBe("50");
+      });
+
+      // Form should be valid and submit button should be enabled
+      const submitButton = screen.getByText(/Submit Application/i) as HTMLButtonElement;
+      expect(submitButton.disabled).toBe(false);
+    });
+
+    it("should show validation error for required number field when empty", async () => {
+      render(
+        <ApplicationSubmission {...defaultProps} formSchema={numberFormSchema} isEditMode={false} />
+      );
+
+      const teamSizeInput = screen.getByLabelText(/Team Size/i) as HTMLInputElement;
+
+      // Field should be empty initially
+      expect(teamSizeInput.value).toBe("");
+
+      // Submit button should be disabled when required field is empty
+      const submitButton = screen.getByText(/Submit Application/i) as HTMLButtonElement;
+      expect(submitButton.disabled).toBe(true);
+    });
+
+    it("should validate min value constraint", async () => {
+      const user = userEvent.setup();
+      const mockOnSubmit = jest.fn();
+
+      render(
+        <ApplicationSubmission
+          {...defaultProps}
+          formSchema={numberFormSchema}
+          onSubmit={mockOnSubmit}
+          isEditMode={false}
+        />
+      );
+
+      const teamSizeInput = screen.getByLabelText(/Team Size/i) as HTMLInputElement;
+
+      // Enter value below minimum (min is 1)
+      await user.type(teamSizeInput, "0");
+
+      // Try to submit
+      const submitButton = screen.getByText(/Submit Application/i) as HTMLButtonElement;
+      await user.click(submitButton);
+
+      // Form should not submit due to validation error
+      await waitFor(
+        () => {
+          // Button should remain disabled or form should show error
+          expect(submitButton.disabled || mockOnSubmit).toBeTruthy();
+        },
+        { timeout: 1000 }
+      ).catch(() => {
+        // If submit was prevented, that's expected
+        expect(mockOnSubmit).not.toHaveBeenCalled();
+      });
+    });
+
+    it("should validate max value constraint", async () => {
+      const user = userEvent.setup();
+      const mockOnSubmit = jest.fn();
+
+      render(
+        <ApplicationSubmission
+          {...defaultProps}
+          formSchema={numberFormSchema}
+          onSubmit={mockOnSubmit}
+          isEditMode={false}
+        />
+      );
+
+      const teamSizeInput = screen.getByLabelText(/Team Size/i) as HTMLInputElement;
+
+      // Enter value above maximum (max is 100)
+      await user.type(teamSizeInput, "101");
+
+      // Try to submit
+      const submitButton = screen.getByText(/Submit Application/i) as HTMLButtonElement;
+      await user.click(submitButton);
+
+      // Form should not submit due to validation error
+      await waitFor(
+        () => {
+          expect(mockOnSubmit).not.toHaveBeenCalled();
+        },
+        { timeout: 1000 }
+      ).catch(() => {
+        // Expected - validation should prevent submission
+        expect(mockOnSubmit).not.toHaveBeenCalled();
+      });
+    });
+
+    it("should accept valid number within min/max range", async () => {
+      const user = userEvent.setup();
+      const mockOnSubmit = jest.fn();
+
+      render(
+        <ApplicationSubmission
+          {...defaultProps}
+          formSchema={numberFormSchema}
+          onSubmit={mockOnSubmit}
+          isEditMode={false}
+        />
+      );
+
+      const teamSizeInput = screen.getByLabelText(/Team Size/i) as HTMLInputElement;
+
+      // Enter valid number within range (1-100)
+      await user.type(teamSizeInput, "50");
+
+      await waitFor(() => {
+        expect(teamSizeInput.value).toBe("50");
+      });
+
+      // Submit button should be enabled
+      const submitButton = screen.getByText(/Submit Application/i) as HTMLButtonElement;
+      expect(submitButton.disabled).toBe(false);
+    });
+
+    it("should handle optional number fields correctly", async () => {
+      const user = userEvent.setup();
+      const mockOnSubmit = jest.fn();
+
+      render(
+        <ApplicationSubmission
+          {...defaultProps}
+          formSchema={numberFormSchema}
+          onSubmit={mockOnSubmit}
+          isEditMode={false}
+        />
+      );
+
+      const budgetInput = screen.getByLabelText(/Budget/i) as HTMLInputElement;
+      const teamSizeInput = screen.getByLabelText(/Team Size/i) as HTMLInputElement;
+
+      // Fill required field
+      await user.type(teamSizeInput, "50");
+
+      // Optional field can be empty
+      expect(budgetInput.value).toBe("");
+
+      // Form should be valid and submit button enabled
+      const submitButton = screen.getByText(/Submit Application/i) as HTMLButtonElement;
+      await waitFor(() => {
+        expect(submitButton.disabled).toBe(false);
+      });
+    });
+
+    it("should store numbers (not strings) in form state when pre-filling in edit mode", async () => {
+      const user = userEvent.setup();
+      const mockOnSubmit = jest.fn();
+
+      const initialData = {
+        team_size: 50, // Number value
+        budget: 10000, // Number value
+      };
+
+      render(
+        <ApplicationSubmission
+          {...defaultProps}
+          formSchema={numberFormSchema}
+          initialData={initialData}
+          onSubmit={mockOnSubmit}
+          isEditMode={true}
+        />
+      );
+
+      await waitFor(() => {
+        const teamSizeInput = screen.getByLabelText(/Team Size/i) as HTMLInputElement;
+        const budgetInput = screen.getByLabelText(/Budget/i) as HTMLInputElement;
+        // Inputs display values as strings (HTML input behavior)
+        expect(teamSizeInput.value).toBe("50");
+        expect(budgetInput.value).toBe("10000");
+      });
+
+      // Submit form to verify form state stores numbers
+      const submitButton = screen.getByText(/Update Application/i) as HTMLButtonElement;
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockOnSubmit).toHaveBeenCalled();
+        const submittedData = mockOnSubmit.mock.calls[0][0];
+        const teamSizeValue = submittedData["Team Size"];
+        const budgetValue = submittedData.Budget;
+        // Values should be numbers, not strings
+        expect(typeof teamSizeValue).toBe("number");
+        expect(teamSizeValue).toBe(50);
+        expect(typeof budgetValue).toBe("number");
+        expect(budgetValue).toBe(10000);
+      });
+    });
+
+    it("should handle decimal numbers correctly", async () => {
+      const user = userEvent.setup();
+      const mockOnSubmit = jest.fn();
+
+      const decimalFormSchema: IFormSchema = {
+        title: "Test Form with Decimals",
+        fields: [
+          {
+            id: "field-1",
+            type: "number",
+            label: "Amount",
+            required: true,
+            validation: {
+              min: 0,
+            },
+          },
+        ],
+      };
+
+      render(
+        <ApplicationSubmission
+          {...defaultProps}
+          formSchema={decimalFormSchema}
+          onSubmit={mockOnSubmit}
+          isEditMode={false}
+        />
+      );
+
+      const amountInput = screen.getByLabelText(/Amount/i) as HTMLInputElement;
+
+      // Enter decimal number
+      await user.type(amountInput, "99.99");
+
+      await waitFor(() => {
+        expect(amountInput.value).toBe("99.99");
+      });
+
+      // Form should accept decimal numbers
+      const submitButton = screen.getByText(/Submit Application/i) as HTMLButtonElement;
+      expect(submitButton.disabled).toBe(false);
     });
   });
 

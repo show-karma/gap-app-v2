@@ -1,16 +1,22 @@
-import type {
-  IGrantResponse,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { Metadata } from "next";
 import { PROJECT_NAME } from "@/constants/brand";
+import type { Grant } from "@/types/v2/grant";
+import type { Project as ProjectResponse } from "@/types/v2/project";
 import { envVars } from "../enviromentVars";
 import { cleanMarkdownForPlainText } from "../markdown";
 import { defaultMetadata } from "../meta";
 
+const getProjectTitle = (project: ProjectResponse): string => {
+  return project?.details?.title || "";
+};
+
+const getProjectDescription = (project: ProjectResponse): string => {
+  return project?.details?.description || "";
+};
+
 // Base project metadata generator
 export const generateProjectMetadata = (
-  project: IProjectResponse,
+  project: ProjectResponse,
   options: {
     title?: string;
     description?: string;
@@ -18,15 +24,16 @@ export const generateProjectMetadata = (
     projectId: string;
   }
 ): Metadata => {
+  const projectTitle = getProjectTitle(project);
   const title =
     options.title ||
     (options.pageName
-      ? `${project.details?.data?.title} ${options.pageName} | ${PROJECT_NAME}`
-      : `${project.details?.data?.title} | ${PROJECT_NAME}`);
+      ? `${projectTitle} ${options.pageName} | ${PROJECT_NAME}`
+      : `${projectTitle} | ${PROJECT_NAME}`);
 
   const description =
     options.description ||
-    cleanMarkdownForPlainText(project.details?.data?.description || "", 160) ||
+    cleanMarkdownForPlainText(getProjectDescription(project) || "", 160) ||
     defaultMetadata.description;
 
   return {
@@ -60,111 +67,133 @@ export const generateProjectMetadata = (
 
 // Specific metadata generators for different page types
 export const generateProjectOverviewMetadata = (
-  project: IProjectResponse,
+  project: ProjectResponse,
   projectId: string
 ): Metadata => {
+  const projectTitle = getProjectTitle(project);
   return generateProjectMetadata(project, {
     projectId,
-    title: `${project.details?.data?.title} | ${PROJECT_NAME}`,
-    description: cleanMarkdownForPlainText(project.details?.data?.description || "", 80),
+    title: `${projectTitle} | ${PROJECT_NAME}`,
+    description: cleanMarkdownForPlainText(getProjectDescription(project) || "", 80),
   });
 };
 
 export const generateProjectTeamMetadata = (
-  project: IProjectResponse,
+  project: ProjectResponse,
   projectId: string
 ): Metadata => {
+  const projectTitle = getProjectTitle(project);
   return generateProjectMetadata(project, {
     projectId,
     pageName: "Team",
-    description: `Meet the team behind ${project.details?.data?.title} and their contributions to the project.`,
+    description: `Meet the team behind ${projectTitle} and their contributions to the project.`,
   });
 };
 
 export const generateProjectImpactMetadata = (
-  project: IProjectResponse,
+  project: ProjectResponse,
   projectId: string
 ): Metadata => {
+  const projectTitle = getProjectTitle(project);
   return generateProjectMetadata(project, {
     projectId,
-    title: `Impact of ${project.details?.data?.title} | ${PROJECT_NAME}`,
-    description: `Explore the impact and outcomes of ${project.details?.data?.title} on ${PROJECT_NAME}.`,
+    title: `Impact of ${projectTitle} | ${PROJECT_NAME}`,
+    description: `Explore the impact and outcomes of ${projectTitle} on ${PROJECT_NAME}.`,
   });
 };
 
 export const generateProjectContactMetadata = (
-  project: IProjectResponse,
+  project: ProjectResponse,
   projectId: string
 ): Metadata => {
+  const projectTitle = getProjectTitle(project);
   return generateProjectMetadata(project, {
     projectId,
     pageName: "Contact",
-    description: `Contact information for ${project.details?.data?.title} project team.`,
+    description: `Contact information for ${projectTitle} project team.`,
   });
 };
 
 export const generateProjectUpdatesMetadata = (
-  project: IProjectResponse,
+  project: ProjectResponse,
   projectId: string
 ): Metadata => {
+  const projectTitle = getProjectTitle(project);
   return generateProjectMetadata(project, {
     projectId,
-    title: `${project.details?.data?.title} Updates | ${PROJECT_NAME}`,
-    description: `Explore the updates of ${project.details?.data?.title} on ${PROJECT_NAME}.`,
+    title: `${projectTitle} Updates | ${PROJECT_NAME}`,
+    description: `Explore the updates of ${projectTitle} on ${PROJECT_NAME}.`,
   });
 };
 
 export const generateProjectFundingMetadata = (
-  project: IProjectResponse,
+  project: ProjectResponse,
   projectId: string
 ): Metadata => {
+  const projectTitle = getProjectTitle(project);
   return generateProjectMetadata(project, {
     projectId,
-    title: `${project.details?.data?.title} Grants | ${PROJECT_NAME}`,
-    description: `View funding and grants for ${project.details?.data?.title} on ${PROJECT_NAME}.`,
+    title: `${projectTitle} Grants | ${PROJECT_NAME}`,
+    description: `View funding and grants for ${projectTitle} on ${PROJECT_NAME}.`,
   });
+};
+
+// Helper to get grant title (V2 API structure)
+const getGrantTitle = (grant: Grant): string => {
+  return grant.details?.title || "";
+};
+
+// Helper to get grant description (V2 API structure)
+const getGrantDescription = (grant: Grant): string => {
+  return grant.details?.description || "";
 };
 
 // Grant-specific metadata generators
 export const generateGrantOverviewMetadata = (
-  project: IProjectResponse,
-  grant: IGrantResponse,
+  project: ProjectResponse,
+  grant: Grant,
   projectId: string
 ): Metadata => {
+  const projectTitle = getProjectTitle(project);
+  const grantTitle = getGrantTitle(grant);
   return generateProjectMetadata(project, {
     projectId,
-    title: `${grant.details?.data?.title} Grant Overview | ${project.details?.data?.title} | ${PROJECT_NAME}`,
-    description: cleanMarkdownForPlainText(grant.details?.data?.description || "", 160),
+    title: `${grantTitle} Grant Overview | ${projectTitle} | ${PROJECT_NAME}`,
+    description: cleanMarkdownForPlainText(getGrantDescription(grant), 160),
   });
 };
 
 export const generateGrantMilestonesMetadata = (
-  project: IProjectResponse,
-  grant: IGrantResponse,
+  project: ProjectResponse,
+  grant: Grant,
   projectId: string
 ): Metadata => {
+  const projectTitle = getProjectTitle(project);
+  const grantTitle = getGrantTitle(grant);
   return generateProjectMetadata(project, {
     projectId,
-    title: `${project.details?.data?.title} - Milestones and Updates for ${grant.details?.data?.title} | ${PROJECT_NAME}`,
-    description: `View all milestones and updates by ${project.details?.data?.title} for ${grant.details?.data?.title} grant.`,
+    title: `${projectTitle} - Milestones and Updates for ${grantTitle} | ${PROJECT_NAME}`,
+    description: `View all milestones and updates by ${projectTitle} for ${grantTitle} grant.`,
   });
 };
 
 export const generateGrantImpactCriteriaMetadata = (
-  project: IProjectResponse,
-  grant: IGrantResponse,
+  project: ProjectResponse,
+  grant: Grant,
   projectId: string
 ): Metadata => {
+  const projectTitle = getProjectTitle(project);
+  const grantTitle = getGrantTitle(grant);
   return generateProjectMetadata(project, {
     projectId,
-    title: `Impact Criteria for ${grant.details?.data?.title} Grant | ${project.details?.data?.title} | ${PROJECT_NAME}`,
-    description: `Impact criteria defined by ${project.details?.data?.title} for ${grant.details?.data?.title} grant.`,
+    title: `Impact Criteria for ${grantTitle} Grant | ${projectTitle} | ${PROJECT_NAME}`,
+    description: `Impact criteria defined by ${projectTitle} for ${grantTitle} grant.`,
   });
 };
 
 // Enhanced metadata composition functions
 export const createMetadataFromContext = (
-  project: IProjectResponse | null,
+  project: ProjectResponse | null,
   projectId: string,
   metadataType: "overview" | "team" | "impact" | "contact" | "updates" | "funding",
   customOptions?: {
@@ -205,8 +234,8 @@ export const createMetadataFromContext = (
 
 // Grant-specific metadata composition functions
 export const createGrantMetadataFromContext = (
-  project: IProjectResponse | null,
-  grant: IGrantResponse | null,
+  project: ProjectResponse | null,
+  grant: Grant | null,
   projectId: string,
   _grantUid?: string,
   metadataType: "overview" | "milestones" | "impact-criteria" = "overview"

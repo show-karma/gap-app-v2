@@ -112,7 +112,7 @@ describe("getAIScore", () => {
       });
       const score = getAIScore(application);
       expect(score).toBeNull();
-      expect(mockConsoleWarn).toHaveBeenCalledWith("AI evaluation is not a string:", "object");
+      // New implementation silently returns null without warning for non-string evaluation
     });
   });
 
@@ -126,7 +126,7 @@ describe("getAIScore", () => {
       const score = getAIScore(application);
       expect(score).toBeNull();
       expect(mockConsoleWarn).toHaveBeenCalledWith(
-        "Failed to parse AI evaluation for application:",
+        "Failed to parse aiEvaluation for application:",
         expect.objectContaining({
           referenceNumber: "APP-TEST-123",
           error: expect.any(String),
@@ -144,7 +144,7 @@ describe("getAIScore", () => {
       const score = getAIScore(application);
       expect(score).toBeNull();
       expect(mockConsoleWarn).toHaveBeenCalledWith(
-        "AI evaluation missing or invalid final_score field:",
+        expect.stringContaining("aiEvaluation evaluation missing valid score field"),
         {}
       );
     });
@@ -158,7 +158,7 @@ describe("getAIScore", () => {
       const score = getAIScore(application);
       expect(score).toBeNull();
       expect(mockConsoleWarn).toHaveBeenCalledWith(
-        "AI evaluation missing or invalid final_score field:",
+        expect.stringContaining("aiEvaluation evaluation missing valid score field"),
         { score: 4.5 }
       );
     });
@@ -196,27 +196,33 @@ describe("getAIScore", () => {
     });
   });
 
-  describe("Range validation warnings", () => {
-    it("should warn for scores below 0", () => {
+  describe("Range validation", () => {
+    it("should return null for scores below 0", () => {
       const application = createMockApplication({
         evaluation: JSON.stringify({ final_score: -1 }),
         promptId: "test-prompt",
       });
 
       const score = getAIScore(application);
-      expect(score).toBe(-1); // Still returns the value
-      expect(mockConsoleWarn).toHaveBeenCalledWith("AI score outside expected range (0-100):", -1);
+      expect(score).toBeNull(); // New implementation returns null for out-of-range scores
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
+        "aiEvaluation score outside expected range (0-100):",
+        -1
+      );
     });
 
-    it("should warn for scores above 100", () => {
+    it("should return null for scores above 100", () => {
       const application = createMockApplication({
         evaluation: JSON.stringify({ final_score: 150 }),
         promptId: "test-prompt",
       });
 
       const score = getAIScore(application);
-      expect(score).toBe(150); // Still returns the value
-      expect(mockConsoleWarn).toHaveBeenCalledWith("AI score outside expected range (0-100):", 150);
+      expect(score).toBeNull(); // New implementation returns null for out-of-range scores
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
+        "aiEvaluation score outside expected range (0-100):",
+        150
+      );
     });
   });
 });

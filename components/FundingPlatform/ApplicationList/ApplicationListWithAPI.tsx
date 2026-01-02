@@ -8,11 +8,19 @@ import pluralize from "pluralize";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { Button } from "@/components/Utilities/Button";
-import { useApplicationExport, useFundingApplications } from "@/hooks/useFundingPlatform";
+import {
+  useApplicationExport,
+  useFundingApplications,
+  useProgramConfig,
+} from "@/hooks/useFundingPlatform";
+import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
+import { useProgramReviewers } from "@/hooks/useProgramReviewers";
+import { useProgram } from "@/hooks/usePrograms";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
 import type { IFundingApplication } from "@/types/funding-platform";
 import formatCurrency from "@/utilities/formatCurrency";
-import ApplicationList from "./ApplicationList";
+import { getAIColumnVisibility } from "../helper/getAIColumnVisibility";
+import { ApplicationList } from "./ApplicationList";
 
 interface IApplicationListWithAPIProps {
   programId: string;
@@ -97,6 +105,28 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
 
   const { exportApplications, isExporting } = useApplicationExport(programId, chainId, isAdmin);
 
+  // Fetch program config and program data to determine AI column visibility
+  const { config } = useProgramConfig(programId, chainId);
+  const { data: program } = useProgram(programId);
+
+  // Fetch reviewers for the program
+  const {
+    data: programReviewers = [],
+    isLoading: isLoadingProgramReviewers,
+    isError: isProgramReviewersError,
+  } = useProgramReviewers(programId, chainId);
+  const {
+    data: milestoneReviewers = [],
+    isLoading: isLoadingMilestoneReviewers,
+    isError: isMilestoneReviewersError,
+  } = useMilestoneReviewers(programId, chainId);
+
+  // Determine column visibility based on configured prompts
+  const { showAIScoreColumn, showInternalAIScoreColumn } = useMemo(
+    () => getAIColumnVisibility(config?.formSchema, program?.langfusePromptId),
+    [config?.formSchema, program?.langfusePromptId]
+  );
+
   // Sync filters and sorting with URL
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -149,9 +179,21 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   }, [filters, sortBy, sortOrder, pathname, router, searchParams]);
 
   const handleStatusChange = useCallback(
-    async (applicationId: string, status: string, note?: string) => {
+    async (
+      applicationId: string,
+      status: string,
+      note?: string,
+      approvedAmount?: string,
+      approvedCurrency?: string
+    ) => {
       try {
-        await updateApplicationStatus({ applicationId, status, note });
+        await updateApplicationStatus({
+          applicationId,
+          status,
+          note,
+          approvedAmount,
+          approvedCurrency,
+        });
         // Refetch to get updated data
         refetch();
         // Call parent's onStatusChange if provided
@@ -414,6 +456,14 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           sortBy={sortBy}
           sortOrder={sortOrder}
           onSortChange={handleSortChange}
+          showAIScoreColumn={showAIScoreColumn}
+          showInternalAIScoreColumn={showInternalAIScoreColumn}
+          programReviewers={programReviewers}
+          milestoneReviewers={milestoneReviewers}
+          isLoadingProgramReviewers={isLoadingProgramReviewers}
+          isProgramReviewersError={isProgramReviewersError}
+          isLoadingMilestoneReviewers={isLoadingMilestoneReviewers}
+          isMilestoneReviewersError={isMilestoneReviewersError}
         />
       </InfiniteScroll>
     </div>

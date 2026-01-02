@@ -3,25 +3,18 @@
 import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
 import { Button } from "@/components/Utilities/Button";
-
-// Define the possible application statuses
-type ApplicationStatus =
-  | "pending"
-  | "under_review"
-  | "revision_requested"
-  | "approved"
-  | "rejected";
+import type { FundingApplicationStatusV2 } from "@/types/funding-platform";
 
 // Define status transition configuration for table view
 interface TableStatusTransition {
-  targetStatus: ApplicationStatus;
+  targetStatus: FundingApplicationStatusV2;
   label: string;
   icon?: React.ComponentType<{ className?: string }>;
   className?: string;
 }
 
 // Configuration for allowed status transitions in table view
-const TABLE_STATUS_TRANSITIONS: Record<ApplicationStatus, TableStatusTransition[]> = {
+const TABLE_STATUS_TRANSITIONS: Record<FundingApplicationStatusV2, TableStatusTransition[]> = {
   pending: [
     {
       targetStatus: "under_review",
@@ -53,6 +46,14 @@ const TABLE_STATUS_TRANSITIONS: Record<ApplicationStatus, TableStatusTransition[
     },
   ],
   revision_requested: [
+    {
+      targetStatus: "under_review",
+      label: "Review",
+      className:
+        "px-2 py-1 text-sm border bg-transparent text-purple-600 font-medium border-purple-200 dark:border-purple-700 dark:text-purple-400",
+    },
+  ],
+  resubmitted: [
     {
       targetStatus: "under_review",
       label: "Review",
@@ -95,7 +96,7 @@ const TableStatusActionButton: FC<TableStatusActionButtonProps> = ({
 
 interface TableStatusActionButtonsProps {
   applicationId: string;
-  currentStatus: ApplicationStatus;
+  currentStatus: FundingApplicationStatusV2;
   onStatusChange: (applicationId: string, status: string, e: React.MouseEvent) => void;
   isUpdating?: boolean;
 }

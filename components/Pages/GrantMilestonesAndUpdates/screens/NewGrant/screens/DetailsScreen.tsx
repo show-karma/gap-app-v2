@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import type React from "react";
 import { useState } from "react";
@@ -12,9 +11,11 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
 import { useGrant } from "@/hooks/useGrant";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
+import type { Grant } from "@/types/v2/grant";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -82,6 +83,9 @@ export const DetailsScreen: React.FC = () => {
   const _refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
   const { address, isConnected, connector, chain } = useAccount();
+
+  // Fetch grants using dedicated hook
+  const { grants } = useProjectGrants(selectedProject?.uid || "");
   const { authenticated: isAuth } = useAuth();
   const { gap } = useGap();
   const { updateGrant, isLoading: isUpdatingGrant } = useGrant();
@@ -111,7 +115,7 @@ export const DetailsScreen: React.FC = () => {
       description: formData.description || "",
       amount: formData.amount || "",
       linkToProposal: formData.linkToProposal || "",
-      recipient: formData.recipient || selectedProject?.recipient || "",
+      recipient: formData.recipient || selectedProject?.owner || "",
     },
     mode: "onChange",
   });
@@ -125,7 +129,7 @@ export const DetailsScreen: React.FC = () => {
 
   const handleCancel = () => {
     if (!selectedProject) return;
-    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.data?.slug || selectedProject?.uid));
+    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.slug || selectedProject?.uid));
   };
 
   const handleNext = () => {
@@ -149,12 +153,10 @@ export const DetailsScreen: React.FC = () => {
     // Update form data
     updateFormData(updateObj);
     if (isEditing) {
-      updateGrant(
-        selectedProject?.grants?.find(
-          (g) => g.uid.toLowerCase() === grant.toLowerCase()
-        ) as IGrantResponse,
-        { ...updateObj, community: formData.community || "" }
-      );
+      updateGrant(grants.find((g) => g.uid.toLowerCase() === grant.toLowerCase()) as Grant, {
+        ...updateObj,
+        community: formData.community || "",
+      });
     } else {
       setCurrentStep(4);
     }

@@ -16,6 +16,8 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
+import { getProjectImpacts } from "@/services/project-impacts.service";
 import { useProjectStore } from "@/store";
 import { useProgressModal } from "@/store/modals/progressModal";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
@@ -51,7 +53,8 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const projectIdOrSlug = project?.details?.slug || project?.uid || "";
+  const { refetch: refetchImpacts } = useProjectImpacts(projectIdOrSlug);
   const [, changeTab] = useQueryState("tab");
   const {
     register,
@@ -115,17 +118,20 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         }
         let retries = 1000;
         showLoading("Indexing impact...");
-        let fetchedProject = null;
         while (retries > 0) {
-          fetchedProject = await gapClient!.fetch.projectById(project.uid as Hex).catch(() => null);
-          if (fetchedProject?.impacts?.find((impact) => impact.uid === newImpact.uid)) {
-            retries = 0;
-            showSuccess("Impact added!");
-            setTimeout(() => {
-              closeProgressModal();
-              changeTab(null);
-            }, 1500);
-            await refreshProject();
+          try {
+            const polledImpacts = await getProjectImpacts(projectIdOrSlug);
+            if (polledImpacts.find((polledImpact) => polledImpact.uid === newImpact.uid)) {
+              retries = 0;
+              await refetchImpacts();
+              showSuccess("Impact added!");
+              setTimeout(() => {
+                closeProgressModal();
+                changeTab(null);
+              }, 1500);
+            }
+          } catch {
+            // Ignore polling errors, continue retrying
           }
           retries -= 1;
           // eslint-disable-next-line no-await-in-loop, no-promise-executor-return

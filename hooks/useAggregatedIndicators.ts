@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { getCommunityDetailsV2 } from "@/utilities/queries/getCommunityDataV2";
+import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 
 export interface AggregatedIndicator {
   id: string;
@@ -41,7 +41,7 @@ export function useAggregatedIndicators(
     if (!indicatorIds.length) return [];
 
     // First get the community details to obtain the UID
-    const communityDetails = await getCommunityDetailsV2(communityId as string);
+    const communityDetails = await getCommunityDetails(communityId as string);
 
     if (!communityDetails) {
       return [];

@@ -49,7 +49,7 @@ const AIEvaluationButton: FC<AIEvaluationButtonProps> = ({
     setIsEvaluating(true);
 
     try {
-      const result = isInternal
+      const _result = isInternal
         ? await fundingApplicationsAPI.runInternalAIEvaluation(referenceNumber)
         : await fundingApplicationsAPI.runAIEvaluation(referenceNumber);
 

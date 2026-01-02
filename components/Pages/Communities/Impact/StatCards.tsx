@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
 import { useCommunityStore } from "@/store/community";
 import formatCurrency from "@/utilities/formatCurrency";
-import { getCommunityStatsV2 } from "@/utilities/queries/getCommunityDataV2";
+import { getCommunityStats } from "@/utilities/queries/v2/getCommunityData";
 
 export const ImpactStatCards = () => {
   const { data, isLoading } = useImpactMeasurement();
@@ -81,7 +81,7 @@ export const CommunityStatCards = () => {
   } = useCommunityStore();
   const { data, isLoading } = useQuery({
     queryKey: ["community-stats", communityId],
-    queryFn: () => getCommunityStatsV2(communityId),
+    queryFn: () => getCommunityStats(communityId),
     enabled: !!communityId,
   });
 

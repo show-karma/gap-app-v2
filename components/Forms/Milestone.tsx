@@ -4,10 +4,7 @@ import { Popover } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Milestone } from "@show-karma/karma-gap-sdk";
-import type {
-  IGrantResponse,
-  IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
 import { useState } from "react";
@@ -23,9 +20,11 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useProgressModal } from "@/store/modals/progressModal";
+import type { Grant } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
@@ -69,7 +68,7 @@ const inputStyle =
 type MilestoneType = z.infer<typeof milestoneSchema>;
 
 interface MilestoneFormProps {
-  grant: IGrantResponse;
+  grant: Grant;
   afterSubmit?: () => void;
 }
 
@@ -105,6 +104,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const project = useProjectStore((state) => state.project);
   const projectUID = project?.uid;
+  const { refetch: refetchGrants } = useProjectGrants(projectUID || "");
 
   const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
 
@@ -139,7 +139,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
       const { walletSigner, gapClient, chainId: actualChainId } = setup;
 
       const milestoneToAttest = new Milestone({
-        refUID: uid,
+        refUID: uid as `0x${string}`,
         schema: gapClient.findSchema("Milestone"),
         recipient: (recipient as Hex) || smartWalletAddress || address,
         data: milestone,
@@ -156,38 +156,37 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         }
         showLoading("Indexing milestone...");
         while (retries > 0) {
-          await refreshProject()
-            .then(async (fetchedProject) => {
-              const fetchedGrant = fetchedProject?.grants.find((g) => g.uid === uid);
-              const milestoneExists = fetchedGrant?.milestones.find(
-                (g: any) => g.uid === milestoneToAttest.uid
+          try {
+            const { data: fetchedGrants } = await refetchGrants();
+            const fetchedGrant = (fetchedGrants || []).find((g) => g.uid === uid);
+            const milestoneExists = fetchedGrant?.milestones?.find(
+              (m) => m.uid === milestoneToAttest.uid
+            );
+            if (milestoneExists) {
+              retries = 0;
+              toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
+              router.push(
+                PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                  (project?.details?.slug || project?.uid) as string,
+                  fetchedGrant?.uid as string,
+                  "milestones-and-updates"
+                )
               );
-              if (milestoneExists) {
-                retries = 0;
-                showSuccess("Milestone created!");
-                toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
-                setTimeout(() => {
-                  closeProgressModal();
-                  router.push(
-                    PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                      (fetchedProject?.details?.data.slug || fetchedProject?.uid) as string,
-                      fetchedGrant?.uid as string,
-                      "milestones-and-updates"
-                    )
-                  );
-                  router.refresh();
-                  afterSubmit?.();
-                }, 1500);
-              }
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            })
-            .catch(async () => {
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            });
+              showSuccess("Milestone created!");
+              setTimeout(() => {
+                closeProgressModal();
+                router.refresh();
+                afterSubmit?.();
+              }, 1500);
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          } catch {
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
         }
       });
     } catch (error) {
@@ -264,9 +263,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                             <button
                               key={priority}
                               className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
-                              disabled={milestones.some(
-                                (m: IMilestoneResponse) => m.data.priority === priority
-                              )}
+                              disabled={milestones?.some((m) => m.priority === priority)}
                               onClick={(event) => {
                                 event?.preventDefault();
                                 event?.stopPropagation();

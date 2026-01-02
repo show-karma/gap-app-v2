@@ -1,6 +1,7 @@
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SectionContainer } from "@/src/components/shared/section-container";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { cn } from "@/utilities/tailwind";
@@ -288,52 +289,54 @@ function CaseStudyCardComponent({ card }: { card: CaseStudyCard }) {
 export function CaseStudiesSection() {
   return (
     <section
-      className={cn(marketingLayoutTheme.padding, "flex flex-col items-start w-full gap-16")}
+      className={cn(marketingLayoutTheme.padding, "flex flex-col items-start w-full")}
       id="case-studies"
     >
-      <div className="flex flex-col items-start gap-4 w-full">
-        <Badge
-          variant="secondary"
+      <SectionContainer className="flex flex-col items-start gap-16">
+        <div className="flex flex-col items-start gap-4 w-full">
+          <Badge
+            variant="secondary"
+            className={cn(
+              "text-secondary-foreground font-medium text-xs",
+              "leading-[150%] tracking-[0.015em]",
+              "rounded-full py-[3px] px-2",
+              "bg-secondary border-0 w-fit"
+            )}
+          >
+            Case Studies
+          </Badge>
+
+          <h2 className={cn("section-title", "w-full")}>
+            <span className="text-foreground">Ecosystems trust Karma</span>{" "}
+            <br className="hidden md:block" />
+            <span className="text-muted-foreground"> to help them grow</span>
+          </h2>
+        </div>
+
+        <div
           className={cn(
-            "text-secondary-foreground font-medium text-xs",
-            "leading-[150%] tracking-[0.015em]",
-            "rounded-full py-[3px] px-2",
-            "bg-secondary border-0 w-fit"
+            "grid grid-cols-1 md:grid-cols-6 gap-10 w-full",
+            "max-w-[1920px]",
+            "items-stretch"
           )}
         >
-          Case Studies
-        </Badge>
+          <div className="md:col-span-2">
+            <TestimonialCardComponent card={caseStudyCards[0] as TestimonialCard} />
+          </div>
 
-        <h2 className={cn("section-title", "w-full")}>
-          <span className="text-foreground">Ecosystems trust Karma</span>{" "}
-          <br className="hidden md:block" />
-          <span className="text-muted-foreground"> to help them grow</span>
-        </h2>
-      </div>
+          <div className="md:col-span-4">
+            <CaseStudyCardComponent card={caseStudyCards[1] as CaseStudyCard} />
+          </div>
 
-      <div
-        className={cn(
-          "grid grid-cols-1 md:grid-cols-6 gap-10 w-full",
-          "max-w-[1920px]",
-          "items-stretch"
-        )}
-      >
-        <div className="md:col-span-2">
-          <TestimonialCardComponent card={caseStudyCards[0] as TestimonialCard} />
+          <div className="md:col-span-4">
+            <CaseStudyCardComponent card={caseStudyCards[2] as CaseStudyCard} />
+          </div>
+
+          <div className="md:col-span-2">
+            <TestimonialCardComponent card={caseStudyCards[3] as TestimonialCard} />
+          </div>
         </div>
-
-        <div className="md:col-span-4">
-          <CaseStudyCardComponent card={caseStudyCards[1] as CaseStudyCard} />
-        </div>
-
-        <div className="md:col-span-4">
-          <CaseStudyCardComponent card={caseStudyCards[2] as CaseStudyCard} />
-        </div>
-
-        <div className="md:col-span-2">
-          <TestimonialCardComponent card={caseStudyCards[3] as TestimonialCard} />
-        </div>
-      </div>
+      </SectionContainer>
     </section>
   );
 }

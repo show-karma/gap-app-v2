@@ -41,10 +41,13 @@ export interface FormSchema {
     submitButtonText: string;
     confirmationMessage: string;
     privateApplications?: boolean; // Whether this program has private applications
-    applicationDeadline?: string; // Application deadline date
     donationRound?: boolean; // Whether this is a donation round
     successPageContent?: string; // Markdown content for "What happens next?" section on success page
     showCommentsOnPublicPage?: boolean; // Whether to show comments on public application pages
+    approvalEmailTemplate?: string; // Markdown/HTML template for approval emails with variable placeholders
+    approvalEmailSubject?: string; // Custom subject for approval emails with variable placeholders (e.g., {{programName}})
+    rejectionEmailTemplate?: string; // Markdown/HTML template for rejection emails with variable placeholders
+    rejectionEmailSubject?: string; // Custom subject for rejection emails with variable placeholders (e.g., {{programName}})
   };
   // AI configuration for the entire form
   aiConfig?: {

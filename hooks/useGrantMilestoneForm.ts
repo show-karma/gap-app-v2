@@ -5,6 +5,8 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks/useGap";
+import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { getProjectGrants } from "@/services/project-grants.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModal } from "@/store/modals/progressModal";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
@@ -34,7 +36,8 @@ export function useGrantMilestoneForm({
   destinationPath,
 }: UseGrantMilestoneFormProps = {}) {
   const { address, chain } = useAccount();
-  const { project, refreshProject } = useProjectStore();
+  const { project } = useProjectStore();
+  const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const _isOwner = useOwnerStore((state) => state.isOwner);
@@ -44,6 +47,9 @@ export function useGrantMilestoneForm({
   const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
   const router = useRouter();
 
+  // Fetch grants using dedicated hook
+  const { grants, refetch: refetchGrants } = useProjectGrants(projectIdOrSlug);
+
   const createMilestoneForGrants = async (data: GrantMilestoneFormData, grantUIDs: string[]) => {
     if (!gap || !address || grantUIDs.length === 0) return;
     setIsLoading(true);
@@ -52,7 +58,7 @@ export function useGrantMilestoneForm({
       // Process each grant UID
       for (const grantUID of grantUIDs) {
         // Get the current grant's chain ID from the project's grants
-        const grant = project?.grants.find((g) => g.uid === grantUID);
+        const grant = grants.find((g) => g.uid === grantUID);
         if (!grant) continue;
 
         const chainID = grant.chainID;
@@ -103,38 +109,35 @@ export function useGrantMilestoneForm({
           showLoading("Indexing milestone...");
 
           while (retries > 0) {
-            await refreshProject()
-              .then(async (fetchedProject) => {
-                const fetchedGrant = fetchedProject?.grants.find((g) => g.uid === grantUID);
+            try {
+              const fetchedGrants = await getProjectGrants(projectIdOrSlug);
+              const fetchedGrant = fetchedGrants.find((g) => g.uid === grantUID);
 
-                const milestoneExists = fetchedGrant?.milestones.find(
-                  (g: any) => g.uid === milestoneToAttest.uid
-                );
+              const milestoneExists = fetchedGrant?.milestones?.find(
+                (m) => m.uid === milestoneToAttest.uid
+              );
 
-                if (milestoneExists) {
-                  retries = 0;
-                  showSuccess("Milestone created!");
-                  toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
+              if (milestoneExists) {
+                retries = 0;
+                await refetchGrants();
+                showSuccess("Milestone created!");
+                toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
 
-                  // Only navigate on the last grant milestone creation
-                  if (grantUID === grantUIDs[grantUIDs.length - 1] && destinationPath) {
-                    setTimeout(() => {
-                      closeProgressModal();
-                      router.push(destinationPath);
-                      router.refresh();
-                    }, 1500);
-                  }
+                // Only navigate on the last grant milestone creation
+                if (grantUID === grantUIDs[grantUIDs.length - 1] && destinationPath) {
+                  setTimeout(() => {
+                    closeProgressModal();
+                    router.push(destinationPath);
+                    router.refresh();
+                  }, 1500);
                 }
-
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              })
-              .catch(async () => {
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              });
+              }
+            } catch {
+              // Ignore polling errors, continue retrying
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
       }

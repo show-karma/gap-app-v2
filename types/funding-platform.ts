@@ -75,8 +75,11 @@ export interface IFormSchema {
   settings?: {
     submitButtonText?: string;
     confirmationMessage?: string;
-    applicationDeadline?: string;
     donationRound?: boolean;
+    approvalEmailTemplate?: string; // Markdown/HTML template for approval emails with variable placeholders
+    approvalEmailSubject?: string; // Custom subject for approval emails with variable placeholders (e.g., {{programName}})
+    rejectionEmailTemplate?: string; // Markdown/HTML template for rejection emails with variable placeholders
+    rejectionEmailSubject?: string; // Custom subject for rejection emails with variable placeholders (e.g., {{programName}})
   };
 }
 
@@ -135,6 +138,8 @@ export interface IFundingApplication {
     promptId?: string;
     evaluatedAt?: string | Date;
   };
+  appReviewers?: string[]; // Array of program reviewer addresses assigned to this application
+  milestoneReviewers?: string[]; // Array of milestone reviewer addresses assigned to this application
   createdAt: string | Date;
   updatedAt: string | Date;
 }
@@ -200,6 +205,8 @@ export interface IApplicationUpdateRequest {
 export interface IApplicationStatusUpdateRequest {
   status: FundingApplicationStatusV2;
   reason: string;
+  approvedAmount?: string; // Required when status is "approved"
+  approvedCurrency?: string; // Required when status is "approved"
 }
 
 export interface IPaginatedApplicationsResponse {
@@ -265,7 +272,13 @@ export interface IApplicationListComponentProps {
   applications: IFundingApplication[];
   isLoading: boolean;
   onApplicationSelect?: (application: IFundingApplication) => void;
-  onStatusChange?: (applicationId: string, status: string, note?: string) => void;
+  onStatusChange?: (
+    applicationId: string,
+    status: string,
+    note?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => void;
   showStatusActions?: boolean;
 }
 

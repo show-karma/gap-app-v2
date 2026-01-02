@@ -1,3 +1,4 @@
+import { SectionContainer } from "@/src/components/shared/section-container";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 import { CreateProfileButton } from "./create-profile-button";
@@ -40,33 +41,35 @@ const _testimonials = [
 export function JoinCommunity() {
   return (
     <section className={cn(marketingLayoutTheme.padding, "py-16 w-full")}>
-      <div className="flex flex-col items-center gap-6 mb-12">
-        <h2 className="section-title text-foreground text-center">Join our community</h2>
-        <p className="text-xl font-normal text-muted-foreground text-center">
-          Celebrate your milestones and wins with the Karma community.
-        </p>
-        <div className="flex flex-row items-center gap-4">
-          <JoinDiscordButton />
-          <CreateProfileButton />
+      <SectionContainer>
+        <div className="flex flex-col items-center gap-6 mb-12">
+          <h2 className="section-title text-foreground text-center">Join our community</h2>
+          <p className="text-xl font-normal text-muted-foreground text-center">
+            Celebrate your milestones and wins with the Karma community.
+          </p>
+          <div className="flex flex-row items-center gap-4">
+            <JoinDiscordButton />
+            <CreateProfileButton />
+          </div>
         </div>
-      </div>
 
-      {/* <div className="flex flex-col gap-4 w-full">
-                <InfiniteMovingCards
-                    items={testimonials}
-                    direction="left"
-                    speed="slow"
-                    pauseOnHover={true}
-                    className="w-full"
-                />
-                <InfiniteMovingCards
-                    items={testimonials}
-                    direction="right"
-                    speed="slow"
-                    pauseOnHover={true}
-                    className="w-full"
-                />
-            </div> */}
+        {/* <div className="flex flex-col gap-4 w-full">
+                  <InfiniteMovingCards
+                      items={testimonials}
+                      direction="left"
+                      speed="slow"
+                      pauseOnHover={true}
+                      className="w-full"
+                  />
+                  <InfiniteMovingCards
+                      items={testimonials}
+                      direction="right"
+                      speed="slow"
+                      pauseOnHover={true}
+                      className="w-full"
+                  />
+              </div> */}
+      </SectionContainer>
     </section>
   );
 }

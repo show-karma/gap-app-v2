@@ -312,7 +312,7 @@ export const MESSAGES = {
       ERROR: "Something went wrong while updating payout address.",
     },
     CREATE: {
-      SUCCESS: "Project created successfully, please create grants now",
+      SUCCESS: "Project created successfully!",
       ERROR: (title: string) => `There was an error creating ${title} project.`,
     },
     UPDATE: {

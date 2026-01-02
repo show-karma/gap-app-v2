@@ -6,7 +6,7 @@ import { ProjectGrantsImpactLoading } from "../../Project/Loading/Grants/Impact"
 export const GrantImpactCriteria = () => {
   const { grant } = useGrantStore();
   if (!grant) return <ProjectGrantsImpactLoading />;
-  const questions = grant?.details?.data.questions;
+  const questions = grant?.details?.questions;
   return (
     <div className="space-y-5 max-w-prose">
       {questions && questions?.length > 0 ? (

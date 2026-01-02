@@ -3,7 +3,6 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
-import { X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { type FC, Fragment, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -82,9 +81,9 @@ export const ContributorProfileDialog: FC = () => {
   const { refetch: refetchTeamProfiles } = useTeamProfiles(project);
 
   const isProjectMember = !!project?.members.find(
-    (item) =>
-      item.recipient.toLowerCase() === address?.toLowerCase() ||
-      project?.recipient?.toLowerCase() === address?.toLowerCase()
+    (item: { address: string; role: string; joinedAt: string }) =>
+      item.address.toLowerCase() === address?.toLowerCase() ||
+      project?.owner?.toLowerCase() === address?.toLowerCase()
   );
   const isEditing = isProjectMember || isGlobal;
   const searchParams = useSearchParams();
@@ -199,7 +198,8 @@ export const ContributorProfileDialog: FC = () => {
             await refreshProject().then(async (refreshedProject) => {
               // Check if the member is already in the project
               const hasMember = refreshedProject?.members.find(
-                (item) => item.recipient.toLowerCase() === address.toLowerCase()
+                (item: { address: string; role: string; joinedAt: string }) =>
+                  item.address?.toLowerCase() === address?.toLowerCase()
               );
               // If the member is already in the project, update the profile
               if (hasMember) {
@@ -312,25 +312,15 @@ export const ContributorProfileDialog: FC = () => {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all">
-                <div className="flex items-start items-center justify-between gap-4">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
-                  >
-                    {isEditing
-                      ? "Edit your profile"
-                      : `Accept invite to join ${project?.details?.data.title || "this project"}`}
-                  </Dialog.Title>
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="rounded-full p-2 text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label="Close"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+              <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
+                <Dialog.Title
+                  as="h3"
+                  className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
+                >
+                  {isEditing
+                    ? "Edit your profile"
+                    : `Accept invite to join ${project?.details?.title || "this project"}`}
+                </Dialog.Title>
                 {isAllowed ? (
                   <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="flex flex-col gap-2 mt-8">
@@ -427,7 +417,7 @@ export const ContributorProfileDialog: FC = () => {
                     <p className="text-base text-zinc-900 dark:text-zinc-100 text-left w-full">
                       {isEditing
                         ? "Login with your wallet to edit your profile."
-                        : `The owner of the project ${project?.details?.data.title} has requested you to join their team on ${PROJECT_NAME}.  Login with your wallet to complete your profile and join the team.`}
+                        : `The owner of the project ${project?.details?.title} has requested you to join their team on ${PROJECT_NAME}.  Login with your wallet to complete your profile and join the team.`}
                     </p>
                     <Button type="button" className="rounded-md text-lg" onClick={login}>
                       Login

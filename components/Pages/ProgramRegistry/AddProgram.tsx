@@ -2,7 +2,6 @@
 import { ChevronLeftIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -19,20 +18,20 @@ import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { OrganizationIcon } from "@/components/Icons/Organization";
 import { Twitter2Icon } from "@/components/Icons/Twitter2";
 import { Button } from "@/components/Utilities/Button";
-import { DatePicker } from "@/components/Utilities/DatePicker";
+import { DateTimePicker } from "@/components/Utilities/DateTimePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { getCommunities } from "@/services/communities.service";
 import { useStepper } from "@/store/modals/txStepper";
 import { useRegistryStore } from "@/store/registry";
+import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
-import { formatDate } from "@/utilities/formatDate";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { appNetwork } from "@/utilities/network";
@@ -180,23 +179,16 @@ export default function AddProgram({
     });
   const { gap } = useGap();
 
-  const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>([]);
+  const [allCommunities, setAllCommunities] = useState<Community[]>([]);
 
   useEffect(() => {
-    const fetchCommunities = async () => {
-      try {
-        if (!gap || !gapIndexerApi) throw new Error("Gap not initialized");
-        const result = await gapIndexerApi.communities();
-        setAllCommunities(result.data);
-        return result;
-      } catch (_error: any) {
-        setAllCommunities([]);
-        return undefined;
-      }
+    const fetchCommunitiesData = async () => {
+      const communities = await getCommunities();
+      setAllCommunities(communities);
     };
 
-    if (allCommunities.length === 0) fetchCommunities();
-  }, [allCommunities, gap]);
+    if (allCommunities.length === 0) fetchCommunitiesData();
+  }, [allCommunities]);
 
   const {
     register,
@@ -513,6 +505,7 @@ export default function AddProgram({
         backTo?.();
       });
     } catch (error: any) {
+      toast.error(error.message);
       errorManager(
         MESSAGES.PROGRAM_REGISTRY.EDIT.ERROR(data.name),
         error,
@@ -587,7 +580,7 @@ export default function AddProgram({
                   <input
                     id="program-name"
                     className={inputStyle}
-                    placeholder="Ex: Super cool Program"
+                    placeholder="Ex: Builder Growth Program"
                     {...register("name")}
                   />
                   <p className="text-base text-red-400">{errors.name?.message}</p>
@@ -612,23 +605,22 @@ export default function AddProgram({
                     control={control}
                     render={({ field, formState }) => (
                       <div className="flex w-full flex-col gap-2">
-                        <div className={labelStyle}>Start date (optional)</div>
-                        <DatePicker
+                        <div className={labelStyle}>
+                          Start date (UTC)
+                          <span className="font-normal text-gray-500 dark:text-gray-400 ml-1">
+                            (optional)
+                          </span>
+                        </div>
+                        <DateTimePicker
                           selected={field.value}
                           onSelect={(date) => {
-                            if (formatDate(date) === formatDate(watch("dates.startsAt") || "")) {
-                              setValue("dates.startsAt", undefined, {
-                                shouldValidate: true,
-                              });
-                              field.onChange(undefined);
-                            } else {
-                              setValue("dates.startsAt", date, {
-                                shouldValidate: true,
-                              });
-                              field.onChange(date);
-                            }
+                            setValue("dates.startsAt", date, {
+                              shouldValidate: true,
+                            });
+                            field.onChange(date);
                           }}
-                          placeholder="Pick a date"
+                          timeMode="start"
+                          placeholder="Pick a date (UTC)"
                           buttonClassName="w-full text-base bg-white dark:bg-zinc-800"
                           clearButtonFn={() => {
                             setValue("dates.startsAt", undefined, {
@@ -650,24 +642,23 @@ export default function AddProgram({
                     control={control}
                     render={({ field, formState }) => (
                       <div className="flex w-full flex-col gap-2">
-                        <div className={labelStyle}>End date (optional)</div>
-                        <DatePicker
+                        <div className={labelStyle}>
+                          End date (UTC)
+                          <span className="font-normal text-gray-500 dark:text-gray-400 ml-1">
+                            (optional)
+                          </span>
+                        </div>
+                        <DateTimePicker
                           selected={field.value}
                           onSelect={(date) => {
-                            if (formatDate(date) === formatDate(watch("dates.endsAt") || "")) {
-                              setValue("dates.endsAt", undefined, {
-                                shouldValidate: true,
-                              });
-                              field.onChange(undefined);
-                            } else {
-                              setValue("dates.endsAt", date, {
-                                shouldValidate: true,
-                              });
-                              field.onChange(date);
-                            }
+                            setValue("dates.endsAt", date, {
+                              shouldValidate: true,
+                            });
+                            field.onChange(date);
                           }}
+                          timeMode="end"
                           minDate={watch("dates.startsAt")}
-                          placeholder="Pick a date"
+                          placeholder="Pick a date (UTC)"
                           buttonClassName="w-full text-base bg-white dark:bg-zinc-800"
                           clearButtonFn={() => {
                             setValue("dates.endsAt", undefined, {
@@ -797,7 +788,7 @@ export default function AddProgram({
                     Communities related
                   </label>
                   <CommunitiesSelect
-                    onSelectFunction={(community: ICommunityResponse) => {
+                    onSelectFunction={(community: Community) => {
                       onChangeGeneric(community?.uid, "communityRef");
                     }}
                     list={allCommunities}
@@ -1019,15 +1010,7 @@ export default function AddProgram({
               isLoading={isLoading}
               type="submit"
               className="px-3 py-3 text-base"
-              disabled={
-                isSubmitting
-                // ||
-                // !isValid ||
-                // selectedCategories.length === 0 ||
-                // selectedEcosystems.length === 0 ||
-                // selectedNetworks.length === 0 ||
-                // selectedGrantTypes.length === 0
-              }
+              disabled={isSubmitting}
             >
               {programToEdit ? "Update program" : "Create program"}
             </Button>

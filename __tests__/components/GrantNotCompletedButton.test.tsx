@@ -34,9 +34,7 @@ describe("GrantNotCompletedButton", () => {
   const mockProject = {
     uid: "project-456",
     details: {
-      data: {
-        slug: "test-project",
-      },
+      slug: "test-project",
     },
   } as any;
 
@@ -100,9 +98,7 @@ describe("GrantNotCompletedButton", () => {
       const projectWithSlug = {
         ...mockProject,
         details: {
-          data: {
-            slug: "my-awesome-project",
-          },
+          slug: "my-awesome-project",
         },
       };
 
@@ -118,9 +114,7 @@ describe("GrantNotCompletedButton", () => {
     it("should fall back to project.uid when slug is missing", () => {
       const projectWithoutSlug = {
         uid: "project-789",
-        details: {
-          data: {},
-        },
+        details: {},
       } as any;
 
       render(<GrantNotCompletedButton project={projectWithoutSlug} grantUID={grantUID} />);
@@ -129,7 +123,7 @@ describe("GrantNotCompletedButton", () => {
       expect(link).toHaveAttribute("href", "/project/project-789/funding/grant-123/complete-grant");
     });
 
-    it("should fall back to project.uid when details.data is missing", () => {
+    it("should fall back to project.uid when details is missing", () => {
       const projectWithoutDetails = {
         uid: "project-999",
       } as any;
@@ -223,9 +217,7 @@ describe("GrantNotCompletedButton", () => {
       const customProject = {
         uid: "custom-project",
         details: {
-          data: {
-            slug: "custom-slug",
-          },
+          slug: "custom-slug",
         },
       } as any;
 

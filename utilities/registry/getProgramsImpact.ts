@@ -3,7 +3,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import type { ProgramImpactData, ProgramImpactDataResponse } from "@/types/programs";
 import fetchData from "../fetchData";
 import { INDEXER } from "../indexer";
-import { getCommunityDetailsV2 } from "../queries/getCommunityDataV2";
+import { getCommunityDetails } from "../queries/v2/getCommunityData";
 
 export async function getProgramsImpact(
   communityId: string,
@@ -13,7 +13,7 @@ export async function getProgramsImpact(
 ): Promise<ProgramImpactData> {
   try {
     // First get the community details to obtain the UID
-    const communityDetails = await getCommunityDetailsV2(communityId);
+    const communityDetails = await getCommunityDetails(communityId);
 
     if (!communityDetails) {
       return {
