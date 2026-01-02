@@ -92,7 +92,7 @@ export const ProjectOptionsMenu = () => {
     useTransferOwnershipModalStore();
   const { isAdminTransferOwnershipModalOpen, openAdminTransferOwnershipModal } =
     useAdminTransferOwnershipModalStore();
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectOwner, refreshProject } = useProjectStore();
   const { data: contactsInfo } = useContactInfo(projectId);
   const { isOwner: isContractOwner } = useOwnerStore();
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
@@ -237,6 +237,7 @@ export const ProjectOptionsMenu = () => {
               onClose={handleSetPayoutDialogClose}
               projectId={project.uid}
               currentAddresses={project.chainPayoutAddress}
+              onSuccess={() => refreshProject()}
             />
           )}
           {showDeleteDialog && (

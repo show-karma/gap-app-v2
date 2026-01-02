@@ -18,6 +18,9 @@ export function EnableDonationsButton({
 }: EnableDonationsButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
+
   // Don't show button if addresses are already configured
   if (hasConfiguredPayoutAddresses(currentAddresses)) {
     return null;
@@ -28,7 +31,7 @@ export function EnableDonationsButton({
       <Button
         type="button"
         className="w-max bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-        onClick={() => setIsModalOpen(true)}
+        onClick={handleOpenModal}
         data-testid="enable-donations-button"
       >
         <CurrencyDollarIcon className="h-5 w-5" />
@@ -37,7 +40,7 @@ export function EnableDonationsButton({
 
       <SetChainPayoutAddressModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseModal}
         projectId={projectId}
         currentAddresses={currentAddresses}
         onSuccess={onSuccess}

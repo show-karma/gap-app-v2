@@ -57,6 +57,7 @@ export const ProjectNavigator = ({
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const refreshProject = useProjectStore((state) => state.refreshProject);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const { isStaff } = useStaff();
 
@@ -114,6 +115,7 @@ export const ProjectNavigator = ({
           <EnableDonationsButton
             projectId={project?.uid || projectId}
             currentAddresses={project?.chainPayoutAddress}
+            onSuccess={() => refreshProject()}
           />
         )}
         {isAuthorized && (
