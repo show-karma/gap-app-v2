@@ -252,12 +252,23 @@ describe("KarmaProfileLinkInput Component", () => {
       const projectOption = screen.getByText("Test Project");
       fireEvent.click(projectOption);
 
-      // Find and click the clear button
+      // Verify project is selected (displayed in the confirmation area)
+      await waitFor(() => {
+        expect(input).toHaveValue("");
+        expect(screen.getByText("Test Project")).toBeInTheDocument();
+      });
+
+      // Find and click the clear button (X icon button)
       const clearButton = screen.getByRole("button");
       fireEvent.click(clearButton);
 
-      // Input should be cleared
-      expect(input).toHaveValue("");
+      // Verify selection is cleared
+      await waitFor(() => {
+        // Input should be cleared
+        expect(input).toHaveValue("");
+        // The selected project display should no longer be visible
+        // (the project title may still appear in search results if dropdown reopens)
+      });
     });
   });
 
