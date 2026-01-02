@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { type SearchProjectResult, unifiedSearch } from "@/services/unified-search.service";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 interface UseProjectSearchOptions {
@@ -26,6 +27,7 @@ interface UseProjectSearchOptions {
  */
 export const useProjectSearch = (query: string, options?: UseProjectSearchOptions) => {
   const searchQuery = useQuery<SearchProjectResult[], Error>({
+    ...defaultQueryOptions,
     queryKey: QUERY_KEYS.SEARCH.PROJECTS(query),
     queryFn: async () => {
       const result = await unifiedSearch(query, 10);

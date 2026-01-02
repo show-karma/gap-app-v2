@@ -34,8 +34,11 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedProject, setSelectedProject] = useState<SearchProjectResult | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const listboxId = `${fieldKey}-listbox`;
 
   // Watch the form value at top level (required for hooks rules)
   const formValue = useWatch({ control, name: fieldKey });
@@ -60,7 +63,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
           chainID: existingProject.chainID,
           createdAt: existingProject.createdAt || "",
           details: {
-            title: existingProject.details?.title || "Untitled Project",
+            title: existingProject.details?.title || "",
             slug: existingProject.details?.slug || "",
             logoUrl: existingProject.details?.logoUrl || undefined,
           },
@@ -117,6 +120,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
   useEffect(() => {
     if (projects.length > 0 && debouncedQuery.length >= 3) {
       setIsDropdownOpen(true);
+      setFocusedIndex(-1); // Reset focus when new results arrive
     }
   }, [projects, debouncedQuery]);
 
@@ -138,7 +142,39 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
     setSearchQuery("");
     setDebouncedQuery("");
     setIsDropdownOpen(false);
+    setFocusedIndex(-1);
     onChange("");
+  };
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    onChange: (value: string) => void
+  ) => {
+    if (!isDropdownOpen || projects.length === 0) {
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setFocusedIndex((prev) => (prev < projects.length - 1 ? prev + 1 : prev));
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setFocusedIndex((prev) => (prev > 0 ? prev - 1 : prev));
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (focusedIndex >= 0 && focusedIndex < projects.length) {
+          handleSelectProject(projects[focusedIndex], onChange);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setIsDropdownOpen(false);
+        setFocusedIndex(-1);
+        break;
+    }
   };
 
   return (
@@ -167,6 +203,14 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                 <input
                   id={fieldKey}
                   type="text"
+                  role="combobox"
+                  aria-expanded={isDropdownOpen}
+                  aria-controls={listboxId}
+                  aria-activedescendant={
+                    focusedIndex >= 0 ? `${listboxId}-option-${focusedIndex}` : undefined
+                  }
+                  aria-autocomplete="list"
+                  aria-haspopup="listbox"
                   value={searchQuery}
                   onChange={(e) => handleInputChange(e.target.value)}
                   onFocus={() => {
@@ -174,6 +218,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                       setIsDropdownOpen(true);
                     }
                   }}
+                  onKeyDown={(e) => handleKeyDown(e, onChange)}
                   disabled={isLoading}
                   className={cn(
                     "w-full rounded-lg border border-gray-200 bg-white pl-10 pr-10 py-3",
@@ -208,7 +253,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 dark:text-white truncate">
-                      {displayProject.details?.title || "Untitled Project"}
+                      {displayProject.details?.title || displayProject.uid}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                       {displayProject.details?.slug || displayProject.uid}
@@ -233,11 +278,18 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
               {isDropdownOpen && (
                 <div
                   ref={dropdownRef}
+                  id={listboxId}
+                  role="listbox"
+                  aria-label="Search results"
                   className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg z-[9999] max-h-64 overflow-y-auto"
                 >
                   {isSearching || isFetching ? (
                     <div className="flex items-center justify-center py-6">
-                      <div className="w-6 h-6 border-2 border-gray-300 dark:border-gray-600 border-t-blue-500 rounded-full animate-spin" />
+                      <div
+                        className="w-6 h-6 border-2 border-gray-300 dark:border-gray-600 border-t-blue-500 rounded-full animate-spin"
+                        aria-hidden="true"
+                      />
+                      <span className="sr-only">Loading search results...</span>
                     </div>
                   ) : projects.length === 0 ? (
                     <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -247,12 +299,20 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                     </div>
                   ) : (
                     <div className="py-1">
-                      {projects.map((project) => (
+                      {projects.map((project, index) => (
                         <button
                           key={project.uid}
+                          id={`${listboxId}-option-${index}`}
+                          role="option"
+                          aria-selected={focusedIndex === index}
                           type="button"
                           onClick={() => handleSelectProject(project, onChange)}
-                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors text-left"
+                          className={cn(
+                            "w-full flex items-center gap-3 px-4 py-3 transition-colors text-left",
+                            focusedIndex === index
+                              ? "bg-gray-100 dark:bg-zinc-700"
+                              : "hover:bg-gray-100 dark:hover:bg-zinc-700"
+                          )}
                         >
                           <ProfilePicture
                             imageURL={project.details?.logoUrl}
@@ -262,7 +322,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                           />
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-900 dark:text-white truncate">
-                              {project.details?.title || "Untitled Project"}
+                              {project.details?.title || `${project.uid.slice(0, 10)}...`}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                               {project.details?.slug || `${project.uid.slice(0, 10)}...`}
@@ -274,6 +334,13 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                   )}
                 </div>
               )}
+
+              {/* Screen reader announcement for search results */}
+              <div aria-live="polite" className="sr-only">
+                {isDropdownOpen && !isSearching && !isFetching && projects.length > 0
+                  ? `${projects.length} project${projects.length === 1 ? "" : "s"} found`
+                  : null}
+              </div>
             </div>
 
             {/* Error Message */}

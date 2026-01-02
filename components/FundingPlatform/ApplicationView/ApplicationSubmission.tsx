@@ -12,6 +12,7 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import type { IFormField, IFormSchema } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
+import { PROJECT_UID_REGEX } from "@/utilities/validation";
 
 interface IApplicationSubmissionProps {
   programId: string;
@@ -306,13 +307,11 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
         }
         case "karma_profile_link": {
           // Karma profile link field stores a project UID (0x followed by 64 hex chars)
-          const uidPattern = /^0x[a-fA-F0-9]{64}$/;
-
           if (field.required) {
             fieldSchema = z
               .string()
               .min(1, `${field.label} is required`)
-              .regex(uidPattern, "Please select a valid project");
+              .regex(PROJECT_UID_REGEX, "Please select a valid project");
           } else {
             fieldSchema = z
               .string()
@@ -321,7 +320,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
               .refine(
                 (val) => {
                   if (!val || val === "") return true;
-                  return uidPattern.test(val);
+                  return PROJECT_UID_REGEX.test(val);
                 },
                 { message: "Please select a valid project" }
               );

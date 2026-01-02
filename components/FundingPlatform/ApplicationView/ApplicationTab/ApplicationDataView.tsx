@@ -7,6 +7,7 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
+import { PROJECT_UID_REGEX } from "@/utilities/validation";
 
 export interface ApplicationDataViewProps {
   application: IFundingApplication;
@@ -101,7 +102,7 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application,
     if (
       fieldType === "karma_profile_link" &&
       typeof value === "string" &&
-      /^0x[a-fA-F0-9]{64}$/.test(value)
+      PROJECT_UID_REGEX.test(value)
     ) {
       return <KarmaProjectLink uid={value} />;
     }
