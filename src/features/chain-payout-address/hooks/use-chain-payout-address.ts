@@ -5,6 +5,15 @@ import { chainPayoutAddressService } from "../services/chain-payout-address.serv
 import type { ChainPayoutAddressMap } from "../types/chain-payout-address";
 
 /**
+ * Query key factory for chain payout address queries
+ * Provides consistent, type-safe query keys for cache management
+ */
+export const chainPayoutAddressKeys = {
+  all: ["chainPayoutAddress"] as const,
+  project: (projectId: string) => [...chainPayoutAddressKeys.all, projectId] as const,
+} as const;
+
+/**
  * Hook for updating chain payout addresses
  *
  * @param projectId - Project UID or slug
@@ -23,6 +32,8 @@ export function useUpdateChainPayoutAddress(
     mutationFn: (chainPayoutAddresses: Record<string, string | null>) =>
       chainPayoutAddressService.update(projectId, chainPayoutAddresses),
     onSuccess: (data) => {
+      // Invalidate chain payout address queries
+      queryClient.invalidateQueries({ queryKey: chainPayoutAddressKeys.project(projectId) });
       // Invalidate project queries to refresh the data
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
