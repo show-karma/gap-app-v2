@@ -1,14 +1,21 @@
 "use client";
 
-import { Dialog, Transition } from "@headlessui/react";
-import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { CheckIcon } from "@heroicons/react/24/outline";
 import debounce from "lodash.debounce";
 import Image from "next/image";
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useProjectStore } from "@/store";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { PAYOUT_CHAINS } from "@/utilities/network";
@@ -193,149 +200,106 @@ export function SetChainPayoutAddressModal({
   };
 
   return (
-    <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-black/25" />
-        </Transition.Child>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="w-full max-w-2xl overflow-visible rounded-2xl dark:bg-zinc-800 bg-white p-4 sm:p-6">
+        <DialogHeader>
+          <DialogTitle className="text-gray-900 dark:text-zinc-100 text-xl font-bold leading-6">
+            {hasExistingAddresses ? "Manage Payout Addresses" : "Set Payout Addresses"}
+          </DialogTitle>
+          <DialogDescription className="text-sm text-gray-500 dark:text-gray-400">
+            Configure wallet addresses to receive donations on each blockchain network. Leave empty
+            to disable donations on that chain.
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
-              enterTo="opacity-100 scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
-            >
-              <Dialog.Panel className="w-full max-w-2xl transform overflow-visible rounded-2xl dark:bg-zinc-800 bg-white p-4 sm:p-6 text-left align-middle transition-all ease-in-out duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <Dialog.Title
-                    as="h2"
-                    className="text-gray-900 dark:text-zinc-100 text-xl font-bold leading-6"
-                  >
-                    {hasExistingAddresses ? "Manage Payout Addresses" : "Set Payout Addresses"}
-                  </Dialog.Title>
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                  >
-                    <XMarkIcon className="h-6 w-6" />
-                  </button>
-                </div>
-
-                {/* Error message - displayed at top */}
-                {error && (
-                  <div
-                    className="mb-4 p-3 rounded-lg bg-red-600 border border-red-700"
-                    role="alert"
-                    aria-live="polite"
-                  >
-                    <p className="text-white text-sm font-medium">{error}</p>
-                  </div>
-                )}
-
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                  Configure wallet addresses to receive donations on each blockchain network. Leave
-                  empty to disable donations on that chain.
-                </p>
-
-                {/* Chain list */}
-                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
-                  {formEntries.map((entry) => (
-                    <div key={entry.chainId} className="flex flex-col gap-2">
-                      <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-zinc-700 rounded-lg">
-                        {/* Chain icon and name */}
-                        <div className="flex items-center gap-2 min-w-[120px]">
-                          <div className="w-6 h-6 relative flex-shrink-0">
-                            <Image
-                              src={getChainIconUrl(entry.chainId)}
-                              alt={entry.chainName}
-                              width={24}
-                              height={24}
-                              className="rounded-full"
-                              onError={(e) => {
-                                // Fallback to a colored circle if image fails
-                                e.currentTarget.style.display = "none";
-                              }}
-                            />
-                          </div>
-                          <span className="font-medium text-gray-900 dark:text-gray-100 text-sm">
-                            {entry.chainName}
-                          </span>
-                        </div>
-
-                        {/* Address input */}
-                        <div className="flex-1 flex items-center gap-2">
-                          <input
-                            type="text"
-                            id={`address-${entry.chainId}`}
-                            value={entry.address}
-                            onChange={(e) => handleAddressChange(entry.chainId, e.target.value)}
-                            className="flex-1 text-sm rounded-md px-3 py-2 text-gray-700 dark:text-gray-200 bg-white dark:bg-zinc-600 border border-gray-300 dark:border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="0x..."
-                            aria-label={`Payout address for ${entry.chainName}`}
-                            aria-describedby={
-                              validationErrors[entry.chainId] ? `error-${entry.chainId}` : undefined
-                            }
-                            aria-invalid={!!validationErrors[entry.chainId]}
-                          />
-                          {entry.address.trim() && !validationErrors[entry.chainId] && (
-                            <CheckIcon
-                              className="h-5 w-5 text-green-500 flex-shrink-0"
-                              aria-hidden="true"
-                            />
-                          )}
-                        </div>
-                      </div>
-                      {validationErrors[entry.chainId] && (
-                        <p
-                          id={`error-${entry.chainId}`}
-                          className="text-red-500 text-xs ml-2"
-                          role="alert"
-                        >
-                          {validationErrors[entry.chainId]}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Actions */}
-                <div className="flex flex-col sm:flex-row gap-3 mt-6 justify-end">
-                  <Button
-                    variant="secondary"
-                    onClick={onClose}
-                    disabled={isLoading}
-                    className="w-full sm:w-auto"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleSave}
-                    disabled={isLoading || hasErrors}
-                    className="w-full sm:w-auto"
-                  >
-                    {isLoading ? "Saving..." : hasExistingAddresses ? "Update" : "Save"}
-                  </Button>
-                </div>
-              </Dialog.Panel>
-            </Transition.Child>
+        {/* Error message - displayed at top */}
+        {error && (
+          <div
+            className="mb-4 p-3 rounded-lg bg-red-600 border border-red-700"
+            role="alert"
+            aria-live="polite"
+          >
+            <p className="text-white text-sm font-medium">{error}</p>
           </div>
+        )}
+
+        {/* Chain list */}
+        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+          {formEntries.map((entry) => (
+            <div key={entry.chainId} className="flex flex-col gap-2">
+              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-zinc-700 rounded-lg">
+                {/* Chain icon and name */}
+                <div className="flex items-center gap-2 min-w-[120px]">
+                  <div className="w-6 h-6 relative flex-shrink-0">
+                    <Image
+                      src={getChainIconUrl(entry.chainId)}
+                      alt={entry.chainName}
+                      width={24}
+                      height={24}
+                      className="rounded-full"
+                      onError={(e) => {
+                        // Fallback to a colored circle if image fails
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  </div>
+                  <span className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+                    {entry.chainName}
+                  </span>
+                </div>
+
+                {/* Address input */}
+                <div className="flex-1 flex items-center gap-2">
+                  <input
+                    type="text"
+                    id={`address-${entry.chainId}`}
+                    value={entry.address}
+                    onChange={(e) => handleAddressChange(entry.chainId, e.target.value)}
+                    className="flex-1 text-sm rounded-md px-3 py-2 text-gray-700 dark:text-gray-200 bg-white dark:bg-zinc-600 border border-gray-300 dark:border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="0x..."
+                    aria-label={`Payout address for ${entry.chainName}`}
+                    aria-describedby={
+                      validationErrors[entry.chainId] ? `error-${entry.chainId}` : undefined
+                    }
+                    aria-invalid={!!validationErrors[entry.chainId]}
+                  />
+                  {entry.address.trim() && !validationErrors[entry.chainId] && (
+                    <CheckIcon
+                      className="h-5 w-5 text-green-500 flex-shrink-0"
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
+              </div>
+              {validationErrors[entry.chainId] && (
+                <p id={`error-${entry.chainId}`} className="text-red-500 text-xs ml-2" role="alert">
+                  {validationErrors[entry.chainId]}
+                </p>
+              )}
+            </div>
+          ))}
         </div>
-      </Dialog>
-    </Transition>
+
+        {/* Actions */}
+        <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6">
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            disabled={isLoading}
+            className="w-full sm:w-auto"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={isLoading || hasErrors}
+            className="w-full sm:w-auto"
+          >
+            {isLoading ? "Saving..." : hasExistingAddresses ? "Update" : "Save"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
