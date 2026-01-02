@@ -49,7 +49,8 @@ export interface IFormField {
     | "checkbox"
     | "radio"
     | "date"
-    | "milestone"; // Added for milestone field support
+    | "milestone"
+    | "karma_profile_link";
   label: string;
   placeholder?: string;
   required?: boolean;

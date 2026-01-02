@@ -10,17 +10,21 @@ import {
 } from "@heroicons/react/24/outline";
 import { type FC, type JSX, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProjectLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useApplicationVersions } from "@/hooks/useFundingPlatform";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import type {
+  IFormField,
   IFundingApplication,
   IFundingProgramConfig,
   ProgramWithFormSchema,
 } from "@/types/funding-platform";
+import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { isFundingProgramConfig } from "@/utilities/type-guards";
+import { isValidProjectUid } from "@/utilities/validation";
 import { getProjectTitle } from "../helper/getProjecTitle";
 import { AIEvaluationDisplay } from "./AIEvaluation";
 import AIEvaluationButton from "./AIEvaluationButton";
@@ -128,18 +132,9 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
     }
   }, [versions, selectedVersion, selectVersion]);
 
-  // Create field labels mapping from program schema
-  const fieldLabels = useMemo(() => {
-    const labels: Record<string, string> = {};
-    if (formSchema?.fields) {
-      formSchema.fields.forEach((field: any) => {
-        if (field.id && field.label) {
-          labels[field.id] = field.label;
-        }
-      });
-    }
-    return labels;
-  }, [formSchema]);
+  // Create field labels and type mappings from program schema
+  const fieldLabels = useMemo(() => createFieldLabelsMap(formSchema), [formSchema]);
+  const fieldTypeMap = useMemo(() => createFieldTypeMap(formSchema), [formSchema]);
 
   const StatusIcon = statusIcons[application.status as keyof typeof statusIcons] || ClockIcon;
 
@@ -197,7 +192,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
     return null;
   };
 
-  const renderFieldValue = (value: any): JSX.Element => {
+  const renderFieldValue = (value: any, fieldKey?: string): JSX.Element => {
     if (Array.isArray(value)) {
       // Check if it's an array of milestones
       const isMilestoneArray =
@@ -332,6 +327,12 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
       );
     }
 
+    // Handle Karma profile link fields (use field type from schema)
+    const fieldType = fieldKey ? fieldTypeMap[fieldKey] : undefined;
+    if (fieldType === "karma_profile_link" && isValidProjectUid(value)) {
+      return <KarmaProjectLink uid={value} />;
+    }
+
     // Default: render as markdown
     return (
       <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -355,7 +356,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
               {fieldLabels[key] || key.replace(/_/g, " ")}
             </dt>
             <dd className="text-base text-gray-900 dark:text-gray-100">
-              {renderFieldValue(value)}
+              {renderFieldValue(value, key)}
             </dd>
           </div>
         ))}
