@@ -6,6 +6,7 @@ import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import type { Control, FieldError, FieldErrorsImpl, Merge } from "react-hook-form";
 import { Controller, useWatch } from "react-hook-form";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { SEARCH_CONSTANTS } from "@/constants/search";
 import { useProject } from "@/hooks/useProject";
 import { useProjectSearch } from "@/hooks/useProjectSearch";
 import type { SearchProjectResult } from "@/services/unified-search.service";
@@ -76,7 +77,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
     isLoading: isSearching,
     isFetching,
   } = useProjectSearch(debouncedQuery, {
-    enabled: debouncedQuery.length >= 3,
+    enabled: debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH,
   });
 
   // Debounce the search query
@@ -84,7 +85,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
     () =>
       debounce((value: string) => {
         setDebouncedQuery(value);
-      }, 500),
+      }, SEARCH_CONSTANTS.DEBOUNCE_DELAY_MS),
     []
   );
 
@@ -118,7 +119,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
 
   // Open dropdown when search results arrive
   useEffect(() => {
-    if (projects.length > 0 && debouncedQuery.length >= 3) {
+    if (projects.length > 0 && debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH) {
       setIsDropdownOpen(true);
       setFocusedIndex(-1); // Reset focus when new results arrive
     }
@@ -214,7 +215,10 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                   value={searchQuery}
                   onChange={(e) => handleInputChange(e.target.value)}
                   onFocus={() => {
-                    if (projects.length > 0 && debouncedQuery.length >= 3) {
+                    if (
+                      projects.length > 0 &&
+                      debouncedQuery.length >= SEARCH_CONSTANTS.MIN_QUERY_LENGTH
+                    ) {
                       setIsDropdownOpen(true);
                     }
                   }}
@@ -281,7 +285,7 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                   id={listboxId}
                   role="listbox"
                   aria-label="Search results"
-                  className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg z-[9999] max-h-64 overflow-y-auto"
+                  className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto"
                 >
                   {isSearching || isFetching ? (
                     <div className="flex items-center justify-center py-6">
@@ -293,8 +297,8 @@ export const KarmaProfileLinkInput: FC<KarmaProfileLinkInputProps> = ({
                     </div>
                   ) : projects.length === 0 ? (
                     <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                      {debouncedQuery.length < 3
-                        ? "Type at least 3 characters to search"
+                      {debouncedQuery.length < SEARCH_CONSTANTS.MIN_QUERY_LENGTH
+                        ? `Type at least ${SEARCH_CONSTANTS.MIN_QUERY_LENGTH} characters to search`
                         : "No projects found"}
                     </div>
                   ) : (
