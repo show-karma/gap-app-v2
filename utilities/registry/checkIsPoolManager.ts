@@ -12,9 +12,9 @@ export const checkIsPoolManager = async (address: string) => {
     });
 
     const isPoolManager = await fetchData(url).then(([res, error]) => {
-      if (!error && res && res.data) {
-        // V2 API wraps response in { data: { programs, total } }
-        return res.data.total > 0;
+      if (!error && res && res.data && res.data.pagination) {
+        // V2 API wraps response in { data: { payload, pagination } }
+        return res.data.pagination.totalCount > 0;
       } else {
         return false;
       }
