@@ -112,12 +112,12 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     data: programReviewers = [],
     isLoading: isLoadingProgramReviewers,
     isError: isProgramReviewersError,
-  } = useProgramReviewers(programId, chainId);
+  } = useProgramReviewers(programId);
   const {
     data: milestoneReviewers = [],
     isLoading: isLoadingMilestoneReviewers,
     isError: isMilestoneReviewersError,
-  } = useMilestoneReviewers(programId, chainId);
+  } = useMilestoneReviewers(programId);
 
   // Determine column visibility based on configured prompts
   const { showAIScoreColumn, showInternalAIScoreColumn } = useMemo(
