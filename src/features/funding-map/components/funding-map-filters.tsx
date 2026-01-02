@@ -115,7 +115,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
               {filters.categories.length > 0 ? (
                 <button
                   type="button"
-                  className="flex h-5 w-5 items-center justify-center rounded-full bg-secondary text-muted-foreground text-xs font-medium cursor-pointer"
+                  className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     resetFilters();
@@ -202,7 +202,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
               {filters.grantTypes.length > 0 ? (
                 <button
                   type="button"
-                  className="flex h-5 w-5 items-center justify-center rounded-full bg-secondary text-muted-foreground text-xs font-medium cursor-pointer"
+                  className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     resetFilters();

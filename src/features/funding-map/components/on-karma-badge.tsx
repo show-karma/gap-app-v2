@@ -15,11 +15,10 @@ export function OnKarmaBadge({ className, showTooltip = false }: OnKarmaBadgePro
   const badge = (
     <span
       className={cn(
-        "flex items-center gap-1 text-xs bg-emerald-50 text-emerald-500 rounded-full px-2 py-0.5 font-medium dark:bg-emerald-900/50 dark:text-emerald-400",
+        "flex items-center gap-1 text-xs bg-emerald-50 text-emerald-500 rounded-full px-2.5 py-1.5 font-medium dark:bg-emerald-900/50 dark:text-emerald-400",
         className
       )}
     >
-      <span>on</span>
       <svg
         width="12"
         height="12"

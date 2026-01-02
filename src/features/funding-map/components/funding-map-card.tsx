@@ -60,7 +60,7 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
   return (
     <Card
       className={cn(
-        "flex flex-col justify-between border-border p-5 shadow-sm transition-shadow hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "flex flex-col justify-between border-border p-6 shadow-sm transition-shadow hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         isPendingReview(program) && "ring-1 ring-gray-200"
       )}
       onClick={onClick}
@@ -69,9 +69,9 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
       role="button"
       aria-label={`View funding program: ${title ?? "Untitled program"}`}
     >
-      <div className="flex flex-col gap-2 mb-4">
+      <div className="flex flex-col gap-1 mb-5">
         <div className="flex w-full flex-row items-start justify-between gap-2">
-          <div className="flex flex-col items-start gap-2">
+          <div className="flex w-full flex-col items-start gap-5">
             {endsAt && (
               <div className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium">
                 <Calendar className="h-3 w-3" />
@@ -118,36 +118,40 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
       <div className="flex flex-col gap-3">
         <FundingMapDescription description={description ?? ""} />
 
-        <div className="flex flex-wrap items-center gap-2">
-          {categories
-            ?.filter((category): category is string => typeof category === "string")
-            .map((category) => (
-              <Badge
-                key={category}
-                variant="outline"
-                className="rounded-full border-border px-2 py-0.5 text-xs font-medium text-foreground"
-              >
-                {category}
-              </Badge>
-            ))}
-        </div>
-
-        <div className="relative flex-1 overflow-hidden">
-          <div className="flex flex-nowrap gap-1 overflow-x-auto scrollbar-hide">
-            {grantTypes
-              ?.filter((type): type is string => typeof type === "string")
-              .map((type) => (
+        {categories && categories.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1">
+            {categories
+              .filter((category): category is string => typeof category === "string")
+              .map((category) => (
                 <Badge
-                  key={type}
-                  variant="secondary"
-                  className="rounded-lg px-2 py-0.5 text-xs font-medium whitespace-nowrap"
+                  key={category}
+                  variant="outline"
+                  className="rounded-full border-border px-2 py-0.5 text-xs font-medium text-foreground"
                 >
-                  {type}
+                  {category}
                 </Badge>
               ))}
           </div>
-          <div className="absolute top-0 right-0 h-full w-8 bg-gradient-to-l from-white dark:from-zinc-950 to-transparent pointer-events-none" />
-        </div>
+        )}
+
+        {grantTypes && grantTypes.length > 0 && (
+          <div className="relative flex-1 overflow-hidden">
+            <div className="flex flex-nowrap gap-1 overflow-x-auto scrollbar-hide">
+              {grantTypes
+                .filter((type): type is string => typeof type === "string")
+                .map((type) => (
+                  <Badge
+                    key={type}
+                    variant="secondary"
+                    className="rounded-lg px-2 py-0.5 text-xs font-medium whitespace-nowrap"
+                  >
+                    {type}
+                  </Badge>
+                ))}
+            </div>
+            <div className="absolute top-0 right-0 h-full w-8 bg-gradient-to-l from-white dark:from-zinc-950 to-transparent pointer-events-none" />
+          </div>
+        )}
       </div>
     </Card>
   );
