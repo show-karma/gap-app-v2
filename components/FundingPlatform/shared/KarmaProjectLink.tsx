@@ -31,6 +31,8 @@ export const KarmaProjectLink: FC<KarmaProjectLinkProps> = ({ uid }) => {
   return (
     <Link
       href={PAGES.PROJECT.OVERVIEW(uid)}
+      target="_blank"
+      rel="noopener noreferrer"
       className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
     >
       {displayName}
