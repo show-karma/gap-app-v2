@@ -33,10 +33,11 @@ export const KarmaProjectLink: FC<KarmaProjectLinkProps> = ({ uid }) => {
       href={PAGES.PROJECT.OVERVIEW(uid)}
       target="_blank"
       rel="noopener noreferrer"
+      aria-label={`${displayName} (opens in new tab)`}
       className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
     >
       {displayName}
-      <ExternalLink className="w-3.5 h-3.5" />
+      <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
     </Link>
   );
 };
