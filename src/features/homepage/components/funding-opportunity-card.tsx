@@ -9,9 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { FundingProgram } from "@/services/fundingPlatformService";
+import { FUNDING_PLATFORM_DOMAINS } from "@/src/features/funding-map/utils/funding-platform-domains";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
+import { envVars } from "@/utilities/enviromentVars";
 import { getProgramStatusInfo } from "@/utilities/funding-programs";
-import { PAGES } from "@/utilities/pages";
+import { FUNDING_PLATFORM_PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
 interface FundingOpportunityCardProps {
@@ -77,6 +79,30 @@ function getCommunityImage(program: FundingProgram, theme: string | undefined): 
   return null;
 }
 
+function getProgramUrls(
+  communitySlug: string | undefined,
+  programId: string | undefined
+): { detailUrl: string | null; applyUrl: string | null } {
+  if (!communitySlug || !programId) {
+    return { detailUrl: null, applyUrl: null };
+  }
+
+  const exclusiveDomain =
+    FUNDING_PLATFORM_DOMAINS[communitySlug as keyof typeof FUNDING_PLATFORM_DOMAINS];
+  const domain = exclusiveDomain
+    ? envVars.isDev
+      ? exclusiveDomain.dev
+      : exclusiveDomain.prod
+    : undefined;
+
+  const pages = FUNDING_PLATFORM_PAGES(communitySlug, domain);
+
+  return {
+    detailUrl: pages.PROGRAM_PAGE(programId),
+    applyUrl: pages.PROGRAM_APPLY(programId),
+  };
+}
+
 export function FundingOpportunityCard({
   program,
   isFeatured = false,
@@ -87,14 +113,10 @@ export function FundingOpportunityCard({
   const budget = program.metadata?.programBudget;
   const communityName = program.communityName || program.communitySlug || "Unknown";
   const communityImage = getCommunityImage(program, theme) || program.metadata?.logoImg;
-  const programDetailUrl =
-    program.communitySlug && program.programId
-      ? PAGES.EXTERNAL_PROGRAM.DETAIL(program.communitySlug, program.programId)
-      : null;
-  const applyUrl =
-    program.communitySlug && program.programId
-      ? PAGES.EXTERNAL_PROGRAM.APPLY(program.communitySlug, program.programId)
-      : null;
+  const { detailUrl: programDetailUrl, applyUrl } = getProgramUrls(
+    program.communitySlug,
+    program.programId
+  );
 
   if (isFeatured) {
     // Mobile featured card with gradient background

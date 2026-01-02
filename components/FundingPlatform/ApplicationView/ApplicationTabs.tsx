@@ -5,7 +5,7 @@ import {
   DocumentTextIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
-import { type FC, type ReactNode, useState } from "react";
+import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/utilities/tailwind";
 
@@ -30,13 +30,25 @@ export const ApplicationTabs: FC<ApplicationTabsProps> = ({
   onChange,
   connectedToHeader = false,
 }) => {
+  // Hooks must be called unconditionally before any early returns
   // Validate defaultIndex is within bounds
-  const validDefaultIndex = defaultIndex >= 0 && defaultIndex < tabs.length ? defaultIndex : 0;
-  const defaultTab = tabs[validDefaultIndex]?.id || tabs[0]?.id;
+  const validDefaultIndex =
+    tabs.length > 0 && defaultIndex >= 0 && defaultIndex < tabs.length ? defaultIndex : 0;
+  const defaultTab = tabs[validDefaultIndex]?.id || tabs[0]?.id || "";
 
   const [activeTab, setActiveTab] = useState(defaultTab);
+  const prevDefaultTabRef = useRef(defaultTab);
 
-  // Handle empty tabs array defensively
+  // Update activeTab when defaultTab changes (e.g., when tabs array changes)
+  // Only update if defaultTab actually changed, not when user manually changes tabs
+  useEffect(() => {
+    if (defaultTab && defaultTab !== prevDefaultTabRef.current) {
+      setActiveTab(defaultTab);
+      prevDefaultTabRef.current = defaultTab;
+    }
+  }, [defaultTab]);
+
+  // Handle empty tabs array defensively (after hooks)
   if (tabs.length === 0) {
     return null;
   }
@@ -79,7 +91,6 @@ export const ApplicationTabs: FC<ApplicationTabsProps> = ({
               "data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:dark:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none",
               "data-[state=inactive]:border-transparent data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-700 data-[state=inactive]:hover:border-gray-300 data-[state=inactive]:dark:text-gray-400 data-[state=inactive]:dark:hover:text-gray-200"
             )}
-            aria-label={tab.label}
           >
             <tab.icon className="w-5 h-5" aria-hidden="true" />
             <span className="hidden sm:inline">{tab.label}</span>

@@ -3,15 +3,22 @@ import type { Hex } from "viem";
 export const INDEXER = {
   ATTESTATION_LISTENER: (hash: Hex | string, chainId: number) =>
     `/attestations/index-by-transaction/${hash}/${chainId}`,
+  ATTESTATIONS: {
+    GET: (uid: string, chainId?: number) =>
+      `/attestations/${uid}${chainId ? `?chainId=${chainId}` : ""}`,
+  },
   PROFILE: {
     GET: (address: string) => `/user/${address}`,
   },
   REGISTRY: {
     GET_ALL: "/registry",
     FIND_BY_ID: (id: string, chainId: number) => `/registry/find/${id}/${chainId}`,
+    GET_ALL_PENDING: "/registry/pending",
     APPROVE: "/registry/approve",
     UPDATE: (id: string, chainId: number) => `/registry/${id}/${chainId}/updateMetadata`,
     CREATE: "/registry/offchain/create",
+    MANAGERS: (profileId: string, chainId: number) =>
+      `/registry/profile/${profileId}/${chainId}/members`,
   },
   PROJECTS: {
     GET_ALL: (offset: number, limit: number, sortField: string, sortOrder: "asc" | "desc") =>
@@ -25,6 +32,7 @@ export const INDEXER = {
   V2: {
     PROJECTS: {
       GET: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}`,
+      SLUG_CHECK: (slug: string) => `/v2/projects/slug/check/${slug}`,
       SEARCH: (query: string, limit?: number) =>
         `/v2/projects?q=${encodeURIComponent(query)}${limit ? `&limit=${limit}` : ""}`,
       GRANTS: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/grants`,
@@ -41,6 +49,8 @@ export const INDEXER = {
     },
     SEARCH: (query: string, limit: number = 10) =>
       `/v2/search?q=${encodeURIComponent(query)}&limit=${limit}`,
+    FUNDING_DETAILS: (programId: string, chainId: number) =>
+      `/v2/program/funding-details?programId=${programId}&chainId=${chainId}`,
     FUNDING_PROGRAMS: {
       BY_COMMUNITY: (communityId: string) => `/v2/funding-program-configs/community/${communityId}`,
       GET: (programId: string, chainId: number) =>
@@ -71,6 +81,7 @@ export const INDEXER = {
         `/v2/funding-applications/admin/${programId}/${chainId}/export`,
       VERSIONS_TIMELINE: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/versions/timeline`,
+      REVIEWERS: (applicationId: string) => `/v2/funding-applications/${applicationId}/reviewers`,
     },
     USER: {
       PERMISSIONS: (resource?: string) => {
@@ -89,6 +100,11 @@ export const INDEXER = {
     MILESTONE_REVIEWERS: {
       LIST: (programId: string, chainID: number) =>
         `/v2/programs/${programId}/${chainID}/milestone-reviewers`,
+    },
+    REGISTRY: {
+      GET_ALL: "/v2/registry",
+      GET_BY_ID: (programId: string, chainId: number) => `/v2/registry/${programId}/${chainId}`,
+      GET_FILTERS: "/v2/registry/filters",
     },
     TRACKS: {
       LIST: (communityUID: string, includeArchived?: boolean) => {

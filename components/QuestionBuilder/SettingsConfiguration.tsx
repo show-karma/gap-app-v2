@@ -6,10 +6,10 @@ import { useParams } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { type SettingsConfigFormData, settingsConfigSchema } from "@/schemas/settingsConfigSchema";
+import { FUNDING_PLATFORM_DOMAINS } from "@/src/features/funding-map/utils/funding-platform-domains";
 import type { FormSchema } from "@/types/question-builder";
 import { envVars } from "@/utilities/enviromentVars";
 import { formatDate } from "@/utilities/formatDate";
-import { fundingPlatformDomains } from "@/utilities/fundingPlatformDomains";
 import { ExternalLink } from "../Utilities/ExternalLink";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 
@@ -22,15 +22,15 @@ interface SettingsConfigurationProps {
 }
 
 const getApplyUrlByCommunityId = (communityId: string, programId: string) => {
-  if (communityId in fundingPlatformDomains) {
-    const domain = fundingPlatformDomains[communityId as keyof typeof fundingPlatformDomains];
+  if (communityId in FUNDING_PLATFORM_DOMAINS) {
+    const domain = FUNDING_PLATFORM_DOMAINS[communityId as keyof typeof FUNDING_PLATFORM_DOMAINS];
     return envVars.isDev
       ? `${domain.dev}/browse-applications?programId=${programId}`
       : `${domain.prod}/browse-applications?programId=${programId}`;
   } else {
     return envVars.isDev
-      ? `${fundingPlatformDomains.shared.dev}/${communityId}/browse-applications?programId=${programId}`
-      : `${fundingPlatformDomains.shared.prod}/${communityId}/browse-applications?programId=${programId}`;
+      ? `${FUNDING_PLATFORM_DOMAINS.shared.dev}/${communityId}/browse-applications?programId=${programId}`
+      : `${FUNDING_PLATFORM_DOMAINS.shared.prod}/${communityId}/browse-applications?programId=${programId}`;
   }
 };
 
@@ -72,7 +72,6 @@ export function SettingsConfiguration({
     resolver: zodResolver(settingsConfigSchema),
     defaultValues: {
       privateApplications: schema.settings?.privateApplications ?? true,
-      applicationDeadline: convertUTCToLocal(schema.settings?.applicationDeadline),
       donationRound: schema.settings?.donationRound ?? false,
       successPageContent: schema.settings?.successPageContent ?? "",
       showCommentsOnPublicPage: schema.settings?.showCommentsOnPublicPage ?? false,
@@ -96,7 +95,6 @@ export function SettingsConfiguration({
           confirmationMessage:
             schema.settings?.confirmationMessage || "Thank you for your submission!",
           privateApplications: data.privateApplications ?? true,
-          applicationDeadline: convertLocalToUTC(data.applicationDeadline),
           donationRound: data.donationRound ?? false,
           successPageContent: data.successPageContent,
           showCommentsOnPublicPage: data.showCommentsOnPublicPage ?? false,
@@ -140,27 +138,6 @@ export function SettingsConfiguration({
         <hr className="my-4" />
 
         <div className="space-y-6 py-4">
-          {/* Application Deadline */}
-          <div className="space-y-2">
-            <label
-              htmlFor="applicationDeadline"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Application Deadline
-            </label>
-            <input
-              {...register("applicationDeadline")}
-              type="datetime-local"
-              id="applicationDeadline"
-              disabled={readOnly}
-              className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Set a deadline for when applications will no longer be accepted. Leave empty for no
-              deadline.
-            </p>
-          </div>
-
           {/* Donation Round */}
           <div className="space-y-3">
             <div className="flex items-start space-x-3">

@@ -41,7 +41,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
-import { getProject } from "@/services/project.service";
+import { checkSlugExists, getProject } from "@/services/project.service";
 import { searchProjects } from "@/services/project-search.service";
 import { useProjectStore } from "@/store";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
@@ -669,7 +669,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       const walletSigner = await walletClientToSigner(walletClient);
-      closeModal();
       changeStepperStep("preparing");
       await project.attest(walletSigner, changeStepperStep).then(async (res) => {
         let retries = 1000;
@@ -679,72 +678,82 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }
         let fetchedProject: ProjectResponse | null = null;
         changeStepperStep("indexing");
+
+        // First, poll using checkSlugExists to avoid 404 errors in Sentry
+        const projectIdentifier = slug || project.uid;
         while (retries > 0) {
           // eslint-disable-next-line no-await-in-loop
-          fetchedProject = await getProject(slug || project.uid);
-          if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
-            if (data.github) {
-              const githubFromField = data.github.includes("http")
-                ? data.github
-                : `https://${data.github}`;
-              const repoUrl = new URL(githubFromField);
-              const pathParts = repoUrl.pathname.split("/").filter(Boolean);
-              if (repoUrl.hostname.includes("github.com") && pathParts.length >= 2) {
-                const owner = pathParts[0];
-                const repoName = pathParts[1];
-
-                const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}`);
-
-                if (!response.ok) {
-                  toast.error("Failed to fetch GitHub repository");
-                  throw new Error("Failed to fetch GitHub repository");
-                }
-
-                const repoData = await response.json();
-                if (repoData.private) {
-                  toast.error("GitHub repository is private");
-                  throw new Error("GitHub repository is private");
-                }
-
-                const [_githubUpdateData, error] = await fetchData(
-                  INDEXER.PROJECT.EXTERNAL.UPDATE(fetchedProject.uid),
-                  "PUT",
-                  {
-                    target: "github",
-                    ids: [repoUrl.href],
-                  }
-                );
-                if (error) {
-                  toast.error("Failed to update GitHub repository");
-                  throw new Error("Failed to update GitHub repository");
-                }
-              }
-            }
-
-            const [, subscriptionError] = await fetchData(
-              INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
-              "POST",
-              { contacts },
-              {},
-              {},
-              true
-            );
-
-            if (subscriptionError) {
-              toast.error("Something went wrong with contact info save. Please try again later.", {
-                className: "z-[9999]",
-              });
-            }
-
-            toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
-            changeStepperStep("indexed");
-            router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
-            router.refresh();
+          const exists = await checkSlugExists(projectIdentifier);
+          if (exists) {
+            // Project is indexed, now fetch the full details
+            // eslint-disable-next-line no-await-in-loop
+            fetchedProject = await getProject(projectIdentifier);
             break;
           }
           retries -= 1;
           // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
           await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+
+        if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
+          if (data.github) {
+            const githubFromField = data.github.includes("http")
+              ? data.github
+              : `https://${data.github}`;
+            const repoUrl = new URL(githubFromField);
+            const pathParts = repoUrl.pathname.split("/").filter(Boolean);
+            if (repoUrl.hostname.includes("github.com") && pathParts.length >= 2) {
+              const owner = pathParts[0];
+              const repoName = pathParts[1];
+
+              const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}`);
+
+              if (!response.ok) {
+                toast.error("Failed to fetch GitHub repository");
+                throw new Error("Failed to fetch GitHub repository");
+              }
+
+              const repoData = await response.json();
+              if (repoData.private) {
+                toast.error("GitHub repository is private");
+                throw new Error("GitHub repository is private");
+              }
+
+              const [_githubUpdateData, error] = await fetchData(
+                INDEXER.PROJECT.EXTERNAL.UPDATE(fetchedProject.uid),
+                "PUT",
+                {
+                  target: "github",
+                  ids: [repoUrl.href],
+                }
+              );
+              if (error) {
+                toast.error("Failed to update GitHub repository");
+                throw new Error("Failed to update GitHub repository");
+              }
+            }
+          }
+
+          const [, subscriptionError] = await fetchData(
+            INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
+            "POST",
+            { contacts },
+            {},
+            {},
+            true
+          );
+
+          if (subscriptionError) {
+            toast.error("Something went wrong with contact info save. Please try again later.", {
+              className: "z-[9999]",
+            });
+          }
+
+          toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
+          changeStepperStep("indexed");
+          closeModal();
+          router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
+          router.refresh();
         }
       });
 
@@ -766,8 +775,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }
       );
       setIsStepper(false);
-      // Don't reset form on error - keep user's data
-      openModal();
+      // Don't reset form on error - keep user's data (modal stays open)
     } finally {
       setIsLoading(false);
     }

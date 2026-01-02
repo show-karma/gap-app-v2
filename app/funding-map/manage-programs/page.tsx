@@ -5,7 +5,7 @@ import { PROJECT_NAME } from "@/constants/brand";
 import { defaultMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = {
-  title: `${PROJECT_NAME} - Grant Program Aggregator`,
+  title: `${PROJECT_NAME} - Find funding for your project`,
   description: `Find all the funding opportunities across web3 ecosystem.`,
   twitter: {
     creator: defaultMetadata.twitter.creator,
@@ -14,11 +14,11 @@ export const metadata: Metadata = {
   },
   openGraph: {
     url: defaultMetadata.openGraph.url,
-    title: `${PROJECT_NAME} - Grant Program Aggregator`,
+    title: `${PROJECT_NAME} - Find funding for your project`,
     description: `Find all the funding opportunities across web3 ecosystem.`,
     images: defaultMetadata.openGraph.images.map((image) => ({
       url: image,
-      alt: `${PROJECT_NAME} - Grant Program Aggregator`,
+      alt: `${PROJECT_NAME} - Find funding for your project`,
     })),
   },
   icons: [

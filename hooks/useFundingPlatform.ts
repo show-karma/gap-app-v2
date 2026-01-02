@@ -272,14 +272,20 @@ export const useFundingApplications = (
       applicationId,
       status,
       note,
+      approvedAmount,
+      approvedCurrency,
     }: {
       applicationId: string;
       status: string;
       note?: string;
+      approvedAmount?: string;
+      approvedCurrency?: string;
     }) =>
       fundingPlatformService.applications.updateApplicationStatus(applicationId, {
         status: status as FundingApplicationStatusV2,
         reason: note || "",
+        approvedAmount,
+        approvedCurrency,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -332,10 +338,22 @@ export const useFundingApplication = (applicationId: string) => {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ status, note }: { status: string; note?: string }) =>
+    mutationFn: ({
+      status,
+      note,
+      approvedAmount,
+      approvedCurrency,
+    }: {
+      status: string;
+      note?: string;
+      approvedAmount?: string;
+      approvedCurrency?: string;
+    }) =>
       fundingPlatformService.applications.updateApplicationStatus(applicationId, {
         status: status as FundingApplicationStatusV2,
         reason: note || "",
+        approvedAmount,
+        approvedCurrency,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(applicationId) });
@@ -532,10 +550,16 @@ export const useApplicationStatusV2 = (applicationId?: string) => {
   });
 
   return {
-    updateStatus: (appId: string, status: FundingApplicationStatusV2, reason: string) =>
+    updateStatus: (
+      appId: string,
+      status: FundingApplicationStatusV2,
+      reason: string,
+      approvedAmount?: string,
+      approvedCurrency?: string
+    ) =>
       updateStatusMutation.mutate({
         applicationId: appId,
-        request: { status, reason },
+        request: { status, reason, approvedAmount, approvedCurrency },
       }),
     isUpdating: updateStatusMutation.isPending,
     error: updateStatusMutation.error,
@@ -688,14 +712,20 @@ export const useApplicationStatus = (programId?: string, chainId?: number) => {
       applicationId,
       status,
       note,
+      approvedAmount,
+      approvedCurrency,
     }: {
       applicationId: string;
       status: string;
       note?: string;
+      approvedAmount?: string;
+      approvedCurrency?: string;
     }) =>
       fundingApplicationsAPI.updateApplicationStatus(applicationId, {
-        status: status as any,
+        status: status as FundingApplicationStatusV2,
         reason: note || "",
+        approvedAmount,
+        approvedCurrency,
       }),
     onSuccess: (_, variables) => {
       // Invalidate and refetch application data

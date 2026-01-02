@@ -15,11 +15,13 @@ interface CommunityMilestoneCardProps {
 
 const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({ milestone }) => {
   const isCompleted = milestone.status === "completed";
-  const projectDetails = milestone.project.details as { slug?: string; title?: string } | undefined;
-  const projectSlug = projectDetails?.slug;
-  const projectTitle = projectDetails?.title;
-  const grantDetails = milestone.grant?.details as { title?: string } | undefined;
-  const grantTitle = grantDetails?.title || "Project Milestone";
+  const projectSlug = milestone.project.details?.data?.slug;
+  const projectTitle = milestone.project.details?.data?.title;
+  const grantTitle = milestone.grant?.details?.data?.title || "Project Milestone";
+
+  // Check if milestone is past due (not completed and due date has passed)
+  const isPastDue =
+    !isCompleted && milestone.details.dueDate && new Date(milestone.details.dueDate) < new Date();
 
   return (
     <div className="flex flex-col w-full gap-2.5 md:gap-5">
@@ -36,7 +38,6 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({ mile
               >
                 {projectTitle}
               </Link>
-              <span>•</span>
               <span>{grantTitle}</span>
             </div>
           </div>
@@ -48,7 +49,9 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({ mile
                 "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium",
                 isCompleted
                   ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                  : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                  : isPastDue
+                    ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                    : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
               )}
             >
               {isCompleted ? (
@@ -56,7 +59,7 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({ mile
               ) : (
                 <ClockIcon className="h-3 w-3" />
               )}
-              {isCompleted ? "Completed" : "Pending"}
+              {isCompleted ? "Completed" : isPastDue ? "Past Due" : "Pending"}
             </div>
             {!isCompleted && milestone.details.dueDate && (
               <span className="text-sm text-gray-600 dark:text-gray-400">

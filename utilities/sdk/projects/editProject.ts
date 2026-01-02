@@ -8,7 +8,7 @@ import type {
 } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
-import { getProject } from "@/services/project.service";
+import { checkSlugExists, getProject } from "@/services/project.service";
 import type { TxStepperSteps } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -109,25 +109,31 @@ export const updateProject = async (
       if (txHash) {
         await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
       }
+
+      // Poll using checkSlugExists first to avoid potential 404 errors in Sentry
+      const projectIdentifier = project.details?.slug || project.uid;
       while (retries > 0) {
         // eslint-disable-next-line no-await-in-loop
-        const fetchedProject = await getProject(project.uid);
-        if (fetchedProject?.details.lastDetailsUpdate !== projectBefore?.updatedAt) {
-          retries = 0;
-          changeStepperStep("indexed");
+        const exists = await checkSlugExists(projectIdentifier);
+        if (exists) {
+          // eslint-disable-next-line no-await-in-loop
+          const fetchedProject = await getProject(project.uid);
+          if (fetchedProject?.details.lastDetailsUpdate !== projectBefore?.updatedAt) {
+            changeStepperStep("indexed");
 
-          // Invalidate React Query cache to force refresh of project data
-          await Promise.all([
-            queryClient.invalidateQueries({
-              queryKey: ["project", project.uid],
-            }),
-            queryClient.invalidateQueries({
-              queryKey: ["project", project.details?.slug],
-            }),
-          ]);
+            // Invalidate React Query cache to force refresh of project data
+            await Promise.all([
+              queryClient.invalidateQueries({
+                queryKey: ["project", project.uid],
+              }),
+              queryClient.invalidateQueries({
+                queryKey: ["project", project.details?.slug],
+              }),
+            ]);
 
-          closeModal();
-          return;
+            closeModal();
+            return;
+          }
         }
         retries -= 1;
         // eslint-disable-next-line no-await-in-loop, no-promise-executor-return

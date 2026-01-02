@@ -2,7 +2,6 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { layoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
-import { ProgramHeader } from "../ProgramHeader";
 
 export const LoadingProgramTable = () => {
   const emptyArrayHeader = Array.from({ length: 7 });
@@ -55,8 +54,6 @@ export const LoadingPrograms = () => {
         "flex w-full max-w-full flex-col justify-between items-center gap-6 pb-7 max-md:pt-0"
       )}
     >
-      <ProgramHeader />
-
       <div className="flex flex-row items-center justify-end max-sm:justify-start gap-2.5  flex-wrap w-full">
         <div className="flex flex-row items-center gap-2 flex-wrap">
           <p className="text-black dark:text-white font-semibold">Status</p>

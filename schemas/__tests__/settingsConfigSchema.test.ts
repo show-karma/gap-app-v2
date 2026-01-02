@@ -5,7 +5,6 @@ describe("settingsConfigSchema", () => {
     it("should validate with successPageContent", () => {
       const validData = {
         privateApplications: true,
-        applicationDeadline: "2024-12-31T23:59",
         donationRound: false,
         showCommentsOnPublicPage: true,
         successPageContent: "**Review**: Applications reviewed weekly.",
@@ -21,7 +20,6 @@ describe("settingsConfigSchema", () => {
     it("should validate without successPageContent (optional)", () => {
       const validData = {
         privateApplications: true,
-        applicationDeadline: "2024-12-31T23:59",
         donationRound: false,
         showCommentsOnPublicPage: true,
       };
@@ -138,52 +136,12 @@ describe("settingsConfigSchema", () => {
       const result = settingsConfigSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
     });
-
-    it("should accept optional applicationDeadline", () => {
-      const validData = {
-        privateApplications: true,
-        applicationDeadline: "2024-12-31T23:59:59",
-        donationRound: false,
-        showCommentsOnPublicPage: true,
-      };
-
-      const result = settingsConfigSchema.safeParse(validData);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.applicationDeadline).toBe("2024-12-31T23:59:59");
-      }
-    });
-
-    it("should accept empty string for applicationDeadline", () => {
-      const validData = {
-        privateApplications: true,
-        applicationDeadline: "",
-        donationRound: false,
-        showCommentsOnPublicPage: true,
-      };
-
-      const result = settingsConfigSchema.safeParse(validData);
-      expect(result.success).toBe(true);
-    });
-
-    it("should reject if applicationDeadline is not a string", () => {
-      const invalidData = {
-        privateApplications: true,
-        applicationDeadline: 123456789,
-        donationRound: false,
-        showCommentsOnPublicPage: true,
-      };
-
-      const result = settingsConfigSchema.safeParse(invalidData);
-      expect(result.success).toBe(false);
-    });
   });
 
   describe("complete schema validation", () => {
     it("should validate with all fields present", () => {
       const validData = {
         privateApplications: true,
-        applicationDeadline: "2024-12-31T23:59",
         donationRound: false,
         showCommentsOnPublicPage: true,
         successPageContent: "**Important**: Check your email regularly.",
@@ -207,7 +165,6 @@ describe("settingsConfigSchema", () => {
 
       const validData = {
         privateApplications: false,
-        applicationDeadline: "2025-01-31T23:59",
         donationRound: true,
         showCommentsOnPublicPage: false,
         successPageContent: markdownContent,
@@ -327,7 +284,6 @@ describe("settingsConfigSchema", () => {
         privateApplications: true,
         donationRound: false,
         showCommentsOnPublicPage: true,
-        applicationDeadline: undefined,
         successPageContent: undefined,
       };
 
@@ -342,7 +298,6 @@ describe("settingsConfigSchema", () => {
         privateApplications: true,
         donationRound: false,
         showCommentsOnPublicPage: true,
-        applicationDeadline: "2024-12-31T23:59",
         successPageContent: "**Test content**",
       };
 
@@ -350,7 +305,6 @@ describe("settingsConfigSchema", () => {
       expect(validData.privateApplications).toBeDefined();
       expect(validData.donationRound).toBeDefined();
       expect(validData.showCommentsOnPublicPage).toBeDefined();
-      expect(validData.applicationDeadline).toBeDefined();
       expect(validData.successPageContent).toBeDefined();
     });
 
@@ -362,7 +316,6 @@ describe("settingsConfigSchema", () => {
       };
 
       // Optional fields should be allowed to be undefined
-      expect(validData.applicationDeadline).toBeUndefined();
       expect(validData.successPageContent).toBeUndefined();
     });
   });
