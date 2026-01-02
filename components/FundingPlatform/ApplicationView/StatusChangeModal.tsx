@@ -103,8 +103,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
     }
   }, [isOpen, getTemplateContent]);
 
-  const isReasonActuallyRequired =
-    isReasonRequired || status === "revision_requested" || status === "rejected";
+  const isReasonActuallyRequired = isReasonRequired || status === "revision_requested";
 
   // Validate approved amount
   const validateAmount = useCallback((value: string): boolean => {
