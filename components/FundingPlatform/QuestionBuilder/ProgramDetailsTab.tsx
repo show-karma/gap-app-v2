@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/useAuth";
+import { useProgramConfig } from "@/hooks/useFundingPlatform";
 import { type CreateProgramFormSchema, createProgramSchema } from "@/schemas/programFormSchema";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
 import fetchData from "@/utilities/fetchData";
@@ -23,7 +24,7 @@ import { sanitizeObject } from "@/utilities/sanitize";
 
 interface ProgramDetailsTabProps {
   programId: string;
-  chainId: number;
+  chainId?: number; // Optional - V2 endpoints use programId only
   readOnly?: boolean;
 }
 
@@ -88,6 +89,9 @@ export function ProgramDetailsTab({
   chainId,
   readOnly = false,
 }: ProgramDetailsTabProps) {
+  // If chainId is not provided, try to fetch from program config
+  const { data: programConfig } = useProgramConfig(programId);
+  const effectiveChainId = chainId ?? programConfig?.chainID;
   const { address, isConnected } = useAccount();
   const { authenticated: isAuth, login } = useAuth();
 
@@ -148,10 +152,14 @@ export function ProgramDetailsTab({
 
   // Fetch program data
   const fetchProgram = useCallback(async () => {
+    if (!effectiveChainId) {
+      setIsLoadingProgram(false);
+      return;
+    }
     try {
       setIsLoadingProgram(true);
       setProgramError(null);
-      const [data, error] = await fetchData(INDEXER.REGISTRY.FIND_BY_ID(programId, chainId));
+      const [data, error] = await fetchData(INDEXER.REGISTRY.FIND_BY_ID(programId, effectiveChainId));
       if (error) {
         throw new Error(error);
       }
@@ -161,20 +169,20 @@ export function ProgramDetailsTab({
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Failed to load program data";
       setProgramError(errorMessage);
-      errorManager("Failed to load program data", error, { programId, chainId });
+      errorManager("Failed to load program data", error, { programId, chainId: effectiveChainId });
     } finally {
       setIsLoadingProgram(false);
     }
-  }, [programId, chainId, processProgramData]);
+  }, [programId, effectiveChainId, processProgramData]);
 
   useEffect(() => {
-    if (programId && chainId) {
+    if (programId && effectiveChainId) {
       fetchProgram();
     } else {
       // Don't leave in loading state if programId/chainId is missing
       setIsLoadingProgram(false);
     }
-  }, [programId, chainId, fetchProgram]);
+  }, [programId, effectiveChainId, fetchProgram]);
 
   // Validate submission prerequisites
   const validateSubmissionPrerequisites = useCallback((): string | null => {
@@ -196,9 +204,10 @@ export function ProgramDetailsTab({
 
   // Refetch program data after update
   const refetchProgramData = useCallback(async () => {
+    if (!effectiveChainId) return;
     try {
       const [updatedData, updateError] = await fetchData(
-        INDEXER.REGISTRY.FIND_BY_ID(programId, chainId)
+        INDEXER.REGISTRY.FIND_BY_ID(programId, effectiveChainId)
       );
 
       if (updateError) {
@@ -212,7 +221,7 @@ export function ProgramDetailsTab({
     } catch (error) {
       console.warn("Error refetching program data:", error);
     }
-  }, [programId, chainId, processProgramData]);
+  }, [programId, effectiveChainId, processProgramData]);
 
   // Helper function to create date picker props (memoized to prevent recreation)
   const createDatePickerProps = useCallback(
@@ -243,11 +252,12 @@ export function ProgramDetailsTab({
       return;
     }
 
-    const programDbId = ProgramRegistryService.extractProgramId(program!);
-    if (!programDbId) {
+    // V2 uses programId (domain identifier), not MongoDB _id
+    const programIdToUpdate = programId || ProgramRegistryService.extractProgramId(program!);
+    if (!programIdToUpdate) {
       errorManager("Program missing ID", new Error("Program ID not found"), {
         programId,
-        chainId,
+        chainId: effectiveChainId,
         programKeys: Object.keys(program!),
       });
       toast.error("Program ID not found. Cannot update program.");
@@ -258,18 +268,11 @@ export function ProgramDetailsTab({
     try {
       const metadata = buildUpdateMetadata(data, program!.metadata);
 
-      const [, error] = await fetchData(
-        INDEXER.REGISTRY.UPDATE(programDbId, chainId),
-        "PUT",
-        { metadata },
-        {},
-        {},
-        true
+      // Use V2 update endpoint
+      await ProgramRegistryService.updateProgram(
+        programIdToUpdate,
+        metadata
       );
-
-      if (error) {
-        throw new Error(error);
-      }
 
       toast.success("Program updated successfully!");
       await refetchProgramData();
@@ -282,7 +285,7 @@ export function ProgramDetailsTab({
           address,
           data,
           programId,
-          chainId,
+          chainId: effectiveChainId,
         });
         toast.error(`Failed to update program: ${errorMessage}`);
       }

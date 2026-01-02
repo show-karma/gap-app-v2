@@ -12,10 +12,10 @@ export const QUERY_KEYS = {
     COMMENTS: (referenceNumber: string) => ["application-comments", referenceNumber] as const,
   },
   REVIEWERS: {
-    PROGRAM: (programId: string, chainID: number) =>
-      ["program-reviewers", programId, chainID] as const,
-    MILESTONE: (programId: string, chainID: number) =>
-      ["milestone-reviewers", programId, chainID] as const,
+    PROGRAM: (programId: string) =>
+      ["program-reviewers", programId] as const,
+    MILESTONE: (programId: string) =>
+      ["milestone-reviewers", programId] as const,
   },
   CONTRACTS: {
     DEPLOYER: (network: string, contractAddress: string) =>

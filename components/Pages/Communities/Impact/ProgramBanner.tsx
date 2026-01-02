@@ -20,14 +20,24 @@ export const ProgramBanner = () => {
   });
   const programs = data?.map((program) => ({
     title: program.metadata?.title || "",
-    value: `${program.programId}_${program.chainID}` || "", // Match ProgramFilter format
+    value: program.programId || "", // Use programId only (backend handles composite format internally)
     // id: program.programId || "",
   }));
 
   const [selectedProgramId] = useQueryState<string | null>("programId", {
     defaultValue: null,
-    serialize: (value) => value ?? "",
-    parse: (value) => value || null,
+    serialize: (value) => {
+      // Normalize programId (remove chainId suffix if present) when writing to URL
+      if (!value) return "";
+      const normalized = value.includes("_") ? value.split("_")[0] : value;
+      return normalized;
+    },
+    parse: (value) => {
+      // Normalize programId when reading from URL (remove chainId suffix if present)
+      if (!value) return null;
+      const normalized = value.includes("_") ? value.split("_")[0] : value;
+      return normalized;
+    },
   });
   const selectedProgram = programs?.find((program) => program.value === selectedProgramId);
 

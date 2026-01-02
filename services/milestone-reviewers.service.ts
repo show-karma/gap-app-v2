@@ -69,9 +69,9 @@ export const milestoneReviewersService = {
   /**
    * Get all milestone reviewers for a program
    */
-  async getReviewers(programId: string, chainID: number): Promise<MilestoneReviewer[]> {
+  async getReviewers(programId: string): Promise<MilestoneReviewer[]> {
     const [data, error] = await fetchData<MilestoneReviewerResponse[]>(
-      INDEXER.V2.MILESTONE_REVIEWERS.LIST(programId, chainID)
+      INDEXER.V2.MILESTONE_REVIEWERS.LIST(programId)
     );
 
     if (error) {
@@ -99,12 +99,11 @@ export const milestoneReviewersService = {
    */
   async addReviewer(
     programId: string,
-    chainID: number,
     reviewerData: AddMilestoneReviewerRequest
   ): Promise<MilestoneReviewer> {
     const response = await apiClient.post<{
       reviewer?: MilestoneReviewerResponse;
-    }>(INDEXER.V2.MILESTONE_REVIEWERS.LIST(programId, chainID), reviewerData);
+    }>(INDEXER.V2.MILESTONE_REVIEWERS.LIST(programId), reviewerData);
 
     // Map the API response to the expected format
     const reviewer = response.data?.reviewer;
@@ -135,9 +134,9 @@ export const milestoneReviewersService = {
   /**
    * Remove a milestone reviewer from a program
    */
-  async removeReviewer(programId: string, chainID: number, publicAddress: string): Promise<void> {
+  async removeReviewer(programId: string, publicAddress: string): Promise<void> {
     await apiClient.delete(
-      `/v2/programs/${programId}/${chainID}/milestone-reviewers/${publicAddress}`
+      `/v2/programs/${programId}/milestone-reviewers/${publicAddress}`
     );
   },
 
@@ -146,7 +145,6 @@ export const milestoneReviewersService = {
    */
   async addMultipleReviewers(
     programId: string,
-    chainID: number,
     reviewers: AddMilestoneReviewerRequest[]
   ): Promise<{
     added: MilestoneReviewer[];
@@ -160,7 +158,7 @@ export const milestoneReviewersService = {
 
     for (const reviewer of reviewers) {
       try {
-        const added = await this.addReviewer(programId, chainID, reviewer);
+        const added = await this.addReviewer(programId, reviewer);
         addedReviewers.push(added);
       } catch (error) {
         let errorMessage = "Failed to add milestone reviewer";

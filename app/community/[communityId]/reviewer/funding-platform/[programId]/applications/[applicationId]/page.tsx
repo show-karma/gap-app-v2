@@ -45,14 +45,14 @@ export default function ReviewerApplicationDetailPage() {
     applicationId: string;
   };
 
-  // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split("_");
-  const parsedChainId = parseInt(chainId, 10);
+  // Extract programId from the combined format if present (e.g., "777_11155111" -> "777")
+  const programId = combinedProgramId.includes("_")
+    ? combinedProgramId.split("_")[0]
+    : combinedProgramId;
 
   // Check if user is a reviewer for this program
   const { hasPermission: canView, isLoading: isLoadingPermission } = usePermissions({
     programId,
-    chainID: parsedChainId,
     action: "read",
   });
 
@@ -70,7 +70,7 @@ export default function ReviewerApplicationDetailPage() {
   } = useApplication(applicationId);
 
   // Fetch program config
-  const { data: program } = useProgramConfig(programId, parsedChainId);
+  const { data: program } = useProgramConfig(programId);
 
   // Use the comments hook - reviewers can view and add comments
   const {
@@ -120,7 +120,7 @@ export default function ReviewerApplicationDetailPage() {
   };
 
   const handleBackClick = () => {
-    router.push(PAGES.REVIEWER.APPLICATIONS(communityId, programId, parsedChainId));
+    router.push(PAGES.REVIEWER.APPLICATIONS(communityId, programId));
   };
 
   // Memoized milestone review URL - only returns URL if approved and has projectUID

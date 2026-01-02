@@ -184,7 +184,7 @@ export interface IApplicationViewProps {
 
 export interface IApplicationListProps {
   programId: string;
-  chainID: number;
+  chainID?: number; // Optional - V2 endpoints use programId only
   onApplicationSelect?: (application: IFundingApplication) => void;
   onApplicationHover?: (applicationId: string) => void;
   statusFilter?: FundingApplicationStatusV2;
@@ -193,7 +193,6 @@ export interface IApplicationListProps {
 // V2 Request/Response Types
 export interface IApplicationSubmitRequest {
   programId: string;
-  chainID: number;
   applicantEmail: string;
   applicationData: Record<string, any>;
 }

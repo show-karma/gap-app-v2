@@ -535,8 +535,7 @@ export default function ReviewerFundingPlatformPage() {
                   <Link
                     href={PAGES.REVIEWER.APPLICATIONS(
                       communityId,
-                      program.programId,
-                      program.chainID
+                      program.programId
                     )}
                     className="w-full"
                   >
@@ -551,8 +550,7 @@ export default function ReviewerFundingPlatformPage() {
                   <Link
                     href={PAGES.REVIEWER.QUESTION_BUILDER(
                       communityId,
-                      program.programId,
-                      program.chainID
+                      program.programId
                     )}
                     className="w-full"
                   >
@@ -573,8 +571,7 @@ export default function ReviewerFundingPlatformPage() {
                     <Link
                       href={PAGES.REVIEWER.APPLICATIONS(
                         communityId,
-                        program.programId,
-                        program.chainID
+                        program.programId
                       )}
                     >
                       <button
