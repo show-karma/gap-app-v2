@@ -11,10 +11,6 @@ const mockPollForGrantCompletion = jest.fn();
 const mockToastSuccess = jest.fn();
 const mockToastError = jest.fn();
 
-jest.mock("@/utilities/chain-wallet-setup", () => ({
-  setupChainAndWallet: mockSetupChainAndWallet,
-}));
-
 jest.mock("@/utilities/grant-helpers", () => ({
   getSDKGrantInstance: mockFetchGrantInstance,
 }));
@@ -40,8 +36,10 @@ jest.mock("@/components/Utilities/errorManager", () => ({
 }));
 
 const mockUseAccount = jest.fn();
+const mockUseChainId = jest.fn(() => 1);
 jest.mock("wagmi", () => ({
   useAccount: mockUseAccount,
+  useChainId: mockUseChainId,
 }));
 
 jest.mock("@/hooks/useWallet", () => ({
@@ -57,6 +55,16 @@ jest.mock("@/hooks/useAttestationToast", () => ({
     showError: jest.fn(),
     updateStep: jest.fn(),
     dismiss: jest.fn(),
+  })),
+}));
+
+jest.mock("@/hooks/useSetupChainAndWallet", () => ({
+  useSetupChainAndWallet: jest.fn(() => ({
+    setupChainAndWallet: mockSetupChainAndWallet,
+    isSmartWalletReady: false,
+    smartWalletAddress: null,
+    hasEmbeddedWallet: false,
+    hasExternalWallet: true,
   })),
 }));
 
