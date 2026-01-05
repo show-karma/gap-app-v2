@@ -90,8 +90,20 @@ jest.mock("@/hooks/useGap", () => ({
   useGap: jest.fn(() => ({ gap: mockGap })),
 }));
 
+const mockSetupChainAndWallet = jest.fn();
+jest.mock("@/hooks/useSetupChainAndWallet", () => ({
+  useSetupChainAndWallet: jest.fn(() => ({
+    setupChainAndWallet: mockSetupChainAndWallet,
+    isSmartWalletReady: false,
+    smartWalletAddress: null,
+    hasEmbeddedWallet: false,
+    hasExternalWallet: true,
+  })),
+}));
+
 const mockChangeStepperStep = jest.fn();
 const mockSetIsStepper = jest.fn();
+const mockDismiss = jest.fn();
 jest.mock("@/hooks/useAttestationToast", () => ({
   useAttestationToast: jest.fn(() => ({
     changeStepperStep: mockChangeStepperStep,
@@ -100,7 +112,7 @@ jest.mock("@/hooks/useAttestationToast", () => ({
     showSuccess: jest.fn(),
     showError: jest.fn(),
     updateStep: jest.fn(),
-    dismiss: jest.fn(),
+    dismiss: mockDismiss,
   })),
 }));
 
@@ -255,7 +267,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockSetIsStepper).not.toHaveBeenCalled();
+      expect(mockChangeStepperStep).not.toHaveBeenCalled();
       expect(result.current.isRevoking).toBe(false);
     });
 
@@ -268,7 +280,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockSetIsStepper).not.toHaveBeenCalled();
+      expect(mockChangeStepperStep).not.toHaveBeenCalled();
       expect(result.current.isRevoking).toBe(false);
     });
   });
@@ -321,16 +333,12 @@ describe("useGrantCompletionRevoke", () => {
         chainID: 42161,
       };
       mockIsProjectOwner.mockReturnValue(true);
-      mockEnsureCorrectChain.mockResolvedValue({
-        success: true,
-        chainId: 42161,
+      mockSetupChainAndWallet.mockResolvedValue({
         gapClient: mockGapClient,
+        walletSigner: mockWalletSigner,
+        chainId: 42161,
+        isGasless: false,
       });
-      mockSafeGetWalletClient.mockResolvedValue({
-        walletClient: mockWalletClient,
-        error: null,
-      });
-      mockWalletClientToSigner.mockResolvedValue(mockWalletSigner);
       mockGapClient.fetch.projectById.mockResolvedValue(mockInstanceProject);
       mockBuildRevocationPayload.mockReturnValue([{ schema: "0xschema123", data: [] }]);
       mockGetMulticall.mockResolvedValue(mockMulticallContract);
@@ -350,7 +358,8 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockEnsureCorrectChain).toHaveBeenCalledWith({
+      // Verify setupChainAndWallet is called with grant.chainID
+      expect(mockSetupChainAndWallet).toHaveBeenCalledWith({
         targetChainId: 42161,
         currentChainId: 42161,
         switchChainAsync: mockSwitchChainAsync,
@@ -375,7 +384,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockSetIsStepper).toHaveBeenCalledWith(true);
+      // Off-chain path goes directly to performOffChainRevoke without chain setup
       expect(mockPerformOffChainRevoke).toHaveBeenCalledWith({
         uid: "0xcompletion123",
         chainID: 42161,
@@ -388,7 +397,8 @@ describe("useGrantCompletionRevoke", () => {
         },
       });
       expect(mockRefreshGrant).toHaveBeenCalled();
-      expect(mockEnsureCorrectChain).not.toHaveBeenCalled();
+      // Chain setup should NOT be called for off-chain path
+      expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
     });
 
     it("should handle off-chain revocation success callback", async () => {
@@ -411,7 +421,7 @@ describe("useGrantCompletionRevoke", () => {
       });
 
       expect(mockChangeStepperStep).toHaveBeenCalledWith("indexed");
-      expect(mockSetIsStepper).toHaveBeenCalledWith(false);
+      expect(mockDismiss).toHaveBeenCalled();
     });
 
     it("should handle off-chain revocation error callback", async () => {
@@ -437,7 +447,7 @@ describe("useGrantCompletionRevoke", () => {
         onErrorCallback?.(mockError);
       });
 
-      expect(mockSetIsStepper).toHaveBeenCalledWith(false);
+      expect(mockDismiss).toHaveBeenCalled();
       expect(consoleSpy).toHaveBeenCalledWith("Off-chain revocation failed:", mockError);
 
       // Restore console.error
@@ -448,6 +458,14 @@ describe("useGrantCompletionRevoke", () => {
   describe("On-chain Revocation Success Path", () => {
     beforeEach(() => {
       mockIsProjectOwner.mockReturnValue(true);
+      // Mock the new setupChainAndWallet hook
+      mockSetupChainAndWallet.mockResolvedValue({
+        gapClient: mockGapClient,
+        walletSigner: mockWalletSigner,
+        chainId: 42161,
+        isGasless: false,
+      });
+      // Keep old mocks for backward compatibility in case they're still checked
       mockEnsureCorrectChain.mockResolvedValue({
         success: true,
         chainId: 42161,
@@ -478,13 +496,12 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockEnsureCorrectChain).toHaveBeenCalledWith({
+      // Hook uses setupChainAndWallet which encapsulates chain and wallet setup
+      expect(mockSetupChainAndWallet).toHaveBeenCalledWith({
         targetChainId: 42161,
         currentChainId: 42161,
         switchChainAsync: mockSwitchChainAsync,
       });
-      expect(mockSafeGetWalletClient).toHaveBeenCalledWith(42161);
-      expect(mockWalletClientToSigner).toHaveBeenCalledWith(mockWalletClient);
       expect(mockGapClient.fetch.projectById).toHaveBeenCalledWith("project-456");
       expect(mockValidateGrantCompletion).toHaveBeenCalledWith(mockGrantInstance.completed);
       expect(mockBuildRevocationPayload).toHaveBeenCalledWith("0xschema123", "0xcompletion123");
@@ -563,11 +580,8 @@ describe("useGrantCompletionRevoke", () => {
     });
 
     it("should handle chain setup failure", async () => {
-      mockEnsureCorrectChain.mockResolvedValue({
-        success: false,
-        chainId: null,
-        gapClient: null,
-      });
+      // Mock setupChainAndWallet returning null (chain setup failed)
+      mockSetupChainAndWallet.mockResolvedValue(null);
 
       const { result } = renderHook(() =>
         useGrantCompletionRevoke({ grant: mockGrant, project: mockProject })
@@ -577,7 +591,8 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockSafeGetWalletClient).not.toHaveBeenCalled();
+      // When setupChainAndWallet fails, it returns null and the hook returns early
+      expect(mockSetupChainAndWallet).toHaveBeenCalled();
       expect(result.current.isRevoking).toBe(false);
     });
   });
@@ -585,18 +600,11 @@ describe("useGrantCompletionRevoke", () => {
   describe("On-chain Wallet Connection Failures", () => {
     beforeEach(() => {
       mockIsProjectOwner.mockReturnValue(true);
-      mockEnsureCorrectChain.mockResolvedValue({
-        success: true,
-        chainId: 42161,
-        gapClient: mockGapClient,
-      });
     });
 
-    it("should handle wallet client error", async () => {
-      mockSafeGetWalletClient.mockResolvedValue({
-        walletClient: null,
-        error: new Error("Wallet connection failed"),
-      });
+    it("should handle wallet connection failure via setupChainAndWallet", async () => {
+      // setupChainAndWallet returns null when wallet connection fails
+      mockSetupChainAndWallet.mockResolvedValue(null);
 
       const { result } = renderHook(() =>
         useGrantCompletionRevoke({ grant: mockGrant, project: mockProject })
@@ -606,20 +614,14 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockToastError).toHaveBeenCalledWith("Failed to connect to wallet");
-      expect(mockErrorManager).toHaveBeenCalled();
+      // When setupChainAndWallet returns null, the hook returns early
+      expect(mockSetupChainAndWallet).toHaveBeenCalled();
+      expect(result.current.isRevoking).toBe(false);
     });
 
-    it("should handle missing gapClient", async () => {
-      mockEnsureCorrectChain.mockResolvedValue({
-        success: true,
-        chainId: 42161,
-        gapClient: null,
-      });
-      mockSafeGetWalletClient.mockResolvedValue({
-        walletClient: mockWalletClient,
-        error: null,
-      });
+    it("should handle missing gapClient via setupChainAndWallet", async () => {
+      // setupChainAndWallet returns null when gapClient is not available
+      mockSetupChainAndWallet.mockResolvedValue(null);
 
       const { result } = renderHook(() =>
         useGrantCompletionRevoke({ grant: mockGrant, project: mockProject })
@@ -629,23 +631,21 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockToastError).toHaveBeenCalled();
+      // When setupChainAndWallet returns null, the hook returns early
+      expect(mockSetupChainAndWallet).toHaveBeenCalled();
+      expect(result.current.isRevoking).toBe(false);
     });
   });
 
   describe("On-chain Grant Instance Not Found", () => {
     beforeEach(() => {
       mockIsProjectOwner.mockReturnValue(true);
-      mockEnsureCorrectChain.mockResolvedValue({
-        success: true,
-        chainId: 42161,
+      mockSetupChainAndWallet.mockResolvedValue({
         gapClient: mockGapClient,
+        walletSigner: mockWalletSigner,
+        chainId: 42161,
+        isGasless: false,
       });
-      mockSafeGetWalletClient.mockResolvedValue({
-        walletClient: mockWalletClient,
-        error: null,
-      });
-      mockWalletClientToSigner.mockResolvedValue(mockWalletSigner);
     });
 
     it("should handle grant instance not found", async () => {
@@ -689,16 +689,12 @@ describe("useGrantCompletionRevoke", () => {
   describe("On-chain Schema Validation Failures", () => {
     beforeEach(() => {
       mockIsProjectOwner.mockReturnValue(true);
-      mockEnsureCorrectChain.mockResolvedValue({
-        success: true,
-        chainId: 42161,
+      mockSetupChainAndWallet.mockResolvedValue({
         gapClient: mockGapClient,
+        walletSigner: mockWalletSigner,
+        chainId: 42161,
+        isGasless: false,
       });
-      mockSafeGetWalletClient.mockResolvedValue({
-        walletClient: mockWalletClient,
-        error: null,
-      });
-      mockWalletClientToSigner.mockResolvedValue(mockWalletSigner);
       mockGapClient.fetch.projectById.mockResolvedValue(mockInstanceProject);
     });
 
@@ -754,16 +750,12 @@ describe("useGrantCompletionRevoke", () => {
   describe("Off-chain Fallback When On-chain Fails", () => {
     beforeEach(() => {
       mockIsProjectOwner.mockReturnValue(true);
-      mockEnsureCorrectChain.mockResolvedValue({
-        success: true,
-        chainId: 42161,
+      mockSetupChainAndWallet.mockResolvedValue({
         gapClient: mockGapClient,
+        walletSigner: mockWalletSigner,
+        chainId: 42161,
+        isGasless: false,
       });
-      mockSafeGetWalletClient.mockResolvedValue({
-        walletClient: mockWalletClient,
-        error: null,
-      });
-      mockWalletClientToSigner.mockResolvedValue(mockWalletSigner);
       mockGapClient.fetch.projectById.mockResolvedValue(mockInstanceProject);
       mockBuildRevocationPayload.mockReturnValue([{ schema: "0xschema123", data: [] }]);
       mockGetMulticall.mockResolvedValue(mockMulticallContract);
@@ -782,7 +774,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockSetIsStepper).toHaveBeenCalledWith(false);
+      expect(mockDismiss).toHaveBeenCalled();
       /**
        * Note: Indirect toast() assertion
        *
@@ -793,7 +785,7 @@ describe("useGrantCompletionRevoke", () => {
        * Instead, we verify the toast call indirectly by:
        * 1. Confirming that performOffChainRevoke is called (which only happens after the toast call)
        * 2. Verifying the fallback path execution through mockPerformOffChainRevoke being called
-       * 3. Checking that mockSetIsStepper(false) was called (which happens right before the toast)
+       * 3. Checking that mockDismiss() was called (which happens when falling back)
        *
        * The actual toast call is: toast("On-chain revocation unavailable. Attempting off-chain revocation...")
        * See: hooks/useGrantCompletionRevoke.ts:190
@@ -854,7 +846,7 @@ describe("useGrantCompletionRevoke", () => {
       });
 
       expect(mockChangeStepperStep).toHaveBeenCalledWith("indexed");
-      expect(mockSetIsStepper).toHaveBeenCalledWith(false);
+      expect(mockDismiss).toHaveBeenCalled();
     });
   });
 
@@ -862,16 +854,12 @@ describe("useGrantCompletionRevoke", () => {
     it("should use on-chain path when isProjectOwner is true", async () => {
       mockIsProjectOwner.mockReturnValue(true);
       mockIsOwner.mockReturnValue(false);
-      mockEnsureCorrectChain.mockResolvedValue({
-        success: true,
-        chainId: 42161,
+      mockSetupChainAndWallet.mockResolvedValue({
         gapClient: mockGapClient,
+        walletSigner: mockWalletSigner,
+        chainId: 42161,
+        isGasless: false,
       });
-      mockSafeGetWalletClient.mockResolvedValue({
-        walletClient: mockWalletClient,
-        error: null,
-      });
-      mockWalletClientToSigner.mockResolvedValue(mockWalletSigner);
       mockGapClient.fetch.projectById.mockResolvedValue(mockInstanceProject);
       mockBuildRevocationPayload.mockReturnValue([{ schema: "0xschema123", data: [] }]);
       mockGetMulticall.mockResolvedValue(mockMulticallContract);
@@ -888,23 +876,19 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockEnsureCorrectChain).toHaveBeenCalled();
+      expect(mockSetupChainAndWallet).toHaveBeenCalled();
       expect(mockPerformOffChainRevoke).not.toHaveBeenCalled();
     });
 
     it("should use on-chain path when isContractOwner is true", async () => {
       mockIsProjectOwner.mockReturnValue(false);
       mockIsOwner.mockReturnValue(true);
-      mockEnsureCorrectChain.mockResolvedValue({
-        success: true,
-        chainId: 42161,
+      mockSetupChainAndWallet.mockResolvedValue({
         gapClient: mockGapClient,
+        walletSigner: mockWalletSigner,
+        chainId: 42161,
+        isGasless: false,
       });
-      mockSafeGetWalletClient.mockResolvedValue({
-        walletClient: mockWalletClient,
-        error: null,
-      });
-      mockWalletClientToSigner.mockResolvedValue(mockWalletSigner);
       mockGapClient.fetch.projectById.mockResolvedValue(mockInstanceProject);
       mockBuildRevocationPayload.mockReturnValue([{ schema: "0xschema123", data: [] }]);
       mockGetMulticall.mockResolvedValue(mockMulticallContract);
@@ -921,7 +905,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockEnsureCorrectChain).toHaveBeenCalled();
+      expect(mockSetupChainAndWallet).toHaveBeenCalled();
       expect(mockPerformOffChainRevoke).not.toHaveBeenCalled();
     });
   });
@@ -929,16 +913,12 @@ describe("useGrantCompletionRevoke", () => {
   describe("Stepper State Transitions", () => {
     beforeEach(() => {
       mockIsProjectOwner.mockReturnValue(true);
-      mockEnsureCorrectChain.mockResolvedValue({
-        success: true,
-        chainId: 42161,
+      mockSetupChainAndWallet.mockResolvedValue({
         gapClient: mockGapClient,
+        walletSigner: mockWalletSigner,
+        chainId: 42161,
+        isGasless: false,
       });
-      mockSafeGetWalletClient.mockResolvedValue({
-        walletClient: mockWalletClient,
-        error: null,
-      });
-      mockWalletClientToSigner.mockResolvedValue(mockWalletSigner);
       mockGapClient.fetch.projectById.mockResolvedValue(mockInstanceProject);
       mockBuildRevocationPayload.mockReturnValue([{ schema: "0xschema123", data: [] }]);
       mockGetMulticall.mockResolvedValue(mockMulticallContract);
@@ -957,7 +937,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockSetIsStepper).toHaveBeenCalledWith(true);
+      expect(mockChangeStepperStep).toHaveBeenCalledWith("preparing");
     });
 
     it("should transition through stepper states", async () => {
@@ -985,7 +965,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockSetIsStepper).toHaveBeenCalledWith(false);
+      expect(mockDismiss).toHaveBeenCalled();
     });
 
     it("should reset stepper in finally block", async () => {
@@ -997,7 +977,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockSetIsStepper).toHaveBeenCalledWith(false);
+      expect(mockDismiss).toHaveBeenCalled();
     });
   });
 
