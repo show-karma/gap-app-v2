@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
@@ -18,7 +19,6 @@ import { getProjectGrants } from "@/services/project-grants.service";
 import { getProjectImpacts } from "@/services/project-impacts.service";
 import { getProjectUpdates } from "@/services/project-updates.service";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
 import type { ConversionGrantUpdate } from "@/types/v2/roadmap";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -40,7 +40,7 @@ type UpdateType =
 export const useUpdateActions = (update: UpdateType) => {
   const [isDeletingUpdate, setIsDeletingUpdate] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, dismiss } = useAttestationToast();
   const { gap } = useGap();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
@@ -231,7 +231,7 @@ export const useUpdateActions = (update: UpdateType) => {
           await refreshDataAfterDeletion();
         } catch (onChainError: any) {
           // Silently fallback to off-chain revoke
-          setIsStepper(false); // Reset stepper since we're falling back
+          dismiss(); // Reset toast since we're falling back
 
           const success = await performOffChainRevoke({
             uid: findUpdate?.uid as `0x${string}`,
@@ -267,7 +267,7 @@ export const useUpdateActions = (update: UpdateType) => {
       );
     } finally {
       setIsDeletingUpdate(false);
-      setIsStepper(false);
+      dismiss();
     }
   };
 

@@ -7,6 +7,7 @@ import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
@@ -14,7 +15,6 @@ import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
-import { useProgressModal } from "@/store/modals/progressModal";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -50,7 +50,7 @@ export const MilestonesScreen: React.FC = () => {
   const { authenticated: isAuth } = useAuth();
   const { gap } = useGap();
   const { smartWalletAddress, setupChainAndWallet } = useSetupChainAndWallet();
-  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
   const queryClient = useQueryClient();
 
   const pathname = usePathname();
@@ -239,7 +239,7 @@ export const MilestonesScreen: React.FC = () => {
 
             await refetchGrants();
             setTimeout(() => {
-              closeProgressModal();
+              dismiss();
               router.push(
                 PAGES.PROJECT.GRANT(
                   selectedProject?.details?.slug || selectedProject.uid,
@@ -255,7 +255,7 @@ export const MilestonesScreen: React.FC = () => {
         }
       });
     } catch (error: any) {
-      closeProgressModal();
+      dismiss();
       errorManager(
         MESSAGES.GRANT.CREATE.ERROR(formData.title),
         error,

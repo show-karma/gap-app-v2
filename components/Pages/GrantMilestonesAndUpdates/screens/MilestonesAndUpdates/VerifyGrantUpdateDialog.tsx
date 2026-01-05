@@ -10,13 +10,13 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
 import type { GrantUpdate } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { getSDKGrantInstance } from "@/utilities/grant-helpers";
@@ -67,7 +67,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
   const project = useProjectStore((state) => state.project);
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const { refetch: refetchGrants } = useProjectGrants(projectIdOrSlug);
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, setIsStepper } = useAttestationToast();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     if (!address || !project) return;

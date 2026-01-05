@@ -4,12 +4,12 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useProgressModal } from "@/store/modals/progressModal";
-import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -44,7 +44,7 @@ export function useGrantMilestoneForm({
 
   const { gap } = useGap();
   const [isLoading, setIsLoading] = useState(false);
-  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
   const router = useRouter();
 
   // Fetch grants using dedicated hook
@@ -126,7 +126,7 @@ export function useGrantMilestoneForm({
                 // Only navigate on the last grant milestone creation
                 if (grantUID === grantUIDs[grantUIDs.length - 1] && destinationPath) {
                   setTimeout(() => {
-                    closeProgressModal();
+                    dismiss();
                     router.push(destinationPath);
                     router.refresh();
                   }, 1500);
@@ -145,7 +145,7 @@ export function useGrantMilestoneForm({
       // Call onSuccess after all grant milestones are created
       onSuccess?.();
     } catch (error) {
-      closeProgressModal();
+      dismiss();
       errorManager(MESSAGES.MILESTONES.CREATE.ERROR(data.title), error, {
         data,
         address,

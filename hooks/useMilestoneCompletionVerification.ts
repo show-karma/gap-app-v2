@@ -8,6 +8,7 @@ import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import {
@@ -16,7 +17,6 @@ import {
   type ProjectGrantMilestonesResponse,
   updateMilestoneVerification,
 } from "@/services/milestones";
-import { useStepper } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
@@ -51,7 +51,7 @@ export const useMilestoneCompletionVerification = ({
   const [isVerifying, setIsVerifying] = useState(false);
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, dismiss } = useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const setupChainAndWalletForMilestone = async (
@@ -68,7 +68,7 @@ export const useMilestoneCompletionVerification = ({
 
     if (!setup) {
       setIsVerifying(false);
-      setIsStepper(false);
+      dismiss();
       return null;
     }
 
@@ -380,7 +380,6 @@ export const useMilestoneCompletionVerification = ({
     const attestationChainId = milestone.chainId;
 
     setIsVerifying(true);
-    setIsStepper(true);
 
     try {
       changeStepperStep("preparing");
@@ -464,7 +463,7 @@ export const useMilestoneCompletionVerification = ({
       }
     } finally {
       setIsVerifying(false);
-      setIsStepper(false);
+      dismiss();
     }
   };
 

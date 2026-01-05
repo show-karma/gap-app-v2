@@ -90,10 +90,15 @@ jest.mock("@/hooks/useGap", () => ({
 
 const mockChangeStepperStep = jest.fn();
 const mockSetIsStepper = jest.fn();
-jest.mock("@/store/modals/txStepper", () => ({
-  useStepper: jest.fn(() => ({
+jest.mock("@/hooks/useAttestationToast", () => ({
+  useAttestationToast: jest.fn(() => ({
     changeStepperStep: mockChangeStepperStep,
     setIsStepper: mockSetIsStepper,
+    showLoading: jest.fn(),
+    showSuccess: jest.fn(),
+    showError: jest.fn(),
+    updateStep: jest.fn(),
+    dismiss: jest.fn(),
   })),
 }));
 

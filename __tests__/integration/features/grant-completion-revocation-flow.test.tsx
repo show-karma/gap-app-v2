@@ -42,10 +42,15 @@ jest.mock("@/hooks/useGap", () => ({
   })),
 }));
 
-jest.mock("@/store/modals/txStepper", () => ({
-  useStepper: jest.fn(() => ({
+jest.mock("@/hooks/useAttestationToast", () => ({
+  useAttestationToast: jest.fn(() => ({
     changeStepperStep: jest.fn(),
     setIsStepper: jest.fn(),
+    showLoading: jest.fn(),
+    showSuccess: jest.fn(),
+    showError: jest.fn(),
+    updateStep: jest.fn(),
+    dismiss: jest.fn(),
   })),
 }));
 
@@ -200,12 +205,17 @@ describe("Integration: Grant Completion Revocation Flow", () => {
     const wagmi = require("wagmi");
     wagmi.useAccount.mockReturnValue({ chain: { id: 42161 } });
 
-    const { useStepper } = require("@/store/modals/txStepper");
+    const { useAttestationToast } = require("@/hooks/useAttestationToast");
     const mockChangeStepperStep = jest.fn();
     const mockSetIsStepper = jest.fn();
-    useStepper.mockReturnValue({
+    useAttestationToast.mockReturnValue({
       changeStepperStep: mockChangeStepperStep,
       setIsStepper: mockSetIsStepper,
+      showLoading: jest.fn(),
+      showSuccess: jest.fn(),
+      showError: jest.fn(),
+      updateStep: jest.fn(),
+      dismiss: jest.fn(),
     });
 
     const { useProjectStore } = require("@/store");
@@ -407,8 +417,8 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       });
 
       // Verify stepper was activated
-      const { useStepper } = require("@/store/modals/txStepper");
-      const stepper = useStepper();
+      const { useAttestationToast } = require("@/hooks/useAttestationToast");
+      const stepper = useAttestationToast();
       await waitFor(() => {
         expect(stepper.setIsStepper).toHaveBeenCalledWith(true);
       });
@@ -527,8 +537,8 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       });
 
       // Verify stepper was used
-      const { useStepper } = require("@/store/modals/txStepper");
-      const stepper = useStepper();
+      const { useAttestationToast } = require("@/hooks/useAttestationToast");
+      const stepper = useAttestationToast();
       await waitFor(() => {
         expect(stepper.setIsStepper).toHaveBeenCalledWith(true);
         expect(stepper.changeStepperStep).toHaveBeenCalledWith("indexed");
@@ -659,8 +669,8 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       });
 
       // Verify stepper transitions
-      const { useStepper } = require("@/store/modals/txStepper");
-      const stepper = useStepper();
+      const { useAttestationToast } = require("@/hooks/useAttestationToast");
+      const stepper = useAttestationToast();
       await waitFor(() => {
         expect(stepper.setIsStepper).toHaveBeenCalledWith(false); // Reset before fallback
         expect(stepper.changeStepperStep).toHaveBeenCalledWith("indexed");
@@ -733,8 +743,8 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       });
 
       // Verify stepper was reset
-      const { useStepper } = require("@/store/modals/txStepper");
-      const stepper = useStepper();
+      const { useAttestationToast } = require("@/hooks/useAttestationToast");
+      const stepper = useAttestationToast();
       await waitFor(() => {
         expect(stepper.setIsStepper).toHaveBeenCalledWith(false);
       });
@@ -786,12 +796,17 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       const fetchData = require("@/utilities/fetchData").default;
       fetchData.mockResolvedValue({});
 
-      const { useStepper } = require("@/store/modals/txStepper");
+      const { useAttestationToast } = require("@/hooks/useAttestationToast");
       const mockChangeStepperStep = jest.fn();
       const mockSetIsStepper = jest.fn();
-      useStepper.mockReturnValue({
+      useAttestationToast.mockReturnValue({
         changeStepperStep: mockChangeStepperStep,
         setIsStepper: mockSetIsStepper,
+        showLoading: jest.fn(),
+        showSuccess: jest.fn(),
+        showError: jest.fn(),
+        updateStep: jest.fn(),
+        dismiss: jest.fn(),
       });
 
       // Test via hook to verify state transitions

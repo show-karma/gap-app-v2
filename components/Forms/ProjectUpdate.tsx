@@ -17,17 +17,17 @@ import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useUnlinkedIndicators } from "@/hooks/useUnlinkedIndicators";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
-import { useProgressModal } from "@/store/modals/progressModal";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -508,7 +508,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     setValue("outputs", outputsToSet);
   }, [editId, updateToEdit, indicatorsData, setValue]);
 
-  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
 
   const { openShareDialog } = useShareDialogStore();
 
@@ -520,7 +520,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   }));
 
   const createProjectUpdate = async (data: UpdateType) => {
-    let gapClient = gap;
+    const gapClient = gap;
     if (!address || !project) return;
 
     try {
@@ -644,7 +644,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
               );
               afterSubmit?.();
               setTimeout(() => {
-                closeProgressModal();
+                dismiss();
                 router.push(PAGES.PROJECT.UPDATES(projectSlug || projectUid));
                 router.refresh();
                 // Only show share dialog for new activities, not edits
@@ -670,7 +670,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         }
       });
     } catch (error) {
-      closeProgressModal();
+      dismiss();
       errorManager(
         `Error of user ${address} creating project activity for project ${project?.uid}`,
         error,

@@ -8,7 +8,6 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
-import { useProgressModal } from "@/store/modals/progressModal";
 import type { Grant } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -16,6 +15,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
+import { useAttestationToast } from "./useAttestationToast";
 import { useGap } from "./useGap";
 import { useSetupChainAndWallet } from "./useSetupChainAndWallet";
 import { useWallet } from "./useWallet";
@@ -26,7 +26,7 @@ export function useGrant() {
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
-  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
   const selectedProject = useProjectStore((state) => state.project);
   const { refetch: refetchGrants } = useProjectGrants(selectedProject?.uid || "");
   const router = useRouter();
@@ -118,7 +118,7 @@ export function useGrant() {
             showSuccess("Grant updated!");
             await refetchGrants().then(() => {
               setTimeout(() => {
-                closeProgressModal();
+                dismiss();
                 router.push(
                   PAGES.PROJECT.GRANT(
                     selectedProject.details?.slug || selectedProject.uid,
@@ -135,7 +135,7 @@ export function useGrant() {
         }
       });
     } catch (error: any) {
-      closeProgressModal();
+      dismiss();
       errorManager(
         MESSAGES.GRANT.UPDATE.ERROR,
         error,

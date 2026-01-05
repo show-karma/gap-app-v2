@@ -14,7 +14,6 @@ import { useGrant } from "@/hooks/useGrant";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { useStepper } from "@/store/modals/txStepper";
 import type { Grant } from "@/types/v2/grant";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
@@ -89,7 +88,6 @@ export const DetailsScreen: React.FC = () => {
   const { authenticated: isAuth } = useAuth();
   const { gap } = useGap();
   const { updateGrant, isLoading: isUpdatingGrant } = useGrant();
-  const { changeStepperStep, setIsStepper } = useStepper();
   const { isCommunityAdmin } = useCommunityAdminStore();
   const { isOwner } = useOwnerStore();
   const [_isLoading, _setIsLoading] = useState(false);

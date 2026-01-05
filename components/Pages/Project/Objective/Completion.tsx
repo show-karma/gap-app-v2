@@ -9,11 +9,11 @@ import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
@@ -47,7 +47,7 @@ export const ObjectiveCardComplete = ({
   const { isProjectOwner } = useProjectStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
 
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, setIsStepper } = useAttestationToast();
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();

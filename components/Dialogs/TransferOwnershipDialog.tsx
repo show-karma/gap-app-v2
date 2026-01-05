@@ -6,11 +6,11 @@ import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import { useAccount } from "wagmi";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
-import { useStepper } from "@/store/modals/txStepper";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -50,7 +50,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
   const { switchChainAsync } = useWallet();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, setIsStepper } = useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const transfer = async () => {

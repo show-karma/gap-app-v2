@@ -37,17 +37,17 @@ import { FileUpload } from "@/components/Utilities/FileUpload";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Button } from "@/components/ui/button";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useGap } from "@/hooks/useGap";
-import { useWallet } from "@/hooks/useWallet";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
+import { useWallet } from "@/hooks/useWallet";
 import { checkSlugExists, getProject } from "@/services/project.service";
 import { searchProjects } from "@/services/project-search.service";
 import { useProjectStore } from "@/store";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
-import { useProgressModal } from "@/store/modals/progressModal";
 import { useOwnerStore } from "@/store/owner";
 import type { Contact } from "@/types/project";
 import type { Project as ProjectResponse } from "@/types/v2/project";
@@ -242,7 +242,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { gap } = useGap();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
-  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
   const [walletSigner, setWalletSigner] = useState<any>(null);
   const [_faucetFunded, setFaucetFunded] = useState(false);
   // Flag to prevent form reset when reopening after an error
@@ -773,7 +773,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
           showSuccess("Project created!");
           setTimeout(() => {
-            closeProgressModal();
+            dismiss();
             closeModal();
             router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
             router.refresh();
@@ -790,7 +790,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       console.error("[ProjectDialog] CATCH BLOCK - Error caught:", error);
       console.error("[ProjectDialog] Error message:", error?.message);
       console.error("[ProjectDialog] Error stack:", error?.stack);
-      closeProgressModal();
+      dismiss();
       errorManager(
         MESSAGES.PROJECT.CREATE.ERROR(data.title),
         error,
@@ -944,14 +944,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         walletSigner,
         gapClient,
         () => {}, // No-op since we're using progress modal
-        () => {}  // No-op since modal is already closed
+        () => {} // No-op since modal is already closed
       ).then(async (res) => {
         // Show success after update completes
         showSuccess("Project updated!");
         setStep(0);
         // Brief delay to show success, then redirect
         setTimeout(() => {
-          closeProgressModal();
+          dismiss();
           if (shouldRefresh) {
             refreshProject();
           } else {
@@ -962,7 +962,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }, 1500);
       });
     } catch (error: any) {
-      closeProgressModal();
+      dismiss();
       errorManager(
         `Error updating project ${projectToUpdate?.details?.slug || projectToUpdate?.uid}`,
         error,

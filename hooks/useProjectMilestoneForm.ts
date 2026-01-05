@@ -6,10 +6,10 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/store";
-import { useProgressModal } from "@/store/modals/progressModal";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
+import { useProjectStore } from "@/store";
 import fetchData from "@/utilities/fetchData";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
@@ -41,7 +41,7 @@ export function useProjectMilestoneForm({
 
   const { gap } = useGap();
   const [isLoading, setIsLoading] = useState(false);
-  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
 
   const { refetch } = useQuery<IProjectMilestoneResponse[]>({
     queryKey: ["projectMilestones"],
@@ -73,7 +73,7 @@ export function useProjectMilestoneForm({
         }),
         schema: gapClient.findSchema("ProjectMilestone"),
         refUID: project?.uid,
-        recipient: (smartWalletAddress || address) as `0x${string}` || "0x00",
+        recipient: ((smartWalletAddress || address) as `0x${string}`) || "0x00",
       });
       const sanitizedData = {
         title: sanitizeInput(data.title),
@@ -112,7 +112,7 @@ export function useProjectMilestoneForm({
                 toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
                 await refetch();
                 setTimeout(() => {
-                  closeProgressModal();
+                  dismiss();
                   onSuccess?.();
                 }, 1500);
               }
@@ -128,7 +128,7 @@ export function useProjectMilestoneForm({
         }
       });
     } catch (error) {
-      closeProgressModal();
+      dismiss();
       errorManager(MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR, error, {
         data,
         address,
@@ -142,7 +142,7 @@ export function useProjectMilestoneForm({
 
   const updateMilestone = async (data: ProjectMilestoneFormData) => {
     if (!gap || !previousMilestone) return;
-    let gapClient = gap;
+    const gapClient = gap;
     setIsLoading(true);
 
     try {
@@ -210,7 +210,7 @@ export function useProjectMilestoneForm({
                 toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.SUCCESS);
                 await refetch();
                 setTimeout(() => {
-                  closeProgressModal();
+                  dismiss();
                   onSuccess?.();
                 }, 1500);
               }
@@ -226,7 +226,7 @@ export function useProjectMilestoneForm({
         }
       });
     } catch (error) {
-      closeProgressModal();
+      dismiss();
       errorManager(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.ERROR, error, {
         data,
         address,

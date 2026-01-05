@@ -11,10 +11,9 @@ import { isAddress } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
-
-import { useStepper } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { sanitizeInput } from "@/utilities/sanitize";
@@ -92,7 +91,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, setIsStepper } = useAttestationToast();
 
   const onSubmit = async (data: SchemaType) => {
     const setup = await setupChainAndWallet({

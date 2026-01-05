@@ -14,13 +14,13 @@ import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import { getProjectImpacts } from "@/services/project-impacts.service";
 import { useProjectStore } from "@/store";
-import { useProgressModal } from "@/store/modals/progressModal";
-import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -74,7 +74,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
-  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
 
   const onSubmit: SubmitHandler<UpdateType> = async (data, event) => {
     event?.preventDefault();
@@ -126,7 +126,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
               await refetchImpacts();
               showSuccess("Impact added!");
               setTimeout(() => {
-                closeProgressModal();
+                dismiss();
                 changeTab(null);
               }, 1500);
             }
@@ -139,7 +139,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         }
       });
     } catch (error: any) {
-      closeProgressModal();
+      dismiss();
       errorManager(
         MESSAGES.PROJECT.IMPACT.ERROR,
         error,

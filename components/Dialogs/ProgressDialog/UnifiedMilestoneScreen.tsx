@@ -15,13 +15,13 @@ import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
-import { useProgressModal } from "@/store/modals/progressModal";
 import type { Grant } from "@/types/v2/grant";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import fetchData from "@/utilities/fetchData";
@@ -81,7 +81,7 @@ export const UnifiedMilestoneScreen = () => {
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
-  const { showLoading, showSuccess, close: closeSimpleProgressModal } = useProgressModal();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
   const { projectId } = useParams();
   const { refetch: refetchUpdates } = useProjectUpdates(projectId as string);
   const router = useRouter();
@@ -167,12 +167,12 @@ export const UnifiedMilestoneScreen = () => {
         toast.success("Roadmap milestone created successfully");
         showSuccess("Milestone created!");
         setTimeout(() => {
-          closeSimpleProgressModal();
+          dismiss();
           closeProgressModal();
         }, 1500);
       });
     } catch (error) {
-      closeSimpleProgressModal();
+      dismiss();
       errorManager("Error creating roadmap milestone", error);
       toast.error("Failed to create roadmap milestone");
     } finally {
@@ -370,12 +370,12 @@ export const UnifiedMilestoneScreen = () => {
       showSuccess("Milestones created!");
 
       setTimeout(() => {
-        closeSimpleProgressModal();
+        dismiss();
         router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
         closeProgressModal();
       }, 1500);
     } catch (error) {
-      closeSimpleProgressModal();
+      dismiss();
       errorManager("Error creating grant milestones", error);
       toastsToRemove.forEach((toastId) => {
         toast.remove(toastId);

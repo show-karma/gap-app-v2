@@ -17,13 +17,13 @@ import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { useProgressModal } from "@/store/modals/progressModal";
 import type { Grant } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -106,7 +106,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const projectUID = project?.uid;
   const { refetch: refetchGrants } = useProjectGrants(projectUID || "");
 
-  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
 
   const router = useRouter();
 
@@ -174,7 +174,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
               );
               showSuccess("Milestone created!");
               setTimeout(() => {
-                closeProgressModal();
+                dismiss();
                 router.refresh();
                 afterSubmit?.();
               }, 1500);
@@ -191,7 +191,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
       });
     } catch (error) {
       console.error(error);
-      closeProgressModal();
+      dismiss();
       errorManager(
         MESSAGES.MILESTONES.CREATE.ERROR(data.title),
         error,

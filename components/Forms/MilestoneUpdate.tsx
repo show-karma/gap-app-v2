@@ -12,6 +12,7 @@ import { z } from "zod";
 import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
@@ -20,7 +21,6 @@ import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
-import { useStepper } from "@/store/modals/txStepper";
 import type { GrantMilestone } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
@@ -166,7 +166,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   };
 
   const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, setIsStepper } = useAttestationToast();
   const project = useProjectStore((state) => state.project);
 
   // Fetch grants using dedicated hook

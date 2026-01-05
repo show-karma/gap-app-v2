@@ -8,12 +8,12 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
-import { useProgressModal } from "@/store/modals/progressModal";
-import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import fetchData from "@/utilities/fetchData";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
@@ -75,7 +75,7 @@ export const ProjectObjectiveForm = ({
 
   const { gap } = useGap();
   const [isLoading, setIsLoading] = useState(false);
-  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
 
   const { refetch } = useProjectUpdates(projectId as string);
 
@@ -103,7 +103,9 @@ export const ProjectObjectiveForm = ({
         }),
         schema: gapClient.findSchema("ProjectMilestone"),
         refUID: project?.uid,
-        recipient: (smartWalletAddress || address || "0x0000000000000000000000000000000000000000") as `0x${string}`,
+        recipient: (smartWalletAddress ||
+          address ||
+          "0x0000000000000000000000000000000000000000") as `0x${string}`,
       });
       const sanitizedData = {
         title: sanitizeInput(data.title),
@@ -140,10 +142,8 @@ export const ProjectObjectiveForm = ({
                 await refetch();
                 stateHandler?.(false);
                 setTimeout(() => {
-                  closeProgressModal();
-                  router.push(
-                    PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || "")
-                  );
+                  dismiss();
+                  router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
                 }, 1500);
               }
               retries -= 1;
@@ -158,7 +158,7 @@ export const ProjectObjectiveForm = ({
         }
       });
     } catch (error) {
-      closeProgressModal();
+      dismiss();
       errorManager(
         MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR,
         error,
@@ -234,7 +234,7 @@ export const ProjectObjectiveForm = ({
                 toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
                 await refetch();
                 stateHandler?.(false);
-                setTimeout(() => closeProgressModal(), 1500);
+                setTimeout(() => dismiss(), 1500);
               }
               retries -= 1;
               // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -248,7 +248,7 @@ export const ProjectObjectiveForm = ({
         }
       });
     } catch (error) {
-      closeProgressModal();
+      dismiss();
       errorManager(
         MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR,
         error,

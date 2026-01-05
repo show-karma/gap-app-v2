@@ -10,15 +10,15 @@ import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useTracksForProgram } from "@/hooks/useTracks";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
-import { useStepper } from "@/store/modals/txStepper";
-import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import type { Grant } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { isFundingProgramGrant } from "@/utilities/funding-programs";
@@ -63,7 +63,7 @@ export const GrantCompletion: FC = () => {
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
 
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, setIsStepper } = useAttestationToast();
   const { gap } = useGap();
 
   // Check if grant is from a funding program (by community or grant name)

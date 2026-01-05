@@ -5,9 +5,9 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import type { MilestoneCompletedFormData } from "@/components/Forms/GrantMilestoneCompletion";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import fetchData from "@/utilities/fetchData";
@@ -75,7 +75,7 @@ export const useMilestone = () => {
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, dismiss } = useAttestationToast();
   const project = useProjectStore((state) => state.project);
   const { projectId } = useParams();
   const { refetch } = useProjectUpdates(projectId as string);
@@ -89,7 +89,6 @@ export const useMilestone = () => {
 
   const multiGrantDelete = async (milestone: UnifiedMilestone) => {
     setIsDeleting(true);
-    setIsStepper(true);
 
     try {
       changeStepperStep("preparing");
@@ -314,14 +313,12 @@ export const useMilestone = () => {
       });
     } finally {
       setIsDeleting(false);
-      setIsStepper(false);
+      dismiss();
     }
   };
 
   // Function to revoke milestone completion for multiple grants and chains
   const multiGrantUndoCompletion = async (milestone: UnifiedMilestone) => {
-    setIsStepper(true);
-
     const chains = [];
 
     try {
@@ -515,7 +512,7 @@ export const useMilestone = () => {
         milestoneData: milestone,
       });
     } finally {
-      setIsStepper(false);
+      dismiss();
       chains.forEach((chainId) => {
         toast.remove(`chain-${chainId}`);
       });
@@ -618,7 +615,7 @@ export const useMilestone = () => {
         milestoneData: milestone,
       });
     } finally {
-      setIsStepper(false);
+      dismiss();
     }
   };
 
@@ -627,8 +624,6 @@ export const useMilestone = () => {
     milestone: UnifiedMilestone,
     data: MilestoneCompletedFormData & { noProofCheckbox: boolean }
   ) => {
-    setIsStepper(true);
-
     try {
       changeStepperStep("preparing");
 
@@ -765,7 +760,7 @@ export const useMilestone = () => {
         milestoneData: milestone,
       });
     } finally {
-      setIsStepper(false);
+      dismiss();
     }
   };
 
@@ -774,8 +769,6 @@ export const useMilestone = () => {
     milestone: UnifiedMilestone,
     data: MilestoneCompletedFormData & { noProofCheckbox: boolean }
   ) => {
-    setIsStepper(true);
-
     const chains: number[] = [];
 
     try {
@@ -1105,7 +1098,7 @@ export const useMilestone = () => {
         milestoneData: milestone,
       });
     } finally {
-      setIsStepper(false);
+      dismiss();
       chains.forEach((chainId) => {
         toast.remove(`chain-${chainId}`);
       });

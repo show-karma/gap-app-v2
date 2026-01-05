@@ -10,6 +10,7 @@ import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useStaff } from "@/hooks/useStaff";
@@ -17,7 +18,6 @@ import { useWallet } from "@/hooks/useWallet";
 import { searchProjects } from "@/services/project-search.service";
 import { useProjectStore } from "@/store";
 import { useMergeModalStore } from "@/store/modals/merge";
-import { useProgressModal } from "@/store/modals/progressModal";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -172,7 +172,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const _setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
   const { switchChainAsync } = useWallet();
-  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
   const { isStaff, isLoading: isStaffLoading } = useStaff();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
@@ -222,7 +222,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                 showSuccess("Project merged!");
                 toast.success(MESSAGES.PROJECT_POINTER_FORM.SUCCESS);
                 setTimeout(() => {
-                  closeProgressModal();
+                  dismiss();
                   router.push(`/project/${primaryProject?.details?.slug}`);
                   router.refresh();
                 }, 1500);
@@ -239,7 +239,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         }
       });
     } catch (error: any) {
-      closeProgressModal();
+      dismiss();
       errorManager(
         `Error creating project pointer`,
         error,

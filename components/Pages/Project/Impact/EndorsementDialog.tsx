@@ -9,15 +9,15 @@ import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { getProject } from "@/services/project.service";
 import { useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
-import { useProgressModal } from "@/store/modals/progressModal";
-import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
@@ -46,7 +46,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
     setIsOpen(false);
   }
 
-  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
 
   const { openShareDialog } = useShareDialogStore();
 
@@ -124,7 +124,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
 
             showSuccess("Endorsement added!");
             setTimeout(() => {
-              closeProgressModal();
+              dismiss();
               router.push(
                 PAGES.PROJECT.OVERVIEW((project.details?.slug || project?.uid) as string)
               );
@@ -146,7 +146,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
       });
       closeModal();
     } catch (error: any) {
-      closeProgressModal();
+      dismiss();
       errorManager(`Error of user ${address} endorsing project ${project?.uid}`, error, {
         projectUID: project?.uid,
         address,

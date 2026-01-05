@@ -12,15 +12,15 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
-import { useProgressModal } from "@/store/modals/progressModal";
-import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import type { Grant } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -110,7 +110,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
     });
   };
 
-  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
 
   const { gap } = useGap();
 
@@ -168,7 +168,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
               afterSubmit?.();
               toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
               setTimeout(() => {
-                closeProgressModal();
+                dismiss();
                 router.push(
                   PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                     project.uid,
@@ -197,7 +197,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         }
       });
     } catch (error) {
-      closeProgressModal();
+      dismiss();
       errorManager(
         `Error creating grant update for grant ${grantToUpdate.uid} from project ${project.uid}`,
         error,

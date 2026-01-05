@@ -9,6 +9,7 @@ import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerif
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
@@ -17,7 +18,6 @@ import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { useStepper } from "@/store/modals/txStepper";
 import type { GrantMilestone } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -46,7 +46,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   };
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, setIsStepper } = useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const { project, isProjectOwner } = useProjectStore();
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");

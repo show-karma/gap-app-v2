@@ -12,6 +12,7 @@ import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { PROJECT_NAME } from "@/constants/brand";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useGap } from "@/hooks/useGap";
@@ -20,7 +21,6 @@ import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
-import { useProgressModal } from "@/store/modals/progressModal";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { gapSupportedNetworks, getChainIdByName } from "@/utilities/network";
@@ -101,7 +101,7 @@ export const ContributorProfileDialog: FC = () => {
   });
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
   const { authenticated: isAuth } = useAuth();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
@@ -194,7 +194,7 @@ export const ContributorProfileDialog: FC = () => {
                 toast.success("Congrats! You have joined the team successfully");
                 refetchTeamProfiles();
                 setTimeout(() => {
-                  closeProgressModal();
+                  dismiss();
                   closeModal();
                 }, 1500);
               }
@@ -222,7 +222,7 @@ export const ContributorProfileDialog: FC = () => {
                 refetchTeamProfiles();
                 toast.success("Profile updated successfully");
                 setTimeout(() => {
-                  closeProgressModal();
+                  dismiss();
                   closeModal();
                 }, 1500);
               }
@@ -235,7 +235,7 @@ export const ContributorProfileDialog: FC = () => {
       });
       return;
     } catch (e) {
-      closeProgressModal();
+      dismiss();
       errorManager("Failed to accept invite", e, {
         projectId: project?.uid,
         inviteCode: inviteCodeParam,

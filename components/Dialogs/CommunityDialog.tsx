@@ -9,10 +9,10 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
-import { useWallet } from "@/hooks/useWallet";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
-import { useProgressModal } from "@/store/modals/progressModal";
+import { useWallet } from "@/hooks/useWallet";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -91,7 +91,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
 
   const { gap } = useGap();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
-  const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
 
   const createCommunity = async (data: SchemaType) => {
     if (!gap) return;
@@ -118,7 +118,9 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         },
         schema: gapClient.findSchema("Community"),
         refUID: nullRef,
-        recipient: (smartWalletAddress || address || "0x0000000000000000000000000000000000000000") as `0x${string}`,
+        recipient: (smartWalletAddress ||
+          address ||
+          "0x0000000000000000000000000000000000000000") as `0x${string}`,
         uid: nullRef,
       });
       if (await gapClient.fetch.slugExists(data.slug as string)) {
@@ -135,49 +137,43 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
       // Close modal before attestation (Privy popups will appear during attest)
       closeModal();
 
-      await newCommunity
-        .attest(walletSigner as any, sanitizedData)
-        .then(async (res) => {
-          // Show progress modal after Privy popups complete
-          showLoading("Indexing community...");
+      await newCommunity.attest(walletSigner as any, sanitizedData).then(async (res) => {
+        // Show progress modal after Privy popups complete
+        showLoading("Indexing community...");
 
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newCommunity.chainID), "POST", {});
-          }
-          await fetchData(
-            INDEXER.ATTESTATION_LISTENER(newCommunity.uid, actualChainId),
-            "POST",
-            {}
-          );
-          let retries = 1000;
-          while (retries > 0) {
-            await refreshCommunities()
-              .then(async (fetchedCommunities) => {
-                const createdCommunityExists = fetchedCommunities?.find(
-                  (g) => g.uid === newCommunity.uid
-                );
-                if (createdCommunityExists) {
-                  retries = 0;
-                  showSuccess("Community created!");
-                  // Brief delay to show success, then close
-                  setTimeout(() => {
-                    closeProgressModal();
-                  }, 1500);
-                }
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              })
-              .catch(async () => {
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              });
-          }
-        });
+        const txHash = res?.tx[0]?.hash;
+        if (txHash) {
+          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newCommunity.chainID), "POST", {});
+        }
+        await fetchData(INDEXER.ATTESTATION_LISTENER(newCommunity.uid, actualChainId), "POST", {});
+        let retries = 1000;
+        while (retries > 0) {
+          await refreshCommunities()
+            .then(async (fetchedCommunities) => {
+              const createdCommunityExists = fetchedCommunities?.find(
+                (g) => g.uid === newCommunity.uid
+              );
+              if (createdCommunityExists) {
+                retries = 0;
+                showSuccess("Community created!");
+                // Brief delay to show success, then close
+                setTimeout(() => {
+                  dismiss();
+                }, 1500);
+              }
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            })
+            .catch(async () => {
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            });
+        }
+      });
     } catch (error: unknown) {
-      closeProgressModal();
+      dismiss();
       errorManager(
         `Error creating community`,
         error,

@@ -15,13 +15,13 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import { getProjectImpacts } from "@/services/project-impacts.service";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -71,7 +71,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({ impact, addVer
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const { refetch: refetchImpacts } = useProjectImpacts(projectIdOrSlug);
 
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, setIsStepper } = useAttestationToast();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     if (!address || !project) return;
