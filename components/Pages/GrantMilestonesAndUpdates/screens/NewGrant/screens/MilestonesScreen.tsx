@@ -9,21 +9,18 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
 import { useProgressModal } from "@/store/modals/progressModal";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { Milestone } from "../Milestone";
 import { StepBlock } from "../StepBlock";
 import { useGrantFormStore } from "../store";
@@ -52,7 +49,7 @@ export const MilestonesScreen: React.FC = () => {
   const { address, isConnected, connector, chain } = useAccount();
   const { authenticated: isAuth } = useAuth();
   const { gap } = useGap();
-  const { smartWalletAddress } = useSetupChainAndWallet();
+  const { smartWalletAddress, setupChainAndWallet } = useSetupChainAndWallet();
   const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
   const queryClient = useQueryClient();
 
@@ -88,26 +85,19 @@ export const MilestonesScreen: React.FC = () => {
     if (!address || !selectedProject || !gap) return;
 
     try {
-      let gapClient = gap;
       if (!isConnected || !isAuth) return;
 
-      // Check if we need to switch chains
-      const chainId = await connector?.getChainId();
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: communityNetworkId,
-        currentChainId: chainId,
+        currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         return;
       }
 
-      gapClient = newGapClient;
+      const { walletSigner, gapClient, chainId: actualChainId } = setup;
 
       // Save all milestones
       saveAllMilestones();
@@ -185,15 +175,6 @@ export const MilestonesScreen: React.FC = () => {
               });
             })
           : [];
-
-      // Get wallet client
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-
-      // Get wallet signer
-      const walletSigner = await walletClientToSigner(walletClient);
 
       // Attest grant
       await grant.attest(walletSigner as any, selectedProject.chainID).then(async (res) => {
