@@ -96,6 +96,7 @@ const transformSearchResponse = (apiResponse: UnifiedSearchApiResponse): Unified
  * @param query Search query (minimum 3 characters)
  * @param limit Maximum results per type (default: 10)
  * @returns Combined search results with V2 structure
+ * @throws Error when the API request fails, enabling React Query error handling
  */
 export const unifiedSearch = async (
   query: string,
@@ -108,11 +109,9 @@ export const unifiedSearch = async (
   const [data, error] = await fetchData<UnifiedSearchApiResponse>(INDEXER.V2.SEARCH(query, limit));
 
   if (error || !data) {
-    errorManager(
-      `Error in unified search for query "${query}" with limit ${limit}: ${error}`,
-      error
-    );
-    return { projects: [], communities: [] };
+    const errorMessage = `Error in unified search for query "${query}" with limit ${limit}: ${error}`;
+    errorManager(errorMessage, error);
+    throw new Error(errorMessage);
   }
 
   return transformSearchResponse(data);
