@@ -94,7 +94,7 @@ export const ProjectObjectiveForm = ({
         return;
       }
 
-      const { walletSigner, gapClient, chainId: actualChainId } = setup;
+      const { walletSigner, gapClient } = setup;
       const newObjective = new ProjectMilestone({
         data: sanitizeObject({
           title: data.title,
@@ -191,7 +191,7 @@ export const ProjectObjectiveForm = ({
         return;
       }
 
-      const { walletSigner, gapClient, chainId: actualChainId } = setup;
+      const { walletSigner, gapClient } = setup;
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),

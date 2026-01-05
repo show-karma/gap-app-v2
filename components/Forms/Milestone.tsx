@@ -136,7 +136,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         return;
       }
 
-      const { walletSigner, gapClient, chainId: actualChainId } = setup;
+      const { walletSigner, gapClient } = setup;
 
       const milestoneToAttest = new Milestone({
         refUID: uid as `0x${string}`,

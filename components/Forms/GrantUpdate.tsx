@@ -132,7 +132,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         return;
       }
 
-      const { walletSigner, gapClient, chainId: actualChainId } = setup;
+      const { walletSigner, gapClient } = setup;
 
       const sanitizedGrantUpdate = sanitizeObject({
         text: data.description,

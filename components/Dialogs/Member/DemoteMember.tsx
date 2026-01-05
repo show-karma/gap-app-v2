@@ -53,7 +53,7 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({ memberAddress 
         return;
       }
 
-      const { walletSigner, gapClient, chainId: actualChainId } = setup;
+      const { walletSigner, gapClient } = setup;
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) throw new Error("Project not found");
 

@@ -57,7 +57,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
         return;
       }
 
-      const { walletSigner, gapClient, chainId: actualChainId } = setup;
+      const { walletSigner, gapClient } = setup;
       const grantUID = grant.uid;
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
       const grantInstance = instanceProject?.grants.find(

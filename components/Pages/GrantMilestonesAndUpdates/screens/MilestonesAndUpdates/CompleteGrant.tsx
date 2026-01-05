@@ -139,7 +139,7 @@ export const GrantCompletion: FC = () => {
       return;
     }
 
-    const { walletSigner, gapClient, chainId: actualChainId } = setup;
+    const { walletSigner, gapClient } = setup;
 
     // Execute transaction
     try {

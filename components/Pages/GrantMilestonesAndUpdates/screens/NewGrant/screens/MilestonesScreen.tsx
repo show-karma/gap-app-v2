@@ -97,7 +97,7 @@ export const MilestonesScreen: React.FC = () => {
         return;
       }
 
-      const { walletSigner, gapClient, chainId: actualChainId } = setup;
+      const { walletSigner, gapClient } = setup;
 
       // Save all milestones
       saveAllMilestones();

@@ -94,7 +94,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         return;
       }
 
-      const { walletSigner, gapClient, chainId: actualChainId } = setup;
+      const { walletSigner, gapClient } = setup;
       const dataToAttest = sanitizeObject({
         work,
         impact,
