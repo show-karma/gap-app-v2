@@ -238,8 +238,8 @@ export function SetChainPayoutAddressModal({
                       height={24}
                       className="rounded-full"
                       onError={(e) => {
-                        // Fallback to a colored circle if image fails
-                        e.currentTarget.style.display = "none";
+                        // Fallback to ethereum icon if chain-specific image fails
+                        e.currentTarget.src = "/images/networks/ethereum.svg";
                       }}
                     />
                   </div>

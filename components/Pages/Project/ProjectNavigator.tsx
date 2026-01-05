@@ -59,12 +59,13 @@ export const ProjectNavigator = ({
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const { isStaff } = useStaff();
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   const isAuthorized = isOwner || isProjectAdmin;
   // Can set payout address: project member/owner/admin/staff
+  // Wait for staff check to complete to avoid UI flicker
   const canSetPayoutAddress =
-    isProjectOwner || isOwner || isProjectAdmin || isCommunityAdmin || isStaff;
+    isProjectOwner || isOwner || isProjectAdmin || isCommunityAdmin || (!isStaffLoading && isStaff);
   useEffect(() => {
     const mountTabs = () => {
       if (isAuthorized) {

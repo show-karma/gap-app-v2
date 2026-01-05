@@ -200,7 +200,7 @@ describe("Chain Payout Address Modal", () => {
       cy.get('[data-testid="enable-donations-button"]').click();
       cy.get('[role="dialog"]').should("be.visible");
 
-      cy.get('[role="dialog"] button').first().click(); // X button is first
+      cy.get('[data-testid="modal-close-button"]').click();
 
       cy.get('[role="dialog"]').should("not.exist");
     });
@@ -230,10 +230,7 @@ describe("Chain Payout Address Modal", () => {
       // Enter invalid address
       cy.get('[role="dialog"] input[type="text"]').first().type("invalid-address");
 
-      // Wait for debounced validation
-      cy.wait(500);
-
-      // Should show validation error
+      // Should show validation error (Cypress auto-retries until assertion passes)
       cy.get('[role="dialog"]').should("contain", "Invalid");
     });
 
@@ -246,8 +243,7 @@ describe("Chain Payout Address Modal", () => {
       // Enter address without 0x
       cy.get('[role="dialog"] input[type="text"]').first().type("1234567890123456789012345678901234567890");
 
-      cy.wait(500);
-
+      // Cypress auto-retries until assertion passes
       cy.get('[role="dialog"]').should("contain", "0x");
     });
 
@@ -260,9 +256,7 @@ describe("Chain Payout Address Modal", () => {
       // Enter valid address
       cy.get('[role="dialog"] input[type="text"]').first().clear().type(VALID_ADDRESS);
 
-      cy.wait(500);
-
-      // Should show checkmark (CheckIcon)
+      // Should show checkmark (CheckIcon) - Cypress auto-retries until assertion passes
       cy.get('[role="dialog"] svg.text-green-500').should("exist");
     });
 
@@ -275,9 +269,7 @@ describe("Chain Payout Address Modal", () => {
       // Enter invalid address
       cy.get('[role="dialog"] input[type="text"]').first().type("invalid");
 
-      cy.wait(500);
-
-      // Save button should be disabled
+      // Save button should be disabled - Cypress auto-retries until assertion passes
       cy.get('[role="dialog"]').contains("button", "Save").should("be.disabled");
     });
   });
@@ -328,7 +320,8 @@ describe("Chain Payout Address Modal", () => {
       // Enter valid address
       cy.get('[role="dialog"] input[type="text"]').first().clear().type(VALID_ADDRESS);
 
-      cy.wait(500);
+      // Wait for validation to complete before clicking Save
+      cy.get('[role="dialog"] svg.text-green-500').should("exist");
 
       // Click Save
       cy.get('[role="dialog"]').contains("button", "Save").click();
@@ -362,7 +355,8 @@ describe("Chain Payout Address Modal", () => {
       // Enter valid address
       cy.get('[role="dialog"] input[type="text"]').first().clear().type(VALID_ADDRESS);
 
-      cy.wait(500);
+      // Wait for validation to complete before clicking Save
+      cy.get('[role="dialog"] svg.text-green-500').should("exist");
 
       // Click Save
       cy.get('[role="dialog"]').contains("button", "Save").click();
