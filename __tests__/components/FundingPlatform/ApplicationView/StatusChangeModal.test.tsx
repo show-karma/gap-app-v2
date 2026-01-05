@@ -561,7 +561,7 @@ describe("StatusChangeModal", () => {
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="rejected" />);
 
       expect(
-        screen.getByText(/this content will be sent to the applicant via email/i)
+        screen.getByText(/if provided, this message will be sent to the applicant via email/i)
       ).toBeInTheDocument();
     });
 
