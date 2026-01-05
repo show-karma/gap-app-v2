@@ -139,9 +139,12 @@ export async function createPrivySignerForZeroDev(
 
     // Sign typed data
     signTypedData: async (typedData: any): Promise<`0x${string}`> => {
+      // Handle BigInt values which are common in EIP-712 typed data (amounts, timestamps)
+      const replacer = (_key: string, value: unknown) =>
+        typeof value === "bigint" ? value.toString() : value;
       const signature = await provider.request({
         method: "eth_signTypedData_v4",
-        params: [address, JSON.stringify(typedData)],
+        params: [address, JSON.stringify(typedData, replacer)],
       });
       return signature as `0x${string}`;
     },
