@@ -1,9 +1,13 @@
 "use client";
 
 import type { FC, JSX } from "react";
+import { useMemo } from "react";
+import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProjectLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
+import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
+import { PROJECT_UID_REGEX } from "@/utilities/validation";
 
 export interface ApplicationDataViewProps {
   application: IFundingApplication;
@@ -11,20 +15,17 @@ export interface ApplicationDataViewProps {
 }
 
 export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application, program }) => {
-  // Resolve form schema from program object
-  const formSchema = (program as any)?.applicationConfig?.formSchema || program?.formSchema;
+  // Resolve form schema from program object (handles both direct formSchema and nested applicationConfig.formSchema)
+  const programAny = program as Record<string, unknown> | null | undefined;
+  const formSchema =
+    (programAny?.applicationConfig as Record<string, unknown> | undefined)?.formSchema ||
+    programAny?.formSchema;
 
-  // Create field labels mapping from program schema
-  const fieldLabels: Record<string, string> = {};
-  if (formSchema?.fields) {
-    formSchema.fields.forEach((field: any) => {
-      if (field.id && field.label) {
-        fieldLabels[field.id] = field.label;
-      }
-    });
-  }
+  // Create field labels and type mappings from program schema
+  const fieldLabels = useMemo(() => createFieldLabelsMap(formSchema), [formSchema]);
+  const fieldTypeMap = useMemo(() => createFieldTypeMap(formSchema), [formSchema]);
 
-  const renderFieldValue = (value: any): JSX.Element => {
+  const renderFieldValue = (value: any, fieldKey?: string): JSX.Element => {
     if (Array.isArray(value)) {
       // Check if it's an array of milestones
       const isMilestoneArray =
@@ -96,6 +97,16 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application,
       );
     }
 
+    // Handle Karma profile link fields (use field type from schema)
+    const fieldType = fieldKey ? fieldTypeMap[fieldKey] : undefined;
+    if (
+      fieldType === "karma_profile_link" &&
+      typeof value === "string" &&
+      PROJECT_UID_REGEX.test(value)
+    ) {
+      return <KarmaProjectLink uid={value} />;
+    }
+
     // Default: render as markdown
     return (
       <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -124,7 +135,9 @@ export const ApplicationDataView: FC<ApplicationDataViewProps> = ({ application,
           <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
             {fieldLabels[key] || key.replace(/_/g, " ")}
           </dt>
-          <dd className="text-base text-gray-900 dark:text-gray-100">{renderFieldValue(value)}</dd>
+          <dd className="text-base text-gray-900 dark:text-gray-100">
+            {renderFieldValue(value, key)}
+          </dd>
         </div>
       ))}
     </div>

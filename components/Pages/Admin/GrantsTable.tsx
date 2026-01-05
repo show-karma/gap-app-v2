@@ -64,6 +64,14 @@ export const GrantsTable = ({
     </button>
   );
 
+  if (grants.length === 0) {
+    return (
+      <div className="flex flex-col justify-center items-center w-full py-12 rounded-md border dark:border-zinc-800 dark:bg-zinc-900">
+        <p className="text-gray-500 dark:text-zinc-400">No project found</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col justify-center w-full max-w-full overflow-x-auto rounded-md border">
       <table className="pt-3 min-w-full divide-y dark:bg-zinc-900 divide-gray-300 dark:divide-zinc-800 dark:text-white">
