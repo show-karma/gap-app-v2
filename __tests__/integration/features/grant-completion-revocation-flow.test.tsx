@@ -24,6 +24,7 @@ import type { ProjectResponse } from "@/types/v2/project";
 // Mock dependencies
 jest.mock("wagmi", () => ({
   useAccount: jest.fn(),
+  useChainId: jest.fn(() => 1),
 }));
 
 jest.mock("@/hooks/useWallet", () => ({

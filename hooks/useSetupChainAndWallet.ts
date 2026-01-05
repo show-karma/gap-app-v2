@@ -71,32 +71,17 @@ export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
       currentChainId,
       switchChainAsync,
     }: SetupChainAndWalletParams): Promise<SetupChainAndWalletResult | null> => {
-      console.log("[setupChainAndWallet] Starting with:", { targetChainId, currentChainId });
-
       const { success, chainId, gapClient } = await ensureCorrectChain({
         targetChainId,
         currentChainId,
         switchChainAsync,
       });
 
-      console.log("[setupChainAndWallet] ensureCorrectChain result:", { success, chainId, gapClient: !!gapClient });
-
       if (!success || !gapClient) {
-        console.log("[setupChainAndWallet] Chain setup failed, returning null");
         return null;
       }
 
-      console.log("[setupChainAndWallet] Calling getAttestationSigner...");
       const walletSigner = await getAttestationSigner(chainId);
-      console.log("[setupChainAndWallet] Got signer:", !!walletSigner);
-
-      // Try to verify the signer works
-      try {
-        const signerAddress = await walletSigner.getAddress();
-        console.log("[setupChainAndWallet] Signer address verified:", signerAddress);
-      } catch (e) {
-        console.error("[setupChainAndWallet] Failed to get signer address:", e);
-      }
 
       return {
         gapClient,
@@ -116,6 +101,12 @@ export function useSetupChainAndWallet(): UseSetupChainAndWalletResult {
       hasEmbeddedWallet,
       hasExternalWallet,
     }),
-    [setupChainAndWallet, isGaslessAvailable, attestationAddress, hasEmbeddedWallet, hasExternalWallet]
+    [
+      setupChainAndWallet,
+      isGaslessAvailable,
+      attestationAddress,
+      hasEmbeddedWallet,
+      hasExternalWallet,
+    ]
   );
 }

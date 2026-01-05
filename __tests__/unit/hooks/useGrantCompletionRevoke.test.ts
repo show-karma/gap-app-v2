@@ -74,8 +74,10 @@ jest.mock("@/components/Utilities/errorManager", () => ({
 }));
 
 const mockUseAccount = jest.fn();
+const mockUseChainId = jest.fn(() => 1);
 jest.mock("wagmi", () => ({
   useAccount: mockUseAccount,
+  useChainId: mockUseChainId,
 }));
 
 const mockSwitchChainAsync = jest.fn();
