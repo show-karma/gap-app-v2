@@ -100,21 +100,9 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
 
   const getAttestationSigner = useCallback(
     async (targetChainId: number): Promise<Signer> => {
-      // DEBUG: Log the state
-      console.log("[ZeroDev Debug]", {
-        targetChainId,
-        isEmailOrSocialLogin,
-        hasEmbeddedWallet: !!embeddedWallet,
-        hasExternalWallet: !!externalWallet,
-        embeddedWalletAddress: embeddedWallet?.address,
-        externalWalletAddress: externalWallet?.address,
-        isChainSupported: isChainSupportedForGasless(targetChainId),
-      });
-
       // Case 1: Email/Google login with gasless support - try EIP-7702 gasless first
       if (isEmailOrSocialLogin && embeddedWallet && isChainSupportedForGasless(targetChainId)) {
         try {
-          console.log("[ZeroDev] Email/Google login - using EIP-7702 gasless...");
           await embeddedWallet.switchChain(targetChainId);
 
           const zeroDevSigner = await createPrivySignerForZeroDev(embeddedWallet, targetChainId);
@@ -129,18 +117,12 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
             const signer = await kernelClientToEthersSigner(kernelClient, {
               chainId: targetChainId,
             });
-            console.log("[ZeroDev] EIP-7702 gasless signer ready");
             return signer;
           }
         } catch (error) {
-          // Log specific error type for debugging
-          if (error instanceof BundlerValidationError) {
-            console.warn(
-              `[ZeroDev] Bundler validation failed for chain ${targetChainId}, falling back to embedded wallet:`,
-              error.message
-            );
-          } else {
-            console.warn("[ZeroDev] Failed to create EIP-7702 kernel client, falling back:", error);
+          // Bundler validation failed or kernel client creation failed - fall back to embedded wallet
+          if (!(error instanceof BundlerValidationError)) {
+            console.warn("[ZeroDev] Kernel client error, falling back to embedded wallet:", error);
           }
         }
       }
@@ -149,19 +131,17 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
       // This handles: gasless fallback failures AND chains that don't support gasless
       if (isEmailOrSocialLogin && embeddedWallet) {
         try {
-          console.log("[ZeroDev] Using embedded wallet directly (user pays gas)...");
           await embeddedWallet.switchChain(targetChainId);
           const provider = await embeddedWallet.getEthereumProvider();
           const ethersProvider = new BrowserProvider(provider);
           return await ethersProvider.getSigner();
         } catch (error) {
-          console.warn("[ZeroDev] Failed to use embedded wallet:", error);
+          console.warn("[ZeroDev] Embedded wallet error:", error);
         }
       }
 
       // Case 3: Wallet login (MetaMask) - use external wallet directly, user pays gas
       if (externalWallet) {
-        console.log("[ZeroDev] Wallet login - using external wallet (user pays gas)...");
         const { walletClient, error } = await safeGetWalletClient(targetChainId);
 
         if (error || !walletClient) {

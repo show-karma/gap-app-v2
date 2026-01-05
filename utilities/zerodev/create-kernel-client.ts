@@ -102,7 +102,6 @@ export async function createPrivySignerForZeroDev(
 
     // Raw hash signing - required for EIP-7702
     sign: async ({ hash }: { hash: `0x${string}` }): Promise<`0x${string}`> => {
-      console.log("[ZeroDev] sign (raw) called with hash:", hash);
       if (!isPrivyEmbedded) {
         throw new Error("Raw signing is only supported for Privy embedded wallets");
       }
@@ -110,14 +109,11 @@ export async function createPrivySignerForZeroDev(
         method: "secp256k1_sign",
         params: [hash],
       });
-      console.log("[ZeroDev] Raw signature received:", signature);
       return signature as `0x${string}`;
     },
 
     // Sign message - handles both string and raw bytes formats
     signMessage: async ({ message }: { message: SignableMessage }): Promise<`0x${string}`> => {
-      console.log("[ZeroDev] signMessage called with:", typeof message, message);
-
       let messageToSign: string;
 
       if (typeof message === "string") {
@@ -133,20 +129,16 @@ export async function createPrivySignerForZeroDev(
         messageToSign = String(message);
       }
 
-      console.log("[ZeroDev] Signing message:", messageToSign);
-
       const signature = await provider.request({
         method: "personal_sign",
         params: [messageToSign, address],
       });
 
-      console.log("[ZeroDev] Signature received:", signature);
       return signature as `0x${string}`;
     },
 
     // Sign typed data
     signTypedData: async (typedData: any): Promise<`0x${string}`> => {
-      console.log("[ZeroDev] signTypedData called");
       const signature = await provider.request({
         method: "eth_signTypedData_v4",
         params: [address, JSON.stringify(typedData)],
@@ -179,19 +171,8 @@ export async function createPrivySignerForZeroDev(
       const targetAddress: `0x${string}` =
         authorization.contractAddress || authorization.address || getKernelImplementationAddress();
 
-      if (!authorization.contractAddress && !authorization.address) {
-        console.log("[ZeroDev] No address provided, using kernel implementation:", targetAddress);
-      }
-
       const authChainId = authorization.chainId ?? chainId;
       const authNonce = authorization.nonce ?? 0;
-
-      console.log("[ZeroDev] signAuthorization called:", {
-        targetAddress,
-        chainId: authChainId,
-        nonce: authNonce,
-        signerAddress: address,
-      });
 
       if (!isPrivyEmbedded) {
         throw new Error("EIP-7702 signAuthorization is only supported for Privy embedded wallets");
@@ -203,22 +184,16 @@ export async function createPrivySignerForZeroDev(
         nonce: authNonce,
       });
 
-      console.log("[ZeroDev] Authorization hash:", hash);
-
       const signature = (await provider.request({
         method: "secp256k1_sign",
         params: [hash],
       })) as string;
-
-      console.log("[ZeroDev] Authorization signature:", signature);
 
       const r = `0x${signature.slice(2, 66)}` as `0x${string}`;
       const s = `0x${signature.slice(66, 130)}` as `0x${string}`;
       const vRaw = parseInt(signature.slice(130, 132), 16);
       const yParity = vRaw >= 27 ? vRaw - 27 : vRaw;
       const v = BigInt(yParity + 27);
-
-      console.log("[ZeroDev] Authorization parsed:", { r, s, yParity, v: v.toString() });
 
       return {
         contractAddress: targetAddress,
@@ -326,13 +301,6 @@ export async function createKernelClientForEmbeddedWallet({
       transport: http(config.paymasterRpc),
     });
 
-    console.log("[ZeroDev] Creating kernel account client with:", {
-      accountAddress: kernelAccount.address,
-      chainId: config.chain.id,
-      bundlerRpc: config.bundlerRpc,
-      paymasterRpc: config.paymasterRpc,
-    });
-
     // Create kernel account client with paymaster
     const kernelClient = createKernelAccountClient({
       account: kernelAccount,
@@ -341,11 +309,9 @@ export async function createKernelClientForEmbeddedWallet({
       bundlerTransport: http(config.bundlerRpc),
     });
 
-    console.log("[ZeroDev] Kernel client created successfully");
-
     return kernelClient as KernelClient;
   } catch (error) {
-    console.error("[ZeroDev] Failed to create kernel client:", error);
+    console.warn("[ZeroDev] Failed to create kernel client:", error);
     return null;
   }
 }
@@ -388,18 +354,14 @@ export async function createKernelClientWithEIP7702({
     });
 
     const implementationAddress = getKernelImplementationAddress();
-    console.log("[ZeroDev] Kernel implementation address:", implementationAddress);
 
     // Sign the EIP-7702 authorization
-    console.log("[ZeroDev] Signing EIP-7702 authorization...");
     const authorization = await signer.signAuthorization({
       contractAddress: implementationAddress,
       chainId,
       nonce: 0,
     });
-    console.log("[ZeroDev] Authorization signed:", authorization);
 
-    console.log("[ZeroDev] Creating kernel account with EIP-7702...");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const kernelAccount = await createKernelAccount(
       publicClient as any,
@@ -410,12 +372,6 @@ export async function createKernelClientWithEIP7702({
         kernelVersion: KERNEL_VERSION,
       } as any
     );
-
-    console.log("[ZeroDev] EIP-7702 Kernel account created:", {
-      accountAddress: kernelAccount.address,
-      signerAddress: signer.address,
-      sameAddress: kernelAccount.address === signer.address,
-    });
 
     // Create paymaster client
     const paymasterClient = createZeroDevPaymasterClient({
@@ -431,11 +387,9 @@ export async function createKernelClientWithEIP7702({
       bundlerTransport: http(config.bundlerRpc),
     });
 
-    console.log("[ZeroDev] EIP-7702 Kernel client created successfully");
-
     return kernelClient as KernelClient;
   } catch (error) {
-    console.error("[ZeroDev] Failed to create EIP-7702 kernel client:", error);
+    console.warn("[ZeroDev] Failed to create EIP-7702 kernel client:", error);
     return null;
   }
 }
@@ -464,13 +418,10 @@ export class BundlerValidationError extends Error {
  * @throws BundlerValidationError if the bundler is not working
  */
 async function validateBundler(kernelClient: KernelClient, chainId: number): Promise<void> {
-  console.log("[ZeroDev] Validating bundler for chain:", chainId);
-
   try {
     // Try to get the supported entry points - this is a lightweight RPC call
     // that will fail if the bundler doesn't support this chain
     const supportedEntryPoints = await kernelClient.getSupportedEntryPoints();
-    console.log("[ZeroDev] Bundler supports entry points:", supportedEntryPoints);
 
     if (!supportedEntryPoints || supportedEntryPoints.length === 0) {
       throw new BundlerValidationError(
@@ -499,8 +450,7 @@ async function validateBundler(kernelClient: KernelClient, chainId: number): Pro
       );
     }
 
-    // For other errors, log but don't fail - let the transaction attempt proceed
-    console.warn("[ZeroDev] Bundler validation warning (continuing anyway):", error);
+    // For other errors, don't fail - let the transaction attempt proceed
   }
 }
 
@@ -518,46 +468,14 @@ export async function kernelClientToEthersSigner(
   kernelClient: KernelClient,
   options?: { chainId?: number }
 ): Promise<Signer> {
-  console.log("[ZeroDev] kernelClientToEthersSigner - Creating EIP-1193 provider");
-  console.log("[ZeroDev] kernelClient account address:", kernelClient.account?.address);
-
   // Create EIP-1193 provider from kernel client
   const kernelProvider = new KernelEIP1193Provider(kernelClient);
-  console.log("[ZeroDev] KernelEIP1193Provider created");
-
-  // Wrap the provider's request method to add logging
-  const originalRequest = kernelProvider.request.bind(kernelProvider);
-  kernelProvider.request = async (args: { method: string; params?: unknown[] }) => {
-    console.log("[ZeroDev] Provider request:", args.method, args.params);
-    try {
-      const result = await originalRequest(args);
-      console.log("[ZeroDev] Provider response:", args.method, result);
-      return result;
-    } catch (error: unknown) {
-      console.error("[ZeroDev] Provider error for", args.method, ":", error);
-      // Re-throw with better error message
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error(`ZeroDev request failed: ${JSON.stringify(error)}`);
-    }
-  };
 
   // Wrap in ethers BrowserProvider
   const ethersProvider = new BrowserProvider(kernelProvider);
-  console.log("[ZeroDev] BrowserProvider created");
 
   // Get signer from provider
   const signer = await ethersProvider.getSigner();
-  console.log("[ZeroDev] Signer created, address:", await signer.getAddress());
-
-  // Verify the signer can get network
-  try {
-    const network = await ethersProvider.getNetwork();
-    console.log("[ZeroDev] Signer network:", network.chainId.toString());
-  } catch (e) {
-    console.warn("[ZeroDev] Could not get network from signer:", e);
-  }
 
   // Validate the bundler if chainId is provided
   // This catches chains where the bundler doesn't work (like Celo via ZeroDev)
