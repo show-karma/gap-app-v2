@@ -562,7 +562,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                             {status === "revision_requested"
                               ? "The applicant will see this message and can update their application."
                               : status === "rejected"
-                                ? "This content will be sent to the applicant via email."
+                                ? "If provided, this message will be sent to the applicant via email."
                                 : status === "approved"
                                   ? "This content will be sent to the applicant via email."
                                   : "This reason will be recorded in the status history."}
