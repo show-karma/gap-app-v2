@@ -19,6 +19,10 @@ export interface AIAnalysisTabProps {
   canRunEvaluation?: boolean;
 }
 
+function getDefaultTab(hasExternal: boolean, hasInternal: boolean): AIAnalysisSubTabId {
+  return !hasExternal && hasInternal ? "internal" : "external";
+}
+
 /**
  * AI Analysis tab component that displays AI evaluations for a funding application.
  * Uses sub-tabs to switch between external (visible to applicants) and internal (reviewer-only) evaluations.
@@ -29,10 +33,13 @@ export const AIAnalysisTab: FC<AIAnalysisTabProps> = ({
   onEvaluationComplete,
   canRunEvaluation = true,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<AIAnalysisSubTabId>("external");
-
   const hasExternalEvaluation = Boolean(application.aiEvaluation?.evaluation);
   const hasInternalEvaluation = Boolean(application.internalAIEvaluation?.evaluation);
+
+  // Determine initial tab based on which evaluations exist
+  const [activeSubTab, setActiveSubTab] = useState<AIAnalysisSubTabId>(() =>
+    getDefaultTab(hasExternalEvaluation, hasInternalEvaluation)
+  );
 
   const referenceNumber = application.referenceNumber || application.id;
 
