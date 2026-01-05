@@ -8,20 +8,26 @@ import { KernelEIP1193Provider } from "@zerodev/sdk/providers";
 import { BrowserProvider, type Signer } from "ethers";
 import {
   type Account,
-  type LocalAccount,
-  createPublicClient,
-  http,
-  type WalletClient,
-  toHex,
-  type Hex,
-  type SignableMessage,
-  keccak256,
-  toRlp,
   concatHex,
+  createPublicClient,
+  type Hex,
+  http,
+  keccak256,
+  type LocalAccount,
   numberToHex,
+  type SignableMessage,
+  toHex,
+  toRlp,
+  type WalletClient,
 } from "viem";
 import { envVars } from "../enviromentVars";
-import { ENTRYPOINT, getZeroDevConfig, isChainSupportedForGasless, KERNEL_VERSION, getKernelImplementationAddress } from "./config";
+import {
+  ENTRYPOINT,
+  getKernelImplementationAddress,
+  getZeroDevConfig,
+  isChainSupportedForGasless,
+  KERNEL_VERSION,
+} from "./config";
 
 // Use simple type for kernel client to avoid complex ZeroDev SDK type issues
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -170,9 +176,8 @@ export async function createPrivySignerForZeroDev(
       yParity: number;
     }> => {
       // Get target address, defaulting to kernel implementation
-      const targetAddress: `0x${string}` = authorization.contractAddress
-        || authorization.address
-        || getKernelImplementationAddress();
+      const targetAddress: `0x${string}` =
+        authorization.contractAddress || authorization.address || getKernelImplementationAddress();
 
       if (!authorization.contractAddress && !authorization.address) {
         console.log("[ZeroDev] No address provided, using kernel implementation:", targetAddress);
@@ -185,7 +190,7 @@ export async function createPrivySignerForZeroDev(
         targetAddress,
         chainId: authChainId,
         nonce: authNonce,
-        signerAddress: address
+        signerAddress: address,
       });
 
       if (!isPrivyEmbedded) {
@@ -200,10 +205,10 @@ export async function createPrivySignerForZeroDev(
 
       console.log("[ZeroDev] Authorization hash:", hash);
 
-      const signature = await provider.request({
+      const signature = (await provider.request({
         method: "secp256k1_sign",
         params: [hash],
-      }) as string;
+      })) as string;
 
       console.log("[ZeroDev] Authorization signature:", signature);
 
@@ -304,13 +309,16 @@ export async function createKernelClientForEmbeddedWallet({
 
     // Create kernel account
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const kernelAccount = await createKernelAccount(publicClient as any, {
-      plugins: {
-        sudo: ecdsaValidator,
-      },
-      entryPoint: ENTRYPOINT,
-      kernelVersion: KERNEL_VERSION,
-    } as any);
+    const kernelAccount = await createKernelAccount(
+      publicClient as any,
+      {
+        plugins: {
+          sudo: ecdsaValidator,
+        },
+        entryPoint: ENTRYPOINT,
+        kernelVersion: KERNEL_VERSION,
+      } as any
+    );
 
     // Create paymaster client
     const paymasterClient = createZeroDevPaymasterClient({
@@ -393,12 +401,15 @@ export async function createKernelClientWithEIP7702({
 
     console.log("[ZeroDev] Creating kernel account with EIP-7702...");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const kernelAccount = await createKernelAccount(publicClient as any, {
-      eip7702Account: signer as any,
-      eip7702Auth: authorization as any,
-      entryPoint: ENTRYPOINT,
-      kernelVersion: KERNEL_VERSION,
-    } as any);
+    const kernelAccount = await createKernelAccount(
+      publicClient as any,
+      {
+        eip7702Account: signer as any,
+        eip7702Auth: authorization as any,
+        entryPoint: ENTRYPOINT,
+        kernelVersion: KERNEL_VERSION,
+      } as any
+    );
 
     console.log("[ZeroDev] EIP-7702 Kernel account created:", {
       accountAddress: kernelAccount.address,
@@ -430,14 +441,82 @@ export async function createKernelClientWithEIP7702({
 }
 
 /**
+ * Custom error type for bundler validation failures.
+ * This error is thrown when the bundler doesn't support the chain properly.
+ */
+export class BundlerValidationError extends Error {
+  constructor(
+    message: string,
+    public chainId: number,
+    public originalError?: unknown
+  ) {
+    super(message);
+    this.name = "BundlerValidationError";
+  }
+}
+
+/**
+ * Validates that the bundler is properly supporting the chain.
+ * Makes a lightweight RPC call to verify the bundler endpoint is working.
+ *
+ * @param kernelClient - The kernel client to validate
+ * @param chainId - The chain ID for error reporting
+ * @throws BundlerValidationError if the bundler is not working
+ */
+async function validateBundler(kernelClient: KernelClient, chainId: number): Promise<void> {
+  console.log("[ZeroDev] Validating bundler for chain:", chainId);
+
+  try {
+    // Try to get the supported entry points - this is a lightweight RPC call
+    // that will fail if the bundler doesn't support this chain
+    const supportedEntryPoints = await kernelClient.getSupportedEntryPoints();
+    console.log("[ZeroDev] Bundler supports entry points:", supportedEntryPoints);
+
+    if (!supportedEntryPoints || supportedEntryPoints.length === 0) {
+      throw new BundlerValidationError(
+        `Bundler returned no supported entry points for chain ${chainId}`,
+        chainId
+      );
+    }
+  } catch (error) {
+    // If we get a specific error about the bundler, wrap it
+    if (error instanceof BundlerValidationError) {
+      throw error;
+    }
+
+    // Check for common bundler error patterns
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (
+      errorMessage.includes("internal error") ||
+      errorMessage.includes("Internal error") ||
+      errorMessage.includes("not supported") ||
+      errorMessage.includes("UserOperationExecutionError")
+    ) {
+      throw new BundlerValidationError(
+        `Bundler does not properly support chain ${chainId}: ${errorMessage}`,
+        chainId,
+        error
+      );
+    }
+
+    // For other errors, log but don't fail - let the transaction attempt proceed
+    console.warn("[ZeroDev] Bundler validation warning (continuing anyway):", error);
+  }
+}
+
+/**
  * Converts a ZeroDev kernel client to an ethers.js Signer.
  * This bridges ZeroDev's viem-based client with the GAP SDK's ethers-based requirements.
  *
  * @param kernelClient - The kernel account client from ZeroDev
+ * @param options - Optional configuration
+ * @param options.chainId - Chain ID for bundler validation (if provided, validates bundler first)
  * @returns An ethers.js Signer that routes transactions through the kernel account
+ * @throws BundlerValidationError if bundler validation fails
  */
 export async function kernelClientToEthersSigner(
-  kernelClient: KernelClient
+  kernelClient: KernelClient,
+  options?: { chainId?: number }
 ): Promise<Signer> {
   console.log("[ZeroDev] kernelClientToEthersSigner - Creating EIP-1193 provider");
   console.log("[ZeroDev] kernelClient account address:", kernelClient.account?.address);
@@ -478,6 +557,12 @@ export async function kernelClientToEthersSigner(
     console.log("[ZeroDev] Signer network:", network.chainId.toString());
   } catch (e) {
     console.warn("[ZeroDev] Could not get network from signer:", e);
+  }
+
+  // Validate the bundler if chainId is provided
+  // This catches chains where the bundler doesn't work (like Celo via ZeroDev)
+  if (options?.chainId) {
+    await validateBundler(kernelClient, options.chainId);
   }
 
   return signer;

@@ -8,6 +8,7 @@ import { useChainId } from "wagmi";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import {
+  BundlerValidationError,
   createKernelClientWithEIP7702,
   createPrivySignerForZeroDev,
   isChainSupportedForGasless,
@@ -123,12 +124,24 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
           });
 
           if (kernelClient) {
-            const signer = await kernelClientToEthersSigner(kernelClient);
+            // Pass chainId for bundler validation - this will throw BundlerValidationError
+            // if the bundler doesn't support this chain (e.g., Celo)
+            const signer = await kernelClientToEthersSigner(kernelClient, {
+              chainId: targetChainId,
+            });
             console.log("[ZeroDev] EIP-7702 gasless signer ready");
             return signer;
           }
         } catch (error) {
-          console.warn("[ZeroDev] Failed to create EIP-7702 kernel client, falling back:", error);
+          // Log specific error type for debugging
+          if (error instanceof BundlerValidationError) {
+            console.warn(
+              `[ZeroDev] Bundler validation failed for chain ${targetChainId}, falling back to embedded wallet:`,
+              error.message
+            );
+          } else {
+            console.warn("[ZeroDev] Failed to create EIP-7702 kernel client, falling back:", error);
+          }
         }
       }
 

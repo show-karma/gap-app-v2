@@ -333,7 +333,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     if (isOpen) {
       // Don't reset if reopening after an error (to preserve user's data)
       if (!shouldResetOnOpen) {
-        setShouldResetOnOpen(true);
+        // Don't set shouldResetOnOpen(true) here - it would trigger this effect again
+        // and cause the form to reset. It will be reset when user explicitly closes modal.
         return;
       }
 
@@ -413,6 +414,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
   function closeModal() {
     setIsOpen(false);
+    // Reset the flag so next time the modal opens, it starts fresh
+    setShouldResetOnOpen(true);
   }
   function openModal() {
     setIsOpen(true);
@@ -1585,57 +1588,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                     Switching to selected network...
                   </p>
                 </div>
-              )}
-
-              {/* Add FaucetSection for gas funding - keep visible even after funding */}
-              {watch("chainID") && walletSigner && !isChangingNetwork && (
-                <FaucetSection
-                  chainId={watch("chainID")}
-                  projectFormData={{
-                    title: watch("title"),
-                    description: watch("description"),
-                    problem: watch("problem"),
-                    solution: watch("solution"),
-                    missionSummary: watch("missionSummary"),
-                    locationOfImpact: watch("locationOfImpact"),
-                    profilePicture: watch("profilePicture"),
-                    twitter: watch("twitter"),
-                    github: watch("github"),
-                    discord: watch("discord"),
-                    website: watch("website"),
-                    linkedin: watch("linkedin"),
-                    pitchDeck: watch("pitchDeck"),
-                    demoVideo: watch("demoVideo"),
-                    farcaster: watch("farcaster"),
-                    recipient: watch("recipient"),
-                    businessModel: watch("businessModel"),
-                    stageIn: watch("stageIn"),
-                    raisedMoney: watch("raisedMoney"),
-                    pathToTake: watch("pathToTake"),
-                    customLinks: customLinks,
-                  }}
-                  walletSigner={walletSigner}
-                  recipient={(watch("recipient") || address) as Hex}
-                  onFundsReceived={async () => {
-                    setFaucetFunded(true);
-                    toast.success("Wallet funded! You can now create your project.");
-
-                    // Refresh wallet signer after funding
-                    try {
-                      await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for blockchain state
-                      const chainId = watch("chainID");
-                      if (chainId) {
-                        const { walletClient, error } = await safeGetWalletClient(chainId);
-                        if (!error && walletClient) {
-                          const signer = await walletClientToSigner(walletClient);
-                          setWalletSigner(signer);
-                        }
-                      }
-                    } catch (error) {
-                      console.error("Failed to refresh wallet signer after funding:", error);
-                    }
-                  }}
-                />
               )}
             </div>
           ) : null}

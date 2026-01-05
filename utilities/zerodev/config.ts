@@ -80,7 +80,7 @@ export const ZERODEV_CHAIN_CONFIG: Record<number, ZeroDevChainConfig> = {
   [celo.id]: {
     ...getZeroDevUrls(celo.id),
     chain: celo,
-    supported: true,
+    supported: true, // EIP-7702 supported on Celo - will fall back to embedded wallet if bundler fails
   },
   [scroll.id]: {
     ...getZeroDevUrls(scroll.id),
