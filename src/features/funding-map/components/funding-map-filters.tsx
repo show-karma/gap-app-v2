@@ -32,6 +32,8 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
     setStatus,
     setOnlyOnKarma,
     setOrganizationFilter,
+    setCategories,
+    setGrantTypes,
     toggleCategory,
     toggleGrantType,
     resetFilters,
@@ -75,17 +77,22 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
           <div
             className={cn(
               "flex h-4 w-4 items-center justify-center rounded border",
-              filters.onlyOnKarma ? "border-emerald-500 bg-emerald-500" : "border-border"
+              filters.onlyOnKarma ? "border-primary bg-primary" : "border-border"
             )}
           >
-            {filters.onlyOnKarma && <Check className="h-3 w-3 text-white" />}
+            {filters.onlyOnKarma && <Check className="h-3 w-3 text-primary-foreground" />}
           </div>
           <span className="text-xs font-medium text-foreground">On Karma</span>
           <OnKarmaBadge />
         </Badge>
 
         <Select value={filters.status} onValueChange={setStatus}>
-          <SelectTrigger className="h-8 w-auto gap-1 rounded-lg px-2.5 text-sm shadow-sm hover:bg-accent hover:text-accent-foreground">
+          <SelectTrigger
+            className={cn(
+              "h-8 w-auto gap-1 rounded-lg px-2.5 text-sm shadow-sm hover:bg-accent hover:text-accent-foreground",
+              filters.status ? "text-foreground" : "text-muted-foreground"
+            )}
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -111,14 +118,20 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
               onMouseEnter={() => setCategoryHover(true)}
               onMouseLeave={() => setCategoryHover(false)}
             >
-              <span>Category</span>
+              <span
+                className={cn(
+                  filters.categories.length > 0 ? "text-foreground" : "text-muted-foreground"
+                )}
+              >
+                Category
+              </span>
               {filters.categories.length > 0 ? (
                 <button
                   type="button"
                   className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
-                    resetFilters();
+                    setCategories([]);
                     setCategoryHover(false);
                   }}
                   aria-label="Clear category filters"
@@ -198,14 +211,20 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
               onMouseEnter={() => setTypeHover(true)}
               onMouseLeave={() => setTypeHover(false)}
             >
-              <span>Type</span>
+              <span
+                className={cn(
+                  filters.grantTypes.length > 0 ? "text-foreground" : "text-muted-foreground"
+                )}
+              >
+                Type
+              </span>
               {filters.grantTypes.length > 0 ? (
                 <button
                   type="button"
                   className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
-                    resetFilters();
+                    setGrantTypes([]);
                     setTypeHover(false);
                   }}
                   aria-label="Clear type filters"

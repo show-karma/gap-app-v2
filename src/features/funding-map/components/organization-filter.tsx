@@ -2,7 +2,7 @@
 
 import * as Popover from "@radix-ui/react-popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "cmdk";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/utilities/tailwind";
 import type { OrganizationFilterValue } from "../hooks/use-funding-filters";
@@ -71,17 +71,36 @@ export function OrganizationFilter({ value, onChange }: OrganizationFilterProps)
       <Popover.Trigger
         disabled={isLoading}
         className={cn(
-          "h-8 flex items-center gap-1 rounded-lg px-2.5 text-sm shadow-sm",
+          "h-8 flex items-center gap-1.5 rounded-lg px-2.5 text-sm shadow-sm",
           "bg-background border border-input hover:bg-accent hover:text-accent-foreground",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground",
           "active:outline-none",
           "disabled:cursor-not-allowed disabled:opacity-50"
         )}
       >
-        <span className="max-w-[150px] truncate">
+        <span
+          className={cn(
+            "max-w-[150px] truncate",
+            selectedOption ? "text-foreground" : "text-muted-foreground"
+          )}
+        >
           {isLoading ? "Loading..." : selectedOption?.name || "Ecosystem"}
         </span>
-        <ChevronDown className="h-4 w-4 opacity-50" />
+        {selectedOption ? (
+          <button
+            type="button"
+            className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange(null);
+            }}
+            aria-label="Clear ecosystem filter"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        ) : (
+          <ChevronDown className="h-4 w-4 opacity-50" />
+        )}
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
