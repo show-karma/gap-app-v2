@@ -90,7 +90,7 @@ export const ZERODEV_CHAIN_CONFIG: Record<number, ZeroDevChainConfig> = {
   [sei.id]: {
     ...getZeroDevUrls(sei.id),
     chain: sei,
-    supported: false, // SEI may not be supported by ZeroDev - verify
+    supported: true,
   },
   [lisk.id]: {
     ...getZeroDevUrls(lisk.id),

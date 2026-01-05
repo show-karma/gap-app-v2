@@ -1,6 +1,6 @@
 "use client";
 
-import { usePrivy, useWallets, type User } from "@privy-io/react-auth";
+import { type User, usePrivy, useWallets } from "@privy-io/react-auth";
 import type { Signer } from "ethers";
 import { BrowserProvider } from "ethers";
 import { useCallback, useMemo } from "react";
@@ -50,8 +50,10 @@ interface UseZeroDevSignerResult {
 /**
  * Hook that provides signers for attestations with ZeroDev gasless support.
  *
- * Gasless transactions (EIP-7702) are only available for embedded wallet users
- * (email/Google/passkey login). MetaMask users pay their own gas.
+ * - For embedded wallet users (email/Google/passkey login):
+ *   - On gasless-supported chains: Uses EIP-7702 (gasless, user doesn't pay gas)
+ *   - On unsupported chains (e.g., Lisk): Uses embedded wallet directly (user pays gas)
+ * - For external wallet users (MetaMask, etc.): User always pays gas
  */
 export function useZeroDevSigner(): UseZeroDevSignerResult {
   const { ready: privyReady, user } = usePrivy();
@@ -108,7 +110,7 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
         isChainSupported: isChainSupportedForGasless(targetChainId),
       });
 
-      // Case 1: Email/Google login - use embedded wallet with EIP-7702 gasless
+      // Case 1: Email/Google login with gasless support - try EIP-7702 gasless first
       if (isEmailOrSocialLogin && embeddedWallet && isChainSupportedForGasless(targetChainId)) {
         try {
           console.log("[ZeroDev] Email/Google login - using EIP-7702 gasless...");
@@ -128,10 +130,13 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
         } catch (error) {
           console.warn("[ZeroDev] Failed to create EIP-7702 kernel client, falling back:", error);
         }
+      }
 
-        // Fallback: use embedded wallet directly (non-gasless)
+      // Case 2: Email/Google login - use embedded wallet directly (user pays gas)
+      // This handles: gasless fallback failures AND chains that don't support gasless
+      if (isEmailOrSocialLogin && embeddedWallet) {
         try {
-          console.log("[ZeroDev] Fallback: using embedded wallet directly...");
+          console.log("[ZeroDev] Using embedded wallet directly (user pays gas)...");
           await embeddedWallet.switchChain(targetChainId);
           const provider = await embeddedWallet.getEthereumProvider();
           const ethersProvider = new BrowserProvider(provider);
@@ -141,7 +146,7 @@ export function useZeroDevSigner(): UseZeroDevSignerResult {
         }
       }
 
-      // Case 2: Wallet login (MetaMask) - use external wallet directly, user pays gas
+      // Case 3: Wallet login (MetaMask) - use external wallet directly, user pays gas
       if (externalWallet) {
         console.log("[ZeroDev] Wallet login - using external wallet (user pays gas)...");
         const { walletClient, error } = await safeGetWalletClient(targetChainId);
