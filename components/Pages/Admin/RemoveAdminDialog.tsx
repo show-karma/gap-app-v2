@@ -10,14 +10,12 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { Button } from "../../Utilities/Button";
 
 const _inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -65,29 +63,24 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({ UUID, chainid, Admin, 
   const [isLoading, setIsLoading] = useState(false);
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const onSubmit = async () => {
     setIsLoading(true); // Set loading state to true
-    const { success, chainId: actualChainId } = await ensureCorrectChain({
+    const setup = await setupChainAndWallet({
       targetChainId: chainid,
       currentChainId: chain?.id,
       switchChainAsync,
     });
 
-    if (!success) {
+    if (!setup) {
       setIsLoading(false);
       return;
     }
 
-    const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-    if (error || !walletClient) {
-      throw new Error("Failed to connect to wallet", { cause: error });
-    }
-    if (!walletClient) return;
-    const walletSigner = await walletClientToSigner(walletClient);
+    const { walletSigner } = setup;
     try {
       const communityResolver = (await GAP.getCommunityResolver(walletSigner)) as any;
       changeStepperStep("preparing");

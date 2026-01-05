@@ -11,19 +11,16 @@ import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
-import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import type { GrantMilestone } from "@/types/v2/grant";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 type VerifyMilestoneUpdateDialogProps = {
   milestone: GrantMilestone;
@@ -66,40 +63,30 @@ export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> =
   // V2: verified is now a boolean
   const hasVerifiedThis = isVerified;
   const { switchChainAsync } = useWallet();
-  const { gap } = useGap();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
   const project = useProjectStore((state) => state.project);
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
-    let gapClient = gap;
-    if (!gap) throw new Error("Please, connect a wallet");
+    if (!address || !project) return;
     try {
       setIsLoading(true);
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: milestone.chainID || 0,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      gapClient = newGapClient;
+      const { gapClient, walletSigner } = setup;
+      if (!gapClient) return;
 
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
-      const fetchedProject = await gapClient.fetch.projectById(project?.uid);
+      const fetchedProject = await gapClient.fetch.projectById(project.uid);
       if (!fetchedProject) return;
       const grantInstance = fetchedProject.grants.find(
         (g) => g.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? "")

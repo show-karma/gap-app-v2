@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useStaff } from "@/hooks/useStaff";
 import { useWallet } from "@/hooks/useWallet";
 import { searchProjects } from "@/services/project-search.service";
@@ -18,14 +19,12 @@ import { useProjectStore } from "@/store";
 import { useMergeModalStore } from "@/store/modals/merge";
 import { useProgressModal } from "@/store/modals/progressModal";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeInput } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "../EthereumAddressToENSName";
 import { errorManager } from "../Utilities/errorManager";
@@ -175,34 +174,22 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const { switchChainAsync } = useWallet();
   const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
   const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const createProjectPointer = async ({ ogProjectUID }: PointerType) => {
-    let gapClient = gap;
     if (!address || !project) return;
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         return;
       }
 
-      gapClient = newGapClient;
-      // Replace direct getWalletClient call with safeGetWalletClient
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { gapClient, walletSigner } = setup;
 
       const projectPointer = new ProjectPointer({
         data: {

@@ -15,7 +15,7 @@ import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
@@ -24,14 +24,10 @@ import { useProgressModalStore } from "@/store/modals/progress";
 import { useProgressModal } from "@/store/modals/progressModal";
 import type { Grant } from "@/types/v2/grant";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { MultiSelect } from "../../../components/Utilities/MultiSelect";
 
 // Helper function to wait for a specified time
@@ -84,8 +80,7 @@ export const UnifiedMilestoneScreen = () => {
   const { grants, refetch: refetchGrants } = useProjectGrants(project?.uid || "");
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { gap } = useGap();
-  const { smartWalletAddress } = useSetupChainAndWallet();
+  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const { showLoading, showSuccess, close: closeSimpleProgressModal } = useProgressModal();
   const { projectId } = useParams();
   const { refetch: refetchUpdates } = useProjectUpdates(projectId as string);
@@ -119,27 +114,23 @@ export const UnifiedMilestoneScreen = () => {
 
   // Create a roadmap milestone (project objective)
   const createRoadmapMilestone = async (data: MilestoneFormData) => {
-    if (!gap || !project) return;
-    let gapClient = gap;
+    if (!address || !project) return;
     setIsSubmitting(true);
 
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsSubmitting(false);
         return;
       }
 
-      gapClient = newGapClient;
+      const { gapClient, walletSigner } = setup;
+      if (!gapClient) return;
 
       const newObjective = new ProjectMilestone({
         data: sanitizeObject({
@@ -149,16 +140,8 @@ export const UnifiedMilestoneScreen = () => {
         }),
         schema: gapClient.findSchema("ProjectMilestone"),
         refUID: project.uid,
-        recipient: (smartWalletAddress || address) as `0x${string}` || "0x00",
+        recipient: ((smartWalletAddress || address) as `0x${string}`) || "0x00",
       });
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-
-      const walletSigner = await walletClientToSigner(walletClient);
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.description),
@@ -210,7 +193,7 @@ export const UnifiedMilestoneScreen = () => {
 
   // Create grant milestone(s) for selected grants
   const createGrantMilestones = async (data: MilestoneFormData) => {
-    if (!gap || !project || selectedGrantIds.length === 0) return;
+    if (!address || !project || selectedGrantIds.length === 0) return;
 
     setIsSubmitting(true);
 
@@ -247,7 +230,6 @@ export const UnifiedMilestoneScreen = () => {
 
       // Process each chain group in the prioritized order
       for (const chainIdStr of sortedChainIds) {
-        let gapClient = gap;
         const chainId = Number(chainIdStr);
         const chainGrants = grantsByChain[chainId];
         const chainName = chainNameDictionary(chainId);
@@ -259,22 +241,19 @@ export const UnifiedMilestoneScreen = () => {
         toastsToRemove.push(`chain-${chainId}`);
 
         // Switch chain if needed
-        const {
-          success,
-          chainId: actualChainId,
-          gapClient: newGapClient,
-        } = await ensureCorrectChain({
+        const setup = await setupChainAndWallet({
           targetChainId: chainId,
           currentChainId: chain?.id,
           switchChainAsync,
         });
 
-        if (!success) {
+        if (!setup) {
           setIsSubmitting(false);
           continue; // Skip this chain if switch fails
         }
 
-        gapClient = newGapClient;
+        const { gapClient, walletSigner } = setup;
+        if (!gapClient) continue;
 
         // If there's only one grant on this chain, process it normally
         if (chainGrants.length === 1) {
@@ -295,16 +274,6 @@ export const UnifiedMilestoneScreen = () => {
             recipient: (smartWalletAddress || address) as `0x${string}`,
             data: milestone,
           });
-
-          const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-          if (error || !walletClient || !gapClient) {
-            throw new Error(`Failed to connect to wallet on ${chainName}`, {
-              cause: error,
-            });
-          }
-
-          const walletSigner = await walletClientToSigner(walletClient);
 
           const result = await milestoneToAttest.attest(walletSigner as any);
 
@@ -342,16 +311,6 @@ export const UnifiedMilestoneScreen = () => {
             recipient: (smartWalletAddress || address) as `0x${string}`,
             data: milestone,
           });
-
-          const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-          if (error || !walletClient || !gapClient) {
-            throw new Error(`Failed to connect to wallet on ${chainName}`, {
-              cause: error,
-            });
-          }
-
-          const walletSigner = await walletClientToSigner(walletClient);
 
           // Instead of using indices, directly use grant UIDs
           const grantUIDs = chainGrants.map((item) => item.grant.uid as `0x${string}`);

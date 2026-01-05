@@ -8,6 +8,7 @@ import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import {
   attestMilestoneCompletionAsReviewer,
@@ -16,14 +17,11 @@ import {
   updateMilestoneVerification,
 } from "@/services/milestones";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { retry, retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 // Constants
 const INDEXER_PROCESSING_DELAY_MS = 2000;
@@ -54,42 +52,27 @@ export const useMilestoneCompletionVerification = ({
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
 
-  const setupChainAndWallet = async (
+  const setupChainAndWalletForMilestone = async (
     milestone: GrantMilestoneWithCompletion,
     _data: ProjectGrantMilestonesResponse
   ): Promise<{ gapClient: GAP; walletSigner: Signer } | null> => {
-    // Use chainId from milestone (now required in API response)
     const targetChainId = +milestone.chainId;
 
-    const {
-      success,
-      chainId: actualChainId,
-      gapClient,
-    } = await ensureCorrectChain({
+    const setup = await setupChainAndWallet({
       targetChainId,
       currentChainId: chain?.id,
       switchChainAsync,
     });
 
-    if (!success || !gapClient) {
+    if (!setup) {
       setIsVerifying(false);
       setIsStepper(false);
       return null;
     }
 
-    const { walletClient, error: walletError } = await safeGetWalletClient(actualChainId);
-    if (walletError || !walletClient) {
-      throw new Error("Failed to connect to wallet", { cause: walletError });
-    }
-
-    const walletSigner = await walletClientToSigner(walletClient);
-
-    if (!walletSigner) {
-      throw new Error("Failed to create wallet signer");
-    }
-
-    return { gapClient, walletSigner };
+    return { gapClient: setup.gapClient, walletSigner: setup.walletSigner };
   };
 
   const fetchMilestoneInstance = async (
@@ -403,7 +386,7 @@ export const useMilestoneCompletionVerification = ({
       changeStepperStep("preparing");
 
       // Step 1: Setup chain and wallet
-      const chainSetup = await setupChainAndWallet(milestone, data);
+      const chainSetup = await setupChainAndWalletForMilestone(milestone, data);
       if (!chainSetup) return;
 
       const { gapClient, walletSigner } = chainSetup;

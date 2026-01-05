@@ -16,20 +16,17 @@ import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
-import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import { getProjectImpacts } from "@/services/project-impacts.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 type VerifyImpactDialogProps = {
   impact: IProjectImpact;
@@ -69,7 +66,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({ impact, addVer
     : null;
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { gap } = useGap();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
   const project = useProjectStore((state) => state.project);
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const { refetch: refetchImpacts } = useProjectImpacts(projectIdOrSlug);
@@ -77,44 +74,25 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({ impact, addVer
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
-    let gapClient = gap;
-    if (!gap) throw new Error("Please, connect a wallet");
+    if (!address || !project) return;
     try {
       setIsLoading(true);
-      const fetchedProject = await getProjectById(project!.uid);
+      const fetchedProject = await getProjectById(project.uid);
       const findImpact = fetchedProject?.impacts?.find((imp) => imp.uid === (impact.uid as string));
       if (!findImpact) return;
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
-        targetChainId: findImpact!.chainID,
+
+      const setup = await setupChainAndWallet({
+        targetChainId: findImpact.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      gapClient = newGapClient;
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error) {
-        toast.error(error);
-        setIsLoading(false);
-        return;
-      }
-
-      if (!walletClient || !address || !gapClient) {
-        setIsLoading(false);
-        return;
-      }
-
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { walletSigner } = setup;
       await findImpact
         .verify(
           walletSigner,

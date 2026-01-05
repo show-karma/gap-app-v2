@@ -9,9 +9,9 @@ import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerif
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useGap } from "@/hooks/useGap";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
@@ -19,8 +19,6 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
 import type { GrantMilestone } from "@/types/v2/grant";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
@@ -29,7 +27,6 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { getCompletionData } from "./MilestoneDetails";
 import { UpdateMilestone } from "./UpdateMilestone";
 
@@ -50,7 +47,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { gap } = useGap();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
   const { project, isProjectOwner } = useProjectStore();
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
   const { isOwner: isContractOwner } = useOwnerStore();
@@ -61,33 +58,22 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const { grants } = useProjectGrants(project?.uid || "");
 
   const undoMilestoneCompletion = async (milestone: GrantMilestone) => {
-    let gapClient = gap;
+    if (!address || !project) return;
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: milestone.chainID || 0,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         return;
       }
 
-      gapClient = newGapClient;
+      const { gapClient, walletSigner } = setup;
+      if (!gapClient) return;
 
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      if (!walletClient || !gapClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
-
-      const instanceProject = await gapClient.fetch.projectById(project?.uid);
+      const instanceProject = await gapClient.fetch.projectById(project.uid);
       const findGrant = instanceProject?.grants.find(
         (item) => item.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? "")
       );

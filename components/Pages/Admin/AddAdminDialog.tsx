@@ -11,16 +11,14 @@ import { isAddress } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { Button } from "../../ui/button";
 
 const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -92,27 +90,23 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const onSubmit = async (data: SchemaType) => {
-    const { success, chainId: actualChainId } = await ensureCorrectChain({
+    const setup = await setupChainAndWallet({
       targetChainId: chainid,
       currentChainId: chain?.id,
       switchChainAsync,
     });
 
-    if (!success) {
+    if (!setup) {
       setIsOpen(false);
       return;
     }
 
-    const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-    if (error || !walletClient) {
-      throw new Error("Failed to connect to wallet", { cause: error });
-    }
-    const walletSigner = await walletClientToSigner(walletClient);
+    const { walletSigner } = setup;
     try {
       const communityResolver = await GAP.getCommunityResolver(walletSigner);
       changeStepperStep("preparing");

@@ -10,16 +10,14 @@ import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
 import { useProgressModal } from "@/store/modals/progressModal";
 import type { Grant } from "@/types/v2/grant";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useGap } from "./useGap";
+import { useSetupChainAndWallet } from "./useSetupChainAndWallet";
 import { useWallet } from "./useWallet";
 
 export function useGrant() {
@@ -27,6 +25,7 @@ export function useGrant() {
   const { gap } = useGap();
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
   const { showLoading, showSuccess, close: closeProgressModal } = useProgressModal();
   const selectedProject = useProjectStore((state) => state.project);
   const { refetch: refetchGrants } = useProjectGrants(selectedProject?.uid || "");
@@ -48,24 +47,21 @@ export function useGrant() {
    */
   const updateGrant = async (oldGrant: Grant, data: Partial<typeof formData>) => {
     if (!address || !oldGrant?.refUID || !selectedProject) return;
-    const _gapClient = gap;
     try {
       setIsLoading(true);
 
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: oldGrant.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success || !gapClient) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
+
+      const { gapClient, walletSigner } = setup;
 
       const projectInstance = await getProjectById(oldGrant.refUID);
       const oldGrantInstance = projectInstance?.grants?.find(
@@ -90,14 +86,6 @@ export function useGrant() {
 
       oldGrantInstance.details?.setValues(grantData);
 
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      if (!walletClient) return;
-
-      const walletSigner = await walletClientToSigner(walletClient);
       const oldGrants = await getProjectGrants(oldGrant.refUID).catch(() => []);
       const oldGrantData = oldGrants?.find(
         (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
