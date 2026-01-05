@@ -59,6 +59,12 @@ export const gapSupportedNetworks = appNetwork.filter(
   (chain) => !gapUnsupportedChainIds.includes(chain.id)
 ) as [Chain, ...Chain[]];
 
+/**
+ * Networks where projects can configure payout addresses for donations.
+ * Currently the same as gapSupportedNetworks, but separated for semantic clarity.
+ */
+export const PAYOUT_CHAINS = gapSupportedNetworks;
+
 export function getExplorerUrl(chainId: number, transactionHash: string) {
   const chain = [
     mainnet,
