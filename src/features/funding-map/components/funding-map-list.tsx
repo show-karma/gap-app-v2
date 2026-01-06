@@ -11,6 +11,20 @@ import { FundingMapFilters } from "./funding-map-filters";
 import { FundingMapPagination } from "./funding-map-pagination";
 import { FundingProgramDetailsDialog } from "./funding-program-details-dialog";
 
+/**
+ * Extract MongoDB _id as string - handles both V2 API (string) and legacy ({ $oid: string }) formats
+ */
+function getProgramId(program: FundingProgramResponse): string {
+  if (typeof program._id === "string") {
+    return program._id;
+  }
+  if (program._id && typeof program._id === "object" && "$oid" in program._id) {
+    return program._id.$oid;
+  }
+  // Fallback to programId or generate a unique key
+  return program.programId || program.id || `program-${program.createdAt}`;
+}
+
 export function FundingMapList() {
   const { apiParams, filters, programId, setProgramId } = useFundingFilters();
   const { data, isLoading, isError, error } = useFundingPrograms(apiParams);
@@ -32,7 +46,7 @@ export function FundingMapList() {
   const handleProgramClick = (program: FundingProgramResponse) => {
     // Use programId (preferred), or MongoDB _id as fallback for programs without programId
     // MongoDB _id is unique across the collection
-    const id = program.programId || program._id.$oid;
+    const id = program.programId || getProgramId(program);
     setProgramId(id);
   };
 
@@ -60,7 +74,7 @@ export function FundingMapList() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {programs.map((program) => (
               <FundingMapCard
-                key={program._id.$oid}
+                key={getProgramId(program)}
                 program={program}
                 onClick={() => handleProgramClick(program)}
               />

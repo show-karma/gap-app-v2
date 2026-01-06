@@ -2,6 +2,16 @@ import { registryHelper } from "./helper";
 import type { GrantProgram } from "./ProgramList";
 
 /**
+ * Extract MongoDB _id as string - handles both V2 API (string) and legacy ({ $oid: string }) formats
+ */
+function getMongoId(program: GrantProgram): string {
+  if (typeof program._id === "string") {
+    return program._id;
+  }
+  return program._id.$oid;
+}
+
+/**
  * Parse programId_chainID format from URL (e.g., "1018_10" → { programId: "1018", chainId: 10 })
  * Falls back to default chainId if parsing fails
  * @param id - The program ID string, potentially in format "programId_chainID"
@@ -56,8 +66,8 @@ export const getProgramIdForUrl = (program: GrantProgram): string => {
     return `${program.programId}_${program.chainID}`;
   }
 
-  // Fallback to programId or _id.$oid
-  return program.programId || program._id.$oid || "";
+  // Fallback to programId or MongoDB _id
+  return program.programId || getMongoId(program) || "";
 };
 
 /**
