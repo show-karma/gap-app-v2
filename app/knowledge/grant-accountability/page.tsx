@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function GrantAccountabilityPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
@@ -57,6 +59,30 @@ export default function GrantAccountabilityPage() {
             <li>Accountability ≠ one-off check-ins</li>
             <li>Accountability ≠ centralized audits only</li>
           </ul>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Related</h2>
+          <p className="space-y-1">
+            <Link
+              href="/knowledge/project-registry"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Public project registries
+            </Link>
+            <Link
+              href="/knowledge/grant-document-signing"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Document signing in grants
+            </Link>
+            <Link
+              href="/knowledge/funding-distribution-mechanisms"
+              className="block text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Funding distribution mechanisms
+            </Link>
+          </p>
         </section>
 
         <section className="space-y-4">

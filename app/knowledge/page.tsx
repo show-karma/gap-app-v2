@@ -339,6 +339,149 @@ export default function KnowledgePage() {
 
         <hr className="border-gray-200 dark:border-gray-700" />
 
+        <section className="space-y-8">
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold">Capabilities used in modern funding systems</h2>
+            <p className="text-gray-700 dark:text-gray-300">
+              In practice, funding programs rely on a set of operational capabilities that sit
+              beneath high-level concepts like accountability and reputation.
+            </p>
+            <p className="text-gray-700 dark:text-gray-300">
+              The articles below explain how these capabilities work and why they matter.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">AI-assisted grant evaluation</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              How funding programs scale application review without sacrificing rigor.
+            </p>
+            <p>
+              <Link
+                href="/knowledge/ai-grant-evaluation"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                → AI-assisted grant evaluation
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Project registries</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              Why communities maintain public records of funded projects and their progress.
+            </p>
+            <p>
+              <Link
+                href="/knowledge/project-registry"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                → Project registries
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">KYC and compliance</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              How identity verification is coordinated without slowing down funding.
+            </p>
+            <p>
+              <Link
+                href="/knowledge/grant-kyc"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                → KYC and compliance
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Document signing</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              Why grant agreements must be tracked as part of the funding workflow.
+            </p>
+            <p>
+              <Link
+                href="/knowledge/grant-document-signing"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                → Document signing
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Fund disbursement coordination</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              How payments are safely triggered once requirements are met.
+            </p>
+            <p>
+              <Link
+                href="/knowledge/grant-fund-disbursement"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                → Fund disbursement coordination
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Impact measurement</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              How funded work is connected to verifiable outputs and outcomes.
+            </p>
+            <p>
+              <Link
+                href="/knowledge/impact-measurement"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                → Impact measurement
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Whitelabel funding platforms</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              Why ecosystems run funding programs under their own brand using shared infrastructure.
+            </p>
+            <p>
+              <Link
+                href="/knowledge/whitelabel-funding-platforms"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                → Whitelabel funding platforms
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Funding distribution mechanisms</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              How different funding goals require different payment structures.
+            </p>
+            <p>
+              <Link
+                href="/knowledge/funding-distribution-mechanisms"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                → Funding distribution mechanisms
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">How to use this section</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              These capabilities appear repeatedly throughout the grant lifecycle and are most
+              effective when treated as integrated infrastructure, not standalone features.
+            </p>
+          </div>
+        </section>
+
+        <hr className="border-gray-200 dark:border-gray-700" />
+
         <footer className="pt-4">
           <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-600 dark:border-gray-600 dark:text-gray-400">
             Funding systems improve when execution is visible.

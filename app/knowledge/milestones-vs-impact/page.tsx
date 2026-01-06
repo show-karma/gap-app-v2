@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function MilestonesVsImpactPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
@@ -42,6 +44,18 @@ export default function MilestonesVsImpactPage() {
           <p className="text-gray-700 dark:text-gray-300">
             A project can meet milestones without impact, or create impact while missing milestones.
             Treating them as the same obscures performance.
+          </p>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Related</h2>
+          <p>
+            <Link
+              href="/knowledge/impact-measurement"
+              className="text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Impact measurement
+            </Link>
           </p>
         </section>
 

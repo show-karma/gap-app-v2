@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function ProjectReputationPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
@@ -38,6 +40,18 @@ export default function ProjectReputationPage() {
             <li>Lack of evidence</li>
             <li>Inconsistent communication</li>
           </ul>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Related</h2>
+          <p>
+            <Link
+              href="/knowledge/project-registry"
+              className="text-blue-600 hover:underline dark:text-blue-400"
+            >
+              → Public project registries
+            </Link>
+          </p>
         </section>
 
         <section className="space-y-4">
