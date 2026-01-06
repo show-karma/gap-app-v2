@@ -53,9 +53,14 @@ const AMOUNT_FIELD_PATTERNS = [
   /total[_\s-]?amount/i,
   /amount[_\s-]?requested/i,
   /funding[_\s-]?requested/i,
+  /op[_\s-]?request/i, // Matches "OP Request", "OP Requested", "op_request"
+  /total.*requested/i, // Matches "Total OP Requested", "Total Amount Requested"
+  /request.*locked/i, // Matches "OP Request Locked"
+  /request.*unlocked/i, // Matches "OP Request Unlocked"
   /^amount$/i,
   /^funding$/i,
   /^budget$/i,
+  /requested$/i, // Matches any field ending in "Requested"
 ];
 
 export interface ExtractedAmountField {
