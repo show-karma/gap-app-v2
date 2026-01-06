@@ -20,16 +20,14 @@ import { Twitter2Icon } from "@/components/Icons/Twitter2";
 import { Button } from "@/components/Utilities/Button";
 import { DateTimePicker } from "@/components/Utilities/DateTimePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
-import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { getCommunities } from "@/services/communities.service";
-import { useStepper } from "@/store/modals/txStepper";
 import { useRegistryStore } from "@/store/registry";
 import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -39,7 +37,6 @@ import { PAGES } from "@/utilities/pages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { registryHelper } from "./helper";
 import type { GrantProgram } from "./ProgramList";
 import { SearchDropdown } from "./SearchDropdown";
@@ -177,7 +174,6 @@ export default function AddProgram({
         img: chainImgDictionary(chain.id),
       };
     });
-  const { gap } = useGap();
 
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
 
@@ -275,7 +271,8 @@ export default function AddProgram({
   const { authenticated: isAuth, login } = useAuth();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { changeStepperStep, setIsStepper } = useAttestationToast();
 
   const { isRegistryAdmin } = useRegistryStore();
 
@@ -384,23 +381,18 @@ export default function AddProgram({
         return;
       }
       const chainSelected = data.networkToCreate;
-      const { success, chainId: actualChainId } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: chainSelected as number,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { walletSigner } = setup;
 
       const metadata = sanitizeObject({
         title: data.name,

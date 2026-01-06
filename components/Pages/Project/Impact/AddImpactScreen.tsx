@@ -14,19 +14,17 @@ import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import { getProjectImpacts } from "@/services/project-impacts.service";
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 const updateSchema = z.object({
   startedAt: z.date({
@@ -53,6 +51,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   const { address } = useAccount();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const project = useProjectStore((state) => state.project);
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const { refetch: refetchImpacts } = useProjectImpacts(projectIdOrSlug);
@@ -75,7 +74,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
 
   const onSubmit: SubmitHandler<UpdateType> = async (data, event) => {
     event?.preventDefault();
@@ -83,32 +82,19 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
     const { completedAt, startedAt } = data;
     if (!address || !project) return;
     setIsLoading(true);
-    let gapClient = gap;
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      gapClient = newGapClient;
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { walletSigner, gapClient } = setup;
       const dataToAttest = sanitizeObject({
         work,
         impact,
@@ -119,27 +105,30 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
       });
       const newImpact = new ProjectImpact({
         data: dataToAttest,
-        recipient: address as `0x${string}`,
-        attester: address as `0x${string}`,
+        recipient: (smartWalletAddress || address) as `0x${string}`,
+        attester: (smartWalletAddress || address) as `0x${string}`,
         schema: gapClient!.findSchema("ProjectImpact"),
         refUID: project.uid,
         createdAt: new Date(),
       });
-      await newImpact.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await newImpact.attest(walletSigner as any).then(async (res) => {
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newImpact.chainID), "POST", {});
         }
         let retries = 1000;
-        changeStepperStep("indexing");
+        showLoading("Indexing impact...");
         while (retries > 0) {
           try {
             const polledImpacts = await getProjectImpacts(projectIdOrSlug);
             if (polledImpacts.find((polledImpact) => polledImpact.uid === newImpact.uid)) {
               retries = 0;
               await refetchImpacts();
-              changeStepperStep("indexed");
-              changeTab(null);
+              showSuccess("Impact added!");
+              setTimeout(() => {
+                dismiss();
+                changeTab(null);
+              }, 1500);
             }
           } catch {
             // Ignore polling errors, continue retrying
@@ -150,6 +139,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         }
       });
     } catch (error: any) {
+      dismiss();
       errorManager(
         MESSAGES.PROJECT.IMPACT.ERROR,
         error,
@@ -163,7 +153,6 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
       );
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 

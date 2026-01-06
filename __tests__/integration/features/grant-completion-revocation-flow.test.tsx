@@ -24,6 +24,7 @@ import type { ProjectResponse } from "@/types/v2/project";
 // Mock dependencies
 jest.mock("wagmi", () => ({
   useAccount: jest.fn(),
+  useChainId: jest.fn(() => 1),
 }));
 
 jest.mock("@/hooks/useWallet", () => ({
@@ -42,10 +43,25 @@ jest.mock("@/hooks/useGap", () => ({
   })),
 }));
 
-jest.mock("@/store/modals/txStepper", () => ({
-  useStepper: jest.fn(() => ({
+jest.mock("@/hooks/useSetupChainAndWallet", () => ({
+  useSetupChainAndWallet: jest.fn(() => ({
+    setupChainAndWallet: jest.fn(),
+    isSmartWalletReady: false,
+    smartWalletAddress: null,
+    hasEmbeddedWallet: false,
+    hasExternalWallet: true,
+  })),
+}));
+
+jest.mock("@/hooks/useAttestationToast", () => ({
+  useAttestationToast: jest.fn(() => ({
     changeStepperStep: jest.fn(),
     setIsStepper: jest.fn(),
+    showLoading: jest.fn(),
+    showSuccess: jest.fn(),
+    showError: jest.fn(),
+    updateStep: jest.fn(),
+    dismiss: jest.fn(),
   })),
 }));
 
@@ -200,12 +216,28 @@ describe("Integration: Grant Completion Revocation Flow", () => {
     const wagmi = require("wagmi");
     wagmi.useAccount.mockReturnValue({ chain: { id: 42161 } });
 
-    const { useStepper } = require("@/store/modals/txStepper");
+    const { useAttestationToast } = require("@/hooks/useAttestationToast");
     const mockChangeStepperStep = jest.fn();
     const mockSetIsStepper = jest.fn();
-    useStepper.mockReturnValue({
+    const mockDismiss = jest.fn();
+    useAttestationToast.mockReturnValue({
       changeStepperStep: mockChangeStepperStep,
       setIsStepper: mockSetIsStepper,
+      showLoading: jest.fn(),
+      showSuccess: jest.fn(),
+      showError: jest.fn(),
+      updateStep: jest.fn(),
+      dismiss: mockDismiss,
+    });
+
+    // Setup default useSetupChainAndWallet mock (returns null by default, tests override as needed)
+    const { useSetupChainAndWallet } = require("@/hooks/useSetupChainAndWallet");
+    useSetupChainAndWallet.mockReturnValue({
+      setupChainAndWallet: jest.fn().mockResolvedValue(null),
+      isSmartWalletReady: false,
+      smartWalletAddress: null,
+      hasEmbeddedWallet: false,
+      hasExternalWallet: true,
     });
 
     const { useProjectStore } = require("@/store");
@@ -348,27 +380,27 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         return state;
       });
 
-      // Setup: On-chain path mocks
-      const { ensureCorrectChain } = require("@/utilities/ensureCorrectChain");
+      // Setup: useSetupChainAndWallet mock for authorized user
       const mockGapClient = {
         fetch: {
           projectById: jest.fn().mockResolvedValue(mockInstanceProject),
         },
       };
-      ensureCorrectChain.mockResolvedValue({
-        success: true,
-        chainId: 42161,
+      const mockWalletSigner = {};
+      const mockSetupChainAndWallet = jest.fn().mockResolvedValue({
         gapClient: mockGapClient,
+        walletSigner: mockWalletSigner,
+        chainId: 42161,
+        isGasless: false,
       });
-
-      const { safeGetWalletClient } = require("@/utilities/wallet-helpers");
-      safeGetWalletClient.mockResolvedValue({
-        walletClient: {},
-        error: null,
+      const { useSetupChainAndWallet } = require("@/hooks/useSetupChainAndWallet");
+      useSetupChainAndWallet.mockReturnValue({
+        setupChainAndWallet: mockSetupChainAndWallet,
+        isSmartWalletReady: false,
+        smartWalletAddress: null,
+        hasEmbeddedWallet: false,
+        hasExternalWallet: true,
       });
-
-      const { walletClientToSigner } = require("@/utilities/eas-wagmi-utils");
-      walletClientToSigner.mockResolvedValue({});
 
       const { GAP } = require("@show-karma/karma-gap-sdk");
       GAP.getMulticall.mockResolvedValue(mockMulticallContract);
@@ -406,16 +438,16 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         expect(screen.getByText("Revoking...")).toBeInTheDocument();
       });
 
-      // Verify stepper was activated
-      const { useStepper } = require("@/store/modals/txStepper");
-      const stepper = useStepper();
+      // Verify stepper was activated (now uses changeStepperStep instead of setIsStepper)
+      const { useAttestationToast } = require("@/hooks/useAttestationToast");
+      const stepper = useAttestationToast();
       await waitFor(() => {
-        expect(stepper.setIsStepper).toHaveBeenCalledWith(true);
+        expect(stepper.changeStepperStep).toHaveBeenCalledWith("preparing");
       });
 
-      // Verify on-chain path was taken
+      // Verify on-chain path was taken via setupChainAndWallet
       await waitFor(() => {
-        expect(ensureCorrectChain).toHaveBeenCalled();
+        expect(mockSetupChainAndWallet).toHaveBeenCalled();
         expect(mockMulticallContract.multiRevoke).toHaveBeenCalled();
       });
 
@@ -430,9 +462,9 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         expect(toast.success).toHaveBeenCalled();
       });
 
-      // Verify final state: stepper reset
+      // Verify final state: stepper dismissed (now uses dismiss instead of setIsStepper)
       await waitFor(() => {
-        expect(stepper.setIsStepper).toHaveBeenCalledWith(false);
+        expect(stepper.dismiss).toHaveBeenCalled();
       });
     });
   });
@@ -526,13 +558,12 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         expect(mockPerformOffChainRevoke).toHaveBeenCalled();
       });
 
-      // Verify stepper was used
-      const { useStepper } = require("@/store/modals/txStepper");
-      const stepper = useStepper();
+      // Verify stepper was used (off-chain flow calls changeStepperStep and dismiss in onSuccess callback)
+      const { useAttestationToast } = require("@/hooks/useAttestationToast");
+      const stepper = useAttestationToast();
       await waitFor(() => {
-        expect(stepper.setIsStepper).toHaveBeenCalledWith(true);
         expect(stepper.changeStepperStep).toHaveBeenCalledWith("indexed");
-        expect(stepper.setIsStepper).toHaveBeenCalledWith(false);
+        expect(stepper.dismiss).toHaveBeenCalled();
       });
 
       // Verify loading state was managed
@@ -585,28 +616,29 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         return state;
       });
 
-      // Setup: On-chain fails
-      const { ensureCorrectChain } = require("@/utilities/ensureCorrectChain");
+      // Setup: useSetupChainAndWallet mock for authorized user
       const mockGapClient = {
         fetch: {
           projectById: jest.fn().mockResolvedValue(mockInstanceProject),
         },
       };
-      ensureCorrectChain.mockResolvedValue({
-        success: true,
-        chainId: 42161,
+      const mockWalletSigner = {};
+      const mockSetupChainAndWallet = jest.fn().mockResolvedValue({
         gapClient: mockGapClient,
+        walletSigner: mockWalletSigner,
+        chainId: 42161,
+        isGasless: false,
+      });
+      const { useSetupChainAndWallet } = require("@/hooks/useSetupChainAndWallet");
+      useSetupChainAndWallet.mockReturnValue({
+        setupChainAndWallet: mockSetupChainAndWallet,
+        isSmartWalletReady: false,
+        smartWalletAddress: null,
+        hasEmbeddedWallet: false,
+        hasExternalWallet: true,
       });
 
-      const { safeGetWalletClient } = require("@/utilities/wallet-helpers");
-      safeGetWalletClient.mockResolvedValue({
-        walletClient: {},
-        error: null,
-      });
-
-      const { walletClientToSigner } = require("@/utilities/eas-wagmi-utils");
-      walletClientToSigner.mockResolvedValue({});
-
+      // Setup: On-chain fails
       const { GAP } = require("@show-karma/karma-gap-sdk");
       GAP.getMulticall.mockResolvedValue(mockMulticallContract);
       const onChainError = new Error("On-chain error");
@@ -633,8 +665,9 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       const button = screen.getByRole("button");
       fireEvent.click(button);
 
-      // Verify on-chain was attempted
+      // Verify on-chain was attempted via setupChainAndWallet
       await waitFor(() => {
+        expect(mockSetupChainAndWallet).toHaveBeenCalled();
         expect(mockMulticallContract.multiRevoke).toHaveBeenCalled();
       });
 
@@ -658,11 +691,11 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         expect(hasFallbackMessage).toBe(true);
       });
 
-      // Verify stepper transitions
-      const { useStepper } = require("@/store/modals/txStepper");
-      const stepper = useStepper();
+      // Verify stepper transitions (dismiss is called before fallback, then indexed and dismiss again in onSuccess)
+      const { useAttestationToast } = require("@/hooks/useAttestationToast");
+      const stepper = useAttestationToast();
       await waitFor(() => {
-        expect(stepper.setIsStepper).toHaveBeenCalledWith(false); // Reset before fallback
+        expect(stepper.dismiss).toHaveBeenCalled(); // Reset before fallback
         expect(stepper.changeStepperStep).toHaveBeenCalledWith("indexed");
       });
     });
@@ -672,34 +705,47 @@ describe("Integration: Grant Completion Revocation Flow", () => {
     it("should handle errors when both paths fail", async () => {
       // Setup: Authorized user
       const { useProjectStore } = require("@/store");
-      useProjectStore.mockImplementation(() => ({
-        refreshProject: jest.fn(),
-        isProjectOwner: true,
-        isProjectAdmin: false,
-      }));
+      const { useOwnerStore } = require("@/store");
+      useProjectStore.mockImplementation((selector?: any) => {
+        const state = {
+          refreshProject: jest.fn(),
+          isProjectOwner: true,
+          isProjectAdmin: false,
+        };
+        if (!selector) return state;
+        if (typeof selector === "function") return selector(state);
+        return state;
+      });
+      useOwnerStore.mockImplementation((selector?: any) => {
+        const state = { isOwner: true };
+        if (!selector) return state;
+        if (typeof selector === "function") return selector(state);
+        return state;
+      });
 
-      // Setup: On-chain fails
-      const { ensureCorrectChain } = require("@/utilities/ensureCorrectChain");
+      // Setup: useSetupChainAndWallet mock for authorized user
       const mockGapClient = {
         fetch: {
           projectById: jest.fn().mockResolvedValue(mockInstanceProject),
         },
       };
-      ensureCorrectChain.mockResolvedValue({
-        success: true,
-        chainId: 42161,
+      const mockWalletSigner = {};
+      const mockSetupChainAndWallet = jest.fn().mockResolvedValue({
         gapClient: mockGapClient,
+        walletSigner: mockWalletSigner,
+        chainId: 42161,
+        isGasless: false,
+      });
+      const { useSetupChainAndWallet } = require("@/hooks/useSetupChainAndWallet");
+      useSetupChainAndWallet.mockReturnValue({
+        setupChainAndWallet: mockSetupChainAndWallet,
+        isSmartWalletReady: false,
+        smartWalletAddress: null,
+        hasEmbeddedWallet: false,
+        hasExternalWallet: true,
       });
 
-      const { safeGetWalletClient } = require("@/utilities/wallet-helpers");
-      safeGetWalletClient.mockResolvedValue({
-        walletClient: {},
-        error: null,
-      });
-
-      const { walletClientToSigner } = require("@/utilities/eas-wagmi-utils");
-      walletClientToSigner.mockResolvedValue({});
-
+      // Setup: On-chain fails
       const { GAP } = require("@show-karma/karma-gap-sdk");
       GAP.getMulticall.mockResolvedValue(mockMulticallContract);
       const onChainError = new Error("On-chain error");
@@ -722,6 +768,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
 
       // Verify both paths were attempted
       await waitFor(() => {
+        expect(mockSetupChainAndWallet).toHaveBeenCalled();
         expect(mockMulticallContract.multiRevoke).toHaveBeenCalled();
         expect(mockPerformOffChainRevoke).toHaveBeenCalled();
       });
@@ -732,11 +779,11 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         expect(errorManager).toHaveBeenCalled();
       });
 
-      // Verify stepper was reset
-      const { useStepper } = require("@/store/modals/txStepper");
-      const stepper = useStepper();
+      // Verify stepper was dismissed (now uses dismiss instead of setIsStepper)
+      const { useAttestationToast } = require("@/hooks/useAttestationToast");
+      const stepper = useAttestationToast();
       await waitFor(() => {
-        expect(stepper.setIsStepper).toHaveBeenCalledWith(false);
+        expect(stepper.dismiss).toHaveBeenCalled();
       });
     });
   });
@@ -745,33 +792,45 @@ describe("Integration: Grant Completion Revocation Flow", () => {
     it("should transition through all stepper states during on-chain flow", async () => {
       // Setup: Authorized user
       const { useProjectStore } = require("@/store");
-      useProjectStore.mockImplementation(() => ({
-        refreshProject: jest.fn(),
-        isProjectOwner: true,
-        isProjectAdmin: false,
-      }));
+      const { useOwnerStore } = require("@/store");
+      useProjectStore.mockImplementation((selector?: any) => {
+        const state = {
+          refreshProject: jest.fn(),
+          isProjectOwner: true,
+          isProjectAdmin: false,
+        };
+        if (!selector) return state;
+        if (typeof selector === "function") return selector(state);
+        return state;
+      });
+      useOwnerStore.mockImplementation((selector?: any) => {
+        const state = { isOwner: true };
+        if (!selector) return state;
+        if (typeof selector === "function") return selector(state);
+        return state;
+      });
 
-      // Setup: On-chain path
-      const { ensureCorrectChain } = require("@/utilities/ensureCorrectChain");
+      // Setup: useSetupChainAndWallet mock for authorized user
       const mockGapClient = {
         fetch: {
           projectById: jest.fn().mockResolvedValue(mockInstanceProject),
         },
       };
-      ensureCorrectChain.mockResolvedValue({
-        success: true,
-        chainId: 42161,
+      const mockWalletSigner = {};
+      const mockSetupChainAndWallet = jest.fn().mockResolvedValue({
         gapClient: mockGapClient,
+        walletSigner: mockWalletSigner,
+        chainId: 42161,
+        isGasless: false,
       });
-
-      const { safeGetWalletClient } = require("@/utilities/wallet-helpers");
-      safeGetWalletClient.mockResolvedValue({
-        walletClient: {},
-        error: null,
+      const { useSetupChainAndWallet } = require("@/hooks/useSetupChainAndWallet");
+      useSetupChainAndWallet.mockReturnValue({
+        setupChainAndWallet: mockSetupChainAndWallet,
+        isSmartWalletReady: false,
+        smartWalletAddress: null,
+        hasEmbeddedWallet: false,
+        hasExternalWallet: true,
       });
-
-      const { walletClientToSigner } = require("@/utilities/eas-wagmi-utils");
-      walletClientToSigner.mockResolvedValue({});
 
       const { GAP } = require("@show-karma/karma-gap-sdk");
       GAP.getMulticall.mockResolvedValue(mockMulticallContract);
@@ -786,12 +845,18 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       const fetchData = require("@/utilities/fetchData").default;
       fetchData.mockResolvedValue({});
 
-      const { useStepper } = require("@/store/modals/txStepper");
+      const { useAttestationToast } = require("@/hooks/useAttestationToast");
       const mockChangeStepperStep = jest.fn();
       const mockSetIsStepper = jest.fn();
-      useStepper.mockReturnValue({
+      const mockDismiss = jest.fn();
+      useAttestationToast.mockReturnValue({
         changeStepperStep: mockChangeStepperStep,
         setIsStepper: mockSetIsStepper,
+        showLoading: jest.fn(),
+        showSuccess: jest.fn(),
+        showError: jest.fn(),
+        updateStep: jest.fn(),
+        dismiss: mockDismiss,
       });
 
       // Test via hook to verify state transitions
@@ -810,9 +875,9 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         await result.current.revokeCompletion();
       });
 
-      // Verify all stepper state transitions
+      // Verify all stepper state transitions (now uses changeStepperStep("preparing") instead of setIsStepper(true))
       await waitFor(() => {
-        expect(mockSetIsStepper).toHaveBeenCalledWith(true);
+        expect(mockChangeStepperStep).toHaveBeenCalledWith("preparing");
         expect(mockChangeStepperStep).toHaveBeenCalledWith("pending");
         expect(mockChangeStepperStep).toHaveBeenCalledWith("indexing");
       });
@@ -822,7 +887,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       await waitFor(
         () => {
           expect(mockChangeStepperStep).toHaveBeenCalledWith("indexed");
-          expect(mockSetIsStepper).toHaveBeenCalledWith(false);
+          expect(mockDismiss).toHaveBeenCalled(); // Now uses dismiss instead of setIsStepper(false)
         },
         { timeout: 3000 }
       );

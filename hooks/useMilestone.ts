@@ -5,13 +5,11 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import type { MilestoneCompletedFormData } from "@/components/Forms/GrantMilestoneCompletion";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
@@ -21,9 +19,9 @@ import { PAGES } from "@/utilities/pages";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useGap } from "./useGap";
 import { useOffChainRevoke } from "./useOffChainRevoke";
+import { useSetupChainAndWallet } from "./useSetupChainAndWallet";
 import { useWallet } from "./useWallet";
 import { useProjectGrants } from "./v2/useProjectGrants";
 import { useProjectUpdates } from "./v2/useProjectUpdates";
@@ -77,7 +75,7 @@ export const useMilestone = () => {
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, dismiss } = useAttestationToast();
   const project = useProjectStore((state) => state.project);
   const { projectId } = useParams();
   const { refetch } = useProjectUpdates(projectId as string);
@@ -87,10 +85,10 @@ export const useMilestone = () => {
   const { isOwner: isContractOwner } = useOwnerStore();
   const _isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const multiGrantDelete = async (milestone: UnifiedMilestone) => {
     setIsDeleting(true);
-    setIsStepper(true);
 
     try {
       changeStepperStep("preparing");
@@ -129,26 +127,17 @@ export const useMilestone = () => {
           });
 
           // Switch chain if needed
-          const {
-            success,
-            chainId: actualChainId,
-            gapClient,
-          } = await ensureCorrectChain({
+          const setup = await setupChainAndWallet({
             targetChainId: chainId,
             currentChainId: chain?.id,
             switchChainAsync,
           });
 
-          if (!success || !gapClient) {
-            throw new Error("Failed to switch chain or get GAP client");
+          if (!setup) {
+            throw new Error("Failed to switch chain or connect wallet");
           }
 
-          const { walletClient, error } = await safeGetWalletClient(actualChainId);
-          if (error || !walletClient) {
-            throw new Error("Failed to connect to wallet", { cause: error });
-          }
-
-          const walletSigner = await walletClientToSigner(walletClient);
+          const { gapClient, walletSigner } = setup;
           const fetchedProject = await getProjectById(project!.details?.slug || "");
           if (!fetchedProject) {
             throw new Error("Failed to fetch project data");
@@ -227,34 +216,21 @@ export const useMilestone = () => {
         }
       } else {
         // Handle single milestone deletion
-        let gapClient = gap;
-
         const loadingToast = toast.loading(`Deleting milestone...`, {
           id: `milestone-${milestone.uid}`,
         });
 
-        const {
-          success,
-          chainId: actualChainId,
-          gapClient: newGapClient,
-        } = await ensureCorrectChain({
+        const setup = await setupChainAndWallet({
           targetChainId: milestone.chainID,
           currentChainId: chain?.id,
           switchChainAsync,
         });
 
-        if (!success) {
-          throw new Error("Failed to switch chain");
+        if (!setup) {
+          throw new Error("Failed to switch chain or connect wallet");
         }
 
-        gapClient = newGapClient;
-
-        const { walletClient, error } = await safeGetWalletClient(actualChainId);
-        if (error || !walletClient || !gapClient) {
-          throw new Error("Failed to connect to wallet", { cause: error });
-        }
-
-        const walletSigner = await walletClientToSigner(walletClient);
+        const { gapClient, walletSigner } = setup;
         const fetchedProject = await gapClient.fetch.projectById(project?.uid);
 
         if (!fetchedProject) {
@@ -337,14 +313,12 @@ export const useMilestone = () => {
       });
     } finally {
       setIsDeleting(false);
-      setIsStepper(false);
+      dismiss();
     }
   };
 
   // Function to revoke milestone completion for multiple grants and chains
   const multiGrantUndoCompletion = async (milestone: UnifiedMilestone) => {
-    setIsStepper(true);
-
     const chains = [];
 
     try {
@@ -388,26 +362,16 @@ export const useMilestone = () => {
           chains.push(chainId);
 
           // Switch chain if needed
-          const {
-            success,
-            chainId: actualChainId,
-            gapClient,
-          } = await ensureCorrectChain({
+          const setup = await setupChainAndWallet({
             targetChainId: chainId,
             currentChainId: chain?.id,
             switchChainAsync,
           });
 
-          if (!success || !gapClient) {
-            throw new Error("Failed to switch chain or get GAP client");
+          if (!setup) {
+            throw new Error("Failed to switch chain or connect wallet");
           }
 
-          const { walletClient, error } = await safeGetWalletClient(actualChainId);
-          if (error || !walletClient) {
-            throw new Error("Failed to connect to wallet", { cause: error });
-          }
-
-          const _walletSigner = await walletClientToSigner(walletClient);
           const fetchedProject = await getProjectById(project!.details?.slug || "");
           if (!fetchedProject) {
             throw new Error("Failed to fetch project data");
@@ -472,34 +436,21 @@ export const useMilestone = () => {
         }
       } else {
         // Handle single milestone completion revocation
-        let gapClient = gap;
-
         const loadingToast = toast.loading(`Undoing milestone completion...`, {
           id: `milestone-${milestone.uid}`,
         });
 
-        const {
-          success,
-          chainId: actualChainId,
-          gapClient: newGapClient,
-        } = await ensureCorrectChain({
+        const setup = await setupChainAndWallet({
           targetChainId: milestone.chainID,
           currentChainId: chain?.id,
           switchChainAsync,
         });
 
-        if (!success) {
-          throw new Error("Failed to switch chain");
+        if (!setup) {
+          throw new Error("Failed to switch chain or connect wallet");
         }
 
-        gapClient = newGapClient;
-
-        const { walletClient, error } = await safeGetWalletClient(actualChainId);
-        if (error || !walletClient || !gapClient) {
-          throw new Error("Failed to connect to wallet", { cause: error });
-        }
-
-        const _walletSigner = await walletClientToSigner(walletClient);
+        const { gapClient } = setup;
         const fetchedProject = await gapClient.fetch.projectById(project?.uid);
 
         if (!fetchedProject) {
@@ -561,7 +512,7 @@ export const useMilestone = () => {
         milestoneData: milestone,
       });
     } finally {
-      setIsStepper(false);
+      dismiss();
       chains.forEach((chainId) => {
         toast.remove(`chain-${chainId}`);
       });
@@ -573,32 +524,18 @@ export const useMilestone = () => {
     milestone: UnifiedMilestone,
     data: MilestoneCompletedFormData & { noProofCheckbox: boolean }
   ) => {
-    let gapClient = gap;
-
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: updatedGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: milestone.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         return;
       }
 
-      gapClient = updatedGapClient;
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { gapClient, walletSigner } = setup;
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
 
       if (!fetchedProject) return;
@@ -678,7 +615,7 @@ export const useMilestone = () => {
         milestoneData: milestone,
       });
     } finally {
-      setIsStepper(false);
+      dismiss();
     }
   };
 
@@ -687,8 +624,6 @@ export const useMilestone = () => {
     milestone: UnifiedMilestone,
     data: MilestoneCompletedFormData & { noProofCheckbox: boolean }
   ) => {
-    setIsStepper(true);
-
     try {
       changeStepperStep("preparing");
 
@@ -727,26 +662,17 @@ export const useMilestone = () => {
         });
 
         // Switch chain if needed
-        const {
-          success,
-          chainId: actualChainId,
-          gapClient,
-        } = await ensureCorrectChain({
+        const setup = await setupChainAndWallet({
           targetChainId: chainId,
           currentChainId: chain?.id,
           switchChainAsync,
         });
 
-        if (!success || !gapClient) {
-          throw new Error("Failed to switch chain or get GAP client");
+        if (!setup) {
+          throw new Error("Failed to switch chain or connect wallet");
         }
 
-        const { walletClient, error } = await safeGetWalletClient(actualChainId);
-        if (error || !walletClient) {
-          throw new Error("Failed to connect to wallet", { cause: error });
-        }
-
-        const walletSigner = await walletClientToSigner(walletClient);
+        const { walletSigner } = setup;
         const fetchedProject = await getProjectById(project!.details?.slug || "");
 
         if (!fetchedProject) {
@@ -834,7 +760,7 @@ export const useMilestone = () => {
         milestoneData: milestone,
       });
     } finally {
-      setIsStepper(false);
+      dismiss();
     }
   };
 
@@ -843,8 +769,6 @@ export const useMilestone = () => {
     milestone: UnifiedMilestone,
     data: MilestoneCompletedFormData & { noProofCheckbox: boolean }
   ) => {
-    setIsStepper(true);
-
     const chains: number[] = [];
 
     try {
@@ -888,26 +812,17 @@ export const useMilestone = () => {
           chains.push(chainId);
 
           // Switch chain if needed
-          const {
-            success,
-            chainId: actualChainId,
-            gapClient,
-          } = await ensureCorrectChain({
+          const setup = await setupChainAndWallet({
             targetChainId: chainId,
             currentChainId: chain?.id,
             switchChainAsync,
           });
 
-          if (!success || !gapClient) {
-            throw new Error("Failed to switch chain or get GAP client");
+          if (!setup) {
+            throw new Error("Failed to switch chain or connect wallet");
           }
 
-          const { walletClient, error } = await safeGetWalletClient(actualChainId);
-          if (error || !walletClient) {
-            throw new Error("Failed to connect to wallet", { cause: error });
-          }
-
-          const walletSigner = await walletClientToSigner(walletClient);
+          const { walletSigner } = setup;
           const fetchedProject = await getProjectById(project!.details?.slug || "");
           if (!fetchedProject) {
             throw new Error("Failed to fetch project data");
@@ -1004,34 +919,21 @@ export const useMilestone = () => {
         }
       } else {
         // Handle single milestone completion editing
-        let gapClient = gap;
-
         const loadingToast = toast.loading(`Editing milestone completion...`, {
           id: `milestone-${milestone.uid}`,
         });
 
-        const {
-          success,
-          chainId: actualChainId,
-          gapClient: newGapClient,
-        } = await ensureCorrectChain({
+        const setup = await setupChainAndWallet({
           targetChainId: milestone.chainID,
           currentChainId: chain?.id,
           switchChainAsync,
         });
 
-        if (!success) {
-          throw new Error("Failed to switch chain");
+        if (!setup) {
+          throw new Error("Failed to switch chain or connect wallet");
         }
 
-        gapClient = newGapClient;
-
-        const { walletClient, error } = await safeGetWalletClient(actualChainId);
-        if (error || !walletClient || !gapClient) {
-          throw new Error("Failed to connect to wallet", { cause: error });
-        }
-
-        const walletSigner = await walletClientToSigner(walletClient);
+        const { gapClient, walletSigner } = setup;
 
         if (milestone.type === "grant") {
           // Grant milestone editing
@@ -1196,7 +1098,7 @@ export const useMilestone = () => {
         milestoneData: milestone,
       });
     } finally {
-      setIsStepper(false);
+      dismiss();
       chains.forEach((chainId) => {
         toast.remove(`chain-${chainId}`);
       });

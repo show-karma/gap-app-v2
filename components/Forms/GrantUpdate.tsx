@@ -12,17 +12,16 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
-import { useStepper } from "@/store/modals/txStepper";
 import type { Grant } from "@/types/v2/grant";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -31,7 +30,6 @@ import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { errorManager } from "../Utilities/errorManager";
 
 const updateSchema = z.object({
@@ -84,6 +82,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
   const { address } = useAccount();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
   const project = useProjectStore((state) => state.project);
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const { refetch: refetchGrants } = useProjectGrants(projectIdOrSlug);
@@ -111,7 +110,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
     });
   };
 
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
 
   const { gap } = useGap();
 
@@ -120,33 +119,20 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
   const router = useRouter();
 
   const createGrantUpdate = async (grantToUpdate: Grant, data: UpdateType) => {
-    let gapClient = gap;
     if (!address || !project) return;
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: grantToUpdate.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      gapClient = newGapClient;
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      if (!walletClient || !gapClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { walletSigner, gapClient } = setup;
 
       const sanitizedGrantUpdate = sanitizeObject({
         text: data.description,
@@ -162,13 +148,13 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         schema: gapClient.findSchema("GrantDetails"),
       });
 
-      await grantUpdate.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await grantUpdate.attest(walletSigner as any).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grantToUpdate.chainID), "POST", {});
         }
-        changeStepperStep("indexing");
+        showLoading("Indexing update...");
         const attestUID = grantUpdate.uid;
         while (retries > 0) {
           try {
@@ -178,28 +164,29 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
             const alreadyExists = updatedGrant?.updates?.find((u) => u.uid === attestUID);
             if (alreadyExists) {
               retries = 0;
-              await refetchGrants();
-              changeStepperStep("indexed");
+              showSuccess("Update posted!");
               afterSubmit?.();
               toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
-              router.push(
-                PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                  project.uid,
-                  grantToUpdate.uid,
-                  "milestones-and-updates"
-                )
-              );
-              openShareDialog({
-                modalShareText: `🎉 Update posted for your ${grant.details?.title}!`,
-                modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building—we're here for it. 💪`,
-                shareText: SHARE_TEXTS.GRANT_UPDATE(
-                  grant.details?.title as string,
-                  (project.details?.slug || project.uid) as string,
-                  grantToUpdate.uid
-                ),
-              });
-
-              router.refresh();
+              setTimeout(() => {
+                dismiss();
+                router.push(
+                  PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                    project.uid,
+                    grantToUpdate.uid,
+                    "milestones-and-updates"
+                  )
+                );
+                openShareDialog({
+                  modalShareText: `🎉 Update posted for your ${grant.details?.title}!`,
+                  modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building—we're here for it. 💪`,
+                  shareText: SHARE_TEXTS.GRANT_UPDATE(
+                    grant.details?.title as string,
+                    (project.details?.slug || project.uid) as string,
+                    grantToUpdate.uid
+                  ),
+                });
+                router.refresh();
+              }, 1500);
             }
           } catch {
             // Ignore polling errors, continue retrying
@@ -210,6 +197,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         }
       });
     } catch (error) {
+      dismiss();
       errorManager(
         `Error creating grant update for grant ${grantToUpdate.uid} from project ${project.uid}`,
         error,
@@ -228,8 +216,6 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
           error: MESSAGES.GRANT.GRANT_UPDATE.ERROR,
         }
       );
-    } finally {
-      setIsStepper(false);
     }
   };
 

@@ -10,22 +10,19 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
-import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
 import type { GrantUpdate } from "@/types/v2/grant";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { getSDKGrantInstance } from "@/utilities/grant-helpers";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 type VerifyGrantUpdateDialogProps = {
   grantUpdate: GrantUpdate;
@@ -66,46 +63,35 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
   const { address, isConnected, chain } = useAccount();
 
   const { switchChainAsync } = useWallet();
-  const { gap } = useGap();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
   const project = useProjectStore((state) => state.project);
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const { refetch: refetchGrants } = useProjectGrants(projectIdOrSlug);
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, setIsStepper } = useAttestationToast();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
-    let gapClient = gap;
-    if (!gap) throw new Error("Please, connect a wallet");
+    if (!address || !project) return;
     try {
       setIsLoading(true);
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: grantUpdate.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      gapClient = newGapClient;
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { gapClient, walletSigner } = setup;
+      if (!gapClient) return;
 
       if (!grantUpdate.refUID) {
         throw new Error("Grant update is missing refUID");
       }
 
-      if (!project?.uid) {
+      if (!project.uid) {
         throw new Error("Project UID is missing");
       }
 
