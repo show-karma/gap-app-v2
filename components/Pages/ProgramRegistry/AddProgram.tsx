@@ -25,6 +25,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { getCommunities } from "@/services/communities.service";
+import { ProgramRegistryService } from "@/services/programRegistry.service";
 import { useRegistryStore } from "@/store/registry";
 import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
@@ -381,7 +382,7 @@ export default function AddProgram({
         login?.();
         return;
       }
-      
+
       const chainSelected = data.networkToCreate;
       const setup = await setupChainAndWallet({
         targetChainId: chainSelected as number,
@@ -444,10 +445,7 @@ export default function AddProgram({
       }
 
       // Use V2 update endpoint
-      await ProgramRegistryService.updateProgram(
-        programIdToUpdate,
-        metadata
-      );
+      await ProgramRegistryService.updateProgram(programIdToUpdate, metadata);
       toast.success("Program updated successfully!");
       await refreshPrograms?.().then(() => {
         backTo?.();
