@@ -49,7 +49,8 @@
       "Skill(commit-commands:commit-push-pr)",
       "WebFetch(domain:www.karmahq.xyz)",
       "Skill(commit-commands:commit)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(head:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
