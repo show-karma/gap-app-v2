@@ -113,7 +113,7 @@ export function useProjectMilestoneForm({
             );
           }
 
-          let retries = 1000;
+          let retries = 5;
           changeStepperStep("indexing");
 
           while (retries > 0) {
@@ -222,7 +222,7 @@ export function useProjectMilestoneForm({
             );
           }
 
-          let retries = 1000;
+          let retries = 5;
           changeStepperStep("indexing");
 
           while (retries > 0) {

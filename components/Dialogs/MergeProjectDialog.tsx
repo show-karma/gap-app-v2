@@ -215,7 +215,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
       });
 
       await projectPointer.attest(walletSigner as any, changeStepperStep).then(async (res) => {
-        let retries = 1000;
+        let retries = 5;
         changeStepperStep("indexing");
         const txHash = res?.tx[0]?.hash;
         if (txHash) {

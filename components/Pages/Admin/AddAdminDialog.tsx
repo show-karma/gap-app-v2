@@ -125,7 +125,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
           await fetchData(INDEXER.ATTESTATION_LISTENER(hash, chainid), "POST", {});
         }
         changeStepperStep("indexing");
-        let retries = 1000;
+        let retries = 5;
         let addressAdded = false;
         while (retries > 0) {
           try {

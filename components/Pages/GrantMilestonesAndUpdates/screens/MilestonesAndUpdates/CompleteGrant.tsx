@@ -218,7 +218,7 @@ export const GrantCompletion: FC = () => {
       await grantInstance
         .complete(walletSigner, sanitizedGrantComplete, changeStepperStep)
         .then(async (res) => {
-          const maxRetries = 40; // 60 seconds total (40 * 1.5s)
+          const maxRetries = 5; // 5 seconds fallback (5 * 1s) - indexer now waits for completion
           let retries = maxRetries;
           changeStepperStep("indexing");
           const fetchedProject = null;

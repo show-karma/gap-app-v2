@@ -154,7 +154,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
             "POST",
             {}
           );
-          let retries = 1000;
+          let retries = 5;
           changeStepperStep("indexing");
           while (retries > 0) {
             await refreshCommunities()

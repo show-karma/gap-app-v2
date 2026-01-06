@@ -129,7 +129,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({ impact, addVer
           if (txHash) {
             await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, findImpact.chainID), "POST", {});
           }
-          let retries = 1000;
+          let retries = 5;
           changeStepperStep("indexing");
           while (retries > 0) {
             try {

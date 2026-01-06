@@ -141,7 +141,7 @@ export const ProjectObjectiveForm = ({
               {}
             );
           }
-          let retries = 1000;
+          let retries = 5;
           changeStepperStep("indexing");
           while (retries > 0) {
             await getProjectObjectives(projectId)
@@ -245,7 +245,7 @@ export const ProjectObjectiveForm = ({
               {}
             );
           }
-          let retries = 1000;
+          let retries = 5;
           changeStepperStep("indexing");
           while (retries > 0) {
             await getProjectObjectives(projectId)

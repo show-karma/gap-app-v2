@@ -157,7 +157,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
       }
       const walletSigner = await walletClientToSigner(walletClient);
       await milestoneToAttest.attest(walletSigner as any, changeStepperStep).then(async (res) => {
-        let retries = 1000;
+        let retries = 5;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(

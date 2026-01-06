@@ -84,7 +84,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
       if (!member) throw new Error("Member not found");
       // Helper function to check if member was removed
       const checkIfMemberRemoved = async () => {
-        let retries = 1000;
+        let retries = 5;
         while (retries > 0) {
           const refreshedProject = await refreshProject();
           const currentMember = refreshedProject?.members.find(

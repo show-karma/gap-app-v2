@@ -130,7 +130,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newImpact.chainID), "POST", {});
         }
-        let retries = 1000;
+        let retries = 5;
         changeStepperStep("indexing");
         while (retries > 0) {
           try {

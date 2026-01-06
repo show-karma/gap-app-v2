@@ -32,8 +32,8 @@ export const pollForGrantCompletion = async ({
   gapClient,
   projectUid,
   grantUid,
-  maxRetries = 40,
-  retryDelayMs = 1500,
+  maxRetries = 5,
+  retryDelayMs = 1000,
 }: PollForGrantCompletionParams): Promise<void> => {
   await retryUntilConditionMet(
     async () => {
@@ -97,8 +97,8 @@ export const pollForMilestoneStatus = async ({
   milestoneUid,
   checkCompletion,
   userAddress,
-  maxRetries = 40,
-  retryDelayMs = 1500,
+  maxRetries = 5,
+  retryDelayMs = 1000,
 }: PollForMilestoneStatusParams): Promise<void> => {
   await retryUntilConditionMet(
     async () => {

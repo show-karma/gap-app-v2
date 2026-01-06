@@ -100,7 +100,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({ UUID, chainid, Admin, 
           await fetchData(INDEXER.ATTESTATION_LISTENER(hash, chainid), "POST", {});
         }
         changeStepperStep("indexing");
-        let retries = 1000;
+        let retries = 5;
         let addressRemoved = false;
         while (retries > 0) {
           try {

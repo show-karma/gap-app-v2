@@ -40,8 +40,8 @@ export async function retry<T>(
 export const retryUntilConditionMet = async (
   conditionFn: () => Promise<boolean>,
   callbackFn?: () => void,
-  maxRetries: number = 1000,
-  delay: number = 1500
+  maxRetries: number = 5,
+  delay: number = 1000
 ) => {
   let retries = maxRetries;
   while (retries > 0) {

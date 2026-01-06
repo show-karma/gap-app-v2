@@ -126,7 +126,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, endorsement.chainID), "POST", {});
         }
-        let retries = 1000;
+        let retries = 5;
         refreshProject();
         changeStepperStep("indexing");
         while (retries > 0) {

@@ -671,7 +671,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
       changeStepperStep("preparing");
       await project.attest(walletSigner, changeStepperStep).then(async (res) => {
-        let retries = 1000;
+        let retries = 5;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});

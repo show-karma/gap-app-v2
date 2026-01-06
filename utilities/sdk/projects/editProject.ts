@@ -103,7 +103,7 @@ export const updateProject = async (
     const projectBefore = await getProject(project.uid);
 
     await project.details?.attest(signer, changeStepperStep).then(async (res) => {
-      let retries = 1000;
+      let retries = 5;
       changeStepperStep("indexing");
       const txHash = res?.tx[0]?.hash;
       if (txHash) {

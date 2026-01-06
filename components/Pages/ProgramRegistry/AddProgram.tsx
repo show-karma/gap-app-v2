@@ -455,7 +455,7 @@ export default function AddProgram({
         const hasRegistry = await allo
           .updatePoolMetadata(programToEdit?.programId as string, metadata, changeStepperStep)
           .then(async (res) => {
-            let retries = 1000;
+            let retries = 5;
             changeStepperStep("indexing");
             while (retries > 0) {
               await fetchData(`${INDEXER.REGISTRY.GET_ALL}?programId=${programToEdit?.programId}`)

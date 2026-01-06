@@ -149,7 +149,7 @@ export const ProjectObjectiveCompletionForm = ({
           changeStepperStep
         )
         .then(async (res) => {
-          let retries = 1000;
+          let retries = 5;
           changeStepperStep("indexing");
           let fetchedObjectives = null;
           const txHash = res?.tx[0]?.hash;
