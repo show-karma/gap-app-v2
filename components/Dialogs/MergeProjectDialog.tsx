@@ -10,22 +10,21 @@ import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useStaff } from "@/hooks/useStaff";
 import { useWallet } from "@/hooks/useWallet";
 import { searchProjects } from "@/services/project-search.service";
 import { useProjectStore } from "@/store";
 import { useMergeModalStore } from "@/store/modals/merge";
-import { useStepper } from "@/store/modals/txStepper";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeInput } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "../EthereumAddressToENSName";
 import { errorManager } from "../Utilities/errorManager";
@@ -173,36 +172,24 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const _setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
   const { switchChainAsync } = useWallet();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
   const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const createProjectPointer = async ({ ogProjectUID }: PointerType) => {
-    let gapClient = gap;
     if (!address || !project) return;
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         return;
       }
 
-      gapClient = newGapClient;
-      // Replace direct getWalletClient call with safeGetWalletClient
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { gapClient, walletSigner } = setup;
 
       const projectPointer = new ProjectPointer({
         data: {
@@ -214,9 +201,10 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         schema: gapClient.findSchema("ProjectPointer"),
       });
 
-      await projectPointer.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await projectPointer.attest(walletSigner as any).then(async (res) => {
+        showLoading("Indexing project merge...");
+
         let retries = 1000;
-        changeStepperStep("indexing");
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
@@ -231,10 +219,13 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
 
               if (alreadyExists) {
                 retries = 0;
-                router.push(PAGES.PROJECT.OVERVIEW(primaryProject?.details?.slug as string));
-                router.refresh();
-                changeStepperStep("indexed");
+                showSuccess("Project merged!");
                 toast.success(MESSAGES.PROJECT_POINTER_FORM.SUCCESS);
+                setTimeout(() => {
+                  dismiss();
+                  router.push(`/project/${primaryProject?.details?.slug}`);
+                  router.refresh();
+                }, 1500);
               }
               retries -= 1;
               // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -248,6 +239,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         }
       });
     } catch (error: any) {
+      dismiss();
       errorManager(
         `Error creating project pointer`,
         error,
@@ -261,7 +253,6 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         }
       );
     } finally {
-      setIsStepper(false);
       setIsLoading(false);
     }
   };

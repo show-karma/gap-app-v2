@@ -12,22 +12,20 @@ import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { PROJECT_NAME } from "@/constants/brand";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
-import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { gapSupportedNetworks, getChainIdByName } from "@/utilities/network";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 const profileSchema = z.object({
   name: z.string().min(3, { message: "This name is too short" }),
@@ -89,6 +87,7 @@ export const ContributorProfileDialog: FC = () => {
   const inviteCodeParam = searchParams?.get("invite-code");
   const { gap } = useGap();
   const { switchChainAsync } = useWallet();
+  const { smartWalletAddress, setupChainAndWallet } = useSetupChainAndWallet();
   const {
     register,
     setValue,
@@ -102,14 +101,13 @@ export const ContributorProfileDialog: FC = () => {
   });
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
   const { authenticated: isAuth } = useAuth();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const isAllowed = isConnected && isAuth;
 
   const onSubmit = async (data: SchemaType) => {
-    let gapClient = gap;
     if (!address) return;
     if (!isGlobal && !project) return;
     try {
@@ -137,29 +135,19 @@ export const ContributorProfileDialog: FC = () => {
         setIsLoading(false);
         return;
       }
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+
+      const setup = await setupChainAndWallet({
         targetChainId,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      gapClient = newGapClient;
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { gapClient, walletSigner } = setup;
       const contributorProfile = new ContributorProfile({
         data: {
           aboutMe: data.aboutMe,
@@ -169,10 +157,12 @@ export const ContributorProfileDialog: FC = () => {
           twitter: data.twitter,
           farcaster: data.farcaster,
         },
-        recipient: address as `0x${string}`,
+        recipient: (smartWalletAddress || address) as `0x${string}`,
         schema: gapClient.findSchema("ContributorProfile"),
       });
-      await contributorProfile.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await contributorProfile.attest(walletSigner as any).then(async (res) => {
+        showLoading("Indexing profile...");
+
         if (!isProjectMember && !isGlobal && inviteCodeParam) {
           const [_data, error] = await fetchData(
             INDEXER.PROJECT.INVITATION.ACCEPT_LINK(project?.uid as string),
@@ -184,7 +174,6 @@ export const ContributorProfileDialog: FC = () => {
           if (error) throw error;
         }
         let retries = 1000;
-        changeStepperStep("indexing");
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, targetChainId), "POST", {});
@@ -201,10 +190,13 @@ export const ContributorProfileDialog: FC = () => {
               // If the member is already in the project, update the profile
               if (hasMember) {
                 retries = 0;
-                changeStepperStep("indexed");
+                showSuccess("Joined team successfully!");
                 toast.success("Congrats! You have joined the team successfully");
                 refetchTeamProfiles();
-                closeModal();
+                setTimeout(() => {
+                  dismiss();
+                  closeModal();
+                }, 1500);
               }
             });
           } else {
@@ -226,10 +218,13 @@ export const ContributorProfileDialog: FC = () => {
               );
               if (isUpdated) {
                 retries = 0;
-                changeStepperStep("indexed");
+                showSuccess("Profile updated!");
                 refetchTeamProfiles();
                 toast.success("Profile updated successfully");
-                closeModal();
+                setTimeout(() => {
+                  dismiss();
+                  closeModal();
+                }, 1500);
               }
             }
           }
@@ -240,6 +235,7 @@ export const ContributorProfileDialog: FC = () => {
       });
       return;
     } catch (e) {
+      dismiss();
       errorManager("Failed to accept invite", e, {
         projectId: project?.uid,
         inviteCode: inviteCodeParam,
@@ -247,7 +243,6 @@ export const ContributorProfileDialog: FC = () => {
       });
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 

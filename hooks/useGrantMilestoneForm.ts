@@ -4,18 +4,16 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "./useWallet";
 
 export interface GrantMilestoneFormData {
@@ -41,11 +39,12 @@ export function useGrantMilestoneForm({
   const { project } = useProjectStore();
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const _isOwner = useOwnerStore((state) => state.isOwner);
 
   const { gap } = useGap();
   const [isLoading, setIsLoading] = useState(false);
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
   const router = useRouter();
 
   // Fetch grants using dedicated hook
@@ -64,21 +63,19 @@ export function useGrantMilestoneForm({
 
         const chainID = grant.chainID;
 
-        // Switch chain if needed
-        const {
-          success,
-          chainId: actualChainId,
-          gapClient,
-        } = await ensureCorrectChain({
+        // Setup chain and get gasless signer
+        const setup = await setupChainAndWallet({
           targetChainId: chainID,
           currentChainId: chain?.id,
           switchChainAsync,
         });
 
-        if (!success) {
+        if (!setup) {
           setIsLoading(false);
           return;
         }
+
+        const { walletSigner, gapClient } = setup;
 
         // Prepare milestone data
         const milestone = sanitizeObject({
@@ -92,21 +89,12 @@ export function useGrantMilestoneForm({
         const milestoneToAttest = new Milestone({
           refUID: grantUID as `0x${string}`,
           schema: gapClient.findSchema("Milestone"),
-          recipient: address as `0x${string}`,
+          recipient: (smartWalletAddress || address) as `0x${string}`,
           data: milestone,
         });
 
-        // Get wallet client safely
-        const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-        if (error || !walletClient || !gapClient) {
-          throw new Error("Failed to connect to wallet", { cause: error });
-        }
-
-        const walletSigner = await walletClientToSigner(walletClient);
-
         // Attest the milestone
-        await milestoneToAttest.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+        await milestoneToAttest.attest(walletSigner as any).then(async (res) => {
           let retries = 1000;
           const txHash = res?.tx[0]?.hash;
 
@@ -118,7 +106,7 @@ export function useGrantMilestoneForm({
             );
           }
 
-          changeStepperStep("indexing");
+          showLoading("Indexing milestone...");
 
           while (retries > 0) {
             try {
@@ -132,13 +120,16 @@ export function useGrantMilestoneForm({
               if (milestoneExists) {
                 retries = 0;
                 await refetchGrants();
-                changeStepperStep("indexed");
+                showSuccess("Milestone created!");
                 toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
 
                 // Only navigate on the last grant milestone creation
                 if (grantUID === grantUIDs[grantUIDs.length - 1] && destinationPath) {
-                  router.push(destinationPath);
-                  router.refresh();
+                  setTimeout(() => {
+                    dismiss();
+                    router.push(destinationPath);
+                    router.refresh();
+                  }, 1500);
                 }
               }
             } catch {
@@ -154,6 +145,7 @@ export function useGrantMilestoneForm({
       // Call onSuccess after all grant milestones are created
       onSuccess?.();
     } catch (error) {
+      dismiss();
       errorManager(MESSAGES.MILESTONES.CREATE.ERROR(data.title), error, {
         data,
         address,
@@ -162,7 +154,6 @@ export function useGrantMilestoneForm({
       toast.error(MESSAGES.MILESTONES.CREATE.ERROR(data.title));
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 

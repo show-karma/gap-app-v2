@@ -33,10 +33,6 @@ jest.mock("@/components/Utilities/PrivyProviderWrapper", () => ({
   ),
 }));
 
-jest.mock("@/components/Dialogs/StepperDialog", () => ({
-  StepperDialog: () => <div data-testid="stepper-dialog" />,
-}));
-
 jest.mock("@/components/Dialogs/ContributorProfileDialog", () => ({
   ContributorProfileDialog: () => <div data-testid="contributor-profile-dialog" />,
 }));
@@ -71,7 +67,6 @@ describe("RootLayout", () => {
     expect(screen.getByTestId("speed-insights")).toBeInTheDocument();
     expect(screen.getByTestId("analytics")).toBeInTheDocument();
     expect(screen.getByTestId("toaster")).toBeInTheDocument();
-    expect(screen.getByTestId("stepper-dialog")).toBeInTheDocument();
     expect(screen.getByTestId("contributor-profile-dialog")).toBeInTheDocument();
     expect(screen.getByTestId("onboarding-dialog")).toBeInTheDocument();
     expect(screen.getByTestId("permissions-provider")).toBeInTheDocument();

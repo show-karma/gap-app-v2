@@ -8,18 +8,16 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
 import type { Grant } from "@/types/v2/grant";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useAttestationToast } from "./useAttestationToast";
 import { useGap } from "./useGap";
+import { useSetupChainAndWallet } from "./useSetupChainAndWallet";
 import { useWallet } from "./useWallet";
 
 export function useGrant() {
@@ -27,7 +25,8 @@ export function useGrant() {
   const { gap } = useGap();
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
   const selectedProject = useProjectStore((state) => state.project);
   const { refetch: refetchGrants } = useProjectGrants(selectedProject?.uid || "");
   const router = useRouter();
@@ -48,25 +47,21 @@ export function useGrant() {
    */
   const updateGrant = async (oldGrant: Grant, data: Partial<typeof formData>) => {
     if (!address || !oldGrant?.refUID || !selectedProject) return;
-    const _gapClient = gap;
     try {
       setIsLoading(true);
-      setIsStepper(true);
 
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: oldGrant.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success || !gapClient) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
+
+      const { gapClient, walletSigner } = setup;
 
       const projectInstance = await getProjectById(oldGrant.refUID);
       const oldGrantInstance = projectInstance?.grants?.find(
@@ -91,47 +86,39 @@ export function useGrant() {
 
       oldGrantInstance.details?.setValues(grantData);
 
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      if (!walletClient) return;
-
-      const walletSigner = await walletClientToSigner(walletClient);
       const oldGrants = await getProjectGrants(oldGrant.refUID).catch(() => []);
       const oldGrantData = oldGrants?.find(
         (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
       );
 
-      await oldGrantInstance.details
-        ?.attest(walletSigner as any, changeStepperStep)
-        .then(async (res) => {
-          let retries = 1000;
-          changeStepperStep("indexing");
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, oldGrant.chainID), "POST", {});
-          }
-          while (retries > 0) {
-            const fetchedGrants = await getProjectGrants(
-              oldGrant.refUID || oldGrant.projectUID || ""
-            ).catch(() => []);
-            const fetchedGrant = fetchedGrants?.find(
-              (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
-            );
+      await oldGrantInstance.details?.attest(walletSigner as any).then(async (res) => {
+        let retries = 1000;
+        const txHash = res?.tx[0]?.hash;
+        if (txHash) {
+          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, oldGrant.chainID), "POST", {});
+        }
+        showLoading("Indexing grant...");
+        while (retries > 0) {
+          const fetchedGrants = await getProjectGrants(
+            oldGrant.refUID || oldGrant.projectUID || ""
+          ).catch(() => []);
+          const fetchedGrant = fetchedGrants?.find(
+            (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
+          );
 
-            if (new Date(fetchedGrant?.updatedAt || 0) > new Date(oldGrantData?.updatedAt || 0)) {
-              clearMilestonesForms();
-              // Reset form data and go back to step 1 for a new grant
-              resetFormData();
-              setFormPriorities([]);
-              setCurrentStep(1);
-              setFlowType("grant"); // Reset to default flow type
-              retries = 0;
-              toast.success(MESSAGES.GRANT.UPDATE.SUCCESS);
-              changeStepperStep("indexed");
-              await refetchGrants().then(() => {
+          if (new Date(fetchedGrant?.updatedAt || 0) > new Date(oldGrantData?.updatedAt || 0)) {
+            clearMilestonesForms();
+            // Reset form data and go back to step 1 for a new grant
+            resetFormData();
+            setFormPriorities([]);
+            setCurrentStep(1);
+            setFlowType("grant"); // Reset to default flow type
+            retries = 0;
+            toast.success(MESSAGES.GRANT.UPDATE.SUCCESS);
+            showSuccess("Grant updated!");
+            await refetchGrants().then(() => {
+              setTimeout(() => {
+                dismiss();
                 router.push(
                   PAGES.PROJECT.GRANT(
                     selectedProject.details?.slug || selectedProject.uid,
@@ -139,14 +126,16 @@ export function useGrant() {
                   )
                 );
                 router.refresh();
-              });
-            }
-            retries -= 1;
-            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+              }, 1500);
+            });
           }
-        });
+          retries -= 1;
+          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+      });
     } catch (error: any) {
+      dismiss();
       errorManager(
         MESSAGES.GRANT.UPDATE.ERROR,
         error,
@@ -159,7 +148,6 @@ export function useGrant() {
       );
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 

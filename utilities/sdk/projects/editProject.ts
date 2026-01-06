@@ -8,8 +8,8 @@ import type {
 } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import type { AttestationStep } from "@/hooks/useAttestationToast";
 import { checkSlugExists, getProject } from "@/services/project.service";
-import type { TxStepperSteps } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -51,7 +51,7 @@ export const updateProject = async (
   },
   signer: SignerOrProvider,
   gap: GAP,
-  changeStepperStep: (step: TxStepperSteps) => void,
+  changeStepperStep: (step: AttestationStep) => void,
   closeModal: () => void
 ) => {
   const oldProjectData = JSON.parse(JSON.stringify(project.details?.data));

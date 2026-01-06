@@ -7,22 +7,20 @@ import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { Milestone } from "../Milestone";
 import { StepBlock } from "../StepBlock";
 import { useGrantFormStore } from "../store";
@@ -51,7 +49,8 @@ export const MilestonesScreen: React.FC = () => {
   const { address, isConnected, connector, chain } = useAccount();
   const { authenticated: isAuth } = useAuth();
   const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { smartWalletAddress, setupChainAndWallet } = useSetupChainAndWallet();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
   const queryClient = useQueryClient();
 
   const pathname = usePathname();
@@ -86,26 +85,19 @@ export const MilestonesScreen: React.FC = () => {
     if (!address || !selectedProject || !gap) return;
 
     try {
-      let gapClient = gap;
       if (!isConnected || !isAuth) return;
 
-      // Check if we need to switch chains
-      const chainId = await connector?.getChainId();
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: communityNetworkId,
-        currentChainId: chainId,
+        currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         return;
       }
 
-      gapClient = newGapClient;
+      const { walletSigner, gapClient } = setup;
 
       // Save all milestones
       saveAllMilestones();
@@ -121,7 +113,7 @@ export const MilestonesScreen: React.FC = () => {
         amount: formData.amount || "",
         milestones: milestonesData,
         community: formData.community || "",
-        recipient: formData.recipient || address,
+        recipient: formData.recipient || smartWalletAddress || address,
         startDate: formData.startDate ? formData.startDate.getTime() / 1000 : undefined,
         programId: formData.programId,
         questions: formData.questions || [],
@@ -135,7 +127,7 @@ export const MilestonesScreen: React.FC = () => {
         },
         refUID: selectedProject.uid,
         schema: gapClient.findSchema("Grant"),
-        recipient: (newGrantData.recipient as Hex) || address,
+        recipient: (newGrantData.recipient as Hex) || smartWalletAddress || address,
         uid: nullRef,
       });
 
@@ -145,7 +137,7 @@ export const MilestonesScreen: React.FC = () => {
         amount: newGrantData.amount || "",
         proposalURL: newGrantData.linkToProposal,
         assetAndChainId: ["0x0", 1],
-        payoutAddress: address,
+        payoutAddress: smartWalletAddress || address,
         questions: newGrantData.questions,
         description:
           newGrantData.description ||
@@ -184,95 +176,86 @@ export const MilestonesScreen: React.FC = () => {
             })
           : [];
 
-      // Get wallet client
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-
-      // Get wallet signer
-      const walletSigner = await walletClientToSigner(walletClient);
-
       // Attest grant
-      setIsStepper(true);
-      await grant
-        .attest(walletSigner as any, selectedProject.chainID, changeStepperStep)
-        .then(async (res) => {
-          let retries = 1000;
-          changeStepperStep("indexing");
-          const fetchedProject = null;
-          const txHash = res?.tx[0]?.hash;
+      await grant.attest(walletSigner as any, selectedProject.chainID).then(async (res) => {
+        let retries = 1000;
+        const txHash = res?.tx[0]?.hash;
 
-          if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID), "POST", {});
-          }
+        if (txHash) {
+          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID), "POST", {});
+        }
+        showLoading("Indexing grant...");
 
-          while (retries > 0) {
-            const polledGrants = await getProjectGrants(selectedProject.uid);
+        while (retries > 0) {
+          const polledGrants = await getProjectGrants(selectedProject.uid);
 
-            // Check that grant exists AND has non-empty details (GrantDetails attestation processed)
-            const foundGrant = polledGrants?.find((oldGrant) => oldGrant.uid === grant.uid);
-            if (foundGrant && foundGrant.details?.title) {
-              clearMilestonesForms();
-              retries = 0;
-              toast.success(
-                flowType === "grant"
-                  ? MESSAGES.GRANT.CREATE.SUCCESS
-                  : "Successfully applied to funding program!"
-              );
-              changeStepperStep("indexed");
+          // Check that grant exists AND has non-empty details (GrantDetails attestation processed)
+          const foundGrant = polledGrants?.find((oldGrant) => oldGrant.uid === grant.uid);
+          if (foundGrant && foundGrant.details?.title) {
+            clearMilestonesForms();
+            retries = 0;
+            toast.success(
+              flowType === "grant"
+                ? MESSAGES.GRANT.CREATE.SUCCESS
+                : "Successfully applied to funding program!"
+            );
+            showSuccess(flowType === "grant" ? "Grant created!" : "Application submitted!");
 
-              // Invalidate duplicate grant check query to refresh data
-              if (!isEditing) {
-                await queryClient.invalidateQueries({
-                  queryKey: QUERY_KEYS.GRANTS.DUPLICATE_CHECK_BASE,
+            // Invalidate duplicate grant check query to refresh data
+            if (!isEditing) {
+              await queryClient.invalidateQueries({
+                queryKey: QUERY_KEYS.GRANTS.DUPLICATE_CHECK_BASE,
+              });
+            }
+
+            // Reset form data and go back to step 1 for a new grant
+            resetFormData();
+            clearMilestonesForms();
+            setFormPriorities([]);
+            setCurrentStep(1);
+            setFlowType("grant"); // Reset to default flow type
+
+            // Redirect to grants page instead of specific grant
+            if (
+              flowType === "program" &&
+              newGrantData.selectedTrackIds &&
+              newGrantData.selectedTrackIds.length > 0 &&
+              newGrantData.programId
+            ) {
+              try {
+                const programIdParts = newGrantData.programId.split("_");
+                const programId = programIdParts[0];
+                const _chainID = parseInt(programIdParts[1] || communityNetworkId.toString(), 10);
+
+                await fetchData(INDEXER.PROJECTS.TRACKS(selectedProject.uid), "POST", {
+                  communityUID: newGrantData.community,
+                  trackIds: newGrantData.selectedTrackIds,
+                  programId,
                 });
+              } catch (trackError) {
+                console.error("Error assigning tracks to project:", trackError);
               }
+            }
 
-              // Reset form data and go back to step 1 for a new grant
-              resetFormData();
-              clearMilestonesForms();
-              setFormPriorities([]);
-              setCurrentStep(1);
-              setFlowType("grant"); // Reset to default flow type
-
-              // Redirect to grants page instead of specific grant
-              if (
-                flowType === "program" &&
-                newGrantData.selectedTrackIds &&
-                newGrantData.selectedTrackIds.length > 0 &&
-                newGrantData.programId
-              ) {
-                try {
-                  const programIdParts = newGrantData.programId.split("_");
-                  const programId = programIdParts[0];
-                  const _chainID = parseInt(programIdParts[1] || communityNetworkId.toString(), 10);
-
-                  await fetchData(INDEXER.PROJECTS.TRACKS(selectedProject.uid), "POST", {
-                    communityUID: newGrantData.community,
-                    trackIds: newGrantData.selectedTrackIds,
-                    programId,
-                  });
-                } catch (trackError) {
-                  console.error("Error assigning tracks to project:", trackError);
-                }
-              }
-
-              await refetchGrants();
+            await refetchGrants();
+            setTimeout(() => {
+              dismiss();
               router.push(
                 PAGES.PROJECT.GRANT(
                   selectedProject?.details?.slug || selectedProject.uid,
                   grant.uid
                 )
               );
-            }
-
-            retries -= 1;
-            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            }, 1500);
           }
-        });
+
+          retries -= 1;
+          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+      });
     } catch (error: any) {
+      dismiss();
       errorManager(
         MESSAGES.GRANT.CREATE.ERROR(formData.title),
         error,
@@ -288,8 +271,6 @@ export const MilestonesScreen: React.FC = () => {
               : "Error applying to funding program",
         }
       );
-    } finally {
-      setIsStepper(false);
     }
   };
 

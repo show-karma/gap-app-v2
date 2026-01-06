@@ -138,6 +138,7 @@ jest.mock("wagmi", () => ({
     isConnected: false,
     connector: null,
   }),
+  useChainId: () => 1,
   useBalance: () => ({
     data: undefined,
     isLoading: false,

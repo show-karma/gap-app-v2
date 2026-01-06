@@ -8,20 +8,18 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
@@ -52,6 +50,7 @@ export const ProjectObjectiveForm = ({
   const { address, chain } = useAccount();
   const { project } = useProjectStore();
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const params = useParams();
   const projectId = params.projectId as string;
   const router = useRouter();
@@ -76,31 +75,26 @@ export const ProjectObjectiveForm = ({
 
   const { gap } = useGap();
   const [isLoading, setIsLoading] = useState(false);
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
 
   const { refetch } = useProjectUpdates(projectId as string);
 
   const createObjective = async (data: ObjectiveType) => {
     if (!gap) return;
-    let gapClient = gap;
     setIsLoading(true);
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: project?.chainID as number,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      gapClient = newGapClient;
+      const { walletSigner, gapClient } = setup;
       const newObjective = new ProjectMilestone({
         data: sanitizeObject({
           title: data.title,
@@ -109,66 +103,62 @@ export const ProjectObjectiveForm = ({
         }),
         schema: gapClient.findSchema("ProjectMilestone"),
         refUID: project?.uid,
-        recipient: (address || "0x0000000000000000000000000000000000000000") as `0x${string}`,
+        recipient: (smartWalletAddress ||
+          address ||
+          "0x0000000000000000000000000000000000000000") as `0x${string}`,
       });
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      if (!walletClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),
       };
-      await newObjective
-        .attest(walletSigner as any, sanitizedData, changeStepperStep)
-        .then(async (res) => {
-          const _fetchedObjectives = null;
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
-              "POST",
-              {}
-            );
-          } else {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(newObjective.uid, project?.chainID as number),
-              "POST",
-              {}
-            );
-          }
-          let retries = 1000;
-          changeStepperStep("indexing");
-          while (retries > 0) {
-            await getProjectObjectives(projectId)
-              .then(async (fetchedObjectives) => {
-                const attestUID = newObjective.uid;
-                const alreadyExists = fetchedObjectives.find((m) => m.uid === attestUID);
+      await newObjective.attest(walletSigner as any, sanitizedData).then(async (res) => {
+        const _fetchedObjectives = null;
+        const txHash = res?.tx[0]?.hash;
+        if (txHash) {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
+            "POST",
+            {}
+          );
+        } else {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(newObjective.uid, project?.chainID as number),
+            "POST",
+            {}
+          );
+        }
+        let retries = 1000;
+        showLoading("Indexing objective...");
+        while (retries > 0) {
+          await getProjectObjectives(projectId)
+            .then(async (fetchedObjectives) => {
+              const attestUID = newObjective.uid;
+              const alreadyExists = fetchedObjectives.find((m) => m.uid === attestUID);
 
-                if (alreadyExists) {
-                  retries = 0;
-                  changeStepperStep("indexed");
-                  toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
-                  await refetch();
-                  stateHandler?.(false);
+              if (alreadyExists) {
+                retries = 0;
+                showSuccess("Objective created!");
+                toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
+                await refetch();
+                stateHandler?.(false);
+                setTimeout(() => {
+                  dismiss();
                   router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
-                }
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              })
-              .catch(async () => {
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              });
-          }
-        });
+                }, 1500);
+              }
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            })
+            .catch(async () => {
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            });
+        }
+      });
     } catch (error) {
+      dismiss();
       errorManager(
         MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR,
         error,
@@ -183,38 +173,25 @@ export const ProjectObjectiveForm = ({
       );
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 
   const updateObjective = async (data: ObjectiveType) => {
     if (!gap) return;
-    let gapClient = gap;
     setIsLoading(true);
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: project?.chainID as number,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      gapClient = newGapClient;
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { walletSigner, gapClient } = setup;
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),
@@ -227,51 +204,51 @@ export const ProjectObjectiveForm = ({
       );
       if (!objectiveInstance) return;
       objectiveInstance.setValues(sanitizedData);
-      await objectiveInstance
-        .attest(walletSigner as any, sanitizedData, changeStepperStep)
-        .then(async (res) => {
-          const _fetchedObjectives = null;
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
-              "POST",
-              {}
-            );
-          } else {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(objectiveInstance.uid, project?.chainID as number),
-              "POST",
-              {}
-            );
-          }
-          let retries = 1000;
-          changeStepperStep("indexing");
-          while (retries > 0) {
-            await getProjectObjectives(projectId)
-              .then(async (fetchedObjectives) => {
-                const attestUID = objectiveInstance.uid;
-                const alreadyExists = fetchedObjectives.find((m) => m.uid === attestUID);
+      await objectiveInstance.attest(walletSigner as any, sanitizedData).then(async (res) => {
+        const _fetchedObjectives = null;
+        const txHash = res?.tx[0]?.hash;
+        if (txHash) {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
+            "POST",
+            {}
+          );
+        } else {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(objectiveInstance.uid, project?.chainID as number),
+            "POST",
+            {}
+          );
+        }
+        let retries = 1000;
+        showLoading("Indexing objective...");
+        while (retries > 0) {
+          await getProjectObjectives(projectId)
+            .then(async (fetchedObjectives) => {
+              const attestUID = objectiveInstance.uid;
+              const alreadyExists = fetchedObjectives.find((m) => m.uid === attestUID);
 
-                if (alreadyExists) {
-                  retries = 0;
-                  changeStepperStep("indexed");
-                  toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
-                  await refetch();
-                  stateHandler?.(false);
-                }
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              })
-              .catch(async () => {
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              });
-          }
-        });
+              if (alreadyExists) {
+                retries = 0;
+                showSuccess("Objective updated!");
+                toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
+                await refetch();
+                stateHandler?.(false);
+                setTimeout(() => dismiss(), 1500);
+              }
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            })
+            .catch(async () => {
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            });
+        }
+      });
     } catch (error) {
+      dismiss();
       errorManager(
         MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR,
         error,
@@ -286,7 +263,6 @@ export const ProjectObjectiveForm = ({
       );
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 

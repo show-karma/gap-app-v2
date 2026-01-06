@@ -2,12 +2,11 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
-import { useStepper } from "@/store/modals/txStepper";
 import type { Grant } from "@/types/v2/grant";
 import { pollForGrantCompletion } from "@/utilities/attestation-polling";
-// Import the utilities we created
-import { setupChainAndWallet } from "@/utilities/chain-wallet-setup";
 import { getSDKGrantInstance } from "@/utilities/grant-helpers";
 import { notifyIndexerForGrant } from "@/utilities/indexer-notification";
 import { MESSAGES } from "@/utilities/messages";
@@ -50,7 +49,8 @@ export const useGrantCompletion = ({
   const [isCompleting, setIsCompleting] = useState(false);
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, dismiss } = useAttestationToast();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const completeGrant = async (grant: Grant, project: { uid: string }) => {
     if (!address || !project || !grant) {
@@ -59,7 +59,6 @@ export const useGrantCompletion = ({
     }
 
     setIsCompleting(true);
-    setIsStepper(true);
 
     try {
       changeStepperStep("preparing");
@@ -128,7 +127,7 @@ export const useGrantCompletion = ({
       }
     } finally {
       setIsCompleting(false);
-      setIsStepper(false);
+      dismiss();
     }
   };
 

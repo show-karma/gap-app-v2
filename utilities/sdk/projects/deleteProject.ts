@@ -1,8 +1,8 @@
 import type { GAP, Project, SignerOrProvider } from "@show-karma/karma-gap-sdk";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { errorManager } from "@/components/Utilities/errorManager";
+import type { AttestationStep } from "@/hooks/useAttestationToast";
 import { getProject } from "@/services/project.service";
-import type { TxStepperSteps } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
@@ -12,7 +12,7 @@ export const deleteProject = async (
   signer: SignerOrProvider,
   gap: GAP,
   router: AppRouterInstance,
-  changeStepperStep: (step: TxStepperSteps) => void
+  changeStepperStep: (step: AttestationStep) => void
 ) => {
   try {
     if (!gap) return;
