@@ -21,8 +21,8 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
     config,
     isLoading: isLoadingConfig,
     error: configError,
-  } = useProgramConfig(programId, chainId);
-  const { submitApplication, isSubmitting } = useFundingApplications(programId, chainId);
+  } = useProgramConfig(programId);
+  const { submitApplication, isSubmitting } = useFundingApplications(programId);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   const handleSubmit = async (applicationData: Record<string, any>) => {

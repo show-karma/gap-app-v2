@@ -26,6 +26,14 @@ import { sanitizeObject } from "@/utilities/sanitize";
 // Constants
 const INDEXER_PROCESSING_DELAY_MS = 2000;
 
+/**
+ * Normalize programId by stripping the chainId suffix if present
+ * Supports both "programId" and legacy "programId_chainId" formats
+ */
+const normalizeProgramId = (id: string): string => {
+  return id.includes("_") ? id.split("_")[0] : id;
+};
+
 interface UseMilestoneCompletionVerificationParams {
   projectId: string;
   programId: string;
@@ -88,7 +96,13 @@ export const useMilestoneCompletionVerification = ({
       throw new Error("Failed to fetch project data");
     }
 
-    const grantInstance = fetchedProject.grants.find((g) => g.details?.programId === programId);
+    // Normalize programId for comparison (supports both formats)
+    const normalizedInputId = normalizeProgramId(programId);
+    const grantInstance = fetchedProject.grants.find((g) => {
+      const storedId = g.details?.programId;
+      if (!storedId) return false;
+      return normalizeProgramId(storedId) === normalizedInputId;
+    });
 
     if (!grantInstance) {
       throw new Error("Grant not found");
@@ -187,16 +201,21 @@ export const useMilestoneCompletionVerification = ({
     milestone: GrantMilestoneWithCompletion,
     checkCompletion: boolean,
     userAddress: string,
-    compositeProgramId: string
+    inputProgramId: string
   ) => {
+    // Normalize for comparison (supports both programId formats)
+    const normalizedInputId = normalizeProgramId(inputProgramId);
+
     await retryUntilConditionMet(async () => {
       const updatedProject = await gapClient.fetch.projectById(data.project.uid);
 
       if (!updatedProject) return false;
 
-      const updatedGrant = updatedProject.grants.find(
-        (g) => g.details?.programId === compositeProgramId
-      );
+      const updatedGrant = updatedProject.grants.find((g) => {
+        const storedId = g.details?.programId;
+        if (!storedId) return false;
+        return normalizeProgramId(storedId) === normalizedInputId;
+      });
 
       if (!updatedGrant) return false;
 

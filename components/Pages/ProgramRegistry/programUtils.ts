@@ -2,6 +2,16 @@ import { registryHelper } from "./helper";
 import type { GrantProgram } from "./ProgramList";
 
 /**
+ * Extract MongoDB _id as string - handles both V2 API (string) and legacy ({ $oid: string }) formats
+ */
+function getMongoId(program: GrantProgram): string {
+  if (typeof program._id === "string") {
+    return program._id;
+  }
+  return program._id.$oid;
+}
+
+/**
  * Parse programId_chainID format from URL (e.g., "1018_10" → { programId: "1018", chainId: 10 })
  * Falls back to default chainId if parsing fails
  * @param id - The program ID string, potentially in format "programId_chainID"
@@ -41,7 +51,9 @@ export const parseProgramIdAndChainId = (
 
 /**
  * Get the URL-friendly program ID for a GrantProgram
- * Priority: refToGrant > programId_chainID format > programId > _id.$oid
+ * Priority: refToGrant > programId > _id.$oid
+ * Note: No longer appends chainId - URLs should use just programId
+ * Backward compatibility for reading URLs with chainId is handled by parseProgramIdAndChainId
  * @param program - The GrantProgram object
  * @returns The program ID string to use in URLs
  */
@@ -51,13 +63,9 @@ export const getProgramIdForUrl = (program: GrantProgram): string => {
     return program.refToGrant;
   }
 
-  // Use programId_chainID format if both are available
-  if (program.programId && program.chainID !== undefined) {
-    return `${program.programId}_${program.chainID}`;
-  }
-
-  // Fallback to programId or _id.$oid
-  return program.programId || program._id.$oid || "";
+  // Use just programId (no longer append chainId for cleaner URLs)
+  // Backward compatibility when reading is handled by parseProgramIdAndChainId
+  return program.programId || getMongoId(program) || "";
 };
 
 /**

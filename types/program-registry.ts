@@ -53,7 +53,8 @@ export interface ProgramCreationResult {
 }
 
 export interface ProgramApprovalRequest {
-  id: string;
+  programId: string;
+  chainId: number;
   isValid: "accepted" | "rejected";
 }
 

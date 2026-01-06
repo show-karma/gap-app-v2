@@ -51,9 +51,10 @@ export default function ApplicationDetailPage() {
     applicationId: string;
   };
 
-  // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split("_");
-  const parsedChainId = parseInt(chainId, 10);
+  // Extract normalized programId (remove chainId suffix if present)
+  const programId = combinedProgramId.includes("_")
+    ? combinedProgramId.split("_")[0]
+    : combinedProgramId;
 
   const { hasAccess, isLoading: isLoadingAdmin, checks } = useCommunityAdminAccess(communityId);
 
@@ -82,10 +83,13 @@ export default function ApplicationDetailPage() {
   } = useApplication(applicationId);
 
   // Fetch program config
-  const { data: program, config } = useProgramConfig(programId, parsedChainId);
+  const { data: program, config } = useProgramConfig(programId);
+  
+  // Get chainId from program config if needed for V1 components
+  const chainId = program?.chainID;
 
   // Use the application status hook
-  const { updateStatusAsync } = useApplicationStatus(programId, parsedChainId);
+  const { updateStatusAsync } = useApplicationStatus(programId);
 
   // Use the comments hook
   const {
@@ -432,7 +436,7 @@ export default function ApplicationDetailPage() {
           onClose={handleEditClose}
           application={application}
           programId={programId}
-          chainId={parsedChainId}
+          chainId={chainId}
           formSchema={config?.formSchema}
           onSuccess={handleEditSuccess}
         />
