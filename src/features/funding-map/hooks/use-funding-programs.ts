@@ -42,8 +42,9 @@ export function useFundingProgram(programId: string | null) {
 }
 
 /**
- * Hook to fetch a program by composite ID (programId_chainId format)
- * Now just extracts programId since chainId is no longer needed
+ * Hook to fetch a program by ID
+ * Supports both "programId" (preferred) and legacy "programId_chainId" formats
+ * Automatically normalizes the input to extract just the programId
  */
 export function useFundingProgramByCompositeId(compositeId: string | null) {
   const parsed = compositeId ? fundingProgramsService.parseProgramIdAndChainId(compositeId) : null;

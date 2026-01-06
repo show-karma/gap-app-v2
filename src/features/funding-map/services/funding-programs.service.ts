@@ -66,8 +66,8 @@ export const fundingProgramsService = {
   },
 
   /**
-   * Parse a program ID that may contain chain ID
-   * Format: "programId" or "programId_chainId"
+   * Parse a program ID that may contain chain ID (for backward compatibility)
+   * Format: "programId" (preferred) or "programId_chainId" (legacy)
    * Splits on the LAST underscore to support program IDs containing underscores
    */
   parseProgramIdAndChainId(

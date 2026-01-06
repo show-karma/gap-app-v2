@@ -30,12 +30,10 @@ export function FundingMapList() {
   const selectedProgram = programFromUrl ?? null;
 
   const handleProgramClick = (program: FundingProgramResponse) => {
-    // Use programId_chainId format if programId exists, otherwise just MongoDB _id
-    // MongoDB _id is unique across the collection, so no chainId needed
-    const compositeId = program.programId
-      ? `${program.programId}_${program.chainID}`
-      : program._id.$oid;
-    setProgramId(compositeId);
+    // Use programId (preferred), or MongoDB _id as fallback for programs without programId
+    // MongoDB _id is unique across the collection
+    const id = program.programId || program._id.$oid;
+    setProgramId(id);
   };
 
   const handleDialogClose = (open: boolean) => {
