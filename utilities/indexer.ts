@@ -225,6 +225,9 @@ export const INDEXER = {
       UPDATE: (projectUID: string) => `/projects/${projectUID}/payout-address`,
       GET: (projectUID: string) => `/projects/${projectUID}/payout-address`,
     },
+    CHAIN_PAYOUT_ADDRESS: {
+      UPDATE: (projectId: string) => `/v2/projects/${projectId}/chain-payout-address`,
+    },
     LOGOS: {
       PRESIGNED_URL: () => `/v2/projects/logos/presigned`,
       PROMOTE_TO_PERMANENT: () => `/v2/projects/logos/promote-to-permanent`,

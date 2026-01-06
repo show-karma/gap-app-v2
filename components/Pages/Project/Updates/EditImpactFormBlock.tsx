@@ -13,19 +13,17 @@ import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import { getProjectImpacts } from "@/services/project-impacts.service";
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 const updateSchema = z.object({
   startedAt: z.date({
@@ -84,7 +82,8 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
   });
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
 
   // Load existing impact data
   useEffect(() => {
@@ -108,33 +107,20 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
   const onSubmit: SubmitHandler<UpdateType> = async (data) => {
     if (!address || !project || !impactToEdit) return;
 
-    let gapClient = gap;
     try {
       setIsLoading(true);
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      gapClient = newGapClient;
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { gapClient, walletSigner } = setup;
 
       const fetchedProject = await gapClient.fetch.projectById(project.uid);
       if (!fetchedProject) return;
@@ -167,15 +153,13 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
         createdAt: impactInstance.createdAt,
       });
 
-      changeStepperStep("preparing");
-
-      await updatedImpact.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await updatedImpact.attest(walletSigner as any).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
         }
-        changeStepperStep("indexing");
+        showLoading("Indexing impact...");
         const attestUID = updatedImpact.uid;
         while (retries > 0) {
           try {
@@ -185,12 +169,15 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
             if (foundImpact) {
               retries = 0;
               await refetchImpacts();
-              changeStepperStep("indexed");
+              showSuccess("Impact updated!");
               toast.success("Impact updated successfully");
-              if (onClose) {
-                onClose();
-              }
-              router.refresh();
+              setTimeout(() => {
+                dismiss();
+                if (onClose) {
+                  onClose();
+                }
+                router.refresh();
+              }, 1500);
             }
           } catch {
             // Ignore polling errors, continue retrying
@@ -200,11 +187,11 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
         }
       });
     } catch (error: any) {
+      dismiss();
       errorManager(`Error updating impact ${impactId} from project ${project?.uid}`, error);
       toast.error("There was an error updating the impact. Please try again");
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 

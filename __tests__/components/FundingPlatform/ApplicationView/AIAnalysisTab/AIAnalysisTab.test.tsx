@@ -182,7 +182,7 @@ describe("AIAnalysisTab", () => {
     });
   });
 
-  describe("With Internal Evaluation", () => {
+  describe("With Internal Evaluation Only", () => {
     const appWithInternal: Partial<IFundingApplication> = {
       ...mockApplication,
       internalAIEvaluation: {
@@ -190,7 +190,20 @@ describe("AIAnalysisTab", () => {
       },
     };
 
-    it("renders internal evaluation content when tab is active", async () => {
+    it("defaults to internal tab when only internal evaluation exists", () => {
+      render(
+        <AIAnalysisTab
+          application={appWithInternal as IFundingApplication}
+          program={mockProgram as ProgramWithFormSchema}
+        />
+      );
+
+      // Should show internal evaluation by default (no click needed)
+      expect(screen.getByTestId("internal-evaluation")).toBeInTheDocument();
+      expect(screen.getByTestId("run-internal-btn")).toBeInTheDocument();
+    });
+
+    it("shows empty state for external evaluation when switching to that tab", async () => {
       const user = userEvent.setup();
 
       render(
@@ -200,18 +213,8 @@ describe("AIAnalysisTab", () => {
         />
       );
 
-      await user.click(screen.getByText("Internal Evaluation"));
-
-      expect(screen.getByTestId("internal-evaluation")).toBeInTheDocument();
-    });
-
-    it("still shows empty state for external evaluation", () => {
-      render(
-        <AIAnalysisTab
-          application={appWithInternal as IFundingApplication}
-          program={mockProgram as ProgramWithFormSchema}
-        />
-      );
+      // Need to click External since Internal is default when only internal exists
+      await user.click(screen.getByText("External Evaluation"));
 
       expect(screen.getByText("No External Evaluation Yet")).toBeInTheDocument();
     });
@@ -227,6 +230,19 @@ describe("AIAnalysisTab", () => {
         evaluation: '{"score": 90}',
       },
     };
+
+    it("defaults to external tab when both evaluations exist", () => {
+      render(
+        <AIAnalysisTab
+          application={appWithBoth as IFundingApplication}
+          program={mockProgram as ProgramWithFormSchema}
+        />
+      );
+
+      // External should be the default when both exist
+      expect(screen.getByTestId("external-evaluation")).toBeInTheDocument();
+      expect(screen.getByTestId("run-external-btn")).toBeInTheDocument();
+    });
 
     it("renders external evaluation on external tab", () => {
       render(

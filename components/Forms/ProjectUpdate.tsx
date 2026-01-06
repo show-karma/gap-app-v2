@@ -17,19 +17,18 @@ import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useUnlinkedIndicators } from "@/hooks/useUnlinkedIndicators";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
-import { useStepper } from "@/store/modals/txStepper";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { sendImpactAnswers } from "@/utilities/impact";
@@ -39,7 +38,6 @@ import { PAGES } from "@/utilities/pages";
 import { getIndicatorsByCommunity } from "@/utilities/queries/getIndicatorsByCommunity";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { ExternalLink } from "../Utilities/ExternalLink";
 import { errorManager } from "../Utilities/errorManager";
 import { type CategorizedIndicator, OutputsSection } from "./Outputs";
@@ -247,6 +245,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const { address } = useAccount();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
   const project = useProjectStore((state) => state.project);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -509,7 +508,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     setValue("outputs", outputsToSet);
   }, [editId, updateToEdit, indicatorsData, setValue]);
 
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
 
   const { openShareDialog } = useShareDialogStore();
 
@@ -521,7 +520,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   }));
 
   const createProjectUpdate = async (data: UpdateType) => {
-    let gapClient = gap;
+    const gapClient = gap;
     if (!address || !project) return;
 
     try {
@@ -534,30 +533,18 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       const projectUid = project.uid;
       const projectSlug = project.details?.slug;
 
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: chainId,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      gapClient = newGapClient;
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { walletSigner, gapClient } = setup;
       const schema = gapClient.findSchema("ProjectUpdate");
 
       if (!schema) {
@@ -636,13 +623,13 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
       const projectUpdate = new ProjectUpdate(projectUpdateData as any);
 
-      await projectUpdate.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await projectUpdate.attest(walletSigner as any).then(async (res) => {
         let retries = 1000;
-        changeStepperStep("indexing");
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, projectUpdate.chainID), "POST", {});
         }
+        showLoading("Indexing activity...");
         while (retries > 0) {
           try {
             const attestUID = projectUpdate.uid;
@@ -651,24 +638,27 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
             if (alreadyExists) {
               retries = 0;
-              changeStepperStep("indexed");
+              showSuccess(isEditMode ? "Activity updated!" : "Activity posted!");
               toast.success(
                 isEditMode ? "Activity updated successfully!" : MESSAGES.PROJECT_UPDATE_FORM.SUCCESS
               );
               afterSubmit?.();
-              router.push(PAGES.PROJECT.UPDATES(projectSlug || projectUid));
-              router.refresh();
-              // Only show share dialog for new activities, not edits
-              if (!isEditMode) {
-                openShareDialog({
-                  modalShareText: `🎉 You just dropped an update for ${project?.details?.title}!`,
-                  modalShareSecondText: `That's how progress gets done! Your update is now live onchain—one step closer to greatness. Keep the vibes high and the milestones rolling! 🚀🔥`,
-                  shareText: SHARE_TEXTS.PROJECT_ACTIVITY(
-                    project?.details?.title as string,
-                    (project?.details?.slug || project?.uid) as string
-                  ),
-                });
-              }
+              setTimeout(() => {
+                dismiss();
+                router.push(PAGES.PROJECT.UPDATES(projectSlug || projectUid));
+                router.refresh();
+                // Only show share dialog for new activities, not edits
+                if (!isEditMode) {
+                  openShareDialog({
+                    modalShareText: `🎉 You just dropped an update for ${project?.details?.title}!`,
+                    modalShareSecondText: `That's how progress gets done! Your update is now live onchain—one step closer to greatness. Keep the vibes high and the milestones rolling! 🚀🔥`,
+                    shareText: SHARE_TEXTS.PROJECT_ACTIVITY(
+                      project?.details?.title as string,
+                      (project?.details?.slug || project?.uid) as string
+                    ),
+                  });
+                }
+              }, 1500);
             } else {
               retries -= 1;
               await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -680,6 +670,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         }
       });
     } catch (error) {
+      dismiss();
       errorManager(
         `Error of user ${address} creating project activity for project ${project?.uid}`,
         error,
@@ -704,7 +695,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         }
       );
     } finally {
-      setIsStepper(false);
       setIsLoading(false);
     }
   };

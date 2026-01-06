@@ -449,7 +449,7 @@ export default function ApplicationDetailPage() {
         onConfirm={handleStatusChangeConfirm}
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
-        isReasonRequired={pendingStatus === "revision_requested" || pendingStatus === "rejected"}
+        isReasonRequired={pendingStatus === "revision_requested"}
         application={application}
         programConfig={isFundingProgramConfig(program) ? program : undefined}
       />

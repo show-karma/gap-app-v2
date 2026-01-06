@@ -56,6 +56,9 @@ export const QUERY_KEYS = {
   SETTINGS: {
     AVAILABLE_AI_MODELS: ["available-ai-models"] as const,
   },
+  SEARCH: {
+    PROJECTS: (query: string) => ["search-projects", query] as const,
+  },
   PROJECT: {
     UPDATES: (projectIdOrSlug: string) => ["project-updates", projectIdOrSlug] as const,
     IMPACTS: (projectIdOrSlug: string) => ["project-impacts", projectIdOrSlug] as const,

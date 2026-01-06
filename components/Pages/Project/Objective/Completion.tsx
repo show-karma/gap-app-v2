@@ -9,13 +9,11 @@ import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useGap } from "@/hooks/useGap";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
@@ -23,7 +21,6 @@ import { MESSAGES } from "@/utilities/messages";
 import { ReadMore } from "@/utilities/ReadMore";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -50,10 +47,10 @@ export const ObjectiveCardComplete = ({
   const { isProjectOwner } = useProjectStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
 
-  const { changeStepperStep, setIsStepper } = useStepper();
-  const { gap } = useGap();
+  const { changeStepperStep, setIsStepper } = useAttestationToast();
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
   const { performOffChainRevoke } = useOffChainRevoke();
 
   const params = useParams();
@@ -65,31 +62,18 @@ export const ObjectiveCardComplete = ({
   });
 
   const deleteObjectiveCompletion = async () => {
-    let gapClient = gap;
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: objective.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         return;
       }
 
-      gapClient = newGapClient;
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      if (!walletClient || !gapClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { gapClient, walletSigner } = setup;
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) return;
       const fetchedMilestones = await getProjectObjectives(projectId);
