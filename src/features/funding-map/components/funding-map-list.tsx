@@ -30,9 +30,15 @@ export function FundingMapList() {
   const { data, isLoading, isError, error } = useFundingPrograms(apiParams);
 
   // Fetch program from URL if programId is set
-  const { data: programFromUrl, isLoading: isProgramLoading } = useFundingProgramByCompositeId(
-    programId || null
-  );
+  const {
+    data: programFromUrl,
+    isLoading: isProgramLoading,
+    isFetched: isProgramFetched,
+  } = useFundingProgramByCompositeId(programId || null);
+
+  // Program not found: query completed but returned null
+  const isProgramNotFound =
+    Boolean(programId) && isProgramFetched && !isProgramLoading && !programFromUrl;
 
   const programs = data?.programs ?? [];
   const totalCount = data?.count ?? 0;
@@ -89,6 +95,7 @@ export function FundingMapList() {
         open={dialogOpen}
         onOpenChange={handleDialogClose}
         isLoading={isProgramLoading}
+        isNotFound={isProgramNotFound}
       />
     </section>
   );

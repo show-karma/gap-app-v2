@@ -51,7 +51,9 @@ export const parseProgramIdAndChainId = (
 
 /**
  * Get the URL-friendly program ID for a GrantProgram
- * Priority: refToGrant > programId_chainID format > programId > _id.$oid
+ * Priority: refToGrant > programId > _id.$oid
+ * Note: No longer appends chainId - URLs should use just programId
+ * Backward compatibility for reading URLs with chainId is handled by parseProgramIdAndChainId
  * @param program - The GrantProgram object
  * @returns The program ID string to use in URLs
  */
@@ -61,12 +63,8 @@ export const getProgramIdForUrl = (program: GrantProgram): string => {
     return program.refToGrant;
   }
 
-  // Use programId_chainID format if both are available
-  if (program.programId && program.chainID !== undefined) {
-    return `${program.programId}_${program.chainID}`;
-  }
-
-  // Fallback to programId or MongoDB _id
+  // Use just programId (no longer append chainId for cleaner URLs)
+  // Backward compatibility when reading is handled by parseProgramIdAndChainId
   return program.programId || getMongoId(program) || "";
 };
 

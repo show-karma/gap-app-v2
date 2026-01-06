@@ -9,6 +9,7 @@ import {
   ChevronRight,
   ExternalLink,
   Globe,
+  Search,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -55,6 +56,7 @@ interface FundingProgramDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isLoading?: boolean;
+  isNotFound?: boolean;
 }
 
 function formatBudgetValue(budget: string | undefined): string | null {
@@ -227,6 +229,23 @@ function DialogSkeleton() {
   );
 }
 
+function DialogNotFound() {
+  return (
+    <div className="flex flex-col items-center justify-center gap-4 p-8 sm:p-10 text-center">
+      <DialogTitle className="sr-only">Program not found</DialogTitle>
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+        <Search className="h-8 w-8 text-muted-foreground" />
+      </div>
+      <div className="space-y-2">
+        <h3 className="text-lg font-semibold text-foreground">Program not found</h3>
+        <DialogDescription className="text-sm text-muted-foreground">
+          The funding program you&apos;re looking for doesn&apos;t exist or may have been removed.
+        </DialogDescription>
+      </div>
+    </div>
+  );
+}
+
 function SocialLinks({ socialLinks }: { socialLinks: FundingProgramMetadata["socialLinks"] }) {
   if (!socialLinks) return null;
 
@@ -324,11 +343,22 @@ export function FundingProgramDetailsDialog({
   open,
   onOpenChange,
   isLoading = false,
+  isNotFound = false,
 }: FundingProgramDetailsDialogProps) {
+  const renderContent = () => {
+    if (isNotFound) {
+      return <DialogNotFound />;
+    }
+    if (isLoading || !program) {
+      return <DialogSkeleton />;
+    }
+    return <DialogContentInner program={program} />;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
-        {isLoading || !program ? <DialogSkeleton /> : <DialogContentInner program={program} />}
+        {renderContent()}
       </DialogContent>
     </Dialog>
   );
