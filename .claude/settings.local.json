@@ -41,7 +41,16 @@
       "Bash(test:*)",
       "Bash(python3:*)",
       "Bash(npm run typecheck:*)",
-      "Bash(npm run test:*)"
+      "Bash(npm run test:*)",
+      "WebFetch(domain:app.asana.com)",
+      "mcp__asana__asana_get_task",
+      "Bash(pnpm biome check:*)",
+      "Bash(pnpm biome format:*)",
+      "Skill(commit-commands:commit-push-pr)",
+      "WebFetch(domain:www.karmahq.xyz)",
+      "Skill(commit-commands:commit)",
+      "Bash(git push)",
+      "Bash(head:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
@@ -49,7 +58,6 @@
       "/Users/mmurthy/dev/dapps/karma_protocol/gap-whitelabel-app/src/types",
       "/Users/mmurthy/dev/dapps/karma_protocol/gap-whitelabel-app/src/features/applications/components",
       "/Users/mmurthy/dev/dapps/karma_protocol/gap-whitelabel-app/src/lib",
-      "/Users/mmurthy/dev/dapps/karma_protocol/gap-whitelabel-app/src/app/applications/[applicationId]/edit",
       "/Users/mmurthy/dev/dapps/karma_protocol/gap-whitelabel-app"
     ]
   },

@@ -11,14 +11,34 @@ import { FundingMapFilters } from "./funding-map-filters";
 import { FundingMapPagination } from "./funding-map-pagination";
 import { FundingProgramDetailsDialog } from "./funding-program-details-dialog";
 
+/**
+ * Extract MongoDB _id as string - handles both V2 API (string) and legacy ({ $oid: string }) formats
+ */
+function getProgramId(program: FundingProgramResponse): string {
+  if (typeof program._id === "string") {
+    return program._id;
+  }
+  if (program._id && typeof program._id === "object" && "$oid" in program._id) {
+    return program._id.$oid;
+  }
+  // Fallback to programId or generate a unique key
+  return program.programId || program.id || `program-${program.createdAt}`;
+}
+
 export function FundingMapList() {
   const { apiParams, filters, programId, setProgramId } = useFundingFilters();
   const { data, isLoading, isError, error } = useFundingPrograms(apiParams);
 
   // Fetch program from URL if programId is set
-  const { data: programFromUrl, isLoading: isProgramLoading } = useFundingProgramByCompositeId(
-    programId || null
-  );
+  const {
+    data: programFromUrl,
+    isLoading: isProgramLoading,
+    isFetched: isProgramFetched,
+  } = useFundingProgramByCompositeId(programId || null);
+
+  // Program not found: query completed but returned null
+  const isProgramNotFound =
+    Boolean(programId) && isProgramFetched && !isProgramLoading && !programFromUrl;
 
   const programs = data?.programs ?? [];
   const totalCount = data?.count ?? 0;
@@ -30,12 +50,10 @@ export function FundingMapList() {
   const selectedProgram = programFromUrl ?? null;
 
   const handleProgramClick = (program: FundingProgramResponse) => {
-    // Use programId_chainId format if programId exists, otherwise just MongoDB _id
-    // MongoDB _id is unique across the collection, so no chainId needed
-    const compositeId = program.programId
-      ? `${program.programId}_${program.chainID}`
-      : program._id.$oid;
-    setProgramId(compositeId);
+    // Use programId (preferred), or MongoDB _id as fallback for programs without programId
+    // MongoDB _id is unique across the collection
+    const id = program.programId || getProgramId(program);
+    setProgramId(id);
   };
 
   const handleDialogClose = (open: boolean) => {
@@ -62,7 +80,7 @@ export function FundingMapList() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {programs.map((program) => (
               <FundingMapCard
-                key={program._id.$oid}
+                key={getProgramId(program)}
                 program={program}
                 onClick={() => handleProgramClick(program)}
               />
@@ -77,6 +95,7 @@ export function FundingMapList() {
         open={dialogOpen}
         onOpenChange={handleDialogClose}
         isLoading={isProgramLoading}
+        isNotFound={isProgramNotFound}
       />
     </section>
   );
@@ -130,7 +149,7 @@ function hasActiveFilters(filters: ReturnType<typeof useFundingFilters>["filters
     filters.ecosystems.length > 0 ||
     filters.networks.length > 0 ||
     filters.grantTypes.length > 0 ||
-    filters.onlyOnKarma ||
+    !filters.onlyOnKarma ||
     filters.organizationFilter !== null
   );
 }

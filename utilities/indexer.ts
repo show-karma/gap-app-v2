@@ -19,6 +19,50 @@ export const INDEXER = {
     CREATE: "/registry/offchain/create",
     MANAGERS: (profileId: string, chainId: number) =>
       `/registry/profile/${profileId}/${chainId}/members`,
+    V2: {
+      CREATE: "/v2/program-registry",
+      UPDATE: (programId: string) => `/v2/program-registry/${programId}`,
+      APPROVE: "/v2/program-registry/approve",
+      GET_BY_ID: (programId: string) => `/v2/program-registry/${programId}`,
+      SEARCH: "/v2/program-registry/search",
+      FILTERS: "/v2/program-registry/filters",
+      GET_ALL: (params?: {
+        page?: number;
+        limit?: number;
+        isValid?: "true" | "false" | "null" | "accepted" | "rejected" | "pending" | "all";
+        offChain?: boolean;
+        chainID?: number;
+        name?: string;
+        networks?: string;
+        ecosystems?: string;
+        grantTypes?: string;
+        sortField?: "createdAt" | "updatedAt" | "name" | "programId";
+        sortOrder?: "asc" | "desc";
+        owners?: string;
+      }) => {
+        const queryParams = new URLSearchParams();
+        if (params?.page) queryParams.set("page", params.page.toString());
+        if (params?.limit) queryParams.set("limit", params.limit.toString());
+        if (params?.isValid) queryParams.set("isValid", params.isValid);
+        if (params?.offChain !== undefined) queryParams.set("offChain", params.offChain.toString());
+        if (params?.chainID) queryParams.set("chainID", params.chainID.toString());
+        if (params?.name) queryParams.set("name", params.name);
+        if (params?.networks) queryParams.set("networks", params.networks);
+        if (params?.ecosystems) queryParams.set("ecosystems", params.ecosystems);
+        if (params?.grantTypes) queryParams.set("grantTypes", params.grantTypes);
+        if (params?.sortField) queryParams.set("sortField", params.sortField);
+        if (params?.sortOrder) queryParams.set("sortOrder", params.sortOrder);
+        if (params?.owners) queryParams.set("owners", params.owners);
+        const query = queryParams.toString();
+        return `/v2/program-registry${query ? `?${query}` : ""}`;
+      },
+      GET_PENDING: (limit?: number, offset?: number) => {
+        const params = new URLSearchParams();
+        if (limit) params.set("limit", limit.toString());
+        if (offset) params.set("offset", offset.toString());
+        return `/v2/program-registry/pending${params.toString() ? `?${params.toString()}` : ""}`;
+      },
+    },
   },
   PROJECTS: {
     GET_ALL: (offset: number, limit: number, sortField: string, sortOrder: "asc" | "desc") =>
@@ -53,32 +97,26 @@ export const INDEXER = {
       `/v2/program/funding-details?programId=${programId}&chainId=${chainId}`,
     FUNDING_PROGRAMS: {
       BY_COMMUNITY: (communityId: string) => `/v2/funding-program-configs/community/${communityId}`,
-      GET: (programId: string, chainId: number) =>
-        `/v2/funding-program-configs/${programId}/${chainId}`,
+      GET: (programId: string) => `/v2/funding-program-configs/${programId}`,
       LIST: (community?: string) =>
         `/v2/funding-program-configs${community ? `?community=${community}` : ""}`,
       ENABLED: () => `/v2/funding-program-configs/enabled`,
-      REVIEWERS: (programId: string, chainID: number) =>
-        `/v2/funding-program-configs/${programId}/${chainID}/reviewers`,
-      CHECK_PERMISSION: (programId: string, chainID: number, action?: string) => {
+      REVIEWERS: (programId: string) => `/v2/funding-program-configs/${programId}/reviewers`,
+      CHECK_PERMISSION: (programId: string, action?: string) => {
         const params = new URLSearchParams();
         if (action) params.append("action", action);
-        return `/v2/funding-program-configs/${programId}/${chainID}/check-permission?${params.toString()}`;
+        return `/v2/funding-program-configs/${programId}/check-permission?${params.toString()}`;
       },
       MY_REVIEWER_PROGRAMS: () => `/v2/funding-program-configs/my-reviewer-programs`,
     },
     FUNDING_APPLICATIONS: {
       GET: (applicationId: string) => `/v2/funding-applications/${applicationId}`,
-      BY_PROGRAM: (programId: string, chainId: number) =>
-        `/v2/funding-applications/program/${programId}/${chainId}`,
-      BY_EMAIL: (programId: string, chainId: number, email: string) =>
-        `/v2/funding-applications/program/${programId}/${chainId}/by-email?email=${encodeURIComponent(email)}`,
-      STATISTICS: (programId: string, chainId: number) =>
-        `/v2/funding-applications/program/${programId}/${chainId}/statistics`,
-      EXPORT: (programId: string, chainId: number) =>
-        `/v2/funding-applications/program/${programId}/${chainId}/export`,
-      ADMIN_EXPORT: (programId: string, chainId: number) =>
-        `/v2/funding-applications/admin/${programId}/${chainId}/export`,
+      BY_PROGRAM: (programId: string) => `/v2/funding-applications/program/${programId}`,
+      BY_EMAIL: (programId: string, email: string) =>
+        `/v2/funding-applications/program/${programId}/by-email?email=${encodeURIComponent(email)}`,
+      STATISTICS: (programId: string) => `/v2/funding-applications/program/${programId}/statistics`,
+      EXPORT: (programId: string) => `/v2/funding-applications/program/${programId}/export`,
+      ADMIN_EXPORT: (programId: string) => `/v2/funding-applications/admin/${programId}/export`,
       VERSIONS_TIMELINE: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/versions/timeline`,
       REVIEWERS: (applicationId: string) => `/v2/funding-applications/${applicationId}/reviewers`,
@@ -98,13 +136,12 @@ export const INDEXER = {
       },
     },
     MILESTONE_REVIEWERS: {
-      LIST: (programId: string, chainID: number) =>
-        `/v2/programs/${programId}/${chainID}/milestone-reviewers`,
+      LIST: (programId: string) => `/v2/programs/${programId}/milestone-reviewers`,
     },
     REGISTRY: {
-      GET_ALL: "/v2/registry",
-      GET_BY_ID: (programId: string, chainId: number) => `/v2/registry/${programId}/${chainId}`,
-      GET_FILTERS: "/v2/registry/filters",
+      GET_ALL: "/v2/program-registry/search",
+      GET_BY_ID: (programId: string) => `/v2/program-registry/${programId}`,
+      GET_FILTERS: "/v2/program-registry/filters",
     },
     TRACKS: {
       LIST: (communityUID: string, includeArchived?: boolean) => {
@@ -181,6 +218,9 @@ export const INDEXER = {
     PAYOUT_ADDRESS: {
       UPDATE: (projectUID: string) => `/projects/${projectUID}/payout-address`,
       GET: (projectUID: string) => `/projects/${projectUID}/payout-address`,
+    },
+    CHAIN_PAYOUT_ADDRESS: {
+      UPDATE: (projectId: string) => `/v2/projects/${projectId}/chain-payout-address`,
     },
     LOGOS: {
       PRESIGNED_URL: () => `/v2/projects/logos/presigned`,

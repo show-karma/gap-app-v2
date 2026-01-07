@@ -49,7 +49,8 @@ export interface IFormField {
     | "checkbox"
     | "radio"
     | "date"
-    | "milestone"; // Added for milestone field support
+    | "milestone"
+    | "karma_profile_link";
   label: string;
   placeholder?: string;
   required?: boolean;
@@ -75,7 +76,6 @@ export interface IFormSchema {
   settings?: {
     submitButtonText?: string;
     confirmationMessage?: string;
-    applicationDeadline?: string;
     donationRound?: boolean;
     approvalEmailTemplate?: string; // Markdown/HTML template for approval emails with variable placeholders
     approvalEmailSubject?: string; // Custom subject for approval emails with variable placeholders (e.g., {{programName}})
@@ -185,7 +185,7 @@ export interface IApplicationViewProps {
 
 export interface IApplicationListProps {
   programId: string;
-  chainID: number;
+  chainID?: number; // Optional - V2 endpoints use programId only
   onApplicationSelect?: (application: IFundingApplication) => void;
   onApplicationHover?: (applicationId: string) => void;
   statusFilter?: FundingApplicationStatusV2;
@@ -194,7 +194,6 @@ export interface IApplicationListProps {
 // V2 Request/Response Types
 export interface IApplicationSubmitRequest {
   programId: string;
-  chainID: number;
   applicantEmail: string;
   applicationData: Record<string, any>;
 }

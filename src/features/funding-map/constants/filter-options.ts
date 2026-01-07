@@ -156,7 +156,7 @@ export const FUNDING_MAP_SORT_OPTIONS = [
   { value: "ending-soon", label: "Ending Soon" },
 ] as const;
 
-export const FUNDING_MAP_PAGE_SIZE = 12;
+export const FUNDING_MAP_PAGE_SIZE = 24;
 
 export const FUNDING_MAP_DEFAULT_CHAIN_ID =
   process.env.NEXT_PUBLIC_ENV === "production" ? 42161 : 11155111;

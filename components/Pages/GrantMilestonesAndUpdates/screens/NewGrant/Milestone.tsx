@@ -343,9 +343,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
           <div className="flex flex-col gap-2">
             <h3 className="text-lg font-bold">{currentMilestone.title}</h3>
             <p>
-              {currentMilestone.startsAt
-                ? `${formatDate(currentMilestone.startsAt)} - `
-                : null}
+              {currentMilestone.startsAt ? `${formatDate(currentMilestone.startsAt)} - ` : null}
               {formatDate(currentMilestone.endsAt)}
             </p>
           </div>

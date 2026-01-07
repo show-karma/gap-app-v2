@@ -12,6 +12,7 @@ import {
   useApplication,
   useApplicationStatus,
   useFundingApplications,
+  useProgramConfig,
 } from "@/hooks/useFundingPlatform";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
@@ -29,9 +30,11 @@ export default function ApplicationsPage() {
     programId: string;
   };
 
-  // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split("_");
-  const parsedChainId = parseInt(chainId, 10);
+  // Extract programId from URL parameter
+  // URL may contain "programId" or "programId_chainId" format
+  const programId = combinedProgramId.includes("_")
+    ? combinedProgramId.split("_")[0]
+    : combinedProgramId;
 
   // Parse initial filters from URL
   const initialFilters = useMemo((): IApplicationFilters => {
@@ -66,31 +69,28 @@ export default function ApplicationsPage() {
   const { hasAccess: hasAdminAccess, isLoading: isLoadingAdmin } =
     useCommunityAdminAccess(communityId);
 
+  // Fetch program config for metadata
+  const { data: programConfig } = useProgramConfig(programId);
+
   // Check if user is a reviewer for this program
   const { hasPermission: canView, isLoading: isLoadingPermission } = usePermissions({
     programId,
-    chainID: parsedChainId,
     action: "read",
   });
 
   const { hasPermission: _canComment } = usePermissions({
     programId,
-    chainID: parsedChainId,
     action: "comment",
   });
 
   // Use the funding applications hook to get applications data
-  const { applications: _applications } = useFundingApplications(
-    programId,
-    parsedChainId,
-    initialFilters
-  );
+  const { applications: _applications } = useFundingApplications(programId, initialFilters);
 
   // Prefetch hook for better UX on hover
   const { prefetchApplication } = useApplication(null);
 
   // Use the custom application status hook
-  const { updateStatusAsync } = useApplicationStatus(programId, parsedChainId);
+  const { updateStatusAsync } = useApplicationStatus(programId);
 
   // Admin, owner, staff have full access; reviewers have view and comment access
   const hasAccess = hasAdminAccess || canView;
@@ -184,7 +184,6 @@ export default function ApplicationsPage() {
       <div className="sm:px-3 md:px-4 px-6 py-2 flex-1 ">
         <ApplicationListWithAPI
           programId={programId}
-          chainId={parsedChainId}
           showStatusActions={isAdmin}
           onApplicationSelect={handleApplicationSelect}
           onApplicationHover={handleApplicationHover}

@@ -30,7 +30,9 @@ export function FundingMapSidebar() {
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-5 rounded-xl p-5">
           <Bell className="h-6 w-6 text-foreground" />
-          <p className="font-medium text-foreground">Be the first to know a new program launches</p>
+          <p className="font-medium text-foreground">
+            Be the first to know when a new program launches
+          </p>
           <iframe
             src="https://paragraph.com/@karmahq/embed?minimal=true&vertical=true"
             width="100%"
@@ -60,9 +62,10 @@ export function FundingMapSidebar() {
       <div className="flex flex-col gap-5 rounded-xl p-5">
         <CircleUser className="h-6 w-6 text-foreground" />
         <div className="flex flex-col gap-3">
-          <p className="font-medium text-foreground">Create a builder profile</p>
+          <p className="font-medium text-foreground">Create your project profile</p>
           <p className="text-sm font-medium text-muted-foreground">
-            Create a profile and start receiving community donations immediately.
+            Create a profile to start building onchain reputation, endorsements and community
+            donations.
           </p>
         </div>
         <ProjectDialog

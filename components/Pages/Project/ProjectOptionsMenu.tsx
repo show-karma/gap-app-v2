@@ -21,11 +21,13 @@ import { useAccount } from "wagmi";
 import { AdminTransferOwnershipDialog } from "@/components/Dialogs/AdminTransferOwnershipDialog";
 import { GithubIcon } from "@/components/Icons";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useContactInfo } from "@/hooks/useContactInfo";
-import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useStaff } from "@/hooks/useStaff";
 import { useWallet } from "@/hooks/useWallet";
+import { SetChainPayoutAddressModal } from "@/src/features/chain-payout-address";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
@@ -33,18 +35,12 @@ import { useGrantGenieModalStore } from "@/store/modals/genie";
 import { useMergeModalStore } from "@/store/modals/merge";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
-import { useStepper } from "@/store/modals/txStepper";
-import type { Project as ProjectResponse } from "@/types/v2/project";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { MESSAGES } from "@/utilities/messages";
 import { deleteProject, getProjectById } from "@/utilities/sdk";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { LinkContractAddressButton } from "./LinkContractAddressButton";
 import { LinkDivviWalletButton } from "./LinkDivviWalletButton";
 import { LinkGithubRepoButton } from "./LinkGithubRepoButton";
 import { LinkOSOProfileButton } from "./LinkOSOProfileButton";
-import { SetPayoutAddressButton } from "./SetPayoutAddressButton";
 
 const ProjectDialog = dynamic(
   () => import("@/components/Dialogs/ProjectDialog").then((mod) => mod.ProjectDialog),
@@ -84,8 +80,8 @@ export const ProjectOptionsMenu = () => {
   const { authenticated: isAuthenticated } = useAuth();
   const { switchChainAsync } = useWallet();
   const router = useRouter();
-  const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
   const { isProjectEditModalOpen, openProjectEditModal } = useProjectEditModalStore();
   const { isMergeModalOpen, openMergeModal } = useMergeModalStore();
   const { openGrantGenieModal, isGrantGenieModalOpen } = useGrantGenieModalStore();
@@ -93,7 +89,7 @@ export const ProjectOptionsMenu = () => {
     useTransferOwnershipModalStore();
   const { isAdminTransferOwnershipModalOpen, openAdminTransferOwnershipModal } =
     useAdminTransferOwnershipModalStore();
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectOwner, refreshProject } = useProjectStore();
   const { data: contactsInfo } = useContactInfo(projectId);
   const { isOwner: isContractOwner } = useOwnerStore();
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
@@ -133,27 +129,21 @@ export const ProjectOptionsMenu = () => {
     if (!address || !project) return;
     setIsDeleting(true);
     try {
-      const { success, chainId: actualChainId } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsDeleting(false);
         return;
       }
 
-      const { walletClient, error } = await safeGetWalletClient(actualChainId, true, setIsDeleting);
-
-      if (error || !walletClient) {
-        return;
-      }
-
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { gapClient, walletSigner } = setup;
       const fetchedProject = await getProjectById(projectId);
-      if (!fetchedProject || !gap) return;
-      await deleteProject(fetchedProject, walletSigner, gap, router, changeStepperStep).then(
+      if (!fetchedProject || !gapClient) return;
+      await deleteProject(fetchedProject, walletSigner, gapClient, router, changeStepperStep).then(
         async () => {
           toast.success(MESSAGES.PROJECT.DELETE.SUCCESS);
         }
@@ -233,11 +223,12 @@ export const ProjectOptionsMenu = () => {
             />
           )}
           {showSetPayoutDialog && (
-            <SetPayoutAddressButton
-              buttonElement={null}
-              buttonClassName={buttonClassName}
-              project={project}
+            <SetChainPayoutAddressModal
+              isOpen={showSetPayoutDialog}
               onClose={handleSetPayoutDialogClose}
+              projectId={project.uid}
+              currentAddresses={project.chainPayoutAddress}
+              onSuccess={() => refreshProject()}
             />
           )}
           {showDeleteDialog && (
@@ -258,7 +249,11 @@ export const ProjectOptionsMenu = () => {
       )}
 
       {!isStaffLoading && (isAuthorized || isStaff || isAuthenticated) && (
-        <Menu as="div" className={`relative inline-block text-left z-1`}>
+        <Menu
+          as="div"
+          className={`relative inline-block text-left z-1`}
+          data-testid="project-options-menu"
+        >
           <div>
             <Menu.Button className="w-max bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-2 rounded-lg">
               <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />

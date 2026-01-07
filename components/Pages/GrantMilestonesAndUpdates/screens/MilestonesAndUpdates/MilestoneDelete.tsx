@@ -4,20 +4,18 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useGap } from "@/hooks/useGap";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
 import type { GrantMilestone } from "@/types/v2/grant";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { retryUntilConditionMet } from "@/utilities/retries";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { getProjectById } from "@/utilities/sdk";
 
 interface MilestoneDeleteProps {
   milestone: GrantMilestone;
@@ -28,8 +26,8 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
 
   const { switchChainAsync } = useWallet();
   const { chain, address } = useAccount();
-  const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const { project, isProjectOwner } = useProjectStore();
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
@@ -38,38 +36,27 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const { performOffChainRevoke } = useOffChainRevoke();
 
   const deleteFn = async () => {
-    console.log("deleteFn", milestone.chainID);
+    if (!address || !project) return;
     setIsDeletingMilestone(true);
-    let gapClient = gap;
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: milestone.chainID || 0,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsDeletingMilestone(false);
         return;
       }
 
-      gapClient = newGapClient;
+      const { gapClient, walletSigner } = setup;
       const milestoneUID = milestone.uid;
 
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
+      const fetchedProject = await getProjectById(project.uid);
+      if (!fetchedProject || !gapClient) return;
 
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      if (!walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet or gap client");
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
-      const instanceProject = await gapClient.fetch.projectById(project?.uid);
+      const instanceProject = await gapClient.fetch.projectById(project.uid);
       const grantInstance = instanceProject?.grants.find(
         (item) => item.uid.toLowerCase() === (milestone.refUID?.toLowerCase() ?? "")
       );

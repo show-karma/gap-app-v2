@@ -21,14 +21,14 @@ export default function ReviewerQuestionBuilderPage() {
     programId: string;
   };
 
-  // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split("_");
-  const parsedChainId = parseInt(chainId, 10);
+  // Extract programId from the combined format if present (e.g., "777_11155111" -> "777")
+  const programId = combinedProgramId.includes("_")
+    ? combinedProgramId.split("_")[0]
+    : combinedProgramId;
 
   // Check if user is a reviewer for this program
   const { hasPermission: canView, isLoading: isLoadingPermission } = usePermissions({
     programId,
-    chainID: parsedChainId,
     action: "read",
   });
 
@@ -37,20 +37,20 @@ export default function ReviewerQuestionBuilderPage() {
     schema: existingSchema,
     isLoading: isLoadingSchema,
     error: schemaError,
-  } = useQuestionBuilderSchema(programId, parsedChainId);
+  } = useQuestionBuilderSchema(programId);
 
   const {
     schema: existingPostApprovalSchema,
     isLoading: isLoadingPostApprovalSchema,
     error: postApprovalSchemaError,
-  } = usePostApprovalSchema(programId, parsedChainId);
+  } = usePostApprovalSchema(programId);
 
   const handleBackClick = () => {
     router.push(PAGES.REVIEWER.DASHBOARD(communityId));
   };
 
   const handleViewApplications = () => {
-    router.push(PAGES.REVIEWER.APPLICATIONS(communityId, programId, parsedChainId));
+    router.push(PAGES.REVIEWER.APPLICATIONS(communityId, programId));
   };
 
   if (isLoadingPermission || isLoadingSchema || isLoadingPostApprovalSchema) {
@@ -120,9 +120,7 @@ export default function ReviewerQuestionBuilderPage() {
 
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">Form Builder</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Program ID: {programId} | Chain ID: {parsedChainId}
-                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Program ID: {programId}</p>
               </div>
             </div>
 
@@ -155,7 +153,6 @@ export default function ReviewerQuestionBuilderPage() {
           initialSchema={existingSchema}
           onSave={undefined} // No save functionality for reviewers
           programId={programId}
-          chainId={parsedChainId}
           communityId={communityId}
           readOnly={true} // Enable read-only mode
           initialPostApprovalSchema={existingPostApprovalSchema || undefined}

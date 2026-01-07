@@ -37,7 +37,7 @@ export function FundingMapFilters() {
     filters.ecosystems.length > 0 ||
     filters.categories.length > 0 ||
     filters.grantTypes.length > 0 ||
-    filters.onlyOnKarma ||
+    !filters.onlyOnKarma ||
     filters.organizationFilter !== null;
 
   return (

@@ -44,31 +44,33 @@ export function MilestonesReviewPage({
     checks,
   } = useCommunityAdminAccess(communityId);
 
-  // Extract programId and chainId from combined format (e.g., "959_42161")
+  // Extract programId from URL param (supports both "959" and legacy "959_42161" formats)
   const { parsedProgramId, parsedChainId } = useMemo(() => {
-    const [id, chain] = programId.split("_");
+    // Check if the programId contains chainId suffix (legacy format)
+    if (programId.includes("_")) {
+      const [id, chain] = programId.split("_");
+      return {
+        parsedProgramId: id,
+        parsedChainId: chain ? parseInt(chain, 10) : undefined,
+      };
+    }
+    // New format: programId only
     return {
-      parsedProgramId: id,
-      parsedChainId: chain ? parseInt(chain, 10) : undefined,
+      parsedProgramId: programId,
+      parsedChainId: undefined,
     };
   }, [programId]);
 
   // Check if user is a reviewer for this program
-  const { isReviewer, isLoading: isLoadingReviewer } = useIsReviewer(
-    parsedProgramId,
-    parsedChainId
-  );
+  const { isReviewer, isLoading: isLoadingReviewer } = useIsReviewer(parsedProgramId);
 
   // Check if user is a milestone reviewer for this program
   const { programs: reviewerPrograms } = useReviewerPrograms();
   const isMilestoneReviewer = useMemo(() => {
     return reviewerPrograms?.some(
-      (program) =>
-        program.programId === parsedProgramId &&
-        program.chainID === parsedChainId &&
-        program.isMilestoneReviewer === true
+      (program) => program.programId === parsedProgramId && program.isMilestoneReviewer === true
     );
-  }, [reviewerPrograms, parsedProgramId, parsedChainId]);
+  }, [reviewerPrograms, parsedProgramId]);
 
   // Determine if user can verify milestones (must be before early returns)
   // Only milestone reviewers, admins, contract owners, and staff can verify/complete/sync
@@ -107,10 +109,16 @@ export function MilestonesReviewPage({
 
   // Get grant name from first milestone's programId (must be before any returns)
   const grantName = useMemo(() => {
-    return data?.grantMilestones[0]?.programId
-      ? `Program ${data.grantMilestones[0].programId.split("_")[0]}`
-      : `Program ${programId}`;
-  }, [data?.grantMilestones, programId]);
+    const milestoneProgramId = data?.grantMilestones[0]?.programId;
+    if (milestoneProgramId) {
+      // Normalize programId (strip chainId if present)
+      const normalizedId = milestoneProgramId.includes("_")
+        ? milestoneProgramId.split("_")[0]
+        : milestoneProgramId;
+      return `Program ${normalizedId}`;
+    }
+    return `Program ${parsedProgramId}`;
+  }, [data?.grantMilestones, parsedProgramId]);
 
   // Memoized back button configuration
   const backButtonConfig = useMemo(() => {
@@ -118,13 +126,8 @@ export function MilestonesReviewPage({
     if (referrer === "application" && referenceNumber) {
       const appUrl = hasAdminAccess
         ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
-        : isReviewer && parsedChainId
-          ? PAGES.REVIEWER.APPLICATION_DETAIL(
-              communityId,
-              parsedProgramId,
-              parsedChainId,
-              referenceNumber
-            )
+        : isReviewer
+          ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, referenceNumber)
           : null;
 
       if (appUrl) {
@@ -145,7 +148,6 @@ export function MilestonesReviewPage({
     communityId,
     programId,
     parsedProgramId,
-    parsedChainId,
   ]);
 
   // Memoized milestone review URL - only returns URL if application is approved
@@ -153,13 +155,8 @@ export function MilestonesReviewPage({
     if (fundingApplication?.status?.toLowerCase() === "approved" && referenceNumber) {
       const appUrl = hasAdminAccess
         ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
-        : isReviewer && parsedChainId
-          ? PAGES.REVIEWER.APPLICATION_DETAIL(
-              communityId,
-              parsedProgramId,
-              parsedChainId,
-              referenceNumber
-            )
+        : isReviewer
+          ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, referenceNumber)
           : null;
 
       return appUrl;
@@ -173,7 +170,6 @@ export function MilestonesReviewPage({
     communityId,
     programId,
     parsedProgramId,
-    parsedChainId,
   ]);
 
   const { verifyMilestone, isVerifying } = useMilestoneCompletionVerification({

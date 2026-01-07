@@ -76,7 +76,16 @@ export const getCommunityProjects = async (
   } = {}
 ): Promise<CommunityProjects> => {
   try {
-    const [data] = await fetchData(INDEXER.COMMUNITY.V2.PROJECTS(slug, options));
+    // Normalize programId (remove chainId suffix if present) before sending to API
+    const normalizedOptions = {
+      ...options,
+      selectedProgramId: options.selectedProgramId
+        ? options.selectedProgramId.includes("_")
+          ? options.selectedProgramId.split("_")[0]
+          : options.selectedProgramId
+        : undefined,
+    };
+    const [data] = await fetchData(INDEXER.COMMUNITY.V2.PROJECTS(slug, normalizedOptions));
 
     if (data) {
       return data as CommunityProjects;

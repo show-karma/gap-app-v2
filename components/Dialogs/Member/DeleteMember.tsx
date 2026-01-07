@@ -8,17 +8,15 @@ import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { getProjectById } from "@/utilities/sdk";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 const _DeleteDialog = dynamic(() =>
   import("@/components/DeleteDialog").then((mod) => mod.DeleteDialog)
@@ -34,48 +32,30 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
   const { gap } = useGap();
   const { address, chain } = useAccount();
   const { project } = useProjectStore();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, setIsStepper } = useAttestationToast();
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { performOffChainRevoke } = useOffChainRevoke();
 
   const deleteMember = async () => {
     // await deleteMemberFromProject(memberAddress);
-    let gapClient = gap;
     if (!address || !project) return;
     try {
       setIsDeleting(true);
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+
+      const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsDeleting(false);
         return;
       }
 
-      gapClient = newGapClient;
-      // Replace direct getWalletClient call with safeGetWalletClient
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      // Verify member exists in V2 project structure
-      const v2Member = project.members?.find(
-        (item) => item.address.toLowerCase() === memberAddress.toLowerCase()
-      );
-      if (!v2Member) throw new Error("Member not found");
-
-      // Get SDK project to access member.revoke() method
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { walletSigner, gapClient } = setup;
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) throw new Error("Project not found");
       const member = fetchedProject.members.find(

@@ -3,17 +3,16 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
-import { useStepper } from "@/store/modals/txStepper";
 import type { Grant } from "@/types/v2/grant";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import {
   buildRevocationPayload,
@@ -22,7 +21,6 @@ import {
 } from "@/utilities/grantCompletionHelpers";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 interface UseGrantCompletionRevokeProps {
   grant: Grant;
@@ -46,7 +44,8 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { changeStepperStep, dismiss } = useAttestationToast();
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const { refetch: refetchGrants } = useProjectGrants(projectIdOrSlug);
   const { refreshGrant } = useGrantStore();
@@ -81,17 +80,16 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
       if (!isOnChainAuthorized) {
         // Use off-chain revocation for users without on-chain authorization
         // No wallet connection needed for off-chain revocation
-        setIsStepper(true);
         await performOffChainRevoke({
           uid: grant.completed.uid as `0x${string}`,
           chainID: chainID,
           checkIfExists: checkIfCompletionExists,
           onSuccess: () => {
             changeStepperStep("indexed");
-            setIsStepper(false);
+            dismiss();
           },
           onError: (error) => {
-            setIsStepper(false);
+            dismiss();
             console.error("Off-chain revocation failed:", error);
           },
           toastMessages: {
@@ -105,30 +103,18 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
       }
 
       // On-chain path requires wallet connection
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsRevoking(false);
         return;
       }
 
-      const gapClient = newGapClient;
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-
-      const walletSigner = await walletClientToSigner(walletClient);
+      const { gapClient, walletSigner } = setup;
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
       const grantInstance = instanceProject?.grants.find(
         (item) => item.uid.toLowerCase() === grant.uid.toLowerCase()
@@ -139,7 +125,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
       }
 
       // Authorized AND attester matches - proceed with on-chain revocation
-      setIsStepper(true);
+      changeStepperStep("preparing");
       validateGrantCompletion(grantInstance.completed);
 
       const schemaToUse = grantInstance.completed.schema;
@@ -178,7 +164,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
         toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS);
       } catch (onChainError: any) {
         // Fallback to off-chain revocation if on-chain fails
-        setIsStepper(false); // Reset stepper since we're falling back
+        dismiss(); // Reset toast since we're falling back
 
         toast("On-chain revocation unavailable. Attempting off-chain revocation...");
 
@@ -188,10 +174,10 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
           checkIfExists: checkIfCompletionExists,
           onSuccess: () => {
             changeStepperStep("indexed");
-            setIsStepper(false);
+            dismiss();
           },
           onError: (error) => {
-            setIsStepper(false);
+            dismiss();
             console.error("Fallback off-chain revocation failed:", error);
           },
           toastMessages: {
@@ -218,7 +204,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
       });
     } finally {
       setIsRevoking(false);
-      setIsStepper(false);
+      dismiss();
     }
   };
 

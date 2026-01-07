@@ -78,8 +78,11 @@ export function validateChainId(chainID: number | string): boolean {
 }
 
 /**
- * Validates a combined program identifier in format: programId_chainID
- * @param combinedId - The combined identifier to validate
+ * Validates a program identifier
+ * Accepts both formats:
+ * - Normalized: "986" (programId only, preferred format)
+ * - Composite: "986_42161" (programId_chainID, backward compatibility)
+ * @param combinedId - The identifier to validate
  * @returns Object with validation result and parsed components
  */
 export function validateProgramIdentifier(combinedId: string): {
@@ -92,46 +95,66 @@ export function validateProgramIdentifier(combinedId: string): {
     return { valid: false, error: "Invalid program identifier format" };
   }
 
-  const parts = combinedId.trim().split("_");
+  const trimmedId = combinedId.trim();
+  const parts = trimmedId.split("_");
 
-  if (parts.length !== 2) {
+  // Handle normalized format (just programId, no chainId)
+  if (parts.length === 1) {
+    const programId = parts[0];
+    if (!validateProgramId(programId)) {
+      return {
+        valid: false,
+        error: "Invalid program ID format",
+      };
+    }
     return {
-      valid: false,
-      error: "Program identifier must be in format: programId_chainID",
+      valid: true,
+      programId,
+      chainID: undefined, // chainID is optional for normalized format
     };
   }
 
-  const [programId, chainIdStr] = parts;
+  // Handle composite format (programId_chainID) for backward compatibility
+  if (parts.length === 2) {
+    const [programId, chainIdStr] = parts;
 
-  if (!validateProgramId(programId)) {
+    if (!validateProgramId(programId)) {
+      return {
+        valid: false,
+        error: "Invalid program ID format",
+      };
+    }
+
+    if (!validateChainId(chainIdStr)) {
+      return {
+        valid: false,
+        error: "Invalid chain ID format",
+      };
+    }
+
     return {
-      valid: false,
-      error: "Invalid program ID format",
+      valid: true,
+      programId,
+      chainID: parseInt(chainIdStr, 10),
     };
   }
 
-  if (!validateChainId(chainIdStr)) {
-    return {
-      valid: false,
-      error: "Invalid chain ID format",
-    };
-  }
-
+  // Invalid format (more than one underscore)
   return {
-    valid: true,
-    programId,
-    chainID: parseInt(chainIdStr, 10),
+    valid: false,
+    error: "Program identifier must be in format: programId or programId_chainID",
   };
 }
 
 /**
  * Validates an array of program identifiers
+ * Accepts both normalized (programId) and composite (programId_chainID) formats
  * @param programIds - Array of program identifiers to validate
  * @returns Object with validation result and errors
  */
 export function validateProgramIdentifiers(programIds: string[]): {
   valid: boolean;
-  validIds: Array<{ programId: string; chainID: number }>;
+  validIds: Array<{ programId: string; chainID?: number }>;
   errors: Array<{ id: string; error: string }>;
 } {
   if (!Array.isArray(programIds)) {
@@ -142,13 +165,17 @@ export function validateProgramIdentifiers(programIds: string[]): {
     };
   }
 
-  const validIds: Array<{ programId: string; chainID: number }> = [];
+  const validIds: Array<{ programId: string; chainID?: number }> = [];
   const errors: Array<{ id: string; error: string }> = [];
 
   programIds.forEach((id) => {
     const result = validateProgramIdentifier(id);
-    if (result.valid && result.programId && result.chainID) {
-      validIds.push({ programId: result.programId, chainID: result.chainID });
+    if (result.valid && result.programId) {
+      // Accept both formats: normalized (no chainID) and composite (with chainID)
+      validIds.push({
+        programId: result.programId,
+        chainID: result.chainID, // chainID is optional for normalized format
+      });
     } else {
       errors.push({ id, error: result.error || "Invalid format" });
     }

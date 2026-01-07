@@ -7,8 +7,8 @@ import type { FormSchema } from "@/types/question-builder";
 
 // Query keys for caching
 const QUERY_KEYS = {
-  questionSchema: (programId: string, chainId: number) => ["question-schema", programId, chainId],
-  programConfig: (programId: string, chainId: number) => ["program-config", programId, chainId],
+  questionSchema: (programId: string) => ["question-schema", programId],
+  programConfig: (programId: string) => ["program-config", programId],
 };
 
 /**
@@ -32,20 +32,17 @@ function createFormSchemaHook(
     options?.errorMessage ||
     (isPostApproval ? "Failed to save post approval form schema" : "Failed to save form schema");
 
-  return function useFormSchema(programId: string, chainId: number) {
+  return function useFormSchema(programId: string) {
     const queryClient = useQueryClient();
     const queryKey = isPostApproval
-      ? [...QUERY_KEYS.questionSchema(programId, chainId), "post-approval"]
-      : QUERY_KEYS.questionSchema(programId, chainId);
+      ? [...QUERY_KEYS.questionSchema(programId), "post-approval"]
+      : QUERY_KEYS.questionSchema(programId);
 
     const schemaQuery = useQuery({
       queryKey,
       queryFn: async () => {
         try {
-          const result = await fundingPlatformService.programs.getProgramConfiguration(
-            programId,
-            chainId
-          );
+          const result = await fundingPlatformService.programs.getProgramConfiguration(programId);
 
           // The service returns FundingProgram type, config is in applicationConfig
           const config = result?.applicationConfig;
@@ -65,7 +62,7 @@ function createFormSchemaHook(
           throw error;
         }
       },
-      enabled: !!programId && !!chainId,
+      enabled: !!programId,
     });
 
     const updateSchemaMutation = useMutation({
@@ -81,15 +78,10 @@ function createFormSchemaHook(
           // The backend should handle setting defaults for other required fields
           const newConfig: Partial<IFundingProgramConfig> = {
             programId,
-            chainID: chainId,
             [schemaField]: schema,
             isEnabled: true,
           };
-          return fundingPlatformService.programs.createProgramConfiguration(
-            programId,
-            chainId,
-            newConfig
-          );
+          return fundingPlatformService.programs.createProgramConfiguration(programId, newConfig);
         }
 
         // For existing configs, preserve all fields and only update the relevant schema
@@ -98,16 +90,12 @@ function createFormSchemaHook(
           [schemaField]: schema,
         };
 
-        return fundingPlatformService.programs.updateProgramConfiguration(
-          programId,
-          chainId,
-          updatedConfig
-        );
+        return fundingPlatformService.programs.updateProgramConfiguration(programId, updatedConfig);
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey });
         queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.programConfig(programId, chainId),
+          queryKey: QUERY_KEYS.programConfig(programId),
         });
         toast.success(successMessage);
       },

@@ -229,8 +229,10 @@ export const unassignTrackFromProgram = async (
  */
 export const fetchProgramTracks = async (programId: string): Promise<ITrackResponse[]> => {
   try {
+    // Normalize programId (remove chainId suffix if present) before sending to API
+    const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
     const [data, error] = await fetchData<Track[]>(
-      INDEXER.V2.TRACKS.PROGRAM_TRACKS(programId),
+      INDEXER.V2.TRACKS.PROGRAM_TRACKS(normalizedProgramId),
       "GET",
       {},
       {},
@@ -347,8 +349,10 @@ export const fetchProjectsByTrack = async (
   trackId?: string
 ): Promise<IProjectTrackResponse[]> => {
   try {
+    // Normalize programId (remove chainId suffix if present) before sending to API
+    const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
     const [data, error] = await fetchData<IProjectTrackResponse[]>(
-      INDEXER.V2.TRACKS.PROJECTS_BY_TRACK(communityId, programId, trackId),
+      INDEXER.V2.TRACKS.PROJECTS_BY_TRACK(communityId, normalizedProgramId, trackId),
       "GET",
       {},
       {},

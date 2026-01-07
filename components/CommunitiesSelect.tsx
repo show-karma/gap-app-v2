@@ -1,6 +1,7 @@
 "use client";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
+import { blo } from "blo";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
 import Image from "next/image";
 import pluralize from "pluralize";
@@ -11,6 +12,23 @@ import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
+
+const isValidImageUrl = (url: string | undefined): boolean => {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
+const getCommunityLogo = (logoUrl: string | undefined, uid: string): string => {
+  if (isValidImageUrl(logoUrl)) {
+    return logoUrl as string;
+  }
+  return blo(uid as `0x${string}`);
+};
 
 interface CommunitiesSelectProps {
   onSelectFunction: (value: Community) => void;
@@ -75,7 +93,10 @@ export const CommunitiesSelect: FC<CommunitiesSelectProps> = ({
                 <div className="flex flex-row gap-2 items-center justify-start w-full">
                   <div className="min-w-5 min-h-5 w-5 h-5 m-0">
                     <Image
-                      src={community.details?.imageURL || "/placeholder.png"}
+                      src={getCommunityLogo(
+                        community.details?.logoUrl || community.details?.imageURL,
+                        community.uid
+                      )}
                       alt={community.details?.name || "Community"}
                       width={20}
                       height={20}

@@ -1,8 +1,9 @@
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck, Calendar } from "lucide-react";
 import Image from "next/image";
 import type { KeyboardEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import type { FundingProgramResponse } from "../types/funding-program";
 import { isValidImageUrl } from "../utils/image-utils";
@@ -33,6 +34,8 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
   const description = metadata?.description;
   const grantTypes = metadata?.grantTypes;
   const organizations = metadata?.organizations;
+  const endsAt = formatDate(metadata?.endsAt, "UTC", "MMM D, YYYY");
+  const hasEnded = metadata?.endsAt && new Date(metadata.endsAt) < new Date();
 
   // Check if we have valid communities with names
   const validCommunities = communities?.filter((c) => c.name && c.name.trim().length > 0) ?? [];
@@ -146,6 +149,15 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
               </Badge>
             ))}
         </div>
+
+        {endsAt && (
+          <div className="flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 w-fit">
+            <Calendar className="h-3 w-3" />
+            <span>
+              {hasEnded ? "Ended" : "Ends"} {endsAt}
+            </span>
+          </div>
+        )}
       </div>
     </Card>
   );

@@ -103,7 +103,7 @@ export function useFundingFilters() {
 
   const [onlyOnKarma, setOnlyOnKarma] = useQueryState(
     "onlyOnKarma",
-    parseAsBoolean.withDefault(false).withOptions({ clearOnDefault: true })
+    parseAsBoolean.withDefault(true).withOptions({ clearOnDefault: true })
   );
 
   // Organization filter - stores as "community:uid" or "organization:name"
@@ -112,7 +112,7 @@ export function useFundingFilters() {
     parseAsString.withDefault("").withOptions({ clearOnDefault: true })
   );
 
-  // Program ID for opening the details dialog - format: "programId_chainId"
+  // Program ID for opening the details dialog - format: "programId" (preferred) or "programId_chainId" (legacy)
   const [programId, setProgramId] = useQueryState(
     "programId",
     parseAsString.withDefault("").withOptions({ clearOnDefault: true })
@@ -229,7 +229,7 @@ export function useFundingFilters() {
     setEcosystems([]);
     setNetworks([]);
     setGrantTypes([]);
-    setOnlyOnKarma(false);
+    setOnlyOnKarma(true);
     setOrganizationFilterRaw("");
   }, [
     setSearch,
@@ -267,7 +267,7 @@ export function useFundingFilters() {
     // Reset all
     resetFilters,
 
-    // Program ID for dialog (format: programId_chainId)
+    // Program ID for dialog (format: programId or legacy programId_chainId)
     programId,
     setProgramId,
   };

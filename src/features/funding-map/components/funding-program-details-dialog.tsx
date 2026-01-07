@@ -1,6 +1,16 @@
 "use client";
 
-import { BadgeCheck, Bug, Building2, ChevronRight, ExternalLink, Globe } from "lucide-react";
+import {
+  BadgeCheck,
+  Bug,
+  Building2,
+  Calendar,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  Globe,
+  Search,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -20,13 +30,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { envVars } from "@/utilities/enviromentVars";
 import formatCurrency from "@/utilities/formatCurrency";
-import { FUNDING_PLATFORM_PAGES, PAGES } from "@/utilities/pages";
+import { formatDate } from "@/utilities/formatDate";
+import { FUNDING_PLATFORM_PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { NETWORK_IMAGES } from "../constants/filter-options";
-import type { FundingProgramMetadata, FundingProgramResponse } from "../types/funding-program";
+import type {
+  FundingProgramCommunity,
+  FundingProgramMetadata,
+  FundingProgramResponse,
+} from "../types/funding-program";
 import { FUNDING_PLATFORM_DOMAINS } from "../utils/funding-platform-domains";
 import { isValidImageUrl } from "../utils/image-utils";
 
@@ -35,6 +56,7 @@ interface FundingProgramDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isLoading?: boolean;
+  isNotFound?: boolean;
 }
 
 function formatBudgetValue(budget: string | undefined): string | null {
@@ -57,21 +79,22 @@ function normalizeUrl(url: string | undefined): string | null {
   return url.includes("http") ? url : `https://${url}`;
 }
 
-function getApplyUrl(program: FundingProgramResponse): string | null {
+function getApplyUrl(
+  program: FundingProgramResponse,
+  community?: FundingProgramCommunity
+): string | null {
   // If program is on Karma and has a community, use the Karma funding platform apply URL
-  if (program.isOnKarma && program.programId) {
-    const communitySlug = program.communities?.[0]?.slug;
-    if (communitySlug) {
-      const exclusiveDomain =
-        FUNDING_PLATFORM_DOMAINS[communitySlug as keyof typeof FUNDING_PLATFORM_DOMAINS];
-      // Use exclusive domain if available, otherwise fall through to shared domain
-      const domain = exclusiveDomain
-        ? envVars.isDev
-          ? exclusiveDomain.dev
-          : exclusiveDomain.prod
-        : undefined;
-      return FUNDING_PLATFORM_PAGES(communitySlug, domain).PROGRAM_PAGE(program.programId);
-    }
+  if (program.isOnKarma && program.programId && community?.slug) {
+    const communitySlug = community.slug;
+    const exclusiveDomain =
+      FUNDING_PLATFORM_DOMAINS[communitySlug as keyof typeof FUNDING_PLATFORM_DOMAINS];
+    // Use exclusive domain if available, otherwise fall through to shared domain
+    const domain = exclusiveDomain
+      ? envVars.isDev
+        ? exclusiveDomain.dev
+        : exclusiveDomain.prod
+      : undefined;
+    return FUNDING_PLATFORM_PAGES(communitySlug, domain).PROGRAM_PAGE(program.programId);
   }
   // Fallback to grantsSite from social links
   return normalizeUrl(program.metadata?.socialLinks?.grantsSite);
@@ -86,6 +109,99 @@ function isProgramActive(program: FundingProgramResponse): boolean {
   }
 
   return status === "active";
+}
+
+interface CommunityApplyButtonProps {
+  program: FundingProgramResponse;
+  isActive: boolean;
+}
+
+function CommunityApplyButton({ program, isActive }: CommunityApplyButtonProps) {
+  const validCommunities = program.communities?.filter((c) => c.slug) ?? [];
+
+  // Case 1: No valid communities with slugs - fall back to grantsSite
+  if (validCommunities.length === 0) {
+    const fallbackUrl = normalizeUrl(program.metadata?.socialLinks?.grantsSite);
+    if (!fallbackUrl) return null;
+
+    return (
+      <Button
+        asChild
+        size="sm"
+        disabled={!isActive}
+        className={cn("gap-1.5 ml-auto", !isActive && "pointer-events-none opacity-50")}
+      >
+        <Link href={isActive ? fallbackUrl : ""} target="_blank" rel="noopener noreferrer">
+          Apply
+          <ChevronRight className="h-4 w-4" />
+        </Link>
+      </Button>
+    );
+  }
+
+  // Case 2: Single community - direct button
+  if (validCommunities.length === 1) {
+    const applyUrl = getApplyUrl(program, validCommunities[0]);
+    if (!applyUrl) return null;
+
+    return (
+      <Button
+        asChild
+        size="sm"
+        disabled={!isActive}
+        className={cn("gap-1.5 ml-auto", !isActive && "pointer-events-none opacity-50")}
+      >
+        <Link href={isActive ? applyUrl : ""} target="_blank" rel="noopener noreferrer">
+          Apply on Karma
+          <ChevronRight className="h-4 w-4" />
+        </Link>
+      </Button>
+    );
+  }
+
+  // Case 3: Multiple communities - dropdown
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          size="sm"
+          disabled={!isActive}
+          className={cn("gap-1.5 ml-auto", !isActive && "pointer-events-none opacity-50")}
+        >
+          Apply on Karma
+          <ChevronDown className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        {validCommunities.map((community) => {
+          const applyUrl = getApplyUrl(program, community);
+          if (!applyUrl) return null;
+
+          return (
+            <DropdownMenuItem key={community.uid} asChild>
+              <a
+                href={isActive ? applyUrl : undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                {isValidImageUrl(community.imageUrl) && (
+                  <Image
+                    src={community.imageUrl}
+                    alt={community.name ?? ""}
+                    width={20}
+                    height={20}
+                    className="rounded-full"
+                  />
+                )}
+                <span>{community.name || community.slug}</span>
+              </a>
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 function DialogSkeleton() {
@@ -108,6 +224,23 @@ function DialogSkeleton() {
       <div className="grid grid-cols-2 gap-4">
         <Skeleton className="h-24 w-full rounded-xl" />
         <Skeleton className="h-24 w-full rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+function DialogNotFound() {
+  return (
+    <div className="flex flex-col items-center justify-center gap-4 p-8 sm:p-10 text-center">
+      <DialogTitle className="sr-only">Program not found</DialogTitle>
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+        <Search className="h-8 w-8 text-muted-foreground" />
+      </div>
+      <div className="space-y-2">
+        <h3 className="text-lg font-semibold text-foreground">Program not found</h3>
+        <DialogDescription className="text-sm text-muted-foreground">
+          The funding program you&apos;re looking for doesn&apos;t exist or may have been removed.
+        </DialogDescription>
       </div>
     </div>
   );
@@ -210,11 +343,22 @@ export function FundingProgramDetailsDialog({
   open,
   onOpenChange,
   isLoading = false,
+  isNotFound = false,
 }: FundingProgramDetailsDialogProps) {
+  const renderContent = () => {
+    if (isNotFound) {
+      return <DialogNotFound />;
+    }
+    if (isLoading || !program) {
+      return <DialogSkeleton />;
+    }
+    return <DialogContentInner program={program} />;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
-        {isLoading || !program ? <DialogSkeleton /> : <DialogContentInner program={program} />}
+        {renderContent()}
       </DialogContent>
     </Dialog>
   );
@@ -240,7 +384,11 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
   const validCommunities = communities?.filter((c) => c.name && c.name.trim().length > 0) ?? [];
   const fallbackName = organizations?.join(", ") ?? "";
 
-  const applyUrl = getApplyUrl(program);
+  const startsAt = formatDate(metadata?.startsAt, "UTC", "MMM D, YYYY, h:mm a UTC");
+  const endsAt = formatDate(metadata?.endsAt, "UTC", "MMM D, YYYY, h:mm a UTC");
+
+  // Only used for non-Karma programs as fallback
+  const fallbackApplyUrl = normalizeUrl(metadata?.socialLinks?.grantsSite);
   const isActive = isProgramActive(program);
 
   const budget = formatBudgetValue(metadata?.programBudget);
@@ -319,6 +467,22 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
                   <span className="text-sm font-medium text-foreground">{fallbackName}</span>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Program Dates */}
+          {(startsAt || endsAt) && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              {startsAt && endsAt ? (
+                <span>
+                  {startsAt} - {endsAt}
+                </span>
+              ) : startsAt ? (
+                <span>Starts: {startsAt}</span>
+              ) : (
+                <span>Ends: {endsAt}</span>
+              )}
             </div>
           )}
         </DialogHeader>
@@ -408,18 +572,26 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
             </a>
           )}
 
-          {applyUrl && (
-            <Button
-              asChild
-              size="sm"
-              disabled={!isActive}
-              className={cn("gap-1.5 ml-auto", !isActive && "pointer-events-none opacity-50")}
-            >
-              <Link href={isActive ? applyUrl : ""} target="_blank" rel="noopener noreferrer">
-                {isOnKarma ? "Apply on Karma" : "Apply"}
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </Button>
+          {isOnKarma ? (
+            <CommunityApplyButton program={program} isActive={isActive} />
+          ) : (
+            fallbackApplyUrl && (
+              <Button
+                asChild
+                size="sm"
+                disabled={!isActive}
+                className={cn("gap-1.5 ml-auto", !isActive && "pointer-events-none opacity-50")}
+              >
+                <Link
+                  href={isActive ? fallbackApplyUrl : ""}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Apply
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            )
           )}
         </div>
       </div>
