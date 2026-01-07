@@ -25,7 +25,6 @@ import {
  */
 interface ReviewerManagementTabProps {
   programId: string;
-  chainID: number;
   communityId: string;
   readOnly?: boolean;
 }
@@ -47,7 +46,6 @@ interface ReviewerMemberWithRole extends RoleMember {
  */
 export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   programId,
-  chainID,
   communityId,
   readOnly = false,
 }) => {
@@ -61,7 +59,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     refetch: refetchProgramReviewers,
     addReviewer: addProgramReviewer,
     removeReviewer: removeProgramReviewer,
-  } = useProgramReviewers(programId, chainID);
+  } = useProgramReviewers(programId);
 
   // Fetch milestone reviewers with mutations
   const {
@@ -70,7 +68,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     refetch: refetchMilestoneReviewers,
     addReviewer: addMilestoneReviewer,
     removeReviewer: removeMilestoneReviewer,
-  } = useMilestoneReviewers(programId, chainID);
+  } = useMilestoneReviewers(programId);
 
   // Common field configuration for both roles
   const commonFields: RoleManagementConfig["fields"] = useMemo(
@@ -140,10 +138,10 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       roleName: "program-reviewer",
       roleDisplayName: "Program Reviewer",
       fields: commonFields,
-      resource: `program_${programId}_${chainID}`,
+      resource: `program_${programId}`,
       canAddMultiple: true,
     }),
-    [commonFields, programId, chainID]
+    [commonFields, programId]
   );
 
   // Configuration for milestone reviewer role
@@ -152,10 +150,10 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       roleName: "milestone-reviewer",
       roleDisplayName: "Milestone Reviewer",
       fields: commonFields,
-      resource: `program_${programId}_${chainID}`,
+      resource: `program_${programId}`,
       canAddMultiple: true,
     }),
-    [commonFields, programId, chainID]
+    [commonFields, programId]
   );
 
   // Role options for the role selector

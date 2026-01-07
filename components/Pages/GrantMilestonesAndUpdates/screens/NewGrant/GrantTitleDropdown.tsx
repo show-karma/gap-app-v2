@@ -72,12 +72,8 @@ export const GrantTitleDropdown: FC<{
     if (programAlreadyExists) {
       requestProgram = programAlreadyExists;
 
-      setValue(
-        "programId",
-        !programAlreadyExists.programId
-          ? undefined
-          : `${programAlreadyExists.programId}_${programAlreadyExists.chainID}`
-      );
+      // Use just programId (no chainId suffix) - service layer normalizes if needed
+      setValue("programId", programAlreadyExists.programId || undefined);
 
       setValue("title", programAlreadyExists.metadata?.title, {
         shouldValidate: true,
@@ -242,10 +238,8 @@ export const GrantTitleDropdown: FC<{
                   type="button"
                   onClick={() => {
                     setSelectedProgram(item);
-                    setValue(
-                      "programId",
-                      !item?.programId ? undefined : `${item.programId}_${item.chainID}`
-                    );
+                    // Use just programId (no chainId suffix) - service layer normalizes if needed
+                    setValue("programId", item?.programId || undefined);
                     setValue("title", item?.metadata?.title, {
                       shouldValidate: true,
                     });

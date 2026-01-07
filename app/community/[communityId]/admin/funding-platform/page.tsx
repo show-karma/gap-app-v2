@@ -78,16 +78,13 @@ export default function FundingPlatformAdminPage() {
 
   const handleToggleProgram = async (
     programId: string,
-    chainId: number,
     currentEnabled: boolean
   ) => {
-    const programKey = `${programId}_${chainId}`;
-    setTogglingPrograms((prev) => new Set(prev).add(programKey));
+    setTogglingPrograms((prev) => new Set(prev).add(programId));
 
     try {
       await fundingPlatformService.programs.toggleProgramStatus(
         programId,
-        chainId,
         !currentEnabled
       );
       toast.success(`Program ${!currentEnabled ? "enabled" : "disabled"} successfully`);
@@ -99,7 +96,7 @@ export default function FundingPlatformAdminPage() {
     } finally {
       setTogglingPrograms((prev) => {
         const newSet = new Set(prev);
-        newSet.delete(programKey);
+        newSet.delete(programId);
         return newSet;
       });
     }
@@ -454,11 +451,11 @@ export default function FundingPlatformAdminPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredPrograms.map((program) => (
               <div
-                key={`${program.programId}_${program.chainID}`}
+                key={program.programId}
                 className="px-4 py-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1 rounded-lg border border-gray-200 bg-white dark:bg-zinc-800 dark:border-gray-700 relative"
               >
                 {/* Loading Overlay */}
-                {togglingPrograms.has(`${program.programId}_${program.chainID}`) && (
+                {togglingPrograms.has(program.programId) && (
                   <LoadingOverlay message="Updating program status..." isLoading={true} />
                 )}
 
@@ -497,7 +494,6 @@ export default function FundingPlatformAdminPage() {
                           if (program.applicationConfig) {
                             handleToggleProgram(
                               program.programId,
-                              program.chainID,
                               program.applicationConfig?.isEnabled || false
                             );
                           }
@@ -505,7 +501,7 @@ export default function FundingPlatformAdminPage() {
                         disabled={
                           !program.applicationConfig ||
                           Object.keys(program.applicationConfig).length === 1 ||
-                          togglingPrograms.has(`${program.programId}_${program.chainID}`)
+                          togglingPrograms.has(program.programId)
                         }
                       >
                         <div
@@ -536,7 +532,7 @@ export default function FundingPlatformAdminPage() {
                               : "text-gray-500 dark:text-gray-400"
                           )}
                         >
-                          {togglingPrograms.has(`${program.programId}_${program.chainID}`)
+                          {togglingPrograms.has(program.programId)
                             ? "Updating..."
                             : program.applicationConfig?.isEnabled
                               ? "Enabled"
@@ -567,7 +563,7 @@ export default function FundingPlatformAdminPage() {
                     <Link
                       href={PAGES.ADMIN.FUNDING_PLATFORM_QUESTION_BUILDER(
                         communityId,
-                        `${program.programId}_${program.chainID}`
+                        program.programId
                       )}
                       title="Configure Form"
                     >
@@ -647,7 +643,7 @@ export default function FundingPlatformAdminPage() {
                   <Link
                     href={PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(
                       communityId,
-                      `${program.programId}_${program.chainID}`
+                      program.programId
                     )}
                     className="flex-1"
                   >

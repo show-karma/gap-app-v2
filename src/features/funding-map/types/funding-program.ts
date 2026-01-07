@@ -56,9 +56,8 @@ export interface FundingProgramCommunity {
  * API response type - matches the raw response from the indexer
  */
 export interface FundingProgramResponse {
-  _id: {
-    $oid: string;
-  };
+  /** MongoDB _id - can be string (V2 API) or { $oid: string } (legacy format) */
+  _id: string | { $oid: string };
   id?: string;
   createdAtBlock?: string;
   createdByAddress?: string;
