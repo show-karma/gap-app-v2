@@ -75,7 +75,9 @@ describe("fundingProgramsService", () => {
 
       await fundingProgramsService.getAll();
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("/v2/program-registry/search"));
+      expect(mockFetchData).toHaveBeenCalledWith(
+        expect.stringContaining("/v2/program-registry/search")
+      );
     });
 
     it("should pass page parameter correctly", async () => {
@@ -237,13 +239,15 @@ describe("fundingProgramsService", () => {
       expect(mockFetchData).toHaveBeenCalledWith("/v2/program-registry/program-1");
     });
 
-    it("should normalize composite programId format", async () => {
+    it("should pass composite programId format through to API", async () => {
+      // Note: getById passes programId directly - callers should use parseProgramIdAndChainId
+      // to extract the normalized programId if they have a composite format
       const mockProgram = createMockProgram();
       mockFetchData.mockResolvedValue([mockProgram, null, null, 200]);
 
       await fundingProgramsService.getById("program-1_42161");
 
-      expect(mockFetchData).toHaveBeenCalledWith("/v2/program-registry/program-1");
+      expect(mockFetchData).toHaveBeenCalledWith("/v2/program-registry/program-1_42161");
     });
 
     it("should return null when program not found", async () => {

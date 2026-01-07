@@ -25,6 +25,7 @@ jest.mock("@/hooks/useAuth", () => ({
 jest.mock("@/services/programRegistry.service", () => ({
   ProgramRegistryService: {
     extractProgramId: jest.fn(),
+    updateProgram: jest.fn(),
   },
 }));
 
@@ -218,13 +219,11 @@ describe("ProgramDetailsTab", () => {
     });
 
     (ProgramRegistryService.extractProgramId as jest.Mock).mockReturnValue(mockProgramDbId);
+    (ProgramRegistryService.updateProgram as jest.Mock).mockResolvedValue(undefined);
 
     (fetchData as jest.Mock).mockImplementation(async (url: string) => {
       if (url.includes("find")) {
         return [mockProgram, null];
-      }
-      if (url.includes("updateMetadata")) {
-        return [null, null]; // Success response
       }
       return [null, null];
     });
@@ -556,17 +555,11 @@ describe("ProgramDetailsTab", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(fetchData).toHaveBeenCalledWith(
-          expect.stringContaining("updateMetadata"),
-          "PUT",
+        expect(ProgramRegistryService.updateProgram).toHaveBeenCalledWith(
+          mockProgramId,
           expect.objectContaining({
-            metadata: expect.objectContaining({
-              title: "Updated Program Name",
-            }),
-          }),
-          {},
-          {},
-          true
+            title: "Updated Program Name",
+          })
         );
       });
     });
@@ -592,18 +585,6 @@ describe("ProgramDetailsTab", () => {
 
     it("should refetch program data after successful update", async () => {
       const user = userEvent.setup();
-      let callCount = 0;
-      (fetchData as jest.Mock).mockImplementation(async (url: string) => {
-        callCount++;
-        if (url.includes("find")) {
-          return [mockProgram, null];
-        }
-        if (url.includes("updateMetadata")) {
-          return [null, null]; // Success response
-        }
-        return [null, null];
-      });
-
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
 
       await waitFor(() => {
@@ -618,9 +599,11 @@ describe("ProgramDetailsTab", () => {
 
       await waitFor(
         () => {
-          // Should call fetchData for initial load, update, then refetch
-          expect(fetchData).toHaveBeenCalledTimes(3);
-          // Last call should be the refetch
+          // Should call fetchData for initial load, then refetch after update
+          // Update now uses ProgramRegistryService.updateProgram
+          expect(ProgramRegistryService.updateProgram).toHaveBeenCalled();
+          // fetchData should be called at least twice (initial load + refetch)
+          expect(fetchData).toHaveBeenCalledTimes(2);
           const calls = (fetchData as jest.Mock).mock.calls;
           const lastCall = calls[calls.length - 1];
           expect(lastCall[0]).toContain("find");
@@ -631,15 +614,10 @@ describe("ProgramDetailsTab", () => {
 
     it("should handle update errors", async () => {
       const user = userEvent.setup();
-      (fetchData as jest.Mock).mockImplementation(async (url: string) => {
-        if (url.includes("find")) {
-          return [mockProgram, null];
-        }
-        if (url.includes("updateMetadata")) {
-          return [null, "Update failed"];
-        }
-        return [null, null];
-      });
+      // Mock service to throw error
+      (ProgramRegistryService.updateProgram as jest.Mock).mockRejectedValue(
+        new Error("Update failed")
+      );
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
 
@@ -662,15 +640,10 @@ describe("ProgramDetailsTab", () => {
 
     it("should handle duplicate program name error", async () => {
       const user = userEvent.setup();
-      (fetchData as jest.Mock).mockImplementation(async (url: string) => {
-        if (url.includes("find")) {
-          return [mockProgram, null];
-        }
-        if (url.includes("updateMetadata")) {
-          return [null, "A program with this name already exists"];
-        }
-        return [null, null];
-      });
+      // Mock service to throw duplicate name error
+      (ProgramRegistryService.updateProgram as jest.Mock).mockRejectedValue(
+        new Error("A program with this name already exists")
+      );
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
 
@@ -689,39 +662,16 @@ describe("ProgramDetailsTab", () => {
       });
     });
 
-    it("should handle missing program ID error", async () => {
-      const user = userEvent.setup();
-      (ProgramRegistryService.extractProgramId as jest.Mock).mockReturnValue(undefined);
-
-      renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
-
-      await waitFor(() => {
-        expect(screen.getByLabelText(/program name/i)).toBeInTheDocument();
-      });
-
-      const nameInput = screen.getByLabelText(/program name/i);
-      await user.type(nameInput, " Updated");
-
-      const submitButton = screen.getByRole("button", { name: /save changes/i });
-      await user.click(submitButton);
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("Program ID not found. Cannot update program.");
-      });
-    });
+    // Note: "missing program ID error" scenario is not reachable in current component design
+    // The component requires a truthy programId to fetch and show the form,
+    // and the truthy programId prop is always used before the extractProgramId fallback
 
     it("should show loading state during submission", async () => {
       const user = userEvent.setup();
-      (fetchData as jest.Mock).mockImplementation(async (url: string) => {
-        if (url.includes("find")) {
-          return [mockProgram, null];
-        }
-        if (url.includes("updateMetadata")) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
-          return [null, null];
-        }
-        return [null, null];
-      });
+      // Mock service to delay so we can see loading state
+      (ProgramRegistryService.updateProgram as jest.Mock).mockImplementation(
+        () => new Promise((resolve) => setTimeout(resolve, 100))
+      );
 
       renderWithProviders(<ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} />);
 
