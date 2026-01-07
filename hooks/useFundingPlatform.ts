@@ -24,12 +24,11 @@ import { useAuth } from "./useAuth";
 // Query keys for caching
 const QUERY_KEYS = {
   programs: (communityId: string) => ["grant-programs", communityId],
-  programConfig: (programId: string, chainId: number) => ["program-config", programId, chainId],
-  programStats: (programId: string, chainId: number) => ["program-stats", programId, chainId],
-  applications: (programId: string, chainId: number, filters: IApplicationFilters) => [
+  programConfig: (programId: string) => ["program-config", programId],
+  programStats: (programId: string) => ["program-stats", programId],
+  applications: (programId: string, filters: IApplicationFilters) => [
     "applications",
     programId,
-    chainId,
     filters,
   ],
   application: (applicationId: string) => ["funding-application", applicationId],
@@ -37,16 +36,14 @@ const QUERY_KEYS = {
     "application-by-reference",
     referenceNumber,
   ],
-  applicationByEmail: (programId: string, chainId: number, email: string) => [
+  applicationByEmail: (programId: string, email: string) => [
     "application-by-email",
     programId,
-    chainId,
     email,
   ],
-  applicationStats: (programId: string, chainId: number) => [
+  applicationStats: (programId: string) => [
     "application-stats",
     programId,
-    chainId,
   ],
   applicationComments: (applicationId: string, isAdmin?: boolean) => [
     "application-comments",
@@ -74,13 +71,11 @@ export const useFundingPrograms = (communityId: string) => {
   const createProgramConfigurationMutation = useMutation({
     mutationFn: ({
       programId,
-      chainId,
       config,
     }: {
       programId: string;
-      chainId: number;
       config: Omit<IFundingProgramConfig, "id" | "createdAt" | "updatedAt">;
-    }) => fundingPlatformService.programs.createProgramConfiguration(programId, chainId, config),
+    }) => fundingPlatformService.programs.createProgramConfiguration(programId, config),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programs(communityId) });
       toast.success("Program created successfully");
@@ -106,11 +101,11 @@ export const useFundingPrograms = (communityId: string) => {
 /**
  * Hook for managing a specific program configuration
  */
-export const useProgramStats = (programId: string, chainId: number) => {
+export const useProgramStats = (programId: string) => {
   const statsQuery = useQuery({
-    queryKey: QUERY_KEYS.programStats(programId, chainId),
-    queryFn: () => fundingPlatformService.programs.getProgramStats(programId, chainId),
-    enabled: !!programId && !!chainId,
+    queryKey: QUERY_KEYS.programStats(programId),
+    queryFn: () => fundingPlatformService.programs.getProgramStats(programId),
+    enabled: !!programId,
   });
 
   return {
@@ -126,20 +121,20 @@ export const useProgramStats = (programId: string, chainId: number) => {
 /**
  * Hook for managing a specific program configuration
  */
-export const useProgramConfig = (programId: string, chainId: number) => {
+export const useProgramConfig = (programId: string) => {
   const queryClient = useQueryClient();
 
   const configQuery = useQuery({
-    queryKey: QUERY_KEYS.programConfig(programId, chainId),
-    queryFn: () => fundingPlatformService.programs.getProgramConfiguration(programId, chainId),
-    enabled: !!programId && !!chainId,
+    queryKey: QUERY_KEYS.programConfig(programId),
+    queryFn: () => fundingPlatformService.programs.getProgramConfiguration(programId),
+    enabled: !!programId,
   });
 
   const updateConfigMutation = useMutation({
     mutationFn: (config: Partial<IFundingProgramConfig | null>) =>
-      fundingPlatformService.programs.updateProgramConfiguration(programId, chainId, config),
+      fundingPlatformService.programs.updateProgramConfiguration(programId, config),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId, chainId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId) });
       toast.success("Program configuration updated successfully");
     },
     onError: (error) => {
@@ -150,9 +145,9 @@ export const useProgramConfig = (programId: string, chainId: number) => {
 
   const updateFormSchemaMutation = useMutation({
     mutationFn: (formSchema: IFormSchema) =>
-      fundingPlatformService.programs.updateFormSchema(programId, chainId, formSchema),
+      fundingPlatformService.programs.updateFormSchema(programId, formSchema),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId, chainId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId) });
       toast.success("Form schema updated successfully");
     },
     onError: (error) => {
@@ -163,9 +158,9 @@ export const useProgramConfig = (programId: string, chainId: number) => {
 
   const toggleStatusMutation = useMutation({
     mutationFn: (enabled: boolean) =>
-      fundingPlatformService.programs.toggleProgramStatus(programId, chainId, enabled),
+      fundingPlatformService.programs.toggleProgramStatus(programId, enabled),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId, chainId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId) });
       toast.success("Program status updated successfully");
     },
     onError: (error) => {
@@ -188,7 +183,7 @@ export const useProgramConfig = (programId: string, chainId: number) => {
       toggleStatusMutation.isPending,
     refetch: () => {
       configQuery.refetch();
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programStats(programId, chainId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programStats(programId) });
     },
   };
 };
@@ -198,7 +193,6 @@ export const useProgramConfig = (programId: string, chainId: number) => {
  */
 export const useFundingApplications = (
   programId: string,
-  chainId: number,
   filters: IApplicationFilters = {}
 ) => {
   const queryClient = useQueryClient();
@@ -212,13 +206,13 @@ export const useFundingApplications = (
   const { authenticated } = useAuth();
 
   const applicationsQuery = useInfiniteQuery({
-    queryKey: QUERY_KEYS.applications(programId, chainId, filtersWithDefaults),
+    queryKey: QUERY_KEYS.applications(programId, filtersWithDefaults),
     queryFn: ({ pageParam = 1 }) =>
-      fundingPlatformService.applications.getApplicationsByProgram(programId, chainId, {
+      fundingPlatformService.applications.getApplicationsByProgram(programId, {
         ...filtersWithDefaults,
         page: pageParam,
       }),
-    enabled: !!programId && !!chainId && authenticated,
+    enabled: !!programId && authenticated,
     getNextPageParam: (lastPage) => {
       const { pagination } = lastPage;
       return pagination.page < pagination.totalPages ? pagination.page + 1 : undefined;
@@ -227,9 +221,9 @@ export const useFundingApplications = (
   });
 
   const statsQuery = useQuery({
-    queryKey: QUERY_KEYS.applicationStats(programId, chainId),
-    queryFn: () => fundingPlatformService.applications.getApplicationStatistics(programId, chainId),
-    enabled: !!programId && !!chainId && authenticated,
+    queryKey: QUERY_KEYS.applicationStats(programId),
+    queryFn: () => fundingPlatformService.applications.getApplicationStatistics(programId),
+    enabled: !!programId && authenticated,
   });
 
   const submitApplicationMutation = useMutation({
@@ -249,16 +243,15 @@ export const useFundingApplications = (
 
       return fundingPlatformService.applications.submitApplication({
         programId,
-        chainID: chainId,
         applicantEmail,
         applicationData,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 }),
+        queryKey: QUERY_KEYS.applications(programId, { limit: 25 }),
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applicationStats(programId, chainId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applicationStats(programId) });
       toast.success("Application submitted successfully!");
     },
     onError: (error) => {
@@ -289,9 +282,9 @@ export const useFundingApplications = (
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 }),
+        queryKey: QUERY_KEYS.applications(programId, { limit: 25 }),
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applicationStats(programId, chainId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applicationStats(programId) });
     },
     onError: (error) => {
       console.error("Failed to update application status:", error);
@@ -313,7 +306,8 @@ export const useFundingApplications = (
     isFetchingNextPage: applicationsQuery.isFetchingNextPage,
     hasNextPage: applicationsQuery.hasNextPage,
     fetchNextPage: applicationsQuery.fetchNextPage,
-    error: applicationsQuery.error || statsQuery.error,
+    error: applicationsQuery.error, // Only show error if applications query fails, stats are optional
+    statsError: statsQuery.error, // Separate error for stats (non-blocking)
     submitApplication: submitApplicationMutation.mutate,
     updateApplicationStatus: updateStatusMutation.mutate,
     isSubmitting: submitApplicationMutation.isPending,
@@ -381,7 +375,7 @@ export const useFormSchemaManager = (programId: string, chainId: number) => {
   const [isDirty, setIsDirty] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  const { config, updateFormSchema, isUpdating } = useProgramConfig(programId, chainId);
+  const { config, updateFormSchema, isUpdating } = useProgramConfig(programId);
 
   const saveSchema = useCallback(
     (schema: IFormSchema) => {
@@ -418,7 +412,6 @@ export const useApplicationSubmissionV2 = (programId: string, chainId: number) =
       try {
         const existing = await fundingPlatformService.applications.getApplicationByEmail(
           programId,
-          chainId,
           email
         );
         return existing;
@@ -427,7 +420,7 @@ export const useApplicationSubmissionV2 = (programId: string, chainId: number) =
         return null;
       }
     },
-    [programId, chainId]
+    [programId]
   );
 
   const submitMutation = useMutation({
@@ -442,10 +435,10 @@ export const useApplicationSubmissionV2 = (programId: string, chainId: number) =
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 }),
+        queryKey: QUERY_KEYS.applications(programId, { limit: 25 }),
       });
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.applicationStats(programId, chainId),
+        queryKey: QUERY_KEYS.applicationStats(programId),
       });
       toast.success(`Application submitted successfully! Reference: ${data.referenceNumber}`);
     },
@@ -590,7 +583,6 @@ export const useApplicationByReference = (referenceNumber: string) => {
  */
 export const useApplicationExport = (
   programId: string,
-  chainId: number,
   isAdmin: boolean = false
 ) => {
   const [isExporting, setIsExporting] = useState(false);
@@ -602,13 +594,11 @@ export const useApplicationExport = (
         const response = isAdmin
           ? await fundingPlatformService.applications.exportApplicationsAdmin(
               programId,
-              chainId,
               format,
               filters
             )
           : await fundingPlatformService.applications.exportApplications(
               programId,
-              chainId,
               format,
               filters
             );
@@ -652,7 +642,7 @@ export const useApplicationExport = (
         setIsExporting(false);
       }
     },
-    [programId, chainId, isAdmin]
+    [programId, isAdmin]
   );
 
   return {
@@ -731,10 +721,10 @@ export const useApplicationStatus = (programId?: string, chainId?: number) => {
       // Invalidate and refetch application data
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(variables.applicationId) });
 
-      // Invalidate applications list if programId and chainId are provided
-      if (programId && chainId) {
+      // Invalidate applications list if programId is provided
+      if (programId) {
         queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 }),
+          queryKey: QUERY_KEYS.applications(programId, { limit: 25 }),
         });
       }
 

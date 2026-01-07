@@ -19,7 +19,6 @@ export default async function Layout(props: { children: React.ReactNode; params:
   const community = await getCommunityDetails(communityId);
   if (!community) return undefined;
 
-  // registryService.searchProgramById now handles programId_chainID format parsing internally
   const program = await registryService.searchProgramById(programId);
   if (!program) return undefined;
 

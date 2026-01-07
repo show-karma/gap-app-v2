@@ -131,9 +131,15 @@ export const MilestonesScreen: React.FC = () => {
         uid: nullRef,
       });
 
+      // Normalize programId (remove chainId suffix if present)
+      const normalizedProgramId = newGrantData.programId?.includes("_")
+        ? newGrantData.programId.split("_")[0]
+        : newGrantData.programId;
+
       // Create grant details
       const sanitizedDetails = sanitizeObject({
         ...newGrantData,
+        programId: normalizedProgramId, // Use normalized programId (no chainId)
         amount: newGrantData.amount || "",
         proposalURL: newGrantData.linkToProposal,
         assetAndChainId: ["0x0", 1],

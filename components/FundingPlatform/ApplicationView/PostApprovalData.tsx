@@ -1,8 +1,11 @@
 "use client";
 
 import { type FC, useMemo } from "react";
+import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProjectLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
+import { PROJECT_UID_REGEX } from "@/utilities/validation";
 
 interface PostApprovalDataProps {
   postApprovalData: Record<string, any>;
@@ -22,6 +25,12 @@ const PostApprovalData: FC<PostApprovalDataProps> = ({ postApprovalData, program
     }
     return labels;
   }, [program]);
+
+  // Create field type mapping from post-approval schema
+  const fieldTypeMap = useMemo(
+    () => createFieldTypeMap(program?.postApprovalFormSchema),
+    [program?.postApprovalFormSchema]
+  );
 
   const renderPostApprovalData = () => {
     if (!postApprovalData || Object.keys(postApprovalData).length === 0) {
@@ -85,6 +94,10 @@ const PostApprovalData: FC<PostApprovalDataProps> = ({ postApprovalData, program
                 <pre className="bg-zinc-50 dark:bg-zinc-800 p-2 rounded text-xs overflow-x-auto">
                   {JSON.stringify(value, null, 2)}
                 </pre>
+              ) : fieldTypeMap[key] === "karma_profile_link" &&
+                typeof value === "string" &&
+                PROJECT_UID_REGEX.test(value) ? (
+                <KarmaProjectLink uid={value} />
               ) : (
                 <div className="prose prose-sm dark:prose-invert max-w-none">
                   <MarkdownPreview source={String(value)} />

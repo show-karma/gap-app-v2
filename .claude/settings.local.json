@@ -47,7 +47,10 @@
       "Bash(pnpm biome check:*)",
       "Bash(pnpm biome format:*)",
       "Skill(commit-commands:commit-push-pr)",
-      "WebFetch(domain:www.karmahq.xyz)"
+      "WebFetch(domain:www.karmahq.xyz)",
+      "Skill(commit-commands:commit)",
+      "Bash(git push)",
+      "Bash(head:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

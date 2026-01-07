@@ -19,11 +19,16 @@ export default function QuestionBuilderPage() {
     programId: string;
   };
 
-  // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split("_");
-  const parsedChainId = parseInt(chainId, 10);
+  // Extract normalized programId (remove chainId suffix if present)
+  const programId = combinedProgramId.includes("_")
+    ? combinedProgramId.split("_")[0]
+    : combinedProgramId;
 
   const { hasAccess, isLoading: isLoadingAdmin } = useCommunityAdminAccess(communityId);
+  
+  // Fetch program config to get chainID if needed for V1 components
+  const { config: programConfig } = useProgramConfig(programId);
+  const chainId = programConfig?.chainID;
 
   const {
     schema: existingSchema,
@@ -31,7 +36,7 @@ export default function QuestionBuilderPage() {
     error: schemaError,
     updateSchema,
     isUpdating,
-  } = useQuestionBuilderSchema(programId, parsedChainId);
+  } = useQuestionBuilderSchema(programId);
 
   const {
     schema: existingPostApprovalSchema,
@@ -39,9 +44,9 @@ export default function QuestionBuilderPage() {
     error: postApprovalSchemaError,
     updateSchema: updatePostApprovalSchema,
     isUpdating: isUpdatingPostApproval,
-  } = usePostApprovalSchema(programId, parsedChainId);
+  } = usePostApprovalSchema(programId);
 
-  const { config: existingConfig } = useProgramConfig(programId, parsedChainId);
+  const { config: existingConfig } = useProgramConfig(programId);
 
   const handleSchemaChange = (schema: FormSchema) => {
     updateSchema({ schema, existingConfig: existingConfig || null });
@@ -114,7 +119,7 @@ export default function QuestionBuilderPage() {
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">Form Builder</h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Program ID: {programId} | Chain ID: {parsedChainId}
+                  Program ID: {programId}
                 </p>
               </div>
             </div>
@@ -135,7 +140,7 @@ export default function QuestionBuilderPage() {
           initialSchema={existingSchema || undefined}
           onSave={handleSchemaChange}
           programId={programId}
-          chainId={parsedChainId}
+          chainId={chainId}
           communityId={communityId}
           initialPostApprovalSchema={existingPostApprovalSchema || undefined}
           onSavePostApproval={handlePostApprovalSchemaChange}

@@ -5,12 +5,31 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { ArrowInIcon } from "./Icons/ArrowIn";
 import { ExternalLink } from "./Utilities/ExternalLink";
 
+/**
+ * Normalize programId from URL - strips chainId suffix if present for backward compatibility
+ * Supports both "programId" (new) and "programId_chainId" (legacy) formats
+ */
+const normalizeProgramId = (id: string | null): string | null => {
+  if (!id) return null;
+  // Check if it has a chainId suffix (ends with _<number>)
+  const lastUnderscoreIndex = id.lastIndexOf("_");
+  if (lastUnderscoreIndex !== -1) {
+    const potentialChainId = id.substring(lastUnderscoreIndex + 1);
+    if (/^\d+$/.test(potentialChainId)) {
+      return id.substring(0, lastUnderscoreIndex);
+    }
+  }
+  return id;
+};
+
 export const ProgramBanner = () => {
   const searchParams = useSearchParams();
   const { communityId } = useParams();
   const { data, isLoading } = useCommunityPrograms(communityId as string);
-  const programId = searchParams.get("programId");
-  const program = data?.find((program) => `${program.programId}_${program.chainID}` === programId);
+  const rawProgramId = searchParams.get("programId");
+  // Normalize to handle both "programId" and legacy "programId_chainId" formats
+  const programId = normalizeProgramId(rawProgramId);
+  const program = data?.find((program) => program.programId === programId);
 
   if (!programId || !program) return null;
   return (

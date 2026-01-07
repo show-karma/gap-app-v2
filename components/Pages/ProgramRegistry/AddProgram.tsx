@@ -25,6 +25,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { getCommunities } from "@/services/communities.service";
+import { ProgramRegistryService } from "@/services/programRegistry.service";
 import { useRegistryStore } from "@/store/registry";
 import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
@@ -325,11 +326,11 @@ export default function AddProgram({
         communityRef: data.communityRef,
       };
 
+      // Use V2 endpoint - owner comes from JWT session
       const [_request, error] = await fetchData(
-        INDEXER.REGISTRY.CREATE,
+        INDEXER.REGISTRY.V2.CREATE,
         "POST",
         {
-          owner: address,
           chainId: chainSelected,
           metadata,
         },
@@ -376,10 +377,12 @@ export default function AddProgram({
   const editProgram = async (data: CreateProgramType) => {
     setIsLoading(true);
     try {
-      if (!isConnected || !isAuth || !address) {
+      // V2 update uses JWT authentication, no wallet connection needed
+      if (!isAuth) {
         login?.();
         return;
       }
+
       const chainSelected = data.networkToCreate;
       const setup = await setupChainAndWallet({
         targetChainId: chainSelected as number,
@@ -434,64 +437,15 @@ export default function AddProgram({
         communityRef: data.communityRef,
       });
 
-      const isSameAddress =
-        programToEdit?.createdByAddress?.toLowerCase() === address?.toLowerCase();
-      const lowercasedAdmins = programToEdit?.admins?.map((item) => item.toLowerCase());
-      const permissionToEditOnChain = !!(
-        programToEdit?.txHash &&
-        (isSameAddress || isRegistryAdmin) &&
-        lowercasedAdmins?.includes(address?.toLowerCase())
-      );
-      if (permissionToEditOnChain) {
-        const allo = new AlloBase(walletSigner as any, envVars.IPFS_TOKEN, chainSelected as number);
-        const hasRegistry = await allo
-          .updatePoolMetadata(programToEdit?.programId as string, metadata, changeStepperStep)
-          .then(async (res) => {
-            let retries = 1000;
-            changeStepperStep("indexing");
-            while (retries > 0) {
-              await fetchData(`${INDEXER.REGISTRY.GET_ALL}?programId=${programToEdit?.programId}`)
-                .then(async ([res]) => {
-                  const hasUpdated =
-                    new Date(programToEdit?.updatedAt) <
-                    new Date((res?.programs?.[0] as GrantProgram)?.updatedAt);
-
-                  if (hasUpdated) {
-                    retries = 0;
-                    changeStepperStep("indexed");
-                  }
-                  retries -= 1;
-                  // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                  await new Promise((resolve) => setTimeout(resolve, 1500));
-                })
-                .catch(async () => {
-                  retries -= 1;
-                  // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                  await new Promise((resolve) => setTimeout(resolve, 1500));
-                });
-            }
-            return res;
-          })
-          .catch((error) => {
-            throw new Error(error);
-          });
-
-        if (!hasRegistry) {
-          throw new Error("Error editing program");
-        }
-      } else {
-        const [_request, error] = await fetchData(
-          INDEXER.REGISTRY.UPDATE(programToEdit?._id.$oid as string, chainSelected as number),
-          "PUT",
-          {
-            metadata,
-          },
-          {},
-          {},
-          true
-        );
-        if (error) throw new Error(error);
+      // Always use V2 update endpoint (off-chain)
+      // All programs now use V2, regardless of whether they were originally created on-chain
+      const programIdToUpdate = programToEdit?.programId;
+      if (!programIdToUpdate) {
+        throw new Error("Program ID not found. Cannot update program.");
       }
+
+      // Use V2 update endpoint
+      await ProgramRegistryService.updateProgram(programIdToUpdate, metadata);
       toast.success("Program updated successfully!");
       await refreshPrograms?.().then(() => {
         backTo?.();
@@ -509,7 +463,6 @@ export default function AddProgram({
       );
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 

@@ -112,16 +112,15 @@ export function CreateProgramModal({
         return;
       }
 
-      // Auto-approve the program
-      try {
-        await ProgramRegistryService.approveProgram(result.programId);
-        toast.success("Program created and approved successfully!");
-      } catch (approveError: unknown) {
-        console.error("Error during auto-approval:", approveError);
+      // Note: V2 auto-approves if user is community admin
+      // If requiresManualApproval is false, program is already approved
+      if (result.requiresManualApproval) {
         toast.success(
-          "Program created successfully, but auto-approval failed. Please approve it manually from the manage programs page.",
+          "Program created successfully. Please approve it manually from the manage programs page.",
           { duration: 10000 }
         );
+      } else {
+        toast.success("Program created and approved successfully!");
       }
 
       reset();

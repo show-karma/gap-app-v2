@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import Pagination from "@/components/Utilities/Pagination";
+import { ProgramRegistryService } from "@/services/programRegistry.service";
 import { useAuth } from "@/hooks/useAuth";
 import { useRegistryStore } from "@/store/registry";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
@@ -164,23 +165,14 @@ export const ManagePrograms = () => {
   useEffect(() => {
     const searchProgramById = async (id: string) => {
       try {
-        const { programId: parsedProgramId, chainId: parsedChainId } = parseProgramIdAndChainId(
-          id,
-          registryHelper.supportedNetworks
-        );
-
-        const [data, error] = await fetchData(
-          INDEXER.REGISTRY.FIND_BY_ID(parsedProgramId, parsedChainId)
-        );
+        const [res, error] = await fetchData(INDEXER.REGISTRY.V2.GET_BY_ID(id));
         if (error) throw Error(error);
-        if (data) {
-          // Handle both array and single object responses
-          const programs = Array.isArray(data) ? data : [data];
+        if (res) {
+          const programs = Array.isArray(res) ? res : [res];
           const normalizedPrograms = normalizeGrantTypesArray(programs as GrantProgram[]);
-          // Use first program if array, otherwise use the single program
           setSelectedProgram(normalizedPrograms[0] || null);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         errorManager(`Error while searching for program by id`, error);
       }
     };
@@ -196,31 +188,32 @@ export const ManagePrograms = () => {
 
   const getGrantPrograms = async () => {
     try {
-      const baseUrl = INDEXER.REGISTRY.GET_ALL;
-      const queryParams = `?isValid=${tab}&limit=${pageSize}&offset=${(page - 1) * pageSize}`;
-      const searchParam = searchInput ? `&name=${searchInput}` : "";
-      const networkParam = selectedNetworks.length ? `&networks=${selectedNetworks.join(",")}` : "";
-      const ecosystemParam = selectedEcosystems.length
-        ? `&ecosystems=${selectedEcosystems.join(",")}`
-        : "";
+      // Map frontend tab values to V2 API isValid values
+      const isValidMap: Record<string, "true" | "false" | "null"> = {
+        pending: "null",
+        accepted: "true",
+        rejected: "false",
+      };
 
-      const grantTypeParam = selectedGrantTypes.length
-        ? `&grantTypes=${selectedGrantTypes.join(",")}`
-        : "";
-
-      const sortParams = `&sortField=${sortField}&sortOrder=${sortOrder}`;
-      const filterParams = networkParam + ecosystemParam + grantTypeParam + sortParams;
-      const ownerParam = address && !isRegistryAdmin ? `&owners=${address}` : "";
-      const url = isRegistryAdmin
-        ? `${baseUrl}${queryParams}${searchParam}${filterParams}`
-        : `${baseUrl}${queryParams}${ownerParam}${searchParam}${filterParams}`;
+      const url = INDEXER.REGISTRY.V2.GET_ALL({
+        page,
+        limit: pageSize,
+        isValid: isValidMap[tab as keyof typeof isValidMap],
+        name: searchInput || undefined,
+        networks: selectedNetworks.length ? selectedNetworks.join(",") : undefined,
+        ecosystems: selectedEcosystems.length ? selectedEcosystems.join(",") : undefined,
+        grantTypes: selectedGrantTypes.length ? selectedGrantTypes.join(",") : undefined,
+        sortField: sortField as "createdAt" | "updatedAt" | "name" | "programId",
+        sortOrder: sortOrder as "asc" | "desc",
+        owners: (address && !isRegistryAdmin) ? address : undefined,
+      });
 
       const [res, error] = await fetchData(url);
-      if (!error && res) {
-        const normalizedPrograms = normalizeGrantTypesArray(res.programs as GrantProgram[]);
+      if (!error && res?.payload) {
+        const normalizedPrograms = normalizeGrantTypesArray(res.payload as GrantProgram[]);
         return {
           programs: normalizedPrograms,
-          count: res.count as number,
+          count: res.pagination?.totalCount as number,
         };
       } else {
         throw Error(error || "Unknown error");
@@ -271,23 +264,17 @@ export const ManagePrograms = () => {
       pending: "pending",
     };
     try {
-      const id = program._id.$oid;
+      // V2 approve endpoint uses programId only
+      const programId = program.programId;
 
-      const request = fetchData(
-        INDEXER.REGISTRY.APPROVE,
-        "POST",
-        {
-          id,
-          isValid: value,
-        },
-        {},
-        {},
-        true
-      ).then(([res, error]) => {
-        if (error) throw Error(error);
-        return res;
-      });
-      await toast.promise(request, {
+      if (!programId) {
+        throw new Error("Program ID not found. Cannot approve program.");
+      }
+
+      // Use V2 approve endpoint with programId only
+      const approvePromise = ProgramRegistryService.approveProgram(programId, value);
+
+      await toast.promise(approvePromise, {
         loading: `Changing program ${program.metadata?.title} to ${value}...`,
         success: `Program changed to ${value} successfully`,
         error: `Error while changing program ${program.metadata?.title} to ${value}.`,
@@ -295,8 +282,8 @@ export const ManagePrograms = () => {
 
       await refreshPrograms();
     } catch (error: any) {
-      errorManager(`Error ${messageDict[value]} program ${program._id.$oid}`, error, {
-        program: program._id.$oid,
+      errorManager(`Error ${messageDict[value]} program ${program.programId}`, error, {
+        programId: program.programId,
         isValid: value,
         address,
       });
