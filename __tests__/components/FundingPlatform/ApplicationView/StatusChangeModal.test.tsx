@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type React from "react";
+import React from "react";
 import StatusChangeModal from "@/components/FundingPlatform/ApplicationView/StatusChangeModal";
 
 // Note: react-hot-toast is no longer used in StatusChangeModal, but keeping mock for other components
@@ -49,8 +49,25 @@ jest.mock("@headlessui/react", () => {
     return <Component>{children}</Component>;
   };
 
+  // Mock Disclosure component for application summary
+  const MockDisclosure = ({ children, defaultOpen }: any) => {
+    const [isOpen, setIsOpen] = React.useState(defaultOpen ?? false);
+    return typeof children === "function" ? children({ open: isOpen }) : children;
+  };
+  MockDisclosure.Button = ({ children, ...props }: any) => (
+    <button data-testid="disclosure-button" {...props}>
+      {children}
+    </button>
+  );
+  MockDisclosure.Panel = ({ children, ...props }: any) => (
+    <div data-testid="disclosure-panel" {...props}>
+      {children}
+    </div>
+  );
+
   return {
     Dialog: MockDialog,
+    Disclosure: MockDisclosure,
     Transition: {
       Root: MockTransitionRoot,
       Child: MockTransitionChild,
@@ -83,6 +100,18 @@ jest.mock("@heroicons/react/24/outline", () => ({
         className={className}
         {...restProps}
         data-testid="warning-icon"
+      />
+    );
+  },
+  ChevronDownIcon: (props: any) => {
+    const { "aria-hidden": ariaHidden, className, ...restProps } = props;
+    return (
+      <svg
+        role="img"
+        aria-hidden={ariaHidden}
+        className={className}
+        {...restProps}
+        data-testid="chevron-down-icon"
       />
     );
   },

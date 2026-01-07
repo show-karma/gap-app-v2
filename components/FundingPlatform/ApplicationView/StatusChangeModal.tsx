@@ -1,7 +1,12 @@
 "use client";
 
+import { Disclosure } from "@headlessui/react";
 import { Dialog, Transition } from "@headlessui/react";
-import { ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  ChevronDownIcon,
+  ExclamationTriangleIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import { useQuery } from "@tanstack/react-query";
 import debounce from "lodash.debounce";
 import { type FC, Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -10,6 +15,11 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { fundingPlatformService } from "@/services/fundingPlatformService";
 import type { IFundingApplication, IFundingProgramConfig } from "@/types/funding-platform";
+import {
+  extractAmountField,
+  extractApplicationSummary,
+  type ApplicationSummaryField,
+} from "@/utilities/form-schema-helpers";
 
 interface StatusChangeModalProps {
   isOpen: boolean;
@@ -67,6 +77,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   const [amountError, setAmountError] = useState<string | null>(null);
   const [currencyError, setCurrencyError] = useState<string | null>(null);
   const [isCurrencyFromAPI, setIsCurrencyFromAPI] = useState(false);
+  const [isAmountPreFilled, setIsAmountPreFilled] = useState(false);
 
   // Extract programId and chainId from application object
   const programId = application?.programId;
@@ -74,6 +85,22 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
 
   // When status is "approved", amount and currency are required
   const isApprovalStatus = status === "approved";
+
+  // Extract requested amount from application data for pre-filling
+  const extractedAmount = useMemo(() => {
+    if (!isApprovalStatus || !application?.applicationData || !programConfig?.formSchema) {
+      return null;
+    }
+    return extractAmountField(application.applicationData, programConfig.formSchema);
+  }, [isApprovalStatus, application?.applicationData, programConfig?.formSchema]);
+
+  // Extract application summary for context display
+  const applicationSummary = useMemo((): ApplicationSummaryField[] => {
+    if (!isApprovalStatus || !application?.applicationData || !programConfig?.formSchema) {
+      return [];
+    }
+    return extractApplicationSummary(application.applicationData, programConfig.formSchema, 5);
+  }, [isApprovalStatus, application?.applicationData, programConfig?.formSchema]);
 
   const getTemplateContent = useCallback((): string => {
     if (!programConfig?.formSchema?.settings) return "";
@@ -158,6 +185,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
     setAmountError(null);
     setCurrencyError(null);
     setIsCurrencyFromAPI(false);
+    setIsAmountPreFilled(false);
   }, []);
 
   // Fetch funding details when modal opens and status is "approved"
@@ -170,6 +198,18 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   });
 
   const isLoadingCurrency = fundingDetailsQuery.isPending && isFundingDetailsEnabled;
+
+  // Pre-fill amount from application data when modal opens
+  useEffect(() => {
+    if (isOpen && isApprovalStatus && extractedAmount) {
+      // Only pre-fill if user hasn't already entered a value
+      setApprovedAmount((current) => {
+        if (current.trim()) return current;
+        setIsAmountPreFilled(true);
+        return String(extractedAmount.value);
+      });
+    }
+  }, [isOpen, isApprovalStatus, extractedAmount]);
 
   // Handle funding details data when it arrives
   useEffect(() => {
@@ -225,6 +265,8 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
 
   const handleAmountChange = (value: string) => {
     setApprovedAmount(value);
+    // Clear pre-fill state when user manually edits
+    setIsAmountPreFilled(false);
     // Clear error immediately on change for better UX
     if (value && value.trim() !== "" && validateAmount(value)) {
       setAmountError(null);
@@ -384,6 +426,47 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                       </p>
 
                       <div className="mt-4 space-y-4">
+                        {/* Application Summary - Only show when approving and has summary data */}
+                        {isApprovalStatus && applicationSummary.length > 0 && (
+                          <Disclosure defaultOpen>
+                            {({ open }) => (
+                              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                                <Disclosure.Button className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-t-lg transition-colors">
+                                  <span>Application Summary</span>
+                                  <ChevronDownIcon
+                                    className={`h-4 w-4 text-gray-500 transition-transform ${
+                                      open ? "rotate-180" : ""
+                                    }`}
+                                  />
+                                </Disclosure.Button>
+                                <Disclosure.Panel className="px-3 pb-3">
+                                  <dl className="space-y-1.5">
+                                    {applicationSummary.map((field, index) => (
+                                      <div
+                                        key={index}
+                                        className="flex items-start gap-2 text-xs"
+                                      >
+                                        <dt className="font-medium text-gray-500 dark:text-gray-400 min-w-0 shrink-0">
+                                          {field.label}:
+                                        </dt>
+                                        <dd
+                                          className={`text-gray-900 dark:text-gray-100 break-words min-w-0 ${
+                                            field.isAmount
+                                              ? "font-semibold text-green-700 dark:text-green-400"
+                                              : ""
+                                          }`}
+                                        >
+                                          {field.value}
+                                        </dd>
+                                      </div>
+                                    ))}
+                                  </dl>
+                                </Disclosure.Panel>
+                              </div>
+                            )}
+                          </Disclosure>
+                        )}
+
                         {/* Approved Amount and Currency Fields - Only show when approving */}
                         {isApprovalStatus && (
                           <div className="space-y-4">
@@ -423,6 +506,11 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                                   className="mt-1 text-xs text-red-600 dark:text-red-400"
                                 >
                                   {amountError}
+                                </p>
+                              )}
+                              {isAmountPreFilled && !amountError && (
+                                <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+                                  Pre-filled from application request
                                 </p>
                               )}
                             </div>
