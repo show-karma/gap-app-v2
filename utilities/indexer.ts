@@ -262,6 +262,88 @@ export const INDEXER = {
       `/projects/${projectUID}/indicator-dashboard-metrics?${Object.entries(params)
         .map(([key, value]) => `${key}=${value}`)
         .join("&")}`,
+    V2: {
+      LIST: (params?: {
+        communityUID?: string;
+        programId?: number;
+        chainId?: number;
+        syncType?: "auto" | "manual";
+        page?: number;
+        limit?: number;
+      }) => {
+        const queryParams = new URLSearchParams();
+        if (params?.communityUID) queryParams.set("communityUID", params.communityUID);
+        if (params?.programId) queryParams.set("programId", params.programId.toString());
+        if (params?.chainId) queryParams.set("chainId", params.chainId.toString());
+        if (params?.syncType) queryParams.set("syncType", params.syncType);
+        if (params?.page) queryParams.set("page", params.page.toString());
+        if (params?.limit) queryParams.set("limit", params.limit.toString());
+        const query = queryParams.toString();
+        return `/v2/indicators${query ? `?${query}` : ""}`;
+      },
+      GET_BY_ID: (indicatorId: string) => `/v2/indicators/${indicatorId}`,
+      DATAPOINTS: (
+        indicatorId: string,
+        params?: {
+          projectUID?: string;
+          startDate?: string;
+          endDate?: string;
+          period?: string;
+          source?: string;
+          page?: number;
+          limit?: number;
+        }
+      ) => {
+        const queryParams = new URLSearchParams();
+        if (params?.projectUID) queryParams.set("projectUID", params.projectUID);
+        if (params?.startDate) queryParams.set("startDate", params.startDate);
+        if (params?.endDate) queryParams.set("endDate", params.endDate);
+        if (params?.period) queryParams.set("period", params.period);
+        if (params?.source) queryParams.set("source", params.source);
+        if (params?.page) queryParams.set("page", params.page.toString());
+        if (params?.limit) queryParams.set("limit", params.limit.toString());
+        const query = queryParams.toString();
+        return `/v2/indicators/${indicatorId}/datapoints${query ? `?${query}` : ""}`;
+      },
+      PROJECT_INDICATORS: (
+        projectUID: string,
+        params?: {
+          indicatorIds?: string;
+          startDate?: string;
+          endDate?: string;
+          period?: string;
+        }
+      ) => {
+        const queryParams = new URLSearchParams();
+        if (params?.indicatorIds) queryParams.set("indicatorIds", params.indicatorIds);
+        if (params?.startDate) queryParams.set("startDate", params.startDate);
+        if (params?.endDate) queryParams.set("endDate", params.endDate);
+        if (params?.period) queryParams.set("period", params.period);
+        const query = queryParams.toString();
+        return `/v2/indicators/projects/${projectUID}${query ? `?${query}` : ""}`;
+      },
+      COMMUNITY_AGGREGATE: (
+        communityUID: string,
+        params?: {
+          indicatorIds?: string;
+          programId?: number;
+          chainId?: number;
+          startDate?: string;
+          endDate?: string;
+          granularity?: "weekly" | "monthly";
+        }
+      ) => {
+        const queryParams = new URLSearchParams();
+        if (params?.indicatorIds) queryParams.set("indicatorIds", params.indicatorIds);
+        if (params?.programId) queryParams.set("programId", params.programId.toString());
+        if (params?.chainId) queryParams.set("chainId", params.chainId.toString());
+        if (params?.startDate) queryParams.set("startDate", params.startDate);
+        if (params?.endDate) queryParams.set("endDate", params.endDate);
+        if (params?.granularity) queryParams.set("granularity", params.granularity);
+        const query = queryParams.toString();
+        return `/v2/indicators/communities/${communityUID}/aggregate${query ? `?${query}` : ""}`;
+      },
+    },
   },
   COMMUNITY: {
     LIST: ({ page, limit, includeStats }: { page: number; limit: number; includeStats: boolean }) =>
