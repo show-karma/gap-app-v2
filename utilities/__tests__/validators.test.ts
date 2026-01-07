@@ -177,11 +177,18 @@ describe("validators", () => {
       expect(result.chainID).toBe(42161);
     });
 
+    it("should validate normalized format (programId only)", () => {
+      const result = validateProgramIdentifier("program-123");
+      expect(result.valid).toBe(true);
+      expect(result.programId).toBe("program-123");
+      expect(result.chainID).toBeUndefined();
+    });
+
     it("should reject invalid formats", () => {
-      expect(validateProgramIdentifier("program-123").valid).toBe(false);
-      expect(validateProgramIdentifier("program-123_").valid).toBe(false);
-      expect(validateProgramIdentifier("_1").valid).toBe(false);
-      expect(validateProgramIdentifier("program-123_1_extra").valid).toBe(false);
+      expect(validateProgramIdentifier("program-123_").valid).toBe(false); // Has underscore but no chainID
+      expect(validateProgramIdentifier("_1").valid).toBe(false); // Empty programId
+      expect(validateProgramIdentifier("program-123_1_extra").valid).toBe(false); // Too many underscores
+      expect(validateProgramIdentifier("program id_1").valid).toBe(false); // Space in programId
     });
 
     it("should reject invalid program IDs", () => {
@@ -212,11 +219,21 @@ describe("validators", () => {
     });
 
     it("should handle mixed valid and invalid identifiers", () => {
-      const result = validateProgramIdentifiers(["program-1_1", "invalid", "program-2_42161"]);
+      // "program id" has a space which makes it invalid
+      const result = validateProgramIdentifiers(["program-1_1", "program id", "program-2_42161"]);
       expect(result.valid).toBe(false);
       expect(result.validIds).toHaveLength(2);
       expect(result.errors).toHaveLength(1);
-      expect(result.errors[0].id).toBe("invalid");
+      expect(result.errors[0].id).toBe("program id");
+    });
+
+    it("should accept normalized format identifiers (programId only)", () => {
+      const result = validateProgramIdentifiers(["program-1", "program-2", "program-3_42161"]);
+      expect(result.valid).toBe(true);
+      expect(result.validIds).toHaveLength(3);
+      expect(result.validIds[0].chainID).toBeUndefined(); // Normalized format
+      expect(result.validIds[1].chainID).toBeUndefined(); // Normalized format
+      expect(result.validIds[2].chainID).toBe(42161); // Composite format
     });
 
     it("should reject non-array input", () => {

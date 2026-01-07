@@ -169,9 +169,8 @@ describe("ProgramRegistryService", () => {
 
     it("should create program successfully", async () => {
       const mockResponse = {
-        _id: {
-          $oid: "program-123",
-        },
+        programId: "program-123",
+        isValid: true,
       };
 
       (fetchData as jest.Mock).mockResolvedValue([mockResponse, null]);
@@ -183,10 +182,9 @@ describe("ProgramRegistryService", () => {
       );
 
       expect(fetchData).toHaveBeenCalledWith(
-        INDEXER.REGISTRY.CREATE,
+        INDEXER.REGISTRY.V2.CREATE,
         "POST",
         {
-          owner: mockOwner,
           chainId: mockChainId,
           metadata: mockMetadata,
         },
@@ -203,11 +201,20 @@ describe("ProgramRegistryService", () => {
     });
 
     it("should handle different response formats", async () => {
+      // V2 response format with programId and isValid
       const testCases = [
-        { response: { _id: { $oid: "id1" } }, expected: "id1" },
-        { response: { program: { _id: { $oid: "id2" } } }, expected: "id2" },
-        { response: { id: "id3" }, expected: "id3" },
-        { response: "id4", expected: "id4" },
+        { response: { programId: "id1", isValid: true }, expected: "id1", requiresApproval: false },
+        { response: { programId: "id2", isValid: null }, expected: "id2", requiresApproval: true },
+        { response: { programId: "id3", isValid: false }, expected: "id3", requiresApproval: true },
+        // Legacy V1 formats (extractProgramId should still handle them)
+        { response: { _id: { $oid: "id4" } }, expected: "id4", requiresApproval: true },
+        {
+          response: { program: { _id: { $oid: "id5" } } },
+          expected: "id5",
+          requiresApproval: true,
+        },
+        { response: { id: "id6" }, expected: "id6", requiresApproval: true },
+        { response: "id7", expected: "id7", requiresApproval: true },
       ];
 
       for (const testCase of testCases) {
@@ -221,7 +228,7 @@ describe("ProgramRegistryService", () => {
 
         expect(result.programId).toBe(testCase.expected);
         expect(result.success).toBe(true);
-        expect(result.requiresManualApproval).toBe(false);
+        expect(result.requiresManualApproval).toBe(testCase.requiresApproval);
       }
     });
 
@@ -269,10 +276,10 @@ describe("ProgramRegistryService", () => {
       await ProgramRegistryService.approveProgram(mockProgramId);
 
       expect(fetchData).toHaveBeenCalledWith(
-        INDEXER.REGISTRY.APPROVE,
+        INDEXER.REGISTRY.V2.APPROVE,
         "POST",
         {
-          id: mockProgramId,
+          programId: mockProgramId,
           isValid: "accepted",
         },
         {},
@@ -306,9 +313,9 @@ describe("ProgramRegistryService", () => {
       const mockChainId = 1;
       const mockMetadata = ProgramRegistryService.buildProgramMetadata(mockFormData, mockCommunity);
 
-      // Mock creation response
+      // Mock V2 creation response
       (fetchData as jest.Mock)
-        .mockResolvedValueOnce([{ _id: { $oid: "program-123" } }, null])
+        .mockResolvedValueOnce([{ programId: "program-123", isValid: null }, null])
         .mockResolvedValueOnce([{ success: true }, null]);
 
       const createResult = await ProgramRegistryService.createProgram(
@@ -325,11 +332,11 @@ describe("ProgramRegistryService", () => {
       expect(fetchData).toHaveBeenCalledTimes(2);
       expect(fetchData).toHaveBeenNthCalledWith(
         1,
-        INDEXER.REGISTRY.CREATE,
+        INDEXER.REGISTRY.V2.CREATE,
         "POST",
         expect.objectContaining({
-          owner: mockOwner,
           chainId: mockChainId,
+          metadata: expect.any(Object),
         }),
         {},
         {},
@@ -337,10 +344,10 @@ describe("ProgramRegistryService", () => {
       );
       expect(fetchData).toHaveBeenNthCalledWith(
         2,
-        INDEXER.REGISTRY.APPROVE,
+        INDEXER.REGISTRY.V2.APPROVE,
         "POST",
         {
-          id: "program-123",
+          programId: "program-123",
           isValid: "accepted",
         },
         {},
