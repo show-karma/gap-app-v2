@@ -8,7 +8,7 @@ import { FundingMapSidebar } from "@/src/features/funding-map/components/funding
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
-  title: `${PROJECT_NAME} - Grant Program Aggregator`,
+  title: `${PROJECT_NAME} - Directory of web3 funding programs`,
   description: `Find all the funding opportunities across web3 ecosystem.`,
 });
 

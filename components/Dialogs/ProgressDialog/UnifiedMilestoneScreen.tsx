@@ -15,22 +15,19 @@ import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { useGap } from "@/hooks/useGap";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
-import { useStepper } from "@/store/modals/txStepper";
 import type { Grant } from "@/types/v2/grant";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { MultiSelect } from "../../../components/Utilities/MultiSelect";
 
 // Helper function to wait for a specified time
@@ -83,8 +80,8 @@ export const UnifiedMilestoneScreen = () => {
   const { grants, refetch: refetchGrants } = useProjectGrants(project?.uid || "");
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
   const { projectId } = useParams();
   const { refetch: refetchUpdates } = useProjectUpdates(projectId as string);
   const router = useRouter();
@@ -117,27 +114,23 @@ export const UnifiedMilestoneScreen = () => {
 
   // Create a roadmap milestone (project objective)
   const createRoadmapMilestone = async (data: MilestoneFormData) => {
-    if (!gap || !project) return;
-    let gapClient = gap;
+    if (!address || !project) return;
     setIsSubmitting(true);
 
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsSubmitting(false);
         return;
       }
 
-      gapClient = newGapClient;
+      const { gapClient, walletSigner } = setup;
+      if (!gapClient) return;
 
       const newObjective = new ProjectMilestone({
         data: sanitizeObject({
@@ -147,50 +140,43 @@ export const UnifiedMilestoneScreen = () => {
         }),
         schema: gapClient.findSchema("ProjectMilestone"),
         refUID: project.uid,
-        recipient: (address as `0x${string}`) || "0x00",
+        recipient: ((smartWalletAddress || address) as `0x${string}`) || "0x00",
       });
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-
-      const walletSigner = await walletClientToSigner(walletClient);
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.description),
       };
 
-      await newObjective
-        .attest(walletSigner as any, sanitizedData, changeStepperStep)
-        .then(async (res) => {
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
-          } else {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(newObjective.uid, project.chainID),
-              "POST",
-              {}
-            );
-          }
+      await newObjective.attest(walletSigner as any, sanitizedData).then(async (res) => {
+        const txHash = res?.tx[0]?.hash;
+        if (txHash) {
+          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
+        } else {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(newObjective.uid, project.chainID),
+            "POST",
+            {}
+          );
+        }
 
-          changeStepperStep("indexing");
+        showLoading("Indexing milestone...");
 
-          // More robust refetch with multiple attempts
-          await tryRefetch();
+        // More robust refetch with multiple attempts
+        await tryRefetch();
 
-          toast.success("Roadmap milestone created successfully");
-          changeStepperStep("indexed");
+        toast.success("Roadmap milestone created successfully");
+        showSuccess("Milestone created!");
+        setTimeout(() => {
+          dismiss();
           closeProgressModal();
-        });
+        }, 1500);
+      });
     } catch (error) {
+      dismiss();
       errorManager("Error creating roadmap milestone", error);
       toast.error("Failed to create roadmap milestone");
     } finally {
       setIsSubmitting(false);
-      setIsStepper(false);
     }
   };
 
@@ -207,10 +193,9 @@ export const UnifiedMilestoneScreen = () => {
 
   // Create grant milestone(s) for selected grants
   const createGrantMilestones = async (data: MilestoneFormData) => {
-    if (!gap || !project || selectedGrantIds.length === 0) return;
+    if (!address || !project || selectedGrantIds.length === 0) return;
 
     setIsSubmitting(true);
-    setIsStepper(true);
 
     const toastsToRemove: string[] = [];
 
@@ -245,12 +230,10 @@ export const UnifiedMilestoneScreen = () => {
 
       // Process each chain group in the prioritized order
       for (const chainIdStr of sortedChainIds) {
-        let gapClient = gap;
         const chainId = Number(chainIdStr);
         const chainGrants = grantsByChain[chainId];
         const chainName = chainNameDictionary(chainId);
 
-        changeStepperStep("preparing");
         // Notify user we're processing grants on this chain
         toast.loading(`Creating milestone`, {
           id: `chain-${chainId}`,
@@ -258,22 +241,19 @@ export const UnifiedMilestoneScreen = () => {
         toastsToRemove.push(`chain-${chainId}`);
 
         // Switch chain if needed
-        const {
-          success,
-          chainId: actualChainId,
-          gapClient: newGapClient,
-        } = await ensureCorrectChain({
+        const setup = await setupChainAndWallet({
           targetChainId: chainId,
           currentChainId: chain?.id,
           switchChainAsync,
         });
 
-        if (!success) {
+        if (!setup) {
           setIsSubmitting(false);
           continue; // Skip this chain if switch fails
         }
 
-        gapClient = newGapClient;
+        const { gapClient, walletSigner } = setup;
+        if (!gapClient) continue;
 
         // If there's only one grant on this chain, process it normally
         if (chainGrants.length === 1) {
@@ -291,21 +271,11 @@ export const UnifiedMilestoneScreen = () => {
           const milestoneToAttest = new Milestone({
             refUID: grant.uid as `0x${string}`,
             schema: gapClient.findSchema("Milestone"),
-            recipient: address as `0x${string}`,
+            recipient: (smartWalletAddress || address) as `0x${string}`,
             data: milestone,
           });
 
-          const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-          if (error || !walletClient || !gapClient) {
-            throw new Error(`Failed to connect to wallet on ${chainName}`, {
-              cause: error,
-            });
-          }
-
-          const walletSigner = await walletClientToSigner(walletClient);
-
-          const result = await milestoneToAttest.attest(walletSigner as any, changeStepperStep);
+          const result = await milestoneToAttest.attest(walletSigner as any);
 
           // Handle indexer notification
           const txHash = result?.tx[0]?.hash;
@@ -338,19 +308,9 @@ export const UnifiedMilestoneScreen = () => {
             // We'll use the first grant as reference, but it will be attested to all selected grants
             refUID: firstGrant.uid as `0x${string}`,
             schema: gapClient.findSchema("Milestone"),
-            recipient: address as `0x${string}`,
+            recipient: (smartWalletAddress || address) as `0x${string}`,
             data: milestone,
           });
-
-          const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-          if (error || !walletClient || !gapClient) {
-            throw new Error(`Failed to connect to wallet on ${chainName}`, {
-              cause: error,
-            });
-          }
-
-          const walletSigner = await walletClientToSigner(walletClient);
 
           // Instead of using indices, directly use grant UIDs
           const grantUIDs = chainGrants.map((item) => item.grant.uid as `0x${string}`);
@@ -378,8 +338,7 @@ export const UnifiedMilestoneScreen = () => {
           // Use the GapContract to submit all attestations in a single transaction
           const result = await GapContract.multiAttest(
             walletSigner as any,
-            allPayloads.map((p) => p[1]),
-            changeStepperStep
+            allPayloads.map((p) => p[1])
           );
 
           // Handle indexer notification for each tx
@@ -402,24 +361,27 @@ export const UnifiedMilestoneScreen = () => {
         }
       }
 
-      changeStepperStep("indexing");
+      showLoading("Indexing milestones...");
 
       // Wait a bit for indexing and perform multiple refetch attempts
       await sleep(1500);
       await tryRefetch();
 
-      changeStepperStep("indexed");
+      showSuccess("Milestones created!");
 
-      router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
-      closeProgressModal();
+      setTimeout(() => {
+        dismiss();
+        router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
+        closeProgressModal();
+      }, 1500);
     } catch (error) {
+      dismiss();
       errorManager("Error creating grant milestones", error);
       toastsToRemove.forEach((toastId) => {
         toast.remove(toastId);
       });
     } finally {
       setIsSubmitting(false);
-      setIsStepper(false);
     }
   };
 

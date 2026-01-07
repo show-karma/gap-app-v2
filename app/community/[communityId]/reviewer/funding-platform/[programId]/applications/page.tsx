@@ -27,9 +27,10 @@ export default function ReviewerApplicationsPage() {
     programId: string;
   };
 
-  // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split("_");
-  const parsedChainId = parseInt(chainId, 10);
+  // Extract programId from the combined format if present (e.g., "777_11155111" -> "777")
+  const programId = combinedProgramId.includes("_")
+    ? combinedProgramId.split("_")[0]
+    : combinedProgramId;
 
   // Parse initial filters from URL
   const initialFilters = useMemo((): IApplicationFilters => {
@@ -62,7 +63,6 @@ export default function ReviewerApplicationsPage() {
   // Check if user is a reviewer for this program
   const { hasPermission: canView, isLoading: isLoadingPermission } = usePermissions({
     programId,
-    chainID: parsedChainId,
     action: "read",
   });
 
@@ -79,7 +79,7 @@ export default function ReviewerApplicationsPage() {
 
   // Use the custom application status hook (needed for component compatibility)
   // Destructure but don't use - this avoids the unused variable warning
-  useApplicationStatus(programId, parsedChainId);
+  useApplicationStatus(programId);
 
   const handleBackClick = () => {
     router.push(`/community/${communityId}/reviewer/funding-platform`);
@@ -140,9 +140,7 @@ export default function ReviewerApplicationsPage() {
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                   Funding Applications
                 </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Program ID: {programId} | Chain ID: {parsedChainId}
-                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Program ID: {programId}</p>
               </div>
             </div>
 
@@ -156,7 +154,7 @@ export default function ReviewerApplicationsPage() {
               </div>
 
               {/* View Form Button */}
-              <Link href={PAGES.REVIEWER.QUESTION_BUILDER(communityId, programId, parsedChainId)}>
+              <Link href={PAGES.REVIEWER.QUESTION_BUILDER(communityId, programId)}>
                 <Button variant="secondary" className="flex items-center">
                   <EyeIcon className="w-4 h-4 mr-2" />
                   View Form
@@ -171,7 +169,6 @@ export default function ReviewerApplicationsPage() {
       <div className="sm:px-3 md:px-4 px-6 py-2 flex-1">
         <ApplicationListWithAPI
           programId={programId}
-          chainId={parsedChainId}
           showStatusActions={false} // Reviewers cannot change status
           onApplicationSelect={handleApplicationSelect}
           onApplicationHover={handleApplicationHover}

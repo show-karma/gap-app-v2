@@ -8,7 +8,12 @@ export function DonationProgramDropdown() {
   const params = useParams();
   const router = useRouter();
   const communityId = params.communityId as string;
-  const programId = params.programId as string; // Format: programId_chainId
+  const rawProgramId = params.programId as string; // Format: programId (preferred) or programId_chainId (legacy)
+
+  // Normalize programId from URL (strip chainId suffix if present for backward compatibility)
+  const normalizedProgramId = rawProgramId?.includes("_")
+    ? rawProgramId.split("_")[0]
+    : rawProgramId;
 
   const { data: programs, isLoading } = useCommunityPrograms(communityId);
 
@@ -23,9 +28,9 @@ export function DonationProgramDropdown() {
   }, [programs]);
 
   const handleProgramChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedCombinedId = e.target.value;
-    if (selectedCombinedId) {
-      router.push(`/community/${communityId}/donate/${selectedCombinedId}`);
+    const selectedProgramId = e.target.value;
+    if (selectedProgramId) {
+      router.push(`/community/${communityId}/donate/${selectedProgramId}`);
     }
   };
 
@@ -58,21 +63,14 @@ export function DonationProgramDropdown() {
         id="program-selector"
         className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:text-zinc-100 transition-colors text-sm"
         onChange={handleProgramChange}
-        value={programId}
+        value={normalizedProgramId}
         aria-label="Select program"
       >
-        {sortedPrograms.map((program) => {
-          const combinedId =
-            program.programId && program.chainID
-              ? `${program.programId}_${program.chainID}`
-              : program.programId || "";
-
-          return (
-            <option key={program.programId} value={combinedId}>
-              {program.metadata?.title || "Untitled Program"}
-            </option>
-          );
-        })}
+        {sortedPrograms.map((program) => (
+          <option key={program.programId} value={program.programId || ""}>
+            {program.metadata?.title || "Untitled Program"}
+          </option>
+        ))}
       </select>
     </div>
   );

@@ -15,8 +15,6 @@ const _apiClient = createAuthenticatedApiClient();
 export interface PermissionOptions {
   /** Program ID to check permissions for */
   programId?: string;
-  /** Chain ID for the program */
-  chainID?: number;
   /** Specific action to check permission for (e.g., 'comment', 'view', 'edit') */
   action?: string;
   /** Role to check (e.g., 'reviewer', 'admin') */
@@ -75,10 +73,10 @@ type ReviewerProgramsResponse = FundingProgram[];
 export const usePermissions = (options: PermissionOptions = {}) => {
   const { address: wagmiAddress } = useAccount();
   const { authenticated: isAuth, getAccessToken: getToken, ready } = useAuth();
-  const { programId, chainID, action, role, enabled = true } = options;
+  const { programId, action, role, enabled = true } = options;
 
   const query = useQuery({
-    queryKey: ["permissions", programId, chainID, action, role, wagmiAddress, isAuth],
+    queryKey: ["permissions", programId, action, role, wagmiAddress, isAuth],
     queryFn: async () => {
       if (!isAuth || !wagmiAddress || !ready) {
         return {
@@ -91,12 +89,9 @@ export const usePermissions = (options: PermissionOptions = {}) => {
       const permissionsService = new PermissionsService();
 
       // Check specific program permission
-      if (programId && chainID) {
+      if (programId) {
         try {
-          const params = new URLSearchParams();
-          if (action) params.append("action", action);
-
-          const response = await permissionsService.checkPermission({ programId, chainID, action });
+          const response = await permissionsService.checkPermission({ programId, action });
 
           return {
             hasPermission: response.hasPermission,
@@ -198,21 +193,19 @@ export const usePermissions = (options: PermissionOptions = {}) => {
  * Convenience hook for checking reviewer role
  *
  * @param programId - The program ID to check
- * @param chainID - The chain ID for the program
  *
  * @example
  * ```tsx
- * const { isReviewer, isLoading } = useIsReviewer('program123', 1);
+ * const { isReviewer, isLoading } = useIsReviewer('program123');
  * if (isReviewer) {
  *   // Show reviewer-specific UI
  * }
  * ```
  */
-export const useIsReviewer = (programId?: string, chainID?: number) => {
+export const useIsReviewer = (programId?: string) => {
   const result = usePermissions({
     role: "reviewer",
     programId,
-    chainID,
   });
 
   return {

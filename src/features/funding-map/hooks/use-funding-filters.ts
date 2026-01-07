@@ -112,7 +112,7 @@ export function useFundingFilters() {
     parseAsString.withDefault("").withOptions({ clearOnDefault: true })
   );
 
-  // Program ID for opening the details dialog - format: "programId_chainId"
+  // Program ID for opening the details dialog - format: "programId" (preferred) or "programId_chainId" (legacy)
   const [programId, setProgramId] = useQueryState(
     "programId",
     parseAsString.withDefault("").withOptions({ clearOnDefault: true })
@@ -267,7 +267,7 @@ export function useFundingFilters() {
     // Reset all
     resetFilters,
 
-    // Program ID for dialog (format: programId_chainId)
+    // Program ID for dialog (format: programId or legacy programId_chainId)
     programId,
     setProgramId,
   };

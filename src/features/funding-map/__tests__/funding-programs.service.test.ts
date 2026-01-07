@@ -69,13 +69,15 @@ describe("fundingProgramsService", () => {
       expect(result.totalPages).toBe(1);
     });
 
-    it("should use V2 registry endpoint", async () => {
+    it("should use V2 program-registry/search endpoint", async () => {
       const mockResponse = createMockPaginatedResponse([]);
       mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
 
       await fundingProgramsService.getAll();
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("/v2/registry"));
+      expect(mockFetchData).toHaveBeenCalledWith(
+        expect.stringContaining("/v2/program-registry/search")
+      );
     });
 
     it("should pass page parameter correctly", async () => {
@@ -218,40 +220,40 @@ describe("fundingProgramsService", () => {
   });
 
   describe("getById", () => {
-    it("should fetch single program by ID and chainId", async () => {
+    it("should fetch single program by ID", async () => {
       const mockProgram = createMockProgram();
       mockFetchData.mockResolvedValue([mockProgram, null, null, 200]);
 
-      const result = await fundingProgramsService.getById("program-1", 10);
+      const result = await fundingProgramsService.getById("program-1");
 
       expect(result).toEqual(mockProgram);
-      expect(mockFetchData).toHaveBeenCalledWith(INDEXER.V2.REGISTRY.GET_BY_ID("program-1", 10));
+      expect(mockFetchData).toHaveBeenCalledWith(INDEXER.V2.REGISTRY.GET_BY_ID("program-1"));
     });
 
-    it("should use V2 registry endpoint for single program", async () => {
-      const mockProgram = createMockProgram();
-      mockFetchData.mockResolvedValue([mockProgram, null, null, 200]);
-
-      await fundingProgramsService.getById("program-1", 10);
-
-      expect(mockFetchData).toHaveBeenCalledWith("/v2/registry/program-1/10");
-    });
-
-    it("should use default chainId when not provided", async () => {
+    it("should use V2 program-registry endpoint for single program", async () => {
       const mockProgram = createMockProgram();
       mockFetchData.mockResolvedValue([mockProgram, null, null, 200]);
 
       await fundingProgramsService.getById("program-1");
 
-      expect(mockFetchData).toHaveBeenCalledWith(
-        `/v2/registry/program-1/${FUNDING_MAP_DEFAULT_CHAIN_ID}`
-      );
+      expect(mockFetchData).toHaveBeenCalledWith("/v2/program-registry/program-1");
+    });
+
+    it("should pass composite programId format through to API", async () => {
+      // Note: getById passes programId directly - callers should use parseProgramIdAndChainId
+      // to extract the normalized programId if they have a composite format
+      const mockProgram = createMockProgram();
+      mockFetchData.mockResolvedValue([mockProgram, null, null, 200]);
+
+      await fundingProgramsService.getById("program-1_42161");
+
+      expect(mockFetchData).toHaveBeenCalledWith("/v2/program-registry/program-1_42161");
     });
 
     it("should return null when program not found", async () => {
       mockFetchData.mockResolvedValue([null, "Not found", null, 404]);
 
-      const result = await fundingProgramsService.getById("nonexistent", 10);
+      const result = await fundingProgramsService.getById("nonexistent");
 
       expect(result).toBeNull();
     });
@@ -259,19 +261,9 @@ describe("fundingProgramsService", () => {
     it("should return null when error occurs", async () => {
       mockFetchData.mockResolvedValue([null, "Server error", null, 500]);
 
-      const result = await fundingProgramsService.getById("program-1", 10);
+      const result = await fundingProgramsService.getById("program-1");
 
       expect(result).toBeNull();
-    });
-
-    it("should handle different chain IDs", async () => {
-      const mockProgram = createMockProgram({ chainID: 42161 });
-      mockFetchData.mockResolvedValue([mockProgram, null, null, 200]);
-
-      const result = await fundingProgramsService.getById("program-1", 42161);
-
-      expect(result?.chainID).toBe(42161);
-      expect(mockFetchData).toHaveBeenCalledWith("/v2/registry/program-1/42161");
     });
   });
 

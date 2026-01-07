@@ -17,22 +17,20 @@ import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { useStepper } from "@/store/modals/txStepper";
 import type { Grant } from "@/types/v2/grant";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { errorManager } from "../Utilities/errorManager";
 
 const milestoneSchema = z.object({
@@ -101,12 +99,14 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const { gap } = useGap();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
+  const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
+  const refreshProject = useProjectStore((state) => state.refreshProject);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const project = useProjectStore((state) => state.project);
   const projectUID = project?.uid;
   const { refetch: refetchGrants } = useProjectGrants(projectUID || "");
 
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { showLoading, showSuccess, dismiss } = useAttestationToast();
 
   const router = useRouter();
 
@@ -116,7 +116,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
     setIsLoading(true);
     if (!address) return;
     if (!gap) throw new Error("Please, connect a wallet");
-    let gapClient = gap;
     const milestone = sanitizeObject({
       title: data.title,
       description: data.description || "",
@@ -126,37 +125,26 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
     });
 
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const setup = await setupChainAndWallet({
         targetChainId: chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
-      if (!success) {
+      if (!setup) {
         setIsLoading(false);
         return;
       }
 
-      gapClient = newGapClient;
+      const { walletSigner, gapClient } = setup;
 
       const milestoneToAttest = new Milestone({
         refUID: uid as `0x${string}`,
         schema: gapClient.findSchema("Milestone"),
-        recipient: (recipient as Hex) || address,
+        recipient: (recipient as Hex) || smartWalletAddress || address,
         data: milestone,
       });
-
-      const { walletClient, error } = await safeGetWalletClient(actualChainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
-      await milestoneToAttest.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+      await milestoneToAttest.attest(walletSigner as any).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
@@ -166,7 +154,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
             {}
           );
         }
-        changeStepperStep("indexing");
+        showLoading("Indexing milestone...");
         while (retries > 0) {
           try {
             const { data: fetchedGrants } = await refetchGrants();
@@ -176,7 +164,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
             );
             if (milestoneExists) {
               retries = 0;
-              changeStepperStep("indexed");
               toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
               router.push(
                 PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
@@ -185,8 +172,12 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                   "milestones-and-updates"
                 )
               );
-              router.refresh();
-              afterSubmit?.();
+              showSuccess("Milestone created!");
+              setTimeout(() => {
+                dismiss();
+                router.refresh();
+                afterSubmit?.();
+              }, 1500);
             }
             retries -= 1;
             // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -200,6 +191,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
       });
     } catch (error) {
       console.error(error);
+      dismiss();
       errorManager(
         MESSAGES.MILESTONES.CREATE.ERROR(data.title),
         error,
@@ -215,7 +207,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
       );
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 

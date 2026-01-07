@@ -47,17 +47,17 @@ export default function DonateProgramSelectPage() {
 
   // Auto-redirect if only one program exists
   useEffect(() => {
-    if (sortedPrograms.length === 1 && sortedPrograms[0].programId && sortedPrograms[0].chainID) {
-      const combinedId = `${sortedPrograms[0].programId}_${sortedPrograms[0].chainID}`;
-      router.push(`/community/${communityId}/donate/${combinedId}`);
+    if (sortedPrograms.length === 1 && sortedPrograms[0].programId) {
+      // Use programId only (backward compatibility handles old programId_chainId format)
+      router.push(`/community/${communityId}/donate/${sortedPrograms[0].programId}`);
     }
   }, [sortedPrograms, communityId, router]);
 
   const handleProgramSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const combinedId = e.target.value; // Format: programId_chainId
-    setSelectedProgramId(combinedId);
-    if (combinedId) {
-      router.push(`/community/${communityId}/donate/${combinedId}`);
+    const selectedId = e.target.value; // Format: programId (preferred) or programId_chainId (legacy)
+    setSelectedProgramId(selectedId);
+    if (selectedId) {
+      router.push(`/community/${communityId}/donate/${selectedId}`);
     }
   };
 
@@ -177,19 +177,11 @@ export default function DonateProgramSelectPage() {
                 <option value="" disabled>
                   Select a program...
                 </option>
-                {sortedPrograms.map((program) => {
-                  // Combine programId and chainID for the value
-                  const combinedId =
-                    program.programId && program.chainID
-                      ? `${program.programId}_${program.chainID}`
-                      : program.programId || "";
-
-                  return (
-                    <option key={program.programId} value={combinedId}>
-                      {program.metadata?.title || "Untitled Program"}
-                    </option>
-                  );
-                })}
+                {sortedPrograms.map((program) => (
+                  <option key={program.programId} value={program.programId || ""}>
+                    {program.metadata?.title || "Untitled Program"}
+                  </option>
+                ))}
               </select>
             </div>
 

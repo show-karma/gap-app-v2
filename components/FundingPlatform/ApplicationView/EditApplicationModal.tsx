@@ -15,7 +15,7 @@ interface EditApplicationModalProps {
   onClose: () => void;
   application: IFundingApplication;
   programId: string;
-  chainId: number;
+  chainId?: number; // Optional - V2 endpoints use programId only
   formSchema?: IFormSchema; // Optional - modal will fetch if not provided
   onSuccess?: () => void;
 }
@@ -40,14 +40,12 @@ const EditApplicationModal: FC<EditApplicationModalProps> = ({
   } | null>(null);
 
   // Fetch formconfig from API when modal opens (if not provided as prop)
+  // V2 endpoints use programId only, chainId is optional
   const fetchFormConfig = useCallback(async () => {
     setIsLoadingFormSchema(true);
     setFormSchemaError(null);
     try {
-      const program = await fundingPlatformService.programs.getProgramConfiguration(
-        programId,
-        chainId
-      );
+      const program = await fundingPlatformService.programs.getProgramConfiguration(programId);
 
       if (!program?.applicationConfig?.formSchema) {
         setFormSchemaError("Form configuration not found");
@@ -66,10 +64,10 @@ const EditApplicationModal: FC<EditApplicationModalProps> = ({
     } finally {
       setIsLoadingFormSchema(false);
     }
-  }, [programId, chainId]);
+  }, [programId]);
 
   useEffect(() => {
-    if (isOpen && programId && chainId) {
+    if (isOpen && programId) {
       if (propFormSchema) {
         // Use provided formSchema if available
         setFormSchema(propFormSchema);
@@ -79,7 +77,7 @@ const EditApplicationModal: FC<EditApplicationModalProps> = ({
         fetchFormConfig();
       }
     }
-  }, [isOpen, programId, chainId, propFormSchema, fetchFormConfig]);
+  }, [isOpen, programId, propFormSchema, fetchFormConfig]);
 
   const handleClose = () => {
     if (!isUpdating) {

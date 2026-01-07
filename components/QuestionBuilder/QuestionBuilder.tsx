@@ -90,7 +90,7 @@ interface QuestionBuilderProps {
   onSave?: (schema: FormSchema) => void;
   className?: string;
   programId: string;
-  chainId: number;
+  chainId?: number; // Optional - V2 endpoints use programId only
   communityId: string;
   readOnly?: boolean;
   initialPostApprovalSchema?: FormSchema;
@@ -792,10 +792,9 @@ export function QuestionBuilder({
         ) : activeTab === "reviewers" ? (
           <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
             <div className="max-w-4xl mx-auto">
-              {programId && chainId && communityId ? (
+              {programId && communityId ? (
                 <ReviewerManagementTab
                   programId={programId}
-                  chainID={chainId}
                   communityId={communityId}
                   readOnly={readOnly}
                 />

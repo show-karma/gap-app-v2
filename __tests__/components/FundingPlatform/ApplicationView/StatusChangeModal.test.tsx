@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type React from "react";
+import React from "react";
 import StatusChangeModal from "@/components/FundingPlatform/ApplicationView/StatusChangeModal";
 
 // Note: react-hot-toast is no longer used in StatusChangeModal, but keeping mock for other components
@@ -49,8 +49,25 @@ jest.mock("@headlessui/react", () => {
     return <Component>{children}</Component>;
   };
 
+  // Mock Disclosure component for application summary
+  const MockDisclosure = ({ children, defaultOpen }: any) => {
+    const [isOpen, setIsOpen] = React.useState(defaultOpen ?? false);
+    return typeof children === "function" ? children({ open: isOpen }) : children;
+  };
+  MockDisclosure.Button = ({ children, ...props }: any) => (
+    <button data-testid="disclosure-button" {...props}>
+      {children}
+    </button>
+  );
+  MockDisclosure.Panel = ({ children, ...props }: any) => (
+    <div data-testid="disclosure-panel" {...props}>
+      {children}
+    </div>
+  );
+
   return {
     Dialog: MockDialog,
+    Disclosure: MockDisclosure,
     Transition: {
       Root: MockTransitionRoot,
       Child: MockTransitionChild,
@@ -83,6 +100,18 @@ jest.mock("@heroicons/react/24/outline", () => ({
         className={className}
         {...restProps}
         data-testid="warning-icon"
+      />
+    );
+  },
+  ChevronDownIcon: (props: any) => {
+    const { "aria-hidden": ariaHidden, className, ...restProps } = props;
+    return (
+      <svg
+        role="img"
+        aria-hidden={ariaHidden}
+        className={className}
+        {...restProps}
+        data-testid="chevron-down-icon"
       />
     );
   },
@@ -265,15 +294,16 @@ describe("StatusChangeModal", () => {
       expect(label.textContent).toMatch(/\*/);
     });
 
-    it("should require reason for rejected status (isReasonActuallyRequired)", () => {
+    it("should not require reason for rejected status (isReasonActuallyRequired)", () => {
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="rejected" />);
 
       const confirmButton = screen.getByTestId("confirm-button");
-      expect(confirmButton).toBeDisabled();
+      // Button should not be disabled since reason is optional for rejected status
+      expect(confirmButton).not.toBeDisabled();
 
-      // Find label element specifically - use getByLabelText which is more specific
+      // Find label element - should show "(Optional)" not "*"
       const label = screen.getByText(/^Reason/);
-      expect(label.textContent).toMatch(/\*/); // Required asterisk
+      expect(label.textContent).toMatch(/optional/i);
     });
 
     it("should not require reason for approved status when isReasonRequired is false", async () => {
@@ -329,7 +359,7 @@ describe("StatusChangeModal", () => {
     it("should prevent submission with whitespace-only reason when required", () => {
       const onConfirm = jest.fn().mockResolvedValue(undefined);
       renderWithQueryClient(
-        <StatusChangeModal {...defaultProps} status="rejected" onConfirm={onConfirm} />
+        <StatusChangeModal {...defaultProps} status="revision_requested" onConfirm={onConfirm} />
       );
 
       const editor = screen.getByTestId("markdown-editor");
@@ -340,6 +370,19 @@ describe("StatusChangeModal", () => {
 
       fireEvent.click(confirmButton);
       expect(onConfirm).not.toHaveBeenCalled();
+    });
+
+    it("should allow submission without reason for rejected status", () => {
+      const onConfirm = jest.fn().mockResolvedValue(undefined);
+      renderWithQueryClient(
+        <StatusChangeModal {...defaultProps} status="rejected" onConfirm={onConfirm} />
+      );
+
+      const confirmButton = screen.getByTestId("confirm-button");
+      expect(confirmButton).not.toBeDisabled();
+
+      fireEvent.click(confirmButton);
+      expect(onConfirm).toHaveBeenCalledWith(undefined, undefined, undefined);
     });
 
     it("should allow submission with valid reason when required", () => {
@@ -547,7 +590,7 @@ describe("StatusChangeModal", () => {
       renderWithQueryClient(<StatusChangeModal {...defaultProps} status="rejected" />);
 
       expect(
-        screen.getByText(/this content will be sent to the applicant via email/i)
+        screen.getByText(/if provided, this message will be sent to the applicant via email/i)
       ).toBeInTheDocument();
     });
 

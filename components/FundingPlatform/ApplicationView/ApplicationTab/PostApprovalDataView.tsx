@@ -1,9 +1,13 @@
 "use client";
 
 import type { FC, JSX } from "react";
+import { useMemo } from "react";
+import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProjectLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
+import { createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
+import { PROJECT_UID_REGEX } from "@/utilities/validation";
 
 export interface PostApprovalDataViewProps {
   application: IFundingApplication;
@@ -25,7 +29,13 @@ export const PostApprovalDataView: FC<PostApprovalDataViewProps> = ({ applicatio
     });
   }
 
-  const renderFieldValue = (value: any): JSX.Element => {
+  // Create field type mapping from post-approval schema
+  const fieldTypeMap = useMemo(
+    () => createFieldTypeMap(postApprovalFormSchema),
+    [postApprovalFormSchema]
+  );
+
+  const renderFieldValue = (value: any, fieldKey?: string): JSX.Element => {
     if (Array.isArray(value)) {
       // Check if it's an array of objects with title (like milestones)
       const isObjectArray = value.length > 0 && typeof value[0] === "object" && "title" in value[0];
@@ -94,6 +104,16 @@ export const PostApprovalDataView: FC<PostApprovalDataViewProps> = ({ applicatio
       );
     }
 
+    // Handle Karma profile link fields (use field type from schema)
+    const fieldType = fieldKey ? fieldTypeMap[fieldKey] : undefined;
+    if (
+      fieldType === "karma_profile_link" &&
+      typeof value === "string" &&
+      PROJECT_UID_REGEX.test(value)
+    ) {
+      return <KarmaProjectLink uid={value} />;
+    }
+
     // Default: render as markdown
     return (
       <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -122,7 +142,9 @@ export const PostApprovalDataView: FC<PostApprovalDataViewProps> = ({ applicatio
           <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
             {fieldLabels[key] || key.replace(/_/g, " ")}
           </dt>
-          <dd className="text-base text-gray-900 dark:text-gray-100">{renderFieldValue(value)}</dd>
+          <dd className="text-base text-gray-900 dark:text-gray-100">
+            {renderFieldValue(value, key)}
+          </dd>
         </div>
       ))}
     </div>

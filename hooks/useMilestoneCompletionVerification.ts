@@ -8,6 +8,8 @@ import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
+import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import {
   attestMilestoneCompletionAsReviewer,
@@ -15,18 +17,22 @@ import {
   type ProjectGrantMilestonesResponse,
   updateMilestoneVerification,
 } from "@/services/milestones";
-import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { retry, retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 // Constants
 const INDEXER_PROCESSING_DELAY_MS = 2000;
+
+/**
+ * Normalize programId by stripping the chainId suffix if present
+ * Supports both "programId" and legacy "programId_chainId" formats
+ */
+const normalizeProgramId = (id: string): string => {
+  return id.includes("_") ? id.split("_")[0] : id;
+};
 
 interface UseMilestoneCompletionVerificationParams {
   projectId: string;
@@ -53,43 +59,28 @@ export const useMilestoneCompletionVerification = ({
   const [isVerifying, setIsVerifying] = useState(false);
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const { changeStepperStep, dismiss } = useAttestationToast();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
 
-  const setupChainAndWallet = async (
+  const setupChainAndWalletForMilestone = async (
     milestone: GrantMilestoneWithCompletion,
     _data: ProjectGrantMilestonesResponse
   ): Promise<{ gapClient: GAP; walletSigner: Signer } | null> => {
-    // Use chainId from milestone (now required in API response)
     const targetChainId = +milestone.chainId;
 
-    const {
-      success,
-      chainId: actualChainId,
-      gapClient,
-    } = await ensureCorrectChain({
+    const setup = await setupChainAndWallet({
       targetChainId,
       currentChainId: chain?.id,
       switchChainAsync,
     });
 
-    if (!success || !gapClient) {
+    if (!setup) {
       setIsVerifying(false);
-      setIsStepper(false);
+      dismiss();
       return null;
     }
 
-    const { walletClient, error: walletError } = await safeGetWalletClient(actualChainId);
-    if (walletError || !walletClient) {
-      throw new Error("Failed to connect to wallet", { cause: walletError });
-    }
-
-    const walletSigner = await walletClientToSigner(walletClient);
-
-    if (!walletSigner) {
-      throw new Error("Failed to create wallet signer");
-    }
-
-    return { gapClient, walletSigner };
+    return { gapClient: setup.gapClient, walletSigner: setup.walletSigner };
   };
 
   const fetchMilestoneInstance = async (
@@ -105,7 +96,13 @@ export const useMilestoneCompletionVerification = ({
       throw new Error("Failed to fetch project data");
     }
 
-    const grantInstance = fetchedProject.grants.find((g) => g.details?.programId === programId);
+    // Normalize programId for comparison (supports both formats)
+    const normalizedInputId = normalizeProgramId(programId);
+    const grantInstance = fetchedProject.grants.find((g) => {
+      const storedId = g.details?.programId;
+      if (!storedId) return false;
+      return normalizeProgramId(storedId) === normalizedInputId;
+    });
 
     if (!grantInstance) {
       throw new Error("Grant not found");
@@ -204,16 +201,21 @@ export const useMilestoneCompletionVerification = ({
     milestone: GrantMilestoneWithCompletion,
     checkCompletion: boolean,
     userAddress: string,
-    compositeProgramId: string
+    inputProgramId: string
   ) => {
+    // Normalize for comparison (supports both programId formats)
+    const normalizedInputId = normalizeProgramId(inputProgramId);
+
     await retryUntilConditionMet(async () => {
       const updatedProject = await gapClient.fetch.projectById(data.project.uid);
 
       if (!updatedProject) return false;
 
-      const updatedGrant = updatedProject.grants.find(
-        (g) => g.details?.programId === compositeProgramId
-      );
+      const updatedGrant = updatedProject.grants.find((g) => {
+        const storedId = g.details?.programId;
+        if (!storedId) return false;
+        return normalizeProgramId(storedId) === normalizedInputId;
+      });
 
       if (!updatedGrant) return false;
 
@@ -397,13 +399,12 @@ export const useMilestoneCompletionVerification = ({
     const attestationChainId = milestone.chainId;
 
     setIsVerifying(true);
-    setIsStepper(true);
 
     try {
       changeStepperStep("preparing");
 
       // Step 1: Setup chain and wallet
-      const chainSetup = await setupChainAndWallet(milestone, data);
+      const chainSetup = await setupChainAndWalletForMilestone(milestone, data);
       if (!chainSetup) return;
 
       const { gapClient, walletSigner } = chainSetup;
@@ -481,7 +482,7 @@ export const useMilestoneCompletionVerification = ({
       }
     } finally {
       setIsVerifying(false);
-      setIsStepper(false);
+      dismiss();
     }
   };
 

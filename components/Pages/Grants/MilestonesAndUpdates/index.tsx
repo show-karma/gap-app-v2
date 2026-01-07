@@ -74,10 +74,9 @@ interface GrantCompletionCardProps {
 }
 
 export const GrantCompletionCard = ({ completion, grant }: GrantCompletionCardProps) => {
-  // Get program ID for fetching tracks
-  const programId = grant?.details?.programId
-    ? `${grant.details.programId}_${grant.chainID}`
-    : undefined;
+  // Get program ID for fetching tracks (just programId, no chainId suffix)
+  // Backward compatibility: trackService normalizes composite format if legacy URLs are used
+  const programId = grant?.details?.programId || undefined;
 
   const { data: tracks = [] } = useTracksForProgram(programId as string);
 

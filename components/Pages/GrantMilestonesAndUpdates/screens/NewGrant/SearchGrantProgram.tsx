@@ -109,7 +109,8 @@ export function SearchGrantProgram({
 
       if (matchingProgram) {
         setSelectedProgram(matchingProgram);
-        setValue("programId", `${matchingProgram.programId}_${matchingProgram.chainID}`);
+        // Use just programId (no chainId suffix) - service layer normalizes if needed
+        setValue("programId", matchingProgram.programId);
         if (!formData.title) {
           setValue("title", matchingProgram.metadata?.title, {
             shouldValidate: true,
@@ -162,11 +163,8 @@ export function SearchGrantProgram({
           {/* Always show track selection if we have a program ID, either from selected program or from form data */}
           {(selectedProgram || formData.programId) && (
             <TrackSelection
-              programId={
-                selectedProgram?.programId
-                  ? `${selectedProgram.programId}_${selectedProgram.chainID}`
-                  : formData.programId
-              }
+              // Use just programId (no chainId suffix) - trackService normalizes if needed
+              programId={selectedProgram?.programId || formData.programId}
               selectedTrackIds={formData.selectedTrackIds || []}
               onTrackSelectionChange={(trackIds) => {
                 // Allow track selection in both edit and create modes

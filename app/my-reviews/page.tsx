@@ -230,7 +230,7 @@ export default function MyReviewPage() {
                   {community.milestoneReviewerPrograms &&
                     community.milestoneReviewerPrograms.length > 0 && (
                       <Link
-                        href={`${PAGES.ADMIN.MILESTONES(community.communitySlug || community.communityUID || "")}?programIds=${community.milestoneReviewerPrograms.map((p) => `${p.programId}_${p.chainID}`).join(",")}`}
+                        href={`${PAGES.ADMIN.MILESTONES(community.communitySlug || community.communityUID || "")}?programIds=${community.milestoneReviewerPrograms.map((p) => p.programId).join(",")}`}
                         className="block"
                       >
                         <Button
