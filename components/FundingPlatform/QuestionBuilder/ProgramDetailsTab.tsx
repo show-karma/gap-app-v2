@@ -159,7 +159,9 @@ export function ProgramDetailsTab({
     try {
       setIsLoadingProgram(true);
       setProgramError(null);
-      const [data, error] = await fetchData(INDEXER.REGISTRY.FIND_BY_ID(programId, effectiveChainId));
+      const [data, error] = await fetchData(
+        INDEXER.REGISTRY.FIND_BY_ID(programId, effectiveChainId)
+      );
       if (error) {
         throw new Error(error);
       }
@@ -269,10 +271,7 @@ export function ProgramDetailsTab({
       const metadata = buildUpdateMetadata(data, program!.metadata);
 
       // Use V2 update endpoint
-      await ProgramRegistryService.updateProgram(
-        programIdToUpdate,
-        metadata
-      );
+      await ProgramRegistryService.updateProgram(programIdToUpdate, metadata);
 
       toast.success("Program updated successfully!");
       await refetchProgramData();

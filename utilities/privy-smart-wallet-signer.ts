@@ -1,10 +1,10 @@
 import {
   AbstractSigner,
-  Provider,
-  TransactionRequest,
-  TransactionResponse,
-  TypedDataDomain,
-  TypedDataField,
+  type Provider,
+  type TransactionRequest,
+  type TransactionResponse,
+  type TypedDataDomain,
+  type TypedDataField,
 } from "ethers";
 
 // Define the minimal interface needed from Privy's smart wallet client
@@ -33,11 +33,7 @@ export class PrivySmartWalletSigner extends AbstractSigner {
    * @param address - The smart wallet address
    * @param provider - An ethers JsonRpcProvider for the target chain
    */
-  constructor(
-    client: SmartWalletClientInterface,
-    address: string,
-    provider: Provider
-  ) {
+  constructor(client: SmartWalletClientInterface, address: string, provider: Provider) {
     super(provider);
     this.client = client;
     this._address = address;
@@ -57,10 +53,7 @@ export class PrivySmartWalletSigner extends AbstractSigner {
    * May be used by some SDK operations.
    */
   async signMessage(message: string | Uint8Array): Promise<string> {
-    const msg =
-      typeof message === "string"
-        ? message
-        : `0x${Buffer.from(message).toString("hex")}`;
+    const msg = typeof message === "string" ? message : `0x${Buffer.from(message).toString("hex")}`;
     // Use the client's signMessage method directly
     return this.client.signMessage({
       account: this._address as `0x${string}`,

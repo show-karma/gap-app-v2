@@ -84,10 +84,7 @@ export default function ApplicationsPage() {
   });
 
   // Use the funding applications hook to get applications data
-  const { applications: _applications } = useFundingApplications(
-    programId,
-    initialFilters
-  );
+  const { applications: _applications } = useFundingApplications(programId, initialFilters);
 
   // Prefetch hook for better UX on hover
   const { prefetchApplication } = useApplication(null);

@@ -178,10 +178,8 @@ export class ProgramRegistryService {
 
     // V2 response: { programId: "...", isValid: true | null, ... }
     const programId = ProgramRegistryService.extractProgramId(createResponse);
-    const isValid = 
-      typeof createResponse === "object" &&
-      createResponse !== null &&
-      "isValid" in createResponse
+    const isValid =
+      typeof createResponse === "object" && createResponse !== null && "isValid" in createResponse
         ? (createResponse as { isValid?: unknown }).isValid
         : null;
 
@@ -207,10 +205,7 @@ export class ProgramRegistryService {
   /**
    * Update a program (V2 endpoint)
    */
-  static async updateProgram(
-    programId: string,
-    metadata: ProgramMetadata
-  ): Promise<void> {
+  static async updateProgram(programId: string, metadata: ProgramMetadata): Promise<void> {
     const request = {
       metadata,
     };

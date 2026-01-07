@@ -84,7 +84,7 @@ export default function ApplicationDetailPage() {
 
   // Fetch program config
   const { data: program, config } = useProgramConfig(programId);
-  
+
   // Get chainId from program config if needed for V1 components
   const chainId = program?.chainID;
 

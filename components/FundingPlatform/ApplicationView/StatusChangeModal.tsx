@@ -1,12 +1,7 @@
 "use client";
 
-import { Disclosure } from "@headlessui/react";
-import { Dialog, Transition } from "@headlessui/react";
-import {
-  ChevronDownIcon,
-  ExclamationTriangleIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
+import { Dialog, Disclosure, Transition } from "@headlessui/react";
+import { ChevronDownIcon, ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useQuery } from "@tanstack/react-query";
 import debounce from "lodash.debounce";
 import { type FC, Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -16,9 +11,9 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { fundingPlatformService } from "@/services/fundingPlatformService";
 import type { IFundingApplication, IFundingProgramConfig } from "@/types/funding-platform";
 import {
+  type ApplicationSummaryField,
   extractAmountField,
   extractApplicationSummary,
-  type ApplicationSummaryField,
 } from "@/utilities/form-schema-helpers";
 
 interface StatusChangeModalProps {
@@ -442,10 +437,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                                 <Disclosure.Panel className="px-3 pb-3">
                                   <dl className="space-y-1.5">
                                     {applicationSummary.map((field, index) => (
-                                      <div
-                                        key={index}
-                                        className="flex items-start gap-2 text-xs"
-                                      >
+                                      <div key={index} className="flex items-start gap-2 text-xs">
                                         <dt className="font-medium text-gray-500 dark:text-gray-400 min-w-0 shrink-0">
                                           {field.label}:
                                         </dt>

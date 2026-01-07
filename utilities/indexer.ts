@@ -101,8 +101,7 @@ export const INDEXER = {
       LIST: (community?: string) =>
         `/v2/funding-program-configs${community ? `?community=${community}` : ""}`,
       ENABLED: () => `/v2/funding-program-configs/enabled`,
-      REVIEWERS: (programId: string) =>
-        `/v2/funding-program-configs/${programId}/reviewers`,
+      REVIEWERS: (programId: string) => `/v2/funding-program-configs/${programId}/reviewers`,
       CHECK_PERMISSION: (programId: string, action?: string) => {
         const params = new URLSearchParams();
         if (action) params.append("action", action);
@@ -112,16 +111,12 @@ export const INDEXER = {
     },
     FUNDING_APPLICATIONS: {
       GET: (applicationId: string) => `/v2/funding-applications/${applicationId}`,
-      BY_PROGRAM: (programId: string) =>
-        `/v2/funding-applications/program/${programId}`,
+      BY_PROGRAM: (programId: string) => `/v2/funding-applications/program/${programId}`,
       BY_EMAIL: (programId: string, email: string) =>
         `/v2/funding-applications/program/${programId}/by-email?email=${encodeURIComponent(email)}`,
-      STATISTICS: (programId: string) =>
-        `/v2/funding-applications/program/${programId}/statistics`,
-      EXPORT: (programId: string) =>
-        `/v2/funding-applications/program/${programId}/export`,
-      ADMIN_EXPORT: (programId: string) =>
-        `/v2/funding-applications/admin/${programId}/export`,
+      STATISTICS: (programId: string) => `/v2/funding-applications/program/${programId}/statistics`,
+      EXPORT: (programId: string) => `/v2/funding-applications/program/${programId}/export`,
+      ADMIN_EXPORT: (programId: string) => `/v2/funding-applications/admin/${programId}/export`,
       VERSIONS_TIMELINE: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/versions/timeline`,
       REVIEWERS: (applicationId: string) => `/v2/funding-applications/${applicationId}/reviewers`,
@@ -141,8 +136,7 @@ export const INDEXER = {
       },
     },
     MILESTONE_REVIEWERS: {
-      LIST: (programId: string) =>
-        `/v2/programs/${programId}/milestone-reviewers`,
+      LIST: (programId: string) => `/v2/programs/${programId}/milestone-reviewers`,
     },
     REGISTRY: {
       GET_ALL: "/v2/program-registry/search",
@@ -270,6 +264,7 @@ export const INDEXER = {
     REGIONS: (idOrSlug: string) => `/v2/communities/${idOrSlug}/regions`,
     V2: {
       GET: (slug: string) => `/v2/communities/${slug}`,
+      GRANTS: (slug: string) => `/v2/communities/${slug}/grants`,
       STATS: (slug: string) => `/v2/communities/${slug}/stats`,
       IMPACT_SEGMENTS: (communityUID: string) => `/v2/impact-segments/${communityUID}`,
       INDICATORS: {

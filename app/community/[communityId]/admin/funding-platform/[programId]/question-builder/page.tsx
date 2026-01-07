@@ -25,7 +25,7 @@ export default function QuestionBuilderPage() {
     : combinedProgramId;
 
   const { hasAccess, isLoading: isLoadingAdmin } = useCommunityAdminAccess(communityId);
-  
+
   // Fetch program config to get chainID if needed for V1 components
   const { config: programConfig } = useProgramConfig(programId);
   const chainId = programConfig?.chainID;
@@ -118,9 +118,7 @@ export default function QuestionBuilderPage() {
 
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">Form Builder</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Program ID: {programId}
-                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Program ID: {programId}</p>
               </div>
             </div>
 
