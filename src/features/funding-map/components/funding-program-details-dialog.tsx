@@ -1,20 +1,14 @@
 "use client";
 
 import {
-  ArrowDownToDot,
   BadgeCheck,
   Bug,
   Building2,
   Calendar,
   ChevronDown,
   ChevronRight,
-  Code,
   ExternalLink,
-  FastForward,
   Globe,
-  IterationCw,
-  Trophy,
-  Vote,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -53,61 +47,16 @@ import type {
   FundingProgramMetadata,
   FundingProgramResponse,
 } from "../types/funding-program";
+import { formatBudgetValue } from "../utils/format-budget";
 import { FUNDING_PLATFORM_DOMAINS } from "../utils/funding-platform-domains";
 import { isValidImageUrl } from "../utils/image-utils";
+import { GrantTypeBadges } from "./grant-type-badges";
 
 interface FundingProgramDetailsDialogProps {
   program: FundingProgramResponse | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isLoading?: boolean;
-}
-
-/**
- * Returns the icon and color configuration for a given grant type.
- */
-function getGrantTypeConfig(type: string): { icon: React.ReactNode; color: string } | null {
-  switch (type) {
-    case "Direct Grants":
-      return {
-        icon: <ArrowDownToDot className="h-3 w-3" style={{ color: "#365cf4" }} />,
-        color: "#365cf4",
-      };
-    case "Bounties":
-      return {
-        icon: <Code className="h-3 w-3" style={{ color: "#f050b5" }} />,
-        color: "#f050b5",
-      };
-    case "Retro Funding":
-      return {
-        icon: <IterationCw className="h-3 w-3" style={{ color: "#ff9757" }} />,
-        color: "#ff9757",
-      };
-    case "Hackathons":
-      return {
-        icon: <Trophy className="h-3 w-3" style={{ color: "#54ba40" }} />,
-        color: "#54ba40",
-      };
-    case "Quadratic Funding":
-      return {
-        icon: <Vote className="h-3 w-3" style={{ color: "#963ffb" }} />,
-        color: "#963ffb",
-      };
-    case "Accelerators":
-      return {
-        icon: <FastForward className="h-3 w-3" style={{ color: "#bfb801" }} />,
-        color: "#bfb801",
-      };
-    default:
-      return null;
-  }
-}
-
-function formatBudgetValue(budget: string | undefined): string | null {
-  if (!budget || Number(budget) === 0) return null;
-  const numBudget = Number(budget);
-  if (Number.isNaN(numBudget)) return budget;
-  return `$${formatCurrency(numBudget)}`;
 }
 
 function formatGrantSize(min: string | undefined, max: string | undefined): string | null {
@@ -449,19 +398,15 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
           {/* Grant Types + Categories */}
           {((grantTypes && grantTypes.length > 0) || (categories && categories.length > 0)) && (
             <div className="flex flex-wrap items-center gap-1.5">
-              {grantTypes?.map((type) => {
-                const config = getGrantTypeConfig(type);
-                return (
-                  <Badge
-                    key={type}
-                    variant="secondary"
-                    className="rounded-lg px-2 py-0.5 text-xs font-medium flex items-center gap-1.5"
-                  >
-                    {config?.icon}
-                    {type}
-                  </Badge>
-                );
-              })}
+              {grantTypes && grantTypes.length > 0 && (
+                <GrantTypeBadges
+                  types={grantTypes}
+                  showLabels={true}
+                  variant="secondary"
+                  iconSize="sm"
+                  className="gap-1.5"
+                />
+              )}
               {categories?.map((category) => (
                 <Badge
                   key={category}
