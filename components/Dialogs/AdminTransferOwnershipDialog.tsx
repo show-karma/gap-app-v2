@@ -4,10 +4,10 @@ import { Dialog, Transition } from "@headlessui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FC, Fragment, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { adminTransferOwnership } from "@/services/project.service";
 import { useProjectStore } from "@/store";
 import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
@@ -39,6 +39,7 @@ export const AdminTransferOwnershipDialog: FC = () => {
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { address } = useAccount();
+  const { startAttestation, showSuccess, showError } = useAttestationToast();
 
   const {
     register,
@@ -58,17 +59,19 @@ export const AdminTransferOwnershipDialog: FC = () => {
 
   const onSubmit = async (data: FormData) => {
     if (!project) return;
+    startAttestation("Transferring ownership...");
     try {
       const sanitizedAddress = sanitizeInput(data.newOwner);
 
       await adminTransferOwnership(project.uid, project.chainID, sanitizedAddress);
 
       await refreshProject();
-      toast.success(
+      showSuccess(
         "Transfer ownership request submitted successfully. It can take few minutes to reflect."
       );
       closeModal();
     } catch (error: any) {
+      showError("Failed to request ownership transfer.");
       errorManager(
         `Error requesting ownership transfer from ${project.owner} to ${data.newOwner}`,
         error,

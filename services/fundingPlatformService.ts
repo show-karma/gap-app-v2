@@ -124,9 +124,7 @@ export const fundingProgramsAPI = {
   /**
    * Get program configuration including form schema
    */
-  async getProgramConfiguration(
-    programId: string
-  ): Promise<FundingProgram | null> {
+  async getProgramConfiguration(programId: string): Promise<FundingProgram | null> {
     const [data, error] = await fetchData<FundingProgram>(
       INDEXER.V2.FUNDING_PROGRAMS.GET(programId)
     );
@@ -194,10 +192,7 @@ export const fundingProgramsAPI = {
     config: Partial<IFundingProgramConfig | null>
   ): Promise<IFundingProgramConfig> {
     // If config exists, use POST to update
-    const response = await apiClient.post(
-      `/v2/funding-program-configs/${programId}`,
-      config
-    );
+    const response = await apiClient.post(`/v2/funding-program-configs/${programId}`, config);
     return response.data;
   },
 
@@ -209,10 +204,7 @@ export const fundingProgramsAPI = {
     config: Partial<IFundingProgramConfig | null>
   ): Promise<IFundingProgramConfig> {
     // If config exists, use PUT to update
-    const response = await apiClient.put(
-      `/v2/funding-program-configs/${programId}`,
-      config
-    );
+    const response = await apiClient.put(`/v2/funding-program-configs/${programId}`, config);
     return response.data;
   },
 
@@ -246,10 +238,7 @@ export const fundingProgramsAPI = {
   /**
    * Toggle program status (enabled/disabled)
    */
-  async toggleProgramStatus(
-    programId: string,
-    enabled: boolean
-  ): Promise<IFundingProgramConfig> {
+  async toggleProgramStatus(programId: string, enabled: boolean): Promise<IFundingProgramConfig> {
     try {
       const existingConfig = await this.getProgramConfiguration(programId);
       return this.updateProgramConfiguration(programId, {
@@ -294,10 +283,7 @@ export const fundingApplicationsAPI = {
    * Submit a new funding application
    */
   async submitApplication(request: IApplicationSubmitRequest): Promise<IFundingApplication> {
-    const response = await apiClient.post(
-      `/v2/funding-applications/${request.programId}`,
-      request
-    );
+    const response = await apiClient.post(`/v2/funding-applications/${request.programId}`, request);
     return response.data;
   },
 
@@ -420,9 +406,7 @@ export const fundingApplicationsAPI = {
   /**
    * Get application statistics for a program
    */
-  async getApplicationStatistics(
-    programId: string
-  ): Promise<IApplicationStatistics> {
+  async getApplicationStatistics(programId: string): Promise<IApplicationStatistics> {
     const [data, error] = await fetchData<IApplicationStatistics>(
       INDEXER.V2.FUNDING_APPLICATIONS.STATISTICS(programId)
     );

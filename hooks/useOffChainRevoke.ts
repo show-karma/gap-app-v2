@@ -1,4 +1,4 @@
-import toast from "react-hot-toast";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -15,6 +15,8 @@ interface UseOffChainRevokeOptions {
 }
 
 export const useOffChainRevoke = () => {
+  const { showLoading, showSuccess, showError, dismiss } = useAttestationToast();
+
   const performOffChainRevoke = async ({
     uid,
     chainID,
@@ -23,15 +25,12 @@ export const useOffChainRevoke = () => {
     onError,
     toastMessages,
   }: UseOffChainRevokeOptions): Promise<boolean> => {
-    const toastLoading = toast.loading(toastMessages?.loading || "Revoking attestation...");
+    showLoading(toastMessages?.loading || "Revoking attestation...");
     try {
       const res = await fetchData(INDEXER.PROJECT.REVOKE_ATTESTATION(uid, chainID), "POST", {});
 
       if (res[1]) {
-        if (toastLoading) {
-          toast.dismiss(toastLoading);
-          toast.error(res[1]);
-        }
+        showError(res[1]);
         onError?.(res[1]);
         return false;
       }
@@ -39,17 +38,15 @@ export const useOffChainRevoke = () => {
       await checkIfExists?.();
 
       if (toastMessages?.success) {
-        toast.success(toastMessages?.success, {
-          id: toastLoading!,
-        });
+        showSuccess(toastMessages.success);
+      } else {
+        dismiss();
       }
 
       onSuccess?.();
       return true;
     } catch (error) {
-      if (toastLoading) {
-        toast.dismiss(toastLoading);
-      }
+      dismiss();
       onError?.(error);
       return false;
     }

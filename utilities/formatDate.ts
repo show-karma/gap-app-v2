@@ -126,3 +126,37 @@ export const formatDate = (
 
   return d.toISOString();
 };
+
+/**
+ * Get ordinal suffix for a day number (1st, 2nd, 3rd, 4th, etc.)
+ */
+export function getOrdinalSuffix(day: number): string {
+  if (day > 3 && day < 21) return "th";
+  switch (day % 10) {
+    case 1:
+      return "st";
+    case 2:
+      return "nd";
+    case 3:
+      return "rd";
+    default:
+      return "th";
+  }
+}
+
+/**
+ * Format a date to "Jan 7th" format (short month + day with ordinal)
+ */
+export function formatDayMonth(date: Date): string {
+  const day = date.getDate();
+  const month = date.toLocaleDateString("en-US", { month: "short" });
+  const suffix = getOrdinalSuffix(day);
+  return `${month} ${day}${suffix}`;
+}
+
+/**
+ * Format a date to "January 2026" format (full month + year)
+ */
+export function formatMonthYear(date: Date): string {
+  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+}

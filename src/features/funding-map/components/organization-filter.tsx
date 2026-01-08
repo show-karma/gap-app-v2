@@ -1,8 +1,8 @@
 "use client";
 
-import { CheckIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "cmdk";
+import { Check, ChevronDown, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/utilities/tailwind";
 import type { OrganizationFilterValue } from "../hooks/use-funding-filters";
@@ -68,48 +68,66 @@ export function OrganizationFilter({ value, onChange }: OrganizationFilterProps)
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger
-        disabled={isLoading}
-        className={cn(
-          "h-8 flex items-center gap-1 rounded-lg px-2.5 text-sm shadow-sm",
-          "bg-background border border-input hover:bg-accent hover:text-accent-foreground",
-          "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-          "disabled:cursor-not-allowed disabled:opacity-50"
+      <div className="flex items-center">
+        <Popover.Trigger
+          disabled={isLoading}
+          className={cn(
+            "h-8 flex items-center gap-1.5 px-2.5 text-sm shadow-sm",
+            "bg-background border border-input hover:bg-accent hover:text-accent-foreground",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground",
+            "active:outline-none",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+            selectedOption ? "rounded-l-lg rounded-r-none" : "rounded-lg"
+          )}
+        >
+          <span
+            className={cn(
+              "max-w-[150px] truncate",
+              selectedOption ? "text-foreground" : "text-muted-foreground"
+            )}
+          >
+            {isLoading ? "Loading..." : selectedOption?.name || "Ecosystem"}
+          </span>
+          {!selectedOption && <ChevronDown className="h-4 w-4 opacity-50" />}
+        </Popover.Trigger>
+        {selectedOption && (
+          <button
+            type="button"
+            className="flex h-8 w-8 items-center justify-center rounded-r-lg border border-l-0 border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer"
+            onClick={() => onChange(null)}
+            aria-label="Clear ecosystem filter"
+          >
+            <X className="h-3 w-3" />
+          </button>
         )}
-      >
-        <span className="text-muted-foreground">Organization:</span>
-        <span className="max-w-[150px] truncate">
-          {isLoading ? "Loading..." : selectedOption?.name || "Any"}
-        </span>
-        <ChevronDownIcon className="h-3 w-3 text-muted-foreground" />
-      </Popover.Trigger>
+      </div>
       <Popover.Portal>
         <Popover.Content
-          className="z-50 mt-1 w-[280px] rounded-md border border-border bg-popover text-popover-foreground shadow-md"
+          className="z-50 mt-1 w-[280px] rounded-md border border-border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
           align="start"
           sideOffset={4}
         >
           <Command className="w-full">
             <CommandInput
-              placeholder="Search organization..."
-              className="h-9 w-full border-b border-border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
+              placeholder="Search ecosystem..."
+              className="h-9 w-full rounded-md border-0 text-sm focus:ring-0 focus-visible:ring-0 focus:border-0 focus-visible:border-0"
             />
             <CommandList className="max-h-[300px] overflow-y-auto p-1">
               <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
-                No organization found.
+                No ecosystem found.
               </CommandEmpty>
               <CommandGroup>
                 <CommandItem
                   value="any"
                   onSelect={() => handleSelect("any", "")}
                   className={cn(
-                    "flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm",
+                    "flex cursor-pointer items-center justify-between rounded-sm px-2 py-1.5 text-sm",
                     "hover:bg-accent hover:text-accent-foreground",
                     "data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                   )}
                 >
-                  <CheckIcon className={cn("h-4 w-4", !value ? "opacity-100" : "opacity-0")} />
-                  <span>Any</span>
+                  <span>All Ecosystems</span>
+                  {!value && <Check className="h-4 w-4 text-primary" />}
                 </CommandItem>
                 {sortedOptions.map((option) => {
                   const isSelected = value?.type === option.type && value?.id === option.id;
@@ -124,9 +142,6 @@ export function OrganizationFilter({ value, onChange }: OrganizationFilterProps)
                         "data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                       )}
                     >
-                      <CheckIcon
-                        className={cn("h-4 w-4 shrink-0", isSelected ? "opacity-100" : "opacity-0")}
-                      />
                       {option.imageUrl && (
                         <img
                           src={option.imageUrl}
@@ -138,6 +153,7 @@ export function OrganizationFilter({ value, onChange }: OrganizationFilterProps)
                       <span className="shrink-0 text-xs text-muted-foreground">
                         ({option.programCount})
                       </span>
+                      {isSelected && <Check className="h-4 w-4 shrink-0 text-primary" />}
                     </CommandItem>
                   );
                 })}

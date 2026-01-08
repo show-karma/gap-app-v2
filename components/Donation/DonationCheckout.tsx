@@ -10,9 +10,9 @@ import {
   getTokensByChain,
   type SupportedToken,
 } from "@/constants/supportedTokens";
+import { useCartChainPayoutAddresses } from "@/hooks/donation/useCartChainPayoutAddresses";
 import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances";
 import { useDonationCheckout } from "@/hooks/donation/useDonationCheckout";
-import { usePayoutAddressManager } from "@/hooks/donation/usePayoutAddressManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useNetworkSwitching } from "@/hooks/useNetworkSwitching";
 import { useDonationCart } from "@/store";
@@ -73,13 +73,11 @@ export function DonationCheckout() {
   );
 
   const {
-    payoutAddresses,
+    chainPayoutAddresses,
     missingPayouts,
-    isFetchingPayouts,
-    payoutStatusByProject,
-    formatAddress,
+    isFetching: isFetchingPayouts,
     setMissingPayouts,
-  } = usePayoutAddressManager(items, communityId);
+  } = useCartChainPayoutAddresses(items);
 
   const {
     transfers,
@@ -189,7 +187,7 @@ export function DonationCheckout() {
   const onProceed = useCallback(async () => {
     await handleProceedWithDonations(
       payments,
-      payoutAddresses,
+      chainPayoutAddresses,
       balanceByTokenKey,
       currentChainId,
       switchToNetwork,
@@ -199,7 +197,7 @@ export function DonationCheckout() {
   }, [
     handleProceedWithDonations,
     payments,
-    payoutAddresses,
+    chainPayoutAddresses,
     balanceByTokenKey,
     currentChainId,
     switchToNetwork,
@@ -259,10 +257,9 @@ export function DonationCheckout() {
               items={items}
               selectedTokens={selectedTokens}
               amounts={amounts}
-              payoutStatusByProject={payoutStatusByProject}
+              chainPayoutAddresses={chainPayoutAddresses}
               allAvailableTokens={allAvailableTokens}
               balanceByTokenKey={balanceByTokenKey}
-              formatAddress={formatAddress}
               onTokenSelect={handleTokenSelect}
               onAmountChange={setAmount}
               onRemove={remove}

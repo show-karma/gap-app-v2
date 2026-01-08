@@ -1,6 +1,5 @@
 import { GAP } from "@show-karma/karma-gap-sdk";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
@@ -45,7 +44,8 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
   const { setupChainAndWallet } = useSetupChainAndWallet();
-  const { changeStepperStep, dismiss } = useAttestationToast();
+  const { startAttestation, showSuccess, showError, showLoading, changeStepperStep, dismiss } =
+    useAttestationToast();
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const { refetch: refetchGrants } = useProjectGrants(projectIdOrSlug);
   const { refreshGrant } = useGrantStore();
@@ -60,6 +60,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
     }
 
     setIsRevoking(true);
+    startAttestation("Revoking grant completion...");
 
     try {
       // Validate chainID before proceeding
@@ -125,7 +126,6 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
       }
 
       // Authorized AND attester matches - proceed with on-chain revocation
-      changeStepperStep("preparing");
       validateGrantCompletion(grantInstance.completed);
 
       const schemaToUse = grantInstance.completed.schema;
@@ -148,7 +148,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
         const tx = await multicallContract.multiRevoke(revocationPayload);
         const res = await tx.wait();
 
-        changeStepperStep("pending");
+        changeStepperStep("confirmed");
 
         const txHash = res?.transactionHash as `0x${string}`;
         if (txHash) {
@@ -161,12 +161,12 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
         });
         await refetchGrants();
         await refreshGrant();
-        toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS);
+        showSuccess(MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS);
       } catch (onChainError: any) {
         // Fallback to off-chain revocation if on-chain fails
         dismiss(); // Reset toast since we're falling back
 
-        toast("On-chain revocation unavailable. Attempting off-chain revocation...");
+        showLoading("On-chain revocation unavailable. Attempting off-chain revocation...");
 
         const success = await performOffChainRevoke({
           uid: grantInstance.completed.uid as `0x${string}`,
@@ -198,7 +198,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
       const errorMessage =
         error instanceof Error ? error.message : MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.ERROR;
 
-      toast.error(errorMessage);
+      showError(errorMessage);
       errorManager(MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.ERROR, error, {
         error: errorMessage,
       });

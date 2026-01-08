@@ -87,7 +87,7 @@ describe("milestoneReviewersService", () => {
 
       mockFetchData.mockResolvedValue([mockApiResponse, null, null, 200]);
 
-      const result = await milestoneReviewersService.getReviewers("program-1", 1);
+      const result = await milestoneReviewersService.getReviewers("program-1");
 
       expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("program-1"));
       expect(result).toEqual([
@@ -105,7 +105,7 @@ describe("milestoneReviewersService", () => {
     it("should return empty array when no reviewers found", async () => {
       mockFetchData.mockResolvedValue([null, "Milestone Reviewer Not Found", null, 404]);
 
-      const result = await milestoneReviewersService.getReviewers("program-1", 1);
+      const result = await milestoneReviewersService.getReviewers("program-1");
 
       expect(result).toEqual([]);
     });
@@ -113,7 +113,7 @@ describe("milestoneReviewersService", () => {
     it('should return empty array when API returns "No reviewers found" message', async () => {
       mockFetchData.mockResolvedValue([null, "No reviewers found for this program", null, 404]);
 
-      const result = await milestoneReviewersService.getReviewers("program-1", 1);
+      const result = await milestoneReviewersService.getReviewers("program-1");
 
       expect(result).toEqual([]);
     });
@@ -131,7 +131,7 @@ describe("milestoneReviewersService", () => {
 
       mockFetchData.mockResolvedValue([mockApiResponse, null, null, 200]);
 
-      const result = await milestoneReviewersService.getReviewers("program-1", 1);
+      const result = await milestoneReviewersService.getReviewers("program-1");
 
       expect(result[0]).toEqual({
         publicAddress: "0x1234567890123456789012345678901234567890",
@@ -146,7 +146,7 @@ describe("milestoneReviewersService", () => {
     it("should throw error for non-404 errors", async () => {
       mockFetchData.mockResolvedValue([null, "Internal Server Error", null, 500]);
 
-      await expect(milestoneReviewersService.getReviewers("program-1", 1)).rejects.toThrow(
+      await expect(milestoneReviewersService.getReviewers("program-1")).rejects.toThrow(
         "Internal Server Error"
       );
     });
@@ -182,7 +182,7 @@ describe("milestoneReviewersService", () => {
 
       mockAxiosInstance.post.mockResolvedValue({ data: mockApiResponse });
 
-      const result = await milestoneReviewersService.addReviewer("program-1", 1, reviewerData);
+      const result = await milestoneReviewersService.addReviewer("program-1", reviewerData);
 
       expect(mockAxiosInstance.post).toHaveBeenCalledWith(
         expect.stringContaining("program-1"),
@@ -207,7 +207,7 @@ describe("milestoneReviewersService", () => {
 
       mockAxiosInstance.post.mockResolvedValue({ data: {} });
 
-      const result = await milestoneReviewersService.addReviewer("program-1", 1, reviewerData);
+      const result = await milestoneReviewersService.addReviewer("program-1", reviewerData);
 
       expect(result.publicAddress).toBe(reviewerData.publicAddress);
       expect(result.name).toBe(reviewerData.name);
@@ -241,7 +241,7 @@ describe("milestoneReviewersService", () => {
 
       mockAxiosInstance.post.mockResolvedValue({ data: mockApiResponse });
 
-      const result = await milestoneReviewersService.addReviewer("program-1", 1, reviewerData);
+      const result = await milestoneReviewersService.addReviewer("program-1", reviewerData);
 
       expect(result.telegram).toBeUndefined();
     });
@@ -253,12 +253,11 @@ describe("milestoneReviewersService", () => {
 
       await milestoneReviewersService.removeReviewer(
         "program-1",
-        1,
         "0x1234567890123456789012345678901234567890"
       );
 
       expect(mockAxiosInstance.delete).toHaveBeenCalledWith(
-        "/v2/programs/program-1/1/milestone-reviewers/0x1234567890123456789012345678901234567890"
+        "/v2/programs/program-1/milestone-reviewers/0x1234567890123456789012345678901234567890"
       );
     });
 
@@ -269,7 +268,6 @@ describe("milestoneReviewersService", () => {
       await expect(
         milestoneReviewersService.removeReviewer(
           "program-1",
-          1,
           "0x1234567890123456789012345678901234567890"
         )
       ).rejects.toThrow("Reviewer not found");
@@ -310,11 +308,7 @@ describe("milestoneReviewersService", () => {
         },
       });
 
-      const result = await milestoneReviewersService.addMultipleReviewers(
-        "program-1",
-        1,
-        reviewers
-      );
+      const result = await milestoneReviewersService.addMultipleReviewers("program-1", reviewers);
 
       expect(result.added).toHaveLength(2);
       expect(result.errors).toHaveLength(0);
@@ -367,11 +361,7 @@ describe("milestoneReviewersService", () => {
           },
         });
 
-      const result = await milestoneReviewersService.addMultipleReviewers(
-        "program-1",
-        1,
-        reviewers
-      );
+      const result = await milestoneReviewersService.addMultipleReviewers("program-1", reviewers);
 
       expect(result.added).toHaveLength(1);
       expect(result.errors).toHaveLength(1);
@@ -402,11 +392,7 @@ describe("milestoneReviewersService", () => {
       ) as unknown as typeof mockedAxios.isAxiosError;
       mockAxiosInstance.post.mockRejectedValue(axiosError);
 
-      const result = await milestoneReviewersService.addMultipleReviewers(
-        "program-1",
-        1,
-        reviewers
-      );
+      const result = await milestoneReviewersService.addMultipleReviewers("program-1", reviewers);
 
       expect(result.added).toHaveLength(0);
       expect(result.errors).toHaveLength(1);
@@ -428,11 +414,7 @@ describe("milestoneReviewersService", () => {
       ) as unknown as typeof mockedAxios.isAxiosError;
       mockAxiosInstance.post.mockRejectedValue(error);
 
-      const result = await milestoneReviewersService.addMultipleReviewers(
-        "program-1",
-        1,
-        reviewers
-      );
+      const result = await milestoneReviewersService.addMultipleReviewers("program-1", reviewers);
 
       expect(result.errors[0].error).toBe("Network error");
     });
@@ -448,11 +430,7 @@ describe("milestoneReviewersService", () => {
 
       mockAxiosInstance.post.mockRejectedValue("String error");
 
-      const result = await milestoneReviewersService.addMultipleReviewers(
-        "program-1",
-        1,
-        reviewers
-      );
+      const result = await milestoneReviewersService.addMultipleReviewers("program-1", reviewers);
 
       expect(result.errors[0].error).toBe("String error");
     });

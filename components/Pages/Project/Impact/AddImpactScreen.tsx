@@ -74,7 +74,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, changeStepperStep, showSuccess, dismiss } = useAttestationToast();
 
   const onSubmit: SubmitHandler<UpdateType> = async (data, event) => {
     event?.preventDefault();
@@ -111,13 +111,14 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         refUID: project.uid,
         createdAt: new Date(),
       });
-      await newImpact.attest(walletSigner as any).then(async (res) => {
+      startAttestation("Creating impact...");
+      await newImpact.attest(walletSigner as any, changeStepperStep).then(async (res) => {
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newImpact.chainID), "POST", {});
         }
         let retries = 1000;
-        showLoading("Indexing impact...");
+        changeStepperStep("indexing");
         while (retries > 0) {
           try {
             const polledImpacts = await getProjectImpacts(projectIdOrSlug);

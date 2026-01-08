@@ -7,7 +7,6 @@ import type {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
@@ -40,7 +39,8 @@ type UpdateType =
 export const useUpdateActions = (update: UpdateType) => {
   const [isDeletingUpdate, setIsDeletingUpdate] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const { changeStepperStep, dismiss } = useAttestationToast();
+  const { startAttestation, showSuccess, showError, changeStepperStep, dismiss } =
+    useAttestationToast();
   const { gap } = useGap();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
@@ -93,6 +93,7 @@ export const useUpdateActions = (update: UpdateType) => {
   const deleteUpdate = async () => {
     try {
       setIsDeletingUpdate(true);
+      startAttestation(`Deleting ${update.type.toLowerCase()}...`);
       const updateChainID = "chainID" in update ? update.chainID : undefined;
       if (!updateChainID) {
         errorManager("Cannot delete update: missing chain ID", new Error("Missing chainID"));
@@ -227,7 +228,7 @@ export const useUpdateActions = (update: UpdateType) => {
           await checkIfAttestationExists(() => {
             changeStepperStep("indexed");
           });
-          toast.success(deleteMessage);
+          showSuccess(deleteMessage);
           await refreshDataAfterDeletion();
         } catch (onChainError: any) {
           // Silently fallback to off-chain revoke
@@ -260,7 +261,7 @@ export const useUpdateActions = (update: UpdateType) => {
             ? MESSAGES.PROJECT.IMPACT.REMOVE.ERROR
             : MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR;
 
-      toast.error(errorMessage);
+      showError(errorMessage);
       errorManager(
         `Error deleting ${update.type.toLowerCase()} ${update.uid} from project ${project?.uid}`,
         error

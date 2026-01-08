@@ -1,24 +1,24 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
-import { JsonRpcProvider, Signer } from "ethers";
-import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import { usePrivy } from "@privy-io/react-auth";
-import { PrivySmartWalletSigner } from "@/utilities/privy-smart-wallet-signer";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { envVars } from "@/utilities/enviromentVars";
+import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
+import { JsonRpcProvider, type Signer } from "ethers";
+import { useCallback, useMemo } from "react";
 import {
-  optimism,
   arbitrum,
-  celo,
-  sei,
-  lisk,
-  scroll,
-  optimismSepolia,
   baseSepolia,
+  celo,
+  lisk,
+  optimism,
+  optimismSepolia,
+  scroll,
+  sei,
   sepolia,
 } from "viem/chains";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { envVars } from "@/utilities/enviromentVars";
+import { PrivySmartWalletSigner } from "@/utilities/privy-smart-wallet-signer";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 /**
  * Maps chain IDs to their corresponding RPC URLs from environment variables.
@@ -98,11 +98,7 @@ export function useGaslessSigner(): UseGaslessSignerResult {
           try {
             await smartWalletClient.switchChain({ id: chainId });
             const provider = new JsonRpcProvider(rpcUrl);
-            return new PrivySmartWalletSigner(
-              smartWalletClient,
-              smartWalletAddress,
-              provider
-            );
+            return new PrivySmartWalletSigner(smartWalletClient, smartWalletAddress, provider);
           } catch {
             // Fall through to regular wallet
           }

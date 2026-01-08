@@ -38,7 +38,7 @@ export interface DiscussionTabProps {
 }
 
 /**
- * Discussion tab with comment input at the top and timeline below.
+ * Comments tab with comment input at the top and timeline below.
  * Displays comments, status changes, and version history in reverse chronological order (newest first).
  */
 export const DiscussionTab: FC<DiscussionTabProps> = ({

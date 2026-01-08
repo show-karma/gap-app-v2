@@ -84,7 +84,7 @@ export default function ApplicationDetailPage() {
 
   // Fetch program config
   const { data: program, config } = useProgramConfig(programId);
-  
+
   // Get chainId from program config if needed for V1 components
   const chainId = program?.chainID;
 
@@ -392,32 +392,30 @@ export default function ApplicationDetailPage() {
                   </TabPanel>
                 ),
               },
-              {
-                id: "discussion",
-                label: "Discussion",
-                icon: TabIcons.Discussion,
-                content: (
-                  <TabPanel padded={false}>
-                    <DiscussionTab
-                      applicationId={application.referenceNumber}
-                      comments={comments}
-                      statusHistory={application.statusHistory}
-                      versionHistory={versions}
-                      currentStatus={application.status}
-                      isAdmin={hasAccess}
-                      currentUserAddress={currentUserAddress}
-                      onCommentAdd={handleCommentAdd}
-                      onCommentEdit={handleCommentEdit}
-                      onCommentDelete={handleCommentDelete}
-                      onVersionClick={handleVersionClick}
-                      isLoading={isLoadingComments}
-                    />
-                  </TabPanel>
-                ),
-              },
             ] satisfies TabConfig[]
           }
         />
+
+        {/* Comments Section - Always visible at the bottom */}
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Comments & Activity
+          </h2>
+          <DiscussionTab
+            applicationId={application.referenceNumber}
+            comments={comments}
+            statusHistory={application.statusHistory}
+            versionHistory={versions}
+            currentStatus={application.status}
+            isAdmin={hasAccess}
+            currentUserAddress={currentUserAddress}
+            onCommentAdd={handleCommentAdd}
+            onCommentEdit={handleCommentEdit}
+            onCommentDelete={handleCommentDelete}
+            onVersionClick={handleVersionClick}
+            isLoading={isLoadingComments}
+          />
+        </div>
       </div>
 
       {/* Delete Confirmation Modal */}

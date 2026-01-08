@@ -1,6 +1,5 @@
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { type FC, useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -26,7 +25,8 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
 
   const { switchChainAsync } = useWallet();
   const { chain, address } = useAccount();
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
+    useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const { project, isProjectOwner } = useProjectStore();
@@ -38,6 +38,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const deleteFn = async () => {
     if (!address || !project) return;
     setIsDeletingMilestone(true);
+    startAttestation("Deleting milestone...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: milestone.chainID || 0,
@@ -121,7 +122,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
           await checkIfAttestationExists(() => {
             changeStepperStep("indexed");
           });
-          toast.success(MESSAGES.MILESTONES.DELETE.SUCCESS);
+          showSuccess(MESSAGES.MILESTONES.DELETE.SUCCESS);
         } catch (onChainError: any) {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
@@ -144,6 +145,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       }
     } catch (error: any) {
       console.error(error);
+      showError(MESSAGES.MILESTONES.DELETE.ERROR(milestone.title || "Milestone"));
       errorManager(
         MESSAGES.MILESTONES.DELETE.ERROR(milestone.title || "Milestone"),
         error,

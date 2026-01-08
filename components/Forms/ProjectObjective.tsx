@@ -5,7 +5,6 @@ import type { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/c
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
@@ -75,13 +74,22 @@ export const ProjectObjectiveForm = ({
 
   const { gap } = useGap();
   const [isLoading, setIsLoading] = useState(false);
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const {
+    startAttestation,
+    showSuccess,
+    showError,
+    dismiss,
+    updateStep,
+    changeStepperStep,
+    setIsStepper,
+  } = useAttestationToast();
 
   const { refetch } = useProjectUpdates(projectId as string);
 
   const createObjective = async (data: ObjectiveType) => {
     if (!gap) return;
     setIsLoading(true);
+    startAttestation("Creating milestone...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: project?.chainID as number,
@@ -111,54 +119,57 @@ export const ProjectObjectiveForm = ({
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),
       };
-      await newObjective.attest(walletSigner as any, sanitizedData).then(async (res) => {
-        const _fetchedObjectives = null;
-        const txHash = res?.tx[0]?.hash;
-        if (txHash) {
-          await fetchData(
-            INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
-            "POST",
-            {}
-          );
-        } else {
-          await fetchData(
-            INDEXER.ATTESTATION_LISTENER(newObjective.uid, project?.chainID as number),
-            "POST",
-            {}
-          );
-        }
-        let retries = 1000;
-        showLoading("Indexing objective...");
-        while (retries > 0) {
-          await getProjectObjectives(projectId)
-            .then(async (fetchedObjectives) => {
-              const attestUID = newObjective.uid;
-              const alreadyExists = fetchedObjectives.find((m) => m.uid === attestUID);
+      await newObjective
+        .attest(walletSigner as any, sanitizedData, changeStepperStep)
+        .then(async (res) => {
+          const _fetchedObjectives = null;
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
+              "POST",
+              {}
+            );
+          } else {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(newObjective.uid, project?.chainID as number),
+              "POST",
+              {}
+            );
+          }
+          let retries = 1000;
+          updateStep("indexing");
+          while (retries > 0) {
+            await getProjectObjectives(projectId)
+              .then(async (fetchedObjectives) => {
+                const attestUID = newObjective.uid;
+                const alreadyExists = fetchedObjectives.find((m) => m.uid === attestUID);
 
-              if (alreadyExists) {
-                retries = 0;
-                showSuccess("Objective created!");
-                toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
-                await refetch();
-                stateHandler?.(false);
-                setTimeout(() => {
-                  dismiss();
-                  router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
-                }, 1500);
-              }
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            })
-            .catch(async () => {
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            });
-        }
-      });
+                if (alreadyExists) {
+                  retries = 0;
+                  showSuccess(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
+                  await refetch();
+                  stateHandler?.(false);
+                  setTimeout(() => {
+                    dismiss();
+                    router.push(
+                      PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || "")
+                    );
+                  }, 1500);
+                }
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              })
+              .catch(async () => {
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              });
+          }
+        });
     } catch (error) {
-      dismiss();
+      showError(MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR);
       errorManager(
         MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR,
         error,
@@ -173,12 +184,14 @@ export const ProjectObjectiveForm = ({
       );
     } finally {
       setIsLoading(false);
+      setIsStepper(false);
     }
   };
 
   const updateObjective = async (data: ObjectiveType) => {
     if (!gap) return;
     setIsLoading(true);
+    startAttestation("Updating milestone...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: project?.chainID as number,
@@ -204,53 +217,54 @@ export const ProjectObjectiveForm = ({
       );
       if (!objectiveInstance) return;
       objectiveInstance.setValues(sanitizedData);
-      await objectiveInstance.attest(walletSigner as any, sanitizedData).then(async (res) => {
-        const _fetchedObjectives = null;
-        const txHash = res?.tx[0]?.hash;
-        if (txHash) {
-          await fetchData(
-            INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
-            "POST",
-            {}
-          );
-        } else {
-          await fetchData(
-            INDEXER.ATTESTATION_LISTENER(objectiveInstance.uid, project?.chainID as number),
-            "POST",
-            {}
-          );
-        }
-        let retries = 1000;
-        showLoading("Indexing objective...");
-        while (retries > 0) {
-          await getProjectObjectives(projectId)
-            .then(async (fetchedObjectives) => {
-              const attestUID = objectiveInstance.uid;
-              const alreadyExists = fetchedObjectives.find((m) => m.uid === attestUID);
+      await objectiveInstance
+        .attest(walletSigner as any, sanitizedData, changeStepperStep)
+        .then(async (res) => {
+          const _fetchedObjectives = null;
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
+              "POST",
+              {}
+            );
+          } else {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(objectiveInstance.uid, project?.chainID as number),
+              "POST",
+              {}
+            );
+          }
+          let retries = 1000;
+          updateStep("indexing");
+          while (retries > 0) {
+            await getProjectObjectives(projectId)
+              .then(async (fetchedObjectives) => {
+                const attestUID = objectiveInstance.uid;
+                const alreadyExists = fetchedObjectives.find((m) => m.uid === attestUID);
 
-              if (alreadyExists) {
-                retries = 0;
-                showSuccess("Objective updated!");
-                toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
-                await refetch();
-                stateHandler?.(false);
-                setTimeout(() => dismiss(), 1500);
-              }
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            })
-            .catch(async () => {
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            });
-        }
-      });
+                if (alreadyExists) {
+                  retries = 0;
+                  showSuccess(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.SUCCESS);
+                  await refetch();
+                  stateHandler?.(false);
+                  setTimeout(() => dismiss(), 1500);
+                }
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              })
+              .catch(async () => {
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              });
+          }
+        });
     } catch (error) {
-      dismiss();
+      showError(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.ERROR);
       errorManager(
-        MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR,
+        MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.ERROR,
         error,
         {
           data,
@@ -258,11 +272,12 @@ export const ProjectObjectiveForm = ({
           project: project?.uid,
         },
         {
-          error: MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR,
+          error: MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.ERROR,
         }
       );
     } finally {
       setIsLoading(false);
+      setIsStepper(false);
     }
   };
 

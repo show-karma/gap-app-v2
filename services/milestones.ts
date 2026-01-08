@@ -100,9 +100,7 @@ export async function fetchProjectGrantMilestones(
   programId: string
 ): Promise<ProjectGrantMilestonesResponse> {
   // Normalize programId (remove chainId suffix if present) before sending to API
-  const normalizedProgramId = programId.includes("_")
-    ? programId.split("_")[0]
-    : programId;
+  const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
   const [projectResponse, milestonesResponse, grant] = await Promise.all([
     fetchData(INDEXER.V2.PROJECTS.GET(projectUid), "GET"),
     fetchData(

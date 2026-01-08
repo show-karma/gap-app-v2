@@ -30,6 +30,13 @@ jest.mock("@/utilities/donations/errorMessages", () => ({
   })),
 }));
 
+jest.mock("@/hooks/donation/useCreateDonation", () => ({
+  useCreateDonation: jest.fn(() => ({
+    mutateAsync: jest.fn().mockResolvedValue({}),
+    isPending: false,
+  })),
+}));
+
 describe("useDonationCheckout", () => {
   const mockAddress = "0x1234567890123456789012345678901234567890";
 
@@ -143,8 +150,11 @@ describe("useDonationCheckout", () => {
   });
 
   describe("handleProceedWithDonations", () => {
-    const mockPayoutAddresses = {
-      "project-1": "0x9876543210987654321098765432109876543210",
+    // Using chainPayoutAddresses format (chain ID as key, address as value)
+    const mockChainPayoutAddresses = {
+      "project-1": {
+        "10": "0x9876543210987654321098765432109876543210",
+      },
     };
 
     const mockBalances = {
@@ -177,7 +187,7 @@ describe("useDonationCheckout", () => {
       await act(async () => {
         await result.current.handleProceedWithDonations(
           [mockPayment],
-          mockPayoutAddresses,
+          mockChainPayoutAddresses,
           mockBalances,
           10,
           mockSwitchNetwork,
@@ -204,7 +214,9 @@ describe("useDonationCheckout", () => {
         );
       });
 
-      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("missing payout addresses"));
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("payout addresses for the selected chains")
+      );
       expect(mockSetMissingPayouts).toHaveBeenCalled();
       expect(mockUseDonationTransfer.executeDonations).not.toHaveBeenCalled();
     });
@@ -221,7 +233,7 @@ describe("useDonationCheckout", () => {
       await act(async () => {
         await result.current.handleProceedWithDonations(
           [mockPayment],
-          mockPayoutAddresses,
+          mockChainPayoutAddresses,
           mockBalances,
           10,
           mockSwitchNetwork,
@@ -247,7 +259,7 @@ describe("useDonationCheckout", () => {
       await act(async () => {
         await result.current.handleProceedWithDonations(
           [mockPayment],
-          mockPayoutAddresses,
+          mockChainPayoutAddresses,
           mockBalances,
           10,
           mockSwitchNetwork,
@@ -273,7 +285,7 @@ describe("useDonationCheckout", () => {
       await act(async () => {
         await result.current.handleProceedWithDonations(
           [mockPayment],
-          mockPayoutAddresses,
+          mockChainPayoutAddresses,
           mockBalances,
           1, // Wrong chain (Ethereum instead of Optimism)
           mockSwitchNetwork,
@@ -293,7 +305,7 @@ describe("useDonationCheckout", () => {
       await act(async () => {
         await result.current.handleProceedWithDonations(
           [mockPayment],
-          mockPayoutAddresses,
+          mockChainPayoutAddresses,
           mockBalances,
           1,
           mockSwitchNetwork,
@@ -318,7 +330,7 @@ describe("useDonationCheckout", () => {
       await act(async () => {
         await result.current.handleProceedWithDonations(
           [mockPayment],
-          mockPayoutAddresses,
+          mockChainPayoutAddresses,
           mockBalances,
           10,
           mockSwitchNetwork,
@@ -342,7 +354,7 @@ describe("useDonationCheckout", () => {
       await act(async () => {
         await result.current.handleProceedWithDonations(
           [mockPayment],
-          mockPayoutAddresses,
+          mockChainPayoutAddresses,
           mockBalances,
           10,
           mockSwitchNetwork,
@@ -368,7 +380,7 @@ describe("useDonationCheckout", () => {
       await act(async () => {
         await result.current.handleProceedWithDonations(
           [mockPayment],
-          mockPayoutAddresses,
+          mockChainPayoutAddresses,
           mockBalances,
           10,
           mockSwitchNetwork,
@@ -401,7 +413,7 @@ describe("useDonationCheckout", () => {
       await act(async () => {
         await result2.current.handleProceedWithDonations(
           [mockPayment],
-          mockPayoutAddresses,
+          mockChainPayoutAddresses,
           mockBalances,
           10,
           mockSwitchNetwork,
@@ -425,7 +437,7 @@ describe("useDonationCheckout", () => {
       await act(async () => {
         await result.current.handleProceedWithDonations(
           [mockPayment],
-          mockPayoutAddresses,
+          mockChainPayoutAddresses,
           mockBalances,
           10,
           mockSwitchNetwork,
@@ -449,7 +461,7 @@ describe("useDonationCheckout", () => {
       await act(async () => {
         await result.current.handleProceedWithDonations(
           [mockPayment],
-          mockPayoutAddresses,
+          mockChainPayoutAddresses,
           mockBalances,
           10,
           mockSwitchNetwork,
@@ -479,7 +491,7 @@ describe("useDonationCheckout", () => {
       await act(async () => {
         await result.current.handleProceedWithDonations(
           [mockPayment], // mockPayment has chainId: 10
-          mockPayoutAddresses,
+          mockChainPayoutAddresses,
           mockBalances,
           1, // activeChainId is 1, different from payment
           mockSwitchNetwork,
@@ -505,7 +517,7 @@ describe("useDonationCheckout", () => {
       await act(async () => {
         await result.current.handleProceedWithDonations(
           [mockPayment], // mockPayment has chainId: 10
-          mockPayoutAddresses,
+          mockChainPayoutAddresses,
           mockBalances,
           10, // activeChainId is already 10
           mockSwitchNetwork,

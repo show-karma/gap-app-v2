@@ -8,7 +8,6 @@ import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { Fragment, useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -67,7 +66,8 @@ export const ObjectiveOptionsMenu = ({
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
   const _router = useRouter();
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
+    useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const { project, isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
@@ -82,6 +82,7 @@ export const ObjectiveOptionsMenu = ({
   const deleteFn = async () => {
     if (!address || !project) return;
     setIsDeleting(true);
+    startAttestation("Deleting milestone...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
@@ -147,7 +148,7 @@ export const ObjectiveOptionsMenu = ({
           await checkIfAttestationExists(() => {
             changeStepperStep("indexed");
           });
-          toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS);
+          showSuccess(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS);
         } catch (onChainError: any) {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
@@ -169,6 +170,7 @@ export const ObjectiveOptionsMenu = ({
         }
       }
     } catch (error: any) {
+      showError(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.ERROR);
       errorManager(
         MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.ERROR,
         error,

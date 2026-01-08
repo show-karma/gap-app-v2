@@ -1,7 +1,6 @@
 import { Milestone } from "@show-karma/karma-gap-sdk";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
@@ -44,7 +43,8 @@ export function useGrantMilestoneForm({
 
   const { gap } = useGap();
   const [isLoading, setIsLoading] = useState(false);
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
+    useAttestationToast();
   const router = useRouter();
 
   // Fetch grants using dedicated hook
@@ -53,6 +53,7 @@ export function useGrantMilestoneForm({
   const createMilestoneForGrants = async (data: GrantMilestoneFormData, grantUIDs: string[]) => {
     if (!gap || !address || grantUIDs.length === 0) return;
     setIsLoading(true);
+    startAttestation("Creating milestone...");
 
     try {
       // Process each grant UID
@@ -94,7 +95,7 @@ export function useGrantMilestoneForm({
         });
 
         // Attest the milestone
-        await milestoneToAttest.attest(walletSigner as any).then(async (res) => {
+        await milestoneToAttest.attest(walletSigner as any, changeStepperStep).then(async (res) => {
           let retries = 1000;
           const txHash = res?.tx[0]?.hash;
 
@@ -106,7 +107,7 @@ export function useGrantMilestoneForm({
             );
           }
 
-          showLoading("Indexing milestone...");
+          changeStepperStep("indexing");
 
           while (retries > 0) {
             try {
@@ -120,13 +121,11 @@ export function useGrantMilestoneForm({
               if (milestoneExists) {
                 retries = 0;
                 await refetchGrants();
-                showSuccess("Milestone created!");
-                toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
+                showSuccess(MESSAGES.MILESTONES.CREATE.SUCCESS);
 
                 // Only navigate on the last grant milestone creation
                 if (grantUID === grantUIDs[grantUIDs.length - 1] && destinationPath) {
                   setTimeout(() => {
-                    dismiss();
                     router.push(destinationPath);
                     router.refresh();
                   }, 1500);
@@ -145,15 +144,15 @@ export function useGrantMilestoneForm({
       // Call onSuccess after all grant milestones are created
       onSuccess?.();
     } catch (error) {
-      dismiss();
+      showError(MESSAGES.MILESTONES.CREATE.ERROR(data.title));
       errorManager(MESSAGES.MILESTONES.CREATE.ERROR(data.title), error, {
         data,
         address,
         grantUIDs,
       });
-      toast.error(MESSAGES.MILESTONES.CREATE.ERROR(data.title));
     } finally {
       setIsLoading(false);
+      dismiss();
     }
   };
 

@@ -88,9 +88,7 @@ export const trackService = {
   getProgramTracks: async (programId: string): Promise<Track[]> => {
     try {
       // Normalize programId (remove chainId suffix if present) before sending to API
-      const normalizedProgramId = programId.includes("_")
-        ? programId.split("_")[0]
-        : programId;
+      const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
       const [data, error] = await fetchData<GetTracksV2Response>(
         INDEXER.V2.TRACKS.PROGRAM_TRACKS(normalizedProgramId),
         "GET",
@@ -204,9 +202,7 @@ export const trackService = {
   ): Promise<void> => {
     try {
       // Normalize programId (remove chainId suffix if present) before sending to API
-      const normalizedProgramId = programId.includes("_")
-        ? programId.split("_")[0]
-        : programId;
+      const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
       const [, error] = await fetchData(
         INDEXER.V2.TRACKS.ASSIGN_TO_PROGRAM(normalizedProgramId),
         "POST",
@@ -234,9 +230,7 @@ export const trackService = {
   ): Promise<void> => {
     try {
       // Normalize programId (remove chainId suffix if present) before sending to API
-      const normalizedProgramId = programId.includes("_")
-        ? programId.split("_")[0]
-        : programId;
+      const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
       const [, error] = await fetchData(
         INDEXER.V2.TRACKS.UNASSIGN_FROM_PROGRAM(normalizedProgramId, trackId),
         "DELETE",
@@ -265,9 +259,7 @@ export const trackService = {
     // For V2, we can remove tracks one by one or use a batch endpoint if available
     try {
       // Normalize programId (remove chainId suffix if present) before sending to API
-      const normalizedProgramId = programId.includes("_")
-        ? programId.split("_")[0]
-        : programId;
+      const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
       await Promise.all(
         trackIds.map((trackId) =>
           fetchData(
@@ -291,9 +283,7 @@ export const trackService = {
   getProjectTracks: async (projectId: string, programId: string): Promise<ProjectTrack[]> => {
     try {
       // Normalize programId (remove chainId suffix if present) before sending to API
-      const normalizedProgramId = programId.includes("_")
-        ? programId.split("_")[0]
-        : programId;
+      const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
       const [data, error] = await fetchData<GetProjectTracksV2Response>(
         INDEXER.V2.TRACKS.PROJECT_TRACKS(projectId, normalizedProgramId),
         "GET",
@@ -324,9 +314,7 @@ export const trackService = {
   ): Promise<void> => {
     try {
       // Normalize programId (remove chainId suffix if present) before sending to API
-      const normalizedProgramId = programId.includes("_")
-        ? programId.split("_")[0]
-        : programId;
+      const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
       const [, error] = await fetchData(
         INDEXER.V2.TRACKS.ASSIGN_TO_PROJECT(projectId),
         "POST",
@@ -354,9 +342,7 @@ export const trackService = {
   ): Promise<void> => {
     try {
       // Normalize programId (remove chainId suffix if present) before sending to API
-      const normalizedProgramId = programId.includes("_")
-        ? programId.split("_")[0]
-        : programId;
+      const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
       const [, error] = await fetchData(
         INDEXER.V2.TRACKS.UNASSIGN_FROM_PROJECT(normalizedProgramId, projectId),
         "DELETE",
@@ -384,9 +370,7 @@ export const trackService = {
   ): Promise<unknown[]> => {
     try {
       // Normalize programId (remove chainId suffix if present) before sending to API
-      const normalizedProgramId = programId.includes("_")
-        ? programId.split("_")[0]
-        : programId;
+      const normalizedProgramId = programId.includes("_") ? programId.split("_")[0] : programId;
       const [data, error] = await fetchData<ProjectByTrackAPIResponse>(
         INDEXER.V2.TRACKS.PROJECTS_BY_TRACK(communityId, normalizedProgramId, trackId),
         "GET",

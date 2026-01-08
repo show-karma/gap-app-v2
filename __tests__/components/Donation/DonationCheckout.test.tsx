@@ -51,8 +51,8 @@ jest.mock("@/hooks/donation/useDonationCheckout", () => ({
   useDonationCheckout: jest.fn(),
 }));
 
-jest.mock("@/hooks/donation/usePayoutAddressManager", () => ({
-  usePayoutAddressManager: jest.fn(),
+jest.mock("@/hooks/donation/useCartChainPayoutAddresses", () => ({
+  useCartChainPayoutAddresses: jest.fn(),
 }));
 
 jest.mock("@/hooks/donation/useCrossChainBalances", () => ({
@@ -200,12 +200,14 @@ describe("DonationCheckout", () => {
     handleProceedWithDonations: jest.fn(),
   };
 
-  const defaultPayoutManager = {
-    payoutAddresses: { "project-1": "0x1234567890123456789012345678901234567890" },
+  const defaultChainPayoutAddresses = {
+    chainPayoutAddresses: {
+      "project-1": {
+        "10": "0x1234567890123456789012345678901234567890",
+      },
+    },
     missingPayouts: [],
-    isFetchingPayouts: false,
-    payoutStatusByProject: {},
-    formatAddress: jest.fn((addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`),
+    isFetching: false,
     setMissingPayouts: jest.fn(),
   };
 
@@ -232,8 +234,8 @@ describe("DonationCheckout", () => {
     const { useDonationCheckout } = require("@/hooks/donation/useDonationCheckout");
     useDonationCheckout.mockReturnValue(defaultDonationCheckout);
 
-    const { usePayoutAddressManager } = require("@/hooks/donation/usePayoutAddressManager");
-    usePayoutAddressManager.mockReturnValue(defaultPayoutManager);
+    const { useCartChainPayoutAddresses } = require("@/hooks/donation/useCartChainPayoutAddresses");
+    useCartChainPayoutAddresses.mockReturnValue(defaultChainPayoutAddresses);
 
     const { useCrossChainBalances } = require("@/hooks/donation/useCrossChainBalances");
     useCrossChainBalances.mockReturnValue(defaultBalances);
@@ -306,12 +308,14 @@ describe("DonationCheckout", () => {
     });
 
     it("should show 'Loading payout addresses...' when fetching payouts", () => {
-      const { usePayoutAddressManager } = require("@/hooks/donation/usePayoutAddressManager");
-      // Note: When isFetchingPayouts is true, canProceed becomes false, so executor won't render
+      const {
+        useCartChainPayoutAddresses,
+      } = require("@/hooks/donation/useCartChainPayoutAddresses");
+      // Note: When isFetching is true, canProceed becomes false, so executor won't render
       // This test verifies the label logic, but executor won't be visible
-      usePayoutAddressManager.mockReturnValue({
-        ...defaultPayoutManager,
-        isFetchingPayouts: true,
+      useCartChainPayoutAddresses.mockReturnValue({
+        ...defaultChainPayoutAddresses,
+        isFetching: true,
       });
 
       render(<DonationCheckout />);
@@ -507,9 +511,11 @@ describe("DonationCheckout", () => {
 
   describe("Validation and Security", () => {
     it("should block donations when payout addresses are missing", () => {
-      const { usePayoutAddressManager } = require("@/hooks/donation/usePayoutAddressManager");
-      usePayoutAddressManager.mockReturnValue({
-        ...defaultPayoutManager,
+      const {
+        useCartChainPayoutAddresses,
+      } = require("@/hooks/donation/useCartChainPayoutAddresses");
+      useCartChainPayoutAddresses.mockReturnValue({
+        ...defaultChainPayoutAddresses,
         missingPayouts: ["project-1"],
       });
 
@@ -533,11 +539,13 @@ describe("DonationCheckout", () => {
     });
 
     it("should validate payout addresses before showing confirmation", () => {
-      const { usePayoutAddressManager } = require("@/hooks/donation/usePayoutAddressManager");
-      usePayoutAddressManager.mockReturnValue({
-        ...defaultPayoutManager,
+      const {
+        useCartChainPayoutAddresses,
+      } = require("@/hooks/donation/useCartChainPayoutAddresses");
+      useCartChainPayoutAddresses.mockReturnValue({
+        ...defaultChainPayoutAddresses,
         missingPayouts: ["project-1"],
-        isFetchingPayouts: false,
+        isFetching: false,
       });
 
       render(<DonationCheckout />);

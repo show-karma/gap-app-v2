@@ -77,12 +77,11 @@ describe("useFundingPrograms hooks", () => {
       expect(fundingProgramsKeys.details()).toEqual(["fundingPrograms", "detail"]);
     });
 
-    it("should create correct detail key with programId and chainId", () => {
-      expect(fundingProgramsKeys.detail("program-1", 10)).toEqual([
+    it("should create correct detail key with programId", () => {
+      expect(fundingProgramsKeys.detail("program-1")).toEqual([
         "fundingPrograms",
         "detail",
         "program-1",
-        10,
       ]);
     });
   });
@@ -178,11 +177,11 @@ describe("useFundingPrograms hooks", () => {
   });
 
   describe("useFundingProgram", () => {
-    it("should fetch single program by ID and chainId", async () => {
+    it("should fetch single program by ID", async () => {
       const mockProgram = createMockProgram();
       mockService.getById.mockResolvedValue(mockProgram);
 
-      const { result } = renderHook(() => useFundingProgram("program-1", 10), {
+      const { result } = renderHook(() => useFundingProgram("program-1"), {
         wrapper,
       });
 
@@ -190,11 +189,11 @@ describe("useFundingPrograms hooks", () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(mockService.getById).toHaveBeenCalledWith("program-1", 10);
+      expect(mockService.getById).toHaveBeenCalledWith("program-1");
       expect(result.current.data).toEqual(mockProgram);
     });
 
-    it("should use default chainId when not provided", async () => {
+    it("should use programId directly when fetching", async () => {
       const mockProgram = createMockProgram();
       mockService.getById.mockResolvedValue(mockProgram);
 
@@ -204,7 +203,7 @@ describe("useFundingPrograms hooks", () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(mockService.getById).toHaveBeenCalledWith("program-1", FUNDING_MAP_DEFAULT_CHAIN_ID);
+      expect(mockService.getById).toHaveBeenCalledWith("program-1");
     });
 
     it("should not fetch when programId is null", () => {
@@ -217,7 +216,7 @@ describe("useFundingPrograms hooks", () => {
     it("should handle program not found", async () => {
       mockService.getById.mockResolvedValue(null);
 
-      const { result } = renderHook(() => useFundingProgram("nonexistent", 10), {
+      const { result } = renderHook(() => useFundingProgram("nonexistent"), {
         wrapper,
       });
 
@@ -231,7 +230,7 @@ describe("useFundingPrograms hooks", () => {
     it("should handle error when fetching program", async () => {
       mockService.getById.mockRejectedValue(new Error("Not found"));
 
-      const { result } = renderHook(() => useFundingProgram("program-1", 10), {
+      const { result } = renderHook(() => useFundingProgram("program-1"), {
         wrapper,
       });
 
@@ -259,7 +258,7 @@ describe("useFundingPrograms hooks", () => {
       });
 
       expect(mockService.parseProgramIdAndChainId).toHaveBeenCalledWith("program-1_10");
-      expect(mockService.getById).toHaveBeenCalledWith("program-1", 10);
+      expect(mockService.getById).toHaveBeenCalledWith("program-1");
       expect(result.current.data).toEqual(mockProgram);
     });
 
@@ -279,7 +278,7 @@ describe("useFundingPrograms hooks", () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(mockService.getById).toHaveBeenCalledWith("program-1", FUNDING_MAP_DEFAULT_CHAIN_ID);
+      expect(mockService.getById).toHaveBeenCalledWith("program-1");
     });
 
     it("should not fetch when compositeId is null", () => {
@@ -316,7 +315,7 @@ describe("useFundingPrograms hooks", () => {
           expect(result.current.isLoading).toBe(false);
         });
 
-        expect(mockService.getById).toHaveBeenCalledWith("prog", expectedChainId);
+        expect(mockService.getById).toHaveBeenCalledWith("prog");
       }
     });
   });

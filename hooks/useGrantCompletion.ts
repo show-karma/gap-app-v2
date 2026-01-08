@@ -1,5 +1,4 @@
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
@@ -49,20 +48,20 @@ export const useGrantCompletion = ({
   const [isCompleting, setIsCompleting] = useState(false);
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { changeStepperStep, dismiss } = useAttestationToast();
+  const { startAttestation, showSuccess, showError, changeStepperStep, dismiss } =
+    useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const completeGrant = async (grant: Grant, project: { uid: string }) => {
     if (!address || !project || !grant) {
-      toast.error("Please connect your wallet");
+      showError("Please connect your wallet");
       return;
     }
 
     setIsCompleting(true);
+    startAttestation("Completing grant...");
 
     try {
-      changeStepperStep("preparing");
-
       // Step 1: Setup chain and wallet (using utility)
       const setup = await setupChainAndWallet({
         targetChainId: grant.chainID,
@@ -71,7 +70,7 @@ export const useGrantCompletion = ({
       });
 
       if (!setup) {
-        toast.error("Please switch to the correct network and try again");
+        showError("Please switch to the correct network and try again");
         return;
       }
 
@@ -109,17 +108,16 @@ export const useGrantCompletion = ({
         grantUid: grant.uid,
       });
 
-      changeStepperStep("indexed");
-      toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS);
+      showSuccess(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS);
       onComplete?.();
     } catch (error: any) {
       console.error("Error completing grant:", error);
 
       // User cancelled
       if (error?.message?.includes("User rejected") || error?.code === 4001) {
-        toast.error("Grant completion cancelled");
+        showError("Grant completion cancelled");
       } else {
-        toast.error(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR);
+        showError(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR);
         errorManager("Error completing grant", error, {
           grantUID: grant.uid,
           address,
