@@ -11,6 +11,8 @@ export interface DonationApiResponse {
   chainID: number;
   donorAddress: string;
   projectUID: string;
+  projectName?: string;
+  projectSlug?: string;
   payoutAddress: string;
   amount: string;
   tokenSymbol: string;
