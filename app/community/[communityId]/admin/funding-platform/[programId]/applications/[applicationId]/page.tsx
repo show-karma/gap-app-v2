@@ -393,8 +393,8 @@ export default function ApplicationDetailPage() {
                 ),
               },
               {
-                id: "discussion",
-                label: "Discussion",
+                id: "comments",
+                label: "Comments",
                 icon: TabIcons.Discussion,
                 content: (
                   <TabPanel padded={false}>
