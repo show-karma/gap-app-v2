@@ -44,6 +44,7 @@ export const createFieldLabelsMap = (formSchema: unknown): Record<string, string
 /**
  * Common patterns that indicate a field contains funding/amount information.
  * Ordered by specificity - more specific patterns first.
+ * Token-agnostic patterns to support any token type (OP, ARB, ETH, etc.)
  */
 const AMOUNT_FIELD_PATTERNS = [
   /funding[_\s-]?amount/i,
@@ -53,15 +54,35 @@ const AMOUNT_FIELD_PATTERNS = [
   /total[_\s-]?amount/i,
   /amount[_\s-]?requested/i,
   /funding[_\s-]?requested/i,
-  /op[_\s-]?request/i, // Matches "OP Request", "OP Requested", "op_request"
   /total.*requested/i, // Matches "Total OP Requested", "Total Amount Requested"
-  /request.*locked/i, // Matches "OP Request Locked"
-  /request.*unlocked/i, // Matches "OP Request Unlocked"
+  /request.*locked/i, // Matches "OP Request Locked", "ARB Request Locked", etc.
+  /request.*unlocked/i, // Matches "OP Request Unlocked", "ARB Request Unlocked", etc.
+  /\brequest\b/i, // Matches any field containing "request" as a word (e.g., "OP request locked", "Token Request")
   /^amount$/i,
   /^funding$/i,
   /^budget$/i,
   /requested$/i, // Matches any field ending in "Requested"
 ];
+
+/**
+ * Helper to get value from applicationData by field id or label.
+ * applicationData may use either field.id or field.label as keys.
+ */
+const getFieldValue = (
+  applicationData: Record<string, unknown>,
+  fieldId: string,
+  fieldLabel?: string
+): unknown => {
+  // Try field.id first
+  if (fieldId in applicationData) {
+    return applicationData[fieldId];
+  }
+  // Fall back to field.label (some forms use labels as keys)
+  if (fieldLabel && fieldLabel in applicationData) {
+    return applicationData[fieldLabel];
+  }
+  return undefined;
+};
 
 export interface ExtractedAmountField {
   fieldId: string;
@@ -81,49 +102,73 @@ export const extractAmountField = (
   applicationData: Record<string, unknown> | undefined,
   formSchema: unknown
 ): ExtractedAmountField | null => {
-  if (!applicationData || !isFormSchemaLike(formSchema) || !formSchema.fields) {
+  if (!applicationData) {
     return null;
   }
 
-  // First pass: Look for number-type fields with amount-related labels/ids
-  for (const pattern of AMOUNT_FIELD_PATTERNS) {
-    for (const field of formSchema.fields) {
-      if (!field.id) continue;
+  const schemaFields = isFormSchemaLike(formSchema) && formSchema.fields ? formSchema.fields : null;
 
-      const matchesId = pattern.test(field.id);
-      const matchesLabel = field.label && pattern.test(field.label);
+  // First pass: Look for number-type fields with amount-related labels/ids (requires schema)
+  if (schemaFields) {
+    for (const pattern of AMOUNT_FIELD_PATTERNS) {
+      for (const field of schemaFields) {
+        if (!field.id) continue;
 
-      if ((matchesId || matchesLabel) && field.type === "number") {
-        const value = applicationData[field.id];
-        if (value !== undefined && value !== null && value !== "") {
-          return {
-            fieldId: field.id,
-            fieldLabel: field.label || field.id,
-            value: value as string | number,
-          };
+        const matchesId = pattern.test(field.id);
+        const matchesLabel = field.label && pattern.test(field.label);
+
+        if ((matchesId || matchesLabel) && field.type === "number") {
+          const value = getFieldValue(applicationData, field.id, field.label);
+          if (value !== undefined && value !== null && value !== "") {
+            return {
+              fieldId: field.id,
+              fieldLabel: field.label || field.id,
+              value: value as string | number,
+            };
+          }
+        }
+      }
+    }
+
+    // Second pass: Look for any field (not just number type) with amount-related labels
+    // Some forms may use text fields for amounts
+    for (const pattern of AMOUNT_FIELD_PATTERNS) {
+      for (const field of schemaFields) {
+        if (!field.id) continue;
+
+        const matchesId = pattern.test(field.id);
+        const matchesLabel = field.label && pattern.test(field.label);
+
+        if (matchesId || matchesLabel) {
+          const value = getFieldValue(applicationData, field.id, field.label);
+          if (value !== undefined && value !== null && value !== "") {
+            // Validate it looks like a number
+            const numValue = Number(value);
+            if (!Number.isNaN(numValue) && numValue > 0) {
+              return {
+                fieldId: field.id,
+                fieldLabel: field.label || field.id,
+                value: value as string | number,
+              };
+            }
+          }
         }
       }
     }
   }
 
-  // Second pass: Look for any field (not just number type) with amount-related labels
-  // Some forms may use text fields for amounts
+  // Third pass: Direct lookup in applicationData keys (fallback when schema doesn't match or fields not found)
+  // This handles cases where applicationData keys are labels directly
   for (const pattern of AMOUNT_FIELD_PATTERNS) {
-    for (const field of formSchema.fields) {
-      if (!field.id) continue;
-
-      const matchesId = pattern.test(field.id);
-      const matchesLabel = field.label && pattern.test(field.label);
-
-      if (matchesId || matchesLabel) {
-        const value = applicationData[field.id];
+    for (const key of Object.keys(applicationData)) {
+      if (pattern.test(key)) {
+        const value = applicationData[key];
         if (value !== undefined && value !== null && value !== "") {
-          // Validate it looks like a number
           const numValue = Number(value);
           if (!Number.isNaN(numValue) && numValue > 0) {
             return {
-              fieldId: field.id,
-              fieldLabel: field.label || field.id,
+              fieldId: key,
+              fieldLabel: key,
               value: value as string | number,
             };
           }
