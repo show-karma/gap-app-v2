@@ -82,9 +82,8 @@ export function useDonationTransfer() {
 
   const checkApprovals = useCallback(
     async (payments: DonationPayment[]): Promise<TokenApprovalInfo[]> => {
-      if (!address || !publicClient) {
-        const error = new Error("Wallet not connected or public client unavailable");
-        throw error;
+      if (!address) {
+        throw new Error("Wallet not connected");
       }
 
       // Group token transfers by token address to get total required amounts
@@ -150,14 +149,9 @@ export function useDonationTransfer() {
 
       for (const [chainId, requirementsMap] of tokenRequirementsByChain.entries()) {
         const requirementsList = Array.from(requirementsMap.values());
-        const chainPublicClient =
-          publicClient && publicClient.chain?.id === chainId
-            ? publicClient
-            : await getRPCClient(chainId);
-
-        if (!chainPublicClient) {
-          throw new Error(`RPC client not configured for chain ${chainId}`);
-        }
+        // Always use getRPCClient for chain-specific operations to avoid issues
+        // with publicClient being undefined during network switches
+        const chainPublicClient = await getRPCClient(chainId);
 
         const resolvedClient = chainPublicClient as PublicClient;
 
@@ -176,7 +170,7 @@ export function useDonationTransfer() {
 
       return approvalResults;
     },
-    [address, publicClient]
+    [address]
   );
 
   const executeApprovalTransactions = useCallback(
