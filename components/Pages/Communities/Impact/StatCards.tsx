@@ -1,6 +1,7 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
+import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { Skeleton } from "@/components/Utilities/Skeleton";
@@ -8,6 +9,39 @@ import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
 import { useCommunityStore } from "@/store/community";
 import formatCurrency from "@/utilities/formatCurrency";
 import { getCommunityStats } from "@/utilities/queries/v2/getCommunityData";
+
+interface StatCardProps {
+  title: string;
+  value: string;
+  color: string;
+  isLoading?: boolean;
+  tooltip?: ReactNode;
+}
+
+const StatCard = ({ title, value, color, isLoading, tooltip }: StatCardProps) => (
+  <div className="flex flex-1 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+    <div className="py-3 pl-3">
+      <div className="w-1 h-full rounded-full" style={{ background: color }} />
+    </div>
+    <div className="flex flex-col items-start justify-center py-3 pl-2 pr-4">
+      {isLoading ? (
+        <Skeleton className="w-12 h-8 mb-1" />
+      ) : (
+        <p className="text-gray-900 dark:text-zinc-100 text-[30px] font-semibold leading-none tracking-tight">
+          {value}
+        </p>
+      )}
+      <div className="flex items-center gap-1">
+        <span className="text-gray-900 dark:text-zinc-100 text-sm font-medium leading-normal">
+          {title}
+        </span>
+        {tooltip && (
+          <InfoTooltip content={tooltip} side="top" align="start" contentClassName="max-w-sm" />
+        )}
+      </div>
+    </div>
+  </div>
+);
 
 export const ImpactStatCards = () => {
   const { data, isLoading } = useImpactMeasurement();
@@ -40,31 +74,13 @@ export const ImpactStatCards = () => {
   ];
 
   return stats.map((item) => (
-    <div
+    <StatCard
       key={item.title}
-      className="flex flex-1 rounded-lg border border-gray-300 dark:border-zinc-600"
-    >
-      <div className="px-3 py-3 rounded-full">
-        <div
-          className="w-1 h-[84px] max-sm:h-full rounded-full"
-          style={{
-            background: item.color,
-          }}
-        />
-      </div>
-      <div className="h-full flex flex-col items-start justify-end py-2">
-        <h3 className="text-slate-800 dark:text-zinc-100 text-base font-semibold font-['Inter']">
-          {item.title}
-        </h3>
-        {isLoading ? (
-          <Skeleton className="w-10 h-10" />
-        ) : (
-          <p className="text-center text-slate-800 dark:text-zinc-100 text-2xl font-bold font-['Inter']">
-            {item.value}
-          </p>
-        )}
-      </div>
-    </div>
+      title={item.title}
+      value={item.value}
+      color={item.color}
+      isLoading={isLoading}
+    />
   ));
 };
 
@@ -90,7 +106,7 @@ export const CommunityStatCards = () => {
       title: "Total Projects",
       value: filteredProjectsCount,
       displayValue: filteredProjectsCount ? formatCurrency(filteredProjectsCount) : "-",
-      color: "#9b59b6",
+      color: "#84ADFF",
       showLoading: isLoadingFilters,
       tooltip: null,
     },
@@ -98,7 +114,7 @@ export const CommunityStatCards = () => {
       title: "Total Grants",
       value: data?.totalGrants,
       displayValue: data?.totalGrants ? formatCurrency(data.totalGrants) : "-",
-      color: "#e67e22",
+      color: "#5FE9D0",
       showLoading: isLoadingFilters,
       tooltip: null,
     },
@@ -106,7 +122,7 @@ export const CommunityStatCards = () => {
       title: "Project Updates",
       value: data?.projectUpdates,
       displayValue: data?.projectUpdates ? formatCurrency(data.projectUpdates) : "-",
-      color: "#3498db",
+      color: "#FDB022",
       showLoading: isLoadingFilters,
       tooltip: data?.projectUpdatesBreakdown ? (
         <div className="flex flex-col gap-1.5 p-1">
@@ -161,41 +177,14 @@ export const CommunityStatCards = () => {
   );
 
   return filteredStats.map((item) => (
-    <div
+    <StatCard
       key={item.title}
-      className="flex flex-1 rounded-lg border border-gray-300 dark:border-zinc-600"
-    >
-      <div className="px-3 py-3 rounded-full">
-        <div
-          className="w-1 h-[84px] max-sm:h-full rounded-full"
-          style={{
-            background: item.color,
-          }}
-        />
-      </div>
-      <div className="h-full flex flex-col items-start justify-end py-2 pr-2">
-        <div className="flex items-center gap-1">
-          <h3 className="text-slate-800 dark:text-zinc-100 text-base font-semibold font-['Inter']">
-            {item.title}
-          </h3>
-          {item.tooltip && (
-            <InfoTooltip
-              content={item.tooltip}
-              side="top"
-              align="start"
-              contentClassName="max-w-sm"
-            />
-          )}
-        </div>
-        {isLoading || item.showLoading ? (
-          <Skeleton className="w-10 h-10" />
-        ) : (
-          <p className="text-center text-slate-800 dark:text-zinc-100 text-2xl font-bold font-['Inter']">
-            {item.displayValue}
-          </p>
-        )}
-      </div>
-    </div>
+      title={item.title}
+      value={item.displayValue}
+      color={item.color}
+      isLoading={isLoading || item.showLoading}
+      tooltip={item.tooltip}
+    />
   ));
 };
 
