@@ -2,15 +2,9 @@
 
 import React, { useMemo } from "react";
 import type { DonationApiResponse } from "@/hooks/donation/types";
+import { formatMonthYear } from "@/utilities/formatDate";
 import type { DonationGroupProps, DonationHistoryListProps } from "../types";
 import { DonationHistoryItem, DonationHistoryItemSkeleton } from "./DonationHistoryItem";
-
-/**
- * Format a date to "Month Year" (e.g., "January 2026")
- */
-function formatMonthYear(date: Date): string {
-  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-}
 
 /**
  * Get a sortable key for month grouping (YYYY-MM format)

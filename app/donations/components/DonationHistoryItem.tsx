@@ -4,34 +4,8 @@ import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import React, { useMemo } from "react";
 import { getNetworkConfig } from "@/constants/supportedTokens";
+import { formatDayMonth } from "@/utilities/formatDate";
 import type { DonationHistoryItemProps } from "../types";
-
-/**
- * Format a date to "Jan 7th" format
- */
-function formatDayMonth(date: Date): string {
-  const day = date.getDate();
-  const month = date.toLocaleDateString("en-US", { month: "short" });
-
-  // Get ordinal suffix
-  const suffix = getOrdinalSuffix(day);
-
-  return `${month} ${day}${suffix}`;
-}
-
-function getOrdinalSuffix(day: number): string {
-  if (day > 3 && day < 21) return "th";
-  switch (day % 10) {
-    case 1:
-      return "st";
-    case 2:
-      return "nd";
-    case 3:
-      return "rd";
-    default:
-      return "th";
-  }
-}
 
 export const DonationHistoryItem = React.memo<DonationHistoryItemProps>(({ donation }) => {
   const explorerUrl = useMemo(() => {
@@ -43,6 +17,11 @@ export const DonationHistoryItem = React.memo<DonationHistoryItemProps>(({ donat
   const formattedDate = useMemo(() => {
     return formatDayMonth(new Date(donation.createdAt));
   }, [donation.createdAt]);
+
+  const chainName = useMemo(() => {
+    const networkConfig = getNetworkConfig(donation.chainID);
+    return networkConfig?.chainName || `Chain ${donation.chainID}`;
+  }, [donation.chainID]);
 
   const statusConfig = useMemo(() => {
     switch (donation.status) {
@@ -101,15 +80,19 @@ export const DonationHistoryItem = React.memo<DonationHistoryItemProps>(({ donat
             {donation.amount} {donation.tokenSymbol}
           </span>
           <span className="text-gray-300 dark:text-zinc-600">·</span>
+          <span>{chainName}</span>
+          <span className="text-gray-300 dark:text-zinc-600">·</span>
           <span>{formattedDate}</span>
-          {donation.fiatAmount && (
-            <>
-              <span className="text-gray-300 dark:text-zinc-600">·</span>
-              <span>
-                ${donation.fiatAmount.toFixed(2)} {donation.fiatCurrency}
-              </span>
-            </>
-          )}
+          {typeof donation.fiatAmount === "number" &&
+            donation.fiatAmount > 0 &&
+            donation.fiatCurrency && (
+              <>
+                <span className="text-gray-300 dark:text-zinc-600">·</span>
+                <span>
+                  ${donation.fiatAmount.toFixed(2)} {donation.fiatCurrency}
+                </span>
+              </>
+            )}
         </div>
       </div>
 
