@@ -60,7 +60,6 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
 
     // Filter tokens: must have balance AND project must have payout address for that chain
     const tokensWithBalanceAndPayoutSet = useMemo(() => {
-      console.log({ SUPPORTED_TOKENS, balanceByTokenKey, configuredChainIds });
       if (configuredChainIds.length === 0) {
         return [];
       }
@@ -89,12 +88,13 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
         >
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-              Support this project
+              Support {project.title}
             </DialogTitle>
-            <DialogDescription className="text-sm text-gray-500 dark:text-gray-400 truncate">
-              {project.title}
-              {displayPayoutAddress ? ` (${shortAddress(displayPayoutAddress)})` : ""}
-            </DialogDescription>
+            {displayPayoutAddress && (
+              <DialogDescription className="text-sm text-gray-500 dark:text-gray-400">
+                Receiving address: {shortAddress(displayPayoutAddress)}
+              </DialogDescription>
+            )}
           </DialogHeader>
 
           <div className="space-y-4">

@@ -12,7 +12,7 @@ export const PaymentMethodSelector = React.memo<PaymentMethodSelectorProps>(
     }, [onSelect]);
 
     return (
-      <div className="flex gap-3">
+      <div className="flex gap-2">
         <button
           type="button"
           onClick={handleCryptoSelect}
@@ -30,27 +30,27 @@ export const PaymentMethodSelector = React.memo<PaymentMethodSelectorProps>(
               : "border-gray-200 dark:border-zinc-700 hover:border-gray-300 dark:hover:border-zinc-600"
           }`}
         >
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex items-center gap-3">
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              className={`w-9 h-9 rounded-lg flex items-center justify-center ${
                 selected === PaymentMethod.CRYPTO
                   ? "bg-brand-blue text-white"
-                  : "bg-gray-100 dark:bg-zinc-700 text-gray-500 dark:text-gray-400"
+                  : "bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400"
               }`}
             >
-              <Zap className="w-5 h-5" />
+              <Zap className="w-4 h-4" />
             </div>
-            <div>
+            <div className="text-left">
               <div
-                className={`font-semibold text-sm ${
+                className={`font-medium text-sm ${
                   selected === PaymentMethod.CRYPTO
                     ? "text-brand-blue dark:text-blue-400"
-                    : "text-gray-700 dark:text-gray-300"
+                    : "text-gray-700 dark:text-zinc-300"
                 }`}
               >
                 Crypto
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Use wallet</div>
+              <div className="text-xs text-gray-500 dark:text-zinc-400">Use wallet</div>
             </div>
           </div>
         </button>
@@ -59,18 +59,15 @@ export const PaymentMethodSelector = React.memo<PaymentMethodSelectorProps>(
           disabled
           aria-disabled="true"
           aria-label="Pay with card - Coming soon"
-          className="flex-1 p-3 rounded-lg border border-gray-200 dark:border-zinc-700 opacity-60 cursor-not-allowed"
+          className="flex-1 p-3 rounded-lg border border-gray-200 dark:border-zinc-700 opacity-50 cursor-not-allowed"
         >
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 dark:bg-zinc-700 text-gray-400 dark:text-gray-500">
-              <CreditCard className="w-5 h-5" />
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gray-100 dark:bg-zinc-800 text-gray-400 dark:text-zinc-500">
+              <CreditCard className="w-4 h-4" />
             </div>
-            <div>
-              <div className="font-semibold text-sm text-gray-400 dark:text-gray-500">Card</div>
-              <div className="text-xs text-gray-400 dark:text-gray-500">Credit / Debit</div>
-              <span className="text-[10px] bg-gray-200 dark:bg-zinc-600 text-gray-600 dark:text-zinc-300 px-1.5 py-0.5 rounded-full font-medium">
-                Coming soon
-              </span>
+            <div className="text-left">
+              <div className="font-medium text-sm text-gray-400 dark:text-zinc-500">Card</div>
+              <div className="text-xs text-gray-400 dark:text-zinc-500">Coming soon</div>
             </div>
           </div>
         </button>
