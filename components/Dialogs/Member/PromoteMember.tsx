@@ -2,7 +2,6 @@ import { Dialog, Transition } from "@headlessui/react";
 import { ShieldCheckIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { type FC, Fragment, useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -30,7 +29,8 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({ memberAddres
   const { address, chain } = useAccount();
   const { project } = useProjectStore();
   const { teamProfiles } = useTeamProfiles(project);
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
+    useAttestationToast();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
@@ -42,7 +42,7 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({ memberAddres
     if (!address || !project) return;
     try {
       setIsPromoting(true);
-      setIsStepper(true);
+      startAttestation("Promoting member to admin...");
 
       const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
@@ -95,7 +95,7 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({ memberAddres
           await checkIfAttestationExists(() => {
             changeStepperStep("indexed");
           }).then(async () => {
-            toast.success("Member promoted successfully");
+            showSuccess("Member promoted successfully");
             closeModal();
             await refreshProject();
             queryClient.invalidateQueries({
@@ -104,6 +104,7 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({ memberAddres
           });
         });
     } catch (error) {
+      showError(`Failed to promote member ${memberAddress}.`);
       errorManager(
         "Error promoting member",
         error,

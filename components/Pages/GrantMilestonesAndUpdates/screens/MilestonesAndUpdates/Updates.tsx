@@ -3,7 +3,6 @@
 import { PencilSquareIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import type { IMilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
 import { Button } from "@/components/Utilities/Button";
@@ -46,7 +45,8 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   };
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
+    useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const { project, isProjectOwner } = useProjectStore();
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
@@ -59,6 +59,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
 
   const undoMilestoneCompletion = async (milestone: GrantMilestone) => {
     if (!address || !project) return;
+    startAttestation("Revoking milestone completion...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: milestone.chainID || 0,
@@ -123,7 +124,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
           }
           await checkIfAttestationExists(() => {
             changeStepperStep("indexed");
-            toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
+            showSuccess(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
           });
         } catch (onChainError: any) {
           // Silently fallback to off-chain revoke
@@ -146,6 +147,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
         }
       }
     } catch (error: any) {
+      showError(MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR);
       errorManager(
         MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR,
         error,

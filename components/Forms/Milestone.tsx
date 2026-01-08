@@ -10,7 +10,6 @@ import type { FC } from "react";
 import { useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
@@ -106,16 +105,26 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const projectUID = project?.uid;
   const { refetch: refetchGrants } = useProjectGrants(projectUID || "");
 
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const {
+    startAttestation,
+    showLoading,
+    showSuccess,
+    showError,
+    dismiss,
+    updateStep,
+    changeStepperStep,
+    setIsStepper,
+  } = useAttestationToast();
 
   const router = useRouter();
 
   const onSubmit: SubmitHandler<MilestoneType> = async (data, event) => {
     event?.preventDefault();
     event?.stopPropagation();
-    setIsLoading(true);
     if (!address) return;
     if (!gap) throw new Error("Please, connect a wallet");
+    setIsLoading(true);
+    startAttestation("Creating milestone...");
     const milestone = sanitizeObject({
       title: data.title,
       description: data.description || "",
@@ -144,7 +153,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         recipient: (recipient as Hex) || smartWalletAddress || address,
         data: milestone,
       });
-      await milestoneToAttest.attest(walletSigner as any).then(async (res) => {
+      await milestoneToAttest.attest(walletSigner as any, changeStepperStep).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
@@ -154,7 +163,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
             {}
           );
         }
-        showLoading("Indexing milestone...");
+        updateStep("indexing");
         while (retries > 0) {
           try {
             const { data: fetchedGrants } = await refetchGrants();
@@ -164,7 +173,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
             );
             if (milestoneExists) {
               retries = 0;
-              toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
+              showSuccess(MESSAGES.MILESTONES.CREATE.SUCCESS);
               router.push(
                 PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                   (project?.details?.slug || project?.uid) as string,
@@ -172,9 +181,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                   "milestones-and-updates"
                 )
               );
-              showSuccess("Milestone created!");
               setTimeout(() => {
-                dismiss();
                 router.refresh();
                 afterSubmit?.();
               }, 1500);
@@ -191,22 +198,16 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
       });
     } catch (error) {
       console.error(error);
-      dismiss();
-      errorManager(
-        MESSAGES.MILESTONES.CREATE.ERROR(data.title),
-        error,
-        {
-          grantUID: uid,
-          projectUID: projectUID,
-          address: address,
-          data: milestone,
-        },
-        {
-          error: MESSAGES.MILESTONES.CREATE.ERROR(data.title),
-        }
-      );
+      showError(MESSAGES.MILESTONES.CREATE.ERROR(data.title));
+      errorManager(MESSAGES.MILESTONES.CREATE.ERROR(data.title), error, {
+        grantUID: uid,
+        projectUID: projectUID,
+        address: address,
+        data: milestone,
+      });
     } finally {
       setIsLoading(false);
+      setIsStepper(false);
     }
   };
 

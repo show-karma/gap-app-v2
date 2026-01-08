@@ -4,7 +4,6 @@ import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
@@ -72,7 +71,8 @@ export const ProjectObjectiveCompletionForm = ({
   const [isCompleting, setIsCompleting] = useState(false);
   const { chain, address } = useAccount();
   const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
+    useAttestationToast();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const projectId = useParams().projectId as string;
@@ -103,6 +103,7 @@ export const ProjectObjectiveCompletionForm = ({
   const onSubmit = async (data: SchemaType) => {
     if (!address || !project) return;
     setIsCompleting(true);
+    startAttestation("Completing milestone...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
@@ -156,7 +157,7 @@ export const ProjectObjectiveCompletionForm = ({
             if (isCompleted) {
               retries = 0;
               changeStepperStep("indexed");
-              toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.SUCCESS);
+              showSuccess(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.SUCCESS);
               await refetch();
               handleCompleting(false);
               router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
@@ -167,6 +168,7 @@ export const ProjectObjectiveCompletionForm = ({
           }
         });
     } catch (error: any) {
+      showError(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.ERROR);
       errorManager(
         `Error completing milestone ${objectiveUID}`,
         error,

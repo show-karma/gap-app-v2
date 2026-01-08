@@ -7,7 +7,6 @@ import type { FC } from "react";
 import { useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
@@ -110,7 +109,15 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
     });
   };
 
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const {
+    startAttestation,
+    showSuccess,
+    showError,
+    dismiss,
+    updateStep,
+    changeStepperStep,
+    setIsStepper,
+  } = useAttestationToast();
 
   const { gap } = useGap();
 
@@ -120,6 +127,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
 
   const createGrantUpdate = async (grantToUpdate: Grant, data: UpdateType) => {
     if (!address || !project) return;
+    startAttestation("Posting update...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: grantToUpdate.chainID,
@@ -148,13 +156,13 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         schema: gapClient.findSchema("GrantDetails"),
       });
 
-      await grantUpdate.attest(walletSigner as any).then(async (res) => {
+      await grantUpdate.attest(walletSigner as any, changeStepperStep).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grantToUpdate.chainID), "POST", {});
         }
-        showLoading("Indexing update...");
+        updateStep("indexing");
         const attestUID = grantUpdate.uid;
         while (retries > 0) {
           try {
@@ -164,11 +172,9 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
             const alreadyExists = updatedGrant?.updates?.find((u) => u.uid === attestUID);
             if (alreadyExists) {
               retries = 0;
-              showSuccess("Update posted!");
+              showSuccess(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
               afterSubmit?.();
-              toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
               setTimeout(() => {
-                dismiss();
                 router.push(
                   PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                     project.uid,
@@ -177,8 +183,8 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
                   )
                 );
                 openShareDialog({
-                  modalShareText: `🎉 Update posted for your ${grant.details?.title}!`,
-                  modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building—we're here for it. 💪`,
+                  modalShareText: `Update posted for your ${grant.details?.title}!`,
+                  modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building!`,
                   shareText: SHARE_TEXTS.GRANT_UPDATE(
                     grant.details?.title as string,
                     (project.details?.slug || project.uid) as string,
@@ -197,7 +203,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         }
       });
     } catch (error) {
-      dismiss();
+      showError(MESSAGES.GRANT.GRANT_UPDATE.ERROR);
       errorManager(
         `Error creating grant update for grant ${grantToUpdate.uid} from project ${project.uid}`,
         error,
@@ -211,11 +217,10 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
             proofOfWork: data.proofOfWork,
             type: "grant-update",
           },
-        },
-        {
-          error: MESSAGES.GRANT.GRANT_UPDATE.ERROR,
         }
       );
+    } finally {
+      setIsStepper(false);
     }
   };
 

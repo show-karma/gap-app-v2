@@ -17,6 +17,8 @@ const mockToastSuccess = jest.fn();
 const mockToastError = jest.fn();
 const mockToast = jest.fn();
 const mockErrorManager = jest.fn();
+const mockShowError = jest.fn();
+const mockShowSuccess = jest.fn();
 
 // Create a mock toast function that can be called directly
 const createMockToastDefault = () => {
@@ -104,13 +106,15 @@ jest.mock("@/hooks/useSetupChainAndWallet", () => ({
 const mockChangeStepperStep = jest.fn();
 const mockSetIsStepper = jest.fn();
 const mockDismiss = jest.fn();
+const mockStartAttestation = jest.fn();
 jest.mock("@/hooks/useAttestationToast", () => ({
   useAttestationToast: jest.fn(() => ({
+    startAttestation: mockStartAttestation,
     changeStepperStep: mockChangeStepperStep,
     setIsStepper: mockSetIsStepper,
     showLoading: jest.fn(),
-    showSuccess: jest.fn(),
-    showError: jest.fn(),
+    showSuccess: mockShowSuccess,
+    showError: mockShowError,
     updateStep: jest.fn(),
     dismiss: mockDismiss,
   })),
@@ -303,7 +307,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockToastError).toHaveBeenCalledWith(expect.stringContaining("Chain ID not found"));
+      expect(mockShowError).toHaveBeenCalledWith(expect.stringContaining("Chain ID not found"));
       expect(mockErrorManager).toHaveBeenCalled();
     });
 
@@ -323,7 +327,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockToastError).toHaveBeenCalledWith("Grant completion UID not found");
+      expect(mockShowError).toHaveBeenCalledWith("Grant completion UID not found");
       expect(mockErrorManager).toHaveBeenCalled();
     });
 
@@ -509,12 +513,12 @@ describe("useGrantCompletionRevoke", () => {
       expect(mockMulticallContract.multiRevoke).toHaveBeenCalledWith([
         { schema: "0xschema123", data: [{ uid: "0xcompletion123", value: 0n }] },
       ]);
-      expect(mockChangeStepperStep).toHaveBeenCalledWith("pending");
+      expect(mockChangeStepperStep).toHaveBeenCalledWith("confirmed");
       expect(mockFetchData).toHaveBeenCalled();
       expect(mockChangeStepperStep).toHaveBeenCalledWith("indexing");
       expect(mockCheckIfCompletionExists).toHaveBeenCalled();
       expect(mockRefreshGrant).toHaveBeenCalled();
-      expect(mockToastSuccess).toHaveBeenCalledWith(MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS);
+      expect(mockShowSuccess).toHaveBeenCalledWith(MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS);
       expect(result.current.isRevoking).toBe(false);
     });
 
@@ -661,7 +665,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockToastError).toHaveBeenCalledWith("Grant completion not found");
+      expect(mockShowError).toHaveBeenCalledWith("Grant completion not found");
       expect(mockErrorManager).toHaveBeenCalled();
     });
 
@@ -682,7 +686,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockToastError).toHaveBeenCalledWith("Grant completion not found");
+      expect(mockShowError).toHaveBeenCalledWith("Grant completion not found");
     });
   });
 
@@ -715,7 +719,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockToastError).toHaveBeenCalledWith("Grant completion schema not found");
+      expect(mockShowError).toHaveBeenCalledWith("Grant completion schema not found");
     });
 
     it("should handle schema without multiRevoke", async () => {
@@ -741,7 +745,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockToastError).toHaveBeenCalledWith(
+      expect(mockShowError).toHaveBeenCalledWith(
         "Grant completion schema does not support multiRevoke"
       );
     });
@@ -820,7 +824,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockToastError).toHaveBeenCalledWith("On-chain error");
+      expect(mockShowError).toHaveBeenCalledWith("On-chain error");
       expect(mockErrorManager).toHaveBeenCalled();
     });
 
@@ -937,7 +941,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockChangeStepperStep).toHaveBeenCalledWith("preparing");
+      expect(mockChangeStepperStep).toHaveBeenCalledWith("confirmed");
     });
 
     it("should transition through stepper states", async () => {
@@ -949,7 +953,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockChangeStepperStep).toHaveBeenCalledWith("pending");
+      expect(mockChangeStepperStep).toHaveBeenCalledWith("confirmed");
       expect(mockChangeStepperStep).toHaveBeenCalledWith("indexing");
     });
 
@@ -1023,7 +1027,7 @@ describe("useGrantCompletionRevoke", () => {
         await result.current.revokeCompletion();
       });
 
-      expect(mockToastError).toHaveBeenCalledWith(MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.ERROR);
+      expect(mockShowError).toHaveBeenCalledWith(MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.ERROR);
       expect(mockErrorManager).toHaveBeenCalled();
     });
   });

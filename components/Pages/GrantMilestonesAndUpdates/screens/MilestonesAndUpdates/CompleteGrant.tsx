@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
@@ -63,7 +62,8 @@ export const GrantCompletion: FC = () => {
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
 
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
+    useAttestationToast();
   const { gap } = useGap();
 
   // Check if grant is from a funding program (by community or grant name)
@@ -126,6 +126,7 @@ export const GrantCompletion: FC = () => {
       trackExplanations?: Array<{ trackUID: string; explanation: string }>;
     }
   ) => {
+    startAttestation("Completing grant...");
     // Setup chain and get gasless signer
     const setup = await setupChainAndWallet({
       targetChainId: grantToComplete.chainID,
@@ -134,7 +135,7 @@ export const GrantCompletion: FC = () => {
     });
 
     if (!setup) {
-      toast.error("Failed to setup chain and wallet");
+      showError("Failed to setup chain and wallet");
       setIsLoading(false);
       return;
     }
@@ -152,7 +153,7 @@ export const GrantCompletion: FC = () => {
           grantUID: grantToComplete.uid,
           address,
         });
-        toast.error(errorMsg);
+        showError(errorMsg);
         setIsLoading(false);
         return;
       }
@@ -167,7 +168,7 @@ export const GrantCompletion: FC = () => {
           availableGrants: fetchedProject.grants.map((g) => g.uid),
           address,
         });
-        toast.error(errorMsg);
+        showError(errorMsg);
         setIsLoading(false);
         return;
       }
@@ -202,7 +203,7 @@ export const GrantCompletion: FC = () => {
             const completedGrant = polledGrants.find((g) => g.uid === grantToComplete.uid);
             if (completedGrant?.completed) {
               changeStepperStep("indexed");
-              toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS);
+              showSuccess(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS);
               await refetchGrants().then(() => {
                 router.push(
                   PAGES.PROJECT.GRANT(
@@ -228,7 +229,7 @@ export const GrantCompletion: FC = () => {
             new Error(`Grant not indexed after ${maxRetries} attempts`),
             { grantUID: grantToComplete.uid, txHash }
           );
-          toast.error(
+          showError(
             "Grant completion is taking longer than expected. Please refresh the page in a moment to see if it completed."
           );
         });

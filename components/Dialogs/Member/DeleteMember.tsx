@@ -3,7 +3,6 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import dynamic from "next/dynamic";
 import { type FC, Fragment, useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -32,7 +31,8 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
   const { gap } = useGap();
   const { address, chain } = useAccount();
   const { project } = useProjectStore();
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
+    useAttestationToast();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
@@ -43,6 +43,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
     if (!address || !project) return;
     try {
       setIsDeleting(true);
+      startAttestation("Removing member...");
 
       const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
@@ -92,7 +93,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
         }
         await checkIfMemberRemoved();
         changeStepperStep("indexed");
-        toast.success("Member removed successfully");
+        showSuccess("Member removed successfully");
         closeModal();
       } catch (onChainError: any) {
         // Silently fallback to off-chain revoke
@@ -117,6 +118,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
         }
       }
     } catch (error: any) {
+      showError(`Failed to remove member ${memberAddress}.`);
       errorManager(
         `Error removing member ${memberAddress}`,
         error,

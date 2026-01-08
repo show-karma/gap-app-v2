@@ -1,7 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { useGrantFormStore } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant/store";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -26,7 +25,8 @@ export function useGrant() {
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
+    useAttestationToast();
   const selectedProject = useProjectStore((state) => state.project);
   const { refetch: refetchGrants } = useProjectGrants(selectedProject?.uid || "");
   const router = useRouter();
@@ -49,6 +49,7 @@ export function useGrant() {
     if (!address || !oldGrant?.refUID || !selectedProject) return;
     try {
       setIsLoading(true);
+      startAttestation("Updating grant...");
 
       const setup = await setupChainAndWallet({
         targetChainId: oldGrant.chainID,
@@ -91,63 +92,58 @@ export function useGrant() {
         (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
       );
 
-      await oldGrantInstance.details?.attest(walletSigner as any).then(async (res) => {
-        let retries = 1000;
-        const txHash = res?.tx[0]?.hash;
-        if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, oldGrant.chainID), "POST", {});
-        }
-        showLoading("Indexing grant...");
-        while (retries > 0) {
-          const fetchedGrants = await getProjectGrants(
-            oldGrant.refUID || oldGrant.projectUID || ""
-          ).catch(() => []);
-          const fetchedGrant = fetchedGrants?.find(
-            (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
-          );
-
-          if (new Date(fetchedGrant?.updatedAt || 0) > new Date(oldGrantData?.updatedAt || 0)) {
-            clearMilestonesForms();
-            // Reset form data and go back to step 1 for a new grant
-            resetFormData();
-            setFormPriorities([]);
-            setCurrentStep(1);
-            setFlowType("grant"); // Reset to default flow type
-            retries = 0;
-            toast.success(MESSAGES.GRANT.UPDATE.SUCCESS);
-            showSuccess("Grant updated!");
-            await refetchGrants().then(() => {
-              setTimeout(() => {
-                dismiss();
-                router.push(
-                  PAGES.PROJECT.GRANT(
-                    selectedProject.details?.slug || selectedProject.uid,
-                    oldGrant.uid
-                  )
-                );
-                router.refresh();
-              }, 1500);
-            });
+      await oldGrantInstance.details
+        ?.attest(walletSigner as any, changeStepperStep)
+        .then(async (res) => {
+          let retries = 1000;
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, oldGrant.chainID), "POST", {});
           }
-          retries -= 1;
-          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-          await new Promise((resolve) => setTimeout(resolve, 1500));
-        }
-      });
+          changeStepperStep("indexing");
+          while (retries > 0) {
+            const fetchedGrants = await getProjectGrants(
+              oldGrant.refUID || oldGrant.projectUID || ""
+            ).catch(() => []);
+            const fetchedGrant = fetchedGrants?.find(
+              (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
+            );
+
+            if (new Date(fetchedGrant?.updatedAt || 0) > new Date(oldGrantData?.updatedAt || 0)) {
+              clearMilestonesForms();
+              resetFormData();
+              setFormPriorities([]);
+              setCurrentStep(1);
+              setFlowType("grant");
+              retries = 0;
+              showSuccess(MESSAGES.GRANT.UPDATE.SUCCESS);
+              await refetchGrants().then(() => {
+                setTimeout(() => {
+                  router.push(
+                    PAGES.PROJECT.GRANT(
+                      selectedProject.details?.slug || selectedProject.uid,
+                      oldGrant.uid
+                    )
+                  );
+                  router.refresh();
+                }, 1500);
+              });
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
+        });
     } catch (error: any) {
-      dismiss();
-      errorManager(
-        MESSAGES.GRANT.UPDATE.ERROR,
-        error,
-        {
-          grantUID: oldGrant.uid,
-          projectUID: selectedProject.uid,
-          address,
-        },
-        { error: MESSAGES.GRANT.UPDATE.ERROR }
-      );
+      showError(MESSAGES.GRANT.UPDATE.ERROR);
+      errorManager(MESSAGES.GRANT.UPDATE.ERROR, error, {
+        grantUID: oldGrant.uid,
+        projectUID: selectedProject.uid,
+        address,
+      });
     } finally {
       setIsLoading(false);
+      dismiss();
     }
   };
 

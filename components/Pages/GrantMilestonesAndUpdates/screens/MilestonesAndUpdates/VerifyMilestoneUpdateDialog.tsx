@@ -5,7 +5,6 @@ import { ArrowRightIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FC, Fragment, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
@@ -64,7 +63,8 @@ export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> =
   const hasVerifiedThis = isVerified;
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
+    useAttestationToast();
   const project = useProjectStore((state) => state.project);
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
 
@@ -72,6 +72,7 @@ export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> =
     if (!address || !project) return;
     try {
       setIsLoading(true);
+      startAttestation("Verifying milestone update...");
       const setup = await setupChainAndWallet({
         targetChainId: milestone.chainID || 0,
         currentChainId: chain?.id,
@@ -131,7 +132,7 @@ export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> =
               if (alreadyExists) {
                 retries = 0;
                 changeStepperStep("indexed");
-                toast.success(MESSAGES.MILESTONES.VERIFY.SUCCESS);
+                showSuccess(MESSAGES.MILESTONES.VERIFY.SUCCESS);
                 onVerified();
               }
               retries -= 1;
@@ -146,6 +147,7 @@ export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> =
         });
       closeModal();
     } catch (error: any) {
+      showError(MESSAGES.MILESTONES.VERIFY.ERROR);
       errorManager(
         MESSAGES.MILESTONES.VERIFY.ERROR,
         error,

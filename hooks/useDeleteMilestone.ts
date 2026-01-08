@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { fundingPlatformService } from "@/services/fundingPlatformService";
 import type {
   GrantMilestoneWithCompletion,
@@ -23,9 +23,11 @@ export const useDeleteMilestone = ({
   onSuccess,
 }: UseDeleteMilestoneParams) => {
   const queryClient = useQueryClient();
+  const { startAttestation, showSuccess, showError } = useAttestationToast();
 
   const deleteMilestoneMutation = useMutation({
     mutationFn: async (milestone: GrantMilestoneWithCompletion) => {
+      startAttestation("Deleting milestone...");
       if (!milestone.fundingApplicationCompletion) {
         const errorMessage = "Cannot delete milestone: missing application data";
         const error = new Error(errorMessage);
@@ -92,7 +94,7 @@ export const useDeleteMilestone = ({
     onSuccess: (data, _milestone, _context) => {
       const { milestone: deletedMilestone, result } = data;
 
-      toast.success(`Milestone "${deletedMilestone.title}" deleted successfully`);
+      showSuccess(`Milestone "${deletedMilestone.title}" deleted successfully`);
 
       // Invalidate and refetch to ensure consistency
       const queryKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectId, programId);
@@ -110,18 +112,13 @@ export const useDeleteMilestone = ({
       const errorMessage =
         error?.response?.data?.message || error?.message || "Failed to delete milestone";
 
-      toast.error(errorMessage);
+      showError(errorMessage);
 
-      errorManager(
-        `Failed to delete milestone "${milestone.title}"`,
-        error,
-        {
-          milestoneUID: milestone.uid,
-          referenceNumber: milestone.fundingApplicationCompletion?.referenceNumber,
-          milestoneTitle: milestone.title,
-        },
-        { error: errorMessage }
-      );
+      errorManager(`Failed to delete milestone "${milestone.title}"`, error, {
+        milestoneUID: milestone.uid,
+        referenceNumber: milestone.fundingApplicationCompletion?.referenceNumber,
+        milestoneTitle: milestone.title,
+      });
     },
   });
 

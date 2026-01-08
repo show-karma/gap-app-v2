@@ -9,7 +9,8 @@ const mockFetchGrantInstance = jest.fn();
 const mockNotifyIndexerForGrant = jest.fn();
 const mockPollForGrantCompletion = jest.fn();
 const mockToastSuccess = jest.fn();
-const mockToastError = jest.fn();
+const mockShowError = jest.fn();
+const mockShowSuccess = jest.fn();
 
 jest.mock("@/utilities/grant-helpers", () => ({
   getSDKGrantInstance: mockFetchGrantInstance,
@@ -27,7 +28,7 @@ jest.mock("react-hot-toast", () => ({
   __esModule: true,
   default: {
     success: mockToastSuccess,
-    error: mockToastError,
+    error: mockShowError,
   },
 }));
 
@@ -48,11 +49,12 @@ jest.mock("@/hooks/useWallet", () => ({
 
 jest.mock("@/hooks/useAttestationToast", () => ({
   useAttestationToast: jest.fn(() => ({
+    startAttestation: jest.fn(),
     changeStepperStep: jest.fn(),
     setIsStepper: jest.fn(),
     showLoading: jest.fn(),
-    showSuccess: jest.fn(),
-    showError: jest.fn(),
+    showSuccess: mockShowSuccess,
+    showError: mockShowError,
     updateStep: jest.fn(),
     dismiss: jest.fn(),
   })),
@@ -163,7 +165,7 @@ describe("useGrantCompletion", () => {
         grantUid: "grant-123",
       });
 
-      expect(mockToastSuccess).toHaveBeenCalled();
+      expect(mockShowSuccess).toHaveBeenCalled();
       expect(onComplete).toHaveBeenCalled();
       expect(result.current.isCompleting).toBe(false);
     });
@@ -190,7 +192,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
 
-      expect(mockToastSuccess).toHaveBeenCalled();
+      expect(mockShowSuccess).toHaveBeenCalled();
       expect(result.current.isCompleting).toBe(false);
     });
   });
@@ -205,7 +207,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
 
-      expect(mockToastError).toHaveBeenCalledWith(
+      expect(mockShowError).toHaveBeenCalledWith(
         "Please switch to the correct network and try again"
       );
       expect(mockFetchGrantInstance).not.toHaveBeenCalled();
@@ -223,7 +225,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
 
-      expect(mockToastError).toHaveBeenCalledWith("Please connect your wallet");
+      expect(mockShowError).toHaveBeenCalledWith("Please connect your wallet");
       expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
     });
 
@@ -234,7 +236,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, null as any);
       });
 
-      expect(mockToastError).toHaveBeenCalledWith("Please connect your wallet");
+      expect(mockShowError).toHaveBeenCalledWith("Please connect your wallet");
       expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
     });
 
@@ -245,7 +247,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(null as any, mockProject);
       });
 
-      expect(mockToastError).toHaveBeenCalledWith("Please connect your wallet");
+      expect(mockShowError).toHaveBeenCalledWith("Please connect your wallet");
       expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
     });
   });
@@ -270,7 +272,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
 
-      expect(mockToastError).toHaveBeenCalledWith("Grant completion cancelled");
+      expect(mockShowError).toHaveBeenCalledWith("Grant completion cancelled");
       expect(result.current.isCompleting).toBe(false);
     });
 
@@ -291,7 +293,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
 
-      expect(mockToastError).toHaveBeenCalledWith("Grant completion cancelled");
+      expect(mockShowError).toHaveBeenCalledWith("Grant completion cancelled");
     });
 
     it("should handle general errors", async () => {
@@ -309,7 +311,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
 
-      expect(mockToastError).toHaveBeenCalledWith("There was an error doing the grant completion.");
+      expect(mockShowError).toHaveBeenCalledWith("There was an error doing the grant completion.");
       expect(result.current.isCompleting).toBe(false);
     });
   });

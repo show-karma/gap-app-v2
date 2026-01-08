@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Community, nullRef } from "@show-karma/karma-gap-sdk";
 import { type FC, Fragment, type ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
@@ -91,11 +90,13 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
 
   const { gap } = useGap();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
+    useAttestationToast();
 
   const createCommunity = async (data: SchemaType) => {
     if (!gap) return;
     setIsLoading(true);
+    startAttestation("Creating community...");
 
     try {
       // Setup chain and wallet (uses gasless smart wallet if available)
@@ -137,43 +138,48 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
       // Close modal before attestation (Privy popups will appear during attest)
       closeModal();
 
-      await newCommunity.attest(walletSigner as any, sanitizedData).then(async (res) => {
-        // Show progress modal after Privy popups complete
-        showLoading("Indexing community...");
+      await newCommunity
+        .attest(walletSigner as any, sanitizedData, changeStepperStep)
+        .then(async (res) => {
+          showLoading("Indexing community...");
 
-        const txHash = res?.tx[0]?.hash;
-        if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newCommunity.chainID), "POST", {});
-        }
-        await fetchData(INDEXER.ATTESTATION_LISTENER(newCommunity.uid, actualChainId), "POST", {});
-        let retries = 1000;
-        while (retries > 0) {
-          await refreshCommunities()
-            .then(async (fetchedCommunities) => {
-              const createdCommunityExists = fetchedCommunities?.find(
-                (g) => g.uid === newCommunity.uid
-              );
-              if (createdCommunityExists) {
-                retries = 0;
-                showSuccess("Community created!");
-                // Brief delay to show success, then close
-                setTimeout(() => {
-                  dismiss();
-                }, 1500);
-              }
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            })
-            .catch(async () => {
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            });
-        }
-      });
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newCommunity.chainID), "POST", {});
+          }
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(newCommunity.uid, actualChainId),
+            "POST",
+            {}
+          );
+          let retries = 1000;
+          while (retries > 0) {
+            await refreshCommunities()
+              .then(async (fetchedCommunities) => {
+                const createdCommunityExists = fetchedCommunities?.find(
+                  (g) => g.uid === newCommunity.uid
+                );
+                if (createdCommunityExists) {
+                  retries = 0;
+                  showSuccess("Community created!");
+                  // Brief delay to show success, then close
+                  setTimeout(() => {
+                    dismiss();
+                  }, 1500);
+                }
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              })
+              .catch(async () => {
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              });
+          }
+        });
     } catch (error: unknown) {
-      dismiss();
+      showError("Failed to create community. Please try again.");
       errorManager(
         `Error creating community`,
         error,
