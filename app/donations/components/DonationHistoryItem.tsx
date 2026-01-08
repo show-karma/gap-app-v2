@@ -10,8 +10,10 @@ import type { DonationHistoryItemProps } from "../types";
 export const DonationHistoryItem = React.memo<DonationHistoryItemProps>(({ donation }) => {
   const explorerUrl = useMemo(() => {
     const networkConfig = getNetworkConfig(donation.chainID);
-    const baseUrl = networkConfig?.blockExplorer || "https://etherscan.io";
-    return `${baseUrl}/tx/${donation.transactionHash}`;
+    if (!networkConfig?.blockExplorer) {
+      return null;
+    }
+    return `${networkConfig.blockExplorer}/tx/${donation.transactionHash}`;
   }, [donation.chainID, donation.transactionHash]);
 
   const formattedDate = useMemo(() => {
@@ -96,15 +98,17 @@ export const DonationHistoryItem = React.memo<DonationHistoryItemProps>(({ donat
         </div>
       </div>
 
-      <a
-        href={explorerUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex-shrink-0 p-2 text-gray-400 hover:text-gray-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors"
-        title="View transaction"
-      >
-        <ExternalLink className="w-4 h-4" />
-      </a>
+      {explorerUrl && (
+        <a
+          href={explorerUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-shrink-0 p-2 text-gray-400 hover:text-gray-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors"
+          title="View transaction"
+        >
+          <ExternalLink className="w-4 h-4" />
+        </a>
+      )}
     </div>
   );
 });
