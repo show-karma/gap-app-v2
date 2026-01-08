@@ -112,10 +112,10 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const onSubmit: SubmitHandler<MilestoneType> = async (data, event) => {
     event?.preventDefault();
     event?.stopPropagation();
-    setIsLoading(true);
-    startAttestation("Creating milestone...");
     if (!address) return;
     if (!gap) throw new Error("Please, connect a wallet");
+    setIsLoading(true);
+    startAttestation("Creating milestone...");
     const milestone = sanitizeObject({
       title: data.title,
       description: data.description || "",

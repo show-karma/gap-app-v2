@@ -42,7 +42,6 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({ memberAddres
     if (!address || !project) return;
     try {
       setIsPromoting(true);
-      setIsStepper(true);
       startAttestation("Promoting member to admin...");
 
       const setup = await setupChainAndWallet({

@@ -40,7 +40,6 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({ memberAddress 
     if (!address || !project) return;
     try {
       setIsDemoting(true);
-      setIsStepper(true);
       startAttestation("Removing admin role...");
 
       const setup = await setupChainAndWallet({

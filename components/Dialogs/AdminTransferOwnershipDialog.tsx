@@ -39,7 +39,7 @@ export const AdminTransferOwnershipDialog: FC = () => {
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { address } = useAccount();
-  const { showSuccess, showError } = useAttestationToast();
+  const { startAttestation, showSuccess, showError } = useAttestationToast();
 
   const {
     register,
@@ -59,6 +59,7 @@ export const AdminTransferOwnershipDialog: FC = () => {
 
   const onSubmit = async (data: FormData) => {
     if (!project) return;
+    startAttestation("Transferring ownership...");
     try {
       const sanitizedAddress = sanitizeInput(data.newOwner);
 
