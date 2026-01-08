@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import type { ChainPayoutAddressMap } from "@/src/features/chain-payout-address/types/chain-payout-address";
+import { shortAddress } from "@/utilities/shortAddress";
 import { CartItemRow } from "./CartItemRow";
 
 interface CartItem {
@@ -67,6 +68,19 @@ export function CartItemWithTokens({
 
   const isMissingPayout = configuredChainIds.length === 0;
 
+  // Build payoutInfo for the selected token's chain
+  const payoutInfo = useMemo(() => {
+    if (!selectedToken || !chainPayoutAddress) {
+      return undefined;
+    }
+    const address = chainPayoutAddress[selectedToken.chainId.toString()];
+    return {
+      address,
+      isLoading: false,
+      isMissing: !address,
+    };
+  }, [selectedToken, chainPayoutAddress]);
+
   return (
     <CartItemRow
       item={item}
@@ -74,6 +88,8 @@ export function CartItemWithTokens({
       currentAmount={currentAmount}
       tokenOptions={tokenOptions}
       isMissingPayout={isMissingPayout}
+      payoutInfo={payoutInfo}
+      formatAddress={shortAddress}
       balanceByTokenKey={balanceByTokenKey}
       onTokenSelect={onTokenSelect}
       onAmountChange={onAmountChange}
