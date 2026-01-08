@@ -20,18 +20,23 @@ const stepMessages: Record<AttestationStep, string> = {
  * Hook for managing attestation progress with toast notifications.
  * This is the primary way to show progress for blockchain attestation operations.
  *
+ * Toast timing:
+ * - No toast shown during `preparing` or `pending` (wallet is loading/showing popup)
+ * - First toast appears on `confirmed` (user signed, transaction submitted)
+ * - Toast updates to "Indexing..." on `indexing` step
+ * - `indexed` step is ignored - use `showSuccess` after verifying data
+ *
  * Usage:
  * ```tsx
- * const { showLoading, showSuccess, showError, updateStep, dismiss } = useAttestationToast();
+ * const { startAttestation, showSuccess, showError, updateStep, dismiss } = useAttestationToast();
  *
  * try {
- *   // Update progress step (for SDK callbacks)
- *   await attestation.attest(signer, data, updateStep);
- *
- *   // Show success when done
- *   showSuccess("Attestation created!");
+ *   startAttestation("Creating project..."); // Sets message, no toast yet
+ *   await attestation.attest(signer, data, updateStep); // Toast shows on 'confirmed'
+ *   await verifyDataIndexed(); // Wait for actual data
+ *   showSuccess("Project created!"); // Show success after verification
  * } catch (error) {
- *   showError("Failed to create attestation");
+ *   showError("Failed to create project");
  * } finally {
  *   dismiss(); // Clean up any remaining toast
  * }
@@ -39,19 +44,17 @@ const stepMessages: Record<AttestationStep, string> = {
  */
 export function useAttestationToast() {
   const toastIdRef = useRef<string | null>(null);
+  const pendingMessageRef = useRef<string | null>(null);
 
   /**
-   * Start the attestation flow with immediate feedback.
-   * Shows "Preparing attestation..." toast immediately when user initiates action.
-   * Use this at the START of any attestation operation for instant UX feedback.
+   * Prepare the attestation flow with a custom message.
+   * Does NOT show a toast immediately - the first toast appears when the user
+   * confirms the transaction in their wallet (on 'confirmed' step).
+   *
+   * @param customMessage - Message to show when transaction is confirmed
    */
   const startAttestation = useCallback((customMessage?: string) => {
-    const message = customMessage || stepMessages.preparing;
-    if (toastIdRef.current) {
-      toast.loading(message, { id: toastIdRef.current });
-    } else {
-      toastIdRef.current = toast.loading(message);
-    }
+    pendingMessageRef.current = customMessage || stepMessages.confirmed;
   }, []);
 
   /**
@@ -70,8 +73,36 @@ export function useAttestationToast() {
    * Update the toast with a step message (for SDK callbacks).
    * Can accept either an AttestationStep or a custom string message.
    * This function can be passed directly to SDK methods as a callback.
+   *
+   * Step handling:
+   * - `preparing`/`pending`: No toast (wallet loading/popup)
+   * - `confirmed`: Show first toast with pending message
+   * - `indexing`: Update to "Indexing..." message
+   * - `indexed`: Ignored - use showSuccess after data verification
    */
   const updateStep = useCallback((step: AttestationStep | string) => {
+    // Skip preparing and pending - no toast during wallet interaction
+    if (step === "preparing" || step === "pending") {
+      return;
+    }
+
+    // Skip indexed - let showSuccess handle final state after data verification
+    if (step === "indexed") {
+      return;
+    }
+
+    // On confirmed: show first toast with the stored message
+    if (step === "confirmed") {
+      const message = pendingMessageRef.current || stepMessages.confirmed;
+      if (toastIdRef.current) {
+        toast.loading(message, { id: toastIdRef.current });
+      } else {
+        toastIdRef.current = toast.loading(message);
+      }
+      return;
+    }
+
+    // For indexing or custom string messages
     const message = stepMessages[step as AttestationStep] || step;
 
     if (toastIdRef.current) {
@@ -92,16 +123,21 @@ export function useAttestationToast() {
    * @deprecated Use dismiss instead
    */
   const setIsStepper = useCallback((isOpen: boolean) => {
-    if (!isOpen && toastIdRef.current) {
-      toast.dismiss(toastIdRef.current);
-      toastIdRef.current = null;
+    if (!isOpen) {
+      pendingMessageRef.current = null;
+      if (toastIdRef.current) {
+        toast.dismiss(toastIdRef.current);
+        toastIdRef.current = null;
+      }
     }
   }, []);
 
   /**
    * Show success and dismiss the loading toast.
+   * Call this after verifying data has been indexed.
    */
   const showSuccess = useCallback((message: string) => {
+    pendingMessageRef.current = null;
     if (toastIdRef.current) {
       toast.success(message, { id: toastIdRef.current, duration: 3000 });
       toastIdRef.current = null;
@@ -114,6 +150,7 @@ export function useAttestationToast() {
    * Show error and dismiss the loading toast.
    */
   const showError = useCallback((message: string) => {
+    pendingMessageRef.current = null;
     if (toastIdRef.current) {
       toast.error(message, { id: toastIdRef.current, duration: 5000 });
       toastIdRef.current = null;
@@ -126,6 +163,7 @@ export function useAttestationToast() {
    * Dismiss any active toast without showing success/error.
    */
   const dismiss = useCallback(() => {
+    pendingMessageRef.current = null;
     if (toastIdRef.current) {
       toast.dismiss(toastIdRef.current);
       toastIdRef.current = null;
