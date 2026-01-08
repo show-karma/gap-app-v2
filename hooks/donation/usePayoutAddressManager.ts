@@ -19,6 +19,17 @@ interface PayoutStatus {
   isMissing: boolean;
 }
 
+/**
+ * @deprecated Use useCartChainPayoutAddresses instead.
+ * This hook uses the legacy payoutAddress resolution which is no longer supported.
+ * The new hook uses chainPayoutAddress for chain-specific payout addresses.
+ *
+ * Migration guide:
+ * - Replace: usePayoutAddressManager(items, communityId)
+ * - With: useCartChainPayoutAddresses(items)
+ *
+ * The new hook returns { chainPayoutAddresses, missingPayouts, isFetching, setMissingPayouts }
+ */
 export function usePayoutAddressManager(items: CartItem[], communityId?: string) {
   const [payoutAddresses, setPayoutAddresses] = useState<Record<string, string>>({});
   const [missingPayouts, setMissingPayouts] = useState<string[]>([]);

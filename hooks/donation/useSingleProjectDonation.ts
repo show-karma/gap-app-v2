@@ -8,10 +8,8 @@ import type { CreateDonationRequest } from "@/hooks/donation/types";
 import { useCreateDonation } from "@/hooks/donation/useCreateDonation";
 import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances";
 import { useDonationTransfer } from "@/hooks/useDonationTransfer";
-import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
-import { useProjectStore } from "@/store";
+import { getPayoutAddressForChain } from "@/src/features/chain-payout-address/hooks/use-chain-payout-address";
 import { DonationType, PaymentMethod } from "@/types/donations";
-import { resolvePayoutAddress } from "@/utilities/address";
 import type { DonationPayment } from "@/utilities/donations/donationExecution";
 
 export const useSingleProjectDonation = (
@@ -23,7 +21,6 @@ export const useSingleProjectDonation = (
   const { switchChainAsync } = useSwitchChain();
   const { executeDonations, isExecuting } = useDonationTransfer();
   const { mutateAsync: createDonation } = useCreateDonation();
-  const fullProject = useProjectStore((state) => state.project);
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CRYPTO);
   const [selectedToken, setSelectedToken] = useState<SupportedToken | null>(null);
@@ -32,21 +29,11 @@ export const useSingleProjectDonation = (
   const supportedChains = useMemo(() => getAllSupportedChains(), []);
   const { balanceByTokenKey } = useCrossChainBalances(currentChainId ?? null, supportedChains);
 
-  const { grants } = useProjectGrants(fullProject?.uid || "");
-
-  const communityContract = useMemo(() => {
-    if (!grants || grants.length === 0) return undefined;
-    return grants[0]?.community?.uid;
-  }, [grants]);
-
-  const resolvedPayoutAddress = useMemo(
-    () =>
-      resolvePayoutAddress(
-        project.payoutAddress as Hex | string | Record<string, string>,
-        communityContract
-      ),
-    [project.payoutAddress, communityContract]
-  );
+  // Get chain-specific payout address based on selected token's chain
+  const resolvedPayoutAddress = useMemo(() => {
+    if (!selectedToken || !project.chainPayoutAddress) return "";
+    return getPayoutAddressForChain(project.chainPayoutAddress, selectedToken.chainId) || "";
+  }, [project.chainPayoutAddress, selectedToken]);
 
   const handlePaymentMethodChange = useCallback((method: PaymentMethod) => {
     setPaymentMethod(method);
@@ -114,7 +101,10 @@ export const useSingleProjectDonation = (
         await switchChainAsync({ chainId: selectedToken.chainId });
       }
 
-      const results = await executeDonations([payment], () => resolvedPayoutAddress);
+      const results = await executeDonations(
+        [payment],
+        (_projectId, _chainId) => resolvedPayoutAddress
+      );
 
       const successfulResult = results.find(
         (r) => r.status === "success" && r.projectId === project.uid

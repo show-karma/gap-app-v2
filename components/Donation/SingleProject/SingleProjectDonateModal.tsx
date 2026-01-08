@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { SUPPORTED_TOKENS } from "@/constants/supportedTokens";
 import { useSingleProjectDonation } from "@/hooks/donation/useSingleProjectDonation";
+import { getPayoutAddressForChain } from "@/src/features/chain-payout-address/hooks/use-chain-payout-address";
 import { PaymentMethod } from "@/types/donations";
-import { resolvePayoutAddress } from "@/utilities/address";
 import { shortAddress } from "@/utilities/shortAddress";
 import { TokenSelector } from "../TokenSelector";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
@@ -52,14 +52,33 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
       [isExecuting]
     );
 
-    // Filter tokens to only show those with balance > 0
-    const tokensWithBalance = useMemo(() => {
+    // Memoize configured chain IDs from project's chainPayoutAddress
+    const configuredChainIds = useMemo(() => {
+      if (!project.chainPayoutAddress) return [];
+      return Object.keys(project.chainPayoutAddress).map(Number);
+    }, [project.chainPayoutAddress]);
+
+    // Filter tokens: must have balance AND project must have payout address for that chain
+    const tokensWithBalanceAndPayoutSet = useMemo(() => {
+      console.log({ SUPPORTED_TOKENS, balanceByTokenKey, configuredChainIds });
+      if (configuredChainIds.length === 0) {
+        return [];
+      }
+
       return SUPPORTED_TOKENS.filter((token) => {
         const key = `${token.symbol}-${token.chainId}`;
         const balance = balanceByTokenKey[key];
-        return balance && parseFloat(balance) > 0;
+        const hasBalance = balance && parseFloat(balance) > 0;
+        const chainConfigured = configuredChainIds.includes(token.chainId);
+        return hasBalance && chainConfigured;
       });
-    }, [balanceByTokenKey]);
+    }, [balanceByTokenKey, configuredChainIds]);
+
+    // Get display address for the selected token's chain
+    const displayPayoutAddress = useMemo(() => {
+      if (!selectedToken || !project.chainPayoutAddress) return "";
+      return getPayoutAddressForChain(project.chainPayoutAddress, selectedToken.chainId) || "";
+    }, [selectedToken, project.chainPayoutAddress]);
 
     return (
       <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -73,7 +92,8 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
               Support this project
             </DialogTitle>
             <DialogDescription className="text-sm text-gray-500 dark:text-gray-400 truncate">
-              {project.title} ({shortAddress(resolvePayoutAddress(project.payoutAddress))})
+              {project.title}
+              {displayPayoutAddress ? ` (${shortAddress(displayPayoutAddress)})` : ""}
             </DialogDescription>
           </DialogHeader>
 
@@ -85,16 +105,20 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
                 <span className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Select Token
                 </span>
-                {tokensWithBalance.length > 0 ? (
+                {tokensWithBalanceAndPayoutSet.length > 0 ? (
                   <TokenSelector
                     selectedToken={selectedToken ?? undefined}
-                    tokenOptions={tokensWithBalance}
+                    tokenOptions={tokensWithBalanceAndPayoutSet}
                     balanceByTokenKey={balanceByTokenKey}
                     onTokenSelect={setSelectedToken}
                   />
+                ) : configuredChainIds.length > 0 ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                    You don't have tokens on the chains this project accepts.
+                  </p>
                 ) : (
                   <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
-                    No tokens with balance found. Please fund your wallet first.
+                    This project hasn't set up donation addresses yet.
                   </p>
                 )}
               </div>
@@ -120,7 +144,7 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
 
             <Button
               onClick={handleProceed}
-              disabled={!canProceed || isExecuting || tokensWithBalance.length === 0}
+              disabled={!canProceed || isExecuting || tokensWithBalanceAndPayoutSet.length === 0}
               className="w-full bg-brand-blue hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isExecuting ? (

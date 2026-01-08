@@ -1,5 +1,5 @@
-import type { Hex } from "viem";
 import type { SupportedToken } from "@/constants/supportedTokens";
+import type { ChainPayoutAddressMap } from "@/src/features/chain-payout-address/types/chain-payout-address";
 import type { PaymentMethod } from "@/types/donations";
 
 export interface SingleProjectDonationState {
@@ -15,7 +15,7 @@ export interface SingleProjectDonateModalProps {
   project: {
     uid: string;
     title: string;
-    payoutAddress: Hex | string | Record<string, string>;
+    chainPayoutAddress?: ChainPayoutAddressMap;
     imageURL?: string;
     chainID?: number;
   };

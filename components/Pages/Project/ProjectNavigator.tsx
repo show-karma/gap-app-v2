@@ -3,11 +3,13 @@ import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import type { Hex } from "viem";
 import { ProminentDonateButton } from "@/components/Donation/SingleProject/ProminentDonateButton";
 import { Button } from "@/components/Utilities/Button";
 import { useStaff } from "@/hooks/useStaff";
-import { EnableDonationsButton } from "@/src/features/chain-payout-address";
+import {
+  EnableDonationsButton,
+  hasConfiguredPayoutAddresses,
+} from "@/src/features/chain-payout-address";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useProgressModalStore } from "@/store/modals/progress";
@@ -114,11 +116,24 @@ export const ProjectNavigator = ({
         ))}
       </nav>
       <div className="flex flex-row gap-2 items-center mb-1">
-        {canSetPayoutAddress && (
+        {/* Show EnableDonationsButton only when no addresses AND user can set them */}
+        {canSetPayoutAddress && !hasConfiguredPayoutAddresses(project?.chainPayoutAddress) && (
           <EnableDonationsButton
             projectId={project?.uid || projectId}
             currentAddresses={project?.chainPayoutAddress}
             onSuccess={() => refreshProject()}
+          />
+        )}
+        {/* Show Donate button when addresses ARE configured */}
+        {hasConfiguredPayoutAddresses(project?.chainPayoutAddress) && (
+          <ProminentDonateButton
+            project={{
+              uid: project?.uid || projectId,
+              title: project?.details?.title || "",
+              chainPayoutAddress: project?.chainPayoutAddress,
+              imageURL: project?.details?.logoUrl,
+              chainID: project?.chainID,
+            }}
           />
         )}
         {isAuthorized && (
