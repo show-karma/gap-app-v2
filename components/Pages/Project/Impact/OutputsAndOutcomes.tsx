@@ -18,6 +18,8 @@ import { cn } from "@/utilities/tailwind";
 import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { GroupedLinks } from "./GroupedLinks";
+import { AggregatedDataSection } from "./AggregatedDataSection";
+import { UniqueUsersSection, hasUniqueUsersData } from "./UniqueUsersSection";
 
 // Function to determine indicator sorting priority
 const getIndicatorSortPriority = (indicatorName: string): number => {
@@ -412,8 +414,44 @@ export const OutputsAndOutcomes = () => {
                     </div>
                   </div>
                 </div>
+                {/* Aggregated Data Section - same layout as Historical Values */}
+                {item.aggregatedData && Object.keys(item.aggregatedData).length > 0 && (
+                  <AggregatedDataSection
+                    aggregatedData={item.aggregatedData}
+                    indicatorName={item.name}
+                    maxItems={10}
+                    rawDatapoints={item.datapoints?.map((dp: any) => ({
+                      value: dp.value,
+                      breakdown: dp.breakdown,
+                      startDate: dp.startDate,
+                      endDate: dp.endDate,
+                    }))}
+                  />
+                )}
+
+                {/* Unique Users Section - for indicators with period-based data (30d, 90d, 180d, 1y, monthly) */}
+                {item.datapoints && hasUniqueUsersData(item.datapoints.map((dp: any) => ({
+                  value: dp.value,
+                  breakdown: dp.breakdown,
+                  period: dp.period,
+                  startDate: dp.startDate,
+                  endDate: dp.endDate,
+                }))) && (
+                  <UniqueUsersSection
+                    datapoints={item.datapoints.map((dp: any) => ({
+                      value: dp.value,
+                      breakdown: dp.breakdown,
+                      period: dp.period,
+                      startDate: dp.startDate,
+                      endDate: dp.endDate,
+                    }))}
+                    indicatorName={item.name}
+                  />
+                )}
+
                 <div className="flex flex-row gap-4 max-md:flex-col-reverse">
                   <div className="flex flex-1 flex-col gap-5">
+                    {/* Raw Historical Values Chart */}
                     {item.datapoints?.length > 1 ? (
                       <Card className="bg-white dark:bg-zinc-800 rounded">
                         <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">

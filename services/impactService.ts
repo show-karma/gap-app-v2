@@ -16,6 +16,15 @@ interface V2Datapoint {
   updatedAt: string;
 }
 
+interface V2AggregatedDatapoint {
+  indicatorId: string;
+  indicatorName: string;
+  startDate: string;
+  endDate: string;
+  totalValue: number;
+  projectCount: number;
+}
+
 interface V2ProjectIndicator {
   id: string;
   name: string;
@@ -24,6 +33,7 @@ interface V2ProjectIndicator {
   hasData: boolean;
   lastUpdatedAt: string | null;
   datapoints: V2Datapoint[];
+  aggregatedData?: Record<string, V2AggregatedDatapoint[]>;
 }
 
 interface V2ProjectIndicatorsResponse {
@@ -47,9 +57,12 @@ function transformV2ProjectIndicators(v2Response: V2ProjectIndicatorsResponse): 
       startDate: dp.startDate,
       endDate: dp.endDate,
       outputTimestamp: dp.startDate,
+      breakdown: dp.breakdown || undefined,
+      period: dp.period || undefined,
     })),
     hasData: indicator.hasData,
     isAssociatedWithPrograms: false, // This can be determined elsewhere if needed
+    aggregatedData: indicator.aggregatedData,
   }));
 }
 
