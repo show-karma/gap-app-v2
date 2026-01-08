@@ -256,32 +256,30 @@ export default function ReviewerApplicationDetailPage() {
                   </TabPanel>
                 ),
               },
-              {
-                id: "comments",
-                label: "Comments",
-                icon: TabIcons.Discussion,
-                content: (
-                  <TabPanel padded={false}>
-                    <DiscussionTab
-                      applicationId={application.referenceNumber}
-                      comments={comments}
-                      statusHistory={application.statusHistory}
-                      versionHistory={versions}
-                      currentStatus={application.status}
-                      isAdmin={false} // Not admin, but can comment
-                      currentUserAddress={currentUserAddress}
-                      onCommentAdd={handleCommentAdd}
-                      onCommentEdit={handleCommentEdit}
-                      onCommentDelete={handleCommentDelete}
-                      onVersionClick={handleVersionClick}
-                      isLoading={isLoadingComments}
-                    />
-                  </TabPanel>
-                ),
-              },
             ] satisfies TabConfig[]
           }
         />
+
+        {/* Comments Section - Always visible at the bottom */}
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Comments & Activity
+          </h2>
+          <DiscussionTab
+            applicationId={application.referenceNumber}
+            comments={comments}
+            statusHistory={application.statusHistory}
+            versionHistory={versions}
+            currentStatus={application.status}
+            isAdmin={false} // Not admin, but can comment
+            currentUserAddress={currentUserAddress}
+            onCommentAdd={handleCommentAdd}
+            onCommentEdit={handleCommentEdit}
+            onCommentDelete={handleCommentDelete}
+            onVersionClick={handleVersionClick}
+            isLoading={isLoadingComments}
+          />
+        </div>
       </div>
     </div>
   );
