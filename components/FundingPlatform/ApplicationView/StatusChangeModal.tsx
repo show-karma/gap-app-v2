@@ -83,10 +83,11 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
 
   // Extract requested amount from application data for pre-filling
   const extractedAmount = useMemo(() => {
-    if (!isApprovalStatus || !application?.applicationData || !programConfig?.formSchema) {
+    if (!isApprovalStatus || !application?.applicationData) {
       return null;
     }
-    return extractAmountField(application.applicationData, programConfig.formSchema);
+    // formSchema is optional - extractAmountField can work without it by searching applicationData keys directly
+    return extractAmountField(application.applicationData, programConfig?.formSchema);
   }, [isApprovalStatus, application?.applicationData, programConfig?.formSchema]);
 
   // Extract application summary for context display
