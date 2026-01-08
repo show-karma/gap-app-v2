@@ -4,7 +4,7 @@ import { ArrowRightIcon } from "@heroicons/react/20/solid";
 import { FolderOpen } from "lucide-react";
 import Link from "next/link";
 import pluralize from "pluralize";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Carousel,
@@ -15,11 +15,34 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import type { FundingProgram } from "@/services/fundingPlatformService";
-import { PAGES } from "@/utilities/pages";
-import { FundingOpportunityCard } from "./funding-opportunity-card";
+import { FundingMapCard } from "@/src/features/funding-map/components/funding-map-card";
+import { FUNDING_PLATFORM_DOMAINS } from "@/src/features/funding-map/utils/funding-platform-domains";
+import { mapFundingProgramToResponse } from "@/src/features/funding-map/utils/map-funding-program";
+import { envVars } from "@/utilities/enviromentVars";
+import { FUNDING_PLATFORM_PAGES, PAGES } from "@/utilities/pages";
 
 interface LiveFundingOpportunitiesCarouselProps {
   programs: FundingProgram[];
+}
+
+function getProgramDetailUrl(
+  communitySlug: string | undefined,
+  programId: string | undefined
+): string | null {
+  if (!communitySlug || !programId) {
+    return null;
+  }
+
+  const exclusiveDomain =
+    FUNDING_PLATFORM_DOMAINS[communitySlug as keyof typeof FUNDING_PLATFORM_DOMAINS];
+  const domain = exclusiveDomain
+    ? envVars.isDev
+      ? exclusiveDomain.dev
+      : exclusiveDomain.prod
+    : undefined;
+
+  const pages = FUNDING_PLATFORM_PAGES(communitySlug, domain);
+  return pages.PROGRAM_PAGE(programId);
 }
 
 export function LiveFundingOpportunitiesCarousel({
@@ -28,6 +51,12 @@ export function LiveFundingOpportunitiesCarousel({
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [totalSlides, setTotalSlides] = useState(0);
+
+  // Map FundingProgram to FundingProgramResponse for FundingMapCard
+  const mappedPrograms = useMemo(
+    () => programs.map((program) => mapFundingProgramToResponse(program)),
+    [programs]
+  );
 
   useEffect(() => {
     if (!api) {
@@ -81,15 +110,33 @@ export function LiveFundingOpportunitiesCarousel({
         }}
         className="w-full"
       >
-        <CarouselContent className="-ml-2 md:-ml-4">
-          {programs.map((program) => (
-            <CarouselItem
-              key={`${program.programId}-${program.chainID}`}
-              className="pl-2 md:pl-4 basis-full sm:basis-1/2 xl:basis-1/3"
-            >
-              <FundingOpportunityCard program={program} />
-            </CarouselItem>
-          ))}
+        <CarouselContent className="-ml-2 md:-ml-4 flex items-stretch">
+          {mappedPrograms.map((mappedProgram, index) => {
+            const originalProgram = programs[index];
+            const detailUrl = getProgramDetailUrl(
+              originalProgram.communitySlug,
+              originalProgram.programId
+            );
+
+            return (
+              <CarouselItem
+                key={`${originalProgram.programId}-${originalProgram.chainID}`}
+                className="pl-2 md:pl-4 basis-full sm:basis-1/2 xl:basis-1/3 flex flex-col"
+              >
+                <FundingMapCard
+                  program={mappedProgram}
+                  hideDescription
+                  hideCategories
+                  onClick={
+                    detailUrl
+                      ? () => window.open(detailUrl, "_blank", "noopener,noreferrer")
+                      : undefined
+                  }
+                  className="flex-1"
+                />
+              </CarouselItem>
+            );
+          })}
         </CarouselContent>
         {/* Carousel arrows are positioned below via custom buttons */}
         <CarouselPrevious className="hidden" />

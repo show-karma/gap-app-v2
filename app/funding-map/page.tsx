@@ -18,7 +18,7 @@ const FundingMapPage = () => {
       <Suspense fallback={null}>
         <FundingMapSearch />
       </Suspense>
-      <div className="flex w-full flex-col gap-6 px-6 py-16 lg:flex-row lg:px-8">
+      <div className="flex w-full flex-col gap-6 px-6 py-8 lg:flex-row lg:px-8">
         <Suspense fallback={<FundingMapLoading />}>
           <FundingMapList />
         </Suspense>

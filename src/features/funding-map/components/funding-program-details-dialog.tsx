@@ -48,8 +48,10 @@ import type {
   FundingProgramMetadata,
   FundingProgramResponse,
 } from "../types/funding-program";
+import { formatBudgetValue } from "../utils/format-budget";
 import { FUNDING_PLATFORM_DOMAINS } from "../utils/funding-platform-domains";
 import { isValidImageUrl } from "../utils/image-utils";
+import { GrantTypeBadges } from "./grant-type-badges";
 
 interface FundingProgramDetailsDialogProps {
   program: FundingProgramResponse | null;
@@ -57,13 +59,6 @@ interface FundingProgramDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
   isLoading?: boolean;
   isNotFound?: boolean;
-}
-
-function formatBudgetValue(budget: string | undefined): string | null {
-  if (!budget || Number(budget) === 0) return null;
-  const numBudget = Number(budget);
-  if (Number.isNaN(numBudget)) return budget;
-  return `$${formatCurrency(numBudget)}`;
 }
 
 function formatGrantSize(min: string | undefined, max: string | undefined): string | null {
@@ -287,7 +282,7 @@ function SocialLinks({ socialLinks }: { socialLinks: FundingProgramMetadata["soc
 
 function InfoCard({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-2 rounded-xl bg-blue-50 dark:bg-zinc-700 px-4 py-3">
+    <div className="flex flex-col gap-2 rounded-xl border border-border bg-card px-4 py-3">
       <div className="text-sm font-semibold text-foreground">{label}</div>
       <div className="flex flex-wrap gap-2">{children}</div>
     </div>
@@ -296,7 +291,7 @@ function InfoCard({ label, children }: { label: string; children: React.ReactNod
 
 function InfoPill({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 rounded-full bg-white dark:bg-zinc-800 px-3 py-1 text-sm font-medium text-blue-600 dark:text-blue-400">
+    <div className="flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-sm font-medium text-foreground">
       {children}
     </div>
   );
@@ -399,7 +394,6 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
 
   const hasStats = budget || grantSize || amountDistributed || grantsIssued;
   const hasInfoCards =
-    (categories?.length ?? 0) > 0 ||
     (networks?.length ?? 0) > 0 ||
     (ecosystems?.length ?? 0) > 0 ||
     (platformsUsed?.length ?? 0) > 0 ||
@@ -410,7 +404,7 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
       {/* Header Section */}
       <div className="flex flex-col gap-4 p-6 sm:p-8">
         <DialogHeader className="space-y-3">
-          {/* Top row: Grant types + Social links */}
+          {/* Top row: On Karma badge + Social links */}
           <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
             <div className="flex flex-wrap items-center gap-2">
               {isOnKarma && (
@@ -422,15 +416,6 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
                   On Karma
                 </Badge>
               )}
-              {grantTypes?.map((type) => (
-                <Badge
-                  key={type}
-                  variant="secondary"
-                  className="rounded-lg bg-neutral-100 px-2 py-1 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
-                >
-                  {type}
-                </Badge>
-              ))}
             </div>
             <SocialLinks socialLinks={metadata?.socialLinks} />
           </div>
@@ -439,6 +424,30 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
           <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight">
             {title}
           </DialogTitle>
+
+          {/* Grant Types + Categories */}
+          {((grantTypes && grantTypes.length > 0) || (categories && categories.length > 0)) && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {grantTypes && grantTypes.length > 0 && (
+                <GrantTypeBadges
+                  types={grantTypes}
+                  showLabels={true}
+                  variant="secondary"
+                  iconSize="sm"
+                  className="gap-1.5"
+                />
+              )}
+              {categories?.map((category) => (
+                <Badge
+                  key={category}
+                  variant="outline"
+                  className="rounded-full border-border px-2 py-0.5 text-xs font-medium text-foreground"
+                >
+                  {category}
+                </Badge>
+              ))}
+            </div>
+          )}
 
           {/* Organization/Community */}
           {(validCommunities.length > 0 || fallbackName) && (
@@ -502,14 +511,6 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
         {/* Info Cards Grid */}
         {hasInfoCards && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            {categories && categories.length > 0 && (
-              <InfoCard label="Categories">
-                {categories.map((category) => (
-                  <InfoPill key={category}>{category}</InfoPill>
-                ))}
-              </InfoCard>
-            )}
-
             {networks && networks.length > 0 && (
               <InfoCard label="Networks">
                 {networks.map((network) => (
@@ -549,7 +550,7 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
 
         {/* Stats Card */}
         {hasStats ? (
-          <div className="rounded-xl bg-blue-50 dark:bg-zinc-700 divide-y divide-blue-100 dark:divide-zinc-600">
+          <div className="rounded-xl border border-border bg-card divide-y divide-border">
             <StatRow label="Budget" value={budget} />
             <StatRow label="Grant Size" value={grantSize} />
             <StatRow label="Amount Distributed to Date" value={amountDistributed} />
@@ -564,7 +565,7 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
               href={bugBounty}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+              className="flex items-center gap-1.5 text-sm font-semibold text-foreground hover:text-muted-foreground transition-colors"
             >
               <Bug className="h-4 w-4" />
               Bug Bounty
@@ -605,7 +606,7 @@ function DialogContentInner({ program }: { program: FundingProgramResponse }) {
               href={`https://tally.so/r/3qB1PY?program_id=${programId}&program_name=karma`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline dark:text-blue-400"
+              className="text-foreground hover:underline font-medium"
             >
               Claim
             </a>{" "}

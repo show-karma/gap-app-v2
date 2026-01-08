@@ -1,4 +1,4 @@
-import { BadgeCheck, Calendar } from "lucide-react";
+import { Calendar, Coins } from "lucide-react";
 import Image from "next/image";
 import type { KeyboardEvent } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -6,12 +6,19 @@ import { Card } from "@/components/ui/card";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import type { FundingProgramResponse } from "../types/funding-program";
+import { formatBudgetValue } from "../utils/format-budget";
 import { isValidImageUrl } from "../utils/image-utils";
 import { FundingMapDescription } from "./funding-map-description";
+import { GrantTypeBadges } from "./grant-type-badges";
+import { OnKarmaBadge } from "./on-karma-badge";
 
 interface FundingMapCardProps {
   program: FundingProgramResponse;
   onClick?: () => void;
+  /** Hide the description section */
+  hideDescription?: boolean;
+  /** Hide the categories section */
+  hideCategories?: boolean;
 }
 
 /**
@@ -27,7 +34,13 @@ function isPendingReview(program: FundingProgramResponse): boolean {
   return !isValidated && !isInactive && !hasEnded;
 }
 
-export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
+export function FundingMapCard({
+  program,
+  onClick,
+  hideDescription = false,
+  hideCategories = false,
+  className,
+}: FundingMapCardProps & { className?: string }) {
   const { metadata, isOnKarma, communities } = program;
 
   const title = metadata?.title;
@@ -46,6 +59,10 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
 
   const categories = metadata?.categories;
 
+  // Format budget for display - using same logic as details dialog
+  const budget = metadata?.programBudget;
+  const formattedBudget = formatBudgetValue(budget);
+
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Enter" || event.key === " ") {
       // Prevent Space from scrolling the page
@@ -59,8 +76,11 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
   return (
     <Card
       className={cn(
-        "flex flex-col gap-4 border-border p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        isPendingReview(program) && "ring-1 ring-gray-200"
+        "flex flex-col justify-between border-border p-6 shadow-sm transition-shadow hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        // Enforce full height to match carousel stretch
+        "h-full",
+        isPendingReview(program) && "ring-1 ring-gray-200",
+        className
       )}
       onClick={onClick}
       onKeyDown={handleKeyDown}
@@ -68,45 +88,37 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
       role="button"
       aria-label={`View funding program: ${title ?? "Untitled program"}`}
     >
-      <div className="flex flex-col gap-3">
-        <div className="relative flex w-full flex-row items-start justify-between gap-2">
-          <div className="flex flex-wrap gap-1 w-[calc(100%-96px)]">
-            {grantTypes
-              ?.filter((type): type is string => typeof type === "string")
-              .map((type) => (
+      <div className="flex flex-col gap-4 mb-4 flex-1">
+        <div className="flex w-full flex-row items-center justify-between gap-2">
+          {(formattedBudget || (grantTypes && grantTypes.length > 0)) && (
+            <div className="flex items-center rounded-[10px] bg-secondary p-0.5 max-w-full overflow-hidden">
+              {formattedBudget && (
                 <Badge
-                  key={type}
-                  variant="secondary"
-                  className="rounded-lg px-2 py-0.5 text-xs font-medium"
+                  variant="outline"
+                  className="flex items-center gap-1.5 rounded-full border-transparent px-2 bg-transparent font-medium"
                 >
-                  {type}
+                  <Coins className="h-3 w-3 shrink-0" />
+                  <span className="truncate max-w-[120px]">{formattedBudget}</span>
                 </Badge>
-              ))}
-          </div>
-          {isOnKarma && (
-            <Badge
-              variant="secondary"
-              className="absolute top-0 right-0 flex flex-row w-max min-w-max items-center gap-1 rounded-lg bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/50"
-            >
-              <BadgeCheck className="h-3 w-3" />
-              On Karma
-            </Badge>
+              )}
+              {grantTypes && grantTypes.length > 0 && (
+                <GrantTypeBadges
+                  types={grantTypes}
+                  showLabels="conditional"
+                  variant="secondary"
+                  iconSize="sm"
+                  className="gap-0.5"
+                />
+              )}
+            </div>
           )}
+          {isOnKarma && <OnKarmaBadge showTooltip={true} />}
         </div>
-
-        <h3
-          className={cn(
-            "text-lg font-semibold text-foreground",
-            !grantTypes || !grantTypes?.length ? "-mt-4" : ""
-          )}
-        >
-          {title}
-        </h3>
-
-        {(validCommunities.length > 0 || fallbackName) && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-medium text-muted-foreground">by</span>
+        <div className="flex flex-col gap-1">
+          <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+          {(validCommunities.length > 0 || fallbackName) && (
             <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-sm text-muted-foreground">by</span>
               {validCommunities.length > 0 ? (
                 validCommunities.map((community, index) => (
                   <div key={community.uid} className="flex items-center gap-1">
@@ -129,33 +141,44 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
                 <span className="text-sm font-medium text-foreground">{fallbackName}</span>
               )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
+        {!hideDescription && <FundingMapDescription description={description ?? ""} />}
       </div>
 
-      <div className="flex flex-col gap-3">
-        <FundingMapDescription description={description ?? ""} />
-
-        <div className="flex flex-wrap items-center gap-2">
-          {categories
-            ?.filter((category): category is string => typeof category === "string")
-            .map((category) => (
+      <div className="flex flex-col gap-4 mt-auto">
+        {(endsAt || (!hideCategories && categories && categories.length > 0)) && (
+          <div className="flex flex-col gap-1.5">
+            {endsAt && (
               <Badge
-                key={category}
                 variant="outline"
-                className="rounded-full border-border px-2 py-0.5 text-xs font-medium text-foreground"
+                className="flex items-center gap-1.5 rounded-lg font-medium w-fit"
               >
-                {category}
+                <Calendar className="h-3 w-3" />
+                <span>
+                  {hasEnded ? "Ended" : "Ends"} {endsAt}
+                </span>
               </Badge>
-            ))}
-        </div>
+            )}
 
-        {endsAt && (
-          <div className="flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 w-fit">
-            <Calendar className="h-3 w-3" />
-            <span>
-              {hasEnded ? "Ended" : "Ends"} {endsAt}
-            </span>
+            {!hideCategories && categories && categories.length > 0 && (
+              <div className="relative flex-1 overflow-hidden">
+                <div className="flex flex-nowrap gap-1 overflow-x-auto scrollbar-hide">
+                  {categories
+                    ?.filter((category): category is string => typeof category === "string")
+                    .map((category) => (
+                      <Badge
+                        key={category}
+                        variant="outline"
+                        className="rounded-full border-border px-2 py-0.5 text-xs font-medium text-foreground whitespace-nowrap"
+                      >
+                        {category}
+                      </Badge>
+                    ))}
+                </div>
+                <div className="absolute top-0 right-0 h-full w-8 bg-gradient-to-l from-white dark:from-zinc-950 to-transparent pointer-events-none" />
+              </div>
+            )}
           </div>
         )}
       </div>

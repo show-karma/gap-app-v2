@@ -65,7 +65,7 @@ export function FundingMapList() {
 
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6">
-      <FundingMapFilters />
+      <FundingMapFilters totalCount={totalCount} />
 
       {isLoading && <FundingMapListSkeleton />}
 
