@@ -1,7 +1,6 @@
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import type { MilestoneCompletedFormData } from "@/components/Forms/GrantMilestoneCompletion";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -75,7 +74,15 @@ export const useMilestone = () => {
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
-  const { changeStepperStep, dismiss } = useAttestationToast();
+  const {
+    startAttestation,
+    showLoading,
+    showSuccess,
+    showError,
+    changeStepperStep,
+    dismiss,
+    showChainProgress,
+  } = useAttestationToast();
   const project = useProjectStore((state) => state.project);
   const { projectId } = useParams();
   const { refetch } = useProjectUpdates(projectId as string);
@@ -89,6 +96,7 @@ export const useMilestone = () => {
 
   const multiGrantDelete = async (milestone: UnifiedMilestone) => {
     setIsDeleting(true);
+    startAttestation("Deleting milestone...");
 
     try {
       changeStepperStep("preparing");
@@ -119,12 +127,18 @@ export const useMilestone = () => {
             return a - b; // Otherwise sort numerically
           });
 
-        for (const chainId of arrayOfMilestonesByChains) {
+        for (let i = 0; i < arrayOfMilestonesByChains.length; i++) {
+          const chainId = arrayOfMilestonesByChains[i];
           const milestoneOfChain = milestonesByChainID?.[chainId];
           const chainName = chainNameDictionary(chainId);
-          toast.loading(`Deleting ${milestoneOfChain?.length} milestone(s) on ${chainName}...`, {
-            id: `chain-${chainId}`,
-          });
+          const itemCount = milestoneOfChain?.length || 1;
+          showChainProgress(
+            "Deleting",
+            chainName,
+            i + 1,
+            arrayOfMilestonesByChains.length,
+            itemCount
+          );
 
           // Switch chain if needed
           const setup = await setupChainAndWallet({
@@ -200,25 +214,14 @@ export const useMilestone = () => {
               await checkIfMilestonesExists(() => {
                 changeStepperStep("indexed");
               }).then(() => {
-                toast.success(
-                  `Deleted successfully ${milestoneOfChain?.length} milestone(s) on ${chainName}...`,
-                  {
-                    id: `chain-${chainId}`,
-                  }
-                );
                 // Use our new force refresh function
                 refetch();
               });
-            })
-            .catch(() => {
-              toast.remove(`chain-${chainId}`);
             });
         }
       } else {
         // Handle single milestone deletion
-        const loadingToast = toast.loading(`Deleting milestone...`, {
-          id: `milestone-${milestone.uid}`,
-        });
+        showLoading("Deleting milestone...");
 
         const setup = await setupChainAndWallet({
           targetChainId: milestone.chainID,
@@ -294,20 +297,15 @@ export const useMilestone = () => {
             await checkIfMilestoneExists(() => {
               changeStepperStep("indexed");
             }).then(() => {
-              toast.success("Milestone deleted successfully", {
-                id: loadingToast,
-              });
+              showSuccess("Milestone deleted successfully");
               // Use our new force refresh function
               refetch();
             });
-          })
-          .catch(() => {
-            toast.remove(loadingToast);
           });
       }
     } catch (error) {
       console.error("Error during deletion:", error);
-      toast.error("There was an error deleting the milestone");
+      showError("There was an error deleting the milestone");
       errorManager("Error deleting milestone", error, {
         milestoneData: milestone,
       });
@@ -319,7 +317,7 @@ export const useMilestone = () => {
 
   // Function to revoke milestone completion for multiple grants and chains
   const multiGrantUndoCompletion = async (milestone: UnifiedMilestone) => {
-    const chains = [];
+    startAttestation("Undoing milestone completion...");
 
     try {
       changeStepperStep("preparing");
@@ -350,16 +348,18 @@ export const useMilestone = () => {
             return a - b; // Otherwise sort numerically
           });
 
-        for (const chainId of arrayOfMilestonesByChains) {
+        for (let i = 0; i < arrayOfMilestonesByChains.length; i++) {
+          const chainId = arrayOfMilestonesByChains[i];
           const milestoneOfChain = milestonesByChainID?.[chainId];
           const chainName = chainNameDictionary(chainId);
-          toast.loading(
-            `Undoing completion for ${milestoneOfChain?.length} milestone(s) on ${chainName}...`,
-            {
-              id: `chain-${chainId}`,
-            }
+          const itemCount = milestoneOfChain?.length || 1;
+          showChainProgress(
+            "Undoing completion",
+            chainName,
+            i + 1,
+            arrayOfMilestonesByChains.length,
+            itemCount
           );
-          chains.push(chainId);
 
           // Switch chain if needed
           const setup = await setupChainAndWallet({
@@ -425,20 +425,14 @@ export const useMilestone = () => {
           await checkIfCompletionExists(() => {
             changeStepperStep("indexed");
           }).then(() => {
-            toast.success(
-              `Undid completion for ${milestoneOfChain?.length} milestone(s) successfully!`,
-              {
-                id: `chain-${chainId}`,
-              }
-            );
             refetch();
           });
         }
+        // Show final success message after all chains processed
+        showSuccess("Milestone completion undone successfully!");
       } else {
         // Handle single milestone completion revocation
-        const loadingToast = toast.loading(`Undoing milestone completion...`, {
-          id: `milestone-${milestone.uid}`,
-        });
+        showLoading("Undoing milestone completion...");
 
         const setup = await setupChainAndWallet({
           targetChainId: milestone.chainID,
@@ -499,23 +493,18 @@ export const useMilestone = () => {
         await checkIfCompletionExists(() => {
           changeStepperStep("indexed");
         }).then(() => {
-          toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS, {
-            id: loadingToast,
-          });
+          showSuccess(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
           refetch();
         });
       }
     } catch (error) {
       console.error("Error during completion revocation:", error);
-      toast.error(MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR);
+      showError(MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR);
       errorManager("Error revoking milestone completion", error, {
         milestoneData: milestone,
       });
     } finally {
       dismiss();
-      chains.forEach((chainId) => {
-        toast.remove(`chain-${chainId}`);
-      });
     }
   };
 
@@ -524,6 +513,7 @@ export const useMilestone = () => {
     milestone: UnifiedMilestone,
     data: MilestoneCompletedFormData & { noProofCheckbox: boolean }
   ) => {
+    startAttestation("Completing milestone...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: milestone.chainID,
@@ -560,9 +550,7 @@ export const useMilestone = () => {
         deliverables: data.deliverables || [],
       });
 
-      toast.loading(`Marking milestone as complete`, {
-        id: `milestone-${milestone.uid}`,
-      });
+      showLoading("Marking milestone as complete...");
 
       await milestoneInstance
         .complete(walletSigner, completionData, changeStepperStep)
@@ -595,9 +583,7 @@ export const useMilestone = () => {
               changeStepperStep("indexed");
             }
           ).then(async () => {
-            toast.success(`Completed ${milestone.title} milestone successfully!`, {
-              id: `milestone-${milestone.uid}`,
-            });
+            showSuccess(`Completed ${milestone.title} milestone successfully!`);
 
             // Send outputs and deliverables data
             await sendOutputsAndDeliverables(milestone.uid, data);
@@ -605,12 +591,9 @@ export const useMilestone = () => {
             refetch();
             router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
           });
-        })
-        .catch(() => {
-          toast.remove(`milestone-${milestone.uid}`);
         });
     } catch (error) {
-      toast.error("There was an error completing the milestone");
+      showError("There was an error completing the milestone");
       errorManager("Error completing milestone.", error, {
         milestoneData: milestone,
       });
@@ -624,6 +607,7 @@ export const useMilestone = () => {
     milestone: UnifiedMilestone,
     data: MilestoneCompletedFormData & { noProofCheckbox: boolean }
   ) => {
+    startAttestation("Completing milestone...");
     try {
       changeStepperStep("preparing");
 
@@ -653,13 +637,18 @@ export const useMilestone = () => {
           return a - b; // Otherwise sort numerically
         });
 
-      for (const chainId of arrayOfMilestonesByChains) {
+      for (let i = 0; i < arrayOfMilestonesByChains.length; i++) {
+        const chainId = arrayOfMilestonesByChains[i];
         const milestonesOfChain = milestonesByChainID[chainId];
         const chainName = chainNameDictionary(chainId);
-
-        toast.loading(`Completing ${milestonesOfChain.length} milestone(s) on ${chainName}...`, {
-          id: `chain-${chainId}`,
-        });
+        const itemCount = milestonesOfChain.length;
+        showChainProgress(
+          "Completing",
+          chainName,
+          i + 1,
+          arrayOfMilestonesByChains.length,
+          itemCount
+        );
 
         // Switch chain if needed
         const setup = await setupChainAndWallet({
@@ -734,28 +723,20 @@ export const useMilestone = () => {
                 changeStepperStep("indexed");
               }
             ).then(async () => {
-              toast.success(
-                `Completed ${milestonesOfChain.length} milestone(s) on ${chainName} successfully!`,
-                {
-                  id: `chain-${chainId}`,
-                }
-              );
-
               // Send outputs and deliverables for each milestone
               for (const milestoneUID of milestonesOfChain) {
                 await sendOutputsAndDeliverables(milestoneUID, data);
               }
 
               refetch();
-              router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
             });
-          })
-          .catch(() => {
-            toast.remove(`chain-${chainId}`);
           });
       }
+      // Show final success message after all chains processed
+      showSuccess("Milestone completed successfully!");
+      router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
     } catch (error) {
-      toast.error("There was an error completing the milestone");
+      showError("There was an error completing the milestone");
       errorManager("Error completing milestone", error, {
         milestoneData: milestone,
       });
@@ -769,7 +750,7 @@ export const useMilestone = () => {
     milestone: UnifiedMilestone,
     data: MilestoneCompletedFormData & { noProofCheckbox: boolean }
   ) => {
-    const chains: number[] = [];
+    startAttestation("Editing milestone completion...");
 
     try {
       changeStepperStep("preparing");
@@ -800,16 +781,18 @@ export const useMilestone = () => {
             return a - b;
           });
 
-        for (const chainId of arrayOfMilestonesByChains) {
+        for (let i = 0; i < arrayOfMilestonesByChains.length; i++) {
+          const chainId = arrayOfMilestonesByChains[i];
           const milestoneOfChain = milestonesByChainID?.[chainId];
           const chainName = chainNameDictionary(chainId);
-          toast.loading(
-            `Editing completion for ${milestoneOfChain?.length} milestone(s) on ${chainName}...`,
-            {
-              id: `chain-${chainId}`,
-            }
+          const itemCount = milestoneOfChain?.length || 1;
+          showChainProgress(
+            "Editing completion",
+            chainName,
+            i + 1,
+            arrayOfMilestonesByChains.length,
+            itemCount
           );
-          chains.push(chainId);
 
           // Switch chain if needed
           const setup = await setupChainAndWallet({
@@ -908,20 +891,14 @@ export const useMilestone = () => {
           await checkIfCompletionUpdated(() => {
             changeStepperStep("indexed");
           }).then(() => {
-            toast.success(
-              `Edited completion for ${milestoneOfChain?.length} milestone(s) on ${chainName} successfully!`,
-              {
-                id: `chain-${chainId}`,
-              }
-            );
             refetch();
           });
         }
+        // Show final success message after all chains processed
+        showSuccess("Milestone completion edited successfully!");
       } else {
         // Handle single milestone completion editing
-        const loadingToast = toast.loading(`Editing milestone completion...`, {
-          id: `milestone-${milestone.uid}`,
-        });
+        showLoading("Editing milestone completion...");
 
         const setup = await setupChainAndWallet({
           targetChainId: milestone.chainID,
@@ -1010,14 +987,9 @@ export const useMilestone = () => {
               await checkIfCompletionUpdated(() => {
                 changeStepperStep("indexed");
               }).then(() => {
-                toast.success(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS, {
-                  id: loadingToast,
-                });
+                showSuccess(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS);
                 refetch();
               });
-            })
-            .catch(() => {
-              toast.remove(loadingToast);
             });
         } else if (milestone.type === "project") {
           // Project milestone editing
@@ -1080,28 +1052,20 @@ export const useMilestone = () => {
               await checkIfCompletionUpdated(() => {
                 changeStepperStep("indexed");
               }).then(() => {
-                toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.SUCCESS, {
-                  id: loadingToast,
-                });
+                showSuccess(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.SUCCESS);
                 refetch();
               });
-            })
-            .catch(() => {
-              toast.remove(loadingToast);
             });
         }
       }
     } catch (error) {
       console.error("Error during completion editing:", error);
-      toast.error("There was an error editing the milestone completion");
+      showError("There was an error editing the milestone completion");
       errorManager("Error editing milestone completion", error, {
         milestoneData: milestone,
       });
     } finally {
       dismiss();
-      chains.forEach((chainId) => {
-        toast.remove(`chain-${chainId}`);
-      });
     }
   };
 

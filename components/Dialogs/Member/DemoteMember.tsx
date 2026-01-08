@@ -2,7 +2,6 @@ import { Dialog, Transition } from "@headlessui/react";
 import { ShieldExclamationIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { type FC, Fragment, useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -28,7 +27,8 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({ memberAddress 
   const { address, chain } = useAccount();
   const { project } = useProjectStore();
   const { teamProfiles } = useTeamProfiles(project);
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
+    useAttestationToast();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
@@ -41,6 +41,7 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({ memberAddress 
     try {
       setIsDemoting(true);
       setIsStepper(true);
+      startAttestation("Removing admin role...");
 
       const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
@@ -93,7 +94,7 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({ memberAddress 
           await checkIfAttestationExists(() => {
             changeStepperStep("indexed");
           }).then(async () => {
-            toast.success("Member removed as admin successfully");
+            showSuccess("Member removed as admin successfully");
             closeModal();
             await refreshProject();
             queryClient.invalidateQueries({
@@ -102,6 +103,7 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({ memberAddress 
           });
         });
     } catch (error) {
+      showError(`Failed to remove member ${memberAddress} as admin.`);
       errorManager(
         "Error removing member as admin",
         error,

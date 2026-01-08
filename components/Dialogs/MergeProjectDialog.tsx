@@ -7,7 +7,6 @@ import { ProjectPointer } from "@show-karma/karma-gap-sdk";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/navigation";
 import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
@@ -172,12 +171,13 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const _setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
   const { switchChainAsync } = useWallet();
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, dismiss } = useAttestationToast();
   const { isStaff, isLoading: isStaffLoading } = useStaff();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const createProjectPointer = async ({ ogProjectUID }: PointerType) => {
     if (!address || !project) return;
+    startAttestation("Merging projects...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
@@ -219,8 +219,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
 
               if (alreadyExists) {
                 retries = 0;
-                showSuccess("Project merged!");
-                toast.success(MESSAGES.PROJECT_POINTER_FORM.SUCCESS);
+                showSuccess(MESSAGES.PROJECT_POINTER_FORM.SUCCESS);
                 setTimeout(() => {
                   dismiss();
                   router.push(`/project/${primaryProject?.details?.slug}`);
@@ -239,7 +238,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         }
       });
     } catch (error: any) {
-      dismiss();
+      showError("Failed to create project pointer.");
       errorManager(
         `Error creating project pointer`,
         error,

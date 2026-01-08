@@ -2,7 +2,6 @@ import { PlusIcon } from "@heroicons/react/24/outline";
 import { Grant, GrantDetails, Milestone as MilestoneSDK, nullRef } from "@show-karma/karma-gap-sdk";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
-import toast from "react-hot-toast";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
@@ -50,7 +49,7 @@ export const MilestonesScreen: React.FC = () => {
   const { authenticated: isAuth } = useAuth();
   const { gap } = useGap();
   const { smartWalletAddress, setupChainAndWallet } = useSetupChainAndWallet();
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, dismiss } = useAttestationToast();
   const queryClient = useQueryClient();
 
   const pathname = usePathname();
@@ -86,6 +85,9 @@ export const MilestonesScreen: React.FC = () => {
 
     try {
       if (!isConnected || !isAuth) return;
+      startAttestation(
+        flowType === "grant" ? "Creating grant..." : "Applying to funding program..."
+      );
 
       const setup = await setupChainAndWallet({
         targetChainId: communityNetworkId,
@@ -200,12 +202,11 @@ export const MilestonesScreen: React.FC = () => {
           if (foundGrant && foundGrant.details?.title) {
             clearMilestonesForms();
             retries = 0;
-            toast.success(
+            showSuccess(
               flowType === "grant"
                 ? MESSAGES.GRANT.CREATE.SUCCESS
                 : "Successfully applied to funding program!"
             );
-            showSuccess(flowType === "grant" ? "Grant created!" : "Application submitted!");
 
             // Invalidate duplicate grant check query to refresh data
             if (!isEditing) {
@@ -261,7 +262,11 @@ export const MilestonesScreen: React.FC = () => {
         }
       });
     } catch (error: any) {
-      dismiss();
+      showError(
+        flowType === "grant"
+          ? MESSAGES.GRANT.CREATE.ERROR(formData.title)
+          : "Error applying to funding program"
+      );
       errorManager(
         MESSAGES.GRANT.CREATE.ERROR(formData.title),
         error,

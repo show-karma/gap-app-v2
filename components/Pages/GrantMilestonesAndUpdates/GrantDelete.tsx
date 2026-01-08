@@ -1,7 +1,6 @@
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { type FC, useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -31,7 +30,8 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
+    useAttestationToast();
 
   const { project, isProjectOwner } = useProjectStore();
   const { refetch: refetchGrants, grants } = useProjectGrants(project?.uid || "");
@@ -45,6 +45,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const deleteFn = async () => {
     if (!address) return;
     setIsDeletingGrant(true);
+    startAttestation("Deleting grant...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: grant.chainID,
@@ -107,7 +108,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
           }
           await checkIfAttestationExists(() => {
             changeStepperStep("indexed");
-            toast.success(MESSAGES.GRANT.DELETE.SUCCESS);
+            showSuccess(MESSAGES.GRANT.DELETE.SUCCESS);
           });
         } catch (onChainError: any) {
           // Silently fallback to off-chain revoke
@@ -133,6 +134,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
         }
       }
     } catch (error: any) {
+      showError(MESSAGES.GRANT.DELETE.ERROR(grant.details?.title || shortAddress(grant.uid)));
       errorManager(
         MESSAGES.GRANT.DELETE.ERROR(grant.details?.title || shortAddress(grant.uid)),
         error,

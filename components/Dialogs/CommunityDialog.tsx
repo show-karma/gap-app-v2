@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Community, nullRef } from "@show-karma/karma-gap-sdk";
 import { type FC, Fragment, type ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
@@ -91,11 +90,12 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
 
   const { gap } = useGap();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, dismiss } = useAttestationToast();
 
   const createCommunity = async (data: SchemaType) => {
     if (!gap) return;
     setIsLoading(true);
+    startAttestation("Creating community...");
 
     try {
       // Setup chain and wallet (uses gasless smart wallet if available)
@@ -173,7 +173,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         }
       });
     } catch (error: unknown) {
-      dismiss();
+      showError("Failed to create community. Please try again.");
       errorManager(
         `Error creating community`,
         error,

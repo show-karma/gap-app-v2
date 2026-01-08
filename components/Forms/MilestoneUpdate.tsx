@@ -6,7 +6,6 @@ import type { IMilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/k
 import { useRouter } from "next/navigation";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
@@ -166,7 +165,8 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   };
 
   const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
+    useAttestationToast();
   const project = useProjectStore((state) => state.project);
 
   // Fetch grants using dedicated hook
@@ -239,6 +239,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 
   const completeMilestone = async (milestone: GrantMilestone, data: SchemaType) => {
     setIsSubmitLoading(true);
+    startAttestation("Completing milestone...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: milestone.chainID || 0,
@@ -300,7 +301,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
               if (isCompleted) {
                 retries = 0;
                 changeStepperStep("indexed");
-                toast.success(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
+                showSuccess(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
 
                 // Send outputs and deliverables data
                 await sendOutputsAndDeliverables(milestone.uid, data);
@@ -329,6 +330,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           }
         });
     } catch (error) {
+      showError(MESSAGES.MILESTONES.COMPLETE.ERROR);
       errorManager(
         `Error completing milestone ${milestone.uid} from grant ${milestone.refUID}`,
         error,
@@ -350,6 +352,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 
   const updateMilestoneCompletion = async (milestone: GrantMilestone, data: SchemaType) => {
     setIsSubmitLoading(true);
+    startAttestation("Updating milestone completion...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: milestone.chainID || 0,
@@ -411,7 +414,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
               ) {
                 retries = 0;
                 changeStepperStep("indexed");
-                toast.success(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS);
+                showSuccess(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS);
 
                 // Send outputs and deliverables data
                 await sendOutputsAndDeliverables(milestone.uid, data);
@@ -436,6 +439,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           }
         });
     } catch (error) {
+      showError(MESSAGES.MILESTONES.UPDATE_COMPLETION.ERROR);
       errorManager(
         `Error updating milestone completion ${milestone.uid} from grant ${milestone.refUID}`,
         error,

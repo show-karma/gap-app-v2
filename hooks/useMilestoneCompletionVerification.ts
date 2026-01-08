@@ -3,7 +3,6 @@ import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapCo
 import { MilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/types/attestations";
 import type { Signer } from "ethers";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -59,7 +58,8 @@ export const useMilestoneCompletionVerification = ({
   const [isVerifying, setIsVerifying] = useState(false);
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { changeStepperStep, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, changeStepperStep, dismiss } =
+    useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const setupChainAndWalletForMilestone = async (
@@ -244,9 +244,7 @@ export const useMilestoneCompletionVerification = ({
     attestationChainId: number,
     communityUID: string
   ): Promise<void> => {
-    toast.loading("Completing milestone...", {
-      id: `milestone-${milestone.uid}`,
-    });
+    showLoading("Completing milestone...");
 
     try {
       changeStepperStep("preparing");
@@ -264,11 +262,9 @@ export const useMilestoneCompletionVerification = ({
       await notifyIndexerAndInvalidateCache(txHash, attestationChainId, 1, communityUID);
       changeStepperStep("indexed");
 
-      toast.success("Milestone completed successfully!", {
-        id: `milestone-${milestone.uid}`,
-      });
+      showSuccess("Milestone completed successfully!");
     } catch (error) {
-      toast.remove(`milestone-${milestone.uid}`);
+      dismiss();
       throw error;
     }
   };
@@ -288,11 +284,8 @@ export const useMilestoneCompletionVerification = ({
   ): Promise<boolean> => {
     const isVerificationOnly = !options.includeCompletion;
 
-    toast.loading(
-      isVerificationOnly ? "Verifying milestone..." : "Completing and verifying milestone...",
-      {
-        id: `milestone-${milestone.uid}`,
-      }
+    showLoading(
+      isVerificationOnly ? "Verifying milestone..." : "Completing and verifying milestone..."
     );
 
     try {
@@ -334,18 +327,15 @@ export const useMilestoneCompletionVerification = ({
       );
 
       changeStepperStep("indexed");
-      toast.success(
+      showSuccess(
         isVerificationOnly
           ? "Milestone verified successfully!"
-          : "Milestone completed and verified successfully!",
-        {
-          id: `milestone-${milestone.uid}`,
-        }
+          : "Milestone completed and verified successfully!"
       );
 
       return true;
     } catch (error: any) {
-      toast.remove(`milestone-${milestone.uid}`);
+      dismiss();
       throw error;
     }
   };
@@ -374,7 +364,7 @@ export const useMilestoneCompletionVerification = ({
       );
     } catch (error) {
       console.error("Failed to update verification in database after retries:", error);
-      toast.error("Verification successful on-chain but failed to update database");
+      showError("Verification successful on-chain but failed to update database");
     }
   };
 
@@ -386,12 +376,12 @@ export const useMilestoneCompletionVerification = ({
   ) => {
     // Validation
     if (!address || !data) {
-      toast.error("Please connect your wallet");
+      showError("Please connect your wallet");
       return;
     }
 
     if (!milestone.uid) {
-      toast.error("Cannot verify milestone without UID");
+      showError("Cannot verify milestone without UID");
       return;
     }
 
@@ -399,6 +389,7 @@ export const useMilestoneCompletionVerification = ({
     const attestationChainId = milestone.chainId;
 
     setIsVerifying(true);
+    startAttestation("Verifying milestone...");
 
     try {
       changeStepperStep("preparing");
@@ -472,9 +463,9 @@ export const useMilestoneCompletionVerification = ({
 
       // Check if user cancelled
       if (error?.message?.includes("User rejected") || error?.code === 4001) {
-        toast.error("Verification cancelled");
+        showError("Verification cancelled");
       } else {
-        toast.error("Failed to verify milestone");
+        showError("Failed to verify milestone");
         errorManager("Error verifying milestone", error, {
           milestoneUID: milestone.uid,
           address,
@@ -482,7 +473,6 @@ export const useMilestoneCompletionVerification = ({
       }
     } finally {
       setIsVerifying(false);
-      dismiss();
     }
   };
 

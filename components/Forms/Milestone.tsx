@@ -10,7 +10,6 @@ import type { FC } from "react";
 import { useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
@@ -106,7 +105,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const projectUID = project?.uid;
   const { refetch: refetchGrants } = useProjectGrants(projectUID || "");
 
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, dismiss } = useAttestationToast();
 
   const router = useRouter();
 
@@ -114,6 +113,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
     event?.preventDefault();
     event?.stopPropagation();
     setIsLoading(true);
+    startAttestation("Creating milestone...");
     if (!address) return;
     if (!gap) throw new Error("Please, connect a wallet");
     const milestone = sanitizeObject({
@@ -164,7 +164,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
             );
             if (milestoneExists) {
               retries = 0;
-              toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
+              showSuccess(MESSAGES.MILESTONES.CREATE.SUCCESS);
               router.push(
                 PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                   (project?.details?.slug || project?.uid) as string,
@@ -172,9 +172,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                   "milestones-and-updates"
                 )
               );
-              showSuccess("Milestone created!");
               setTimeout(() => {
-                dismiss();
                 router.refresh();
                 afterSubmit?.();
               }, 1500);
@@ -191,20 +189,13 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
       });
     } catch (error) {
       console.error(error);
-      dismiss();
-      errorManager(
-        MESSAGES.MILESTONES.CREATE.ERROR(data.title),
-        error,
-        {
-          grantUID: uid,
-          projectUID: projectUID,
-          address: address,
-          data: milestone,
-        },
-        {
-          error: MESSAGES.MILESTONES.CREATE.ERROR(data.title),
-        }
-      );
+      showError(MESSAGES.MILESTONES.CREATE.ERROR(data.title));
+      errorManager(MESSAGES.MILESTONES.CREATE.ERROR(data.title), error, {
+        grantUID: uid,
+        projectUID: projectUID,
+        address: address,
+        data: milestone,
+      });
     } finally {
       setIsLoading(false);
     }

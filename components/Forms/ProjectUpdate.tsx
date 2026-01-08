@@ -9,7 +9,6 @@ import type { FC } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
@@ -508,7 +507,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     setValue("outputs", outputsToSet);
   }, [editId, updateToEdit, indicatorsData, setValue]);
 
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, dismiss } = useAttestationToast();
 
   const { openShareDialog } = useShareDialogStore();
 
@@ -523,6 +522,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     const gapClient = gap;
     if (!address || !project) return;
 
+    startAttestation(isEditMode ? "Updating activity..." : "Posting activity...");
     try {
       if (!project?.chainID || !project.owner || !project.uid) {
         throw new Error("Required project data is missing");
@@ -638,8 +638,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
             if (alreadyExists) {
               retries = 0;
-              showSuccess(isEditMode ? "Activity updated!" : "Activity posted!");
-              toast.success(
+              showSuccess(
                 isEditMode ? "Activity updated successfully!" : MESSAGES.PROJECT_UPDATE_FORM.SUCCESS
               );
               afterSubmit?.();
@@ -670,7 +669,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         }
       });
     } catch (error) {
-      dismiss();
+      showError(MESSAGES.PROJECT_UPDATE_FORM.ERROR);
       errorManager(
         `Error of user ${address} creating project activity for project ${project?.uid}`,
         error,

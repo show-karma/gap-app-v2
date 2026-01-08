@@ -6,7 +6,6 @@ import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { useSearchParams } from "next/navigation";
 import { type FC, Fragment, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
@@ -101,7 +100,7 @@ export const ContributorProfileDialog: FC = () => {
   });
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, dismiss } = useAttestationToast();
   const { authenticated: isAuth } = useAuth();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
@@ -112,6 +111,7 @@ export const ContributorProfileDialog: FC = () => {
     if (!isGlobal && !project) return;
     try {
       setIsLoading(true);
+      startAttestation("Saving profile...");
       let targetChainId = 0;
 
       if (isGlobal) {
@@ -131,7 +131,7 @@ export const ContributorProfileDialog: FC = () => {
       }
 
       if (!targetChainId) {
-        toast.error("Chain not found");
+        showError("Chain not found");
         setIsLoading(false);
         return;
       }
@@ -190,8 +190,7 @@ export const ContributorProfileDialog: FC = () => {
               // If the member is already in the project, update the profile
               if (hasMember) {
                 retries = 0;
-                showSuccess("Joined team successfully!");
-                toast.success("Congrats! You have joined the team successfully");
+                showSuccess("Congrats! You have joined the team successfully");
                 refetchTeamProfiles();
                 setTimeout(() => {
                   dismiss();
@@ -218,9 +217,8 @@ export const ContributorProfileDialog: FC = () => {
               );
               if (isUpdated) {
                 retries = 0;
-                showSuccess("Profile updated!");
+                showSuccess("Profile updated successfully");
                 refetchTeamProfiles();
-                toast.success("Profile updated successfully");
                 setTimeout(() => {
                   dismiss();
                   closeModal();

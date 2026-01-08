@@ -5,7 +5,6 @@ import type { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/c
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
@@ -75,13 +74,14 @@ export const ProjectObjectiveForm = ({
 
   const { gap } = useGap();
   const [isLoading, setIsLoading] = useState(false);
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, dismiss } = useAttestationToast();
 
   const { refetch } = useProjectUpdates(projectId as string);
 
   const createObjective = async (data: ObjectiveType) => {
     if (!gap) return;
     setIsLoading(true);
+    startAttestation("Creating milestone...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: project?.chainID as number,
@@ -137,8 +137,7 @@ export const ProjectObjectiveForm = ({
 
               if (alreadyExists) {
                 retries = 0;
-                showSuccess("Objective created!");
-                toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
+                showSuccess(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
                 await refetch();
                 stateHandler?.(false);
                 setTimeout(() => {
@@ -158,7 +157,7 @@ export const ProjectObjectiveForm = ({
         }
       });
     } catch (error) {
-      dismiss();
+      showError(MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR);
       errorManager(
         MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR,
         error,
@@ -179,6 +178,7 @@ export const ProjectObjectiveForm = ({
   const updateObjective = async (data: ObjectiveType) => {
     if (!gap) return;
     setIsLoading(true);
+    startAttestation("Updating milestone...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: project?.chainID as number,
@@ -230,8 +230,7 @@ export const ProjectObjectiveForm = ({
 
               if (alreadyExists) {
                 retries = 0;
-                showSuccess("Objective updated!");
-                toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
+                showSuccess(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.SUCCESS);
                 await refetch();
                 stateHandler?.(false);
                 setTimeout(() => dismiss(), 1500);
@@ -248,9 +247,9 @@ export const ProjectObjectiveForm = ({
         }
       });
     } catch (error) {
-      dismiss();
+      showError(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.ERROR);
       errorManager(
-        MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR,
+        MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.ERROR,
         error,
         {
           data,
@@ -258,7 +257,7 @@ export const ProjectObjectiveForm = ({
           project: project?.uid,
         },
         {
-          error: MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR,
+          error: MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.ERROR,
         }
       );
     } finally {

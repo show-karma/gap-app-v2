@@ -9,10 +9,10 @@ export type AttestationStep = "preparing" | "pending" | "confirmed" | "indexing"
 export type TxStepperSteps = AttestationStep;
 
 const stepMessages: Record<AttestationStep, string> = {
-  preparing: "Preparing transaction...",
-  pending: "Waiting for signature...",
-  confirmed: "Transaction confirmed...",
-  indexing: "Indexing data...",
+  preparing: "Preparing attestation...",
+  pending: "Waiting for wallet signature...",
+  confirmed: "Transaction confirmed, processing...",
+  indexing: "Indexing data on-chain...",
   indexed: "Complete!",
 };
 
@@ -39,6 +39,20 @@ const stepMessages: Record<AttestationStep, string> = {
  */
 export function useAttestationToast() {
   const toastIdRef = useRef<string | null>(null);
+
+  /**
+   * Start the attestation flow with immediate feedback.
+   * Shows "Preparing attestation..." toast immediately when user initiates action.
+   * Use this at the START of any attestation operation for instant UX feedback.
+   */
+  const startAttestation = useCallback((customMessage?: string) => {
+    const message = customMessage || stepMessages.preparing;
+    if (toastIdRef.current) {
+      toast.loading(message, { id: toastIdRef.current });
+    } else {
+      toastIdRef.current = toast.loading(message);
+    }
+  }, []);
 
   /**
    * Show a loading toast with custom message.
@@ -118,7 +132,39 @@ export function useAttestationToast() {
     }
   }, []);
 
+  /**
+   * Show multi-chain progress in a single updating toast.
+   * Use this for operations spanning multiple chains instead of multiple toasts.
+   *
+   * @param action - The action being performed (e.g., "Creating milestone", "Deleting")
+   * @param chainName - Current chain name (e.g., "Optimism")
+   * @param current - Current chain number (1-based)
+   * @param total - Total number of chains
+   * @param itemCount - Optional number of items on this chain (e.g., "2 milestone(s)")
+   *
+   * @example
+   * showChainProgress("Creating milestone", "Optimism", 1, 3);
+   * // Shows: "Creating milestone on Optimism (1/3)..."
+   *
+   * showChainProgress("Deleting", "Arbitrum", 2, 3, 2);
+   * // Shows: "Deleting 2 milestone(s) on Arbitrum (2/3)..."
+   */
+  const showChainProgress = useCallback(
+    (action: string, chainName: string, current: number, total: number, itemCount?: number) => {
+      const itemText = itemCount && itemCount > 1 ? `${itemCount} milestone(s) ` : "";
+      const message = `${action} ${itemText}on ${chainName} (${current}/${total})...`;
+
+      if (toastIdRef.current) {
+        toast.loading(message, { id: toastIdRef.current });
+      } else {
+        toastIdRef.current = toast.loading(message);
+      }
+    },
+    []
+  );
+
   return {
+    startAttestation,
     showLoading,
     showSuccess,
     showError,
@@ -126,5 +172,6 @@ export function useAttestationToast() {
     changeStepperStep,
     setIsStepper,
     dismiss,
+    showChainProgress,
   };
 }

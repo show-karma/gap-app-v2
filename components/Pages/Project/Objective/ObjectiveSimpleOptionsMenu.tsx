@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
@@ -41,7 +40,8 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
+    useAttestationToast();
   const { project, isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
@@ -56,6 +56,7 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
   const deleteFn = async () => {
     if (!address || !project) return;
     setIsDeleting(true);
+    startAttestation("Deleting milestone...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
@@ -121,7 +122,7 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
           await checkIfAttestationExists(() => {
             changeStepperStep("indexed");
           });
-          toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS);
+          showSuccess(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS);
         } catch (onChainError: any) {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
@@ -143,7 +144,7 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
         }
       }
     } catch (error: any) {
-      toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.ERROR);
+      showError(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.ERROR);
       errorManager(`Error deleting objective ${objectiveId}`, error, {
         project: projectId,
         objective: objectiveId,

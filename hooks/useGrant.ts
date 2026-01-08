@@ -1,7 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { useGrantFormStore } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant/store";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -26,7 +25,7 @@ export function useGrant() {
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError } = useAttestationToast();
   const selectedProject = useProjectStore((state) => state.project);
   const { refetch: refetchGrants } = useProjectGrants(selectedProject?.uid || "");
   const router = useRouter();
@@ -49,6 +48,7 @@ export function useGrant() {
     if (!address || !oldGrant?.refUID || !selectedProject) return;
     try {
       setIsLoading(true);
+      startAttestation("Updating grant...");
 
       const setup = await setupChainAndWallet({
         targetChainId: oldGrant.chainID,
@@ -108,17 +108,14 @@ export function useGrant() {
 
           if (new Date(fetchedGrant?.updatedAt || 0) > new Date(oldGrantData?.updatedAt || 0)) {
             clearMilestonesForms();
-            // Reset form data and go back to step 1 for a new grant
             resetFormData();
             setFormPriorities([]);
             setCurrentStep(1);
-            setFlowType("grant"); // Reset to default flow type
+            setFlowType("grant");
             retries = 0;
-            toast.success(MESSAGES.GRANT.UPDATE.SUCCESS);
-            showSuccess("Grant updated!");
+            showSuccess(MESSAGES.GRANT.UPDATE.SUCCESS);
             await refetchGrants().then(() => {
               setTimeout(() => {
-                dismiss();
                 router.push(
                   PAGES.PROJECT.GRANT(
                     selectedProject.details?.slug || selectedProject.uid,
@@ -135,17 +132,12 @@ export function useGrant() {
         }
       });
     } catch (error: any) {
-      dismiss();
-      errorManager(
-        MESSAGES.GRANT.UPDATE.ERROR,
-        error,
-        {
-          grantUID: oldGrant.uid,
-          projectUID: selectedProject.uid,
-          address,
-        },
-        { error: MESSAGES.GRANT.UPDATE.ERROR }
-      );
+      showError(MESSAGES.GRANT.UPDATE.ERROR);
+      errorManager(MESSAGES.GRANT.UPDATE.ERROR, error, {
+        grantUID: oldGrant.uid,
+        projectUID: selectedProject.uid,
+        address,
+      });
     } finally {
       setIsLoading(false);
     }

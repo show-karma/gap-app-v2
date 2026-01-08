@@ -3,7 +3,6 @@ import type { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/c
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
@@ -41,7 +40,7 @@ export function useProjectMilestoneForm({
 
   const { gap } = useGap();
   const [isLoading, setIsLoading] = useState(false);
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError } = useAttestationToast();
 
   const { refetch } = useQuery<IProjectMilestoneResponse[]>({
     queryKey: ["projectMilestones"],
@@ -51,6 +50,7 @@ export function useProjectMilestoneForm({
   const createMilestone = async (data: ProjectMilestoneFormData) => {
     if (!gap) return;
     setIsLoading(true);
+    startAttestation("Creating milestone...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: project?.chainID as number,
@@ -108,11 +108,9 @@ export function useProjectMilestoneForm({
 
               if (alreadyExists) {
                 retries = 0;
-                showSuccess("Milestone created!");
-                toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
+                showSuccess(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
                 await refetch();
                 setTimeout(() => {
-                  dismiss();
                   onSuccess?.();
                 }, 1500);
               }
@@ -128,13 +126,12 @@ export function useProjectMilestoneForm({
         }
       });
     } catch (error) {
-      dismiss();
+      showError(MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR);
       errorManager(MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR, error, {
         data,
         address,
         project: project?.uid,
       });
-      toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR);
     } finally {
       setIsLoading(false);
     }
@@ -144,6 +141,7 @@ export function useProjectMilestoneForm({
     if (!gap || !previousMilestone) return;
     const gapClient = gap;
     setIsLoading(true);
+    startAttestation("Updating milestone...");
 
     try {
       const setup = await setupChainAndWallet({
@@ -206,11 +204,9 @@ export function useProjectMilestoneForm({
 
               if (alreadyExists) {
                 retries = 0;
-                showSuccess("Milestone updated!");
-                toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.SUCCESS);
+                showSuccess(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.SUCCESS);
                 await refetch();
                 setTimeout(() => {
-                  dismiss();
                   onSuccess?.();
                 }, 1500);
               }
@@ -226,13 +222,12 @@ export function useProjectMilestoneForm({
         }
       });
     } catch (error) {
-      dismiss();
+      showError(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.ERROR);
       errorManager(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.ERROR, error, {
         data,
         address,
         project: project?.uid,
       });
-      toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.ERROR);
     } finally {
       setIsLoading(false);
     }
