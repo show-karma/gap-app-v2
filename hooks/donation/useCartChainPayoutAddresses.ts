@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getProject } from "@/services/project.service";
 import type { ChainPayoutAddressMap } from "@/src/features/chain-payout-address/types/chain-payout-address";
 
@@ -29,11 +29,17 @@ export function useCartChainPayoutAddresses(items: CartItem[]) {
   const [missingPayouts, setMissingPayouts] = useState<string[]>([]);
   const [isFetching, setIsFetching] = useState(false);
 
+  // Use ref to access current items without causing re-renders
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+
   // Memoize item UIDs to prevent unnecessary refetches
   const itemIds = useMemo(() => items.map((i) => i.uid).join(","), [items]);
 
   useEffect(() => {
-    if (!itemIds || items.length === 0) {
+    const currentItems = itemsRef.current;
+
+    if (!itemIds || currentItems.length === 0) {
       setChainPayoutAddresses({});
       setMissingPayouts([]);
       setIsFetching(false);
@@ -44,9 +50,8 @@ export function useCartChainPayoutAddresses(items: CartItem[]) {
     setIsFetching(true);
 
     // Fetch payout addresses for all items
-    // Note: itemIds is used for memoization (string comparison), items is used for data
     Promise.all(
-      items.map((item) =>
+      currentItems.map((item) =>
         fetchProjectChainPayoutAddress(item.slug || item.uid).then((addresses) => ({
           uid: item.uid,
           addresses,
@@ -82,7 +87,7 @@ export function useCartChainPayoutAddresses(items: CartItem[]) {
     return () => {
       cancelled = true;
     };
-  }, [itemIds, items]); // itemIds for change detection, items for data access
+  }, [itemIds]);
 
   return {
     chainPayoutAddresses,
