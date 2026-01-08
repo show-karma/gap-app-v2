@@ -15,6 +15,10 @@ import { OnKarmaBadge } from "./on-karma-badge";
 interface FundingMapCardProps {
   program: FundingProgramResponse;
   onClick?: () => void;
+  /** Hide the description section */
+  hideDescription?: boolean;
+  /** Hide the categories section */
+  hideCategories?: boolean;
 }
 
 /**
@@ -30,7 +34,13 @@ function isPendingReview(program: FundingProgramResponse): boolean {
   return !isValidated && !isInactive && !hasEnded;
 }
 
-export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
+export function FundingMapCard({
+  program,
+  onClick,
+  hideDescription = false,
+  hideCategories = false,
+  className,
+}: FundingMapCardProps & { className?: string }) {
   const { metadata, isOnKarma, communities } = program;
 
   const title = metadata?.title;
@@ -67,7 +77,10 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
     <Card
       className={cn(
         "flex flex-col justify-between border-border p-6 shadow-sm transition-shadow hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        isPendingReview(program) && "ring-1 ring-gray-200"
+        // Enforce full height to match carousel stretch
+        "h-full",
+        isPendingReview(program) && "ring-1 ring-gray-200",
+        className
       )}
       onClick={onClick}
       onKeyDown={handleKeyDown}
@@ -75,7 +88,7 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
       role="button"
       aria-label={`View funding program: ${title ?? "Untitled program"}`}
     >
-      <div className="flex flex-col gap-4 mb-4">
+      <div className="flex flex-col gap-4 mb-4 flex-1">
         <div className="flex w-full flex-row items-center justify-between gap-2">
           {(formattedBudget || (grantTypes && grantTypes.length > 0)) && (
             <div className="flex items-center rounded-[10px] bg-secondary p-0.5 max-w-full overflow-hidden">
@@ -84,8 +97,8 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
                   variant="outline"
                   className="flex items-center gap-1.5 rounded-full border-transparent px-2 bg-transparent font-medium"
                 >
-                  <Coins className="h-3 w-3" />
-                  <span>{formattedBudget}</span>
+                  <Coins className="h-3 w-3 shrink-0" />
+                  <span className="truncate max-w-[120px]">{formattedBudget}</span>
                 </Badge>
               )}
               {grantTypes && grantTypes.length > 0 && (
@@ -130,12 +143,11 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
             </div>
           )}
         </div>
+        {!hideDescription && <FundingMapDescription description={description ?? ""} />}
       </div>
 
-      <div className="flex flex-col gap-4">
-        <FundingMapDescription description={description ?? ""} />
-
-        {(endsAt || (categories && categories.length > 0)) && (
+      <div className="flex flex-col gap-4 mt-auto">
+        {(endsAt || (!hideCategories && categories && categories.length > 0)) && (
           <div className="flex flex-col gap-1.5">
             {endsAt && (
               <Badge
@@ -149,7 +161,7 @@ export function FundingMapCard({ program, onClick }: FundingMapCardProps) {
               </Badge>
             )}
 
-            {categories && categories.length > 0 && (
+            {!hideCategories && categories && categories.length > 0 && (
               <div className="relative flex-1 overflow-hidden">
                 <div className="flex flex-nowrap gap-1 overflow-x-auto scrollbar-hide">
                   {categories
