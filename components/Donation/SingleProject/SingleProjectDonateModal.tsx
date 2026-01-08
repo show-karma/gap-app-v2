@@ -14,6 +14,7 @@ import { SUPPORTED_TOKENS } from "@/constants/supportedTokens";
 import { useSingleProjectDonation } from "@/hooks/donation/useSingleProjectDonation";
 import { getPayoutAddressForChain } from "@/src/features/chain-payout-address/hooks/use-chain-payout-address";
 import { PaymentMethod } from "@/types/donations";
+import { appNetwork } from "@/utilities/network";
 import { shortAddress } from "@/utilities/shortAddress";
 import { TokenSelector } from "../TokenSelector";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
@@ -57,6 +58,16 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
       if (!project.chainPayoutAddress) return [];
       return Object.keys(project.chainPayoutAddress).map(Number);
     }, [project.chainPayoutAddress]);
+
+    // Get display names for configured chains
+    const configuredChainNames = useMemo(() => {
+      return configuredChainIds
+        .map((chainId) => {
+          const chain = appNetwork.find((c) => c.id === chainId);
+          return chain?.name || `Chain ${chainId}`;
+        })
+        .sort();
+    }, [configuredChainIds]);
 
     // Filter tokens: must have balance AND project must have payout address for that chain
     const tokensWithBalanceAndPayoutSet = useMemo(() => {
@@ -113,9 +124,14 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
                     onTokenSelect={setSelectedToken}
                   />
                 ) : configuredChainIds.length > 0 ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
-                    You don't have tokens on the chains this project accepts.
-                  </p>
+                  <div className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                    <p>You don&apos;t have tokens on the chains this project accepts:</p>
+                    <ul className="list-disc list-inside mt-1 ml-2">
+                      {configuredChainNames.map((name) => (
+                        <li key={name}>{name}</li>
+                      ))}
+                    </ul>
+                  </div>
                 ) : (
                   <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
                     This project hasn't set up donation addresses yet.
