@@ -11,6 +11,7 @@ export const PAGES = {
   COMMUNITY: {
     ALL_GRANTS: (community: string, programId?: string) =>
       `/community/${community}${programId ? `?programId=${programId}` : ""}`,
+    FUNDING_OPPORTUNITIES: (community: string) => `/community/${community}/funding-opportunities`,
     IMPACT: (community: string) => `/community/${community}/impact`,
     DONATE: (community: string) => `/community/${community}/donate`,
     DONATE_PROGRAM: (community: string, programId: string) =>
