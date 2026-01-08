@@ -33,7 +33,7 @@ export function useCartChainPayoutAddresses(items: CartItem[]) {
   const itemIds = useMemo(() => items.map((i) => i.uid).join(","), [items]);
 
   useEffect(() => {
-    if (!itemIds) {
+    if (!itemIds || items.length === 0) {
       setChainPayoutAddresses({});
       setMissingPayouts([]);
       setIsFetching(false);
@@ -43,11 +43,10 @@ export function useCartChainPayoutAddresses(items: CartItem[]) {
     let cancelled = false;
     setIsFetching(true);
 
-    // Parse item data from the memoized string
-    const itemsToFetch = items.filter((item) => itemIds.includes(item.uid));
-
+    // Fetch payout addresses for all items
+    // Note: itemIds is used for memoization (string comparison), items is used for data
     Promise.all(
-      itemsToFetch.map((item) =>
+      items.map((item) =>
         fetchProjectChainPayoutAddress(item.slug || item.uid).then((addresses) => ({
           uid: item.uid,
           addresses,
@@ -83,7 +82,7 @@ export function useCartChainPayoutAddresses(items: CartItem[]) {
     return () => {
       cancelled = true;
     };
-  }, [itemIds]); // Only depend on itemIds string, not items array
+  }, [itemIds, items]); // itemIds for change detection, items for data access
 
   return {
     chainPayoutAddresses,
