@@ -100,7 +100,8 @@ export const ContributorProfileDialog: FC = () => {
   });
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const { startAttestation, showLoading, showSuccess, showError, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
+    useAttestationToast();
   const { authenticated: isAuth } = useAuth();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
@@ -160,7 +161,7 @@ export const ContributorProfileDialog: FC = () => {
         recipient: (smartWalletAddress || address) as `0x${string}`,
         schema: gapClient.findSchema("ContributorProfile"),
       });
-      await contributorProfile.attest(walletSigner as any).then(async (res) => {
+      await contributorProfile.attest(walletSigner as any, changeStepperStep).then(async (res) => {
         showLoading("Indexing profile...");
 
         if (!isProjectMember && !isGlobal && inviteCodeParam) {
@@ -233,7 +234,7 @@ export const ContributorProfileDialog: FC = () => {
       });
       return;
     } catch (e) {
-      dismiss();
+      showError("Failed to save profile");
       errorManager("Failed to accept invite", e, {
         projectId: project?.uid,
         inviteCode: inviteCodeParam,

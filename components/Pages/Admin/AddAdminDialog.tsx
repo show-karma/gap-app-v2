@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { GAP } from "@show-karma/karma-gap-sdk";
 import { type FC, Fragment, type ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
@@ -91,7 +90,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { changeStepperStep, setIsStepper, startAttestation, showSuccess } = useAttestationToast();
 
   const onSubmit = async (data: SchemaType) => {
     const setup = await setupChainAndWallet({
@@ -107,8 +106,8 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
 
     const { walletSigner } = setup;
     try {
+      startAttestation("Adding admin...");
       const communityResolver = await GAP.getCommunityResolver(walletSigner);
-      changeStepperStep("preparing");
       const address = sanitizeInput(data.address.toLowerCase());
       const communityResponse = await communityResolver.enlist(UUID, address);
       changeStepperStep("pending");
@@ -141,7 +140,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
             if (addressAdded) {
               await fetchAdmins();
               changeStepperStep("indexed");
-              toast.success("Admin added successfully!");
+              showSuccess("Admin added successfully!");
               closeModal(); // Close the dialog upon successful submission
               break;
             }

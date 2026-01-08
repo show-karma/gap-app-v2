@@ -52,7 +52,10 @@ export const updateProject = async (
   signer: SignerOrProvider,
   gap: GAP,
   changeStepperStep: (step: AttestationStep) => void,
-  closeModal: () => void
+  closeModal: () => void,
+  setIsStepper: (value: boolean) => void,
+  startAttestation: (message: string) => void,
+  showSuccess: (message: string) => void
 ) => {
   const oldProjectData = JSON.parse(JSON.stringify(project.details?.data));
   try {
@@ -98,10 +101,9 @@ export const updateProject = async (
       pathToTake: newProjectInfo.pathToTake,
     });
 
-    closeModal();
-
     const projectBefore = await getProject(project.uid);
 
+    startAttestation("Updating project...");
     await project.details?.attest(signer, changeStepperStep).then(async (res) => {
       let retries = 1000;
       changeStepperStep("indexing");
@@ -120,6 +122,7 @@ export const updateProject = async (
           const fetchedProject = await getProject(project.uid);
           if (fetchedProject?.details.lastDetailsUpdate !== projectBefore?.updatedAt) {
             changeStepperStep("indexed");
+            showSuccess("Project updated successfully!");
 
             // Invalidate React Query cache to force refresh of project data
             await Promise.all([
@@ -145,5 +148,7 @@ export const updateProject = async (
     project.details?.setValues(oldProjectData);
     errorManager(`Error editing project: ${project.uid}`, error);
     throw error;
+  } finally {
+    setIsStepper(false);
   }
 };

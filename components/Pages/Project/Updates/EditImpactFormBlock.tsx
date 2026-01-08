@@ -81,7 +81,8 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
   });
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
-  const { startAttestation, showLoading, showSuccess, showError, dismiss } = useAttestationToast();
+  const { startAttestation, changeStepperStep, showSuccess, showError, dismiss } =
+    useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
   // Load existing impact data
@@ -153,13 +154,13 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
         createdAt: impactInstance.createdAt,
       });
 
-      await updatedImpact.attest(walletSigner as any).then(async (res) => {
+      await updatedImpact.attest(walletSigner as any, changeStepperStep).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
         }
-        showLoading("Indexing impact...");
+        changeStepperStep("indexing");
         const attestUID = updatedImpact.uid;
         while (retries > 0) {
           try {
@@ -190,6 +191,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
       errorManager(`Error updating impact ${impactId} from project ${project?.uid}`, error);
     } finally {
       setIsLoading(false);
+      dismiss();
     }
   };
 

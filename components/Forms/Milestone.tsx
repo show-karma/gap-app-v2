@@ -105,7 +105,16 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const projectUID = project?.uid;
   const { refetch: refetchGrants } = useProjectGrants(projectUID || "");
 
-  const { startAttestation, showLoading, showSuccess, showError, dismiss } = useAttestationToast();
+  const {
+    startAttestation,
+    showLoading,
+    showSuccess,
+    showError,
+    dismiss,
+    updateStep,
+    changeStepperStep,
+    setIsStepper,
+  } = useAttestationToast();
 
   const router = useRouter();
 
@@ -144,7 +153,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         recipient: (recipient as Hex) || smartWalletAddress || address,
         data: milestone,
       });
-      await milestoneToAttest.attest(walletSigner as any).then(async (res) => {
+      await milestoneToAttest.attest(walletSigner as any, changeStepperStep).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
@@ -154,7 +163,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
             {}
           );
         }
-        showLoading("Indexing milestone...");
+        updateStep("indexing");
         while (retries > 0) {
           try {
             const { data: fetchedGrants } = await refetchGrants();
@@ -198,6 +207,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
       });
     } finally {
       setIsLoading(false);
+      setIsStepper(false);
     }
   };
 

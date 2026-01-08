@@ -171,7 +171,8 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const _setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
   const { switchChainAsync } = useWallet();
-  const { startAttestation, showLoading, showSuccess, showError, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
+    useAttestationToast();
   const { isStaff, isLoading: isStaffLoading } = useStaff();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
@@ -201,7 +202,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         schema: gapClient.findSchema("ProjectPointer"),
       });
 
-      await projectPointer.attest(walletSigner as any).then(async (res) => {
+      await projectPointer.attest(walletSigner as any, changeStepperStep).then(async (res) => {
         showLoading("Indexing project merge...");
 
         let retries = 1000;

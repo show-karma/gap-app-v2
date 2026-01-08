@@ -25,7 +25,8 @@ export function useGrant() {
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
-  const { startAttestation, showLoading, showSuccess, showError } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
+    useAttestationToast();
   const selectedProject = useProjectStore((state) => state.project);
   const { refetch: refetchGrants } = useProjectGrants(selectedProject?.uid || "");
   const router = useRouter();
@@ -91,46 +92,48 @@ export function useGrant() {
         (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
       );
 
-      await oldGrantInstance.details?.attest(walletSigner as any).then(async (res) => {
-        let retries = 1000;
-        const txHash = res?.tx[0]?.hash;
-        if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, oldGrant.chainID), "POST", {});
-        }
-        showLoading("Indexing grant...");
-        while (retries > 0) {
-          const fetchedGrants = await getProjectGrants(
-            oldGrant.refUID || oldGrant.projectUID || ""
-          ).catch(() => []);
-          const fetchedGrant = fetchedGrants?.find(
-            (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
-          );
-
-          if (new Date(fetchedGrant?.updatedAt || 0) > new Date(oldGrantData?.updatedAt || 0)) {
-            clearMilestonesForms();
-            resetFormData();
-            setFormPriorities([]);
-            setCurrentStep(1);
-            setFlowType("grant");
-            retries = 0;
-            showSuccess(MESSAGES.GRANT.UPDATE.SUCCESS);
-            await refetchGrants().then(() => {
-              setTimeout(() => {
-                router.push(
-                  PAGES.PROJECT.GRANT(
-                    selectedProject.details?.slug || selectedProject.uid,
-                    oldGrant.uid
-                  )
-                );
-                router.refresh();
-              }, 1500);
-            });
+      await oldGrantInstance.details
+        ?.attest(walletSigner as any, changeStepperStep)
+        .then(async (res) => {
+          let retries = 1000;
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, oldGrant.chainID), "POST", {});
           }
-          retries -= 1;
-          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-          await new Promise((resolve) => setTimeout(resolve, 1500));
-        }
-      });
+          changeStepperStep("indexing");
+          while (retries > 0) {
+            const fetchedGrants = await getProjectGrants(
+              oldGrant.refUID || oldGrant.projectUID || ""
+            ).catch(() => []);
+            const fetchedGrant = fetchedGrants?.find(
+              (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
+            );
+
+            if (new Date(fetchedGrant?.updatedAt || 0) > new Date(oldGrantData?.updatedAt || 0)) {
+              clearMilestonesForms();
+              resetFormData();
+              setFormPriorities([]);
+              setCurrentStep(1);
+              setFlowType("grant");
+              retries = 0;
+              showSuccess(MESSAGES.GRANT.UPDATE.SUCCESS);
+              await refetchGrants().then(() => {
+                setTimeout(() => {
+                  router.push(
+                    PAGES.PROJECT.GRANT(
+                      selectedProject.details?.slug || selectedProject.uid,
+                      oldGrant.uid
+                    )
+                  );
+                  router.refresh();
+                }, 1500);
+              });
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
+        });
     } catch (error: any) {
       showError(MESSAGES.GRANT.UPDATE.ERROR);
       errorManager(MESSAGES.GRANT.UPDATE.ERROR, error, {
@@ -140,6 +143,7 @@ export function useGrant() {
       });
     } finally {
       setIsLoading(false);
+      dismiss();
     }
   };
 

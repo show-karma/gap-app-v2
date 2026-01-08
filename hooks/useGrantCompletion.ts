@@ -62,8 +62,6 @@ export const useGrantCompletion = ({
     startAttestation("Completing grant...");
 
     try {
-      changeStepperStep("preparing");
-
       // Step 1: Setup chain and wallet (using utility)
       const setup = await setupChainAndWallet({
         targetChainId: grant.chainID,
@@ -110,7 +108,6 @@ export const useGrantCompletion = ({
         grantUid: grant.uid,
       });
 
-      changeStepperStep("indexed");
       showSuccess(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS);
       onComplete?.();
     } catch (error: any) {
@@ -128,6 +125,7 @@ export const useGrantCompletion = ({
       }
     } finally {
       setIsCompleting(false);
+      dismiss();
     }
   };
 

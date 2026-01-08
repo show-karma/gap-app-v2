@@ -241,7 +241,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { gap } = useGap();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
-  const { startAttestation, showLoading, showSuccess, showError, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
+    useAttestationToast();
   const [walletSigner, setWalletSigner] = useState<any>(null);
   const [_faucetFunded, setFaucetFunded] = useState(false);
   // Flag to prevent form reset when reopening after an error
@@ -693,8 +694,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       closeModal();
 
       // Attest first (Privy popups appear here), then show progress modal
-      await project.attest(signer as any).then(async (res) => {
-        // Show progress modal after Privy popups complete
+      await project.attest(signer as any, changeStepperStep).then(async (res) => {
         showLoading("Indexing project...");
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
@@ -790,7 +790,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       console.error("[ProjectDialog] CATCH BLOCK - Error caught:", error);
       console.error("[ProjectDialog] Error message:", error?.message);
       console.error("[ProjectDialog] Error stack:", error?.stack);
-      dismiss();
+      showError(MESSAGES.PROJECT.CREATE.ERROR(data.title));
       errorManager(
         MESSAGES.PROJECT.CREATE.ERROR(data.title),
         error,
@@ -944,11 +944,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         socialData,
         walletSigner,
         gapClient,
-        () => {}, // No-op since we're using progress modal
-        () => {} // No-op since modal is already closed
+        changeStepperStep,
+        () => {}, // No-op since modal is already closed
+        () => {}, // setIsStepper - no-op, managed by toast hook
+        startAttestation,
+        showSuccess
       ).then(async (res) => {
-        // Show success after update completes
-        showSuccess("Project updated!");
+        // updateProject calls showSuccess internally
         setStep(0);
         // Brief delay to show success, then redirect
         setTimeout(() => {
@@ -963,7 +965,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }, 1500);
       });
     } catch (error: any) {
-      dismiss();
+      showError(MESSAGES.PROJECT.UPDATE.ERROR);
       errorManager(
         `Error updating project ${projectToUpdate?.details?.slug || projectToUpdate?.uid}`,
         error,

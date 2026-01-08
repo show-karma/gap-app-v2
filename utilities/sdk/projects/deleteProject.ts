@@ -12,10 +12,14 @@ export const deleteProject = async (
   signer: SignerOrProvider,
   gap: GAP,
   router: AppRouterInstance,
-  changeStepperStep: (step: AttestationStep) => void
+  changeStepperStep: (step: AttestationStep) => void,
+  setIsStepper: (value: boolean) => void,
+  startAttestation: (message: string) => void,
+  showSuccess: (message: string) => void
 ) => {
   try {
     if (!gap) return;
+    startAttestation("Deleting project...");
     await project.revoke(signer, changeStepperStep).then(async (res) => {
       let retries = 1000;
       changeStepperStep("indexing");
@@ -29,6 +33,7 @@ export const deleteProject = async (
         if (!fetchedProject) {
           retries = 0;
           changeStepperStep("indexed");
+          showSuccess("Project deleted successfully!");
           router.push(PAGES.MY_PROJECTS);
           return;
         }
@@ -40,5 +45,7 @@ export const deleteProject = async (
   } catch (error: unknown) {
     errorManager(`Error deleting project: ${project.uid}`, error);
     throw error instanceof Error ? error : new Error(String(error));
+  } finally {
+    setIsStepper(false);
   }
 };

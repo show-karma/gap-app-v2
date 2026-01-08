@@ -43,7 +43,8 @@ export function useGrantMilestoneForm({
 
   const { gap } = useGap();
   const [isLoading, setIsLoading] = useState(false);
-  const { startAttestation, showLoading, showSuccess, showError, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
+    useAttestationToast();
   const router = useRouter();
 
   // Fetch grants using dedicated hook
@@ -94,7 +95,7 @@ export function useGrantMilestoneForm({
         });
 
         // Attest the milestone
-        await milestoneToAttest.attest(walletSigner as any).then(async (res) => {
+        await milestoneToAttest.attest(walletSigner as any, changeStepperStep).then(async (res) => {
           let retries = 1000;
           const txHash = res?.tx[0]?.hash;
 
@@ -106,7 +107,7 @@ export function useGrantMilestoneForm({
             );
           }
 
-          showLoading("Indexing milestone...");
+          changeStepperStep("indexing");
 
           while (retries > 0) {
             try {
@@ -151,6 +152,7 @@ export function useGrantMilestoneForm({
       });
     } finally {
       setIsLoading(false);
+      dismiss();
     }
   };
 

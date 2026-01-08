@@ -473,6 +473,7 @@ export const useMilestoneCompletionVerification = ({
       }
     } finally {
       setIsVerifying(false);
+      dismiss();
     }
   };
 

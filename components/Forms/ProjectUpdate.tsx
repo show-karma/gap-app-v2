@@ -507,7 +507,15 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     setValue("outputs", outputsToSet);
   }, [editId, updateToEdit, indicatorsData, setValue]);
 
-  const { startAttestation, showLoading, showSuccess, showError, dismiss } = useAttestationToast();
+  const {
+    startAttestation,
+    showSuccess,
+    showError,
+    dismiss,
+    updateStep,
+    changeStepperStep,
+    setIsStepper,
+  } = useAttestationToast();
 
   const { openShareDialog } = useShareDialogStore();
 
@@ -623,13 +631,13 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
       const projectUpdate = new ProjectUpdate(projectUpdateData as any);
 
-      await projectUpdate.attest(walletSigner as any).then(async (res) => {
+      await projectUpdate.attest(walletSigner as any, changeStepperStep).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, projectUpdate.chainID), "POST", {});
         }
-        showLoading("Indexing activity...");
+        updateStep("indexing");
         while (retries > 0) {
           try {
             const attestUID = projectUpdate.uid;
@@ -695,6 +703,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       );
     } finally {
       setIsLoading(false);
+      setIsStepper(false);
     }
   };
 

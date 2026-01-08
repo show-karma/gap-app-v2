@@ -550,8 +550,6 @@ export const useMilestone = () => {
         deliverables: data.deliverables || [],
       });
 
-      showLoading("Marking milestone as complete...");
-
       await milestoneInstance
         .complete(walletSigner, completionData, changeStepperStep)
         .then(async (result) => {

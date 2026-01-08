@@ -128,7 +128,6 @@ export const ProjectOptionsMenu = () => {
   const deleteFn = async () => {
     if (!address || !project) return;
     setIsDeleting(true);
-    startAttestation("Deleting project...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
@@ -144,10 +143,15 @@ export const ProjectOptionsMenu = () => {
       const { gapClient, walletSigner } = setup;
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject || !gapClient) return;
-      await deleteProject(fetchedProject, walletSigner, gapClient, router, changeStepperStep).then(
-        async () => {
-          showSuccess(MESSAGES.PROJECT.DELETE.SUCCESS);
-        }
+      await deleteProject(
+        fetchedProject,
+        walletSigner,
+        gapClient,
+        router,
+        changeStepperStep,
+        setIsStepper,
+        startAttestation,
+        showSuccess
       );
     } catch (error: any) {
       showError(MESSAGES.PROJECT.DELETE.ERROR);
@@ -160,7 +164,6 @@ export const ProjectOptionsMenu = () => {
       setIsStepper(false);
     } finally {
       setIsDeleting(false);
-      setIsStepper(false);
     }
   };
 

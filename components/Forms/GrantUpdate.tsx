@@ -109,7 +109,15 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
     });
   };
 
-  const { startAttestation, showLoading, showSuccess, showError, dismiss } = useAttestationToast();
+  const {
+    startAttestation,
+    showSuccess,
+    showError,
+    dismiss,
+    updateStep,
+    changeStepperStep,
+    setIsStepper,
+  } = useAttestationToast();
 
   const { gap } = useGap();
 
@@ -148,13 +156,13 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         schema: gapClient.findSchema("GrantDetails"),
       });
 
-      await grantUpdate.attest(walletSigner as any).then(async (res) => {
+      await grantUpdate.attest(walletSigner as any, changeStepperStep).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grantToUpdate.chainID), "POST", {});
         }
-        showLoading("Indexing update...");
+        updateStep("indexing");
         const attestUID = grantUpdate.uid;
         while (retries > 0) {
           try {
@@ -211,6 +219,8 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
           },
         }
       );
+    } finally {
+      setIsStepper(false);
     }
   };
 

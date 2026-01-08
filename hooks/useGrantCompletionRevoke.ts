@@ -126,7 +126,6 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
       }
 
       // Authorized AND attester matches - proceed with on-chain revocation
-      changeStepperStep("preparing");
       validateGrantCompletion(grantInstance.completed);
 
       const schemaToUse = grantInstance.completed.schema;
@@ -149,7 +148,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
         const tx = await multicallContract.multiRevoke(revocationPayload);
         const res = await tx.wait();
 
-        changeStepperStep("pending");
+        changeStepperStep("confirmed");
 
         const txHash = res?.transactionHash as `0x${string}`;
         if (txHash) {
@@ -205,6 +204,7 @@ export const useGrantCompletionRevoke = ({ grant, project }: UseGrantCompletionR
       });
     } finally {
       setIsRevoking(false);
+      dismiss();
     }
   };
 
