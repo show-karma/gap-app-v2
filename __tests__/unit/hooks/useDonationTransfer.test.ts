@@ -285,7 +285,9 @@ describe("useDonationTransfer", () => {
   });
 
   describe("executeDonations", () => {
-    const getRecipientAddress = jest.fn((_projectId: string) => mockRecipientAddress);
+    const getRecipientAddress = jest.fn(
+      (_projectId: string, _chainId: number) => mockRecipientAddress
+    );
 
     it("should execute donation for native token", async () => {
       const { result } = renderHook(() => useDonationTransfer());
