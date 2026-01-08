@@ -38,7 +38,7 @@ export interface CreateDonationRequest {
   donationType: DonationType;
   fiatAmount?: number;
   fiatCurrency?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface OnrampRequest {
