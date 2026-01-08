@@ -36,14 +36,14 @@ export function FundingMapSidebar() {
           src="https://paragraph.com/@karmahq/embed?minimal=true&vertical=true"
           width="100%"
           height="90"
-          frameBorder="0"
-          scrolling="no"
           title="Subscribe to Karma"
+          sandbox="allow-scripts allow-same-origin allow-forms"
+          style={{ border: 0, overflow: "hidden" }}
         />
       </div>
       <div className="flex flex-col gap-4">
         <div className="px-5">
-          <div className="h-px w-full" />
+          <div className="h-px w-full bg-border" />
         </div>
 
         <div className="flex flex-col gap-5 rounded-xl p-5">

@@ -68,40 +68,39 @@ export function OrganizationFilter({ value, onChange }: OrganizationFilterProps)
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger
-        disabled={isLoading}
-        className={cn(
-          "h-8 flex items-center gap-1.5 rounded-lg px-2.5 text-sm shadow-sm",
-          "bg-background border border-input hover:bg-accent hover:text-accent-foreground",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground",
-          "active:outline-none",
-          "disabled:cursor-not-allowed disabled:opacity-50"
-        )}
-      >
-        <span
+      <div className="flex items-center">
+        <Popover.Trigger
+          disabled={isLoading}
           className={cn(
-            "max-w-[150px] truncate",
-            selectedOption ? "text-foreground" : "text-muted-foreground"
+            "h-8 flex items-center gap-1.5 px-2.5 text-sm shadow-sm",
+            "bg-background border border-input hover:bg-accent hover:text-accent-foreground",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground",
+            "active:outline-none",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+            selectedOption ? "rounded-l-lg rounded-r-none" : "rounded-lg"
           )}
         >
-          {isLoading ? "Loading..." : selectedOption?.name || "Ecosystem"}
-        </span>
-        {selectedOption ? (
+          <span
+            className={cn(
+              "max-w-[150px] truncate",
+              selectedOption ? "text-foreground" : "text-muted-foreground"
+            )}
+          >
+            {isLoading ? "Loading..." : selectedOption?.name || "Ecosystem"}
+          </span>
+          {!selectedOption && <ChevronDown className="h-4 w-4 opacity-50" />}
+        </Popover.Trigger>
+        {selectedOption && (
           <button
             type="button"
-            className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              onChange(null);
-            }}
+            className="flex h-8 w-8 items-center justify-center rounded-r-lg border border-l-0 border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer"
+            onClick={() => onChange(null)}
             aria-label="Clear ecosystem filter"
           >
             <X className="h-3 w-3" />
           </button>
-        ) : (
-          <ChevronDown className="h-4 w-4 opacity-50" />
         )}
-      </Popover.Trigger>
+      </div>
       <Popover.Portal>
         <Popover.Content
           className="z-50 mt-1 w-[280px] rounded-md border border-border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"

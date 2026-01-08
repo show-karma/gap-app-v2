@@ -41,8 +41,6 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
 
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [typeOpen, setTypeOpen] = useState(false);
-  const [categoryHover, setCategoryHover] = useState(false);
-  const [typeHover, setTypeHover] = useState(false);
 
   const hasActiveFilters =
     filters.status !== "Active" ||
@@ -58,7 +56,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
           variant="outline"
           className={cn(
             "cursor-pointer gap-1.5 rounded-full pr-1 py-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-            filters.onlyOnKarma
+            filters.onlyOnKarma && "border-primary"
           )}
           tabIndex={0}
           role="button"
@@ -111,38 +109,44 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
         <OrganizationFilter value={filters.organizationFilter} onChange={setOrganizationFilter} />
 
         <Popover.Root open={categoryOpen} onOpenChange={setCategoryOpen}>
-          <Popover.Trigger asChild>
-            <Button
-              variant="outline"
-              className="h-8 w-auto gap-1.5 rounded-lg px-2.5 text-sm font-normal shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground"
-              onMouseEnter={() => setCategoryHover(true)}
-              onMouseLeave={() => setCategoryHover(false)}
-            >
-              <span
+          <div className="flex items-center">
+            <Popover.Trigger asChild>
+              <Button
+                variant="outline"
                 className={cn(
-                  filters.categories.length > 0 ? "text-foreground" : "text-muted-foreground"
+                  "h-8 w-auto gap-1.5 text-sm font-normal shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground",
+                  filters.categories.length > 0
+                    ? "rounded-l-lg rounded-r-none px-2.5"
+                    : "rounded-lg px-2.5"
                 )}
               >
-                Category
-              </span>
-              {filters.categories.length > 0 ? (
-                <button
-                  type="button"
-                  className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCategories([]);
-                    setCategoryHover(false);
-                  }}
-                  aria-label="Clear category filters"
+                <span
+                  className={cn(
+                    filters.categories.length > 0 ? "text-foreground" : "text-muted-foreground"
+                  )}
                 >
-                  {categoryHover ? <X className="h-3 w-3" /> : filters.categories.length}
-                </button>
-              ) : (
-                <ChevronDown className="h-4 w-4 opacity-50" />
-              )}
-            </Button>
-          </Popover.Trigger>
+                  Category
+                </span>
+                {filters.categories.length > 0 ? (
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                    {filters.categories.length}
+                  </span>
+                ) : (
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                )}
+              </Button>
+            </Popover.Trigger>
+            {filters.categories.length > 0 && (
+              <button
+                type="button"
+                className="flex h-8 w-8 items-center justify-center rounded-r-lg border border-l-0 border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                onClick={() => setCategories([])}
+                aria-label="Clear category filters"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
           <Popover.Portal>
             <Popover.Content
               align="start"
@@ -204,38 +208,44 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
         </Popover.Root>
 
         <Popover.Root open={typeOpen} onOpenChange={setTypeOpen}>
-          <Popover.Trigger asChild>
-            <Button
-              variant="outline"
-              className="h-8 w-auto gap-1.5 rounded-lg px-2.5 text-sm font-normal shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground"
-              onMouseEnter={() => setTypeHover(true)}
-              onMouseLeave={() => setTypeHover(false)}
-            >
-              <span
+          <div className="flex items-center">
+            <Popover.Trigger asChild>
+              <Button
+                variant="outline"
                 className={cn(
-                  filters.grantTypes.length > 0 ? "text-foreground" : "text-muted-foreground"
+                  "h-8 w-auto gap-1.5 text-sm font-normal shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground",
+                  filters.grantTypes.length > 0
+                    ? "rounded-l-lg rounded-r-none px-2.5"
+                    : "rounded-lg px-2.5"
                 )}
               >
-                Type
-              </span>
-              {filters.grantTypes.length > 0 ? (
-                <button
-                  type="button"
-                  className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setGrantTypes([]);
-                    setTypeHover(false);
-                  }}
-                  aria-label="Clear type filters"
+                <span
+                  className={cn(
+                    filters.grantTypes.length > 0 ? "text-foreground" : "text-muted-foreground"
+                  )}
                 >
-                  {typeHover ? <X className="h-3 w-3" /> : filters.grantTypes.length}
-                </button>
-              ) : (
-                <ChevronDown className="h-4 w-4 opacity-50" />
-              )}
-            </Button>
-          </Popover.Trigger>
+                  Type
+                </span>
+                {filters.grantTypes.length > 0 ? (
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                    {filters.grantTypes.length}
+                  </span>
+                ) : (
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                )}
+              </Button>
+            </Popover.Trigger>
+            {filters.grantTypes.length > 0 && (
+              <button
+                type="button"
+                className="flex h-8 w-8 items-center justify-center rounded-r-lg border border-l-0 border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                onClick={() => setGrantTypes([])}
+                aria-label="Clear type filters"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
           <Popover.Portal>
             <Popover.Content
               align="start"
