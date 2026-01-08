@@ -12,7 +12,7 @@ const stepMessages: Record<AttestationStep, string> = {
   preparing: "Preparing attestation...",
   pending: "Waiting for wallet signature...",
   confirmed: "Transaction confirmed, processing...",
-  indexing: "Indexing data on-chain...",
+  indexing: "Indexing data...",
   indexed: "Complete!",
 };
 
