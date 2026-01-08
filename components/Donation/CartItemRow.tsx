@@ -28,7 +28,8 @@ interface CartItemRowProps {
   payoutInfo?: PayoutInfo;
   tokenOptions: SupportedToken[];
   balanceByTokenKey: Record<string, string>;
-  formatAddress: (address?: string) => string;
+  formatAddress?: (address?: string) => string;
+  isMissingPayout?: boolean;
   onTokenSelect: (token: SupportedToken) => void;
   onAmountChange: (amount: string) => void;
   onRemove: () => void;
@@ -42,6 +43,7 @@ export function CartItemRow({
   tokenOptions,
   balanceByTokenKey,
   formatAddress,
+  isMissingPayout,
   onTokenSelect,
   onAmountChange,
   onRemove,
@@ -76,7 +78,11 @@ export function CartItemRow({
               </h3>
             </Link>
             <div className="flex items-center gap-1 mt-0.5">
-              <PayoutAddressDisplay payoutInfo={payoutInfo} formatAddress={formatAddress} />
+              {isMissingPayout ? (
+                <span className="text-xs text-red-500">No payout address configured</span>
+              ) : payoutInfo && formatAddress ? (
+                <PayoutAddressDisplay payoutInfo={payoutInfo} formatAddress={formatAddress} />
+              ) : null}
             </div>
           </div>
         </div>

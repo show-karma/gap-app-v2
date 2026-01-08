@@ -9,6 +9,11 @@ const securityHeaders = [
     key: "X-Frame-Options",
     value: "SAMEORIGIN",
   },
+  {
+    key: "Content-Security-Policy",
+    value:
+      "frame-src 'self' https://auth.privy.io https://*.privy.io https://paragraph.com https://*.paragraph.com; frame-ancestors 'self';",
+  },
 ];
 
 const removeImports = require("next-remove-imports")();

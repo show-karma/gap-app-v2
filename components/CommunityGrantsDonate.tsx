@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
+import { ProjectCartButton } from "@/components/Donation/ProjectCartButton";
 import { ShoppingCartIcon as ShoppingCartIconCustom } from "@/components/Icons/ShoppingCartIcon";
 import { useCommunityProjectsPaginated } from "@/hooks/useCommunityProjectsPaginated";
 import useMediaQuery from "@/hooks/useMediaQuery";
@@ -94,47 +95,17 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
                                   hideStats
                                   hideCategories
                                   cardClassName="rounded-lg"
-                                  actionSlot={(() => {
-                                    const inCart = items.some((i) => i.uid === project.uid);
-                                    return (
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          toggle({
-                                            uid: project.uid,
-                                            title: project.details?.title || project.uid,
-                                            slug: project.details?.slug,
-                                            imageURL: project.details?.logoUrl,
-                                          });
-                                        }}
-                                        className={`group relative flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm border ${
-                                          inCart
-                                            ? "bg-red-100 hover:bg-red-200 text-red-700 border-red-200 hover:border-red-300"
-                                            : "bg-[#F0FDF4] hover:bg-emerald-100 text-emerald-700 border-[#BDEFE2] hover:border-emerald-300"
-                                        } hover:shadow-md`}
-                                        aria-label={
-                                          inCart
-                                            ? "Remove from donation cart"
-                                            : "Add to donation cart"
-                                        }
-                                      >
-                                        <div
-                                          className={`w-5 h-5 flex items-center justify-center transition-transform duration-200 ${
-                                            inCart ? "group-hover:rotate-90" : ""
-                                          }`}
-                                        >
-                                          <ShoppingCartIconCustom
-                                            className={inCart ? "text-red-700" : "text-emerald-700"}
-                                          />
-                                        </div>
-                                        {inCart ? "Remove" : "Add to Cart"}
-                                        {inCart && (
-                                          <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                                        )}
-                                      </button>
-                                    );
-                                  })()}
+                                  actionSlot={
+                                    <ProjectCartButton
+                                      projectUid={project.uid}
+                                      projectTitle={project.details?.title || project.uid}
+                                      projectSlug={project.details?.slug}
+                                      projectImageURL={project.details?.logoUrl}
+                                      chainPayoutAddress={project.chainPayoutAddress}
+                                      isInCart={items.some((i) => i.uid === project.uid)}
+                                      onToggle={toggle}
+                                    />
+                                  }
                                 />
                               </div>
                             )}

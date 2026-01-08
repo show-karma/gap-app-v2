@@ -5,6 +5,7 @@ import {
   CircleHelp,
   CircleUser,
   FolderKanban,
+  Heart,
   LogOutIcon,
   Settings,
   ShieldCheck,
@@ -186,6 +187,12 @@ export function NavbarUserMenu() {
                   <Link href={PAGES.MY_PROJECTS} className="flex items-center gap-2 w-full">
                     <FolderKanban className={menuStyles.itemIcon} />
                     <span className={menuStyles.itemText}>My projects</span>
+                  </Link>
+                </MenubarItem>
+                <MenubarItem asChild className="w-full cursor-pointer">
+                  <Link href="/donations" className="flex items-center gap-2 w-full">
+                    <Heart className={menuStyles.itemIcon} />
+                    <span className={menuStyles.itemText}>My donations</span>
                   </Link>
                 </MenubarItem>
                 {hasReviewerRole && (

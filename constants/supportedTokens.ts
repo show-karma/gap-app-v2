@@ -117,6 +117,10 @@ export const SUPPORTED_NETWORKS: Record<number, NetworkConfig> = includeTestNetw
   ? TEST_NETWORKS
   : MAINNET_NETWORKS;
 
+// Export mainnet chain IDs for reuse
+export const MAINNET_CHAIN_IDS = [1, 10, 42161, 8453, 42220, 137] as const;
+export const MAINNET_CHAINS: number[] = [...MAINNET_CHAIN_IDS];
+
 // Supported tokens configuration
 export const SUPPORTED_TOKENS: SupportedToken[] = [
   // USDT - All 6 networks
@@ -179,7 +183,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
   {
     symbol: "USDC",
     name: "USD Coin",
-    address: "0xA0b86a33E6417c8f2bbD1c7E2e1a6D8Eb6F0aB0F",
+    address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
     decimals: 6,
     chainId: 1,
     chainName: "Ethereum",
