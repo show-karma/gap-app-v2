@@ -2,21 +2,18 @@
 
 import { AreaChart, BarChart, Card, Title } from "@tremor/react";
 import { useMemo, useState } from "react";
+import type { PeriodDatapoint } from "@/types/indicator";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
+import {
+  getChainName,
+  hasMonthlyData,
+  hasPeriodBasedData,
+  parseBreakdown,
+  rollingPeriodLabels,
+  rollingPeriodOrder,
+} from "@/utilities/indicator";
 import { cn } from "@/utilities/tailwind";
-
-/**
- * Period-based datapoint interface
- * Works with datapoints that have a `period` field (30d, 90d, 180d, 1y, monthly)
- */
-interface PeriodDatapoint {
-  value: number | string;
-  breakdown?: string | Record<string, unknown>;
-  period?: string | null;
-  startDate: string;
-  endDate: string;
-}
 
 interface PeriodComparisonSectionProps {
   datapoints: PeriodDatapoint[];
@@ -24,75 +21,7 @@ interface PeriodComparisonSectionProps {
   unitOfMeasure?: string;
 }
 
-// Period order for display
-const periodOrder = ["30d", "90d", "180d", "1y"];
-const periodLabels: Record<string, string> = {
-  "30d": "30 Days",
-  "90d": "90 Days",
-  "180d": "180 Days",
-  "1y": "1 Year",
-  monthly: "Monthly",
-};
-
-// Chain ID to name mapping
-const chainNames: Record<string, string> = {
-  "1": "Ethereum",
-  "10": "Optimism",
-  "137": "Polygon",
-  "250": "Fantom",
-  "8453": "Base",
-  "42161": "Arbitrum",
-  "42220": "Celo",
-  "43114": "Avalanche",
-  "534352": "Scroll",
-  "7777777": "Zora",
-};
-
-const getChainName = (chainId: string): string => {
-  return chainNames[chainId] || `Chain ${chainId}`;
-};
-
-/**
- * Parse breakdown to get per-chain values
- * Handles both string (JSON) and object formats
- */
-const parseBreakdown = (breakdown?: string | Record<string, unknown>): Record<string, number> => {
-  if (!breakdown) return {};
-  try {
-    // Handle string (JSON) format
-    const parsed = typeof breakdown === "string" ? JSON.parse(breakdown) : breakdown;
-    if (typeof parsed === "object" && !Array.isArray(parsed)) {
-      const result: Record<string, number> = {};
-      for (const [key, value] of Object.entries(parsed)) {
-        if (typeof value === "number") {
-          result[key] = value;
-        }
-      }
-      return result;
-    }
-    return {};
-  } catch {
-    return {};
-  }
-};
-
-/**
- * Check if datapoints have period-based structure
- */
-export const hasPeriodBasedData = (
-  datapoints: PeriodDatapoint[]
-): boolean => {
-  return datapoints.some(
-    (dp) => dp.period && periodOrder.includes(dp.period)
-  );
-};
-
-/**
- * Check if datapoints have monthly historical data
- */
-export const hasMonthlyData = (datapoints: PeriodDatapoint[]): boolean => {
-  return datapoints.some((dp) => dp.period === "monthly");
-};
+export { hasPeriodBasedData, hasMonthlyData };
 
 /**
  * Dynamic chart component for period-based indicators (e.g., Unique users)
@@ -122,7 +51,7 @@ export const PeriodComparisonSection = ({
         chains.add(chainId);
       }
 
-      if (dp.period && periodOrder.includes(dp.period)) {
+      if (dp.period && rollingPeriodOrder.includes(dp.period)) {
         periodDps.push(dp);
       } else if (dp.period === "monthly") {
         monthlyDps.push(dp);
@@ -152,7 +81,7 @@ export const PeriodComparisonSection = ({
       }
     }
 
-    return periodOrder
+    return rollingPeriodOrder
       .filter((period) => latestByPeriod.has(period))
       .map((period) => {
         const dp = latestByPeriod.get(period)!;
@@ -162,14 +91,11 @@ export const PeriodComparisonSection = ({
           const breakdown = parseBreakdown(dp.breakdown);
           value = breakdown[selectedChain] || 0;
         } else {
-          value =
-            typeof dp.value === "number"
-              ? dp.value
-              : parseFloat(dp.value) || 0;
+          value = typeof dp.value === "number" ? dp.value : parseFloat(dp.value) || 0;
         }
 
         return {
-          period: periodLabels[period] || period,
+          period: rollingPeriodLabels[period] || period,
           [indicatorName]: value,
           value,
         };
@@ -185,10 +111,7 @@ export const PeriodComparisonSection = ({
         const breakdown = parseBreakdown(dp.breakdown);
         value = breakdown[selectedChain] || 0;
       } else {
-        value =
-          typeof dp.value === "number"
-            ? dp.value
-            : parseFloat(dp.value) || 0;
+        value = typeof dp.value === "number" ? dp.value : parseFloat(dp.value) || 0;
       }
 
       return {
@@ -211,7 +134,7 @@ export const PeriodComparisonSection = ({
       }
     }
 
-    return periodOrder
+    return rollingPeriodOrder
       .filter((period) => latestByPeriod.has(period))
       .map((period) => {
         const dp = latestByPeriod.get(period)!;
@@ -221,15 +144,12 @@ export const PeriodComparisonSection = ({
         if (selectedChain !== "all") {
           totalValue = breakdown[selectedChain] || 0;
         } else {
-          totalValue =
-            typeof dp.value === "number"
-              ? dp.value
-              : parseFloat(dp.value) || 0;
+          totalValue = typeof dp.value === "number" ? dp.value : parseFloat(dp.value) || 0;
         }
 
         return {
           period,
-          label: periodLabels[period] || period,
+          label: rollingPeriodLabels[period] || period,
           value: totalValue,
           breakdown,
           endDate: dp.endDate,
@@ -390,30 +310,30 @@ export const PeriodComparisonSection = ({
       </div>
 
       {/* Chain Breakdown (if showing all chains) */}
-      {selectedChain === "all" && tableData.length > 0 && tableData[0].breakdown && Object.keys(tableData[0].breakdown).length > 1 && (
-        <Card className="bg-white dark:bg-zinc-800 rounded">
-          <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
-            Chain Breakdown (30 Days)
-          </Title>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {Object.entries(tableData[0].breakdown)
-              .sort(([, a], [, b]) => b - a)
-              .map(([chainId, value]) => (
-                <div
-                  key={chainId}
-                  className="p-3 bg-gray-50 dark:bg-zinc-700/50 rounded-lg"
-                >
-                  <div className="text-xs text-gray-500 dark:text-zinc-400 mb-1">
-                    {getChainName(chainId)}
+      {selectedChain === "all" &&
+        tableData.length > 0 &&
+        tableData[0].breakdown &&
+        Object.keys(tableData[0].breakdown).length > 1 && (
+          <Card className="bg-white dark:bg-zinc-800 rounded">
+            <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
+              Chain Breakdown (30 Days)
+            </Title>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {Object.entries(tableData[0].breakdown)
+                .sort(([, a], [, b]) => b - a)
+                .map(([chainId, value]) => (
+                  <div key={chainId} className="p-3 bg-gray-50 dark:bg-zinc-700/50 rounded-lg">
+                    <div className="text-xs text-gray-500 dark:text-zinc-400 mb-1">
+                      {getChainName(chainId)}
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900 dark:text-zinc-100 tabular-nums">
+                      {formatCurrency(value)}
+                    </div>
                   </div>
-                  <div className="text-lg font-semibold text-gray-900 dark:text-zinc-100 tabular-nums">
-                    {formatCurrency(value)}
-                  </div>
-                </div>
-              ))}
-          </div>
-        </Card>
-      )}
+                ))}
+            </div>
+          </Card>
+        )}
     </div>
   );
 };

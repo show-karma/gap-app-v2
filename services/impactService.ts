@@ -1,56 +1,20 @@
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import type { ProjectIndicatorsResponse } from "@/types/indicator";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-// V2 API response types
-interface V2Datapoint {
-  id: string;
-  value: string;
-  breakdown: string | null;
-  startDate: string;
-  endDate: string;
-  period: string | null;
-  proof: string | null;
-  source: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface V2AggregatedDatapoint {
-  indicatorId: string;
-  indicatorName: string;
-  startDate: string;
-  endDate: string;
-  totalValue: number;
-  projectCount: number;
-}
-
-interface V2ProjectIndicator {
-  id: string;
-  name: string;
-  description: string;
-  unitOfMeasure: string;
-  hasData: boolean;
-  lastUpdatedAt: string | null;
-  datapoints: V2Datapoint[];
-  aggregatedData?: Record<string, V2AggregatedDatapoint[]>;
-}
-
-interface V2ProjectIndicatorsResponse {
-  projectUID: string;
-  indicators: V2ProjectIndicator[];
-}
-
 /**
- * Transform V2 API response to match existing ImpactIndicatorWithData interface
+ * Transform API response to match existing ImpactIndicatorWithData interface
  */
-function transformV2ProjectIndicators(v2Response: V2ProjectIndicatorsResponse): ImpactIndicatorWithData[] {
-  return v2Response.indicators.map((indicator) => ({
+function transformProjectIndicators(
+  response: ProjectIndicatorsResponse
+): ImpactIndicatorWithData[] {
+  return response.indicators.map((indicator) => ({
     id: indicator.id,
     name: indicator.name,
     description: indicator.description,
     unitOfMeasure: indicator.unitOfMeasure,
-    programs: [], // V2 project indicators endpoint doesn't include programs
+    programs: [], // Project indicators endpoint doesn't include programs
     datapoints: indicator.datapoints.map((dp) => ({
       value: dp.value,
       proof: dp.proof || "",
@@ -67,7 +31,7 @@ function transformV2ProjectIndicators(v2Response: V2ProjectIndicatorsResponse): 
 }
 
 /**
- * Fetches impact indicator data for a project using V2 API
+ * Fetches impact indicator data for a project
  *
  * @param projectIdentifier - The project slug or UID
  * @returns Promise with the impact indicators data
@@ -83,13 +47,12 @@ export const getImpactAnswers = async (
     throw new Error(error);
   }
 
-  // Transform V2 response to match existing interface
-  return transformV2ProjectIndicators(data as V2ProjectIndicatorsResponse);
+  // Transform response to match existing interface
+  return transformProjectIndicators(data as ProjectIndicatorsResponse);
 };
 
 /**
  * Sends impact indicator data for a project
- * Note: Write operations still use the original endpoint as V2 is read-only for now
  *
  * @param projectIdentifier - The project slug or UID
  * @param indicatorId - The ID of the impact indicator

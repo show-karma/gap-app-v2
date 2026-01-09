@@ -1,6 +1,7 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
+import type { CommunityAggregateResponse } from "@/types/indicator";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
@@ -18,39 +19,11 @@ export interface AggregatedIndicator {
   }[];
 }
 
-// V2 API response types
-interface V2AggregatedDatapoint {
-  indicatorId: string;
-  indicatorName: string;
-  startDate: string;
-  endDate: string;
-  totalValue: number;
-  projectCount: number;
-}
-
-interface V2CommunityAggregatedIndicator {
-  id: string;
-  name: string;
-  description: string;
-  unitOfMeasure: string;
-  totalProjects: number;
-  aggregatedData: V2AggregatedDatapoint[];
-}
-
-interface V2CommunityAggregateResponse {
-  communityUID: string;
-  timeRange: {
-    startDate: string;
-    endDate: string;
-  };
-  indicators: V2CommunityAggregatedIndicator[];
-}
-
 /**
- * Transform V2 API response to match existing AggregatedIndicator interface
+ * Transform API response to match existing AggregatedIndicator interface
  */
-function transformV2Response(v2Response: V2CommunityAggregateResponse): AggregatedIndicator[] {
-  return v2Response.indicators.map((indicator) => ({
+function transformResponse(response: CommunityAggregateResponse): AggregatedIndicator[] {
+  return response.indicators.map((indicator) => ({
     id: indicator.id,
     name: indicator.name,
     description: indicator.description,
@@ -104,12 +77,16 @@ export function useAggregatedIndicators(
     if (programId) {
       const parts = programId.split("_");
       if (parts.length === 2) {
-        parsedProgramId = parseInt(parts[0], 10);
-        parsedChainId = parseInt(parts[1], 10);
+        const programIdNum = parseInt(parts[0], 10);
+        const chainIdNum = parseInt(parts[1], 10);
+        if (!isNaN(programIdNum) && !isNaN(chainIdNum)) {
+          parsedProgramId = programIdNum;
+          parsedChainId = chainIdNum;
+        }
       }
     }
 
-    // Use V2 community aggregate endpoint
+    // Fetch community aggregate indicators
     const [data, error] = await fetchData(
       INDEXER.INDICATORS.V2.COMMUNITY_AGGREGATE(communityDetails.uid, {
         indicatorIds: indicatorIds.join(","),
@@ -125,8 +102,8 @@ export function useAggregatedIndicators(
       throw error;
     }
 
-    // Transform V2 response to match existing interface
-    return transformV2Response(data as V2CommunityAggregateResponse);
+    // Transform response to match existing interface
+    return transformResponse(data as CommunityAggregateResponse);
   };
 
   return useQuery({

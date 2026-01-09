@@ -3,16 +3,16 @@
 import { AreaChart, Card, Title } from "@tremor/react";
 import { useMemo, useState } from "react";
 import type { AggregatedDatapoint } from "@/types/impactMeasurement";
+import type { RawDatapoint } from "@/types/indicator";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
+import {
+  aggregatedPeriodLabels,
+  aggregatedPeriodOrder,
+  getChainName,
+  parseBreakdown,
+} from "@/utilities/indicator";
 import { cn } from "@/utilities/tailwind";
-
-interface RawDatapoint {
-  value: number | string;
-  breakdown?: string;
-  startDate: string;
-  endDate: string;
-}
 
 interface AggregatedDataSectionProps {
   aggregatedData: Record<string, AggregatedDatapoint[]>;
@@ -20,56 +20,6 @@ interface AggregatedDataSectionProps {
   maxItems?: number;
   rawDatapoints?: RawDatapoint[];
 }
-
-const periodLabels: Record<string, string> = {
-  monthly: "Monthly",
-  weekly: "Weekly",
-  daily: "Daily",
-  yearly: "Yearly",
-};
-
-const periodOrder = ["daily", "weekly", "monthly", "yearly"];
-
-// Chain ID to name mapping
-const chainNames: Record<string, string> = {
-  "1": "Ethereum",
-  "10": "Optimism",
-  "137": "Polygon",
-  "250": "Fantom",
-  "8453": "Base",
-  "42161": "Arbitrum",
-  "42220": "Celo",
-  "43114": "Avalanche",
-  "534352": "Scroll",
-  "7777777": "Zora",
-};
-
-const getChainName = (chainId: string): string => {
-  return chainNames[chainId] || `Chain ${chainId}`;
-};
-
-/**
- * Parse breakdown string to get per-chain values
- */
-const parseBreakdown = (breakdown?: string): Record<string, number> => {
-  if (!breakdown) return {};
-  try {
-    const parsed = JSON.parse(breakdown);
-    // Handle flat format: {"42220": 100}
-    if (typeof parsed === "object" && !Array.isArray(parsed)) {
-      const result: Record<string, number> = {};
-      for (const [key, value] of Object.entries(parsed)) {
-        if (typeof value === "number") {
-          result[key] = value;
-        }
-      }
-      return result;
-    }
-    return {};
-  } catch {
-    return {};
-  }
-};
 
 /**
  * Combined chart + breakdown section for aggregated data
@@ -83,7 +33,7 @@ export const AggregatedDataSection = ({
 }: AggregatedDataSectionProps) => {
   const periods = useMemo(() => {
     return Object.keys(aggregatedData).sort(
-      (a, b) => periodOrder.indexOf(a) - periodOrder.indexOf(b)
+      (a, b) => aggregatedPeriodOrder.indexOf(a) - aggregatedPeriodOrder.indexOf(b)
     );
   }, [aggregatedData]);
 
@@ -216,7 +166,7 @@ export const AggregatedDataSection = ({
                           : "text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-300"
                       )}
                     >
-                      {periodLabels[period] || period}
+                      {aggregatedPeriodLabels[period] || period}
                     </button>
                   ))}
                 </div>
