@@ -258,7 +258,7 @@ export default function ReviewerApplicationDetailPage() {
               },
               {
                 id: "comments",
-                label: "Comments & Activity",
+                label: "Comments",
                 icon: TabIcons.Discussion,
                 content: (
                   <TabPanel>

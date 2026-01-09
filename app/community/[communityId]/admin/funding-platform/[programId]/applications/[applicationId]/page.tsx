@@ -405,7 +405,7 @@ export default function ApplicationDetailPage() {
               },
               {
                 id: "comments",
-                label: "Comments & Activity",
+                label: "Comments",
                 icon: TabIcons.Discussion,
                 content: (
                   <TabPanel>
