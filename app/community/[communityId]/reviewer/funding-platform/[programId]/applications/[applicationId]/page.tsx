@@ -263,7 +263,7 @@ export default function ReviewerApplicationDetailPage() {
                 content: (
                   <TabPanel>
                     <DiscussionTab
-                      applicationId={application.referenceNumber}
+                      applicationId={applicationIdentifier}
                       comments={comments}
                       statusHistory={application.statusHistory}
                       versionHistory={versions}

@@ -3,7 +3,7 @@
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { useQuery } from "@tanstack/react-query";
 import debounce from "lodash.debounce";
-import { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type FC, type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -22,8 +22,10 @@ import {
 } from "@/utilities/form-schema-helpers";
 import { cn } from "@/utilities/tailwind";
 
+export type ApplicationStatus = "revision_requested" | "approved" | "rejected" | "pending";
+
 interface StatusChangeInlineProps {
-  status: string;
+  status: ApplicationStatus;
   onConfirm: (reason?: string, approvedAmount?: string, approvedCurrency?: string) => Promise<void>;
   onCancel: () => void;
   isSubmitting?: boolean;
@@ -115,9 +117,11 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
 
   useEffect(() => {
     const templateContent = getTemplateContent();
-    if (templateContent) {
+    // Only prefill if template exists AND user hasn't typed anything yet
+    if (templateContent && !reason.trim()) {
       setReason(templateContent);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only run on template change, not reason change
   }, [getTemplateContent]);
 
   const isReasonActuallyRequired = isReasonRequired || status === "revision_requested";
@@ -189,13 +193,18 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
 
   // Handle funding details data when it arrives
   useEffect(() => {
+    // Skip if user has already entered a currency value
+    if (approvedCurrency.trim()) {
+      return;
+    }
+
     if (fundingDetailsQuery.data && isApprovalStatus) {
       const currency = extractCurrency(fundingDetailsQuery.data);
       if (currency) {
         const normalizedCurrency = currency.trim().toUpperCase();
         const currencyRegex = /^[A-Z]+$/;
         const isValid = currencyRegex.test(normalizedCurrency);
-        setApprovedCurrency((current) => (current.trim() ? current : normalizedCurrency));
+        setApprovedCurrency(normalizedCurrency);
         setIsCurrencyFromAPI(isValid);
         setCurrencyError(isValid ? null : "Currency must be a valid code (e.g., USD, ETH, USDC)");
       }
@@ -215,6 +224,7 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
     fundingDetailsQuery.error,
     application?.programId,
     application?.chainID,
+    approvedCurrency,
   ]);
 
   // Cleanup debounced function on unmount
@@ -279,7 +289,7 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     void handleConfirm();
   };
@@ -486,9 +496,13 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
                   disabled={isSubmitting}
                 />
               )}
-              {currencyError && (
+              {currencyError ? (
                 <p id="currency-error" role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
                   {currencyError}
+                </p>
+              ) : (
+                <p id="currency-info" className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Use 3-letter currency codes (e.g., USD, ETH, USDC)
                 </p>
               )}
             </div>

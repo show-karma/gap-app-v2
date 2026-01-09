@@ -19,7 +19,10 @@ import { DiscussionTab } from "@/components/FundingPlatform/ApplicationView/Disc
 import EditApplicationModal from "@/components/FundingPlatform/ApplicationView/EditApplicationModal";
 import HeaderActions from "@/components/FundingPlatform/ApplicationView/HeaderActions";
 import MoreActionsDropdown from "@/components/FundingPlatform/ApplicationView/MoreActionsDropdown";
-import { StatusChangeInline } from "@/components/FundingPlatform/ApplicationView/StatusChangeInline";
+import {
+  type ApplicationStatus,
+  StatusChangeInline,
+} from "@/components/FundingPlatform/ApplicationView/StatusChangeInline";
 import { TabPanel } from "@/components/FundingPlatform/ApplicationView/TabPanel";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -71,7 +74,7 @@ export default function ApplicationDetailPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Status change inline form state
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | null>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   // Fetch application data
@@ -129,9 +132,9 @@ export default function ApplicationDetailPage() {
     });
   };
 
-  // Handle status change click - shows inline form
-  const handleStatusChangeClick = (status: string) => {
-    setSelectedStatus(status);
+  // Handle status change click - shows inline form (toggle if same status clicked)
+  const handleStatusChangeClick = (status: ApplicationStatus) => {
+    setSelectedStatus((current) => (current === status ? null : status));
   };
 
   // Handle status change confirmation from inline form
@@ -260,7 +263,7 @@ export default function ApplicationDetailPage() {
 
   // Check if status actions should be shown (not finalized)
   const showStatusActions =
-    hasAccess && application && !["approved", "rejected"].includes(application.status);
+    hasAccess && application && !["approved", "rejected"].includes(application.status.toLowerCase());
 
   // Check loading states
   if (isLoadingAdmin || isLoadingApplication) {
@@ -369,7 +372,7 @@ export default function ApplicationDetailPage() {
 
         {/* Tab-based Layout */}
         <ApplicationTabs
-          connectedToHeader={!milestoneReviewUrl}
+          connectedToHeader={!milestoneReviewUrl && !selectedStatus}
           tabs={
             [
               {
