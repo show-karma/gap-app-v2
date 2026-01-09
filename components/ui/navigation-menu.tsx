@@ -8,11 +8,9 @@ import { cn } from "@/utilities/tailwind";
 const NavigationMenu = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Root>
->(({ className, children, delayDuration, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => (
   <NavigationMenuPrimitive.Root
     ref={ref}
-    // Set very high delay to disable hover opening - menus open on click only
-    delayDuration={delayDuration ?? Number.MAX_SAFE_INTEGER}
     className={cn("relative z-10 flex max-w-max flex-1 items-center justify-center", className)}
     {...props}
   >
