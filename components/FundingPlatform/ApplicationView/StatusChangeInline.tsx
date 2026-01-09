@@ -21,8 +21,7 @@ import {
   extractApplicationSummary,
 } from "@/utilities/form-schema-helpers";
 import { cn } from "@/utilities/tailwind";
-
-export type ApplicationStatus = "revision_requested" | "approved" | "rejected" | "pending";
+import type { ApplicationStatus } from "./HeaderActions";
 
 interface StatusChangeInlineProps {
   status: ApplicationStatus;

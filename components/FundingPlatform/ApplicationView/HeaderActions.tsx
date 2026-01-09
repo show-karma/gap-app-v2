@@ -3,7 +3,7 @@
 import type { FC } from "react";
 import { Button } from "@/components/ui/button";
 
-type ApplicationStatus =
+export type ApplicationStatus =
   | "pending"
   | "under_review"
   | "revision_requested"
@@ -66,7 +66,7 @@ const STATUS_TRANSITIONS: Record<ApplicationStatus, StatusTransition[]> = {
 
 export interface HeaderActionsProps {
   currentStatus: ApplicationStatus;
-  onStatusChange: (status: string) => void;
+  onStatusChange: (status: ApplicationStatus) => void;
   isUpdating?: boolean;
 }
 

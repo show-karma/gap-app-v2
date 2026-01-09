@@ -17,12 +17,11 @@ import {
 import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView/DeleteApplicationModal";
 import { DiscussionTab } from "@/components/FundingPlatform/ApplicationView/DiscussionTab";
 import EditApplicationModal from "@/components/FundingPlatform/ApplicationView/EditApplicationModal";
-import HeaderActions from "@/components/FundingPlatform/ApplicationView/HeaderActions";
-import MoreActionsDropdown from "@/components/FundingPlatform/ApplicationView/MoreActionsDropdown";
-import {
+import HeaderActions, {
   type ApplicationStatus,
-  StatusChangeInline,
-} from "@/components/FundingPlatform/ApplicationView/StatusChangeInline";
+} from "@/components/FundingPlatform/ApplicationView/HeaderActions";
+import MoreActionsDropdown from "@/components/FundingPlatform/ApplicationView/MoreActionsDropdown";
+import { StatusChangeInline } from "@/components/FundingPlatform/ApplicationView/StatusChangeInline";
 import { TabPanel } from "@/components/FundingPlatform/ApplicationView/TabPanel";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
