@@ -9,6 +9,18 @@ const walletConnectErrors = [
   "this.provider.disconnect is not a function",
   "n.disconnect is not a function",
   "indexedDB is not defined",
+  // WalletConnect WebSocket origin rejection - not caused by our code
+  // See https://karma-crypto-inc.sentry.io/issues/KARMA-GAP-WHITELABEL-28
+  "WebSocket connection closed abnormally with code: 3000",
+];
+
+const browserExtensionErrors = [
+  // Browser extensions disconnecting ports (Chrome extensions, wallet extensions)
+  // See https://karma-crypto-inc.sentry.io/issues/GAP-FRONTEND-1BA
+  "Attempting to use a disconnected port object",
+  // Wallet extensions calling chrome.runtime without proper Extension ID
+  // See https://karma-crypto-inc.sentry.io/issues/GAP-FRONTEND-1B8
+  "chrome.runtime.sendMessage() called from a webpage must specify an Extension ID",
 ];
 
 export const sentryIgnoreErrors = [
@@ -23,4 +35,5 @@ export const sentryIgnoreErrors = [
   `TypeError: can't access dead object`,
   ...unsupportedWalletErrors,
   ...walletConnectErrors,
+  ...browserExtensionErrors,
 ];
