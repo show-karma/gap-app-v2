@@ -1,6 +1,7 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
+import type { CommunityAggregateResponse } from "@/types/indicator";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
@@ -16,6 +17,23 @@ export interface AggregatedIndicator {
     timestamp: string;
     proof?: string;
   }[];
+}
+
+/**
+ * Transform API response to match existing AggregatedIndicator interface
+ */
+function transformResponse(response: CommunityAggregateResponse): AggregatedIndicator[] {
+  return response.indicators.map((indicator) => ({
+    id: indicator.id,
+    name: indicator.name,
+    description: indicator.description,
+    unitOfMeasure: indicator.unitOfMeasure,
+    totalProjects: indicator.totalProjects,
+    aggregatedData: indicator.aggregatedData.map((dp) => ({
+      value: dp.totalValue,
+      timestamp: dp.startDate, // Use start date as timestamp
+    })),
+  }));
 }
 
 export function useAggregatedIndicators(
@@ -34,7 +52,7 @@ export function useAggregatedIndicators(
     communityId,
     programId || "all",
     projectUID || "all",
-    `last-${timeframeMonths}-months`, // Include date range in cache key
+    `last-${timeframeMonths}-months`,
   ];
 
   const queryFn = async (): Promise<AggregatedIndicator[]> => {
@@ -53,23 +71,39 @@ export function useAggregatedIndicators(
     const startDate = startDateObj.toISOString();
     const endDate = new Date().toISOString();
 
-    // Call the new aggregated indicators endpoint
+    // Parse programId to extract programId and chainId if in format "programId_chainId"
+    let parsedProgramId: number | undefined;
+    let parsedChainId: number | undefined;
+    if (programId) {
+      const parts = programId.split("_");
+      if (parts.length === 2) {
+        const programIdNum = parseInt(parts[0], 10);
+        const chainIdNum = parseInt(parts[1], 10);
+        if (!isNaN(programIdNum) && !isNaN(chainIdNum)) {
+          parsedProgramId = programIdNum;
+          parsedChainId = chainIdNum;
+        }
+      }
+    }
+
+    // Fetch community aggregate indicators
     const [data, error] = await fetchData(
-      INDEXER.COMMUNITY.V2.INDICATORS.AGGREGATED(
-        indicatorIds.join(","),
-        communityDetails.uid,
-        programId || undefined,
-        projectUID || undefined,
+      INDEXER.INDICATORS.V2.COMMUNITY_AGGREGATE(communityDetails.uid, {
+        indicatorIds: indicatorIds.join(","),
+        programId: parsedProgramId,
+        chainId: parsedChainId,
         startDate,
-        endDate
-      )
+        endDate,
+        granularity: "monthly",
+      })
     );
 
     if (error) {
       throw error;
     }
 
-    return data || [];
+    // Transform response to match existing interface
+    return transformResponse(data as CommunityAggregateResponse);
   };
 
   return useQuery({

@@ -1,6 +1,34 @@
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import type { ProjectIndicatorsResponse } from "@/types/indicator";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+
+/**
+ * Transform API response to match existing ImpactIndicatorWithData interface
+ */
+function transformProjectIndicators(
+  response: ProjectIndicatorsResponse
+): ImpactIndicatorWithData[] {
+  return response.indicators.map((indicator) => ({
+    id: indicator.id,
+    name: indicator.name,
+    description: indicator.description,
+    unitOfMeasure: indicator.unitOfMeasure,
+    programs: [], // Project indicators endpoint doesn't include programs
+    datapoints: indicator.datapoints.map((dp) => ({
+      value: dp.value,
+      proof: dp.proof || "",
+      startDate: dp.startDate,
+      endDate: dp.endDate,
+      outputTimestamp: dp.startDate,
+      breakdown: dp.breakdown || undefined,
+      period: dp.period || undefined,
+    })),
+    hasData: indicator.hasData,
+    isAssociatedWithPrograms: false, // This can be determined elsewhere if needed
+    aggregatedData: indicator.aggregatedData,
+  }));
+}
 
 /**
  * Fetches impact indicator data for a project
@@ -11,13 +39,16 @@ import { INDEXER } from "@/utilities/indexer";
 export const getImpactAnswers = async (
   projectIdentifier: string
 ): Promise<ImpactIndicatorWithData[]> => {
-  const [data, error] = await fetchData(INDEXER.PROJECT.IMPACT_INDICATORS.GET(projectIdentifier));
+  const [data, error] = await fetchData(
+    INDEXER.INDICATORS.V2.PROJECT_INDICATORS(projectIdentifier)
+  );
 
   if (error) {
     throw new Error(error);
   }
 
-  return data;
+  // Transform response to match existing interface
+  return transformProjectIndicators(data as ProjectIndicatorsResponse);
 };
 
 /**
@@ -39,6 +70,7 @@ export const sendImpactAnswers = async (
   }[]
 ): Promise<boolean> => {
   try {
+    // Write operations use the original endpoint (dual-write to MongoDB and PostgreSQL)
     const [, error] = await fetchData(
       INDEXER.PROJECT.IMPACT_INDICATORS.SEND(projectIdentifier),
       "POST",
