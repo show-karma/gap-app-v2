@@ -1,10 +1,15 @@
 "use client";
 
-import { Disclosure } from "@headlessui/react";
-import { ChevronDownIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { useQuery } from "@tanstack/react-query";
 import debounce from "lodash.debounce";
 import { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
@@ -15,6 +20,7 @@ import {
   extractAmountField,
   extractApplicationSummary,
 } from "@/utilities/form-schema-helpers";
+import { cn } from "@/utilities/tailwind";
 
 interface StatusChangeInlineProps {
   status: string;
@@ -273,6 +279,11 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
     );
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    void handleConfirm();
+  };
+
   const handleCancel = useCallback(() => {
     if (!isSubmitting) {
       if (debouncedAmountValidationRef.current) {
@@ -301,34 +312,35 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
     validateCurrency,
   ]);
 
-  const statusColor =
-    status === "approved"
-      ? "border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20"
-      : status === "rejected"
-        ? "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20"
-        : "border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20";
-
   return (
-    <div className={`mt-4 rounded-lg border ${statusColor} p-4`}>
+    <form
+      className={cn(
+        "mt-4 rounded-lg border p-4",
+        status === "approved" && "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20",
+        status === "rejected" && "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20",
+        status !== "approved" &&
+          status !== "rejected" &&
+          "border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20"
+      )}
+      onSubmit={handleSubmit}
+    >
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="mb-4 flex items-center gap-3">
         <div
-          className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${
-            status === "approved"
-              ? "bg-green-100 dark:bg-green-900"
-              : status === "rejected"
-                ? "bg-red-100 dark:bg-red-900"
-                : "bg-yellow-100 dark:bg-yellow-900"
-          }`}
+          className={cn(
+            "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full",
+            status === "approved" && "bg-green-100 dark:bg-green-900",
+            status === "rejected" && "bg-red-100 dark:bg-red-900",
+            status !== "approved" && status !== "rejected" && "bg-yellow-100 dark:bg-yellow-900"
+          )}
         >
           <ExclamationTriangleIcon
-            className={`h-4 w-4 ${
-              status === "approved"
-                ? "text-green-600 dark:text-green-400"
-                : status === "rejected"
-                  ? "text-red-600 dark:text-red-400"
-                  : "text-yellow-600 dark:text-yellow-400"
-            }`}
+            className={cn(
+              "h-4 w-4",
+              status === "approved" && "text-green-600 dark:text-green-400",
+              status === "rejected" && "text-red-600 dark:text-red-400",
+              status !== "approved" && status !== "rejected" && "text-yellow-600 dark:text-yellow-400"
+            )}
             aria-hidden="true"
           />
         </div>
@@ -344,36 +356,35 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
 
       {/* Application Summary - Only show when approving and has summary data */}
       {isApprovalStatus && applicationSummary.length > 0 && (
-        <Disclosure defaultOpen>
-          {({ open }) => (
-            <div className="mb-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-              <Disclosure.Button className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-t-lg transition-colors">
-                <span>Application Summary</span>
-                <ChevronDownIcon
-                  className={`h-4 w-4 text-gray-500 transition-transform ${open ? "rotate-180" : ""}`}
-                />
-              </Disclosure.Button>
-              <Disclosure.Panel className="px-3 pb-3">
-                <dl className="space-y-1.5">
-                  {applicationSummary.map((field, index) => (
-                    <div key={index} className="flex items-start gap-2 text-xs">
-                      <dt className="font-medium text-gray-500 dark:text-gray-400 min-w-0 shrink-0">
-                        {field.label}:
-                      </dt>
-                      <dd
-                        className={`text-gray-900 dark:text-gray-100 break-words min-w-0 ${
-                          field.isAmount ? "font-semibold text-green-700 dark:text-green-400" : ""
-                        }`}
-                      >
-                        {field.value}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </Disclosure.Panel>
-            </div>
-          )}
-        </Disclosure>
+        <Accordion type="single" collapsible defaultValue="summary" className="mb-4">
+          <AccordionItem
+            value="summary"
+            className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+          >
+            <AccordionTrigger className="px-3 py-2 text-sm font-medium text-gray-700 hover:no-underline dark:text-gray-300">
+              Application Summary
+            </AccordionTrigger>
+            <AccordionContent className="px-3 pb-3">
+              <dl className="space-y-1.5">
+                {applicationSummary.map((field) => (
+                  <div key={field.label} className="flex items-start gap-2 text-xs">
+                    <dt className="min-w-0 shrink-0 font-medium text-gray-500 dark:text-gray-400">
+                      {field.label}:
+                    </dt>
+                    <dd
+                      className={cn(
+                        "min-w-0 break-words text-gray-900 dark:text-gray-100",
+                        field.isAmount && "font-semibold text-green-700 dark:text-green-400"
+                      )}
+                    >
+                      {field.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       )}
 
       {/* Form Fields */}
@@ -385,7 +396,7 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
             <div className="flex-1">
               <label
                 htmlFor="approvedAmount"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Approved Amount <span className="text-red-500">*</span>
               </label>
@@ -399,7 +410,10 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
                   .filter(Boolean)
                   .join(" ")}
                 aria-invalid={!!amountError}
-                className={`block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 ${amountError ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
+                className={cn(
+                  "block w-full rounded-md border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm",
+                  amountError && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                )}
                 placeholder="0.00"
                 value={approvedAmount}
                 onChange={(e) => handleAmountChange(e.target.value)}
@@ -409,11 +423,7 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
                 Enter the approved funding amount as a positive number
               </div>
               {amountError && (
-                <p
-                  id="amount-error"
-                  role="alert"
-                  className="mt-1 text-xs text-red-600 dark:text-red-400"
-                >
+                <p id="amount-error" role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
                   {amountError}
                 </p>
               )}
@@ -428,13 +438,13 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
             <div className="w-40">
               <label
                 htmlFor="approvedCurrency"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Currency <span className="text-red-500">*</span>
               </label>
               {fundingDetailsQuery.isError && (
                 <div className="mb-1 flex items-start gap-2 rounded border border-yellow-200 bg-yellow-50 p-1.5 dark:border-yellow-900/50 dark:bg-yellow-900/20">
-                  <ExclamationTriangleIcon className="w-3 h-3 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                  <ExclamationTriangleIcon className="mt-0.5 h-3 w-3 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
                   <p className="text-xs text-yellow-800 dark:text-yellow-200">Auto-load failed</p>
                 </div>
               )}
@@ -443,7 +453,7 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
                   id="approvedCurrency"
                   name="approvedCurrency"
                   type="text"
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm sm:text-sm px-3 py-2 cursor-not-allowed"
+                  className="block w-full cursor-not-allowed rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 shadow-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 sm:text-sm"
                   value=""
                   placeholder="Loading..."
                   readOnly
@@ -454,7 +464,7 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
                   id="approvedCurrency"
                   name="approvedCurrency"
                   type="text"
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm sm:text-sm px-3 py-2 cursor-not-allowed"
+                  className="block w-full cursor-not-allowed rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 shadow-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 sm:text-sm"
                   value={approvedCurrency}
                   readOnly
                   disabled
@@ -466,9 +476,10 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
                   type="text"
                   aria-describedby={currencyError ? "currency-error" : "currency-info"}
                   aria-invalid={!!currencyError}
-                  className={`block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 ${
-                    currencyError ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""
-                  }`}
+                  className={cn(
+                    "block w-full rounded-md border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm",
+                    currencyError && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                  )}
                   placeholder="e.g., USD"
                   value={approvedCurrency}
                   onChange={(e) => handleCurrencyChange(e.target.value)}
@@ -476,11 +487,7 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
                 />
               )}
               {currencyError && (
-                <p
-                  id="currency-error"
-                  role="alert"
-                  className="mt-1 text-xs text-red-600 dark:text-red-400"
-                >
+                <p id="currency-error" role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
                   {currencyError}
                 </p>
               )}
@@ -492,12 +499,11 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
         <div>
           <label
             htmlFor="reason"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Reason{" "}
-            {isReasonActuallyRequired ? <span className="text-red-500">*</span> : "(Optional)"}
+            Reason {isReasonActuallyRequired ? <span className="text-red-500">*</span> : "(Optional)"}
           </label>
-          <div className={isSubmitting ? "opacity-50 pointer-events-none" : ""}>
+          <div className={cn(isSubmitting && "pointer-events-none opacity-50")}>
             <MarkdownEditor
               id="reason"
               value={reason}
@@ -531,25 +537,20 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
 
       {/* Action Buttons */}
       <div className="mt-4 flex justify-end gap-3">
-        <Button variant="secondary" onClick={handleCancel} disabled={isSubmitting}>
+        <Button type="button" variant="secondary" onClick={handleCancel} disabled={isSubmitting}>
           Cancel
         </Button>
         <Button
-          onClick={handleConfirm}
+          type="submit"
           disabled={!isFormValid}
-          className={
-            status === "approved"
-              ? "bg-green-600 hover:bg-green-700"
-              : status === "rejected"
-                ? "bg-red-600 hover:bg-red-700"
-                : ""
-          }
+          className={cn(
+            status === "approved" && "bg-green-600 hover:bg-green-700",
+            status === "rejected" && "bg-red-600 hover:bg-red-700"
+          )}
         >
           {isSubmitting ? "Processing..." : "Confirm"}
         </Button>
       </div>
-    </div>
+    </form>
   );
 };
-
-export default StatusChangeInline;
