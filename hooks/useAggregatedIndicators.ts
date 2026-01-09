@@ -22,8 +22,8 @@ export interface AggregatedIndicator {
 interface V2AggregatedDatapoint {
   indicatorId: string;
   indicatorName: string;
-  periodStart: string;
-  periodEnd: string;
+  startDate: string;
+  endDate: string;
   totalValue: number;
   projectCount: number;
 }
@@ -58,7 +58,7 @@ function transformV2Response(v2Response: V2CommunityAggregateResponse): Aggregat
     totalProjects: indicator.totalProjects,
     aggregatedData: indicator.aggregatedData.map((dp) => ({
       value: dp.totalValue,
-      timestamp: dp.periodStart, // Use period start as timestamp
+      timestamp: dp.startDate, // Use start date as timestamp
     })),
   }));
 }
