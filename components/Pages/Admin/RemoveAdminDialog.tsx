@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { GAP } from "@show-karma/karma-gap-sdk";
 import { type FC, Fragment, useState } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -65,7 +64,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({ UUID, chainid, Admin, 
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { changeStepperStep, setIsStepper, startAttestation, showSuccess } = useAttestationToast();
 
   const onSubmit = async () => {
     setIsLoading(true); // Set loading state to true
@@ -82,8 +81,8 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({ UUID, chainid, Admin, 
 
     const { walletSigner } = setup;
     try {
+      startAttestation("Removing admin...");
       const communityResolver = (await GAP.getCommunityResolver(walletSigner)) as any;
-      changeStepperStep("preparing");
       const communityResponse = await communityResolver.delist(UUID, Admin);
 
       changeStepperStep("pending");
@@ -116,7 +115,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({ UUID, chainid, Admin, 
             if (addressRemoved) {
               await fetchAdmins();
               changeStepperStep("indexed");
-              toast.success("Admin removed successfully!");
+              showSuccess("Admin removed successfully!");
               closeModal(); // Close the dialog upon successful submission
               break;
             }

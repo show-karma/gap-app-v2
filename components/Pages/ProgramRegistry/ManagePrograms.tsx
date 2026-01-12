@@ -23,8 +23,8 @@ import {
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import Pagination from "@/components/Utilities/Pagination";
-import { ProgramRegistryService } from "@/services/programRegistry.service";
 import { useAuth } from "@/hooks/useAuth";
+import { ProgramRegistryService } from "@/services/programRegistry.service";
 import { useRegistryStore } from "@/store/registry";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
@@ -205,7 +205,7 @@ export const ManagePrograms = () => {
         grantTypes: selectedGrantTypes.length ? selectedGrantTypes.join(",") : undefined,
         sortField: sortField as "createdAt" | "updatedAt" | "name" | "programId",
         sortOrder: sortOrder as "asc" | "desc",
-        owners: (address && !isRegistryAdmin) ? address : undefined,
+        owners: address && !isRegistryAdmin ? address : undefined,
       });
 
       const [res, error] = await fetchData(url);

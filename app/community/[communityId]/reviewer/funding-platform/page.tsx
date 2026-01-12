@@ -533,10 +533,7 @@ export default function ReviewerFundingPlatformPage() {
                 {/* Action Buttons - View Applications and View Form */}
                 <div className="flex flex-row gap-2">
                   <Link
-                    href={PAGES.REVIEWER.APPLICATIONS(
-                      communityId,
-                      program.programId
-                    )}
+                    href={PAGES.REVIEWER.APPLICATIONS(communityId, program.programId)}
                     className="w-full"
                   >
                     <Button
@@ -548,10 +545,7 @@ export default function ReviewerFundingPlatformPage() {
                     </Button>
                   </Link>
                   <Link
-                    href={PAGES.REVIEWER.QUESTION_BUILDER(
-                      communityId,
-                      program.programId
-                    )}
+                    href={PAGES.REVIEWER.QUESTION_BUILDER(communityId, program.programId)}
                     className="w-full"
                   >
                     <Button
@@ -568,12 +562,7 @@ export default function ReviewerFundingPlatformPage() {
                 {program?.metrics?.pendingApplications &&
                 program.metrics.pendingApplications > 0 ? (
                   <div className="mt-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                    <Link
-                      href={PAGES.REVIEWER.APPLICATIONS(
-                        communityId,
-                        program.programId
-                      )}
-                    >
+                    <Link href={PAGES.REVIEWER.APPLICATIONS(communityId, program.programId)}>
                       <button
                         type="button"
                         className="rounded-lg px-2 py-2 w-full border-none text-left flex items-center justify-between text-orange-700 dark:text-orange-300 text-sm hover:text-orange-800 dark:hover:text-orange-200"

@@ -120,9 +120,7 @@ export default function ReviewerQuestionBuilderPage() {
 
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">Form Builder</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Program ID: {programId}
-                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Program ID: {programId}</p>
               </div>
             </div>
 

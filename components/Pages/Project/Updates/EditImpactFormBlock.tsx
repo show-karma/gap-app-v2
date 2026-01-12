@@ -6,7 +6,6 @@ import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
@@ -82,7 +81,8 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
   });
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, changeStepperStep, showSuccess, showError, dismiss } =
+    useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
   // Load existing impact data
@@ -109,6 +109,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
 
     try {
       setIsLoading(true);
+      startAttestation("Updating impact...");
       const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
@@ -153,13 +154,13 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
         createdAt: impactInstance.createdAt,
       });
 
-      await updatedImpact.attest(walletSigner as any).then(async (res) => {
+      await updatedImpact.attest(walletSigner as any, changeStepperStep).then(async (res) => {
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
         }
-        showLoading("Indexing impact...");
+        changeStepperStep("indexing");
         const attestUID = updatedImpact.uid;
         while (retries > 0) {
           try {
@@ -169,8 +170,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
             if (foundImpact) {
               retries = 0;
               await refetchImpacts();
-              showSuccess("Impact updated!");
-              toast.success("Impact updated successfully");
+              showSuccess("Impact updated successfully");
               setTimeout(() => {
                 dismiss();
                 if (onClose) {
@@ -187,11 +187,11 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
         }
       });
     } catch (error: any) {
-      dismiss();
+      showError("There was an error updating the impact. Please try again");
       errorManager(`Error updating impact ${impactId} from project ${project?.uid}`, error);
-      toast.error("There was an error updating the impact. Please try again");
     } finally {
       setIsLoading(false);
+      dismiss();
     }
   };
 

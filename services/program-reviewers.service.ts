@@ -97,10 +97,7 @@ export const programReviewersService = {
   /**
    * Add a reviewer to a program
    */
-  async addReviewer(
-    programId: string,
-    reviewerData: AddReviewerRequest
-  ): Promise<ProgramReviewer> {
+  async addReviewer(programId: string, reviewerData: AddReviewerRequest): Promise<ProgramReviewer> {
     const response = await apiClient.post<{ reviewer?: ProgramReviewerResponse }>(
       INDEXER.V2.FUNDING_PROGRAMS.REVIEWERS(programId),
       reviewerData
@@ -136,9 +133,7 @@ export const programReviewersService = {
    * Remove a reviewer from a program
    */
   async removeReviewer(programId: string, publicAddress: string): Promise<void> {
-    await apiClient.delete(
-      `/v2/funding-program-configs/${programId}/reviewers/${publicAddress}`
-    );
+    await apiClient.delete(`/v2/funding-program-configs/${programId}/reviewers/${publicAddress}`);
   },
 
   /**

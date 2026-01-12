@@ -1,19 +1,17 @@
 "use client";
-import { ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
+import { ChartLine, Coins, LandPlot, SquareUser } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
-import { FolderIcon } from "@/components/Icons/Folder";
-import { Target2Icon } from "@/components/Icons/Target2";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
 const activeLinkStyle =
-  "text-brand-darkblue dark:text-white font-bold border-b border-b-4 border-b-brand-blue dark:border-b-brand-blue";
+  "text-gray-900 dark:text-white border-b-4 border-b-gray-900 dark:border-b-white";
 const inactiveLinkStyle =
-  "text-gray-600 dark:text-zinc-400 font-normal hover:text-brand-darkblue dark:hover:text-white border-b border-b-4 border-b-transparent";
+  "text-gray-500 dark:text-zinc-400 border-b-4 border-b-transparent hover:text-gray-700 dark:hover:text-zinc-300";
 const baseLinkStyle =
-  "flex flex-row items-center gap-2 px-3 py-2 max-lg:w-full rounded-none text-base font-semibold font-['Inter'] leading-normal w-max transition-colors duration-200";
+  "flex flex-row items-center gap-3 p-3 max-lg:w-full rounded-none text-base font-normal leading-6 w-max transition-colors duration-200";
 
 const NewTag = () => {
   return (
@@ -33,34 +31,34 @@ type NavigationItem = {
 
 const NAVIGATION_ITEMS: readonly NavigationItem[] = [
   {
+    path: (communityId: string) => PAGES.COMMUNITY.FUNDING_OPPORTUNITIES(communityId),
+    title: () => "Funding opportunities",
+    Icon: Coins,
+    isActive: (pathname: string) => pathname.includes("/funding-opportunities"),
+  },
+  {
     path: (communityId: string) => PAGES.COMMUNITY.ALL_GRANTS(communityId),
-    title: (communityName: string) => `View all ${communityName} Community Projects`,
-    Icon: FolderIcon,
+    title: (communityName: string) => `View ${communityName} community projects`,
+    Icon: SquareUser,
     isActive: (pathname: string) =>
       !pathname.includes("/impact") &&
       !pathname.includes("/project-discovery") &&
       !pathname.includes("/updates") &&
-      !pathname.includes("/donate"),
+      !pathname.includes("/donate") &&
+      !pathname.includes("/funding-opportunities"),
   },
   {
     path: (communityId: string) => PAGES.COMMUNITY.UPDATES(communityId),
-    title: () => "Milestone Updates",
-    Icon: ClipboardDocumentListIcon,
+    title: () => "Milestone updates",
+    Icon: LandPlot,
     isActive: (pathname: string) => pathname.includes("/updates"),
   },
   {
     path: (communityId: string) => PAGES.COMMUNITY.IMPACT(communityId),
-    title: () => "Learn about their impact",
-    Icon: Target2Icon,
+    title: () => "Impact",
+    Icon: ChartLine,
     isActive: (pathname: string) => pathname.includes("/impact"),
-    showNewTag: false,
   },
-  // {
-  //   path: (communityId: string) => `/community/${communityId}/karma-ai`,
-  //   title: () => "Ask Karma AI",
-  //   Icon: SparklesIcon,
-  //   isActive: (pathname: string) => pathname.includes("/karma-ai"),
-  // },
 ] as const;
 
 const getPathWithProgramId = (program: string | null, basePath: string) => {
@@ -79,7 +77,7 @@ export const CommunityPageNavigator = () => {
   if (isAdminPage) return null;
 
   return (
-    <div className="flex-row max-md:flex-col flex-wrap px-1.5 pt-2 mb-[-1px] rounded-lg justify-start items-center gap-4 flex h-max">
+    <div className="flex flex-row max-md:flex-col flex-wrap pt-8 border-b border-gray-200 dark:border-zinc-700 justify-start items-center gap-6 h-max">
       {NAVIGATION_ITEMS.map(({ path, title, Icon, isActive, showNewTag }) => (
         <Link
           key={path(communityId)}
@@ -90,8 +88,8 @@ export const CommunityPageNavigator = () => {
             className={cn(
               "w-6 h-6 transition-colors duration-200",
               isActive(pathname)
-                ? "text-brand-blue dark:text-brand-blue"
-                : "text-brand-darkblue dark:text-zinc-400"
+                ? "text-gray-900 dark:text-white"
+                : "text-gray-500 dark:text-zinc-400"
             )}
           />
           {title(community?.details?.name || "")}

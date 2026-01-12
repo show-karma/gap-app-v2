@@ -2,7 +2,7 @@
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
@@ -12,14 +12,14 @@ import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAc
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useCategories } from "@/hooks/useCategories";
 import { useCommunityGrants } from "@/hooks/useCommunityGrants";
-import { type SimplifiedGrant, useGrants } from "@/hooks/useGrants";
+import type { SimplifiedGrant } from "@/hooks/useGrants";
 import { useGrantsTable } from "@/hooks/useGrantsTable";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
+import { reduceText } from "@/utilities/reduceText";
 import { CategoryCreationDialog } from "./CategoryCreationDialog";
 import { GrantsTable } from "./GrantsTable";
 import { ProgramFilter } from "./ProgramFilter";
@@ -56,13 +56,30 @@ export default function EditCategoriesPage() {
     }
   }, [communityError, router]);
 
-  // Fetch grants data
-  const { data, isLoading: isLoadingGrants, refetch: refreshGrants } = useGrants(communityId);
+  // Fetch grants data using V2 endpoint
+  const {
+    grants: communityGrants,
+    isLoading: isLoadingGrants,
+    refetch: refreshGrants,
+  } = useCommunityGrants(community?.details?.slug || communityId);
 
-  // Fetch all grants for the filter dropdown
-  const { data: communityGrants = [] } = useCommunityGrants(
-    community?.details?.slug || communityId
-  );
+  // Transform CommunityGrant to SimplifiedGrant format for useGrantsTable
+  const simplifiedGrants: SimplifiedGrant[] = useMemo(() => {
+    return communityGrants.map((grant) => ({
+      uid: grant.uid,
+      grant: grant.title,
+      project: grant.projectTitle,
+      description: reduceText(grant.description || ""),
+      categories: grant.categories || [],
+      projectUid: grant.projectUID,
+      projectSlug: grant.projectSlug,
+      programId: grant.programId,
+      // Fields not used by this page but required by SimplifiedGrant type
+      createdOn: "",
+      regions: [],
+      grantChainId: 0,
+    }));
+  }, [communityGrants]);
 
   // Table state management
   const {
@@ -76,7 +93,7 @@ export default function EditCategoriesPage() {
     handleProgramChange,
     handleSortChange,
   } = useGrantsTable({
-    grants: (data?.grants as SimplifiedGrant[]) || [],
+    grants: simplifiedGrants,
     itemsPerPage: 12,
   });
 
@@ -97,14 +114,10 @@ export default function EditCategoriesPage() {
         return fetchData(INDEXER.PROJECT.CATEGORIES.UPDATE(uid), "PUT", {
           categories,
           communityUID: community?.uid,
-        })
-          .then(() => {
-            refreshGrants();
-          })
-          .catch((error) => {
-            console.error(error);
-            hasError = true;
-          });
+        }).catch((error) => {
+          console.error(error);
+          hasError = true;
+        });
       });
       await Promise.all(promises);
 
@@ -112,7 +125,9 @@ export default function EditCategoriesPage() {
         throw new Error("Error updating categories");
       }
 
+      await refreshGrants();
       toast.success("Categories updated successfully.");
+      setSelectedCategories({});
     } catch (error: any) {
       errorManager(
         `Error updating categories of ${communityId}`,
@@ -157,7 +172,10 @@ export default function EditCategoriesPage() {
           </Link>
           <div className="flex items-center gap-4">
             <ProgramFilter
-              programs={communityGrants}
+              programs={communityGrants.map((g) => ({
+                programId: g.programId,
+                title: g.title,
+              }))}
               selectedProgramId={selectedProgramId}
               onChange={handleProgramChange}
             />

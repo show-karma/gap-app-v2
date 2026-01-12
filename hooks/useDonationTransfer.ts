@@ -82,9 +82,8 @@ export function useDonationTransfer() {
 
   const checkApprovals = useCallback(
     async (payments: DonationPayment[]): Promise<TokenApprovalInfo[]> => {
-      if (!address || !publicClient) {
-        const error = new Error("Wallet not connected or public client unavailable");
-        throw error;
+      if (!address) {
+        throw new Error("Wallet not connected");
       }
 
       // Group token transfers by token address to get total required amounts
@@ -150,14 +149,9 @@ export function useDonationTransfer() {
 
       for (const [chainId, requirementsMap] of tokenRequirementsByChain.entries()) {
         const requirementsList = Array.from(requirementsMap.values());
-        const chainPublicClient =
-          publicClient && publicClient.chain?.id === chainId
-            ? publicClient
-            : await getRPCClient(chainId);
-
-        if (!chainPublicClient) {
-          throw new Error(`RPC client not configured for chain ${chainId}`);
-        }
+        // Always use getRPCClient for chain-specific operations to avoid issues
+        // with publicClient being undefined during network switches
+        const chainPublicClient = await getRPCClient(chainId);
 
         const resolvedClient = chainPublicClient as PublicClient;
 
@@ -176,7 +170,7 @@ export function useDonationTransfer() {
 
       return approvalResults;
     },
-    [address, publicClient]
+    [address]
   );
 
   const executeApprovalTransactions = useCallback(
@@ -237,7 +231,7 @@ export function useDonationTransfer() {
   const executeDonations = useCallback(
     async (
       payments: DonationPayment[],
-      getRecipientAddress: (projectId: string) => string,
+      getRecipientAddress: (projectId: string, chainId: number) => string,
       beforeTransfer?: (payment: DonationPayment) => Promise<void>
     ) => {
       if (!address) {
@@ -247,9 +241,11 @@ export function useDonationTransfer() {
       // SECURITY: Validate all recipient addresses upfront before starting execution
       // This implements the checks-effects-interactions pattern
       const _recipientValidation = payments.map((payment) => {
-        const recipient = getRecipientAddress(payment.projectId);
+        const recipient = getRecipientAddress(payment.projectId, payment.chainId);
         if (!recipient) {
-          throw new Error(`Missing payout address for project ${payment.projectId}`);
+          throw new Error(
+            `Missing payout address for project ${payment.projectId} on chain ${payment.chainId}`
+          );
         }
         // Validate it's a proper Ethereum address
         try {
@@ -391,9 +387,11 @@ export function useDonationTransfer() {
           }> = [];
 
           chainPayments.forEach((payment) => {
-            const recipientAddress = getRecipientAddress(payment.projectId);
+            const recipientAddress = getRecipientAddress(payment.projectId, payment.chainId);
             if (!recipientAddress) {
-              throw new Error(`No recipient address for project ${payment.projectId}`);
+              throw new Error(
+                `No recipient address for project ${payment.projectId} on chain ${payment.chainId}`
+              );
             }
 
             const projectAddress = getAddress(recipientAddress);

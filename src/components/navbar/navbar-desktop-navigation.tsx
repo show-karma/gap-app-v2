@@ -1,17 +1,16 @@
 "use client";
 
+import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Button } from "@/components/ui/button";
 import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { useStaff } from "@/hooks/useStaff";
@@ -34,10 +33,22 @@ import { NavbarSearch } from "./navbar-search";
 import { NavbarUserMenu } from "./navbar-user-menu";
 
 const menuStyles = {
-  button:
-    "px-1 font-medium text-muted-foreground flex flex-row gap-1 hover:bg-transparent hover:text-foreground data-[state=open]:bg-transparent data-[state=open]:text-foreground shadow-none h-auto",
+  trigger:
+    "group inline-flex h-auto py-2 px-1 w-max items-center justify-center rounded-md bg-transparent text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-transparent focus:bg-transparent focus:text-foreground focus:outline-none data-[state=open]:text-foreground data-[state=open]:bg-transparent",
   itemText: "text-foreground text-sm font-medium",
 };
+
+function NavDropdownTrigger({ children }: { children: React.ReactNode }) {
+  return (
+    <DropdownMenuTrigger className={menuStyles.trigger}>
+      {children}
+      <ChevronDown
+        className="relative top-[1px] ml-0.5 h-3 w-3 transition duration-300 group-data-[state=open]:rotate-180"
+        aria-hidden="true"
+      />
+    </DropdownMenuTrigger>
+  );
+}
 
 const socialMediaLinks = [
   {
@@ -80,33 +91,27 @@ export function NavbarDesktopNavigation() {
       <div className="flex flex-row items-center gap-3 flex-shrink-0">
         <Logo />
         {!isLoggedIn ? (
-          <NavigationMenu>
-            <NavigationMenuList>
-              {/* For Builders Dropdown */}
-              <NavigationMenuItem>
-                <NavigationMenuTrigger className={cn(menuStyles.button, "h-auto py-2")}>
-                  For Builders
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <div className="min-w-[500px] p-4">
-                    <ForBuildersContent variant="desktop" />
-                  </div>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
+          <div className="flex items-center gap-1">
+            {/* For Builders Dropdown */}
+            <DropdownMenu>
+              <NavDropdownTrigger>For Builders</NavDropdownTrigger>
+              <DropdownMenuContent align="start" className="p-0">
+                <div className="min-w-[500px] p-4">
+                  <ForBuildersContent variant="desktop" />
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-              {/* For Funders Dropdown */}
-              <NavigationMenuItem>
-                <NavigationMenuTrigger className={cn(menuStyles.button, "h-auto py-2")}>
-                  For Funders
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <div className="min-w-[500px] p-4">
-                    <ForFundersContent variant="desktop" />
-                  </div>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-            </NavigationMenuList>
-          </NavigationMenu>
+            {/* For Funders Dropdown */}
+            <DropdownMenu>
+              <NavDropdownTrigger>For Funders</NavDropdownTrigger>
+              <DropdownMenuContent align="start" className="p-0">
+                <div className="min-w-[500px] p-4">
+                  <ForFundersContent variant="desktop" />
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         ) : (
           <div className="flex flex-row items-center ml-2 gap-2">
             <Button variant="outline" size="sm" asChild>
@@ -134,60 +139,48 @@ export function NavbarDesktopNavigation() {
       <div className="flex flex-1 justify-center flex-row items-center gap-3">
         {/* Search */}
         <NavbarSearch />
-        <NavigationMenu>
-          <NavigationMenuList>
-            {/* Explore Dropdown */}
-            <NavigationMenuItem>
-              <NavigationMenuTrigger className={cn(menuStyles.button, "h-auto py-2")}>
-                Explore
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ExploreContent variant="desktop" />
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-          </NavigationMenuList>
-        </NavigationMenu>
+        {/* Explore Dropdown */}
+        <DropdownMenu>
+          <NavDropdownTrigger>Explore</NavDropdownTrigger>
+          <DropdownMenuContent align="center" className="p-0">
+            <ExploreContent variant="desktop" />
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {!isLoggedIn ? (
         <div className="flex flex-row items-center gap-4">
-          <NavigationMenu>
-            <NavigationMenuList>
-              {/* Resources Dropdown */}
-              <NavigationMenuItem>
-                <NavigationMenuTrigger className={cn(menuStyles.button, "h-auto py-2")}>
-                  Resources
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <div className="flex flex-col gap-4 px-4 py-4 w-max">
-                    <ResourcesContent variant="desktop" />
-                    <hr className="h-[1px] w-full border-border" />
-                    <div className="flex flex-col items-start justify-start w-full">
-                      <MenuSection title="Follow" variant="desktop" />
-                      <div className="flex flex-row items-center w-full justify-between gap-4 py-2">
-                        {socialMediaLinks.map((social) => {
-                          const IconComponent = social.icon;
-                          return (
-                            <ExternalLink
-                              key={social.name}
-                              href={social.href}
-                              className={cn(
-                                menuStyles.itemText,
-                                "flex items-center justify-center rounded-full transition-colors"
-                              )}
-                              aria-label={social.name}
-                            >
-                              <IconComponent className="w-5 h-5" />
-                            </ExternalLink>
-                          );
-                        })}
-                      </div>
-                    </div>
+          {/* Resources Dropdown */}
+          <DropdownMenu>
+            <NavDropdownTrigger>Resources</NavDropdownTrigger>
+            <DropdownMenuContent align="end" className="p-0">
+              <div className="flex flex-col gap-4 px-4 py-4 w-max">
+                <ResourcesContent variant="desktop" />
+                <hr className="h-[1px] w-full border-border" />
+                <div className="flex flex-col items-start justify-start w-full">
+                  <MenuSection title="Follow" variant="desktop" />
+                  <div className="flex flex-row items-center w-full justify-between gap-4 py-2">
+                    {socialMediaLinks.map((social) => {
+                      const IconComponent = social.icon;
+                      return (
+                        <ExternalLink
+                          key={social.name}
+                          href={social.href}
+                          className={cn(
+                            menuStyles.itemText,
+                            "flex items-center justify-center rounded-full transition-colors"
+                          )}
+                          aria-label={social.name}
+                        >
+                          <IconComponent className="w-5 h-5" />
+                        </ExternalLink>
+                      );
+                    })}
                   </div>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-            </NavigationMenuList>
-          </NavigationMenu>
+                </div>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Auth Buttons */}
           <NavbarAuthButtons />

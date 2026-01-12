@@ -271,17 +271,23 @@ describe("useDonationTransfer", () => {
       );
     });
 
-    it("should throw error when public client unavailable", async () => {
+    it("should use getRPCClient when public client unavailable", async () => {
+      // When publicClient is null, checkApprovals should fall back to getRPCClient
+      // and not throw an error. This enables multi-chain donations during network switches.
       (wagmi.usePublicClient as jest.Mock).mockReturnValue(null);
 
       const { result } = renderHook(() => useDonationTransfer());
 
-      await expect(result.current.checkApprovals([mockPayment])).rejects.toThrow();
+      // Should resolve without throwing since getRPCClient is used as fallback
+      const approvals = await result.current.checkApprovals([mockPayment]);
+      expect(Array.isArray(approvals)).toBe(true);
     });
   });
 
   describe("executeDonations", () => {
-    const getRecipientAddress = jest.fn((_projectId: string) => mockRecipientAddress);
+    const getRecipientAddress = jest.fn(
+      (_projectId: string, _chainId: number) => mockRecipientAddress
+    );
 
     it("should execute donation for native token", async () => {
       const { result } = renderHook(() => useDonationTransfer());

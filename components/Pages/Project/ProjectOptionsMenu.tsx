@@ -16,7 +16,6 @@ import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { Fragment, useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { AdminTransferOwnershipDialog } from "@/components/Dialogs/AdminTransferOwnershipDialog";
 import { GithubIcon } from "@/components/Icons";
@@ -80,7 +79,8 @@ export const ProjectOptionsMenu = () => {
   const { authenticated: isAuthenticated } = useAuth();
   const { switchChainAsync } = useWallet();
   const router = useRouter();
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
+    useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const { isProjectEditModalOpen, openProjectEditModal } = useProjectEditModalStore();
   const { isMergeModalOpen, openMergeModal } = useMergeModalStore();
@@ -143,12 +143,18 @@ export const ProjectOptionsMenu = () => {
       const { gapClient, walletSigner } = setup;
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject || !gapClient) return;
-      await deleteProject(fetchedProject, walletSigner, gapClient, router, changeStepperStep).then(
-        async () => {
-          toast.success(MESSAGES.PROJECT.DELETE.SUCCESS);
-        }
+      await deleteProject(
+        fetchedProject,
+        walletSigner,
+        gapClient,
+        router,
+        changeStepperStep,
+        setIsStepper,
+        startAttestation,
+        showSuccess
       );
     } catch (error: any) {
+      showError(MESSAGES.PROJECT.DELETE.ERROR);
       errorManager(
         MESSAGES.PROJECT.DELETE.ERROR,
         error,
@@ -158,7 +164,6 @@ export const ProjectOptionsMenu = () => {
       setIsStepper(false);
     } finally {
       setIsDeleting(false);
-      setIsStepper(false);
     }
   };
 

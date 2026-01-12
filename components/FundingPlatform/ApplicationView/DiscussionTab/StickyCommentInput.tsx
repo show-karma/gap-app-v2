@@ -15,7 +15,7 @@ export interface StickyCommentInputProps {
 }
 
 /**
- * Sticky comment input that stays at the bottom of the Discussion tab.
+ * Sticky comment input that stays at the bottom of the Comments tab.
  * Has visual separation from the timeline with shadow and border.
  */
 export const StickyCommentInput: FC<StickyCommentInputProps> = ({

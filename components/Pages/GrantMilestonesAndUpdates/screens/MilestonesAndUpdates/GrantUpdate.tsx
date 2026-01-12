@@ -1,6 +1,5 @@
 import { ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { type FC, useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -68,7 +67,8 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
   const { switchChainAsync } = useWallet();
   const [isDeletingGrantUpdate, setIsDeletingGrantUpdate] = useState(false);
   const { setupChainAndWallet } = useSetupChainAndWallet();
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
+    useAttestationToast();
   const { project, isProjectOwner } = useProjectStore();
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const { isOwner: isContractOwner } = useOwnerStore();
@@ -82,6 +82,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
     if (!address || !project) return;
     try {
       setIsDeletingGrantUpdate(true);
+      startAttestation("Deleting grant update...");
       const setup = await setupChainAndWallet({
         targetChainId: update.chainID,
         currentChainId: chain?.id,
@@ -151,7 +152,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
           await checkIfAttestationExists(() => {
             changeStepperStep("indexed");
           });
-          toast.success(MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS);
+          showSuccess(MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS);
         } catch (onChainError: any) {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
@@ -173,6 +174,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
         }
       }
     } catch (error: any) {
+      showError(MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR);
       errorManager(
         MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR,
         error,

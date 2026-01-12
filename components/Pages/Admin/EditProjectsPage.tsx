@@ -203,7 +203,7 @@ export default function EditProjectsPage() {
   });
 
   // Fetch all grants for the filter dropdown
-  const { data: grants = [] } = useCommunityGrants(community?.details?.slug || communityId);
+  const { grants } = useCommunityGrants(community?.details?.slug || communityId);
 
   const projects = projectsData?.payload || [];
   const totalItems = projectsData?.pagination?.totalCount || 0;

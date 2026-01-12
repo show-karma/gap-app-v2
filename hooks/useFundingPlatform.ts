@@ -41,10 +41,7 @@ const QUERY_KEYS = {
     programId,
     email,
   ],
-  applicationStats: (programId: string) => [
-    "application-stats",
-    programId,
-  ],
+  applicationStats: (programId: string) => ["application-stats", programId],
   applicationComments: (applicationId: string, isAdmin?: boolean) => [
     "application-comments",
     applicationId,
@@ -191,10 +188,7 @@ export const useProgramConfig = (programId: string) => {
 /**
  * Hook for managing grant applications with infinite scroll
  */
-export const useFundingApplications = (
-  programId: string,
-  filters: IApplicationFilters = {}
-) => {
+export const useFundingApplications = (programId: string, filters: IApplicationFilters = {}) => {
   const queryClient = useQueryClient();
 
   // Set default limit to 25 if not provided, exclude page from filters for infinite scroll
@@ -581,10 +575,7 @@ export const useApplicationByReference = (referenceNumber: string) => {
 /**
  * Hook for exporting applications with V2 format support
  */
-export const useApplicationExport = (
-  programId: string,
-  isAdmin: boolean = false
-) => {
+export const useApplicationExport = (programId: string, isAdmin: boolean = false) => {
   const [isExporting, setIsExporting] = useState(false);
 
   const exportApplications = useCallback(

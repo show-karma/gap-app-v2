@@ -4,7 +4,6 @@ import type { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/c
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -47,7 +46,8 @@ export const ObjectiveCardComplete = ({
   const { isProjectOwner } = useProjectStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
 
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
+    useAttestationToast();
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
@@ -62,6 +62,7 @@ export const ObjectiveCardComplete = ({
   });
 
   const deleteObjectiveCompletion = async () => {
+    startAttestation("Removing milestone completion...");
     try {
       const setup = await setupChainAndWallet({
         targetChainId: objective.chainID,
@@ -129,7 +130,7 @@ export const ObjectiveCardComplete = ({
           await checkIfAttestationExists(() => {
             changeStepperStep("indexed");
           });
-          toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.SUCCESS);
+          showSuccess(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.SUCCESS);
         } catch (onChainError: any) {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
@@ -151,6 +152,7 @@ export const ObjectiveCardComplete = ({
         }
       }
     } catch (error: any) {
+      showError(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR);
       errorManager(
         MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR,
         error,

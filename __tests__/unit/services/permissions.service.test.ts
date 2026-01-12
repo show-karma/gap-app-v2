@@ -103,23 +103,28 @@ describe("PermissionsService", () => {
     });
 
     it("should throw error if programId is missing", async () => {
-      const options: PermissionCheckOptions = {
-        chainID: 1,
-      };
+      const options: PermissionCheckOptions = {};
 
       await expect(service.checkPermission(options)).rejects.toThrow(
-        "Program ID and Chain ID are required for permission check"
+        "Program ID is required for permission check"
       );
     });
 
-    it("should throw error if chainID is missing", async () => {
+    it("should work without chainID (normalized format)", async () => {
       const options: PermissionCheckOptions = {
         programId: "program-1",
       };
 
-      await expect(service.checkPermission(options)).rejects.toThrow(
-        "Program ID and Chain ID are required for permission check"
-      );
+      const mockResponse = {
+        hasPermission: true,
+        permissions: ["view", "read"],
+      };
+
+      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+
+      const result = await service.checkPermission(options);
+
+      expect(result).toEqual(mockResponse);
     });
 
     it("should return no permission when user lacks access", async () => {
@@ -369,21 +374,19 @@ describe("PermissionsService", () => {
   describe("checkMultiplePermissions", () => {
     it("should check permissions for multiple programs using batch endpoint", async () => {
       const programIds = [
-        { programId: "program-1", chainID: 1, action: "review" },
-        { programId: "program-2", chainID: 1, action: "approve" },
+        { programId: "program-1", action: "review" },
+        { programId: "program-2", action: "approve" },
       ];
 
       const mockBatchResponse = {
         permissions: [
           {
             programId: "program-1",
-            chainID: 1,
             hasPermission: true,
             permissions: ["review", "approve"],
           },
           {
             programId: "program-2",
-            chainID: 1,
             hasPermission: false,
             permissions: [],
           },
@@ -399,21 +402,18 @@ describe("PermissionsService", () => {
         { programs: programIds }
       );
       expect(result.size).toBe(2);
-      expect(result.get("program-1-1")).toEqual({
+      expect(result.get("program-1")).toEqual({
         hasPermission: true,
         permissions: ["review", "approve"],
       });
-      expect(result.get("program-2-1")).toEqual({
+      expect(result.get("program-2")).toEqual({
         hasPermission: false,
         permissions: [],
       });
     });
 
     it("should fall back to parallel calls if batch endpoint fails", async () => {
-      const programIds = [
-        { programId: "program-1", chainID: 1 },
-        { programId: "program-2", chainID: 1 },
-      ];
+      const programIds = [{ programId: "program-1" }, { programId: "program-2" }];
 
       // Batch endpoint fails
       mockAxiosInstance.post.mockRejectedValue(new Error("Batch endpoint not available"));
@@ -430,10 +430,7 @@ describe("PermissionsService", () => {
     });
 
     it("should handle individual call failures in fallback mode", async () => {
-      const programIds = [
-        { programId: "program-1", chainID: 1 },
-        { programId: "program-2", chainID: 1 },
-      ];
+      const programIds = [{ programId: "program-1" }, { programId: "program-2" }];
 
       // Batch endpoint fails
       mockAxiosInstance.post.mockRejectedValue(new Error("Not available"));
@@ -445,11 +442,11 @@ describe("PermissionsService", () => {
 
       const result = await service.checkMultiplePermissions(programIds);
 
-      expect(result.get("program-1-1")).toEqual({
+      expect(result.get("program-1")).toEqual({
         hasPermission: true,
         permissions: ["review"],
       });
-      expect(result.get("program-2-1")).toEqual({
+      expect(result.get("program-2")).toEqual({
         hasPermission: false,
         permissions: [],
       });

@@ -223,7 +223,7 @@ describe("NavbarDesktopNavigation", () => {
     it("should have proper minimum width on dropdown content", async () => {
       const user = userEvent.setup();
       const authFixture = getAuthFixture("unauthenticated");
-      const { container } = renderWithProviders(<NavbarDesktopNavigation />, {
+      renderWithProviders(<NavbarDesktopNavigation />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
       });
 
@@ -233,8 +233,9 @@ describe("NavbarDesktopNavigation", () => {
       await user.click(forBuildersButton);
 
       await waitFor(() => {
+        // DropdownMenu uses Portal, so content is rendered in document.body
         // Check for min-w-[500px] class on dropdown content
-        const dropdownContent = container.querySelector(".min-w-\\[500px\\]");
+        const dropdownContent = document.querySelector(".min-w-\\[500px\\]");
         expect(dropdownContent).toBeInTheDocument();
       });
     });
@@ -385,7 +386,7 @@ describe("NavbarDesktopNavigation", () => {
     it("should pass desktop variant to menu content components", async () => {
       const user = userEvent.setup();
       const authFixture = getAuthFixture("unauthenticated");
-      const { container } = renderWithProviders(<NavbarDesktopNavigation />, {
+      renderWithProviders(<NavbarDesktopNavigation />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
       });
 
@@ -396,8 +397,9 @@ describe("NavbarDesktopNavigation", () => {
       await user.click(forBuildersButton);
 
       await waitFor(() => {
+        // DropdownMenu uses Portal, so content is rendered in document.body
         // Desktop variant should have specific styling
-        const dropdownContent = container.querySelector(".min-w-\\[500px\\]");
+        const dropdownContent = document.querySelector(".min-w-\\[500px\\]");
         expect(dropdownContent).toBeInTheDocument();
       });
     });

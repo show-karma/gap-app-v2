@@ -257,13 +257,13 @@ export default function ReviewerApplicationDetailPage() {
                 ),
               },
               {
-                id: "discussion",
-                label: "Discussion",
+                id: "comments",
+                label: "Comments",
                 icon: TabIcons.Discussion,
                 content: (
-                  <TabPanel padded={false}>
+                  <TabPanel>
                     <DiscussionTab
-                      applicationId={application.referenceNumber}
+                      applicationId={applicationIdentifier}
                       comments={comments}
                       statusHistory={application.statusHistory}
                       versionHistory={versions}

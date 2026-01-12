@@ -578,18 +578,21 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(ProgramRegistryService.approveProgram).toHaveBeenCalledWith("program-123");
+        // V2 API auto-approves if user is admin - approveProgram is not called separately
         expect(toast.success).toHaveBeenCalledWith("Program created and approved successfully!");
         expect(mockOnSuccess).toHaveBeenCalled();
         expect(mockOnClose).toHaveBeenCalled();
       });
     });
 
-    it("should handle auto-approval failure", async () => {
+    it("should handle manual approval required", async () => {
       const user = userEvent.setup();
-      (ProgramRegistryService.approveProgram as jest.Mock).mockRejectedValue(
-        new Error("Approval failed")
-      );
+      // V2 API returns requiresManualApproval when auto-approval is not possible
+      (ProgramRegistryService.createProgram as jest.Mock).mockResolvedValue({
+        programId: "program-123",
+        success: true,
+        requiresManualApproval: true,
+      });
 
       renderWithProviders(
         <CreateProgramModal
@@ -611,8 +614,8 @@ describe("CreateProgramModal", () => {
 
       await waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith(
-          expect.stringContaining("auto-approval failed"),
-          expect.any(Object)
+          expect.stringContaining("approve it manually"),
+          expect.objectContaining({ duration: 10000 })
         );
         expect(mockOnSuccess).toHaveBeenCalled();
         expect(mockOnClose).toHaveBeenCalled();

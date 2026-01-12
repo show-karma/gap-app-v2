@@ -76,17 +76,11 @@ export default function FundingPlatformAdminPage() {
   );
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const handleToggleProgram = async (
-    programId: string,
-    currentEnabled: boolean
-  ) => {
+  const handleToggleProgram = async (programId: string, currentEnabled: boolean) => {
     setTogglingPrograms((prev) => new Set(prev).add(programId));
 
     try {
-      await fundingPlatformService.programs.toggleProgramStatus(
-        programId,
-        !currentEnabled
-      );
+      await fundingPlatformService.programs.toggleProgramStatus(programId, !currentEnabled);
       toast.success(`Program ${!currentEnabled ? "enabled" : "disabled"} successfully`);
       // Refresh the programs list
       await refetch();
@@ -641,10 +635,7 @@ export default function FundingPlatformAdminPage() {
                 {/* Primary CTA - View Applications */}
                 <div className="flex items-center gap-2">
                   <Link
-                    href={PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(
-                      communityId,
-                      program.programId
-                    )}
+                    href={PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, program.programId)}
                     className="flex-1"
                   >
                     <Button

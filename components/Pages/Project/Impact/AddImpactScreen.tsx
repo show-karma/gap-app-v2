@@ -75,7 +75,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, changeStepperStep, showSuccess, dismiss } = useAttestationToast();
 
   const onSubmit: SubmitHandler<UpdateType> = async (data, event) => {
     event?.preventDefault();
@@ -112,33 +112,36 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         refUID: project.uid,
         createdAt: new Date(),
       });
-      await newImpact.attest(walletSigner as SignerOrProvider).then(async (res) => {
-        const txHash = res?.tx[0]?.hash;
-        if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newImpact.chainID), "POST", {});
-        }
-        let retries = 1000;
-        showLoading("Indexing impact...");
-        while (retries > 0) {
-          try {
-            const polledImpacts = await getProjectImpacts(projectIdOrSlug);
-            if (polledImpacts.find((polledImpact) => polledImpact.uid === newImpact.uid)) {
-              retries = 0;
-              await refetchImpacts();
-              showSuccess("Impact added!");
-              setTimeout(() => {
-                dismiss();
-                changeTab(null);
-              }, 1500);
-            }
-          } catch {
-            // Ignore polling errors, continue retrying
+      startAttestation("Creating impact...");
+      await newImpact
+        .attest(walletSigner as SignerOrProvider, changeStepperStep)
+        .then(async (res) => {
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newImpact.chainID), "POST", {});
           }
-          retries -= 1;
-          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-          await new Promise((resolve) => setTimeout(resolve, 1500));
-        }
-      });
+          let retries = 1000;
+          changeStepperStep("indexing");
+          while (retries > 0) {
+            try {
+              const polledImpacts = await getProjectImpacts(projectIdOrSlug);
+              if (polledImpacts.find((polledImpact) => polledImpact.uid === newImpact.uid)) {
+                retries = 0;
+                await refetchImpacts();
+                showSuccess("Impact added!");
+                setTimeout(() => {
+                  dismiss();
+                  changeTab(null);
+                }, 1500);
+              }
+            } catch {
+              // Ignore polling errors, continue retrying
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
+        });
     } catch (error: unknown) {
       dismiss();
       errorManager(

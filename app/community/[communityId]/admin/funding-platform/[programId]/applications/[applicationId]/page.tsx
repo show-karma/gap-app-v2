@@ -17,9 +17,11 @@ import {
 import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView/DeleteApplicationModal";
 import { DiscussionTab } from "@/components/FundingPlatform/ApplicationView/DiscussionTab";
 import EditApplicationModal from "@/components/FundingPlatform/ApplicationView/EditApplicationModal";
-import HeaderActions from "@/components/FundingPlatform/ApplicationView/HeaderActions";
+import HeaderActions, {
+  type ApplicationStatus,
+} from "@/components/FundingPlatform/ApplicationView/HeaderActions";
 import MoreActionsDropdown from "@/components/FundingPlatform/ApplicationView/MoreActionsDropdown";
-import StatusChangeModal from "@/components/FundingPlatform/ApplicationView/StatusChangeModal";
+import { StatusChangeInline } from "@/components/FundingPlatform/ApplicationView/StatusChangeInline";
 import { TabPanel } from "@/components/FundingPlatform/ApplicationView/TabPanel";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -70,9 +72,8 @@ export default function ApplicationDetailPage() {
   // Edit modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // Status change modal state
-  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState("");
+  // Status change inline form state
+  const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | null>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   // Fetch application data
@@ -84,7 +85,7 @@ export default function ApplicationDetailPage() {
 
   // Fetch program config
   const { data: program, config } = useProgramConfig(programId);
-  
+
   // Get chainId from program config if needed for V1 components
   const chainId = program?.chainID;
 
@@ -130,33 +131,31 @@ export default function ApplicationDetailPage() {
     });
   };
 
-  // Handle status change click - opens confirmation modal
-  const handleStatusChangeClick = (status: string) => {
-    setPendingStatus(status);
-    setIsStatusModalOpen(true);
+  // Handle status change click - shows inline form (toggle if same status clicked)
+  const handleStatusChangeClick = (status: ApplicationStatus) => {
+    setSelectedStatus((current) => (current === status ? null : status));
   };
 
-  // Handle status change confirmation from modal
+  // Handle status change confirmation from inline form
   const handleStatusChangeConfirm = async (
     reason?: string,
     approvedAmount?: string,
     approvedCurrency?: string
   ) => {
-    if (!pendingStatus) return;
+    if (!selectedStatus) return;
 
     setIsUpdatingStatus(true);
     try {
-      await handleStatusChange(pendingStatus, reason, approvedAmount, approvedCurrency);
-      // Success: close modal and clear state
-      setIsStatusModalOpen(false);
-      setPendingStatus("");
-      if (pendingStatus === "approved") {
+      await handleStatusChange(selectedStatus, reason, approvedAmount, approvedCurrency);
+      // Success: hide inline form and clear state
+      setSelectedStatus(null);
+      if (selectedStatus === "approved") {
         toast.success("Application approved successfully!");
       } else {
-        toast.success(`Application status updated to ${pendingStatus}`);
+        toast.success(`Application status updated to ${selectedStatus}`);
       }
     } catch (error) {
-      // Error: keep modal open so user can retry
+      // Error: keep form open so user can retry
       const errorMessage =
         error instanceof Error ? error.message : "Failed to update application status";
       toast.error(errorMessage);
@@ -166,11 +165,10 @@ export default function ApplicationDetailPage() {
     }
   };
 
-  // Handle status modal close
-  const handleStatusModalClose = () => {
+  // Handle inline form cancel
+  const handleStatusChangeCancel = () => {
     if (!isUpdatingStatus) {
-      setIsStatusModalOpen(false);
-      setPendingStatus("");
+      setSelectedStatus(null);
     }
   };
 
@@ -264,7 +262,9 @@ export default function ApplicationDetailPage() {
 
   // Check if status actions should be shown (not finalized)
   const showStatusActions =
-    hasAccess && application && !["approved", "rejected"].includes(application.status);
+    hasAccess &&
+    application &&
+    !["approved", "rejected"].includes(application.status.toLowerCase());
 
   // Check loading states
   if (isLoadingAdmin || isLoadingApplication) {
@@ -310,11 +310,11 @@ export default function ApplicationDetailPage() {
             Back to Applications
           </Button>
         </div>
-        {/* Application Header Card with Actions - connects to tabs when no milestone link */}
+        {/* Application Header Card with Actions - connects to tabs when no milestone link and no inline form */}
         <ApplicationHeader
           application={application}
           program={program}
-          connectedToTabs={!milestoneReviewUrl}
+          connectedToTabs={!milestoneReviewUrl && !selectedStatus}
           statusActions={
             showStatusActions ? (
               <HeaderActions
@@ -335,6 +335,19 @@ export default function ApplicationDetailPage() {
             />
           }
         />
+
+        {/* Status Change Inline Form - Shows below header when status action is selected */}
+        {selectedStatus && showStatusActions && (
+          <StatusChangeInline
+            status={selectedStatus}
+            onConfirm={handleStatusChangeConfirm}
+            onCancel={handleStatusChangeCancel}
+            isSubmitting={isUpdatingStatus}
+            isReasonRequired={selectedStatus === "revision_requested"}
+            application={application}
+            programConfig={isFundingProgramConfig(program) ? program : undefined}
+          />
+        )}
 
         {/* Milestone Review Link - Only shown if application is approved and has projectUID */}
         {milestoneReviewUrl && (
@@ -360,7 +373,7 @@ export default function ApplicationDetailPage() {
 
         {/* Tab-based Layout */}
         <ApplicationTabs
-          connectedToHeader={!milestoneReviewUrl}
+          connectedToHeader={!milestoneReviewUrl && !selectedStatus}
           tabs={
             [
               {
@@ -393,11 +406,11 @@ export default function ApplicationDetailPage() {
                 ),
               },
               {
-                id: "discussion",
-                label: "Discussion",
+                id: "comments",
+                label: "Comments",
                 icon: TabIcons.Discussion,
                 content: (
-                  <TabPanel padded={false}>
+                  <TabPanel>
                     <DiscussionTab
                       applicationId={application.referenceNumber}
                       comments={comments}
@@ -441,18 +454,6 @@ export default function ApplicationDetailPage() {
           onSuccess={handleEditSuccess}
         />
       )}
-
-      {/* Status Change Modal */}
-      <StatusChangeModal
-        isOpen={isStatusModalOpen}
-        onClose={handleStatusModalClose}
-        onConfirm={handleStatusChangeConfirm}
-        status={pendingStatus}
-        isSubmitting={isUpdatingStatus}
-        isReasonRequired={pendingStatus === "revision_requested"}
-        application={application}
-        programConfig={isFundingProgramConfig(program) ? program : undefined}
-      />
     </div>
   );
 }

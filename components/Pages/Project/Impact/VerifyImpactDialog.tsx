@@ -8,7 +8,6 @@ import type {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, Fragment, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
@@ -71,12 +70,14 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({ impact, addVer
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const { refetch: refetchImpacts } = useProjectImpacts(projectIdOrSlug);
 
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
+    useAttestationToast();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     if (!address || !project) return;
     try {
       setIsLoading(true);
+      startAttestation("Verifying impact...");
       const fetchedProject = await getProjectById(project.uid);
       const findImpact = fetchedProject?.impacts?.find((imp) => imp.uid === (impact.uid as string));
       if (!findImpact) return;
@@ -123,6 +124,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({ impact, addVer
                 retries = 0;
                 await refetchImpacts();
                 changeStepperStep("indexed");
+                showSuccess("Impact verified successfully");
               }
             } catch {
               // Ignore polling errors, continue retrying
@@ -134,6 +136,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({ impact, addVer
         });
       closeModal();
     } catch (error: unknown) {
+      showError(MESSAGES.PROJECT.IMPACT.VERIFY.ERROR);
       errorManager(
         MESSAGES.PROJECT.IMPACT.VERIFY.ERROR,
         error,

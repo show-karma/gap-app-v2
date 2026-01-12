@@ -42,9 +42,7 @@ function createFormSchemaHook(
       queryKey,
       queryFn: async () => {
         try {
-          const result = await fundingPlatformService.programs.getProgramConfiguration(
-            programId
-          );
+          const result = await fundingPlatformService.programs.getProgramConfiguration(programId);
 
           // The service returns FundingProgram type, config is in applicationConfig
           const config = result?.applicationConfig;
@@ -83,10 +81,7 @@ function createFormSchemaHook(
             [schemaField]: schema,
             isEnabled: true,
           };
-          return fundingPlatformService.programs.createProgramConfiguration(
-            programId,
-            newConfig
-          );
+          return fundingPlatformService.programs.createProgramConfiguration(programId, newConfig);
         }
 
         // For existing configs, preserve all fields and only update the relevant schema
@@ -95,10 +90,7 @@ function createFormSchemaHook(
           [schemaField]: schema,
         };
 
-        return fundingPlatformService.programs.updateProgramConfiguration(
-          programId,
-          updatedConfig
-        );
+        return fundingPlatformService.programs.updateProgramConfiguration(programId, updatedConfig);
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey });

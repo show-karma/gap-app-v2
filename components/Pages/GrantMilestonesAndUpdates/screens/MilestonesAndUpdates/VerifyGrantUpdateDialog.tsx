@@ -5,7 +5,6 @@ import { ArrowRightIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FC, Fragment, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
@@ -67,12 +66,14 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
   const project = useProjectStore((state) => state.project);
   const projectIdOrSlug = project?.details?.slug || project?.uid || "";
   const { refetch: refetchGrants } = useProjectGrants(projectIdOrSlug);
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
+    useAttestationToast();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     if (!address || !project) return;
     try {
       setIsLoading(true);
+      startAttestation("Verifying grant update...");
       const setup = await setupChainAndWallet({
         targetChainId: grantUpdate.chainID,
         currentChainId: chain?.id,
@@ -145,7 +146,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
                 await refetchGrants();
                 changeStepperStep("indexed");
                 onVerified();
-                toast.success(MESSAGES.GRANT.GRANT_UPDATE.VERIFY.SUCCESS);
+                showSuccess(MESSAGES.GRANT.GRANT_UPDATE.VERIFY.SUCCESS);
               }
             } catch {
               // Ignore polling errors, continue retrying
@@ -158,6 +159,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
       closeModal();
     } catch (error: any) {
       console.log("[VerifyGrantUpdateDialog] error:", error);
+      showError(MESSAGES.GRANT.GRANT_UPDATE.VERIFY.ERROR);
       errorManager(
         MESSAGES.GRANT.GRANT_UPDATE.VERIFY.ERROR,
         error,

@@ -172,9 +172,9 @@ export function validateProgramIdentifiers(programIds: string[]): {
     const result = validateProgramIdentifier(id);
     if (result.valid && result.programId) {
       // Accept both formats: normalized (no chainID) and composite (with chainID)
-      validIds.push({ 
-        programId: result.programId, 
-        chainID: result.chainID // chainID is optional for normalized format
+      validIds.push({
+        programId: result.programId,
+        chainID: result.chainID, // chainID is optional for normalized format
       });
     } else {
       errors.push({ id, error: result.error || "Invalid format" });

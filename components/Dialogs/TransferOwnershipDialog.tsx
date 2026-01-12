@@ -3,7 +3,6 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import { useAccount } from "wagmi";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
@@ -50,17 +49,19 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
   const { switchChainAsync } = useWallet();
-  const { changeStepperStep, setIsStepper } = useAttestationToast();
+  const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
+    useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const transfer = async () => {
     if (!project) return;
     if (!newOwner || !isAddress(newOwner)) {
-      toast.error("Please enter a valid address");
+      showError("Please enter a valid address");
       return;
     }
     try {
       setIsLoading(true);
+      startAttestation("Transferring ownership...");
       const setup = await setupChainAndWallet({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
@@ -101,7 +102,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
             // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
-          toast.success("Ownership transferred successfully");
+          showSuccess("Ownership transferred successfully");
         });
       closeModal();
     } catch (error: any) {

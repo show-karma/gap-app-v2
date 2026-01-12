@@ -16,7 +16,6 @@ import debounce from "lodash.debounce";
 import { useRouter } from "next/navigation";
 import { type FC, Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { type Hex, isAddress, zeroHash } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
@@ -242,7 +241,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { gap } = useGap();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
+    useAttestationToast();
   const [walletSigner, setWalletSigner] = useState<any>(null);
   const [_faucetFunded, setFaucetFunded] = useState(false);
   // Flag to prevent form reset when reopening after an error
@@ -284,11 +284,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setWalletSigner(signer);
       } else {
         setWalletSigner(null);
-        toast.error("Failed to connect to the selected network");
+        showError("Failed to connect to the selected network");
       }
     } catch (error) {
       console.error("Failed to switch network:", error);
-      toast.error("Failed to switch network. Please try again.");
+      showError("Failed to switch network. Please try again.");
       setWalletSigner(null);
       throw error; // Re-throw to let NetworkDropdown handle it
     } finally {
@@ -511,6 +511,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     try {
       console.log("[ProjectDialog] createProject started");
       setIsLoading(true);
+      startAttestation("Creating project...");
       if (!isConnected || !isAuth) {
         console.log("[ProjectDialog] Not connected or not auth, calling login");
         login?.();
@@ -693,8 +694,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       closeModal();
 
       // Attest first (Privy popups appear here), then show progress modal
-      await project.attest(signer as any).then(async (res) => {
-        // Show progress modal after Privy popups complete
+      await project.attest(signer as any, changeStepperStep).then(async (res) => {
         showLoading("Indexing project...");
         let retries = 1000;
         const txHash = res?.tx[0]?.hash;
@@ -733,13 +733,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}`);
 
               if (!response.ok) {
-                toast.error("Failed to fetch GitHub repository");
+                showError("Failed to fetch GitHub repository");
                 throw new Error("Failed to fetch GitHub repository");
               }
 
               const repoData = await response.json();
               if (repoData.private) {
-                toast.error("GitHub repository is private");
+                showError("GitHub repository is private");
                 throw new Error("GitHub repository is private");
               }
 
@@ -752,7 +752,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 }
               );
               if (error) {
-                toast.error("Failed to update GitHub repository");
+                showError("Failed to update GitHub repository");
                 throw new Error("Failed to update GitHub repository");
               }
             }
@@ -768,13 +768,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           );
 
           if (subscriptionError) {
-            toast.error("Something went wrong with contact info save. Please try again later.", {
-              className: "z-[9999]",
-            });
+            showError("Something went wrong with contact info save. Please try again later.");
           }
 
-          toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
-          showSuccess("Project created!");
+          showSuccess(MESSAGES.PROJECT.CREATE.SUCCESS);
           setTimeout(() => {
             dismiss();
             closeModal();
@@ -793,7 +790,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       console.error("[ProjectDialog] CATCH BLOCK - Error caught:", error);
       console.error("[ProjectDialog] Error message:", error?.message);
       console.error("[ProjectDialog] Error stack:", error?.stack);
-      dismiss();
+      showError(MESSAGES.PROJECT.CREATE.ERROR(data.title));
       errorManager(
         MESSAGES.PROJECT.CREATE.ERROR(data.title),
         error,
@@ -812,6 +809,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const updateThisProject = async (data: SchemaType): Promise<void> => {
     try {
       setIsLoading(true);
+      startAttestation("Updating project...");
       if (!isConnected || !isAuth) {
         login?.();
         return;
@@ -946,11 +944,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         socialData,
         walletSigner,
         gapClient,
-        () => {}, // No-op since we're using progress modal
-        () => {} // No-op since modal is already closed
+        changeStepperStep,
+        () => {}, // No-op since modal is already closed
+        () => {}, // setIsStepper - no-op, managed by toast hook
+        startAttestation,
+        showSuccess
       ).then(async (res) => {
-        // Show success after update completes
-        showSuccess("Project updated!");
+        // updateProject calls showSuccess internally
         setStep(0);
         // Brief delay to show success, then redirect
         setTimeout(() => {
@@ -965,7 +965,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }, 1500);
       });
     } catch (error: any) {
-      dismiss();
+      showError(MESSAGES.PROJECT.UPDATE.ERROR);
       errorManager(
         `Error updating project ${projectToUpdate?.details?.slug || projectToUpdate?.uid}`,
         error,

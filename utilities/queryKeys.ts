@@ -12,10 +12,8 @@ export const QUERY_KEYS = {
     COMMENTS: (referenceNumber: string) => ["application-comments", referenceNumber] as const,
   },
   REVIEWERS: {
-    PROGRAM: (programId: string) =>
-      ["program-reviewers", programId] as const,
-    MILESTONE: (programId: string) =>
-      ["milestone-reviewers", programId] as const,
+    PROGRAM: (programId: string) => ["program-reviewers", programId] as const,
+    MILESTONE: (programId: string) => ["milestone-reviewers", programId] as const,
   },
   CONTRACTS: {
     DEPLOYER: (network: string, contractAddress: string) =>
@@ -32,6 +30,7 @@ export const QUERY_KEYS = {
       ["community-details-v2", communityUIDorSlug] as const,
     PROJECTS: (slug: string, options?: unknown) =>
       ["community-projects-v2", slug, options] as const,
+    GRANTS: (communitySlug: string) => ["community-grants", communitySlug] as const,
     CATEGORIES: (communityUIDorSlug?: string) =>
       ["communityCategories", communityUIDorSlug] as const,
     IS_ADMIN: (
@@ -52,6 +51,10 @@ export const QUERY_KEYS = {
       community: string;
       title: string;
     }) => ["duplicate-grant-check", params] as const,
+  },
+  DONATIONS: {
+    BY_USER: (walletAddress: string) => ["donations", "user", walletAddress] as const,
+    BY_PROJECT: (projectUID: string) => ["donations", "project", projectUID] as const,
   },
   SETTINGS: {
     AVAILABLE_AI_MODELS: ["available-ai-models"] as const,

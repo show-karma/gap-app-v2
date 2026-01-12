@@ -81,7 +81,8 @@ export const UnifiedMilestoneScreen = () => {
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
+    useAttestationToast();
   const { projectId } = useParams();
   const { refetch: refetchUpdates } = useProjectUpdates(projectId as string);
   const router = useRouter();
@@ -116,6 +117,7 @@ export const UnifiedMilestoneScreen = () => {
   const createRoadmapMilestone = async (data: MilestoneFormData) => {
     if (!address || !project) return;
     setIsSubmitting(true);
+    startAttestation("Creating roadmap milestone...");
 
     try {
       const setup = await setupChainAndWallet({
@@ -147,34 +149,35 @@ export const UnifiedMilestoneScreen = () => {
         text: sanitizeInput(data.description),
       };
 
-      await newObjective.attest(walletSigner as any, sanitizedData).then(async (res) => {
-        const txHash = res?.tx[0]?.hash;
-        if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
-        } else {
-          await fetchData(
-            INDEXER.ATTESTATION_LISTENER(newObjective.uid, project.chainID),
-            "POST",
-            {}
-          );
-        }
+      await newObjective
+        .attest(walletSigner as any, sanitizedData, changeStepperStep)
+        .then(async (res) => {
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
+          } else {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(newObjective.uid, project.chainID),
+              "POST",
+              {}
+            );
+          }
 
-        showLoading("Indexing milestone...");
+          showLoading("Indexing milestone...");
 
-        // More robust refetch with multiple attempts
-        await tryRefetch();
+          // More robust refetch with multiple attempts
+          await tryRefetch();
 
-        toast.success("Roadmap milestone created successfully");
-        showSuccess("Milestone created!");
-        setTimeout(() => {
-          dismiss();
-          closeProgressModal();
-        }, 1500);
-      });
+          showSuccess("Roadmap milestone created!");
+          setTimeout(() => {
+            dismiss();
+            closeProgressModal();
+          }, 1500);
+        });
     } catch (error) {
       dismiss();
       errorManager("Error creating roadmap milestone", error);
-      toast.error("Failed to create roadmap milestone");
+      showError("Failed to create roadmap milestone");
     } finally {
       setIsSubmitting(false);
     }
@@ -196,6 +199,7 @@ export const UnifiedMilestoneScreen = () => {
     if (!address || !project || selectedGrantIds.length === 0) return;
 
     setIsSubmitting(true);
+    startAttestation("Creating grant milestone(s)...");
 
     const toastsToRemove: string[] = [];
 
@@ -275,7 +279,7 @@ export const UnifiedMilestoneScreen = () => {
             data: milestone,
           });
 
-          const result = await milestoneToAttest.attest(walletSigner as any);
+          const result = await milestoneToAttest.attest(walletSigner as any, changeStepperStep);
 
           // Handle indexer notification
           const txHash = result?.tx[0]?.hash;
@@ -376,6 +380,7 @@ export const UnifiedMilestoneScreen = () => {
       }, 1500);
     } catch (error) {
       dismiss();
+      showError("Failed to create grant milestones");
       errorManager("Error creating grant milestones", error);
       toastsToRemove.forEach((toastId) => {
         toast.remove(toastId);
@@ -388,14 +393,14 @@ export const UnifiedMilestoneScreen = () => {
   const onSubmit: SubmitHandler<MilestoneFormData> = async (data) => {
     // For grant milestones, validate that endsAt is provided
     if (selectedGrantIds.length > 0 && !data.dates?.endsAt) {
-      toast.error("End date is required for grant milestones");
+      showError("End date is required for grant milestones");
       return;
     }
 
     // Validate dates relationship if both exist
     if (data.dates?.startsAt && data.dates?.endsAt) {
       if (data.dates.startsAt > data.dates.endsAt) {
-        toast.error("Start date must be before the end date");
+        showError("Start date must be before the end date");
         return;
       }
     }

@@ -55,6 +55,7 @@ jest.mock("@/hooks/useSetupChainAndWallet", () => ({
 
 jest.mock("@/hooks/useAttestationToast", () => ({
   useAttestationToast: jest.fn(() => ({
+    startAttestation: jest.fn(),
     changeStepperStep: jest.fn(),
     setIsStepper: jest.fn(),
     showLoading: jest.fn(),
@@ -220,7 +221,9 @@ describe("Integration: Grant Completion Revocation Flow", () => {
     const mockChangeStepperStep = jest.fn();
     const mockSetIsStepper = jest.fn();
     const mockDismiss = jest.fn();
+    const mockStartAttestation = jest.fn();
     useAttestationToast.mockReturnValue({
+      startAttestation: mockStartAttestation,
       changeStepperStep: mockChangeStepperStep,
       setIsStepper: mockSetIsStepper,
       showLoading: jest.fn(),
@@ -441,9 +444,6 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       // Verify stepper was activated (now uses changeStepperStep instead of setIsStepper)
       const { useAttestationToast } = require("@/hooks/useAttestationToast");
       const stepper = useAttestationToast();
-      await waitFor(() => {
-        expect(stepper.changeStepperStep).toHaveBeenCalledWith("preparing");
-      });
 
       // Verify on-chain path was taken via setupChainAndWallet
       await waitFor(() => {
@@ -451,15 +451,15 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         expect(mockMulticallContract.multiRevoke).toHaveBeenCalled();
       });
 
-      // Verify stepper transitions
+      // Verify stepper transitions (preparing/pending are skipped in new toast system)
       await waitFor(() => {
-        expect(stepper.changeStepperStep).toHaveBeenCalledWith("pending");
+        expect(stepper.changeStepperStep).toHaveBeenCalledWith("confirmed");
         expect(stepper.changeStepperStep).toHaveBeenCalledWith("indexing");
       });
 
-      // Verify success toast
+      // Verify success (now uses showSuccess from useAttestationToast)
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalled();
+        expect(stepper.showSuccess).toHaveBeenCalled();
       });
 
       // Verify final state: stepper dismissed (now uses dismiss instead of setIsStepper)
@@ -676,24 +676,16 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         expect(mockPerformOffChainRevoke).toHaveBeenCalled();
       });
 
-      // Verify toast notification about fallback
-      // toast() is called directly as default export from react-hot-toast
-      // The mock is set up in beforeEach, so we check the mock function directly
+      // Verify fallback notification (now uses showLoading from useAttestationToast)
+      const { useAttestationToast } = require("@/hooks/useAttestationToast");
+      const stepper = useAttestationToast();
       await waitFor(() => {
-        // Get the actual toast mock from the module
-        const toastModule = require("react-hot-toast");
-        const toastMock = toastModule.default;
-        expect(toastMock).toHaveBeenCalled();
-        const toastCalls = (toastMock as jest.Mock).mock.calls;
-        const hasFallbackMessage = toastCalls.some((call: any[]) =>
-          call[0]?.includes("On-chain revocation unavailable")
+        expect(stepper.showLoading).toHaveBeenCalledWith(
+          "On-chain revocation unavailable. Attempting off-chain revocation..."
         );
-        expect(hasFallbackMessage).toBe(true);
       });
 
       // Verify stepper transitions (dismiss is called before fallback, then indexed and dismiss again in onSuccess)
-      const { useAttestationToast } = require("@/hooks/useAttestationToast");
-      const stepper = useAttestationToast();
       await waitFor(() => {
         expect(stepper.dismiss).toHaveBeenCalled(); // Reset before fallback
         expect(stepper.changeStepperStep).toHaveBeenCalledWith("indexed");
@@ -773,15 +765,15 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         expect(mockPerformOffChainRevoke).toHaveBeenCalled();
       });
 
-      // Verify error handling
+      // Verify error handling (now uses showError from useAttestationToast)
+      const { useAttestationToast } = require("@/hooks/useAttestationToast");
+      const stepper = useAttestationToast();
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("On-chain error");
+        expect(stepper.showError).toHaveBeenCalledWith("On-chain error");
         expect(errorManager).toHaveBeenCalled();
       });
 
       // Verify stepper was dismissed (now uses dismiss instead of setIsStepper)
-      const { useAttestationToast } = require("@/hooks/useAttestationToast");
-      const stepper = useAttestationToast();
       await waitFor(() => {
         expect(stepper.dismiss).toHaveBeenCalled();
       });
@@ -849,7 +841,9 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       const mockChangeStepperStep = jest.fn();
       const mockSetIsStepper = jest.fn();
       const mockDismiss = jest.fn();
+      const mockStartAttestation = jest.fn();
       useAttestationToast.mockReturnValue({
+        startAttestation: mockStartAttestation,
         changeStepperStep: mockChangeStepperStep,
         setIsStepper: mockSetIsStepper,
         showLoading: jest.fn(),
@@ -875,10 +869,9 @@ describe("Integration: Grant Completion Revocation Flow", () => {
         await result.current.revokeCompletion();
       });
 
-      // Verify all stepper state transitions (now uses changeStepperStep("preparing") instead of setIsStepper(true))
+      // Verify all stepper state transitions (preparing/pending are skipped in new toast system)
       await waitFor(() => {
-        expect(mockChangeStepperStep).toHaveBeenCalledWith("preparing");
-        expect(mockChangeStepperStep).toHaveBeenCalledWith("pending");
+        expect(mockChangeStepperStep).toHaveBeenCalledWith("confirmed");
         expect(mockChangeStepperStep).toHaveBeenCalledWith("indexing");
       });
 

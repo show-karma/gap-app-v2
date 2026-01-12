@@ -47,7 +47,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
     setIsOpen(false);
   }
 
-  const { showLoading, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, changeStepperStep, showSuccess, dismiss } = useAttestationToast();
 
   const { openShareDialog } = useShareDialogStore();
 
@@ -108,14 +108,15 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         refUID: project?.uid,
         recipient: (smartWalletAddress || address) as `0x${string}`,
       });
-      await endorsement.attest(walletSigner).then(async (res) => {
+      startAttestation("Creating endorsement...");
+      await endorsement.attest(walletSigner, changeStepperStep).then(async (res) => {
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, endorsement.chainID), "POST", {});
         }
         let retries = 1000;
         refreshProject();
-        showLoading("Indexing endorsement...");
+        changeStepperStep("indexing");
         while (retries > 0) {
           const polledProject = await getProject(project.uid);
           if (
