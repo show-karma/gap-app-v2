@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
+import type { SignerOrProvider } from "@show-karma/karma-gap-sdk/core/types";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";
@@ -111,7 +112,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         refUID: project.uid,
         createdAt: new Date(),
       });
-      await newImpact.attest(walletSigner as any).then(async (res) => {
+      await newImpact.attest(walletSigner as SignerOrProvider).then(async (res) => {
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newImpact.chainID), "POST", {});
@@ -138,7 +139,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
           await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       dismiss();
       errorManager(
         MESSAGES.PROJECT.IMPACT.ERROR,

@@ -1,6 +1,7 @@
 "use client";
 import { Dialog, Transition } from "@headlessui/react";
 import { type Project, ProjectEndorsement } from "@show-karma/karma-gap-sdk";
+import type { IProjectEndorsement } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import { type FC, Fragment, useState } from "react";
 import type { Hex } from "viem";
@@ -117,7 +118,11 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         showLoading("Indexing endorsement...");
         while (retries > 0) {
           const polledProject = await getProject(project.uid);
-          if (polledProject?.endorsements?.find((end: any) => end.uid === endorsement.uid)) {
+          if (
+            polledProject?.endorsements?.find(
+              (end: IProjectEndorsement) => end.uid === endorsement.uid
+            )
+          ) {
             retries = 0;
 
             await notifyProjectOwner(endorsement);
@@ -145,7 +150,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         }
       });
       closeModal();
-    } catch (error: any) {
+    } catch (error: unknown) {
       dismiss();
       errorManager(`Error of user ${address} endorsing project ${project?.uid}`, error, {
         projectUID: project?.uid,

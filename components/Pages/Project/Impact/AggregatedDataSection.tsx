@@ -142,7 +142,8 @@ export const AggregatedDataSection = ({
                 <select
                   value={selectedChain}
                   onChange={(e) => setSelectedChain(e.target.value)}
-                  className="px-3 py-1 text-xs font-medium bg-gray-100 dark:bg-zinc-700 border-0 rounded-md text-gray-700 dark:text-zinc-300 focus:ring-2 focus:ring-blue-500 min-w-[100px]"
+                  aria-label="Filter aggregated data by blockchain network"
+                  className="px-3 py-1 text-xs font-medium bg-gray-100 dark:bg-zinc-700 border-0 rounded-md text-gray-700 dark:text-zinc-300 focus:ring-2 focus:ring-blue-500 focus:outline-none min-w-[100px]"
                 >
                   <option value="all">All Chains</option>
                   {availableChains.map((chainId) => (
@@ -154,13 +155,19 @@ export const AggregatedDataSection = ({
               )}
               {/* Period selector */}
               {periods.length > 1 && (
-                <div className="flex items-center gap-1 p-0.5 bg-gray-100 dark:bg-zinc-700 rounded-md">
+                <fieldset
+                  aria-label="Select aggregation period"
+                  className="flex items-center gap-1 p-0.5 bg-gray-100 dark:bg-zinc-700 rounded-md border-0 m-0 p-0"
+                >
                   {periods.map((period) => (
                     <button
                       key={period}
+                      type="button"
                       onClick={() => setSelectedPeriod(period)}
+                      aria-pressed={selectedPeriod === period}
+                      aria-label={`View ${aggregatedPeriodLabels[period] || period} aggregation`}
                       className={cn(
-                        "px-2 py-1 text-xs font-medium rounded transition-all",
+                        "px-2 py-1 text-xs font-medium rounded transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1",
                         selectedPeriod === period
                           ? "bg-white dark:bg-zinc-600 text-gray-900 dark:text-zinc-100 shadow-sm"
                           : "text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-300"
@@ -169,7 +176,7 @@ export const AggregatedDataSection = ({
                       {aggregatedPeriodLabels[period] || period}
                     </button>
                   ))}
-                </div>
+                </fieldset>
               )}
             </div>
           </div>
@@ -193,13 +200,22 @@ export const AggregatedDataSection = ({
             Breakdown
           </Title>
           <div className="overflow-y-auto max-h-52 rounded border border-gray-200 dark:border-zinc-700">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
+            <table
+              className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700"
+              aria-label="Aggregated values breakdown by period"
+            >
               <thead className="bg-gray-50 dark:bg-zinc-800 sticky top-0">
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400">
+                  <th
+                    scope="col"
+                    className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400"
+                  >
                     Period
                   </th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-gray-600 dark:text-zinc-400">
+                  <th
+                    scope="col"
+                    className="px-3 py-2 text-right text-xs font-semibold text-gray-600 dark:text-zinc-400"
+                  >
                     Value
                   </th>
                 </tr>

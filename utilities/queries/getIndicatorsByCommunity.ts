@@ -57,26 +57,60 @@ interface V2Indicator {
 function transformIndicator(v2Indicator: V2Indicator): Indicator {
   return {
     ...v2Indicator,
-    programs: v2Indicator.programs?.map(p => ({
-      programId: String(p.programId),
-      chainID: p.chainID
-    })) || undefined,
+    programs:
+      v2Indicator.programs?.map((p) => ({
+        programId: String(p.programId),
+        chainID: p.chainID,
+      })) || undefined,
   };
 }
 
 /**
- * Get indicators by community using V2 API
+ * Fetch all pages of indicators for a given query
+ * @param params - Query parameters for the indicators API
+ * @param pageSize - Number of results per page (default 100)
+ * @returns All indicators across all pages
  */
-export const getIndicatorsByCommunity = async (communityId: string) => {
-  try {
+async function fetchAllIndicatorPages(
+  params: {
+    communityUID?: string;
+    programId?: number;
+    chainId?: number;
+    syncType?: "auto" | "manual";
+  },
+  pageSize = 100
+): Promise<Indicator[]> {
+  const allIndicators: Indicator[] = [];
+  let currentPage = 1;
+  let hasMore = true;
+
+  while (hasMore) {
     const [data, error] = await fetchData(
-      INDEXER.INDICATORS.V2.LIST({ communityUID: communityId, limit: 100 })
+      INDEXER.INDICATORS.V2.LIST({ ...params, page: currentPage, limit: pageSize })
     );
+
     if (error) {
       throw error;
     }
+
     const paginatedData = data as PaginatedResponse<V2Indicator>;
-    return (paginatedData.payload || []).map(transformIndicator);
+    const indicators = (paginatedData.payload || []).map(transformIndicator);
+    allIndicators.push(...indicators);
+
+    hasMore = paginatedData.pagination.hasNextPage;
+    currentPage++;
+  }
+
+  return allIndicators;
+}
+
+/**
+ * Get indicators by community using V2 API
+ * Fetches all pages of results automatically
+ */
+export const getIndicatorsByCommunity = async (communityId: string) => {
+  try {
+    return await fetchAllIndicatorPages({ communityUID: communityId });
   } catch (error) {
     errorManager("Error fetching indicators by community", error);
     return [];
@@ -86,22 +120,16 @@ export const getIndicatorsByCommunity = async (communityId: string) => {
 /**
  * Get grouped indicators by community
  * Note: V2 API doesn't have grouped endpoint, so we fetch all and group by syncType
+ * Fetches all pages of results automatically
  */
 export const getGroupedIndicatorsByCommunity = async (communityId: string) => {
   try {
-    const [data, error] = await fetchData(
-      INDEXER.INDICATORS.V2.LIST({ communityUID: communityId, limit: 100 })
-    );
-    if (error) {
-      throw error;
-    }
-    const paginatedData = data as PaginatedResponse<V2Indicator>;
-    const indicators = (paginatedData.payload || []).map(transformIndicator);
+    const indicators = await fetchAllIndicatorPages({ communityUID: communityId });
 
     // Group indicators: auto-synced are system/admin created, manual are project owner created
     return {
-      communityAdminCreated: indicators.filter(i => i.syncType === "auto" || !i.syncType),
-      projectOwnerCreated: indicators.filter(i => i.syncType === "manual"),
+      communityAdminCreated: indicators.filter((i) => i.syncType === "auto" || !i.syncType),
+      projectOwnerCreated: indicators.filter((i) => i.syncType === "manual"),
     };
   } catch (error) {
     errorManager("Error fetching grouped indicators by community", error);
@@ -156,9 +184,7 @@ export const getIndicatorsV2 = async (params?: {
  */
 export const getIndicatorById = async (indicatorId: string): Promise<Indicator | null> => {
   try {
-    const [data, error] = await fetchData(
-      INDEXER.INDICATORS.V2.GET_BY_ID(indicatorId)
-    );
+    const [data, error] = await fetchData(INDEXER.INDICATORS.V2.GET_BY_ID(indicatorId));
     if (error) {
       throw error;
     }

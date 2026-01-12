@@ -8,6 +8,7 @@ import { formatDate } from "@/utilities/formatDate";
 import {
   getChainColor,
   getChainName,
+  getLatestByPeriod,
   hasUniqueUsersData,
   parseBreakdown,
   rollingPeriodLabels,
@@ -32,7 +33,6 @@ export const UniqueUsersSection = ({ datapoints, indicatorName }: UniqueUsersSec
 
   // Separate rolling periods and monthly data
   const { rollingPeriods, monthlyData, availableChains } = useMemo(() => {
-    const rolling: Record<string, PeriodDatapoint> = {};
     const monthly: PeriodDatapoint[] = [];
     const chains = new Set<string>();
 
@@ -42,14 +42,16 @@ export const UniqueUsersSection = ({ datapoints, indicatorName }: UniqueUsersSec
         if (breakdown[chainId] > 0) chains.add(chainId);
       }
 
-      if (dp.period && rollingPeriodOrder.includes(dp.period)) {
-        // Keep the latest for each rolling period
-        if (!rolling[dp.period] || new Date(dp.endDate) > new Date(rolling[dp.period].endDate)) {
-          rolling[dp.period] = dp;
-        }
-      } else if (dp.period === "monthly") {
+      if (dp.period === "monthly") {
         monthly.push(dp);
       }
+    }
+
+    // Use shared utility to get latest by period, then convert Map to Record
+    const latestByPeriodMap = getLatestByPeriod(datapoints);
+    const rolling: Record<string, PeriodDatapoint> = {};
+    for (const [period, dp] of latestByPeriodMap) {
+      rolling[period] = dp;
     }
 
     return {
@@ -130,7 +132,10 @@ export const UniqueUsersSection = ({ datapoints, indicatorName }: UniqueUsersSec
   return (
     <div className="flex flex-col gap-4">
       {/* Hero Section - Period Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <fieldset
+        aria-label="Select time period for unique users data"
+        className="grid grid-cols-2 md:grid-cols-4 gap-3 border-0 m-0 p-0"
+      >
         {rollingPeriodOrder.map((period) => {
           const value = getPeriodValue(period);
           const isSelected = selectedPeriod === period;
@@ -138,9 +143,12 @@ export const UniqueUsersSection = ({ datapoints, indicatorName }: UniqueUsersSec
           return (
             <button
               key={period}
+              type="button"
               onClick={() => setSelectedPeriod(period)}
+              aria-pressed={isSelected}
+              aria-label={`${rollingPeriodLabels[period]}: ${formatCurrency(value)} unique users${isSelected ? " (selected)" : ""}`}
               className={cn(
-                "p-4 rounded-xl text-left transition-all duration-200 border-2",
+                "p-4 rounded-xl text-left transition-all duration-200 border-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
                 isSelected
                   ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 shadow-md"
                   : "bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 hover:border-gray-300 dark:hover:border-zinc-500 hover:shadow-sm cursor-pointer"
@@ -150,6 +158,7 @@ export const UniqueUsersSection = ({ datapoints, indicatorName }: UniqueUsersSec
                 {rollingPeriodLabels[period]}
               </div>
               <div
+                aria-hidden="true"
                 className={cn(
                   "text-2xl md:text-3xl font-bold mt-1 tabular-nums",
                   isSelected
@@ -159,23 +168,34 @@ export const UniqueUsersSection = ({ datapoints, indicatorName }: UniqueUsersSec
               >
                 {formatCurrency(value)}
               </div>
-              <div className="text-xs text-gray-400 dark:text-zinc-500 mt-1">unique users</div>
+              <div aria-hidden="true" className="text-xs text-gray-400 dark:text-zinc-500 mt-1">
+                unique users
+              </div>
             </button>
           );
         })}
-      </div>
+      </fieldset>
 
       {/* Chain Filter */}
       {availableChains.length > 1 && (
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-medium text-gray-500 dark:text-zinc-400">
+          <span
+            id="chain-filter-label"
+            className="text-xs font-medium text-gray-500 dark:text-zinc-400"
+          >
             Filter by chain:
           </span>
-          <div className="flex items-center gap-1 p-0.5 bg-gray-100 dark:bg-zinc-700 rounded-lg">
+          <fieldset
+            aria-labelledby="chain-filter-label"
+            className="flex items-center gap-1 p-0.5 bg-gray-100 dark:bg-zinc-700 rounded-lg border-0 m-0 p-0"
+          >
             <button
+              type="button"
               onClick={() => setSelectedChain("all")}
+              aria-pressed={selectedChain === "all"}
+              aria-label="Show data for all blockchain networks"
               className={cn(
-                "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                "px-3 py-1.5 text-xs font-medium rounded-md transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1",
                 selectedChain === "all"
                   ? "bg-white dark:bg-zinc-600 text-gray-900 dark:text-zinc-100 shadow-sm"
                   : "text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-300"
@@ -186,9 +206,12 @@ export const UniqueUsersSection = ({ datapoints, indicatorName }: UniqueUsersSec
             {availableChains.map((chainId) => (
               <button
                 key={chainId}
+                type="button"
                 onClick={() => setSelectedChain(chainId)}
+                aria-pressed={selectedChain === chainId}
+                aria-label={`Filter by ${getChainName(chainId)} network`}
                 className={cn(
-                  "px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5",
+                  "px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1",
                   selectedChain === chainId
                     ? "bg-white dark:bg-zinc-600 text-gray-900 dark:text-zinc-100 shadow-sm"
                     : "text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-300"
@@ -196,12 +219,13 @@ export const UniqueUsersSection = ({ datapoints, indicatorName }: UniqueUsersSec
               >
                 <span
                   className="w-2 h-2 rounded-full"
+                  aria-hidden="true"
                   style={{ backgroundColor: getChainColor(chainId) }}
                 />
                 {getChainName(chainId)}
               </button>
             ))}
-          </div>
+          </fieldset>
         </div>
       )}
 
@@ -270,12 +294,16 @@ export const UniqueUsersSection = ({ datapoints, indicatorName }: UniqueUsersSec
               showLabel={true}
               label={formatCurrency(currentValue)}
             />
-            <div className="mt-4 space-y-2">
+            <ul
+              aria-label="Top chains by unique users"
+              className="mt-4 space-y-2 list-none m-0 p-0"
+            >
               {chainBarData.slice(0, 5).map((item) => (
-                <div key={item.name} className="flex items-center justify-between text-sm">
+                <li key={item.name} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <span
                       className="w-3 h-3 rounded-full"
+                      aria-hidden="true"
                       style={{ backgroundColor: item.color }}
                     />
                     <span className="text-gray-600 dark:text-zinc-400">{item.name}</span>
@@ -283,9 +311,9 @@ export const UniqueUsersSection = ({ datapoints, indicatorName }: UniqueUsersSec
                   <span className="font-semibold text-gray-900 dark:text-zinc-100 tabular-nums">
                     {formatCurrency(item.value)}
                   </span>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           </Card>
         )}
 
@@ -295,14 +323,14 @@ export const UniqueUsersSection = ({ datapoints, indicatorName }: UniqueUsersSec
             <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
               Period Comparison ({getChainName(selectedChain)})
             </Title>
-            <div className="space-y-3">
+            <ul aria-label="Period comparison values" className="space-y-3 list-none m-0 p-0">
               {rollingPeriodOrder.map((period) => {
                 const value = getPeriodValue(period);
                 const maxValue = Math.max(...rollingPeriodOrder.map((p) => getPeriodValue(p)));
                 const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
 
                 return (
-                  <div key={period}>
+                  <li key={period}>
                     <div className="flex items-center justify-between text-sm mb-1">
                       <span className="text-gray-600 dark:text-zinc-400">
                         {rollingPeriodLabels[period]}
@@ -311,16 +339,23 @@ export const UniqueUsersSection = ({ datapoints, indicatorName }: UniqueUsersSec
                         {formatCurrency(value)}
                       </span>
                     </div>
-                    <div className="h-2 bg-gray-100 dark:bg-zinc-700 rounded-full overflow-hidden">
+                    <div
+                      role="progressbar"
+                      aria-valuenow={Math.round(percentage)}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={`${rollingPeriodLabels[period]}: ${formatCurrency(value)} unique users`}
+                      className="h-2 bg-gray-100 dark:bg-zinc-700 rounded-full overflow-hidden"
+                    >
                       <div
                         className="h-full bg-blue-500 rounded-full transition-all duration-300"
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
-                  </div>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           </Card>
         )}
       </div>
@@ -331,21 +366,34 @@ export const UniqueUsersSection = ({ datapoints, indicatorName }: UniqueUsersSec
           Period Details
         </Title>
         <div className="overflow-x-auto">
-          <table className="min-w-full">
+          <table
+            className="min-w-full"
+            aria-label="Detailed unique users data by period and blockchain network"
+          >
             <thead>
               <tr className="border-b border-gray-100 dark:border-zinc-700">
-                <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400">
+                <th
+                  scope="col"
+                  className="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400"
+                >
                   Period
                 </th>
-                <th className="px-3 py-2 text-right text-xs font-semibold text-gray-500 dark:text-zinc-400">
+                <th
+                  scope="col"
+                  className="px-3 py-2 text-right text-xs font-semibold text-gray-500 dark:text-zinc-400"
+                >
                   Users
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400">
+                <th
+                  scope="col"
+                  className="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400"
+                >
                   Date Range
                 </th>
                 {availableChains.slice(0, 3).map((chainId) => (
                   <th
                     key={chainId}
+                    scope="col"
                     className="px-3 py-2 text-right text-xs font-semibold text-gray-500 dark:text-zinc-400"
                   >
                     {getChainName(chainId)}

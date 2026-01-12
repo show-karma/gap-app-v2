@@ -10,7 +10,6 @@ import { type FC, Fragment, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import type { Hex } from "viem";
-
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
@@ -20,6 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
+import type { ProjectImpactVerification } from "@/services/project-impacts.service";
 import { getProjectImpacts } from "@/services/project-impacts.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import fetchData from "@/utilities/fetchData";
@@ -115,7 +115,8 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({ impact, addVer
               if (
                 polledImpacts.find((polledImpact) =>
                   polledImpact.verified?.find(
-                    (v: any) => v.attester?.toLowerCase() === address?.toLowerCase()
+                    (v: ProjectImpactVerification) =>
+                      v.attester?.toLowerCase() === address?.toLowerCase()
                   )
                 )
               ) {
@@ -132,7 +133,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({ impact, addVer
           }
         });
       closeModal();
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorManager(
         MESSAGES.PROJECT.IMPACT.VERIFY.ERROR,
         error,

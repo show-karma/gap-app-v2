@@ -7,6 +7,7 @@ import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import {
   getChainName,
+  getLatestByPeriod,
   hasMonthlyData,
   hasPeriodBasedData,
   parseBreakdown,
@@ -71,15 +72,7 @@ export const PeriodComparisonSection = ({
 
   // Period comparison data for bar chart
   const periodComparisonData = useMemo(() => {
-    // Group by period and get the latest datapoint for each
-    const latestByPeriod = new Map<string, PeriodDatapoint>();
-    for (const dp of periodDatapoints) {
-      if (!dp.period) continue;
-      const existing = latestByPeriod.get(dp.period);
-      if (!existing || new Date(dp.endDate) > new Date(existing.endDate)) {
-        latestByPeriod.set(dp.period, dp);
-      }
-    }
+    const latestByPeriod = getLatestByPeriod(periodDatapoints);
 
     return rollingPeriodOrder
       .filter((period) => latestByPeriod.has(period))
@@ -124,15 +117,7 @@ export const PeriodComparisonSection = ({
 
   // Period breakdown table data
   const tableData = useMemo(() => {
-    // Group by period and get the latest datapoint for each
-    const latestByPeriod = new Map<string, PeriodDatapoint>();
-    for (const dp of periodDatapoints) {
-      if (!dp.period) continue;
-      const existing = latestByPeriod.get(dp.period);
-      if (!existing || new Date(dp.endDate) > new Date(existing.endDate)) {
-        latestByPeriod.set(dp.period, dp);
-      }
-    }
+    const latestByPeriod = getLatestByPeriod(periodDatapoints);
 
     return rollingPeriodOrder
       .filter((period) => latestByPeriod.has(period))
@@ -187,7 +172,8 @@ export const PeriodComparisonSection = ({
                   <select
                     value={selectedChain}
                     onChange={(e) => setSelectedChain(e.target.value)}
-                    className="px-3 py-1 text-xs font-medium bg-gray-100 dark:bg-zinc-700 border-0 rounded-md text-gray-700 dark:text-zinc-300 focus:ring-2 focus:ring-blue-500 min-w-[100px]"
+                    aria-label="Filter data by blockchain network"
+                    className="px-3 py-1 text-xs font-medium bg-gray-100 dark:bg-zinc-700 border-0 rounded-md text-gray-700 dark:text-zinc-300 focus:ring-2 focus:ring-blue-500 focus:outline-none min-w-[100px]"
                   >
                     <option value="all">All Chains</option>
                     {availableChains.map((chainId) => (
@@ -199,11 +185,17 @@ export const PeriodComparisonSection = ({
                 )}
                 {/* View toggle */}
                 {hasMonthly && (
-                  <div className="flex items-center gap-1 p-0.5 bg-gray-100 dark:bg-zinc-700 rounded-md">
+                  <fieldset
+                    aria-label="Select chart view type"
+                    className="flex items-center gap-1 p-0.5 bg-gray-100 dark:bg-zinc-700 rounded-md border-0 m-0 p-0"
+                  >
                     <button
+                      type="button"
                       onClick={() => setShowMonthlyTrend(false)}
+                      aria-pressed={!showMonthlyTrend}
+                      aria-label="View period comparison chart"
                       className={cn(
-                        "px-2 py-1 text-xs font-medium rounded transition-all",
+                        "px-2 py-1 text-xs font-medium rounded transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1",
                         !showMonthlyTrend
                           ? "bg-white dark:bg-zinc-600 text-gray-900 dark:text-zinc-100 shadow-sm"
                           : "text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-300"
@@ -212,9 +204,12 @@ export const PeriodComparisonSection = ({
                       Periods
                     </button>
                     <button
+                      type="button"
                       onClick={() => setShowMonthlyTrend(true)}
+                      aria-pressed={showMonthlyTrend}
+                      aria-label="View monthly trend chart"
                       className={cn(
-                        "px-2 py-1 text-xs font-medium rounded transition-all",
+                        "px-2 py-1 text-xs font-medium rounded transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1",
                         showMonthlyTrend
                           ? "bg-white dark:bg-zinc-600 text-gray-900 dark:text-zinc-100 shadow-sm"
                           : "text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-300"
@@ -222,7 +217,7 @@ export const PeriodComparisonSection = ({
                     >
                       Monthly
                     </button>
-                  </div>
+                  </fieldset>
                 )}
               </div>
             </div>
@@ -260,13 +255,22 @@ export const PeriodComparisonSection = ({
               Period Breakdown
             </Title>
             <div className="overflow-y-auto max-h-52 rounded border border-gray-200 dark:border-zinc-700">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
+              <table
+                className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700"
+                aria-label="Period breakdown showing values for different time ranges"
+              >
                 <thead className="bg-gray-50 dark:bg-zinc-800 sticky top-0">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400">
+                    <th
+                      scope="col"
+                      className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400"
+                    >
                       Period
                     </th>
-                    <th className="px-3 py-2 text-right text-xs font-semibold text-gray-600 dark:text-zinc-400">
+                    <th
+                      scope="col"
+                      className="px-3 py-2 text-right text-xs font-semibold text-gray-600 dark:text-zinc-400"
+                    >
                       {unitOfMeasure || "Value"}
                     </th>
                   </tr>
@@ -318,20 +322,23 @@ export const PeriodComparisonSection = ({
             <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
               Chain Breakdown (30 Days)
             </Title>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <ul
+              aria-label="Value breakdown by blockchain network over 30 days"
+              className="grid grid-cols-2 md:grid-cols-4 gap-3 list-none m-0 p-0"
+            >
               {Object.entries(tableData[0].breakdown)
                 .sort(([, a], [, b]) => b - a)
                 .map(([chainId, value]) => (
-                  <div key={chainId} className="p-3 bg-gray-50 dark:bg-zinc-700/50 rounded-lg">
+                  <li key={chainId} className="p-3 bg-gray-50 dark:bg-zinc-700/50 rounded-lg">
                     <div className="text-xs text-gray-500 dark:text-zinc-400 mb-1">
                       {getChainName(chainId)}
                     </div>
                     <div className="text-lg font-semibold text-gray-900 dark:text-zinc-100 tabular-nums">
                       {formatCurrency(value)}
                     </div>
-                  </div>
+                  </li>
                 ))}
-            </div>
+            </ul>
           </Card>
         )}
     </div>

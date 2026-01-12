@@ -127,3 +127,22 @@ export const hasMonthlyData = (datapoints: PeriodDatapoint[]): boolean => {
 export const hasUniqueUsersData = (datapoints: PeriodDatapoint[]): boolean => {
   return datapoints.some((dp) => dp.period && rollingPeriodOrder.includes(dp.period));
 };
+
+/**
+ * Get the latest datapoint for each rolling period (30d, 90d, 180d, 1y)
+ * Groups datapoints by period and returns the most recent one for each period
+ */
+export const getLatestByPeriod = (datapoints: PeriodDatapoint[]): Map<string, PeriodDatapoint> => {
+  const latestByPeriod = new Map<string, PeriodDatapoint>();
+
+  for (const dp of datapoints) {
+    if (!dp.period || !rollingPeriodOrder.includes(dp.period)) continue;
+
+    const existing = latestByPeriod.get(dp.period);
+    if (!existing || new Date(dp.endDate) > new Date(existing.endDate)) {
+      latestByPeriod.set(dp.period, dp);
+    }
+  }
+
+  return latestByPeriod;
+};
