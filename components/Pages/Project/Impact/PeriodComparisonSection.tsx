@@ -1,7 +1,7 @@
 "use client";
 
 import { AreaChart, BarChart, Card, Title } from "@tremor/react";
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import type { PeriodDatapoint } from "@/types/indicator";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
@@ -31,7 +31,7 @@ export { hasPeriodBasedData, hasMonthlyData };
  * - Monthly historical trend
  * - Chain breakdown with filter
  */
-export const PeriodComparisonSection = ({
+const PeriodComparisonSectionComponent = ({
   datapoints,
   indicatorName,
   unitOfMeasure,
@@ -344,3 +344,5 @@ export const PeriodComparisonSection = ({
     </div>
   );
 };
+
+export const PeriodComparisonSection = React.memo(PeriodComparisonSectionComponent);

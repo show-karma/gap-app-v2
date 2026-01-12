@@ -1,8 +1,9 @@
 "use client";
 
+import { Dialog, Transition } from "@headlessui/react";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { AreaChart, Card, Title } from "@tremor/react";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
@@ -363,6 +364,7 @@ export const OutputsAndOutcomes = () => {
                       period: dp.period,
                       startDate: dp.startDate,
                       endDate: dp.endDate,
+                      proof: dp.proof,
                     }))
                   ) && (
                     <UniqueUsersSection
@@ -372,6 +374,7 @@ export const OutputsAndOutcomes = () => {
                         period: dp.period,
                         startDate: dp.startDate,
                         endDate: dp.endDate,
+                        proof: dp.proof,
                       }))}
                       indicatorName={item.name}
                     />
@@ -509,7 +512,9 @@ export const OutputsAndOutcomes = () => {
                                     ? form.datapoints
                                     : item.datapoints.slice(0, 10)
                                   ).map((datapoint, index: number) => (
-                                    <tr key={index}>
+                                    <tr
+                                      key={`${datapoint.endDate || ""}-${datapoint.value || ""}-${index}`}
+                                    >
                                       <td className="px-4 py-2">
                                         {!autosyncedIndicators.find((i) => i.name === item.name) &&
                                         form?.isEditing ? (
@@ -709,6 +714,7 @@ export const OutputsAndOutcomes = () => {
                                                     key={urlIndex}
                                                     href={url}
                                                     target="_blank"
+                                                    rel="noopener noreferrer"
                                                     className="text-blue-500 underline dark:text-blue-400 truncate max-w-xs"
                                                   >
                                                     {url}
@@ -747,7 +753,7 @@ export const OutputsAndOutcomes = () => {
                                   ))}
                                   {form?.isEditing && isAuthorized && (
                                     <tr>
-                                      <td className="px-4 py-2">
+                                      <td colSpan={5} className="px-4 py-2">
                                         <Button onClick={() => handleAddEntry(item.id)}>
                                           Add new entry
                                         </Button>
@@ -831,93 +837,113 @@ export const OutputsAndOutcomes = () => {
         </div>
       )}
 
-      {/* Modal */}
-      {selectedPoint && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="modal-title"
-          className="fixed inset-0 flex items-center justify-center z-50"
-        >
-          {/* Modal backdrop */}
-          <button
-            type="button"
-            className="fixed inset-0 bg-black/50 dark:bg-black/70 border-none p-0 cursor-pointer"
-            onClick={() => setSelectedPoint(null)}
-            aria-label="Close modal"
-          />
+      {/* Modal - Using Headless UI Dialog for proper accessibility focus management */}
+      <Transition appear show={selectedPoint !== null} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setSelectedPoint(null)}>
+          {/* Backdrop with transition */}
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/50 dark:bg-black/70" aria-hidden="true" />
+          </Transition.Child>
 
-          {/* Modal content */}
-          <div className="relative bg-white dark:bg-zinc-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4 z-50">
-            <div className="flex flex-col gap-4">
-              <div className="flex justify-between items-start">
-                <h3
-                  id="modal-title"
-                  className="text-lg font-semibold text-gray-900 dark:text-zinc-100"
-                >
-                  Data Point Details
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setSelectedPoint(null)}
-                  aria-label="Close data point details"
-                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors"
-                >
-                  <span className="text-2xl" aria-hidden="true">
-                    ×
-                  </span>
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <div className="text-sm font-medium text-gray-500 dark:text-zinc-400">Value</div>
-                  <p className="text-base text-gray-900 dark:text-zinc-100">
-                    {selectedPoint.data.value}
-                  </p>
-                </div>
-
-                <div>
-                  <div className="text-sm font-medium text-gray-500 dark:text-zinc-400">Date</div>
-                  <p className="text-base text-gray-900 dark:text-zinc-100">
-                    {selectedPoint.data.date}
-                  </p>
-                </div>
-
-                {selectedPoint.data.proof && (
-                  <div>
-                    <div className="text-sm font-medium text-gray-500 dark:text-zinc-400">
-                      Proof
-                    </div>
-                    <div className="mt-1 flex flex-col gap-2">
-                      {parseProofUrls(selectedPoint.data.proof).length > 0 ? (
-                        parseProofUrls(selectedPoint.data.proof).map((url, index) => (
-                          <a
-                            key={index}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:hover:bg-blue-500 transition-colors"
-                          >
-                            View Proof{" "}
-                            {parseProofUrls(selectedPoint.data.proof).length > 1
-                              ? `#${index + 1}`
-                              : ""}
-                          </a>
-                        ))
-                      ) : (
-                        <span className="text-gray-500 dark:text-zinc-400">
-                          {selectedPoint.data.proof}
+          {/* Modal content container */}
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="relative bg-white dark:bg-zinc-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex justify-between items-start">
+                      <Dialog.Title
+                        as="h3"
+                        className="text-lg font-semibold text-gray-900 dark:text-zinc-100"
+                      >
+                        Data Point Details
+                      </Dialog.Title>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedPoint(null)}
+                        aria-label="Close data point details"
+                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors"
+                      >
+                        <span className="text-2xl" aria-hidden="true">
+                          ×
                         </span>
-                      )}
+                      </button>
                     </div>
+
+                    {selectedPoint && (
+                      <div className="space-y-3">
+                        <div>
+                          <div className="text-sm font-medium text-gray-500 dark:text-zinc-400">
+                            Value
+                          </div>
+                          <p className="text-base text-gray-900 dark:text-zinc-100">
+                            {selectedPoint.data.value}
+                          </p>
+                        </div>
+
+                        <div>
+                          <div className="text-sm font-medium text-gray-500 dark:text-zinc-400">
+                            Date
+                          </div>
+                          <p className="text-base text-gray-900 dark:text-zinc-100">
+                            {selectedPoint.data.date}
+                          </p>
+                        </div>
+
+                        {selectedPoint.data.proof && (
+                          <div>
+                            <div className="text-sm font-medium text-gray-500 dark:text-zinc-400">
+                              Proof
+                            </div>
+                            <div className="mt-1 flex flex-col gap-2">
+                              {parseProofUrls(selectedPoint.data.proof).length > 0 ? (
+                                parseProofUrls(selectedPoint.data.proof).map((url, index) => (
+                                  <a
+                                    key={index}
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:hover:bg-blue-500 transition-colors"
+                                  >
+                                    View Proof{" "}
+                                    {parseProofUrls(selectedPoint.data.proof).length > 1
+                                      ? `#${index + 1}`
+                                      : ""}
+                                  </a>
+                                ))
+                              ) : (
+                                <span className="text-gray-500 dark:text-zinc-400">
+                                  {selectedPoint.data.proof}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </Dialog.Panel>
+              </Transition.Child>
             </div>
           </div>
-        </div>
-      )}
+        </Dialog>
+      </Transition>
     </div>
   );
 };
