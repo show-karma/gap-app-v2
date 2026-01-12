@@ -31,14 +31,41 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx', '!node_modules/**') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-
+
+      - name: Build application
+        run: pnpm run build
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.NEXT_PUBLIC_PRIVY_APP_ID }}
+          NEXT_PUBLIC_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_PROJECT_ID }}
+          NEXT_PUBLIC_GAP_INDEXER_URL: https://gapstagapi.karmahq.xyz
+
+      - name: Cache Cypress binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            cypress-${{ runner.os }}-
+
       - name: Install Cypress binary
         run: pnpm exec cypress install
 
       - name: Run E2E tests
-        run: pnpm run e2e:headless
+        run: pnpm run e2e:ci
         env:
-          NODE_ENV: test
+          NODE_ENV: production
           CYPRESS_BASE_URL: http://localhost:3000
+          CYPRESS_VIDEO: false
           NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.NEXT_PUBLIC_PRIVY_APP_ID }}
           NEXT_PUBLIC_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_PROJECT_ID }}
           NEXT_PUBLIC_GAP_INDEXER_URL: https://gapstagapi.karmahq.xyz
@@ -70,18 +97,18 @@ jobs:
             const body = '${{ job.status }}' === 'success'
               ? `## ✅ E2E Tests Passed!\n\nAll end-to-end tests completed successfully.`
               : `## ❌ E2E Tests Failed\n\nSome E2E tests failed. Please check the workflow logs and artifacts for details.\n\n**Artifacts available:**\n- Screenshots (on failure)\n- Videos (on failure)`;
-            
+
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
+
             const e2eComment = comments.find(comment =>
-              comment.user.type === 'Bot' && 
+              comment.user.type === 'Bot' &&
               comment.body.includes('E2E Tests')
             );
-            
+
             if (e2eComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -97,4 +124,3 @@ jobs:
                 body,
               });
             }
-
