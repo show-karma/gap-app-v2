@@ -187,7 +187,7 @@ export const UniqueUsersSection = ({ datapoints, indicatorName }: UniqueUsersSec
           </span>
           <fieldset
             aria-labelledby="chain-filter-label"
-            className="flex items-center gap-1 p-0.5 bg-gray-100 dark:bg-zinc-700 rounded-lg border-0 m-0 p-0"
+            className="flex items-center gap-1 bg-gray-100 dark:bg-zinc-700 rounded-lg border-0 m-0 p-0.5"
           >
             <button
               type="button"

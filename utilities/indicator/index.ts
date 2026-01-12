@@ -136,10 +136,11 @@ export const getLatestByPeriod = (datapoints: PeriodDatapoint[]): Map<string, Pe
   const latestByPeriod = new Map<string, PeriodDatapoint>();
 
   for (const dp of datapoints) {
-    if (!dp.period || !rollingPeriodOrder.includes(dp.period)) continue;
+    // Skip if missing required fields
+    if (!dp.period || !rollingPeriodOrder.includes(dp.period) || !dp.endDate) continue;
 
     const existing = latestByPeriod.get(dp.period);
-    if (!existing || new Date(dp.endDate) > new Date(existing.endDate)) {
+    if (!existing || !existing.endDate || new Date(dp.endDate) > new Date(existing.endDate)) {
       latestByPeriod.set(dp.period, dp);
     }
   }

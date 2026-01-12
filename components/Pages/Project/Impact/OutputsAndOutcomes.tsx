@@ -183,14 +183,7 @@ export const OutputsAndOutcomes = () => {
   const sortedOutputs = sortIndicatorsByPriority(filteredOutputs);
 
   const handleAddEntry = (id: string) => {
-    const output = impactAnswers.find((o) => o.id === id);
-    output?.datapoints.push({
-      value: 0,
-      proof: "",
-      startDate: "",
-      endDate: "",
-    });
-
+    // Only update local form state - don't mutate React Query cache directly
     setForms((prev) =>
       prev.map((f) =>
         f.id === id
@@ -205,6 +198,7 @@ export const OutputsAndOutcomes = () => {
                   endDate: new Date().toISOString(),
                 },
               ],
+              isEdited: true,
             }
           : f
       )
@@ -212,15 +206,13 @@ export const OutputsAndOutcomes = () => {
   };
 
   const handleDeleteEntry = (id: string, index: number) => {
-    const output = impactAnswers.find((o) => o.id === id);
-    output?.datapoints.splice(index, 1);
-
+    // Only update local form state - don't mutate React Query cache directly
     setForms((prev) =>
       prev.map((f) =>
         f.id === id
           ? {
               ...f,
-              datapoints: [...f.datapoints].filter((_, i) => i !== index),
+              datapoints: f.datapoints.filter((_, i) => i !== index),
               isEdited: true,
             }
           : f

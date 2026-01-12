@@ -69,6 +69,7 @@ function transformIndicator(v2Indicator: V2Indicator): Indicator {
  * Fetch all pages of indicators for a given query
  * @param params - Query parameters for the indicators API
  * @param pageSize - Number of results per page (default 100)
+ * @param maxPages - Maximum number of pages to fetch (default 50, safety limit)
  * @returns All indicators across all pages
  */
 async function fetchAllIndicatorPages(
@@ -78,13 +79,14 @@ async function fetchAllIndicatorPages(
     chainId?: number;
     syncType?: "auto" | "manual";
   },
-  pageSize = 100
+  pageSize = 100,
+  maxPages = 50
 ): Promise<Indicator[]> {
   const allIndicators: Indicator[] = [];
   let currentPage = 1;
   let hasMore = true;
 
-  while (hasMore) {
+  while (hasMore && currentPage <= maxPages) {
     const [data, error] = await fetchData(
       INDEXER.INDICATORS.V2.LIST({ ...params, page: currentPage, limit: pageSize })
     );

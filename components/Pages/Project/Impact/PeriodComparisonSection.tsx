@@ -187,7 +187,7 @@ export const PeriodComparisonSection = ({
                 {hasMonthly && (
                   <fieldset
                     aria-label="Select chart view type"
-                    className="flex items-center gap-1 p-0.5 bg-gray-100 dark:bg-zinc-700 rounded-md border-0 m-0 p-0"
+                    className="flex items-center gap-1 bg-gray-100 dark:bg-zinc-700 rounded-md border-0 m-0 p-0.5"
                   >
                     <button
                       type="button"
