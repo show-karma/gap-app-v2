@@ -320,10 +320,10 @@ export const PeriodComparisonSection = ({
         Object.keys(tableData[0].breakdown).length > 1 && (
           <Card className="bg-white dark:bg-zinc-800 rounded">
             <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
-              Chain Breakdown (30 Days)
+              Chain Breakdown ({tableData[0].label})
             </Title>
             <ul
-              aria-label="Value breakdown by blockchain network over 30 days"
+              aria-label={`Value breakdown by blockchain network over ${tableData[0].label.toLowerCase()}`}
               className="grid grid-cols-2 md:grid-cols-4 gap-3 list-none m-0 p-0"
             >
               {Object.entries(tableData[0].breakdown)

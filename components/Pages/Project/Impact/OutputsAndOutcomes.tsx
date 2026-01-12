@@ -652,18 +652,18 @@ export const OutputsAndOutcomes = () => {
                                             }
                                             className={cn(
                                               "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 focus:outline-none dark:text-zinc-100",
-                                              isInvalidTimestamp(
+                                              (isInvalidTimestamp(
                                                 item.id,
                                                 form?.datapoints?.[index]?.endDate ||
                                                   form?.datapoints?.[index]?.outputTimestamp ||
                                                   ""
                                               ) ||
-                                                (hasInvalidDatesSameRow(
+                                                hasInvalidDatesSameRow(
                                                   item.id,
                                                   form?.datapoints?.[index]?.startDate,
                                                   form?.datapoints?.[index]?.endDate
-                                                ) &&
-                                                  "border-2 border-red-500")
+                                                )) &&
+                                                "border-2 border-red-500"
                                             )}
                                           />
                                         ) : (
