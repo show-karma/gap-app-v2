@@ -10,19 +10,19 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
  * @returns Object containing grants array, loading state, error, and refetch function
  */
 export function useCommunityGrants(communitySlug: string) {
-    const queryKey = QUERY_KEYS.COMMUNITY.GRANTS(communitySlug);
+  const queryKey = QUERY_KEYS.COMMUNITY.GRANTS(communitySlug);
 
-    const { data, isLoading, error, refetch } = useQuery<CommunityGrant[]>({
-        queryKey,
-        queryFn: () => getCommunityGrants(communitySlug),
-        enabled: !!communitySlug,
-        staleTime: 5 * 60 * 1000,
-    });
+  const { data, isLoading, error, refetch } = useQuery<CommunityGrant[]>({
+    queryKey,
+    queryFn: () => getCommunityGrants(communitySlug),
+    enabled: !!communitySlug,
+    staleTime: 5 * 60 * 1000,
+  });
 
-    return {
-        grants: data || [],
-        isLoading,
-        error,
-        refetch,
-    };
+  return {
+    grants: data || [],
+    isLoading,
+    error,
+    refetch,
+  };
 }
