@@ -7,11 +7,24 @@
  * - Form validation
  * - Save/update operations
  * - Authorization checks
+ *
+ * IMPORTANT: These tests require actual Privy authentication mocking which
+ * is not currently supported. The cy.login() command sets localStorage values
+ * but Privy uses React context internally, so the frontend never recognizes
+ * the user as authenticated. These tests are skipped in CI until proper
+ * authentication mocking is implemented.
+ *
+ * TODO: Implement proper Privy test mode or authentication mocking
+ * @see https://docs.privy.io/guide/testing
  */
 
 import { setupCommonIntercepts, waitForPageLoad } from "../../support/intercepts";
 
-describe("Chain Payout Address Modal", () => {
+// Skip in CI - requires real Privy authentication which cannot be mocked via localStorage
+const isCI = Cypress.env("CI") === "true" || Cypress.env("CI") === true;
+const describeOrSkip = isCI ? describe.skip : describe;
+
+describeOrSkip("Chain Payout Address Modal", () => {
   // Test data
   const TEST_PROJECT_SLUG = "test-project";
   const VALID_ADDRESS = "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed";

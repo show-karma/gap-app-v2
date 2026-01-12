@@ -66,6 +66,7 @@ jobs:
           NODE_ENV: production
           CYPRESS_BASE_URL: http://localhost:3000
           CYPRESS_VIDEO: false
+          CYPRESS_CI: true
           NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.NEXT_PUBLIC_PRIVY_APP_ID }}
           NEXT_PUBLIC_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_PROJECT_ID }}
           NEXT_PUBLIC_GAP_INDEXER_URL: https://gapstagapi.karmahq.xyz
