@@ -15,14 +15,12 @@ interface MilestoneCardProps {
   verifyingMilestoneId: string | null;
   verificationComment: string;
   isVerifying: boolean;
-  isSyncing: boolean;
   canVerifyMilestones: boolean;
   canDeleteMilestones: boolean;
   onVerifyClick: (uid: string) => void;
   onCancelVerification: () => void;
   onVerificationCommentChange: (comment: string) => void;
   onSubmitVerification: (milestone: GrantMilestoneWithCompletion) => void;
-  onSyncVerification: (milestone: GrantMilestoneWithCompletion) => void;
   onDeleteMilestone: (milestone: GrantMilestoneWithCompletion) => Promise<void>;
   isDeleting?: boolean;
 }
@@ -33,14 +31,12 @@ export function MilestoneCard({
   verifyingMilestoneId,
   verificationComment,
   isVerifying,
-  isSyncing,
   canVerifyMilestones,
   canDeleteMilestones,
   onVerifyClick,
   onCancelVerification,
   onVerificationCommentChange,
   onSubmitVerification,
-  onSyncVerification,
   onDeleteMilestone,
   isDeleting = false,
 }: MilestoneCardProps) {
@@ -167,23 +163,6 @@ export function MilestoneCard({
                   Verified: {formatDate(milestone.verificationDetails.verifiedAt)}
                 </p>
               </div>
-              {/* Show sync button if off-chain data is not synced */}
-              {/* Only milestone reviewers, admins, and contract owners can sync */}
-              {canVerifyMilestones &&
-                milestone.fundingApplicationCompletion &&
-                !milestone.fundingApplicationCompletion.isVerified && (
-                  <div className="mt-2">
-                    <Button
-                      onClick={() => onSyncVerification(milestone)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700"
-                      disabled={isSyncing}
-                      isLoading={isSyncing}
-                    >
-                      <CheckCircleIcon className="w-4 h-4" />
-                      Sync Verification to Off-chain
-                    </Button>
-                  </div>
-                )}
             </div>
           ) : (
             /* Show Verify Button for all non-verified milestones with completion (on-chain or off-chain) */

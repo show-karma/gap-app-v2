@@ -3,7 +3,6 @@
 import { ArrowLeftIcon, ChevronLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -13,7 +12,7 @@ import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompleti
 import { useIsReviewer, useReviewerPrograms } from "@/hooks/usePermissions";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
-import { updateMilestoneVerification } from "@/services/milestones";
+import { useOwnerStore } from "@/store";
 import { PAGES } from "@/utilities/pages";
 import { CommentsAndActivity } from "./CommentsAndActivity";
 import { GrantCompleteButtonForReviewer } from "./GrantCompleteButtonForReviewer";
@@ -182,8 +181,6 @@ export function MilestonesReviewPage({
     },
   });
 
-  const [isSyncing, setIsSyncing] = useState(false);
-
   const handleVerifyClick = useCallback((completionId: string) => {
     setVerifyingMilestoneId(completionId);
     setVerificationComment("");
@@ -201,34 +198,6 @@ export function MilestonesReviewPage({
       await verifyMilestone(milestone, isMilestoneReviewer || false, data, verificationComment);
     },
     [data, verifyMilestone, isMilestoneReviewer, verificationComment]
-  );
-
-  const handleSyncVerification = useCallback(
-    async (milestone: GrantMilestoneWithCompletion) => {
-      if (!milestone.fundingApplicationCompletion || !milestone.verificationDetails) return;
-
-      setIsSyncing(true);
-      try {
-        // Extract verification comment from verificationDetails description
-        const verificationComment = milestone.verificationDetails.description || "";
-
-        await updateMilestoneVerification(
-          milestone.fundingApplicationCompletion.referenceNumber,
-          milestone.fundingApplicationCompletion.milestoneFieldLabel,
-          milestone.fundingApplicationCompletion.milestoneTitle,
-          verificationComment
-        );
-
-        toast.success("Verification synced successfully to off-chain database!");
-        await refetch();
-      } catch (error) {
-        console.error("Error syncing verification:", error);
-        toast.error("Failed to sync verification to database");
-      } finally {
-        setIsSyncing(false);
-      }
-    },
-    [refetch]
   );
 
   const handleDeleteMilestone = useCallback(
@@ -397,14 +366,12 @@ export function MilestonesReviewPage({
                       verifyingMilestoneId={verifyingMilestoneId}
                       verificationComment={verificationComment}
                       isVerifying={isVerifying}
-                      isSyncing={isSyncing}
                       canVerifyMilestones={canVerifyMilestones}
                       canDeleteMilestones={canDeleteMilestones}
                       onVerifyClick={handleVerifyClick}
                       onCancelVerification={handleCancelVerification}
                       onVerificationCommentChange={setVerificationComment}
                       onSubmitVerification={handleSubmitVerification}
-                      onSyncVerification={handleSyncVerification}
                       onDeleteMilestone={handleDeleteMilestone}
                       isDeleting={isDeleting && deletingMilestoneId === milestone.uid}
                     />
