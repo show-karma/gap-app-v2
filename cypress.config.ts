@@ -24,6 +24,7 @@ export default defineConfig({
   e2e: {
     env: {
       NEXT_PUBLIC_ENV: "staging",
+      CI: isCI, // Pass CI flag to Cypress.env() for tests to check
     },
     baseUrl: "http://localhost:3000",
     viewportHeight: 800,

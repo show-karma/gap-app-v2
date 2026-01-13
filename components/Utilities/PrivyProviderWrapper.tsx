@@ -48,7 +48,14 @@ export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperP
             createOnLogin: "users-without-wallets",
           },
         },
-        loginMethods: ["email", "google", "wallet"],
+        loginMethodsAndOrder: {
+          primary: [
+            "email",
+            "google",
+            "metamask",
+            `privy:${privyAppId}`, // Cross-app SSO with whitelabel apps
+          ] as const,
+        },
         defaultChain: defaultChain,
         supportedChains: appNetwork,
         externalWallets: {
