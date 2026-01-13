@@ -371,6 +371,17 @@ export const INDEXER = {
           return `/v2/indicators/aggregate?${params.toString()}`;
         },
       },
+      COMMUNITY_METRICS: (
+        communityIdOrSlug: string,
+        params?: { startDate?: string; endDate?: string; metricNames?: string }
+      ) => {
+        const urlParams = new URLSearchParams();
+        if (params?.startDate) urlParams.append("startDate", params.startDate);
+        if (params?.endDate) urlParams.append("endDate", params.endDate);
+        if (params?.metricNames) urlParams.append("metricNames", params.metricNames);
+        const queryString = urlParams.toString();
+        return `/v2/communities/${communityIdOrSlug}/community-metrics${queryString ? `?${queryString}` : ""}`;
+      },
       PROJECTS: (
         slug: string,
         {
