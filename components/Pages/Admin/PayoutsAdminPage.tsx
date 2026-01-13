@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
+import { BanknotesIcon, ClockIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -19,6 +20,11 @@ import {
   useBatchUpdatePayouts,
 } from "@/hooks/useCommunityPayouts";
 import { useGrants } from "@/hooks/useGrants";
+import {
+  CreateDisbursementModal,
+  type GrantDisbursementInfo,
+  PayoutHistoryDrawer,
+} from "@/src/features/payout-disbursement";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -54,6 +60,22 @@ export default function PayoutsAdminPage() {
   // State for tracking edits
   const [editedFields, setEditedFields] = useState<Record<string, EditableFields>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // State for row selection (for disbursement)
+  const [selectedGrants, setSelectedGrants] = useState<Set<string>>(new Set());
+
+  // State for disbursement modal
+  const [isDisbursementModalOpen, setIsDisbursementModalOpen] = useState(false);
+  const [grantsForDisbursement, setGrantsForDisbursement] = useState<GrantDisbursementInfo[]>([]);
+
+  // State for payout history drawer
+  const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useState(false);
+  const [historyGrant, setHistoryGrant] = useState<{
+    grantUID: string;
+    grantName: string;
+    projectName: string;
+    approvedAmount?: string;
+  } | null>(null);
 
   // Get values from URL params or use defaults
   const selectedProgramId = searchParams.get("programId");
@@ -317,6 +339,83 @@ export default function PayoutsAdminPage() {
     URL.revokeObjectURL(url);
   }, [tableData]);
 
+  // Selection handlers
+  const handleSelectGrant = (uid: string, checked: boolean) => {
+    setSelectedGrants((prev) => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(uid);
+      } else {
+        newSet.delete(uid);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedGrants(new Set(paginatedData.map((item) => item.uid)));
+    } else {
+      setSelectedGrants(new Set());
+    }
+  };
+
+  // Check if a grant is ready for disbursement (has payout address and amount)
+  const isGrantReadyForDisbursement = (item: PayoutsTableData): boolean => {
+    const payoutAddress = editedFields[item.uid]?.payoutAddress ?? item.currentPayoutAddress;
+    const amount = editedFields[item.uid]?.amount ?? item.currentAmount;
+    return !!(payoutAddress && isAddress(payoutAddress) && amount && parseFloat(amount) > 0);
+  };
+
+  // Open disbursement modal for selected grants
+  const handleOpenDisbursementModal = () => {
+    const selectedItems = paginatedData.filter(
+      (item) => selectedGrants.has(item.uid) && isGrantReadyForDisbursement(item)
+    );
+
+    if (selectedItems.length === 0) {
+      toast.error("Please select grants with valid payout addresses and amounts");
+      return;
+    }
+
+    const grantsInfo: GrantDisbursementInfo[] = selectedItems.map((item) => ({
+      grantUID: item.uid,
+      grantName: item.grantName,
+      projectName: item.projectName,
+      payoutAddress: editedFields[item.uid]?.payoutAddress || item.currentPayoutAddress || "",
+      approvedAmount: editedFields[item.uid]?.amount || item.currentAmount || "0",
+    }));
+
+    setGrantsForDisbursement(grantsInfo);
+    setIsDisbursementModalOpen(true);
+  };
+
+  // Open history drawer for a specific grant
+  const handleOpenHistoryDrawer = (item: PayoutsTableData) => {
+    setHistoryGrant({
+      grantUID: item.uid,
+      grantName: item.grantName,
+      projectName: item.projectName,
+      approvedAmount: editedFields[item.uid]?.amount || item.currentAmount,
+    });
+    setIsHistoryDrawerOpen(true);
+  };
+
+  // Handle disbursement modal close
+  const handleDisbursementModalClose = () => {
+    setIsDisbursementModalOpen(false);
+    setGrantsForDisbursement([]);
+  };
+
+  // Handle disbursement success
+  const handleDisbursementSuccess = () => {
+    // Clear selection after successful disbursement
+    setSelectedGrants(new Set());
+    // Refresh grants data
+    refreshGrants();
+    toast.success("Disbursement created successfully");
+  };
+
   // Handle save
   const handleSave = async () => {
     // Clear all errors
@@ -440,6 +539,15 @@ export default function PayoutsAdminPage() {
           <div className="flex flex-row flex-wrap justify-between items-center gap-4">
             <div className="flex items-center gap-4">
               <ProgramFilter onChange={handleProgramChange} />
+              {selectedGrants.size > 0 && (
+                <Button
+                  onClick={handleOpenDisbursementModal}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md"
+                >
+                  <BanknotesIcon className="h-5 w-5" />
+                  Create Disbursement ({selectedGrants.size})
+                </Button>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <p className="text-sm text-gray-600 dark:text-gray-400">Show</p>
@@ -474,6 +582,17 @@ export default function PayoutsAdminPage() {
             <table className="pt-3 min-w-full divide-y dark:bg-zinc-900 divide-gray-300 dark:divide-zinc-800 dark:text-white">
               <thead>
                 <tr className="border-b transition-colors text-gray-500 dark:text-gray-200 hover:bg-muted/50">
+                  <th scope="col" className="h-12 px-2 text-center align-middle font-medium w-12">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      checked={
+                        paginatedData.length > 0 &&
+                        paginatedData.every((item) => selectedGrants.has(item.uid))
+                      }
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                    />
+                  </th>
                   <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
                     Project
                   </th>
@@ -486,6 +605,9 @@ export default function PayoutsAdminPage() {
                   <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
                     Payout Amount
                   </th>
+                  <th scope="col" className="h-12 px-4 text-center align-middle font-medium w-24">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="px-4 divide-y divide-gray-200 dark:divide-zinc-800">
@@ -497,8 +619,19 @@ export default function PayoutsAdminPage() {
                   return (
                     <tr
                       key={`${item.uid}-${item.projectUid}`}
-                      className="dark:text-zinc-300 text-gray-900 px-4 py-4"
+                      className={cn(
+                        "dark:text-zinc-300 text-gray-900 px-4 py-4",
+                        selectedGrants.has(item.uid) && "bg-blue-50 dark:bg-blue-900/20"
+                      )}
                     >
+                      <td className="px-2 py-2 text-center">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          checked={selectedGrants.has(item.uid)}
+                          onChange={(e) => handleSelectGrant(item.uid, e.target.checked)}
+                        />
+                      </td>
                       <td className="px-4 py-2 font-medium h-16">
                         <ExternalLink
                           href={PAGES.PROJECT.OVERVIEW(item.projectSlug || item.projectUid)}
@@ -565,6 +698,15 @@ export default function PayoutsAdminPage() {
                           )}
                         </div>
                       </td>
+                      <td className="px-4 py-2 text-center">
+                        <button
+                          onClick={() => handleOpenHistoryDrawer(item)}
+                          className="inline-flex items-center justify-center p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 rounded-md hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
+                          title="View payout history"
+                        >
+                          <ClockIcon className="h-5 w-5" />
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -592,6 +734,30 @@ export default function PayoutsAdminPage() {
           </div>
         </div>
       </div>
+
+      {/* Create Disbursement Modal */}
+      <CreateDisbursementModal
+        isOpen={isDisbursementModalOpen}
+        onClose={handleDisbursementModalClose}
+        communityUID={community?.uid || ""}
+        grants={grantsForDisbursement}
+        onSuccess={handleDisbursementSuccess}
+      />
+
+      {/* Payout History Drawer */}
+      {historyGrant && (
+        <PayoutHistoryDrawer
+          isOpen={isHistoryDrawerOpen}
+          onClose={() => {
+            setIsHistoryDrawerOpen(false);
+            setHistoryGrant(null);
+          }}
+          grantUID={historyGrant.grantUID}
+          grantName={historyGrant.grantName}
+          projectName={historyGrant.projectName}
+          approvedAmount={historyGrant.approvedAmount}
+        />
+      )}
     </div>
   );
 }

@@ -167,6 +167,33 @@ export const INDEXER = {
         return trackId ? `${base}?trackId=${trackId}` : base;
       },
     },
+    PAYOUTS: {
+      CREATE: "/v2/payouts/disburse",
+      RECORD_SAFE_TX: (disbursementId: string) => `/v2/payouts/${disbursementId}/record-safe-tx`,
+      GRANT_HISTORY: (grantUID: string, page?: number, limit?: number) => {
+        const params = new URLSearchParams();
+        if (page) params.set("page", page.toString());
+        if (limit) params.set("limit", limit.toString());
+        const query = params.toString();
+        return `/v2/payouts/grant/${grantUID}/history${query ? `?${query}` : ""}`;
+      },
+      GRANT_TOTAL_DISBURSED: (grantUID: string) => `/v2/payouts/grant/${grantUID}/total-disbursed`,
+      COMMUNITY_PENDING: (communityUID: string, page?: number, limit?: number) => {
+        const params = new URLSearchParams();
+        if (page) params.set("page", page.toString());
+        if (limit) params.set("limit", limit.toString());
+        const query = params.toString();
+        return `/v2/payouts/community/${communityUID}/pending${query ? `?${query}` : ""}`;
+      },
+      UPDATE_STATUS: (disbursementId: string) => `/v2/payouts/${disbursementId}/status`,
+      SAFE_AWAITING: (safeAddress: string, page?: number, limit?: number) => {
+        const params = new URLSearchParams();
+        if (page) params.set("page", page.toString());
+        if (limit) params.set("limit", limit.toString());
+        const query = params.toString();
+        return `/v2/payouts/safe/${safeAddress}/awaiting${query ? `?${query}` : ""}`;
+      },
+    },
   },
   PROGRAMS: {
     GET: (programId: string) => `/programs/${programId}`,
