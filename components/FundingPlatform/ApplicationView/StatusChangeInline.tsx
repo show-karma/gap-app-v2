@@ -4,15 +4,15 @@ import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { useQuery } from "@tanstack/react-query";
 import debounce from "lodash.debounce";
 import { type FC, type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { fundingPlatformService } from "@/services/fundingPlatformService";
 import type { IFundingApplication, IFundingProgramConfig } from "@/types/funding-platform";
 import {
@@ -325,7 +325,8 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
     <form
       className={cn(
         "mt-4 rounded-lg border p-4",
-        status === "approved" && "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20",
+        status === "approved" &&
+          "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20",
         status === "rejected" && "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20",
         status !== "approved" &&
           status !== "rejected" &&
@@ -348,7 +349,9 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
               "h-4 w-4",
               status === "approved" && "text-green-600 dark:text-green-400",
               status === "rejected" && "text-red-600 dark:text-red-400",
-              status !== "approved" && status !== "rejected" && "text-yellow-600 dark:text-yellow-400"
+              status !== "approved" &&
+                status !== "rejected" &&
+                "text-yellow-600 dark:text-yellow-400"
             )}
             aria-hidden="true"
           />
@@ -432,7 +435,11 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
                 Enter the approved funding amount as a positive number
               </div>
               {amountError && (
-                <p id="amount-error" role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+                <p
+                  id="amount-error"
+                  role="alert"
+                  className="mt-1 text-xs text-red-600 dark:text-red-400"
+                >
                   {amountError}
                 </p>
               )}
@@ -496,7 +503,11 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
                 />
               )}
               {currencyError ? (
-                <p id="currency-error" role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+                <p
+                  id="currency-error"
+                  role="alert"
+                  className="mt-1 text-xs text-red-600 dark:text-red-400"
+                >
                   {currencyError}
                 </p>
               ) : (
@@ -514,7 +525,8 @@ export const StatusChangeInline: FC<StatusChangeInlineProps> = ({
             htmlFor="reason"
             className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Reason {isReasonActuallyRequired ? <span className="text-red-500">*</span> : "(Optional)"}
+            Reason{" "}
+            {isReasonActuallyRequired ? <span className="text-red-500">*</span> : "(Optional)"}
           </label>
           <div className={cn(isSubmitting && "pointer-events-none opacity-50")}>
             <MarkdownEditor

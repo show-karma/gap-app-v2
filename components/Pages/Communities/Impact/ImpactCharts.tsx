@@ -5,6 +5,7 @@ import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
 import type { ProgramImpactDataResponse } from "@/types/programs";
 import { formatDate } from "@/utilities/formatDate";
 import { CategoryRow } from "./CategoryRow";
+import { CommunityMetricsSection } from "./CommunityMetricsSection";
 import { ProgramBanner } from "./ProgramBanner";
 
 export const prepareChartData = (
@@ -55,9 +56,14 @@ export const CommunityImpactCharts = () => {
     return a.categoryName.localeCompare(b.categoryName);
   });
 
+  // Hide community metrics when filtered by program or project
+  // Community metrics show network-wide data, not program/project specific
+  const showCommunityMetrics = !programSelected && !projectSelected;
+
   return (
     <div className="flex flex-col gap-4 flex-1 mb-10">
       <ProgramBanner />
+      {showCommunityMetrics && <CommunityMetricsSection />}
       {isLoading ? (
         <div className="flex justify-center items-center h-full">
           <Spinner />

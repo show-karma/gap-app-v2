@@ -13,20 +13,18 @@ import { INDEXER } from "@/utilities/indexer";
  * @param communitySlug - The community slug or UID
  * @returns Promise<CommunityGrant[]> - Array of community grants
  */
-export const getCommunityGrants = async (
-    communitySlug: string,
-): Promise<CommunityGrant[]> => {
-    const [data, error] = await fetchData<CommunityGrant[]>(
-        INDEXER.COMMUNITY.V2.GRANTS(communitySlug),
-    );
+export const getCommunityGrants = async (communitySlug: string): Promise<CommunityGrant[]> => {
+  const [data, error] = await fetchData<CommunityGrant[]>(
+    INDEXER.COMMUNITY.V2.GRANTS(communitySlug)
+  );
 
-    if (error || !data) {
-        errorManager(`Community Grants API Error: ${error}`, error, {
-            context: "community-grants.service",
-            communitySlug,
-        });
-        return [];
-    }
+  if (error || !data) {
+    errorManager(`Community Grants API Error: ${error}`, error, {
+      context: "community-grants.service",
+      communitySlug,
+    });
+    return [];
+  }
 
-    return data;
+  return data;
 };

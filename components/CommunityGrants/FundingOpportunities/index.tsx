@@ -94,7 +94,7 @@ export const FundingOpportunities = ({
         loader={<LoadingMore />}
         style={{ overflow: "visible" }}
       >
-        <FundingOpportunitiesGrid programs={programs} />
+        <FundingOpportunitiesGrid programs={programs} communitySlug={communitySlug} />
       </InfiniteScroll>
       <AlreadyAppliedBanner communitySlug={communitySlug} />
     </div>

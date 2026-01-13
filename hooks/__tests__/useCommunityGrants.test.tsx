@@ -1,16 +1,14 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { useCommunityGrants } from "../useCommunityGrants";
 import { getCommunityGrants } from "@/services/community-grants.service";
 import type { CommunityGrant } from "@/types/v2/community-grant";
+import { useCommunityGrants } from "../useCommunityGrants";
 
 // Mock the service
 jest.mock("@/services/community-grants.service");
 
-const mockGetCommunityGrants = getCommunityGrants as jest.MockedFunction<
-  typeof getCommunityGrants
->;
+const mockGetCommunityGrants = getCommunityGrants as jest.MockedFunction<typeof getCommunityGrants>;
 
 describe("useCommunityGrants", () => {
   let queryClient: QueryClient;
@@ -107,10 +105,7 @@ describe("useCommunityGrants", () => {
   describe("loading state", () => {
     it("should have loading state while fetching", async () => {
       mockGetCommunityGrants.mockImplementation(
-        () =>
-          new Promise((resolve) =>
-            setTimeout(() => resolve([createMockGrant()]), 100)
-          )
+        () => new Promise((resolve) => setTimeout(() => resolve([createMockGrant()]), 100))
       );
 
       const { result } = renderHook(() => useCommunityGrants("test-community"), {
@@ -197,10 +192,9 @@ describe("useCommunityGrants", () => {
       const mockGrants = [createMockGrant()];
       mockGetCommunityGrants.mockResolvedValue(mockGrants);
 
-      const { result, rerender } = renderHook(
-        () => useCommunityGrants("test-community"),
-        { wrapper }
-      );
+      const { result, rerender } = renderHook(() => useCommunityGrants("test-community"), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -218,13 +212,10 @@ describe("useCommunityGrants", () => {
     it("should fetch again when communitySlug changes", async () => {
       mockGetCommunityGrants.mockResolvedValue([createMockGrant()]);
 
-      const { result, rerender } = renderHook(
-        ({ slug }) => useCommunityGrants(slug),
-        {
-          wrapper,
-          initialProps: { slug: "community-1" },
-        }
-      );
+      const { result, rerender } = renderHook(({ slug }) => useCommunityGrants(slug), {
+        wrapper,
+        initialProps: { slug: "community-1" },
+      });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);

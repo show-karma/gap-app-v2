@@ -1,5 +1,6 @@
 import { Calendar, Coins } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import type { KeyboardEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -15,6 +16,8 @@ import { OnKarmaBadge } from "./on-karma-badge";
 interface FundingMapCardProps {
   program: FundingProgramResponse;
   onClick?: () => void;
+  /** URL to navigate to when the card is clicked (takes precedence over onClick) */
+  href?: string;
   /** Hide the description section */
   hideDescription?: boolean;
   /** Hide the categories section */
@@ -37,10 +40,12 @@ function isPendingReview(program: FundingProgramResponse): boolean {
 export function FundingMapCard({
   program,
   onClick,
+  href,
   hideDescription = false,
   hideCategories = false,
   className,
 }: FundingMapCardProps & { className?: string }) {
+  const router = useRouter();
   const { metadata, isOnKarma, communities } = program;
 
   const title = metadata?.title;
@@ -63,13 +68,21 @@ export function FundingMapCard({
   const budget = metadata?.programBudget;
   const formattedBudget = formatBudgetValue(budget);
 
+  const handleClick = () => {
+    if (href) {
+      router.push(href);
+    } else {
+      onClick?.();
+    }
+  };
+
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Enter" || event.key === " ") {
       // Prevent Space from scrolling the page
       if (event.key === " ") {
         event.preventDefault();
       }
-      onClick?.();
+      handleClick();
     }
   };
 
@@ -82,7 +95,7 @@ export function FundingMapCard({
         isPendingReview(program) && "ring-1 ring-gray-200",
         className
       )}
-      onClick={onClick}
+      onClick={handleClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="button"

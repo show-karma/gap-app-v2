@@ -1,8 +1,10 @@
 "use client";
-import { ChartLine, Coins, LandPlot, SquareUser } from "lucide-react";
+import { ChartLine, DollarSign, LandPlot, SquareUser } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
+import { useFundingOpportunitiesCount } from "@/hooks/useFundingOpportunitiesCount";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
@@ -22,6 +24,7 @@ const NewTag = () => {
 };
 
 type NavigationItem = {
+  readonly id: string;
   readonly path: (communityId: string) => string;
   readonly title: (communityName: string) => string;
   readonly Icon: React.ElementType;
@@ -31,12 +34,14 @@ type NavigationItem = {
 
 const NAVIGATION_ITEMS: readonly NavigationItem[] = [
   {
+    id: "funding-opportunities",
     path: (communityId: string) => PAGES.COMMUNITY.FUNDING_OPPORTUNITIES(communityId),
     title: () => "Funding opportunities",
-    Icon: Coins,
+    Icon: DollarSign,
     isActive: (pathname: string) => pathname.includes("/funding-opportunities"),
   },
   {
+    id: "community-projects",
     path: (communityId: string) => PAGES.COMMUNITY.ALL_GRANTS(communityId),
     title: (communityName: string) => `View ${communityName} community projects`,
     Icon: SquareUser,
@@ -48,12 +53,14 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
       !pathname.includes("/funding-opportunities"),
   },
   {
+    id: "milestone-updates",
     path: (communityId: string) => PAGES.COMMUNITY.UPDATES(communityId),
     title: () => "Milestone updates",
     Icon: LandPlot,
     isActive: (pathname: string) => pathname.includes("/updates"),
   },
   {
+    id: "impact",
     path: (communityId: string) => PAGES.COMMUNITY.IMPACT(communityId),
     title: () => "Impact",
     Icon: ChartLine,
@@ -72,15 +79,29 @@ export const CommunityPageNavigator = () => {
   const pathname = usePathname();
   const programId = searchParams.get("programId");
   const { data: community } = useCommunityDetails(communityId);
+  const { data: fundingOpportunitiesCount } = useFundingOpportunitiesCount({
+    communityUid: community?.uid,
+  });
 
   const isAdminPage = pathname.includes("/admin");
+
+  const visibleNavigationItems = useMemo(() => {
+    return NAVIGATION_ITEMS.filter((item) => {
+      // Hide funding opportunities tab if there are no opportunities
+      if (item.id === "funding-opportunities" && fundingOpportunitiesCount === 0) {
+        return false;
+      }
+      return true;
+    });
+  }, [fundingOpportunitiesCount]);
+
   if (isAdminPage) return null;
 
   return (
     <div className="flex flex-row max-md:flex-col flex-wrap pt-8 border-b border-gray-200 dark:border-zinc-700 justify-start items-center gap-6 h-max">
-      {NAVIGATION_ITEMS.map(({ path, title, Icon, isActive, showNewTag }) => (
+      {visibleNavigationItems.map(({ id, path, title, Icon, isActive, showNewTag }) => (
         <Link
-          key={path(communityId)}
+          key={id}
           href={getPathWithProgramId(programId, path(communityId))}
           className={cn(baseLinkStyle, isActive(pathname) ? activeLinkStyle : inactiveLinkStyle)}
         >

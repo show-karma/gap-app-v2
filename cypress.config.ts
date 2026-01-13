@@ -1,6 +1,9 @@
 import { defineConfig } from "cypress";
 import { addMatchImageSnapshotPlugin } from "cypress-image-snapshot/plugin";
 
+// Check if running in CI environment
+const isCI = process.env.CI === "true";
+
 export default defineConfig({
   component: {
     devServer: {
@@ -9,9 +12,10 @@ export default defineConfig({
     },
   },
   screenshotOnRunFailure: true,
-  video: true,
+  // Disable video in CI to speed up tests (can be overridden with CYPRESS_VIDEO env var)
+  video: !isCI,
   retries: {
-    runMode: 2, // Retry failed tests twice in CI
+    runMode: isCI ? 1 : 2, // Reduce retries in CI for faster feedback
     openMode: 0, // No retries in interactive mode
   },
   defaultCommandTimeout: 10000,
