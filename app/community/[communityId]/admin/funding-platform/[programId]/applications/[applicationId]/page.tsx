@@ -262,7 +262,9 @@ export default function ApplicationDetailPage() {
 
   // Check if status actions should be shown (not finalized)
   const showStatusActions =
-    hasAccess && application && !["approved", "rejected"].includes(application.status.toLowerCase());
+    hasAccess &&
+    application &&
+    !["approved", "rejected"].includes(application.status.toLowerCase());
 
   // Check loading states
   if (isLoadingAdmin || isLoadingApplication) {
