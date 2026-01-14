@@ -79,6 +79,7 @@ export function useAggregatedIndicators(
       INDEXER.INDICATORS.V2.COMMUNITY_AGGREGATE(communityDetails.uid, {
         indicatorIds: indicatorIds.join(","),
         programId: Number.isNaN(parsedProgramId) ? undefined : parsedProgramId,
+        projectUID: projectUID || undefined,
         startDate,
         endDate,
         granularity: "monthly",
