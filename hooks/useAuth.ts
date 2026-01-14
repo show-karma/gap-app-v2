@@ -46,11 +46,13 @@ export const useAuth = () => {
   useEffect(() => {
     // Detect logout: was authenticated, now not authenticated
     if (prevAuthRef.current && !authenticated) {
-      // Invalidate all permission/authorization queries on logout
-      // This ensures fresh data when user re-logs in
-      queryClient.invalidateQueries({ queryKey: ["isCommunityAdmin"] });
-      queryClient.invalidateQueries({ queryKey: ["staffAuthorization"] });
-      queryClient.invalidateQueries({ queryKey: ["contract-owner"] });
+      // Reset all permission/authorization queries on logout
+      // Using resetQueries instead of invalidateQueries to:
+      // 1. Clear cached data immediately (so hooks return false)
+      // 2. NOT trigger refetches (which would cause 401 errors)
+      queryClient.resetQueries({ queryKey: ["isCommunityAdmin"] });
+      queryClient.resetQueries({ queryKey: ["staffAuthorization"] });
+      queryClient.resetQueries({ queryKey: ["contract-owner"] });
     }
     prevAuthRef.current = authenticated;
   }, [authenticated]);

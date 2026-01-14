@@ -39,7 +39,8 @@ export const useStaff = () => {
     retry: 1,
   });
 
-  const isStaff: boolean = data?.authorized ?? false;
+  // Return false immediately if not authenticated (defense-in-depth)
+  const isStaff: boolean = isAuth ? (data?.authorized ?? false) : false;
 
   return { isStaff, isLoading, error };
 };

@@ -62,7 +62,8 @@ export const useCheckCommunityAdmin = (
   });
 
   return {
-    isAdmin: query.data ?? false,
+    // Return false immediately if not authenticated (defense-in-depth)
+    isAdmin: isAuth ? (query.data ?? false) : false,
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,
