@@ -5,6 +5,7 @@ import { watchAccount } from "@wagmi/core";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
+import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
 
@@ -28,6 +29,31 @@ export const useAuth = () => {
   const address = primaryWallet?.address as Hex | undefined;
 
   const shouldLoginAfterLogout = useRef(false);
+  const prevAuthRef = useRef(authenticated);
+
+  /**
+   * AUTH CACHE INVALIDATION
+   *
+   * When user logs out, we must invalidate all permission/authorization query caches.
+   * This prevents stale "isAdmin: true" data from being served on re-login.
+   *
+   * IMPORTANT: When creating new auth/permission hooks, add their query key here:
+   * - useCheckCommunityAdmin → ["isCommunityAdmin"]
+   * - useStaff → ["staffAuthorization"]
+   * - useContractOwner → ["contract-owner"]
+   * - [NEW HOOK] → [ADD QUERY KEY HERE]
+   */
+  useEffect(() => {
+    // Detect logout: was authenticated, now not authenticated
+    if (prevAuthRef.current && !authenticated) {
+      // Invalidate all permission/authorization queries on logout
+      // This ensures fresh data when user re-logs in
+      queryClient.invalidateQueries({ queryKey: ["isCommunityAdmin"] });
+      queryClient.invalidateQueries({ queryKey: ["staffAuthorization"] });
+      queryClient.invalidateQueries({ queryKey: ["contract-owner"] });
+    }
+    prevAuthRef.current = authenticated;
+  }, [authenticated]);
 
   // Initialize TokenManager with Privy
   useEffect(() => {

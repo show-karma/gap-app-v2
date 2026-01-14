@@ -42,6 +42,9 @@ export const useContractOwner = (chainOverride?: Chain) => {
       }),
     enabled: !!address && isAuth,
     staleTime: 10 * 60 * 1000, // 10 minutes - contract owner changes rarely
+    gcTime: 10 * 60 * 1000, // Match staleTime for consistency
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     retry: (failureCount, _error) => {
       // Retry up to 2 times for network errors
       return failureCount < 2;

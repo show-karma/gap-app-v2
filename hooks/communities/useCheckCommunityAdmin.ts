@@ -7,6 +7,9 @@ import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 
+const ADMIN_CHECK_STALE_TIME = 1000 * 60 * 5; // 5 minutes
+const ADMIN_CHECK_GC_TIME = 1000 * 60 * 10; // 10 minutes
+
 interface UseCheckCommunityAdminOptions {
   enabled?: boolean;
 }
@@ -40,7 +43,6 @@ export const useCheckCommunityAdmin = (
       community?.uid,
       community?.chainID,
       checkAddress,
-      !!isAuth,
       signer
     ),
     queryFn: async () => {
@@ -51,8 +53,10 @@ export const useCheckCommunityAdmin = (
       return await isCommunityAdminOf(community, checkAddress, signer);
     },
     enabled: !!community && !!checkAddress && !!isAuth && options?.enabled !== false,
+    staleTime: ADMIN_CHECK_STALE_TIME,
+    gcTime: ADMIN_CHECK_GC_TIME,
     refetchOnWindowFocus: false,
-    refetchOnMount: true,
+    refetchOnMount: false,
     refetchOnReconnect: false,
     retry: 1,
   });
