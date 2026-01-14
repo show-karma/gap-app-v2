@@ -71,27 +71,14 @@ export function useAggregatedIndicators(
     const startDate = startDateObj.toISOString();
     const endDate = new Date().toISOString();
 
-    // Parse programId to extract programId and chainId if in format "programId_chainId"
-    let parsedProgramId: number | undefined;
-    let parsedChainId: number | undefined;
-    if (programId) {
-      const parts = programId.split("_");
-      if (parts.length === 2) {
-        const programIdNum = parseInt(parts[0], 10);
-        const chainIdNum = parseInt(parts[1], 10);
-        if (!isNaN(programIdNum) && !isNaN(chainIdNum)) {
-          parsedProgramId = programIdNum;
-          parsedChainId = chainIdNum;
-        }
-      }
-    }
+    // Parse programId as number
+    const parsedProgramId = programId ? parseInt(programId, 10) : undefined;
 
     // Fetch community aggregate indicators
     const [data, error] = await fetchData(
       INDEXER.INDICATORS.V2.COMMUNITY_AGGREGATE(communityDetails.uid, {
         indicatorIds: indicatorIds.join(","),
-        programId: parsedProgramId,
-        chainId: parsedChainId,
+        programId: Number.isNaN(parsedProgramId) ? undefined : parsedProgramId,
         startDate,
         endDate,
         granularity: "monthly",
