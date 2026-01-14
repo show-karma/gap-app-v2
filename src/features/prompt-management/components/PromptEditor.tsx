@@ -7,6 +7,7 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAvailableAIModels } from "@/hooks/useAvailableAIModels";
 import { cn } from "@/utilities/tailwind";
 import {
+  useBulkEvaluationJobPolling,
   useSavePrompt,
   useTestPrompt,
   useTriggerBulkEvaluation,
@@ -80,6 +81,21 @@ export function PromptEditor({
     },
     onError: (error) => {
       toast.error(error.message || "Failed to start bulk evaluation");
+    },
+  });
+
+  // Poll for job status when we have a job ID
+  const { data: polledJobData } = useBulkEvaluationJobPolling(programId, currentJobId, {
+    onComplete: (job) => {
+      if (job.status === "completed") {
+        toast.success(
+          `Evaluation complete: ${job.completedApplications} of ${job.totalApplications} applications processed`
+        );
+      } else if (job.status === "failed") {
+        toast.error(`Evaluation failed: ${job.errorMessage || "Unknown error"}`);
+      }
+      // Clear job ID after completion to stop polling
+      setCurrentJobId(null);
     },
   });
 
@@ -182,12 +198,12 @@ export function PromptEditor({
   const canTest = existingPrompt && !isDirty;
   const canBulkEvaluate = existingPrompt && !isDirty;
 
-  // Show running job - prefer passed job, fall back to current job ID from mutation
-  const activeJob = bulkEvaluationJob ?? null;
+  // Show running job - prefer polled data, then passed prop, then check if job is starting
+  const activeJob = polledJobData ?? bulkEvaluationJob ?? null;
   const isJobRunning =
     activeJob?.status === "pending" ||
     activeJob?.status === "running" ||
-    Boolean(currentJobId && !bulkEvaluationJob);
+    Boolean(currentJobId && !activeJob);
 
   return (
     <div className="space-y-6">
