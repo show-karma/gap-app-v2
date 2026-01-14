@@ -170,12 +170,12 @@ export function useBulkEvaluationJobPolling(
     enabled: !!jobId,
     refetchInterval: (query) => {
       const data = query.state.data;
-      if (!data) return 2000;
+      if (!data) return 5000;
       if (data.status === "completed" || data.status === "failed") {
         options?.onComplete?.(data);
         return false;
       }
-      return 2000;
+      return 5000;
     },
   });
 }
