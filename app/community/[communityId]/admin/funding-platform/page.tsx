@@ -559,7 +559,7 @@ export default function FundingPlatformAdminPage() {
                         communityId,
                         program.programId
                       )}
-                      title="Configure Form"
+                      title="Program Settings"
                     >
                       <button
                         type="button"

@@ -2,7 +2,7 @@
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { useParams, useRouter } from "next/navigation";
 import FormBuilderErrorBoundary from "@/components/ErrorBoundary/FormBuilderErrorBoundary";
-import { QuestionBuilder } from "@/components/QuestionBuilder";
+import { ProgramSettings } from "@/components/FundingPlatform/ProgramSettings";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -48,12 +48,12 @@ export default function QuestionBuilderPage() {
 
   const { config: existingConfig } = useProgramConfig(programId);
 
-  const handleSchemaChange = (schema: FormSchema) => {
-    updateSchema({ schema, existingConfig: existingConfig || null });
+  const handleSchemaChange = async (schema: FormSchema) => {
+    await updateSchema({ schema, existingConfig: existingConfig || null });
   };
 
-  const handlePostApprovalSchemaChange = (schema: FormSchema) => {
-    updatePostApprovalSchema({ schema, existingConfig: existingConfig || null });
+  const handlePostApprovalSchemaChange = async (schema: FormSchema) => {
+    await updatePostApprovalSchema({ schema, existingConfig: existingConfig || null });
   };
 
   const handleBackClick = () => {
@@ -81,10 +81,10 @@ export default function QuestionBuilderPage() {
       <div className="sm:px-3 md:px-4 px-6 py-2">
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-red-700 dark:text-red-300 mb-2">
-            Error Loading Form Schema
+            Error Loading Configuration
           </h3>
           <p className="text-red-600 dark:text-red-400 mb-4">
-            Unable to load the form schema. This might be the first time creating a form for this
+            Unable to load the program configuration. This might be the first time setting up this
             program.
           </p>
           <div className="flex space-x-3">
@@ -105,21 +105,16 @@ export default function QuestionBuilderPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="sm:px-3 md:px-4 px-6 py-2">
+      <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
                 <ArrowLeftIcon className="w-4 h-4 mr-2" />
                 Back
               </Button>
-
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Form Builder</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Program ID: {programId}</p>
-              </div>
             </div>
 
             {(isUpdating || isUpdatingPostApproval) && (
@@ -132,16 +127,16 @@ export default function QuestionBuilderPage() {
         </div>
       </div>
 
-      {/* Question Builder */}
+      {/* Program Settings */}
       <FormBuilderErrorBoundary>
-        <QuestionBuilder
-          initialSchema={existingSchema || undefined}
-          onSave={handleSchemaChange}
+        <ProgramSettings
           programId={programId}
           chainId={chainId}
           communityId={communityId}
+          initialSchema={existingSchema || undefined}
           initialPostApprovalSchema={existingPostApprovalSchema || undefined}
-          onSavePostApproval={handlePostApprovalSchemaChange}
+          onSaveSchema={handleSchemaChange}
+          onSavePostApprovalSchema={handlePostApprovalSchemaChange}
         />
       </FormBuilderErrorBoundary>
     </div>
