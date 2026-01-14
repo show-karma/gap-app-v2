@@ -5,8 +5,8 @@ import { AreaChart, Card, Title } from "@tremor/react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { Button } from "@/components/Utilities/Button";
+import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
@@ -86,6 +86,9 @@ export const FilteredOutputsAndOutcomes = ({
     projectIdentifier: project?.uid as string,
     enabled: !!project?.uid && !!indicatorIds?.length && !!indicatorNames?.length,
   });
+
+  // Fetch auto-synced indicators from API
+  const { data: autosyncedIndicators = [] } = useAutosyncedIndicators();
 
   // Filter indicators based on IDs and names
   const filteredAnswers = useMemo(() => {

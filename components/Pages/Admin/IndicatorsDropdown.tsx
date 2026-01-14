@@ -4,8 +4,8 @@ import * as Popover from "@radix-ui/react-popover";
 import { type FC, Fragment, useEffect, useState } from "react";
 import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
 import { IndicatorForm } from "@/components/Forms/IndicatorForm";
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { Button } from "@/components/Utilities/Button";
+import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import type { ImpactIndicator } from "@/types/impactMeasurement";
 
 interface IndicatorsDropdownProps {
@@ -36,6 +36,10 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
     unitOfMeasure: "int",
     programs: [],
   });
+
+  // Fetch auto-synced indicators from API
+  const { data: autosyncedIndicators = [], isLoading: isLoadingAutosynced } =
+    useAutosyncedIndicators();
 
   // Combine the original indicators with any newly created ones
   const allIndicators = [...indicators, ...newIndicators];
@@ -282,12 +286,17 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
                       id="indicators-dropdown-autosynced"
                       value={selectedAutosynced}
                       onChange={(e) => handleAutosyncedSelect(e.target.value)}
-                      className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
+                      disabled={isLoadingAutosynced}
+                      className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700 disabled:opacity-50"
                     >
-                      <option value="">Create Custom Indicator</option>
+                      <option value="">
+                        {isLoadingAutosynced
+                          ? "Loading autosynced indicators..."
+                          : "Create Custom Indicator"}
+                      </option>
                       {autosyncedIndicators.map((indicator) => (
-                        <option key={indicator.name} value={indicator.name}>
-                          {indicator.description}
+                        <option key={indicator.id || indicator.name} value={indicator.name}>
+                          {indicator.name}
                         </option>
                       ))}
                     </select>

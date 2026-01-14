@@ -8,6 +8,7 @@ import { DeleteDialog } from "@/components/DeleteDialog";
 import { IndicatorForm, type IndicatorFormData } from "@/components/Forms/IndicatorForm";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import { useIndicators } from "@/hooks/useIndicators";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -23,87 +24,6 @@ interface Program {
 type IndicatorWithPrograms = Indicator & {
   programs?: Program[];
 };
-
-export const autosyncedIndicators: IndicatorWithPrograms[] = [
-  {
-    name: "No. of Transactions",
-    id: "",
-    description: "No. of transactions",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "active_developers",
-    id: "",
-    description: "No. of active developers (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "PULL_REQUEST_MERGED",
-    id: "",
-    description: "Number of pull requests merged (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "ISSUE_OPENED",
-    id: "",
-    description: "Number of issues opened (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "FORKED",
-    id: "",
-    description: "Number of repository forks (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "ISSUE_CLOSED",
-    id: "",
-    description: "Number of issues closed (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "ISSUE_COMMENT",
-    id: "",
-    description: "Number of comments on issues (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "STARRED",
-    id: "",
-    description: "Number of repository stars (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "GitHub Commits",
-    id: "",
-    description: "Number of code commits (*github)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "PULL_REQUEST_OPENED",
-    id: "",
-    description: "Number of pull requests opened (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "GitHub Merged PRs",
-    id: "",
-    description: "Number of pull requests merged (*github)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "RELEASE_PUBLISHED",
-    id: "",
-    description: "Number of releases published (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "contributors",
-    id: "",
-    description: "No. of contributors (*oso)",
-    unitOfMeasure: "int",
-  },
-];
 
 interface IndicatorsHubProps {
   communitySlug: string;
@@ -125,6 +45,8 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
   const { data: rawIndicators = [], refetch } = useIndicators({
     communityId,
   });
+  const { data: autosyncedIndicators = [], isLoading: isLoadingAutosynced } =
+    useAutosyncedIndicators();
 
   const indicators = rawIndicators as IndicatorWithPrograms[];
 
@@ -233,12 +155,17 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
                 id="indicators-hub-autosynced"
                 value={selectedAutosynced}
                 onChange={(e) => handleAutosyncedSelect(e.target.value)}
-                className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
+                disabled={isLoadingAutosynced}
+                className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700 disabled:opacity-50"
               >
-                <option value="">Create Custom Indicator</option>
+                <option value="">
+                  {isLoadingAutosynced
+                    ? "Loading autosynced indicators..."
+                    : "Create Custom Indicator"}
+                </option>
                 {autosyncedIndicators.map((indicator) => (
-                  <option key={indicator.name} value={indicator.name}>
-                    {indicator.description}
+                  <option key={indicator.id || indicator.name} value={indicator.name}>
+                    {indicator.name}
                   </option>
                 ))}
               </select>
