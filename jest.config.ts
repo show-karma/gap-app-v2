@@ -35,6 +35,7 @@ const config: Config = {
     "^@/app/(.*)$": "<rootDir>/app/$1",
     "^@/components/(.*)$": "<rootDir>/components/$1",
     "^@/contexts/(.*)$": "<rootDir>/contexts/$1",
+    "^@/features/(.*)$": "<rootDir>/src/features/$1",
     "^@/hooks/(.*)$": "<rootDir>/hooks/$1",
     "^@/lib/(.*)$": "<rootDir>/lib/$1",
     "^@/store$": "<rootDir>/store/index.ts",
