@@ -482,6 +482,125 @@ export default function KnowledgePage() {
 
         <hr className="border-gray-200 dark:border-gray-700" />
 
+        <section className="space-y-8">
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold">Project profiles</h2>
+            <p className="text-gray-700 dark:text-gray-300">
+              Project profiles are public, persistent records of what projects have done — not just
+              what they promise to do. These articles explain how profiles work and why they matter
+              for grantees and funders.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">What is a project profile?</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              A public, shareable page where projects document funding, milestones, updates, and
+              outcomes over time.
+            </p>
+            <p>
+              <Link
+                href="/knowledge/project-profiles"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                → What is a project profile?
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Why grantees need project profiles</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              How profiles help grantees show funders what happens after funding.
+            </p>
+            <p>
+              <Link
+                href="/knowledge/why-grantees-need-project-profiles"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                → Why grantees need project profiles
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Project profiles as resumes</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              Why project profiles serve as global resumes for funded work.
+            </p>
+            <p>
+              <Link
+                href="/knowledge/project-profiles-as-resumes"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                → Project profiles as resumes
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Building reputation through updates</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              How consistent public updates build trust more than perfect outcomes.
+            </p>
+            <p>
+              <Link
+                href="/knowledge/project-updates-and-reputation"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                → Building reputation through updates
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Software vs non-software projects</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              How project profiles work for both technical and non-technical work.
+            </p>
+            <p>
+              <Link
+                href="/knowledge/project-profiles-software-vs-nonsoftware"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                → Software vs non-software projects
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Onchain project profiles</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              How onchain storage provides credibility without blockchain complexity.
+            </p>
+            <p>
+              <Link
+                href="/knowledge/onchain-project-profiles"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                → Onchain project profiles
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">How funders use project profiles</h3>
+            <p className="text-gray-700 dark:text-gray-300">
+              How funders evaluate projects based on execution history, not just proposals.
+            </p>
+            <p>
+              <Link
+                href="/knowledge/how-funders-use-project-profiles"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                → How funders use project profiles
+              </Link>
+            </p>
+          </div>
+        </section>
+
+        <hr className="border-gray-200 dark:border-gray-700" />
+
         <footer className="pt-4">
           <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-600 dark:border-gray-600 dark:text-gray-400">
             Funding systems improve when execution is visible.
