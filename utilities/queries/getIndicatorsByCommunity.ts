@@ -196,3 +196,16 @@ export const getIndicatorById = async (indicatorId: string): Promise<Indicator |
     return null;
   }
 };
+
+/**
+ * Get all auto-synced (system) indicators
+ * These are indicators with syncType='auto' that are managed by the system
+ */
+export const getAutosyncedIndicators = async (): Promise<Indicator[]> => {
+  try {
+    return await fetchAllIndicatorPages({ syncType: "auto" });
+  } catch (error) {
+    errorManager("Error fetching autosynced indicators", error);
+    return [];
+  }
+};
