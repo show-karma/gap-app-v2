@@ -391,14 +391,11 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
                       // Add the new indicator to local state
                       setNewIndicators((prev) => [...prev, indicator]);
 
-                      // Notify parent
-                      if (onIndicatorCreated) {
-                        setTimeout(() => onIndicatorCreated(indicator), 0);
-                      }
+                      // Notify parent callback
+                      onIndicatorCreated?.(indicator);
 
-                      // Close modal and reopen dropdown
+                      // Close modal - dropdown will stay in its current state
                       setIsFormModalOpen(false);
-                      setTimeout(() => setOpen(true), 10);
                     }}
                     onError={(error) => {
                       toast.error(
