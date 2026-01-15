@@ -35,15 +35,25 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
   externalIsOpen,
   externalSetIsOpen,
 }) => {
-  const [isOpen, setIsOpen] = useState(externalIsOpen || false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+
+  // Use external state if provided, otherwise use internal state
+  const isControlled = externalIsOpen !== undefined;
+  const isOpen = isControlled ? externalIsOpen : internalIsOpen;
 
   function closeModal() {
-    setIsOpen(false);
-    externalSetIsOpen?.(false);
+    if (isControlled) {
+      externalSetIsOpen?.(false);
+    } else {
+      setInternalIsOpen(false);
+    }
   }
   function openModal() {
-    setIsOpen(true);
-    externalSetIsOpen?.(true);
+    if (isControlled) {
+      externalSetIsOpen?.(true);
+    } else {
+      setInternalIsOpen(true);
+    }
   }
 
   const handleFunction = async () => {
@@ -59,7 +69,11 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
     <>
       {buttonElement ? (
         <Button
-          onClick={openModal}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            openModal();
+          }}
           className={cn(
             "flex w-max h-max justify-center items-center gap-x-1 rounded-md px-3 py-2 text-sm font-semibold",
             buttonElement.styleClass

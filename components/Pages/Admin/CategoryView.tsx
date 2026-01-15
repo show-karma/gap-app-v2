@@ -111,6 +111,7 @@ export const CategoryView = ({
   const [initialModalType, setInitialModalType] = useState<"output" | "outcome">("output");
   const [editingSegment, setEditingSegment] = useState<ImpactSegment | null>(null);
   const [isDeletingSegment, setIsDeletingSegment] = useState<string | null>(null);
+  const [segmentToDelete, setSegmentToDelete] = useState<ImpactSegment | null>(null);
 
   const {
     data: groupedIndicators = { communityAdminCreated: [], projectOwnerCreated: [] },
@@ -354,18 +355,15 @@ export const CategoryView = ({
                         </Menu.Item>
                         <Menu.Item>
                           {({ active }) => (
-                            <DeleteDialog
-                              title={`Are you sure you want to delete ${segment.name}?`}
-                              deleteFunction={() => handleDeleteSegment(segment.id)}
-                              isLoading={isDeletingSegment === segment.id}
-                              buttonElement={{
-                                icon: <TrashIcon className="h-4 w-4 mr-2" />,
-                                text: "Delete",
-                                styleClass: `${
-                                  active ? "bg-gray-100 dark:bg-zinc-700" : "bg-transparent"
-                                } hover:bg-gray-100 dark:hover:bg-zinc-700 font-normal w-full px-4 py-2 text-left flex items-center text-sm text-red-500`,
-                              }}
-                            />
+                            <button
+                              className={`${
+                                active ? "bg-gray-100 dark:bg-zinc-700" : ""
+                              } w-full px-4 py-2 text-left flex items-center text-sm text-red-500`}
+                              onClick={() => setSegmentToDelete(segment)}
+                            >
+                              <TrashIcon className="h-4 w-4 mr-2" />
+                              Delete
+                            </button>
                           )}
                         </Menu.Item>
                       </div>
@@ -444,6 +442,23 @@ export const CategoryView = ({
         }}
         initialType={initialModalType}
         editingSegment={editingSegment}
+      />
+
+      {/* Delete confirmation dialog - rendered outside Menu to prevent unmounting */}
+      <DeleteDialog
+        title={`Are you sure you want to delete ${segmentToDelete?.name}?`}
+        deleteFunction={async () => {
+          if (segmentToDelete) {
+            await handleDeleteSegment(segmentToDelete.id);
+            setSegmentToDelete(null);
+          }
+        }}
+        isLoading={isDeletingSegment === segmentToDelete?.id}
+        buttonElement={null}
+        externalIsOpen={!!segmentToDelete}
+        externalSetIsOpen={(isOpen) => {
+          if (!isOpen) setSegmentToDelete(null);
+        }}
       />
     </div>
   );

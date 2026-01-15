@@ -9,7 +9,6 @@ import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpin
 import { IndicatorForm } from "@/components/Forms/IndicatorForm";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import { useGroupedIndicators } from "@/hooks/useGroupedIndicators";
 import type { Category, ImpactIndicator, ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import fetchData from "@/utilities/fetchData";
@@ -95,7 +94,6 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
   const [indicatorViewType, setIndicatorViewType] = useState<"all" | "automated" | "manual">("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [selectedAutosynced, setSelectedAutosynced] = useState<string>("");
   const [formDefaultValues, setFormDefaultValues] = useState<Partial<any>>({
     name: "",
     description: "",
@@ -120,35 +118,6 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
   } = useGroupedIndicators({
     communityId: communityId || "",
   });
-
-  // Fetch auto-synced indicators from API
-  const { data: autosyncedIndicators = [], isLoading: isLoadingAutosynced } =
-    useAutosyncedIndicators();
-
-  // Handle autosynced indicator selection
-  const handleAutosyncedSelect = (name: string) => {
-    if (!name) {
-      setFormDefaultValues({
-        name: "",
-        description: "",
-        unitOfMeasure: "int",
-        programs: [],
-      });
-      setSelectedAutosynced("");
-      return;
-    }
-
-    const selectedIndicator = autosyncedIndicators.find((i) => i.name === name);
-    if (selectedIndicator) {
-      setFormDefaultValues({
-        name: selectedIndicator.name,
-        description: selectedIndicator.description,
-        unitOfMeasure: selectedIndicator.unitOfMeasure as "float" | "int",
-        programs: [],
-      });
-      setSelectedAutosynced(name);
-    }
-  };
 
   // Handle indicator creation success
   const handleIndicatorCreated = (_indicator: ImpactIndicatorWithData) => {
@@ -201,9 +170,9 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
     );
   };
 
-  // Check if an indicator is autosynced
+  // Check if an indicator is autosynced (based on syncType field)
   const isAutosyncedIndicator = (indicator: ImpactIndicator) => {
-    return autosyncedIndicators.some((i) => i.name === indicator.name);
+    return (indicator as any).syncType === "auto";
   };
 
   // Filter indicators based on search and view type
@@ -272,9 +241,9 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
                     <span className="text-xs bg-white dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-zinc-700 inline-block">
                       {indicator.unitOfMeasure || "N/A"}
                     </span>
-                    {autosyncedIndicators.find((i) => i.name === indicator.name) && (
+                    {(indicator as any).syncType === "auto" && (
                       <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full inline-block">
-                        Autosynced
+                        Auto
                       </span>
                     )}
                   </div>
@@ -440,14 +409,13 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
           className="relative z-50"
           onClose={() => {
             setIsFormModalOpen(false);
-            // Reset form values and selected autosynced when closing modal
+            // Reset form values when closing modal
             setFormDefaultValues({
               name: "",
               description: "",
               unitOfMeasure: "int",
               programs: [],
             });
-            setSelectedAutosynced("");
           }}
         >
           <Transition.Child
@@ -490,7 +458,6 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
                           unitOfMeasure: "int",
                           programs: [],
                         });
-                        setSelectedAutosynced("");
                       }}
                       className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     >
@@ -498,42 +465,15 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
                     </button>
                   </div>
 
-                  {/* Add autosynced indicator selector */}
-                  <div className="mb-4">
-                    <label
-                      htmlFor="indicators-view-autosynced"
-                      className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
-                    >
-                      Select Autosynced Indicator (Optional)
-                    </label>
-                    <select
-                      id="indicators-view-autosynced"
-                      value={selectedAutosynced}
-                      onChange={(e) => handleAutosyncedSelect(e.target.value)}
-                      disabled={isLoadingAutosynced}
-                      className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700 disabled:opacity-50"
-                    >
-                      <option value="">
-                        {isLoadingAutosynced
-                          ? "Loading autosynced indicators..."
-                          : "Create Custom Indicator"}
-                      </option>
-                      {autosyncedIndicators.map((indicator) => (
-                        <option key={indicator.id || indicator.name} value={indicator.name}>
-                          {indicator.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    Create a custom indicator for your community. For system metrics like GitHub
+                    stats or transactions, use the &quot;Default&quot; indicators when creating
+                    activities or outcomes.
+                  </p>
 
                   <IndicatorForm
                     communityId={communityId}
                     defaultValues={formDefaultValues}
-                    readOnlyFields={{
-                      name: !!selectedAutosynced,
-                      description: !!selectedAutosynced,
-                      unitOfMeasure: !!selectedAutosynced,
-                    }}
                     onSuccess={(indicator) => {
                       // Prevent event bubbling if any
                       if (event) {
@@ -544,14 +484,13 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
                       // Add the new indicator to our local state
                       setNewIndicators((prev) => [...prev, indicator]);
 
-                      // Reset form values and selected autosynced
+                      // Reset form values
                       setFormDefaultValues({
                         name: "",
                         description: "",
                         unitOfMeasure: "int",
                         programs: [],
                       });
-                      setSelectedAutosynced("");
 
                       // Handle success
                       handleIndicatorCreated(indicator);
