@@ -5,6 +5,7 @@ import type { CommunityAggregateResponse } from "@/types/indicator";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 export interface AggregatedIndicator {
   id: string;
@@ -43,17 +44,20 @@ export function useAggregatedIndicators(
 ) {
   const { communityId } = useParams();
   const searchParams = useSearchParams();
-  const projectUID = searchParams.get("projectId");
-  const programId = searchParams.get("programId");
+  const projectUID = searchParams.get("projectId")?.trim() || null;
+  const programIdParam = searchParams.get("programId")?.trim() || null;
 
-  const queryKey = [
-    "aggregated-indicators",
-    indicatorIds.join(","),
-    communityId,
-    programId || "all",
-    projectUID || "all",
-    `last-${timeframeMonths}-months`,
-  ];
+  // Parse programId safely - handle invalid input
+  const programIdNum = programIdParam ? parseInt(programIdParam, 10) : NaN;
+  const parsedProgramId = Number.isNaN(programIdNum) ? undefined : programIdNum;
+
+  const queryKey = QUERY_KEYS.INDICATORS.AGGREGATED({
+    indicatorIds: indicatorIds.join(","),
+    communityId: String(communityId || ""),
+    programId: programIdParam || "all",
+    projectUID: projectUID || "all",
+    timeframe: `last-${timeframeMonths}-months`,
+  });
 
   const queryFn = async (): Promise<AggregatedIndicator[]> => {
     if (!indicatorIds.length) return [];
@@ -71,27 +75,12 @@ export function useAggregatedIndicators(
     const startDate = startDateObj.toISOString();
     const endDate = new Date().toISOString();
 
-    // Parse programId to extract programId and chainId if in format "programId_chainId"
-    let parsedProgramId: number | undefined;
-    let parsedChainId: number | undefined;
-    if (programId) {
-      const parts = programId.split("_");
-      if (parts.length === 2) {
-        const programIdNum = parseInt(parts[0], 10);
-        const chainIdNum = parseInt(parts[1], 10);
-        if (!isNaN(programIdNum) && !isNaN(chainIdNum)) {
-          parsedProgramId = programIdNum;
-          parsedChainId = chainIdNum;
-        }
-      }
-    }
-
     // Fetch community aggregate indicators
     const [data, error] = await fetchData(
       INDEXER.INDICATORS.V2.COMMUNITY_AGGREGATE(communityDetails.uid, {
         indicatorIds: indicatorIds.join(","),
         programId: parsedProgramId,
-        chainId: parsedChainId,
+        projectUID: projectUID || undefined,
         startDate,
         endDate,
         granularity: "monthly",

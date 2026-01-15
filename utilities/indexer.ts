@@ -321,7 +321,7 @@ export const INDEXER = {
         params?: {
           indicatorIds?: string;
           programId?: number;
-          chainId?: number;
+          projectUID?: string;
           startDate?: string;
           endDate?: string;
           granularity?: "weekly" | "monthly";
@@ -330,7 +330,7 @@ export const INDEXER = {
         const queryParams = new URLSearchParams();
         if (params?.indicatorIds) queryParams.set("indicatorIds", params.indicatorIds);
         if (params?.programId) queryParams.set("programId", params.programId.toString());
-        if (params?.chainId) queryParams.set("chainId", params.chainId.toString());
+        if (params?.projectUID) queryParams.set("projectUID", params.projectUID);
         if (params?.startDate) queryParams.set("startDate", params.startDate);
         if (params?.endDate) queryParams.set("endDate", params.endDate);
         if (params?.granularity) queryParams.set("granularity", params.granularity);
