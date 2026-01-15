@@ -5,6 +5,7 @@ export interface OnrampUrlParams {
   fiatAmount?: number;
   fiatCurrency?: string;
   asset?: string;
+  redirectUrl?: string;
 }
 
 export interface OnrampProviderConfig {
@@ -22,11 +23,12 @@ const PROVIDER_CONFIGS: Record<OnrampProvider, OnrampProviderConfig> = {
     id: OnrampProvider.COINBASE,
     name: "Coinbase",
     baseUrl: "https://pay.coinbase.com/buy/select-asset",
-    buildUrl: ({ token, fiatAmount, fiatCurrency, asset }: OnrampUrlParams) => {
+    buildUrl: ({ token, fiatAmount, fiatCurrency, asset, redirectUrl }: OnrampUrlParams) => {
       const params = new URLSearchParams({ sessionToken: token });
       if (fiatAmount) params.set("presetFiatAmount", String(fiatAmount));
       if (fiatCurrency) params.set("fiatCurrency", fiatCurrency);
       if (asset) params.set("defaultAsset", asset);
+      if (redirectUrl) params.set("redirectUrl", redirectUrl);
       return `https://pay.coinbase.com/buy/select-asset?${params.toString()}`;
     },
     description: "Purchase crypto with card via Coinbase",

@@ -12,6 +12,7 @@ interface UseOnrampParams {
   payoutAddress: string;
   network: string;
   targetAsset: string;
+  redirectUrl?: string;
   provider?: OnrampProvider;
   onError?: (error: Error) => void;
 }
@@ -27,6 +28,7 @@ export const useOnramp = ({
   payoutAddress,
   network,
   targetAsset,
+  redirectUrl,
   provider = DEFAULT_ONRAMP_PROVIDER,
   onError,
 }: UseOnrampParams): UseOnrampReturn => {
@@ -67,6 +69,7 @@ export const useOnramp = ({
           fiatAmount,
           fiatCurrency,
           asset: targetAsset,
+          redirectUrl,
         });
         window.open(onrampUrl, "_blank", "noopener,noreferrer");
 
@@ -81,7 +84,17 @@ export const useOnramp = ({
         onError?.(error);
       }
     },
-    [projectUid, payoutAddress, network, targetAsset, provider, providerConfig, address, onError]
+    [
+      projectUid,
+      payoutAddress,
+      network,
+      targetAsset,
+      redirectUrl,
+      provider,
+      providerConfig,
+      address,
+      onError,
+    ]
   );
 
   return {

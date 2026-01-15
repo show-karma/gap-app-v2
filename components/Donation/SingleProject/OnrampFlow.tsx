@@ -23,11 +23,17 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
     const providerConfig = getProviderConfig(provider);
     const network = useMemo(() => getChainNameById(chainId), [chainId]);
 
+    const redirectUrl = useMemo(() => {
+      if (typeof window === "undefined") return undefined;
+      return `${window.location.origin}/project/${projectUid}`;
+    }, [projectUid]);
+
     const { initiateOnramp, isLoading } = useOnramp({
       projectUid,
       payoutAddress,
       network,
       targetAsset: "USDC",
+      redirectUrl,
       provider,
     });
 
