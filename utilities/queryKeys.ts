@@ -62,7 +62,14 @@ export const QUERY_KEYS = {
   SEARCH: {
     PROJECTS: (query: string) => ["search-projects", query] as const,
   },
+  PROJECT: {
+    UPDATES: (projectIdOrSlug: string) => ["project-updates", projectIdOrSlug] as const,
+    IMPACTS: (projectIdOrSlug: string) => ["project-impacts", projectIdOrSlug] as const,
+    MILESTONES: (projectIdOrSlug: string) => ["project-milestones", projectIdOrSlug] as const,
+    GRANTS: (projectIdOrSlug: string) => ["project-grants", projectIdOrSlug] as const,
+  },
   INDICATORS: {
+    AUTOSYNCED: ["indicators", "autosynced"] as const,
     AGGREGATED: (params: {
       indicatorIds: string;
       communityId: string;
@@ -78,12 +85,6 @@ export const QUERY_KEYS = {
         params.projectUID,
         params.timeframe,
       ] as const,
-  },
-  PROJECT: {
-    UPDATES: (projectIdOrSlug: string) => ["project-updates", projectIdOrSlug] as const,
-    IMPACTS: (projectIdOrSlug: string) => ["project-impacts", projectIdOrSlug] as const,
-    MILESTONES: (projectIdOrSlug: string) => ["project-milestones", projectIdOrSlug] as const,
-    GRANTS: (projectIdOrSlug: string) => ["project-grants", projectIdOrSlug] as const,
   },
   FUNDING_PLATFORM: {
     APPLICATIONS: (programId: string, chainId: number, filters?: unknown) =>

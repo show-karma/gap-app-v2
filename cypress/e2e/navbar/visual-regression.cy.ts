@@ -152,7 +152,8 @@ describe("Navbar UI States", () => {
       cy.visit("/");
       waitForPageLoad();
 
-      cy.contains("Sign in").should("be.visible");
+      // Use filter to find the visible Sign in button (mobile has its own button separate from desktop)
+      cy.contains("button", "Sign in").filter(":visible").should("exist");
     });
   });
 });

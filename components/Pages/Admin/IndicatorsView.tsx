@@ -1,88 +1,22 @@
+"use client";
+
 import { Dialog, Transition } from "@headlessui/react";
-import { ChevronDownIcon, PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
-import { IndicatorForm } from "@/components/Forms/IndicatorForm";
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
+import { IndicatorForm, type IndicatorFormData } from "@/components/Forms/IndicatorForm";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { useGroupedIndicators } from "@/hooks/useGroupedIndicators";
 import type { Category, ImpactIndicator, ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-
-// Custom Dropdown Menu Component - copied from CategoryView.tsx
-const DropdownMenu = ({
-  value,
-  onChange,
-  options,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string }[];
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const selectedOption = options.find((option) => option.value === value);
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none"
-      >
-        <span>{selectedOption?.label || "Select option"}</span>
-        <ChevronDownIcon
-          className={`ml-2 h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
-        />
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 z-10 mt-1 w-full bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 rounded-md shadow-lg">
-          <div className="py-1">
-            {options.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => {
-                  onChange(option.value);
-                  setIsOpen(false);
-                }}
-                className={`block w-full text-left px-4 py-2 text-sm ${
-                  value === option.value
-                    ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 interface IndicatorsViewProps {
   categories: Category[];
@@ -95,8 +29,7 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
   const [indicatorViewType, setIndicatorViewType] = useState<"all" | "automated" | "manual">("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [selectedAutosynced, setSelectedAutosynced] = useState<string>("");
-  const [formDefaultValues, setFormDefaultValues] = useState<Partial<any>>({
+  const [formDefaultValues, setFormDefaultValues] = useState<Partial<IndicatorFormData>>({
     name: "",
     description: "",
     unitOfMeasure: "int",
@@ -120,31 +53,6 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
   } = useGroupedIndicators({
     communityId: communityId || "",
   });
-
-  // Handle autosynced indicator selection
-  const handleAutosyncedSelect = (name: string) => {
-    if (!name) {
-      setFormDefaultValues({
-        name: "",
-        description: "",
-        unitOfMeasure: "int",
-        programs: [],
-      });
-      setSelectedAutosynced("");
-      return;
-    }
-
-    const selectedIndicator = autosyncedIndicators.find((i) => i.name === name);
-    if (selectedIndicator) {
-      setFormDefaultValues({
-        name: selectedIndicator.name,
-        description: selectedIndicator.description,
-        unitOfMeasure: selectedIndicator.unitOfMeasure as "float" | "int",
-        programs: [],
-      });
-      setSelectedAutosynced(name);
-    }
-  };
 
   // Handle indicator creation success
   const handleIndicatorCreated = (_indicator: ImpactIndicatorWithData) => {
@@ -197,9 +105,9 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
     );
   };
 
-  // Check if an indicator is autosynced
+  // Check if an indicator is autosynced (based on syncType field)
   const isAutosyncedIndicator = (indicator: ImpactIndicator) => {
-    return autosyncedIndicators.some((i) => i.name === indicator.name);
+    return indicator.syncType === "auto";
   };
 
   // Filter indicators based on search and view type
@@ -268,9 +176,9 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
                     <span className="text-xs bg-white dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-zinc-700 inline-block">
                       {indicator.unitOfMeasure || "N/A"}
                     </span>
-                    {autosyncedIndicators.find((i) => i.name === indicator.name) && (
+                    {indicator.syncType === "auto" && (
                       <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full inline-block">
-                        Autosynced
+                        Auto
                       </span>
                     )}
                   </div>
@@ -345,9 +253,9 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">View</span>
                 <div className="w-36">
-                  <DropdownMenu
+                  <SelectDropdown
                     value={indicatorViewType}
-                    onChange={(value: any) =>
+                    onChange={(value) =>
                       setIndicatorViewType(value as "all" | "automated" | "manual")
                     }
                     options={filterOptions}
@@ -436,14 +344,13 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
           className="relative z-50"
           onClose={() => {
             setIsFormModalOpen(false);
-            // Reset form values and selected autosynced when closing modal
+            // Reset form values when closing modal
             setFormDefaultValues({
               name: "",
               description: "",
               unitOfMeasure: "int",
               programs: [],
             });
-            setSelectedAutosynced("");
           }}
         >
           <Transition.Child
@@ -486,7 +393,6 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
                           unitOfMeasure: "int",
                           programs: [],
                         });
-                        setSelectedAutosynced("");
                       }}
                       className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     >
@@ -494,55 +400,26 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
                     </button>
                   </div>
 
-                  {/* Add autosynced indicator selector */}
-                  <div className="mb-4">
-                    <label
-                      htmlFor="indicators-view-autosynced"
-                      className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
-                    >
-                      Select Autosynced Indicator (Optional)
-                    </label>
-                    <select
-                      id="indicators-view-autosynced"
-                      value={selectedAutosynced}
-                      onChange={(e) => handleAutosyncedSelect(e.target.value)}
-                      className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
-                    >
-                      <option value="">Create Custom Indicator</option>
-                      {autosyncedIndicators.map((indicator) => (
-                        <option key={indicator.name} value={indicator.name}>
-                          {indicator.description}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    Create a custom indicator for your community. For system metrics like GitHub
+                    stats or transactions, use the &quot;System&quot; indicators when creating
+                    activities or outcomes.
+                  </p>
 
                   <IndicatorForm
                     communityId={communityId}
                     defaultValues={formDefaultValues}
-                    readOnlyFields={{
-                      name: !!selectedAutosynced,
-                      description: !!selectedAutosynced,
-                      unitOfMeasure: !!selectedAutosynced,
-                    }}
                     onSuccess={(indicator) => {
-                      // Prevent event bubbling if any
-                      if (event) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                      }
-
                       // Add the new indicator to our local state
                       setNewIndicators((prev) => [...prev, indicator]);
 
-                      // Reset form values and selected autosynced
+                      // Reset form values
                       setFormDefaultValues({
                         name: "",
                         description: "",
                         unitOfMeasure: "int",
                         programs: [],
                       });
-                      setSelectedAutosynced("");
 
                       // Handle success
                       handleIndicatorCreated(indicator);
