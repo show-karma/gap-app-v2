@@ -223,6 +223,12 @@ export const INDEXER = {
         return `/v2/communities/${communityUID}/payouts${query ? `?${query}` : ""}`;
       },
     },
+    PAYOUT_CONFIG: {
+      SAVE: "/v2/payout-config",
+      BY_COMMUNITY: (communityUID: string) => `/v2/payout-config/community/${communityUID}`,
+      BY_GRANT: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
+      DELETE: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
+    },
   },
   PROGRAMS: {
     GET: (programId: string) => `/programs/${programId}`,

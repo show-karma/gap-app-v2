@@ -10,6 +10,9 @@ import type {
   UpdateStatusRequest,
   CommunityPayoutsResponse,
   CommunityPayoutsOptions,
+  SavePayoutConfigRequest,
+  SavePayoutConfigResponse,
+  PayoutGrantConfig,
 } from "../types/payout-disbursement";
 
 /**
@@ -40,6 +43,13 @@ export const payoutDisbursementKeys = {
       communityUID,
       options,
     ] as const,
+  payoutConfigs: {
+    all: ["payoutConfig"] as const,
+    byCommunity: (communityUID: string) =>
+      [...payoutDisbursementKeys.payoutConfigs.all, "community", communityUID] as const,
+    byGrant: (grantUID: string) =>
+      [...payoutDisbursementKeys.payoutConfigs.all, "grant", grantUID] as const,
+  },
 } as const;
 
 /**
@@ -337,4 +347,100 @@ export function useCommunityPayouts(
     ...query,
     invalidate,
   };
+}
+
+/**
+ * Hook for saving payout configs (payout address and total grant amount)
+ */
+export function useSavePayoutConfig(options?: {
+  onSuccess?: (data: SavePayoutConfigResponse) => void;
+  onError?: (error: Error) => void;
+}) {
+  const queryClient = useQueryClient();
+
+  return useMutation<SavePayoutConfigResponse, Error, SavePayoutConfigRequest>({
+    mutationFn: (request) => payoutService.savePayoutConfigs(request),
+    onSuccess: (data, variables) => {
+      // Invalidate payout configs for the community
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.payoutConfigs.byCommunity(variables.communityUID),
+      });
+      // Invalidate community payouts to refresh the admin data view
+      queryClient.invalidateQueries({
+        queryKey: [...payoutDisbursementKeys.all, "communityPayouts", variables.communityUID],
+      });
+      // Invalidate individual grant configs
+      for (const config of variables.configs) {
+        queryClient.invalidateQueries({
+          queryKey: payoutDisbursementKeys.payoutConfigs.byGrant(config.grantUID),
+        });
+      }
+      options?.onSuccess?.(data);
+    },
+    onError: (error) => {
+      options?.onError?.(error);
+    },
+  });
+}
+
+/**
+ * Hook for fetching payout configs for a community
+ */
+export function usePayoutConfigsByCommunity(
+  communityUID: string,
+  options?: { enabled?: boolean }
+) {
+  return useQuery<PayoutGrantConfig[], Error>({
+    queryKey: payoutDisbursementKeys.payoutConfigs.byCommunity(communityUID),
+    queryFn: () => payoutService.getPayoutConfigsByCommunity(communityUID),
+    enabled: options?.enabled ?? !!communityUID,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+/**
+ * Hook for fetching payout config for a specific grant
+ */
+export function usePayoutConfigByGrant(
+  grantUID: string,
+  options?: { enabled?: boolean }
+) {
+  return useQuery<PayoutGrantConfig | null, Error>({
+    queryKey: payoutDisbursementKeys.payoutConfigs.byGrant(grantUID),
+    queryFn: () => payoutService.getPayoutConfigByGrant(grantUID),
+    enabled: options?.enabled ?? !!grantUID,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+/**
+ * Hook for deleting a payout config
+ */
+export function useDeletePayoutConfig(options?: {
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+}) {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, { grantUID: string; communityUID: string }>({
+    mutationFn: ({ grantUID }) => payoutService.deletePayoutConfig(grantUID),
+    onSuccess: (_, variables) => {
+      // Invalidate the specific grant config
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.payoutConfigs.byGrant(variables.grantUID),
+      });
+      // Invalidate community configs
+      queryClient.invalidateQueries({
+        queryKey: payoutDisbursementKeys.payoutConfigs.byCommunity(variables.communityUID),
+      });
+      // Invalidate community payouts
+      queryClient.invalidateQueries({
+        queryKey: [...payoutDisbursementKeys.all, "communityPayouts", variables.communityUID],
+      });
+      options?.onSuccess?.();
+    },
+    onError: (error) => {
+      options?.onError?.(error);
+    },
+  });
 }

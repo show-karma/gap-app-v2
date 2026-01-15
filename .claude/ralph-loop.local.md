@@ -1,14 +1,14 @@
 ---
 active: true
 iteration: 1
-max_iterations: 0
+max_iterations: 50
 completion_promise: "DONE"
-started_at: "2026-01-14T16:20:27Z"
+started_at: "2026-01-15T23:20:49Z"
 ---
 
-We should have the perfect match with the PRD and with that is implemented. Regarding just the Frontend, we won't touch backend
-. Analyse one point of the PRD payout_system_prd.md
-. Compare with what was implemented
-. If have different things, write into a differences.md
-. Go to next point and repeat 
-. Output: <promise>DONE</promise>
+I need you to check all the changes in gap-indexer and validate the code
+1. Evaluate as a Senior Software Engineer if we are following the good practices and guidelines(gap-indexer/guidelines) and rate to 10 points
+2. Ultrathink a plan to implemente the changes
+3. Spin up multiple agentes to fix all the points to change
+4. Evaluate again and repeat until it's 10/10
+5. If it's 10/10, output: <promise>DONE</promise>

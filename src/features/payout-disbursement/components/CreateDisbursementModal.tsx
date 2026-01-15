@@ -11,6 +11,9 @@ import {
 } from "@heroicons/react/24/outline";
 import {
   Check,
+  CheckCircle2,
+  CircleX,
+  Clock,
   FileSearch,
   ListChecks,
   Settings,
@@ -194,20 +197,47 @@ export function CreateDisbursementModal({
   // Extract grant UIDs for batch fetching already disbursed amounts
   const grantUIDs = useMemo(() => grants.map((g) => g.grantUID), [grants]);
 
-  // Fetch already disbursed amounts for all grants
-  const { data: disbursedTotals, isLoading: isDisbursedLoading } = useBatchTotalDisbursed(
+  // Calculate total disbursed from totalsByToken (converting from raw to human-readable)
+  const getDisbursedFromTokenTotals = useCallback(
+    (grant: GrantDisbursementInfo): number => {
+      if (!grant.totalsByToken || grant.totalsByToken.length === 0) {
+        return 0;
+      }
+      // Sum all tokens' totals, converting from raw units to human-readable
+      return grant.totalsByToken.reduce((sum, tokenTotal) => {
+        const rawAmount = BigInt(tokenTotal.totalAmount || "0");
+        const decimals = tokenTotal.tokenDecimals || 6;
+        const humanReadable = parseFloat(formatUnits(rawAmount, decimals));
+        return sum + humanReadable;
+      }, 0);
+    },
+    []
+  );
+
+  // Create a map of grant UID to human-readable disbursed totals from passed-in data
+  const disbursedTotalsFromProps = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const grant of grants) {
+      map[grant.grantUID] = getDisbursedFromTokenTotals(grant);
+    }
+    return map;
+  }, [grants, getDisbursedFromTokenTotals]);
+
+  // Fetch already disbursed amounts for all grants (fallback if totalsByToken not provided)
+  const { isLoading: isDisbursedLoading } = useBatchTotalDisbursed(
     grantUIDs,
-    { enabled: isOpen && grantUIDs.length > 0 }
+    { enabled: isOpen && grantUIDs.length > 0 && grants.some((g) => !g.totalsByToken) }
   );
 
   // Calculate remaining amount for a grant (approved - already disbursed)
   const getRemainingAmount = useCallback(
     (grantUID: string, approvedAmount: string): number => {
       const approved = parseFloat(approvedAmount) || 0;
-      const alreadyDisbursed = parseFloat(disbursedTotals?.[grantUID] || "0") || 0;
+      // Prefer the pre-calculated human-readable totals from props
+      const alreadyDisbursed = disbursedTotalsFromProps[grantUID] ?? 0;
       return Math.max(0, approved - alreadyDisbursed);
     },
-    [disbursedTotals]
+    [disbursedTotalsFromProps]
   );
 
   // Get the effective disbursement amount for a grant (user-entered or remaining)
@@ -973,9 +1003,10 @@ export function CreateDisbursementModal({
                     projectIndex={currentProjectIndex}
                     totalProjects={grantsToReview.length}
                     tokenSymbol={selectedTokenSymbol}
+                    tokenDecimals={selectedTokenDecimals}
                     selectedNetwork={selectedNetwork}
                     selectedNetworkName={selectedNetworkName}
-                    alreadyDisbursed={disbursedTotals?.[currentProject.grantUID] || "0"}
+                    alreadyDisbursed={(disbursedTotalsFromProps[currentProject.grantUID] ?? 0).toString()}
                     isLoadingDisbursed={isDisbursedLoading}
                     disbursementAmount={
                       disbursementAmounts[currentProject.grantUID] ??
@@ -1299,11 +1330,19 @@ function CheckItem({
 
   const styles = getStatusStyles();
 
+  const getStatusIcon = () => {
+    if (status === true) {
+      return <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />;
+    }
+    if (status === false) {
+      return <CircleX className="w-5 h-5 text-red-600 dark:text-red-400" />;
+    }
+    return <Clock className="w-5 h-5 text-gray-500 dark:text-gray-400" />;
+  };
+
   return (
     <div className={`flex items-center p-3 rounded-lg border ${styles.container}`}>
-      <span className="text-lg mr-3">
-        {status === true ? "\u2705" : status === false ? "\u274C" : "\u23F3"}
-      </span>
+      <span className="mr-3">{getStatusIcon()}</span>
       <div className="flex-1">
         <div className={`font-medium ${styles.label}`}>{label}</div>
         <div className={`text-sm ${styles.description}`}>{description}</div>
@@ -1375,6 +1414,7 @@ function ProjectReviewStep({
   projectIndex,
   totalProjects,
   tokenSymbol,
+  tokenDecimals,
   selectedNetwork,
   selectedNetworkName,
   alreadyDisbursed,
@@ -1396,6 +1436,7 @@ function ProjectReviewStep({
   projectIndex: number;
   totalProjects: number;
   tokenSymbol: string;
+  tokenDecimals: number;
   selectedNetwork: number;
   selectedNetworkName: string;
   alreadyDisbursed: string;
@@ -1415,6 +1456,7 @@ function ProjectReviewStep({
 }) {
   const hasMilestones = project.milestones && project.milestones.length > 0;
   const approvedAmount = parseFloat(project.approvedAmount) || 0;
+  // alreadyDisbursed is now passed in human-readable format from the parent
   const disbursedAmount = parseFloat(alreadyDisbursed) || 0;
   const remainingAmount = Math.max(0, approvedAmount - disbursedAmount);
 

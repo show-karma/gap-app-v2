@@ -12,6 +12,7 @@ export {
   RecentActivityWidget,
 } from "./components/PayoutDashboardWidgets";
 export { PayoutHistoryDrawer } from "./components/PayoutHistoryDrawer";
+export { TokenBreakdown, TokenBreakdownInline } from "./components/TokenBreakdown";
 
 // Hooks
 export * from "./hooks/use-payout-disbursement";

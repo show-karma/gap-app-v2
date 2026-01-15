@@ -11,6 +11,9 @@ import type {
   UpdateStatusRequest,
   CommunityPayoutsResponse,
   CommunityPayoutsOptions,
+  SavePayoutConfigRequest,
+  SavePayoutConfigResponse,
+  PayoutGrantConfig,
 } from "../types/payout-disbursement";
 
 function getErrorMessage(error: unknown): string {
@@ -285,5 +288,113 @@ export const getCommunityPayouts = async (
   } catch (error: unknown) {
     errorManager(`Error fetching community payouts for ${communityUID}`, error);
     throw new Error(`Failed to fetch community payouts: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Save payout configs (payout address and total grant amount) for multiple grants
+ */
+export const savePayoutConfigs = async (
+  request: SavePayoutConfigRequest
+): Promise<SavePayoutConfigResponse> => {
+  try {
+    const [data, error] = await fetchData<SavePayoutConfigResponse>(
+      INDEXER.V2.PAYOUT_CONFIG.SAVE,
+      "POST",
+      request,
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to save payout configs");
+    }
+
+    return data;
+  } catch (error: unknown) {
+    errorManager("Error saving payout configs", error);
+    throw new Error(`Failed to save payout configs: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Get payout configs for a community
+ */
+export const getPayoutConfigsByCommunity = async (
+  communityUID: string
+): Promise<PayoutGrantConfig[]> => {
+  try {
+    const [data, error] = await fetchData<{ configs: PayoutGrantConfig[] }>(
+      INDEXER.V2.PAYOUT_CONFIG.BY_COMMUNITY(communityUID),
+      "GET",
+      {},
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to fetch payout configs");
+    }
+
+    return data.configs;
+  } catch (error: unknown) {
+    errorManager(`Error fetching payout configs for community ${communityUID}`, error);
+    throw new Error(`Failed to fetch payout configs: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Get payout config for a specific grant
+ */
+export const getPayoutConfigByGrant = async (
+  grantUID: string
+): Promise<PayoutGrantConfig | null> => {
+  try {
+    const [data, error] = await fetchData<{ config: PayoutGrantConfig | null }>(
+      INDEXER.V2.PAYOUT_CONFIG.BY_GRANT(grantUID),
+      "GET",
+      {},
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to fetch payout config");
+    }
+
+    return data.config;
+  } catch (error: unknown) {
+    errorManager(`Error fetching payout config for grant ${grantUID}`, error);
+    throw new Error(`Failed to fetch payout config: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Delete payout config for a grant
+ */
+export const deletePayoutConfig = async (grantUID: string): Promise<void> => {
+  try {
+    const [, error] = await fetchData(
+      INDEXER.V2.PAYOUT_CONFIG.DELETE(grantUID),
+      "DELETE",
+      {},
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error) {
+      throw new Error(error);
+    }
+  } catch (error: unknown) {
+    errorManager(`Error deleting payout config for grant ${grantUID}`, error);
+    throw new Error(`Failed to delete payout config: ${getErrorMessage(error)}`);
   }
 };

@@ -37,6 +37,11 @@ interface PayoutHistoryDrawerProps {
 
 const STATUS_COLORS: Record<PayoutDisbursementStatus, { bg: string; text: string; label: string }> =
   {
+    [PayoutDisbursementStatus.CONFIGURED]: {
+      bg: "bg-purple-100 dark:bg-purple-900/30",
+      text: "text-purple-800 dark:text-purple-300",
+      label: "Configured",
+    },
     [PayoutDisbursementStatus.PENDING]: {
       bg: "bg-yellow-100 dark:bg-yellow-900/30",
       text: "text-yellow-800 dark:text-yellow-300",

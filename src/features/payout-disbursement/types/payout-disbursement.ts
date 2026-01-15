@@ -1,4 +1,5 @@
 export enum PayoutDisbursementStatus {
+  CONFIGURED = "CONFIGURED", // Admin-configured payout settings (not a transaction)
   PENDING = "PENDING",
   AWAITING_SIGNATURES = "AWAITING_SIGNATURES",
   DISBURSED = "DISBURSED",
@@ -114,6 +115,8 @@ export interface GrantDisbursementInfo {
   approvedAmount: string;
   /** Optional milestones associated with this grant */
   milestones?: MilestoneInfo[];
+  /** Token totals breakdown (passed from page to avoid re-fetching with wrong units) */
+  totalsByToken?: TokenTotal[];
 }
 
 /**
@@ -135,6 +138,8 @@ export interface CommunityPayoutProjectInfo {
   chainID: number;
   payoutAddress: string | null;
   chainPayoutAddress: Record<string, string> | null;
+  /** Admin-set payout address for this community (from attestation.payoutAddress[communityUID]) */
+  adminPayoutAddress: string | null;
 }
 
 /**
@@ -148,6 +153,19 @@ export interface CommunityPayoutGrantInfo {
   currency: string;
   payoutAddress: string | null;
   programId: string | null;
+  /** Admin-set payout amount (from attestation.amount) - separate from grant's original amount */
+  adminPayoutAmount: string | null;
+}
+
+/**
+ * Token total breakdown for multi-currency disbursements
+ */
+export interface TokenTotal {
+  token: string;
+  tokenDecimals: number;
+  tokenAddress: string;
+  chainID: number;
+  totalAmount: string;
 }
 
 /**
@@ -155,6 +173,8 @@ export interface CommunityPayoutGrantInfo {
  */
 export interface CommunityPayoutDisbursementInfo {
   totalDisbursed: string;
+  /** Breakdown of totals by token type (for multi-currency support) */
+  totalsByToken: TokenTotal[];
   status: AggregatedDisbursementStatus;
   history: PayoutDisbursement[];
 }
@@ -200,4 +220,46 @@ export interface CommunityPayoutsOptions {
   limit?: number;
   filters?: CommunityPayoutsFilters;
   sorting?: CommunityPayoutsSorting;
+}
+
+/**
+ * Item for saving payout config (payout address and total grant amount)
+ */
+export interface PayoutConfigItem {
+  grantUID: string;
+  projectUID: string;
+  payoutAddress?: string;
+  totalGrantAmount?: string;
+}
+
+/**
+ * Request to save payout configs
+ */
+export interface SavePayoutConfigRequest {
+  configs: PayoutConfigItem[];
+  communityUID: string;
+}
+
+/**
+ * Saved payout config response
+ */
+export interface PayoutGrantConfig {
+  id: string;
+  grantUID: string;
+  projectUID: string;
+  communityUID: string;
+  payoutAddress: string | null;
+  totalGrantAmount: string | null;
+  createdBy: string;
+  updatedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Response from saving payout configs
+ */
+export interface SavePayoutConfigResponse {
+  success: PayoutGrantConfig[];
+  failed: Array<{ grantUID: string; error: string }>;
 }
