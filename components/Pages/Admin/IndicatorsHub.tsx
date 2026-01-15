@@ -118,7 +118,7 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           Create a custom indicator specific to your community. For system metrics like GitHub stats
-          or transactions, use the &quot;Default&quot; indicators when creating activities or
+          or transactions, use the &quot;System&quot; indicators when creating activities or
           outcomes.
         </p>
         <div className="space-y-4">

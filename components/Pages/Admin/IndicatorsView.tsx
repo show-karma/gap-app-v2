@@ -1,87 +1,20 @@
 import { Dialog, Transition } from "@headlessui/react";
-import { ChevronDownIcon, PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
-import { IndicatorForm } from "@/components/Forms/IndicatorForm";
+import { IndicatorForm, type IndicatorFormData } from "@/components/Forms/IndicatorForm";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { useGroupedIndicators } from "@/hooks/useGroupedIndicators";
 import type { Category, ImpactIndicator, ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-
-// Custom Dropdown Menu Component - copied from CategoryView.tsx
-const DropdownMenu = ({
-  value,
-  onChange,
-  options,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string }[];
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const selectedOption = options.find((option) => option.value === value);
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none"
-      >
-        <span>{selectedOption?.label || "Select option"}</span>
-        <ChevronDownIcon
-          className={`ml-2 h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
-        />
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 z-10 mt-1 w-full bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 rounded-md shadow-lg">
-          <div className="py-1">
-            {options.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => {
-                  onChange(option.value);
-                  setIsOpen(false);
-                }}
-                className={`block w-full text-left px-4 py-2 text-sm ${
-                  value === option.value
-                    ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 interface IndicatorsViewProps {
   categories: Category[];
@@ -94,7 +27,7 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
   const [indicatorViewType, setIndicatorViewType] = useState<"all" | "automated" | "manual">("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [formDefaultValues, setFormDefaultValues] = useState<Partial<any>>({
+  const [formDefaultValues, setFormDefaultValues] = useState<Partial<IndicatorFormData>>({
     name: "",
     description: "",
     unitOfMeasure: "int",
@@ -318,9 +251,9 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">View</span>
                 <div className="w-36">
-                  <DropdownMenu
+                  <SelectDropdown
                     value={indicatorViewType}
-                    onChange={(value: any) =>
+                    onChange={(value) =>
                       setIndicatorViewType(value as "all" | "automated" | "manual")
                     }
                     options={filterOptions}
@@ -467,7 +400,7 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
 
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Create a custom indicator for your community. For system metrics like GitHub
-                    stats or transactions, use the &quot;Default&quot; indicators when creating
+                    stats or transactions, use the &quot;System&quot; indicators when creating
                     activities or outcomes.
                   </p>
 

@@ -7,7 +7,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import * as Popover from "@radix-ui/react-popover";
-import { type FC, Fragment, useEffect, useMemo, useState } from "react";
+import { type FC, Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
 import { IndicatorForm } from "@/components/Forms/IndicatorForm";
@@ -15,12 +15,24 @@ import { Button } from "@/components/Utilities/Button";
 import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import type { ImpactIndicator } from "@/types/impactMeasurement";
 
+// Debounce hook for search performance
+const useDebouncedValue = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
 interface IndicatorsDropdownProps {
   selectedIndicators: string[];
   indicators: ImpactIndicator[];
   onIndicatorChange: (value: string) => void;
   communityId?: string;
-  onIndicatorCreated?: (indicator: any) => void;
+  onIndicatorCreated?: (indicator: ImpactIndicator) => void;
   isLoading?: boolean;
 }
 
@@ -38,41 +50,57 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
   const [newIndicators, setNewIndicators] = useState<ImpactIndicator[]>([]);
   const [activeTab, setActiveTab] = useState<"community" | "default">("community");
 
+  // Debounce search for better performance
+  const debouncedSearch = useDebouncedValue(search, 150);
+
   // Fetch auto-synced indicators from API
   const { data: autosyncedIndicators = [], isLoading: isLoadingAutosynced } =
     useAutosyncedIndicators();
 
-  // Combine the original indicators with any newly created ones
-  const allCommunityIndicators = useMemo(() => {
-    const combined = [...indicators, ...newIndicators];
-    // Sort alphabetically
-    return combined.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
-  }, [indicators, newIndicators]);
+  // Memoized handler for indicator changes
+  const handleIndicatorChange = useCallback(
+    (value: string) => {
+      onIndicatorChange(value);
+    },
+    [onIndicatorChange]
+  );
 
-  // Filter community indicators based on search
+  // Combine, sort, and filter community indicators in a single pass
   const filteredCommunityIndicators = useMemo(() => {
-    if (!search) return allCommunityIndicators;
-    const searchLower = search.toLowerCase();
-    return allCommunityIndicators.filter(
-      (indicator) =>
-        indicator.name.toLowerCase().includes(searchLower) ||
-        indicator.description?.toLowerCase().includes(searchLower)
-    );
-  }, [allCommunityIndicators, search]);
-
-  // Filter default/auto indicators based on search
-  const filteredDefaultIndicators = useMemo(() => {
-    const sorted = [...autosyncedIndicators].sort((a, b) =>
+    const combined = [...indicators, ...newIndicators];
+    const sorted = combined.sort((a, b) =>
       a.name.toLowerCase().localeCompare(b.name.toLowerCase())
     );
-    if (!search) return sorted;
-    const searchLower = search.toLowerCase();
+
+    if (!debouncedSearch) return sorted;
+    const searchLower = debouncedSearch.toLowerCase();
     return sorted.filter(
       (indicator) =>
         indicator.name.toLowerCase().includes(searchLower) ||
         indicator.description?.toLowerCase().includes(searchLower)
     );
-  }, [autosyncedIndicators, search]);
+  }, [indicators, newIndicators, debouncedSearch]);
+
+  // Sort and filter default/auto indicators in a single pass
+  const filteredDefaultIndicators = useMemo(() => {
+    const sorted = [...autosyncedIndicators].sort((a, b) =>
+      a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+    );
+
+    if (!debouncedSearch) return sorted;
+    const searchLower = debouncedSearch.toLowerCase();
+    return sorted.filter(
+      (indicator) =>
+        indicator.name.toLowerCase().includes(searchLower) ||
+        indicator.description?.toLowerCase().includes(searchLower)
+    );
+  }, [autosyncedIndicators, debouncedSearch]);
+
+  // All community indicators (for selectedNames lookup)
+  const allCommunityIndicators = useMemo(
+    () => [...indicators, ...newIndicators],
+    [indicators, newIndicators]
+  );
 
   // Get selected indicator names for display
   const selectedNames = useMemo(() => {
@@ -97,7 +125,7 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
         key={indicator.id}
         type="button"
         className="px-4 py-3 w-full hover:bg-gray-50 dark:hover:bg-zinc-700 cursor-pointer flex justify-between items-center gap-3 text-left"
-        onClick={() => onIndicatorChange(indicator.id)}
+        onClick={() => handleIndicatorChange(indicator.id)}
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -264,7 +292,7 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
                 }`}
               >
                 <SparklesIcon className="w-4 h-4 inline mr-1" />
-                Default
+                System
                 <span className="ml-1.5 text-xs text-gray-400">
                   ({filteredDefaultIndicators.length})
                 </span>
@@ -348,7 +376,7 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
 
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Create a new custom indicator for your community. For system metrics like GitHub
-                    stats or transactions, use the &quot;Default&quot; tab instead.
+                    stats or transactions, use the &quot;System&quot; tab instead.
                   </p>
 
                   <IndicatorForm

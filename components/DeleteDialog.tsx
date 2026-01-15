@@ -58,11 +58,12 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
 
   const handleFunction = async () => {
     try {
-      await deleteFunction().then(() => {
-        afterFunction?.();
-      });
+      await deleteFunction();
+      afterFunction?.();
       closeModal();
-    } catch (_error: any) {}
+    } catch (error) {
+      console.error("Delete operation failed:", error);
+    }
   };
 
   return (
