@@ -652,6 +652,7 @@ export function CreateDisbursementModal({
         safeAddress,
         token: selectedTokenSymbol,
         tokenAddress: selectedTokenAddress || "", // Empty for native tokens
+        tokenDecimals: selectedTokenDecimals,
       });
 
       // 2. Create Safe transaction
@@ -690,7 +691,7 @@ export function CreateDisbursementModal({
       toast.success(
         result.executed
           ? "Disbursement executed successfully!"
-          : "Disbursement transaction created!"
+          : "Transaction to disburse created!"
       );
       onSuccess?.();
     } catch (error) {
@@ -1215,25 +1216,26 @@ export function CreateDisbursementModal({
                         ? "Disbursement Executed!"
                         : "Transaction Created!"}
                     </h4>
-                    <p className="text-gray-600 dark:text-gray-400 mb-2">
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
                       {transactionResult.executed
                         ? "Funds have been transferred successfully."
-                        : `Transaction to disburse ${totalAmount.toLocaleString()} ${selectedTokenSymbol} to ${validGrants.length} project${validGrants.length !== 1 ? "s" : ""} has been created.`}
+                        : (
+                          <>
+                            Transaction to disburse {totalAmount.toLocaleString()} {selectedTokenSymbol} to {validGrants.length} project{validGrants.length !== 1 ? "s" : ""} has been created.
+                            <br />
+                            The signers can go{" "}
+                            <a
+                              href={transactionResult.safeUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                            >
+                              here
+                            </a>{" "}
+                            and sign the transaction.
+                          </>
+                        )}
                     </p>
-                    {!transactionResult.executed && (
-                      <p className="text-gray-600 dark:text-gray-400 mb-4">
-                        Safe owners can{" "}
-                        <a
-                          href={transactionResult.safeUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                        >
-                          review and approve the transaction
-                        </a>{" "}
-                        in the Safe app.
-                      </p>
-                    )}
                     <div className="bg-gray-50 dark:bg-zinc-700/50 rounded-lg px-4 py-3 mb-6">
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                         Transaction Hash

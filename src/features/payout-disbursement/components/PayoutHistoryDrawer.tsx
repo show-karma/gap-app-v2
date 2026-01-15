@@ -17,6 +17,10 @@ import {
   useUpdateDisbursementStatus,
 } from "../hooks/use-payout-disbursement";
 import { type PayoutDisbursement, PayoutDisbursementStatus } from "../types/payout-disbursement";
+import {
+  formatTokenAmount,
+  calculateDisbursementProgress,
+} from "../utils/format-token-amount";
 
 interface PayoutHistoryDrawerProps {
   isOpen: boolean;
@@ -25,6 +29,10 @@ interface PayoutHistoryDrawerProps {
   grantName: string;
   projectName: string;
   approvedAmount?: string;
+  /** Token symbol for display (e.g., "USDC", "ETH"). Defaults to "USDC" */
+  tokenSymbol?: string;
+  /** Number of decimals for the token. Defaults to 6 (USDC standard) */
+  tokenDecimals?: number;
 }
 
 const STATUS_COLORS: Record<PayoutDisbursementStatus, { bg: string; text: string; label: string }> =
@@ -67,11 +75,6 @@ function formatDate(dateString: string): string {
   });
 }
 
-function formatAmount(amount: string, decimals: number = 6): string {
-  const num = parseFloat(amount) / 10 ** decimals;
-  return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
-}
-
 function getSafeUrl(safeAddress: string, txHash: string, chainId: number): string {
   const networkName = NETWORKS[chainId as SupportedChainId]?.name?.toLowerCase() || "mainnet";
   return `https://app.safe.global/transactions/tx?safe=${networkName}:${safeAddress}&id=multisig_${safeAddress}_${txHash}`;
@@ -89,6 +92,8 @@ export function PayoutHistoryDrawer({
   grantName,
   projectName,
   approvedAmount,
+  tokenSymbol = "USDC",
+  tokenDecimals = 6,
 }: PayoutHistoryDrawerProps) {
   const {
     data: historyData,
@@ -101,6 +106,12 @@ export function PayoutHistoryDrawer({
   });
 
   const disbursements = historyData?.payload || [];
+
+  // Calculate progress using the utility function
+  const progress =
+    totalDisbursed && approvedAmount
+      ? calculateDisbursementProgress(totalDisbursed, approvedAmount, tokenDecimals)
+      : 0;
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -163,7 +174,7 @@ export function PayoutHistoryDrawer({
                         <Spinner className="w-4 h-4 mt-1" />
                       ) : (
                         <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {formatAmount(totalDisbursed || "0")} USDC
+                          {formatTokenAmount(totalDisbursed || "0", tokenDecimals)} {tokenSymbol}
                         </p>
                       )}
                     </div>
@@ -173,7 +184,7 @@ export function PayoutHistoryDrawer({
                           Grant Amount
                         </p>
                         <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {parseFloat(approvedAmount).toLocaleString()} USDC
+                          {parseFloat(approvedAmount).toLocaleString()} {tokenSymbol}
                         </p>
                       </div>
                     )}
@@ -182,20 +193,12 @@ export function PayoutHistoryDrawer({
                     <div className="mt-3">
                       <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
                         <span>Progress</span>
-                        <span>
-                          {Math.min(
-                            100,
-                            (parseFloat(totalDisbursed) / (parseFloat(approvedAmount) * 1e6)) * 100
-                          ).toFixed(1)}
-                          %
-                        </span>
+                        <span>{progress.toFixed(1)}%</span>
                       </div>
                       <div className="w-full bg-gray-200 dark:bg-zinc-600 rounded-full h-2">
                         <div
                           className="bg-blue-600 h-2 rounded-full"
-                          style={{
-                            width: `${Math.min(100, (parseFloat(totalDisbursed) / (parseFloat(approvedAmount) * 1e6)) * 100)}%`,
-                          }}
+                          style={{ width: `${progress}%` }}
                         />
                       </div>
                     </div>
@@ -260,7 +263,8 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
           </div>
           <div className="text-right">
             <p className="text-lg font-semibold text-gray-900 dark:text-white">
-              {formatAmount(disbursement.disbursedAmount)} {disbursement.token}
+              {formatTokenAmount(disbursement.disbursedAmount, disbursement.tokenDecimals)}{" "}
+              {disbursement.token}
             </p>
           </div>
         </div>
@@ -324,7 +328,7 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
                       {milestoneId}
                     </span>
                     <span className="text-gray-900 dark:text-white">
-                      {formatAmount(amount)} {disbursement.token}
+                      {formatTokenAmount(amount, disbursement.tokenDecimals)} {disbursement.token}
                     </span>
                   </div>
                 ))}
@@ -438,7 +442,8 @@ function CancelDisbursementDialog({
                 <p className="text-sm text-center text-gray-500 dark:text-gray-400 mb-4">
                   Are you sure you want to cancel this disbursement of{" "}
                   <span className="font-semibold text-gray-900 dark:text-white">
-                    {formatAmount(disbursement.disbursedAmount)} {disbursement.token}
+                    {formatTokenAmount(disbursement.disbursedAmount, disbursement.tokenDecimals)}{" "}
+                    {disbursement.token}
                   </span>
                   ?
                 </p>

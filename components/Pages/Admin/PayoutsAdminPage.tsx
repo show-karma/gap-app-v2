@@ -483,7 +483,6 @@ export default function PayoutsAdminPage() {
     setSelectedGrants(new Set());
     // Refresh grants data
     refreshPayouts();
-    toast.success("Disbursement created successfully");
   };
 
   // Handle save

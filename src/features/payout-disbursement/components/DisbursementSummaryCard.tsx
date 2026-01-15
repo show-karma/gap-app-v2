@@ -6,6 +6,11 @@ import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { cn } from "@/utilities/tailwind";
 import { useTotalDisbursed } from "../hooks/use-payout-disbursement";
+import {
+  formatTokenAmount,
+  calculateDisbursementProgress,
+  calculateRemainingBalance,
+} from "../utils/format-token-amount";
 import { PayoutHistoryDrawer } from "./PayoutHistoryDrawer";
 
 interface DisbursementSummaryCardProps {
@@ -19,17 +24,10 @@ interface DisbursementSummaryCardProps {
   approvedAmount?: string;
   /** Currency symbol to display (defaults to "USDC") */
   currency?: string;
+  /** Number of decimals for the token (defaults to 6 for USDC) */
+  tokenDecimals?: number;
   /** Additional CSS classes for the card container */
   className?: string;
-}
-
-/**
- * Formats a raw amount (with decimals) to a human-readable format
- * The total disbursed from the API comes with 6 decimals (USDC standard)
- */
-function formatDisbursedAmount(amount: string, decimals: number = 6): string {
-  const num = parseFloat(amount) / 10 ** decimals;
-  return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
 /**
@@ -39,41 +37,6 @@ function formatApprovedAmount(amount: string): string {
   const num = parseFloat(amount.replace(/,/g, ""));
   if (Number.isNaN(num)) return amount;
   return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
-}
-
-/**
- * Calculates the disbursement progress percentage
- * @param disbursed - Raw disbursed amount with decimals
- * @param approved - Human-readable approved amount
- * @param decimals - Number of decimals in the disbursed amount
- */
-function calculateProgress(disbursed: string, approved: string, decimals: number = 6): number {
-  const disbursedNum = parseFloat(disbursed) / 10 ** decimals;
-  const approvedNum = parseFloat(approved.replace(/,/g, ""));
-
-  if (Number.isNaN(disbursedNum) || Number.isNaN(approvedNum) || approvedNum === 0) {
-    return 0;
-  }
-
-  return Math.min(100, (disbursedNum / approvedNum) * 100);
-}
-
-/**
- * Calculates the remaining balance
- * @param disbursed - Raw disbursed amount with decimals
- * @param approved - Human-readable approved amount
- * @param decimals - Number of decimals in the disbursed amount
- */
-function calculateRemaining(disbursed: string, approved: string, decimals: number = 6): string {
-  const disbursedNum = parseFloat(disbursed) / 10 ** decimals;
-  const approvedNum = parseFloat(approved.replace(/,/g, ""));
-
-  if (Number.isNaN(disbursedNum) || Number.isNaN(approvedNum)) {
-    return "0";
-  }
-
-  const remaining = Math.max(0, approvedNum - disbursedNum);
-  return remaining.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
 /**
@@ -108,6 +71,7 @@ export function DisbursementSummaryCard({
   projectName,
   approvedAmount,
   currency = "USDC",
+  tokenDecimals = 6,
   className,
 }: DisbursementSummaryCardProps) {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -119,14 +83,18 @@ export function DisbursementSummaryCard({
     error,
   } = useTotalDisbursed(grantUID, { enabled: !!grantUID });
 
-  // Calculate derived values
-  const formattedDisbursed = totalDisbursed ? formatDisbursedAmount(totalDisbursed) : "0";
+  // Calculate derived values using shared utilities
+  const formattedDisbursed = totalDisbursed
+    ? formatTokenAmount(totalDisbursed, tokenDecimals)
+    : "0";
   const formattedApproved = approvedAmount ? formatApprovedAmount(approvedAmount) : undefined;
   const progress =
-    totalDisbursed && approvedAmount ? calculateProgress(totalDisbursed, approvedAmount) : 0;
+    totalDisbursed && approvedAmount
+      ? calculateDisbursementProgress(totalDisbursed, approvedAmount, tokenDecimals)
+      : 0;
   const remaining =
     totalDisbursed && approvedAmount
-      ? calculateRemaining(totalDisbursed, approvedAmount)
+      ? calculateRemainingBalance(totalDisbursed, approvedAmount, tokenDecimals)
       : formattedApproved || "0";
 
   // Determine progress bar color based on percentage
@@ -261,6 +229,8 @@ export function DisbursementSummaryCard({
         grantName={grantName}
         projectName={projectName}
         approvedAmount={approvedAmount}
+        tokenSymbol={currency}
+        tokenDecimals={tokenDecimals}
       />
     </>
   );

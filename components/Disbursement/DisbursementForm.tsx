@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  CheckCircle,
+  CircleX,
+  Coins,
+  Globe,
+  Loader,
+  Shield,
+  UserCheck,
+} from "lucide-react";
 import Papa from "papaparse";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
@@ -10,9 +19,9 @@ import { useWallet } from "@/hooks/useWallet";
 import type { SupportedChainId } from "../../config/tokens";
 import type { DisbursementRecipient } from "../../types/disbursement";
 import {
+  canProposeToSafe,
   getSafeTokenBalance,
   isSafeDeployed,
-  isSafeOwner,
   signAndProposeDisbursement,
 } from "../../utilities/safe";
 import { Button } from "./components/Button";
@@ -51,7 +60,9 @@ export const formatNumber = (value: number): string => {
 interface PreflightChecks {
   isCorrectNetwork: boolean | null;
   isDeployed: boolean | null;
+  canPropose: boolean | null;
   isOwner: boolean | null;
+  isDelegate: boolean | null;
   hasSufficientBalance: boolean | null;
   safeBalance: string;
   isChecking: boolean;
@@ -93,7 +104,9 @@ export const DisbursementForm = () => {
   const [preflightChecks, setPreflightChecks] = useState<PreflightChecks>({
     isCorrectNetwork: null,
     isDeployed: null,
+    canPropose: null,
     isOwner: null,
+    isDelegate: null,
     hasSufficientBalance: null,
     safeBalance: "0",
     isChecking: false,
@@ -214,7 +227,9 @@ export const DisbursementForm = () => {
         setPreflightChecks({
           isCorrectNetwork: false,
           isDeployed: null,
+          canPropose: null,
           isOwner: null,
+          isDelegate: null,
           hasSufficientBalance: null,
           safeBalance: "0",
           isChecking: false,
@@ -232,7 +247,9 @@ export const DisbursementForm = () => {
         setPreflightChecks({
           isCorrectNetwork: true,
           isDeployed: false,
+          canPropose: null,
           isOwner: null,
+          isDelegate: null,
           hasSufficientBalance: null,
           safeBalance: "0",
           isChecking: false,
@@ -243,8 +260,12 @@ export const DisbursementForm = () => {
         return;
       }
 
-      // Check if user is owner of the Safe
-      const isOwner = await isSafeOwner(safeAddress, userAddress, network);
+      // Check if user can propose transactions (owner or delegate/proposer)
+      const { canPropose, isOwner, isDelegate } = await canProposeToSafe(
+        safeAddress,
+        userAddress,
+        network
+      );
 
       // Get Safe token balance
       const balanceInfo = await getSafeTokenBalance(safeAddress, token, network);
@@ -262,7 +283,9 @@ export const DisbursementForm = () => {
       setPreflightChecks({
         isCorrectNetwork: true,
         isDeployed: true,
+        canPropose,
         isOwner,
+        isDelegate,
         hasSufficientBalance,
         safeBalance: balanceInfo.balanceFormatted,
         isChecking: false,
@@ -340,7 +363,7 @@ export const DisbursementForm = () => {
     isConnected &&
     preflightChecks.isCorrectNetwork === true &&
     preflightChecks.isDeployed === true &&
-    preflightChecks.isOwner === true &&
+    preflightChecks.canPropose === true &&
     preflightChecks.hasSufficientBalance === true &&
     !preflightChecks.isChecking &&
     !transactionState.isProcessing;
@@ -684,25 +707,30 @@ export const DisbursementForm = () => {
                             : "bg-gray-50 border-gray-200 text-gray-600"
                       }`}
                     >
-                      <span className="text-lg mr-3">
-                        {preflightChecks.isCorrectNetwork === true
-                          ? "✅"
-                          : preflightChecks.isCorrectNetwork === false
-                            ? "❌"
-                            : "⏳"}
+                      <span className="mr-3">
+                        {preflightChecks.isCorrectNetwork === true ? (
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        ) : preflightChecks.isCorrectNetwork === false ? (
+                          <CircleX className="h-5 w-5 text-red-600" />
+                        ) : (
+                          <Loader className="h-5 w-5 text-gray-400 animate-spin" />
+                        )}
                       </span>
-                      <div>
-                        <div className="font-medium">🌐 Wallet Network</div>
-                        <div className="text-sm">
-                          {preflightChecks.isCorrectNetwork === true
-                            ? "Connected to correct network"
-                            : preflightChecks.isCorrectNetwork === false
-                              ? `Auto-switching to ${
-                                  NETWORK_OPTIONS.find((n) => n.id === network)?.name
-                                }...`
-                              : isSwitchingNetwork
-                                ? "Switching networks..."
-                                : "Checking network..."}
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-4 w-4" />
+                        <div>
+                          <div className="font-medium">Wallet Network</div>
+                          <div className="text-sm">
+                            {preflightChecks.isCorrectNetwork === true
+                              ? "Connected to correct network"
+                              : preflightChecks.isCorrectNetwork === false
+                                ? `Auto-switching to ${
+                                    NETWORK_OPTIONS.find((n) => n.id === network)?.name
+                                  }...`
+                                : isSwitchingNetwork
+                                  ? "Switching networks..."
+                                  : "Checking network..."}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -716,49 +744,63 @@ export const DisbursementForm = () => {
                             : "bg-gray-50 border-gray-200 text-gray-600"
                       }`}
                     >
-                      <span className="text-lg mr-3">
-                        {preflightChecks.isDeployed === true
-                          ? "✅"
-                          : preflightChecks.isDeployed === false
-                            ? "❌"
-                            : "⏳"}
+                      <span className="mr-3">
+                        {preflightChecks.isDeployed === true ? (
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        ) : preflightChecks.isDeployed === false ? (
+                          <CircleX className="h-5 w-5 text-red-600" />
+                        ) : (
+                          <Loader className="h-5 w-5 text-gray-400 animate-spin" />
+                        )}
                       </span>
-                      <div>
-                        <div className="font-medium">🏦 Safe Contract</div>
-                        <div className="text-sm">
-                          {preflightChecks.isDeployed === true
-                            ? "Safe found on network"
-                            : preflightChecks.isDeployed === false
-                              ? "Safe not found on this network"
-                              : "Checking deployment..."}
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        <div>
+                          <div className="font-medium">Safe Contract</div>
+                          <div className="text-sm">
+                            {preflightChecks.isDeployed === true
+                              ? "Safe found on network"
+                              : preflightChecks.isDeployed === false
+                                ? "Safe not found on this network"
+                                : "Checking deployment..."}
+                          </div>
                         </div>
                       </div>
                     </div>
 
                     <div
                       className={`flex items-center p-3 rounded-lg border ${
-                        preflightChecks.isOwner === true
+                        preflightChecks.canPropose === true
                           ? "bg-green-50 border-green-200 text-green-700"
-                          : preflightChecks.isOwner === false
+                          : preflightChecks.canPropose === false
                             ? "bg-red-50 border-red-200 text-red-700"
                             : "bg-gray-50 border-gray-200 text-gray-600"
                       }`}
                     >
-                      <span className="text-lg mr-3">
-                        {preflightChecks.isOwner === true
-                          ? "✅"
-                          : preflightChecks.isOwner === false
-                            ? "❌"
-                            : "⏳"}
+                      <span className="mr-3">
+                        {preflightChecks.canPropose === true ? (
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        ) : preflightChecks.canPropose === false ? (
+                          <CircleX className="h-5 w-5 text-red-600" />
+                        ) : (
+                          <Loader className="h-5 w-5 text-gray-400 animate-spin" />
+                        )}
                       </span>
-                      <div>
-                        <div className="font-medium">👤 Ownership</div>
-                        <div className="text-sm">
-                          {preflightChecks.isOwner === true
-                            ? "Wallet is Safe owner"
-                            : preflightChecks.isOwner === false
-                              ? "Wallet is not a Safe owner"
-                              : "Checking ownership..."}
+                      <div className="flex items-center gap-2">
+                        <UserCheck className="h-4 w-4" />
+                        <div>
+                          <div className="font-medium">Authorization</div>
+                          <div className="text-sm">
+                            {preflightChecks.canPropose === true
+                              ? preflightChecks.isOwner
+                                ? "Wallet is Safe owner"
+                                : preflightChecks.isDelegate
+                                  ? "Wallet is Safe proposer"
+                                  : "Wallet can propose transactions"
+                              : preflightChecks.canPropose === false
+                                ? "Wallet is not an owner or proposer"
+                                : "Checking authorization..."}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -772,27 +814,33 @@ export const DisbursementForm = () => {
                             : "bg-gray-50 border-gray-200 text-gray-600"
                       }`}
                     >
-                      <span className="text-lg mr-3">
-                        {preflightChecks.hasSufficientBalance === true
-                          ? "✅"
-                          : preflightChecks.hasSufficientBalance === false
-                            ? "❌"
-                            : "⏳"}
+                      <span className="mr-3">
+                        {preflightChecks.hasSufficientBalance === true ? (
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        ) : preflightChecks.hasSufficientBalance === false ? (
+                          <CircleX className="h-5 w-5 text-red-600" />
+                        ) : (
+                          <Loader className="h-5 w-5 text-gray-400 animate-spin" />
+                        )}
                       </span>
-                      <div>
-                        <div className="font-medium">💰 Balance</div>
-                        <div className="text-sm">
-                          {formatNumber(parseFloat(preflightChecks.safeBalance) || 0)} USDC
-                          available
-                          {totalAmount > 0 && ` (${formatNumber(totalAmount)} USDC needed)`}
+                      <div className="flex items-center gap-2">
+                        <Coins className="h-4 w-4" />
+                        <div>
+                          <div className="font-medium">Balance</div>
+                          <div className="text-sm">
+                            {formatNumber(parseFloat(preflightChecks.safeBalance) || 0)} USDC
+                            available
+                            {totalAmount > 0 && ` (${formatNumber(totalAmount)} USDC needed)`}
+                          </div>
                         </div>
                       </div>
                     </div>
 
                     {preflightChecks.error && (
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2">
+                        <CircleX className="h-4 w-4 text-red-600 flex-shrink-0" />
                         <div className="text-red-700 text-sm font-medium">
-                          ❌ {preflightChecks.error}
+                          {preflightChecks.error}
                         </div>
                       </div>
                     )}

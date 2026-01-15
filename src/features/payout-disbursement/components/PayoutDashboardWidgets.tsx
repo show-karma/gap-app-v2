@@ -16,6 +16,7 @@ import {
   useRecentCommunityDisbursements,
 } from "../hooks/use-payout-disbursement";
 import { type PayoutDisbursement, PayoutDisbursementStatus } from "../types/payout-disbursement";
+import { formatTokenAmount } from "../utils/format-token-amount";
 
 // Status configuration for badges
 const STATUS_CONFIG: Record<PayoutDisbursementStatus, { bg: string; text: string; label: string }> =
@@ -48,11 +49,6 @@ const STATUS_CONFIG: Record<PayoutDisbursementStatus, { bg: string; text: string
   };
 
 // Helper functions
-function formatAmount(amount: string, decimals: number = 6): string {
-  const num = parseFloat(amount) / 10 ** decimals;
-  return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
-}
-
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
   return date.toLocaleDateString("en-US", {
@@ -233,7 +229,8 @@ function AwaitingSignatureItem({ disbursement }: { disbursement: PayoutDisbursem
           Grant: {truncateAddress(disbursement.grantUID)}
         </p>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          {formatAmount(disbursement.disbursedAmount)} {disbursement.token}
+          {formatTokenAmount(disbursement.disbursedAmount, disbursement.tokenDecimals)}{" "}
+          {disbursement.token}
         </p>
       </div>
       <div className="flex items-center gap-2 ml-4">
@@ -333,7 +330,7 @@ function RecentActivityItem({ disbursement }: { disbursement: PayoutDisbursement
       </div>
       <div className="text-right ml-4">
         <p className="text-sm font-semibold text-gray-900 dark:text-white">
-          {formatAmount(disbursement.disbursedAmount)}
+          {formatTokenAmount(disbursement.disbursedAmount, disbursement.tokenDecimals)}
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400">{disbursement.token}</p>
       </div>

@@ -21,6 +21,8 @@ export interface PayoutDisbursement {
   disbursedAmount: string;
   token: string;
   tokenAddress: string;
+  /** Number of decimals for the token (e.g., 6 for USDC, 18 for most ERC-20s) */
+  tokenDecimals: number;
   payoutAddress: string;
   milestoneBreakdown: MilestoneBreakdown | null;
   status: PayoutDisbursementStatus;
@@ -45,6 +47,8 @@ export interface CreateDisbursementsRequest {
   safeAddress: string;
   token: string;
   tokenAddress: string;
+  /** Number of decimals for the token (e.g., 6 for USDC, 18 for most ERC-20s) */
+  tokenDecimals: number;
 }
 
 export interface CreateDisbursementsResponse {
