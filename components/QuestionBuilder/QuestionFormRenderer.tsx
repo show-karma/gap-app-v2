@@ -65,8 +65,8 @@ export function QuestionFormRenderer({
         return (
           <select {...commonProps}>
             <option value="">Select an option</option>
-            {field.options?.map((option: string, index: number) => (
-              <option key={index} value={option}>
+            {field.options?.map((option: string) => (
+              <option key={option} value={option}>
                 {option}
               </option>
             ))}
@@ -76,8 +76,8 @@ export function QuestionFormRenderer({
       case "radio":
         return (
           <div className="space-y-2">
-            {field.options?.map((option: string, index: number) => (
-              <label key={index} className="flex items-center">
+            {field.options?.map((option: string) => (
+              <label key={option} className="flex items-center">
                 <input
                   {...register(field.id, {
                     required: field.required ? `${field.label} is required` : false,
@@ -96,10 +96,10 @@ export function QuestionFormRenderer({
       case "checkbox":
         return (
           <div className="space-y-2">
-            {field.options?.map((option: string, index: number) => (
-              <label key={index} className="flex items-center">
+            {field.options?.map((option: string) => (
+              <label key={option} className="flex items-center">
                 <input
-                  {...register(`${field.id}.${index}`)}
+                  {...register(`${field.id}.${option}`)}
                   type="checkbox"
                   value={option}
                   disabled={isSubmitting}

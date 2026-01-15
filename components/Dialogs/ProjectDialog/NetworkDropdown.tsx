@@ -75,8 +75,7 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
                   if (onNetworkChange) {
                     try {
                       await onNetworkChange(network.id);
-                    } catch (error) {
-                      console.error("Failed to change network:", error);
+                    } catch {
                       // Revert the value if chain switch failed
                       setValue(previousValue);
                       setIsProcessing(false);

@@ -287,7 +287,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         showError("Failed to connect to the selected network");
       }
     } catch (error) {
-      console.error("Failed to switch network:", error);
       showError("Failed to switch network. Please try again.");
       setWalletSigner(null);
       throw error; // Re-throw to let NetworkDropdown handle it
@@ -316,8 +315,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             // Chain mismatch, signer will be set after chain switch
             setWalletSigner(null);
           }
-        } catch (error) {
-          console.error("Failed to prepare wallet signer:", error);
+        } catch {
           setWalletSigner(null);
         }
       } else {
@@ -509,24 +507,19 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
   const createProject = async (data: SchemaType): Promise<void> => {
     try {
-      console.log("[ProjectDialog] createProject started");
       setIsLoading(true);
       startAttestation("Creating project...");
       if (!isConnected || !isAuth) {
-        console.log("[ProjectDialog] Not connected or not auth, calling login");
         login?.();
         return;
       }
       if (!address || !gap) {
-        console.log("[ProjectDialog] No address or gap client", { address, gap: !!gap });
         return;
       }
 
       const chainSelected = data.chainID;
-      console.log("[ProjectDialog] Chain selected:", chainSelected);
 
       // Setup chain and wallet (uses gasless smart wallet if available)
-      console.log("[ProjectDialog] Calling setupChainAndWallet...");
       const setup = await setupChainAndWallet({
         targetChainId: chainSelected,
         currentChainId: chain?.id,
@@ -534,16 +527,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       });
 
       if (!setup) {
-        console.log("[ProjectDialog] setupChainAndWallet returned null");
         setIsLoading(false);
         return;
       }
-
-      console.log("[ProjectDialog] setupChainAndWallet success:", {
-        chainId: setup.chainId,
-        isGasless: setup.isGasless,
-        signerAddress: await setup.walletSigner.getAddress?.().catch(() => "unknown"),
-      });
 
       const { gapClient, walletSigner: signer, chainId } = setup;
 
@@ -630,11 +616,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           if (!promoteError) {
             const { permanentUrl } = promoteData;
             finalImageURL = permanentUrl;
-          } else {
-            console.warn("Failed to promote logo to permanent status, using temp URL");
           }
-        } catch (error) {
-          console.warn("Error promoting logo before project creation:", error);
+          // If promotion fails, continue with temp URL
+        } catch {
           // Continue with temp URL if promotion fails
         }
       }
@@ -781,15 +765,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }
       });
 
-      console.log("[ProjectDialog] Resetting form after success");
       reset();
       setStep(0);
       setContacts([]);
       setCustomLinks([]);
     } catch (error: any) {
-      console.error("[ProjectDialog] CATCH BLOCK - Error caught:", error);
-      console.error("[ProjectDialog] Error message:", error?.message);
-      console.error("[ProjectDialog] Error stack:", error?.stack);
       showError(MESSAGES.PROJECT.CREATE.ERROR(data.title));
       errorManager(
         MESSAGES.PROJECT.CREATE.ERROR(data.title),
@@ -801,7 +781,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setShouldResetOnOpen(false);
       openModal();
     } finally {
-      console.log("[ProjectDialog] FINALLY block - setting isLoading to false");
       setIsLoading(false);
     }
   };
@@ -865,11 +844,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           if (!promoteError) {
             const { permanentUrl } = promoteData;
             finalImageURL = permanentUrl;
-          } else {
-            console.warn("Failed to promote logo to permanent status, using temp URL");
           }
-        } catch (error) {
-          console.warn("Error promoting logo before project update:", error);
+          // If promotion fails, continue with temp URL
+        } catch {
           // Continue with temp URL if promotion fails
         }
       }
