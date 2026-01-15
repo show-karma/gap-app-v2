@@ -1,4 +1,4 @@
-import { Dialog, Switch, Transition } from "@headlessui/react";
+import { Dialog, Transition } from "@headlessui/react";
 import {
   ChevronDownIcon,
   MagnifyingGlassIcon,
@@ -8,6 +8,7 @@ import {
 } from "@heroicons/react/24/outline";
 import * as Popover from "@radix-ui/react-popover";
 import { type FC, Fragment, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
 import { IndicatorForm } from "@/components/Forms/IndicatorForm";
 import { Button } from "@/components/Utilities/Button";
@@ -95,10 +96,10 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
       <button
         key={indicator.id}
         type="button"
-        className="px-4 py-3 w-full hover:bg-gray-50 dark:hover:bg-zinc-700 cursor-pointer flex justify-between items-center gap-3"
+        className="px-4 py-3 w-full hover:bg-gray-50 dark:hover:bg-zinc-700 cursor-pointer flex justify-between items-center gap-3 text-left"
         onClick={() => onIndicatorChange(indicator.id)}
       >
-        <div className="flex-1 text-left min-w-0">
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p className="font-medium text-sm truncate">{indicator.name}</p>
             {isDefault && (
@@ -114,19 +115,18 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
             </p>
           )}
         </div>
-        <Switch
-          checked={isSelected}
-          onChange={() => onIndicatorChange(indicator.id)}
+        <div
           className={`${
             isSelected ? "bg-blue-600" : "bg-gray-200 dark:bg-zinc-700"
-          } relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2`}
+          } relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors`}
+          aria-hidden="true"
         >
           <span
             className={`${
               isSelected ? "translate-x-6" : "translate-x-1"
             } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
           />
-        </Switch>
+        </div>
       </button>
     );
   };
@@ -372,7 +372,11 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
                       setIsFormModalOpen(false);
                       setTimeout(() => setOpen(true), 10);
                     }}
-                    onError={() => {}}
+                    onError={(error) => {
+                      toast.error(
+                        error instanceof Error ? error.message : "Failed to create indicator"
+                      );
+                    }}
                     preventPropagation={true}
                   />
                 </Dialog.Panel>

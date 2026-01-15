@@ -172,7 +172,7 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
 
   // Check if an indicator is autosynced (based on syncType field)
   const isAutosyncedIndicator = (indicator: ImpactIndicator) => {
-    return (indicator as any).syncType === "auto";
+    return indicator.syncType === "auto";
   };
 
   // Filter indicators based on search and view type
@@ -241,7 +241,7 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
                     <span className="text-xs bg-white dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-zinc-700 inline-block">
                       {indicator.unitOfMeasure || "N/A"}
                     </span>
-                    {(indicator as any).syncType === "auto" && (
+                    {indicator.syncType === "auto" && (
                       <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full inline-block">
                         Auto
                       </span>
@@ -475,12 +475,6 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
                     communityId={communityId}
                     defaultValues={formDefaultValues}
                     onSuccess={(indicator) => {
-                      // Prevent event bubbling if any
-                      if (event) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                      }
-
                       // Add the new indicator to our local state
                       setNewIndicators((prev) => [...prev, indicator]);
 
