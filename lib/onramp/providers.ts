@@ -1,5 +1,9 @@
 import { OnrampProvider } from "@/hooks/donation/types";
 
+const COINBASE_PAY_URL = process.env.NEXT_PUBLIC_COINBASE_PAY_URL || "https://pay.coinbase.com";
+
+export const ALLOWED_ONRAMP_DOMAINS = ["pay.coinbase.com"] as const;
+
 export interface OnrampUrlParams {
   token: string;
   fiatAmount?: number;
@@ -29,7 +33,7 @@ const PROVIDER_CONFIGS: Record<OnrampProvider, OnrampProviderConfig> = {
       if (fiatCurrency) params.set("fiatCurrency", fiatCurrency);
       if (asset) params.set("defaultAsset", asset);
       if (redirectUrl) params.set("redirectUrl", redirectUrl);
-      return `https://pay.coinbase.com/buy/select-asset?${params.toString()}`;
+      return `${COINBASE_PAY_URL}/buy/select-asset?${params.toString()}`;
     },
     description: "Purchase crypto with card via Coinbase",
     supportedCurrencies: [

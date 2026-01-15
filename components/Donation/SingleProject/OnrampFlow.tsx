@@ -8,6 +8,12 @@ import { useOnramp } from "@/hooks/donation/useOnramp";
 import { DEFAULT_ONRAMP_PROVIDER, getProviderConfig } from "@/lib/onramp";
 import { getChainNameById } from "@/utilities/network";
 
+const ONRAMP_LIMITS = {
+  MIN_AMOUNT: 1,
+  MAX_AMOUNT: 10000,
+  MAX_DECIMALS: 2,
+} as const;
+
 interface OnrampFlowProps {
   projectUid: string;
   payoutAddress: string;
@@ -21,7 +27,12 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
     const [currency, setCurrency] = useState("USD");
 
     const providerConfig = getProviderConfig(provider);
-    const network = useMemo(() => getChainNameById(chainId), [chainId]);
+
+    const { network, isChainSupported } = useMemo(() => {
+      const chainName = getChainNameById(chainId);
+      const supported = providerConfig.supportedNetworks.includes(chainName);
+      return { network: chainName, isChainSupported: supported };
+    }, [chainId, providerConfig.supportedNetworks]);
 
     const redirectUrl = useMemo(() => {
       if (typeof window === "undefined") return undefined;
@@ -39,7 +50,9 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
 
     const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
-      if (value === "" || /^\d*\.?\d*$/.test(value)) {
+      // Allow numbers with up to MAX_DECIMALS decimal places
+      const decimalRegex = new RegExp(`^\\d*\\.?\\d{0,${ONRAMP_LIMITS.MAX_DECIMALS}}$`);
+      if (value === "" || decimalRegex.test(value)) {
         setAmount(value);
       }
     }, []);
@@ -48,9 +61,24 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
       setCurrency(e.target.value);
     }, []);
 
+    const validationError = useMemo(() => {
+      if (!amount) return null;
+      const numAmount = parseFloat(amount);
+      if (Number.isNaN(numAmount)) return "Please enter a valid amount";
+      if (numAmount < ONRAMP_LIMITS.MIN_AMOUNT)
+        return `Minimum amount is ${ONRAMP_LIMITS.MIN_AMOUNT}`;
+      if (numAmount > ONRAMP_LIMITS.MAX_AMOUNT)
+        return `Maximum amount is ${ONRAMP_LIMITS.MAX_AMOUNT.toLocaleString()}`;
+      return null;
+    }, [amount]);
+
     const isValidAmount = useMemo(() => {
       const numAmount = parseFloat(amount);
-      return !Number.isNaN(numAmount) && numAmount >= 1;
+      return (
+        !Number.isNaN(numAmount) &&
+        numAmount >= ONRAMP_LIMITS.MIN_AMOUNT &&
+        numAmount <= ONRAMP_LIMITS.MAX_AMOUNT
+      );
     }, [amount]);
 
     const handleProceed = useCallback(() => {
@@ -99,8 +127,22 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
               ))}
             </select>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Minimum: {currencySymbol}1.00</p>
+          {validationError ? (
+            <p className="text-xs text-red-500">{validationError}</p>
+          ) : (
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Min: {currencySymbol}
+              {ONRAMP_LIMITS.MIN_AMOUNT} · Max: {currencySymbol}
+              {ONRAMP_LIMITS.MAX_AMOUNT.toLocaleString()}
+            </p>
+          )}
         </div>
+
+        {!isChainSupported && (
+          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 dark:text-red-400">
+            Card payments are not available for this network.
+          </div>
+        )}
 
         <div className="rounded-lg bg-gray-50 dark:bg-zinc-800/50 p-3 text-sm text-gray-600 dark:text-gray-400">
           <p>
@@ -111,7 +153,7 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
 
         <Button
           onClick={handleProceed}
-          disabled={!isValidAmount || isLoading || !payoutAddress}
+          disabled={!isValidAmount || isLoading || !payoutAddress || !isChainSupported}
           className="w-full bg-brand-blue hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (

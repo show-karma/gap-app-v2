@@ -3,8 +3,9 @@
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
+import { OnrampError } from "@/hooks/donation/onramp-errors";
 import type { OnrampProvider, OnrampSessionRequest } from "@/hooks/donation/types";
-import { DEFAULT_ONRAMP_PROVIDER, getProviderConfig } from "@/lib/onramp";
+import { ALLOWED_ONRAMP_DOMAINS, DEFAULT_ONRAMP_PROVIDER, getProviderConfig } from "@/lib/onramp";
 import { donationsService } from "@/services/donations.service";
 
 interface UseOnrampParams {
@@ -71,16 +72,36 @@ export const useOnramp = ({
           asset: targetAsset,
           redirectUrl,
         });
+
+        // Validate URL before opening
+        const isValidUrl = (() => {
+          try {
+            const parsed = new URL(onrampUrl);
+            return ALLOWED_ONRAMP_DOMAINS.some((domain) => parsed.hostname === domain);
+          } catch {
+            return false;
+          }
+        })();
+
+        if (!isValidUrl) {
+          throw OnrampError.invalidUrl();
+        }
+
         window.open(onrampUrl, "_blank", "noopener,noreferrer");
 
         toast.success(`Redirecting to ${providerConfig.name}...`);
         setIsLoading(false);
       } catch (err) {
-        const error = err instanceof Error ? err : new Error("Failed to create onramp session");
+        const error =
+          err instanceof OnrampError
+            ? err
+            : err instanceof Error
+              ? OnrampError.sessionCreationFailed(err.message)
+              : OnrampError.sessionCreationFailed();
         console.error("Onramp session creation failed:", error);
         setError(error);
         setIsLoading(false);
-        toast.error(error.message);
+        toast.error(error.userMessage);
         onError?.(error);
       }
     },
