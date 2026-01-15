@@ -1,13 +1,14 @@
 "use client";
 
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
-import { BanknotesIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { BanknotesIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import { useAccount } from "wagmi";
+import { useAuth } from "@/hooks/useAuth";
 import { ProgramFilter } from "@/components/Pages/Communities/Impact/ProgramFilter";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -19,12 +20,16 @@ import {
   type AttestationBatchUpdateItem,
   useBatchUpdatePayouts,
 } from "@/hooks/useCommunityPayouts";
-import { useGrants } from "@/hooks/useGrants";
 import {
   CreateDisbursementModal,
   type GrantDisbursementInfo,
   PayoutHistoryDrawer,
+  PayoutDisbursementStatus,
+  useCommunityPayouts,
+  AggregatedDisbursementStatus,
+  type CommunityPayoutsOptions,
 } from "@/src/features/payout-disbursement";
+import { appNetwork } from "@/utilities/network";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -54,6 +59,7 @@ export default function PayoutsAdminPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { address } = useAccount();
+  const { ready: authReady } = useAuth();
   const params = useParams();
   const communityId = params.communityId as string;
 
@@ -76,6 +82,7 @@ export default function PayoutsAdminPage() {
     projectName: string;
     approvedAmount?: string;
   } | null>(null);
+
 
   // Get values from URL params or use defaults
   const selectedProgramId = searchParams.get("programId");
@@ -112,63 +119,97 @@ export default function PayoutsAdminPage() {
   // Extract the actual programId from the composite value (programId_chainId)
   const actualProgramId = selectedProgramId?.split("_")[0] || null;
 
-  // Fetch grants data with filter and pagination
+  // Build options for the community payouts query
+  const payoutsOptions: CommunityPayoutsOptions = {
+    page: currentPage,
+    limit: itemsPerPage,
+    filters: actualProgramId ? { programId: actualProgramId } : undefined,
+  };
+
+  // Fetch payouts data with filter and pagination using the new endpoint
+  // Wait for auth to be ready to ensure JWT is available
   const {
-    data: grantsData,
-    isLoading: isLoadingGrants,
-    refetch: refreshGrants,
-  } = useGrants(communityId, {
-    filter: actualProgramId ? { selectedProgramId: actualProgramId } : undefined,
-    paginationOps: {
-      page: currentPage - 1, // Backend expects 0-based page index
-      pageLimit: itemsPerPage,
-    },
-    sortBy: "recent", // Use backend's recent sort option
+    data: payoutsData,
+    isLoading: isLoadingPayouts,
+    invalidate: refreshPayouts,
+  } = useCommunityPayouts(community?.uid || "", payoutsOptions, {
+    enabled: !!community?.uid && authReady,
   });
 
-  const grants = grantsData?.grants || [];
-  const totalItems = grantsData?.totalItems || 0;
+  const payouts = payoutsData?.payload || [];
+  const totalItems = payoutsData?.pagination?.totalCount || 0;
 
   // Batch update mutation
   const { mutate: batchUpdate, isPending: isSaving } = useBatchUpdatePayouts();
 
-  // Process grants into table data format
+  // Process payouts into table data format
   const tableData: PayoutsTableData[] = useMemo(() => {
-    const grantsArray: PayoutsTableData[] = [];
+    return payouts.map((payout) => ({
+      uid: payout.grant.uid,
+      projectUid: payout.project.uid,
+      projectName: payout.project.title,
+      projectSlug: payout.project.slug,
+      grantName: payout.grant.title,
+      grantProgramId: payout.grant.programId || "",
+      grantChainId: payout.grant.chainID,
+      projectChainId: payout.project.chainID,
+      currentPayoutAddress: "", // Admin must fill manually
+      currentAmount: payout.grant.payoutAmount || "",
+    }));
+  }, [payouts]);
 
-    grants.forEach((grant) => {
-      // Extract payout address for this community from the project's payoutAddress dictionary
-      // Note: grant.payoutAddress is actually the project's payoutAddress extracted by useGrants hook
-      let currentPayoutAddress = "";
-      if (grant.payoutAddress) {
-        if (typeof grant.payoutAddress === "string") {
-          // Backward compatibility: if it's still a string, use it directly
-          currentPayoutAddress = grant.payoutAddress;
-        } else if (typeof grant.payoutAddress === "object" && community?.uid) {
-          // New structure: extract address for this specific community
-          currentPayoutAddress = grant.payoutAddress[community.uid] || "";
-        }
-      }
-
-      grantsArray.push({
-        uid: grant.uid,
-        projectUid: grant.projectUid,
-        projectName: grant.project,
-        projectSlug: grant.projectSlug,
-        grantName: grant.grant,
-        grantProgramId: grant.programId,
-        grantChainId: grant.grantChainId,
-        projectChainId: grant.projectChainId || grant.grantChainId,
-        currentPayoutAddress: currentPayoutAddress,
-        currentAmount: grant.payoutAmount || "",
-      });
+  // Create a map of grant UID to disbursement info from the payouts response
+  const disbursementMap = useMemo(() => {
+    const map: Record<string, { totalDisbursed: string; status: string; history: any[] }> = {};
+    payouts.forEach((payout) => {
+      map[payout.grant.uid] = {
+        totalDisbursed: payout.disbursements.totalDisbursed,
+        status: payout.disbursements.status,
+        history: payout.disbursements.history,
+      };
     });
-
-    return grantsArray;
-  }, [grants, community?.uid]);
+    return map;
+  }, [payouts]);
 
   // Since we're now using backend pagination, we don't need to filter or paginate client-side
   const paginatedData = tableData;
+
+  // Helper to compute display status based on aggregated status from API
+  const computeDisplayStatus = useCallback(
+    (
+      item: PayoutsTableData,
+      disbursementInfo?: { totalDisbursed: string; status: string; history: any[] }
+    ): { label: string; color: string } => {
+      const aggregatedStatus = disbursementInfo?.status;
+      const history = disbursementInfo?.history || [];
+      const latestDisbursement = history[0];
+
+      // Check for in-progress states from the latest disbursement
+      if (latestDisbursement) {
+        if (latestDisbursement.status === PayoutDisbursementStatus.AWAITING_SIGNATURES) {
+          return { label: "Awaiting Signatures", color: "text-yellow-700 bg-yellow-100 dark:bg-yellow-900/30" };
+        }
+        if (latestDisbursement.status === PayoutDisbursementStatus.FAILED) {
+          return { label: "Failed", color: "text-red-700 bg-red-100 dark:bg-red-900/30" };
+        }
+        if (latestDisbursement.status === PayoutDisbursementStatus.CANCELLED) {
+          return { label: "Cancelled", color: "text-gray-700 bg-gray-200 dark:bg-gray-600" };
+        }
+      }
+
+      // Use aggregated status for overall progress
+      switch (aggregatedStatus) {
+        case AggregatedDisbursementStatus.COMPLETED:
+          return { label: "Disbursed", color: "text-green-700 bg-green-100 dark:bg-green-900/30" };
+        case AggregatedDisbursementStatus.IN_PROGRESS:
+          return { label: "Partially Disbursed", color: "text-blue-700 bg-blue-100 dark:bg-blue-900/30" };
+        case AggregatedDisbursementStatus.NOT_STARTED:
+        default:
+          return { label: "Pending", color: "text-gray-500 bg-gray-100 dark:bg-gray-700" };
+      }
+    },
+    []
+  );
 
   // URL param update handlers
   const handleProgramChange = (programId: string | null) => {
@@ -339,6 +380,40 @@ export default function PayoutsAdminPage() {
     URL.revokeObjectURL(url);
   }, [tableData]);
 
+  // Check if a grant is ready for disbursement (has payout address and amount)
+  const isGrantReadyForDisbursement = useCallback((item: PayoutsTableData): boolean => {
+    const payoutAddress = editedFields[item.uid]?.payoutAddress ?? item.currentPayoutAddress;
+    const amount = editedFields[item.uid]?.amount ?? item.currentAmount;
+    return !!(payoutAddress && isAddress(payoutAddress) && amount && parseFloat(amount) > 0);
+  }, [editedFields]);
+
+  // Check if a grant's checkbox should be disabled (missing payout address or amount = 0)
+  // Returns { disabled: boolean, reason: string | null }
+  const getCheckboxDisabledState = useCallback((item: PayoutsTableData): { disabled: boolean; reason: string | null } => {
+    const payoutAddress = editedFields[item.uid]?.payoutAddress ?? item.currentPayoutAddress;
+    const amount = editedFields[item.uid]?.amount ?? item.currentAmount;
+    const parsedAmount = amount ? parseFloat(amount) : 0;
+
+    if (!payoutAddress || payoutAddress.trim() === "") {
+      return { disabled: true, reason: "Missing payout address" };
+    }
+
+    if (!isAddress(payoutAddress)) {
+      return { disabled: true, reason: "Invalid payout address" };
+    }
+
+    if (parsedAmount === 0 || Number.isNaN(parsedAmount)) {
+      return { disabled: true, reason: "Payout amount is 0 or missing" };
+    }
+
+    return { disabled: false, reason: null };
+  }, [editedFields]);
+
+  // Get all selectable grants (those with valid payout address and amount > 0)
+  const selectableGrants = useMemo(() => {
+    return paginatedData.filter((item) => !getCheckboxDisabledState(item).disabled);
+  }, [paginatedData, getCheckboxDisabledState]);
+
   // Selection handlers
   const handleSelectGrant = (uid: string, checked: boolean) => {
     setSelectedGrants((prev) => {
@@ -354,17 +429,11 @@ export default function PayoutsAdminPage() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedGrants(new Set(paginatedData.map((item) => item.uid)));
+      // Only select grants that have valid payout address AND amount > 0
+      setSelectedGrants(new Set(selectableGrants.map((item) => item.uid)));
     } else {
       setSelectedGrants(new Set());
     }
-  };
-
-  // Check if a grant is ready for disbursement (has payout address and amount)
-  const isGrantReadyForDisbursement = (item: PayoutsTableData): boolean => {
-    const payoutAddress = editedFields[item.uid]?.payoutAddress ?? item.currentPayoutAddress;
-    const amount = editedFields[item.uid]?.amount ?? item.currentAmount;
-    return !!(payoutAddress && isAddress(payoutAddress) && amount && parseFloat(amount) > 0);
   };
 
   // Open disbursement modal for selected grants
@@ -380,6 +449,7 @@ export default function PayoutsAdminPage() {
 
     const grantsInfo: GrantDisbursementInfo[] = selectedItems.map((item) => ({
       grantUID: item.uid,
+      projectUID: item.projectUid,
       grantName: item.grantName,
       projectName: item.projectName,
       payoutAddress: editedFields[item.uid]?.payoutAddress || item.currentPayoutAddress || "",
@@ -412,7 +482,7 @@ export default function PayoutsAdminPage() {
     // Clear selection after successful disbursement
     setSelectedGrants(new Set());
     // Refresh grants data
-    refreshGrants();
+    refreshPayouts();
     toast.success("Disbursement created successfully");
   };
 
@@ -490,7 +560,7 @@ export default function PayoutsAdminPage() {
           });
 
           // Refresh grants data
-          refreshGrants();
+          refreshPayouts();
         },
       }
     );
@@ -507,7 +577,7 @@ export default function PayoutsAdminPage() {
   }, [communityError, router]);
 
   // Loading state
-  if (loadingAdmin || isLoadingGrants || isLoadingCommunity) {
+  if (!authReady || loadingAdmin || isLoadingPayouts || isLoadingCommunity) {
     return (
       <div className="flex w-full items-center justify-center h-96">
         <Spinner />
@@ -539,15 +609,6 @@ export default function PayoutsAdminPage() {
           <div className="flex flex-row flex-wrap justify-between items-center gap-4">
             <div className="flex items-center gap-4">
               <ProgramFilter onChange={handleProgramChange} />
-              {selectedGrants.size > 0 && (
-                <Button
-                  onClick={handleOpenDisbursementModal}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md"
-                >
-                  <BanknotesIcon className="h-5 w-5" />
-                  Create Disbursement ({selectedGrants.size})
-                </Button>
-              )}
             </div>
             <div className="flex items-center gap-2">
               <p className="text-sm text-gray-600 dark:text-gray-400">Show</p>
@@ -585,12 +646,19 @@ export default function PayoutsAdminPage() {
                   <th scope="col" className="h-12 px-2 text-center align-middle font-medium w-12">
                     <input
                       type="checkbox"
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className={cn(
+                        "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500",
+                        selectableGrants.length === 0 && "opacity-50 cursor-not-allowed"
+                      )}
                       checked={
-                        paginatedData.length > 0 &&
-                        paginatedData.every((item) => selectedGrants.has(item.uid))
+                        selectableGrants.length > 0 &&
+                        selectableGrants.every((item) => selectedGrants.has(item.uid))
                       }
                       onChange={(e) => handleSelectAll(e.target.checked)}
+                      disabled={selectableGrants.length === 0}
+                      title={selectableGrants.length === 0
+                        ? "No grants have valid payout address and amount"
+                        : `Select all ${selectableGrants.length} eligible grants`}
                     />
                   </th>
                   <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
@@ -603,10 +671,13 @@ export default function PayoutsAdminPage() {
                     Payout Address
                   </th>
                   <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
-                    Payout Amount
+                    Total Grant
                   </th>
-                  <th scope="col" className="h-12 px-4 text-center align-middle font-medium w-24">
-                    Actions
+                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
+                    Total Disbursed to Date
+                  </th>
+                  <th scope="col" className="h-12 px-4 text-center align-middle font-medium w-32">
+                    Status
                   </th>
                 </tr>
               </thead>
@@ -615,21 +686,33 @@ export default function PayoutsAdminPage() {
                   const fieldId = item.uid;
                   const payoutError = errors[`${fieldId}-payoutAddress`];
                   const amountError = errors[`${fieldId}-amount`];
+                  const disbursementInfo = disbursementMap[item.uid];
+                  const totalDisbursed = disbursementInfo?.totalDisbursed || "0";
+                  const displayStatus = computeDisplayStatus(item, disbursementInfo);
+
+                  // Check if checkbox should be disabled
+                  const checkboxState = getCheckboxDisabledState(item);
 
                   return (
                     <tr
                       key={`${item.uid}-${item.projectUid}`}
                       className={cn(
                         "dark:text-zinc-300 text-gray-900 px-4 py-4",
-                        selectedGrants.has(item.uid) && "bg-blue-50 dark:bg-blue-900/20"
+                        selectedGrants.has(item.uid) && "bg-blue-50 dark:bg-blue-900/20",
+                        checkboxState.disabled && "opacity-60"
                       )}
                     >
                       <td className="px-2 py-2 text-center">
                         <input
                           type="checkbox"
-                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className={cn(
+                            "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500",
+                            checkboxState.disabled && "opacity-50 cursor-not-allowed"
+                          )}
                           checked={selectedGrants.has(item.uid)}
                           onChange={(e) => handleSelectGrant(item.uid, e.target.checked)}
+                          disabled={checkboxState.disabled}
+                          title={checkboxState.reason || "Select for disbursement"}
                         />
                       </td>
                       <td className="px-4 py-2 font-medium h-16">
@@ -698,13 +781,28 @@ export default function PayoutsAdminPage() {
                           )}
                         </div>
                       </td>
+                      {/* Disbursed Amount column */}
+                      <td className="px-4 py-2 text-left">
+                        <span className="text-sm font-medium">
+                          {parseFloat(totalDisbursed) > 0
+                            ? parseFloat(totalDisbursed).toLocaleString(undefined, {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 2,
+                              })
+                            : "0"}
+                        </span>
+                      </td>
+                      {/* Status column - clickable to open history */}
                       <td className="px-4 py-2 text-center">
                         <button
                           onClick={() => handleOpenHistoryDrawer(item)}
-                          className="inline-flex items-center justify-center p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 rounded-md hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
-                          title="View payout history"
+                          className={cn(
+                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity",
+                            displayStatus.color
+                          )}
+                          title="Click to view payout history"
                         >
-                          <ClockIcon className="h-5 w-5" />
+                          {displayStatus.label}
                         </button>
                       </td>
                     </tr>
@@ -757,6 +855,19 @@ export default function PayoutsAdminPage() {
           projectName={historyGrant.projectName}
           approvedAmount={historyGrant.approvedAmount}
         />
+      )}
+
+      {/* Floating Create Disbursement Button */}
+      {selectedGrants.size > 0 && (
+        <div className="fixed bottom-6 right-6 z-40 animate-in slide-in-from-bottom-4 fade-in duration-300">
+          <Button
+            onClick={handleOpenDisbursementModal}
+            className="flex items-center gap-3 px-6 py-4 bg-brand-blue hover:bg-brand-blue/80 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 text-base font-semibold"
+          >
+            <BanknotesIcon className="h-6 w-6" />
+            Create Disbursement ({selectedGrants.size})
+          </Button>
+        </div>
       )}
     </div>
   );

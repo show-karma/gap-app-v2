@@ -88,12 +88,112 @@ export interface PayoutDisbursementFilters {
 }
 
 /**
+ * Simplified milestone info for disbursement purposes
+ */
+export interface MilestoneInfo {
+  uid: string;
+  title: string;
+}
+
+/**
  * Grant info needed for creating a disbursement from the PayoutsAdminPage
  */
 export interface GrantDisbursementInfo {
   grantUID: string;
+  projectUID: string;
   grantName: string;
   projectName: string;
+  /** Default payout address */
   payoutAddress: string;
+  /** Chain-specific payout addresses keyed by chain ID (e.g., { "10": "0x...", "42161": "0x..." }) */
+  chainPayoutAddress?: Record<string, string>;
   approvedAmount: string;
+  /** Optional milestones associated with this grant */
+  milestones?: MilestoneInfo[];
+}
+
+/**
+ * Aggregated disbursement status for a grant
+ */
+export enum AggregatedDisbursementStatus {
+  NOT_STARTED = "NOT_STARTED",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
+}
+
+/**
+ * Project info in community payouts response
+ */
+export interface CommunityPayoutProjectInfo {
+  uid: string;
+  title: string;
+  slug: string;
+  chainID: number;
+  payoutAddress: string | null;
+  chainPayoutAddress: Record<string, string> | null;
+}
+
+/**
+ * Grant info in community payouts response
+ */
+export interface CommunityPayoutGrantInfo {
+  uid: string;
+  title: string;
+  chainID: number;
+  payoutAmount: string;
+  currency: string;
+  payoutAddress: string | null;
+  programId: string | null;
+}
+
+/**
+ * Disbursement info in community payouts response
+ */
+export interface CommunityPayoutDisbursementInfo {
+  totalDisbursed: string;
+  status: AggregatedDisbursementStatus;
+  history: PayoutDisbursement[];
+}
+
+/**
+ * Community payout item combining project, grant, and disbursement info
+ */
+export interface CommunityPayoutItem {
+  project: CommunityPayoutProjectInfo;
+  grant: CommunityPayoutGrantInfo;
+  disbursements: CommunityPayoutDisbursementInfo;
+}
+
+/**
+ * Response from community payouts endpoint
+ */
+export interface CommunityPayoutsResponse {
+  payload: CommunityPayoutItem[];
+  pagination: PaginationInfo;
+}
+
+/**
+ * Filters for community payouts
+ */
+export interface CommunityPayoutsFilters {
+  programId?: string;
+  status?: AggregatedDisbursementStatus;
+}
+
+/**
+ * Sorting options for community payouts
+ */
+export interface CommunityPayoutsSorting {
+  sortBy?: "project_title" | "grant_title" | "payout_amount" | "disbursed_amount" | "status";
+  sortOrder?: "asc" | "desc";
+}
+
+/**
+ * Options for fetching community payouts
+ */
+export interface CommunityPayoutsOptions {
+  page?: number;
+  limit?: number;
+  filters?: CommunityPayoutsFilters;
+  sorting?: CommunityPayoutsSorting;
 }

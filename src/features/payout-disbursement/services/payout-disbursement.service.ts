@@ -9,6 +9,8 @@ import type {
   RecordSafeTransactionRequest,
   TotalDisbursedResponse,
   UpdateStatusRequest,
+  CommunityPayoutsResponse,
+  CommunityPayoutsOptions,
 } from "../types/payout-disbursement";
 
 function getErrorMessage(error: unknown): string {
@@ -215,5 +217,73 @@ export const getAwaitingSignaturesDisbursements = async (
   } catch (error: unknown) {
     errorManager(`Error fetching awaiting signatures disbursements for Safe ${safeAddress}`, error);
     throw new Error(`Failed to fetch awaiting signatures disbursements: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Gets recent disbursements for a community (all statuses)
+ */
+export const getRecentCommunityDisbursements = async (
+  communityUID: string,
+  page?: number,
+  limit?: number,
+  status?: string
+): Promise<PaginatedDisbursementsResponse> => {
+  try {
+    const [data, error] = await fetchData<PaginatedDisbursementsResponse>(
+      INDEXER.V2.PAYOUTS.COMMUNITY_RECENT(communityUID, page, limit, status),
+      "GET",
+      {},
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to fetch recent community disbursements");
+    }
+
+    return data;
+  } catch (error: unknown) {
+    errorManager(`Error fetching recent disbursements for community ${communityUID}`, error);
+    throw new Error(`Failed to fetch recent community disbursements: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Gets community payouts with aggregated disbursement status
+ * Returns grants with their project info, payout amounts, and disbursement history
+ */
+export const getCommunityPayouts = async (
+  communityUID: string,
+  options?: CommunityPayoutsOptions
+): Promise<CommunityPayoutsResponse> => {
+  try {
+    const [data, error] = await fetchData<CommunityPayoutsResponse>(
+      INDEXER.V2.PAYOUTS.COMMUNITY_PAYOUTS(communityUID, {
+        page: options?.page,
+        limit: options?.limit,
+        programId: options?.filters?.programId,
+        status: options?.filters?.status,
+        sortBy: options?.sorting?.sortBy,
+        sortOrder: options?.sorting?.sortOrder,
+      }),
+      "GET",
+      {},
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to fetch community payouts");
+    }
+
+    return data;
+  } catch (error: unknown) {
+    errorManager(`Error fetching community payouts for ${communityUID}`, error);
+    throw new Error(`Failed to fetch community payouts: ${getErrorMessage(error)}`);
   }
 };

@@ -29,12 +29,11 @@ export const useAuth = () => {
 
   const shouldLoginAfterLogout = useRef(false);
 
-  // Initialize TokenManager with Privy
-  useEffect(() => {
-    if (ready) {
-      TokenManager.setPrivyInstance({ getAccessToken });
-    }
-  }, [ready, getAccessToken]);
+  // Initialize TokenManager with Privy synchronously
+  // This must happen before any API calls are made, so we do it outside useEffect
+  if (ready) {
+    TokenManager.setPrivyInstance({ getAccessToken });
+  }
 
   // Auto-login after logout completes
   useEffect(() => {

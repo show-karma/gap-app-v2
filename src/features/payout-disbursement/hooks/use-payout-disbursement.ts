@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as payoutService from "../services/payout-disbursement.service";
 import type {
   CreateDisbursementsRequest,
@@ -8,6 +8,8 @@ import type {
   PayoutDisbursement,
   RecordSafeTransactionRequest,
   UpdateStatusRequest,
+  CommunityPayoutsResponse,
+  CommunityPayoutsOptions,
 } from "../types/payout-disbursement";
 
 /**
@@ -24,6 +26,20 @@ export const payoutDisbursementKeys = {
     [...payoutDisbursementKeys.all, "communityPending", communityUID, { page, limit }] as const,
   safeAwaiting: (safeAddress: string, page?: number, limit?: number) =>
     [...payoutDisbursementKeys.all, "safeAwaiting", safeAddress, { page, limit }] as const,
+  communityRecent: (communityUID: string, page?: number, limit?: number, status?: string) =>
+    [
+      ...payoutDisbursementKeys.all,
+      "communityRecent",
+      communityUID,
+      { page, limit, status },
+    ] as const,
+  communityPayouts: (communityUID: string, options?: CommunityPayoutsOptions) =>
+    [
+      ...payoutDisbursementKeys.all,
+      "communityPayouts",
+      communityUID,
+      options,
+    ] as const,
 } as const;
 
 /**
@@ -187,10 +203,138 @@ export function useUpdateDisbursementStatus(options?: {
       queryClient.invalidateQueries({
         queryKey: [...payoutDisbursementKeys.all, "safeAwaiting", data.safeAddress],
       });
+      queryClient.invalidateQueries({
+        queryKey: [...payoutDisbursementKeys.all, "communityRecent", data.communityUID],
+      });
       options?.onSuccess?.(data);
     },
     onError: (error) => {
       options?.onError?.(error);
     },
   });
+}
+
+/**
+ * Hook for fetching recent disbursements for a community (all statuses)
+ */
+export function useRecentCommunityDisbursements(
+  communityUID: string,
+  page?: number,
+  limit?: number,
+  status?: string,
+  options?: { enabled?: boolean }
+) {
+  return useQuery<PaginatedDisbursementsResponse, Error>({
+    queryKey: payoutDisbursementKeys.communityRecent(communityUID, page, limit, status),
+    queryFn: () => payoutService.getRecentCommunityDisbursements(communityUID, page, limit, status),
+    enabled: options?.enabled ?? !!communityUID,
+    staleTime: 1000 * 60 * 1, // 1 minute
+  });
+}
+
+/**
+ * Hook for fetching total disbursed amounts for multiple grants in parallel
+ * Returns a map of grantUID to total disbursed amount
+ */
+export function useBatchTotalDisbursed(grantUIDs: string[], options?: { enabled?: boolean }) {
+  const queries = useQueries({
+    queries: grantUIDs.map((grantUID) => ({
+      queryKey: payoutDisbursementKeys.grantTotal(grantUID),
+      queryFn: () => payoutService.getTotalDisbursed(grantUID),
+      enabled: options?.enabled ?? true,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    })),
+  });
+
+  // Transform results into a map
+  const totalsMap: Record<string, string> = {};
+  const isLoading = queries.some((q) => q.isLoading);
+  const isError = queries.some((q) => q.isError);
+
+  grantUIDs.forEach((grantUID, index) => {
+    const query = queries[index];
+    if (query?.data) {
+      totalsMap[grantUID] = query.data;
+    }
+  });
+
+  return {
+    data: totalsMap,
+    isLoading,
+    isError,
+    queries,
+  };
+}
+
+/**
+ * Hook for fetching payout history for multiple grants to determine their status
+ * Returns a map of grantUID to latest disbursement status
+ */
+export function useBatchGrantStatus(grantUIDs: string[], options?: { enabled?: boolean }) {
+  const queries = useQueries({
+    queries: grantUIDs.map((grantUID) => ({
+      queryKey: payoutDisbursementKeys.grantHistory(grantUID, 1, 1), // Only fetch latest
+      queryFn: () => payoutService.getPayoutHistory(grantUID, 1, 1),
+      enabled: options?.enabled ?? true,
+      staleTime: 1000 * 60 * 2, // 2 minutes
+    })),
+  });
+
+  // Transform results into a map of grantUID to latest status
+  const statusMap: Record<
+    string,
+    { status: PayoutDisbursement["status"] | "PENDING" | "PARTIALLY_DISBURSED"; latestDisbursement?: PayoutDisbursement }
+  > = {};
+  const isLoading = queries.some((q) => q.isLoading);
+  const isError = queries.some((q) => q.isError);
+
+  grantUIDs.forEach((grantUID, index) => {
+    const query = queries[index];
+    if (query?.data?.payload?.[0]) {
+      statusMap[grantUID] = {
+        status: query.data.payload[0].status,
+        latestDisbursement: query.data.payload[0],
+      };
+    } else {
+      // No disbursements yet
+      statusMap[grantUID] = { status: "PENDING" };
+    }
+  });
+
+  return {
+    data: statusMap,
+    isLoading,
+    isError,
+    queries,
+  };
+}
+
+/**
+ * Hook for fetching community payouts with aggregated disbursement status
+ * Returns grants with their project info, payout amounts, and disbursement history
+ */
+export function useCommunityPayouts(
+  communityUID: string,
+  options?: CommunityPayoutsOptions,
+  queryOptions?: { enabled?: boolean }
+) {
+  const queryClient = useQueryClient();
+
+  const query = useQuery<CommunityPayoutsResponse, Error>({
+    queryKey: payoutDisbursementKeys.communityPayouts(communityUID, options),
+    queryFn: () => payoutService.getCommunityPayouts(communityUID, options),
+    enabled: queryOptions?.enabled ?? !!communityUID,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({
+      queryKey: [...payoutDisbursementKeys.all, "communityPayouts", communityUID],
+    });
+  };
+
+  return {
+    ...query,
+    invalidate,
+  };
 }

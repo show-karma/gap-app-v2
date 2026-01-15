@@ -1,11 +1,21 @@
 "use client";
 
 import { Dialog, Transition } from "@headlessui/react";
-import { ArrowTopRightOnSquareIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { Fragment } from "react";
+import {
+  ArrowTopRightOnSquareIcon,
+  ExclamationTriangleIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
+import { Fragment, useState } from "react";
+import toast from "react-hot-toast";
+import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { NETWORKS, type SupportedChainId } from "@/config/tokens";
-import { usePayoutHistory, useTotalDisbursed } from "../hooks/use-payout-disbursement";
+import {
+  usePayoutHistory,
+  useTotalDisbursed,
+  useUpdateDisbursementStatus,
+} from "../hooks/use-payout-disbursement";
 import { type PayoutDisbursement, PayoutDisbursementStatus } from "../types/payout-disbursement";
 
 interface PayoutHistoryDrawerProps {
@@ -226,97 +236,259 @@ export function PayoutHistoryDrawer({
 }
 
 function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }) {
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
   const statusConfig = STATUS_COLORS[disbursement.status];
   const safeUrl = disbursement.safeTransactionHash
     ? getSafeUrl(disbursement.safeAddress, disbursement.safeTransactionHash, disbursement.chainID)
     : null;
 
-  return (
-    <div className="border border-gray-200 dark:border-zinc-600 rounded-lg p-4">
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <span
-            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusConfig.bg} ${statusConfig.text}`}
-          >
-            {statusConfig.label}
-          </span>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            {formatDate(disbursement.createdAt)}
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">
-            {formatAmount(disbursement.disbursedAmount)} {disbursement.token}
-          </p>
-        </div>
-      </div>
+  const canCancel = disbursement.status === PayoutDisbursementStatus.PENDING;
 
-      <div className="space-y-2 text-sm">
-        <div className="flex justify-between">
-          <span className="text-gray-500 dark:text-gray-400">Recipient</span>
-          <span className="font-mono text-gray-900 dark:text-white">
-            {truncateAddress(disbursement.payoutAddress)}
-          </span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-500 dark:text-gray-400">Safe</span>
-          <span className="font-mono text-gray-900 dark:text-white">
-            {truncateAddress(disbursement.safeAddress)}
-          </span>
-        </div>
-        {disbursement.safeTransactionHash && (
-          <div className="flex justify-between items-center">
-            <span className="text-gray-500 dark:text-gray-400">Transaction</span>
-            {safeUrl ? (
-              <a
-                href={safeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-              >
-                <span className="font-mono">
-                  {truncateAddress(disbursement.safeTransactionHash)}
-                </span>
-                <ArrowTopRightOnSquareIcon className="w-4 h-4 ml-1" />
-              </a>
-            ) : (
-              <span className="font-mono text-gray-900 dark:text-white">
-                {truncateAddress(disbursement.safeTransactionHash)}
-              </span>
-            )}
+  return (
+    <>
+      <div className="border border-gray-200 dark:border-zinc-600 rounded-lg p-4">
+        <div className="flex justify-between items-start mb-3">
+          <div>
+            <span
+              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusConfig.bg} ${statusConfig.text}`}
+            >
+              {statusConfig.label}
+            </span>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              {formatDate(disbursement.createdAt)}
+            </p>
           </div>
-        )}
-        {disbursement.executedAt && (
+          <div className="text-right">
+            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+              {formatAmount(disbursement.disbursedAmount)} {disbursement.token}
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-500 dark:text-gray-400">Executed</span>
-            <span className="text-gray-900 dark:text-white">
-              {formatDate(disbursement.executedAt)}
+            <span className="text-gray-500 dark:text-gray-400">Recipient</span>
+            <span className="font-mono text-gray-900 dark:text-white">
+              {truncateAddress(disbursement.payoutAddress)}
             </span>
           </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500 dark:text-gray-400">Safe</span>
+            <span className="font-mono text-gray-900 dark:text-white">
+              {truncateAddress(disbursement.safeAddress)}
+            </span>
+          </div>
+          {disbursement.safeTransactionHash && (
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500 dark:text-gray-400">Transaction</span>
+              {safeUrl ? (
+                <a
+                  href={safeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  <span className="font-mono">
+                    {truncateAddress(disbursement.safeTransactionHash)}
+                  </span>
+                  <ArrowTopRightOnSquareIcon className="w-4 h-4 ml-1" />
+                </a>
+              ) : (
+                <span className="font-mono text-gray-900 dark:text-white">
+                  {truncateAddress(disbursement.safeTransactionHash)}
+                </span>
+              )}
+            </div>
+          )}
+          {disbursement.executedAt && (
+            <div className="flex justify-between">
+              <span className="text-gray-500 dark:text-gray-400">Executed</span>
+              <span className="text-gray-900 dark:text-white">
+                {formatDate(disbursement.executedAt)}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Milestone Breakdown */}
+        {disbursement.milestoneBreakdown &&
+          Object.keys(disbursement.milestoneBreakdown).length > 0 && (
+            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-zinc-600">
+              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Milestone Breakdown
+              </p>
+              <div className="space-y-1">
+                {Object.entries(disbursement.milestoneBreakdown).map(([milestoneId, amount]) => (
+                  <div key={milestoneId} className="flex justify-between text-xs">
+                    <span className="text-gray-500 dark:text-gray-400 truncate max-w-[150px]">
+                      {milestoneId}
+                    </span>
+                    <span className="text-gray-900 dark:text-white">
+                      {formatAmount(amount)} {disbursement.token}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+        {/* Cancel Button - Only for PENDING status */}
+        {canCancel && (
+          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-zinc-600">
+            <button
+              type="button"
+              onClick={() => setShowCancelDialog(true)}
+              className="text-sm text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors"
+            >
+              Cancel Disbursement
+            </button>
+          </div>
         )}
       </div>
 
-      {/* Milestone Breakdown */}
-      {disbursement.milestoneBreakdown &&
-        Object.keys(disbursement.milestoneBreakdown).length > 0 && (
-          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-zinc-600">
-            <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Milestone Breakdown
-            </p>
-            <div className="space-y-1">
-              {Object.entries(disbursement.milestoneBreakdown).map(([milestoneId, amount]) => (
-                <div key={milestoneId} className="flex justify-between text-xs">
-                  <span className="text-gray-500 dark:text-gray-400 truncate max-w-[150px]">
-                    {milestoneId}
-                  </span>
-                  <span className="text-gray-900 dark:text-white">
-                    {formatAmount(amount)} {disbursement.token}
-                  </span>
+      {/* Cancel Confirmation Dialog */}
+      <CancelDisbursementDialog
+        isOpen={showCancelDialog}
+        onClose={() => setShowCancelDialog(false)}
+        disbursement={disbursement}
+      />
+    </>
+  );
+}
+
+interface CancelDisbursementDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  disbursement: PayoutDisbursement;
+}
+
+function CancelDisbursementDialog({
+  isOpen,
+  onClose,
+  disbursement,
+}: CancelDisbursementDialogProps) {
+  const [reason, setReason] = useState("");
+  const updateStatusMutation = useUpdateDisbursementStatus({
+    onSuccess: () => {
+      toast.success("Disbursement cancelled successfully");
+      onClose();
+      setReason("");
+    },
+    onError: (error) => {
+      toast.error(`Failed to cancel disbursement: ${error.message}`);
+    },
+  });
+
+  const handleCancel = async () => {
+    await updateStatusMutation.mutateAsync({
+      disbursementId: disbursement.id,
+      request: {
+        status: PayoutDisbursementStatus.CANCELLED,
+        reason: reason.trim() || undefined,
+      },
+    });
+  };
+
+  const handleClose = () => {
+    if (!updateStatusMutation.isPending) {
+      onClose();
+      setReason("");
+    }
+  };
+
+  return (
+    <Transition appear show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-[60]" onClose={handleClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/25" />
+        </Transition.Child>
+
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 text-center">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white dark:bg-zinc-800 p-6 text-left align-middle shadow-xl transition-all">
+                {/* Warning Icon */}
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
+                  <ExclamationTriangleIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
                 </div>
-              ))}
-            </div>
+
+                <Dialog.Title
+                  as="h3"
+                  className="text-lg font-semibold text-center text-gray-900 dark:text-white mb-2"
+                >
+                  Cancel Disbursement
+                </Dialog.Title>
+
+                <p className="text-sm text-center text-gray-500 dark:text-gray-400 mb-4">
+                  Are you sure you want to cancel this disbursement of{" "}
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {formatAmount(disbursement.disbursedAmount)} {disbursement.token}
+                  </span>
+                  ?
+                </p>
+
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md p-3 mb-4">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                    This action cannot be undone.
+                  </p>
+                </div>
+
+                {/* Optional Reason Input */}
+                <div className="mb-6">
+                  <label
+                    htmlFor="cancel-reason"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  >
+                    Reason (optional)
+                  </label>
+                  <textarea
+                    id="cancel-reason"
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    placeholder="Enter a reason for cancellation..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-gray-900 dark:text-white text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-end gap-3">
+                  <Button
+                    variant="secondary"
+                    onClick={handleClose}
+                    disabled={updateStatusMutation.isPending}
+                  >
+                    Keep Disbursement
+                  </Button>
+                  <Button
+                    onClick={handleCancel}
+                    isLoading={updateStatusMutation.isPending}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Cancel Disbursement
+                  </Button>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
           </div>
-        )}
-    </div>
+        </div>
+      </Dialog>
+    </Transition>
   );
 }
