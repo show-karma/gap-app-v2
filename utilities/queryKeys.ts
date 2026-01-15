@@ -62,23 +62,6 @@ export const QUERY_KEYS = {
   SEARCH: {
     PROJECTS: (query: string) => ["search-projects", query] as const,
   },
-  INDICATORS: {
-    AGGREGATED: (params: {
-      indicatorIds: string;
-      communityId: string;
-      programId: string;
-      projectUID: string;
-      timeframe: string;
-    }) =>
-      [
-        "aggregated-indicators",
-        params.indicatorIds,
-        params.communityId,
-        params.programId,
-        params.projectUID,
-        params.timeframe,
-      ] as const,
-  },
   PROJECT: {
     UPDATES: (projectIdOrSlug: string) => ["project-updates", projectIdOrSlug] as const,
     IMPACTS: (projectIdOrSlug: string) => ["project-impacts", projectIdOrSlug] as const,
