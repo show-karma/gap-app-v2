@@ -6,15 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { OnrampProvider } from "@/hooks/donation/types";
 import { useOnramp } from "@/hooks/donation/useOnramp";
 import { DEFAULT_ONRAMP_PROVIDER, getProviderConfig } from "@/lib/onramp";
-
-const NETWORK_MAPPING: Record<number, string> = {
-  1: "ethereum",
-  10: "optimism",
-  137: "polygon",
-  42161: "arbitrum",
-  8453: "base",
-  84532: "base-sepolia",
-};
+import { getChainNameById } from "@/utilities/network";
 
 interface OnrampFlowProps {
   projectUid: string;
@@ -29,7 +21,7 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
     const [currency, setCurrency] = useState("USD");
 
     const providerConfig = getProviderConfig(provider);
-    const network = useMemo(() => NETWORK_MAPPING[chainId] || "base", [chainId]);
+    const network = useMemo(() => getChainNameById(chainId), [chainId]);
 
     const { initiateOnramp, isLoading } = useOnramp({
       projectUid,
