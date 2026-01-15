@@ -87,6 +87,21 @@ export const QUERY_KEYS = {
   },
   INDICATORS: {
     AUTOSYNCED: ["indicators", "autosynced"] as const,
+    AGGREGATED: (params: {
+      indicatorIds: string;
+      communityId: string;
+      programId: string;
+      projectUID: string;
+      timeframe: string;
+    }) =>
+      [
+        "aggregated-indicators",
+        params.indicatorIds,
+        params.communityId,
+        params.programId,
+        params.projectUID,
+        params.timeframe,
+      ] as const,
   },
   FUNDING_PLATFORM: {
     APPLICATIONS: (programId: string, chainId: number, filters?: unknown) =>
