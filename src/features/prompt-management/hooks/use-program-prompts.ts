@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { programPromptService } from "../services/program-prompt.service";
 import type {
   BulkEvaluationJob,
@@ -38,6 +39,8 @@ export function useProgramPrompts(
     queryKey: promptKeys.program(programId),
     queryFn: () => programPromptService.getPrompts(programId),
     enabled: options?.enabled ?? !!programId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 }
 
@@ -146,11 +149,16 @@ export function useBulkEvaluationJob(
     queryFn: () => programPromptService.getJobStatus(programId, jobId!),
     enabled: !!jobId && (options?.enabled ?? true),
     refetchInterval: options?.refetchInterval ?? false,
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 
 /**
  * Hook for polling bulk evaluation job status
+ *
+ * Uses refs to prevent stale closures and memory leaks, and ensures
+ * the onComplete callback is only called once per job completion.
  *
  * @param programId - The program ID
  * @param jobId - The job ID
@@ -164,15 +172,35 @@ export function useBulkEvaluationJobPolling(
     onError?: (error: Error) => void;
   }
 ) {
+  // Use refs to hold latest callback values without causing stale closures
+  const onCompleteRef = useRef(options?.onComplete);
+  const hasCalledOnComplete = useRef(false);
+
+  // Keep ref in sync with latest callback
+  useEffect(() => {
+    onCompleteRef.current = options?.onComplete;
+  }, [options?.onComplete]);
+
+  // Reset completion flag when jobId changes
+  useEffect(() => {
+    hasCalledOnComplete.current = false;
+  }, [jobId]);
+
   return useQuery({
     queryKey: promptKeys.job(programId, jobId ?? ""),
     queryFn: () => programPromptService.getJobStatus(programId, jobId!),
     enabled: !!jobId,
+    staleTime: 0,
+    gcTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: (query) => {
       const data = query.state.data;
       if (!data) return 5000;
       if (data.status === "completed" || data.status === "failed") {
-        options?.onComplete?.(data);
+        // Only call onComplete once per job
+        if (!hasCalledOnComplete.current) {
+          hasCalledOnComplete.current = true;
+          onCompleteRef.current?.(data);
+        }
         return false;
       }
       return 5000;
