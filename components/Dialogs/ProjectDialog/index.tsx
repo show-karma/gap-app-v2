@@ -315,8 +315,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             // Chain mismatch, signer will be set after chain switch
             setWalletSigner(null);
           }
-        } catch {
+        } catch (error) {
           setWalletSigner(null);
+          // Track for debugging without user-facing notification
+          errorManager("Failed to prepare wallet signer", error, { chainIDValue }, {});
         }
       } else {
         setWalletSigner(null);
