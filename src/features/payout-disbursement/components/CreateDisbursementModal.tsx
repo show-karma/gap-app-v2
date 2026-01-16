@@ -1166,7 +1166,7 @@ export function CreateDisbursementModal({
                                 : `Your current wallet should have at least a Proposer role in this Safe Wallet.
 
 How to add a proposer:
-Navigate to Settings → Setup → Find the Proposers section
+At Safe Settings, navigate to Setup → Find the Proposers section
 Click "Add Proposer" → Enter the wallet address and name → Confirm the addition`
                             }
                           />
@@ -1323,7 +1323,7 @@ function CheckItem({
       <span className="mr-3">{getStatusIcon()}</span>
       <div className="flex-1">
         <div className={`font-medium ${styles.label}`}>{label}</div>
-        <div className={`text-sm ${styles.description}`}>{description}</div>
+        <div className={`text-sm whitespace-pre-line ${styles.description}`}>{description}</div>
       </div>
     </div>
   );
