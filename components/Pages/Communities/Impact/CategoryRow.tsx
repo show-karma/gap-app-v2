@@ -9,6 +9,7 @@ import { useAggregatedIndicators } from "@/hooks/useAggregatedIndicators";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import type { ProgramImpactDataResponse, ProgramImpactSegment } from "@/types/programs";
 import formatCurrency from "@/utilities/formatCurrency";
+import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { SegmentSkeleton } from "./SegmentSkeleton";
 import { type TimeframeOption, TimeframeSelector, timeframeOptions } from "./TimeframeSelector";
@@ -26,26 +27,31 @@ const prepareAggregatedChartData = (indicators: any[]) => {
   if (!indicators.length) return [];
 
   // Combine all datapoints from all indicators into a single timeline
+  // Use rawDate for sorting and date for display
   const allDatapoints: any[] = [];
 
   indicators.forEach((indicator) => {
     indicator.aggregatedData.forEach((datapoint: any) => {
-      const existingIndex = allDatapoints.findIndex((dp) => dp.date === datapoint.timestamp);
+      const formattedDate = formatDate(new Date(datapoint.timestamp), "UTC");
+      const existingIndex = allDatapoints.findIndex((dp) => dp.rawDate === datapoint.timestamp);
       if (existingIndex >= 0) {
         // Add this indicator's value to existing timestamp
         allDatapoints[existingIndex][indicator.name] = datapoint.value;
       } else {
-        // Create new datapoint entry
-        const newDatapoint: any = { date: datapoint.timestamp };
+        // Create new datapoint entry with formatted date for display
+        const newDatapoint: any = {
+          rawDate: datapoint.timestamp,
+          date: formattedDate,
+        };
         newDatapoint[indicator.name] = datapoint.value;
         allDatapoints.push(newDatapoint);
       }
     });
   });
 
-  // Sort by date and fill missing values with 0
+  // Sort by rawDate (original timestamp) and fill missing values with 0
   const sortedData = allDatapoints.sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    (a, b) => new Date(a.rawDate).getTime() - new Date(b.rawDate).getTime()
   );
   const indicatorNames = indicators.map((ind) => ind.name);
 
@@ -56,7 +62,9 @@ const prepareAggregatedChartData = (indicators: any[]) => {
         filledDatapoint[name] = 0;
       }
     });
-    return filledDatapoint;
+    // Remove rawDate from final output, keep only formatted date
+    const { rawDate: _, ...displayDatapoint } = filledDatapoint;
+    return displayDatapoint;
   });
 };
 
@@ -196,8 +204,8 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
                 index="date"
                 categories={indicatorNames}
                 colors={colors.slice(0, indicatorNames.length)}
-                valueFormatter={(value) => `${formatCurrency(value)}`}
-                yAxisWidth={60}
+                valueFormatter={(value) => formatCurrency(value)}
+                yAxisWidth={80}
                 enableLegendSlider
                 noDataText="No data available for the selected period"
                 className="h-72"

@@ -19,6 +19,7 @@ export const prepareChartData = (
     .map((timestamp, index) => {
       if (runningValues?.length) {
         return {
+          rawTimestamp: timestamp, // Keep original for sorting
           date: formatDate(new Date(timestamp), "UTC"),
           [name]: Number(values[index]) || 0,
           Cumulative: Number(runningValues[index]) || 0,
@@ -26,12 +27,14 @@ export const prepareChartData = (
         };
       }
       return {
+        rawTimestamp: timestamp, // Keep original for sorting
         date: formatDate(new Date(timestamp), "UTC"),
         [name]: Number(values[index]) || 0,
         proof: proofs?.[index] || "",
       };
     })
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    .sort((a, b) => new Date(a.rawTimestamp).getTime() - new Date(b.rawTimestamp).getTime())
+    .map(({ rawTimestamp: _, ...rest }) => rest); // Remove rawTimestamp from output
   return chartData;
 };
 
