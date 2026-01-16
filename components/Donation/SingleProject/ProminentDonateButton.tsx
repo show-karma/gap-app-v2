@@ -3,6 +3,7 @@
 import { Heart } from "lucide-react";
 import { useState } from "react";
 import { SingleProjectDonateModal } from "@/components/Donation/SingleProject/SingleProjectDonateModal";
+import { useAuth } from "@/hooks/useAuth";
 import { hasConfiguredPayoutAddresses } from "@/src/features/chain-payout-address/hooks/use-chain-payout-address";
 import type { SingleProjectDonateModalProps } from "./types";
 
@@ -12,6 +13,12 @@ interface ProminentDonateButtonProps {
 
 export function ProminentDonateButton({ project }: ProminentDonateButtonProps) {
   const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
+  const { authenticated, ready } = useAuth();
+
+  // Don't render if not authenticated or auth state not ready
+  if (!ready || !authenticated) {
+    return null;
+  }
 
   // Don't render if no payout addresses configured
   if (!hasConfiguredPayoutAddresses(project.chainPayoutAddress)) {

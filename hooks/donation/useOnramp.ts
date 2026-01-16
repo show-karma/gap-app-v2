@@ -65,12 +65,18 @@ export const useOnramp = ({
 
         const sessionResponse = await donationsService.createOnrampSession(request);
 
+        // Include partnerUserRef (donationUid) in redirect URL for status tracking
+        const redirectWithRef = redirectUrl
+          ? `${redirectUrl}?onrampRef=${sessionResponse.donationUid}`
+          : undefined;
+
         const onrampUrl = providerConfig.buildUrl({
           token: sessionResponse.sessionToken,
           fiatAmount,
           fiatCurrency,
           asset: targetAsset,
-          redirectUrl,
+          redirectUrl: redirectWithRef,
+          partnerUserRef: sessionResponse.donationUid,
         });
 
         // Validate URL before opening

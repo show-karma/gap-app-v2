@@ -6,7 +6,7 @@ import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
 import { useEffect } from "react";
 import type { Hex } from "viem";
@@ -28,6 +28,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useActivityTabStore } from "@/store/activityTab";
 import { useENS } from "@/store/ens";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { useOnrampStatusModalStore } from "@/store/modals/onrampStatus";
 import fetchData from "@/utilities/fetchData";
 import formatCurrency from "@/utilities/formatCurrency";
 import type { Member } from "@/utilities/getProjectMemberRoles";
@@ -65,7 +66,11 @@ function ProjectPage() {
   const { teamProfiles } = useTeamProfiles(project);
   const { address } = useAccount();
   const { openModal } = useContributorProfileModalStore();
-  const inviteCodeParam = useSearchParams().get("invite-code");
+  const { openModal: openOnrampModal } = useOnrampStatusModalStore();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const inviteCodeParam = searchParams.get("invite-code");
   const params = useParams();
   const projectId = params.projectId as string;
   const { populateEns, ensData } = useENS();
@@ -84,6 +89,19 @@ function ProjectPage() {
       populateEns(addresses);
     }
   }, [project?.members, populateEns]);
+
+  // Detect onrampRef param and show status modal
+  useEffect(() => {
+    const onrampRef = searchParams.get("onrampRef");
+    if (onrampRef) {
+      openOnrampModal(onrampRef);
+      // Clear the param from URL without navigation
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("onrampRef");
+      const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [searchParams, openOnrampModal, router, pathname]);
 
   const [, copy] = useCopyToClipboard();
 
