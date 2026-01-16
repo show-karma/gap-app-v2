@@ -66,8 +66,13 @@ export const useOnramp = ({
         const sessionResponse = await donationsService.createOnrampSession(request);
 
         // Include partnerUserRef (donationUid) in redirect URL for status tracking
+        // Use URL API to properly handle existing query params
         const redirectWithRef = redirectUrl
-          ? `${redirectUrl}?onrampRef=${sessionResponse.donationUid}`
+          ? (() => {
+              const url = new URL(redirectUrl);
+              url.searchParams.set("onrampRef", sessionResponse.donationUid);
+              return url.toString();
+            })()
           : undefined;
 
         const onrampUrl = providerConfig.buildUrl({

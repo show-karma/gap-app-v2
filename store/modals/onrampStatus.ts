@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import fetchData from "@/utilities/fetchData";
 
 interface OnrampTransaction {
   status: "pending" | "success" | "failed" | "NOT_FOUND" | "unknown";
@@ -27,20 +28,20 @@ export const useOnrampStatusModalStore = create<OnrampStatusModalStore>((set) =>
 
   openModal: async (partnerUserRef: string) => {
     set({ isOpen: true, isLoading: true, error: null, transaction: null });
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_GAP_INDEXER_URL}/v2/onramp/transactions/${encodeURIComponent(partnerUserRef)}`
-      );
-      if (!response.ok) {
-        throw new Error(`Failed to fetch: ${response.status}`);
-      }
-      const data = await response.json();
+
+    const [data, error] = await fetchData<OnrampTransaction>(
+      `/v2/onramp/transactions/${encodeURIComponent(partnerUserRef)}`,
+      "GET",
+      {},
+      {},
+      {},
+      false // No auth required for this endpoint
+    );
+
+    if (error) {
+      set({ error: error, isLoading: false });
+    } else {
       set({ transaction: data, isLoading: false });
-    } catch (err) {
-      set({
-        error: err instanceof Error ? err.message : "Failed to fetch transaction status",
-        isLoading: false,
-      });
     }
   },
 
