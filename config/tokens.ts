@@ -15,9 +15,7 @@ export const TOKEN_ADDRESSES = {
     // Celo Mainnet
     42220: "0xcebA9300f2b948710d2653dD7B07f33A8B32118C" as const,
     // Scroll
-    534352: "0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4" as const,
-    // Sei
-    1329: "0x3894085Ef7Ff0f0aeDf52E2A2704928d1Ec074F1" as const,
+    534352: "0x06efdbff2a14a7c8e15944d1f4a48f9f95f663a4" as const,
     // Lisk
     1135: "0xF242275d3a6527d877f2c927a82D9b057609cc71" as const,
     // OP Sepolia (testnet USDC)
@@ -85,14 +83,6 @@ export const NETWORKS = {
     blockExplorer: "https://scrollscan.com",
     isTestnet: false,
   },
-  1329: {
-    name: "Sei",
-    chainId: 1329,
-    shortName: "sei",
-    rpcUrl: "https://evm-rpc.sei-apis.com",
-    blockExplorer: "https://seitrace.com",
-    isTestnet: false,
-  },
   1135: {
     name: "Lisk",
     chainId: 1135,
@@ -138,7 +128,10 @@ export const TOKENS = {
 } as const;
 
 // Native token information per network
-export const NATIVE_TOKENS: Record<number, { symbol: string; decimals: number; coingeckoId: string }> = {
+export const NATIVE_TOKENS: Record<
+  number,
+  { symbol: string; decimals: number; coingeckoId: string }
+> = {
   1: {
     symbol: "ETH",
     decimals: 18,
@@ -173,11 +166,6 @@ export const NATIVE_TOKENS: Record<number, { symbol: string; decimals: number; c
     symbol: "ETH",
     decimals: 18,
     coingeckoId: "ethereum",
-  },
-  1329: {
-    symbol: "SEI",
-    decimals: 18,
-    coingeckoId: "sei-network",
   },
   1135: {
     symbol: "ETH",

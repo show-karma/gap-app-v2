@@ -55,6 +55,7 @@ export async function isSafeOwner(
 ): Promise<boolean> {
   try {
     const rpcUrl = NETWORKS[chainId].rpcUrl;
+    console.log("Checking Safe ownership:", { safeAddress, signerAddress, chainId, rpcUrl });
 
     // Initialize Safe SDK with RPC URL
     const safe = await Safe.init({
@@ -64,9 +65,12 @@ export async function isSafeOwner(
 
     // Get Safe owners
     const owners = await safe.getOwners();
+    console.log("Safe owners:", owners);
 
     // Check if signer is one of the owners
-    return owners.some((owner) => owner.toLowerCase() === signerAddress.toLowerCase());
+    const isOwner = owners.some((owner) => owner.toLowerCase() === signerAddress.toLowerCase());
+    console.log("Is owner:", isOwner);
+    return isOwner;
   } catch (error) {
     console.error("Error checking Safe ownership:", error);
     return false;
@@ -87,20 +91,20 @@ export async function isSafeDelegate(
   }
 
   try {
-    const apiKit = new SafeApiKit({
-      chainId: BigInt(chainId),
-      txServiceUrl,
-    });
-
-    // Get delegates for this Safe
-    const delegates = await apiKit.getSafeDelegates({ safeAddress });
-
-    // Check if signer is a delegate
-    return delegates.results.some(
-      (delegate) => delegate.delegate.toLowerCase() === signerAddress.toLowerCase()
+    // Use direct API call instead of SDK (more reliable)
+    const response = await fetch(
+      `${txServiceUrl}/api/v1/delegates/?safe=${safeAddress}&delegate=${signerAddress}`
     );
+
+    if (!response.ok) {
+      console.warn(`Delegate check failed with status ${response.status}`);
+      return false;
+    }
+
+    const data = await response.json();
+    return data.count > 0;
   } catch (error) {
-    console.error("Error checking Safe delegate status:", error);
+    console.warn("Error checking Safe delegate status:", error);
     return false;
   }
 }
@@ -113,10 +117,29 @@ export async function canProposeToSafe(
   signerAddress: string,
   chainId: SupportedChainId
 ): Promise<{ canPropose: boolean; isOwner: boolean; isDelegate: boolean }> {
-  const [isOwner, isDelegate] = await Promise.all([
+  console.log("canProposeToSafe called:", { safeAddress, signerAddress, chainId });
+
+  // Run checks in parallel but handle errors individually
+  const [ownerResult, delegateResult] = await Promise.allSettled([
     isSafeOwner(safeAddress, signerAddress, chainId),
     isSafeDelegate(safeAddress, signerAddress, chainId),
   ]);
+
+  const isOwner = ownerResult.status === "fulfilled" ? ownerResult.value : false;
+  const isDelegate = delegateResult.status === "fulfilled" ? delegateResult.value : false;
+
+  if (ownerResult.status === "rejected") {
+    console.error("Owner check failed:", ownerResult.reason);
+  }
+  if (delegateResult.status === "rejected") {
+    console.error("Delegate check failed:", delegateResult.reason);
+  }
+
+  console.log("canProposeToSafe result:", {
+    isOwner,
+    isDelegate,
+    canPropose: isOwner || isDelegate,
+  });
 
   return {
     canPropose: isOwner || isDelegate,

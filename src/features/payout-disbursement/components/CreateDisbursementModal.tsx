@@ -28,7 +28,6 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import {
   getAvailableNetworks,
   getNativeTokenSymbol,
-  hasUSDC,
   NATIVE_TOKENS,
   NETWORKS,
   type SupportedChainId,
@@ -36,7 +35,12 @@ import {
 } from "@/config/tokens";
 import { useWallet } from "@/hooks/useWallet";
 import { envVars } from "@/utilities/enviromentVars";
-import { getSafeTokenBalance, isSafeDeployed, signAndProposeDisbursement } from "@/utilities/safe";
+import {
+  canProposeToSafe,
+  getSafeTokenBalance,
+  isSafeDeployed,
+  signAndProposeDisbursement,
+} from "@/utilities/safe";
 import {
   useBatchTotalDisbursed,
   useCreateDisbursements,
@@ -60,8 +64,10 @@ export interface CreateDisbursementModalProps {
 type Step = "setup" | "project-review" | "summary" | "preflight" | "signing" | "complete";
 
 interface PreflightChecks {
-  isCorrectNetwork: boolean | null;
   isDeployed: boolean | null;
+  canPropose: boolean | null;
+  isOwner: boolean;
+  isDelegate: boolean;
   hasSufficientBalance: boolean | null;
   safeBalance: string;
   isChecking: boolean;
@@ -81,7 +87,7 @@ type DisbursementAmountsState = Record<string, string>;
 type DisbursementValidationErrors = Record<string, string>;
 
 /** Token type selection */
-type TokenType = "usdc" | "native" | "custom";
+type TokenType = "usdc" | "native";
 
 /** Get available networks based on environment (include testnets in staging) */
 const getSupportedNetworks = () => getAvailableNetworks(envVars.isDev);
@@ -102,29 +108,25 @@ export function CreateDisbursementModal({
   // Form state
   const [selectedNetwork, setSelectedNetwork] = useState<SupportedChainId>(10);
   const [tokenType, setTokenType] = useState<TokenType>("usdc");
-  const [customTokenAddress, setCustomTokenAddress] = useState("");
   const [safeAddress, setSafeAddress] = useState(initialSafeAddress || "");
   const [step, setStep] = useState<Step>("setup");
 
   // Computed token values
   const selectedTokenSymbol = useMemo(() => {
     if (tokenType === "usdc") return "USDC";
-    if (tokenType === "native") return getNativeTokenSymbol(selectedNetwork);
-    return "TOKEN"; // Custom token
+    return getNativeTokenSymbol(selectedNetwork);
   }, [tokenType, selectedNetwork]);
 
   const selectedTokenAddress = useMemo(() => {
     if (tokenType === "usdc") {
       return TOKEN_ADDRESSES.usdc[selectedNetwork as keyof typeof TOKEN_ADDRESSES.usdc] || "";
     }
-    if (tokenType === "native") return ""; // Native token has no address
-    return customTokenAddress;
-  }, [tokenType, selectedNetwork, customTokenAddress]);
+    return ""; // Native token has no address
+  }, [tokenType, selectedNetwork]);
 
   const selectedTokenDecimals = useMemo(() => {
     if (tokenType === "usdc") return 6;
-    if (tokenType === "native") return NATIVE_TOKENS[selectedNetwork]?.decimals || 18;
-    return 18; // Default for custom tokens
+    return NATIVE_TOKENS[selectedNetwork]?.decimals || 18;
   }, [tokenType, selectedNetwork]);
 
   /**
@@ -163,8 +165,10 @@ export function CreateDisbursementModal({
 
   // Pre-flight checks state
   const [preflightChecks, setPreflightChecks] = useState<PreflightChecks>({
-    isCorrectNetwork: null,
     isDeployed: null,
+    canPropose: null,
+    isOwner: false,
+    isDelegate: false,
     hasSufficientBalance: null,
     safeBalance: "0",
     isChecking: false,
@@ -444,10 +448,11 @@ export function CreateDisbursementModal({
       setStep("setup");
       setSafeAddress(initialSafeAddress || "");
       setCurrentProjectIndex(0);
-      setCustomTokenAddress("");
       setPreflightChecks({
-        isCorrectNetwork: null,
         isDeployed: null,
+        canPropose: null,
+        isOwner: false,
+        isDelegate: false,
         hasSufficientBalance: null,
         safeBalance: "0",
         isChecking: false,
@@ -472,32 +477,36 @@ export function CreateDisbursementModal({
     setPreflightChecks((prev) => ({ ...prev, isChecking: true, error: null }));
 
     try {
-      // Check wallet network
-      const isCorrectNetwork = walletChainId === selectedNetwork;
-
-      if (!isCorrectNetwork) {
-        setPreflightChecks({
-          isCorrectNetwork: false,
-          isDeployed: null,
-          hasSufficientBalance: null,
-          safeBalance: "0",
-          isChecking: false,
-          error: `Please switch your wallet to ${getSupportedNetworks().find((n) => n.id === selectedNetwork)?.name}.`,
-        });
-        return;
-      }
-
       // Check Safe deployment
       const isDeployed = await isSafeDeployed(safeAddress, selectedNetwork);
 
       if (!isDeployed) {
         setPreflightChecks({
-          isCorrectNetwork: true,
           isDeployed: false,
+          canPropose: null,
+          isOwner: false,
+          isDelegate: false,
           hasSufficientBalance: null,
           safeBalance: "0",
           isChecking: false,
           error: `Safe not deployed on ${getSupportedNetworks().find((n) => n.id === selectedNetwork)?.name}.`,
+        });
+        return;
+      }
+
+      // Check if user can propose (is owner or delegate)
+      const proposerStatus = await canProposeToSafe(safeAddress, userAddress, selectedNetwork);
+
+      if (!proposerStatus.canPropose) {
+        setPreflightChecks({
+          isDeployed: true,
+          canPropose: false,
+          isOwner: false,
+          isDelegate: false,
+          hasSufficientBalance: null,
+          safeBalance: "0",
+          isChecking: false,
+          error: "You are not an owner or delegate of this Safe. You cannot propose transactions.",
         });
         return;
       }
@@ -511,8 +520,10 @@ export function CreateDisbursementModal({
       const hasSufficientBalance = parseFloat(balanceInfo.balanceFormatted) >= totalAmount;
 
       setPreflightChecks({
-        isCorrectNetwork: true,
         isDeployed: true,
+        canPropose: true,
+        isOwner: proposerStatus.isOwner,
+        isDelegate: proposerStatus.isDelegate,
         hasSufficientBalance,
         safeBalance: balanceInfo.balanceFormatted,
         isChecking: false,
@@ -530,7 +541,6 @@ export function CreateDisbursementModal({
     safeAddress,
     userAddress,
     isConnected,
-    walletChainId,
     selectedNetwork,
     tokenType,
     selectedTokenAddress,
@@ -728,8 +738,8 @@ export function CreateDisbursementModal({
   const canProceed =
     validGrants.length > 0 &&
     isConnected &&
-    preflightChecks.isCorrectNetwork === true &&
     preflightChecks.isDeployed === true &&
+    preflightChecks.canPropose === true &&
     preflightChecks.hasSufficientBalance === true &&
     !preflightChecks.isChecking;
 
@@ -875,37 +885,13 @@ export function CreateDisbursementModal({
                           onChange={(e) => setTokenType(e.target.value as TokenType)}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-gray-900 dark:text-white"
                         >
-                          {hasUSDC(selectedNetwork) && <option value="usdc">USDC</option>}
+                          <option value="usdc">USDC</option>
                           <option value="native">
                             {getNativeTokenSymbol(selectedNetwork)} (Native)
                           </option>
-                          <option value="custom">Custom Token</option>
                         </select>
                       </div>
                     </div>
-
-                    {/* Custom Token Address Input */}
-                    {tokenType === "custom" && (
-                      <div>
-                        <label
-                          htmlFor="custom-token-address"
-                          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                        >
-                          Custom Token Address
-                        </label>
-                        <input
-                          id="custom-token-address"
-                          type="text"
-                          value={customTokenAddress}
-                          onChange={(e) => setCustomTokenAddress(e.target.value)}
-                          placeholder="0x..."
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-gray-900 dark:text-white font-mono text-sm"
-                        />
-                        {customTokenAddress && !isAddress(customTokenAddress) && (
-                          <p className="mt-1 text-sm text-red-500">Invalid token address</p>
-                        )}
-                      </div>
-                    )}
 
                     {/* Safe Address Input */}
                     <div>
@@ -970,12 +956,7 @@ export function CreateDisbursementModal({
                       </Button>
                       <Button
                         onClick={handleProceedToProjectReview}
-                        disabled={
-                          validGrants.length === 0 ||
-                          !isConnected ||
-                          !safeAddress ||
-                          (tokenType === "custom" && !isAddress(customTokenAddress))
-                        }
+                        disabled={validGrants.length === 0 || !isConnected || !safeAddress}
                       >
                         Continue
                       </Button>
@@ -1166,21 +1147,27 @@ export function CreateDisbursementModal({
                       ) : (
                         <>
                           <CheckItem
-                            label="Wallet Network"
-                            status={preflightChecks.isCorrectNetwork}
-                            description={
-                              preflightChecks.isCorrectNetwork === true
-                                ? "Connected to correct network"
-                                : "Switch to correct network"
-                            }
-                          />
-                          <CheckItem
                             label="Safe Deployed"
                             status={preflightChecks.isDeployed}
                             description={
                               preflightChecks.isDeployed === true
                                 ? "Safe found on network"
                                 : "Safe not found"
+                            }
+                          />
+                          <CheckItem
+                            label="Proposer Role"
+                            status={preflightChecks.canPropose}
+                            description={
+                              preflightChecks.canPropose === true
+                                ? preflightChecks.isOwner
+                                  ? "You are an owner of this Safe"
+                                  : "You are a delegate of this Safe"
+                                : `Your current wallet should have at least a Proposer role in this Safe Wallet.
+
+How to add a proposer:
+Navigate to Settings → Setup → Find the Proposers section
+Click "Add Proposer" → Enter the wallet address and name → Confirm the addition`
                             }
                           />
                           <CheckItem
