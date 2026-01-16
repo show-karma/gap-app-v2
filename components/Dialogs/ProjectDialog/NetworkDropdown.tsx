@@ -4,6 +4,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { Command, CommandGroup, CommandItem } from "cmdk";
 import Image from "next/image";
 import { type FC, useState } from "react";
+import toast from "react-hot-toast";
 import type { Chain } from "viem";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { cn } from "@/utilities/tailwind";
@@ -75,8 +76,8 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
                   if (onNetworkChange) {
                     try {
                       await onNetworkChange(network.id);
-                    } catch (error) {
-                      console.error("Failed to change network:", error);
+                    } catch {
+                      toast.error("Failed to switch network. Please try again.");
                       // Revert the value if chain switch failed
                       setValue(previousValue);
                       setIsProcessing(false);

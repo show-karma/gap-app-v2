@@ -275,7 +275,7 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
                   </p>
                   {completionDeliverables.map((deliverable: any, index: number) => (
                     <div
-                      key={index}
+                      key={deliverable.id || `${deliverable.name}-${index}`}
                       className="border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800"
                     >
                       <div className="flex flex-col gap-1">
@@ -311,7 +311,7 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
                   <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Metrics:</p>
                   {milestoneImpactData.map((metric: any, index: number) => (
                     <div
-                      key={index}
+                      key={metric.id || metric.indicator?.id || `${metric.name}-${index}`}
                       className="border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800"
                     >
                       <div className="flex flex-col gap-1">
