@@ -2,6 +2,7 @@
  * Integration test to verify JWT authentication in comment functionality
  * This test simulates the real-world usage of the comment service with authentication
  */
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import type { AxiosInstance } from "axios";
 import { TokenManager } from "@/utilities/auth/token-manager";
 

@@ -1,0 +1,116 @@
+# Bun configuration for gap-app-v2
+# Next.js 15.4.10 with Turbopack, TypeScript 5.9.3, Web3 stack
+
+# =============================================================================
+# Install Settings
+# =============================================================================
+[install]
+# Use frozen lockfile in CI environments to ensure reproducible builds
+# Set BUN_FROZEN_LOCKFILE=1 in CI or use --frozen-lockfile flag
+frozenLockfile = false
+
+# Save exact versions to lockfile (no semver ranges)
+exact = true
+
+# Automatically install peer dependencies
+peer = true
+
+# Production mode: skip devDependencies when NODE_ENV=production
+production = false
+
+# Use global cache for faster installs
+globalCache = true
+
+# Registry configuration
+registry = "https://registry.npmjs.org"
+
+# =============================================================================
+# Install Scopes (for private packages if needed)
+# =============================================================================
+# [install.scopes]
+# "@show-karma" = { registry = "https://registry.npmjs.org" }
+
+# =============================================================================
+# Module Resolution
+# =============================================================================
+[resolve]
+# Prefer ESM modules (better for modern Next.js + Turbopack)
+moduleResolution = "bun"
+
+# =============================================================================
+# Test Configuration
+# =============================================================================
+[test]
+# Preload setup files (Bun equivalent of Jest's setupFilesAfterEnv)
+# Order matters: jest-compat.ts sets up Jest globals first, then bun-setup.ts configures DOM
+preload = ["./tests/jest-compat.ts", "./tests/bun-setup.ts"]
+
+# Root directory for tests
+root = "."
+
+# Timeout settings (in milliseconds) - matching Jest's 30000ms
+timeout = 30000
+
+# Coverage settings (use --coverage flag to enable)
+# Run with: bun test --coverage
+coverage = false
+coverageDir = "coverage"
+
+# Coverage thresholds matching Jest config (50%)
+# Note: Bun coverage thresholds use inline format
+coverageThreshold = { line = 50, function = 50, statement = 50 }
+
+# Reduce memory usage with controlled parallelism
+# smol = true
+
+# =============================================================================
+# Runtime Settings
+# =============================================================================
+[run]
+# Enable source maps for better error traces
+sourcemap = "external"
+
+# Automatically install missing dependencies
+installDependencies = true
+
+# =============================================================================
+# Bundler Settings (for Bun's bundler, not Next.js)
+# =============================================================================
+[bundle]
+# Target environment
+target = "browser"
+
+# Source map generation
+sourcemap = "external"
+
+# Minification (when using Bun's bundler directly)
+minify = true
+
+# =============================================================================
+# Lifecycle Scripts
+# =============================================================================
+[install.lifecycle]
+# Enable lifecycle scripts (postinstall, prepare, etc.)
+# Required for husky and other tools
+scripts = true
+
+# Trusted dependencies that can run lifecycle scripts
+# Add packages here that need to run postinstall scripts
+# trustedDependencies = ["@prisma/client", "esbuild", "@swc/core"]
+
+# =============================================================================
+# Performance Optimizations
+# =============================================================================
+[debug]
+# Disable debug logging in production
+# Set BUN_DEBUG=1 to enable when needed
+quiet = false
+
+# =============================================================================
+# Environment-specific overrides
+# =============================================================================
+# CI Environment: Use frozen lockfile
+# Set in CI: BUN_FROZEN_LOCKFILE=1
+
+# Telemetry (disabled by default for privacy)
+# telemetry = false

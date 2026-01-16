@@ -4,6 +4,7 @@
  * covering business logic, error handling, and response parsing
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
 import type { CommunityDetails } from "@/types/community";
 import type { CreateProgramFormData } from "@/types/program-registry";

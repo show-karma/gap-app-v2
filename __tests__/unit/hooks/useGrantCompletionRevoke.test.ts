@@ -3,6 +3,8 @@
  * @description Tests grant completion revocation workflow with dual paths (on-chain and off-chain)
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+
 // Mock ALL dependencies to avoid ESM import issues
 const mockEnsureCorrectChain = jest.fn();
 const mockSafeGetWalletClient = jest.fn();

@@ -3,6 +3,7 @@
  * Tests sign in and contact sales buttons, loading states, and authentication triggers
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NavbarAuthButtons } from "@/src/components/navbar/navbar-auth-buttons";

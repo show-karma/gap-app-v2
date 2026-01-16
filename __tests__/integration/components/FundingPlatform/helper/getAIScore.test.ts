@@ -1,3 +1,4 @@
+import { afterAll, beforeEach, describe, expect, it } from "bun:test";
 import { formatAIScore, getAIScore } from "@/components/FundingPlatform/helper/getAIScore";
 import type { IFundingApplication } from "@/types/funding-platform";
 

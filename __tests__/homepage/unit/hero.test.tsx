@@ -10,6 +10,7 @@
  * - Edge Cases (4)
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { Hero } from "@/src/features/homepage/components/hero";
 import { renderWithProviders, screen, setViewportSize, userEvent } from "../utils/test-helpers";
 import "@testing-library/jest-dom";

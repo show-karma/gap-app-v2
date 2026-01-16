@@ -9,6 +9,7 @@
  * - Layout stability (CLS)
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import FundersPage from "@/app/funders/page";
 import { mockCommunities } from "../fixtures/communities";
 import { mockChosenCommunities } from "../setup";

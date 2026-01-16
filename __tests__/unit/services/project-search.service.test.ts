@@ -3,6 +3,7 @@
  * @description Tests the V2 project search API service
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import type { ProjectResponse } from "@/types/v2/project";
 
 // Mock environment variables

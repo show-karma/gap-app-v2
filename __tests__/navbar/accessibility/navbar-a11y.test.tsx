@@ -3,6 +3,7 @@
  * Tests WCAG 2.2 AA compliance, keyboard navigation, screen reader support, and focus management
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { fireEvent, screen, within } from "@testing-library/react";
 import { axe, toHaveNoViolations } from "jest-axe";
 import { Navbar } from "@/src/components/navbar/navbar";

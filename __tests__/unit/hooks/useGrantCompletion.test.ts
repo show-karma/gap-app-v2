@@ -3,6 +3,8 @@
  * @description Tests grant completion workflow with utilities
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+
 // Mock ALL dependencies to avoid ESM import issues
 const mockSetupChainAndWallet = jest.fn();
 const mockFetchGrantInstance = jest.fn();

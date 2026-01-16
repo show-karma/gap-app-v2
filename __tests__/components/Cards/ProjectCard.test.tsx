@@ -3,6 +3,7 @@
  * @description Tests for project card component rendering and display functionality
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import { ProjectCard } from "@/components/Pages/NewProjects/ProjectCard";
 import type { ProjectFromList } from "@/types/project";

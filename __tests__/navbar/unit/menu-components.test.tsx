@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 /**
  * @file menu-components.test.tsx
  * @description Unit tests for menu component building blocks

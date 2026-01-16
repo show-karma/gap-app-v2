@@ -1,3 +1,4 @@
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import { Footer } from "@/src/components/footer/footer";
 import "@testing-library/jest-dom";

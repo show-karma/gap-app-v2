@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 /**
  * Integration Tests: Modal Integration
  * Tests modal interactions triggered from navbar (profile modal, create project modal)

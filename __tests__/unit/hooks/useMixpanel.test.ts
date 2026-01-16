@@ -3,6 +3,7 @@
  * @description Tests analytics tracking hook with Mixpanel integration
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { renderHook, waitFor } from "@testing-library/react";
 import mp from "mixpanel-browser";
 import { useMixpanel } from "@/hooks/useMixpanel";

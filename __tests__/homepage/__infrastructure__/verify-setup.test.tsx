@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 /**
  * Infrastructure Verification Test
  * Ensures all test dependencies and setup are working correctly

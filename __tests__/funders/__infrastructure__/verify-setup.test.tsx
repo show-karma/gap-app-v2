@@ -5,6 +5,7 @@
  * and all necessary mocks are in place.
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import { renderWithProviders } from "../utils/test-helpers";
 

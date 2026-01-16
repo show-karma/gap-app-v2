@@ -10,6 +10,7 @@
  * - Accessibility (4)
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { FAQ } from "@/src/features/homepage/components/faq";
 import { renderWithProviders, screen, userEvent } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
