@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useAvailableAIModels } from "@/hooks/useAvailableAIModels";
@@ -171,25 +171,42 @@ export function AIPromptConfiguration({
     }
   }, [program?.langfusePromptId, schema.aiConfig?.langfusePromptId, setValue]);
 
-  // Auto-update the schema when form values change
+  // Refs to hold latest values without causing stale closures in watch subscription
+  const schemaRef = useRef(schema);
+  const onUpdateRef = useRef(onUpdate);
+  const availableModelsRef = useRef(availableModels);
+
+  // Keep refs in sync with latest values
   useEffect(() => {
-    if (readOnly || !onUpdate) return;
+    schemaRef.current = schema;
+  }, [schema]);
+  useEffect(() => {
+    onUpdateRef.current = onUpdate;
+  }, [onUpdate]);
+  useEffect(() => {
+    availableModelsRef.current = availableModels;
+  }, [availableModels]);
+
+  // Auto-update the schema when form values change
+  // Only re-subscribe when watch or readOnly changes, not on schema/onUpdate/availableModels changes
+  useEffect(() => {
+    if (readOnly || !onUpdateRef.current) return;
 
     const subscription = watch((data) => {
       const updatedSchema: FormSchema = {
-        ...schema,
+        ...schemaRef.current,
         aiConfig: {
-          aiModel: data.aiModel || availableModels[0] || DEFAULT_AI_MODEL,
+          aiModel: data.aiModel || availableModelsRef.current[0] || DEFAULT_AI_MODEL,
           enableRealTimeEvaluation: data.enableRealTimeEvaluation || false,
           langfusePromptId: data.langfusePromptId || "",
           internalLangfusePromptId: data.internalLangfusePromptId || "",
         },
       };
-      onUpdate(updatedSchema);
+      onUpdateRef.current?.(updatedSchema);
     });
 
     return () => subscription.unsubscribe();
-  }, [watch, onUpdate, schema, readOnly, availableModels]);
+  }, [watch, readOnly]);
 
   return (
     <div
