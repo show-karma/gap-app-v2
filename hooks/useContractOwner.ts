@@ -5,8 +5,10 @@ import type { Chain } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useOwnerStore } from "@/store/owner";
+import { CONTRACT_OWNER_CACHE_CONFIG } from "@/utilities/cache-config";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { gapSupportedNetworks } from "@/utilities/network";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { getRPCUrlByChainId } from "@/utilities/rpcClient";
 import { getContractOwner } from "@/utilities/sdk/getContractOwner";
 
@@ -35,14 +37,14 @@ export const useContractOwner = (chainOverride?: Chain) => {
   const chain = chainOverride || gapSupportedNetworks[0];
 
   const queryResult = useQuery<boolean, Error>({
-    queryKey: ["contract-owner", address, chain?.id],
+    queryKey: QUERY_KEYS.AUTH.CONTRACT_OWNER(address, chain?.id),
     queryFn: () =>
       fetchContractOwner(address!).catch(() => {
         return false;
       }),
     enabled: !!address && isAuth,
-    staleTime: 10 * 60 * 1000, // 10 minutes - contract owner changes rarely
-    gcTime: 10 * 60 * 1000, // Match staleTime for consistency
+    staleTime: CONTRACT_OWNER_CACHE_CONFIG.staleTime,
+    gcTime: CONTRACT_OWNER_CACHE_CONFIG.gcTime,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     retry: (failureCount, _error) => {

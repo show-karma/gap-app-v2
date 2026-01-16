@@ -5,8 +5,9 @@ import { watchAccount } from "@wagmi/core";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { TokenManager } from "@/utilities/auth/token-manager";
+import { queryClient } from "@/utilities/query-client";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
 
 /**
@@ -37,11 +38,11 @@ export const useAuth = () => {
    * When user logs out, we must invalidate all permission/authorization query caches.
    * This prevents stale "isAdmin: true" data from being served on re-login.
    *
-   * IMPORTANT: When creating new auth/permission hooks, add their query key here:
-   * - useCheckCommunityAdmin → ["isCommunityAdmin"]
-   * - useStaff → ["staffAuthorization"]
-   * - useContractOwner → ["contract-owner"]
-   * - [NEW HOOK] → [ADD QUERY KEY HERE]
+   * IMPORTANT: When creating new auth/permission hooks, add their query key here
+   * using the centralized QUERY_KEYS from utilities/queryKeys.ts:
+   * - useCheckCommunityAdmin → QUERY_KEYS.COMMUNITY.IS_ADMIN_BASE
+   * - useStaff → QUERY_KEYS.AUTH.STAFF_AUTHORIZATION_BASE
+   * - useContractOwner → QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE
    */
   useEffect(() => {
     // Detect logout: was authenticated, now not authenticated
@@ -51,9 +52,9 @@ export const useAuth = () => {
       // - invalidateQueries triggers refetches → 401 errors
       // - resetQueries also triggers refetches for active queries
       // - removeQueries cleanly removes from cache without any refetch
-      queryClient.removeQueries({ queryKey: ["isCommunityAdmin"] });
-      queryClient.removeQueries({ queryKey: ["staffAuthorization"] });
-      queryClient.removeQueries({ queryKey: ["contract-owner"] });
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.COMMUNITY.IS_ADMIN_BASE });
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.AUTH.STAFF_AUTHORIZATION_BASE });
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE });
     }
     prevAuthRef.current = authenticated;
   }, [authenticated]);

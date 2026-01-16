@@ -3,12 +3,10 @@ import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
 import type { Community } from "@/types/v2/community";
+import { ADMIN_CACHE_CONFIG } from "@/utilities/cache-config";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
-
-const ADMIN_CHECK_STALE_TIME = 1000 * 60 * 5; // 5 minutes
-const ADMIN_CHECK_GC_TIME = 1000 * 60 * 10; // 10 minutes
 
 interface UseCheckCommunityAdminOptions {
   enabled?: boolean;
@@ -53,8 +51,8 @@ export const useCheckCommunityAdmin = (
       return await isCommunityAdminOf(community, checkAddress, signer);
     },
     enabled: !!community && !!checkAddress && !!isAuth && options?.enabled !== false,
-    staleTime: ADMIN_CHECK_STALE_TIME,
-    gcTime: ADMIN_CHECK_GC_TIME,
+    staleTime: ADMIN_CACHE_CONFIG.staleTime,
+    gcTime: ADMIN_CACHE_CONFIG.gcTime,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
