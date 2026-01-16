@@ -17,10 +17,7 @@ import {
   useUpdateDisbursementStatus,
 } from "../hooks/use-payout-disbursement";
 import { type PayoutDisbursement, PayoutDisbursementStatus } from "../types/payout-disbursement";
-import {
-  formatTokenAmount,
-  calculateDisbursementProgress,
-} from "../utils/format-token-amount";
+import { calculateDisbursementProgress, formatTokenAmount } from "../utils/format-token-amount";
 
 interface PayoutHistoryDrawerProps {
   isOpen: boolean;
@@ -160,6 +157,7 @@ export function PayoutHistoryDrawer({
                       </p>
                     </div>
                     <button
+                      type="button"
                       onClick={onClose}
                       className="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"
                     >

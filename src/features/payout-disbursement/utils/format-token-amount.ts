@@ -95,8 +95,6 @@ export function toSmallestUnit(amount: string | number, decimals: number): strin
     return "0";
   }
 
-  // Use BigInt for precision with large numbers
-  const multiplier = BigInt(10 ** decimals);
   // Handle decimal places by multiplying first, then converting
   const scaled = Math.round(num * 10 ** decimals);
 

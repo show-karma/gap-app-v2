@@ -3,16 +3,16 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as payoutService from "../services/payout-disbursement.service";
 import type {
+  CommunityPayoutsOptions,
+  CommunityPayoutsResponse,
   CreateDisbursementsRequest,
   PaginatedDisbursementsResponse,
   PayoutDisbursement,
+  PayoutGrantConfig,
   RecordSafeTransactionRequest,
-  UpdateStatusRequest,
-  CommunityPayoutsResponse,
-  CommunityPayoutsOptions,
   SavePayoutConfigRequest,
   SavePayoutConfigResponse,
-  PayoutGrantConfig,
+  UpdateStatusRequest,
 } from "../types/payout-disbursement";
 
 /**
@@ -37,12 +37,7 @@ export const payoutDisbursementKeys = {
       { page, limit, status },
     ] as const,
   communityPayouts: (communityUID: string, options?: CommunityPayoutsOptions) =>
-    [
-      ...payoutDisbursementKeys.all,
-      "communityPayouts",
-      communityUID,
-      options,
-    ] as const,
+    [...payoutDisbursementKeys.all, "communityPayouts", communityUID, options] as const,
   payoutConfigs: {
     all: ["payoutConfig"] as const,
     byCommunity: (communityUID: string) =>
@@ -293,7 +288,10 @@ export function useBatchGrantStatus(grantUIDs: string[], options?: { enabled?: b
   // Transform results into a map of grantUID to latest status
   const statusMap: Record<
     string,
-    { status: PayoutDisbursement["status"] | "PENDING" | "PARTIALLY_DISBURSED"; latestDisbursement?: PayoutDisbursement }
+    {
+      status: PayoutDisbursement["status"] | "PENDING" | "PARTIALLY_DISBURSED";
+      latestDisbursement?: PayoutDisbursement;
+    }
   > = {};
   const isLoading = queries.some((q) => q.isLoading);
   const isError = queries.some((q) => q.isError);
@@ -386,10 +384,7 @@ export function useSavePayoutConfig(options?: {
 /**
  * Hook for fetching payout configs for a community
  */
-export function usePayoutConfigsByCommunity(
-  communityUID: string,
-  options?: { enabled?: boolean }
-) {
+export function usePayoutConfigsByCommunity(communityUID: string, options?: { enabled?: boolean }) {
   return useQuery<PayoutGrantConfig[], Error>({
     queryKey: payoutDisbursementKeys.payoutConfigs.byCommunity(communityUID),
     queryFn: () => payoutService.getPayoutConfigsByCommunity(communityUID),
@@ -401,10 +396,7 @@ export function usePayoutConfigsByCommunity(
 /**
  * Hook for fetching payout config for a specific grant
  */
-export function usePayoutConfigByGrant(
-  grantUID: string,
-  options?: { enabled?: boolean }
-) {
+export function usePayoutConfigByGrant(grantUID: string, options?: { enabled?: boolean }) {
   return useQuery<PayoutGrantConfig | null, Error>({
     queryKey: payoutDisbursementKeys.payoutConfigs.byGrant(grantUID),
     queryFn: () => payoutService.getPayoutConfigByGrant(grantUID),

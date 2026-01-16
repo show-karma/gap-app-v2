@@ -21,27 +21,22 @@ import {
 } from "lucide-react";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { erc20Abi, formatUnits, parseUnits } from "viem";
+import { erc20Abi, formatUnits, isAddress, parseUnits } from "viem";
 import { useAccount, useChainId, useWalletClient } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import {
-  NETWORKS,
-  NATIVE_TOKENS,
-  type SupportedChainId,
-  TOKEN_ADDRESSES,
+  getAvailableNetworks,
   getNativeTokenSymbol,
   hasUSDC,
-  getAvailableNetworks,
+  NATIVE_TOKENS,
+  NETWORKS,
+  type SupportedChainId,
+  TOKEN_ADDRESSES,
 } from "@/config/tokens";
-import { envVars } from "@/utilities/enviromentVars";
-import { isAddress } from "viem";
 import { useWallet } from "@/hooks/useWallet";
-import {
-  getSafeTokenBalance,
-  isSafeDeployed,
-  signAndProposeDisbursement,
-} from "@/utilities/safe";
+import { envVars } from "@/utilities/enviromentVars";
+import { getSafeTokenBalance, isSafeDeployed, signAndProposeDisbursement } from "@/utilities/safe";
 import {
   useBatchTotalDisbursed,
   useCreateDisbursements,
@@ -198,21 +193,18 @@ export function CreateDisbursementModal({
   const grantUIDs = useMemo(() => grants.map((g) => g.grantUID), [grants]);
 
   // Calculate total disbursed from totalsByToken (converting from raw to human-readable)
-  const getDisbursedFromTokenTotals = useCallback(
-    (grant: GrantDisbursementInfo): number => {
-      if (!grant.totalsByToken || grant.totalsByToken.length === 0) {
-        return 0;
-      }
-      // Sum all tokens' totals, converting from raw units to human-readable
-      return grant.totalsByToken.reduce((sum, tokenTotal) => {
-        const rawAmount = BigInt(tokenTotal.totalAmount || "0");
-        const decimals = tokenTotal.tokenDecimals || 6;
-        const humanReadable = parseFloat(formatUnits(rawAmount, decimals));
-        return sum + humanReadable;
-      }, 0);
-    },
-    []
-  );
+  const getDisbursedFromTokenTotals = useCallback((grant: GrantDisbursementInfo): number => {
+    if (!grant.totalsByToken || grant.totalsByToken.length === 0) {
+      return 0;
+    }
+    // Sum all tokens' totals, converting from raw units to human-readable
+    return grant.totalsByToken.reduce((sum, tokenTotal) => {
+      const rawAmount = BigInt(tokenTotal.totalAmount || "0");
+      const decimals = tokenTotal.tokenDecimals || 6;
+      const humanReadable = parseFloat(formatUnits(rawAmount, decimals));
+      return sum + humanReadable;
+    }, 0);
+  }, []);
 
   // Create a map of grant UID to human-readable disbursed totals from passed-in data
   const disbursedTotalsFromProps = useMemo(() => {
@@ -224,10 +216,9 @@ export function CreateDisbursementModal({
   }, [grants, getDisbursedFromTokenTotals]);
 
   // Fetch already disbursed amounts for all grants (fallback if totalsByToken not provided)
-  const { isLoading: isDisbursedLoading } = useBatchTotalDisbursed(
-    grantUIDs,
-    { enabled: isOpen && grantUIDs.length > 0 && grants.some((g) => !g.totalsByToken) }
-  );
+  const { isLoading: isDisbursedLoading } = useBatchTotalDisbursed(grantUIDs, {
+    enabled: isOpen && grantUIDs.length > 0 && grants.some((g) => !g.totalsByToken),
+  });
 
   // Calculate remaining amount for a grant (approved - already disbursed)
   const getRemainingAmount = useCallback(
@@ -719,9 +710,7 @@ export function CreateDisbursementModal({
       });
       setStep("complete");
       toast.success(
-        result.executed
-          ? "Disbursement executed successfully!"
-          : "Transaction to disburse created!"
+        result.executed ? "Disbursement executed successfully!" : "Transaction to disburse created!"
       );
       onSuccess?.();
     } catch (error) {
@@ -961,9 +950,7 @@ export function CreateDisbursementModal({
                     {/* Grants Overview */}
                     <div className="bg-gray-50 dark:bg-zinc-700/50 rounded-lg p-4">
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-700 dark:text-gray-300">
-                          Projects to Review
-                        </span>
+                        <span className="text-gray-700 dark:text-gray-300">Projects to Review</span>
                         <span className="text-lg font-semibold text-gray-900 dark:text-white">
                           {validGrants.length} project{validGrants.length !== 1 ? "s" : ""}
                         </span>
@@ -1006,7 +993,9 @@ export function CreateDisbursementModal({
                     tokenDecimals={selectedTokenDecimals}
                     selectedNetwork={selectedNetwork}
                     selectedNetworkName={selectedNetworkName}
-                    alreadyDisbursed={(disbursedTotalsFromProps[currentProject.grantUID] ?? 0).toString()}
+                    alreadyDisbursed={(
+                      disbursedTotalsFromProps[currentProject.grantUID] ?? 0
+                    ).toString()}
                     isLoadingDisbursed={isDisbursedLoading}
                     disbursementAmount={
                       disbursementAmounts[currentProject.grantUID] ??
@@ -1248,24 +1237,26 @@ export function CreateDisbursementModal({
                         : "Transaction Created!"}
                     </h4>
                     <p className="text-gray-600 dark:text-gray-400 mb-4">
-                      {transactionResult.executed
-                        ? "Funds have been transferred successfully."
-                        : (
-                          <>
-                            Transaction to disburse {totalAmount.toLocaleString()} {selectedTokenSymbol} to {validGrants.length} project{validGrants.length !== 1 ? "s" : ""} has been created.
-                            <br />
-                            The signers can go{" "}
-                            <a
-                              href={transactionResult.safeUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                            >
-                              here
-                            </a>{" "}
-                            and sign the transaction.
-                          </>
-                        )}
+                      {transactionResult.executed ? (
+                        "Funds have been transferred successfully."
+                      ) : (
+                        <>
+                          Transaction to disburse {totalAmount.toLocaleString()}{" "}
+                          {selectedTokenSymbol} to {validGrants.length} project
+                          {validGrants.length !== 1 ? "s" : ""} has been created.
+                          <br />
+                          The signers can go{" "}
+                          <a
+                            href={transactionResult.safeUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                          >
+                            here
+                          </a>{" "}
+                          and sign the transaction.
+                        </>
+                      )}
                     </p>
                     <div className="bg-gray-50 dark:bg-zinc-700/50 rounded-lg px-4 py-3 mb-6">
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
@@ -1467,7 +1458,9 @@ function ProjectReviewStep({
       ? chainSpecificAddress
       : project.payoutAddress;
   const isChainSpecificAddress =
-    chainSpecificAddress && isAddress(chainSpecificAddress) && chainSpecificAddress !== project.payoutAddress;
+    chainSpecificAddress &&
+    isAddress(chainSpecificAddress) &&
+    chainSpecificAddress !== project.payoutAddress;
   const currentDisbursementAmount = parseFloat(disbursementAmount) || 0;
 
   return (
@@ -1492,9 +1485,9 @@ function ProjectReviewStep({
       {/* Payout Address (read-only display) */}
       <div>
         <div className="flex items-center gap-2 mb-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Payout Address
-          </label>
+          </span>
           {isChainSpecificAddress && (
             <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
               {selectedNetworkName} specific
@@ -1514,17 +1507,17 @@ function ProjectReviewStep({
       {/* Amount Details Grid */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Total Grant
-          </label>
+          </span>
           <div className="px-3 py-2 bg-gray-100 dark:bg-zinc-700 rounded-md text-gray-900 dark:text-white font-semibold">
             {approvedAmount.toLocaleString()} {tokenSymbol}
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Total Disbursed to Date
-          </label>
+          </span>
           <div className="px-3 py-2 bg-gray-100 dark:bg-zinc-700 rounded-md text-gray-900 dark:text-white font-semibold">
             {isLoadingDisbursed ? (
               <Spinner className="w-4 h-4" />
@@ -1660,9 +1653,7 @@ function ProjectReviewStep({
         <Button variant="secondary" onClick={onBack}>
           Back
         </Button>
-        <Button onClick={onNext}>
-          {isLastProject ? "Review Summary" : "Save & Next Project"}
-        </Button>
+        <Button onClick={onNext}>{isLastProject ? "Review Summary" : "Save & Next Project"}</Button>
       </div>
     </div>
   );

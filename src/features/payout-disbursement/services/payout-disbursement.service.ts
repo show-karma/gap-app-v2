@@ -2,18 +2,18 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import type {
+  CommunityPayoutsOptions,
+  CommunityPayoutsResponse,
   CreateDisbursementsRequest,
   CreateDisbursementsResponse,
   PaginatedDisbursementsResponse,
   PayoutDisbursement,
+  PayoutGrantConfig,
   RecordSafeTransactionRequest,
-  TotalDisbursedResponse,
-  UpdateStatusRequest,
-  CommunityPayoutsResponse,
-  CommunityPayoutsOptions,
   SavePayoutConfigRequest,
   SavePayoutConfigResponse,
-  PayoutGrantConfig,
+  TotalDisbursedResponse,
+  UpdateStatusRequest,
 } from "../types/payout-disbursement";
 
 function getErrorMessage(error: unknown): string {

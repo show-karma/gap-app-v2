@@ -2,16 +2,16 @@
 
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
-import { cn } from "@/utilities/tailwind";
 import { getChainNameById } from "@/utilities/network";
-import { formatTokenAmount } from "../utils/format-token-amount";
+import { cn } from "@/utilities/tailwind";
 import type { TokenTotal } from "../types/payout-disbursement";
+import { formatTokenAmount } from "../utils/format-token-amount";
 
 /**
  * Get display name for token, including chain if there are duplicates
  */
 function getTokenDisplayName(tokenTotal: TokenTotal, allTokens: TokenTotal[]): string {
-  const sameSymbolTokens = allTokens.filter(t => t.token === tokenTotal.token);
+  const sameSymbolTokens = allTokens.filter((t) => t.token === tokenTotal.token);
   if (sameSymbolTokens.length > 1) {
     // Multiple tokens with same symbol - show chain name
     const chainName = getChainNameById(tokenTotal.chainID);
@@ -48,18 +48,12 @@ interface TokenBreakdownProps {
  * ]} />
  * // Shows: "1 USDC + 1 more" with expandable dropdown
  */
-export function TokenBreakdown({
-  totalsByToken,
-  className,
-  size = "md",
-}: TokenBreakdownProps) {
+export function TokenBreakdown({ totalsByToken, className, size = "md" }: TokenBreakdownProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Handle empty array
   if (!totalsByToken || totalsByToken.length === 0) {
-    return (
-      <span className={cn("text-sm font-medium", className)}>0</span>
-    );
+    return <span className={cn("text-sm font-medium", className)}>0</span>;
   }
 
   // Single token - simple display
@@ -93,9 +87,7 @@ export function TokenBreakdown({
           {formatTokenAmount(primaryToken.totalAmount, primaryToken.tokenDecimals)}{" "}
           {getTokenDisplayName(primaryToken, totalsByToken)}
         </span>
-        <span className="text-gray-500 dark:text-gray-400">
-          + {additionalCount} more
-        </span>
+        <span className="text-gray-500 dark:text-gray-400">+ {additionalCount} more</span>
         {isExpanded ? (
           <ChevronUpIcon className="h-4 w-4 text-gray-500" />
         ) : (
@@ -153,7 +145,8 @@ export function TokenBreakdownInline({
       {totalsByToken.map((t, i) => (
         <span key={`${t.tokenAddress}-${t.chainID}`}>
           {i > 0 && ", "}
-          {formatTokenAmount(t.totalAmount, t.tokenDecimals)} {getTokenDisplayName(t, totalsByToken)}
+          {formatTokenAmount(t.totalAmount, t.tokenDecimals)}{" "}
+          {getTokenDisplayName(t, totalsByToken)}
         </span>
       ))}
     </span>

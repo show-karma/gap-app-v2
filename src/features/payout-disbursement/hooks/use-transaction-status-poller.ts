@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SupportedChainId } from "@/config/tokens";
 import { getTransactionStatus, type SafeTransactionStatus } from "@/utilities/safe";
-import { useUpdateDisbursementStatus } from "./use-payout-disbursement";
 import { PayoutDisbursementStatus } from "../types/payout-disbursement";
+import { useUpdateDisbursementStatus } from "./use-payout-disbursement";
 
 const POLLING_INTERVAL_MS = 30_000; // 30 seconds
 

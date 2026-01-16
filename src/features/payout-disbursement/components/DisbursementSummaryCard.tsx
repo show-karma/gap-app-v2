@@ -7,9 +7,9 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { cn } from "@/utilities/tailwind";
 import { useTotalDisbursed } from "../hooks/use-payout-disbursement";
 import {
-  formatTokenAmount,
   calculateDisbursementProgress,
   calculateRemainingBalance,
+  formatTokenAmount,
 } from "../utils/format-token-amount";
 import { PayoutHistoryDrawer } from "./PayoutHistoryDrawer";
 

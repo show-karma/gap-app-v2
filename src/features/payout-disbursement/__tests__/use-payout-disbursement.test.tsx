@@ -1,13 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import * as payoutService from "../services/payout-disbursement.service";
-import type {
-  CreateDisbursementsRequest,
-  PaginatedDisbursementsResponse,
-  PayoutDisbursement,
-} from "../types/payout-disbursement";
-import { PayoutDisbursementStatus } from "../types/payout-disbursement";
 import {
   payoutDisbursementKeys,
   useAwaitingSignaturesDisbursements,
@@ -18,6 +11,13 @@ import {
   useTotalDisbursed,
   useUpdateDisbursementStatus,
 } from "../hooks/use-payout-disbursement";
+import * as payoutService from "../services/payout-disbursement.service";
+import type {
+  CreateDisbursementsRequest,
+  PaginatedDisbursementsResponse,
+  PayoutDisbursement,
+} from "../types/payout-disbursement";
+import { PayoutDisbursementStatus } from "../types/payout-disbursement";
 
 jest.mock("../services/payout-disbursement.service");
 
