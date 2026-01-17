@@ -1,19 +1,38 @@
-import { Dialog, Switch, Transition } from "@headlessui/react";
-import { ChevronDownIcon, MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Dialog, Transition } from "@headlessui/react";
+import {
+  ChevronDownIcon,
+  MagnifyingGlassIcon,
+  PlusIcon,
+  SparklesIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import * as Popover from "@radix-ui/react-popover";
-import { type FC, Fragment, useEffect, useState } from "react";
+import { type FC, Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
 import { IndicatorForm } from "@/components/Forms/IndicatorForm";
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { Button } from "@/components/Utilities/Button";
+import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import type { ImpactIndicator } from "@/types/impactMeasurement";
+
+// Debounce hook for search performance
+const useDebouncedValue = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+};
 
 interface IndicatorsDropdownProps {
   selectedIndicators: string[];
   indicators: ImpactIndicator[];
   onIndicatorChange: (value: string) => void;
   communityId?: string;
-  onIndicatorCreated?: (indicator: any) => void;
+  onIndicatorCreated?: (indicator: ImpactIndicator) => void;
   isLoading?: boolean;
 }
 
@@ -29,53 +48,67 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
   const [search, setSearch] = useState("");
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [newIndicators, setNewIndicators] = useState<ImpactIndicator[]>([]);
-  const [selectedAutosynced, setSelectedAutosynced] = useState<string>("");
-  const [formDefaultValues, setFormDefaultValues] = useState<Partial<any>>({
-    name: "",
-    description: "",
-    unitOfMeasure: "int",
-    programs: [],
-  });
+  const [activeTab, setActiveTab] = useState<"community" | "default">("community");
 
-  // Combine the original indicators with any newly created ones
-  const allIndicators = [...indicators, ...newIndicators];
+  // Debounce search for better performance
+  const debouncedSearch = useDebouncedValue(search, 150);
 
-  // Sort all indicators alphabetically by name
-  const sortedIndicators = [...allIndicators].sort((a, b) =>
-    a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+  // Fetch auto-synced indicators from API
+  const { data: autosyncedIndicators = [], isLoading: isLoadingAutosynced } =
+    useAutosyncedIndicators();
+
+  // Memoized handler for indicator changes
+  const handleIndicatorChange = useCallback(
+    (value: string) => {
+      onIndicatorChange(value);
+    },
+    [onIndicatorChange]
   );
 
-  // Filter indicators based on search - use sorted indicators now
-  const filteredIndicators = sortedIndicators.filter(
-    (indicator) =>
-      indicator.name.toLowerCase().includes(search.toLowerCase()) ||
-      indicator.unitOfMeasure?.toLowerCase().includes(search.toLowerCase())
+  // Combine, sort, and filter community indicators in a single pass
+  const filteredCommunityIndicators = useMemo(() => {
+    const combined = [...indicators, ...newIndicators];
+    const sorted = combined.sort((a, b) =>
+      a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+    );
+
+    if (!debouncedSearch) return sorted;
+    const searchLower = debouncedSearch.toLowerCase();
+    return sorted.filter(
+      (indicator) =>
+        indicator.name.toLowerCase().includes(searchLower) ||
+        indicator.description?.toLowerCase().includes(searchLower)
+    );
+  }, [indicators, newIndicators, debouncedSearch]);
+
+  // Sort and filter default/auto indicators in a single pass
+  const filteredDefaultIndicators = useMemo(() => {
+    const sorted = [...autosyncedIndicators].sort((a, b) =>
+      a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+    );
+
+    if (!debouncedSearch) return sorted;
+    const searchLower = debouncedSearch.toLowerCase();
+    return sorted.filter(
+      (indicator) =>
+        indicator.name.toLowerCase().includes(searchLower) ||
+        indicator.description?.toLowerCase().includes(searchLower)
+    );
+  }, [autosyncedIndicators, debouncedSearch]);
+
+  // All community indicators (for selectedNames lookup)
+  const allCommunityIndicators = useMemo(
+    () => [...indicators, ...newIndicators],
+    [indicators, newIndicators]
   );
 
-  // Handle autosynced indicator selection
-  const handleAutosyncedSelect = (name: string) => {
-    if (!name) {
-      setFormDefaultValues({
-        name: "",
-        description: "",
-        unitOfMeasure: "int",
-        programs: [],
-      });
-      setSelectedAutosynced("");
-      return;
-    }
-
-    const selectedIndicator = autosyncedIndicators.find((i) => i.name === name);
-    if (selectedIndicator) {
-      setFormDefaultValues({
-        name: selectedIndicator.name,
-        description: selectedIndicator.description,
-        unitOfMeasure: selectedIndicator.unitOfMeasure as "float" | "int",
-        programs: [],
-      });
-      setSelectedAutosynced(name);
-    }
-  };
+  // Get selected indicator names for display
+  const selectedNames = useMemo(() => {
+    const allIndicators = [...allCommunityIndicators, ...autosyncedIndicators];
+    return selectedIndicators
+      .map((id) => allIndicators.find((i) => i.id === id)?.name)
+      .filter(Boolean);
+  }, [selectedIndicators, allCommunityIndicators, autosyncedIndicators]);
 
   // Clear search when dropdown closes
   useEffect(() => {
@@ -83,6 +116,75 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
       setSearch("");
     }
   }, [open]);
+
+  const renderIndicatorItem = (indicator: ImpactIndicator, isDefault = false) => {
+    const isSelected = selectedIndicators.includes(indicator.id);
+
+    return (
+      <button
+        key={indicator.id}
+        type="button"
+        className="px-4 py-3 w-full hover:bg-gray-50 dark:hover:bg-zinc-700 cursor-pointer flex justify-between items-center gap-3 text-left"
+        onClick={() => handleIndicatorChange(indicator.id)}
+      >
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="font-medium text-sm truncate">{indicator.name}</p>
+            {isDefault && (
+              <span className="flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                <SparklesIcon className="w-3 h-3 mr-0.5" />
+                Auto
+              </span>
+            )}
+          </div>
+          {indicator.description && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+              {indicator.description}
+            </p>
+          )}
+        </div>
+        <div
+          className={`${
+            isSelected ? "bg-blue-600" : "bg-gray-200 dark:bg-zinc-700"
+          } relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors`}
+          aria-hidden="true"
+        >
+          <span
+            className={`${
+              isSelected ? "translate-x-6" : "translate-x-1"
+            } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+          />
+        </div>
+      </button>
+    );
+  };
+
+  const renderEmptyState = (isDefault: boolean) => (
+    <div className="px-4 py-8 text-sm text-gray-500 dark:text-gray-400 text-center flex flex-col items-center">
+      <MagnifyingGlassIcon className="h-8 w-8 mb-2 text-gray-300 dark:text-gray-600" />
+      <p className="font-medium">No indicators found</p>
+      <p className="text-xs mt-1">
+        {search
+          ? "Try a different search term"
+          : isDefault
+            ? "No default indicators available"
+            : "Create a custom indicator to get started"}
+      </p>
+      {!isDefault && !search && (
+        <Button
+          onClick={() => {
+            setOpen(false);
+            setIsFormModalOpen(true);
+          }}
+          variant="secondary"
+          className="mt-4 text-xs py-1.5 px-4"
+        >
+          <PlusIcon className="w-4 h-4 mr-1" />
+          Create Custom Indicator
+        </Button>
+      )}
+    </div>
+  );
 
   return (
     <div className="flex flex-col gap-2 w-full">
@@ -100,11 +202,13 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
                   Loading indicators...
                 </span>
               ) : selectedIndicators.length > 0 ? (
-                `${selectedIndicators.length} indicator${
-                  selectedIndicators.length > 1 ? "s" : ""
-                } selected`
+                selectedNames.length <= 2 ? (
+                  selectedNames.join(", ")
+                ) : (
+                  `${selectedIndicators.length} indicators selected`
+                )
               ) : (
-                "Search for indicators"
+                "Select indicators"
               )}
             </span>
             <ChevronDownIcon
@@ -117,32 +221,44 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
 
         <Popover.Portal>
           <Popover.Content
-            className="mt-1 w-[var(--radix-popover-trigger-width)] z-50 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800 overflow-hidden shadow-lg"
+            className="mt-1 w-[var(--radix-popover-trigger-width)] z-50 bg-white border border-zinc-200 dark:border-zinc-700 rounded-lg dark:text-white dark:bg-zinc-800 overflow-hidden shadow-xl"
             align="start"
             side="bottom"
             sideOffset={5}
             sticky="always"
           >
-            <div className="flex justify-between items-center p-3 border-b border-gray-200 dark:border-gray-700">
-              <span className="text-slate-700 text-sm font-bold dark:text-gray-300">
-                Selected Indicators ({selectedIndicators.length})
+            {/* Header */}
+            <div className="flex justify-between items-center p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-zinc-900">
+              <span className="text-slate-700 text-sm font-semibold dark:text-gray-300">
+                Assign Indicators
+                {selectedIndicators.length > 0 && (
+                  <span className="ml-2 text-blue-600 dark:text-blue-400">
+                    ({selectedIndicators.length} selected)
+                  </span>
+                )}
               </span>
               <button
-                onClick={() => setIsFormModalOpen(true)}
-                className="text-blue-600 dark:text-blue-200 text-sm font-semibold p-1"
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  setIsFormModalOpen(true);
+                }}
+                className="inline-flex items-center text-blue-600 dark:text-blue-400 text-sm font-medium hover:text-blue-700 dark:hover:text-blue-300"
               >
-                Add indicator
+                <PlusIcon className="w-4 h-4 mr-1" />
+                Create Custom
               </button>
             </div>
 
+            {/* Search */}
             <div className="p-2 border-b border-gray-200 dark:border-gray-700">
               <div className="relative">
                 <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                   <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
                 </div>
                 <input
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-zinc-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="Search for indicators"
+                  className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Search indicators..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   disabled={isLoading}
@@ -150,53 +266,63 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
               </div>
             </div>
 
-            <div className="max-h-60 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
-              {isLoading ? (
-                <LoadingSpinner size="md" color="blue" message="Loading indicators..." />
-              ) : filteredIndicators.length === 0 ? (
-                <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400 text-center flex flex-col items-center">
-                  <MagnifyingGlassIcon className="h-6 w-6 mb-2 text-gray-400" />
-                  <p>No indicators found</p>
-                  <Button
-                    onClick={() => {
-                      setOpen(false);
-                      setIsFormModalOpen(true);
-                    }}
-                    variant="secondary"
-                    className="mt-3 text-xs py-1 px-3"
-                  >
-                    Create new indicator
-                  </Button>
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 dark:border-gray-700">
+              <button
+                type="button"
+                onClick={() => setActiveTab("community")}
+                className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+                  activeTab === "community"
+                    ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+              >
+                Community
+                <span className="ml-1.5 text-xs text-gray-400">
+                  ({filteredCommunityIndicators.length})
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("default")}
+                className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+                  activeTab === "default"
+                    ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+              >
+                <SparklesIcon className="w-4 h-4 inline mr-1" />
+                System
+                <span className="ml-1.5 text-xs text-gray-400">
+                  ({filteredDefaultIndicators.length})
+                </span>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="max-h-64 overflow-y-auto">
+              {isLoading || isLoadingAutosynced ? (
+                <div className="py-8">
+                  <LoadingSpinner size="md" color="blue" message="Loading indicators..." />
                 </div>
+              ) : activeTab === "community" ? (
+                filteredCommunityIndicators.length === 0 ? (
+                  renderEmptyState(false)
+                ) : (
+                  <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                    {filteredCommunityIndicators.map((indicator) =>
+                      renderIndicatorItem(indicator, false)
+                    )}
+                  </div>
+                )
+              ) : filteredDefaultIndicators.length === 0 ? (
+                renderEmptyState(true)
               ) : (
-                filteredIndicators.map((indicator) => (
-                  <button
-                    key={indicator.id}
-                    className="px-4 py-3 w-full flex-1 hover:bg-gray-50 dark:hover:bg-zinc-700 cursor-pointer flex justify-between items-center"
-                    onClick={() => onIndicatorChange(indicator.id)}
-                  >
-                    <div className="flex-1 text-left">
-                      <p className="font-medium text-sm">{indicator.name}</p>
-                    </div>
-                    <Switch
-                      checked={selectedIndicators.includes(indicator.id)}
-                      onChange={() => onIndicatorChange(indicator.id)}
-                      className={`${
-                        selectedIndicators.includes(indicator.id)
-                          ? "bg-blue-600"
-                          : "bg-gray-200 dark:bg-zinc-700"
-                      } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2`}
-                    >
-                      <span
-                        className={`${
-                          selectedIndicators.includes(indicator.id)
-                            ? "translate-x-6"
-                            : "translate-x-1"
-                        } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                      />
-                    </Switch>
-                  </button>
-                ))
+                <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                  {filteredDefaultIndicators.map((indicator) =>
+                    renderIndicatorItem(indicator, true)
+                  )}
+                </div>
               )}
             </div>
 
@@ -205,23 +331,9 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
         </Popover.Portal>
       </Popover.Root>
 
-      {/* Modal for creating new indicator */}
+      {/* Modal for creating CUSTOM indicator only */}
       <Transition appear show={isFormModalOpen} as={Fragment}>
-        <Dialog
-          as="div"
-          className="relative z-50"
-          onClose={() => {
-            setIsFormModalOpen(false);
-            // Reset form values and selected autosynced when closing modal
-            setFormDefaultValues({
-              name: "",
-              description: "",
-              unitOfMeasure: "int",
-              programs: [],
-            });
-            setSelectedAutosynced("");
-          }}
-        >
+        <Dialog as="div" className="relative z-50" onClose={() => setIsFormModalOpen(false)}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -249,95 +361,46 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
                   <div className="flex justify-between items-center mb-4">
                     <Dialog.Title
                       as="h3"
-                      className="text-lg font-medium leading-6 text-gray-900 dark:text-white"
+                      className="text-lg font-semibold text-gray-900 dark:text-white"
                     >
-                      Create New Indicator
+                      Create Custom Indicator
                     </Dialog.Title>
                     <button
-                      onClick={() => {
-                        setIsFormModalOpen(false);
-                        setFormDefaultValues({
-                          name: "",
-                          description: "",
-                          unitOfMeasure: "int",
-                          programs: [],
-                        });
-                        setSelectedAutosynced("");
-                      }}
-                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      type="button"
+                      onClick={() => setIsFormModalOpen(false)}
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
                     >
                       <XMarkIcon className="h-5 w-5" />
                     </button>
                   </div>
 
-                  {/* Add autosynced indicator selector */}
-                  <div className="mb-4">
-                    <label
-                      htmlFor="indicators-dropdown-autosynced"
-                      className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
-                    >
-                      Select Autosynced Indicator (Optional)
-                    </label>
-                    <select
-                      id="indicators-dropdown-autosynced"
-                      value={selectedAutosynced}
-                      onChange={(e) => handleAutosyncedSelect(e.target.value)}
-                      className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
-                    >
-                      <option value="">Create Custom Indicator</option>
-                      {autosyncedIndicators.map((indicator) => (
-                        <option key={indicator.name} value={indicator.name}>
-                          {indicator.description}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    Create a new custom indicator for your community. For system metrics like GitHub
+                    stats or transactions, use the &quot;System&quot; tab instead.
+                  </p>
 
                   <IndicatorForm
                     communityId={communityId}
-                    defaultValues={formDefaultValues}
-                    readOnlyFields={{
-                      name: !!selectedAutosynced,
-                      description: !!selectedAutosynced,
-                      unitOfMeasure: !!selectedAutosynced,
+                    defaultValues={{
+                      name: "",
+                      description: "",
+                      unitOfMeasure: "int",
+                      programs: [],
                     }}
                     onSuccess={(indicator) => {
-                      // Prevent event bubbling if any
-                      if (event) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                      }
-
-                      // Add the new indicator to our local state
+                      // Add the new indicator to local state
                       setNewIndicators((prev) => [...prev, indicator]);
 
-                      // Reset form values and selected autosynced
-                      setFormDefaultValues({
-                        name: "",
-                        description: "",
-                        unitOfMeasure: "int",
-                        programs: [],
-                      });
-                      setSelectedAutosynced("");
+                      // Notify parent callback
+                      onIndicatorCreated?.(indicator);
 
-                      // Only notify parent of new indicator without causing form submission
-                      if (onIndicatorCreated) {
-                        // Use setTimeout to break the event chain
-                        setTimeout(() => {
-                          onIndicatorCreated(indicator);
-                        }, 0);
-                      }
-
-                      // Close the form modal
+                      // Close modal - dropdown will stay in its current state
                       setIsFormModalOpen(false);
-
-                      // Keep dropdown open
-                      setTimeout(() => {
-                        setOpen(true);
-                      }, 10);
                     }}
-                    onError={() => {
-                      // Handle error
+                    onError={(error) => {
+                      toast.error(
+                        error instanceof Error ? error.message : "Failed to create indicator"
+                      );
                     }}
                     preventPropagation={true}
                   />

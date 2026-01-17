@@ -24,6 +24,7 @@ export const prepareChartData = (
   const timestampsData = timestamps
     .map((timestamp, index) => {
       return {
+        rawTimestamp: timestamp, // Keep original for sorting
         date: formatDate(new Date(timestamp), "UTC"),
         Avg: Number(avg_values[index]) || 0,
         Total: Number(total_values[index]) || 0,
@@ -31,7 +32,8 @@ export const prepareChartData = (
         Max: Number(max_values[index]) || 0,
       };
     })
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    .sort((a, b) => new Date(a.rawTimestamp).getTime() - new Date(b.rawTimestamp).getTime())
+    .map(({ rawTimestamp: _, ...rest }) => rest); // Remove rawTimestamp from output
   return timestampsData;
 };
 
@@ -83,8 +85,8 @@ const AggregateMetricCard = ({
       index={"date"}
       categories={["Avg", "Total", "Min", "Max"]}
       colors={["blue", "green", "red", "yellow"]}
-      valueFormatter={(value) => `${formatCurrency(value)}`}
-      yAxisWidth={40}
+      valueFormatter={(value) => formatCurrency(value)}
+      yAxisWidth={80}
       enableLegendSlider
       noDataText="Awaiting grantees to submit values"
     />

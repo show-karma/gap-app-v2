@@ -2,13 +2,14 @@ import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import type { Category, ImpactIndicator, ImpactSegment } from "@/types/impactMeasurement";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -64,6 +65,15 @@ export const ActivityOutcomeModal = ({
   const [isSaving, setIsSaving] = useState(false);
   const { address } = useAccount();
 
+  // Fetch autosynced indicators to include in matching
+  const { data: autosyncedIndicators = [] } = useAutosyncedIndicators();
+
+  // Combine all indicators for matching
+  const allIndicators = useMemo(
+    () => [...impact_indicators, ...autosyncedIndicators],
+    [impact_indicators, autosyncedIndicators]
+  );
+
   const {
     register,
     handleSubmit,
@@ -77,21 +87,39 @@ export const ActivityOutcomeModal = ({
       type: editingSegment ? editingSegment.type : initialType,
       name: editingSegment ? editingSegment.name : "",
       description: editingSegment ? editingSegment.description : "",
-      impact_indicators: editingSegment?.impact_indicators?.map((ind) => ind.id) || [],
+      impact_indicators: [],
     },
     mode: "onChange",
   });
 
   useEffect(() => {
     if (isOpen) {
+      // When editing, map indicator names to PostgreSQL IDs from all available indicators
+      // This handles the case where segment has MongoDB ObjectIDs but dropdown uses PostgreSQL UUIDs
+      let selectedIndicatorIds: string[] = [];
+      if (editingSegment?.impact_indicators) {
+        selectedIndicatorIds = editingSegment.impact_indicators
+          .map((segmentInd) => {
+            // First try to find by ID (in case IDs match)
+            const byId = allIndicators.find((ind) => ind.id === segmentInd.id);
+            if (byId) return byId.id;
+            // Fallback to matching by name (case-insensitive)
+            const byName = allIndicators.find(
+              (ind) => ind.name.toLowerCase() === segmentInd.name.toLowerCase()
+            );
+            return byName?.id;
+          })
+          .filter((id): id is string => !!id);
+      }
+
       reset({
         type: editingSegment ? editingSegment.type : initialType,
         name: editingSegment ? editingSegment.name : "",
         description: editingSegment ? editingSegment.description : "",
-        impact_indicators: editingSegment?.impact_indicators?.map((ind) => ind.id) || [],
+        impact_indicators: selectedIndicatorIds,
       });
     }
-  }, [editingSegment, isOpen, initialType, reset]);
+  }, [editingSegment, isOpen, initialType, reset, allIndicators]);
 
   const selectedIndicators = watch("impact_indicators") || [];
   const _selectedType = watch("type");

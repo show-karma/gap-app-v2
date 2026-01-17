@@ -1,20 +1,16 @@
 import { Menu, Transition } from "@headlessui/react";
-import {
-  ChevronDownIcon,
-  EllipsisVerticalIcon,
-  PlusIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
+import { EllipsisVerticalIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { PencilSquareIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import pluralize from "pluralize";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { pickColor } from "@/components/GrantCard";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { useGroupedIndicators } from "@/hooks/useGroupedIndicators";
 import type { Category, ImpactSegment } from "@/types/impactMeasurement";
 import fetchData from "@/utilities/fetchData";
@@ -31,74 +27,6 @@ interface CategoryViewProps {
   communityId: string;
 }
 
-// Custom Dropdown Menu Component
-const DropdownMenu = ({
-  value,
-  onChange,
-  options,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string }[];
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const selectedOption = options.find((option) => option.value === value);
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none"
-      >
-        <span>{selectedOption?.label || "Select option"}</span>
-        <ChevronDownIcon
-          className={`ml-2 h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
-        />
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 z-10 mt-1 w-full bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 rounded-md shadow-lg">
-          <div className="py-1">
-            {options.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => {
-                  onChange(option.value);
-                  setIsOpen(false);
-                }}
-                className={`block w-full text-left px-4 py-2 text-sm ${
-                  value === option.value
-                    ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
 export const CategoryView = ({
   selectedCategory,
   viewType,
@@ -111,6 +39,7 @@ export const CategoryView = ({
   const [initialModalType, setInitialModalType] = useState<"output" | "outcome">("output");
   const [editingSegment, setEditingSegment] = useState<ImpactSegment | null>(null);
   const [isDeletingSegment, setIsDeletingSegment] = useState<string | null>(null);
+  const [segmentToDelete, setSegmentToDelete] = useState<ImpactSegment | null>(null);
 
   const {
     data: groupedIndicators = { communityAdminCreated: [], projectOwnerCreated: [] },
@@ -254,7 +183,7 @@ export const CategoryView = ({
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">View</span>
             <div className="w-36">
-              <DropdownMenu
+              <SelectDropdown
                 value={viewType}
                 onChange={(value) => setViewType(value as "all" | "output" | "outcome")}
                 options={filterOptions}
@@ -354,18 +283,15 @@ export const CategoryView = ({
                         </Menu.Item>
                         <Menu.Item>
                           {({ active }) => (
-                            <DeleteDialog
-                              title={`Are you sure you want to delete ${segment.name}?`}
-                              deleteFunction={() => handleDeleteSegment(segment.id)}
-                              isLoading={isDeletingSegment === segment.id}
-                              buttonElement={{
-                                icon: <TrashIcon className="h-4 w-4 mr-2" />,
-                                text: "Delete",
-                                styleClass: `${
-                                  active ? "bg-gray-100 dark:bg-zinc-700" : "bg-transparent"
-                                } hover:bg-gray-100 dark:hover:bg-zinc-700 font-normal w-full px-4 py-2 text-left flex items-center text-sm text-red-500`,
-                              }}
-                            />
+                            <button
+                              className={`${
+                                active ? "bg-gray-100 dark:bg-zinc-700" : ""
+                              } w-full px-4 py-2 text-left flex items-center text-sm text-red-500`}
+                              onClick={() => setSegmentToDelete(segment)}
+                            >
+                              <TrashIcon className="h-4 w-4 mr-2" />
+                              Delete
+                            </button>
                           )}
                         </Menu.Item>
                       </div>
@@ -444,6 +370,23 @@ export const CategoryView = ({
         }}
         initialType={initialModalType}
         editingSegment={editingSegment}
+      />
+
+      {/* Delete confirmation dialog - rendered outside Menu to prevent unmounting */}
+      <DeleteDialog
+        title={`Are you sure you want to delete ${segmentToDelete?.name}?`}
+        deleteFunction={async () => {
+          if (segmentToDelete) {
+            await handleDeleteSegment(segmentToDelete.id);
+            setSegmentToDelete(null);
+          }
+        }}
+        isLoading={isDeletingSegment === segmentToDelete?.id}
+        buttonElement={null}
+        externalIsOpen={!!segmentToDelete}
+        externalSetIsOpen={(isOpen) => {
+          if (!isOpen) setSegmentToDelete(null);
+        }}
       />
     </div>
   );
