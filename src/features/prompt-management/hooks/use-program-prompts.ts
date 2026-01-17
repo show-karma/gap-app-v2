@@ -169,7 +169,6 @@ export function useBulkEvaluationJobPolling(
   jobId: string | null,
   options?: {
     onComplete?: (job: BulkEvaluationJob) => void;
-    onError?: (error: Error) => void;
   }
 ) {
   // Use refs to hold latest callback values without causing stale closures

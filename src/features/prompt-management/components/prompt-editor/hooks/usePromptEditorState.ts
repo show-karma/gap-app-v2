@@ -180,7 +180,10 @@ export function usePromptEditorState({
   const canSave = isDirty && !!name.trim() && !!content.trim() && !!modelId && !readOnly;
   const canTest = !!existingPrompt && !isDirty;
   const canBulkEvaluate = !!existingPrompt && !isDirty;
-  const isJobRunning = Boolean(currentJobId && !polledJobData);
+  const isJobRunning = Boolean(
+    currentJobId &&
+      (!polledJobData || polledJobData.status === "pending" || polledJobData.status === "running")
+  );
 
   return {
     // Form state

@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import toast from "react-hot-toast";
 import { PromptEditor } from "@/features/prompt-management/components/PromptEditor";
 import {
+  useBulkEvaluationJobPolling,
   useSavePrompt,
   useTestPrompt,
   useTriggerBulkEvaluation,
@@ -15,6 +16,7 @@ jest.mock("@/features/prompt-management/hooks/use-program-prompts", () => ({
   useSavePrompt: jest.fn(),
   useTestPrompt: jest.fn(),
   useTriggerBulkEvaluation: jest.fn(),
+  useBulkEvaluationJobPolling: jest.fn(),
 }));
 
 jest.mock("@/hooks/useAvailableAIModels", () => ({
@@ -101,6 +103,10 @@ describe("PromptEditor", () => {
     (useTriggerBulkEvaluation as jest.Mock).mockReturnValue({
       mutate: mockTriggerBulkEvaluation,
       isPending: false,
+    });
+
+    (useBulkEvaluationJobPolling as jest.Mock).mockReturnValue({
+      data: null,
     });
   });
 
