@@ -41,18 +41,24 @@ export interface CreateDonationRequest {
   metadata?: Record<string, unknown>;
 }
 
-export interface OnrampRequest {
-  projectId: string;
+export enum OnrampProvider {
+  COINBASE = "coinbase",
+}
+
+export interface OnrampSessionRequest {
+  provider: OnrampProvider;
+  projectUid: string;
   payoutAddress: string;
   fiatAmount: number;
   fiatCurrency: string;
-  targetToken: string;
-  network: number;
-  userEmail?: string;
-  redirectUrl?: string;
+  network: string;
+  targetAsset: string;
+  donorAddress?: string;
 }
 
-export interface OnrampResponse {
-  url: string;
+export interface OnrampSessionResponse {
+  sessionToken: string;
   sessionId: string;
+  donationUid: string;
+  expiresAt: string;
 }

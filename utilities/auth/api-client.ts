@@ -24,7 +24,8 @@ export function createAuthenticatedApiClient(
     // Get auth token from store
     const token = await TokenManager.getToken();
     if (token) {
-      config.headers.Authorization = token;
+      // Ensure Bearer prefix is present for standard HTTP authorization
+      config.headers.Authorization = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
     }
     return config;
   });

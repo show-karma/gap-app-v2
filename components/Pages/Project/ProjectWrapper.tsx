@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import React from "react";
+import { OnrampStatusDialog } from "@/components/Dialogs/OnrampStatusDialog";
 import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { Globe } from "@/components/Icons";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
@@ -18,6 +19,7 @@ import { layoutTheme } from "@/src/helper/theme";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
+import { useOnrampStatusModalStore } from "@/store/modals/onrampStatus";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { isCustomLink } from "@/utilities/customLink";
@@ -62,6 +64,7 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
   const { isEndorsementOpen } = useEndorsementStore();
   const { isProgressModalOpen } = useProgressModalStore();
   const { isOpen: isShareDialogOpen } = useShareDialogStore();
+  const { isOpen: isOnrampStatusOpen } = useOnrampStatusModalStore();
 
   return (
     <div>
@@ -69,6 +72,7 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
       {isEndorsementOpen ? <EndorsementDialog /> : null}
       {isProgressModalOpen ? <ProgressDialog /> : null}
       {isShareDialogOpen ? <ShareDialog /> : null}
+      {isOnrampStatusOpen ? <OnrampStatusDialog /> : null}
       <div className="relative border-b border-gray-200 ">
         <div
           className={cn(

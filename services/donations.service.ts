@@ -1,8 +1,8 @@
 import type {
   CreateDonationRequest,
   DonationApiResponse,
-  OnrampRequest,
-  OnrampResponse,
+  OnrampSessionRequest,
+  OnrampSessionResponse,
 } from "@/hooks/donation/types";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
@@ -39,8 +39,8 @@ export const donationsService = {
     return response.data;
   },
 
-  async createOnrampUrl(request: OnrampRequest): Promise<OnrampResponse> {
-    const response = await apiClient.post<OnrampResponse>("/v2/onramp/create", request);
+  async createOnrampSession(request: OnrampSessionRequest): Promise<OnrampSessionResponse> {
+    const response = await apiClient.post<OnrampSessionResponse>("/v2/onramp/session", request);
     return response.data;
   },
 };
