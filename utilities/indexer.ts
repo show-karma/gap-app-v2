@@ -108,6 +108,17 @@ export const INDEXER = {
         return `/v2/funding-program-configs/${programId}/check-permission?${params.toString()}`;
       },
       MY_REVIEWER_PROGRAMS: () => `/v2/funding-program-configs/my-reviewer-programs`,
+      PROMPTS: {
+        GET: (programId: string) => `/v2/funding-program-configs/${programId}/prompts`,
+        SAVE: (programId: string, promptType: "external" | "internal") =>
+          `/v2/funding-program-configs/${programId}/prompts/${promptType}`,
+        TEST: (programId: string, promptType: "external" | "internal") =>
+          `/v2/funding-program-configs/${programId}/prompts/${promptType}/test`,
+        BULK_EVALUATE: (programId: string) =>
+          `/v2/funding-program-configs/${programId}/evaluate-all`,
+        JOB_STATUS: (programId: string, jobId: string) =>
+          `/v2/funding-program-configs/${programId}/evaluate-all/${jobId}`,
+      },
     },
     FUNDING_APPLICATIONS: {
       GET: (applicationId: string) => `/v2/funding-applications/${applicationId}`,
