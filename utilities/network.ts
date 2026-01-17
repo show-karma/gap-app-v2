@@ -11,7 +11,6 @@ import {
   optimismSepolia,
   polygon,
   scroll,
-  sei,
   sepolia,
 } from "viem/chains";
 
@@ -24,7 +23,6 @@ const productionNetworks: Chain[] = [
   base,
   celo,
   polygon,
-  sei,
   lisk,
   scroll,
 ];
@@ -36,7 +34,6 @@ const nonProductionNetworks: Chain[] = [
   base,
   celo,
   polygon,
-  sei,
   lisk,
   scroll,
   optimismSepolia,
@@ -73,7 +70,6 @@ export function getExplorerUrl(chainId: number, transactionHash: string) {
     base,
     celo,
     polygon,
-    sei,
     optimismSepolia,
     baseSepolia,
     sepolia,
@@ -106,9 +102,6 @@ export function getChainIdByName(name: string) {
     case "polygon":
     case "matic":
       return 137;
-    case "sei":
-    case "seitrace":
-      return 1329;
     case "optimismgoerli":
     case "optimism goerli":
     case "optimism-goerli":
@@ -146,8 +139,6 @@ export function getChainNameById(id: number): TNetwork {
       return "celo";
     case 137:
       return "polygon" as TNetwork;
-    case 1329:
-      return "sei";
     case 11155420:
       return "optimism-sepolia";
     case 11155111:

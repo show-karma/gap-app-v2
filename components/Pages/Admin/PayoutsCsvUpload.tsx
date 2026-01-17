@@ -186,9 +186,9 @@ export function PayoutsCsvUpload({
                 if (Number.isNaN(numAmount) || numAmount <= 0) {
                   rowErrors.push(`Row ${rowNum}: Invalid amount: ${amount}`);
                   hasError = true;
-                } else if (!/^\d+(\.\d{0,2})?$/.test(amount)) {
+                } else if (!/^\d+(\.\d{1,18})?$/.test(amount)) {
                   rowErrors.push(
-                    `Row ${rowNum}: Amount must have at most 2 decimal places: ${amount}`
+                    `Row ${rowNum}: Amount must have at most 18 decimal places: ${amount}`
                   );
                   hasError = true;
                 }

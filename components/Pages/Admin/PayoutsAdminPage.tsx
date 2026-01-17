@@ -1,12 +1,14 @@
 "use client";
 
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
+import { BanknotesIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import { useAccount } from "wagmi";
+import { useAuth } from "@/hooks/useAuth";
 import { ProgramFilter } from "@/components/Pages/Communities/Impact/ProgramFilter";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -15,10 +17,20 @@ import TablePagination from "@/components/Utilities/TablePagination";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import {
-  type AttestationBatchUpdateItem,
-  useBatchUpdatePayouts,
-} from "@/hooks/useCommunityPayouts";
-import { useGrants } from "@/hooks/useGrants";
+  CreateDisbursementModal,
+  type GrantDisbursementInfo,
+  PayoutHistoryDrawer,
+  PayoutDisbursementStatus,
+  useCommunityPayouts,
+  useSavePayoutConfig,
+  AggregatedDisbursementStatus,
+  type CommunityPayoutsOptions,
+  type PayoutConfigItem,
+  type SavePayoutConfigRequest,
+  TokenBreakdown,
+  type TokenTotal,
+} from "@/src/features/payout-disbursement";
+import { appNetwork } from "@/utilities/network";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -48,12 +60,30 @@ export default function PayoutsAdminPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { address } = useAccount();
+  const { ready: authReady } = useAuth();
   const params = useParams();
   const communityId = params.communityId as string;
 
   // State for tracking edits
   const [editedFields, setEditedFields] = useState<Record<string, EditableFields>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // State for row selection (for disbursement)
+  const [selectedGrants, setSelectedGrants] = useState<Set<string>>(new Set());
+
+  // State for disbursement modal
+  const [isDisbursementModalOpen, setIsDisbursementModalOpen] = useState(false);
+  const [grantsForDisbursement, setGrantsForDisbursement] = useState<GrantDisbursementInfo[]>([]);
+
+  // State for payout history drawer
+  const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useState(false);
+  const [historyGrant, setHistoryGrant] = useState<{
+    grantUID: string;
+    grantName: string;
+    projectName: string;
+    approvedAmount?: string;
+  } | null>(null);
+
 
   // Get values from URL params or use defaults
   const selectedProgramId = searchParams.get("programId");
@@ -90,63 +120,100 @@ export default function PayoutsAdminPage() {
   // Extract the actual programId from the composite value (programId_chainId)
   const actualProgramId = selectedProgramId?.split("_")[0] || null;
 
-  // Fetch grants data with filter and pagination
+  // Build options for the community payouts query
+  const payoutsOptions: CommunityPayoutsOptions = {
+    page: currentPage,
+    limit: itemsPerPage,
+    filters: actualProgramId ? { programId: actualProgramId } : undefined,
+  };
+
+  // Fetch payouts data with filter and pagination using the new endpoint
+  // Wait for auth to be ready to ensure JWT is available
   const {
-    data: grantsData,
-    isLoading: isLoadingGrants,
-    refetch: refreshGrants,
-  } = useGrants(communityId, {
-    filter: actualProgramId ? { selectedProgramId: actualProgramId } : undefined,
-    paginationOps: {
-      page: currentPage - 1, // Backend expects 0-based page index
-      pageLimit: itemsPerPage,
-    },
-    sortBy: "recent", // Use backend's recent sort option
+    data: payoutsData,
+    isLoading: isLoadingPayouts,
+    invalidate: refreshPayouts,
+  } = useCommunityPayouts(community?.uid || "", payoutsOptions, {
+    enabled: !!community?.uid && authReady,
   });
 
-  const grants = grantsData?.grants || [];
-  const totalItems = grantsData?.totalItems || 0;
+  const payouts = payoutsData?.payload || [];
+  const totalItems = payoutsData?.pagination?.totalCount || 0;
 
-  // Batch update mutation
-  const { mutate: batchUpdate, isPending: isSaving } = useBatchUpdatePayouts();
+  // Save payout config mutation (saves to payout_grant_config collection)
+  const { mutate: saveConfigs, isPending: isSaving } = useSavePayoutConfig();
 
-  // Process grants into table data format
+  // Process payouts into table data format
   const tableData: PayoutsTableData[] = useMemo(() => {
-    const grantsArray: PayoutsTableData[] = [];
-
-    grants.forEach((grant) => {
-      // Extract payout address for this community from the project's payoutAddress dictionary
-      // Note: grant.payoutAddress is actually the project's payoutAddress extracted by useGrants hook
-      let currentPayoutAddress = "";
-      if (grant.payoutAddress) {
-        if (typeof grant.payoutAddress === "string") {
-          // Backward compatibility: if it's still a string, use it directly
-          currentPayoutAddress = grant.payoutAddress;
-        } else if (typeof grant.payoutAddress === "object" && community?.uid) {
-          // New structure: extract address for this specific community
-          currentPayoutAddress = grant.payoutAddress[community.uid] || "";
-        }
-      }
-
-      grantsArray.push({
-        uid: grant.uid,
-        projectUid: grant.projectUid,
-        projectName: grant.project,
-        projectSlug: grant.projectSlug,
-        grantName: grant.grant,
-        grantProgramId: grant.programId,
-        grantChainId: grant.grantChainId,
-        projectChainId: grant.projectChainId || grant.grantChainId,
-        currentPayoutAddress: currentPayoutAddress,
-        currentAmount: grant.payoutAmount || "",
-      });
+    return payouts.map((payout) => {
+      return {
+        uid: payout.grant.uid,
+        projectUid: payout.project.uid,
+        projectName: payout.project.title,
+        projectSlug: payout.project.slug,
+        grantName: payout.grant.title,
+        grantProgramId: payout.grant.programId || "",
+        grantChainId: payout.grant.chainID,
+        projectChainId: payout.project.chainID,
+        // Use admin-set values from attestation table (separate from project/grant native data)
+        currentPayoutAddress: payout.project.adminPayoutAddress || "",
+        currentAmount: payout.grant.adminPayoutAmount || "",
+      };
     });
+  }, [payouts]);
 
-    return grantsArray;
-  }, [grants, community?.uid]);
+  // Create a map of grant UID to disbursement info from the payouts response
+  const disbursementMap = useMemo(() => {
+    const map: Record<string, { totalsByToken: TokenTotal[]; status: string; history: any[] }> = {};
+    payouts.forEach((payout) => {
+      map[payout.grant.uid] = {
+        totalsByToken: payout.disbursements.totalsByToken || [],
+        status: payout.disbursements.status,
+        history: payout.disbursements.history,
+      };
+    });
+    return map;
+  }, [payouts]);
 
   // Since we're now using backend pagination, we don't need to filter or paginate client-side
   const paginatedData = tableData;
+
+  // Helper to compute display status based on aggregated status from API
+  const computeDisplayStatus = useCallback(
+    (
+      item: PayoutsTableData,
+      disbursementInfo?: { totalsByToken: TokenTotal[]; status: string; history: any[] }
+    ): { label: string; color: string } => {
+      const aggregatedStatus = disbursementInfo?.status;
+      const history = disbursementInfo?.history || [];
+      const latestDisbursement = history[0];
+
+      // Check for in-progress states from the latest disbursement
+      if (latestDisbursement) {
+        if (latestDisbursement.status === PayoutDisbursementStatus.AWAITING_SIGNATURES) {
+          return { label: "Awaiting Signatures", color: "text-yellow-700 bg-yellow-100 dark:bg-yellow-900/30" };
+        }
+        if (latestDisbursement.status === PayoutDisbursementStatus.FAILED) {
+          return { label: "Failed", color: "text-red-700 bg-red-100 dark:bg-red-900/30" };
+        }
+        if (latestDisbursement.status === PayoutDisbursementStatus.CANCELLED) {
+          return { label: "Cancelled", color: "text-gray-700 bg-gray-200 dark:bg-gray-600" };
+        }
+      }
+
+      // Use aggregated status for overall progress
+      switch (aggregatedStatus) {
+        case AggregatedDisbursementStatus.COMPLETED:
+          return { label: "Disbursed", color: "text-green-700 bg-green-100 dark:bg-green-900/30" };
+        case AggregatedDisbursementStatus.IN_PROGRESS:
+          return { label: "Partially Disbursed", color: "text-blue-700 bg-blue-100 dark:bg-blue-900/30" };
+        case AggregatedDisbursementStatus.NOT_STARTED:
+        default:
+          return { label: "Pending", color: "text-gray-500 bg-gray-100 dark:bg-gray-700" };
+      }
+    },
+    []
+  );
 
   // URL param update handlers
   const handleProgramChange = (programId: string | null) => {
@@ -203,10 +270,10 @@ export default function PayoutsAdminPage() {
     }
 
     if (field === "amount" && value) {
-      if (!/^\d+(\.\d{1,2})?$/.test(value)) {
+      if (!/^\d+(\.\d{1,18})?$/.test(value)) {
         setErrors((prev) => ({
           ...prev,
-          [`${uid}-${field}`]: "Must be a valid number with up to 2 decimal places",
+          [`${uid}-${field}`]: "Must be a valid number with up to 18 decimal places",
         }));
         return false;
       }
@@ -317,49 +384,165 @@ export default function PayoutsAdminPage() {
     URL.revokeObjectURL(url);
   }, [tableData]);
 
-  // Handle save
+  // Check if a grant is ready for disbursement (has payout address and amount)
+  const isGrantReadyForDisbursement = useCallback((item: PayoutsTableData): boolean => {
+    const payoutAddress = editedFields[item.uid]?.payoutAddress ?? item.currentPayoutAddress;
+    const amount = editedFields[item.uid]?.amount ?? item.currentAmount;
+    return !!(payoutAddress && isAddress(payoutAddress) && amount && parseFloat(amount) > 0);
+  }, [editedFields]);
+
+  // Check if a grant's checkbox should be disabled (missing payout address or amount = 0)
+  // Returns { disabled: boolean, reason: string | null }
+  const getCheckboxDisabledState = useCallback((item: PayoutsTableData): { disabled: boolean; reason: string | null } => {
+    const payoutAddress = editedFields[item.uid]?.payoutAddress ?? item.currentPayoutAddress;
+    const amount = editedFields[item.uid]?.amount ?? item.currentAmount;
+    const parsedAmount = amount ? parseFloat(amount) : 0;
+
+    if (!payoutAddress || payoutAddress.trim() === "") {
+      return { disabled: true, reason: "Missing payout address" };
+    }
+
+    if (!isAddress(payoutAddress)) {
+      return { disabled: true, reason: "Invalid payout address" };
+    }
+
+    if (parsedAmount === 0 || Number.isNaN(parsedAmount)) {
+      return { disabled: true, reason: "Payout amount is 0 or missing" };
+    }
+
+    return { disabled: false, reason: null };
+  }, [editedFields]);
+
+  // Get all selectable grants (those with valid payout address and amount > 0)
+  const selectableGrants = useMemo(() => {
+    return paginatedData.filter((item) => !getCheckboxDisabledState(item).disabled);
+  }, [paginatedData, getCheckboxDisabledState]);
+
+  // Selection handlers
+  const handleSelectGrant = (uid: string, checked: boolean) => {
+    setSelectedGrants((prev) => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(uid);
+      } else {
+        newSet.delete(uid);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      // Only select grants that have valid payout address AND amount > 0
+      setSelectedGrants(new Set(selectableGrants.map((item) => item.uid)));
+    } else {
+      setSelectedGrants(new Set());
+    }
+  };
+
+  // Open disbursement modal for selected grants
+  const handleOpenDisbursementModal = () => {
+    const selectedItems = paginatedData.filter(
+      (item) => selectedGrants.has(item.uid) && isGrantReadyForDisbursement(item)
+    );
+
+    if (selectedItems.length === 0) {
+      toast.error("Please select grants with valid payout addresses and amounts");
+      return;
+    }
+
+    const grantsInfo: GrantDisbursementInfo[] = selectedItems.map((item) => ({
+      grantUID: item.uid,
+      projectUID: item.projectUid,
+      grantName: item.grantName,
+      projectName: item.projectName,
+      payoutAddress: editedFields[item.uid]?.payoutAddress || item.currentPayoutAddress || "",
+      approvedAmount: editedFields[item.uid]?.amount || item.currentAmount || "0",
+      // Pass totalsByToken so the modal can correctly calculate remaining amount
+      // (converts from raw BigInt to human-readable using token decimals)
+      totalsByToken: disbursementMap[item.uid]?.totalsByToken || [],
+    }));
+
+    setGrantsForDisbursement(grantsInfo);
+    setIsDisbursementModalOpen(true);
+  };
+
+  // Open history drawer for a specific grant
+  const handleOpenHistoryDrawer = (item: PayoutsTableData) => {
+    setHistoryGrant({
+      grantUID: item.uid,
+      grantName: item.grantName,
+      projectName: item.projectName,
+      approvedAmount: editedFields[item.uid]?.amount || item.currentAmount,
+    });
+    setIsHistoryDrawerOpen(true);
+  };
+
+  // Handle disbursement modal close
+  const handleDisbursementModalClose = () => {
+    setIsDisbursementModalOpen(false);
+    setGrantsForDisbursement([]);
+  };
+
+  // Handle disbursement success
+  const handleDisbursementSuccess = () => {
+    // Clear selection after successful disbursement
+    setSelectedGrants(new Set());
+    // Refresh grants data
+    refreshPayouts();
+  };
+
+  // Handle save - saves payout config to payout_grant_config collection
   const handleSave = async () => {
     // Clear all errors
     setErrors({});
 
-    // Prepare updates
-    const updates: AttestationBatchUpdateItem[] = [];
+    // Prepare payout configs
+    const configs: PayoutConfigItem[] = [];
     let hasValidationError = false;
 
-    Object.entries(editedFields).forEach(([uid, fields]) => {
-      const item = tableData.find((d) => d.uid === uid);
+    Object.entries(editedFields).forEach(([grantUID, fields]) => {
+      const item = tableData.find((d) => d.uid === grantUID);
       if (!item) return;
 
       // Validate fields
       if (Object.hasOwn(fields, "payoutAddress")) {
         // Allow empty string to clear the field
-        if (fields.payoutAddress && !validateField(uid, "payoutAddress", fields.payoutAddress)) {
+        if (fields.payoutAddress && !validateField(grantUID, "payoutAddress", fields.payoutAddress)) {
           hasValidationError = true;
           return;
         }
-
-        updates.push({
-          uid: item.projectUid,
-          chainId: item.projectChainId,
-          type: "Project",
-          payoutAddress: fields.payoutAddress,
-        });
       }
 
       if (Object.hasOwn(fields, "amount")) {
         // Allow empty string to clear the field
-        if (fields.amount && !validateField(uid, "amount", fields.amount)) {
+        if (fields.amount && !validateField(grantUID, "amount", fields.amount)) {
           hasValidationError = true;
           return;
         }
-
-        updates.push({
-          uid,
-          chainId: item.grantChainId,
-          type: "Grant",
-          amount: fields.amount,
-        });
       }
+
+      // Build the config item with both payoutAddress and totalGrantAmount
+      const configItem: PayoutConfigItem = {
+        grantUID,
+        projectUID: item.projectUid,
+      };
+
+      // Include payoutAddress if edited or use current value
+      if (Object.hasOwn(fields, "payoutAddress")) {
+        configItem.payoutAddress = fields.payoutAddress || undefined;
+      } else if (item.currentPayoutAddress) {
+        configItem.payoutAddress = item.currentPayoutAddress;
+      }
+
+      // Include totalGrantAmount if edited or use current value
+      if (Object.hasOwn(fields, "amount")) {
+        configItem.totalGrantAmount = fields.amount || undefined;
+      } else if (item.currentAmount) {
+        configItem.totalGrantAmount = item.currentAmount;
+      }
+
+      configs.push(configItem);
     });
 
     if (hasValidationError) {
@@ -367,34 +550,45 @@ export default function PayoutsAdminPage() {
       return;
     }
 
-    if (updates.length === 0) {
+    if (configs.length === 0) {
       toast.error("No changes to save");
       return;
     }
 
-    // Execute batch update
-    batchUpdate(
-      {
-        communityIdOrSlug: communityId,
-        updates,
-      },
-      {
-        onSuccess: (data) => {
-          // Clear edited fields for successful updates
-          const successfulUids = data.success;
-          setEditedFields((prev) => {
-            const newEdited = { ...prev };
-            successfulUids.forEach((uid) => {
-              delete newEdited[uid];
-            });
-            return newEdited;
-          });
+    // Execute save payout config
+    const request: SavePayoutConfigRequest = {
+      configs,
+      communityUID: community?.uid || "",
+    };
 
-          // Refresh grants data
-          refreshGrants();
-        },
-      }
-    );
+    saveConfigs(request, {
+      onSuccess: (data) => {
+        const { success, failed } = data;
+
+        if (success.length > 0) {
+          toast.success(`Successfully saved ${success.length} payout config(s)`);
+        }
+
+        if (failed.length > 0) {
+          toast.error(`Failed to save ${failed.length} config(s)`);
+        }
+
+        // Clear edited fields for successful saves only
+        setEditedFields((prev) => {
+          const newEdited = { ...prev };
+          success.forEach((config) => {
+            delete newEdited[config.grantUID];
+          });
+          return newEdited;
+        });
+
+        // Note: No need to call refreshPayouts() here - the useSavePayoutConfig hook
+        // already invalidates the communityPayouts query on success
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to save payout configs");
+      },
+    });
   };
 
   // Handle errors
@@ -408,7 +602,7 @@ export default function PayoutsAdminPage() {
   }, [communityError, router]);
 
   // Loading state
-  if (loadingAdmin || isLoadingGrants || isLoadingCommunity) {
+  if (!authReady || loadingAdmin || isLoadingPayouts || isLoadingCommunity) {
     return (
       <div className="flex w-full items-center justify-center h-96">
         <Spinner />
@@ -474,6 +668,24 @@ export default function PayoutsAdminPage() {
             <table className="pt-3 min-w-full divide-y dark:bg-zinc-900 divide-gray-300 dark:divide-zinc-800 dark:text-white">
               <thead>
                 <tr className="border-b transition-colors text-gray-500 dark:text-gray-200 hover:bg-muted/50">
+                  <th scope="col" className="h-12 px-2 text-center align-middle font-medium w-12">
+                    <input
+                      type="checkbox"
+                      className={cn(
+                        "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500",
+                        selectableGrants.length === 0 && "opacity-50 cursor-not-allowed"
+                      )}
+                      checked={
+                        selectableGrants.length > 0 &&
+                        selectableGrants.every((item) => selectedGrants.has(item.uid))
+                      }
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      disabled={selectableGrants.length === 0}
+                      title={selectableGrants.length === 0
+                        ? "No grants have valid payout address and amount"
+                        : `Select all ${selectableGrants.length} eligible grants`}
+                    />
+                  </th>
                   <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
                     Project
                   </th>
@@ -484,7 +696,13 @@ export default function PayoutsAdminPage() {
                     Payout Address
                   </th>
                   <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
-                    Payout Amount
+                    Total Grant
+                  </th>
+                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
+                    Total Disbursed to Date
+                  </th>
+                  <th scope="col" className="h-12 px-4 text-center align-middle font-medium w-32">
+                    Status
                   </th>
                 </tr>
               </thead>
@@ -493,12 +711,35 @@ export default function PayoutsAdminPage() {
                   const fieldId = item.uid;
                   const payoutError = errors[`${fieldId}-payoutAddress`];
                   const amountError = errors[`${fieldId}-amount`];
+                  const disbursementInfo = disbursementMap[item.uid];
+                  const totalsByToken = disbursementInfo?.totalsByToken || [];
+                  const displayStatus = computeDisplayStatus(item, disbursementInfo);
+
+                  // Check if checkbox should be disabled
+                  const checkboxState = getCheckboxDisabledState(item);
 
                   return (
                     <tr
                       key={`${item.uid}-${item.projectUid}`}
-                      className="dark:text-zinc-300 text-gray-900 px-4 py-4"
+                      className={cn(
+                        "dark:text-zinc-300 text-gray-900 px-4 py-4",
+                        selectedGrants.has(item.uid) && "bg-blue-50 dark:bg-blue-900/20",
+                        checkboxState.disabled && "opacity-60"
+                      )}
                     >
+                      <td className="px-2 py-2 text-center">
+                        <input
+                          type="checkbox"
+                          className={cn(
+                            "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500",
+                            checkboxState.disabled && "opacity-50 cursor-not-allowed"
+                          )}
+                          checked={selectedGrants.has(item.uid)}
+                          onChange={(e) => handleSelectGrant(item.uid, e.target.checked)}
+                          disabled={checkboxState.disabled}
+                          title={checkboxState.reason || "Select for disbursement"}
+                        />
+                      </td>
                       <td className="px-4 py-2 font-medium h-16">
                         <ExternalLink
                           href={PAGES.PROJECT.OVERVIEW(item.projectSlug || item.projectUid)}
@@ -565,6 +806,23 @@ export default function PayoutsAdminPage() {
                           )}
                         </div>
                       </td>
+                      {/* Disbursed Amount column */}
+                      <td className="px-4 py-2 text-left">
+                        <TokenBreakdown totalsByToken={totalsByToken} size="sm" />
+                      </td>
+                      {/* Status column - clickable to open history */}
+                      <td className="px-4 py-2 text-center">
+                        <button
+                          onClick={() => handleOpenHistoryDrawer(item)}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity",
+                            displayStatus.color
+                          )}
+                          title="Click to view payout history"
+                        >
+                          {displayStatus.label}
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -581,17 +839,60 @@ export default function PayoutsAdminPage() {
                   totalPosts={totalItems}
                 />
               </div>
-              <Button
-                disabled={isSaving || !hasChanges || Object.keys(errors).length > 0}
-                onClick={handleSave}
-                className="w-max mx-4 px-8 py-2 bg-blue-400 text-white rounded-md disabled:opacity-25 dark:bg-blue-900"
-              >
-                {isSaving ? "Saving..." : "Save"}
-              </Button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Create Disbursement Modal */}
+      <CreateDisbursementModal
+        isOpen={isDisbursementModalOpen}
+        onClose={handleDisbursementModalClose}
+        communityUID={community?.uid || ""}
+        grants={grantsForDisbursement}
+        onSuccess={handleDisbursementSuccess}
+      />
+
+      {/* Payout History Drawer */}
+      {historyGrant && (
+        <PayoutHistoryDrawer
+          isOpen={isHistoryDrawerOpen}
+          onClose={() => {
+            setIsHistoryDrawerOpen(false);
+            setHistoryGrant(null);
+          }}
+          grantUID={historyGrant.grantUID}
+          grantName={historyGrant.grantName}
+          projectName={historyGrant.projectName}
+          approvedAmount={historyGrant.approvedAmount}
+        />
+      )}
+
+      {/* Floating Action Buttons - Save and Create Disbursement */}
+      {(hasChanges || selectedGrants.size > 0) && (
+        <div className="fixed bottom-6 right-6 z-40 animate-in slide-in-from-bottom-4 fade-in duration-300 flex items-center gap-3">
+          {/* Save Button - only show if there are unsaved changes */}
+          {hasChanges && (
+            <Button
+              disabled={isSaving || Object.keys(errors).length > 0}
+              onClick={handleSave}
+              className="flex items-center gap-2 px-6 py-4 bg-gray-600 hover:bg-gray-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 text-base font-semibold disabled:opacity-50"
+            >
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+          )}
+          {/* Create Disbursement Button - only show if grants are selected */}
+          {selectedGrants.size > 0 && (
+            <Button
+              onClick={handleOpenDisbursementModal}
+              className="flex items-center gap-3 px-6 py-4 bg-brand-blue hover:bg-brand-blue/80 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 text-base font-semibold"
+            >
+              <BanknotesIcon className="h-6 w-6" />
+              Create Disbursement ({selectedGrants.size})
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

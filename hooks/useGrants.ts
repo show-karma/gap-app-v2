@@ -19,6 +19,8 @@ export type SimplifiedGrant = {
   projectChainId?: number;
   programId: string;
   payoutAddress?: string;
+  /** Chain-specific payout addresses keyed by chain ID (e.g., { "10": "0x...", "42161": "0x..." }) */
+  chainPayoutAddress?: Record<string, string>;
   payoutAmount?: string;
 };
 
@@ -60,6 +62,9 @@ export const useGrants = (communityId: string, options?: UseGrantsOptions) => {
             programId: grant.details?.programId || "",
             chainId: grant.chainID,
             payoutAddress: grant.project?.payoutAddress,
+            // Type assertion to access chainPayoutAddress from the full project object
+            chainPayoutAddress: (grant.project as { chainPayoutAddress?: Record<string, string> })
+              ?.chainPayoutAddress,
             payoutAmount: grant.amount,
             grantChainId: grant.chainID,
             projectChainId: grant.project?.chainID,
