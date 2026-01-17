@@ -1,7 +1,8 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Info } from "lucide-react";
-import { type FC, useCallback, useEffect, useState } from "react";
+import { type FC, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -28,50 +29,28 @@ const EditPostApprovalModal: FC<EditPostApprovalModalProps> = ({
   onSuccess,
 }) => {
   const { updatePostApprovalDataAsync, isUpdating } = usePostApprovalUpdate();
-  const [formSchema, setFormSchema] = useState<IFormSchema | null>(propFormSchema || null);
-  const [isLoadingFormSchema, setIsLoadingFormSchema] = useState(false);
-  const [formSchemaError, setFormSchemaError] = useState<string | null>(null);
   const [matchingDiagnostics, setMatchingDiagnostics] = useState<{
     matched: Array<{ fieldLabel: string; originalKey: string; fieldId: string }>;
     unmatched: Array<{ originalKey: string; value: any }>;
     matchRate: number;
   } | null>(null);
 
-  // Fetch post-approval form schema from API when modal opens
-  const fetchFormConfig = useCallback(async () => {
-    setIsLoadingFormSchema(true);
-    setFormSchemaError(null);
-    try {
-      const program = await fundingPlatformService.programs.getProgramConfiguration(programId);
+  // Fetch post-approval form schema from API when modal opens (if not provided as prop)
+  const {
+    data: fetchedFormSchema,
+    isLoading: isLoadingFormSchema,
+    error: formSchemaError,
+    refetch,
+  } = useQuery({
+    queryKey: ["postApprovalFormSchema", programId],
+    queryFn: () => fundingPlatformService.programs.getProgramConfiguration(programId),
+    enabled: isOpen && !!programId && !propFormSchema,
+    select: (program) => program?.applicationConfig?.postApprovalFormSchema,
+    retry: false,
+  });
 
-      if (!program?.applicationConfig?.postApprovalFormSchema) {
-        setFormSchemaError("Post-approval form configuration not found");
-        setFormSchema(null);
-        return;
-      }
-
-      setFormSchema(program.applicationConfig.postApprovalFormSchema);
-    } catch (error) {
-      setFormSchemaError("Failed to load form configuration");
-      setFormSchema(null);
-      if (process.env.NODE_ENV === "development") {
-        console.error("Failed to fetch post-approval form config:", error);
-      }
-    } finally {
-      setIsLoadingFormSchema(false);
-    }
-  }, [programId]);
-
-  useEffect(() => {
-    if (isOpen && programId) {
-      if (propFormSchema) {
-        setFormSchema(propFormSchema);
-        setFormSchemaError(null);
-      } else {
-        fetchFormConfig();
-      }
-    }
-  }, [isOpen, programId, propFormSchema, fetchFormConfig]);
+  // Use prop schema if provided, otherwise use fetched schema
+  const formSchema = propFormSchema || fetchedFormSchema;
 
   const handleClose = () => {
     if (!isUpdating) {
@@ -93,6 +72,19 @@ const EditPostApprovalModal: FC<EditPostApprovalModalProps> = ({
       }
     }
   };
+
+  // Determine error message
+  const getErrorMessage = () => {
+    if (formSchemaError) {
+      return "Failed to load form configuration";
+    }
+    if (!isLoadingFormSchema && !formSchema && !propFormSchema) {
+      return "Post-approval form configuration not found";
+    }
+    return null;
+  };
+
+  const errorMessage = getErrorMessage();
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -154,12 +146,12 @@ const EditPostApprovalModal: FC<EditPostApprovalModalProps> = ({
                 Loading form configuration...
               </p>
             </div>
-          ) : formSchemaError ? (
+          ) : errorMessage ? (
             <div className="flex flex-col items-center justify-center py-12">
               <p className="text-sm font-medium text-red-600 dark:text-red-400 mb-4">
-                {formSchemaError}
+                {errorMessage}
               </p>
-              <Button onClick={fetchFormConfig} variant="primary">
+              <Button onClick={() => refetch()} variant="primary">
                 Retry
               </Button>
             </div>
