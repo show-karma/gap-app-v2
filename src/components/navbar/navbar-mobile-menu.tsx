@@ -21,12 +21,7 @@ import {
 } from "@/components/ui/drawer";
 import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
-import { useReviewerPrograms } from "@/hooks/usePermissions";
-import { useStaff } from "@/hooks/useStaff";
-import { useOwnerStore } from "@/store";
-import { useCommunitiesStore } from "@/store/communities";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
-import { useRegistryStore } from "@/store/registry";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { Logo } from "../shared/logo";
@@ -37,6 +32,7 @@ import {
   MenuSection,
   ResourcesContent,
 } from "./menu-components";
+import { useNavbarPermissions } from "./navbar-permissions-context";
 import { NavbarSearch } from "./navbar-search";
 
 const menuStyles = {
@@ -73,7 +69,7 @@ const _formatAddress = (addr: string) => {
 
 export function NavbarMobileMenu() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { authenticated: isLoggedIn, authenticate: login, logout, address } = useAuth();
+  const { authenticate: login, logout } = useAuth();
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const toggleTheme = () => {
     changeCurrentTheme(currentTheme === "light" ? "dark" : "light");
@@ -81,19 +77,11 @@ export function NavbarMobileMenu() {
 
   const { openModal: openProfileModal } = useContributorProfileModalStore();
 
+  // Use centralized permissions context to avoid duplicate API calls
+  const { isLoggedIn, address, hasReviewerRole, hasAdminAccess, isRegistryAllowed } =
+    useNavbarPermissions();
+
   const { profile } = useContributorProfile(address);
-
-  // Check admin and reviewer permissions
-  const { communities } = useCommunitiesStore();
-  const { programs: reviewerPrograms } = useReviewerPrograms();
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isPoolManager, isRegistryAdmin } = useRegistryStore();
-
-  const isCommunityAdmin = communities.length !== 0;
-  const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
-  const hasAdminAccess = !isStaffLoading && (isStaff || isOwner || isCommunityAdmin);
-  const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
 
   const quickActions = [
     {
@@ -177,129 +165,138 @@ export function NavbarMobileMenu() {
                 </button>
               </DrawerClose>
             </DrawerHeader>
-            <div className="flex flex-col p-4 gap-2 max-h-[70vh] overflow-y-auto">
-              {/* Mobile Search */}
-              <div className="mb-4 w-full">
-                <NavbarSearch onSelectItem={() => setMobileMenuOpen(false)} />
-              </div>
-
-              {isLoggedIn && quickActions.length > 0 && (
-                <div className="mb-4 flex flex-col items-start justify-start gap-2">
-                  {quickActions.map((action) => (
-                    <Button key={action.href} variant="secondary" asChild>
-                      <Link href={action.href} onClick={() => setMobileMenuOpen(false)}>
-                        {action.label}
-                      </Link>
-                    </Button>
-                  ))}
+            {/* Only render drawer body content when menu is open to avoid unnecessary component initialization */}
+            {mobileMenuOpen && (
+              <div className="flex flex-col p-4 gap-2 max-h-[70vh] overflow-y-auto">
+                {/* Mobile Search */}
+                <div className="mb-4 w-full">
+                  <NavbarSearch onSelectItem={() => setMobileMenuOpen(false)} />
                 </div>
-              )}
 
-              {!isLoggedIn && (
-                <>
-                  {/* For Builders Section */}
-                  <div className="border-b border-border py-3">
-                    <MenuSection title="For Builders" variant="mobile" />
-                    <ForBuildersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+                {isLoggedIn && quickActions.length > 0 && (
+                  <div className="mb-4 flex flex-col items-start justify-start gap-2">
+                    {quickActions.map((action) => (
+                      <Button key={action.href} variant="secondary" asChild>
+                        <Link href={action.href} onClick={() => setMobileMenuOpen(false)}>
+                          {action.label}
+                        </Link>
+                      </Button>
+                    ))}
                   </div>
+                )}
 
-                  {/* For Funders Section */}
+                {!isLoggedIn && (
+                  <>
+                    {/* For Builders Section */}
+                    <div className="border-b border-border py-3">
+                      <MenuSection title="For Builders" variant="mobile" />
+                      <ForBuildersContent
+                        variant="mobile"
+                        onClose={() => setMobileMenuOpen(false)}
+                      />
+                    </div>
+
+                    {/* For Funders Section */}
+                    <div className="border-b border-border py-3">
+                      <MenuSection title="For Funders" variant="mobile" />
+                      <ForFundersContent
+                        variant="mobile"
+                        onClose={() => setMobileMenuOpen(false)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Explore Section */}
+                <div className="border-b border-border py-5">
+                  <ExploreContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+                </div>
+
+                {/* Resources Section - Only when NOT logged in */}
+                {!isLoggedIn && (
                   <div className="border-b border-border py-3">
-                    <MenuSection title="For Funders" variant="mobile" />
-                    <ForFundersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
-                  </div>
-                </>
-              )}
-
-              {/* Explore Section */}
-              <div className="border-b border-border py-5">
-                <ExploreContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
-              </div>
-
-              {/* Resources Section - Only when NOT logged in */}
-              {!isLoggedIn && (
-                <div className="border-b border-border py-3">
-                  <MenuSection title="Resources" variant="mobile" />
-                  <ResourcesContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
-                  <div className="mt-4 pt-4 border-t border-border">
-                    <MenuSection title="Follow" variant="mobile" className="mb-4" />
-                    <div className="flex items-center gap-2">
-                      {socialMediaLinks.map((social) => {
-                        const IconComponent = social.icon;
-                        return (
-                          <ExternalLink
-                            key={social.name}
-                            href={social.href}
-                            className="w-10 h-10 flex items-center justify-center rounded-full transition-colors"
-                            aria-label={social.name}
-                          >
-                            <IconComponent className="w-8 h-8 text-muted-foreground" />
-                          </ExternalLink>
-                        );
-                      })}
+                    <MenuSection title="Resources" variant="mobile" />
+                    <ResourcesContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <MenuSection title="Follow" variant="mobile" className="mb-4" />
+                      <div className="flex items-center gap-2">
+                        {socialMediaLinks.map((social) => {
+                          const IconComponent = social.icon;
+                          return (
+                            <ExternalLink
+                              key={social.name}
+                              href={social.href}
+                              className="w-10 h-10 flex items-center justify-center rounded-full transition-colors"
+                              aria-label={social.name}
+                            >
+                              <IconComponent className="w-8 h-8 text-muted-foreground" />
+                            </ExternalLink>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Mobile Auth */}
-              {isLoggedIn ? (
-                <div className="py-3">
-                  <button
-                    type="button"
-                    className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
-                    onClick={toggleTheme}
-                  >
-                    {currentTheme === "light" ? (
-                      <ToggleLeft className={menuStyles.itemIcon} />
-                    ) : (
-                      <ToggleRight className={menuStyles.itemIcon} />
-                    )}
-                    <span className={menuStyles.itemText}>
-                      {currentTheme === "light" ? "Dark mode" : "Light mode"}
-                    </span>
-                  </button>
-                  <ExternalLink
-                    href={SOCIALS.DOCS}
-                    className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <CircleHelp className={menuStyles.itemIcon} />
-                    <span className={menuStyles.itemText}>Docs</span>
-                  </ExternalLink>
-                  <hr className="h-[1px] w-full border-border" />
-                  <button
-                    type="button"
-                    className="w-full flex items-center gap-3 rounded-md hover:bg-accent text-left mt-4"
-                    onClick={() => {
-                      logout();
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    <LogOutIcon className={menuStyles.itemIcon} />
-                    <span className={menuStyles.itemText}>Log out</span>
-                  </button>
-                  <div className="mt-4 pt-4 border-t border-border flex flex-col items-center">
-                    <MenuSection title="Follow" variant="mobile" className="mb-4" />
-                    <div className="flex items-center gap-2">
-                      {socialMediaLinks.map((social) => {
-                        const IconComponent = social.icon;
-                        return (
-                          <ExternalLink
-                            key={social.name}
-                            href={social.href}
-                            className="w-10 h-10 flex items-center justify-center rounded-full transition-colors"
-                            aria-label={social.name}
-                          >
-                            <IconComponent className="w-8 h-8 text-muted-foreground" />
-                          </ExternalLink>
-                        );
-                      })}
+                {/* Mobile Auth */}
+                {isLoggedIn ? (
+                  <div className="py-3">
+                    <button
+                      type="button"
+                      className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
+                      onClick={toggleTheme}
+                    >
+                      {currentTheme === "light" ? (
+                        <ToggleLeft className={menuStyles.itemIcon} />
+                      ) : (
+                        <ToggleRight className={menuStyles.itemIcon} />
+                      )}
+                      <span className={menuStyles.itemText}>
+                        {currentTheme === "light" ? "Dark mode" : "Light mode"}
+                      </span>
+                    </button>
+                    <ExternalLink
+                      href={SOCIALS.DOCS}
+                      className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <CircleHelp className={menuStyles.itemIcon} />
+                      <span className={menuStyles.itemText}>Docs</span>
+                    </ExternalLink>
+                    <hr className="h-[1px] w-full border-border" />
+                    <button
+                      type="button"
+                      className="w-full flex items-center gap-3 rounded-md hover:bg-accent text-left mt-4"
+                      onClick={() => {
+                        logout();
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      <LogOutIcon className={menuStyles.itemIcon} />
+                      <span className={menuStyles.itemText}>Log out</span>
+                    </button>
+                    <div className="mt-4 pt-4 border-t border-border flex flex-col items-center">
+                      <MenuSection title="Follow" variant="mobile" className="mb-4" />
+                      <div className="flex items-center gap-2">
+                        {socialMediaLinks.map((social) => {
+                          const IconComponent = social.icon;
+                          return (
+                            <ExternalLink
+                              key={social.name}
+                              href={social.href}
+                              className="w-10 h-10 flex items-center justify-center rounded-full transition-colors"
+                              aria-label={social.name}
+                            >
+                              <IconComponent className="w-8 h-8 text-muted-foreground" />
+                            </ExternalLink>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : null}
-            </div>
+                ) : null}
+              </div>
+            )}
           </DrawerContent>
         </Drawer>
       </div>
