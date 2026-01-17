@@ -528,7 +528,9 @@ export const usePostApprovalUpdate = () => {
       toast.success("Post-approval data updated successfully");
     },
     onError: (error: any) => {
-      console.error("Failed to update post-approval data:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to update post-approval data:", error);
+      }
 
       if (error.response?.status === 403) {
         const message =
