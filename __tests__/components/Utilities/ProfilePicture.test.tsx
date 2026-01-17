@@ -1,3 +1,4 @@
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { render, screen } from "@testing-library/react";
 
 // Unmock ProfilePicture before importing it (navbar/setup.ts mocks it globally)

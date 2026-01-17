@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 /**
  * Unit tests for the HandleTheVisionSection component (/funders page)
  *

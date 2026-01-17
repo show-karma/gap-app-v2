@@ -1,3 +1,4 @@
+import { afterEach, describe, expect, it } from "bun:test";
 /**
  * Unit Tests: Navbar User Menu
  * Tests user menu rendering states, permission-based items, theme toggle, and social links

@@ -8,6 +8,7 @@
  * - Error reporting integration
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { fireEvent, render, screen } from "@testing-library/react";
 import type React from "react";
 import { DonationErrorBoundary } from "@/components/Donation/DonationErrorBoundary";

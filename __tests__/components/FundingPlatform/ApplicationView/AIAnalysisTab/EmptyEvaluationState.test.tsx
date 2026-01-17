@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import { EmptyEvaluationState } from "@/components/FundingPlatform/ApplicationView/AIAnalysisTab/EmptyEvaluationState";
 

@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ApplicationTab } from "@/components/FundingPlatform/ApplicationView/ApplicationTab";

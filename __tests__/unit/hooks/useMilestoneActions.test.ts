@@ -3,6 +3,7 @@
  * @description Tests for milestone action state management hook
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { act, renderHook } from "@testing-library/react";
 import { useMilestoneActions } from "@/hooks/useMilestoneActions";
 

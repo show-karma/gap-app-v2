@@ -9,6 +9,7 @@
  * - Accessibility (2)
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { PlatformFeatures } from "@/src/features/homepage/components/platform-features";
 import { renderWithProviders, screen, setViewportSize } from "../utils/test-helpers";
 import "@testing-library/jest-dom";

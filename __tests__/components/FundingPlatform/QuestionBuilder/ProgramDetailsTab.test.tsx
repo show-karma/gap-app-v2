@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from "bun:test";
 /**
  * @file Tests for ProgramDetailsTab component
  * @description Comprehensive tests for the program details tab

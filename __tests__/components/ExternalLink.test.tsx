@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import "@testing-library/jest-dom";

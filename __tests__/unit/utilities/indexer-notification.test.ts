@@ -3,27 +3,19 @@
  * @description Tests indexer notification and cache invalidation utilities
  */
 
-import * as fetchDataModule from "@/utilities/fetchData";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+import fetchData from "@/utilities/fetchData";
 import {
   notifyIndexer,
   notifyIndexerForGrant,
   notifyIndexerForMilestone,
 } from "@/utilities/indexer-notification";
-import * as queryKeysModule from "@/utilities/queryKeys";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
-// Mock dependencies
-jest.mock("@/utilities/fetchData");
-jest.mock("@/components/Utilities/PrivyProviderWrapper", () => ({
-  queryClient: {
-    invalidateQueries: jest.fn(),
-  },
-}));
+// fetchData is pre-registered as mock in bun-setup.ts
+const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
 
-const mockFetchData = fetchDataModule.default as jest.MockedFunction<
-  typeof fetchDataModule.default
->;
-
-// Import queryClient after mocking
+// queryClient is pre-registered in bun-setup.ts
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 
 const mockInvalidateQueries = queryClient.invalidateQueries as jest.MockedFunction<
@@ -127,20 +119,15 @@ describe("notifyIndexerForGrant", () => {
     it("should invalidate milestone queries when programId provided", async () => {
       mockFetchData.mockResolvedValue([{}, null]);
 
-      // Mock QUERY_KEYS
-      const mockQueryKey = ["projectGrantMilestones", "project-123", "program-1"];
-      jest
-        .spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES")
-        .mockReturnValue(mockQueryKey as any);
-
       await notifyIndexerForGrant("0x123abc", 42161, "project-123", "program-1");
 
       expect(mockInvalidateQueries).toHaveBeenCalledWith({
         queryKey: ["project", "project-123"],
       });
 
+      // The QUERY_KEYS mock returns ["project-grant-milestones", projectId, programId]
       expect(mockInvalidateQueries).toHaveBeenCalledWith({
-        queryKey: mockQueryKey,
+        queryKey: ["project-grant-milestones", "project-123", "program-1"],
       });
     });
 
@@ -175,26 +162,16 @@ describe("notifyIndexerForMilestone", () => {
     it("should notify indexer and invalidate milestone queries", async () => {
       mockFetchData.mockResolvedValue([{}, null]);
 
-      const mockQueryKey = ["projectGrantMilestones", "project-123", "program-1"];
-      jest
-        .spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES")
-        .mockReturnValue(mockQueryKey as any);
-
       await notifyIndexerForMilestone("0x123abc", 42161, "project-123", "program-1");
 
       expect(mockFetchData).toHaveBeenCalled();
       expect(mockInvalidateQueries).toHaveBeenCalledWith({
-        queryKey: mockQueryKey,
+        queryKey: ["project-grant-milestones", "project-123", "program-1"],
       });
     });
 
     it("should invalidate community queries when communityUID provided", async () => {
       mockFetchData.mockResolvedValue([{}, null]);
-
-      const mockQueryKey = ["projectGrantMilestones", "project-123", "program-1"];
-      jest
-        .spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES")
-        .mockReturnValue(mockQueryKey as any);
 
       await notifyIndexerForMilestone(
         "0x123abc",
@@ -205,7 +182,7 @@ describe("notifyIndexerForMilestone", () => {
       );
 
       expect(mockInvalidateQueries).toHaveBeenCalledWith({
-        queryKey: mockQueryKey,
+        queryKey: ["project-grant-milestones", "project-123", "program-1"],
       });
 
       expect(mockInvalidateQueries).toHaveBeenCalledWith({
@@ -214,32 +191,22 @@ describe("notifyIndexerForMilestone", () => {
     });
 
     it("should work without txHash", async () => {
-      const mockQueryKey = ["projectGrantMilestones", "project-123", "program-1"];
-      jest
-        .spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES")
-        .mockReturnValue(mockQueryKey as any);
-
       await notifyIndexerForMilestone(undefined, 42161, "project-123", "program-1");
 
       expect(mockFetchData).not.toHaveBeenCalled();
       expect(mockInvalidateQueries).toHaveBeenCalledWith({
-        queryKey: mockQueryKey,
+        queryKey: ["project-grant-milestones", "project-123", "program-1"],
       });
     });
 
     it("should work without communityUID", async () => {
       mockFetchData.mockResolvedValue([{}, null]);
 
-      const mockQueryKey = ["projectGrantMilestones", "project-123", "program-1"];
-      jest
-        .spyOn(queryKeysModule.QUERY_KEYS.MILESTONES, "PROJECT_GRANT_MILESTONES")
-        .mockReturnValue(mockQueryKey as any);
-
       await notifyIndexerForMilestone("0x123abc", 42161, "project-123", "program-1");
 
       expect(mockInvalidateQueries).toHaveBeenCalledTimes(1);
       expect(mockInvalidateQueries).toHaveBeenCalledWith({
-        queryKey: mockQueryKey,
+        queryKey: ["project-grant-milestones", "project-123", "program-1"],
       });
     });
   });

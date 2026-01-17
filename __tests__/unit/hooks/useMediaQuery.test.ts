@@ -3,6 +3,7 @@
  * @description Tests media query matching hook with resize event handling
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { act, renderHook } from "@testing-library/react";
 import useMediaQuery from "@/hooks/useMediaQuery";
 

@@ -3,6 +3,7 @@
  * @description Tests pagination logic hook with page range calculation
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { renderHook } from "@testing-library/react";
 import { DOTS, usePagination } from "@/hooks/usePagination";
 

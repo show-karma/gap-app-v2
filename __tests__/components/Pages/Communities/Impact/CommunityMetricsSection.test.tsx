@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from "bun:test";
 /**
  * @file Tests for CommunityMetricsSection component
  * @description Tests for the community metrics display component

@@ -8,6 +8,7 @@
  * - Visual Elements (2)
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { HowItWorks } from "@/src/features/homepage/components/how-it-works";
 import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";

@@ -1,3 +1,4 @@
+import { afterEach, describe, expect, it } from "bun:test";
 /**
  * Integration Tests: Navigation Flow
  * Tests all navigation patterns including dropdowns, external links, anchors, and modals

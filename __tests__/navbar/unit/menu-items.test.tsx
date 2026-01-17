@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 /**
  * @file menu-items.test.tsx
  * @description Unit tests for menu-items configuration data

@@ -1,3 +1,4 @@
+import { afterEach, describe, expect, it } from "bun:test";
 /**
  * Unit Tests: Navbar Desktop Navigation
  * Tests desktop navigation layout, dropdowns, auth states, and component integration

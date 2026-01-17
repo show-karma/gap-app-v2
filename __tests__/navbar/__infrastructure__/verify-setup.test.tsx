@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 /**
  * Verification tests for navbar test infrastructure
  * Ensures all fixtures, helpers, and mocks work correctly

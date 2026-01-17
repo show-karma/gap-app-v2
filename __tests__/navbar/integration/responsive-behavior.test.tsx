@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 /**
  * Integration Tests: Responsive Behavior
  * Tests viewport-specific behavior across mobile, tablet, and desktop breakpoints

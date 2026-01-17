@@ -1,3 +1,4 @@
+import { afterEach, describe, expect, it } from "bun:test";
 /**
  * Integration Tests: Permission Matrix
  * Systematically tests all 15+ permission combinations in both desktop and mobile contexts

@@ -1,3 +1,4 @@
+import { afterEach, describe, expect, it } from "bun:test";
 /**
  * Integration Tests: Theme Switching
  * Tests theme switching functionality in both desktop and mobile contexts

@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 /**
  * Unit Tests: Navbar User Skeleton
  * Tests skeleton loading states for user menu, auth buttons, and logged-in buttons

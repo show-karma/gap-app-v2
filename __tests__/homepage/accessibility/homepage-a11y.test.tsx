@@ -6,6 +6,7 @@
  * - Automated Checks (8): Each major section tested with axe
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { axe, toHaveNoViolations } from "jest-axe";
 import HomePage from "@/app/page";
 import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
