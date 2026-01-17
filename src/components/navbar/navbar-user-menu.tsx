@@ -28,16 +28,12 @@ import {
 } from "@/components/ui/menubar";
 import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
-import { useReviewerPrograms } from "@/hooks/usePermissions";
-import { useStaff } from "@/hooks/useStaff";
-import { useOwnerStore } from "@/store";
-import { useCommunitiesStore } from "@/store/communities";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
-import { useRegistryStore } from "@/store/registry";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
 import { MenuSection } from "./menu-components";
+import { useNavbarPermissions } from "./navbar-permissions-context";
 import { NavbarUserSkeleton } from "./navbar-user-skeleton";
 
 const menuStyles = {
@@ -77,27 +73,19 @@ const _formatAddressLong = (addr: string) => {
 };
 
 export function NavbarUserMenu() {
-  const { authenticated: isLoggedIn, logout, address, ready } = useAuth();
+  const { logout } = useAuth();
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const toggleTheme = () => {
     changeCurrentTheme(currentTheme === "light" ? "dark" : "light");
   };
 
+  // Use centralized permissions context to avoid duplicate API calls
+  const { isLoggedIn, address, ready, hasReviewerRole, hasAdminAccess, isRegistryAllowed } =
+    useNavbarPermissions();
+
   const { profile } = useContributorProfile(address);
 
   const { openModal: openProfileModal } = useContributorProfileModalStore();
-
-  // Check admin and reviewer permissions
-  const { communities } = useCommunitiesStore();
-  const { programs: reviewerPrograms } = useReviewerPrograms();
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isPoolManager, isRegistryAdmin } = useRegistryStore();
-
-  const isCommunityAdmin = communities.length !== 0;
-  const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
-  const hasAdminAccess = !isStaffLoading && (isStaff || isOwner || isCommunityAdmin);
-  const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
 
   if (!ready) {
     return <NavbarUserSkeleton />;

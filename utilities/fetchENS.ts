@@ -3,18 +3,25 @@ import { mainnet } from "viem/chains";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { retry } from "./retries";
 
-export const fetchENS = async (addresses: (Hex | string)[]) => {
-  const alchemyTransport = http(
-    `https://eth-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY}`,
-    {
-      batch: true,
-    }
-  );
+// Create a singleton client for ENS resolution to avoid recreating on every call
+// Using batch and cacheTime for optimal RPC usage
+const alchemyTransport = http(
+  `https://eth-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY}`,
+  {
+    batch: true,
+    retryCount: 2,
+  }
+);
 
-  const client = createPublicClient({
-    chain: mainnet,
-    transport: alchemyTransport,
-  });
+const ensClient = createPublicClient({
+  chain: mainnet,
+  transport: alchemyTransport,
+  // Cache RPC responses for 5 minutes
+  cacheTime: 5 * 60 * 1000,
+});
+
+export const fetchENS = async (addresses: (Hex | string)[]) => {
+  const client = ensClient;
 
   try {
     const calls = addresses.map(async (address) => {
@@ -59,17 +66,8 @@ export const fetchENS = async (addresses: (Hex | string)[]) => {
  * @returns Array of objects containing the ENS name and its corresponding address
  */
 export const fetchAddressFromENS = async (ensNames: string[]) => {
-  const alchemyTransport = http(
-    `https://eth-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY}`,
-    {
-      batch: true,
-    }
-  );
-
-  const client = createPublicClient({
-    chain: mainnet,
-    transport: alchemyTransport,
-  });
+  // Use the singleton ENS client for consistency and caching
+  const client = ensClient;
 
   try {
     const calls = ensNames.map(async (name) => {

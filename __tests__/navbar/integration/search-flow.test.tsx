@@ -216,14 +216,16 @@ describe("Search Flow Integration Tests", () => {
 
       // Verify the search dropdown closes after clicking a search result
       // The onSelectItem callback triggers setMobileMenuOpen(false)
-      // Note: The Drawer uses CSS animations, so in jsdom it may not fully unmount immediately
-      // We verify the search results are cleared (dropdown closed) as an indication the callback was triggered
+      // The drawer body content is now unmounted when closed (lazy loading optimization)
+      // So we verify the search input and results are no longer in the document
       await waitFor(() => {
-        // Search input should be cleared
-        expect(searchInput).toHaveValue("");
+        // Search input should be unmounted when drawer closes
+        expect(
+          within(drawer).queryByPlaceholderText("Search Project/Community")
+        ).not.toBeInTheDocument();
       });
 
-      // Verify search results are no longer visible (dropdown closed)
+      // Verify search results are no longer visible (drawer content unmounted)
       await waitFor(() => {
         expect(within(drawer).queryByText(firstProject.details.title)).not.toBeInTheDocument();
       });

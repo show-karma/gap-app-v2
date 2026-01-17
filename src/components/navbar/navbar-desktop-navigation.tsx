@@ -11,12 +11,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAuth } from "@/hooks/useAuth";
-import { useReviewerPrograms } from "@/hooks/usePermissions";
-import { useStaff } from "@/hooks/useStaff";
-import { useOwnerStore } from "@/store";
-import { useCommunitiesStore } from "@/store/communities";
-import { useRegistryStore } from "@/store/registry";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
@@ -29,6 +23,7 @@ import {
   ResourcesContent,
 } from "./menu-components";
 import { NavbarAuthButtons } from "./navbar-auth-buttons";
+import { useNavbarPermissions } from "./navbar-permissions-context";
 import { NavbarSearch } from "./navbar-search";
 import { NavbarUserMenu } from "./navbar-user-menu";
 
@@ -74,17 +69,8 @@ const socialMediaLinks = [
 ];
 
 export function NavbarDesktopNavigation() {
-  const { authenticated: isLoggedIn } = useAuth();
-  const { communities } = useCommunitiesStore();
-  const { programs: reviewerPrograms } = useReviewerPrograms();
-  const { isStaff } = useStaff();
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isPoolManager, isRegistryAdmin } = useRegistryStore();
-
-  const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
-  const isCommunityAdmin = communities.length !== 0;
-  const hasAdminAccess = isStaff || isOwner || isCommunityAdmin;
-  const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
+  // Use centralized permissions context to avoid duplicate API calls
+  const { isLoggedIn, hasReviewerRole, hasAdminAccess, isRegistryAllowed } = useNavbarPermissions();
 
   return (
     <div className="hidden lg:flex items-center flex-1 lg:justify-between gap-8">
