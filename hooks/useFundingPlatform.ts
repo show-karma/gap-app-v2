@@ -506,6 +506,56 @@ export const useApplicationUpdateV2 = () => {
 };
 
 /**
+ * Hook for updating post-approval form data (Admin/Staff only after initial submission)
+ * Owners can submit once, admins/staff can edit multiple times with audit trail tracking
+ */
+export const usePostApprovalUpdate = () => {
+  const queryClient = useQueryClient();
+
+  const updateMutation = useMutation({
+    mutationFn: ({
+      applicationId,
+      postApprovalData,
+    }: {
+      applicationId: string;
+      postApprovalData: Record<string, any>;
+    }) =>
+      fundingPlatformService.applications.updatePostApprovalData(applicationId, postApprovalData),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.application(variables.applicationId),
+      });
+      toast.success("Post-approval data updated successfully");
+    },
+    onError: (error: any) => {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to update post-approval data:", error);
+      }
+
+      if (error.response?.status === 403) {
+        const message =
+          error.response?.data?.message || "You do not have permission to edit post-approval data";
+        toast.error(message);
+      } else if (error.response?.status === 400) {
+        const message =
+          error.response?.data?.message || "Validation error. Please check your input.";
+        toast.error(message);
+      } else {
+        const message = error.response?.data?.message || "Failed to update post-approval data";
+        toast.error(message);
+      }
+    },
+  });
+
+  return {
+    updatePostApprovalData: updateMutation.mutate,
+    updatePostApprovalDataAsync: updateMutation.mutateAsync,
+    isUpdating: updateMutation.isPending,
+    error: updateMutation.error,
+  };
+};
+
+/**
  * Hook for admin status updates with V2 reason support
  */
 export const useApplicationStatusV2 = (applicationId?: string) => {

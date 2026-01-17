@@ -313,6 +313,21 @@ export const fundingApplicationsAPI = {
   },
 
   /**
+   * Update post-approval data (for owners on first submit, admins/staff anytime)
+   * Admins can edit existing post-approval data with audit trail tracking
+   */
+  async updatePostApprovalData(
+    applicationId: string,
+    postApprovalData: Record<string, any>
+  ): Promise<IFundingApplication> {
+    const response = await apiClient.put(
+      `/v2/funding-applications/${applicationId}/post-approval`,
+      { postApprovalData }
+    );
+    return response.data;
+  },
+
+  /**
    * Get applications for a program with filtering and pagination
    */
   async getApplicationsByProgram(
