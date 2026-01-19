@@ -75,6 +75,8 @@ export const QUERY_KEYS = {
     IMPACTS: (projectIdOrSlug: string) => ["project-impacts", projectIdOrSlug] as const,
     MILESTONES: (projectIdOrSlug: string) => ["project-milestones", projectIdOrSlug] as const,
     GRANTS: (projectIdOrSlug: string) => ["project-grants", projectIdOrSlug] as const,
+    EXPLORER: (search?: string) => ["projects-explorer", search] as const,
+    EXPLORER_BASE: ["projects-explorer"] as const,
   },
   INDICATORS: {
     AUTOSYNCED: ["indicators", "autosynced"] as const,

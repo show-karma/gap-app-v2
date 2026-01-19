@@ -77,6 +77,7 @@ export const INDEXER = {
     PROJECTS: {
       GET: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}`,
       SLUG_CHECK: (slug: string) => `/v2/projects/slug/check/${slug}`,
+      LIST: (limit?: number) => `/v2/projects${limit ? `?limit=${limit}` : ""}`,
       SEARCH: (query: string, limit?: number) =>
         `/v2/projects?q=${encodeURIComponent(query)}${limit ? `&limit=${limit}` : ""}`,
       GRANTS: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/grants`,
