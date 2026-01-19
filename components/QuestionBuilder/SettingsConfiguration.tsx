@@ -512,11 +512,26 @@ export function SettingsConfiguration({
             id="accessCode"
             disabled={readOnly}
             placeholder="Enter a code to gate this application"
-            className={`w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white font-mono ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
+            aria-describedby="accessCode-help accessCode-error"
+            aria-invalid={!!errors.accessCode}
+            className={`w-full max-w-xs px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white font-mono ${
+              errors.accessCode
+                ? "border-red-500 dark:border-red-500"
+                : "border-gray-300 dark:border-zinc-600"
+            } ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
           />
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          {errors.accessCode && (
+            <p
+              id="accessCode-error"
+              className="text-red-500 dark:text-red-400 text-sm"
+              role="alert"
+            >
+              {errors.accessCode.message}
+            </p>
+          )}
+          <p id="accessCode-help" className="text-xs text-gray-500 dark:text-gray-400">
             If set, applicants will need to enter this code to unlock the application form. Leave
-            empty for open applications. The code is case-sensitive.
+            empty for open applications. Must be at least 6 characters with no spaces.
           </p>
         </div>
       </div>

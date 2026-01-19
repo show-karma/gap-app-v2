@@ -352,7 +352,7 @@ describe("SettingsConfiguration - Access Code", () => {
           /If set, applicants will need to enter this code to unlock the application form/i
         )
       ).toBeInTheDocument();
-      expect(screen.getByText(/The code is case-sensitive/i)).toBeInTheDocument();
+      expect(screen.getByText(/Must be at least 6 characters with no spaces/i)).toBeInTheDocument();
     });
 
     it("should disable access code input when readOnly is true", () => {
@@ -414,7 +414,7 @@ describe("SettingsConfiguration - Access Code", () => {
       const schemaWithAccessCode: FormSchema = {
         ...mockSchema,
         settings: {
-          accessCode: "CODE",
+          accessCode: "SECRET123",
         },
       };
 
@@ -458,7 +458,7 @@ describe("SettingsConfiguration - Access Code", () => {
       // Clear any previous calls from useEffect/watch
       mockOnUpdate.mockClear();
 
-      await user.type(input, "CODE");
+      await user.type(input, "SECRET");
 
       await waitFor(() => {
         expect(mockOnUpdate).toHaveBeenCalled();
@@ -470,7 +470,48 @@ describe("SettingsConfiguration - Access Code", () => {
       expect(updatedSchema.settings?.submitButtonText).toBe("Apply Now");
       expect(updatedSchema.settings?.confirmationMessage).toBe("Thank you!");
       expect(updatedSchema.settings?.privateApplications).toBe(true);
-      expect(updatedSchema.settings?.accessCode).toContain("CODE");
+      expect(updatedSchema.settings?.accessCode).toContain("SECRET");
+    });
+
+    it("should show validation error when access code is too short", async () => {
+      const user = userEvent.setup();
+
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
+
+      const input = screen.getByLabelText("Gate this application");
+
+      await user.type(input, "ABC");
+      // Trigger validation by blurring
+      fireEvent.blur(input);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Access code must be at least 6 characters/i)).toBeInTheDocument();
+      });
+    });
+
+    it("should show validation error when access code contains spaces", async () => {
+      const user = userEvent.setup();
+
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
+
+      const input = screen.getByLabelText("Gate this application");
+
+      await user.type(input, "SECRET CODE");
+      // Trigger validation by blurring
+      fireEvent.blur(input);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Access code cannot contain spaces/i)).toBeInTheDocument();
+      });
+    });
+
+    it("should have proper ARIA attributes for accessibility", () => {
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
+
+      const input = screen.getByLabelText("Gate this application");
+
+      expect(input).toHaveAttribute("aria-describedby", "accessCode-help accessCode-error");
+      expect(input).toHaveAttribute("aria-invalid", "false");
     });
   });
 });
