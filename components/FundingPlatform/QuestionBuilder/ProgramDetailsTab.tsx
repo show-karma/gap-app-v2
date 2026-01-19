@@ -26,6 +26,8 @@ interface ProgramDetailsTabProps {
   programId: string;
   chainId?: number; // Optional - V2 endpoints use programId only
   readOnly?: boolean;
+  /** Pre-loaded program data from parent - skips V1 registry fetch when provided */
+  initialProgram?: GrantProgram | null;
 }
 
 // Constants
@@ -88,6 +90,7 @@ export function ProgramDetailsTab({
   programId,
   chainId,
   readOnly = false,
+  initialProgram,
 }: ProgramDetailsTabProps) {
   // If chainId is not provided, try to fetch from program config
   const { data: programConfig } = useProgramConfig(programId);
@@ -96,8 +99,9 @@ export function ProgramDetailsTab({
   const { authenticated: isAuth, login } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingProgram, setIsLoadingProgram] = useState(true);
-  const [program, setProgram] = useState<GrantProgram | null>(null);
+  // Skip loading state if initialProgram is provided
+  const [isLoadingProgram, setIsLoadingProgram] = useState(!initialProgram);
+  const [program, setProgram] = useState<GrantProgram | null>(initialProgram || null);
   const [programError, setProgramError] = useState<string | null>(null);
 
   const {
@@ -177,14 +181,28 @@ export function ProgramDetailsTab({
     }
   }, [programId, effectiveChainId, processProgramData]);
 
+  // Initialize form with initial program data if provided
   useEffect(() => {
+    if (initialProgram) {
+      const formValues = buildFormValuesFromMetadata(initialProgram.metadata);
+      if (formValues) {
+        reset(formValues);
+      }
+    }
+  }, [initialProgram, reset]);
+
+  useEffect(() => {
+    // Skip fetch if initialProgram was provided
+    if (initialProgram) {
+      return;
+    }
     if (programId && effectiveChainId) {
       fetchProgram();
     } else {
       // Don't leave in loading state if programId/chainId is missing
       setIsLoadingProgram(false);
     }
-  }, [programId, effectiveChainId, fetchProgram]);
+  }, [programId, effectiveChainId, fetchProgram, initialProgram]);
 
   // Validate submission prerequisites
   const validateSubmissionPrerequisites = useCallback((): string | null => {
@@ -321,7 +339,7 @@ export function ProgramDetailsTab({
   }
 
   return (
-    <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Program Name */}

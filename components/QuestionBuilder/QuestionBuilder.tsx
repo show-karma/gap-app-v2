@@ -17,26 +17,26 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { DocumentTextIcon } from "@heroicons/react/24/outline";
 import {
   Bars3Icon,
   CheckCircleIcon,
   ChevronDownIcon,
   ChevronRightIcon,
-  Cog6ToothIcon,
-  CpuChipIcon,
   ExclamationTriangleIcon,
   PlusIcon,
-  UserGroupIcon,
-  WrenchScrewdriverIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import {
+  EmptyStateGuidance,
+  PostApprovalEmptyState,
+} from "@/components/FundingPlatform/EmptyStateGuidance";
 import { ProgramDetailsTab } from "@/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab";
 import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
+import { SettingsSidebar, type SidebarTabKey } from "@/components/FundingPlatform/Sidebar";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { FormField, FormSchema } from "@/types/question-builder";
@@ -55,35 +55,14 @@ const TAB_KEYS = [
   "reviewers",
   "program-details",
 ] as const;
-type TabKey = (typeof TAB_KEYS)[number];
-const DEFAULT_TAB: TabKey = "build";
 
-const isTabKey = (value: string | null): value is TabKey =>
-  !!value && TAB_KEYS.includes(value as TabKey);
+const DEFAULT_TAB: SidebarTabKey = "build";
 
-const getValidTab = (value: string | null): TabKey => (isTabKey(value) ? value : DEFAULT_TAB);
+const isTabKey = (value: string | null): value is SidebarTabKey =>
+  !!value && TAB_KEYS.includes(value as SidebarTabKey);
 
-// Tab configuration for rendering buttons
-const TAB_CONFIG = [
-  { key: "build" as TabKey, icon: WrenchScrewdriverIcon, label: "Build" },
-  { key: "settings" as TabKey, icon: Cog6ToothIcon, label: "Settings" },
-  {
-    key: "post-approval" as TabKey,
-    icon: CheckCircleIcon,
-    label: "Post Approval",
-  },
-  { key: "ai-config" as TabKey, icon: CpuChipIcon, label: "AI Config" },
-  { key: "reviewers" as TabKey, icon: UserGroupIcon, label: "Reviewers" },
-  { key: "program-details" as TabKey, icon: DocumentTextIcon, label: "Program Details" },
-] as const;
-
-// Helper to get tab button class names
-const getTabButtonClassName = (isActive: boolean): string => {
-  const base = "flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors";
-  return isActive
-    ? `${base} bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm`
-    : `${base} text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white`;
-};
+const getValidTab = (value: string | null): SidebarTabKey =>
+  isTabKey(value) ? value : DEFAULT_TAB;
 
 interface QuestionBuilderProps {
   initialSchema?: FormSchema;
@@ -95,6 +74,11 @@ interface QuestionBuilderProps {
   readOnly?: boolean;
   initialPostApprovalSchema?: FormSchema;
   onSavePostApproval?: (schema: FormSchema) => void;
+  programTitle?: string;
+  hasReviewers?: boolean;
+  hasAIConfig?: boolean;
+  /** Program data for ProgramDetailsTab - avoids V1 registry fetch */
+  program?: { programId: string; chainID: number; metadata: Record<string, any> } | null;
 }
 
 export function QuestionBuilder({
@@ -107,6 +91,10 @@ export function QuestionBuilder({
   readOnly = false,
   initialPostApprovalSchema,
   onSavePostApproval,
+  programTitle,
+  hasReviewers = false,
+  hasAIConfig = false,
+  program,
 }: QuestionBuilderProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -141,7 +129,48 @@ export function QuestionBuilder({
     }
   );
 
-  const [activeTab, setActiveTab] = useState<TabKey>(() => getValidTab(searchParams.get("tab")));
+  const [activeTab, setActiveTab] = useState<SidebarTabKey>(() =>
+    getValidTab(searchParams.get("tab"))
+  );
+
+  // Calculate completed steps for sidebar indicators
+  const completedSteps = useMemo(() => {
+    const completed = new Set<SidebarTabKey>();
+
+    // Program details is always considered complete (program exists)
+    completed.add("program-details");
+
+    // Check if application form has fields
+    if (schema.fields && schema.fields.length > 0) {
+      completed.add("build");
+    }
+
+    // Check if post-approval form has fields
+    if (postApprovalSchema.fields && postApprovalSchema.fields.length > 0) {
+      completed.add("post-approval");
+    }
+
+    // Check if settings have custom email templates
+    if (
+      schema.settings?.approvalEmailTemplate ||
+      schema.settings?.rejectionEmailTemplate ||
+      schema.settings?.successPageContent
+    ) {
+      completed.add("settings");
+    }
+
+    // Check if reviewers are added (passed as prop)
+    if (hasReviewers) {
+      completed.add("reviewers");
+    }
+
+    // Check if AI config is set (passed as prop)
+    if (hasAIConfig) {
+      completed.add("ai-config");
+    }
+
+    return completed;
+  }, [schema, postApprovalSchema, hasReviewers, hasAIConfig]);
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const fieldRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const [newEmail, setNewEmail] = useState<string>("");
@@ -176,7 +205,7 @@ export function QuestionBuilder({
     }
   }, [pathname, router, searchParams]);
 
-  const updateTabInUrl = (tab: TabKey) => {
+  const updateTabInUrl = (tab: SidebarTabKey) => {
     try {
       const params = new URLSearchParams(searchParams.toString());
 
@@ -197,7 +226,7 @@ export function QuestionBuilder({
     }
   };
 
-  const handleTabChange = (tab: TabKey) => {
+  const handleTabChange = (tab: SidebarTabKey) => {
     if (tab === activeTab) return;
 
     // Update state first (immediate UI feedback)
@@ -516,33 +545,28 @@ export function QuestionBuilder({
           placeholderText="Form Description"
           height={100}
           minHeight={100}
+          enablePreviewToggle={false}
         />
       </div>
     );
   };
 
   return (
-    <div className={`flex flex-col h-full ${className}`.trim()}>
-      {/* Header - Tabs only */}
-      <div className="border-b border-gray-200 dark:border-gray-700 sm:px-3 md:px-4 px-6 py-2">
-        <div className="flex flex-row flex-wrap bg-gray-100 dark:bg-gray-700 p-1 rounded-lg w-fit">
-          {TAB_CONFIG.map(({ key, icon: Icon, label }) => (
-            <button
-              key={key}
-              onClick={() => handleTabChange(key)}
-              className={getTabButtonClassName(activeTab === key)}
-            >
-              <Icon className="w-4 h-4 mr-2" />
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
+    <div className={`flex min-h-full ${className}`.trim()}>
+      {/* Sidebar Navigation */}
+      <SettingsSidebar
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        communityId={communityId}
+        programId={programId}
+        programTitle={programTitle}
+        completedSteps={completedSteps}
+      />
 
-      {/* Content */}
-      <div className="flex-1 overflow-hidden sm:px-3 md:px-4 px-6 py-4">
+      {/* Main Content Area */}
+      <div className="flex-1">
         {activeTab === "build" || activeTab === "post-approval" ? (
-          <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
             {/* Field Types Panel */}
             {!readOnly && (
               <div className="lg:col-span-1">
@@ -554,7 +578,7 @@ export function QuestionBuilder({
             )}
 
             {/* Form Builder */}
-            <div className={readOnly ? "" : "lg:col-span-2 overflow-y-auto"}>
+            <div className={readOnly ? "" : "lg:col-span-2"}>
               {/* Form Title and Description - Only in Build/Post-Approval tabs */}
               {renderFormTitleDescription()}
 
@@ -593,17 +617,11 @@ export function QuestionBuilder({
                 )}
 
                 {!currentSchema.fields || currentSchema.fields.length === 0 ? (
-                  <div className="bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
-                    <div className="text-gray-400 mb-4">
-                      <Cog6ToothIcon className="w-12 h-12 mx-auto" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                      No fields yet
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Add form fields from the panel on the left to start building your form.
-                    </p>
-                  </div>
+                  isPostApprovalMode ? (
+                    <PostApprovalEmptyState />
+                  ) : (
+                    <EmptyStateGuidance />
+                  )
                 ) : (
                   <>
                     {/* Form Fields List with Drag and Drop */}
@@ -763,7 +781,7 @@ export function QuestionBuilder({
             </div>
           </div>
         ) : activeTab === "settings" ? (
-          <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
+          <div className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-4xl mx-auto">
               <SettingsConfiguration
                 onUpdate={readOnly ? undefined : handleAIConfigUpdate}
@@ -776,7 +794,7 @@ export function QuestionBuilder({
             </div>
           </div>
         ) : activeTab === "ai-config" ? (
-          <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
+          <div className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-4xl mx-auto">
               <AIPromptConfiguration
                 onUpdate={readOnly ? undefined : handleAIConfigUpdate}
@@ -790,7 +808,7 @@ export function QuestionBuilder({
             </div>
           </div>
         ) : activeTab === "reviewers" ? (
-          <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
+          <div className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-4xl mx-auto">
               {programId && communityId ? (
                 <ReviewerManagementTab
@@ -808,7 +826,12 @@ export function QuestionBuilder({
             </div>
           </div>
         ) : activeTab === "program-details" ? (
-          <ProgramDetailsTab programId={programId} chainId={chainId} readOnly={readOnly} />
+          <ProgramDetailsTab
+            programId={programId}
+            chainId={chainId}
+            readOnly={readOnly}
+            initialProgram={program as any}
+          />
         ) : null}
       </div>
     </div>

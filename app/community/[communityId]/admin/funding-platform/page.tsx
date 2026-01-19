@@ -23,6 +23,10 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { CreateProgramModal } from "@/components/FundingPlatform/CreateProgramModal";
 import { FundingPlatformStatsCard } from "@/components/FundingPlatform/Dashboard/card";
+import {
+  hasFormConfigured,
+  ProgramSetupStatus,
+} from "@/components/FundingPlatform/ProgramSetupStatus";
 import { Button } from "@/components/Utilities/Button";
 import { LoadingOverlay } from "@/components/Utilities/LoadingOverlay";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -551,31 +555,21 @@ export default function FundingPlatformAdminPage() {
                       {program.metadata?.type || "program"}
                     </span>
                   </div>
-
-                  {/* Quick Action Icon */}
-                  <div className="flex items-center gap-1">
-                    <Link
-                      href={PAGES.ADMIN.FUNDING_PLATFORM_QUESTION_BUILDER(
-                        communityId,
-                        program.programId
-                      )}
-                      title="Configure Form"
-                    >
-                      <button
-                        type="button"
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-md transition-colors"
-                      >
-                        <Cog6ToothIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                      </button>
-                    </Link>
-                  </div>
                 </div>
 
                 {/* Program Title and Description */}
                 <div className="mb-3">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 text-ellipsis line-clamp-2">
-                    {program.metadata?.title || program.name}
-                  </h3>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white text-ellipsis line-clamp-2">
+                      {program.metadata?.title || program.name}
+                    </h3>
+                    <ProgramSetupStatus
+                      programId={program.programId}
+                      communityId={communityId}
+                      hasFormFields={hasFormConfigured(program.applicationConfig)}
+                      isEnabled={program.applicationConfig?.isEnabled || false}
+                    />
+                  </div>
                   <MarkdownPreview
                     source={
                       program.metadata?.shortDescription ||
@@ -632,7 +626,7 @@ export default function FundingPlatformAdminPage() {
                   </div>
                 </div>
 
-                {/* Primary CTA - View Applications */}
+                {/* Action Buttons */}
                 <div className="flex items-center gap-2">
                   <Link
                     href={PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, program.programId)}
@@ -643,16 +637,32 @@ export default function FundingPlatformAdminPage() {
                       className="w-full hover:shadow flex items-center justify-center text-sm bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:text-white dark:hover:bg-blue-600"
                     >
                       <EyeIcon className="w-4 h-4 mr-2" />
-                      View Applications
+                      Applications
                     </Button>
                   </Link>
 
-                  {/* Link to Application Icon */}
+                  <Link
+                    href={PAGES.ADMIN.FUNDING_PLATFORM_QUESTION_BUILDER(
+                      communityId,
+                      program.programId
+                    )}
+                    className="flex-1"
+                  >
+                    <Button
+                      variant="secondary"
+                      className="w-full hover:shadow flex items-center justify-center text-sm"
+                    >
+                      <Cog6ToothIcon className="w-4 h-4 mr-2" />
+                      Settings
+                    </Button>
+                  </Link>
+
+                  {/* Link to Application Form */}
                   <Link
                     href={getApplyUrlByCommunityId(communityId, program.programId)}
                     target="_blank"
-                    title="Link to application"
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-md transition-colors"
+                    title="Open application form"
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-md transition-colors border border-gray-200 dark:border-gray-600"
                   >
                     <svg
                       className="w-5 h-5 text-gray-600 dark:text-gray-400"

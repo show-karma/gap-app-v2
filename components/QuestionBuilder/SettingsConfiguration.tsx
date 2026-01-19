@@ -11,6 +11,7 @@ import { FUNDING_PLATFORM_DOMAINS } from "@/src/features/funding-map/utils/fundi
 import type { FormSchema } from "@/types/question-builder";
 import { envVars } from "@/utilities/enviromentVars";
 import { formatDate } from "@/utilities/formatDate";
+import { PlaceholderReference } from "../FundingPlatform/PlaceholderReference";
 import { ExternalLink } from "../Utilities/ExternalLink";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 
@@ -235,13 +236,12 @@ export function SettingsConfiguration({
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Email Templates</h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Customize the emails sent to applicants when their applications are approved or
-            rejected. Use placeholders like{" "}
-            <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{applicantName}}"}</code>
-            , <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{programName}}"}</code>
-            , <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">{"{{reason}}"}</code>,
-            etc. Note: Project name and application details are already shown in the application
-            info section of the email.
+            rejected. Note: Project name and application details are already shown in the
+            application info section of the email.
           </p>
+
+          {/* Placeholder Reference */}
+          <PlaceholderReference />
 
           {/* Approval Email Template */}
           <div className="space-y-4">
