@@ -9,6 +9,7 @@ export const settingsConfigSchema = z.object({
   approvalEmailSubject: z.string().optional(),
   rejectionEmailTemplate: z.string().optional(),
   rejectionEmailSubject: z.string().optional(),
+  accessCode: z.string().optional(),
 });
 
 export type SettingsConfigFormData = z.infer<typeof settingsConfigSchema>;

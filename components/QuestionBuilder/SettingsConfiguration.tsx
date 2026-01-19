@@ -79,6 +79,7 @@ export function SettingsConfiguration({
       approvalEmailSubject: schema.settings?.approvalEmailSubject ?? "",
       rejectionEmailTemplate: schema.settings?.rejectionEmailTemplate ?? "",
       rejectionEmailSubject: schema.settings?.rejectionEmailSubject ?? "",
+      accessCode: schema.settings?.accessCode ?? "",
     },
   });
 
@@ -102,6 +103,9 @@ export function SettingsConfiguration({
           approvalEmailSubject: data.approvalEmailSubject,
           rejectionEmailTemplate: data.rejectionEmailTemplate,
           rejectionEmailSubject: data.rejectionEmailSubject,
+          // Derive accessCodeEnabled from whether accessCode has a value
+          accessCodeEnabled: Boolean(data.accessCode?.trim()),
+          accessCode: data.accessCode,
         },
       };
 
@@ -491,6 +495,30 @@ export function SettingsConfiguration({
               public responses (configure per field in the form builder)
             </p>
           </div>
+        </div>
+
+        <hr className="my-4" />
+
+        {/* Gate this application */}
+        <div className="space-y-2">
+          <label
+            htmlFor="accessCode"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Gate this application
+          </label>
+          <input
+            {...register("accessCode")}
+            type="text"
+            id="accessCode"
+            disabled={readOnly}
+            placeholder="Enter a code to gate this application"
+            className={`w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white font-mono ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
+          />
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            If set, applicants will need to enter this code to unlock the application form. Leave
+            empty for open applications. The code is case-sensitive.
+          </p>
         </div>
       </div>
     </div>
