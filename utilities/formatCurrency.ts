@@ -26,7 +26,7 @@ export default function formatCurrency(value: number) {
 function formatLargeNumber(value: number): string {
   // Define thresholds and suffixes (ordered from largest to smallest)
   const tiers = [
-    { threshold: 1e18, suffix: "E" }, // Exa (10^18)
+    { threshold: 1e18, suffix: "ETH" }, // Exa (10^18)
     { threshold: 1e15, suffix: "P" }, // Peta (10^15)
     { threshold: 1e12, suffix: "T" }, // Tera (10^12)
     { threshold: 1e9, suffix: "B" }, // Billion (10^9)
