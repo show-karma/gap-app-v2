@@ -95,9 +95,13 @@ function createFormSchemaHook(
       onSuccess: (data) => {
         // Use setQueryData to update cache without refetching
         // This prevents multiple redundant API calls
-        // The mutation returns IFundingProgramConfig directly, so access formSchema/postApprovalFormSchema
-        const updatedSchema = data?.[schemaField as keyof typeof data] ?? null;
-        queryClient.setQueryData(queryKey, updatedSchema);
+        // Note: This only updates the schema-specific query cache. Other queries that depend
+        // on the full program config should refetch independently if they need fresh data.
+        const updatedSchema =
+          schemaField === "postApprovalFormSchema"
+            ? data?.postApprovalFormSchema
+            : data?.formSchema;
+        queryClient.setQueryData(queryKey, updatedSchema ?? null);
 
         toast.success(successMessage);
       },

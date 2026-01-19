@@ -15,6 +15,9 @@ export const settingsConfigSchema = z.object({
     .refine((code) => !code || code.length >= 6, {
       message: "Access code must be at least 6 characters",
     })
+    .refine((code) => !code || code.length <= 50, {
+      message: "Access code must be at most 50 characters",
+    })
     .refine((code) => !code || !/\s/.test(code), {
       message: "Access code cannot contain spaces",
     }),
