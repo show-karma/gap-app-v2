@@ -134,27 +134,39 @@ describe("fundingPlatformService", () => {
 
     describe("getProgramConfiguration", () => {
       it("should fetch program configuration successfully", async () => {
-        mockFetchData.mockResolvedValue([mockProgram, null, null, 200]);
+        mockGet.mockResolvedValue({ data: mockProgram });
 
         const result = await fundingProgramsAPI.getProgramConfiguration("program-123");
 
         expect(result).toEqual(mockProgram);
-        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("program-123"));
+        expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("program-123"));
       });
 
       it("should return null when no data is returned", async () => {
-        mockFetchData.mockResolvedValue([null, null, null, 200]);
+        mockGet.mockResolvedValue({ data: null });
 
         const result = await fundingProgramsAPI.getProgramConfiguration("nonexistent");
 
         expect(result).toBeNull();
       });
 
-      it("should throw error on API errors", async () => {
-        mockFetchData.mockResolvedValue([null, "Not found", null, 404]);
+      it("should return null on 404 errors", async () => {
+        const error = new Error("Not found");
+        (error as any).response = { status: 404 };
+        mockGet.mockRejectedValue(error);
+
+        const result = await fundingProgramsAPI.getProgramConfiguration("nonexistent");
+
+        expect(result).toBeNull();
+      });
+
+      it("should throw error on non-404 API errors", async () => {
+        const error = new Error("Server error");
+        (error as any).response = { status: 500, data: { message: "Internal server error" } };
+        mockGet.mockRejectedValue(error);
 
         await expect(fundingProgramsAPI.getProgramConfiguration("nonexistent")).rejects.toThrow(
-          "Not found"
+          "Internal server error"
         );
       });
     });
@@ -242,7 +254,7 @@ describe("fundingPlatformService", () => {
       };
 
       it("should update form schema when config exists", async () => {
-        mockFetchData.mockResolvedValue([mockProgram, null, null, 200]);
+        mockGet.mockResolvedValue({ data: mockProgram });
         mockPut.mockResolvedValue({
           data: { ...mockProgram, formSchema: mockFormSchema },
         });
@@ -257,7 +269,8 @@ describe("fundingPlatformService", () => {
       });
 
       it("should create new config with formSchema when config does not exist", async () => {
-        mockFetchData.mockResolvedValue([null, "Not found", null, 404]);
+        // getProgramConfiguration returns null for 404, which is mocked here
+        mockGet.mockResolvedValue({ data: null });
         mockPut.mockResolvedValue({
           data: { ...mockProgram, formSchema: mockFormSchema },
         });
@@ -272,8 +285,8 @@ describe("fundingPlatformService", () => {
 
       it("should throw error for non-404 errors", async () => {
         const error = new Error("Server error");
-        (error as any).response = { status: 500 };
-        mockFetchData.mockRejectedValue(error);
+        (error as any).response = { status: 500, data: { message: "Server error" } };
+        mockGet.mockRejectedValue(error);
 
         await expect(
           fundingProgramsAPI.updateFormSchema("program-123", mockFormSchema)
@@ -283,7 +296,7 @@ describe("fundingPlatformService", () => {
 
     describe("toggleProgramStatus", () => {
       it("should toggle program status when config exists", async () => {
-        mockFetchData.mockResolvedValue([mockProgram, null, null, 200]);
+        mockGet.mockResolvedValue({ data: mockProgram });
         mockPut.mockResolvedValue({ data: { ...mockProgram, isEnabled: false } });
 
         const result = await fundingProgramsAPI.toggleProgramStatus("program-123", false);
@@ -296,7 +309,8 @@ describe("fundingPlatformService", () => {
       });
 
       it("should create new config with enabled status when config does not exist", async () => {
-        mockFetchData.mockResolvedValue([null, "Not found", null, 404]);
+        // getProgramConfiguration returns null for 404, which is mocked here
+        mockGet.mockResolvedValue({ data: null });
         mockPut.mockResolvedValue({ data: { ...mockProgram, isEnabled: true } });
 
         const result = await fundingProgramsAPI.toggleProgramStatus("program-123", true);
@@ -309,8 +323,8 @@ describe("fundingPlatformService", () => {
 
       it("should throw error for non-404 errors", async () => {
         const error = new Error("Server error");
-        (error as any).response = { status: 500 };
-        mockFetchData.mockRejectedValue(error);
+        (error as any).response = { status: 500, data: { message: "Server error" } };
+        mockGet.mockRejectedValue(error);
 
         await expect(fundingProgramsAPI.toggleProgramStatus("program-123", true)).rejects.toThrow(
           "Server error"

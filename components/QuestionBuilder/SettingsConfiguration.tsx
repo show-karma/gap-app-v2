@@ -1,9 +1,10 @@
 "use client";
 
-import { LinkIcon } from "@heroicons/react/24/outline";
+import { ClipboardDocumentIcon, LinkIcon } from "@heroicons/react/24/outline";
+import { CheckIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { type SettingsConfigFormData, settingsConfigSchema } from "@/schemas/settingsConfigSchema";
 import { FUNDING_PLATFORM_DOMAINS } from "@/src/features/funding-map/utils/funding-platform-domains";
@@ -34,6 +35,21 @@ const getApplyUrlByCommunityId = (communityId: string, programId: string) => {
   }
 };
 
+const getApplicationFormUrl = (communityId: string, programId: string, accessCode?: string) => {
+  let baseUrl: string;
+  if (communityId in FUNDING_PLATFORM_DOMAINS) {
+    const domain = FUNDING_PLATFORM_DOMAINS[communityId as keyof typeof FUNDING_PLATFORM_DOMAINS];
+    baseUrl = envVars.isDev
+      ? `${domain.dev}/programs/${programId}/apply`
+      : `${domain.prod}/programs/${programId}/apply`;
+  } else {
+    baseUrl = envVars.isDev
+      ? `${FUNDING_PLATFORM_DOMAINS.shared.dev}/${communityId}/programs/${programId}/apply`
+      : `${FUNDING_PLATFORM_DOMAINS.shared.prod}/${communityId}/programs/${programId}/apply`;
+  }
+  return accessCode ? `${baseUrl}?accessCode=${encodeURIComponent(accessCode)}` : baseUrl;
+};
+
 // Convert local datetime-local value to UTC ISO string
 const convertLocalToUTC = (localDatetime: string | undefined): string | undefined => {
   if (!localDatetime) return undefined;
@@ -62,6 +78,21 @@ export function SettingsConfiguration({
   readOnly = false,
 }: SettingsConfigurationProps) {
   const { communityId } = useParams() as { communityId: string };
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyGatedUrl = async () => {
+    const accessCodeValue = watch("accessCode");
+    if (!accessCodeValue || !programId) return;
+
+    const url = getApplicationFormUrl(communityId, programId, accessCodeValue);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy URL:", err);
+    }
+  };
 
   const {
     register,
@@ -70,6 +101,7 @@ export function SettingsConfiguration({
     formState: { errors },
   } = useForm<SettingsConfigFormData>({
     resolver: zodResolver(settingsConfigSchema),
+    mode: "onTouched",
     defaultValues: {
       privateApplications: schema.settings?.privateApplications ?? true,
       donationRound: schema.settings?.donationRound ?? false,
@@ -79,6 +111,7 @@ export function SettingsConfiguration({
       approvalEmailSubject: schema.settings?.approvalEmailSubject ?? "",
       rejectionEmailTemplate: schema.settings?.rejectionEmailTemplate ?? "",
       rejectionEmailSubject: schema.settings?.rejectionEmailSubject ?? "",
+      accessCode: schema.settings?.accessCode ?? "",
     },
   });
 
@@ -102,6 +135,8 @@ export function SettingsConfiguration({
           approvalEmailSubject: data.approvalEmailSubject,
           rejectionEmailTemplate: data.rejectionEmailTemplate,
           rejectionEmailSubject: data.rejectionEmailSubject,
+          // Only send accessCode - backend derives accessCodeEnabled from it
+          accessCode: data.accessCode,
         },
       };
 
@@ -491,6 +526,66 @@ export function SettingsConfiguration({
               public responses (configure per field in the form builder)
             </p>
           </div>
+        </div>
+
+        <hr className="my-4" />
+
+        {/* Gate this application */}
+        <div className="space-y-2">
+          <label
+            htmlFor="accessCode"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Gate this application
+          </label>
+          <input
+            {...register("accessCode")}
+            type="text"
+            id="accessCode"
+            disabled={readOnly}
+            placeholder="Enter a code to gate this application"
+            aria-describedby="accessCode-help accessCode-error"
+            aria-invalid={!!errors.accessCode}
+            className={`w-full max-w-xs px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white font-mono ${
+              errors.accessCode
+                ? "border-red-500 dark:border-red-500"
+                : "border-gray-300 dark:border-zinc-600"
+            } ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
+          />
+          {errors.accessCode && (
+            <p
+              id="accessCode-error"
+              className="text-red-500 dark:text-red-400 text-sm"
+              role="alert"
+            >
+              {errors.accessCode.message}
+            </p>
+          )}
+          <p id="accessCode-help" className="text-xs text-gray-500 dark:text-gray-400">
+            If set, applicants will need to enter this code to unlock the application form. Leave
+            empty for open applications. Must be at least 6 characters with no spaces.
+          </p>
+
+          {/* Copy gated URL button */}
+          {watch("accessCode") && programId && (
+            <button
+              type="button"
+              onClick={handleCopyGatedUrl}
+              className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+            >
+              {copied ? (
+                <>
+                  <CheckIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  <span className="text-green-600 dark:text-green-400">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <ClipboardDocumentIcon className="w-4 h-4" />
+                  <span>Copy gated application URL</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>

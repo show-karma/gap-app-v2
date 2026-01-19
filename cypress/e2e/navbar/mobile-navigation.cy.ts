@@ -43,7 +43,8 @@ describe("Mobile Navigation", () => {
 
   describe("Mobile Menu - Unauthenticated", () => {
     it("should show Sign in button in mobile header", () => {
-      cy.contains("Sign in").should("be.visible");
+      // The mobile Sign in button is inside the lg:hidden wrapper, not the desktop navbar
+      cy.get(".lg\\:hidden").contains("Sign in").should("be.visible");
     });
 
     it("should show Contact sales in mobile header", () => {
