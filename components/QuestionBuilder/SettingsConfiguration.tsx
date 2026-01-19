@@ -70,6 +70,7 @@ export function SettingsConfiguration({
     formState: { errors },
   } = useForm<SettingsConfigFormData>({
     resolver: zodResolver(settingsConfigSchema),
+    mode: "onTouched",
     defaultValues: {
       privateApplications: schema.settings?.privateApplications ?? true,
       donationRound: schema.settings?.donationRound ?? false,
