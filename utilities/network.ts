@@ -11,6 +11,7 @@ import {
   optimismSepolia,
   polygon,
   scroll,
+  sei,
   sepolia,
 } from "viem/chains";
 
@@ -25,6 +26,7 @@ const productionNetworks: Chain[] = [
   polygon,
   lisk,
   scroll,
+  sei,
 ];
 
 const nonProductionNetworks: Chain[] = [
@@ -36,6 +38,7 @@ const nonProductionNetworks: Chain[] = [
   polygon,
   lisk,
   scroll,
+  sei,
   optimismSepolia,
   baseSepolia,
   sepolia,
@@ -75,6 +78,7 @@ export function getExplorerUrl(chainId: number, transactionHash: string) {
     sepolia,
     lisk,
     scroll,
+    sei,
   ].find((c) => c.id === chainId);
   if (!chain || !chain.blockExplorers?.default?.url) {
     // Return a fallback block explorer URL if the chain or its explorer is not found
@@ -120,6 +124,8 @@ export function getChainIdByName(name: string) {
       return 1135;
     case "scroll":
       return 534352;
+    case "sei":
+      return 1329;
     default:
       return appNetwork[0].id;
   }
@@ -149,6 +155,8 @@ export function getChainNameById(id: number): TNetwork {
       return "lisk";
     case 534352:
       return "scroll";
+    case 1329:
+      return "sei" as TNetwork;
     default: {
       const network = appNetwork[0].name;
       return getChainNameById(getChainIdByName(network));
