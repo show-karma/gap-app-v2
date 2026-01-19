@@ -13,7 +13,10 @@ const HERO_ICONS = [
 
 export const ProjectsHeroSection = () => {
   return (
-    <section className="relative flex flex-col items-center justify-center py-16 px-4">
+    <section
+      className="relative flex flex-col items-center justify-center py-16 px-4 bg-no-repeat bg-center bg-cover"
+      style={{ backgroundImage: "url('/images/karma-projects-page-bg.svg')" }}
+    >
       {/* Icon row - 44x44px icons */}
       <div className="flex gap-3 mb-5">
         {HERO_ICONS.map((icon) => (
