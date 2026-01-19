@@ -24,87 +24,6 @@ type IndicatorWithPrograms = Indicator & {
   programs?: Program[];
 };
 
-export const autosyncedIndicators: IndicatorWithPrograms[] = [
-  {
-    name: "No. of Transactions",
-    id: "",
-    description: "No. of transactions",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "active_developers",
-    id: "",
-    description: "No. of active developers (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "PULL_REQUEST_MERGED",
-    id: "",
-    description: "Number of pull requests merged (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "ISSUE_OPENED",
-    id: "",
-    description: "Number of issues opened (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "FORKED",
-    id: "",
-    description: "Number of repository forks (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "ISSUE_CLOSED",
-    id: "",
-    description: "Number of issues closed (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "ISSUE_COMMENT",
-    id: "",
-    description: "Number of comments on issues (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "STARRED",
-    id: "",
-    description: "Number of repository stars (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "GitHub Commits",
-    id: "",
-    description: "Number of code commits (*github)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "PULL_REQUEST_OPENED",
-    id: "",
-    description: "Number of pull requests opened (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "GitHub Merged PRs",
-    id: "",
-    description: "Number of pull requests merged (*github)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "RELEASE_PUBLISHED",
-    id: "",
-    description: "Number of releases published (*oso)",
-    unitOfMeasure: "int",
-  },
-  {
-    name: "contributors",
-    id: "",
-    description: "No. of contributors (*oso)",
-    unitOfMeasure: "int",
-  },
-];
-
 interface IndicatorsHubProps {
   communitySlug: string;
   communityId: string;
@@ -115,7 +34,6 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
   const [isLoading, _setIsLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingIndicator, setEditingIndicator] = useState<IndicatorWithPrograms | null>(null);
-  const [selectedAutosynced, setSelectedAutosynced] = useState<string>("");
   const [formDefaultValues, setFormDefaultValues] = useState<Partial<IndicatorFormData>>({
     name: "",
     description: "",
@@ -128,30 +46,6 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
 
   const indicators = rawIndicators as IndicatorWithPrograms[];
 
-  const handleAutosyncedSelect = (name: string) => {
-    if (!name) {
-      setFormDefaultValues({
-        name: "",
-        description: "",
-        unitOfMeasure: "int",
-        programs: [],
-      });
-      setSelectedAutosynced("");
-      return;
-    }
-
-    const selectedIndicator = autosyncedIndicators.find((i) => i.name === name);
-    if (selectedIndicator) {
-      setFormDefaultValues({
-        name: selectedIndicator.name,
-        description: selectedIndicator.description,
-        unitOfMeasure: selectedIndicator.unitOfMeasure as "float" | "int",
-        programs: [],
-      });
-      setSelectedAutosynced(name);
-    }
-  };
-
   const handleSuccess = async () => {
     await refetch();
     toast.success("Indicator created successfully");
@@ -161,7 +55,6 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
       unitOfMeasure: "int",
       programs: [],
     });
-    setSelectedAutosynced("");
   };
 
   const handleError = () => {
@@ -220,31 +113,15 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
   return (
     <div className="w-full h-max max-h-full flex flex-col">
       <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 mb-6">
-        <h3 className="text-lg font-semibold mb-4">
-          {editingIndicator ? "Edit Indicator" : "Create New Indicator"}
+        <h3 className="text-lg font-semibold mb-2">
+          {editingIndicator ? "Edit Indicator" : "Create Custom Indicator"}
         </h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Create a custom indicator specific to your community. For system metrics like GitHub stats
+          or transactions, use the &quot;System&quot; indicators when creating activities or
+          outcomes.
+        </p>
         <div className="space-y-4">
-          {!editingIndicator && (
-            <div>
-              <label htmlFor="indicators-hub-autosynced" className="block text-sm font-medium mb-1">
-                Select Autosynced Indicator (Optional)
-              </label>
-              <select
-                id="indicators-hub-autosynced"
-                value={selectedAutosynced}
-                onChange={(e) => handleAutosyncedSelect(e.target.value)}
-                className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
-              >
-                <option value="">Create Custom Indicator</option>
-                {autosyncedIndicators.map((indicator) => (
-                  <option key={indicator.name} value={indicator.name}>
-                    {indicator.description}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
           <IndicatorForm
             communityId={communityId}
             onSuccess={editingIndicator ? handleEditSuccess : handleSuccess}
@@ -252,20 +129,6 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
             isLoading={isLoading}
             defaultValues={formDefaultValues}
             indicatorId={editingIndicator?.id}
-            readOnlyFields={{
-              name:
-                !!selectedAutosynced ||
-                (!!editingIndicator &&
-                  autosyncedIndicators.some((i) => i.name === editingIndicator.name)),
-              description:
-                !!selectedAutosynced ||
-                (!!editingIndicator &&
-                  autosyncedIndicators.some((i) => i.name === editingIndicator.name)),
-              unitOfMeasure:
-                !!selectedAutosynced ||
-                (!!editingIndicator &&
-                  autosyncedIndicators.some((i) => i.name === editingIndicator.name)),
-            }}
           />
 
           {editingIndicator && (
@@ -290,7 +153,7 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
       </div>
 
       <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 flex-1">
-        <h3 className="text-lg font-semibold mb-4">Existing Indicators</h3>
+        <h3 className="text-lg font-semibold mb-4">Community Indicators</h3>
         <div className="space-y-3 overflow-y-auto">
           {indicators.length ? (
             indicators.map((indicator) => (
@@ -301,6 +164,11 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium text-sm">{indicator.name}</h3>
+                    {indicator.syncType === "auto" && (
+                      <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full">
+                        Auto
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
                     {indicator.description}
@@ -309,11 +177,6 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
                     <span className="text-xs bg-white dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-zinc-700 inline-block">
                       {indicator.unitOfMeasure}
                     </span>
-                    {autosyncedIndicators.find((i) => i.name === indicator.name) && (
-                      <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full">
-                        Autosynced
-                      </span>
-                    )}
                   </div>
                   {indicator.programs && indicator.programs.length > 0 && (
                     <div className="mt-2">

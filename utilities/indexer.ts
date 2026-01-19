@@ -108,6 +108,17 @@ export const INDEXER = {
         return `/v2/funding-program-configs/${programId}/check-permission?${params.toString()}`;
       },
       MY_REVIEWER_PROGRAMS: () => `/v2/funding-program-configs/my-reviewer-programs`,
+      PROMPTS: {
+        GET: (programId: string) => `/v2/funding-program-configs/${programId}/prompts`,
+        SAVE: (programId: string, promptType: "external" | "internal") =>
+          `/v2/funding-program-configs/${programId}/prompts/${promptType}`,
+        TEST: (programId: string, promptType: "external" | "internal") =>
+          `/v2/funding-program-configs/${programId}/prompts/${promptType}/test`,
+        BULK_EVALUATE: (programId: string) =>
+          `/v2/funding-program-configs/${programId}/evaluate-all`,
+        JOB_STATUS: (programId: string, jobId: string) =>
+          `/v2/funding-program-configs/${programId}/evaluate-all/${jobId}`,
+      },
     },
     FUNDING_APPLICATIONS: {
       GET: (applicationId: string) => `/v2/funding-applications/${applicationId}`,
@@ -383,7 +394,7 @@ export const INDEXER = {
         params?: {
           indicatorIds?: string;
           programId?: number;
-          chainId?: number;
+          projectUID?: string;
           startDate?: string;
           endDate?: string;
           granularity?: "weekly" | "monthly";
@@ -392,7 +403,7 @@ export const INDEXER = {
         const queryParams = new URLSearchParams();
         if (params?.indicatorIds) queryParams.set("indicatorIds", params.indicatorIds);
         if (params?.programId) queryParams.set("programId", params.programId.toString());
-        if (params?.chainId) queryParams.set("chainId", params.chainId.toString());
+        if (params?.projectUID) queryParams.set("projectUID", params.projectUID);
         if (params?.startDate) queryParams.set("startDate", params.startDate);
         if (params?.endDate) queryParams.set("endDate", params.endDate);
         if (params?.granularity) queryParams.set("granularity", params.granularity);
@@ -432,6 +443,17 @@ export const INDEXER = {
 
           return `/v2/indicators/aggregate?${params.toString()}`;
         },
+      },
+      COMMUNITY_METRICS: (
+        communityIdOrSlug: string,
+        params?: { startDate?: string; endDate?: string; metricNames?: string }
+      ) => {
+        const urlParams = new URLSearchParams();
+        if (params?.startDate) urlParams.append("startDate", params.startDate);
+        if (params?.endDate) urlParams.append("endDate", params.endDate);
+        if (params?.metricNames) urlParams.append("metricNames", params.metricNames);
+        const queryString = urlParams.toString();
+        return `/v2/communities/${communityIdOrSlug}/community-metrics${queryString ? `?${queryString}` : ""}`;
       },
       PROJECTS: (
         slug: string,

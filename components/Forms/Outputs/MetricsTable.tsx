@@ -2,9 +2,9 @@
 
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { Button } from "@/components/Utilities/Button";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
+import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { cn } from "@/utilities/tailwind";
 // Temporarily comment out SearchWithValueDropdown to test
@@ -115,6 +115,9 @@ export const MetricsTable = ({
 }: MetricsTableProps) => {
   const [isOutputDialogOpen, setIsOutputDialogOpen] = useState(false);
   const [_selectedToCreate, setSelectedToCreate] = useState<number | undefined>(undefined);
+
+  // Fetch auto-synced indicators from API
+  const { data: autosyncedIndicators = [] } = useAutosyncedIndicators();
 
   const handleOutputChange = (index: number, field: keyof OutputData, value: any) => {
     const newOutputs = [...outputs];

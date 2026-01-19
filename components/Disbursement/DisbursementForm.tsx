@@ -134,8 +134,7 @@ export const DisbursementForm = () => {
     if (isConnected && walletChainId !== newNetwork) {
       try {
         await switchChainAsync({ chainId: newNetwork });
-      } catch (error) {
-        console.error("Failed to switch network:", error);
+      } catch {
         toast.error(
           "Failed to switch network. Please manually switch to the correct network in your wallet."
         );
@@ -291,8 +290,7 @@ export const DisbursementForm = () => {
         isChecking: false,
         error: null,
       });
-    } catch (error) {
-      console.error("Pre-flight check failed:", error);
+    } catch {
       setPreflightChecks((prev) => ({
         ...prev,
         isChecking: false,
@@ -330,7 +328,6 @@ export const DisbursementForm = () => {
         result,
       });
     } catch (error) {
-      console.error("Disbursement failed:", error);
       setTransactionState({
         isProcessing: false,
         isComplete: false,

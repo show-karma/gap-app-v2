@@ -52,7 +52,10 @@ export const DisbursementReview: React.FC<DisbursementReviewProps> = ({ recipien
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
             {recipients.map((recipient, index) => (
-              <tr key={index} className="hover:bg-gray-50 transition-colors">
+              <tr
+                key={`${recipient.address}-${index}`}
+                className="hover:bg-gray-50 transition-colors"
+              >
                 <td className="whitespace-nowrap py-4 pl-6 pr-3 text-sm">
                   <code className="font-mono text-gray-900 bg-gray-100 px-2 py-1 rounded text-xs">
                     {recipient.address}

@@ -2,18 +2,15 @@
 
 import { PrivyProvider } from "@privy-io/react-auth";
 import { WagmiProvider } from "@privy-io/wagmi";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { PROJECT_NAME } from "@/constants/brand";
 import { envVars } from "@/utilities/enviromentVars";
 import { appNetwork } from "@/utilities/network";
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { queryClient } from "@/utilities/query-client";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
 
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: defaultQueryOptions,
-  },
-});
+// Re-export for backwards compatibility
+export { queryClient };
 
 interface PrivyProviderWrapperProps {
   children: React.ReactNode;
