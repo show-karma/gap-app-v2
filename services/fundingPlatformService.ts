@@ -123,17 +123,22 @@ export const fundingProgramsAPI = {
 
   /**
    * Get program configuration including form schema
+   * Uses apiClient for authenticated requests (admins get full config with accessCode)
    */
   async getProgramConfiguration(programId: string): Promise<FundingProgram | null> {
-    const [data, error] = await fetchData<FundingProgram>(
-      INDEXER.V2.FUNDING_PROGRAMS.GET(programId)
-    );
-
-    if (error) {
-      throw new Error(error);
+    try {
+      const response = await apiClient.get<FundingProgram>(
+        INDEXER.V2.FUNDING_PROGRAMS.GET(programId)
+      );
+      return response.data || null;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw new Error(
+        error.response?.data?.message || error.message || "Failed to fetch program configuration"
+      );
     }
-
-    return data || null;
   },
 
   /**

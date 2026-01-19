@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import toast from "react-hot-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { fundingPlatformService } from "@/services/fundingPlatformService";
 import type { IFundingProgramConfig } from "@/types/funding-platform";
 import type { FormSchema } from "@/types/question-builder";
@@ -34,6 +35,7 @@ function createFormSchemaHook(
 
   return function useFormSchema(programId: string) {
     const queryClient = useQueryClient();
+    const { authenticated, ready } = useAuth();
     const queryKey = isPostApproval
       ? [...QUERY_KEYS.questionSchema(programId), "post-approval"]
       : QUERY_KEYS.questionSchema(programId);
@@ -62,7 +64,9 @@ function createFormSchemaHook(
           throw error;
         }
       },
-      enabled: !!programId,
+      // Wait for auth to be ready so the request includes the auth token
+      // This ensures admins get the full config with accessCode
+      enabled: !!programId && ready && authenticated,
     });
 
     const updateSchemaMutation = useMutation({
@@ -115,7 +119,8 @@ function createFormSchemaHook(
 
     return {
       schema: schemaQuery.data,
-      isLoading: schemaQuery.isLoading,
+      // Include auth loading state so UI shows loading while waiting for auth
+      isLoading: schemaQuery.isLoading || !ready,
       error: schemaQuery.error,
       updateSchema: updateSchemaMutation.mutate,
       isUpdating: updateSchemaMutation.isPending,
