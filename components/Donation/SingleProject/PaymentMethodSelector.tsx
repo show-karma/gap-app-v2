@@ -98,9 +98,6 @@ export const PaymentMethodSelector = React.memo<PaymentMethodSelectorProps>(
               >
                 Card
               </div>
-              <div className="text-xs text-gray-500 dark:text-zinc-400">
-                Via {defaultProvider.name}
-              </div>
             </div>
           </div>
         </button>

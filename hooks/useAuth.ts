@@ -19,7 +19,7 @@ import { privyConfig } from "@/utilities/wagmi/privy-config";
  * - Wallet connections
  */
 export const useAuth = () => {
-  const { ready, authenticated, user, login, logout, getAccessToken } = usePrivy();
+  const { ready, authenticated, user, login, logout, getAccessToken, connectWallet } = usePrivy();
 
   const { isConnected } = useAccount();
 
@@ -132,5 +132,6 @@ export const useAuth = () => {
     login: adaptedLogin,
     logout,
     getAccessToken,
+    connectWallet, // Connect wallet without full login
   };
 };
