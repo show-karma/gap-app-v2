@@ -387,7 +387,7 @@ describe("SettingsConfiguration - Access Code", () => {
       expect(updatedSchema.settings?.accessCode).toContain("NEWCODE");
     });
 
-    it("should set accessCodeEnabled to true when accessCode has value", async () => {
+    it("should set accessCode when value is entered", async () => {
       const user = userEvent.setup();
 
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
@@ -407,10 +407,10 @@ describe("SettingsConfiguration - Access Code", () => {
       const lastCall = mockOnUpdate.mock.calls[mockOnUpdate.mock.calls.length - 1];
       expect(lastCall).toBeDefined();
       const updatedSchema = lastCall[0] as FormSchema;
-      expect(updatedSchema.settings?.accessCodeEnabled).toBe(true);
+      expect(updatedSchema.settings?.accessCode).toContain("SECRET");
     });
 
-    it("should set accessCodeEnabled to false when accessCode is empty", async () => {
+    it("should clear accessCode when input is emptied", async () => {
       const schemaWithAccessCode: FormSchema = {
         ...mockSchema,
         settings: {
@@ -436,7 +436,7 @@ describe("SettingsConfiguration - Access Code", () => {
       const lastCall = mockOnUpdate.mock.calls[mockOnUpdate.mock.calls.length - 1];
       expect(lastCall).toBeDefined();
       const updatedSchema = lastCall[0] as FormSchema;
-      expect(updatedSchema.settings?.accessCodeEnabled).toBe(false);
+      expect(updatedSchema.settings?.accessCode).toBe("");
     });
 
     it("should preserve other settings when updating access code", async () => {
@@ -470,7 +470,7 @@ describe("SettingsConfiguration - Access Code", () => {
       expect(updatedSchema.settings?.submitButtonText).toBe("Apply Now");
       expect(updatedSchema.settings?.confirmationMessage).toBe("Thank you!");
       expect(updatedSchema.settings?.privateApplications).toBe(true);
-      expect(updatedSchema.settings?.accessCodeEnabled).toBe(true);
+      expect(updatedSchema.settings?.accessCode).toContain("CODE");
     });
   });
 });

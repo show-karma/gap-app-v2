@@ -103,8 +103,7 @@ export function SettingsConfiguration({
           approvalEmailSubject: data.approvalEmailSubject,
           rejectionEmailTemplate: data.rejectionEmailTemplate,
           rejectionEmailSubject: data.rejectionEmailSubject,
-          // Derive accessCodeEnabled from whether accessCode has a value
-          accessCodeEnabled: Boolean(data.accessCode?.trim()),
+          // Only send accessCode - backend derives accessCodeEnabled from it
           accessCode: data.accessCode,
         },
       };
