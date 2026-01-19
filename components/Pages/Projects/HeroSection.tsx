@@ -14,7 +14,7 @@ const HERO_ICONS = [
 export const ProjectsHeroSection = () => {
   return (
     <section
-      className="relative flex flex-col items-center justify-center py-16 px-4 bg-no-repeat bg-center bg-cover"
+      className="relative flex flex-col items-center justify-center py-16 px-4 bg-no-repeat bg-center bg-cover pb-96"
       style={{ backgroundImage: "url('/images/karma-projects-page-bg.svg')" }}
     >
       {/* Icon row - 44x44px icons */}
