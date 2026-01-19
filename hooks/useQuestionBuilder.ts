@@ -92,11 +92,13 @@ function createFormSchemaHook(
 
         return fundingPlatformService.programs.updateProgramConfiguration(programId, updatedConfig);
       },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey });
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.programConfig(programId),
-        });
+      onSuccess: (data) => {
+        // Use setQueryData to update cache without refetching
+        // This prevents multiple redundant API calls
+        // The mutation returns IFundingProgramConfig directly, so access formSchema/postApprovalFormSchema
+        const updatedSchema = data?.[schemaField as keyof typeof data] ?? null;
+        queryClient.setQueryData(queryKey, updatedSchema);
+
         toast.success(successMessage);
       },
       onError: (error: AxiosError<{ message?: string }>) => {
