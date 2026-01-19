@@ -220,23 +220,21 @@ export const fundingProgramsAPI = {
     programId: string,
     formSchema: IFormSchema
   ): Promise<IFundingProgramConfig> {
-    try {
-      const existingConfig = await this.getProgramConfiguration(programId);
+    // getProgramConfiguration returns null for 404, throws for other errors
+    const existingConfig = await this.getProgramConfiguration(programId);
+
+    if (existingConfig) {
+      // Config exists, update it with new formSchema
       const updatedConfig = {
         ...existingConfig,
         formSchema: formSchema,
       };
-
-      // Use updateProgramConfiguration which handles POST/PUT logic
       return this.updateProgramConfiguration(programId, updatedConfig);
-    } catch (error: any) {
-      // If config doesn't exist, create new one with formSchema
-      if (error.response?.status === 404 || !error.response) {
-        return this.updateProgramConfiguration(programId, {
-          formSchema,
-        });
-      }
-      throw error;
+    } else {
+      // Config doesn't exist (404), create new one with just formSchema
+      return this.updateProgramConfiguration(programId, {
+        formSchema,
+      });
     }
   },
 
@@ -244,20 +242,20 @@ export const fundingProgramsAPI = {
    * Toggle program status (enabled/disabled)
    */
   async toggleProgramStatus(programId: string, enabled: boolean): Promise<IFundingProgramConfig> {
-    try {
-      const existingConfig = await this.getProgramConfiguration(programId);
+    // getProgramConfiguration returns null for 404, throws for other errors
+    const existingConfig = await this.getProgramConfiguration(programId);
+
+    if (existingConfig) {
+      // Config exists, update it with new enabled status
       return this.updateProgramConfiguration(programId, {
         ...existingConfig,
         isEnabled: enabled,
       });
-    } catch (error: any) {
-      // If config doesn't exist, create new one with enabled status
-      if (error.response?.status === 404 || !error.response) {
-        return this.updateProgramConfiguration(programId, {
-          isEnabled: enabled,
-        });
-      }
-      throw error;
+    } else {
+      // Config doesn't exist (404), create new one with just enabled status
+      return this.updateProgramConfiguration(programId, {
+        isEnabled: enabled,
+      });
     }
   },
 
