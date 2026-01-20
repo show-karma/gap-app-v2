@@ -1,12 +1,23 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import { PROJECTS_EXPLORER_CONSTANTS } from "@/constants/projects-explorer";
-import type { Project as ProjectResponse } from "@/types/v2/project";
+import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
+import type { PaginatedProjectsResponse, Project as ProjectResponse } from "@/types/v2/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 export interface ExplorerProjectsParams {
   search?: string;
   limit?: number;
+}
+
+export interface ExplorerProjectsPaginatedParams {
+  search?: string;
+  page: number;
+  limit?: number;
+  sortBy?: ExplorerSortByOptions;
+  sortOrder?: ExplorerSortOrder;
+  /** When true, includes stats for each project (grantsCount, grantMilestonesCount, roadmapItemsCount) */
+  includeStats?: boolean;
 }
 
 /**
@@ -47,4 +58,70 @@ export const getExplorerProjects = async (
   }
 
   return filterTestProjects(data);
+};
+
+/**
+ * Fetch paginated projects for the explorer page using V2 API
+ * Automatically filters out test projects
+ *
+ * @param params - Paginated search parameters including page, sortBy, sortOrder
+ * @returns Paginated response with filtered projects and pagination metadata
+ */
+export const getExplorerProjectsPaginated = async (
+  params: ExplorerProjectsPaginatedParams
+): Promise<PaginatedProjectsResponse> => {
+  const {
+    search = "",
+    page,
+    limit = PROJECTS_EXPLORER_CONSTANTS.RESULT_LIMIT,
+    sortBy = "updatedAt",
+    sortOrder = "desc",
+    includeStats = false,
+  } = params;
+
+  // Validate search length if provided
+  const queryString =
+    search.length >= PROJECTS_EXPLORER_CONSTANTS.MIN_SEARCH_LENGTH ? search : undefined;
+
+  const endpoint = INDEXER.V2.PROJECTS.LIST_PAGINATED({
+    q: queryString,
+    page,
+    limit,
+    sortBy,
+    sortOrder,
+    includeStats,
+  });
+
+  const [data, error] = await fetchData<PaginatedProjectsResponse>(endpoint);
+
+  if (error || !data) {
+    errorManager("Failed to fetch explorer projects (paginated)", error, {
+      context: "projects-explorer.service",
+      search,
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+    });
+    // Return empty paginated response
+    return {
+      payload: [],
+      pagination: {
+        totalCount: 0,
+        page,
+        limit,
+        totalPages: 0,
+        nextPage: null,
+        prevPage: null,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
+    };
+  }
+
+  // Filter test projects from payload
+  return {
+    ...data,
+    payload: filterTestProjects(data.payload),
+  };
 };

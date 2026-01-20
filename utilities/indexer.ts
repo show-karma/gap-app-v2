@@ -80,6 +80,29 @@ export const INDEXER = {
       LIST: (limit?: number) => `/v2/projects${limit ? `?limit=${limit}` : ""}`,
       SEARCH: (query: string, limit?: number) =>
         `/v2/projects?q=${encodeURIComponent(query)}${limit ? `&limit=${limit}` : ""}`,
+      /**
+       * Paginated list/search with sorting support
+       * Returns { payload: Project[], pagination: { ... } } when page is provided
+       * When includeStats is true, includes stats for each project (grantsCount, grantMilestonesCount, roadmapItemsCount)
+       */
+      LIST_PAGINATED: (params?: {
+        q?: string;
+        page?: number;
+        limit?: number;
+        sortBy?: string;
+        sortOrder?: "asc" | "desc";
+        includeStats?: boolean;
+      }) => {
+        const queryParams = new URLSearchParams();
+        if (params?.q) queryParams.set("q", params.q);
+        if (params?.page) queryParams.set("page", params.page.toString());
+        if (params?.limit) queryParams.set("limit", params.limit.toString());
+        if (params?.sortBy) queryParams.set("sortBy", params.sortBy);
+        if (params?.sortOrder) queryParams.set("sortOrder", params.sortOrder);
+        if (params?.includeStats) queryParams.set("includeStats", "true");
+        const query = queryParams.toString();
+        return `/v2/projects${query ? `?${query}` : ""}`;
+      },
       GRANTS: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/grants`,
       GRANT_MILESTONES: (projectUid: string, programId: string) =>
         `/v2/projects/${projectUid}/grants/${programId}/milestones`,

@@ -24,7 +24,12 @@ const CARD_COLORS = [
 
 export const ProjectCard = ({ project, index }: ProjectCardProps) => {
   const colorClass = CARD_COLORS[index % CARD_COLORS.length];
-  const { details, createdAt } = project;
+  const { details, createdAt, stats } = project;
+
+  // Get stats from API response, fallback to 0 if not available
+  const grantsCount = stats?.grantsCount ?? 0;
+  const grantMilestonesCount = stats?.grantMilestonesCount ?? 0;
+  const roadmapItemsCount = stats?.roadmapItemsCount ?? 0;
 
   return (
     <Link href={PAGES.PROJECT.OVERVIEW(details.slug)}>
@@ -60,10 +65,13 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
           {/* Stats */}
           <div className="flex flex-wrap gap-2 mt-auto">
             <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-zinc-800 rounded-full text-gray-600 dark:text-gray-400">
-              0 grants received
+              {grantsCount} {grantsCount === 1 ? "grant" : "grants"}
             </span>
             <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-zinc-800 rounded-full text-gray-600 dark:text-gray-400">
-              0 Milestones
+              {grantMilestonesCount} {grantMilestonesCount === 1 ? "milestone" : "milestones"}
+            </span>
+            <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-zinc-800 rounded-full text-gray-600 dark:text-gray-400">
+              {roadmapItemsCount} {roadmapItemsCount === 1 ? "roadmap item" : "roadmap items"}
             </span>
           </div>
         </div>

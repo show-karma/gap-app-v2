@@ -77,6 +77,13 @@ export const QUERY_KEYS = {
     GRANTS: (projectIdOrSlug: string) => ["project-grants", projectIdOrSlug] as const,
     EXPLORER: (search?: string) => ["projects-explorer", search] as const,
     EXPLORER_BASE: ["projects-explorer"] as const,
+    EXPLORER_INFINITE: (params: { search?: string; sortBy?: string; sortOrder?: string }) =>
+      [
+        "projects-explorer-infinite",
+        params.search || "",
+        params.sortBy || "updatedAt",
+        params.sortOrder || "desc",
+      ] as const,
   },
   INDICATORS: {
     AUTOSYNCED: ["indicators", "autosynced"] as const,
