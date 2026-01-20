@@ -1,15 +1,22 @@
 "use client";
 
-import { Dialog, Transition } from "@headlessui/react";
 import {
   ArrowTopRightOnSquareIcon,
   ExclamationTriangleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { NETWORKS, type SupportedChainId } from "@/config/tokens";
 import {
   usePayoutHistory,
@@ -116,132 +123,101 @@ export function PayoutHistoryDrawer({
       : 0;
 
   return (
-    <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
-        </Transition.Child>
-
-        <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-start justify-end p-4">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 translate-x-4"
-              enterTo="opacity-100 translate-x-0"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 translate-x-0"
-              leaveTo="opacity-0 translate-x-4"
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="fixed right-0 top-0 h-full w-full max-w-lg translate-x-0 translate-y-0 rounded-none rounded-l-lg border-l bg-white p-0 shadow-xl data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right dark:bg-zinc-800 sm:rounded-l-lg [&>button]:hidden">
+        {/* Header */}
+        <div className="sticky top-0 z-10 border-b border-gray-200 bg-white px-6 py-4 dark:border-zinc-700 dark:bg-zinc-800">
+          <div className="flex items-start justify-between">
+            <DialogHeader className="space-y-1">
+              <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-white">
+                Payout History
+              </DialogTitle>
+              <DialogDescription className="text-sm text-gray-500 dark:text-gray-400">
+                {projectName} - {grantName}
+              </DialogDescription>
+            </DialogHeader>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"
             >
-              <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-lg bg-white dark:bg-zinc-800 shadow-xl transition-all min-h-[calc(100vh-2rem)]">
-                {/* Header */}
-                <div className="sticky top-0 bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700 px-6 py-4 z-10">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <Dialog.Title
-                        as="h3"
-                        className="text-lg font-semibold text-gray-900 dark:text-white"
-                      >
-                        Payout History
-                      </Dialog.Title>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {projectName} - {grantName}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"
-                    >
-                      <XMarkIcon className="h-6 w-6" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Summary */}
-                <div className="px-6 py-4 bg-gray-50 dark:bg-zinc-700/30 border-b border-gray-200 dark:border-zinc-700">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Total Disbursed
-                      </p>
-                      {isLoadingTotal ? (
-                        <Spinner className="w-4 h-4 mt-1" />
-                      ) : (
-                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {formatTokenAmount(totalDisbursed || "0", tokenDecimals)} {tokenSymbol}
-                        </p>
-                      )}
-                    </div>
-                    {approvedAmount && (
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Grant Amount
-                        </p>
-                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {parseFloat(approvedAmount).toLocaleString(undefined, {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 18,
-                          })}{" "}
-                          {tokenSymbol}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  {approvedAmount && totalDisbursed && (
-                    <div className="mt-3">
-                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                        <span>Progress</span>
-                        <span>{progress.toFixed(1)}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 dark:bg-zinc-600 rounded-full h-2">
-                        <div
-                          className="bg-blue-600 h-2 rounded-full"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="px-6 py-4">
-                  {isLoadingHistory ? (
-                    <div className="flex items-center justify-center py-12">
-                      <Spinner className="w-8 h-8" />
-                    </div>
-                  ) : historyError ? (
-                    <div className="text-center py-12">
-                      <p className="text-red-500 dark:text-red-400">
-                        Failed to load payout history
-                      </p>
-                    </div>
-                  ) : disbursements.length === 0 ? (
-                    <div className="text-center py-12">
-                      <p className="text-gray-500 dark:text-gray-400">No disbursements yet</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {disbursements.map((disbursement) => (
-                        <DisbursementCard key={disbursement.id} disbursement={disbursement} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </Dialog.Panel>
-            </Transition.Child>
+              <XMarkIcon className="h-6 w-6" />
+            </button>
           </div>
         </div>
-      </Dialog>
-    </Transition>
+
+        {/* Summary */}
+        <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 dark:border-zinc-700 dark:bg-zinc-700/30">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                Total Disbursed
+              </p>
+              {isLoadingTotal ? (
+                <Spinner className="mt-1 h-4 w-4" />
+              ) : (
+                <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {formatTokenAmount(totalDisbursed || "0", tokenDecimals)} {tokenSymbol}
+                </p>
+              )}
+            </div>
+            {approvedAmount && (
+              <div>
+                <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Grant Amount
+                </p>
+                <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {parseFloat(approvedAmount).toLocaleString(undefined, {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 18,
+                  })}{" "}
+                  {tokenSymbol}
+                </p>
+              </div>
+            )}
+          </div>
+          {approvedAmount && totalDisbursed && (
+            <div className="mt-3">
+              <div className="mb-1 flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                <span>Progress</span>
+                <span>{progress.toFixed(1)}%</span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-zinc-600">
+                <div
+                  className="h-2 rounded-full bg-blue-600"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {isLoadingHistory ? (
+            <div className="flex items-center justify-center py-12">
+              <Spinner className="h-8 w-8" />
+            </div>
+          ) : historyError ? (
+            <div className="py-12 text-center">
+              <p className="text-red-500 dark:text-red-400">
+                Failed to load payout history
+              </p>
+            </div>
+          ) : disbursements.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-gray-500 dark:text-gray-400">No disbursements yet</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {disbursements.map((disbursement) => (
+                <DisbursementCard key={disbursement.id} disbursement={disbursement} />
+              ))}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -256,15 +232,15 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
 
   return (
     <>
-      <div className="border border-gray-200 dark:border-zinc-600 rounded-lg p-4">
-        <div className="flex justify-between items-start mb-3">
+      <div className="rounded-lg border border-gray-200 p-4 dark:border-zinc-600">
+        <div className="mb-3 flex items-start justify-between">
           <div>
             <span
-              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusConfig.bg} ${statusConfig.text}`}
+              className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${statusConfig.bg} ${statusConfig.text}`}
             >
               {statusConfig.label}
             </span>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
               {formatDate(disbursement.createdAt)}
             </p>
           </div>
@@ -290,7 +266,7 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
             </span>
           </div>
           {disbursement.safeTransactionHash && (
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between">
               <span className="text-gray-500 dark:text-gray-400">Transaction</span>
               {safeUrl ? (
                 <a
@@ -302,7 +278,7 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
                   <span className="font-mono">
                     {truncateAddress(disbursement.safeTransactionHash)}
                   </span>
-                  <ArrowTopRightOnSquareIcon className="w-4 h-4 ml-1" />
+                  <ArrowTopRightOnSquareIcon className="ml-1 h-4 w-4" />
                 </a>
               ) : (
                 <span className="font-mono text-gray-900 dark:text-white">
@@ -324,14 +300,14 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
         {/* Milestone Breakdown */}
         {disbursement.milestoneBreakdown &&
           Object.keys(disbursement.milestoneBreakdown).length > 0 && (
-            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-zinc-600">
-              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="mt-3 border-t border-gray-200 pt-3 dark:border-zinc-600">
+              <p className="mb-2 text-xs font-medium text-gray-700 dark:text-gray-300">
                 Milestone Breakdown
               </p>
               <div className="space-y-1">
                 {Object.entries(disbursement.milestoneBreakdown).map(([milestoneId, amount]) => (
                   <div key={milestoneId} className="flex justify-between text-xs">
-                    <span className="text-gray-500 dark:text-gray-400 truncate max-w-[150px]">
+                    <span className="max-w-[150px] truncate text-gray-500 dark:text-gray-400">
                       {milestoneId}
                     </span>
                     <span className="text-gray-900 dark:text-white">
@@ -345,11 +321,11 @@ function DisbursementCard({ disbursement }: { disbursement: PayoutDisbursement }
 
         {/* Cancel Button - Only for PENDING status */}
         {canCancel && (
-          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-zinc-600">
+          <div className="mt-3 border-t border-gray-200 pt-3 dark:border-zinc-600">
             <button
               type="button"
               onClick={() => setShowCancelDialog(true)}
-              className="text-sm text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors"
+              className="text-sm text-gray-500 transition-colors hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
             >
               Cancel Disbursement
             </button>
@@ -408,99 +384,69 @@ function CancelDisbursementDialog({
   };
 
   return (
-    <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-[60]" onClose={handleClose}>
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-black/25" />
-        </Transition.Child>
-
-        <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
-              enterTo="opacity-100 scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
-            >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white dark:bg-zinc-800 p-6 text-left align-middle shadow-xl transition-all">
-                {/* Warning Icon */}
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
-                  <ExclamationTriangleIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
-                </div>
-
-                <Dialog.Title
-                  as="h3"
-                  className="text-lg font-semibold text-center text-gray-900 dark:text-white mb-2"
-                >
-                  Cancel Disbursement
-                </Dialog.Title>
-
-                <p className="text-sm text-center text-gray-500 dark:text-gray-400 mb-4">
-                  Are you sure you want to cancel this disbursement of{" "}
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {formatTokenAmount(disbursement.disbursedAmount, disbursement.tokenDecimals)}{" "}
-                    {disbursement.token}
-                  </span>
-                  ?
-                </p>
-
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md p-3 mb-4">
-                  <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                    This action cannot be undone.
-                  </p>
-                </div>
-
-                {/* Optional Reason Input */}
-                <div className="mb-6">
-                  <label
-                    htmlFor="cancel-reason"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    Reason (optional)
-                  </label>
-                  <textarea
-                    id="cancel-reason"
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    placeholder="Enter a reason for cancellation..."
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-gray-900 dark:text-white text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  />
-                </div>
-
-                {/* Actions */}
-                <div className="flex justify-end gap-3">
-                  <Button
-                    variant="secondary"
-                    onClick={handleClose}
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    Keep Disbursement
-                  </Button>
-                  <Button
-                    onClick={handleCancel}
-                    isLoading={updateStatusMutation.isPending}
-                    className="bg-red-600 hover:bg-red-700 text-white"
-                  >
-                    Cancel Disbursement
-                  </Button>
-                </div>
-              </Dialog.Panel>
-            </Transition.Child>
-          </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="w-full max-w-md rounded-lg bg-white p-6 dark:bg-zinc-800">
+        {/* Warning Icon */}
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+          <ExclamationTriangleIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
         </div>
-      </Dialog>
-    </Transition>
+
+        <DialogHeader className="text-center">
+          <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-white">
+            Cancel Disbursement
+          </DialogTitle>
+          <DialogDescription className="text-sm text-gray-500 dark:text-gray-400">
+            Are you sure you want to cancel this disbursement of{" "}
+            <span className="font-semibold text-gray-900 dark:text-white">
+              {formatTokenAmount(disbursement.disbursedAmount, disbursement.tokenDecimals)}{" "}
+              {disbursement.token}
+            </span>
+            ?
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="mb-4 rounded-md border border-yellow-200 bg-yellow-50 p-3 dark:border-yellow-800 dark:bg-yellow-900/20">
+          <p className="text-sm text-yellow-800 dark:text-yellow-300">
+            This action cannot be undone.
+          </p>
+        </div>
+
+        {/* Optional Reason Input */}
+        <div className="mb-6">
+          <label
+            htmlFor="cancel-reason"
+            className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Reason (optional)
+          </label>
+          <textarea
+            id="cancel-reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Enter a reason for cancellation..."
+            rows={3}
+            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-red-500 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white dark:placeholder:text-gray-500"
+          />
+        </div>
+
+        {/* Actions */}
+        <DialogFooter className="flex justify-end gap-3">
+          <Button
+            variant="secondary"
+            onClick={handleClose}
+            disabled={updateStatusMutation.isPending}
+          >
+            Keep Disbursement
+          </Button>
+          <Button
+            onClick={handleCancel}
+            isLoading={updateStatusMutation.isPending}
+            className="bg-red-600 text-white hover:bg-red-700"
+          >
+            Cancel Disbursement
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
