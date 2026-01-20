@@ -1,4 +1,5 @@
 "use client";
+import { DocumentTextIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -21,6 +22,8 @@ import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { cn } from "@/utilities/tailwind";
+import { PAGE_HEADER_CONTENT, PageHeader } from "../PageHeader";
 
 interface ProgramDetailsTabProps {
   programId: string;
@@ -341,6 +344,11 @@ export function ProgramDetailsTab({
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
+        <PageHeader
+          title={PAGE_HEADER_CONTENT.programDetails.title}
+          description={PAGE_HEADER_CONTENT.programDetails.description}
+          icon={DocumentTextIcon}
+        />
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Program Name */}
           <div className="flex w-full flex-col gap-1">
@@ -436,9 +444,10 @@ export function ProgramDetailsTab({
                       selected={field.value}
                       onSelect={datePickerProps.onSelect}
                       placeholder="Pick a date"
-                      buttonClassName={`${DATE_PICKER_BUTTON_CLASS} ${
-                        isDisabled ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
+                      buttonClassName={cn(
+                        DATE_PICKER_BUTTON_CLASS,
+                        isDisabled && "opacity-50 cursor-not-allowed"
+                      )}
                       clearButtonFn={datePickerProps.clearButtonFn}
                     />
                     {formState.errors.dates?.startsAt && (
@@ -465,9 +474,10 @@ export function ProgramDetailsTab({
                       onSelect={datePickerProps.onSelect}
                       minDate={startDate}
                       placeholder="Pick a date"
-                      buttonClassName={`${DATE_PICKER_BUTTON_CLASS} ${
-                        isDisabled ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
+                      buttonClassName={cn(
+                        DATE_PICKER_BUTTON_CLASS,
+                        isDisabled && "opacity-50 cursor-not-allowed"
+                      )}
                       clearButtonFn={datePickerProps.clearButtonFn}
                     />
                     {formState.errors.dates?.endsAt && (

@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { EMAIL_PLACEHOLDERS } from "@/components/FundingPlatform/HelpTooltip";
-import { PlaceholderReference } from "@/components/FundingPlatform/PlaceholderReference";
+import {
+  EMAIL_PLACEHOLDERS,
+  PlaceholderReference,
+} from "@/components/FundingPlatform/PlaceholderReference";
 
 describe("PlaceholderReference", () => {
   describe("rendering", () => {

@@ -11,7 +11,6 @@ import {
 } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { cn } from "@/utilities/tailwind";
-import { type HELP_CONTENT, HelpTooltip } from "../HelpTooltip";
 
 export type SidebarTabKey =
   | "build"
@@ -32,8 +31,10 @@ interface SidebarItem {
   icon: React.ElementType;
   required?: boolean;
   description?: string;
-  helpKey?: keyof typeof HELP_CONTENT;
 }
+
+// Module-level constant to avoid creating new Set on every render
+const EMPTY_COMPLETED_STEPS = new Set<SidebarTabKey>();
 
 const SIDEBAR_SECTIONS: SidebarSection[] = [
   {
@@ -44,7 +45,6 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
         label: "Program Details",
         icon: DocumentTextIcon,
         description: "Basic program information",
-        helpKey: "programDetails",
       },
       {
         key: "build",
@@ -52,14 +52,12 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
         icon: WrenchScrewdriverIcon,
         required: true,
         description: "Build the application form",
-        helpKey: "applicationForm",
       },
       {
         key: "post-approval",
         label: "Post-Approval Form",
         icon: CheckCircleIcon,
         description: "Form shown after approval",
-        helpKey: "postApprovalForm",
       },
     ],
   },
@@ -71,7 +69,6 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
         label: "Reviewers",
         icon: UserGroupIcon,
         description: "Manage who reviews applications",
-        helpKey: "reviewers",
       },
     ],
   },
@@ -83,7 +80,6 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
         label: "Email & Privacy",
         icon: Cog6ToothIcon,
         description: "Email templates and privacy settings",
-        helpKey: "emailTemplates",
       },
     ],
   },
@@ -95,7 +91,6 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
         label: "AI Evaluation",
         icon: CpuChipIcon,
         description: "Configure AI-powered evaluation",
-        helpKey: "aiConfig",
       },
     ],
   },
@@ -117,7 +112,7 @@ export function SettingsSidebar({
   communityId,
   programId,
   programTitle,
-  completedSteps = new Set(),
+  completedSteps = EMPTY_COMPLETED_STEPS,
   className,
 }: SettingsSidebarProps) {
   return (

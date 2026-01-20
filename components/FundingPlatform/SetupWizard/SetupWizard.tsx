@@ -3,13 +3,11 @@
 import { ArrowLeftIcon, CheckCircleIcon, RocketLaunchIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
 import type { SetupProgress } from "@/hooks/useProgramSetupProgress";
-import { fundingPlatformService } from "@/services/fundingPlatformService";
 import { cn } from "@/utilities/tailwind";
 import { SetupStep } from "./SetupStep";
 
@@ -22,8 +20,11 @@ interface SetupWizardProps {
 
 export function SetupWizard({ communityId, programId, programName, progress }: SetupWizardProps) {
   const router = useRouter();
-  const [isEnabling, setIsEnabling] = useState(false);
-  const { refetch: refetchConfig } = useProgramConfig(programId);
+  const {
+    toggleStatusAsync,
+    isUpdating: isEnabling,
+    refetch: refetchConfig,
+  } = useProgramConfig(programId);
 
   const dashboardUrl = `/community/${communityId}/admin/funding-platform`;
 
@@ -33,18 +34,14 @@ export function SetupWizard({ communityId, programId, programName, progress }: S
       return;
     }
 
-    setIsEnabling(true);
     try {
-      await fundingPlatformService.programs.toggleProgramStatus(programId, true);
-      toast.success("Program enabled successfully! You can now accept applications.");
+      await toggleStatusAsync(true);
+      // The mutation already shows success toast, so just redirect
       await refetchConfig();
-      // Redirect to dashboard after enabling
       router.push(dashboardUrl);
     } catch (error) {
+      // The mutation already handles error toast, just log
       console.error("Error enabling program:", error);
-      toast.error("Failed to enable program. Please try again.");
-    } finally {
-      setIsEnabling(false);
     }
   };
 

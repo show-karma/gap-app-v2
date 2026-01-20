@@ -24,16 +24,17 @@ import {
   ChevronRightIcon,
   ExclamationTriangleIcon,
   PlusIcon,
+  WrenchScrewdriverIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type React from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import {
   EmptyStateGuidance,
   PostApprovalEmptyState,
 } from "@/components/FundingPlatform/EmptyStateGuidance";
+import { PAGE_HEADER_CONTENT, PageHeader } from "@/components/FundingPlatform/PageHeader";
 import { ProgramDetailsTab } from "@/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab";
 import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
 import { SettingsSidebar, type SidebarTabKey } from "@/components/FundingPlatform/Sidebar";
@@ -283,74 +284,87 @@ export function QuestionBuilder({
     }
   }, [selectedFieldId]);
 
-  const handleFieldAdd = (fieldType: FormField["type"]) => {
-    if (readOnly) return; // Prevent adding fields in read-only mode
+  const handleFieldAdd = useCallback(
+    (fieldType: FormField["type"]) => {
+      if (readOnly) return; // Prevent adding fields in read-only mode
 
-    const newField: FormField = {
-      id: `field_${Date.now()}`,
-      type: fieldType,
-      label: `New ${fieldType} field`,
-      required: !!(fieldType === "email" && !isPostApprovalMode), // Email fields are required by default only in main form
-      private: isPostApprovalMode, // All fields in post-approval mode are private by default
-      options: ["select", "radio", "checkbox"].includes(fieldType)
-        ? ["Option 1", "Option 2"]
-        : undefined,
-    };
+      const newField: FormField = {
+        id: `field_${Date.now()}`,
+        type: fieldType,
+        label: `New ${fieldType} field`,
+        required: !!(fieldType === "email" && !isPostApprovalMode), // Email fields are required by default only in main form
+        private: isPostApprovalMode, // All fields in post-approval mode are private by default
+        options: ["select", "radio", "checkbox"].includes(fieldType)
+          ? ["Option 1", "Option 2"]
+          : undefined,
+      };
 
-    setCurrentSchema((prev) => ({
-      ...prev,
-      fields: [...(prev.fields || []), newField],
-    }));
+      setCurrentSchema((prev) => ({
+        ...prev,
+        fields: [...(prev.fields || []), newField],
+      }));
 
-    setSelectedFieldId(newField.id);
-  };
+      setSelectedFieldId(newField.id);
+    },
+    [readOnly, isPostApprovalMode, setCurrentSchema]
+  );
 
-  const handleFieldUpdate = (updatedField: FormField) => {
-    if (readOnly) return; // Prevent updating fields in read-only mode
+  const handleFieldUpdate = useCallback(
+    (updatedField: FormField) => {
+      if (readOnly) return; // Prevent updating fields in read-only mode
 
-    setCurrentSchema((prev) => ({
-      ...prev,
-      fields: (prev.fields || []).map((field) =>
-        field.id === updatedField.id ? updatedField : field
-      ),
-    }));
-  };
+      setCurrentSchema((prev) => ({
+        ...prev,
+        fields: (prev.fields || []).map((field) =>
+          field.id === updatedField.id ? updatedField : field
+        ),
+      }));
+    },
+    [readOnly, setCurrentSchema]
+  );
 
-  const handleFieldDelete = (fieldId: string) => {
-    if (readOnly) return; // Prevent deleting fields in read-only mode
+  const handleFieldDelete = useCallback(
+    (fieldId: string) => {
+      if (readOnly) return; // Prevent deleting fields in read-only mode
 
-    setCurrentSchema((prev) => ({
-      ...prev,
-      fields: (prev.fields || []).filter((field) => field.id !== fieldId),
-    }));
+      setCurrentSchema((prev) => ({
+        ...prev,
+        fields: (prev.fields || []).filter((field) => field.id !== fieldId),
+      }));
 
-    if (selectedFieldId === fieldId) {
-      setSelectedFieldId(null);
-    }
+      setSelectedFieldId((prevSelected) => (prevSelected === fieldId ? null : prevSelected));
 
-    // Clean up the ref
-    delete fieldRefs.current[fieldId];
-  };
+      // Clean up the ref
+      delete fieldRefs.current[fieldId];
+    },
+    [readOnly, setCurrentSchema]
+  );
 
-  const handleFieldMove = (fieldId: string, direction: "up" | "down") => {
-    if (readOnly) return; // Prevent moving fields in read-only mode
-    if (!currentSchema.fields) return;
+  const handleFieldMove = useCallback(
+    (fieldId: string, direction: "up" | "down") => {
+      if (readOnly) return; // Prevent moving fields in read-only mode
 
-    const currentIndex = currentSchema.fields.findIndex((field) => field.id === fieldId);
-    if (currentIndex === -1) return;
+      setCurrentSchema((prev) => {
+        if (!prev.fields) return prev;
 
-    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-    if (newIndex < 0 || newIndex >= currentSchema.fields.length) return;
+        const currentIndex = prev.fields.findIndex((field) => field.id === fieldId);
+        if (currentIndex === -1) return prev;
 
-    const newFields = [...currentSchema.fields];
-    const [movedField] = newFields.splice(currentIndex, 1);
-    newFields.splice(newIndex, 0, movedField);
+        const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+        if (newIndex < 0 || newIndex >= prev.fields.length) return prev;
 
-    setCurrentSchema((prev) => ({
-      ...prev,
-      fields: newFields,
-    }));
-  };
+        const newFields = [...prev.fields];
+        const [movedField] = newFields.splice(currentIndex, 1);
+        newFields.splice(newIndex, 0, movedField);
+
+        return {
+          ...prev,
+          fields: newFields,
+        };
+      });
+    },
+    [readOnly, setCurrentSchema]
+  );
 
   const handleDragEnd = (event: DragEndEvent) => {
     try {
@@ -566,217 +580,234 @@ export function QuestionBuilder({
       {/* Main Content Area */}
       <div className="flex-1">
         {activeTab === "build" || activeTab === "post-approval" ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-            {/* Field Types Panel */}
-            {!readOnly && (
-              <div className="lg:col-span-1">
-                <FieldTypeSelector
-                  onFieldAdd={handleFieldAdd}
-                  isPostApprovalMode={isPostApprovalMode}
-                />
-              </div>
-            )}
+          <div className="p-6">
+            {/* Page Header */}
+            <PageHeader
+              title={
+                isPostApprovalMode
+                  ? PAGE_HEADER_CONTENT.postApprovalForm.title
+                  : PAGE_HEADER_CONTENT.applicationForm.title
+              }
+              description={
+                isPostApprovalMode
+                  ? PAGE_HEADER_CONTENT.postApprovalForm.description
+                  : PAGE_HEADER_CONTENT.applicationForm.description
+              }
+              icon={isPostApprovalMode ? CheckCircleIcon : WrenchScrewdriverIcon}
+            />
 
-            {/* Form Builder */}
-            <div className={readOnly ? "" : "lg:col-span-2"}>
-              {/* Form Title and Description - Only in Build/Post-Approval tabs */}
-              {renderFormTitleDescription()}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Field Types Panel */}
+              {!readOnly && (
+                <div className="lg:col-span-1">
+                  <FieldTypeSelector
+                    onFieldAdd={handleFieldAdd}
+                    isPostApprovalMode={isPostApprovalMode}
+                  />
+                </div>
+              )}
 
-              <div className="space-y-4">
-                {/* Email Field Warning - only for main application form */}
-                {needsEmailValidation() && (
-                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-start space-x-3">
-                    <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                        Email Field Required
-                      </h4>
-                      <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                        {`Your form must include at least one email field for
+              {/* Form Builder */}
+              <div className={readOnly ? "" : "lg:col-span-2"}>
+                {/* Form Title and Description - Only in Build/Post-Approval tabs */}
+                {renderFormTitleDescription()}
+
+                <div className="space-y-4">
+                  {/* Email Field Warning - only for main application form */}
+                  {needsEmailValidation() && (
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-start space-x-3">
+                      <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                          Email Field Required
+                        </h4>
+                        <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                          {`Your form must include at least one email field for
                         application tracking. Add a field with type "Email" or
                         label containing "email".`}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Post Approval Form Info */}
-                {isPostApprovalMode && (
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-start space-x-3">
-                    <CheckCircleIcon className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                        Post Approval Form
-                      </h4>
-                      <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                        This form will be shown to applicants after their application is approved.
-                        {`Use it to collect additional information needed for the next steps. All fields are automatically set as private, and email fields are not required since we already have the applicant's information.`}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {!currentSchema.fields || currentSchema.fields.length === 0 ? (
-                  isPostApprovalMode ? (
-                    <PostApprovalEmptyState />
-                  ) : (
-                    <EmptyStateGuidance />
-                  )
-                ) : (
-                  <>
-                    {/* Form Fields List with Drag and Drop */}
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleDragEnd}
-                    >
-                      <SortableContext
-                        items={currentSchema.fields.map((field) => field.id)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        <div className="space-y-3">
-                          {currentSchema.fields.map((field, index) => (
-                            <SortableFieldItem
-                              key={field.id}
-                              field={field}
-                              index={index}
-                              selectedFieldId={selectedFieldId}
-                              setSelectedFieldId={setSelectedFieldId}
-                              handleFieldUpdate={handleFieldUpdate}
-                              handleFieldDelete={handleFieldDelete}
-                              handleFieldMove={handleFieldMove}
-                              readOnly={readOnly}
-                              isPostApprovalMode={isPostApprovalMode}
-                              totalFields={currentSchema.fields.length}
-                              fieldRefs={fieldRefs}
-                            />
-                          ))}
-                        </div>
-                      </SortableContext>
-                    </DndContext>
-                  </>
-                )}
-
-                {/* Post Approval Email Notification Section - Only show in post-approval mode */}
-                {isPostApprovalMode && (
-                  <div className="mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                          Post Approval Email Notifications
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          Add email addresses that should receive notifications when post-approval
-                          forms are submitted.
                         </p>
                       </div>
                     </div>
+                  )}
 
-                    {/* Email List */}
-                    {currentSchema.emailNotifications &&
-                      currentSchema.emailNotifications.length > 0 && (
-                        <div className="space-y-2 mb-4">
-                          {currentSchema.emailNotifications.map((email, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 px-4 py-3 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                                  <svg
-                                    className="w-4 h-4 text-blue-600 dark:text-blue-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                    />
-                                  </svg>
+                  {/* Post Approval Form Info */}
+                  {isPostApprovalMode && (
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-start space-x-3">
+                      <CheckCircleIcon className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                          Post Approval Form
+                        </h4>
+                        <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                          This form will be shown to applicants after their application is approved.
+                          {`Use it to collect additional information needed for the next steps. All fields are automatically set as private, and email fields are not required since we already have the applicant's information.`}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {!currentSchema.fields || currentSchema.fields.length === 0 ? (
+                    isPostApprovalMode ? (
+                      <PostApprovalEmptyState />
+                    ) : (
+                      <EmptyStateGuidance />
+                    )
+                  ) : (
+                    <>
+                      {/* Form Fields List with Drag and Drop */}
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <SortableContext
+                          items={currentSchema.fields.map((field) => field.id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          <div className="space-y-3">
+                            {currentSchema.fields.map((field, index) => (
+                              <SortableFieldItem
+                                key={field.id}
+                                field={field}
+                                index={index}
+                                selectedFieldId={selectedFieldId}
+                                setSelectedFieldId={setSelectedFieldId}
+                                handleFieldUpdate={handleFieldUpdate}
+                                handleFieldDelete={handleFieldDelete}
+                                handleFieldMove={handleFieldMove}
+                                readOnly={readOnly}
+                                isPostApprovalMode={isPostApprovalMode}
+                                totalFields={currentSchema.fields.length}
+                                fieldRefs={fieldRefs}
+                              />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      </DndContext>
+                    </>
+                  )}
+
+                  {/* Post Approval Email Notification Section - Only show in post-approval mode */}
+                  {isPostApprovalMode && (
+                    <div className="mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                            Post Approval Email Notifications
+                          </h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            Add email addresses that should receive notifications when post-approval
+                            forms are submitted.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Email List */}
+                      {currentSchema.emailNotifications &&
+                        currentSchema.emailNotifications.length > 0 && (
+                          <div className="space-y-2 mb-4">
+                            {currentSchema.emailNotifications.map((email, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 px-4 py-3 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                                    <svg
+                                      className="w-4 h-4 text-blue-600 dark:text-blue-400"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                      />
+                                    </svg>
+                                  </div>
+                                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                    {email}
+                                  </span>
                                 </div>
-                                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                  {email}
-                                </span>
+                                {!readOnly && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveEmail(index)}
+                                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors opacity-0 group-hover:opacity-100"
+                                    aria-label={`Remove ${email}`}
+                                  >
+                                    <XMarkIcon className="w-5 h-5" />
+                                  </button>
+                                )}
                               </div>
-                              {!readOnly && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveEmail(index)}
-                                  className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors opacity-0 group-hover:opacity-100"
-                                  aria-label={`Remove ${email}`}
-                                >
-                                  <XMarkIcon className="w-5 h-5" />
-                                </button>
-                              )}
-                            </div>
-                          ))}
+                            ))}
+                          </div>
+                        )}
+
+                      {/* Empty state */}
+                      {(!currentSchema.emailNotifications ||
+                        currentSchema.emailNotifications.length === 0) && (
+                        <div className="text-center py-8 mb-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
+                          <svg
+                            className="mx-auto h-12 w-12 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                            />
+                          </svg>
+                          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                            No email addresses added yet
+                          </p>
                         </div>
                       )}
 
-                    {/* Empty state */}
-                    {(!currentSchema.emailNotifications ||
-                      currentSchema.emailNotifications.length === 0) && (
-                      <div className="text-center py-8 mb-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
-                        <svg
-                          className="mx-auto h-12 w-12 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                          />
-                        </svg>
-                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                          No email addresses added yet
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Add Email Input */}
-                    {!readOnly && (
-                      <div className="space-y-2">
-                        <label
-                          htmlFor="email-input"
-                          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >
-                          Add Email Address
-                        </label>
-                        <div className="flex gap-2">
-                          <input
-                            id="email-input"
-                            type="email"
-                            value={newEmail}
-                            onChange={(e) => setNewEmail(e.target.value)}
-                            onKeyDown={handleEmailKeyDown}
-                            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
-                            placeholder="Enter email address (e.g., admin@example.com)"
-                          />
-                          <Button
-                            type="button"
-                            onClick={handleAddEmail}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                      {/* Add Email Input */}
+                      {!readOnly && (
+                        <div className="space-y-2">
+                          <label
+                            htmlFor="email-input"
+                            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                           >
-                            <PlusIcon className="w-5 h-5" />
-                            Add
-                          </Button>
+                            Add Email Address
+                          </label>
+                          <div className="flex gap-2">
+                            <input
+                              id="email-input"
+                              type="email"
+                              value={newEmail}
+                              onChange={(e) => setNewEmail(e.target.value)}
+                              onKeyDown={handleEmailKeyDown}
+                              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
+                              placeholder="Enter email address (e.g., admin@example.com)"
+                            />
+                            <Button
+                              type="button"
+                              onClick={handleAddEmail}
+                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                            >
+                              <PlusIcon className="w-5 h-5" />
+                              Add
+                            </Button>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Press Enter or click Add to include the email address
+                          </p>
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Press Enter or click Add to include the email address
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  )}
 
-                {/* Save Button at bottom of Build/Post-Approval tab */}
-                {renderSaveButton()}
+                  {/* Save Button at bottom of Build/Post-Approval tab */}
+                  {renderSaveButton()}
+                </div>
               </div>
             </div>
           </div>
@@ -852,7 +883,7 @@ interface SortableFieldItemProps {
   fieldRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
 }
 
-function SortableFieldItem({
+const SortableFieldItem = React.memo(function SortableFieldItem({
   field,
   index,
   selectedFieldId,
@@ -978,4 +1009,4 @@ function SortableFieldItem({
       </div>
     </div>
   );
-}
+});

@@ -34,27 +34,13 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import { type FundingProgram, fundingPlatformService } from "@/services/fundingPlatformService";
-import { FUNDING_PLATFORM_DOMAINS } from "@/src/features/funding-map/utils/funding-platform-domains";
 import { layoutTheme } from "@/src/helper/theme";
-import { envVars } from "@/utilities/enviromentVars";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
+import { getProgramApplyUrl } from "@/utilities/fundingPlatformUrls";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-
-const getApplyUrlByCommunityId = (communityId: string, programId: string) => {
-  if (communityId in FUNDING_PLATFORM_DOMAINS) {
-    const domain = FUNDING_PLATFORM_DOMAINS[communityId as keyof typeof FUNDING_PLATFORM_DOMAINS];
-    return envVars.isDev
-      ? `${domain.dev}/programs/${programId}/apply`
-      : `${domain.prod}/programs/${programId}/apply`;
-  } else {
-    return envVars.isDev
-      ? `${FUNDING_PLATFORM_DOMAINS.shared.dev}/${communityId}/programs/${programId}/apply`
-      : `${FUNDING_PLATFORM_DOMAINS.shared.prod}/${communityId}/programs/${programId}/apply`;
-  }
-};
 
 export default function FundingPlatformAdminPage() {
   const { communityId } = useParams() as { communityId: string };
@@ -659,7 +645,7 @@ export default function FundingPlatformAdminPage() {
 
                   {/* Link to Application Form */}
                   <Link
-                    href={getApplyUrlByCommunityId(communityId, program.programId)}
+                    href={getProgramApplyUrl(communityId, program.programId)}
                     target="_blank"
                     title="Open application form"
                     className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-md transition-colors border border-gray-200 dark:border-gray-600"
