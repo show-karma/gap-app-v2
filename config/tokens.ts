@@ -1,3 +1,7 @@
+// Sentinel address used to represent native tokens (ETH, POL, etc.) in protocols
+// This is the standard DeFi convention (used by Uniswap, 1inch, etc.)
+export const NATIVE_TOKEN_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" as const;
+
 // Token contract addresses for supported networks
 export const TOKEN_ADDRESSES = {
   // USDC contract addresses

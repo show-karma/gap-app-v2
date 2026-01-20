@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  CheckCircle,
-  CircleX,
-  Coins,
-  Globe,
-  Loader,
-  Shield,
-  UserCheck,
-} from "lucide-react";
+import { CheckCircle, CircleX, Coins, Globe, Loader, Shield, UserCheck } from "lucide-react";
 import Papa from "papaparse";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
@@ -46,6 +38,11 @@ const NETWORK_OPTIONS = [
 ];
 
 const TOKEN_OPTIONS = [{ id: "usdc", name: "USDC" }];
+
+/** Get display name for a token ID */
+const getTokenName = (tokenId: string): string => {
+  return TOKEN_OPTIONS.find((t) => t.id === tokenId)?.name || tokenId.toUpperCase();
+};
 
 export const formatNumber = (value: number): string => {
   if (value >= 1_000_000) {
@@ -398,8 +395,8 @@ export const DisbursementForm = () => {
               <div className="mt-4 space-y-3">
                 <p className="text-gray-600 max-w-2xl mx-auto">
                   {transactionState.result.executed
-                    ? `Successfully executed disbursement to ${transactionState.result.totalRecipients} recipients for a total of ${transactionState.result.totalAmount} USDC. The funds have been transferred!`
-                    : `Successfully signed disbursement to ${transactionState.result.totalRecipients} recipients for a total of ${transactionState.result.totalAmount} USDC. The transaction is ready for execution.`}
+                    ? `Successfully executed disbursement to ${transactionState.result.totalRecipients} recipients for a total of ${transactionState.result.totalAmount} ${getTokenName(token)}. The funds have been transferred!`
+                    : `Successfully signed disbursement to ${transactionState.result.totalRecipients} recipients for a total of ${transactionState.result.totalAmount} ${getTokenName(token)}. The transaction is ready for execution.`}
                 </p>
                 <div className="bg-gray-50 rounded-lg px-4 py-3 mx-auto max-w-md">
                   <p className="text-sm text-gray-600">Transaction Hash:</p>
@@ -493,7 +490,7 @@ export const DisbursementForm = () => {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">💰 Safe Disbursement</h1>
           <p className="text-gray-600">
-            Distribute USDC tokens to multiple recipients using Gnosis Safe
+            Distribute tokens to multiple recipients using Gnosis Safe
           </p>
         </div>
 
@@ -662,7 +659,7 @@ export const DisbursementForm = () => {
             </div>
           </Card>
 
-          <DisbursementReview recipients={recipients} />
+          <DisbursementReview recipients={recipients} tokenSymbol={getTokenName(token)} />
 
           {/* Pre-flight Check Status */}
           {safeAddress && isConnected && (
@@ -825,9 +822,10 @@ export const DisbursementForm = () => {
                         <div>
                           <div className="font-medium">Balance</div>
                           <div className="text-sm">
-                            {formatNumber(parseFloat(preflightChecks.safeBalance) || 0)} USDC
-                            available
-                            {totalAmount > 0 && ` (${formatNumber(totalAmount)} USDC needed)`}
+                            {formatNumber(parseFloat(preflightChecks.safeBalance) || 0)}{" "}
+                            {getTokenName(token)} available
+                            {totalAmount > 0 &&
+                              ` (${formatNumber(totalAmount)} ${getTokenName(token)} needed)`}
                           </div>
                         </div>
                       </div>
@@ -870,8 +868,8 @@ export const DisbursementForm = () => {
                     <div>
                       <div className="text-lg font-semibold text-gray-900">📊 Summary</div>
                       <div className="text-sm text-gray-600">
-                        👥 {recipients.length} recipients • 💰 {formatNumber(totalAmount)} USDC
-                        total
+                        👥 {recipients.length} recipients • 💰 {formatNumber(totalAmount)}{" "}
+                        {getTokenName(token)} total
                       </div>
                     </div>
                   </div>

@@ -5,8 +5,9 @@ import {
   ExclamationTriangleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { formatUnits } from "viem";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import {
@@ -18,13 +19,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { NETWORKS, type SupportedChainId } from "@/config/tokens";
-import {
-  usePayoutHistory,
-  useTotalDisbursed,
-  useUpdateDisbursementStatus,
-} from "../hooks/use-payout-disbursement";
+import { usePayoutHistory, useUpdateDisbursementStatus } from "../hooks/use-payout-disbursement";
 import { type PayoutDisbursement, PayoutDisbursementStatus } from "../types/payout-disbursement";
-import { calculateDisbursementProgress, formatTokenAmount } from "../utils/format-token-amount";
+import { formatTokenAmount } from "../utils/format-token-amount";
 
 interface PayoutHistoryDrawerProps {
   isOpen: boolean;
@@ -33,10 +30,14 @@ interface PayoutHistoryDrawerProps {
   grantName: string;
   projectName: string;
   approvedAmount?: string;
-  /** Token symbol for display (e.g., "USDC", "ETH"). Defaults to "USDC" */
-  tokenSymbol?: string;
-  /** Number of decimals for the token. Defaults to 6 (USDC standard) */
-  tokenDecimals?: number;
+}
+
+/** Token total aggregation for multi-token support */
+interface TokenTotalInfo {
+  token: string;
+  tokenDecimals: number;
+  totalRaw: bigint;
+  totalFormatted: string;
 }
 
 const STATUS_COLORS: Record<PayoutDisbursementStatus, { bg: string; text: string; label: string }> =
@@ -101,8 +102,6 @@ export function PayoutHistoryDrawer({
   grantName,
   projectName,
   approvedAmount,
-  tokenSymbol = "USDC",
-  tokenDecimals = 6,
 }: PayoutHistoryDrawerProps) {
   const {
     data: historyData,
@@ -110,17 +109,68 @@ export function PayoutHistoryDrawer({
     error: historyError,
   } = usePayoutHistory(grantUID, 1, 50, { enabled: isOpen && !!grantUID });
 
-  const { data: totalDisbursed, isLoading: isLoadingTotal } = useTotalDisbursed(grantUID, {
-    enabled: isOpen && !!grantUID,
-  });
-
   const disbursements = historyData?.payload || [];
 
-  // Calculate progress using the utility function
-  const progress =
-    totalDisbursed && approvedAmount
-      ? calculateDisbursementProgress(totalDisbursed, approvedAmount, tokenDecimals)
-      : 0;
+  // Calculate totals grouped by token from actual disbursements
+  const tokenTotals = useMemo((): TokenTotalInfo[] => {
+    const totalsMap = new Map<string, { token: string; tokenDecimals: number; totalRaw: bigint }>();
+
+    for (const d of disbursements) {
+      // Only count disbursed transactions (not pending/cancelled/failed)
+      if (d.status !== PayoutDisbursementStatus.DISBURSED) continue;
+
+      const key = `${d.token}-${d.tokenDecimals}`;
+      const existing = totalsMap.get(key);
+      const amount = BigInt(d.disbursedAmount || "0");
+
+      if (existing) {
+        existing.totalRaw += amount;
+      } else {
+        totalsMap.set(key, {
+          token: d.token,
+          tokenDecimals: d.tokenDecimals,
+          totalRaw: amount,
+        });
+      }
+    }
+
+    return Array.from(totalsMap.values()).map((t) => ({
+      ...t,
+      totalFormatted: formatUnits(t.totalRaw, t.tokenDecimals),
+    }));
+  }, [disbursements]);
+
+  // Get primary token info (first token with disbursements, or from first transaction)
+  const primaryToken = useMemo(() => {
+    if (tokenTotals.length > 0) {
+      return tokenTotals[0];
+    }
+    // Fallback to first disbursement's token info if no completed disbursements
+    if (disbursements.length > 0) {
+      return {
+        token: disbursements[0].token,
+        tokenDecimals: disbursements[0].tokenDecimals,
+        totalRaw: BigInt(0),
+        totalFormatted: "0",
+      };
+    }
+    // Default fallback
+    return {
+      token: "",
+      tokenDecimals: 6,
+      totalRaw: BigInt(0),
+      totalFormatted: "0",
+    };
+  }, [tokenTotals, disbursements]);
+
+  // Calculate progress based on primary token
+  const progress = useMemo(() => {
+    if (!approvedAmount || tokenTotals.length === 0) return 0;
+    const totalDisbursed = parseFloat(primaryToken.totalFormatted);
+    const approved = parseFloat(approvedAmount);
+    if (approved <= 0) return 0;
+    return Math.min(100, (totalDisbursed / approved) * 100);
+  }, [approvedAmount, tokenTotals, primaryToken]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -153,12 +203,35 @@ export function PayoutHistoryDrawer({
               <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
                 Total Disbursed
               </p>
-              {isLoadingTotal ? (
+              {isLoadingHistory ? (
                 <Spinner className="mt-1 h-4 w-4" />
-              ) : (
+              ) : tokenTotals.length === 0 ? (
                 <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {formatTokenAmount(totalDisbursed || "0", tokenDecimals)} {tokenSymbol}
+                  0 {primaryToken.token}
                 </p>
+              ) : tokenTotals.length === 1 ? (
+                <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {parseFloat(tokenTotals[0].totalFormatted).toLocaleString(undefined, {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 18,
+                  })}{" "}
+                  {tokenTotals[0].token}
+                </p>
+              ) : (
+                <div className="space-y-1">
+                  {tokenTotals.map((t) => (
+                    <p
+                      key={`${t.token}-${t.tokenDecimals}`}
+                      className="text-lg font-semibold text-gray-900 dark:text-white"
+                    >
+                      {parseFloat(t.totalFormatted).toLocaleString(undefined, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 18,
+                      })}{" "}
+                      {t.token}
+                    </p>
+                  ))}
+                </div>
               )}
             </div>
             {approvedAmount && (
@@ -171,12 +244,12 @@ export function PayoutHistoryDrawer({
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 18,
                   })}{" "}
-                  {tokenSymbol}
+                  {primaryToken.token}
                 </p>
               </div>
             )}
           </div>
-          {approvedAmount && totalDisbursed && (
+          {approvedAmount && tokenTotals.length > 0 && (
             <div className="mt-3">
               <div className="mb-1 flex justify-between text-xs text-gray-500 dark:text-gray-400">
                 <span>Progress</span>
@@ -185,7 +258,7 @@ export function PayoutHistoryDrawer({
               <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-zinc-600">
                 <div
                   className="h-2 rounded-full bg-blue-600"
-                  style={{ width: `${progress}%` }}
+                  style={{ width: `${Math.min(100, progress)}%` }}
                 />
               </div>
             </div>
@@ -200,9 +273,7 @@ export function PayoutHistoryDrawer({
             </div>
           ) : historyError ? (
             <div className="py-12 text-center">
-              <p className="text-red-500 dark:text-red-400">
-                Failed to load payout history
-              </p>
+              <p className="text-red-500 dark:text-red-400">Failed to load payout history</p>
             </div>
           ) : disbursements.length === 0 ? (
             <div className="py-12 text-center">

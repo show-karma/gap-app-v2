@@ -5,9 +5,14 @@ import type { DisbursementRecipient } from "../../types/disbursement";
 
 interface DisbursementReviewProps {
   recipients: DisbursementRecipient[];
+  /** Token symbol to display in the amount column header */
+  tokenSymbol?: string;
 }
 
-export const DisbursementReview: React.FC<DisbursementReviewProps> = ({ recipients }) => {
+export const DisbursementReview: React.FC<DisbursementReviewProps> = ({
+  recipients,
+  tokenSymbol,
+}) => {
   if (recipients.length === 0) {
     return null;
   }
@@ -43,7 +48,7 @@ export const DisbursementReview: React.FC<DisbursementReviewProps> = ({ recipien
                 👤 Recipient Address
               </th>
               <th scope="col" className="px-3 py-4 text-left text-sm font-semibold text-gray-900">
-                💰 Amount (USDC)
+                💰 Amount{tokenSymbol ? ` (${tokenSymbol})` : ""}
               </th>
               <th scope="col" className="px-3 py-4 text-left text-sm font-semibold text-gray-900">
                 ✅ Status

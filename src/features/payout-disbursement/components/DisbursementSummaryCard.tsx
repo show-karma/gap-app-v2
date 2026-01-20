@@ -229,8 +229,6 @@ export function DisbursementSummaryCard({
         grantName={grantName}
         projectName={projectName}
         approvedAmount={approvedAmount}
-        tokenSymbol={currency}
-        tokenDecimals={tokenDecimals}
       />
     </>
   );

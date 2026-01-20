@@ -28,6 +28,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import {
   getAvailableNetworks,
   getNativeTokenSymbol,
+  NATIVE_TOKEN_ADDRESS,
   NATIVE_TOKENS,
   NETWORKS,
   type SupportedChainId,
@@ -735,7 +736,7 @@ export function CreateDisbursementModal({
         chainID: selectedNetwork,
         safeAddress,
         token: selectedTokenSymbol,
-        tokenAddress: selectedTokenAddress || "", // Empty for native tokens
+        tokenAddress: selectedTokenAddress || NATIVE_TOKEN_ADDRESS,
         tokenDecimals: selectedTokenDecimals,
       });
 
