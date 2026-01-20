@@ -1,3 +1,15 @@
+/**
+ * Aggregated datapoint from materialized views
+ */
+export interface AggregatedDatapoint {
+  indicatorId: string;
+  indicatorName: string;
+  startDate: string;
+  endDate: string;
+  totalValue: number;
+  projectCount: number;
+}
+
 export interface ImpactIndicatorWithData {
   id: string;
   name: string;
@@ -15,9 +27,20 @@ export interface ImpactIndicatorWithData {
     startDate: string;
     endDate: string;
     outputTimestamp?: string;
+    breakdown?: string;
+    /**
+     * Period type for rolling metrics (e.g., "30d", "90d", "180d", "1y", "monthly")
+     * Used for indicators like "Unique users" that have period-based datapoints
+     */
+    period?: string | null;
   }[];
   hasData: boolean;
   isAssociatedWithPrograms: boolean;
+  /**
+   * Aggregated data by period (e.g., { monthly: [...], weekly: [...] })
+   * FE can use Object.keys() to get available periods
+   */
+  aggregatedData?: Record<string, AggregatedDatapoint[]>;
 }
 
 export interface ImpactIndicator {
@@ -29,6 +52,7 @@ export interface ImpactIndicator {
     chainID: number;
   }[];
   unitOfMeasure: string;
+  syncType?: "auto" | "manual";
   createdAt?: string;
   updatedAt?: string;
 }

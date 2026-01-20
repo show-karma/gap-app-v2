@@ -4,6 +4,7 @@ import { ArrowLeftIcon, EyeIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { AIAnalysisTab } from "@/components/FundingPlatform/ApplicationView/AIAnalysisTab";
 import ApplicationHeader from "@/components/FundingPlatform/ApplicationView/ApplicationHeader";
@@ -14,12 +15,17 @@ import {
   TabIcons,
 } from "@/components/FundingPlatform/ApplicationView/ApplicationTabs";
 import { DiscussionTab } from "@/components/FundingPlatform/ApplicationView/DiscussionTab";
+import HeaderActions, {
+  type ApplicationStatus,
+} from "@/components/FundingPlatform/ApplicationView/HeaderActions";
+import { StatusChangeInline } from "@/components/FundingPlatform/ApplicationView/StatusChangeInline";
 import { TabPanel } from "@/components/FundingPlatform/ApplicationView/TabPanel";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import {
   useApplication,
   useApplicationComments,
+  useApplicationStatus,
   useApplicationVersions,
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
@@ -27,6 +33,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { layoutTheme } from "@/src/helper/theme";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import { PAGES } from "@/utilities/pages";
+import { isFundingProgramConfig } from "@/utilities/type-guards";
 
 /**
  * Reviewer Application Detail Page
@@ -62,6 +69,10 @@ export default function ReviewerApplicationDetailPage() {
   // View mode state for ApplicationTab
   const [applicationViewMode, setApplicationViewMode] = useState<"details" | "changes">("details");
 
+  // Status change inline form state
+  const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
   // Fetch application data
   const {
     application,
@@ -71,6 +82,9 @@ export default function ReviewerApplicationDetailPage() {
 
   // Fetch program config
   const { data: program } = useProgramConfig(programId);
+
+  // Use the application status hook for status changes
+  const { updateStatusAsync } = useApplicationStatus(programId);
 
   // Use the comments hook - reviewers can view and add comments
   const {
@@ -89,6 +103,64 @@ export default function ReviewerApplicationDetailPage() {
 
   // Get version selection from store
   const { selectVersion } = useApplicationVersionsStore();
+
+  // Handle status change
+  const handleStatusChange = async (
+    status: string,
+    note?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => {
+    if (!application) return;
+    await updateStatusAsync({
+      applicationId: application.referenceNumber,
+      status,
+      note,
+      approvedAmount,
+      approvedCurrency,
+    });
+  };
+
+  // Handle status change click - shows inline form (toggle if same status clicked)
+  const handleStatusChangeClick = (status: ApplicationStatus) => {
+    setSelectedStatus((current) => (current === status ? null : status));
+  };
+
+  // Handle status change confirmation from inline form
+  const handleStatusChangeConfirm = async (
+    reason?: string,
+    approvedAmount?: string,
+    approvedCurrency?: string
+  ) => {
+    if (!selectedStatus) return;
+
+    setIsUpdatingStatus(true);
+    try {
+      await handleStatusChange(selectedStatus, reason, approvedAmount, approvedCurrency);
+      // Success: hide inline form and clear state
+      setSelectedStatus(null);
+      if (selectedStatus === "approved") {
+        toast.success("Application approved successfully!");
+      } else {
+        toast.success(`Application status updated to ${selectedStatus}`);
+      }
+    } catch (error) {
+      // Error: keep form open so user can retry
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update application status";
+      toast.error(errorMessage);
+    } finally {
+      // Always clear loading state
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  // Handle inline form cancel
+  const handleStatusChangeCancel = () => {
+    if (!isUpdatingStatus) {
+      setSelectedStatus(null);
+    }
+  };
 
   // Handle comment operations - reviewers can add and edit their own comments
   const handleCommentAdd = async (content: string) => {
@@ -130,6 +202,10 @@ export default function ReviewerApplicationDetailPage() {
     }
     return null;
   }, [application?.status, application?.projectUID, communityId, combinedProgramId]);
+
+  // Check if status actions should be shown (reviewer has permission and app not finalized)
+  const showStatusActions =
+    canView && application && !["approved", "rejected"].includes(application.status.toLowerCase());
 
   // Check loading states
   if (isLoadingPermission || isLoadingApplication) {
@@ -192,12 +268,34 @@ export default function ReviewerApplicationDetailPage() {
           </div>
         </div>
 
-        {/* Application Header - No status actions for reviewers */}
+        {/* Application Header with Status Actions for Reviewers */}
         <ApplicationHeader
           application={application}
           program={program}
-          connectedToTabs={!milestoneReviewUrl}
+          connectedToTabs={!milestoneReviewUrl && !selectedStatus}
+          statusActions={
+            showStatusActions ? (
+              <HeaderActions
+                currentStatus={application.status as ApplicationStatus}
+                onStatusChange={handleStatusChangeClick}
+                isUpdating={isUpdatingStatus}
+              />
+            ) : undefined
+          }
         />
+
+        {/* Status Change Inline Form - Shows below header when status action is selected */}
+        {selectedStatus && showStatusActions && (
+          <StatusChangeInline
+            status={selectedStatus}
+            onConfirm={handleStatusChangeConfirm}
+            onCancel={handleStatusChangeCancel}
+            isSubmitting={isUpdatingStatus}
+            isReasonRequired={selectedStatus === "revision_requested"}
+            application={application}
+            programConfig={isFundingProgramConfig(program) ? program : undefined}
+          />
+        )}
 
         {/* Milestone Review Link - Only shown if application is approved and has projectUID */}
         {milestoneReviewUrl && (
@@ -223,7 +321,7 @@ export default function ReviewerApplicationDetailPage() {
 
         {/* Tab-based Layout */}
         <ApplicationTabs
-          connectedToHeader={!milestoneReviewUrl}
+          connectedToHeader={!milestoneReviewUrl && !selectedStatus}
           tabs={
             [
               {
@@ -256,30 +354,32 @@ export default function ReviewerApplicationDetailPage() {
                   </TabPanel>
                 ),
               },
+              {
+                id: "comments",
+                label: "Comments",
+                icon: TabIcons.Discussion,
+                content: (
+                  <TabPanel>
+                    <DiscussionTab
+                      applicationId={applicationIdentifier}
+                      comments={comments}
+                      statusHistory={application.statusHistory}
+                      versionHistory={versions}
+                      currentStatus={application.status}
+                      isAdmin={false} // Not admin, but can comment
+                      currentUserAddress={currentUserAddress}
+                      onCommentAdd={handleCommentAdd}
+                      onCommentEdit={handleCommentEdit}
+                      onCommentDelete={handleCommentDelete}
+                      onVersionClick={handleVersionClick}
+                      isLoading={isLoadingComments}
+                    />
+                  </TabPanel>
+                ),
+              },
             ] satisfies TabConfig[]
           }
         />
-
-        {/* Comments Section - Always visible at the bottom */}
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Comments & Activity
-          </h2>
-          <DiscussionTab
-            applicationId={application.referenceNumber}
-            comments={comments}
-            statusHistory={application.statusHistory}
-            versionHistory={versions}
-            currentStatus={application.status}
-            isAdmin={false} // Not admin, but can comment
-            currentUserAddress={currentUserAddress}
-            onCommentAdd={handleCommentAdd}
-            onCommentEdit={handleCommentEdit}
-            onCommentDelete={handleCommentDelete}
-            onVersionClick={handleVersionClick}
-            isLoading={isLoadingComments}
-          />
-        </div>
       </div>
     </div>
   );

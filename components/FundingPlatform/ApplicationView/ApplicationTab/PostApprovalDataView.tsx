@@ -134,6 +134,7 @@ export const PostApprovalDataView: FC<PostApprovalDataViewProps> = ({ applicatio
 
   return (
     <div className="space-y-6">
+      {/* Post-approval data fields */}
       {Object.entries(dataToRender).map(([key, value]) => (
         <div
           key={key}

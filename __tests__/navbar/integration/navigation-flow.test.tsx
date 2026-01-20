@@ -608,7 +608,7 @@ describe("Navigation Flow Integration Tests", () => {
   });
 
   describe("8. Navigation State Management", () => {
-    it("should close dropdown when clicking outside", async () => {
+    it("should close dropdown when pressing Escape", async () => {
       const user = userEvent.setup();
       const authFixture = getAuthFixture("unauthenticated");
 
@@ -624,11 +624,13 @@ describe("Navigation Flow Integration Tests", () => {
         expect(screen.getByText("All projects")).toBeInTheDocument();
       });
 
-      // Click outside (on the body)
-      await user.click(document.body);
+      // Press Escape to close dropdown (DropdownMenu applies pointer-events: none to body when open)
+      await user.keyboard("{Escape}");
 
       // Dropdown should close
-      // Note: This behavior depends on the dropdown component implementation
+      await waitFor(() => {
+        expect(screen.queryByText("All projects")).not.toBeInTheDocument();
+      });
     });
 
     it("should allow switching between dropdowns", async () => {
@@ -647,6 +649,13 @@ describe("Navigation Flow Integration Tests", () => {
 
       await waitFor(() => {
         expect(screen.getByText("Create project")).toBeInTheDocument();
+      });
+
+      // Close first dropdown by pressing Escape (DropdownMenu applies pointer-events: none to body when open)
+      await user.keyboard("{Escape}");
+
+      await waitFor(() => {
+        expect(screen.queryByText("Create project")).not.toBeInTheDocument();
       });
 
       // Open second dropdown

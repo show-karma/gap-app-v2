@@ -14,12 +14,11 @@ import {
   attestMilestoneCompletionAsReviewer,
   type GrantMilestoneWithCompletion,
   type ProjectGrantMilestonesResponse,
-  updateMilestoneVerification,
 } from "@/services/milestones";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
-import { retry, retryUntilConditionMet } from "@/utilities/retries";
+import { retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeObject } from "@/utilities/sanitize";
 
 // Constants
@@ -340,34 +339,6 @@ export const useMilestoneCompletionVerification = ({
     }
   };
 
-  const updateDatabaseVerification = async (
-    milestone: GrantMilestoneWithCompletion,
-    verificationComment: string
-  ) => {
-    if (!milestone.fundingApplicationCompletion) {
-      return;
-    }
-
-    try {
-      await retry(
-        () =>
-          updateMilestoneVerification(
-            milestone.fundingApplicationCompletion!.referenceNumber,
-            milestone.fundingApplicationCompletion!.milestoneFieldLabel,
-            milestone.fundingApplicationCompletion!.milestoneTitle,
-            verificationComment
-          ),
-        3,
-        1000,
-        4000,
-        2
-      );
-    } catch (error) {
-      console.error("Failed to update verification in database after retries:", error);
-      showError("Verification successful on-chain but failed to update database");
-    }
-  };
-
   const verifyMilestone = async (
     milestone: GrantMilestoneWithCompletion,
     isMilestoneReviewer: boolean,
@@ -450,13 +421,10 @@ export const useMilestoneCompletionVerification = ({
       );
 
       if (!onChainConfirmed) {
-        throw new Error("Cannot update database: On-chain attestation was not confirmed");
+        throw new Error("On-chain attestation was not confirmed");
       }
 
-      // Step 4: Update database
-      await updateDatabaseVerification(milestone, verificationComment);
-
-      // Success callback
+      // Success callback - backend will sync to off-chain database automatically
       onSuccess?.();
     } catch (error: any) {
       console.error("Error verifying milestone:", error);

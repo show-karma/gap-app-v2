@@ -65,8 +65,8 @@ export function QuestionFormRenderer({
         return (
           <select {...commonProps}>
             <option value="">Select an option</option>
-            {field.options?.map((option: string, index: number) => (
-              <option key={index} value={option}>
+            {field.options?.map((option: string) => (
+              <option key={option} value={option}>
                 {option}
               </option>
             ))}
@@ -76,8 +76,8 @@ export function QuestionFormRenderer({
       case "radio":
         return (
           <div className="space-y-2">
-            {field.options?.map((option: string, index: number) => (
-              <label key={index} className="flex items-center">
+            {field.options?.map((option: string) => (
+              <label key={option} className="flex items-center">
                 <input
                   {...register(field.id, {
                     required: field.required ? `${field.label} is required` : false,
@@ -96,18 +96,22 @@ export function QuestionFormRenderer({
       case "checkbox":
         return (
           <div className="space-y-2">
-            {field.options?.map((option: string, index: number) => (
-              <label key={index} className="flex items-center">
-                <input
-                  {...register(`${field.id}.${index}`)}
-                  type="checkbox"
-                  value={option}
-                  disabled={isSubmitting}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">{option}</span>
-              </label>
-            ))}
+            {field.options?.map((option: string) => {
+              // Sanitize option value to prevent react-hook-form path conflicts
+              const sanitizedOption = option.replace(/[.[\]]/g, "_");
+              return (
+                <label key={option} className="flex items-center">
+                  <input
+                    {...register(`${field.id}.${sanitizedOption}`)}
+                    type="checkbox"
+                    value={option}
+                    disabled={isSubmitting}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{option}</span>
+                </label>
+              );
+            })}
           </div>
         );
 

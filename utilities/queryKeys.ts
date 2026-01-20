@@ -3,6 +3,18 @@
  * Organized by feature/domain similar to INDEXER structure
  */
 export const QUERY_KEYS = {
+  /**
+   * Authentication and authorization query keys
+   * Used for permission checks and staff authorization
+   */
+  AUTH: {
+    STAFF_AUTHORIZATION: (address?: string) =>
+      ["staffAuthorization", address?.toLowerCase()] as const,
+    STAFF_AUTHORIZATION_BASE: ["staffAuthorization"] as const,
+    CONTRACT_OWNER: (address?: string, chainId?: number) =>
+      ["contract-owner", address, chainId] as const,
+    CONTRACT_OWNER_BASE: ["contract-owner"] as const,
+  },
   MILESTONES: {
     PROJECT_GRANT_MILESTONES: (projectId: string, programId: string) =>
       ["project-grant-milestones", projectId, programId] as const,
@@ -33,13 +45,9 @@ export const QUERY_KEYS = {
     GRANTS: (communitySlug: string) => ["community-grants", communitySlug] as const,
     CATEGORIES: (communityUIDorSlug?: string) =>
       ["communityCategories", communityUIDorSlug] as const,
-    IS_ADMIN: (
-      communityUid?: string,
-      chainId?: number,
-      address?: string,
-      isAuth?: boolean,
-      signer?: unknown
-    ) => ["isCommunityAdmin", communityUid, chainId, address, isAuth, signer] as const,
+    IS_ADMIN: (communityUid?: string, chainId?: number, address?: string, signer?: unknown) =>
+      ["isCommunityAdmin", communityUid, chainId, address, signer] as const,
+    IS_ADMIN_BASE: ["isCommunityAdmin"] as const,
     PROJECT_UPDATES: (communityId: string, filter: string, page: number) =>
       ["community-project-updates", communityId, filter, page] as const,
   },
@@ -67,6 +75,24 @@ export const QUERY_KEYS = {
     IMPACTS: (projectIdOrSlug: string) => ["project-impacts", projectIdOrSlug] as const,
     MILESTONES: (projectIdOrSlug: string) => ["project-milestones", projectIdOrSlug] as const,
     GRANTS: (projectIdOrSlug: string) => ["project-grants", projectIdOrSlug] as const,
+  },
+  INDICATORS: {
+    AUTOSYNCED: ["indicators", "autosynced"] as const,
+    AGGREGATED: (params: {
+      indicatorIds: string;
+      communityId: string;
+      programId: string;
+      projectUID: string;
+      timeframe: string;
+    }) =>
+      [
+        "aggregated-indicators",
+        params.indicatorIds,
+        params.communityId,
+        params.programId,
+        params.projectUID,
+        params.timeframe,
+      ] as const,
   },
   FUNDING_PLATFORM: {
     APPLICATIONS: (programId: string, chainId: number, filters?: unknown) =>

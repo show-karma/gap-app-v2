@@ -10,6 +10,7 @@ import {
   Square2StackIcon,
   TagIcon,
 } from "@heroicons/react/24/outline";
+import Link from "next/link";
 import { Button } from "@/components/Utilities/Button";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -27,7 +28,7 @@ interface AdminButtonProps {
 }
 
 const AdminButton = ({ href, label, description, colorClass, icon }: AdminButtonProps) => (
-  <a
+  <Link
     href={href}
     className="group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500"
   >
@@ -49,7 +50,7 @@ const AdminButton = ({ href, label, description, colorClass, icon }: AdminButton
       </div>
       <p className="text-sm text-gray-600 dark:text-gray-300">{description}</p>
     </div>
-  </a>
+  </Link>
 );
 
 const LoadingSkeleton = () => (

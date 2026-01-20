@@ -123,17 +123,22 @@ export const fundingProgramsAPI = {
 
   /**
    * Get program configuration including form schema
+   * Uses apiClient for authenticated requests (admins get full config with accessCode)
    */
   async getProgramConfiguration(programId: string): Promise<FundingProgram | null> {
-    const [data, error] = await fetchData<FundingProgram>(
-      INDEXER.V2.FUNDING_PROGRAMS.GET(programId)
-    );
-
-    if (error) {
-      throw new Error(error);
+    try {
+      const response = await apiClient.get<FundingProgram>(
+        INDEXER.V2.FUNDING_PROGRAMS.GET(programId)
+      );
+      return response.data || null;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw new Error(
+        error.response?.data?.message || error.message || "Failed to fetch program configuration"
+      );
     }
-
-    return data || null;
   },
 
   /**
@@ -215,23 +220,21 @@ export const fundingProgramsAPI = {
     programId: string,
     formSchema: IFormSchema
   ): Promise<IFundingProgramConfig> {
-    try {
-      const existingConfig = await this.getProgramConfiguration(programId);
+    // getProgramConfiguration returns null for 404, throws for other errors
+    const existingConfig = await this.getProgramConfiguration(programId);
+
+    if (existingConfig) {
+      // Config exists, update it with new formSchema
       const updatedConfig = {
         ...existingConfig,
         formSchema: formSchema,
       };
-
-      // Use updateProgramConfiguration which handles POST/PUT logic
       return this.updateProgramConfiguration(programId, updatedConfig);
-    } catch (error: any) {
-      // If config doesn't exist, create new one with formSchema
-      if (error.response?.status === 404 || !error.response) {
-        return this.updateProgramConfiguration(programId, {
-          formSchema,
-        });
-      }
-      throw error;
+    } else {
+      // Config doesn't exist (404), create new one with just formSchema
+      return this.updateProgramConfiguration(programId, {
+        formSchema,
+      });
     }
   },
 
@@ -239,20 +242,20 @@ export const fundingProgramsAPI = {
    * Toggle program status (enabled/disabled)
    */
   async toggleProgramStatus(programId: string, enabled: boolean): Promise<IFundingProgramConfig> {
-    try {
-      const existingConfig = await this.getProgramConfiguration(programId);
+    // getProgramConfiguration returns null for 404, throws for other errors
+    const existingConfig = await this.getProgramConfiguration(programId);
+
+    if (existingConfig) {
+      // Config exists, update it with new enabled status
       return this.updateProgramConfiguration(programId, {
         ...existingConfig,
         isEnabled: enabled,
       });
-    } catch (error: any) {
-      // If config doesn't exist, create new one with enabled status
-      if (error.response?.status === 404 || !error.response) {
-        return this.updateProgramConfiguration(programId, {
-          isEnabled: enabled,
-        });
-      }
-      throw error;
+    } else {
+      // Config doesn't exist (404), create new one with just enabled status
+      return this.updateProgramConfiguration(programId, {
+        isEnabled: enabled,
+      });
     }
   },
 
@@ -308,6 +311,21 @@ export const fundingApplicationsAPI = {
     const response = await apiClient.put(
       `/v2/funding-applications/${applicationId}/status`,
       request
+    );
+    return response.data;
+  },
+
+  /**
+   * Update post-approval data (for owners on first submit, admins/staff anytime)
+   * Admins can edit existing post-approval data with audit trail tracking
+   */
+  async updatePostApprovalData(
+    applicationId: string,
+    postApprovalData: Record<string, any>
+  ): Promise<IFundingApplication> {
+    const response = await apiClient.put(
+      `/v2/funding-applications/${applicationId}/post-approval`,
+      { postApprovalData }
     );
     return response.data;
   },

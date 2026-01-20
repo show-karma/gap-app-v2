@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ClipboardDocumentCheckIcon,
   EllipsisHorizontalIcon,
   LinkIcon,
   PencilSquareIcon,
@@ -25,6 +26,8 @@ export interface MoreActionsDropdownProps {
   isDeleting?: boolean;
   onEditClick?: () => void;
   canEdit?: boolean;
+  onEditPostApprovalClick?: () => void;
+  canEditPostApproval?: boolean;
 }
 
 export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
@@ -34,6 +37,8 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
   isDeleting = false,
   onEditClick,
   canEdit = false,
+  onEditPostApprovalClick,
+  canEditPostApproval = false,
 }) => {
   const handleCopyLink = async () => {
     try {
@@ -86,6 +91,17 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
           >
             <PencilSquareIcon className="w-4 h-4" />
             Edit Application
+          </DropdownMenuItem>
+        )}
+
+        {/* Edit Post-Approval Data - Only shown for approved applications with post-approval data */}
+        {canEditPostApproval && onEditPostApprovalClick && (
+          <DropdownMenuItem
+            onClick={onEditPostApprovalClick}
+            className="flex items-center gap-3 px-4 py-2.5 text-sm cursor-pointer"
+          >
+            <ClipboardDocumentCheckIcon className="w-4 h-4" />
+            Edit Post-Approval
           </DropdownMenuItem>
         )}
 

@@ -5,8 +5,8 @@ jest.mock("@/components/Utilities/errorManager", () => ({
   errorManager: jest.fn(),
 }));
 
-import fetchData from "@/utilities/fetchData";
 import { errorManager } from "@/components/Utilities/errorManager";
+import fetchData from "@/utilities/fetchData";
 
 const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
 const mockErrorManager = errorManager as jest.MockedFunction<typeof errorManager>;
@@ -47,9 +47,7 @@ describe("community-grants.service", () => {
 
       const result = await getCommunityGrants(communitySlug);
 
-      expect(mockFetchData).toHaveBeenCalledWith(
-        `/v2/communities/${communitySlug}/grants`
-      );
+      expect(mockFetchData).toHaveBeenCalledWith(`/v2/communities/${communitySlug}/grants`);
       expect(result).toEqual(mockGrants);
       expect(mockErrorManager).not.toHaveBeenCalled();
     });

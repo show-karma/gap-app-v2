@@ -6,11 +6,15 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useAvailableAIModels } from "@/hooks/useAvailableAIModels";
 import { useProgram } from "@/hooks/usePrograms";
+import { MigrationBanner, PromptEditor, useProgramPrompts } from "@/src/features/prompt-management";
 import type { FormSchema } from "@/types/question-builder";
+import { TabContent } from "../Utilities/Tabs/TabContent";
+import { Tabs } from "../Utilities/Tabs/Tabs";
+import { TabTrigger } from "../Utilities/Tabs/TabTrigger";
+
+const DEFAULT_AI_MODEL = "gpt-4o";
 
 const aiConfigSchema = z.object({
-  // systemPrompt: z.string().min(10, 'System prompt must be at least 10 characters'),
-  // detailedPrompt: z.string().optional(),
   aiModel: z.string().min(1, "AI model is required"),
   enableRealTimeEvaluation: z.boolean(),
   langfusePromptId: z.string().optional(),
@@ -28,6 +32,82 @@ interface AIPromptConfigurationProps {
   readOnly?: boolean;
 }
 
+function PromptTabs({ programId, readOnly }: { programId: string; readOnly: boolean }) {
+  // Fetch prompts from the new API
+  const {
+    data: promptsData,
+    isLoading: isLoadingPrompts,
+    isError,
+    error,
+    refetch,
+  } = useProgramPrompts(programId, {
+    enabled: !!programId,
+  });
+
+  if (isLoadingPrompts) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <p className="text-red-700 dark:text-red-400 mb-2">
+          Failed to load prompts: {error?.message || "Unknown error"}
+        </p>
+        <button
+          onClick={() => refetch()}
+          className="text-red-600 dark:text-red-400 underline text-sm hover:no-underline"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  const showMigrationBanner =
+    promptsData?.migrationRequired &&
+    (promptsData.legacyPromptIds.external || promptsData.legacyPromptIds.internal);
+
+  return (
+    <>
+      {showMigrationBanner && <MigrationBanner legacyPromptIds={promptsData.legacyPromptIds} />}
+
+      <div className="flex flex-row gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg w-fit mb-6">
+        <TabTrigger value="external" className="rounded-md">
+          External AI Prompt
+        </TabTrigger>
+        <TabTrigger value="internal" className="rounded-md">
+          Internal Evaluation Prompt
+        </TabTrigger>
+      </div>
+
+      <TabContent value="external">
+        <PromptEditor
+          programId={programId}
+          promptType="external"
+          existingPrompt={promptsData?.external || null}
+          legacyPromptId={promptsData?.legacyPromptIds.external}
+          readOnly={readOnly}
+        />
+      </TabContent>
+
+      <TabContent value="internal">
+        <PromptEditor
+          programId={programId}
+          promptType="internal"
+          existingPrompt={promptsData?.internal || null}
+          legacyPromptId={promptsData?.legacyPromptIds.internal}
+          readOnly={readOnly}
+        />
+      </TabContent>
+    </>
+  );
+}
+
 export function AIPromptConfiguration({
   schema,
   onUpdate,
@@ -40,13 +120,12 @@ export function AIPromptConfiguration({
   const { data: program } = useProgram(programId || "");
 
   // Fetch available AI models from backend
-  const { data: availableModels = ["gpt-5.2"], isLoading: isLoadingModels } =
+  const { data: availableModels = [DEFAULT_AI_MODEL], isLoading: isLoadingModels } =
     useAvailableAIModels();
 
   // Get default langfusePromptId from program registry if not set in schema
   const defaultLangfusePromptId =
     schema.aiConfig?.langfusePromptId || program?.langfusePromptId || "";
-  const recommendedPrompt = "";
 
   // Get default model - use schema value if valid, otherwise use first available model
   const defaultModel = useMemo(() => {
@@ -54,60 +133,36 @@ export function AIPromptConfiguration({
     if (schemaModel && availableModels.includes(schemaModel)) {
       return schemaModel;
     }
-    return availableModels[0] || "gpt-5.2";
+    return availableModels[0] || DEFAULT_AI_MODEL;
   }, [schema.aiConfig?.aiModel, availableModels]);
-
-  // Track if initial sync has been performed to prevent overwriting user selections
-  const hasInitialSyncedRef = useRef(false);
 
   const {
     register,
-    handleSubmit,
     watch,
     setValue,
     getValues,
-    formState: { errors, isDirty },
+    formState: { errors },
   } = useForm<AIConfigFormData>({
     resolver: zodResolver(aiConfigSchema),
     defaultValues: {
-      // systemPrompt: schema.aiConfig?.systemPrompt || '',
-      // detailedPrompt: schema.aiConfig?.detailedPrompt || '',
       aiModel: defaultModel,
       enableRealTimeEvaluation: schema.aiConfig?.enableRealTimeEvaluation || false,
-      langfusePromptId: defaultLangfusePromptId || recommendedPrompt,
+      langfusePromptId: defaultLangfusePromptId,
       internalLangfusePromptId: schema.aiConfig?.internalLangfusePromptId || "",
     },
   });
 
   // Update form value when availableModels loads and current value is invalid
-  // Prevents race conditions: only updates invalid values, preserving valid user selections
   useEffect(() => {
     if (!isLoadingModels && availableModels.length > 0) {
       const currentValue = getValues("aiModel");
       const isCurrentValueInvalid = !currentValue || !availableModels.includes(currentValue);
 
-      // Only update if value is invalid (not in availableModels list)
-      // This handles:
-      // - Initial load with invalid value
-      // - Value becoming invalid after availableModels changes
-      // - But preserves valid user selections (won't overwrite if value is in the list)
       if (isCurrentValueInvalid) {
         setValue("aiModel", defaultModel, { shouldValidate: false });
       }
-
-      // Mark as synced after first check
-      if (!hasInitialSyncedRef.current) {
-        hasInitialSyncedRef.current = true;
-      }
     }
   }, [availableModels, isLoadingModels, defaultModel, getValues, setValue]);
-
-  const watchedValues = watch();
-  const currentLangfusePromptId = watchedValues.langfusePromptId || "";
-  const currentInternalLangfusePromptId = watchedValues.internalLangfusePromptId || "";
-
-  const displayValue =
-    currentLangfusePromptId === recommendedPrompt ? recommendedPrompt : currentLangfusePromptId;
 
   // Update form value when program data loads and no langfusePromptId is set
   useEffect(() => {
@@ -116,28 +171,42 @@ export function AIPromptConfiguration({
     }
   }, [program?.langfusePromptId, schema.aiConfig?.langfusePromptId, setValue]);
 
-  // Auto-update the schema when form values change
+  // Refs to hold latest values without causing stale closures in watch subscription
+  const schemaRef = useRef(schema);
+  const onUpdateRef = useRef(onUpdate);
+  const availableModelsRef = useRef(availableModels);
+
+  // Keep refs in sync with latest values
   useEffect(() => {
-    if (readOnly || !onUpdate) return; // Don't update in read-only mode
+    schemaRef.current = schema;
+  }, [schema]);
+  useEffect(() => {
+    onUpdateRef.current = onUpdate;
+  }, [onUpdate]);
+  useEffect(() => {
+    availableModelsRef.current = availableModels;
+  }, [availableModels]);
+
+  // Auto-update the schema when form values change
+  // Only re-subscribe when watch or readOnly changes, not on schema/onUpdate/availableModels changes
+  useEffect(() => {
+    if (readOnly || !onUpdateRef.current) return;
 
     const subscription = watch((data) => {
-      // Only update if we have a valid system prompt (minimum requirement)
       const updatedSchema: FormSchema = {
-        ...schema,
+        ...schemaRef.current,
         aiConfig: {
-          // systemPrompt: data.systemPrompt || '',
-          // detailedPrompt: data.detailedPrompt || '',
-          aiModel: data.aiModel || availableModels[0] || "gpt-5.2",
+          aiModel: data.aiModel || availableModelsRef.current[0] || DEFAULT_AI_MODEL,
           enableRealTimeEvaluation: data.enableRealTimeEvaluation || false,
           langfusePromptId: data.langfusePromptId || "",
           internalLangfusePromptId: data.internalLangfusePromptId || "",
         },
       };
-      onUpdate(updatedSchema);
+      onUpdateRef.current?.(updatedSchema);
     });
 
     return () => subscription.unsubscribe();
-  }, [watch, onUpdate, schema, readOnly, availableModels]);
+  }, [watch, readOnly]);
 
   return (
     <div
@@ -153,94 +222,55 @@ export function AIPromptConfiguration({
       </div>
 
       <div className="space-y-6">
-        {/* AI Model Selection */}
-        <div>
-          <label
-            htmlFor="ai-model"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-          >
-            AI Model *
-          </label>
-          <select
-            id="ai-model"
-            {...register("aiModel")}
-            disabled={readOnly || isLoadingModels}
-            className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 ${readOnly || isLoadingModels ? "opacity-50 cursor-not-allowed" : ""}`}
-          >
-            {isLoadingModels ? (
-              <option value="">Loading models...</option>
-            ) : (
-              availableModels.map((model) => (
-                <option key={model} value={model}>
-                  {model}
-                </option>
-              ))
+        {/* Prompt Management Section */}
+        {programId && (
+          <div className="border-b border-gray-200 dark:border-gray-700 pb-6 mb-6">
+            <Tabs defaultTab="external">
+              <PromptTabs programId={programId} readOnly={readOnly} />
+            </Tabs>
+          </div>
+        )}
+
+        {/* Legacy Configuration (kept for backwards compatibility) */}
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
+          <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
+            Legacy Settings
+          </h4>
+
+          {/* AI Model Selection */}
+          <div className="mb-4">
+            <label
+              htmlFor="ai-model"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              Default AI Model *
+            </label>
+            <select
+              id="ai-model"
+              {...register("aiModel")}
+              disabled={readOnly || isLoadingModels}
+              className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 ${readOnly || isLoadingModels ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              {isLoadingModels ? (
+                <option value="">Loading models...</option>
+              ) : (
+                availableModels.map((model) => (
+                  <option key={model} value={model}>
+                    {model}
+                  </option>
+                ))
+              )}
+            </select>
+            {errors.aiModel && (
+              <p className="text-red-500 text-sm mt-1">{errors.aiModel.message}</p>
             )}
-          </select>
-          {errors.aiModel && <p className="text-red-500 text-sm mt-1">{errors.aiModel.message}</p>}
-        </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              This model is used for legacy configurations. New prompts use their own model
+              selection.
+            </p>
+          </div>
 
-        {/* Langfuse Prompt Name */}
-        <div>
-          <label
-            htmlFor="langfuse-prompt"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-          >
-            Langfuse Prompt Name
-          </label>
-          <input
-            id="langfuse-prompt"
-            type="text"
-            value={displayValue}
-            disabled={readOnly}
-            onChange={(e) => {
-              const value = e.target.value;
-              const cleanValue = value.replace(/ \(Recommended\)$/, "");
-              setValue("langfusePromptId", cleanValue);
-            }}
-            className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
-            placeholder=""
-          />
-          {errors.langfusePromptId && (
-            <p className="text-red-500 text-sm mt-1">{errors.langfusePromptId.message}</p>
-          )}
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            The name of the Langfuse prompt to use for AI evaluation. If not specified, the default
-            prompt from the program registry will be used.
-          </p>
-        </div>
-
-        {/* Internal AI Evaluation Prompt Name */}
-        <div>
-          <label
-            htmlFor="internal-langfuse-prompt"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-          >
-            Internal AI Evaluation Prompt Name
-          </label>
-          <input
-            id="internal-langfuse-prompt"
-            type="text"
-            value={currentInternalLangfusePromptId}
-            disabled={readOnly}
-            onChange={(e) => {
-              const value = e.target.value;
-              setValue("internalLangfusePromptId", value);
-            }}
-            className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
-            placeholder=""
-          />
-          {errors.internalLangfusePromptId && (
-            <p className="text-red-500 text-sm mt-1">{errors.internalLangfusePromptId.message}</p>
-          )}
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            Langfuse prompt name for internal reviewer evaluation (not visible to applicants). This
-            evaluation runs automatically after application submission.
-          </p>
-        </div>
-
-        {/* Real-time Evaluation Toggle */}
-        <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+          {/* Real-time Evaluation Toggle */}
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center">
@@ -259,8 +289,7 @@ export function AIPromptConfiguration({
                 </label>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-6">
-                Provide instant feedback to applicants as they complete form fields. This uses only
-                the system prompt for faster responses.
+                Provide instant feedback to applicants as they complete form fields.
               </p>
             </div>
           </div>
@@ -295,18 +324,6 @@ export function AIPromptConfiguration({
                 <dt className="text-gray-600 dark:text-gray-400">Internal Prompt:</dt>
                 <dd className="text-gray-900 dark:text-white font-mono text-xs">
                   {schema.aiConfig.internalLangfusePromptId || "Not configured"}
-                </dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-600 dark:text-gray-400">System Prompt Length:</dt>
-                <dd className="text-gray-900 dark:text-white">
-                  {schema.aiConfig.systemPrompt?.length || 0} characters
-                </dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-600 dark:text-gray-400">Detailed Prompt Length:</dt>
-                <dd className="text-gray-900 dark:text-white">
-                  {schema.aiConfig.detailedPrompt?.length || 0} characters
                 </dd>
               </div>
             </dl>

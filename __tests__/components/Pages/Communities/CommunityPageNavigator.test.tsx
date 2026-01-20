@@ -3,9 +3,11 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
+import { useFundingOpportunitiesCount } from "@/hooks/useFundingOpportunitiesCount";
 
 // Mock hooks
 jest.mock("@/hooks/communities/useCommunityDetails");
+jest.mock("@/hooks/useFundingOpportunitiesCount");
 
 // Mock next/navigation
 const mockUseParams = jest.fn();
@@ -33,13 +35,16 @@ jest.mock("@/utilities/pages", () => ({
 // Mock lucide-react icons
 jest.mock("lucide-react", () => ({
   ChartLine: (props: any) => <svg data-testid="chart-line-icon" {...props} />,
-  Coins: (props: any) => <svg data-testid="coins-icon" {...props} />,
+  DollarSign: (props: any) => <svg data-testid="dollar-sign-icon" {...props} />,
   LandPlot: (props: any) => <svg data-testid="land-plot-icon" {...props} />,
   SquareUser: (props: any) => <svg data-testid="square-user-icon" {...props} />,
 }));
 
 const mockUseCommunityDetails = useCommunityDetails as jest.MockedFunction<
   typeof useCommunityDetails
+>;
+const mockUseFundingOpportunitiesCount = useFundingOpportunitiesCount as jest.MockedFunction<
+  typeof useFundingOpportunitiesCount
 >;
 
 describe("CommunityPageNavigator", () => {
@@ -67,10 +72,15 @@ describe("CommunityPageNavigator", () => {
     });
     mockUseCommunityDetails.mockReturnValue({
       data: {
+        uid: "0x1234567890123456789012345678901234567890",
         details: {
           name: "Test Community",
         },
       },
+      isLoading: false,
+    } as any);
+    mockUseFundingOpportunitiesCount.mockReturnValue({
+      data: 5, // Default to having some funding opportunities
       isLoading: false,
     } as any);
   });
@@ -92,7 +102,7 @@ describe("CommunityPageNavigator", () => {
     it("should render all icons", () => {
       render(<CommunityPageNavigator />, { wrapper });
 
-      expect(screen.getByTestId("coins-icon")).toBeInTheDocument();
+      expect(screen.getByTestId("dollar-sign-icon")).toBeInTheDocument();
       expect(screen.getByTestId("square-user-icon")).toBeInTheDocument();
       expect(screen.getByTestId("land-plot-icon")).toBeInTheDocument();
       expect(screen.getByTestId("chart-line-icon")).toBeInTheDocument();
@@ -188,6 +198,7 @@ describe("CommunityPageNavigator", () => {
     it("should include community name in projects link text", () => {
       mockUseCommunityDetails.mockReturnValue({
         data: {
+          uid: "0x1234567890123456789012345678901234567890",
           details: {
             name: "Optimism",
           },
@@ -271,7 +282,7 @@ describe("CommunityPageNavigator", () => {
     it("should have icons with correct size", () => {
       render(<CommunityPageNavigator />, { wrapper });
 
-      const icon = screen.getByTestId("coins-icon");
+      const icon = screen.getByTestId("dollar-sign-icon");
       expect(icon).toHaveClass("w-6");
       expect(icon).toHaveClass("h-6");
     });
@@ -342,9 +353,47 @@ describe("CommunityPageNavigator", () => {
     it("should have transition classes on icons", () => {
       render(<CommunityPageNavigator />, { wrapper });
 
-      const icon = screen.getByTestId("coins-icon");
+      const icon = screen.getByTestId("dollar-sign-icon");
       expect(icon).toHaveClass("transition-colors");
       expect(icon).toHaveClass("duration-200");
+    });
+  });
+
+  describe("Funding Opportunities Visibility", () => {
+    it("should hide funding opportunities tab when count is 0", () => {
+      mockUseFundingOpportunitiesCount.mockReturnValue({
+        data: 0,
+        isLoading: false,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(screen.queryByText("Funding opportunities")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("dollar-sign-icon")).not.toBeInTheDocument();
+    });
+
+    it("should show funding opportunities tab when count is greater than 0", () => {
+      mockUseFundingOpportunitiesCount.mockReturnValue({
+        data: 10,
+        isLoading: false,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(screen.getByText("Funding opportunities")).toBeInTheDocument();
+      expect(screen.getByTestId("dollar-sign-icon")).toBeInTheDocument();
+    });
+
+    it("should show funding opportunities tab when count is undefined (loading)", () => {
+      mockUseFundingOpportunitiesCount.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      // Tab should be visible while loading (undefined !== 0)
+      expect(screen.getByText("Funding opportunities")).toBeInTheDocument();
     });
   });
 });

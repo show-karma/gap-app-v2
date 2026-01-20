@@ -177,8 +177,8 @@ export function BlocklistManager() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
-            {addresses?.data.map((blocked, index) => (
-              <tr key={index}>
+            {addresses?.data.map((blocked) => (
+              <tr key={`${blocked.address}-${blocked.chainId ?? "all"}`}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white">
                   {blocked.address}
                 </td>
