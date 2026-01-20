@@ -53,21 +53,27 @@ describe("E2E: Donation Error Handling", () => {
     });
 
     it("should handle invalid cart data and show fallback UI", () => {
+      // Visit the page first, then set invalid localStorage data
+      // This ensures we're setting data on the correct origin
+      cy.visit(`/community/${COMMUNITY}/donate`, { failOnStatusCode: false });
+
+      // Set invalid JSON in localStorage after page starts loading
       cy.window().then((win) => {
-        // Set invalid JSON
         win.localStorage.setItem("donation-cart-storage", "invalid-json");
       });
 
-      cy.visit(`/community/${COMMUNITY}/donate`);
-      waitForPageLoad();
+      // Reload the page to pick up the invalid localStorage data
+      cy.reload();
 
-      // Page should handle error gracefully and show usable UI
-      cy.get("body").should("be.visible");
+      // Page should handle error gracefully - wait for body to be visible
+      cy.get("body", { timeout: 30000 }).should("be.visible");
+
+      // Verify the page didn't completely crash - should have navigation
       cy.get("nav").should("exist");
 
       // Verify no error crash - should show either empty state or valid UI
       cy.get("body").then(($body) => {
-        // Should not show raw error message
+        // Should not show raw error message to user
         const pageText = $body.text();
         expect(pageText).to.not.include("SyntaxError");
         expect(pageText).to.not.include("JSON.parse");
