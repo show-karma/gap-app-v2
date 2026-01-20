@@ -124,9 +124,9 @@ export function PayoutHistoryDrawer({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="fixed right-0 top-0 h-full w-full max-w-lg translate-x-0 translate-y-0 rounded-none rounded-l-lg border-l bg-white p-0 shadow-xl data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right dark:bg-zinc-800 sm:rounded-l-lg [&>button]:hidden">
+      <DialogContent className="fixed inset-y-0 right-0 left-auto h-full w-full max-w-lg translate-x-0 translate-y-0 flex flex-col gap-0 rounded-none border-l border-y-0 border-r-0 bg-white p-0 shadow-xl duration-300 data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:rounded-l-lg dark:bg-zinc-800 [&>button]:hidden">
         {/* Header */}
-        <div className="sticky top-0 z-10 border-b border-gray-200 bg-white px-6 py-4 dark:border-zinc-700 dark:bg-zinc-800">
+        <div className="flex-shrink-0 border-b border-gray-200 bg-white px-6 py-4 dark:border-zinc-700 dark:bg-zinc-800">
           <div className="flex items-start justify-between">
             <DialogHeader className="space-y-1">
               <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -147,7 +147,7 @@ export function PayoutHistoryDrawer({
         </div>
 
         {/* Summary */}
-        <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 dark:border-zinc-700 dark:bg-zinc-700/30">
+        <div className="flex-shrink-0 border-b border-gray-200 bg-gray-50 px-6 py-4 dark:border-zinc-700 dark:bg-zinc-700/30">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -193,7 +193,7 @@ export function PayoutHistoryDrawer({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
           {isLoadingHistory ? (
             <div className="flex items-center justify-center py-12">
               <Spinner className="h-8 w-8" />
