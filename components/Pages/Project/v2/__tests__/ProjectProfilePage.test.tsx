@@ -82,17 +82,28 @@ jest.mock("@/store", () => ({
   }),
 }));
 
-// Mock stores for side panel
+// Mock stores for side panel and dialogs
 jest.mock("@/store/modals/endorsement", () => ({
   useEndorsementStore: () => ({
+    isEndorsementOpen: false,
     setIsEndorsementOpen: jest.fn(),
   }),
 }));
 
 jest.mock("@/store/modals/intro", () => ({
   useIntroModalStore: () => ({
+    isIntroModalOpen: false,
     setIsIntroModalOpen: jest.fn(),
   }),
+}));
+
+// Mock dialogs
+jest.mock("@/components/Pages/Project/Impact/EndorsementDialog", () => ({
+  EndorsementDialog: () => <div data-testid="endorsement-dialog">Endorsement Dialog</div>,
+}));
+
+jest.mock("@/components/Pages/Project/IntroDialog", () => ({
+  IntroDialog: () => <div data-testid="intro-dialog">Intro Dialog</div>,
 }));
 
 // Mock fetchData for SubscribeSection
@@ -110,9 +121,22 @@ jest.mock("react-hot-toast", () => ({
   },
 }));
 
-// Mock wagmi
+// Mock wagmi with all required hooks
 jest.mock("wagmi", () => ({
   useAccount: () => ({ address: "0x1234567890123456789012345678901234567890" }),
+  useChainId: () => 1,
+  useSwitchChain: () => ({ switchChainAsync: jest.fn() }),
+}));
+
+// Mock SingleProjectDonateModal to avoid complex wagmi/web3 dependencies
+jest.mock("@/components/Donation/SingleProject/SingleProjectDonateModal", () => ({
+  SingleProjectDonateModal: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? <div data-testid="donate-modal">Donation Modal</div> : null,
+}));
+
+// Mock hasConfiguredPayoutAddresses
+jest.mock("@/src/features/chain-payout-address/hooks/use-chain-payout-address", () => ({
+  hasConfiguredPayoutAddresses: jest.fn(() => true),
 }));
 
 // Mock ActivityCard

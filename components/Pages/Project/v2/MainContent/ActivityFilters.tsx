@@ -68,7 +68,10 @@ export function ActivityFilters({
 
         {/* Milestone Count */}
         {milestonesCount > 0 && (
-          <span className="text-sm text-gray-600 dark:text-gray-400" data-testid="milestones-count">
+          <span
+            className="text-sm text-neutral-600 dark:text-neutral-400"
+            data-testid="milestones-count"
+          >
             {milestonesCount} Milestones, {completedCount} Completed
           </span>
         )}
@@ -88,10 +91,10 @@ export function ActivityFilters({
               <Badge
                 variant={isActive ? "default" : "outline"}
                 className={cn(
-                  "cursor-pointer transition-colors",
+                  "cursor-pointer transition-colors rounded-md",
                   isActive
-                    ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
-                    : "hover:bg-gray-100 dark:hover:bg-zinc-700"
+                    ? "bg-neutral-900 hover:bg-neutral-800 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white"
+                    : "text-neutral-600 dark:text-neutral-400 border-neutral-300 dark:border-zinc-600 hover:bg-neutral-100 dark:hover:bg-zinc-700"
                 )}
               >
                 {filter.label}

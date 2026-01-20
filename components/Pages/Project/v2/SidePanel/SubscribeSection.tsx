@@ -1,7 +1,7 @@
 "use client";
 
-import { EnvelopeIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { MailsIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -33,6 +33,7 @@ interface SubscribeSectionProps {
 
 /**
  * SubscribeSection provides a form for users to subscribe to project updates.
+ * Matches Figma design with Lucide icons and neutral color palette.
  */
 export function SubscribeSection({ project, className }: SubscribeSectionProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -89,60 +90,67 @@ export function SubscribeSection({ project, className }: SubscribeSectionProps) 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className={cn(
-        "flex flex-col gap-4 p-4 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800",
-        className
-      )}
+      className={cn("flex flex-col gap-4", className)}
       data-testid="subscribe-section"
     >
       {/* Header */}
-      <div className="flex flex-row items-center gap-2">
-        <EnvelopeIcon className="h-5 w-5 text-blue-500" />
-        <span className="text-sm font-semibold text-gray-900 dark:text-white">Stay Updated</span>
-      </div>
-
-      {/* Name Input */}
       <div className="flex flex-col gap-1">
-        <Input
-          type="text"
-          placeholder="First name (optional)"
-          {...register("name")}
-          className="w-full"
-          data-testid="subscribe-name-input"
-        />
-        {errors.name && (
-          <p className="text-xs text-red-500" data-testid="subscribe-name-error">
-            {errors.name.message}
-          </p>
-        )}
+        <div className="flex flex-row items-center gap-2">
+          <MailsIcon className="h-6 w-6 text-neutral-700 dark:text-neutral-300" />
+          <span className="text-xl font-semibold text-neutral-900 dark:text-white tracking-tight">
+            Stay updated
+          </span>
+        </div>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          Get project updates in your inbox
+        </p>
       </div>
 
-      {/* Email Input */}
-      <div className="flex flex-col gap-1">
-        <Input
-          type="email"
-          placeholder="Email address"
-          {...register("email")}
-          className="w-full"
-          data-testid="subscribe-email-input"
-        />
-        {errors.email && (
-          <p className="text-xs text-red-500" data-testid="subscribe-email-error">
-            {errors.email.message}
-          </p>
-        )}
-      </div>
+      {/* Stay Updated Form */}
+      <div className="flex flex-col gap-2 items-end">
+        {/* Name Input */}
+        <div className="flex flex-col gap-1 w-full">
+          <Input
+            type="text"
+            placeholder="First name"
+            {...register("name")}
+            className="w-full bg-white dark:bg-zinc-900 border-neutral-200 dark:border-zinc-700 rounded-lg shadow-sm"
+            data-testid="subscribe-name-input"
+          />
+          {errors.name && (
+            <p className="text-xs text-red-500" data-testid="subscribe-name-error">
+              {errors.name.message}
+            </p>
+          )}
+        </div>
 
-      {/* Subscribe Button */}
-      <Button
-        type="submit"
-        disabled={isLoading}
-        isLoading={isLoading}
-        className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-        data-testid="subscribe-button"
-      >
-        Subscribe
-      </Button>
+        {/* Email Input */}
+        <div className="flex flex-col gap-1 w-full">
+          <Input
+            type="email"
+            placeholder="your@email.com*"
+            {...register("email")}
+            className="w-full bg-white dark:bg-zinc-900 border-neutral-200 dark:border-zinc-700 rounded-lg shadow-sm"
+            data-testid="subscribe-email-input"
+          />
+          {errors.email && (
+            <p className="text-xs text-red-500" data-testid="subscribe-email-error">
+              {errors.email.message}
+            </p>
+          )}
+        </div>
+
+        {/* Subscribe Button */}
+        <Button
+          type="submit"
+          disabled={isLoading}
+          isLoading={isLoading}
+          className="bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-lg px-3"
+          data-testid="subscribe-button"
+        >
+          Subscribe
+        </Button>
+      </div>
     </form>
   );
 }

@@ -2,11 +2,15 @@
 
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
+import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
+import { IntroDialog } from "@/components/Pages/Project/IntroDialog";
 import { useProject } from "@/hooks/useProject";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
+import { useEndorsementStore } from "@/store/modals/endorsement";
+import { useIntroModalStore } from "@/store/modals/intro";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { cn } from "@/utilities/tailwind";
 import { ProjectHeader } from "./Header/ProjectHeader";
@@ -35,6 +39,10 @@ export function ProjectProfilePage({ className }: ProjectProfilePageProps) {
   const { projectId } = useParams();
   const { project, isLoading: isProjectLoading } = useProject(projectId as string);
   const { isProjectAdmin } = useProjectStore();
+
+  // Modal stores for dialogs
+  const { isEndorsementOpen } = useEndorsementStore();
+  const { isIntroModalOpen } = useIntroModalStore();
 
   // Fetch grants using dedicated hook
   const { grants } = useProjectGrants(project?.uid || (projectId as string));
@@ -86,31 +94,40 @@ export function ProjectProfilePage({ className }: ProjectProfilePageProps) {
   }
 
   return (
-    <div className={cn("flex flex-col gap-6 w-full", className)} data-testid="project-profile-page">
-      {/* Header Section */}
-      <ProjectHeader project={project} isVerified={isVerified} />
+    <>
+      {/* Dialogs */}
+      {isEndorsementOpen && <EndorsementDialog />}
+      {isIntroModalOpen && <IntroDialog />}
 
-      {/* Stats Bar */}
-      <ProjectStatsBar
-        grants={grantsCount}
-        endorsements={endorsementsCount}
-        lastUpdate={lastUpdate}
-      />
+      <div
+        className={cn("flex flex-col gap-6 w-full", className)}
+        data-testid="project-profile-page"
+      >
+        {/* Header Section */}
+        <ProjectHeader project={project} isVerified={isVerified} />
 
-      {/* Main Layout: Side Panel + Content */}
-      <div className="flex flex-row gap-6" data-testid="main-layout">
-        {/* Side Panel - Desktop Only */}
-        <ProjectSidePanel project={project} />
-
-        {/* Main Content */}
-        <ProjectMainContent
-          milestones={allUpdates}
-          milestonesCount={allUpdates.length}
-          completedCount={completedCount}
-          fundingCount={grantsCount}
-          isAuthorized={isProjectAdmin}
+        {/* Stats Bar */}
+        <ProjectStatsBar
+          grants={grantsCount}
+          endorsements={endorsementsCount}
+          lastUpdate={lastUpdate}
         />
+
+        {/* Main Layout: Side Panel + Content */}
+        <div className="flex flex-row gap-6" data-testid="main-layout">
+          {/* Side Panel - Desktop Only */}
+          <ProjectSidePanel project={project} />
+
+          {/* Main Content */}
+          <ProjectMainContent
+            milestones={allUpdates}
+            milestonesCount={allUpdates.length}
+            completedCount={completedCount}
+            fundingCount={grantsCount}
+            isAuthorized={isProjectAdmin}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

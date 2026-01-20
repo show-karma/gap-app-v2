@@ -184,10 +184,10 @@ describe("ActivityFilters", () => {
     it("should show active state for selected filters", () => {
       render(<ActivityFilters {...defaultProps} activeFilters={["funding"]} />);
 
-      // Check that the badge inside funding filter has active styling (bg-blue-600)
+      // Check that the badge inside funding filter has active styling (bg-neutral-900)
       const fundingButton = screen.getByTestId("filter-funding");
       const badge = fundingButton.querySelector("div");
-      expect(badge).toHaveClass("bg-blue-600");
+      expect(badge).toHaveClass("bg-neutral-900");
     });
   });
 
@@ -215,11 +215,11 @@ describe("ActivityFeed", () => {
       expect(items).toHaveLength(3);
     });
 
-    it("should render timeline dots", () => {
+    it("should render timeline icons", () => {
       render(<ActivityFeed milestones={mockMilestones} />);
 
-      const dots = screen.getAllByTestId("timeline-dot");
-      expect(dots).toHaveLength(3);
+      const icons = screen.getAllByTestId("timeline-icon");
+      expect(icons).toHaveLength(3);
     });
 
     it("should render activity dates", () => {
@@ -270,21 +270,21 @@ describe("ActivityFeed", () => {
     });
   });
 
-  describe("Timeline Dots", () => {
-    it("should show completed state for completed milestones", () => {
+  describe("Timeline Icons", () => {
+    it("should show orange icon for milestone type", () => {
       render(<ActivityFeed milestones={mockMilestones} />);
 
-      const dots = screen.getAllByTestId("timeline-dot");
-      // The second milestone is completed
-      expect(dots[1]).toHaveClass("bg-green-500");
+      const icons = screen.getAllByTestId("timeline-icon");
+      // First milestone is type "milestone" - should have orange background
+      expect(icons[0]).toHaveClass("bg-orange-100");
     });
 
-    it("should show incomplete state for incomplete milestones", () => {
+    it("should show green icon for grant/funding type", () => {
       render(<ActivityFeed milestones={mockMilestones} />);
 
-      const dots = screen.getAllByTestId("timeline-dot");
-      // The first milestone is not completed
-      expect(dots[0]).toHaveClass("bg-white");
+      const icons = screen.getAllByTestId("timeline-icon");
+      // Second milestone is type "grant" - should have green background
+      expect(icons[1]).toHaveClass("bg-green-100");
     });
   });
 

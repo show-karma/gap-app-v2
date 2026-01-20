@@ -2,12 +2,18 @@
 import dynamic from "next/dynamic";
 import { ProjectOverviewLoading } from "@/components/Pages/Project/Loading/Overview";
 
-const ProjectPage = dynamic(() => import("@/components/Pages/Project/ProjectPage"), {
-  loading: () => <ProjectOverviewLoading />,
-});
+const ProjectProfilePage = dynamic(
+  () =>
+    import("@/components/Pages/Project/v2/ProjectProfilePage").then(
+      (mod) => mod.ProjectProfilePage
+    ),
+  {
+    loading: () => <ProjectOverviewLoading />,
+  }
+);
 
 const ProjectPageIndex = () => {
-  return <ProjectPage />;
+  return <ProjectProfilePage />;
 };
 
 export default ProjectPageIndex;

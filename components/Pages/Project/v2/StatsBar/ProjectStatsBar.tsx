@@ -21,8 +21,11 @@ interface ProjectStatsBarProps {
  * ProjectStatsBar displays project metrics in a horizontal scrollable bar (desktop)
  * or a wrapping grid (mobile).
  *
- * Desktop: Horizontal scroll with ScrollArea
- * Mobile: Flex wrap grid with min-w-[120px] items
+ * Matches Figma design with:
+ * - Card wrapper with border
+ * - Type-specific icons for each stat
+ * - Desktop: Horizontal scroll with ScrollArea
+ * - Mobile: Flex wrap grid
  */
 export function ProjectStatsBar({
   grants,
@@ -50,51 +53,70 @@ export function ProjectStatsBar({
     return `${Math.floor(diffDays / 365)}y ago`;
   };
 
-  const stats = [
-    {
-      value: formatCurrency(grants),
-      label: grants === 1 ? "Grant" : "Grants",
-      onClick: onGrantsClick,
-      key: "grants",
-    },
-    {
-      value: formatCurrency(endorsements),
-      label: endorsements === 1 ? "Endorsement" : "Endorsements",
-      onClick: onEndorsementsClick,
-      key: "endorsements",
-    },
+  // Build stats array with iconType for each - order matches Figma
+  const stats: Array<{
+    value: string;
+    label: string;
+    iconType: "received" | "token" | "grants" | "endorsements" | "complete" | "lastUpdate";
+    onClick?: () => void;
+    key: string;
+  }> = [
+    // Received comes first if available
     ...(totalReceived !== undefined
       ? [
           {
             value: `$${formatCurrency(totalReceived)}`,
             label: "Received",
+            iconType: "received" as const,
             key: "received",
           },
         ]
       : []),
+    // Token price second if available
     ...(tokenPrice !== undefined
       ? [
           {
             value: `$${tokenPrice.toFixed(2)}`,
-            label: "Token",
+            label: "Token Price",
+            iconType: "token" as const,
             key: "token",
           },
         ]
       : []),
+    // Grants
+    {
+      value: formatCurrency(grants),
+      label: grants === 1 ? "Grant" : "Grants",
+      iconType: "grants" as const,
+      onClick: onGrantsClick,
+      key: "grants",
+    },
+    // Endorsements
+    {
+      value: formatCurrency(endorsements),
+      label: endorsements === 1 ? "Endorsement" : "Endorsements",
+      iconType: "endorsements" as const,
+      onClick: onEndorsementsClick,
+      key: "endorsements",
+    },
+    // Complete rate if available
     ...(completeRate !== undefined
       ? [
           {
             value: `${completeRate}%`,
-            label: "Complete",
+            label: "Complete Rate",
+            iconType: "complete" as const,
             key: "complete",
           },
         ]
       : []),
+    // Last update if available
     ...(lastUpdate
       ? [
           {
             value: formatLastUpdate(lastUpdate),
-            label: "Last Update",
+            label: "Last update",
+            iconType: "lastUpdate" as const,
             key: "lastUpdate",
           },
         ]
@@ -103,35 +125,39 @@ export function ProjectStatsBar({
 
   return (
     <div className={cn("w-full", className)} data-testid="project-stats-bar">
-      {/* Desktop: Horizontal scroll */}
-      <div className="hidden lg:block">
-        <ScrollArea className="w-full whitespace-nowrap">
-          <div className="flex flex-row gap-3 p-1">
+      {/* Card wrapper matching Figma */}
+      <div className="rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 py-4 px-2">
+        {/* Desktop: Horizontal row with equal spacing */}
+        <div className="hidden lg:block">
+          <ScrollArea className="w-full whitespace-nowrap">
+            <div className="flex flex-row justify-around">
+              {stats.map((stat) => (
+                <StatItem
+                  key={stat.key}
+                  value={stat.value}
+                  label={stat.label}
+                  iconType={stat.iconType}
+                  onClick={stat.onClick}
+                />
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </div>
+
+        {/* Mobile: Wrapping grid */}
+        <div className="lg:hidden">
+          <div className="flex flex-row flex-wrap justify-center gap-4">
             {stats.map((stat) => (
               <StatItem
                 key={stat.key}
                 value={stat.value}
                 label={stat.label}
+                iconType={stat.iconType}
                 onClick={stat.onClick}
               />
             ))}
           </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-      </div>
-
-      {/* Mobile: Wrapping grid */}
-      <div className="lg:hidden">
-        <div className="flex flex-row flex-wrap gap-2">
-          {stats.map((stat) => (
-            <StatItem
-              key={stat.key}
-              value={stat.value}
-              label={stat.label}
-              onClick={stat.onClick}
-              className="flex-1"
-            />
-          ))}
         </div>
       </div>
     </div>

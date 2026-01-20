@@ -2,7 +2,6 @@
 
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import type { Metadata } from "next";
-import { ProjectWrapper } from "@/components/Pages/Project/ProjectWrapper";
 import { layoutTheme } from "@/src/helper/theme";
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
@@ -45,10 +44,7 @@ export default async function RootLayout(props: {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="flex flex-col gap-0">
-        <ProjectWrapper projectId={projectId} />
-        <div className={layoutTheme.padding}>{children}</div>
-      </div>
+      <div className={layoutTheme.padding}>{children}</div>
     </HydrationBoundary>
   );
 }

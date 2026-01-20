@@ -111,22 +111,22 @@ describe("ProjectStatsBar", () => {
       render(<ProjectStatsBar {...defaultProps} tokenPrice={0.14} />);
 
       expect(screen.getAllByText("$0.14")).toHaveLength(2);
-      expect(screen.getAllByText("Token")).toHaveLength(2);
+      expect(screen.getAllByText("Token Price")).toHaveLength(2);
     });
 
     it("should render completeRate when provided", () => {
       render(<ProjectStatsBar {...defaultProps} completeRate={100} />);
 
       expect(screen.getAllByText("100%")).toHaveLength(2);
-      expect(screen.getAllByText("Complete")).toHaveLength(2);
+      expect(screen.getAllByText("Complete Rate")).toHaveLength(2);
     });
 
     it("should not render optional stats when not provided", () => {
       render(<ProjectStatsBar {...defaultProps} />);
 
       expect(screen.queryByText("Received")).not.toBeInTheDocument();
-      expect(screen.queryByText("Token")).not.toBeInTheDocument();
-      expect(screen.queryByText("Complete")).not.toBeInTheDocument();
+      expect(screen.queryByText("Token Price")).not.toBeInTheDocument();
+      expect(screen.queryByText("Complete Rate")).not.toBeInTheDocument();
     });
   });
 

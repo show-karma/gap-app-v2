@@ -76,7 +76,9 @@ describe("ProjectHeader", () => {
 
       const stageElement = screen.getByTestId("project-stage");
       expect(stageElement).toBeInTheDocument();
-      expect(stageElement).toHaveTextContent("Stage: Growth");
+      // Stage text content includes both label and value (CSS gap doesn't add text spaces)
+      expect(stageElement).toHaveTextContent(/Stage/);
+      expect(stageElement).toHaveTextContent(/Growth/);
     });
 
     it("should not render stage when not provided", () => {
@@ -106,15 +108,15 @@ describe("ProjectHeader", () => {
   });
 
   describe("Social Links", () => {
-    it("should render social links", () => {
+    it("should render social links in top-right corner", () => {
       render(<ProjectHeader project={mockProject} />);
 
-      // Check that social icons are rendered (both desktop and mobile versions)
-      const twitterIcons = screen.getAllByTestId("twitter-icon");
-      const githubIcons = screen.getAllByTestId("github-icon");
+      // Check that social links container exists
+      expect(screen.getByTestId("social-links")).toBeInTheDocument();
 
-      expect(twitterIcons.length).toBeGreaterThan(0);
-      expect(githubIcons.length).toBeGreaterThan(0);
+      // Check that social icons are rendered
+      expect(screen.getByTestId("twitter-icon")).toBeInTheDocument();
+      expect(screen.getByTestId("github-icon")).toBeInTheDocument();
     });
   });
 
@@ -130,7 +132,7 @@ describe("ProjectHeader", () => {
       render(<ProjectHeader project={mockProjectLongDescription} />);
 
       expect(screen.getByTestId("read-more-button")).toBeInTheDocument();
-      expect(screen.getByTestId("read-more-button")).toHaveTextContent("Read more");
+      expect(screen.getByTestId("read-more-button")).toHaveTextContent("Read More");
     });
 
     it("should expand description when Read More is clicked", () => {
@@ -149,7 +151,7 @@ describe("ProjectHeader", () => {
       fireEvent.click(readMoreButton); // Expand
       fireEvent.click(readMoreButton); // Collapse
 
-      expect(readMoreButton).toHaveTextContent("Read more");
+      expect(readMoreButton).toHaveTextContent("Read More");
     });
 
     it("should not show Read More for short descriptions", () => {

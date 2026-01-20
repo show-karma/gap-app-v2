@@ -11,11 +11,11 @@ jest.mock("next/dynamic", () => ({
   },
 }));
 
-jest.mock("@/components/Pages/Project/ProjectPage", () => {
-  return function MockProjectPage() {
+jest.mock("@/components/Pages/Project/v2/ProjectProfilePage", () => ({
+  ProjectProfilePage: function MockProjectProfilePage() {
     return <div data-testid="mock-project-page">Mocked Project Page</div>;
-  };
-});
+  },
+}));
 
 jest.mock("@/components/Pages/Project/Loading/Overview", () => ({
   ProjectOverviewLoading: () => <div data-testid="project-overview-loading">Loading...</div>,

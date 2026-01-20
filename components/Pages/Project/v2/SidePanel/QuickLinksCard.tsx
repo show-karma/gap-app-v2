@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  DocumentTextIcon,
-  GlobeAltIcon,
-  HandRaisedIcon,
-  PlayCircleIcon,
-} from "@heroicons/react/24/outline";
+import { GlobeIcon, NotebookTabsIcon, PresentationIcon, TvIcon } from "lucide-react";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useIntroModalStore } from "@/store/modals/intro";
 import type { Project } from "@/types/v2/project";
@@ -25,6 +20,7 @@ interface QuickLinksCardProps {
 
 /**
  * QuickLinksCard displays a list of quick action links for the project.
+ * Matches Figma design with separate card, Lucide icons and neutral colors.
  * Includes: Request Intro, Website, Pitch Deck, Demo Video
  */
 export function QuickLinksCard({ project, className }: QuickLinksCardProps) {
@@ -41,14 +37,14 @@ export function QuickLinksCard({ project, className }: QuickLinksCardProps) {
 
   const links: QuickLink[] = [
     {
-      icon: <HandRaisedIcon className="h-5 w-5" />,
+      icon: <NotebookTabsIcon className="h-4 w-4" />,
       label: "Request Intro",
       onClick: () => setIsIntroModalOpen(true),
     },
     ...(websiteUrl
       ? [
           {
-            icon: <GlobeAltIcon className="h-5 w-5" />,
+            icon: <GlobeIcon className="h-4 w-4" />,
             label: "Website",
             href: ensureProtocol(websiteUrl),
           },
@@ -57,7 +53,7 @@ export function QuickLinksCard({ project, className }: QuickLinksCardProps) {
     ...(pitchDeckUrl
       ? [
           {
-            icon: <DocumentTextIcon className="h-5 w-5" />,
+            icon: <PresentationIcon className="h-4 w-4" />,
             label: "Pitch Deck",
             href: ensureProtocol(pitchDeckUrl),
           },
@@ -66,7 +62,7 @@ export function QuickLinksCard({ project, className }: QuickLinksCardProps) {
     ...(demoVideoUrl
       ? [
           {
-            icon: <PlayCircleIcon className="h-5 w-5" />,
+            icon: <TvIcon className="h-4 w-4" />,
             label: "Demo Video",
             href: ensureProtocol(demoVideoUrl),
           },
@@ -79,50 +75,58 @@ export function QuickLinksCard({ project, className }: QuickLinksCardProps) {
   return (
     <div
       className={cn(
-        "flex flex-col rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800",
+        "flex flex-col gap-4 p-8 rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-sm",
         className
       )}
       data-testid="quick-links-card"
     >
-      {links.map((link, index) => {
-        const isLast = index === links.length - 1;
-        const itemContent = (
-          <div
-            className={cn(
-              "flex flex-row items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors",
-              !isLast && "border-b border-gray-200 dark:border-zinc-700"
-            )}
-          >
-            {link.icon}
-            <span className="text-sm font-medium">{link.label}</span>
-          </div>
-        );
+      {/* Header */}
+      <span className="text-xl font-semibold text-neutral-900 dark:text-white tracking-tight">
+        Quick links
+      </span>
 
-        if (link.onClick) {
-          return (
-            <button
-              key={link.label}
-              type="button"
-              onClick={link.onClick}
-              className="text-left"
-              data-testid={`quick-link-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
-            >
-              {itemContent}
-            </button>
+      {/* Links */}
+      <div className="flex flex-col gap-2">
+        {links.map((link, index) => {
+          const isLast = index === links.length - 1;
+          const itemContent = (
+            <>
+              <div className="flex flex-row items-center gap-2 py-2 text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-colors">
+                {link.icon}
+                <span className="text-sm font-medium">{link.label}</span>
+              </div>
+              {!isLast && <div className="h-px w-full bg-neutral-200 dark:bg-zinc-700" />}
+            </>
           );
-        }
 
-        return (
-          <ExternalLink
-            key={link.label}
-            href={link.href}
-            className="text-left"
-            data-testid={`quick-link-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
-          >
-            {itemContent}
-          </ExternalLink>
-        );
-      })}
+          if (link.onClick) {
+            return (
+              <div key={link.label}>
+                <button
+                  type="button"
+                  onClick={link.onClick}
+                  className="text-left"
+                  data-testid={`quick-link-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
+                >
+                  {itemContent}
+                </button>
+              </div>
+            );
+          }
+
+          return (
+            <div key={link.label}>
+              <ExternalLink
+                href={link.href}
+                className="text-left"
+                data-testid={`quick-link-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
+              >
+                {itemContent}
+              </ExternalLink>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

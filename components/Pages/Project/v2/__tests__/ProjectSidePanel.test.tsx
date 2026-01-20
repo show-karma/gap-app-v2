@@ -38,9 +38,22 @@ jest.mock("react-hot-toast", () => ({
   },
 }));
 
-// Mock wagmi
+// Mock wagmi with all required hooks
 jest.mock("wagmi", () => ({
   useAccount: () => ({ address: "0x1234567890123456789012345678901234567890" }),
+  useChainId: () => 1,
+  useSwitchChain: () => ({ switchChainAsync: jest.fn() }),
+}));
+
+// Mock SingleProjectDonateModal to avoid complex wagmi/web3 dependencies
+jest.mock("@/components/Donation/SingleProject/SingleProjectDonateModal", () => ({
+  SingleProjectDonateModal: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? <div data-testid="donate-modal">Donation Modal</div> : null,
+}));
+
+// Mock hasConfiguredPayoutAddresses
+jest.mock("@/src/features/chain-payout-address/hooks/use-chain-payout-address", () => ({
+  hasConfiguredPayoutAddresses: jest.fn(() => true),
 }));
 
 const mockProject: Project = {
@@ -80,62 +93,49 @@ describe("DonateSection", () => {
       render(<DonateSection project={mockProject} />);
 
       expect(screen.getByTestId("donate-amount-input")).toBeInTheDocument();
-      expect(screen.getByPlaceholderText("Enter amount")).toBeInTheDocument();
+      expect(screen.getByPlaceholderText("amount")).toBeInTheDocument();
     });
 
     it("should render donate button", () => {
       render(<DonateSection project={mockProject} />);
 
-      expect(screen.getByTestId("donate-button")).toBeInTheDocument();
-      expect(screen.getByText("Donate")).toBeInTheDocument();
+      const button = screen.getByTestId("donate-button");
+      expect(button).toBeInTheDocument();
+      expect(button).toHaveTextContent("Donate");
     });
 
     it("should render header with icon", () => {
       render(<DonateSection project={mockProject} />);
 
-      expect(screen.getByText("Support this project")).toBeInTheDocument();
+      // Check for subtitle text in header
+      expect(screen.getByText("Support the project with a donation")).toBeInTheDocument();
     });
   });
 
   describe("Interactions", () => {
-    it("should disable button when amount is empty", () => {
-      render(<DonateSection project={mockProject} />);
-
-      const button = screen.getByTestId("donate-button");
-      expect(button).toBeDisabled();
-    });
-
-    it("should disable button when amount is zero", () => {
-      render(<DonateSection project={mockProject} />);
-
-      const input = screen.getByTestId("donate-amount-input");
-      fireEvent.change(input, { target: { value: "0" } });
-
-      const button = screen.getByTestId("donate-button");
-      expect(button).toBeDisabled();
-    });
-
-    it("should enable button when valid amount is entered", () => {
+    it("should allow typing in amount input", () => {
       render(<DonateSection project={mockProject} />);
 
       const input = screen.getByTestId("donate-amount-input");
       fireEvent.change(input, { target: { value: "10" } });
 
-      const button = screen.getByTestId("donate-button");
-      expect(button).not.toBeDisabled();
+      expect(input).toHaveValue(10);
     });
 
-    it("should call onDonate callback when button is clicked", () => {
-      const handleDonate = jest.fn();
-      render(<DonateSection project={mockProject} onDonate={handleDonate} />);
-
-      const input = screen.getByTestId("donate-amount-input");
-      fireEvent.change(input, { target: { value: "25" } });
+    it("should open donation modal when button is clicked", () => {
+      render(<DonateSection project={mockProject} />);
 
       const button = screen.getByTestId("donate-button");
       fireEvent.click(button);
 
-      expect(handleDonate).toHaveBeenCalledWith("25");
+      expect(screen.getByTestId("donate-modal")).toBeInTheDocument();
+    });
+
+    it("should enable button when payout addresses are configured", () => {
+      render(<DonateSection project={mockProject} />);
+
+      const button = screen.getByTestId("donate-button");
+      expect(button).not.toBeDisabled();
     });
   });
 
@@ -170,13 +170,13 @@ describe("EndorseSection", () => {
       render(<EndorseSection project={mockProject} />);
 
       expect(screen.getByTestId("endorse-button")).toBeInTheDocument();
-      expect(screen.getByText("Endorse")).toBeInTheDocument();
+      expect(screen.getByText("Submit")).toBeInTheDocument();
     });
 
     it("should render header with icon", () => {
       render(<EndorseSection project={mockProject} />);
 
-      expect(screen.getByText("Endorse this project")).toBeInTheDocument();
+      expect(screen.getByText("Endorse")).toBeInTheDocument();
     });
   });
 
@@ -221,14 +221,14 @@ describe("SubscribeSection", () => {
       render(<SubscribeSection project={mockProject} />);
 
       expect(screen.getByTestId("subscribe-name-input")).toBeInTheDocument();
-      expect(screen.getByPlaceholderText("First name (optional)")).toBeInTheDocument();
+      expect(screen.getByPlaceholderText("First name")).toBeInTheDocument();
     });
 
     it("should render email input", () => {
       render(<SubscribeSection project={mockProject} />);
 
       expect(screen.getByTestId("subscribe-email-input")).toBeInTheDocument();
-      expect(screen.getByPlaceholderText("Email address")).toBeInTheDocument();
+      expect(screen.getByPlaceholderText("your@email.com*")).toBeInTheDocument();
     });
 
     it("should render subscribe button", () => {
@@ -241,7 +241,7 @@ describe("SubscribeSection", () => {
     it("should render header with icon", () => {
       render(<SubscribeSection project={mockProject} />);
 
-      expect(screen.getByText("Stay Updated")).toBeInTheDocument();
+      expect(screen.getByText("Stay updated")).toBeInTheDocument();
     });
   });
 
@@ -424,18 +424,14 @@ describe("ProjectSidePanel", () => {
     });
   });
 
-  describe("Props Passing", () => {
-    it("should pass onDonate to DonateSection", () => {
-      const handleDonate = jest.fn();
-      render(<ProjectSidePanel project={mockProject} onDonate={handleDonate} />);
-
-      const input = screen.getByTestId("donate-amount-input");
-      fireEvent.change(input, { target: { value: "50" } });
+  describe("Integration", () => {
+    it("should open donation modal when donate button is clicked", () => {
+      render(<ProjectSidePanel project={mockProject} />);
 
       const button = screen.getByTestId("donate-button");
       fireEvent.click(button);
 
-      expect(handleDonate).toHaveBeenCalledWith("50");
+      expect(screen.getByTestId("donate-modal")).toBeInTheDocument();
     });
   });
 
