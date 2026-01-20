@@ -1,0 +1,107 @@
+"use client";
+
+import { useState } from "react";
+import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import { cn } from "@/utilities/tailwind";
+import { ActivityFeed } from "./ActivityFeed";
+import { ActivityFilters, type ActivityFilterType, type SortOption } from "./ActivityFilters";
+import { type ContentTab, ContentTabs } from "./ContentTabs";
+
+interface ProjectMainContentProps {
+  milestones: UnifiedMilestone[];
+  milestonesCount?: number;
+  completedCount?: number;
+  fundingCount?: number;
+  isAuthorized?: boolean;
+  onTabChange?: (tab: ContentTab) => void;
+  className?: string;
+}
+
+/**
+ * ProjectMainContent is the main content area containing:
+ * - Content tabs (Profile, Updates, About, Funding, Impact)
+ * - Activity filters (Sort, filter badges)
+ * - Activity feed (Timeline of project activities)
+ */
+export function ProjectMainContent({
+  milestones,
+  milestonesCount = 0,
+  completedCount = 0,
+  fundingCount = 0,
+  isAuthorized = false,
+  onTabChange,
+  className,
+}: ProjectMainContentProps) {
+  const [activeTab, setActiveTab] = useState<ContentTab>("profile");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [activeFilters, setActiveFilters] = useState<ActivityFilterType[]>([]);
+
+  const handleTabChange = (tab: ContentTab) => {
+    setActiveTab(tab);
+    onTabChange?.(tab);
+  };
+
+  const handleFilterToggle = (filter: ActivityFilterType) => {
+    setActiveFilters((prev) =>
+      prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]
+    );
+  };
+
+  return (
+    <div
+      className={cn("flex flex-col gap-6 flex-1 min-w-0", className)}
+      data-testid="project-main-content"
+    >
+      {/* Content Tabs */}
+      <ContentTabs
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        fundingCount={fundingCount}
+      />
+
+      {/* Filters - only show on Profile tab */}
+      {activeTab === "profile" && (
+        <ActivityFilters
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          activeFilters={activeFilters}
+          onFilterToggle={handleFilterToggle}
+          milestonesCount={milestonesCount}
+          completedCount={completedCount}
+        />
+      )}
+
+      {/* Tab Content */}
+      <div className="flex-1" data-testid="tab-content">
+        {activeTab === "profile" && (
+          <ActivityFeed
+            milestones={milestones}
+            isAuthorized={isAuthorized}
+            sortBy={sortBy}
+            activeFilters={activeFilters}
+          />
+        )}
+        {activeTab === "updates" && (
+          <div className="text-gray-500 dark:text-gray-400" data-testid="updates-content">
+            Updates content will be displayed here
+          </div>
+        )}
+        {activeTab === "about" && (
+          <div className="text-gray-500 dark:text-gray-400" data-testid="about-content">
+            About content will be displayed here
+          </div>
+        )}
+        {activeTab === "funding" && (
+          <div className="text-gray-500 dark:text-gray-400" data-testid="funding-content">
+            Funding content will be displayed here
+          </div>
+        )}
+        {activeTab === "impact" && (
+          <div className="text-gray-500 dark:text-gray-400" data-testid="impact-content">
+            Impact content will be displayed here
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
