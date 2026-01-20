@@ -109,7 +109,6 @@ export const useOnramp = ({
             : err instanceof Error
               ? OnrampError.sessionCreationFailed(err.message)
               : OnrampError.sessionCreationFailed();
-        console.error("Onramp session creation failed:", error);
         setError(error);
         setIsLoading(false);
         toast.error(error.userMessage);

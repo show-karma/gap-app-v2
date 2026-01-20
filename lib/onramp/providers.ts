@@ -16,7 +16,6 @@ export interface OnrampUrlParams {
 export interface OnrampProviderConfig {
   id: OnrampProvider;
   name: string;
-  baseUrl: string;
   buildUrl: (params: OnrampUrlParams) => string;
   description: string;
   supportedCurrencies: Array<{ code: string; symbol: string }>;
@@ -27,7 +26,6 @@ const PROVIDER_CONFIGS: Record<OnrampProvider, OnrampProviderConfig> = {
   [OnrampProvider.COINBASE]: {
     id: OnrampProvider.COINBASE,
     name: "Coinbase",
-    baseUrl: "https://pay.coinbase.com/buy/select-asset",
     buildUrl: ({
       token,
       fiatAmount,

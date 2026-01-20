@@ -112,12 +112,15 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
                 placeholder="0.00"
                 value={amount}
                 onChange={handleAmountChange}
+                aria-describedby={validationError ? "fiat-amount-error" : "fiat-amount-hint"}
+                aria-invalid={validationError ? "true" : undefined}
                 className="w-full rounded-md border border-gray-300 bg-white pl-7 pr-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
               />
             </div>
             <select
               value={currency}
               onChange={handleCurrencyChange}
+              aria-label="Select currency"
               className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             >
               {providerConfig.supportedCurrencies.map((c) => (
@@ -128,9 +131,11 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
             </select>
           </div>
           {validationError ? (
-            <p className="text-xs text-red-500">{validationError}</p>
+            <p id="fiat-amount-error" role="alert" className="text-xs text-red-500">
+              {validationError}
+            </p>
           ) : (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p id="fiat-amount-hint" className="text-xs text-gray-500 dark:text-gray-400">
               Min: {currencySymbol}
               {ONRAMP_LIMITS.MIN_AMOUNT} · Max: {currencySymbol}
               {ONRAMP_LIMITS.MAX_AMOUNT.toLocaleString()}

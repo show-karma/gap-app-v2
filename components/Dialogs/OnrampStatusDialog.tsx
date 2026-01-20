@@ -47,9 +47,11 @@ const statusConfig = {
 };
 
 export const OnrampStatusDialog = () => {
-  const { isOpen, isLoading, transaction, error, closeModal } = useOnrampStatusModalStore();
+  const { isOpen, isLoading, transaction, error, closeModal, retry } = useOnrampStatusModalStore();
 
-  const config = transaction ? statusConfig[transaction.status] : statusConfig.unknown;
+  const config = transaction
+    ? statusConfig[transaction.status] || statusConfig.unknown
+    : statusConfig.unknown;
   const StatusIcon = config.icon;
 
   return (
@@ -88,7 +90,8 @@ export const OnrampStatusDialog = () => {
                   </Dialog.Title>
                   <button
                     type="button"
-                    className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200"
+                    aria-label="Close dialog"
+                    className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2"
                     onClick={closeModal}
                   >
                     <XMarkIcon className="w-5 h-5" />
@@ -105,6 +108,12 @@ export const OnrampStatusDialog = () => {
                     <>
                       <ExclamationCircleIcon className="h-12 w-12 text-red-500" />
                       <p className="text-gray-600 dark:text-zinc-300">{error}</p>
+                      <Button
+                        onClick={retry}
+                        className="mt-2 bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-zinc-200 hover:bg-gray-200 dark:hover:bg-zinc-600 px-4 py-2 rounded-lg"
+                      >
+                        Try Again
+                      </Button>
                     </>
                   ) : transaction ? (
                     <>
