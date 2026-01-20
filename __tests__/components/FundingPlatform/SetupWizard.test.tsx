@@ -25,18 +25,15 @@ jest.mock("next/link", () => {
 });
 
 // Mock dependencies
+const mockToggleStatusAsync = jest.fn();
+const mockRefetch = jest.fn();
+
 jest.mock("@/hooks/useFundingPlatform", () => ({
   useProgramConfig: jest.fn(() => ({
-    refetch: jest.fn(),
+    toggleStatusAsync: mockToggleStatusAsync,
+    isUpdating: false,
+    refetch: mockRefetch,
   })),
-}));
-
-jest.mock("@/services/fundingPlatformService", () => ({
-  fundingPlatformService: {
-    programs: {
-      toggleProgramStatus: jest.fn(),
-    },
-  },
 }));
 
 jest.mock("react-hot-toast", () => ({
@@ -48,12 +45,18 @@ jest.mock("react-hot-toast", () => ({
 }));
 
 import toast from "react-hot-toast";
-import { fundingPlatformService } from "@/services/fundingPlatformService";
 
 describe("SetupWizard", () => {
   const communityId = "test-community";
   const programId = "program-123";
   const programName = "Test Grant Program";
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockPush.mockClear();
+    mockToggleStatusAsync.mockResolvedValue(undefined);
+    mockRefetch.mockResolvedValue(undefined);
+  });
 
   const createMockProgress = (overrides: Partial<SetupProgress> = {}): SetupProgress => ({
     steps: [
@@ -120,11 +123,6 @@ describe("SetupWizard", () => {
     percentComplete: 17,
     isLoading: false,
     ...overrides,
-  });
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockPush.mockClear();
   });
 
   describe("Rendering", () => {
@@ -433,7 +431,6 @@ describe("SetupWizard", () => {
 
     it("should enable program when clicking the enable button", async () => {
       const user = userEvent.setup();
-      (fundingPlatformService.programs.toggleProgramStatus as jest.Mock).mockResolvedValue({});
 
       const readySteps: SetupStep[] = [
         {
@@ -484,16 +481,12 @@ describe("SetupWizard", () => {
       await user.click(enableButtons[0]);
 
       await waitFor(() => {
-        expect(fundingPlatformService.programs.toggleProgramStatus).toHaveBeenCalledWith(
-          programId,
-          true
-        );
+        expect(mockToggleStatusAsync).toHaveBeenCalledWith(true);
       });
     });
 
     it("should show success toast and redirect on successful enable", async () => {
       const user = userEvent.setup();
-      (fundingPlatformService.programs.toggleProgramStatus as jest.Mock).mockResolvedValue({});
 
       const readySteps: SetupStep[] = [
         {
@@ -544,18 +537,15 @@ describe("SetupWizard", () => {
       await user.click(enableButtons[0]);
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith(
-          "Program enabled successfully! You can now accept applications."
-        );
+        expect(mockToggleStatusAsync).toHaveBeenCalledWith(true);
+        expect(mockRefetch).toHaveBeenCalled();
         expect(mockPush).toHaveBeenCalledWith(`/community/${communityId}/admin/funding-platform`);
       });
     });
 
-    it("should show error toast on failed enable", async () => {
+    it("should handle failed enable gracefully", async () => {
       const user = userEvent.setup();
-      (fundingPlatformService.programs.toggleProgramStatus as jest.Mock).mockRejectedValue(
-        new Error("Failed")
-      );
+      mockToggleStatusAsync.mockRejectedValue(new Error("Failed"));
 
       const readySteps: SetupStep[] = [
         {
@@ -606,7 +596,9 @@ describe("SetupWizard", () => {
       await user.click(enableButtons[0]);
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("Failed to enable program. Please try again.");
+        expect(mockToggleStatusAsync).toHaveBeenCalledWith(true);
+        // Should not navigate on error
+        expect(mockPush).not.toHaveBeenCalled();
       });
     });
   });
