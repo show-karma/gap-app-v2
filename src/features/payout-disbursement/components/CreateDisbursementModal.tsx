@@ -105,11 +105,62 @@ export function CreateDisbursementModal({
   const walletChainId = useChainId();
   const { switchChainAsync, isPending: isSwitchingNetwork } = useWallet();
 
-  // Form state
+  // LocalStorage key for persisting setup preferences (per community)
+  const storageKey = `disbursement-setup-${communityUID}`;
+
+  // Form state - initialize with defaults, will be updated from localStorage on mount
   const [selectedNetwork, setSelectedNetwork] = useState<SupportedChainId>(10);
   const [tokenType, setTokenType] = useState<TokenType>("usdc");
   const [safeAddress, setSafeAddress] = useState(initialSafeAddress || "");
   const [step, setStep] = useState<Step>("setup");
+  const [hasLoadedPrefs, setHasLoadedPrefs] = useState(false);
+
+  // Load saved preferences from localStorage on mount (client-side only)
+  useEffect(() => {
+    if (typeof window === "undefined" || hasLoadedPrefs) return;
+
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const prefs = JSON.parse(saved) as {
+          selectedNetwork?: SupportedChainId;
+          tokenType?: TokenType;
+          safeAddress?: string;
+        };
+
+        if (prefs.selectedNetwork) {
+          setSelectedNetwork(prefs.selectedNetwork);
+        }
+        if (prefs.tokenType) {
+          setTokenType(prefs.tokenType);
+        }
+        // Only use saved safeAddress if no initialSafeAddress was provided
+        if (prefs.safeAddress && !initialSafeAddress) {
+          setSafeAddress(prefs.safeAddress);
+        }
+      }
+    } catch {
+      // Ignore parsing errors
+    }
+
+    setHasLoadedPrefs(true);
+  }, [storageKey, initialSafeAddress, hasLoadedPrefs]);
+
+  // Save preferences to localStorage whenever they change (after initial load)
+  useEffect(() => {
+    if (typeof window === "undefined" || !hasLoadedPrefs) return;
+
+    try {
+      const prefs = {
+        selectedNetwork,
+        tokenType,
+        safeAddress,
+      };
+      localStorage.setItem(storageKey, JSON.stringify(prefs));
+    } catch {
+      // Ignore storage errors (e.g., quota exceeded)
+    }
+  }, [selectedNetwork, tokenType, safeAddress, storageKey, hasLoadedPrefs]);
 
   // Computed token values
   const selectedTokenSymbol = useMemo(() => {
@@ -181,6 +232,8 @@ export function CreateDisbursementModal({
     txHash: string;
     safeUrl: string;
     executed?: boolean;
+    totalAmount: number;
+    recipientCount: number;
   } | null>(null);
   const [transactionError, setTransactionError] = useState<string | null>(null);
 
@@ -692,6 +745,13 @@ export function CreateDisbursementModal({
         amount: getEffectiveDisbursementAmount(grant.grantUID, grant.approvedAmount).toString(),
       }));
 
+      // Calculate totals before transaction for display in complete step
+      const calculatedTotalAmount = recipients.reduce(
+        (sum, r) => sum + (parseFloat(r.amount) || 0),
+        0
+      );
+      const calculatedRecipientCount = recipients.length;
+
       const result = await signAndProposeDisbursement(
         safeAddress,
         recipients,
@@ -717,6 +777,8 @@ export function CreateDisbursementModal({
         txHash: result.txHash,
         safeUrl: result.safeUrl,
         executed: result.executed,
+        totalAmount: calculatedTotalAmount,
+        recipientCount: calculatedRecipientCount,
       });
       setStep("complete");
       toast.success(
@@ -1055,6 +1117,9 @@ export function CreateDisbursementModal({
                                   Payout Address
                                 </th>
                                 <th className="px-4 py-3 text-right font-medium text-gray-700 dark:text-gray-300">
+                                  Total Grant
+                                </th>
+                                <th className="px-4 py-3 text-right font-medium text-gray-700 dark:text-gray-300">
                                   Amount to Disburse
                                 </th>
                               </tr>
@@ -1066,6 +1131,7 @@ export function CreateDisbursementModal({
                                   grant.grantUID,
                                   grant.approvedAmount
                                 );
+                                const totalGrant = parseFloat(grant.approvedAmount) || 0;
 
                                 return (
                                   <tr key={grant.grantUID}>
@@ -1075,8 +1141,19 @@ export function CreateDisbursementModal({
                                     <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-400">
                                       {payoutAddress.slice(0, 6)}...{payoutAddress.slice(-4)}
                                     </td>
+                                    <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400">
+                                      {totalGrant.toLocaleString(undefined, {
+                                        minimumFractionDigits: 0,
+                                        maximumFractionDigits: 18,
+                                      })}{" "}
+                                      {selectedTokenSymbol}
+                                    </td>
                                     <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-white">
-                                      {effectiveAmount.toLocaleString()} {selectedTokenSymbol}
+                                      {effectiveAmount.toLocaleString(undefined, {
+                                        minimumFractionDigits: 0,
+                                        maximumFractionDigits: 18,
+                                      })}{" "}
+                                      {selectedTokenSymbol}
                                     </td>
                                   </tr>
                                 );
@@ -1094,7 +1171,11 @@ export function CreateDisbursementModal({
                           Total disbursement
                         </span>
                         <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                          {totalAmount.toLocaleString()} {selectedTokenSymbol}
+                          {totalAmount.toLocaleString(undefined, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 18,
+                          })}{" "}
+                          {selectedTokenSymbol}
                         </span>
                       </div>
                       <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -1228,9 +1309,13 @@ Click "Add Proposer" → Enter the wallet address and name → Confirm the addit
                         "Funds have been transferred successfully."
                       ) : (
                         <>
-                          Transaction to disburse {totalAmount.toLocaleString()}{" "}
-                          {selectedTokenSymbol} to {validGrants.length} project
-                          {validGrants.length !== 1 ? "s" : ""} has been created.
+                          Transaction to disburse{" "}
+                          {transactionResult.totalAmount.toLocaleString(undefined, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 18,
+                          })}{" "}
+                          {selectedTokenSymbol} to {transactionResult.recipientCount} project
+                          {transactionResult.recipientCount !== 1 ? "s" : ""} has been created.
                           <br />
                           The signers can go{" "}
                           <a
@@ -1498,7 +1583,11 @@ function ProjectReviewStep({
             Total Grant
           </span>
           <div className="px-3 py-2 bg-gray-100 dark:bg-zinc-700 rounded-md text-gray-900 dark:text-white font-semibold">
-            {approvedAmount.toLocaleString()} {tokenSymbol}
+            {approvedAmount.toLocaleString(undefined, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 18,
+            })}{" "}
+            {tokenSymbol}
           </div>
         </div>
         <div>
@@ -1510,7 +1599,11 @@ function ProjectReviewStep({
               <Spinner className="w-4 h-4" />
             ) : (
               <>
-                {disbursedAmount.toLocaleString()} {tokenSymbol}
+                {disbursedAmount.toLocaleString(undefined, {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 18,
+                })}{" "}
+                {tokenSymbol}
               </>
             )}
           </div>
@@ -1523,7 +1616,11 @@ function ProjectReviewStep({
           <p className="text-sm text-amber-700 dark:text-amber-400">
             Remaining to disburse:{" "}
             <strong>
-              {remainingAmount.toLocaleString()} {tokenSymbol}
+              {remainingAmount.toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 18,
+              })}{" "}
+              {tokenSymbol}
             </strong>
           </p>
         </div>
@@ -1566,7 +1663,12 @@ function ProjectReviewStep({
             onClick={() => onDisbursementAmountChange(remainingAmount.toString())}
             className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
           >
-            Set to remaining amount ({remainingAmount.toLocaleString()})
+            Set to remaining amount (
+            {remainingAmount.toLocaleString(undefined, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 18,
+            })}
+            )
           </button>
         )}
       </div>
@@ -1618,8 +1720,16 @@ function ProjectReviewStep({
                         : "text-orange-600 dark:text-orange-400"
                     }`}
                   >
-                    Sum: {milestoneSum.toLocaleString()} /{" "}
-                    {currentDisbursementAmount.toLocaleString()}
+                    Sum:{" "}
+                    {milestoneSum.toLocaleString(undefined, {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 18,
+                    })}{" "}
+                    /{" "}
+                    {currentDisbursementAmount.toLocaleString(undefined, {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 18,
+                    })}
                   </span>
                 </div>
               )}

@@ -187,7 +187,11 @@ export function PayoutHistoryDrawer({
                           Grant Amount
                         </p>
                         <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {parseFloat(approvedAmount).toLocaleString()} {tokenSymbol}
+                          {parseFloat(approvedAmount).toLocaleString(undefined, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 18,
+                          })}{" "}
+                          {tokenSymbol}
                         </p>
                       </div>
                     )}

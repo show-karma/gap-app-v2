@@ -8,7 +8,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import { useAccount } from "wagmi";
-import { useAuth } from "@/hooks/useAuth";
 import { ProgramFilter } from "@/components/Pages/Communities/Impact/ProgramFilter";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -16,22 +15,23 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import TablePagination from "@/components/Utilities/TablePagination";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
+import { useAuth } from "@/hooks/useAuth";
 import {
-  CreateDisbursementModal,
-  type GrantDisbursementInfo,
-  PayoutHistoryDrawer,
-  PayoutDisbursementStatus,
-  useCommunityPayouts,
-  useSavePayoutConfig,
   AggregatedDisbursementStatus,
   type CommunityPayoutsOptions,
+  CreateDisbursementModal,
+  type GrantDisbursementInfo,
   type PayoutConfigItem,
+  PayoutDisbursementStatus,
+  PayoutHistoryDrawer,
   type SavePayoutConfigRequest,
   TokenBreakdown,
   type TokenTotal,
+  useCommunityPayouts,
+  useSavePayoutConfig,
 } from "@/src/features/payout-disbursement";
-import { appNetwork } from "@/utilities/network";
 import { MESSAGES } from "@/utilities/messages";
+import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { type CsvParseResult, PayoutsCsvUpload } from "./PayoutsCsvUpload";
@@ -83,7 +83,6 @@ export default function PayoutsAdminPage() {
     projectName: string;
     approvedAmount?: string;
   } | null>(null);
-
 
   // Get values from URL params or use defaults
   const selectedProgramId = searchParams.get("programId");
@@ -179,6 +178,13 @@ export default function PayoutsAdminPage() {
   const paginatedData = tableData;
 
   // Helper to compute display status based on aggregated status from API
+  // Priority:
+  // 1. "Awaiting Signatures" - if latest transaction is awaiting signatures
+  // 2. "Disbursed" - if total grant is fulfilled (COMPLETED)
+  // 3. "Partially Disbursed" - if has at least one disbursed transaction but not completed
+  // 4. "Cancelled" - only if ALL transactions are cancelled
+  // 5. "Failed" - if latest transaction failed
+  // 6. "Pending" - default
   const computeDisplayStatus = useCallback(
     (
       item: PayoutsTableData,
@@ -188,29 +194,52 @@ export default function PayoutsAdminPage() {
       const history = disbursementInfo?.history || [];
       const latestDisbursement = history[0];
 
-      // Check for in-progress states from the latest disbursement
-      if (latestDisbursement) {
-        if (latestDisbursement.status === PayoutDisbursementStatus.AWAITING_SIGNATURES) {
-          return { label: "Awaiting Signatures", color: "text-yellow-700 bg-yellow-100 dark:bg-yellow-900/30" };
-        }
-        if (latestDisbursement.status === PayoutDisbursementStatus.FAILED) {
-          return { label: "Failed", color: "text-red-700 bg-red-100 dark:bg-red-900/30" };
-        }
-        if (latestDisbursement.status === PayoutDisbursementStatus.CANCELLED) {
-          return { label: "Cancelled", color: "text-gray-700 bg-gray-200 dark:bg-gray-600" };
-        }
+      // If no history, default to Pending
+      if (history.length === 0) {
+        return { label: "Pending", color: "text-gray-500 bg-gray-100 dark:bg-gray-700" };
       }
 
-      // Use aggregated status for overall progress
-      switch (aggregatedStatus) {
-        case AggregatedDisbursementStatus.COMPLETED:
-          return { label: "Disbursed", color: "text-green-700 bg-green-100 dark:bg-green-900/30" };
-        case AggregatedDisbursementStatus.IN_PROGRESS:
-          return { label: "Partially Disbursed", color: "text-blue-700 bg-blue-100 dark:bg-blue-900/30" };
-        case AggregatedDisbursementStatus.NOT_STARTED:
-        default:
-          return { label: "Pending", color: "text-gray-500 bg-gray-100 dark:bg-gray-700" };
+      // Check if any transaction has been disbursed
+      const hasDisbursedTransaction = history.some(
+        (d) => d.status === PayoutDisbursementStatus.DISBURSED
+      );
+
+      // Check if ALL transactions are cancelled
+      const allCancelled = history.every((d) => d.status === PayoutDisbursementStatus.CANCELLED);
+
+      // Priority 1: If the latest transaction is awaiting signatures, show that
+      if (latestDisbursement?.status === PayoutDisbursementStatus.AWAITING_SIGNATURES) {
+        return {
+          label: "Awaiting Signatures",
+          color: "text-yellow-700 bg-yellow-100 dark:bg-yellow-900/30",
+        };
       }
+
+      // Priority 2: If total grant is fulfilled (COMPLETED), show Disbursed
+      if (aggregatedStatus === AggregatedDisbursementStatus.COMPLETED) {
+        return { label: "Disbursed", color: "text-green-700 bg-green-100 dark:bg-green-900/30" };
+      }
+
+      // Priority 3: If there's at least one disbursed transaction (but not completed), show Partially Disbursed
+      if (hasDisbursedTransaction) {
+        return {
+          label: "Partially Disbursed",
+          color: "text-blue-700 bg-blue-100 dark:bg-blue-900/30",
+        };
+      }
+
+      // Priority 4: Only show Cancelled if ALL transactions are cancelled
+      if (allCancelled) {
+        return { label: "Cancelled", color: "text-gray-700 bg-gray-200 dark:bg-gray-600" };
+      }
+
+      // Priority 5: If latest is failed, show Failed
+      if (latestDisbursement?.status === PayoutDisbursementStatus.FAILED) {
+        return { label: "Failed", color: "text-red-700 bg-red-100 dark:bg-red-900/30" };
+      }
+
+      // Default to Pending
+      return { label: "Pending", color: "text-gray-500 bg-gray-100 dark:bg-gray-700" };
     },
     []
   );
@@ -385,33 +414,39 @@ export default function PayoutsAdminPage() {
   }, [tableData]);
 
   // Check if a grant is ready for disbursement (has payout address and amount)
-  const isGrantReadyForDisbursement = useCallback((item: PayoutsTableData): boolean => {
-    const payoutAddress = editedFields[item.uid]?.payoutAddress ?? item.currentPayoutAddress;
-    const amount = editedFields[item.uid]?.amount ?? item.currentAmount;
-    return !!(payoutAddress && isAddress(payoutAddress) && amount && parseFloat(amount) > 0);
-  }, [editedFields]);
+  const isGrantReadyForDisbursement = useCallback(
+    (item: PayoutsTableData): boolean => {
+      const payoutAddress = editedFields[item.uid]?.payoutAddress ?? item.currentPayoutAddress;
+      const amount = editedFields[item.uid]?.amount ?? item.currentAmount;
+      return !!(payoutAddress && isAddress(payoutAddress) && amount && parseFloat(amount) > 0);
+    },
+    [editedFields]
+  );
 
   // Check if a grant's checkbox should be disabled (missing payout address or amount = 0)
   // Returns { disabled: boolean, reason: string | null }
-  const getCheckboxDisabledState = useCallback((item: PayoutsTableData): { disabled: boolean; reason: string | null } => {
-    const payoutAddress = editedFields[item.uid]?.payoutAddress ?? item.currentPayoutAddress;
-    const amount = editedFields[item.uid]?.amount ?? item.currentAmount;
-    const parsedAmount = amount ? parseFloat(amount) : 0;
+  const getCheckboxDisabledState = useCallback(
+    (item: PayoutsTableData): { disabled: boolean; reason: string | null } => {
+      const payoutAddress = editedFields[item.uid]?.payoutAddress ?? item.currentPayoutAddress;
+      const amount = editedFields[item.uid]?.amount ?? item.currentAmount;
+      const parsedAmount = amount ? parseFloat(amount) : 0;
 
-    if (!payoutAddress || payoutAddress.trim() === "") {
-      return { disabled: true, reason: "Missing payout address" };
-    }
+      if (!payoutAddress || payoutAddress.trim() === "") {
+        return { disabled: true, reason: "Missing payout address" };
+      }
 
-    if (!isAddress(payoutAddress)) {
-      return { disabled: true, reason: "Invalid payout address" };
-    }
+      if (!isAddress(payoutAddress)) {
+        return { disabled: true, reason: "Invalid payout address" };
+      }
 
-    if (parsedAmount === 0 || Number.isNaN(parsedAmount)) {
-      return { disabled: true, reason: "Payout amount is 0 or missing" };
-    }
+      if (parsedAmount === 0 || Number.isNaN(parsedAmount)) {
+        return { disabled: true, reason: "Payout amount is 0 or missing" };
+      }
 
-    return { disabled: false, reason: null };
-  }, [editedFields]);
+      return { disabled: false, reason: null };
+    },
+    [editedFields]
+  );
 
   // Get all selectable grants (those with valid payout address and amount > 0)
   const selectableGrants = useMemo(() => {
@@ -451,17 +486,31 @@ export default function PayoutsAdminPage() {
       return;
     }
 
-    const grantsInfo: GrantDisbursementInfo[] = selectedItems.map((item) => ({
-      grantUID: item.uid,
-      projectUID: item.projectUid,
-      grantName: item.grantName,
-      projectName: item.projectName,
-      payoutAddress: editedFields[item.uid]?.payoutAddress || item.currentPayoutAddress || "",
-      approvedAmount: editedFields[item.uid]?.amount || item.currentAmount || "0",
-      // Pass totalsByToken so the modal can correctly calculate remaining amount
-      // (converts from raw BigInt to human-readable using token decimals)
-      totalsByToken: disbursementMap[item.uid]?.totalsByToken || [],
-    }));
+    const grantsInfo: GrantDisbursementInfo[] = selectedItems.map((item) => {
+      // Use the same logic as the input display: prefer editedFields if the key exists
+      const hasEditedPayoutAddress = editedFields[item.uid]?.hasOwnProperty("payoutAddress");
+      const hasEditedAmount = editedFields[item.uid]?.hasOwnProperty("amount");
+
+      const payoutAddress = hasEditedPayoutAddress
+        ? editedFields[item.uid].payoutAddress || ""
+        : item.currentPayoutAddress || "";
+
+      const approvedAmount = hasEditedAmount
+        ? editedFields[item.uid].amount || "0"
+        : item.currentAmount || "0";
+
+      return {
+        grantUID: item.uid,
+        projectUID: item.projectUid,
+        grantName: item.grantName,
+        projectName: item.projectName,
+        payoutAddress,
+        approvedAmount,
+        // Pass totalsByToken so the modal can correctly calculate remaining amount
+        // (converts from raw BigInt to human-readable using token decimals)
+        totalsByToken: disbursementMap[item.uid]?.totalsByToken || [],
+      };
+    });
 
     setGrantsForDisbursement(grantsInfo);
     setIsDisbursementModalOpen(true);
@@ -469,11 +518,17 @@ export default function PayoutsAdminPage() {
 
   // Open history drawer for a specific grant
   const handleOpenHistoryDrawer = (item: PayoutsTableData) => {
+    // Use the same logic as the input display: prefer editedFields if the key exists
+    const hasEditedAmount = editedFields[item.uid]?.hasOwnProperty("amount");
+    const approvedAmount = hasEditedAmount
+      ? editedFields[item.uid].amount || "0"
+      : item.currentAmount || "0";
+
     setHistoryGrant({
       grantUID: item.uid,
       grantName: item.grantName,
       projectName: item.projectName,
-      approvedAmount: editedFields[item.uid]?.amount || item.currentAmount,
+      approvedAmount,
     });
     setIsHistoryDrawerOpen(true);
   };
@@ -508,7 +563,10 @@ export default function PayoutsAdminPage() {
       // Validate fields
       if (Object.hasOwn(fields, "payoutAddress")) {
         // Allow empty string to clear the field
-        if (fields.payoutAddress && !validateField(grantUID, "payoutAddress", fields.payoutAddress)) {
+        if (
+          fields.payoutAddress &&
+          !validateField(grantUID, "payoutAddress", fields.payoutAddress)
+        ) {
           hasValidationError = true;
           return;
         }
@@ -681,9 +739,11 @@ export default function PayoutsAdminPage() {
                       }
                       onChange={(e) => handleSelectAll(e.target.checked)}
                       disabled={selectableGrants.length === 0}
-                      title={selectableGrants.length === 0
-                        ? "No grants have valid payout address and amount"
-                        : `Select all ${selectableGrants.length} eligible grants`}
+                      title={
+                        selectableGrants.length === 0
+                          ? "No grants have valid payout address and amount"
+                          : `Select all ${selectableGrants.length} eligible grants`
+                      }
                     />
                   </th>
                   <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
