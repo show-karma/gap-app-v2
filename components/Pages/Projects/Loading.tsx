@@ -15,7 +15,11 @@ const SKELETON_IDS = [
 
 export const ProjectsLoading = () => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+    <output
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+      aria-live="polite"
+      aria-label="Loading projects"
+    >
       {SKELETON_IDS.map((id) => (
         <div
           key={id}
@@ -40,6 +44,6 @@ export const ProjectsLoading = () => {
           </div>
         </div>
       ))}
-    </div>
+    </output>
   );
 };

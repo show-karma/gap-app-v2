@@ -47,6 +47,7 @@ export const ProjectsSearchBar = ({
       <MagnifyingGlassIcon className="absolute left-3 h-5 w-5 text-gray-400" />
       <input
         type="text"
+        aria-label="Search projects"
         value={value}
         onChange={handleChange}
         placeholder={placeholder}

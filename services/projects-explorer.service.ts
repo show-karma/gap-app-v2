@@ -119,9 +119,21 @@ export const getExplorerProjectsPaginated = async (
     };
   }
 
-  // Filter test projects from payload
+  // Filter test projects from payload and recalculate pagination metadata
+  const filteredPayload = filterTestProjects(data.payload);
+  const filteredCount = data.payload.length - filteredPayload.length;
+  const adjustedTotalCount = Math.max(0, data.pagination.totalCount - filteredCount);
+  const adjustedTotalPages = Math.ceil(adjustedTotalCount / limit) || 0;
+
   return {
     ...data,
-    payload: filterTestProjects(data.payload),
+    payload: filteredPayload,
+    pagination: {
+      ...data.pagination,
+      totalCount: adjustedTotalCount,
+      totalPages: adjustedTotalPages,
+      hasNextPage: page < adjustedTotalPages,
+      nextPage: page < adjustedTotalPages ? page + 1 : null,
+    },
   };
 };
