@@ -17,8 +17,8 @@ export const ProjectsHeroSection = () => {
       className="relative flex flex-col items-center justify-center py-16 px-4 bg-no-repeat bg-center bg-cover pb-96"
       style={{ backgroundImage: "url('/images/karma-projects-page-bg.svg')" }}
     >
-      {/* Icon row - 44x44px icons */}
-      <div className="flex gap-3 mb-5">
+      {/* Icon row - 44x44px decorative icons */}
+      <div className="flex gap-3 mb-5" aria-hidden="true">
         {HERO_ICONS.map((icon) => (
           <span
             key={icon.id}
@@ -60,7 +60,7 @@ export const ProjectsHeroSection = () => {
       <p className="text-sm text-gray-500 dark:text-gray-400">
         Are you a <span className="font-semibold">grant operator</span>?{" "}
         <Link href={PAGES.REGISTRY.ADD_PROGRAM} className="text-blue-600 hover:underline">
-          Click here
+          Add your program
         </Link>
       </p>
     </section>

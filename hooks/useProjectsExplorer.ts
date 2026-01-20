@@ -24,12 +24,14 @@ interface UseProjectsExplorerOptions {
 export const useProjectsExplorer = (options: UseProjectsExplorerOptions = {}) => {
   const { search = "", enabled = true } = options;
 
-  const shouldSearch = search.length >= PROJECTS_EXPLORER_CONSTANTS.MIN_SEARCH_LENGTH;
+  // Ensure query key and queryFn use the same effective search value
+  const effectiveSearch =
+    search.length >= PROJECTS_EXPLORER_CONSTANTS.MIN_SEARCH_LENGTH ? search : "";
 
   const query = useQuery({
     ...defaultQueryOptions,
-    queryKey: QUERY_KEYS.PROJECT.EXPLORER(search),
-    queryFn: () => getExplorerProjects({ search: shouldSearch ? search : "" }),
+    queryKey: QUERY_KEYS.PROJECT.EXPLORER(effectiveSearch),
+    queryFn: () => getExplorerProjects({ search: effectiveSearch }),
     enabled,
     staleTime: PROJECTS_EXPLORER_CONSTANTS.STALE_TIME_MS,
   });

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useMemo } from "react";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import type { Project } from "@/types/v2/project";
 import { formatDate } from "@/utilities/formatDate";
@@ -23,7 +24,8 @@ const CARD_COLORS = [
 ];
 
 export const ProjectCard = ({ project, index }: ProjectCardProps) => {
-  const colorClass = CARD_COLORS[index % CARD_COLORS.length];
+  // Memoize color calculation to avoid recalculating on every render
+  const colorClass = useMemo(() => CARD_COLORS[index % CARD_COLORS.length], [index]);
   const { details, createdAt, stats } = project;
 
   // Get stats from API response, fallback to 0 if not available
@@ -32,10 +34,14 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
   const roadmapItemsCount = stats?.roadmapItemsCount ?? 0;
 
   return (
-    <Link href={PAGES.PROJECT.OVERVIEW(details.slug)}>
+    <Link
+      href={PAGES.PROJECT.OVERVIEW(details.slug)}
+      aria-label={`View ${details.title} project details`}
+      className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded-lg"
+    >
       <div className="border border-gray-200 dark:border-zinc-700 rounded-lg overflow-hidden hover:shadow-lg transition-shadow bg-white dark:bg-zinc-900 h-full">
-        {/* Colored top bar */}
-        <div className={`h-2 ${colorClass}`} />
+        {/* Decorative colored top bar - hidden from screen readers */}
+        <div className={`h-2 ${colorClass}`} aria-hidden="true" />
 
         <div className="p-4 flex flex-col h-[calc(100%-8px)]">
           {/* Logo + Title row */}
