@@ -156,7 +156,7 @@ export const EmptyProjectsState: FC<EmptyProjectsStateProps> = ({ onStartWalkthr
               icon: <FolderPlusIcon className="w-5 h-5" />,
               iconSide: "left",
               styleClass:
-                "inline-flex items-center justify-center gap-2 px-6 py-3 bg-brand-darkblue dark:bg-zinc-700 hover:opacity-75 text-white font-semibold rounded-md transition-all duration-200 w-full sm:w-auto",
+                "inline-flex items-center justify-center gap-2 px-6 py-3 h-auto bg-brand-darkblue dark:bg-zinc-700 hover:opacity-75 text-white font-semibold rounded-md transition-all duration-200 w-full sm:w-auto",
             }}
           />
           <button
