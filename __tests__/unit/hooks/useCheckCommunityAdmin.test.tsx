@@ -375,12 +375,12 @@ describe("useCheckCommunityAdmin", () => {
       });
 
       // Verify the query is cached with the correct key components (using centralized QUERY_KEYS)
+      // Note: isAuth was removed from query key to prevent refetch on auth state transitions
       const cachedData = queryClient.getQueryData([
         "isCommunityAdmin",
         mockCommunity.uid,
         mockCommunity.chainID,
         mockAddress,
-        true, // isAuth
         "mockSigner",
       ]);
       expect(cachedData).toBe(true);

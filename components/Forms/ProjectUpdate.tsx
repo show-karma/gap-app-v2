@@ -11,12 +11,12 @@ import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
 import { z } from "zod";
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
+import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import { useGap } from "@/hooks/useGap";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
@@ -282,6 +282,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const { data: indicatorsData } = useImpactAnswers({
     projectIdentifier: project?.uid,
   });
+
+  // Fetch auto-synced indicators from API
+  const { data: autosyncedIndicators = [] } = useAutosyncedIndicators();
 
   // Get communities from selected grants
   const watchedGrantIds = watch("grants") || [];

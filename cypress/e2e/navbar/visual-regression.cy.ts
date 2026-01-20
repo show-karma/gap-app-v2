@@ -152,7 +152,13 @@ describe("Navbar UI States", () => {
       cy.visit("/");
       waitForPageLoad();
 
-      cy.contains("Sign in").should("be.visible");
+      // On mobile, the Sign in button is inside the mobile drawer
+      // First open the mobile menu
+      cy.get('[aria-label="Open menu"]').click();
+      cy.get('[role="dialog"]').should("be.visible");
+
+      // Now find the Sign in button inside the mobile drawer
+      cy.contains("button", "Sign in").should("be.visible");
     });
   });
 });

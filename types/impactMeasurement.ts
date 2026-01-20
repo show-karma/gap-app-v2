@@ -52,6 +52,7 @@ export interface ImpactIndicator {
     chainID: number;
   }[];
   unitOfMeasure: string;
+  syncType?: "auto" | "manual";
   createdAt?: string;
   updatedAt?: string;
 }

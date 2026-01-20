@@ -6,8 +6,8 @@ import { AreaChart, Card, Title } from "@tremor/react";
 import { Fragment, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { Button } from "@/components/Utilities/Button";
+import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
@@ -50,6 +50,9 @@ export const OutputsAndOutcomes = () => {
     projectIdentifier: project?.uid as string,
     enabled: !!project?.uid,
   });
+
+  // Fetch auto-synced indicators from API
+  const { data: autosyncedIndicators = [] } = useAutosyncedIndicators();
 
   const handleSubmit = async (id: string) => {
     const form = forms.find((f) => f.id === id);

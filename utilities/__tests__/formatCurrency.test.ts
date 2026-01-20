@@ -104,11 +104,19 @@ describe("formatCurrency", () => {
   describe("Very large numbers", () => {
     it("should handle quadrillions (P)", () => {
       expect(formatCurrency(1000000000000000)).toBe("1P");
+      expect(formatCurrency(1500000000000000)).toBe("1.5P");
     });
 
     it("should handle quintillions (E)", () => {
-      // JavaScript number precision limit reached - formatted as string
-      expect(formatCurrency(1000000000000000000)).toBe("1000000000000000000");
+      // Exa range (10^18) - common for blockchain Wei values
+      expect(formatCurrency(1000000000000000000)).toBe("1E");
+      expect(formatCurrency(3700000000000000000)).toBe("3.7E");
+    });
+
+    it("should handle very large Wei-scale values", () => {
+      // Real-world example: Transaction fees in Wei
+      // 3724584981882890000 is approximately 3.72 ETH worth of Wei
+      expect(formatCurrency(3724584981882890000)).toBe("3.7E");
     });
   });
 

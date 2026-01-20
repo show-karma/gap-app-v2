@@ -3,6 +3,7 @@ import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
 import type { Community } from "@/types/v2/community";
+import { ADMIN_CACHE_CONFIG } from "@/utilities/cache-config";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
@@ -40,7 +41,6 @@ export const useCheckCommunityAdmin = (
       community?.uid,
       community?.chainID,
       checkAddress,
-      !!isAuth,
       signer
     ),
     queryFn: async () => {
@@ -51,14 +51,17 @@ export const useCheckCommunityAdmin = (
       return await isCommunityAdminOf(community, checkAddress, signer);
     },
     enabled: !!community && !!checkAddress && !!isAuth && options?.enabled !== false,
+    staleTime: ADMIN_CACHE_CONFIG.staleTime,
+    gcTime: ADMIN_CACHE_CONFIG.gcTime,
     refetchOnWindowFocus: false,
-    refetchOnMount: true,
+    refetchOnMount: false,
     refetchOnReconnect: false,
     retry: 1,
   });
 
   return {
-    isAdmin: query.data ?? false,
+    // Return false immediately if not authenticated (defense-in-depth)
+    isAdmin: isAuth ? (query.data ?? false) : false,
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,
