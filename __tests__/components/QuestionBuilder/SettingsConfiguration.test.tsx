@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { SettingsConfiguration } from "@/components/QuestionBuilder/SettingsConfiguration";
 import type { FormSchema } from "@/types/question-builder";
 
@@ -299,6 +300,218 @@ describe("SettingsConfiguration - Email Templates", () => {
       const updatedSchema = lastCall[0] as FormSchema;
       expect(updatedSchema.settings?.submitButtonText).toBe("Submit Application");
       expect(updatedSchema.settings?.rejectionEmailTemplate).toBe("New rejection template");
+    });
+  });
+});
+
+describe("SettingsConfiguration - Access Code", () => {
+  const mockSchema: FormSchema = {
+    fields: [],
+    settings: {},
+  };
+
+  const mockOnUpdate = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe("Gate this application field", () => {
+    it("should render gate this application text field", () => {
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
+
+      expect(screen.getByLabelText("Gate this application")).toBeInTheDocument();
+    });
+
+    it("should display existing access code value", () => {
+      const schemaWithAccessCode: FormSchema = {
+        ...mockSchema,
+        settings: {
+          accessCode: "EXISTING_CODE",
+        },
+      };
+
+      render(<SettingsConfiguration schema={schemaWithAccessCode} onUpdate={mockOnUpdate} />);
+
+      const input = screen.getByLabelText("Gate this application") as HTMLInputElement;
+      expect(input.value).toBe("EXISTING_CODE");
+    });
+
+    it("should show placeholder text for access code input", () => {
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
+
+      const input = screen.getByLabelText("Gate this application");
+      expect(input).toHaveAttribute("placeholder", "Enter a code to gate this application");
+    });
+
+    it("should show helper text about case sensitivity", () => {
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
+
+      expect(
+        screen.getByText(
+          /If set, applicants will need to enter this code to unlock the application form/i
+        )
+      ).toBeInTheDocument();
+      expect(screen.getByText(/Must be at least 6 characters with no spaces/i)).toBeInTheDocument();
+    });
+
+    it("should disable access code input when readOnly is true", () => {
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} readOnly={true} />);
+
+      const input = screen.getByLabelText("Gate this application");
+      expect(input).toBeDisabled();
+    });
+  });
+
+  describe("Access Code Updates", () => {
+    it("should call onUpdate with accessCode when input changes", async () => {
+      const user = userEvent.setup();
+
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
+
+      const input = screen.getByLabelText("Gate this application");
+
+      // Clear any previous calls from useEffect/watch
+      mockOnUpdate.mockClear();
+
+      await user.type(input, "NEWCODE");
+
+      await waitFor(() => {
+        expect(mockOnUpdate).toHaveBeenCalled();
+      });
+
+      // Get the most recent call
+      const lastCall = mockOnUpdate.mock.calls[mockOnUpdate.mock.calls.length - 1];
+      expect(lastCall).toBeDefined();
+      const updatedSchema = lastCall[0] as FormSchema;
+      expect(updatedSchema.settings?.accessCode).toContain("NEWCODE");
+    });
+
+    it("should set accessCode when value is entered", async () => {
+      const user = userEvent.setup();
+
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
+
+      const input = screen.getByLabelText("Gate this application");
+
+      // Clear any previous calls from useEffect/watch
+      mockOnUpdate.mockClear();
+
+      await user.type(input, "SECRET");
+
+      await waitFor(() => {
+        expect(mockOnUpdate).toHaveBeenCalled();
+      });
+
+      // Get the most recent call
+      const lastCall = mockOnUpdate.mock.calls[mockOnUpdate.mock.calls.length - 1];
+      expect(lastCall).toBeDefined();
+      const updatedSchema = lastCall[0] as FormSchema;
+      expect(updatedSchema.settings?.accessCode).toContain("SECRET");
+    });
+
+    it("should clear accessCode when input is emptied", async () => {
+      const schemaWithAccessCode: FormSchema = {
+        ...mockSchema,
+        settings: {
+          accessCode: "SECRET123",
+        },
+      };
+
+      render(<SettingsConfiguration schema={schemaWithAccessCode} onUpdate={mockOnUpdate} />);
+
+      const input = screen.getByLabelText("Gate this application") as HTMLInputElement;
+
+      // Clear any previous calls from useEffect/watch
+      mockOnUpdate.mockClear();
+
+      // Clear the input
+      fireEvent.change(input, { target: { value: "" } });
+
+      await waitFor(() => {
+        expect(mockOnUpdate).toHaveBeenCalled();
+      });
+
+      // Get the most recent call
+      const lastCall = mockOnUpdate.mock.calls[mockOnUpdate.mock.calls.length - 1];
+      expect(lastCall).toBeDefined();
+      const updatedSchema = lastCall[0] as FormSchema;
+      expect(updatedSchema.settings?.accessCode).toBe("");
+    });
+
+    it("should preserve other settings when updating access code", async () => {
+      const user = userEvent.setup();
+      const schemaWithOtherSettings: FormSchema = {
+        ...mockSchema,
+        settings: {
+          submitButtonText: "Apply Now",
+          confirmationMessage: "Thank you!",
+          privateApplications: true,
+          donationRound: false,
+        },
+      };
+
+      render(<SettingsConfiguration schema={schemaWithOtherSettings} onUpdate={mockOnUpdate} />);
+
+      const input = screen.getByLabelText("Gate this application");
+
+      // Clear any previous calls from useEffect/watch
+      mockOnUpdate.mockClear();
+
+      await user.type(input, "SECRET");
+
+      await waitFor(() => {
+        expect(mockOnUpdate).toHaveBeenCalled();
+      });
+
+      const lastCall = mockOnUpdate.mock.calls[mockOnUpdate.mock.calls.length - 1];
+      expect(lastCall).toBeDefined();
+      const updatedSchema = lastCall[0] as FormSchema;
+      expect(updatedSchema.settings?.submitButtonText).toBe("Apply Now");
+      expect(updatedSchema.settings?.confirmationMessage).toBe("Thank you!");
+      expect(updatedSchema.settings?.privateApplications).toBe(true);
+      expect(updatedSchema.settings?.accessCode).toContain("SECRET");
+    });
+
+    it("should show validation error when access code is too short", async () => {
+      const user = userEvent.setup();
+
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
+
+      const input = screen.getByLabelText("Gate this application");
+
+      await user.type(input, "ABC");
+      // Trigger validation by blurring
+      fireEvent.blur(input);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Access code must be at least 6 characters/i)).toBeInTheDocument();
+      });
+    });
+
+    it("should show validation error when access code contains spaces", async () => {
+      const user = userEvent.setup();
+
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
+
+      const input = screen.getByLabelText("Gate this application");
+
+      await user.type(input, "SECRET CODE");
+      // Trigger validation by blurring
+      fireEvent.blur(input);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Access code cannot contain spaces/i)).toBeInTheDocument();
+      });
+    });
+
+    it("should have proper ARIA attributes for accessibility", () => {
+      render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
+
+      const input = screen.getByLabelText("Gate this application");
+
+      expect(input).toHaveAttribute("aria-describedby", "accessCode-help accessCode-error");
+      expect(input).toHaveAttribute("aria-invalid", "false");
     });
   });
 });

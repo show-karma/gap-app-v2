@@ -8,7 +8,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useAggregatedIndicators } from "@/hooks/useAggregatedIndicators";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import type { ProgramImpactDataResponse, ProgramImpactSegment } from "@/types/programs";
-import formatCurrency from "@/utilities/formatCurrency";
+import formatCurrency, { formatWeiToEth } from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { SegmentSkeleton } from "./SegmentSkeleton";
@@ -105,6 +105,16 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
   const chartData = aggregatedIndicators ? prepareAggregatedChartData(aggregatedIndicators) : [];
   const indicatorNames = aggregatedIndicators?.map((ind) => ind.name) || [];
   const colors = ["blue", "green", "yellow", "purple", "red", "pink"];
+
+  // Check if any indicator has wei as unit of measure
+  const hasWeiUnit = aggregatedIndicators?.some(
+    (ind) => ind.unitOfMeasure?.toLowerCase() === "wei"
+  );
+
+  // Use ETH formatter for wei values, otherwise use default currency formatter
+  const valueFormatter = hasWeiUnit
+    ? (value: number) => formatWeiToEth(value)
+    : (value: number) => formatCurrency(value);
 
   // If not visible yet, show skeleton
   if (!isVisible) {
@@ -204,7 +214,7 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
                 index="date"
                 categories={indicatorNames}
                 colors={colors.slice(0, indicatorNames.length)}
-                valueFormatter={(value) => formatCurrency(value)}
+                valueFormatter={valueFormatter}
                 yAxisWidth={80}
                 enableLegendSlider
                 noDataText="No data available for the selected period"
