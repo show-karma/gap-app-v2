@@ -16,3 +16,32 @@ export const PROJECT_UID_REGEX = /^0x[a-fA-F0-9]{64}$/;
 export function isValidProjectUid(value: unknown): value is string {
   return typeof value === "string" && PROJECT_UID_REGEX.test(value);
 }
+
+/**
+ * Sanitizes a string to only allow valid numeric input (digits and at most one decimal point).
+ * Useful for amount/currency input fields.
+ *
+ * @param value - The raw input string to sanitize
+ * @returns A sanitized string containing only digits and at most one decimal point
+ *
+ * @example
+ * sanitizeNumericInput("123.45") // "123.45"
+ * sanitizeNumericInput("12.34.56") // "12.3456"
+ * sanitizeNumericInput("abc123def") // "123"
+ * sanitizeNumericInput("1,234.56") // "1234.56"
+ * sanitizeNumericInput("") // ""
+ * sanitizeNumericInput(".5") // ".5"
+ */
+export function sanitizeNumericInput(value: string): string {
+  // Remove all characters except digits and decimal points
+  let sanitized = value.replace(/[^\d.]/g, "");
+
+  // Ensure only one decimal point exists
+  const parts = sanitized.split(".");
+  if (parts.length > 2) {
+    // Keep only the first decimal point, concatenate remaining parts
+    sanitized = `${parts[0]}.${parts.slice(1).join("")}`;
+  }
+
+  return sanitized;
+}

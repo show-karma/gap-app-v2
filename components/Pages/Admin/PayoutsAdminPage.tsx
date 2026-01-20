@@ -1,24 +1,32 @@
 "use client";
 
-import { ChevronLeftIcon } from "@heroicons/react/20/solid";
-import { BanknotesIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
+import { BanknotesIcon, CheckIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { isAddress } from "viem";
+import { formatUnits, isAddress } from "viem";
 import { useAccount } from "wagmi";
 import { ProgramFilter } from "@/components/Pages/Communities/Impact/ProgramFilter";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Spinner } from "@/components/Utilities/Spinner";
 import TablePagination from "@/components/Utilities/TablePagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
 import {
   AggregatedDisbursementStatus,
   type CommunityPayoutsOptions,
+  type CommunityPayoutsSorting,
   CreateDisbursementModal,
   type GrantDisbursementInfo,
   type PayoutConfigItem,
@@ -34,6 +42,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import { sanitizeNumericInput } from "@/utilities/validation";
 import { type CsvParseResult, PayoutsCsvUpload } from "./PayoutsCsvUpload";
 
 // Component-specific types
@@ -67,6 +76,8 @@ export default function PayoutsAdminPage() {
   // State for tracking edits
   const [editedFields, setEditedFields] = useState<Record<string, EditableFields>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // State for tracking individual field saves (key format: "grantUID-fieldName")
+  const [savingFields, setSavingFields] = useState<Set<string>>(new Set());
 
   // State for row selection (for disbursement)
   const [selectedGrants, setSelectedGrants] = useState<Set<string>>(new Set());
@@ -88,6 +99,8 @@ export default function PayoutsAdminPage() {
   const selectedProgramId = searchParams.get("programId");
   const itemsPerPage = Number(searchParams.get("limit")) || 200;
   const currentPage = Number(searchParams.get("page")) || 1;
+  const sortBy = (searchParams.get("sortBy") as CommunityPayoutsSorting["sortBy"]) || undefined;
+  const sortOrder = (searchParams.get("sortOrder") as "asc" | "desc") || undefined;
 
   // Create URLSearchParams utility function
   const createQueryString = useCallback(
@@ -124,6 +137,7 @@ export default function PayoutsAdminPage() {
     page: currentPage,
     limit: itemsPerPage,
     filters: actualProgramId ? { programId: actualProgramId } : undefined,
+    sorting: sortBy ? { sortBy, sortOrder: sortOrder || "asc" } : undefined,
   };
 
   // Fetch payouts data with filter and pagination using the new endpoint
@@ -141,6 +155,8 @@ export default function PayoutsAdminPage() {
 
   // Save payout config mutation (saves to payout_grant_config collection)
   const { mutate: saveConfigs, isPending: isSaving } = useSavePayoutConfig();
+  // Separate mutation for inline single-field saves
+  const { mutate: saveSingleField } = useSavePayoutConfig();
 
   // Process payouts into table data format
   const tableData: PayoutsTableData[] = useMemo(() => {
@@ -174,8 +190,16 @@ export default function PayoutsAdminPage() {
     return map;
   }, [payouts]);
 
-  // Since we're now using backend pagination, we don't need to filter or paginate client-side
-  const paginatedData = tableData;
+  // Helper to calculate total disbursed amount from totalsByToken (converting from raw to human-readable)
+  const getTotalDisbursed = useCallback((totalsByToken: TokenTotal[]): number => {
+    if (!totalsByToken || totalsByToken.length === 0) return 0;
+    return totalsByToken.reduce((sum, tokenTotal) => {
+      const rawAmount = BigInt(tokenTotal.totalAmount || "0");
+      const decimals = tokenTotal.tokenDecimals || 6;
+      const humanReadable = parseFloat(formatUnits(rawAmount, decimals));
+      return sum + humanReadable;
+    }, 0);
+  }, []);
 
   // Helper to compute display status based on aggregated status from API
   // Priority:
@@ -244,6 +268,9 @@ export default function PayoutsAdminPage() {
     []
   );
 
+  // Since we're using backend pagination, we use tableData directly
+  const paginatedData = tableData;
+
   // URL param update handlers
   const handleProgramChange = (programId: string | null) => {
     const query = createQueryString({
@@ -264,6 +291,20 @@ export default function PayoutsAdminPage() {
   const handlePageChange = (page: number) => {
     const query = createQueryString({
       page: page.toString(),
+    });
+    router.push(`${pathname}?${query}`);
+  };
+
+  const handleSort = (column: CommunityPayoutsSorting["sortBy"]) => {
+    let newSortOrder: "asc" | "desc" = "asc";
+    if (sortBy === column) {
+      // Toggle sort order if clicking the same column
+      newSortOrder = sortOrder === "asc" ? "desc" : "asc";
+    }
+    const query = createQueryString({
+      sortBy: column || null,
+      sortOrder: newSortOrder,
+      page: "1", // Reset to first page when changing sort
     });
     router.push(`${pathname}?${query}`);
   };
@@ -309,6 +350,90 @@ export default function PayoutsAdminPage() {
     }
 
     return true;
+  };
+
+  // Handle saving a single field inline
+  const handleSaveField = (
+    grantUID: string,
+    projectUID: string,
+    field: "payoutAddress" | "amount"
+  ) => {
+    const fieldValue = editedFields[grantUID]?.[field];
+
+    // Validate the field before saving
+    if (fieldValue && !validateField(grantUID, field, fieldValue)) {
+      return;
+    }
+
+    // Find the item to get current values for other fields
+    const item = tableData.find((d) => d.uid === grantUID);
+    if (!item) return;
+
+    const savingKey = `${grantUID}-${field}`;
+    setSavingFields((prev) => new Set(prev).add(savingKey));
+
+    // Build the config item with the single field being saved
+    const configItem: PayoutConfigItem = {
+      grantUID,
+      projectUID,
+    };
+
+    if (field === "payoutAddress") {
+      configItem.payoutAddress = fieldValue || undefined;
+      // Include current amount if exists
+      if (item.currentAmount) {
+        configItem.totalGrantAmount = item.currentAmount;
+      }
+    } else if (field === "amount") {
+      configItem.totalGrantAmount = fieldValue || undefined;
+      // Include current payout address if exists
+      if (item.currentPayoutAddress) {
+        configItem.payoutAddress = item.currentPayoutAddress;
+      }
+    }
+
+    const request: SavePayoutConfigRequest = {
+      configs: [configItem],
+      communityUID: community?.uid || "",
+    };
+
+    saveSingleField(request, {
+      onSuccess: (data) => {
+        setSavingFields((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(savingKey);
+          return newSet;
+        });
+
+        if (data.success.length > 0) {
+          toast.success(`Saved ${field === "payoutAddress" ? "payout address" : "grant amount"}`);
+          // Clear the edited field for this specific field only
+          setEditedFields((prev) => {
+            const newEdited = { ...prev };
+            if (newEdited[grantUID]) {
+              delete newEdited[grantUID][field];
+              // If no more edited fields for this grant, remove the entry
+              if (Object.keys(newEdited[grantUID]).length === 0) {
+                delete newEdited[grantUID];
+              }
+            }
+            return newEdited;
+          });
+        } else if (data.failed.length > 0) {
+          toast.error(
+            `Failed to save ${field === "payoutAddress" ? "payout address" : "grant amount"}`
+          );
+        }
+      },
+      onError: (error) => {
+        setSavingFields((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(savingKey);
+          return newSet;
+        });
+        toast.error(error.message || "Failed to save");
+      },
+    });
   };
 
   // State to store last CSV result for display
@@ -423,7 +548,7 @@ export default function PayoutsAdminPage() {
     [editedFields]
   );
 
-  // Check if a grant's checkbox should be disabled (missing payout address or amount = 0)
+  // Check if a grant's checkbox should be disabled (missing payout address, amount = 0, or fully disbursed)
   // Returns { disabled: boolean, reason: string | null }
   const getCheckboxDisabledState = useCallback(
     (item: PayoutsTableData): { disabled: boolean; reason: string | null } => {
@@ -443,9 +568,19 @@ export default function PayoutsAdminPage() {
         return { disabled: true, reason: "Payout amount is 0 or missing" };
       }
 
+      // Check if grant is fully disbursed
+      const disbursementInfo = disbursementMap[item.uid];
+      if (disbursementInfo) {
+        const totalDisbursed = getTotalDisbursed(disbursementInfo.totalsByToken);
+        const remainingAmount = parsedAmount - totalDisbursed;
+        if (remainingAmount <= 0) {
+          return { disabled: true, reason: "Fully disbursed" };
+        }
+      }
+
       return { disabled: false, reason: null };
     },
-    [editedFields]
+    [editedFields, disbursementMap, getTotalDisbursed]
   );
 
   // Get all selectable grants (those with valid payout address and amount > 0)
@@ -690,21 +825,23 @@ export default function PayoutsAdminPage() {
             </Button>
           </Link>
           <div className="flex flex-row flex-wrap justify-between items-center gap-4">
-            <div className="flex items-center gap-4">
-              <ProgramFilter onChange={handleProgramChange} />
-            </div>
+            <ProgramFilter onChange={handleProgramChange} />
             <div className="flex items-center gap-2">
               <p className="text-sm text-gray-600 dark:text-gray-400">Show</p>
-              <select
-                className="border border-gray-300 dark:border-zinc-700 rounded-md px-3 py-1.5 pr-8 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
-                value={itemsPerPage}
-                onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={(value) => handleItemsPerPageChange(Number(value))}
               >
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-                <option value={200}>200</option>
-              </select>
+                <SelectTrigger className="w-[80px] bg-white dark:bg-zinc-800">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                  <SelectItem value="200">200</SelectItem>
+                </SelectContent>
+              </Select>
               <p className="text-sm text-gray-600 dark:text-gray-400">entries</p>
             </div>
           </div>
@@ -746,23 +883,98 @@ export default function PayoutsAdminPage() {
                       }
                     />
                   </th>
-                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
-                    Project
+                  <th
+                    scope="col"
+                    className="h-12 px-4 text-left align-middle font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800 select-none"
+                    onClick={() => handleSort("project_title")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Project
+                      {sortBy === "project_title" ? (
+                        sortOrder === "asc" ? (
+                          <ChevronUpIcon className="h-4 w-4" />
+                        ) : (
+                          <ChevronDownIcon className="h-4 w-4" />
+                        )
+                      ) : (
+                        <ChevronUpIcon className="h-4 w-4 opacity-30" />
+                      )}
+                    </div>
                   </th>
-                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
-                    Grant
+                  <th
+                    scope="col"
+                    className="h-12 px-4 text-left align-middle font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800 select-none"
+                    onClick={() => handleSort("grant_title")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Grant
+                      {sortBy === "grant_title" ? (
+                        sortOrder === "asc" ? (
+                          <ChevronUpIcon className="h-4 w-4" />
+                        ) : (
+                          <ChevronDownIcon className="h-4 w-4" />
+                        )
+                      ) : (
+                        <ChevronUpIcon className="h-4 w-4 opacity-30" />
+                      )}
+                    </div>
                   </th>
                   <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
                     Payout Address
                   </th>
-                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
-                    Total Grant
+                  <th
+                    scope="col"
+                    className="h-12 px-4 text-left align-middle font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800 select-none"
+                    onClick={() => handleSort("payout_amount")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Total Grant
+                      {sortBy === "payout_amount" ? (
+                        sortOrder === "asc" ? (
+                          <ChevronUpIcon className="h-4 w-4" />
+                        ) : (
+                          <ChevronDownIcon className="h-4 w-4" />
+                        )
+                      ) : (
+                        <ChevronUpIcon className="h-4 w-4 opacity-30" />
+                      )}
+                    </div>
                   </th>
-                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
-                    Total Disbursed to Date
+                  <th
+                    scope="col"
+                    className="h-12 px-4 text-left align-middle font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800 select-none"
+                    onClick={() => handleSort("disbursed_amount")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Total Disbursed
+                      {sortBy === "disbursed_amount" ? (
+                        sortOrder === "asc" ? (
+                          <ChevronUpIcon className="h-4 w-4" />
+                        ) : (
+                          <ChevronDownIcon className="h-4 w-4" />
+                        )
+                      ) : (
+                        <ChevronUpIcon className="h-4 w-4 opacity-30" />
+                      )}
+                    </div>
                   </th>
-                  <th scope="col" className="h-12 px-4 text-center align-middle font-medium w-32">
-                    Status
+                  <th
+                    scope="col"
+                    className="h-12 px-4 text-center align-middle font-medium w-32 cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800 select-none"
+                    onClick={() => handleSort("status")}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      Status
+                      {sortBy === "status" ? (
+                        sortOrder === "asc" ? (
+                          <ChevronUpIcon className="h-4 w-4" />
+                        ) : (
+                          <ChevronDownIcon className="h-4 w-4" />
+                        )
+                      ) : (
+                        <ChevronUpIcon className="h-4 w-4 opacity-30" />
+                      )}
+                    </div>
                   </th>
                 </tr>
               </thead>
@@ -778,13 +990,16 @@ export default function PayoutsAdminPage() {
                   // Check if checkbox should be disabled
                   const checkboxState = getCheckboxDisabledState(item);
 
+                  const isFullyDisbursed = checkboxState.reason === "Fully disbursed";
+
                   return (
                     <tr
                       key={`${item.uid}-${item.projectUid}`}
                       className={cn(
                         "dark:text-zinc-300 text-gray-900 px-4 py-4",
                         selectedGrants.has(item.uid) && "bg-blue-50 dark:bg-blue-900/20",
-                        checkboxState.disabled && "opacity-60"
+                        isFullyDisbursed && "bg-green-50 dark:bg-green-900/20",
+                        checkboxState.disabled && !isFullyDisbursed && "opacity-60"
                       )}
                     >
                       <td className="px-2 py-2 text-center">
@@ -818,25 +1033,51 @@ export default function PayoutsAdminPage() {
                       </td>
                       <td className="px-4 py-2">
                         <div className="flex flex-col gap-1">
-                          <input
-                            type="text"
-                            className={cn(
-                              "w-full px-3 py-2 border rounded-md bg-transparent placeholder:text-gray-400",
-                              "focus:outline-none focus:ring-2 focus:ring-blue-500",
-                              "dark:border-zinc-700 dark:text-white",
-                              payoutError ? "border-red-500" : "border-gray-300"
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              className={cn(
+                                "w-full px-3 py-2 border rounded-md bg-transparent placeholder:text-gray-400",
+                                "focus:outline-none focus:ring-2 focus:ring-blue-500",
+                                "dark:border-zinc-700 dark:text-white",
+                                payoutError ? "border-red-500" : "border-gray-300"
+                              )}
+                              placeholder="Enter payout address"
+                              value={
+                                editedFields[fieldId]?.hasOwnProperty("payoutAddress")
+                                  ? editedFields[fieldId].payoutAddress
+                                  : item.currentPayoutAddress || ""
+                              }
+                              onChange={(e) =>
+                                handleFieldChange(fieldId, "payoutAddress", e.target.value)
+                              }
+                              disabled={isSaving || savingFields.has(`${fieldId}-payoutAddress`)}
+                            />
+                            {editedFields[fieldId]?.hasOwnProperty("payoutAddress") && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleSaveField(fieldId, item.projectUid, "payoutAddress")
+                                }
+                                disabled={
+                                  savingFields.has(`${fieldId}-payoutAddress`) || !!payoutError
+                                }
+                                className={cn(
+                                  "flex-shrink-0 p-1.5 rounded-md transition-colors",
+                                  "bg-green-100 hover:bg-green-200 text-green-700",
+                                  "dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-400",
+                                  "disabled:opacity-50 disabled:cursor-not-allowed"
+                                )}
+                                title="Save payout address"
+                              >
+                                {savingFields.has(`${fieldId}-payoutAddress`) ? (
+                                  <Spinner className="h-4 w-4" />
+                                ) : (
+                                  <CheckIcon className="h-4 w-4" />
+                                )}
+                              </button>
                             )}
-                            placeholder="Enter payout address"
-                            value={
-                              editedFields[fieldId]?.hasOwnProperty("payoutAddress")
-                                ? editedFields[fieldId].payoutAddress
-                                : item.currentPayoutAddress || ""
-                            }
-                            onChange={(e) =>
-                              handleFieldChange(fieldId, "payoutAddress", e.target.value)
-                            }
-                            disabled={isSaving}
-                          />
+                          </div>
                           {payoutError && (
                             <span className="text-red-500 text-sm">{payoutError}</span>
                           )}
@@ -844,23 +1085,51 @@ export default function PayoutsAdminPage() {
                       </td>
                       <td className="px-4 py-2">
                         <div className="flex flex-col gap-1">
-                          <input
-                            type="text"
-                            className={cn(
-                              "w-full px-3 py-2 border rounded-md bg-transparent placeholder:text-gray-400",
-                              "focus:outline-none focus:ring-2 focus:ring-blue-500",
-                              "dark:border-zinc-700 dark:text-white",
-                              amountError ? "border-red-500" : "border-gray-300"
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              className={cn(
+                                "w-full px-3 py-2 border rounded-md bg-transparent placeholder:text-gray-400",
+                                "focus:outline-none focus:ring-2 focus:ring-blue-500",
+                                "dark:border-zinc-700 dark:text-white",
+                                amountError ? "border-red-500" : "border-gray-300"
+                              )}
+                              placeholder="0"
+                              value={
+                                editedFields[fieldId]?.hasOwnProperty("amount")
+                                  ? editedFields[fieldId].amount
+                                  : item.currentAmount || ""
+                              }
+                              onChange={(e) =>
+                                handleFieldChange(
+                                  fieldId,
+                                  "amount",
+                                  sanitizeNumericInput(e.target.value)
+                                )
+                              }
+                              disabled={isSaving || savingFields.has(`${fieldId}-amount`)}
+                            />
+                            {editedFields[fieldId]?.hasOwnProperty("amount") && (
+                              <button
+                                type="button"
+                                onClick={() => handleSaveField(fieldId, item.projectUid, "amount")}
+                                disabled={savingFields.has(`${fieldId}-amount`) || !!amountError}
+                                className={cn(
+                                  "flex-shrink-0 p-1.5 rounded-md transition-colors",
+                                  "bg-green-100 hover:bg-green-200 text-green-700",
+                                  "dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-400",
+                                  "disabled:opacity-50 disabled:cursor-not-allowed"
+                                )}
+                                title="Save grant amount"
+                              >
+                                {savingFields.has(`${fieldId}-amount`) ? (
+                                  <Spinner className="h-4 w-4" />
+                                ) : (
+                                  <CheckIcon className="h-4 w-4" />
+                                )}
+                              </button>
                             )}
-                            placeholder="0"
-                            value={
-                              editedFields[fieldId]?.hasOwnProperty("amount")
-                                ? editedFields[fieldId].amount
-                                : item.currentAmount || ""
-                            }
-                            onChange={(e) => handleFieldChange(fieldId, "amount", e.target.value)}
-                            disabled={isSaving}
-                          />
+                          </div>
                           {amountError && (
                             <span className="text-red-500 text-sm">{amountError}</span>
                           )}
@@ -890,7 +1159,7 @@ export default function PayoutsAdminPage() {
             </table>
 
             {/* Footer with pagination and save button */}
-            <div className="dark:bg-zinc-900 flex flex-col pb-4 items-end">
+            <div className="dark:bg-zinc-900 flex flex-col pb-4">
               <div className="w-full">
                 <TablePagination
                   currentPage={currentPage}
@@ -899,6 +1168,17 @@ export default function PayoutsAdminPage() {
                   totalPosts={totalItems}
                 />
               </div>
+              {hasChanges && (
+                <div className="flex justify-end px-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
+                  <Button
+                    disabled={isSaving || Object.keys(errors).length > 0}
+                    onClick={handleSave}
+                    className="flex items-center gap-2 px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-all duration-200 font-medium disabled:opacity-50"
+                  >
+                    {isSaving ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -928,29 +1208,16 @@ export default function PayoutsAdminPage() {
         />
       )}
 
-      {/* Floating Action Buttons - Save and Create Disbursement */}
-      {(hasChanges || selectedGrants.size > 0) && (
-        <div className="fixed bottom-6 right-6 z-40 animate-in slide-in-from-bottom-4 fade-in duration-300 flex items-center gap-3">
-          {/* Save Button - only show if there are unsaved changes */}
-          {hasChanges && (
-            <Button
-              disabled={isSaving || Object.keys(errors).length > 0}
-              onClick={handleSave}
-              className="flex items-center gap-2 px-6 py-4 bg-gray-600 hover:bg-gray-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 text-base font-semibold disabled:opacity-50"
-            >
-              {isSaving ? "Saving..." : "Save Changes"}
-            </Button>
-          )}
-          {/* Create Disbursement Button - only show if grants are selected */}
-          {selectedGrants.size > 0 && (
-            <Button
-              onClick={handleOpenDisbursementModal}
-              className="flex items-center gap-3 px-6 py-4 bg-brand-blue hover:bg-brand-blue/80 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 text-base font-semibold"
-            >
-              <BanknotesIcon className="h-6 w-6" />
-              Create Disbursement ({selectedGrants.size})
-            </Button>
-          )}
+      {/* Floating Create Disbursement Button */}
+      {selectedGrants.size > 0 && (
+        <div className="fixed bottom-6 right-6 z-40 animate-in slide-in-from-bottom-4 fade-in duration-300">
+          <Button
+            onClick={handleOpenDisbursementModal}
+            className="flex items-center gap-3 px-6 py-4 bg-brand-blue hover:bg-brand-blue/80 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 text-base font-semibold"
+          >
+            <BanknotesIcon className="h-6 w-6" />
+            Create Disbursement ({selectedGrants.size})
+          </Button>
         </div>
       )}
     </div>

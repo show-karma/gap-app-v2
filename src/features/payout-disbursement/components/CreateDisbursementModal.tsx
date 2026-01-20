@@ -19,6 +19,7 @@ import {
   Settings,
   Shield,
 } from "lucide-react";
+import pluralize from "pluralize";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { erc20Abi, formatUnits, isAddress, parseUnits } from "viem";
@@ -42,6 +43,7 @@ import {
   isSafeDeployed,
   signAndProposeDisbursement,
 } from "@/utilities/safe";
+import { sanitizeNumericInput } from "@/utilities/validation";
 import {
   useBatchTotalDisbursed,
   useCreateDisbursements,
@@ -1001,15 +1003,9 @@ export function CreateDisbursementModal({
                       <div className="flex justify-between items-center">
                         <span className="text-gray-700 dark:text-gray-300">Projects to Review</span>
                         <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {validGrants.length} project{validGrants.length !== 1 ? "s" : ""}
+                          {validGrants.length} {pluralize("project", validGrants.length)}
                         </span>
                       </div>
-                      {grants.length !== validGrants.length && (
-                        <p className="text-sm text-amber-600 dark:text-amber-400 mt-2">
-                          {grants.length - validGrants.length} grant(s) excluded due to missing
-                          payout address or zero remaining amount
-                        </p>
-                      )}
                     </div>
 
                     {/* Actions */}
@@ -1180,7 +1176,7 @@ export function CreateDisbursementModal({
                         </span>
                       </div>
                       <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {validGrants.length} project{validGrants.length !== 1 ? "s" : ""}
+                        {validGrants.length} {pluralize("project", validGrants.length)}
                       </div>
                     </div>
 
@@ -1245,11 +1241,11 @@ export function CreateDisbursementModal({
                                 ? preflightChecks.isOwner
                                   ? "You are an owner of this Safe"
                                   : "You are a delegate of this Safe"
-                                : `Your current wallet should have at least a Proposer role in this Safe Wallet.
+                                : `Your wallet account ${userAddress} is not a signer or proposer on Safe account "${safeAddress}".
 
-How to add a proposer:
-At Safe Settings, navigate to Setup → Find the Proposers section
-Click "Add Proposer" → Enter the wallet address and name → Confirm the addition`
+To add your account ${userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : "unknown"} as proposer:
+Go to Safe app -> Settings -> Setup
+Find proposer section and click "Add proposer" and add ${userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : "unknown"} as a proposer`
                             }
                           />
                           <CheckItem
@@ -1315,8 +1311,8 @@ Click "Add Proposer" → Enter the wallet address and name → Confirm the addit
                             minimumFractionDigits: 0,
                             maximumFractionDigits: 18,
                           })}{" "}
-                          {selectedTokenSymbol} to {transactionResult.recipientCount} project
-                          {transactionResult.recipientCount !== 1 ? "s" : ""} has been created.
+                          {selectedTokenSymbol} to {transactionResult.recipientCount}{" "}
+                          {pluralize("project", transactionResult.recipientCount)} has been created.
                           <br />
                           The signers can go{" "}
                           <a
@@ -1640,7 +1636,7 @@ function ProjectReviewStep({
             id={`disbursement-amount-${project.grantUID}`}
             type="text"
             value={disbursementAmount}
-            onChange={(e) => onDisbursementAmountChange(e.target.value)}
+            onChange={(e) => onDisbursementAmountChange(sanitizeNumericInput(e.target.value))}
             placeholder="0"
             className={`w-full px-3 py-2 pr-16 border rounded-md bg-white dark:bg-zinc-700 text-gray-900 dark:text-white text-lg font-semibold ${
               disbursementError
@@ -1657,20 +1653,6 @@ function ProjectReviewStep({
             <ExclamationTriangleIcon className="h-4 w-4" />
             {disbursementError}
           </div>
-        )}
-        {remainingAmount > 0 && currentDisbursementAmount !== remainingAmount && (
-          <button
-            type="button"
-            onClick={() => onDisbursementAmountChange(remainingAmount.toString())}
-            className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            Set to remaining amount (
-            {remainingAmount.toLocaleString(undefined, {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 18,
-            })}
-            )
-          </button>
         )}
       </div>
 
