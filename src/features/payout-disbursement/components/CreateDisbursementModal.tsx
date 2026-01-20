@@ -1254,7 +1254,7 @@ Click "Add Proposer" → Enter the wallet address and name → Confirm the addit
                           <CheckItem
                             label="Sufficient Balance"
                             status={preflightChecks.hasSufficientBalance}
-                            description={`${parseFloat(preflightChecks.safeBalance).toLocaleString()} ${selectedTokenSymbol} available (${totalAmount.toLocaleString()} needed)`}
+                            description={`${parseFloat(preflightChecks.safeBalance).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 18 })} ${selectedTokenSymbol} available (${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 18 })} needed)`}
                           />
                         </>
                       )}
