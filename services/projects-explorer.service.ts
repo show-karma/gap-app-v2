@@ -23,9 +23,10 @@ export interface ExplorerProjectsPaginatedParams {
 /**
  * Filter out test projects from results
  * Projects with 'test' (case-insensitive) in title are excluded
+ * Projects without a title are included (not filtered out)
  */
 const filterTestProjects = (projects: ProjectResponse[]): ProjectResponse[] => {
-  return projects.filter((project) => !project.details?.title?.toLowerCase().includes("test"));
+  return projects.filter((project) => !project.details?.title?.toLowerCase()?.includes("test"));
 };
 
 /**
