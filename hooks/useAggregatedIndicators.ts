@@ -40,7 +40,7 @@ function transformResponse(response: CommunityAggregateResponse): AggregatedIndi
 export function useAggregatedIndicators(
   indicatorIds: string[],
   enabled: boolean = true,
-  timeframeMonths: number = 1
+  timeframeMonths?: number // undefined means "all" - no date filtering
 ) {
   const { communityId } = useParams();
   const searchParams = useSearchParams();
@@ -56,7 +56,7 @@ export function useAggregatedIndicators(
     communityId: String(communityId || ""),
     programId: programIdParam || "all",
     projectUID: projectUID || "all",
-    timeframe: `last-${timeframeMonths}-months`,
+    timeframe: timeframeMonths ? `last-${timeframeMonths}-months` : "all",
   });
 
   const queryFn = async (): Promise<AggregatedIndicator[]> => {
@@ -70,10 +70,22 @@ export function useAggregatedIndicators(
     }
 
     // Calculate date range based on selected timeframe
-    const startDateObj = new Date();
-    startDateObj.setMonth(startDateObj.getMonth() - timeframeMonths);
-    const startDate = startDateObj.toISOString();
-    const endDate = new Date().toISOString();
+    // If timeframeMonths is undefined, fetch all data (no date filtering)
+    let startDate: string | undefined;
+    let endDate: string | undefined;
+
+    if (timeframeMonths) {
+      // For monthly granularity, snap to full month boundaries
+      // "1 Month" = current month, "3 Months" = current + 2 previous months
+      const startDateObj = new Date();
+      // Go back (timeframeMonths - 1) to include current month in the count
+      startDateObj.setMonth(startDateObj.getMonth() - (timeframeMonths - 1));
+      // Snap to first day of the month
+      startDateObj.setDate(1);
+      startDateObj.setHours(0, 0, 0, 0);
+      startDate = startDateObj.toISOString();
+      endDate = new Date().toISOString();
+    }
 
     // Fetch community aggregate indicators
     const [data, error] = await fetchData(
@@ -81,8 +93,8 @@ export function useAggregatedIndicators(
         indicatorIds: indicatorIds.join(","),
         programId: parsedProgramId,
         projectUID: projectUID || undefined,
-        startDate,
-        endDate,
+        ...(startDate && { startDate }),
+        ...(endDate && { endDate }),
         granularity: "monthly",
       })
     );

@@ -8,7 +8,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useAggregatedIndicators } from "@/hooks/useAggregatedIndicators";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import type { ProgramImpactDataResponse, ProgramImpactSegment } from "@/types/programs";
-import formatCurrency from "@/utilities/formatCurrency";
+import formatCurrency, { formatWeiToEth } from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { SegmentSkeleton } from "./SegmentSkeleton";
@@ -69,7 +69,7 @@ const prepareAggregatedChartData = (indicators: any[]) => {
 };
 
 const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) => {
-  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeOption>("1_month");
+  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeOption>("3_months");
 
   const { isVisible, ref } = useIntersectionObserver({
     threshold: 0.1,
@@ -80,7 +80,8 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
   const selectedTimeframeConfig = timeframeOptions.find(
     (option) => option.value === selectedTimeframe
   );
-  const timeframeMonths = selectedTimeframeConfig?.months || 1;
+  // For "all" timeframe, pass undefined to fetch all data without date filtering
+  const timeframeMonths = selectedTimeframeConfig?.months;
 
   const {
     data: aggregatedIndicators,
@@ -98,13 +99,24 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
   const _programSelected = searchParams.get("programId");
 
   useEffect(() => {
-    // Reset timeframe to 1 month when filters change
-    setSelectedTimeframe("1_month");
+    // Reset timeframe to 3 months when filters change
+    setSelectedTimeframe("3_months");
   }, []);
 
   const chartData = aggregatedIndicators ? prepareAggregatedChartData(aggregatedIndicators) : [];
   const indicatorNames = aggregatedIndicators?.map((ind) => ind.name) || [];
   const colors = ["blue", "green", "yellow", "purple", "red", "pink"];
+
+  // Check if ALL indicators have wei as unit of measure
+  // Using .every() to avoid mislabeling non-wei series when mixed with wei series
+  const hasWeiUnit = aggregatedIndicators?.every(
+    (ind) => ind.unitOfMeasure?.toLowerCase() === "wei"
+  );
+
+  // Use ETH formatter for wei values, otherwise use default currency formatter
+  const valueFormatter = hasWeiUnit
+    ? (value: number) => formatWeiToEth(value)
+    : (value: number) => formatCurrency(value);
 
   // If not visible yet, show skeleton
   if (!isVisible) {
@@ -204,7 +216,7 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
                 index="date"
                 categories={indicatorNames}
                 colors={colors.slice(0, indicatorNames.length)}
-                valueFormatter={(value) => formatCurrency(value)}
+                valueFormatter={valueFormatter}
                 yAxisWidth={80}
                 enableLegendSlider
                 noDataText="No data available for the selected period"
@@ -212,11 +224,22 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
               />
             </Card>
           ) : (
-            <div className="p-8 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-zinc-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
-              <p className="text-lg font-medium">No data available</p>
-              <p className="text-sm mt-1">
-                Metrics are configured but no data has been reported yet
-              </p>
+            <div className="bg-white dark:bg-zinc-700 rounded-lg border border-gray-200 dark:border-gray-600">
+              <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-600">
+                <h4 className="text-lg font-semibold text-black dark:text-white">
+                  Aggregated Impact Metrics
+                </h4>
+                <TimeframeSelector
+                  selectedTimeframe={selectedTimeframe}
+                  onTimeframeChange={setSelectedTimeframe}
+                />
+              </div>
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                <p className="text-lg font-medium">No data available</p>
+                <p className="text-sm mt-1">
+                  No data available for the selected period. Try selecting a different timeframe.
+                </p>
+              </div>
             </div>
           )}
         </div>
