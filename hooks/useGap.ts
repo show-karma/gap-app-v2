@@ -1,6 +1,6 @@
 "use client";
 
-import type { GAPRpcConfig, TNetwork } from "@show-karma/karma-gap-sdk";
+import type { TNetwork } from "@show-karma/karma-gap-sdk";
 import { GAP } from "@show-karma/karma-gap-sdk/core/class/GAP";
 import { GapIndexerClient } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/GapIndexerClient";
 import { IpfsStorage } from "@show-karma/karma-gap-sdk/core/class/remote-storage/IpfsStorage";
@@ -23,30 +23,6 @@ const _gelatoOpts = {
   sponsorUrl: envVars.NEXT_PUBLIC_SPONSOR_URL || "/api/sponsored-txn",
   useGasless: false,
 };
-
-/**
- * Builds the RPC configuration for GAP SDK from environment variables
- */
-const buildRpcConfig = (): GAPRpcConfig => {
-  const config: GAPRpcConfig = {};
-
-  // Map environment RPC URLs to chain IDs
-  if (envVars.RPC.OPTIMISM) config[10] = envVars.RPC.OPTIMISM;
-  if (envVars.RPC.OPT_SEPOLIA) config[11155420] = envVars.RPC.OPT_SEPOLIA;
-  if (envVars.RPC.ARBITRUM) config[42161] = envVars.RPC.ARBITRUM;
-  if (envVars.RPC.SEPOLIA) config[11155111] = envVars.RPC.SEPOLIA;
-  if (envVars.RPC.BASE_SEPOLIA) config[84532] = envVars.RPC.BASE_SEPOLIA;
-  if (envVars.RPC.CELO) config[42220] = envVars.RPC.CELO;
-  if (envVars.RPC.SEI) config[1329] = envVars.RPC.SEI;
-  if (envVars.RPC.LISK) config[1135] = envVars.RPC.LISK;
-  if (envVars.RPC.SCROLL) config[534352] = envVars.RPC.SCROLL;
-  if (envVars.RPC.BASE) config[8453] = envVars.RPC.BASE;
-  if (envVars.RPC.POLYGON) config[137] = envVars.RPC.POLYGON;
-
-  return config;
-};
-
-const rpcConfig = buildRpcConfig();
 
 const gapClients: Record<number, GAP> = {};
 
@@ -84,7 +60,6 @@ export const getGapClient = (chainID: number): GAP => {
           }
         : {}),
       remoteStorage: ipfsClient,
-      rpcUrls: rpcConfig,
     });
     gapClients[networkChainId] = client;
     return client;
