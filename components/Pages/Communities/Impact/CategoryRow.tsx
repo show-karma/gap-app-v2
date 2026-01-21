@@ -107,8 +107,9 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
   const indicatorNames = aggregatedIndicators?.map((ind) => ind.name) || [];
   const colors = ["blue", "green", "yellow", "purple", "red", "pink"];
 
-  // Check if any indicator has wei as unit of measure
-  const hasWeiUnit = aggregatedIndicators?.some(
+  // Check if ALL indicators have wei as unit of measure
+  // Using .every() to avoid mislabeling non-wei series when mixed with wei series
+  const hasWeiUnit = aggregatedIndicators?.every(
     (ind) => ind.unitOfMeasure?.toLowerCase() === "wei"
   );
 
