@@ -6,6 +6,7 @@ jest.mock("@/components/Pages/Projects", () => ({
   ProjectsExplorer: () => <div data-testid="projects-explorer">Projects Explorer</div>,
   ProjectsHeroSection: () => <div data-testid="projects-hero">Projects Hero Section</div>,
   ProjectsLoading: () => <div data-testid="projects-loading">Loading...</div>,
+  ProjectsStatsSection: () => <div data-testid="projects-stats">Stats Section</div>,
 }));
 
 describe("Projects Page", () => {
