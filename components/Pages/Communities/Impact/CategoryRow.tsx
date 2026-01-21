@@ -99,8 +99,8 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
   const _programSelected = searchParams.get("programId");
 
   useEffect(() => {
-    // Reset timeframe to 1 month when filters change
-    setSelectedTimeframe("1_month");
+    // Reset timeframe to 3 months when filters change
+    setSelectedTimeframe("3_months");
   }, []);
 
   const chartData = aggregatedIndicators ? prepareAggregatedChartData(aggregatedIndicators) : [];
