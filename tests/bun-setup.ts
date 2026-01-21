@@ -12,18 +12,24 @@
 
 import { afterAll, afterEach, beforeAll, mock } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
-import "@testing-library/jest-dom";
-
-// Import mock utilities from jest-compat
-import { createMockFn, preRegisteredMocks, registerMock } from "./jest-compat";
 
 // =============================================================================
-// DOM Environment Setup
+// DOM Environment Setup - MUST BE FIRST
 // =============================================================================
 
 // Register happy-dom globally for DOM testing
 // This provides window, document, and other DOM APIs
+// IMPORTANT: This must happen BEFORE importing @testing-library/react
+// because Testing Library's `screen` checks for document.body at import time
 GlobalRegistrator.register();
+
+// Now we can safely import testing-library modules using dynamic import
+// This ensures the imports happen after GlobalRegistrator.register()
+const { cleanup: rtlCleanup } = await import("@testing-library/react");
+await import("@testing-library/jest-dom");
+
+// Import mock utilities from jest-compat
+import { createMockFn, preRegisteredMocks, registerMock } from "./jest-compat";
 
 // =============================================================================
 // Polyfills for Node/Bun environment
@@ -217,6 +223,7 @@ registerMock("axios", mockAxios);
   },
   mixpanel: mockMixpanel,
   axios: mockAxios,
+  // Note: toast is added after definition below
 };
 
 // =============================================================================
@@ -548,11 +555,14 @@ mock.module("@/utilities/enviromentVars", () => ({
 
 // Mock @/utilities/retries
 const mockRetryUntilConditionMet = createMockFn();
+const mockRetry = createMockFn((fn: () => unknown) => fn());
 mock.module("@/utilities/retries", () => ({
   retryUntilConditionMet: mockRetryUntilConditionMet,
+  retry: mockRetry,
 }));
 registerMock("@/utilities/retries", {
   retryUntilConditionMet: mockRetryUntilConditionMet,
+  retry: mockRetry,
 });
 
 // Mock @/services/project-grants.service
@@ -737,6 +747,38 @@ mock.module("wagmi", () => ({
   usePublicClient: () => ({
     data: null,
   }),
+  useWaitForTransactionReceipt: () => ({
+    data: undefined,
+    isLoading: false,
+    isSuccess: false,
+    isError: false,
+    error: null,
+  }),
+  useWriteContract: () => ({
+    writeContract: createMockFn(),
+    writeContractAsync: createMockFn(),
+    data: undefined,
+    isLoading: false,
+    isSuccess: false,
+    isError: false,
+    error: null,
+    reset: createMockFn(),
+  }),
+  useReadContract: () => ({
+    data: undefined,
+    isLoading: false,
+    isSuccess: false,
+    isError: false,
+    error: null,
+    refetch: createMockFn(),
+  }),
+  useSimulateContract: () => ({
+    data: undefined,
+    isLoading: false,
+    isSuccess: false,
+    isError: false,
+    error: null,
+  }),
   WagmiProvider: ({ children }: { children: unknown }) => children,
   createConfig: () => ({}),
 }));
@@ -748,6 +790,9 @@ mock.module("@wagmi/core", () => ({
   switchChain: () => {},
   readContract: () => {},
   writeContract: () => {},
+  getWalletClient: createMockFn(() => Promise.resolve(null)),
+  getPublicClient: createMockFn(() => ({})),
+  waitForTransactionReceipt: createMockFn(() => Promise.resolve({ status: "success" })),
   createConfig: () => ({}),
   createStorage: () => ({}),
   cookieStorage: {},
@@ -802,6 +847,30 @@ registerMock("@sentry/nextjs", {
   captureMessage: mockSentryCaptureMessage,
   withScope: mockSentryWithScope,
 });
+
+// Mock react-hot-toast
+const mockToastSuccess = createMockFn();
+const mockToastError = createMockFn();
+const mockToastLoading = createMockFn();
+const mockToastDismiss = createMockFn();
+const mockToastPromise = createMockFn();
+const mockToast = Object.assign(createMockFn(), {
+  success: mockToastSuccess,
+  error: mockToastError,
+  loading: mockToastLoading,
+  dismiss: mockToastDismiss,
+  promise: mockToastPromise,
+  custom: createMockFn(),
+  remove: createMockFn(),
+});
+mock.module("react-hot-toast", () => ({
+  default: mockToast,
+  toast: mockToast,
+  Toaster: () => null,
+}));
+registerMock("react-hot-toast", mockToast);
+// Add toast to global mocks for test access
+(globalThis as any).__mocks__.toast = mockToast;
 
 // Mock rehype plugins (ESM-only packages)
 mock.module("rehype-sanitize", () => ({
@@ -878,6 +947,137 @@ mock.module("@/components/Pages/Project/Loading/Overview", () => ({
 }));
 
 // =============================================================================
+// Homepage Component Mocks
+// =============================================================================
+
+mock.module("@/src/features/homepage/components/hero", () => ({
+  Hero: () => React.createElement("section", { "data-testid": "hero" }),
+}));
+
+mock.module("@/src/features/homepage/components/live-funding-opportunities", () => ({
+  LiveFundingOpportunities: () =>
+    React.createElement("section", { "data-testid": "live-funding-opportunities" }),
+}));
+
+mock.module("@/src/features/homepage/components/live-funding-opportunities-skeleton", () => ({
+  LiveFundingOpportunitiesSkeleton: () =>
+    React.createElement("div", { "data-testid": "live-funding-opportunities-skeleton" }),
+}));
+
+mock.module("@/src/features/homepage/components/platform-features", () => ({
+  PlatformFeatures: () => React.createElement("section", { "data-testid": "platform-features" }),
+}));
+
+mock.module("@/src/features/homepage/components/how-it-works", () => ({
+  HowItWorks: () => React.createElement("section", { "data-testid": "how-it-works" }),
+}));
+
+mock.module("@/src/features/homepage/components/where-builders-grow", () => ({
+  WhereBuildersGrow: () => React.createElement("section", { "data-testid": "where-builders-grow" }),
+}));
+
+mock.module("@/src/features/homepage/components/join-community", () => ({
+  JoinCommunity: () => React.createElement("section", { "data-testid": "join-community" }),
+}));
+
+mock.module("@/src/features/homepage/components/faq", () => ({
+  FAQ: () => React.createElement("section", { "data-testid": "faq" }),
+}));
+
+// =============================================================================
+// FundingMap Component Mocks
+// =============================================================================
+
+mock.module("@/src/features/funding-map/components/funding-map-list", () => ({
+  FundingMapList: () => React.createElement("div", { "data-testid": "funding-map-list" }),
+}));
+
+mock.module("@/src/features/funding-map/components/funding-map-search", () => ({
+  FundingMapSearch: () => React.createElement("div", { "data-testid": "funding-map-search" }),
+}));
+
+mock.module("@/src/features/funding-map/components/funding-map-sidebar", () => ({
+  FundingMapSidebar: () => React.createElement("div", { "data-testid": "funding-map-sidebar" }),
+}));
+
+// =============================================================================
+// Application List Component Mocks
+// =============================================================================
+
+// Mock SortableTableHeader for AI Score tests
+mock.module("@/components/Utilities/SortableTableHeader", () => ({
+  default: ({
+    label,
+    sortKey,
+    onSort,
+  }: {
+    label: string;
+    sortKey: string;
+    onSort?: (sortKey: string) => void;
+  }) =>
+    React.createElement(
+      "th",
+      { scope: "col", "data-testid": `header-${sortKey}` },
+      React.createElement("button", { onClick: () => onSort?.(sortKey) }, label)
+    ),
+}));
+
+// Note: We do NOT mock @/components/FundingPlatform/helper/getAIScore globally
+// because there are unit tests that need to test the real implementation.
+// Integration tests for ApplicationList use the real formatAIScore function
+// to format AI scores displayed in the table.
+
+// Mock getProjectTitle helper
+mock.module("@/components/FundingPlatform/helper/getProjecTitle", () => ({
+  getProjectTitle: createMockFn(() => "Test Project"),
+}));
+
+// Mock formatDate utility
+mock.module("@/utilities/formatDate", () => ({
+  formatDate: createMockFn(() => "2025-01-01"),
+}));
+
+// Mock ReviewerAssignmentDropdown
+mock.module("@/components/FundingPlatform/ApplicationList/ReviewerAssignmentDropdown", () => ({
+  ReviewerAssignmentDropdown: () =>
+    React.createElement("div", { "data-testid": "reviewer-assignment-dropdown" }),
+}));
+
+// =============================================================================
+// Authentication & API Mocks for Integration Tests
+// =============================================================================
+
+// Mock api-client for comments and other authenticated API calls
+const mockApiClientInstance = {
+  get: createMockFn(),
+  post: createMockFn(),
+  put: createMockFn(),
+  delete: createMockFn(),
+  patch: createMockFn(),
+  request: createMockFn(),
+  head: createMockFn(),
+  options: createMockFn(),
+  interceptors: {
+    request: { use: createMockFn(), eject: createMockFn(), clear: createMockFn() },
+    response: { use: createMockFn(), eject: createMockFn(), clear: createMockFn() },
+  },
+  defaults: { headers: { common: {} } },
+  getUri: createMockFn(),
+};
+
+mock.module("@/utilities/auth/api-client", () => ({
+  createAuthenticatedApiClient: createMockFn(() => mockApiClientInstance),
+}));
+
+// Export for test access
+(globalThis as any).__mocks__.apiClient = mockApiClientInstance;
+
+// Mock getWalletFromWagmiStore
+mock.module("@/utilities/getWalletFromWagmiStore", () => ({
+  getWalletFromWagmiStore: createMockFn(() => "0x1234567890abcdef"),
+}));
+
+// =============================================================================
 // MSW Setup
 // =============================================================================
 
@@ -902,6 +1102,8 @@ afterEach(() => {
   if ((globalThis as any).jest?.clearAllMocks) {
     (globalThis as any).jest.clearAllMocks();
   }
+  // Clean up DOM between tests to prevent test pollution
+  rtlCleanup();
 });
 
 afterAll(() => {

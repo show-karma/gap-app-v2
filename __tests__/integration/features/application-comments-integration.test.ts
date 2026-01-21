@@ -1,83 +1,43 @@
 /**
  * Integration test to verify JWT authentication in comment functionality
  * This test simulates the real-world usage of the comment service with authentication
+ *
+ * Mocks are pre-registered in bun-setup.ts:
+ * - @/utilities/auth/token-manager (TokenManager)
+ * - @/utilities/enviromentVars (envVars)
+ * - @/utilities/fetchData (fetchData)
+ * - @/utilities/auth/api-client (createAuthenticatedApiClient)
+ * - @/utilities/getWalletFromWagmiStore (getWalletFromWagmiStore)
  */
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
-import type { AxiosInstance } from "axios";
-import { TokenManager } from "@/utilities/auth/token-manager";
-
-// Mock dependencies BEFORE importing service
-jest.mock("@/utilities/auth/token-manager");
-jest.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
-  },
-}));
-
-// Mock fetchData for getComments method (which uses fetchData)
-jest.mock("@/utilities/fetchData");
-
-// Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
-var mockAxiosInstance: jest.Mocked<AxiosInstance>;
-
-// Mock api-client for mutations (createComment, editComment, deleteComment)
-jest.mock("@/utilities/auth/api-client", () => {
-  const instance = {
-    get: jest.fn(),
-    post: jest.fn(),
-    delete: jest.fn(),
-    put: jest.fn(),
-    patch: jest.fn(),
-    request: jest.fn(),
-    head: jest.fn(),
-    options: jest.fn(),
-    interceptors: {
-      request: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
-      response: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
-    },
-    defaults: {} as any,
-    getUri: jest.fn(),
-  } as unknown as jest.Mocked<AxiosInstance>;
-
-  mockAxiosInstance = instance;
-
-  return {
-    createAuthenticatedApiClient: jest.fn(() => instance),
-  };
-});
-
-// Mock the wagmi store to simulate a connected wallet
-jest.mock("@/utilities/getWalletFromWagmiStore", () => ({
-  getWalletFromWagmiStore: jest.fn(() => "0x1234567890abcdef"),
-}));
-
-// NOW import the service after mocks are configured
+import { afterEach, beforeEach, describe, expect, it, type mock } from "bun:test";
 import { applicationCommentsService } from "@/services/application-comments.service";
-// Import fetchData mock
+import { TokenManager } from "@/utilities/auth/token-manager";
 import fetchData from "@/utilities/fetchData";
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+// Get the mock API client from globalThis.__mocks__
+const mockApiClient = (globalThis as any).__mocks__.apiClient;
 
 describe("Application Comments Integration", () => {
   const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mocktoken";
   const applicationId = "app-test-123";
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockFetchData.mockClear();
-    if (mockAxiosInstance) {
-      mockAxiosInstance.get?.mockClear();
-      mockAxiosInstance.post?.mockClear();
-      mockAxiosInstance.put?.mockClear();
-      mockAxiosInstance.delete?.mockClear();
+    // Clear mock calls before each test
+    (fetchData as ReturnType<typeof mock>).mockClear();
+    if (mockApiClient) {
+      mockApiClient.get?.mockClear();
+      mockApiClient.post?.mockClear();
+      mockApiClient.put?.mockClear();
+      mockApiClient.delete?.mockClear();
     }
 
     // Setup default mock for TokenManager
-    (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue(mockToken);
+    const tokenManagerGetToken = TokenManager.getToken as ReturnType<typeof mock>;
+    tokenManagerGetToken.mockResolvedValue(mockToken);
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    // Note: jest.restoreAllMocks() equivalent is called in bun-setup.ts afterEach
   });
 
   describe("Authentication Flow", () => {
@@ -93,7 +53,7 @@ describe("Application Comments Integration", () => {
       };
 
       // Step 1: Create a comment (uses apiClient.post)
-      mockAxiosInstance.post.mockResolvedValueOnce({
+      mockApiClient.post.mockResolvedValueOnce({
         data: { comment: mockComment },
       });
 
@@ -104,7 +64,7 @@ describe("Application Comments Integration", () => {
       );
 
       expect(createdComment).toEqual(mockComment);
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith(
+      expect(mockApiClient.post).toHaveBeenCalledWith(
         expect.stringContaining(applicationId),
         expect.objectContaining({
           content: "This is a test comment",
@@ -113,6 +73,7 @@ describe("Application Comments Integration", () => {
       );
 
       // Step 2: Get comments (uses fetchData)
+      const mockFetchData = fetchData as ReturnType<typeof mock>;
       mockFetchData.mockResolvedValueOnce([{ comments: [mockComment] }, null, null, 200]);
 
       const comments = await applicationCommentsService.getComments(applicationId);
@@ -127,7 +88,7 @@ describe("Application Comments Integration", () => {
 
       // Step 3: Edit the comment (uses apiClient.put)
       const updatedComment = { ...mockComment, content: "Updated comment" };
-      mockAxiosInstance.put.mockResolvedValueOnce({
+      mockApiClient.put.mockResolvedValueOnce({
         data: { comment: updatedComment },
       });
 
@@ -137,7 +98,7 @@ describe("Application Comments Integration", () => {
       );
 
       expect(editedComment).toEqual(updatedComment);
-      expect(mockAxiosInstance.put).toHaveBeenCalledWith(
+      expect(mockApiClient.put).toHaveBeenCalledWith(
         expect.stringContaining("comment-1"),
         expect.objectContaining({
           content: "Updated comment",
@@ -145,13 +106,13 @@ describe("Application Comments Integration", () => {
       );
 
       // Step 4: Delete the comment (uses apiClient.delete)
-      mockAxiosInstance.delete.mockResolvedValueOnce({
+      mockApiClient.delete.mockResolvedValueOnce({
         data: {},
       });
 
       await applicationCommentsService.deleteComment("comment-1");
 
-      expect(mockAxiosInstance.delete).toHaveBeenCalledWith(
+      expect(mockApiClient.delete).toHaveBeenCalledWith(
         expect.stringContaining("comment-1"),
         expect.objectContaining({
           params: {},
@@ -173,7 +134,7 @@ describe("Application Comments Integration", () => {
       };
 
       // Create admin comment (uses apiClient.post)
-      mockAxiosInstance.post.mockResolvedValueOnce({
+      mockApiClient.post.mockResolvedValueOnce({
         data: { comment: adminComment },
       });
 
@@ -184,7 +145,7 @@ describe("Application Comments Integration", () => {
       );
 
       expect(created).toEqual(adminComment);
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith(
+      expect(mockApiClient.post).toHaveBeenCalledWith(
         expect.stringContaining(applicationId),
         expect.objectContaining({
           content: "Admin review comment",
@@ -195,7 +156,8 @@ describe("Application Comments Integration", () => {
 
     it("should handle authentication failure gracefully", async () => {
       // Simulate no token available
-      (TokenManager.getToken as jest.Mock).mockResolvedValue(null);
+      const tokenManagerGetToken = TokenManager.getToken as ReturnType<typeof mock>;
+      tokenManagerGetToken.mockResolvedValue(null);
 
       const error = {
         response: {
@@ -206,14 +168,14 @@ describe("Application Comments Integration", () => {
         message: "JWT is required",
       };
 
-      mockAxiosInstance.post.mockRejectedValueOnce(error);
+      mockApiClient.post.mockRejectedValueOnce(error);
 
       await expect(
         applicationCommentsService.createComment(applicationId, "Test comment")
       ).rejects.toEqual(error);
 
       // Verify the request was made
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith(
+      expect(mockApiClient.post).toHaveBeenCalledWith(
         expect.stringContaining(applicationId),
         expect.objectContaining({
           content: "Test comment",
@@ -228,8 +190,10 @@ describe("Application Comments Integration", () => {
       const refreshedToken = "refreshed-token";
 
       // First call with initial token (getComments uses fetchData)
-      (TokenManager.getToken as jest.Mock).mockResolvedValueOnce(initialToken);
+      const tokenManagerGetToken = TokenManager.getToken as ReturnType<typeof mock>;
+      tokenManagerGetToken.mockResolvedValueOnce(initialToken);
 
+      const mockFetchData = fetchData as ReturnType<typeof mock>;
       mockFetchData.mockResolvedValueOnce([{ comments: [] }, null, null, 200]);
 
       await applicationCommentsService.getComments(applicationId);
@@ -242,7 +206,7 @@ describe("Application Comments Integration", () => {
       );
 
       // Second call with refreshed token
-      (TokenManager.getToken as jest.Mock).mockResolvedValueOnce(refreshedToken);
+      tokenManagerGetToken.mockResolvedValueOnce(refreshedToken);
 
       mockFetchData.mockResolvedValueOnce([{ comments: [] }, null, null, 200]);
 
