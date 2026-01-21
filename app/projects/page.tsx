@@ -3,6 +3,7 @@ import {
   ProjectsExplorer,
   ProjectsHeroSection,
   ProjectsLoading,
+  ProjectsStatsSection,
 } from "@/components/Pages/Projects";
 import { customMetadata } from "@/utilities/meta";
 
@@ -19,6 +20,7 @@ export default function Projects() {
       <Suspense fallback={<ProjectsLoading />}>
         <ProjectsExplorer />
       </Suspense>
+      <ProjectsStatsSection />
     </div>
   );
 }

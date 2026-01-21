@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { CreateProjectButton } from "@/src/features/homepage/components/create-project-button";
 import { PAGES } from "@/utilities/pages";
@@ -12,10 +14,19 @@ const HERO_ICONS = [
 ];
 
 export const ProjectsHeroSection = () => {
+  const handleScrollToProjects = () => {
+    document.getElementById("browse-projects")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
   return (
     <section
-      className="relative flex flex-col items-center justify-center py-16 px-4 bg-no-repeat bg-center bg-cover pb-96"
-      style={{ backgroundImage: "url('/images/karma-projects-page-bg.svg')" }}
+      className="relative flex flex-col items-center justify-center py-16 px-4 bg-no-repeat bg-bottom bg-contain pb-32 sm:pb-48 md:pb-64 lg:pb-96"
+      style={{
+        backgroundImage: "url('/images/karma-projects-page-bg.svg')",
+      }}
     >
       {/* Icon row - 44x44px decorative icons */}
       <div className="flex gap-3 mb-5" aria-hidden="true">
@@ -47,12 +58,12 @@ export const ProjectsHeroSection = () => {
 
       {/* Buttons */}
       <div className="flex gap-4 mb-4">
-        <a
-          href="#browse-projects"
-          className="px-5 py-2 border border-brand-blue text-brand-blue dark:border-zinc-600 rounded-sm font-medium hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors  dark:text-white h-[40px]"
+        <button
+          onClick={handleScrollToProjects}
+          className="px-5 py-2 border border-brand-blue text-brand-blue dark:border-zinc-600 rounded-sm font-medium hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors dark:text-white h-[40px]"
         >
           Explore Projects
-        </a>
+        </button>
         <CreateProjectButton styleClass="flex px-5 py-2 bg-blue-600 text-white rounded-sm font-medium hover:bg-blue-700 transition-colors h-[40px]" />
       </div>
 

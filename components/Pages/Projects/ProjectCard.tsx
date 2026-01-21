@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { useMemo } from "react";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import type { Project } from "@/types/v2/project";
 import { formatDate } from "@/utilities/formatDate";
@@ -64,19 +65,22 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
           </p>
 
           {/* Description */}
-          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mb-4 flex-1">
-            {details.description || details.missionSummary || "No description available"}
-          </p>
+          <div className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 overflow-hidden mb-4 flex-1">
+            <MarkdownPreview
+              source={details.description || details.missionSummary || "No description available"}
+              className="!text-sm !leading-relaxed [&>*]:!m-0 [&>*]:!p-0"
+            />
+          </div>
 
           {/* Stats */}
           <div className="flex flex-wrap gap-2 mt-auto">
-            <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-zinc-800 rounded-full text-gray-600 dark:text-gray-400">
+            <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-zinc-800 rounded text-gray-600 dark:text-gray-400">
               {grantsCount} {grantsCount === 1 ? "grant" : "grants"}
             </span>
-            <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-zinc-800 rounded-full text-gray-600 dark:text-gray-400">
+            <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-zinc-800 rounded text-gray-600 dark:text-gray-400">
               {grantMilestonesCount} {grantMilestonesCount === 1 ? "milestone" : "milestones"}
             </span>
-            <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-zinc-800 rounded-full text-gray-600 dark:text-gray-400">
+            <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-zinc-800 rounded text-gray-600 dark:text-gray-400">
               {roadmapItemsCount} {roadmapItemsCount === 1 ? "roadmap item" : "roadmap items"}
             </span>
           </div>

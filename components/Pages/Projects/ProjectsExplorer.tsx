@@ -5,7 +5,7 @@ import { CheckIcon, MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import debounce from "lodash.debounce";
 import { useQueryState } from "nuqs";
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { PROJECTS_EXPLORER_CONSTANTS } from "@/constants/projects-explorer";
 import { useProjectsExplorerInfinite } from "@/hooks/useProjectsExplorerInfinite";
@@ -89,41 +89,6 @@ export const ProjectsExplorer = () => {
     sortBy: selectedSort as ExplorerSortByOptions,
     sortOrder: selectedSortOrder as ExplorerSortOrder,
   });
-
-  // Infinite scroll observer
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadMoreRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (isFetchingNextPage) return;
-
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-
-      observerRef.current = new IntersectionObserver(
-        (entries) => {
-          if (entries[0]?.isIntersecting && hasNextPage) {
-            fetchNextPage();
-          }
-        },
-        { threshold: 0.1 }
-      );
-
-      if (node) {
-        observerRef.current.observe(node);
-      }
-    },
-    [isFetchingNextPage, hasNextPage, fetchNextPage]
-  );
-
-  // Cleanup observer on unmount
-  useEffect(() => {
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, []);
 
   // Handle sort change
   const changeSort = async (newValue: ExplorerSortByOptions) => {
@@ -267,24 +232,30 @@ export const ProjectsExplorer = () => {
             ))}
           </div>
 
-          {/* Load More Trigger */}
+          {/* Load More Button */}
           {hasNextPage && (
-            <div ref={loadMoreRef} className="flex justify-center py-8">
-              {isFetchingNextPage ? (
-                <div className="flex items-center gap-2 text-gray-500">
-                  <div className="h-5 w-5 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
-                  <span>Loading more...</span>
-                </div>
-              ) : (
-                <div className="h-8" />
-              )}
+            <div className="flex justify-center py-8">
+              <button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="px-6 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              >
+                {isFetchingNextPage ? (
+                  <>
+                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  "Load More Projects"
+                )}
+              </button>
             </div>
           )}
 
           {/* End of results */}
           {!hasNextPage && projects.length > 0 && (
             <div className="text-center py-8 text-gray-500 text-sm">
-              Showing all {projects.length} projects
+              Showing all {totalCount.toLocaleString()} projects
             </div>
           )}
         </>
