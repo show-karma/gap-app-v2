@@ -177,6 +177,10 @@ const mockAxiosPost = createMockFn();
 const mockAxiosPut = createMockFn();
 const mockAxiosDelete = createMockFn();
 const mockAxiosPatch = createMockFn();
+const mockAxiosInterceptors = {
+  request: { use: createMockFn(), eject: createMockFn() },
+  response: { use: createMockFn(), eject: createMockFn() },
+};
 const mockAxios = Object.assign(createMockFn(), {
   request: mockAxiosRequest,
   get: mockAxiosGet,
@@ -191,12 +195,11 @@ const mockAxios = Object.assign(createMockFn(), {
     put: mockAxiosPut,
     delete: mockAxiosDelete,
     patch: mockAxiosPatch,
+    interceptors: mockAxiosInterceptors,
+    defaults: { headers: { common: {} } },
   })),
   defaults: { headers: { common: {} } },
-  interceptors: {
-    request: { use: createMockFn(), eject: createMockFn() },
-    response: { use: createMockFn(), eject: createMockFn() },
-  },
+  interceptors: mockAxiosInterceptors,
   isAxiosError: createMockFn(() => false),
 });
 mock.module("axios", () => ({
@@ -585,29 +588,59 @@ mock.module("next/navigation", () => ({
   redirect: () => {},
 }));
 
-// Mock next/image
-mock.module("next/image", () => ({
-  default: (props: Record<string, unknown>) => {
-    const { src, alt, ...rest } = props;
-    return { type: "img", props: { src, alt: alt || "", ...rest } };
-  },
-}));
+// Mock next/dynamic - return a component that renders the loading state
+mock.module("next/dynamic", () => {
+  const React = require("react");
+  return {
+    default: (
+      importFn: () => Promise<{ default: React.ComponentType }>,
+      options?: { loading?: () => React.ReactNode; ssr?: boolean }
+    ) => {
+      // Return a component that renders the loading state (for testing)
+      const DynamicComponent = (props: Record<string, unknown>) => {
+        if (options?.loading) {
+          return options.loading();
+        }
+        return React.createElement("div", { "data-testid": "dynamic-loading" }, "Loading...");
+      };
+      DynamicComponent.displayName = "DynamicComponent";
+      return DynamicComponent;
+    },
+  };
+});
 
-// Mock next/link
-mock.module("next/link", () => ({
-  default: ({
-    children,
-    href,
-    ...props
-  }: {
-    children: unknown;
-    href: string;
-    [key: string]: unknown;
-  }) => ({
-    type: "a",
-    props: { href, ...props, children },
-  }),
-}));
+// Mock next/image - return actual React element
+mock.module("next/image", () => {
+  const React = require("react");
+  return {
+    default: (props: Record<string, unknown>) => {
+      const { src, alt, width, height, ...rest } = props;
+      return React.createElement("img", {
+        src: typeof src === "object" ? (src as { src: string }).src : src,
+        alt: alt || "",
+        width,
+        height,
+        ...rest,
+      });
+    },
+  };
+});
+
+// Mock next/link - return actual React element
+mock.module("next/link", () => {
+  const React = require("react");
+  return {
+    default: ({
+      children,
+      href,
+      ...props
+    }: {
+      children: React.ReactNode;
+      href: string;
+      [key: string]: unknown;
+    }) => React.createElement("a", { href, ...props }, children),
+  };
+});
 
 // Mock @/components/Utilities/PrivyProviderWrapper with queryClient
 const mockInvalidateQueries = createMockFn();
@@ -788,13 +821,14 @@ mock.module("remark-breaks", () => ({
 }));
 
 // Mock until-async (ESM-only package that Jest couldn't transform)
+// MSW imports it as `{ until }` (named export), not default
 mock.module("until-async", () => ({
-  default: async <T>(promise: Promise<T>) => {
+  until: async <T>(callback: () => Promise<T>): Promise<[Error | null, T | null]> => {
     try {
-      const result = await promise;
+      const result = await callback();
       return [null, result];
     } catch (error) {
-      return [error, null];
+      return [error as Error, null];
     }
   },
 }));
@@ -811,6 +845,36 @@ mock.module("multiformats/cid", () => ({
 mock.module("@/utilities/wagmi/privy-config", () => ({
   privyConfig: {},
   getPrivyWagmiConfig: () => ({}),
+}));
+
+// =============================================================================
+// Page Component Mocks (for integration tests)
+// =============================================================================
+// These mocks are pre-registered to solve Jest hoisting issues in Bun.
+// Tests that need these mocks will get them applied before any imports.
+
+const React = require("react");
+
+// Mock @/components/Pages/MyProjects
+mock.module("@/components/Pages/MyProjects", () => ({
+  default: () =>
+    React.createElement(
+      "div",
+      { "data-testid": "mock-my-projects" },
+      "Mocked MyProjects Component"
+    ),
+}));
+
+// Mock @/components/Pages/Project/ProjectPage
+mock.module("@/components/Pages/Project/ProjectPage", () => ({
+  default: () =>
+    React.createElement("div", { "data-testid": "mock-project-page" }, "Mocked Project Page"),
+}));
+
+// Mock @/components/Pages/Project/Loading/Overview
+mock.module("@/components/Pages/Project/Loading/Overview", () => ({
+  ProjectOverviewLoading: () =>
+    React.createElement("div", { "data-testid": "project-overview-loading" }, "Loading..."),
 }));
 
 // =============================================================================
