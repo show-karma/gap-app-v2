@@ -237,12 +237,14 @@ describe("queryKeys", () => {
           search: "dao",
           sortBy: "noOfGrants",
           sortOrder: "asc",
+          limit: 25,
         };
         const key = QUERY_KEYS.PROJECT.EXPLORER_INFINITE(params);
         expect(key[0]).toBe("projects-explorer-infinite");
         expect(key[1]).toBe("dao");
         expect(key[2]).toBe("noOfGrants");
         expect(key[3]).toBe("asc");
+        expect(key[4]).toBe(25);
       });
 
       it("should use default values when params are not provided", () => {
@@ -251,6 +253,7 @@ describe("queryKeys", () => {
         expect(key[1]).toBe(""); // empty search
         expect(key[2]).toBe("updatedAt"); // default sortBy
         expect(key[3]).toBe("desc"); // default sortOrder
+        expect(key[4]).toBe(50); // default limit
       });
 
       it("should handle undefined search", () => {
@@ -264,7 +267,7 @@ describe("queryKeys", () => {
       it("should return as const tuple", () => {
         const key = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ search: "test" });
         expect(Array.isArray(key)).toBe(true);
-        expect(key.length).toBe(4);
+        expect(key.length).toBe(5);
       });
 
       it("should generate different keys for different search queries", () => {
@@ -276,6 +279,12 @@ describe("queryKeys", () => {
       it("should generate different keys for different sort options", () => {
         const key1 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ sortBy: "createdAt" });
         const key2 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ sortBy: "noOfGrants" });
+        expect(key1).not.toEqual(key2);
+      });
+
+      it("should generate different keys for different limit values", () => {
+        const key1 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ limit: 25 });
+        const key2 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ limit: 100 });
         expect(key1).not.toEqual(key2);
       });
     });

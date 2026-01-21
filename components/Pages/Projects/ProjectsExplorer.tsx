@@ -1,16 +1,21 @@
 "use client";
 
-import { Listbox, Transition } from "@headlessui/react";
-import { CheckIcon, MagnifyingGlassIcon } from "@heroicons/react/20/solid";
+import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import debounce from "lodash.debounce";
 import { useQueryState } from "nuqs";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PROJECTS_EXPLORER_CONSTANTS } from "@/constants/projects-explorer";
 import { useProjectsExplorerInfinite } from "@/hooks/useProjectsExplorerInfinite";
 import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
-import { cn } from "@/utilities/tailwind";
 import { ProjectsLoading } from "./Loading";
 import { ProjectCard } from "./ProjectCard";
 
@@ -92,18 +97,15 @@ export const ProjectsExplorer = () => {
 
   // Handle sort change
   const changeSort = async (newValue: ExplorerSortByOptions) => {
-    if (newValue === selectedSort) {
-      // Toggle sort order if same field is selected
-      setSelectedSortOrder(selectedSortOrder === "asc" ? "desc" : "asc");
-    } else {
+    if (newValue !== selectedSort) {
       setSelectedSort(newValue);
       setSelectedSortOrder("desc");
-    }
 
-    // Clear query cache to force refetch with new sort
-    queryClient.removeQueries({
-      predicate: (query) => query.queryKey[0] === "projects-explorer-infinite",
-    });
+      // Clear query cache to force refetch with new sort
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey[0] === "projects-explorer-infinite",
+      });
+    }
   };
 
   return (
@@ -135,81 +137,53 @@ export const ProjectsExplorer = () => {
           </div>
 
           {/* Sort Dropdown */}
-          <Listbox
-            value={selectedSort}
-            onChange={(value) => {
-              changeSort(value as ExplorerSortByOptions);
-            }}
-          >
-            {({ open }) => (
-              <div className="flex items-center gap-x-2">
-                <Listbox.Label className="text-sm font-medium text-gray-700 dark:text-zinc-300 whitespace-nowrap">
-                  Sort by
-                </Listbox.Label>
-                <div className="relative w-48">
-                  <Listbox.Button
-                    id="sort-by-button"
-                    className="relative w-full cursor-default rounded-md bg-white py-2 pl-3 pr-10 text-left dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 text-gray-900 ring-1 ring-inset ring-gray-300 text-sm"
-                  >
-                    <span className="block truncate">
-                      {sortOptions[selectedSort as ExplorerSortByOptions]}
-                    </span>
-                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                      {selectedSortOrder === "asc" ? (
-                        <ArrowUpIcon className="h-4 w-4 text-gray-400" />
-                      ) : (
-                        <ArrowDownIcon className="h-4 w-4 text-gray-400" />
-                      )}
-                    </span>
-                  </Listbox.Button>
-
-                  <Transition
-                    show={open}
-                    as={Fragment}
-                    leave="transition ease-in duration-100"
-                    leaveFrom="opacity-100"
-                    leaveTo="opacity-0"
-                  >
-                    <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-sm dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black ring-opacity-5 focus:outline-none">
-                      {Object.keys(sortOptions).map((sortOption) => (
-                        <Listbox.Option
-                          key={sortOption}
-                          className={({ active }) =>
-                            cn(
-                              active
-                                ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
-                                : "text-gray-900 dark:text-gray-200",
-                              "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
-                            )
-                          }
-                          value={sortOption}
-                        >
-                          {({ selected }) => (
-                            <>
-                              <span
-                                className={cn(
-                                  selected ? "font-semibold" : "font-normal",
-                                  "block truncate"
-                                )}
-                              >
-                                {sortOptions[sortOption as ExplorerSortByOptions]}
-                              </span>
-
-                              {selected && (
-                                <span className="text-blue-600 dark:text-blue-400 absolute inset-y-0 right-0 flex items-center pr-4">
-                                  <CheckIcon className="h-5 w-5" aria-hidden="true" />
-                                </span>
-                              )}
-                            </>
-                          )}
-                        </Listbox.Option>
-                      ))}
-                    </Listbox.Options>
-                  </Transition>
-                </div>
-              </div>
-            )}
-          </Listbox>
+          <div className="flex items-center gap-x-2">
+            <label
+              htmlFor="sort-by-select"
+              className="text-sm font-medium text-gray-700 dark:text-zinc-300 whitespace-nowrap"
+            >
+              Sort by
+            </label>
+            <div className="flex items-center gap-1">
+              <Select
+                value={selectedSort}
+                onValueChange={(value) => {
+                  changeSort(value as ExplorerSortByOptions);
+                }}
+              >
+                <SelectTrigger
+                  id="sort-by-select"
+                  aria-label="Sort projects by"
+                  className="w-48 bg-white dark:bg-zinc-800 dark:text-zinc-200 border-gray-300 dark:border-zinc-700"
+                >
+                  <SelectValue>{sortOptions[selectedSort as ExplorerSortByOptions]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-zinc-800">
+                  {Object.keys(sortOptions).map((sortOption) => (
+                    <SelectItem
+                      key={sortOption}
+                      value={sortOption}
+                      className="text-gray-900 dark:text-gray-200 focus:bg-gray-100 dark:focus:bg-zinc-700"
+                    >
+                      {sortOptions[sortOption as ExplorerSortByOptions]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <button
+                type="button"
+                onClick={() => setSelectedSortOrder(selectedSortOrder === "asc" ? "desc" : "asc")}
+                aria-label={`Sort ${selectedSortOrder === "asc" ? "descending" : "ascending"}`}
+                className="p-2 rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              >
+                {selectedSortOrder === "asc" ? (
+                  <ArrowUpIcon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                ) : (
+                  <ArrowDownIcon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

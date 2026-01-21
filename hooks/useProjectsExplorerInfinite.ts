@@ -47,7 +47,7 @@ export const useProjectsExplorerInfinite = (options: UseProjectsExplorerInfinite
   } = options;
 
   const query = useInfiniteQuery<PaginatedProjectsResponse, Error>({
-    queryKey: QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ search, sortBy, sortOrder }),
+    queryKey: QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ search, sortBy, sortOrder, limit }),
     queryFn: async ({ pageParam = 1 }) => {
       return getExplorerProjectsPaginated({
         search,
