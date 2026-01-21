@@ -30,20 +30,34 @@ export interface ImpactApiResponse {
 }
 
 /**
+ * Optional filter parameters for impact data
+ */
+export interface ImpactFilters {
+  programId?: string;
+  projectId?: string;
+}
+
+/**
  * Fetches impact data for a community from the backend.
  * The backend handles all business logic (grouping, stats calculation, etc.)
  *
  * @param communityId - Community slug or UID
+ * @param filters - Optional filters for programId and projectId
  * @returns ProgramImpactData with stats and categorized impact segments
  */
-export async function getProgramsImpact(communityId: string): Promise<ProgramImpactData> {
+export async function getProgramsImpact(
+  communityId: string,
+  filters?: ImpactFilters
+): Promise<ProgramImpactData> {
   try {
     const [data, error] = await fetchData<ImpactApiResponse>(
-      INDEXER.COMMUNITY.V2.IMPACT(communityId)
+      INDEXER.COMMUNITY.V2.IMPACT(communityId, filters)
     );
 
     if (error || !data) {
-      console.warn("Impact fetch error:", error);
+      const message = "Impact fetch error";
+      console.warn(`${message}:`, error);
+      errorManager(message, error);
       return {
         data: [],
         stats: {

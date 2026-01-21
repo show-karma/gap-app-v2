@@ -9,8 +9,12 @@ import { getAllProgramsOfCommunity } from "@/utilities/registry/getAllProgramsOf
 export const ProgramBanner = () => {
   const { communityId } = useParams();
   const searchParams = useSearchParams();
+  const programSelected = searchParams.get("programId");
   const projectSelected = searchParams.get("projectId");
-  const { data: impactData, isLoading: isImpactLoading } = useImpactMeasurement();
+  const { data: impactData, isLoading: isImpactLoading } = useImpactMeasurement({
+    programId: programSelected ?? undefined,
+    projectId: projectSelected ?? undefined,
+  });
 
   const { data } = useQuery({
     queryKey: ["programs"],

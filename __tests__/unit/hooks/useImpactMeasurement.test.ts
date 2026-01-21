@@ -64,17 +64,51 @@ describe("useImpactMeasurement", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(mockGetProgramsImpact).toHaveBeenCalledWith("test-community");
+    expect(mockGetProgramsImpact).toHaveBeenCalledWith("test-community", undefined);
     expect(result.current.data).toEqual(mockImpactData);
   });
 
-  it("should use correct query key", () => {
+  it("should use correct query key without filters", () => {
     const wrapper = createWrapper();
     renderHook(() => useImpactMeasurement(), { wrapper });
 
-    const queryKey = ["impact-measurement", "test-community"];
-    const queryData = queryClient.getQueryData(queryKey);
-    expect(queryData).toBeUndefined(); // Initially undefined until fetch completes
+    const queryKey = ["impact-measurement", "test-community", "all", "all"];
+    const query = queryClient.getQueryCache().find({ queryKey });
+    expect(query).toBeDefined();
+  });
+
+  it("should use correct query key with filters", () => {
+    const wrapper = createWrapper();
+    renderHook(() => useImpactMeasurement({ programId: "program-123", projectId: "project-456" }), {
+      wrapper,
+    });
+
+    const queryKey = ["impact-measurement", "test-community", "program-123", "project-456"];
+    const query = queryClient.getQueryCache().find({ queryKey });
+    expect(query).toBeDefined();
+  });
+
+  it("should pass filters to getProgramsImpact", async () => {
+    const mockImpactData = {
+      stats: {
+        totalProjects: 5,
+        totalCategories: 1,
+        totalFundingAllocated: undefined,
+      },
+      data: [],
+    } as any;
+
+    mockGetProgramsImpact.mockResolvedValue(mockImpactData);
+
+    const filters = { programId: "program-123", projectId: "project-456" };
+    const wrapper = createWrapper();
+    const { result } = renderHook(() => useImpactMeasurement(filters), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(mockGetProgramsImpact).toHaveBeenCalledWith("test-community", filters);
   });
 
   it("should handle fetch error", async () => {
@@ -100,5 +134,44 @@ describe("useImpactMeasurement", () => {
 
     expect(result.current.isLoading).toBe(false);
     expect(mockGetProgramsImpact).not.toHaveBeenCalled();
+  });
+
+  it("should cache separately for different filters", async () => {
+    const mockImpactData1 = {
+      stats: { totalProjects: 10, totalCategories: 2, totalFundingAllocated: undefined },
+      data: [],
+    } as any;
+    const mockImpactData2 = {
+      stats: { totalProjects: 5, totalCategories: 1, totalFundingAllocated: undefined },
+      data: [],
+    } as any;
+
+    mockGetProgramsImpact
+      .mockResolvedValueOnce(mockImpactData1)
+      .mockResolvedValueOnce(mockImpactData2);
+
+    const wrapper = createWrapper();
+
+    // First call without filters
+    const { result: result1 } = renderHook(() => useImpactMeasurement(), { wrapper });
+    await waitFor(() => expect(result1.current.isLoading).toBe(false));
+
+    // Second call with filters
+    const { result: result2 } = renderHook(
+      () => useImpactMeasurement({ programId: "program-123" }),
+      { wrapper }
+    );
+    await waitFor(() => expect(result2.current.isLoading).toBe(false));
+
+    // Both queries should be cached separately
+    const queryNoFilters = queryClient
+      .getQueryCache()
+      .find({ queryKey: ["impact-measurement", "test-community", "all", "all"] });
+    const queryWithFilters = queryClient
+      .getQueryCache()
+      .find({ queryKey: ["impact-measurement", "test-community", "program-123", "all"] });
+
+    expect(queryNoFilters).toBeDefined();
+    expect(queryWithFilters).toBeDefined();
   });
 });

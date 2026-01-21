@@ -426,7 +426,13 @@ export const INDEXER = {
       GET: (slug: string) => `/v2/communities/${slug}`,
       GRANTS: (slug: string) => `/v2/communities/${slug}/grants`,
       STATS: (slug: string) => `/v2/communities/${slug}/stats`,
-      IMPACT: (slug: string) => `/v2/communities/${slug}/impact`,
+      IMPACT: (slug: string, params?: { programId?: string; projectId?: string }) => {
+        const queryParams = new URLSearchParams();
+        if (params?.programId) queryParams.set("programId", params.programId);
+        if (params?.projectId) queryParams.set("projectId", params.projectId);
+        const query = queryParams.toString();
+        return `/v2/communities/${slug}/impact${query ? `?${query}` : ""}`;
+      },
       IMPACT_SEGMENTS: (communityUID: string) => `/v2/impact-segments/${communityUID}`,
       INDICATORS: {
         AGGREGATED: (

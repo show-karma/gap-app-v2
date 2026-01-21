@@ -14,7 +14,15 @@ jest.mock("@/utilities/indexer", () => ({
   INDEXER: {
     COMMUNITY: {
       V2: {
-        IMPACT: jest.fn((communityId: string) => `/v2/communities/${communityId}/impact`),
+        IMPACT: jest.fn(
+          (communityId: string, params?: { programId?: string; projectId?: string }) => {
+            const queryParams = new URLSearchParams();
+            if (params?.programId) queryParams.set("programId", params.programId);
+            if (params?.projectId) queryParams.set("projectId", params.projectId);
+            const query = queryParams.toString();
+            return `/v2/communities/${communityId}/impact${query ? `?${query}` : ""}`;
+          }
+        ),
       },
     },
   },
@@ -198,6 +206,7 @@ describe("getProgramsImpact", () => {
 
       expect(result).toEqual(emptyFallbackResponse);
       expect(console.warn).toHaveBeenCalledWith("Impact fetch error:", error);
+      expect(mockErrorManager).toHaveBeenCalledWith("Impact fetch error", error);
     });
 
     it("should return fallback response when API returns null data", async () => {
@@ -223,15 +232,16 @@ describe("getProgramsImpact", () => {
 
       expect(result).toEqual(emptyFallbackResponse);
       expect(console.warn).toHaveBeenCalledWith("Impact fetch error:", "Not Found");
+      expect(mockErrorManager).toHaveBeenCalledWith("Impact fetch error", "Not Found");
     });
 
-    it("should not call errorManager for API errors (handled via fallback)", async () => {
+    it("should call errorManager for API errors for consistent error reporting", async () => {
       mockFetchData.mockResolvedValue([null, "API Error", null, 500]);
 
       await getProgramsImpact("test-community");
 
-      // errorManager is only called in catch block for exceptions
-      expect(mockErrorManager).not.toHaveBeenCalled();
+      // errorManager is called for all errors (API errors and exceptions)
+      expect(mockErrorManager).toHaveBeenCalledWith("Impact fetch error", "API Error");
     });
   });
 
@@ -358,6 +368,67 @@ describe("getProgramsImpact", () => {
       expect(result.data[0].impacts[0].indicators).toEqual([]);
       // But indicatorIds should be populated
       expect(result.data[0].impacts[0].impactIndicatorIds).toEqual(["id-1"]);
+    });
+  });
+
+  describe("filter parameters", () => {
+    const mockResponse = {
+      stats: { totalCategories: 1, totalProjects: 5, totalFundingAllocated: "100000" },
+      categories: [
+        {
+          categoryName: "Test",
+          impacts: [{ name: "Test", id: "1", description: "", type: "output", indicatorIds: [] }],
+        },
+      ],
+    };
+
+    it("should pass programId filter to the API endpoint", async () => {
+      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+
+      await getProgramsImpact("test-community", { programId: "program-123" });
+
+      expect(mockFetchData).toHaveBeenCalledWith(
+        "/v2/communities/test-community/impact?programId=program-123"
+      );
+    });
+
+    it("should pass projectId filter to the API endpoint", async () => {
+      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+
+      await getProgramsImpact("test-community", { projectId: "project-456" });
+
+      expect(mockFetchData).toHaveBeenCalledWith(
+        "/v2/communities/test-community/impact?projectId=project-456"
+      );
+    });
+
+    it("should pass both programId and projectId filters", async () => {
+      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+
+      await getProgramsImpact("test-community", {
+        programId: "program-123",
+        projectId: "project-456",
+      });
+
+      expect(mockFetchData).toHaveBeenCalledWith(
+        "/v2/communities/test-community/impact?programId=program-123&projectId=project-456"
+      );
+    });
+
+    it("should work without filters (backward compatibility)", async () => {
+      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+
+      await getProgramsImpact("test-community");
+
+      expect(mockFetchData).toHaveBeenCalledWith("/v2/communities/test-community/impact");
+    });
+
+    it("should work with empty filters object", async () => {
+      mockFetchData.mockResolvedValue([mockResponse, null, null, 200]);
+
+      await getProgramsImpact("test-community", {});
+
+      expect(mockFetchData).toHaveBeenCalledWith("/v2/communities/test-community/impact");
     });
   });
 });
