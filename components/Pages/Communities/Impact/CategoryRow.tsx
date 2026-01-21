@@ -69,7 +69,7 @@ const prepareAggregatedChartData = (indicators: any[]) => {
 };
 
 const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) => {
-  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeOption>("1_month");
+  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeOption>("3_months");
 
   const { isVisible, ref } = useIntersectionObserver({
     threshold: 0.1,
