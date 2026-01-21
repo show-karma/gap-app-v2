@@ -80,7 +80,8 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
   const selectedTimeframeConfig = timeframeOptions.find(
     (option) => option.value === selectedTimeframe
   );
-  const timeframeMonths = selectedTimeframeConfig?.months || 1;
+  // For "all" timeframe, pass undefined to fetch all data without date filtering
+  const timeframeMonths = selectedTimeframeConfig?.months;
 
   const {
     data: aggregatedIndicators,
@@ -222,11 +223,22 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
               />
             </Card>
           ) : (
-            <div className="p-8 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-zinc-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
-              <p className="text-lg font-medium">No data available</p>
-              <p className="text-sm mt-1">
-                Metrics are configured but no data has been reported yet
-              </p>
+            <div className="bg-white dark:bg-zinc-700 rounded-lg border border-gray-200 dark:border-gray-600">
+              <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-600">
+                <h4 className="text-lg font-semibold text-black dark:text-white">
+                  Aggregated Impact Metrics
+                </h4>
+                <TimeframeSelector
+                  selectedTimeframe={selectedTimeframe}
+                  onTimeframeChange={setSelectedTimeframe}
+                />
+              </div>
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                <p className="text-lg font-medium">No data available</p>
+                <p className="text-sm mt-1">
+                  No data available for the selected period. Try selecting a different timeframe.
+                </p>
+              </div>
             </div>
           )}
         </div>
