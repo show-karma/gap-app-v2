@@ -219,7 +219,12 @@ export const INDEXER = {
           limit?: number;
           programId?: string;
           status?: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
-          sortBy?: "project_title" | "grant_title" | "payout_amount" | "disbursed_amount" | "status";
+          sortBy?:
+            | "project_title"
+            | "grant_title"
+            | "payout_amount"
+            | "disbursed_amount"
+            | "status";
           sortOrder?: "asc" | "desc";
         }
       ) => {
@@ -421,6 +426,7 @@ export const INDEXER = {
       GET: (slug: string) => `/v2/communities/${slug}`,
       GRANTS: (slug: string) => `/v2/communities/${slug}/grants`,
       STATS: (slug: string) => `/v2/communities/${slug}/stats`,
+      IMPACT: (slug: string) => `/v2/communities/${slug}/impact`,
       IMPACT_SEGMENTS: (communityUID: string) => `/v2/impact-segments/${communityUID}`,
       INDICATORS: {
         AGGREGATED: (
