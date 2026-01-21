@@ -18,7 +18,7 @@ The `completedSteps` prop has a default value that creates a new Set on every re
 
 **Source**: Performance Oracle Agent
 
-**Location**: `/Users/mmurthy/dev/dapps/karma_protocol/super-gap-program-onboarding/gap-app-v2/components/FundingPlatform/Sidebar/SettingsSidebar.tsx` (line 121)
+**Location**: `gap-app-v2/components/FundingPlatform/Sidebar/SettingsSidebar.tsx` (line 121)
 
 **Current Code**:
 ```typescript

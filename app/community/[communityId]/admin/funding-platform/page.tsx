@@ -76,8 +76,7 @@ export default function FundingPlatformAdminPage() {
       toast.success(`Program ${!currentEnabled ? "enabled" : "disabled"} successfully`);
       // Refresh the programs list
       await refetch();
-    } catch (error) {
-      console.error("Error toggling program status:", error);
+    } catch {
       toast.error("Failed to update program status");
     } finally {
       setTogglingPrograms((prev) => {
@@ -457,8 +456,7 @@ export default function FundingPlatformAdminPage() {
         filteredPrograms.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredPrograms.map((program) => {
-              const hasFormConfig =
-                program.applicationConfig && Object.keys(program.applicationConfig).length > 1;
+              const hasFormConfig = hasFormConfigured(program.applicationConfig);
               const isEnabled = program.applicationConfig?.isEnabled || false;
 
               return (
@@ -495,6 +493,10 @@ export default function FundingPlatformAdminPage() {
                     >
                       <button
                         type="button"
+                        role="switch"
+                        aria-checked={isEnabled}
+                        aria-label={`${isEnabled ? "Disable" : "Enable"} submissions for ${program.metadata?.title || program.name}`}
+                        aria-disabled={!hasFormConfig}
                         className={cn(
                           "flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg border",
                           isEnabled
@@ -646,6 +648,7 @@ export default function FundingPlatformAdminPage() {
                     <Link
                       href={getProgramApplyUrl(communityId, program.programId)}
                       target="_blank"
+                      rel="noopener noreferrer"
                       title="View public application form"
                       className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600"
                     >

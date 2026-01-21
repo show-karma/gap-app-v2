@@ -19,8 +19,8 @@ The same URL generation logic exists in multiple files, violating DRY principles
 **Source**: Pattern Recognition Specialist, Architecture Strategist
 
 **Duplicate Locations**:
-1. `/Users/mmurthy/dev/dapps/karma_protocol/super-gap-program-onboarding/gap-app-v2/app/community/[communityId]/admin/funding-platform/page.tsx` (lines 46-57)
-2. `/Users/mmurthy/dev/dapps/karma_protocol/super-gap-program-onboarding/gap-app-v2/components/QuestionBuilder/SettingsConfiguration.tsx` (lines 40-66)
+1. `gap-app-v2/app/community/[communityId]/admin/funding-platform/page.tsx` (lines 46-57)
+2. `gap-app-v2/components/QuestionBuilder/SettingsConfiguration.tsx` (lines 40-66)
 
 **Functions duplicated**:
 - `getApplyUrlByCommunityId(communityId, programId)` - near identical

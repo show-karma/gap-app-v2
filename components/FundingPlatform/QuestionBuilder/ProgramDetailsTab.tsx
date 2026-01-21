@@ -184,9 +184,11 @@ export function ProgramDetailsTab({
     }
   }, [programId, effectiveChainId, processProgramData]);
 
-  // Initialize form with initial program data if provided
+  // Initialize form and program state with initial program data if provided
   useEffect(() => {
     if (initialProgram) {
+      setProgram(initialProgram);
+      setIsLoadingProgram(false);
       const formValues = buildFormValuesFromMetadata(initialProgram.metadata);
       if (formValues) {
         reset(formValues);
@@ -234,15 +236,14 @@ export function ProgramDetailsTab({
       );
 
       if (updateError) {
-        console.warn("Failed to refetch program data after update:", updateError);
         return;
       }
 
       if (updatedData) {
         processProgramData(updatedData);
       }
-    } catch (error) {
-      console.warn("Error refetching program data:", error);
+    } catch {
+      // Error refetching program data - ignore silently
     }
   }, [programId, effectiveChainId, processProgramData]);
 

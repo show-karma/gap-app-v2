@@ -18,7 +18,7 @@ The `SetupWizard` component calls `fundingPlatformService.programs.toggleProgram
 
 **Source**: Architecture Strategist Agent
 
-**Location**: `/Users/mmurthy/dev/dapps/karma_protocol/super-gap-program-onboarding/gap-app-v2/components/FundingPlatform/SetupWizard/SetupWizard.tsx` (lines 30-49)
+**Location**: `gap-app-v2/components/FundingPlatform/SetupWizard/SetupWizard.tsx` (lines 30-49)
 
 **Current Code**:
 ```typescript

@@ -18,7 +18,7 @@ Some files use string template concatenation for conditional classes instead of 
 
 **Source**: Pattern Recognition Specialist
 
-**Example Location**: `/Users/mmurthy/dev/dapps/karma_protocol/super-gap-program-onboarding/gap-app-v2/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab.tsx` (lines 446-448)
+**Example Location**: `gap-app-v2/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab.tsx` (lines 446-448)
 
 **Current Code**:
 ```typescript

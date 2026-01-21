@@ -19,8 +19,8 @@ The `Breadcrumbs.tsx` component and its test file are not used anywhere in the a
 **Source**: Code Simplicity Reviewer Agent
 
 **Files to Remove**:
-- `/Users/mmurthy/dev/dapps/karma_protocol/super-gap-program-onboarding/gap-app-v2/components/FundingPlatform/Breadcrumbs.tsx` (60 lines)
-- `/Users/mmurthy/dev/dapps/karma_protocol/super-gap-program-onboarding/gap-app-v2/__tests__/components/FundingPlatform/Breadcrumbs.test.tsx` (170 lines)
+- `gap-app-v2/components/FundingPlatform/Breadcrumbs.tsx` (60 lines)
+- `gap-app-v2/__tests__/components/FundingPlatform/Breadcrumbs.test.tsx` (170 lines)
 
 **Evidence**:
 - Searched for `Breadcrumbs` imports - only found in test file

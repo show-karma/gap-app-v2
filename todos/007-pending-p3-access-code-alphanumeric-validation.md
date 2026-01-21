@@ -18,7 +18,7 @@ Access codes allow any characters except spaces and have minimum length validati
 
 **Source**: Security Sentinel Agent
 
-**Location**: `/Users/mmurthy/dev/dapps/karma_protocol/super-gap-program-onboarding/gap-app-v2/schemas/settingsConfigSchema.ts` (lines 12-23)
+**Location**: `gap-app-v2/schemas/settingsConfigSchema.ts` (lines 12-23)
 
 **Current Validation**:
 ```typescript

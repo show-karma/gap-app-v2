@@ -18,7 +18,7 @@ The `SettingsConfiguration.tsx` component uses react-hook-form's `watch()` witho
 
 **Source**: Performance Oracle Agent
 
-**Location**: `/Users/mmurthy/dev/dapps/karma_protocol/super-gap-program-onboarding/gap-app-v2/components/QuestionBuilder/SettingsConfiguration.tsx` (lines 134-162)
+**Location**: `gap-app-v2/components/QuestionBuilder/SettingsConfiguration.tsx` (lines 134-162)
 
 **Current Code**:
 ```typescript

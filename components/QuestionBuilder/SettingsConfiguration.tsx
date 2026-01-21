@@ -70,8 +70,8 @@ export function SettingsConfiguration({
       await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy URL:", err);
+    } catch {
+      // Clipboard copy failed silently
     }
   };
 
@@ -381,7 +381,7 @@ export function SettingsConfiguration({
             <AccordionContent className="px-6 pb-6">
               <div className="space-y-6">
                 {/* Browse All Applications URL */}
-                {!watch("privateApplications") && (
+                {!watch("privateApplications") && programId && (
                   <div className="flex flex-col space-y-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                     <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       All Applications URL
@@ -389,7 +389,7 @@ export function SettingsConfiguration({
                     <div className="flex flex-row items-center space-x-2">
                       <ExternalLink
                         className="underline text-blue-500"
-                        href={getBrowseApplicationsUrl(communityId, programId as string)}
+                        href={getBrowseApplicationsUrl(communityId, programId)}
                       >
                         Browse All Applications
                       </ExternalLink>

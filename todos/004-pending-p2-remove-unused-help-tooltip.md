@@ -18,7 +18,7 @@ The `HelpTooltip` component and `HELP_CONTENT` object are defined but never actu
 
 **Source**: Code Simplicity Reviewer Agent
 
-**Location**: `/Users/mmurthy/dev/dapps/karma_protocol/super-gap-program-onboarding/gap-app-v2/components/FundingPlatform/HelpTooltip.tsx`
+**Location**: `gap-app-v2/components/FundingPlatform/HelpTooltip.tsx`
 
 **Analysis**:
 - `HelpTooltip` component (lines 15-72) - never rendered

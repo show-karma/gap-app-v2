@@ -4,8 +4,8 @@ import { ArrowLeftIcon, CheckCircleIcon, RocketLaunchIcon } from "@heroicons/rea
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { Button } from "@/components/ui/button";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
 import type { SetupProgress } from "@/hooks/useProgramSetupProgress";
 import { cn } from "@/utilities/tailwind";
@@ -39,9 +39,8 @@ export function SetupWizard({ communityId, programId, programName, progress }: S
       // The mutation already shows success toast, so just redirect
       await refetchConfig();
       router.push(dashboardUrl);
-    } catch (error) {
-      // The mutation already handles error toast, just log
-      console.error("Error enabling program:", error);
+    } catch {
+      // The mutation already handles error toast
     }
   };
 
@@ -53,8 +52,16 @@ export function SetupWizard({ communityId, programId, programName, progress }: S
     );
   }
 
-  // Check if program is already fully set up and enabled
-  const isFullySetup = progress.steps.every((s) => s.status === "completed" || !s.required);
+  if (progress.error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <p className="text-red-500 mb-4">Failed to load program setup data</p>
+        <p className="text-gray-500 text-sm">Please try refreshing the page</p>
+      </div>
+    );
+  }
+
+  // Check if program is already enabled
   const isEnabled = progress.steps.find((s) => s.id === "enable-program")?.status === "completed";
 
   return (
@@ -128,16 +135,16 @@ export function SetupWizard({ communityId, programId, programName, progress }: S
                 the dashboard.
               </p>
               <div className="mt-3 flex gap-2">
-                <Link href={dashboardUrl}>
-                  <Button variant="primary" className="bg-green-600 hover:bg-green-700">
-                    Go to Dashboard
-                  </Button>
-                </Link>
-                <Link
-                  href={`/community/${communityId}/admin/funding-platform/${programId}/applications`}
-                >
-                  <Button variant="secondary">View Applications</Button>
-                </Link>
+                <Button asChild className="bg-green-600 hover:bg-green-700">
+                  <Link href={dashboardUrl}>Go to Dashboard</Link>
+                </Button>
+                <Button asChild variant="secondary">
+                  <Link
+                    href={`/community/${communityId}/admin/funding-platform/${programId}/applications`}
+                  >
+                    View Applications
+                  </Link>
+                </Button>
               </div>
             </div>
           </div>
@@ -168,13 +175,16 @@ export function SetupWizard({ communityId, programId, programName, progress }: S
               </p>
             </div>
             <Button
-              variant="primary"
               onClick={handleEnableProgram}
-              isLoading={isEnabling}
-              className="bg-blue-600 hover:bg-blue-700 flex-shrink-0"
+              disabled={isEnabling}
+              className="bg-blue-600 hover:bg-blue-700 flex-shrink-0 text-white"
             >
-              <RocketLaunchIcon className="w-4 h-4 mr-2" />
-              Enable Program
+              {isEnabling ? (
+                <Spinner className="w-4 h-4 mr-2" />
+              ) : (
+                <RocketLaunchIcon className="w-4 h-4 mr-2" />
+              )}
+              {isEnabling ? "Enabling..." : "Enable Program"}
             </Button>
           </div>
         </div>

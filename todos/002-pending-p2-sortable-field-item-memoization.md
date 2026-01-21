@@ -18,7 +18,7 @@ The `SortableFieldItem` component in `QuestionBuilder.tsx` is not memoized with 
 
 **Source**: Performance Oracle Agent, Pattern Recognition Specialist
 
-**Location**: `/Users/mmurthy/dev/dapps/karma_protocol/super-gap-program-onboarding/gap-app-v2/components/QuestionBuilder/QuestionBuilder.tsx` (lines 874-1000)
+**Location**: `gap-app-v2/components/QuestionBuilder/QuestionBuilder.tsx` (lines 874-1000)
 
 **Current Behavior**:
 - `SortableFieldItem` is defined as a regular function inside the component file

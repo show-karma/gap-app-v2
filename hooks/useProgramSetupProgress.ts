@@ -21,6 +21,7 @@ export interface SetupProgress {
   missingRequired: string[];
   percentComplete: number;
   isLoading: boolean;
+  error: Error | null;
 }
 
 /**
@@ -28,10 +29,15 @@ export interface SetupProgress {
  * Determines which setup steps have been completed and which are still pending.
  */
 export function useProgramSetupProgress(communityId: string, programId: string): SetupProgress {
-  const { config, isLoading: isLoadingConfig } = useProgramConfig(programId);
-  const { data: reviewers, isLoading: isLoadingReviewers } = useProgramReviewers(programId);
+  const { config, isLoading: isLoadingConfig, error: configError } = useProgramConfig(programId);
+  const {
+    data: reviewers,
+    isLoading: isLoadingReviewers,
+    error: reviewersError,
+  } = useProgramReviewers(programId);
 
   const isLoading = isLoadingConfig || isLoadingReviewers;
+  const error = configError || reviewersError || null;
 
   const progress = useMemo<SetupProgress>(() => {
     const baseUrl = `/community/${communityId}/admin/funding-platform/${programId}`;
@@ -131,8 +137,9 @@ export function useProgramSetupProgress(communityId: string, programId: string):
       missingRequired,
       percentComplete,
       isLoading,
+      error,
     };
-  }, [communityId, programId, config, reviewers, isLoading]);
+  }, [communityId, programId, config, reviewers, isLoading, error]);
 
   return progress;
 }

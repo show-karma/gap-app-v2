@@ -217,14 +217,12 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       const parsed = parseReviewerMemberId(memberId);
 
       if (!parsed.valid) {
-        console.error("Invalid member ID:", parsed.error);
         toast.error(parsed.error || "Invalid reviewer ID format");
         return;
       }
 
       // Type guard ensures we have the required properties
       if (!parsed.role || !parsed.publicAddress) {
-        console.error("Missing role or publicAddress in parsed member ID");
         toast.error("Failed to remove reviewer: Invalid ID");
         return;
       }
@@ -237,10 +235,9 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         } else {
           toast.error(`Unknown reviewer role: ${parsed.role}`);
         }
-      } catch (error) {
+      } catch {
         // Error handling is already done in the mutations, but we catch here
         // to prevent unhandled promise rejections
-        console.error("Error in handleRemove:", error);
       }
     },
     [removeProgramReviewer, removeMilestoneReviewer]

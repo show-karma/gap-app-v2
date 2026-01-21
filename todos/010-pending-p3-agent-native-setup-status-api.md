@@ -18,7 +18,7 @@ The setup progress (completed steps, missing required fields, readiness to enabl
 
 **Source**: Agent-Native Reviewer
 
-**Location**: `/Users/mmurthy/dev/dapps/karma_protocol/super-gap-program-onboarding/gap-app-v2/hooks/useProgramSetupProgress.ts`
+**Location**: `gap-app-v2/hooks/useProgramSetupProgress.ts`
 
 **Agent-Native Score**: 57% (8/14 capabilities accessible)
 

@@ -122,6 +122,7 @@ describe("SetupWizard", () => {
     missingRequired: ["Build Application Form", "Enable Program"],
     percentComplete: 17,
     isLoading: false,
+    error: null,
     ...overrides,
   });
 
