@@ -81,7 +81,7 @@ const PROVIDER_CONFIGS: Record<OnrampProvider, OnrampProviderConfig> = {
   },
 };
 
-export const DEFAULT_ONRAMP_PROVIDER = OnrampProvider.STRIPE;
+export const DEFAULT_ONRAMP_PROVIDER = OnrampProvider.COINBASE;
 
 export function getProviderConfig(provider: OnrampProvider): OnrampProviderConfig {
   const config = PROVIDER_CONFIGS[provider];

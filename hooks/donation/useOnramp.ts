@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { OnrampError } from "@/hooks/donation/onramp-errors";
-import type { OnrampProvider, OnrampSessionRequest } from "@/hooks/donation/types";
+import { OnrampProvider, type OnrampSessionRequest } from "@/hooks/donation/types";
 import { ALLOWED_ONRAMP_DOMAINS, DEFAULT_ONRAMP_PROVIDER, getProviderConfig } from "@/lib/onramp";
 import { donationsService } from "@/services/donations.service";
 
@@ -18,10 +18,17 @@ interface UseOnrampParams {
   onError?: (error: Error) => void;
 }
 
+interface OnrampSession {
+  clientSecret: string;
+  donationUid: string;
+}
+
 interface UseOnrampReturn {
   initiateOnramp: (fiatAmount: number, fiatCurrency: string) => Promise<void>;
   isLoading: boolean;
   error: Error | null;
+  session: OnrampSession | null;
+  clearSession: () => void;
 }
 
 export const useOnramp = ({
@@ -36,8 +43,13 @@ export const useOnramp = ({
   const { address } = useAccount();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [session, setSession] = useState<OnrampSession | null>(null);
 
   const providerConfig = getProviderConfig(provider);
+
+  const clearSession = useCallback(() => {
+    setSession(null);
+  }, []);
 
   const initiateOnramp = useCallback(
     async (fiatAmount: number, fiatCurrency: string) => {
@@ -65,8 +77,17 @@ export const useOnramp = ({
 
         const sessionResponse = await donationsService.createOnrampSession(request);
 
-        // Include partnerUserRef (donationUid) in redirect URL for status tracking
-        // Use URL API to properly handle existing query params
+        // For Stripe, use embedded widget instead of redirect
+        if (provider === OnrampProvider.STRIPE) {
+          setSession({
+            clientSecret: sessionResponse.sessionToken,
+            donationUid: sessionResponse.donationUid,
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        // For Coinbase, continue with redirect flow
         const redirectWithRef = redirectUrl
           ? (() => {
               const url = new URL(redirectUrl);
@@ -132,5 +153,7 @@ export const useOnramp = ({
     initiateOnramp,
     isLoading,
     error,
+    session,
+    clearSession,
   };
 };

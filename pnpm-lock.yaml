@@ -116,6 +116,12 @@ importers:
       '@show-karma/karma-gap-sdk':
         specifier: ^0.4.19
         version: 0.4.19(@typechain/ethers-v6@0.5.1(ethers@6.11.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3))(bufferutil@4.0.9)(ts-node@10.9.2(@types/node@20.2.5)(typescript@5.9.3))(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+      '@stripe/crypto':
+        specifier: ^0.0.4
+        version: 0.0.4(@stripe/stripe-js@7.9.0)
+      '@stripe/stripe-js':
+        specifier: ^7.4.0
+        version: 7.9.0
       '@tailwindcss/typography':
         specifier: ^0.5.10
         version: 0.5.16(tailwindcss@3.4.17(ts-node@10.9.2(@types/node@20.2.5)(typescript@5.9.3)))
@@ -4761,6 +4767,15 @@ packages:
     resolution: {integrity: sha512-GkPNBbbZmz+XRdrhMtkxPotCLOQ1BaGNp/gFZYdGDk2KmUWBKmvc5JxxOhtoXM2703IzNFlQHSSNnhrDZYuLlw==}
     peerDependencies:
       storybook: ^8.6.14
+
+  '@stripe/crypto@0.0.4':
+    resolution: {integrity: sha512-gcD/aG0N90ZrNVppWYf9ADPECptw6PVtF67VIeaFP7fhgd2NvNx8erkzlcvk3VIVSY+bZ6YGX7c7cASoySX74Q==}
+    peerDependencies:
+      '@stripe/stripe-js': ^1.46.0
+
+  '@stripe/stripe-js@7.9.0':
+    resolution: {integrity: sha512-ggs5k+/0FUJcIgNY08aZTqpBTtbExkJMYMLSMwyucrhtWexVOEY1KJmhBsxf+E/Q15f5rbwBpj+t0t2AW2oCsQ==}
+    engines: {node: '>=12.16'}
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
@@ -19233,6 +19248,12 @@ snapshots:
       '@vitest/expect': 2.0.5
       '@vitest/spy': 2.0.5
       storybook: 10.0.5(@testing-library/dom@10.4.1)(bufferutil@4.0.9)(msw@2.12.0(@types/node@20.2.5)(typescript@5.9.3))(prettier@2.8.8)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(utf-8-validate@5.0.10)(vite@7.2.1(@types/node@20.2.5)(jiti@2.6.1)(sass@1.92.1)(terser@5.44.0)(yaml@2.8.1))
+
+  '@stripe/crypto@0.0.4(@stripe/stripe-js@7.9.0)':
+    dependencies:
+      '@stripe/stripe-js': 7.9.0
+
+  '@stripe/stripe-js@7.9.0': {}
 
   '@swc/helpers@0.5.15':
     dependencies:

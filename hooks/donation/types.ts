@@ -43,6 +43,7 @@ export interface CreateDonationRequest {
 
 export enum OnrampProvider {
   COINBASE = "coinbase",
+  STRIPE = "stripe",
 }
 
 export interface OnrampSessionRequest {

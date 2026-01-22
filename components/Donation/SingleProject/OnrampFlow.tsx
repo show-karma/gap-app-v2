@@ -3,10 +3,12 @@
 import { CreditCard, Loader2 } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import type { OnrampProvider } from "@/hooks/donation/types";
+import { OnrampProvider } from "@/hooks/donation/types";
 import { useOnramp } from "@/hooks/donation/useOnramp";
 import { DEFAULT_ONRAMP_PROVIDER, getProviderConfig } from "@/lib/onramp";
 import { getChainNameById } from "@/utilities/network";
+import { OnrampProviderToggle } from "./OnrampProviderToggle";
+import { StripeOnrampEmbed } from "./StripeOnrampEmbed";
 
 const ONRAMP_LIMITS = {
   MIN_AMOUNT: 1,
@@ -18,15 +20,17 @@ interface OnrampFlowProps {
   projectUid: string;
   payoutAddress: string;
   chainId: number;
-  provider?: OnrampProvider;
 }
 
-export const OnrampFlow = React.memo<OnrampFlowProps>(
-  ({ projectUid, payoutAddress, chainId, provider = DEFAULT_ONRAMP_PROVIDER }) => {
-    const [amount, setAmount] = useState("");
-    const [currency, setCurrency] = useState("USD");
+const DEFAULT_CURRENCY = "USD";
+const CURRENCY_SYMBOL = "$";
 
-    const providerConfig = getProviderConfig(provider);
+export const OnrampFlow = React.memo<OnrampFlowProps>(
+  ({ projectUid, payoutAddress, chainId }) => {
+    const [amount, setAmount] = useState("");
+    const [selectedProvider, setSelectedProvider] = useState<OnrampProvider>(DEFAULT_ONRAMP_PROVIDER);
+
+    const providerConfig = getProviderConfig(selectedProvider);
 
     const { network, isChainSupported } = useMemo(() => {
       const chainName = getChainNameById(chainId);
@@ -39,14 +43,22 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
       return `${window.location.origin}/project/${projectUid}`;
     }, [projectUid]);
 
-    const { initiateOnramp, isLoading } = useOnramp({
+    const { initiateOnramp, isLoading, session, clearSession } = useOnramp({
       projectUid,
       payoutAddress,
       network,
       targetAsset: "USDC",
       redirectUrl,
-      provider,
+      provider: selectedProvider,
     });
+
+    const handleStripeSuccess = useCallback(() => {
+      clearSession();
+    }, [clearSession]);
+
+    const handleProviderChange = useCallback((provider: OnrampProvider) => {
+      setSelectedProvider(provider);
+    }, []);
 
     const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
@@ -55,10 +67,6 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
       if (value === "" || decimalRegex.test(value)) {
         setAmount(value);
       }
-    }, []);
-
-    const handleCurrencyChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-      setCurrency(e.target.value);
     }, []);
 
     const validationError = useMemo(() => {
@@ -83,52 +91,43 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
 
     const handleProceed = useCallback(() => {
       if (!isValidAmount) return;
-      initiateOnramp(parseFloat(amount), currency);
-    }, [isValidAmount, initiateOnramp, amount, currency]);
-
-    const currencySymbol = useMemo(
-      () => providerConfig.supportedCurrencies.find((c) => c.code === currency)?.symbol || "$",
-      [providerConfig.supportedCurrencies, currency]
-    );
+      initiateOnramp(parseFloat(amount), DEFAULT_CURRENCY);
+    }, [isValidAmount, initiateOnramp, amount]);
 
     return (
       <div className="space-y-4">
+        {session && selectedProvider === OnrampProvider.STRIPE && (
+          <StripeOnrampEmbed
+            clientSecret={session.clientSecret}
+            onClose={clearSession}
+            onSuccess={handleStripeSuccess}
+          />
+        )}
+
+        <OnrampProviderToggle selected={selectedProvider} onSelect={handleProviderChange} />
+
         <div className="space-y-2">
           <label
             htmlFor="fiat-amount"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Amount
+            Amount ({DEFAULT_CURRENCY})
           </label>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
-                {currencySymbol}
-              </span>
-              <input
-                id="fiat-amount"
-                type="text"
-                inputMode="decimal"
-                placeholder="0.00"
-                value={amount}
-                onChange={handleAmountChange}
-                aria-describedby={validationError ? "fiat-amount-error" : "fiat-amount-hint"}
-                aria-invalid={validationError ? "true" : undefined}
-                className="w-full rounded-md border border-gray-300 bg-white pl-7 pr-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-              />
-            </div>
-            <select
-              value={currency}
-              onChange={handleCurrencyChange}
-              aria-label="Select currency"
-              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-            >
-              {providerConfig.supportedCurrencies.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.code}
-                </option>
-              ))}
-            </select>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
+              {CURRENCY_SYMBOL}
+            </span>
+            <input
+              id="fiat-amount"
+              type="text"
+              inputMode="decimal"
+              placeholder="0.00"
+              value={amount}
+              onChange={handleAmountChange}
+              aria-describedby={validationError ? "fiat-amount-error" : "fiat-amount-hint"}
+              aria-invalid={validationError ? "true" : undefined}
+              className="w-full rounded-md border border-gray-300 bg-white pl-7 pr-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            />
           </div>
           {validationError ? (
             <p id="fiat-amount-error" role="alert" className="text-xs text-red-500">
@@ -136,8 +135,8 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
             </p>
           ) : (
             <p id="fiat-amount-hint" className="text-xs text-gray-500 dark:text-gray-400">
-              Min: {currencySymbol}
-              {ONRAMP_LIMITS.MIN_AMOUNT} · Max: {currencySymbol}
+              Min: {CURRENCY_SYMBOL}
+              {ONRAMP_LIMITS.MIN_AMOUNT} · Max: {CURRENCY_SYMBOL}
               {ONRAMP_LIMITS.MAX_AMOUNT.toLocaleString()}
             </p>
           )}
