@@ -225,7 +225,7 @@ export function ActivityFeed({
                           <span>by</span>
                           <EthereumAddressToENSAvatar
                             address={attester}
-                            className="h-5 w-5 min-h-5 min-w-5 rounded-full"
+                            className="h-8 w-8 min-h-8 min-w-8 rounded-full"
                           />
                           <span className="text-sm font-semibold leading-5 text-foreground">
                             <EthereumAddressToENSName address={attester} />
