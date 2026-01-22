@@ -412,6 +412,8 @@ const lucideIcons = [
   "Volume2",
   "Watch",
   "Wind",
+  // Additional icons found in CI
+  "FlaskConical",
 ].reduce(
   (acc, name) => {
     acc[name] = getLucideIcon(name);
