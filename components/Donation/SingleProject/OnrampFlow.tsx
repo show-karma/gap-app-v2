@@ -5,6 +5,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { OnrampProvider } from "@/hooks/donation/types";
 import { useOnramp } from "@/hooks/donation/useOnramp";
+import { useCountryDetection } from "@/hooks/useCountryDetection";
 import { DEFAULT_ONRAMP_PROVIDER, getProviderConfig } from "@/lib/onramp";
 import { getChainNameById } from "@/utilities/network";
 import { OnrampProviderToggle } from "./OnrampProviderToggle";
@@ -25,156 +26,168 @@ interface OnrampFlowProps {
 const DEFAULT_CURRENCY = "USD";
 const CURRENCY_SYMBOL = "$";
 
-export const OnrampFlow = React.memo<OnrampFlowProps>(
-  ({ projectUid, payoutAddress, chainId }) => {
-    const [amount, setAmount] = useState("");
-    const [selectedProvider, setSelectedProvider] = useState<OnrampProvider>(DEFAULT_ONRAMP_PROVIDER);
+export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddress, chainId }) => {
+  const [amount, setAmount] = useState("");
+  const [selectedProvider, setSelectedProvider] = useState<OnrampProvider>(DEFAULT_ONRAMP_PROVIDER);
 
-    const providerConfig = getProviderConfig(selectedProvider);
+  const { country, isLoading: isCountryLoading } = useCountryDetection();
 
-    const { network, isChainSupported } = useMemo(() => {
-      const chainName = getChainNameById(chainId);
-      const supported = providerConfig.supportedNetworks.includes(chainName);
-      return { network: chainName, isChainSupported: supported };
-    }, [chainId, providerConfig.supportedNetworks]);
+  const providerConfig = getProviderConfig(selectedProvider);
 
-    const redirectUrl = useMemo(() => {
-      if (typeof window === "undefined") return undefined;
-      return `${window.location.origin}/project/${projectUid}`;
-    }, [projectUid]);
+  const { network, isChainSupported } = useMemo(() => {
+    const chainName = getChainNameById(chainId);
+    const supported = providerConfig.supportedNetworks.includes(chainName);
+    return { network: chainName, isChainSupported: supported };
+  }, [chainId, providerConfig.supportedNetworks]);
 
-    const { initiateOnramp, isLoading, session, clearSession } = useOnramp({
-      projectUid,
-      payoutAddress,
-      network,
-      targetAsset: "USDC",
-      redirectUrl,
-      provider: selectedProvider,
-    });
+  const redirectUrl = useMemo(() => {
+    if (typeof window === "undefined") return undefined;
+    return `${window.location.origin}/project/${projectUid}`;
+  }, [projectUid]);
 
-    const handleStripeSuccess = useCallback(() => {
-      clearSession();
-    }, [clearSession]);
+  const { initiateOnramp, isLoading, session, clearSession } = useOnramp({
+    projectUid,
+    payoutAddress,
+    network,
+    targetAsset: "USDC",
+    redirectUrl,
+    provider: selectedProvider,
+    country,
+  });
 
-    const handleProviderChange = useCallback((provider: OnrampProvider) => {
-      setSelectedProvider(provider);
-    }, []);
+  const handleStripeSuccess = useCallback(() => {
+    clearSession();
+  }, [clearSession]);
 
-    const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      // Allow numbers with up to MAX_DECIMALS decimal places
-      const decimalRegex = new RegExp(`^\\d*\\.?\\d{0,${ONRAMP_LIMITS.MAX_DECIMALS}}$`);
-      if (value === "" || decimalRegex.test(value)) {
-        setAmount(value);
-      }
-    }, []);
+  const handleProviderChange = useCallback((provider: OnrampProvider) => {
+    setSelectedProvider(provider);
+  }, []);
 
-    const validationError = useMemo(() => {
-      if (!amount) return null;
-      const numAmount = parseFloat(amount);
-      if (Number.isNaN(numAmount)) return "Please enter a valid amount";
-      if (numAmount < ONRAMP_LIMITS.MIN_AMOUNT)
-        return `Minimum amount is ${ONRAMP_LIMITS.MIN_AMOUNT}`;
-      if (numAmount > ONRAMP_LIMITS.MAX_AMOUNT)
-        return `Maximum amount is ${ONRAMP_LIMITS.MAX_AMOUNT.toLocaleString()}`;
-      return null;
-    }, [amount]);
+  const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Allow numbers with up to MAX_DECIMALS decimal places
+    const decimalRegex = new RegExp(`^\\d*\\.?\\d{0,${ONRAMP_LIMITS.MAX_DECIMALS}}$`);
+    if (value === "" || decimalRegex.test(value)) {
+      setAmount(value);
+    }
+  }, []);
 
-    const isValidAmount = useMemo(() => {
-      const numAmount = parseFloat(amount);
-      return (
-        !Number.isNaN(numAmount) &&
-        numAmount >= ONRAMP_LIMITS.MIN_AMOUNT &&
-        numAmount <= ONRAMP_LIMITS.MAX_AMOUNT
-      );
-    }, [amount]);
+  const validationError = useMemo(() => {
+    if (!amount) return null;
+    const numAmount = parseFloat(amount);
+    if (Number.isNaN(numAmount)) return "Please enter a valid amount";
+    if (numAmount < ONRAMP_LIMITS.MIN_AMOUNT)
+      return `Minimum amount is ${ONRAMP_LIMITS.MIN_AMOUNT}`;
+    if (numAmount > ONRAMP_LIMITS.MAX_AMOUNT)
+      return `Maximum amount is ${ONRAMP_LIMITS.MAX_AMOUNT.toLocaleString()}`;
+    return null;
+  }, [amount]);
 
-    const handleProceed = useCallback(() => {
-      if (!isValidAmount) return;
-      initiateOnramp(parseFloat(amount), DEFAULT_CURRENCY);
-    }, [isValidAmount, initiateOnramp, amount]);
-
+  const isValidAmount = useMemo(() => {
+    const numAmount = parseFloat(amount);
     return (
-      <div className="space-y-4">
-        {session && selectedProvider === OnrampProvider.STRIPE && (
-          <StripeOnrampEmbed
-            clientSecret={session.clientSecret}
-            onClose={clearSession}
-            onSuccess={handleStripeSuccess}
-          />
-        )}
-
-        <OnrampProviderToggle selected={selectedProvider} onSelect={handleProviderChange} />
-
-        <div className="space-y-2">
-          <label
-            htmlFor="fiat-amount"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Amount ({DEFAULT_CURRENCY})
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
-              {CURRENCY_SYMBOL}
-            </span>
-            <input
-              id="fiat-amount"
-              type="text"
-              inputMode="decimal"
-              placeholder="0.00"
-              value={amount}
-              onChange={handleAmountChange}
-              aria-describedby={validationError ? "fiat-amount-error" : "fiat-amount-hint"}
-              aria-invalid={validationError ? "true" : undefined}
-              className="w-full rounded-md border border-gray-300 bg-white pl-7 pr-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-            />
-          </div>
-          {validationError ? (
-            <p id="fiat-amount-error" role="alert" className="text-xs text-red-500">
-              {validationError}
-            </p>
-          ) : (
-            <p id="fiat-amount-hint" className="text-xs text-gray-500 dark:text-gray-400">
-              Min: {CURRENCY_SYMBOL}
-              {ONRAMP_LIMITS.MIN_AMOUNT} · Max: {CURRENCY_SYMBOL}
-              {ONRAMP_LIMITS.MAX_AMOUNT.toLocaleString()}
-            </p>
-          )}
-        </div>
-
-        {!isChainSupported && (
-          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 dark:text-red-400">
-            Card payments are not available for this network.
-          </div>
-        )}
-
-        <div className="rounded-lg bg-gray-50 dark:bg-zinc-800/50 p-3 text-sm text-gray-600 dark:text-gray-400">
-          <p>
-            You&apos;ll be redirected to {providerConfig.name} to complete your purchase. The crypto
-            will be sent directly to the project&apos;s wallet.
-          </p>
-        </div>
-
-        <Button
-          onClick={handleProceed}
-          disabled={!isValidAmount || isLoading || !payoutAddress || !isChainSupported}
-          className="w-full bg-brand-blue hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isLoading ? (
-            <span className="flex items-center justify-center gap-2">
-              <Loader2 className="animate-spin h-4 w-4" />
-              Creating session...
-            </span>
-          ) : (
-            <span className="flex items-center justify-center gap-2">
-              <CreditCard className="w-4 h-4" />
-              Continue to {providerConfig.name}
-            </span>
-          )}
-        </Button>
-      </div>
+      !Number.isNaN(numAmount) &&
+      numAmount >= ONRAMP_LIMITS.MIN_AMOUNT &&
+      numAmount <= ONRAMP_LIMITS.MAX_AMOUNT
     );
-  }
-);
+  }, [amount]);
+
+  const handleProceed = useCallback(() => {
+    if (!isValidAmount) return;
+    initiateOnramp(parseFloat(amount), DEFAULT_CURRENCY);
+  }, [isValidAmount, initiateOnramp, amount]);
+
+  return (
+    <div className="space-y-4">
+      {session && selectedProvider === OnrampProvider.STRIPE && (
+        <StripeOnrampEmbed
+          clientSecret={session.clientSecret}
+          onClose={clearSession}
+          onSuccess={handleStripeSuccess}
+        />
+      )}
+
+      <OnrampProviderToggle selected={selectedProvider} onSelect={handleProviderChange} />
+
+      <div className="space-y-2">
+        <label
+          htmlFor="fiat-amount"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Amount ({DEFAULT_CURRENCY})
+        </label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
+            {CURRENCY_SYMBOL}
+          </span>
+          <input
+            id="fiat-amount"
+            type="text"
+            inputMode="decimal"
+            placeholder="0.00"
+            value={amount}
+            onChange={handleAmountChange}
+            aria-describedby={validationError ? "fiat-amount-error" : "fiat-amount-hint"}
+            aria-invalid={validationError ? "true" : undefined}
+            className="w-full rounded-md border border-gray-300 bg-white pl-7 pr-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          />
+        </div>
+        {validationError ? (
+          <p id="fiat-amount-error" role="alert" className="text-xs text-red-500">
+            {validationError}
+          </p>
+        ) : (
+          <p id="fiat-amount-hint" className="text-xs text-gray-500 dark:text-gray-400">
+            Min: {CURRENCY_SYMBOL}
+            {ONRAMP_LIMITS.MIN_AMOUNT} · Max: {CURRENCY_SYMBOL}
+            {ONRAMP_LIMITS.MAX_AMOUNT.toLocaleString()}
+          </p>
+        )}
+      </div>
+
+      {!isChainSupported && (
+        <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 dark:text-red-400">
+          Card payments are not available for this network.
+        </div>
+      )}
+
+      <div className="rounded-lg bg-gray-50 dark:bg-zinc-800/50 p-3 text-sm text-gray-600 dark:text-gray-400">
+        <p>
+          You&apos;ll be redirected to {providerConfig.name} to complete your purchase. The crypto
+          will be sent directly to the project&apos;s wallet.
+        </p>
+      </div>
+
+      <Button
+        onClick={handleProceed}
+        disabled={
+          !isValidAmount ||
+          isLoading ||
+          !payoutAddress ||
+          !isChainSupported ||
+          (selectedProvider === OnrampProvider.COINBASE && isCountryLoading)
+        }
+        className="w-full bg-brand-blue hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isLoading ? (
+          <span className="flex items-center justify-center gap-2">
+            <Loader2 className="animate-spin h-4 w-4" />
+            Creating session...
+          </span>
+        ) : isCountryLoading && selectedProvider === OnrampProvider.COINBASE ? (
+          <span className="flex items-center justify-center gap-2">
+            <Loader2 className="animate-spin h-4 w-4" />
+            Detecting location...
+          </span>
+        ) : (
+          <span className="flex items-center justify-center gap-2">
+            <CreditCard className="w-4 h-4" />
+            Continue to {providerConfig.name}
+          </span>
+        )}
+      </Button>
+    </div>
+  );
+});
 
 OnrampFlow.displayName = "OnrampFlow";

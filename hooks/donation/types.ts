@@ -55,6 +55,8 @@ export interface OnrampSessionRequest {
   network: string;
   targetAsset: string;
   donorAddress?: string;
+  country?: string; // ISO 3166-1 alpha-2 code (required for Coinbase)
+  redirectUrl?: string; // URL to redirect user after completing onramp
 }
 
 export interface OnrampSessionResponse {
@@ -62,4 +64,5 @@ export interface OnrampSessionResponse {
   sessionId: string;
   donationUid: string;
   expiresAt: string;
+  onrampUrl?: string; // Direct URL for Coinbase Quote-based flow
 }

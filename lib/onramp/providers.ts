@@ -27,6 +27,8 @@ const PROVIDER_CONFIGS: Record<OnrampProvider, OnrampProviderConfig> = {
   [OnrampProvider.COINBASE]: {
     id: OnrampProvider.COINBASE,
     name: "Coinbase",
+    // Note: With the Quote-based flow, URL is returned from backend (onrampUrl in response)
+    // This buildUrl is kept as fallback for backwards compatibility only
     buildUrl: ({
       token,
       fiatAmount,
