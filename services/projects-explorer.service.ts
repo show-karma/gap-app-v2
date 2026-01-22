@@ -96,7 +96,8 @@ export const getExplorerProjectsPaginated = async (
   const [data, error] = await fetchData<PaginatedProjectsResponse>(endpoint);
 
   if (error || !data) {
-    errorManager("Failed to fetch explorer projects (paginated)", error, {
+    const errorMessage = "Failed to fetch explorer projects (paginated)";
+    errorManager(errorMessage, error, {
       context: "projects-explorer.service",
       search,
       page,
@@ -104,20 +105,8 @@ export const getExplorerProjectsPaginated = async (
       sortBy,
       sortOrder,
     });
-    // Return empty paginated response
-    return {
-      payload: [],
-      pagination: {
-        totalCount: 0,
-        page,
-        limit,
-        totalPages: 0,
-        nextPage: null,
-        prevPage: null,
-        hasNextPage: false,
-        hasPrevPage: false,
-      },
-    };
+    // Throw error so React Query can properly handle it and set isError state
+    throw new Error(error || errorMessage);
   }
 
   // Filter test projects from payload and recalculate pagination metadata
