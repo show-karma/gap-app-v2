@@ -1,26 +1,9 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ProjectPageIndex from "@/app/project/[projectId]/page";
 
-jest.mock("next/dynamic", () => ({
-  __esModule: true,
-  default: (_callback: () => Promise<any>, options: { loading: () => React.ReactNode }) => {
-    return function DynamicComponent() {
-      return options.loading();
-    };
-  },
-}));
-
-jest.mock("@/components/Pages/Project/ProjectPage", () => {
-  return function MockProjectPage() {
-    return <div data-testid="mock-project-page">Mocked Project Page</div>;
-  };
-});
-
-jest.mock("@/components/Pages/Project/Loading/Overview", () => ({
-  ProjectOverviewLoading: () => <div data-testid="project-overview-loading">Loading...</div>,
-}));
+// Mocks for next/dynamic, ProjectPage, and ProjectOverviewLoading are pre-registered in tests/bun-setup.ts
 
 describe("Project Page", () => {
   it("renders the loading component while the main component is loading", () => {

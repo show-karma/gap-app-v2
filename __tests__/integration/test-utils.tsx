@@ -3,12 +3,21 @@
  *
  * Provides helper functions for setting up realistic test scenarios
  * with multiple components and hooks working together.
+ *
+ * NOTE: This file has been updated to work with Bun's test runner.
+ * Mocks are pre-registered in tests/bun-setup.ts and configured via
+ * the global mock state objects.
  */
 
+import { mock } from "bun:test";
 import { waitFor } from "@testing-library/react";
 import type { Address } from "viem";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import type { DonationPayment } from "@/store/donationCart";
+
+// Access the configurable wagmi mock state
+const getWagmiMockState = () => (globalThis as any).__wagmiMockState__;
+const getMocks = () => (globalThis as any).__mocks__;
 
 /**
  * Mock wallet connection with default or custom address
@@ -18,14 +27,13 @@ export function mockWalletConnection(
   isConnected: boolean = true,
   chainId: number = 10
 ) {
-  const wagmi = require("wagmi");
-
-  (wagmi.useAccount as jest.Mock).mockReturnValue({
-    address: isConnected ? address : null,
+  const wagmiState = getWagmiMockState();
+  wagmiState.account = {
+    address: isConnected ? address : undefined,
     isConnected,
-  });
-
-  (wagmi.useChainId as jest.Mock).mockReturnValue(chainId);
+    connector: null,
+  };
+  wagmiState.chainId = chainId;
 }
 
 /**
@@ -48,14 +56,11 @@ export function setupMockWalletClient(chainId: number = 10) {
   const mockWalletClient = {
     account: { address: "0x1234567890123456789012345678901234567890" as Address },
     chain: { id: chainId },
-    signTypedData: jest.fn().mockResolvedValue("0xsignature"),
+    signTypedData: mock(() => Promise.resolve("0xsignature")),
   };
 
-  const wagmi = require("wagmi");
-  (wagmi.useWalletClient as jest.Mock).mockReturnValue({
-    data: mockWalletClient,
-    refetch: jest.fn().mockResolvedValue({ data: mockWalletClient }),
-  });
+  const wagmiState = getWagmiMockState();
+  wagmiState.walletClient = mockWalletClient;
 
   return mockWalletClient;
 }
@@ -66,15 +71,17 @@ export function setupMockWalletClient(chainId: number = 10) {
 export function setupMockPublicClient(chainId: number = 10) {
   const mockPublicClient = {
     chain: { id: chainId },
-    waitForTransactionReceipt: jest.fn().mockResolvedValue({
-      status: "success",
-      transactionHash: "0xtxhash",
-    }),
-    readContract: jest.fn(),
+    waitForTransactionReceipt: mock(() =>
+      Promise.resolve({
+        status: "success",
+        transactionHash: "0xtxhash",
+      })
+    ),
+    readContract: mock(() => Promise.resolve(undefined)),
   };
 
-  const wagmi = require("wagmi");
-  (wagmi.usePublicClient as jest.Mock).mockReturnValue(mockPublicClient);
+  const wagmiState = getWagmiMockState();
+  wagmiState.publicClient = mockPublicClient;
 
   return mockPublicClient;
 }
@@ -87,19 +94,23 @@ export async function simulateApproval(
   tokenSymbol: string,
   shouldSucceed: boolean = true
 ) {
-  const { executeApprovals } = require("@/utilities/erc20");
+  const mocks = getMocks();
 
   if (shouldSucceed) {
-    executeApprovals.mockResolvedValue([
-      {
-        status: "confirmed",
-        hash: "0xapprovalhash",
-        tokenAddress,
-        tokenSymbol,
-      },
-    ]);
+    mocks.executeApprovals.mockImplementation(() =>
+      Promise.resolve([
+        {
+          status: "confirmed",
+          hash: "0xapprovalhash",
+          tokenAddress,
+          tokenSymbol,
+        },
+      ])
+    );
   } else {
-    executeApprovals.mockRejectedValue(new Error("User rejected the request"));
+    mocks.executeApprovals.mockImplementation(() =>
+      Promise.reject(new Error("User rejected the request"))
+    );
   }
 }
 
@@ -110,18 +121,27 @@ export async function simulateTransaction(
   shouldSucceed: boolean = true,
   txHash: string = "0xtransactionhash"
 ) {
-  const wagmi = require("wagmi");
-  const mockWriteContractAsync = jest.fn();
+  const wagmiState = getWagmiMockState();
+  const mockWriteContractAsync = mock(() => Promise.resolve(txHash));
 
   if (shouldSucceed) {
-    mockWriteContractAsync.mockResolvedValue(txHash);
+    mockWriteContractAsync.mockImplementation(() => Promise.resolve(txHash));
   } else {
-    mockWriteContractAsync.mockRejectedValue(new Error("Transaction reverted"));
+    mockWriteContractAsync.mockImplementation(() =>
+      Promise.reject(new Error("Transaction reverted"))
+    );
   }
 
-  (wagmi.useWriteContract as jest.Mock).mockReturnValue({
+  wagmiState.writeContract = {
     writeContractAsync: mockWriteContractAsync,
-  });
+    writeContract: mock(() => {}),
+    data: undefined,
+    isLoading: false,
+    isSuccess: false,
+    isError: false,
+    error: null,
+    reset: mock(() => {}),
+  };
 
   return mockWriteContractAsync;
 }
@@ -143,10 +163,11 @@ export async function waitForDonationComplete(
 
 /**
  * Create mock token
+ * Note: Using valid checksummed Ethereum addresses for viem compatibility
  */
 export function createMockToken(overrides?: Partial<SupportedToken>): SupportedToken {
   return {
-    address: "0xUSDC000000000000000000000000000000000000",
+    address: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", // Valid USDC address on Optimism
     symbol: "USDC",
     name: "USD Coin",
     decimals: 6,
@@ -189,46 +210,40 @@ export function createMockPayment(overrides?: Partial<DonationPayment>): Donatio
  * Setup default mocks for all wagmi hooks and utilities
  */
 export function setupDefaultMocks() {
-  const wagmi = require("wagmi");
+  const wagmiState = getWagmiMockState();
+  const mocks = getMocks();
 
-  // Mock wagmi hooks
-  (wagmi.useAccount as jest.Mock).mockReturnValue({
+  // Configure wagmi mock state
+  wagmiState.account = {
     address: "0x1234567890123456789012345678901234567890",
     isConnected: true,
-  });
-
-  (wagmi.useChainId as jest.Mock).mockReturnValue(10);
+    connector: null,
+  };
+  wagmiState.chainId = 10;
 
   const mockPublicClient = setupMockPublicClient(10);
   const mockWalletClient = setupMockWalletClient(10);
 
-  const mockWriteContractAsync = jest.fn().mockResolvedValue("0xtxhash");
-  (wagmi.useWriteContract as jest.Mock).mockReturnValue({
+  const mockWriteContractAsync = mock(() => Promise.resolve("0xtxhash"));
+  wagmiState.writeContract = {
     writeContractAsync: mockWriteContractAsync,
-  });
+    writeContract: mock(() => {}),
+    data: undefined,
+    isLoading: false,
+    isSuccess: false,
+    isError: false,
+    error: null,
+    reset: mock(() => {}),
+  };
 
-  // Mock utilities
-  const {
-    checkTokenAllowances,
-    executeApprovals,
-    getApprovalAmount,
-  } = require("@/utilities/erc20");
-  checkTokenAllowances.mockResolvedValue([]);
-  executeApprovals.mockResolvedValue([]);
-  getApprovalAmount.mockImplementation((amount: bigint) => amount);
-
-  const { getRPCClient } = require("@/utilities/rpcClient");
-  getRPCClient.mockResolvedValue(mockPublicClient);
-
-  const {
-    getWalletClientWithFallback,
-    isWalletClientGoodEnough,
-  } = require("@/utilities/walletClientFallback");
-  getWalletClientWithFallback.mockResolvedValue(mockWalletClient);
-  isWalletClientGoodEnough.mockReturnValue(true);
-
-  const { validateChainSync } = require("@/utilities/chainSyncValidation");
-  validateChainSync.mockResolvedValue(true);
+  // Configure utility mocks
+  mocks.checkTokenAllowances.mockImplementation(() => Promise.resolve([]));
+  mocks.executeApprovals.mockImplementation(() => Promise.resolve([]));
+  mocks.getApprovalAmount.mockImplementation((amount: bigint) => amount);
+  mocks.getRPCClient.mockImplementation(() => Promise.resolve(mockPublicClient));
+  mocks.getWalletClientWithFallback.mockImplementation(() => Promise.resolve(mockWalletClient));
+  mocks.isWalletClientGoodEnough.mockImplementation(() => true);
+  mocks.validateChainSync.mockImplementation(() => Promise.resolve(true));
 
   return {
     mockPublicClient,
@@ -245,18 +260,20 @@ export function setupApprovalNeededMocks(
   tokenSymbol: string,
   requiredAmount: bigint
 ) {
-  const { checkTokenAllowances } = require("@/utilities/erc20");
+  const mocks = getMocks();
 
-  checkTokenAllowances.mockResolvedValue([
-    {
-      tokenAddress: tokenAddress as Address,
-      tokenSymbol,
-      requiredAmount,
-      currentAllowance: BigInt(0),
-      needsApproval: true,
-      chainId: 10,
-    },
-  ]);
+  mocks.checkTokenAllowances.mockImplementation(() =>
+    Promise.resolve([
+      {
+        tokenAddress: tokenAddress as Address,
+        tokenSymbol,
+        requiredAmount,
+        currentAllowance: BigInt(0),
+        needsApproval: true,
+        chainId: 10,
+      },
+    ])
+  );
 }
 
 /**
@@ -271,33 +288,70 @@ export function createPayoutAddressGetter(
 /**
  * Mock switch chain function
  */
-export function createMockSwitchChain(shouldSucceed: boolean = true): jest.Mock {
-  const mockSwitchChain = jest.fn();
+export function createMockSwitchChain(shouldSucceed: boolean = true) {
+  const wagmiState = getWagmiMockState();
+  const mockSwitchChain = mock(() => Promise.resolve(undefined));
 
   if (shouldSucceed) {
-    mockSwitchChain.mockResolvedValue(undefined);
+    mockSwitchChain.mockImplementation(() => Promise.resolve(undefined));
   } else {
-    mockSwitchChain.mockRejectedValue(new Error("User rejected network switch"));
+    mockSwitchChain.mockImplementation(() =>
+      Promise.reject(new Error("User rejected network switch"))
+    );
   }
 
+  wagmiState.switchChain = mockSwitchChain;
   return mockSwitchChain;
 }
 
 /**
  * Mock fresh wallet client getter
  */
-export function createMockGetFreshWalletClient(chainId: number = 10): jest.Mock {
-  return jest.fn().mockResolvedValue({
-    chain: { id: chainId },
-    account: { address: "0x1234567890123456789012345678901234567890" },
-  });
+export function createMockGetFreshWalletClient(chainId: number = 10) {
+  return mock(() =>
+    Promise.resolve({
+      chain: { id: chainId },
+      account: { address: "0x1234567890123456789012345678901234567890" },
+    })
+  );
 }
 
 /**
  * Clear all donation-related mocks
  */
 export function clearDonationMocks() {
-  jest.clearAllMocks();
+  const mocks = getMocks();
+  const wagmiState = getWagmiMockState();
+
+  // Reset wagmi state to defaults
+  wagmiState.account = {
+    address: undefined,
+    isConnected: false,
+    connector: null,
+  };
+  wagmiState.chainId = 1;
+  wagmiState.walletClient = null;
+  wagmiState.publicClient = null;
+  wagmiState.writeContract = {
+    writeContract: mock(() => {}),
+    writeContractAsync: mock(() => Promise.resolve("")),
+    data: undefined,
+    isLoading: false,
+    isSuccess: false,
+    isError: false,
+    error: null,
+    reset: mock(() => {}),
+  };
+  wagmiState.switchChain = mock(() => Promise.resolve(undefined));
+
+  // Clear mock call history
+  if (mocks.checkTokenAllowances?.mockClear) mocks.checkTokenAllowances.mockClear();
+  if (mocks.executeApprovals?.mockClear) mocks.executeApprovals.mockClear();
+  if (mocks.getApprovalAmount?.mockClear) mocks.getApprovalAmount.mockClear();
+  if (mocks.getRPCClient?.mockClear) mocks.getRPCClient.mockClear();
+  if (mocks.getWalletClientWithFallback?.mockClear) mocks.getWalletClientWithFallback.mockClear();
+  if (mocks.isWalletClientGoodEnough?.mockClear) mocks.isWalletClientGoodEnough.mockClear();
+  if (mocks.validateChainSync?.mockClear) mocks.validateChainSync.mockClear();
 }
 
 /**
@@ -322,6 +376,7 @@ export function setupLocalStorageMock() {
   Object.defineProperty(window, "localStorage", {
     value: mockStorage,
     writable: true,
+    configurable: true,
   });
 
   return mockStorage;

@@ -1,65 +1,22 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import RootLayout from "@/app/layout";
 import "@testing-library/jest-dom";
 
-jest.mock("@vercel/speed-insights/next", () => ({
-  SpeedInsights: () => <div data-testid="speed-insights" />,
-}));
-
-jest.mock("@vercel/analytics/react", () => ({
-  Analytics: () => <div data-testid="analytics" />,
-}));
-
-jest.mock("@next/third-parties/google", () => ({
-  GoogleAnalytics: () => <div data-testid="google-analytics" />,
-}));
-
-jest.mock("@/src/components/footer/footer", () => ({
-  Footer: () => <footer data-testid="footer" />,
-}));
-
-jest.mock("@/src/components/navbar/navbar", () => ({
-  Navbar: () => <header data-testid="header" />,
-}));
-
-jest.mock("react-hot-toast", () => ({
-  Toaster: () => <div data-testid="toaster" />,
-}));
-
-jest.mock("@/components/Utilities/PrivyProviderWrapper", () => ({
-  __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="privy-provider">{children}</div>
-  ),
-}));
-
-jest.mock("@/components/Dialogs/ContributorProfileDialog", () => ({
-  ContributorProfileDialog: () => <div data-testid="contributor-profile-dialog" />,
-}));
-
-jest.mock("@/components/Dialogs/OnboardingDialog", () => ({
-  OnboardingDialog: () => <div data-testid="onboarding-dialog" />,
-}));
-
-jest.mock("@/components/Utilities/PermissionsProvider", () => ({
-  PermissionsProvider: () => <div data-testid="permissions-provider" />,
-}));
-
-jest.mock("@/components/ProgressBarWrapper", () => ({
-  ProgressBarWrapper: () => <div data-testid="progress-bar-wrapper" />,
-}));
-
-jest.mock("@/components/Utilities/HotjarAnalytics", () => ({
-  __esModule: true,
-  default: () => <div data-testid="hotjar-analytics" />,
-}));
-
-jest.mock("next-themes", () => ({
-  ThemeProvider: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="theme-provider">{children}</div>
-  ),
-}));
+// All mocks are pre-registered in tests/bun-setup.ts:
+// - @vercel/speed-insights/next
+// - @vercel/analytics/react
+// - @next/third-parties/google
+// - @/src/components/footer/footer
+// - @/src/components/navbar/navbar
+// - react-hot-toast
+// - @/components/Utilities/PrivyProviderWrapper
+// - @/components/Dialogs/ContributorProfileDialog
+// - @/components/Dialogs/OnboardingDialog
+// - @/components/Utilities/PermissionsProvider
+// - @/components/ProgressBarWrapper
+// - @/components/Utilities/HotjarAnalytics
+// - next-themes
 
 describe("RootLayout", () => {
   it("renders all components correctly", () => {

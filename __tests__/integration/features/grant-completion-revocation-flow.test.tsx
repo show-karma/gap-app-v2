@@ -416,7 +416,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       const { buildRevocationPayload } = require("@/utilities/grantCompletionHelpers");
       buildRevocationPayload.mockReturnValue([{ schema: "0xschema123", data: [] }]);
 
-      const fetchData = require("@/utilities/fetchData").default;
+      const fetchData = (globalThis as any).__mocks__.fetchData;
       fetchData.mockResolvedValue({});
 
       // Render component
@@ -835,7 +835,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       const { buildRevocationPayload } = require("@/utilities/grantCompletionHelpers");
       buildRevocationPayload.mockReturnValue([{ schema: "0xschema123", data: [] }]);
 
-      const fetchData = require("@/utilities/fetchData").default;
+      const fetchData = (globalThis as any).__mocks__.fetchData;
       fetchData.mockResolvedValue({});
 
       const { useAttestationToast } = require("@/hooks/useAttestationToast");

@@ -1,33 +1,34 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
-import { errorManager } from "@/components/Utilities/errorManager";
+import { beforeEach, describe, expect, it } from "bun:test";
+
+// All mocks are pre-registered in tests/bun-setup.ts
+// Access mocks via globalThis.__mocks__
+
+// Import after mocks are set up
 import {
   type FetchCommunityProjectUpdatesParams,
   fetchCommunityProjectUpdates,
 } from "@/services/community-project-updates.service";
 
-// Mock dependencies
-jest.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
-  },
-}));
+// Get mocks from globalThis
+const getMocks = () => (globalThis as any).__mocks__;
 
-jest.mock("@/utilities/indexer", () => ({
-  INDEXER: {
-    COMMUNITY: {
-      PROJECT_UPDATES: (communityId: string) => `/communities/${communityId}/project-updates`,
-    },
-  },
-}));
-
-jest.mock("@/components/Utilities/errorManager");
+// Base URL from pre-registered envVars mock
+const BASE_URL = "https://gap-indexer.vercel.app";
 
 describe("fetchCommunityProjectUpdates", () => {
-  const mockFetch = jest.fn();
+  let mockFetch: any;
+  let mockErrorManager: any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    const mocks = getMocks();
+    mockErrorManager = mocks.errorManager;
+
+    // Create a new mock fetch for each test
+    mockFetch = jest.fn();
     global.fetch = mockFetch;
+
+    // Clear mocks
+    if (mockErrorManager?.mockClear) mockErrorManager.mockClear();
   });
 
   describe("Successful requests", () => {
@@ -63,7 +64,7 @@ describe("fetchCommunityProjectUpdates", () => {
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:4000/communities/community-1/project-updates?page=1&limit=25"
+        `${BASE_URL}/v2/communities/community-1/project-updates?page=1&limit=25`
       );
       expect(result).toEqual(mockResponse);
     });
@@ -96,7 +97,7 @@ describe("fetchCommunityProjectUpdates", () => {
       const result = await fetchCommunityProjectUpdates(params);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:4000/communities/community-1/project-updates?page=2&limit=50"
+        `${BASE_URL}/v2/communities/community-1/project-updates?page=2&limit=50`
       );
       expect(result).toEqual(mockResponse);
     });
@@ -133,7 +134,7 @@ describe("fetchCommunityProjectUpdates", () => {
       const result = await fetchCommunityProjectUpdates(params);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:4000/communities/community-1/project-updates?page=1&limit=25&status=pending"
+        `${BASE_URL}/v2/communities/community-1/project-updates?page=1&limit=25&status=pending`
       );
       expect(result).toEqual(mockResponse);
     });
@@ -165,7 +166,7 @@ describe("fetchCommunityProjectUpdates", () => {
       await fetchCommunityProjectUpdates(params);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:4000/communities/community-1/project-updates?page=1&limit=25&status=completed"
+        `${BASE_URL}/v2/communities/community-1/project-updates?page=1&limit=25&status=completed`
       );
     });
 
@@ -213,7 +214,7 @@ describe("fetchCommunityProjectUpdates", () => {
         "Failed to fetch community updates: 404 Not Found"
       );
 
-      expect(errorManager).toHaveBeenCalledWith(
+      expect(mockErrorManager).toHaveBeenCalledWith(
         "Community project updates fetch failed",
         expect.any(Error),
         expect.objectContaining({
@@ -236,7 +237,7 @@ describe("fetchCommunityProjectUpdates", () => {
         "Failed to fetch community updates: 500 Internal Server Error"
       );
 
-      expect(errorManager).toHaveBeenCalledWith(
+      expect(mockErrorManager).toHaveBeenCalledWith(
         "Community project updates fetch failed",
         expect.any(Error),
         expect.objectContaining({
@@ -258,7 +259,7 @@ describe("fetchCommunityProjectUpdates", () => {
         "Server returned non-JSON response"
       );
 
-      expect(errorManager).toHaveBeenCalledWith(
+      expect(mockErrorManager).toHaveBeenCalledWith(
         "Invalid content-type from community updates endpoint",
         expect.any(Error),
         expect.objectContaining({
@@ -295,7 +296,7 @@ describe("fetchCommunityProjectUpdates", () => {
         "Server returned invalid JSON"
       );
 
-      expect(errorManager).toHaveBeenCalledWith(
+      expect(mockErrorManager).toHaveBeenCalledWith(
         "JSON parsing failed for community project updates",
         expect.any(Error),
         expect.objectContaining({
@@ -313,7 +314,7 @@ describe("fetchCommunityProjectUpdates", () => {
         "Network request failed"
       );
 
-      expect(errorManager).toHaveBeenCalledWith(
+      expect(mockErrorManager).toHaveBeenCalledWith(
         "Unexpected error fetching community project updates",
         networkError,
         expect.objectContaining({
@@ -340,7 +341,7 @@ describe("fetchCommunityProjectUpdates", () => {
       }
 
       // errorManager should only be called once for the HTTP error
-      const calls = (errorManager as jest.Mock).mock.calls;
+      const calls = mockErrorManager.mock.calls;
       expect(calls.length).toBe(1);
       expect(calls[0][0]).toBe("Community project updates fetch failed");
     });
@@ -352,7 +353,7 @@ describe("fetchCommunityProjectUpdates", () => {
         "String error"
       );
 
-      expect(errorManager).toHaveBeenCalledWith(
+      expect(mockErrorManager).toHaveBeenCalledWith(
         "Unexpected error fetching community project updates",
         "String error",
         expect.any(Object)
@@ -390,7 +391,7 @@ describe("fetchCommunityProjectUpdates", () => {
       await fetchCommunityProjectUpdates(params);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:4000/communities/community-123/project-updates?page=3&limit=10&status=pending"
+        `${BASE_URL}/v2/communities/community-123/project-updates?page=3&limit=10&status=pending`
       );
     });
 
@@ -418,7 +419,7 @@ describe("fetchCommunityProjectUpdates", () => {
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:4000/communities/community-with-dashes-123/project-updates?page=1&limit=25"
+        `${BASE_URL}/v2/communities/community-with-dashes-123/project-updates?page=1&limit=25`
       );
     });
   });

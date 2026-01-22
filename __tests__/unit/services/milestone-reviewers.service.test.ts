@@ -1,68 +1,37 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
-import axios, { type AxiosInstance } from "axios";
-import { TokenManager } from "@/utilities/auth/token-manager";
+import { beforeEach, describe, expect, it } from "bun:test";
 
-// Mock dependencies BEFORE importing the service
-jest.mock("axios");
-jest.mock("@/utilities/auth/token-manager");
-jest.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
-  },
-}));
+// All mocks are pre-registered in tests/bun-setup.ts
+// Access mocks via globalThis.__mocks__
 
-// Mock fetchData for GET requests
-jest.mock("@/utilities/fetchData");
-
-// Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
-var mockAxiosInstance: jest.Mocked<AxiosInstance>;
-
-// Mock api-client for mutations (POST, DELETE)
-jest.mock("@/utilities/auth/api-client", () => {
-  const instance = {
-    get: jest.fn(),
-    post: jest.fn(),
-    delete: jest.fn(),
-    put: jest.fn(),
-    patch: jest.fn(),
-    request: jest.fn(),
-    head: jest.fn(),
-    options: jest.fn(),
-    interceptors: {
-      request: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
-      response: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
-    },
-    defaults: {} as any,
-    getUri: jest.fn(),
-    deleteUri: jest.fn(),
-  } as unknown as jest.Mocked<AxiosInstance>;
-
-  mockAxiosInstance = instance;
-
-  return {
-    createAuthenticatedApiClient: jest.fn(() => instance),
-  };
-});
-
-// Import the service AFTER all mocks are set up
+// Import the service AFTER mocks are set up (they're pre-registered in bun-setup.ts)
 import {
   type AddMilestoneReviewerRequest,
   milestoneReviewersService,
 } from "@/services/milestone-reviewers.service";
-// Import fetchData mock
-import fetchData from "@/utilities/fetchData";
 
-const mockedAxios = axios as jest.Mocked<typeof axios>;
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+// Get mocks from globalThis
+const getMocks = () => (globalThis as any).__mocks__;
 
 describe("milestoneReviewersService", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockAxiosInstance.post.mockClear();
-    mockAxiosInstance.delete.mockClear();
+  let mockFetchData: any;
+  let mockApiClient: any;
+  let mockAxios: any;
 
-    // Mock TokenManager
-    (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue("test-token");
+  beforeEach(() => {
+    const mocks = getMocks();
+    mockFetchData = mocks.fetchData;
+    mockApiClient = mocks.apiClient;
+    mockAxios = mocks.axios;
+
+    // Clear mocks
+    if (mockFetchData?.mockClear) mockFetchData.mockClear();
+    if (mockApiClient?.post?.mockClear) mockApiClient.post.mockClear();
+    if (mockApiClient?.delete?.mockClear) mockApiClient.delete.mockClear();
+
+    // Setup default behavior for TokenManager
+    if (mocks.TokenManager?.getToken?.mockImplementation) {
+      mocks.TokenManager.getToken.mockImplementation(() => Promise.resolve("test-token"));
+    }
   });
 
   describe("getReviewers", () => {
@@ -181,11 +150,11 @@ describe("milestoneReviewersService", () => {
         },
       };
 
-      mockAxiosInstance.post.mockResolvedValue({ data: mockApiResponse });
+      mockApiClient.post.mockResolvedValue({ data: mockApiResponse });
 
       const result = await milestoneReviewersService.addReviewer("program-1", reviewerData);
 
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith(
+      expect(mockApiClient.post).toHaveBeenCalledWith(
         expect.stringContaining("program-1"),
         reviewerData
       );
@@ -206,7 +175,7 @@ describe("milestoneReviewersService", () => {
         email: "jane@example.com",
       };
 
-      mockAxiosInstance.post.mockResolvedValue({ data: {} });
+      mockApiClient.post.mockResolvedValue({ data: {} });
 
       const result = await milestoneReviewersService.addReviewer("program-1", reviewerData);
 
@@ -240,7 +209,7 @@ describe("milestoneReviewersService", () => {
         },
       };
 
-      mockAxiosInstance.post.mockResolvedValue({ data: mockApiResponse });
+      mockApiClient.post.mockResolvedValue({ data: mockApiResponse });
 
       const result = await milestoneReviewersService.addReviewer("program-1", reviewerData);
 
@@ -250,21 +219,21 @@ describe("milestoneReviewersService", () => {
 
   describe("removeReviewer", () => {
     it("should remove a milestone reviewer successfully", async () => {
-      mockAxiosInstance.delete.mockResolvedValue({ data: {} });
+      mockApiClient.delete.mockResolvedValue({ data: {} });
 
       await milestoneReviewersService.removeReviewer(
         "program-1",
         "0x1234567890123456789012345678901234567890"
       );
 
-      expect(mockAxiosInstance.delete).toHaveBeenCalledWith(
+      expect(mockApiClient.delete).toHaveBeenCalledWith(
         "/v2/programs/program-1/milestone-reviewers/0x1234567890123456789012345678901234567890"
       );
     });
 
     it("should handle deletion errors", async () => {
       const mockError = new Error("Reviewer not found");
-      mockAxiosInstance.delete.mockRejectedValue(mockError);
+      mockApiClient.delete.mockRejectedValue(mockError);
 
       await expect(
         milestoneReviewersService.removeReviewer(
@@ -290,7 +259,7 @@ describe("milestoneReviewersService", () => {
         },
       ];
 
-      mockAxiosInstance.post.mockResolvedValue({
+      mockApiClient.post.mockResolvedValue({
         data: {
           reviewer: {
             publicAddress: "0x1234567890123456789012345678901234567890",
@@ -330,11 +299,11 @@ describe("milestoneReviewersService", () => {
       ];
 
       // Mock axios.isAxiosError for this test
-      mockedAxios.isAxiosError = jest.fn(
+      mockAxios.isAxiosError.mockImplementation(
         (payload: any): payload is import("axios").AxiosError => true
-      ) as unknown as typeof mockedAxios.isAxiosError;
+      );
 
-      mockAxiosInstance.post
+      mockApiClient.post
         .mockResolvedValueOnce({
           data: {
             reviewer: {
@@ -388,10 +357,10 @@ describe("milestoneReviewersService", () => {
         message: "Request failed",
       };
 
-      mockedAxios.isAxiosError = jest.fn(
+      mockAxios.isAxiosError.mockImplementation(
         (payload: any): payload is import("axios").AxiosError => true
-      ) as unknown as typeof mockedAxios.isAxiosError;
-      mockAxiosInstance.post.mockRejectedValue(axiosError);
+      );
+      mockApiClient.post.mockRejectedValue(axiosError);
 
       const result = await milestoneReviewersService.addMultipleReviewers("program-1", reviewers);
 
@@ -410,10 +379,10 @@ describe("milestoneReviewersService", () => {
       ];
 
       const error = new Error("Network error");
-      mockedAxios.isAxiosError = jest.fn(
+      mockAxios.isAxiosError.mockImplementation(
         (payload: any): payload is import("axios").AxiosError => false
-      ) as unknown as typeof mockedAxios.isAxiosError;
-      mockAxiosInstance.post.mockRejectedValue(error);
+      );
+      mockApiClient.post.mockRejectedValue(error);
 
       const result = await milestoneReviewersService.addMultipleReviewers("program-1", reviewers);
 
@@ -429,7 +398,7 @@ describe("milestoneReviewersService", () => {
         },
       ];
 
-      mockAxiosInstance.post.mockRejectedValue("String error");
+      mockApiClient.post.mockRejectedValue("String error");
 
       const result = await milestoneReviewersService.addMultipleReviewers("program-1", reviewers);
 

@@ -98,6 +98,46 @@ global.cancelAnimationFrame = (handle: number): void => {
 // Mock scrollTo
 window.scrollTo = () => {};
 
+// Mock localStorage - required for zustand persist middleware
+// This needs to be set up before any zustand stores are imported
+const mockLocalStorage = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+    get length() {
+      return Object.keys(store).length;
+    },
+    key: (index: number) => {
+      const keys = Object.keys(store);
+      return keys[index] || null;
+    },
+  };
+})();
+
+Object.defineProperty(window, "localStorage", {
+  value: mockLocalStorage,
+  writable: true,
+  configurable: true,
+});
+
+Object.defineProperty(globalThis, "localStorage", {
+  value: mockLocalStorage,
+  writable: true,
+  configurable: true,
+});
+
+// Export localStorage mock for test access
+(globalThis as any).__mockLocalStorage__ = mockLocalStorage;
+
 // =============================================================================
 // Environment Variables for Tests
 // =============================================================================
@@ -320,7 +360,12 @@ const indexerMock = {
         REVIEWERS: (applicationId: string) => `/v2/funding-applications/${applicationId}/reviewers`,
       },
       USER: {
-        PERMISSIONS: (resource?: string) => `/v2/user/permissions`,
+        PERMISSIONS: (resource?: string) => {
+          const params = new URLSearchParams();
+          if (resource) params.append("resource", resource);
+          const queryString = params.toString();
+          return `/v2/user/permissions${queryString ? `?${queryString}` : ""}`;
+        },
         ADMIN_COMMUNITIES: () => `/v2/user/communities/admin`,
         PROJECTS: (page?: number, limit?: number) => `/v2/user/projects`,
       },
@@ -565,20 +610,26 @@ registerMock("@/utilities/retries", {
   retry: mockRetry,
 });
 
-// Mock @/services/project-grants.service
-const mockGetProjectGrants = createMockFn();
-mock.module("@/services/project-grants.service", () => ({
-  getProjectGrants: mockGetProjectGrants,
-}));
-registerMock("@/services/project-grants.service", {
-  getProjectGrants: mockGetProjectGrants,
-});
+// NOTE: Do NOT mock @/services/project-grants.service here
+// because it prevents unit tests from testing the real implementation.
+// Integration tests that need to mock this service can do so locally.
+// const mockGetProjectGrants = createMockFn();
+// mock.module("@/services/project-grants.service", () => ({
+//   getProjectGrants: mockGetProjectGrants,
+// }));
+// registerMock("@/services/project-grants.service", {
+//   getProjectGrants: mockGetProjectGrants,
+// });
 
 // Register mock for both aliased and relative paths
 mock.module("@/utilities/indexer", () => indexerMock);
 mock.module("./utilities/indexer", () => indexerMock);
 mock.module("utilities/indexer", () => indexerMock);
 mock.module("/home/amaury/gap/gap-app-v2/utilities/indexer", () => indexerMock);
+mock.module(
+  "/home/amaury/gap/.worktrees/feat-migration-to-bun/gap-app-v2/utilities/indexer",
+  () => indexerMock
+);
 
 // Mock next/navigation
 mock.module("next/navigation", () => ({
@@ -652,7 +703,7 @@ mock.module("next/link", () => {
   };
 });
 
-// Mock @/components/Utilities/PrivyProviderWrapper with queryClient
+// Mock @/components/Utilities/PrivyProviderWrapper with queryClient and default export
 const mockInvalidateQueries = createMockFn();
 const mockQueryClient = {
   invalidateQueries: mockInvalidateQueries,
@@ -660,9 +711,15 @@ const mockQueryClient = {
   getQueryData: createMockFn(),
   setQueryData: createMockFn(),
 };
-mock.module("@/components/Utilities/PrivyProviderWrapper", () => ({
-  queryClient: mockQueryClient,
-}));
+// Default export is a component that wraps children with testid
+mock.module("@/components/Utilities/PrivyProviderWrapper", () => {
+  const React = require("react");
+  return {
+    default: ({ children }: { children: unknown }) =>
+      React.createElement("div", { "data-testid": "privy-provider" }, children),
+    queryClient: mockQueryClient,
+  };
+});
 registerMock("@/components/Utilities/PrivyProviderWrapper", {
   queryClient: mockQueryClient,
 });
@@ -670,12 +727,15 @@ registerMock("@/components/Utilities/PrivyProviderWrapper", {
 // Export for test access
 (globalThis as any).__mocks__.queryClient = mockQueryClient;
 
-// Mock @/utilities/queryKeys
+// Mock @/utilities/queryKeys - include all keys used by hooks
 const mockQueryKeys = {
   AUTH: {
     STAFF_AUTHORIZATION: (address?: string) =>
       ["staffAuthorization", address?.toLowerCase()] as const,
     STAFF_AUTHORIZATION_BASE: ["staffAuthorization"] as const,
+    CONTRACT_OWNER: (address?: string, chainId?: number) =>
+      ["contract-owner", address, chainId] as const,
+    CONTRACT_OWNER_BASE: ["contract-owner"] as const,
   },
   MILESTONES: {
     PROJECT_GRANT_MILESTONES: (projectId: string, programId: string) =>
@@ -688,6 +748,80 @@ const mockQueryKeys = {
   REVIEWERS: {
     PROGRAM: (programId: string) => ["program-reviewers", programId] as const,
     MILESTONE: (programId: string) => ["milestone-reviewers", programId] as const,
+  },
+  COMMUNITY: {
+    DETAILS: (communityUIDorSlug?: string) => ["communityDetails", communityUIDorSlug] as const,
+    DETAILS_V2: (communityUIDorSlug?: string) =>
+      ["community-details-v2", communityUIDorSlug] as const,
+    PROJECTS: (slug: string, options?: unknown) =>
+      ["community-projects-v2", slug, options] as const,
+    GRANTS: (communitySlug: string) => ["community-grants", communitySlug] as const,
+    CATEGORIES: (communityUIDorSlug?: string) =>
+      ["communityCategories", communityUIDorSlug] as const,
+    IS_ADMIN: (communityUid?: string, chainId?: number, address?: string, signer?: unknown) =>
+      ["isCommunityAdmin", communityUid, chainId, address, signer] as const,
+    IS_ADMIN_BASE: ["isCommunityAdmin"] as const,
+    PROJECT_UPDATES: (communityId: string, filter: string, page: number) =>
+      ["community-project-updates", communityId, filter, page] as const,
+  },
+  CONTRACTS: {
+    DEPLOYER: (network: string, contractAddress: string) =>
+      ["contract-deployer", network, contractAddress] as const,
+    VALIDATION: {
+      ALL: ["contract-validation"] as const,
+      VALIDATE: (params: { address: string; network: string; excludeProjectId?: string }) =>
+        ["contract-validation", params] as const,
+    },
+  },
+  GRANTS: {
+    DUPLICATE_CHECK_BASE: ["duplicate-grant-check"] as const,
+    DUPLICATE_CHECK: (params: {
+      projectUid?: string;
+      programId?: string;
+      community: string;
+      title: string;
+    }) => ["duplicate-grant-check", params] as const,
+  },
+  DONATIONS: {
+    BY_USER: (walletAddress: string) => ["donations", "user", walletAddress] as const,
+    BY_PROJECT: (projectUID: string) => ["donations", "project", projectUID] as const,
+  },
+  SEARCH: {
+    PROJECTS: (query: string) => ["search-projects", query] as const,
+  },
+  PROJECT: {
+    UPDATES: (projectIdOrSlug: string) => ["project-updates", projectIdOrSlug] as const,
+    IMPACTS: (projectIdOrSlug: string) => ["project-impacts", projectIdOrSlug] as const,
+    MILESTONES: (projectIdOrSlug: string) => ["project-milestones", projectIdOrSlug] as const,
+    GRANTS: (projectIdOrSlug: string) => ["project-grants", projectIdOrSlug] as const,
+  },
+  INDICATORS: {
+    AUTOSYNCED: ["indicators", "autosynced"] as const,
+    AGGREGATED: (params: {
+      indicatorIds: string;
+      communityId: string;
+      programId: string;
+      projectUID: string;
+      timeframe: string;
+    }) =>
+      [
+        "aggregated-indicators",
+        params.indicatorIds,
+        params.communityId,
+        params.programId,
+        params.projectUID,
+        params.timeframe,
+      ] as const,
+  },
+  FUNDING_PLATFORM: {
+    APPLICATIONS: (programId: string, chainId: number, filters?: unknown) =>
+      ["applications", programId, chainId, filters] as const,
+    APPLICATION: (applicationId: string) => ["funding-application", applicationId] as const,
+    APPLICATION_STATS: (programId: string, chainId: number) =>
+      ["application-stats", programId, chainId] as const,
+  },
+  SETTINGS: {
+    AVAILABLE_AI_MODELS: ["available-ai-models"] as const,
   },
 };
 mock.module("@/utilities/queryKeys", () => ({
@@ -718,14 +852,43 @@ mock.module("@privy-io/react-auth", () => ({
   PrivyProvider: ({ children }: { children: unknown }) => children,
 }));
 
-// Mock wagmi
-mock.module("wagmi", () => ({
-  useAccount: () => ({
-    address: undefined,
+// Mock wagmi - configurable state for integration tests
+const wagmiMockState = {
+  account: {
+    address: undefined as string | undefined,
     isConnected: false,
     connector: null,
-  }),
-  useChainId: () => 1,
+  },
+  chainId: 1,
+  walletClient: null as any,
+  publicClient: null as any,
+  writeContract: {
+    writeContract: createMockFn(),
+    writeContractAsync: createMockFn(),
+    data: undefined,
+    isLoading: false,
+    isSuccess: false,
+    isError: false,
+    error: null,
+    reset: createMockFn(),
+  },
+  switchChain: createMockFn(),
+  // Configurable state for useWaitForTransactionReceipt hook
+  waitForTransactionReceipt: {
+    data: null as { status: string; transactionHash: string } | null,
+    isLoading: false,
+    isSuccess: false,
+    isError: false,
+    error: null,
+  },
+};
+
+// Export wagmi mock state for test configuration
+(globalThis as any).__wagmiMockState__ = wagmiMockState;
+
+mock.module("wagmi", () => ({
+  useAccount: () => wagmiMockState.account,
+  useChainId: () => wagmiMockState.chainId,
   useBalance: () => ({
     data: undefined,
     isLoading: false,
@@ -738,32 +901,28 @@ mock.module("wagmi", () => ({
     disconnect: () => {},
   }),
   useSwitchChain: () => ({
-    switchChain: () => {},
+    switchChain: wagmiMockState.switchChain,
     chains: [],
   }),
   useWalletClient: () => ({
-    data: null,
+    data: wagmiMockState.walletClient,
+    refetch: createMockFn(() => Promise.resolve({ data: wagmiMockState.walletClient })),
   }),
-  usePublicClient: () => ({
-    data: null,
-  }),
-  useWaitForTransactionReceipt: () => ({
-    data: undefined,
-    isLoading: false,
-    isSuccess: false,
-    isError: false,
-    error: null,
-  }),
-  useWriteContract: () => ({
-    writeContract: createMockFn(),
-    writeContractAsync: createMockFn(),
-    data: undefined,
-    isLoading: false,
-    isSuccess: false,
-    isError: false,
-    error: null,
-    reset: createMockFn(),
-  }),
+  usePublicClient: () => wagmiMockState.publicClient,
+  useWaitForTransactionReceipt: (params?: { hash?: string; query?: { enabled?: boolean } }) => {
+    // Return idle state when hash is empty or query is disabled
+    if (!params?.hash || params?.query?.enabled === false) {
+      return {
+        data: null,
+        isLoading: false,
+        isSuccess: false,
+        isError: false,
+        error: null,
+      };
+    }
+    return wagmiMockState.waitForTransactionReceipt;
+  },
+  useWriteContract: () => wagmiMockState.writeContract,
   useReadContract: () => ({
     data: undefined,
     isLoading: false,
@@ -863,14 +1022,120 @@ const mockToast = Object.assign(createMockFn(), {
   custom: createMockFn(),
   remove: createMockFn(),
 });
-mock.module("react-hot-toast", () => ({
-  default: mockToast,
-  toast: mockToast,
-  Toaster: () => null,
-}));
+mock.module("react-hot-toast", () => {
+  const React = require("react");
+  return {
+    default: mockToast,
+    toast: mockToast,
+    Toaster: () => React.createElement("div", { "data-testid": "toaster" }),
+  };
+});
 registerMock("react-hot-toast", mockToast);
 // Add toast to global mocks for test access
 (globalThis as any).__mocks__.toast = mockToast;
+
+// Mock @/utilities/donations/errorMessages
+const mockGetDetailedErrorInfo = createMockFn(() => ({
+  code: "UNKNOWN_ERROR",
+  message: "An unexpected error occurred",
+  technicalMessage: "Test error",
+  actionableSteps: ["Try again", "Contact support"],
+}));
+const mockParseDonationError = createMockFn(() => ({
+  code: "UNKNOWN_ERROR",
+  message: "An unexpected error occurred",
+  actionableSteps: [],
+}));
+
+// =============================================================================
+// Donation Flow Mocks
+// =============================================================================
+
+// Mock @/utilities/donations/batchDonations
+mock.module("@/utilities/donations/batchDonations", () => ({
+  BatchDonationsABI: [],
+  BATCH_DONATIONS_CONTRACTS: {
+    10: "0x1111111111111111111111111111111111111111",
+    8453: "0x2222222222222222222222222222222222222222",
+    42161: "0x3333333333333333333333333333333333333333",
+  },
+  PERMIT2_ADDRESS: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+  getBatchDonationsContractAddress: createMockFn((chainId: number) => {
+    const contracts: Record<number, string> = {
+      10: "0x1111111111111111111111111111111111111111",
+      8453: "0x2222222222222222222222222222222222222222",
+      42161: "0x3333333333333333333333333333333333333333",
+    };
+    return contracts[chainId];
+  }),
+}));
+
+// Mock @/utilities/erc20
+const mockCheckTokenAllowances = createMockFn(() => Promise.resolve([]));
+const mockExecuteApprovals = createMockFn(() => Promise.resolve([]));
+const mockGetApprovalAmount = createMockFn((amount: bigint) => amount);
+mock.module("@/utilities/erc20", () => ({
+  checkTokenAllowances: mockCheckTokenAllowances,
+  executeApprovals: mockExecuteApprovals,
+  getApprovalAmount: mockGetApprovalAmount,
+}));
+(globalThis as any).__mocks__.checkTokenAllowances = mockCheckTokenAllowances;
+(globalThis as any).__mocks__.executeApprovals = mockExecuteApprovals;
+(globalThis as any).__mocks__.getApprovalAmount = mockGetApprovalAmount;
+
+// Mock @/utilities/rpcClient
+const mockGetRPCClient = createMockFn(() => Promise.resolve(null));
+const mockGetRPCUrlByChainId = createMockFn((chainId: number) => `https://rpc.test/${chainId}`);
+mock.module("@/utilities/rpcClient", () => ({
+  getRPCClient: mockGetRPCClient,
+  getRPCUrlByChainId: mockGetRPCUrlByChainId,
+}));
+(globalThis as any).__mocks__.getRPCClient = mockGetRPCClient;
+(globalThis as any).__mocks__.getRPCUrlByChainId = mockGetRPCUrlByChainId;
+
+// Mock @/utilities/walletClientValidation
+mock.module("@/utilities/walletClientValidation", () => ({
+  validateWalletClient: createMockFn(() => true),
+}));
+
+// Mock @/utilities/walletClientFallback
+const mockGetWalletClientWithFallback = createMockFn(() => Promise.resolve(null));
+const mockIsWalletClientGoodEnough = createMockFn(() => true);
+mock.module("@/utilities/walletClientFallback", () => ({
+  getWalletClientWithFallback: mockGetWalletClientWithFallback,
+  isWalletClientGoodEnough: mockIsWalletClientGoodEnough,
+}));
+(globalThis as any).__mocks__.getWalletClientWithFallback = mockGetWalletClientWithFallback;
+(globalThis as any).__mocks__.isWalletClientGoodEnough = mockIsWalletClientGoodEnough;
+
+// Mock @/utilities/chainSyncValidation
+const mockValidateChainSync = createMockFn(() => Promise.resolve(true));
+mock.module("@/utilities/chainSyncValidation", () => ({
+  validateChainSync: mockValidateChainSync,
+}));
+(globalThis as any).__mocks__.validateChainSync = mockValidateChainSync;
+
+mock.module("@/utilities/donations/errorMessages", () => ({
+  getDetailedErrorInfo: mockGetDetailedErrorInfo,
+  parseDonationError: mockParseDonationError,
+  DonationErrorCode: {
+    USER_REJECTED: "USER_REJECTED",
+    INSUFFICIENT_GAS: "INSUFFICIENT_GAS",
+    INSUFFICIENT_BALANCE: "INSUFFICIENT_BALANCE",
+    NETWORK_MISMATCH: "NETWORK_MISMATCH",
+    CONTRACT_ERROR: "CONTRACT_ERROR",
+    BALANCE_FETCH_ERROR: "BALANCE_FETCH_ERROR",
+    PAYOUT_ADDRESS_ERROR: "PAYOUT_ADDRESS_ERROR",
+    APPROVAL_ERROR: "APPROVAL_ERROR",
+    PERMIT_SIGNATURE_ERROR: "PERMIT_SIGNATURE_ERROR",
+    CHAIN_SYNC_ERROR: "CHAIN_SYNC_ERROR",
+    WALLET_CLIENT_ERROR: "WALLET_CLIENT_ERROR",
+    TRANSACTION_TIMEOUT: "TRANSACTION_TIMEOUT",
+    UNKNOWN_ERROR: "UNKNOWN_ERROR",
+  },
+}));
+(globalThis as any).__mocks__.getDetailedErrorInfo = mockGetDetailedErrorInfo;
+(globalThis as any).__mocks__.parseDonationError = mockParseDonationError;
 
 // Mock rehype plugins (ESM-only packages)
 mock.module("rehype-sanitize", () => ({
@@ -944,6 +1209,34 @@ mock.module("@/components/Pages/Project/ProjectPage", () => ({
 mock.module("@/components/Pages/Project/Loading/Overview", () => ({
   ProjectOverviewLoading: () =>
     React.createElement("div", { "data-testid": "project-overview-loading" }, "Loading..."),
+}));
+
+// Mock @/components/Pages/NewProjects
+mock.module("@/components/Pages/NewProjects", () => ({
+  NewProjectsPage: () =>
+    React.createElement("div", { "data-testid": "new-projects-page" }, "New Projects Page"),
+}));
+
+// Mock @/utilities/indexer/getNewProjects
+const mockGetNewProjects = createMockFn(() =>
+  Promise.resolve({
+    projects: Array(10).fill({}),
+    pageInfo: {
+      page: 0,
+      pageLimit: 10,
+      totalItems: 100,
+    },
+  })
+);
+mock.module("@/utilities/indexer/getNewProjects", () => ({
+  getNewProjects: mockGetNewProjects,
+}));
+registerMock("@/utilities/indexer/getNewProjects", { getNewProjects: mockGetNewProjects });
+(globalThis as any).__mocks__.getNewProjects = mockGetNewProjects;
+
+// Mock Stats component for stats page (named export)
+mock.module("@/components/Pages/Stats", () => ({
+  Stats: () => React.createElement("div", { "data-testid": "stats-component" }, "Stats Component"),
 }));
 
 // =============================================================================
@@ -1041,6 +1334,74 @@ mock.module("@/utilities/formatDate", () => ({
 mock.module("@/components/FundingPlatform/ApplicationList/ReviewerAssignmentDropdown", () => ({
   ReviewerAssignmentDropdown: () =>
     React.createElement("div", { "data-testid": "reviewer-assignment-dropdown" }),
+}));
+
+// =============================================================================
+// Layout Component Mocks
+// =============================================================================
+
+// Mock @vercel/speed-insights/next
+mock.module("@vercel/speed-insights/next", () => ({
+  SpeedInsights: () => React.createElement("div", { "data-testid": "speed-insights" }),
+}));
+
+// Mock @vercel/analytics/react
+mock.module("@vercel/analytics/react", () => ({
+  Analytics: () => React.createElement("div", { "data-testid": "analytics" }),
+}));
+
+// Mock @next/third-parties/google
+mock.module("@next/third-parties/google", () => ({
+  GoogleAnalytics: () => React.createElement("div", { "data-testid": "google-analytics" }),
+}));
+
+// Mock @/src/components/footer/footer
+mock.module("@/src/components/footer/footer", () => ({
+  Footer: () => React.createElement("footer", { "data-testid": "footer" }),
+}));
+
+// Mock @/src/components/navbar/navbar
+mock.module("@/src/components/navbar/navbar", () => ({
+  Navbar: () => React.createElement("header", { "data-testid": "header" }),
+}));
+
+// Mock @/components/Dialogs/ContributorProfileDialog
+mock.module("@/components/Dialogs/ContributorProfileDialog", () => ({
+  ContributorProfileDialog: () =>
+    React.createElement("div", { "data-testid": "contributor-profile-dialog" }),
+}));
+
+// Mock @/components/Dialogs/OnboardingDialog
+mock.module("@/components/Dialogs/OnboardingDialog", () => ({
+  OnboardingDialog: () => React.createElement("div", { "data-testid": "onboarding-dialog" }),
+}));
+
+// Mock @/components/Utilities/PermissionsProvider
+mock.module("@/components/Utilities/PermissionsProvider", () => ({
+  PermissionsProvider: ({ children }: { children: unknown }) =>
+    React.createElement("div", { "data-testid": "permissions-provider" }, children),
+}));
+
+// Mock @/components/ProgressBarWrapper
+mock.module("@/components/ProgressBarWrapper", () => ({
+  ProgressBarWrapper: () => React.createElement("div", { "data-testid": "progress-bar-wrapper" }),
+}));
+
+// Mock @/components/Utilities/HotjarAnalytics
+mock.module("@/components/Utilities/HotjarAnalytics", () => ({
+  default: () => React.createElement("div", { "data-testid": "hotjar-analytics" }),
+}));
+
+// Mock next-themes
+mock.module("next-themes", () => ({
+  ThemeProvider: ({ children }: { children: unknown }) =>
+    React.createElement("div", { "data-testid": "theme-provider" }, children),
+  useTheme: () => ({
+    theme: "light",
+    setTheme: () => {},
+    resolvedTheme: "light",
+    themes: ["light", "dark"],
+  }),
 }));
 
 // =============================================================================

@@ -3,34 +3,27 @@
  * @description Tests the V2 project grants API service
  */
 
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import type { GrantResponse } from "@/types/v2/grant";
 
-// Mock environment variables
-jest.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
-  },
-}));
-
-// Mock errorManager
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
-}));
-
-// Mock fetchData utility - the service now uses fetchData instead of api-client directly
-jest.mock("@/utilities/fetchData");
+// All mocks are pre-registered in tests/bun-setup.ts
+// Access mocks via globalThis.__mocks__
 
 // Import the service AFTER all mocks are set up
 import { getProjectGrants } from "@/services/project-grants.service";
-// Import the mocked module to get access to the mock function
-import fetchData from "@/utilities/fetchData";
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+// Get mocks from globalThis
+const getMocks = () => (globalThis as any).__mocks__;
 
 describe("project-grants.service", () => {
+  let mockFetchData: any;
+
   beforeEach(() => {
-    jest.clearAllMocks();
+    const mocks = getMocks();
+    mockFetchData = mocks.fetchData;
+
+    // Clear mocks
+    if (mockFetchData?.mockClear) mockFetchData.mockClear();
   });
 
   describe("getProjectGrants", () => {

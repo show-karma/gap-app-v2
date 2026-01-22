@@ -1,22 +1,9 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import Projects from "@/app/projects/page";
 import "@testing-library/jest-dom";
 
-jest.mock("@/components/Pages/NewProjects", () => ({
-  NewProjectsPage: () => <div data-testid="new-projects-page">New Projects Page</div>,
-}));
-
-jest.mock("@/utilities/indexer/getNewProjects", () => ({
-  getNewProjects: jest.fn().mockResolvedValue({
-    projects: Array(10).fill({}),
-    pageInfo: {
-      page: 0,
-      pageLimit: 10,
-      totalItems: 100,
-    },
-  }),
-}));
+// Mocks for NewProjectsPage and getNewProjects are pre-registered in tests/bun-setup.ts
 
 describe("Projects Page", () => {
   it("renders the NewProjectsPage component", () => {
@@ -26,8 +13,8 @@ describe("Projects Page", () => {
   });
 
   it("mocks data fetching correctly", async () => {
-    const { getNewProjects } = require("@/utilities/indexer/getNewProjects");
-    const { projects, pageInfo } = await getNewProjects(10, 0, "createdAt", "desc");
+    const mockGetNewProjects = (globalThis as any).__mocks__.getNewProjects;
+    const { projects, pageInfo } = await mockGetNewProjects(10, 0, "createdAt", "desc");
 
     expect(projects).toHaveLength(10);
     expect(pageInfo.page).toEqual(0);

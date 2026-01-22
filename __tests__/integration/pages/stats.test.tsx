@@ -1,11 +1,9 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import Index from "@/app/stats/page";
 import "@testing-library/jest-dom";
 
-jest.mock("@/components/Pages/Stats", () => ({
-  Stats: () => <div data-testid="stats-component">Stats Component</div>,
-}));
+// Mock for Stats is pre-registered in tests/bun-setup.ts
 
 describe("Stats Page", () => {
   it("renders the Stats component", () => {

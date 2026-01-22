@@ -1,68 +1,38 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
-import type { AxiosInstance } from "axios";
-import { TokenManager } from "@/utilities/auth/token-manager";
+import { beforeEach, describe, expect, it } from "bun:test";
 
-// Mock the dependencies BEFORE importing the service
-jest.mock("@/utilities/auth/token-manager");
-jest.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
-  },
-}));
+// All mocks are pre-registered in tests/bun-setup.ts
+// Access mocks via globalThis.__mocks__
 
-// Mock fetchData for getComments method (which uses fetchData)
-jest.mock("@/utilities/fetchData");
-
-// Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
-var mockAxiosInstance: jest.Mocked<AxiosInstance>;
-
-// Mock api-client for mutations (createComment, editComment, deleteComment)
-jest.mock("@/utilities/auth/api-client", () => {
-  const instance = {
-    get: jest.fn(),
-    post: jest.fn(),
-    delete: jest.fn(),
-    put: jest.fn(),
-    patch: jest.fn(),
-    request: jest.fn(),
-    head: jest.fn(),
-    options: jest.fn(),
-    interceptors: {
-      request: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
-      response: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
-    },
-    defaults: {} as any,
-    getUri: jest.fn(),
-  } as unknown as jest.Mocked<AxiosInstance>;
-
-  mockAxiosInstance = instance;
-
-  return {
-    createAuthenticatedApiClient: jest.fn(() => instance),
-  };
-});
-
-// NOW import the service after mocks are configured
+// Import the service AFTER mocks are set up (they're pre-registered in bun-setup.ts)
 import { applicationCommentsService } from "@/services/application-comments.service";
-// Import the mocked module to get access to the mock function
-import fetchData from "@/utilities/fetchData";
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+// Get mocks from globalThis
+const getMocks = () => (globalThis as any).__mocks__;
 
 describe("applicationCommentsService", () => {
+  let mockFetchData: any;
+  let mockApiClient: any;
+
   beforeEach(() => {
-    jest.clearAllMocks();
-    if (mockAxiosInstance) {
-      mockAxiosInstance.get?.mockClear();
-      mockAxiosInstance.post?.mockClear();
-      mockAxiosInstance.put?.mockClear();
-      mockAxiosInstance.delete?.mockClear();
+    const mocks = getMocks();
+    mockFetchData = mocks.fetchData;
+    mockApiClient = mocks.apiClient;
+
+    // Clear mocks
+    if (mockFetchData?.mockClear) mockFetchData.mockClear();
+    if (mockApiClient?.get?.mockClear) mockApiClient.get.mockClear();
+    if (mockApiClient?.post?.mockClear) mockApiClient.post.mockClear();
+    if (mockApiClient?.put?.mockClear) mockApiClient.put.mockClear();
+    if (mockApiClient?.delete?.mockClear) mockApiClient.delete.mockClear();
+
+    // Setup default behavior for TokenManager
+    if (mocks.TokenManager?.getToken?.mockImplementation) {
+      mocks.TokenManager.getToken.mockImplementation(() => Promise.resolve("test-token"));
     }
   });
 
   describe("Authentication", () => {
     it("should include JWT token in Authorization header when creating a comment", async () => {
-      const mockToken = "test-jwt-token";
       const mockComment = {
         id: "1",
         content: "Test comment",
@@ -73,11 +43,8 @@ describe("applicationCommentsService", () => {
         isDeleted: false,
       };
 
-      // Mock TokenManager to return a token
-      (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue(mockToken);
-
       // Mock successful axios response
-      mockAxiosInstance.post.mockResolvedValueOnce({
+      mockApiClient.post.mockResolvedValueOnce({
         data: { comment: mockComment },
       });
 
@@ -85,7 +52,7 @@ describe("applicationCommentsService", () => {
       await applicationCommentsService.createComment("app-123", "Test comment", "Test User");
 
       // Verify axios.post was called with correct parameters
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith(
+      expect(mockApiClient.post).toHaveBeenCalledWith(
         expect.stringContaining("app-123"),
         expect.objectContaining({
           content: "Test comment",
@@ -95,8 +62,11 @@ describe("applicationCommentsService", () => {
     });
 
     it("should not include Authorization header when no token is available", async () => {
+      const mocks = getMocks();
       // Mock TokenManager to return no token
-      (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue(null);
+      if (mocks.TokenManager?.getToken?.mockImplementation) {
+        mocks.TokenManager.getToken.mockImplementation(() => Promise.resolve(null));
+      }
 
       // Mock successful fetchData response for getComments
       mockFetchData.mockResolvedValueOnce([{ comments: [] }, null, null, 200]);
@@ -109,15 +79,16 @@ describe("applicationCommentsService", () => {
     });
 
     it("should include JWT token for all service methods", async () => {
-      const mockToken = "test-jwt-token";
-
+      const mocks = getMocks();
       // Mock TokenManager to return a token
-      (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue(mockToken);
+      if (mocks.TokenManager?.getToken?.mockImplementation) {
+        mocks.TokenManager.getToken.mockImplementation(() => Promise.resolve("test-jwt-token"));
+      }
 
       // Mock successful responses
       mockFetchData.mockResolvedValue([{ comments: [] }, null, null, 200]);
-      mockAxiosInstance.put.mockResolvedValue({ data: { comment: {} } });
-      mockAxiosInstance.delete.mockResolvedValue({ data: {} });
+      mockApiClient.put.mockResolvedValue({ data: { comment: {} } });
+      mockApiClient.delete.mockResolvedValue({ data: {} });
 
       // Test getComments (uses fetchData)
       await applicationCommentsService.getComments("app-123");
@@ -125,7 +96,7 @@ describe("applicationCommentsService", () => {
 
       // Test editComment (uses apiClient)
       await applicationCommentsService.editComment("comment-1", "Updated content");
-      expect(mockAxiosInstance.put).toHaveBeenCalledWith(
+      expect(mockApiClient.put).toHaveBeenCalledWith(
         expect.stringContaining("comment-1"),
         expect.objectContaining({
           content: "Updated content",
@@ -134,7 +105,7 @@ describe("applicationCommentsService", () => {
 
       // Test deleteComment (uses apiClient)
       await applicationCommentsService.deleteComment("comment-1");
-      expect(mockAxiosInstance.delete).toHaveBeenCalledWith(
+      expect(mockApiClient.delete).toHaveBeenCalledWith(
         expect.stringContaining("comment-1"),
         expect.objectContaining({
           params: {},
