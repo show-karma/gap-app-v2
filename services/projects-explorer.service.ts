@@ -63,10 +63,10 @@ export const getExplorerProjects = async (
 
 /**
  * Fetch paginated projects for the explorer page using V2 API
- * Automatically filters out test projects
+ * Test projects are filtered on the backend via excludeTestProjects parameter
  *
  * @param params - Paginated search parameters including page, sortBy, sortOrder
- * @returns Paginated response with filtered projects and pagination metadata
+ * @returns Paginated response with projects and pagination metadata
  */
 export const getExplorerProjectsPaginated = async (
   params: ExplorerProjectsPaginatedParams
@@ -91,6 +91,7 @@ export const getExplorerProjectsPaginated = async (
     sortBy,
     sortOrder,
     includeStats,
+    excludeTestProjects: true, // Filter test projects on backend for accurate pagination
   });
 
   const [data, error] = await fetchData<PaginatedProjectsResponse>(endpoint);
@@ -109,21 +110,5 @@ export const getExplorerProjectsPaginated = async (
     throw new Error(error || errorMessage);
   }
 
-  // Filter test projects from payload and recalculate pagination metadata
-  const filteredPayload = filterTestProjects(data.payload);
-  const filteredCount = data.payload.length - filteredPayload.length;
-  const adjustedTotalCount = Math.max(0, data.pagination.totalCount - filteredCount);
-  const adjustedTotalPages = Math.ceil(adjustedTotalCount / limit) || 0;
-
-  return {
-    ...data,
-    payload: filteredPayload,
-    pagination: {
-      ...data.pagination,
-      totalCount: adjustedTotalCount,
-      totalPages: adjustedTotalPages,
-      hasNextPage: page < adjustedTotalPages,
-      nextPage: page < adjustedTotalPages ? page + 1 : null,
-    },
-  };
+  return data;
 };

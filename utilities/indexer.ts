@@ -84,6 +84,7 @@ export const INDEXER = {
        * Paginated list/search with sorting support
        * Returns { payload: Project[], pagination: { ... } } when page is provided
        * When includeStats is true, includes stats for each project (grantsCount, grantMilestonesCount, roadmapItemsCount)
+       * When excludeTestProjects is true, excludes projects with "test" in title
        */
       LIST_PAGINATED: (params?: {
         q?: string;
@@ -92,6 +93,7 @@ export const INDEXER = {
         sortBy?: string;
         sortOrder?: "asc" | "desc";
         includeStats?: boolean;
+        excludeTestProjects?: boolean;
       }) => {
         const queryParams = new URLSearchParams();
         if (params?.q) queryParams.set("q", params.q);
@@ -100,6 +102,7 @@ export const INDEXER = {
         if (params?.sortBy) queryParams.set("sortBy", params.sortBy);
         if (params?.sortOrder) queryParams.set("sortOrder", params.sortOrder);
         if (params?.includeStats) queryParams.set("includeStats", "true");
+        if (params?.excludeTestProjects) queryParams.set("excludeTestProjects", "true");
         const query = queryParams.toString();
         return `/v2/projects${query ? `?${query}` : ""}`;
       },
