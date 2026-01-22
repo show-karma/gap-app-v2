@@ -8,7 +8,8 @@ interface CountryData {
   error: string | null;
 }
 
-const GEOLOCATION_API = "https://ipapi.co/json/";
+// ipinfo.io supports HTTPS and has a generous free tier (50k req/month)
+const GEOLOCATION_API = "https://ipinfo.io/json?token=";
 const FALLBACK_COUNTRY = "US";
 
 export function useCountryDetection(): CountryData {
@@ -26,7 +27,7 @@ export function useCountryDetection(): CountryData {
 
         const result = await response.json();
         setData({
-          country: result.country_code || FALLBACK_COUNTRY,
+          country: result.country || FALLBACK_COUNTRY,
           isLoading: false,
           error: null,
         });
