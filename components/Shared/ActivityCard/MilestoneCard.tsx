@@ -17,7 +17,6 @@ import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
-import { formatDate } from "@/utilities/formatDate";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { ReadMore } from "@/utilities/ReadMore";
 import { shareOnX } from "@/utilities/share/shareOnX";
@@ -96,9 +95,6 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
 
   // project milestone-specific properties
   const projectMilestone = milestone.source.projectMilestone;
-  const attester =
-    projectMilestone?.attester || milestone.source.grantMilestone?.milestone.attester || "";
-  const createdAt = milestone.createdAt;
 
   // grant milestone-specific properties
   const grantMilestone = milestone.source.grantMilestone;
@@ -110,7 +106,6 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
   const _communityData = grantMilestone?.grant.community?.details as
     | { name?: string; imageURL?: string }
     | undefined;
-  const endsAt = milestone.endsAt;
 
   // completion information
   const completionReason =
@@ -399,33 +394,27 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
             </div>
           ) : null}
         </div>
-        {/* Bottom Attribution with Actions */}
-        <ActivityAttribution
-          date={createdAt}
-          attester={attester}
-          actions={
-            isAuthorized ? (
-              <div className="flex flex-row gap-6 items-center">
-                {!completed && (
-                  <Button
-                    className="flex flex-row gap-1 border border-brand-blue text-brand-blue  text-sm font-semibold bg-white hover:bg-white dark:bg-transparent dark:hover:bg-transparent p-3  rounded-md max-sm:px-2 max-sm:py-1"
-                    onClick={() => handleCompleting(true)}
-                  >
-                    Mark Milestone Complete
-                    <CheckCircleIcon className="h-5 w-5" />
-                  </Button>
-                )}
+        {/* Bottom Actions (removed attribution since it's shown in timeline header) */}
+        {isAuthorized && (
+          <div className="flex flex-row gap-6 items-center px-5 py-3 border-t border-gray-300 dark:border-zinc-400">
+            {!completed && (
+              <Button
+                className="flex flex-row gap-1 border border-brand-blue text-brand-blue  text-sm font-semibold bg-white hover:bg-white dark:bg-transparent dark:hover:bg-transparent p-3  rounded-md max-sm:px-2 max-sm:py-1"
+                onClick={() => handleCompleting(true)}
+              >
+                Mark Milestone Complete
+                <CheckCircleIcon className="h-5 w-5" />
+              </Button>
+            )}
 
-                {/* Options Menu with only Delete */}
-                {type === "milestone" && projectMilestone ? (
-                  <ObjectiveSimpleOptionsMenu objectiveId={projectMilestone.uid} />
-                ) : type === "grant" && grantMilestone ? (
-                  <GrantMilestoneSimpleOptionsMenu milestone={milestone} />
-                ) : null}
-              </div>
-            ) : undefined
-          }
-        />
+            {/* Options Menu with only Delete */}
+            {type === "milestone" && projectMilestone ? (
+              <ObjectiveSimpleOptionsMenu objectiveId={projectMilestone.uid} />
+            ) : type === "grant" && grantMilestone ? (
+              <GrantMilestoneSimpleOptionsMenu milestone={milestone} />
+            ) : null}
+          </div>
+        )}
       </div>
       {isCompleting ||
       isEditing ||
