@@ -424,11 +424,11 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
       completionReason ||
       completionProof ||
       completionDeliverables ? (
-        <div className="relative flex flex-col w-full pl-8 md:pl-[120px]">
+        <div className="relative pl-10">
           {/* Timeline dot */}
-          <div className="absolute left-[3px] md:left-[108px] top-2 w-2 h-2 rounded-full bg-green-500" />
+          <div className="absolute left-0 top-0 w-2.5 h-2.5 rounded-full bg-neutral-400 dark:bg-zinc-500" />
 
-          {/* Timeline header: Milestone Update ... Posted by ... */}
+          {/* Timeline header: Milestone Update + Posted by */}
           <div className="flex flex-row items-center justify-between gap-2 mb-3 flex-wrap">
             {/* Left side: Status */}
             <div className="flex flex-row items-center gap-2 flex-wrap">
@@ -453,6 +453,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
             </div>
           </div>
 
+          {/* Completion content */}
           {renderMilestoneCompletion()}
         </div>
       ) : null}
