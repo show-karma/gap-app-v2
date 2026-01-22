@@ -109,6 +109,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
   const _communityData = grantMilestone?.grant.community?.details as
     | { name?: string; imageURL?: string }
     | undefined;
+  const endsAt = milestone.endsAt;
 
   // completion information
   const completionReason =
@@ -424,36 +425,42 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
       completionReason ||
       completionProof ||
       completionDeliverables ? (
-        <div className="relative pl-10">
-          {/* Timeline dot */}
-          <div className="absolute left-0 top-0 w-2.5 h-2.5 rounded-full bg-neutral-400 dark:bg-zinc-500" />
-
-          {/* Timeline header: Milestone Update + Posted by */}
-          <div className="flex flex-row items-center justify-between gap-2 mb-3 flex-wrap">
-            {/* Left side: Status */}
+        <div className="flex flex-col gap-3 mt-4">
+          {/* Timeline header: Icon, Status, Due date, and Posted by */}
+          <div className="flex flex-row items-center justify-between gap-2 flex-wrap">
+            {/* Left side: Icon, Status and Due date */}
             <div className="flex flex-row items-center gap-2 flex-wrap">
+              {/* Orange dot indicator */}
+              <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />
               <span className="text-sm font-semibold text-foreground">Milestone Update</span>
+              {endsAt && (
+                <span className="text-sm font-semibold text-muted-foreground">
+                  Due on {formatDate(new Date(endsAt * 1000).toISOString())}
+                </span>
+              )}
             </div>
 
             {/* Right side: Posted by */}
-            <div className="flex flex-row items-center gap-2 text-sm font-medium leading-5 text-muted-foreground">
-              <span>Posted {formatDate(completionDate || "")}</span>
-              {completionAttester && (
-                <>
-                  <span>by</span>
-                  <EthereumAddressToENSAvatar
-                    address={completionAttester}
-                    className="h-8 w-8 min-h-8 min-w-8 rounded-full"
-                  />
-                  <span className="text-sm font-semibold leading-5 text-foreground">
-                    <EthereumAddressToENSName address={completionAttester} />
-                  </span>
-                </>
-              )}
-            </div>
+            {completionDate && (
+              <div className="flex flex-row items-center gap-2 text-sm font-medium leading-5 text-muted-foreground">
+                <span>Posted {formatDate(completionDate)}</span>
+                {completionAttester && (
+                  <>
+                    <span>by</span>
+                    <EthereumAddressToENSAvatar
+                      address={completionAttester}
+                      className="h-8 w-8 min-h-8 min-w-8 rounded-full"
+                    />
+                    <span className="text-sm font-semibold leading-5 text-foreground">
+                      <EthereumAddressToENSName address={completionAttester} />
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Completion content */}
+          {/* Completion card */}
           {renderMilestoneCompletion()}
         </div>
       ) : null}
