@@ -8,10 +8,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { ActivityFilterType, SortOption } from "@/types/v2/project-profile.types";
+import { ACTIVITY_FILTER_OPTIONS } from "@/types/v2/project-profile.types";
 import { cn } from "@/utilities/tailwind";
 
-export type SortOption = "newest" | "oldest";
-export type ActivityFilterType = "funding" | "updates" | "blog" | "socials" | "other";
+// Re-export types for backward compatibility
+export type { ActivityFilterType, SortOption } from "@/types/v2/project-profile.types";
 
 interface ActivityFiltersProps {
   sortBy: SortOption;
@@ -23,13 +25,8 @@ interface ActivityFiltersProps {
   className?: string;
 }
 
-const filterOptions: { value: ActivityFilterType; label: string }[] = [
-  { value: "funding", label: "Funding" },
-  { value: "updates", label: "Product updates" },
-  { value: "blog", label: "Blog" },
-  { value: "socials", label: "Socials" },
-  { value: "other", label: "Other" },
-];
+// Use shared filter options from types
+const filterOptions = ACTIVITY_FILTER_OPTIONS;
 
 /**
  * ActivityFilters provides sorting and filtering controls for the activity feed.
@@ -87,6 +84,7 @@ export function ActivityFilters({
               type="button"
               onClick={() => onFilterToggle(filter.value)}
               data-testid={`filter-${filter.value}`}
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-neutral-500 dark:focus-visible:ring-neutral-400 rounded-md"
             >
               <Badge
                 variant={isActive ? "default" : "outline"}

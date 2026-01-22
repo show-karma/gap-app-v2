@@ -110,7 +110,11 @@ export function SubscribeSection({ project, className }: SubscribeSectionProps) 
       <div className="flex flex-col gap-2 items-end">
         {/* Name Input */}
         <div className="flex flex-col gap-1 w-full">
+          <label htmlFor="subscribe-name" className="sr-only">
+            First name
+          </label>
           <Input
+            id="subscribe-name"
             type="text"
             placeholder="First name"
             {...register("name")}
@@ -118,7 +122,7 @@ export function SubscribeSection({ project, className }: SubscribeSectionProps) 
             data-testid="subscribe-name-input"
           />
           {errors.name && (
-            <p className="text-xs text-red-500" data-testid="subscribe-name-error">
+            <p className="text-xs text-red-500" data-testid="subscribe-name-error" role="alert">
               {errors.name.message}
             </p>
           )}
@@ -126,15 +130,20 @@ export function SubscribeSection({ project, className }: SubscribeSectionProps) 
 
         {/* Email Input */}
         <div className="flex flex-col gap-1 w-full">
+          <label htmlFor="subscribe-email" className="sr-only">
+            Email address (required)
+          </label>
           <Input
+            id="subscribe-email"
             type="email"
             placeholder="your@email.com*"
             {...register("email")}
+            aria-required="true"
             className="w-full bg-white dark:bg-zinc-900 border-neutral-200 dark:border-zinc-700 rounded-lg shadow-sm"
             data-testid="subscribe-email-input"
           />
           {errors.email && (
-            <p className="text-xs text-red-500" data-testid="subscribe-email-error">
+            <p className="text-xs text-red-500" data-testid="subscribe-email-error" role="alert">
               {errors.email.message}
             </p>
           )}

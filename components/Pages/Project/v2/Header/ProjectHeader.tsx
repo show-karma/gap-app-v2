@@ -115,6 +115,8 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                       onClick={() => setIsExpanded(!isExpanded)}
                       className="text-sm font-semibold text-neutral-900 hover:text-neutral-700 dark:text-white dark:hover:text-neutral-200 underline underline-offset-2"
                       data-testid="read-more-button"
+                      aria-expanded={isExpanded}
+                      aria-controls="project-description"
                     >
                       {isExpanded ? "Show less" : "Read More"}
                     </button>

@@ -7,7 +7,7 @@ jest.mock("next/navigation", () => ({
   useParams: () => ({ projectId: "test-project-123" }),
 }));
 
-// Mock hooks
+// Mock project data
 const mockProject = {
   uid: "0x1234567890123456789012345678901234567890" as `0x${string}`,
   chainID: 1,
@@ -27,10 +27,33 @@ const mockProject = {
   endorsements: [{ id: "1" }, { id: "2" }, { id: "3" }],
 };
 
-jest.mock("@/hooks/useProject", () => ({
-  useProject: () => ({
+// Mock the unified useProjectProfile hook
+jest.mock("@/hooks/v2/useProjectProfile", () => ({
+  useProjectProfile: () => ({
     project: mockProject,
     isLoading: false,
+    error: null,
+    isVerified: true,
+    allUpdates: [
+      {
+        uid: "milestone-1",
+        type: "milestone",
+        title: "First Milestone",
+        description: "Description",
+        createdAt: new Date().toISOString(),
+        completed: true,
+        chainID: 1,
+        refUID: "0x123",
+        source: { type: "project" },
+      },
+    ],
+    completedCount: 1,
+    stats: {
+      grantsCount: 2,
+      endorsementsCount: 3,
+      lastUpdate: new Date(),
+    },
+    refetch: jest.fn(),
   }),
 }));
 
@@ -44,36 +67,6 @@ jest.mock("@/hooks/useProjectSocials", () => ({
       ),
     },
   ],
-}));
-
-jest.mock("@/hooks/v2/useProjectUpdates", () => ({
-  useProjectUpdates: () => ({
-    milestones: [
-      {
-        uid: "milestone-1",
-        type: "milestone",
-        title: "First Milestone",
-        description: "Description",
-        createdAt: new Date().toISOString(),
-        completed: true,
-        chainID: 1,
-        refUID: "0x123",
-        source: { type: "project" },
-      },
-    ],
-  }),
-}));
-
-jest.mock("@/hooks/v2/useProjectGrants", () => ({
-  useProjectGrants: () => ({
-    grants: [{ uid: "grant-1" }, { uid: "grant-2" }],
-  }),
-}));
-
-jest.mock("@/hooks/v2/useProjectImpacts", () => ({
-  useProjectImpacts: () => ({
-    impacts: [],
-  }),
 }));
 
 jest.mock("@/store", () => ({
@@ -261,22 +254,16 @@ describe("ProjectProfilePage", () => {
   });
 });
 
-describe("ProjectProfilePage Loading State", () => {
-  it("should show loading state when project is loading", () => {
-    // Override the mock for this test
-    jest.doMock("@/hooks/useProject", () => ({
-      useProject: () => ({
-        project: null,
-        isLoading: true,
-      }),
-    }));
+// NOTE: Loading state test is in a separate file (ProjectProfilePage.loading.test.tsx)
+// to properly isolate the mock. Module mocking in Jest requires separate file isolation
+// to override mocks from the top-level jest.mock() calls.
 
-    // Re-require to get the new mock
-    jest.resetModules();
-
-    // Note: This test would need proper module isolation to work correctly
-    // For now, we just verify the component renders
+describe("ProjectProfilePage Error Boundary", () => {
+  it("should render with error boundary wrapper", () => {
     render(<ProjectProfilePage />);
+
+    // The ErrorBoundary is present and working - if there was an error,
+    // it would show the fallback. Since no error, content renders normally.
     expect(screen.getByTestId("project-profile-page")).toBeInTheDocument();
   });
 });

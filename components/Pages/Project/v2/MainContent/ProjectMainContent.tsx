@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { cn } from "@/utilities/tailwind";
 import { ActivityFeed } from "./ActivityFeed";
@@ -36,16 +36,19 @@ export function ProjectMainContent({
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [activeFilters, setActiveFilters] = useState<ActivityFilterType[]>([]);
 
-  const handleTabChange = (tab: ContentTab) => {
-    setActiveTab(tab);
-    onTabChange?.(tab);
-  };
+  const handleTabChange = useCallback(
+    (tab: ContentTab) => {
+      setActiveTab(tab);
+      onTabChange?.(tab);
+    },
+    [onTabChange]
+  );
 
-  const handleFilterToggle = (filter: ActivityFilterType) => {
+  const handleFilterToggle = useCallback((filter: ActivityFilterType) => {
     setActiveFilters((prev) =>
       prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]
     );
-  };
+  }, []);
 
   return (
     <div

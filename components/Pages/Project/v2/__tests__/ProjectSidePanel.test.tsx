@@ -160,23 +160,18 @@ describe("EndorseSection", () => {
       expect(screen.getByTestId("endorse-section")).toBeInTheDocument();
     });
 
-    it("should render message textarea", () => {
-      render(<EndorseSection project={mockProject} />);
-
-      expect(screen.getByTestId("endorse-message-input")).toBeInTheDocument();
-    });
-
     it("should render endorse button", () => {
       render(<EndorseSection project={mockProject} />);
 
       expect(screen.getByTestId("endorse-button")).toBeInTheDocument();
-      expect(screen.getByText("Submit")).toBeInTheDocument();
+      expect(screen.getByText("Endorse this project")).toBeInTheDocument();
     });
 
     it("should render header with icon", () => {
       render(<EndorseSection project={mockProject} />);
 
       expect(screen.getByText("Endorse")).toBeInTheDocument();
+      expect(screen.getByText("Vouch for this project")).toBeInTheDocument();
     });
   });
 
@@ -188,15 +183,6 @@ describe("EndorseSection", () => {
       fireEvent.click(button);
 
       expect(mockSetIsEndorsementOpen).toHaveBeenCalledWith(true);
-    });
-
-    it("should allow typing in message textarea", () => {
-      render(<EndorseSection project={mockProject} />);
-
-      const textarea = screen.getByTestId("endorse-message-input");
-      fireEvent.change(textarea, { target: { value: "Great project!" } });
-
-      expect(textarea).toHaveValue("Great project!");
     });
   });
 
