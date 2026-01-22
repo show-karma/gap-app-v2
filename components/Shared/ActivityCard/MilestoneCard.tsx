@@ -7,6 +7,8 @@ import {
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import type { FC } from "react";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -17,6 +19,7 @@ import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import { formatDate } from "@/utilities/formatDate";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { ReadMore } from "@/utilities/ReadMore";
 import { shareOnX } from "@/utilities/share/shareOnX";
@@ -421,7 +424,37 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
       completionReason ||
       completionProof ||
       completionDeliverables ? (
-        <div className="flex flex-col w-full pl-8 md:pl-[120px]">{renderMilestoneCompletion()}</div>
+        <div className="relative flex flex-col w-full pl-8 md:pl-[120px]">
+          {/* Timeline dot */}
+          <div className="absolute left-[3px] md:left-[108px] top-2 w-2 h-2 rounded-full bg-green-500" />
+
+          {/* Timeline header: Milestone Update ... Posted by ... */}
+          <div className="flex flex-row items-center justify-between gap-2 mb-3 flex-wrap">
+            {/* Left side: Status */}
+            <div className="flex flex-row items-center gap-2 flex-wrap">
+              <span className="text-sm font-semibold text-foreground">Milestone Update</span>
+            </div>
+
+            {/* Right side: Posted by */}
+            <div className="flex flex-row items-center gap-2 text-sm font-medium leading-5 text-muted-foreground">
+              <span>Posted {formatDate(completionDate || "")}</span>
+              {completionAttester && (
+                <>
+                  <span>by</span>
+                  <EthereumAddressToENSAvatar
+                    address={completionAttester}
+                    className="h-8 w-8 min-h-8 min-w-8 rounded-full"
+                  />
+                  <span className="text-sm font-semibold leading-5 text-foreground">
+                    <EthereumAddressToENSName address={completionAttester} />
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {renderMilestoneCompletion()}
+        </div>
       ) : null}
     </div>
   );
