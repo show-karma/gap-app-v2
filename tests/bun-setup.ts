@@ -1701,10 +1701,8 @@ mock.module("@/components/FundingPlatform/helper/getProjecTitle", () => ({
   getProjectTitle: createMockFn(() => "Test Project"),
 }));
 
-// Mock formatDate utility
-mock.module("@/utilities/formatDate", () => ({
-  formatDate: createMockFn(() => "2025-01-01"),
-}));
+// NOTE: formatDate is NOT mocked globally because utilities/__tests__/formatDate.test.ts
+// needs to test the real implementation. Tests that need a mock should define it locally.
 
 // Mock ReviewerAssignmentDropdown
 mock.module("@/components/FundingPlatform/ApplicationList/ReviewerAssignmentDropdown", () => ({
