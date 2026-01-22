@@ -962,6 +962,9 @@ mock.module("next/link", () => {
       href: string;
       [key: string]: unknown;
     }) => React.createElement("a", { href, ...props }, children),
+    useLinkStatus: () => ({
+      pending: false,
+    }),
   };
 });
 
@@ -1200,6 +1203,16 @@ mock.module("wagmi", () => ({
     isError: false,
     error: null,
   }),
+  useSignMessage: () => ({
+    signMessage: createMockFn(),
+    signMessageAsync: createMockFn(() => Promise.resolve("0xmocksignature")),
+    data: undefined,
+    isLoading: false,
+    isSuccess: false,
+    isError: false,
+    error: null,
+    reset: createMockFn(),
+  }),
   WagmiProvider: ({ children }: { children: unknown }) => children,
   createConfig: () => ({}),
 }));
@@ -1330,16 +1343,19 @@ mock.module("@/utilities/donations/batchDonations", () => ({
     };
     return contracts[chainId];
   }),
+  getSupportedBatchDonationsChains: createMockFn(() => [10, 8453, 42161]),
 }));
 
 // Mock @/utilities/erc20
 const mockCheckTokenAllowances = createMockFn(() => Promise.resolve([]));
 const mockExecuteApprovals = createMockFn(() => Promise.resolve([]));
 const mockGetApprovalAmount = createMockFn((amount: bigint) => amount);
+const mockApproveToken = createMockFn(() => Promise.resolve("0xmockhash"));
 mock.module("@/utilities/erc20", () => ({
   checkTokenAllowances: mockCheckTokenAllowances,
   executeApprovals: mockExecuteApprovals,
   getApprovalAmount: mockGetApprovalAmount,
+  approveToken: mockApproveToken,
 }));
 (globalThis as any).__mocks__.checkTokenAllowances = mockCheckTokenAllowances;
 (globalThis as any).__mocks__.executeApprovals = mockExecuteApprovals;
@@ -1358,7 +1374,29 @@ mock.module("@/utilities/rpcClient", () => ({
 // Mock @/utilities/walletClientValidation
 mock.module("@/utilities/walletClientValidation", () => ({
   validateWalletClient: createMockFn(() => true),
+  getWalletClientReadinessScore: createMockFn(() => ({ score: 100, isReady: true })),
 }));
+
+// Mock @/utilities/grant-helpers
+const mockFetchGrantInstance = createMockFn(() => Promise.resolve(null));
+mock.module("@/utilities/grant-helpers", () => ({
+  fetchGrantInstance: mockFetchGrantInstance,
+}));
+(globalThis as any).__mocks__.fetchGrantInstance = mockFetchGrantInstance;
+
+// Mock @/utilities/indexer-notification
+const mockNotifyIndexerForMilestone = createMockFn(() => Promise.resolve());
+mock.module("@/utilities/indexer-notification", () => ({
+  notifyIndexerForMilestone: mockNotifyIndexerForMilestone,
+}));
+(globalThis as any).__mocks__.notifyIndexerForMilestone = mockNotifyIndexerForMilestone;
+
+// Mock @/utilities/attestation-polling
+const mockPollForMilestoneStatus = createMockFn(() => Promise.resolve({ status: "complete" }));
+mock.module("@/utilities/attestation-polling", () => ({
+  pollForMilestoneStatus: mockPollForMilestoneStatus,
+}));
+(globalThis as any).__mocks__.pollForMilestoneStatus = mockPollForMilestoneStatus;
 
 // Mock @/utilities/walletClientFallback
 const mockGetWalletClientWithFallback = createMockFn(() => Promise.resolve(null));
@@ -1372,14 +1410,19 @@ mock.module("@/utilities/walletClientFallback", () => ({
 
 // Mock @/utilities/chainSyncValidation
 const mockValidateChainSync = createMockFn(() => Promise.resolve(true));
+const mockWaitForChainSync = createMockFn(() => Promise.resolve(true));
 mock.module("@/utilities/chainSyncValidation", () => ({
   validateChainSync: mockValidateChainSync,
+  waitForChainSync: mockWaitForChainSync,
 }));
 (globalThis as any).__mocks__.validateChainSync = mockValidateChainSync;
+(globalThis as any).__mocks__.waitForChainSync = mockWaitForChainSync;
 
+const mockGetShortErrorMessage = createMockFn(() => "An error occurred");
 mock.module("@/utilities/donations/errorMessages", () => ({
   getDetailedErrorInfo: mockGetDetailedErrorInfo,
   parseDonationError: mockParseDonationError,
+  getShortErrorMessage: mockGetShortErrorMessage,
   DonationErrorCode: {
     USER_REJECTED: "USER_REJECTED",
     INSUFFICIENT_GAS: "INSUFFICIENT_GAS",
@@ -1398,6 +1441,7 @@ mock.module("@/utilities/donations/errorMessages", () => ({
 }));
 (globalThis as any).__mocks__.getDetailedErrorInfo = mockGetDetailedErrorInfo;
 (globalThis as any).__mocks__.parseDonationError = mockParseDonationError;
+(globalThis as any).__mocks__.getShortErrorMessage = mockGetShortErrorMessage;
 
 // Mock rehype plugins (ESM-only packages)
 mock.module("rehype-sanitize", () => ({
@@ -1435,6 +1479,77 @@ mock.module("multiformats/cid", () => ({
     parse: (str: string) => ({ toString: () => str }),
     decode: (bytes: Uint8Array) => ({ toString: () => "mock-cid" }),
   },
+}));
+
+// Mock @show-karma/karma-gap-sdk IpfsStorage
+class MockIpfsStorage {
+  async upload(data: unknown) {
+    return "QmMockIpfsHash123456789";
+  }
+  async download(hash: string) {
+    return { data: "mock data" };
+  }
+}
+mock.module("@show-karma/karma-gap-sdk/core/class/remote-storage/IpfsStorage", () => ({
+  IpfsStorage: MockIpfsStorage,
+}));
+
+// Mock Schema class - base class for GapSchema
+class MockSchema {
+  uid?: string;
+  constructor() {}
+  static create() {
+    return new MockSchema();
+  }
+}
+
+// Mock GapSchema class
+class MockGapSchema extends MockSchema {
+  constructor() {
+    super();
+  }
+}
+
+// Mock GAP class
+class MockGAP {
+  network: any;
+  constructor(config?: any) {
+    this.network = config?.network || {};
+  }
+  static async connect() {
+    return new MockGAP();
+  }
+}
+
+// Also mock the main SDK export paths for IpfsStorage
+mock.module("@show-karma/karma-gap-sdk", () => ({
+  IpfsStorage: MockIpfsStorage,
+  GAP: MockGAP,
+  GapSchema: MockGapSchema,
+  Schema: MockSchema,
+}));
+
+// Mock internal SDK paths that may be imported directly
+mock.module("@show-karma/karma-gap-sdk/core/class/Schema", () => ({
+  Schema: MockSchema,
+}));
+
+mock.module("@show-karma/karma-gap-sdk/core/class/GapSchema", () => ({
+  GapSchema: MockGapSchema,
+}));
+
+mock.module("@show-karma/karma-gap-sdk/core/class/GAP", () => ({
+  GAP: MockGAP,
+}));
+
+mock.module("@show-karma/karma-gap-sdk/core/class/contract/GapContract", () => ({
+  GapContract: class MockGapContract {
+    constructor() {}
+  },
+}));
+
+mock.module("@show-karma/karma-gap-sdk/core/utils/gelato/send-gelato-txn", () => ({
+  sendGelatoTxn: createMockFn(() => Promise.resolve("0xmockhash")),
 }));
 
 // Mock privy-config
