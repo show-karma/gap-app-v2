@@ -6,7 +6,8 @@ import { QuestionBuilder } from "@/components/QuestionBuilder";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
-import { useProgramConfig } from "@/hooks/useFundingPlatform";
+import { useFundingPrograms } from "@/hooks/useFundingPlatform";
+import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
 import { layoutTheme } from "@/src/helper/theme";
 import type { FormSchema } from "@/types/question-builder";
@@ -26,9 +27,14 @@ export default function QuestionBuilderPage() {
 
   const { hasAccess, isLoading: isLoadingAdmin } = useCommunityAdminAccess(communityId);
 
-  // Fetch program config to get chainID if needed for V1 components
-  const { config: programConfig } = useProgramConfig(programId);
-  const chainId = programConfig?.chainID;
+  // Fetch all programs to get program metadata (title) and chainID
+  const { programs, isLoading: isLoadingPrograms } = useFundingPrograms(communityId);
+
+  // Find the program to get its title and chainID
+  const program = programs.find((p) => p.programId === programId);
+
+  // Get chainID from the program (already fetched via useFundingPrograms)
+  const chainId = program?.chainID;
 
   const {
     schema: existingSchema,
@@ -46,7 +52,16 @@ export default function QuestionBuilderPage() {
     isUpdating: isUpdatingPostApproval,
   } = usePostApprovalSchema(programId);
 
-  const { config: existingConfig } = useProgramConfig(programId);
+  // Get existing config from program (already fetched via useFundingPrograms)
+  const existingConfig = program?.applicationConfig || null;
+
+  // Fetch reviewers to check if any are configured
+  const { data: reviewers, isLoading: isLoadingReviewers } = useProgramReviewers(programId);
+
+  // Derive computed values for sidebar completion status
+  const hasReviewers = reviewers && reviewers.length > 0;
+  const hasAIConfig = Boolean(existingConfig?.systemPrompt);
+  const programTitle = program?.metadata?.title || program?.name;
 
   const handleSchemaChange = (schema: FormSchema) => {
     updateSchema({ schema, existingConfig: existingConfig || null });
@@ -60,7 +75,13 @@ export default function QuestionBuilderPage() {
     router.push(`/community/${communityId}/admin/funding-platform`);
   };
 
-  if (isLoadingAdmin || isLoadingSchema || isLoadingPostApprovalSchema) {
+  if (
+    isLoadingAdmin ||
+    isLoadingPrograms ||
+    isLoadingSchema ||
+    isLoadingPostApprovalSchema ||
+    isLoadingReviewers
+  ) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />
@@ -105,34 +126,16 @@ export default function QuestionBuilderPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="sm:px-3 md:px-4 px-6 py-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
-                <ArrowLeftIcon className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Form Builder</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Program ID: {programId}</p>
-              </div>
-            </div>
-
-            {(isUpdating || isUpdatingPostApproval) && (
-              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <Spinner />
-                <span className="ml-2">Saving...</span>
-              </div>
-            )}
-          </div>
+    <div className="min-h-screen flex flex-col bg-white dark:bg-gray-800">
+      {/* Saving indicator - minimal header */}
+      {(isUpdating || isUpdatingPostApproval) && (
+        <div className="absolute top-4 right-4 flex items-center text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 px-3 py-2 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+          <Spinner />
+          <span className="ml-2">Saving...</span>
         </div>
-      </div>
+      )}
 
-      {/* Question Builder */}
+      {/* Question Builder with Sidebar */}
       <FormBuilderErrorBoundary>
         <QuestionBuilder
           initialSchema={existingSchema || undefined}
@@ -142,6 +145,10 @@ export default function QuestionBuilderPage() {
           communityId={communityId}
           initialPostApprovalSchema={existingPostApprovalSchema || undefined}
           onSavePostApproval={handlePostApprovalSchemaChange}
+          programTitle={programTitle}
+          hasReviewers={hasReviewers}
+          hasAIConfig={hasAIConfig}
+          program={program}
         />
       </FormBuilderErrorBoundary>
     </div>
