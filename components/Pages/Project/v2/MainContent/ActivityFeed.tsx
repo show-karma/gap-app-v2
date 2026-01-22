@@ -218,7 +218,7 @@ export function ActivityFeed({
                 {(() => {
                   const attester = getMilestoneAttester(milestone);
                   return (
-                    <div className="flex flex-row items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex flex-row items-center gap-2 text-sm font-medium leading-5 text-muted-foreground">
                       <span>Posted {formatDate(milestone.createdAt)}</span>
                       {attester && (
                         <>
@@ -227,7 +227,7 @@ export function ActivityFeed({
                             address={attester}
                             className="h-5 w-5 min-h-5 min-w-5 rounded-full"
                           />
-                          <span className="font-medium text-foreground">
+                          <span className="text-sm font-semibold leading-5 text-foreground">
                             <EthereumAddressToENSName address={attester} />
                           </span>
                         </>
