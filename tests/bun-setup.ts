@@ -183,6 +183,144 @@ mock.module("@/components/Utilities/errorManager", () => ({
   __esModule: true,
 }));
 
+// Mock lucide-react - Bun has ESM/CJS interop issues with this package
+// Create a factory that returns mock SVG components for any icon
+const createMockIcon = (name: string) => {
+  const MockIcon = (props: any) =>
+    React.createElement("svg", { "data-testid": `${name}-icon`, ...props });
+  MockIcon.displayName = name;
+  return MockIcon;
+};
+
+// Create a Proxy-based module that generates mock icons on demand
+// This handles any lucide-react icon import without needing to list them all
+const lucideReactIconCache: Record<string, ReturnType<typeof createMockIcon>> = {};
+
+const getLucideIcon = (name: string) => {
+  if (!lucideReactIconCache[name]) {
+    lucideReactIconCache[name] = createMockIcon(name);
+  }
+  return lucideReactIconCache[name];
+};
+
+// Pre-create all commonly used icons in the codebase
+// This ensures they're available for both named and default exports
+const lucideIcons = [
+  // Core/utility icons
+  "Loader2",
+  "Loader2Icon",
+  "Check",
+  "CheckIcon",
+  "X",
+  "XIcon",
+  "Search",
+  "SearchIcon",
+  "Plus",
+  "PlusIcon",
+  "Minus",
+  "MinusIcon",
+  "Info",
+  "InfoIcon",
+  // Navigation/chevron icons
+  "ChevronDown",
+  "ChevronDownIcon",
+  "ChevronUp",
+  "ChevronUpIcon",
+  "ChevronLeft",
+  "ChevronRight",
+  // Alert/notification icons
+  "AlertCircle",
+  "AlertCircleIcon",
+  "Bell",
+  "BellDot",
+  // Circle-based icons
+  "Circle",
+  "CircleHelp",
+  "CircleUser",
+  "CheckCircle2",
+  "MinusCircle",
+  "PlusCircle",
+  "CheckSquare2Icon",
+  // Arrow icons
+  "ArrowUpRight",
+  "ArrowDownToDot",
+  // User/account icons
+  "LogOutIcon",
+  "Settings",
+  "ShieldCheck",
+  "FolderKanban",
+  "Heart",
+  "CopyPlus",
+  "UserPlus",
+  // Toggle icons
+  "ToggleLeft",
+  "ToggleRight",
+  // Data/chart icons
+  "BarChart2",
+  "Calendar",
+  "Clock",
+  "Coins",
+  // Content icons
+  "FolderOpen",
+  "Code",
+  "Mail",
+  "MessageCircleMore",
+  "SquareCheckBig",
+  "MoreHorizontal",
+  // Action icons
+  "FastForward",
+  "IterationCw",
+  "Trophy",
+  "Vote",
+  "Zap",
+  // Navbar menu-items.tsx icons
+  "BanknoteArrowDown",
+  "Flame",
+  "GalleryThumbnails",
+  "GoalIcon",
+  "LayoutGrid",
+  "LayoutList",
+  "LifeBuoy",
+  "PhoneCall",
+  "Radio",
+  "ScrollText",
+  // funding-program-details-dialog.tsx icons
+  "BadgeCheck",
+  "Bug",
+  "Building2",
+  "ExternalLink",
+  "Globe",
+].reduce(
+  (acc, name) => {
+    acc[name] = getLucideIcon(name);
+    return acc;
+  },
+  {} as Record<string, ReturnType<typeof createMockIcon>>
+);
+
+mock.module("lucide-react", () => ({
+  __esModule: true,
+  // Spread all pre-created icons
+  ...lucideIcons,
+  // LucideIcon type export (used as type annotation)
+  LucideIcon: {} as any,
+  // Default export with proxy for any dynamic access
+  default: new Proxy(
+    {},
+    {
+      get(_target: any, prop: string) {
+        return getLucideIcon(prop);
+      },
+    }
+  ),
+}));
+
+// Also mock @/components/ui/spinner directly to avoid lucide-react import issues
+mock.module("@/components/ui/spinner", () => ({
+  Spinner: (props: any) =>
+    React.createElement("svg", { role: "status", "aria-label": "Loading", ...props }),
+}));
+
 // Mock @/utilities/auth/token-manager
 mock.module("@/utilities/auth/token-manager", () => ({
   TokenManager: {
@@ -1241,11 +1379,14 @@ mock.module("@/components/Pages/Stats", () => ({
 
 // =============================================================================
 // Homepage Component Mocks
+// NOTE: These are intentionally NOT mocked globally because they have dedicated
+// unit tests that need the real implementations. Integration tests should mock
+// these components individually if needed.
 // =============================================================================
 
-mock.module("@/src/features/homepage/components/hero", () => ({
-  Hero: () => React.createElement("section", { "data-testid": "hero" }),
-}));
+// Components with unit tests - NOT MOCKED:
+// - @/src/features/homepage/components/hero (hero.test.tsx)
+// - @/src/features/homepage/components/how-it-works (how-it-works.test.tsx)
 
 mock.module("@/src/features/homepage/components/live-funding-opportunities", () => ({
   LiveFundingOpportunities: () =>
@@ -1259,10 +1400,6 @@ mock.module("@/src/features/homepage/components/live-funding-opportunities-skele
 
 mock.module("@/src/features/homepage/components/platform-features", () => ({
   PlatformFeatures: () => React.createElement("section", { "data-testid": "platform-features" }),
-}));
-
-mock.module("@/src/features/homepage/components/how-it-works", () => ({
-  HowItWorks: () => React.createElement("section", { "data-testid": "how-it-works" }),
 }));
 
 mock.module("@/src/features/homepage/components/where-builders-grow", () => ({
@@ -1279,11 +1416,11 @@ mock.module("@/src/features/homepage/components/faq", () => ({
 
 // =============================================================================
 // FundingMap Component Mocks
+// NOTE: FundingMapList has dedicated unit tests - NOT MOCKED globally
 // =============================================================================
 
-mock.module("@/src/features/funding-map/components/funding-map-list", () => ({
-  FundingMapList: () => React.createElement("div", { "data-testid": "funding-map-list" }),
-}));
+// Components with unit tests - NOT MOCKED:
+// - @/src/features/funding-map/components/funding-map-list (FundingMapList.test.tsx)
 
 mock.module("@/src/features/funding-map/components/funding-map-search", () => ({
   FundingMapSearch: () => React.createElement("div", { "data-testid": "funding-map-search" }),
@@ -1355,15 +1492,9 @@ mock.module("@next/third-parties/google", () => ({
   GoogleAnalytics: () => React.createElement("div", { "data-testid": "google-analytics" }),
 }));
 
-// Mock @/src/components/footer/footer
-mock.module("@/src/components/footer/footer", () => ({
-  Footer: () => React.createElement("footer", { "data-testid": "footer" }),
-}));
-
-// Mock @/src/components/navbar/navbar
-mock.module("@/src/components/navbar/navbar", () => ({
-  Navbar: () => React.createElement("header", { "data-testid": "header" }),
-}));
+// NOTE: Footer and Navbar have dedicated unit tests - NOT MOCKED globally
+// - @/src/components/footer/footer (Footer.test.tsx)
+// - @/src/components/navbar/navbar (Navbar.test.tsx)
 
 // Mock @/components/Dialogs/ContributorProfileDialog
 mock.module("@/components/Dialogs/ContributorProfileDialog", () => ({
