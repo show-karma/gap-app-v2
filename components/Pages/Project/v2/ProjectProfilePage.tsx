@@ -79,15 +79,16 @@ export function ProjectProfilePage({ className }: ProjectProfilePageProps) {
         className={cn("flex flex-col gap-6 w-full", className)}
         data-testid="project-profile-page"
       >
-        {/* Header Section */}
-        <ProjectHeader project={project} isVerified={isVerified} />
-
-        {/* Stats Bar */}
-        <ProjectStatsBar
-          grants={stats.grantsCount}
-          endorsements={stats.endorsementsCount}
-          lastUpdate={stats.lastUpdate}
-        />
+        {/* Header + Stats Bar - Connected as one visual unit */}
+        <div className="flex flex-col bg-secondary border border-border rounded-xl">
+          <ProjectHeader project={project} isVerified={isVerified} />
+          <ProjectStatsBar
+            grants={stats.grantsCount}
+            endorsements={stats.endorsementsCount}
+            lastUpdate={stats.lastUpdate}
+            completeRate={stats.completeRate}
+          />
+        </div>
 
         {/* Main Layout: Side Panel + Content */}
         <div className="flex flex-row gap-6" data-testid="main-layout">

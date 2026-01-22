@@ -3,6 +3,13 @@ import "@testing-library/jest-dom";
 import type { Project } from "@/types/v2/project";
 import { ProjectHeader } from "../Header/ProjectHeader";
 
+// Mock the MarkdownPreview component
+jest.mock("@/components/Utilities/MarkdownPreview", () => ({
+  MarkdownPreview: ({ source, className }: { source: string; className?: string }) => (
+    <div className={className}>{source}</div>
+  ),
+}));
+
 // Mock the useProjectSocials hook
 jest.mock("@/hooks/useProjectSocials", () => ({
   useProjectSocials: jest.fn(() => [

@@ -2,8 +2,11 @@
 
 import { ArrowLeftIcon, BookOpenIcon, Share2Icon } from "lucide-react";
 import { useMemo } from "react";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { ActivityCard } from "@/components/Shared/ActivityCard";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
+import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import type { ActivityFilterType, SortOption } from "./ActivityFilters";
 
@@ -13,6 +16,40 @@ interface ActivityFeedProps {
   sortBy?: SortOption;
   activeFilters?: ActivityFilterType[];
   className?: string;
+}
+
+/**
+ * Get the attester/creator address from a milestone.
+ */
+function getMilestoneAttester(milestone: UnifiedMilestone): string | undefined {
+  // Try to get attester from various sources
+  return (
+    milestone.source.projectMilestone?.attester ||
+    milestone.source.grantMilestone?.milestone?.attester ||
+    milestone.projectUpdate?.recipient ||
+    milestone.grantUpdate?.attester ||
+    milestone.grantUpdate?.recipient
+  );
+}
+
+/**
+ * Get the text label for an activity type.
+ */
+function getActivityTypeLabel(type: string): string {
+  switch (type) {
+    case "grant":
+    case "grant_update":
+      return "Grant Update";
+    case "project":
+      return "Project Activity";
+    case "impact":
+      return "Project Impact";
+    case "milestone":
+    case "activity":
+    case "update":
+    default:
+      return "Milestone";
+  }
 }
 
 /**
@@ -154,7 +191,7 @@ export function ActivityFeed({
               {/* Timeline icon - colored rounded square */}
               <div
                 className={cn(
-                  "absolute left-0 top-2 w-6 h-6 rounded-lg flex items-center justify-center",
+                  "absolute left-0 top-0 w-6 h-6 rounded-lg flex items-center justify-center",
                   typeIcon.bgColor,
                   typeIcon.textColor
                 )}
@@ -163,12 +200,41 @@ export function ActivityFeed({
                 {typeIcon.icon}
               </div>
 
-              {/* Date header */}
-              <div
-                className="text-sm text-neutral-500 dark:text-neutral-400 mb-2"
-                data-testid="activity-date"
-              >
-                {formatDate(milestone.createdAt)}
+              {/* Status Text, Due Date, and Posted By */}
+              <div className="flex flex-row items-center justify-between gap-2 mb-3 flex-wrap">
+                {/* Left side: Status and Due Date */}
+                <div className="flex flex-row items-center gap-2 flex-wrap">
+                  <span className="text-sm font-semibold text-foreground">
+                    {getActivityTypeLabel(milestone.type)}
+                  </span>
+                  {milestone.endsAt && (
+                    <span className="text-sm font-semibold text-muted-foreground">
+                      Due by {formatDate(new Date(milestone.endsAt * 1000).toISOString())}
+                    </span>
+                  )}
+                </div>
+
+                {/* Right side: Posted by */}
+                {(() => {
+                  const attester = getMilestoneAttester(milestone);
+                  return (
+                    <div className="flex flex-row items-center gap-2 text-sm text-muted-foreground">
+                      <span>Posted {formatDate(milestone.createdAt)}</span>
+                      {attester && (
+                        <>
+                          <span>by</span>
+                          <EthereumAddressToENSAvatar
+                            address={attester}
+                            className="h-5 w-5 min-h-5 min-w-5 rounded-full"
+                          />
+                          <span className="font-medium text-foreground">
+                            <EthereumAddressToENSName address={attester} />
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Activity Card */}

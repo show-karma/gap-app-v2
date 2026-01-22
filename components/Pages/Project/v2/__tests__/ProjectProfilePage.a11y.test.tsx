@@ -312,13 +312,13 @@ describe("ProjectProfilePage Accessibility", () => {
       expect(tabsList).toBeInTheDocument();
 
       // Check individual tabs have proper attributes
-      const profileTab = screen.getByTestId("tab-profile");
       const updatesTab = screen.getByTestId("tab-updates");
+      const aboutTab = screen.getByTestId("tab-about");
 
-      expect(profileTab).toHaveAttribute("data-state");
       expect(updatesTab).toHaveAttribute("data-state");
-      expect(profileTab).toHaveAttribute("role", "tab");
+      expect(aboutTab).toHaveAttribute("data-state");
       expect(updatesTab).toHaveAttribute("role", "tab");
+      expect(aboutTab).toHaveAttribute("role", "tab");
 
       // Verify tab list has proper role
       expect(tabsList).toHaveAttribute("role", "tablist");

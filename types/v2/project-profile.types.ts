@@ -76,6 +76,7 @@ export interface ProjectProfileStats {
   grantsCount: number;
   endorsementsCount: number;
   lastUpdate?: Date;
+  completeRate?: number;
 }
 
 // =============================================================================

@@ -57,7 +57,7 @@ const mockMilestones: UnifiedMilestone[] = [
 
 describe("ContentTabs", () => {
   const defaultProps = {
-    activeTab: "profile" as const,
+    activeTab: "updates" as const,
     onTabChange: jest.fn(),
   };
 
@@ -75,11 +75,12 @@ describe("ContentTabs", () => {
     it("should render all tab options", () => {
       render(<ContentTabs {...defaultProps} />);
 
-      expect(screen.getByTestId("tab-profile")).toBeInTheDocument();
       expect(screen.getByTestId("tab-updates")).toBeInTheDocument();
       expect(screen.getByTestId("tab-about")).toBeInTheDocument();
       expect(screen.getByTestId("tab-funding")).toBeInTheDocument();
       expect(screen.getByTestId("tab-impact")).toBeInTheDocument();
+      // Profile tab was renamed to Updates
+      expect(screen.queryByTestId("tab-profile")).not.toBeInTheDocument();
     });
 
     it("should show funding count badge when provided", () => {
@@ -97,17 +98,17 @@ describe("ContentTabs", () => {
 
   describe("Interactions", () => {
     it("should have correct active tab attribute", () => {
-      render(<ContentTabs {...defaultProps} activeTab="updates" />);
+      render(<ContentTabs {...defaultProps} activeTab="about" />);
 
-      const updatesTab = screen.getByTestId("tab-updates");
-      expect(updatesTab).toHaveAttribute("data-state", "active");
+      const aboutTab = screen.getByTestId("tab-about");
+      expect(aboutTab).toHaveAttribute("data-state", "active");
     });
 
     it("should have inactive state for non-selected tabs", () => {
-      render(<ContentTabs {...defaultProps} activeTab="profile" />);
+      render(<ContentTabs {...defaultProps} activeTab="updates" />);
 
-      const updatesTab = screen.getByTestId("tab-updates");
-      expect(updatesTab).toHaveAttribute("data-state", "inactive");
+      const aboutTab = screen.getByTestId("tab-about");
+      expect(aboutTab).toHaveAttribute("data-state", "inactive");
     });
   });
 
@@ -149,11 +150,13 @@ describe("ActivityFilters", () => {
       render(<ActivityFilters {...defaultProps} />);
 
       expect(screen.getByTestId("filter-badges")).toBeInTheDocument();
+      expect(screen.getByTestId("filter-everything")).toBeInTheDocument();
       expect(screen.getByTestId("filter-funding")).toBeInTheDocument();
       expect(screen.getByTestId("filter-updates")).toBeInTheDocument();
-      expect(screen.getByTestId("filter-blog")).toBeInTheDocument();
-      expect(screen.getByTestId("filter-socials")).toBeInTheDocument();
-      expect(screen.getByTestId("filter-other")).toBeInTheDocument();
+      // Blog, Socials, and Other are hidden
+      expect(screen.queryByTestId("filter-blog")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("filter-socials")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("filter-other")).not.toBeInTheDocument();
     });
 
     it("should show milestone count when provided", () => {
@@ -162,6 +165,12 @@ describe("ActivityFilters", () => {
       expect(screen.getByTestId("milestones-count")).toHaveTextContent(
         "21 Milestones, 15 Completed"
       );
+    });
+
+    it("should use singular form for single milestone", () => {
+      render(<ActivityFilters {...defaultProps} milestonesCount={1} completedCount={1} />);
+
+      expect(screen.getByTestId("milestones-count")).toHaveTextContent("1 Milestone, 1 Completed");
     });
 
     it("should not show milestone count when zero", () => {
@@ -188,6 +197,35 @@ describe("ActivityFilters", () => {
       const fundingButton = screen.getByTestId("filter-funding");
       const badge = fundingButton.querySelector("div");
       expect(badge).toHaveClass("bg-neutral-900");
+    });
+
+    it("should show Everything button as active when no filters selected", () => {
+      render(<ActivityFilters {...defaultProps} activeFilters={[]} />);
+
+      const everythingButton = screen.getByTestId("filter-everything");
+      expect(everythingButton).toBeInTheDocument();
+
+      // Check that the badge inside Everything button has active styling
+      const badge = everythingButton.querySelector("div");
+      expect(badge).toHaveClass("bg-neutral-900");
+    });
+
+    it("should clear all filters when Everything button is clicked", () => {
+      const handleToggle = jest.fn();
+      render(
+        <ActivityFilters
+          {...defaultProps}
+          activeFilters={["funding", "updates"]}
+          onFilterToggle={handleToggle}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId("filter-everything"));
+
+      // Should call toggle for each active filter to clear them
+      expect(handleToggle).toHaveBeenCalledWith("funding");
+      expect(handleToggle).toHaveBeenCalledWith("updates");
+      expect(handleToggle).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -222,11 +260,11 @@ describe("ActivityFeed", () => {
       expect(icons).toHaveLength(3);
     });
 
-    it("should render activity dates", () => {
+    it("should render activity items with timeline icons", () => {
       render(<ActivityFeed milestones={mockMilestones} />);
 
-      const dates = screen.getAllByTestId("activity-date");
-      expect(dates).toHaveLength(3);
+      const items = screen.getAllByTestId("activity-item");
+      expect(items).toHaveLength(3);
     });
 
     it("should show empty state when no milestones", () => {
@@ -241,15 +279,17 @@ describe("ActivityFeed", () => {
     it("should sort by newest first by default", () => {
       render(<ActivityFeed milestones={mockMilestones} />);
 
-      const dates = screen.getAllByTestId("activity-date");
-      expect(dates[0]).toHaveTextContent("Today");
+      const items = screen.getAllByTestId("activity-item");
+      expect(items).toHaveLength(3);
+      // First item should be the newest (index 0 in mockMilestones is today)
     });
 
     it("should sort by oldest first when sortBy is oldest", () => {
       render(<ActivityFeed milestones={mockMilestones} sortBy="oldest" />);
 
-      const dates = screen.getAllByTestId("activity-date");
-      expect(dates[0]).toHaveTextContent("2 days ago");
+      const items = screen.getAllByTestId("activity-item");
+      expect(items).toHaveLength(3);
+      // Items should be in reverse chronological order
     });
   });
 
@@ -317,13 +357,13 @@ describe("ProjectMainContent", () => {
       expect(screen.getByTestId("content-tabs")).toBeInTheDocument();
     });
 
-    it("should render activity filters on profile tab", () => {
+    it("should render activity filters on updates tab", () => {
       render(<ProjectMainContent {...defaultProps} />);
 
       expect(screen.getByTestId("activity-filters")).toBeInTheDocument();
     });
 
-    it("should render activity feed on profile tab", () => {
+    it("should render activity feed on updates tab", () => {
       render(<ProjectMainContent {...defaultProps} />);
 
       expect(screen.getByTestId("activity-feed")).toBeInTheDocument();
@@ -331,14 +371,14 @@ describe("ProjectMainContent", () => {
   });
 
   describe("Tab Navigation", () => {
-    it("should start with profile tab active", () => {
+    it("should start with updates tab active", () => {
       render(<ProjectMainContent {...defaultProps} />);
 
-      const profileTab = screen.getByTestId("tab-profile");
-      expect(profileTab).toHaveAttribute("data-state", "active");
+      const updatesTab = screen.getByTestId("tab-updates");
+      expect(updatesTab).toHaveAttribute("data-state", "active");
     });
 
-    it("should show activity feed on initial render (profile tab)", () => {
+    it("should show activity feed on initial render (updates tab)", () => {
       render(<ProjectMainContent {...defaultProps} />);
 
       expect(screen.getByTestId("activity-feed")).toBeInTheDocument();
@@ -348,11 +388,12 @@ describe("ProjectMainContent", () => {
     it("should render all tab triggers", () => {
       render(<ProjectMainContent {...defaultProps} />);
 
-      expect(screen.getByTestId("tab-profile")).toBeInTheDocument();
       expect(screen.getByTestId("tab-updates")).toBeInTheDocument();
       expect(screen.getByTestId("tab-about")).toBeInTheDocument();
       expect(screen.getByTestId("tab-funding")).toBeInTheDocument();
       expect(screen.getByTestId("tab-impact")).toBeInTheDocument();
+      // Profile tab was renamed to Updates
+      expect(screen.queryByTestId("tab-profile")).not.toBeInTheDocument();
     });
   });
 

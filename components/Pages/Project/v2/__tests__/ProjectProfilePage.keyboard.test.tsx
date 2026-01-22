@@ -139,7 +139,7 @@ describe("Keyboard Navigation Tests", () => {
 
   describe("ContentTabs Keyboard Navigation", () => {
     const defaultTabProps = {
-      activeTab: "profile" as const,
+      activeTab: "updates" as const,
       onTabChange: jest.fn(),
     };
 
@@ -159,10 +159,10 @@ describe("Keyboard Navigation Tests", () => {
       const user = userEvent.setup();
       render(<ContentTabs {...defaultTabProps} />);
 
-      const profileTab = screen.getByTestId("tab-profile");
-      profileTab.focus();
+      const updatesTab = screen.getByTestId("tab-updates");
+      updatesTab.focus();
 
-      expect(profileTab).toHaveFocus();
+      expect(updatesTab).toHaveFocus();
 
       // Arrow right should move focus to next tab
       await user.keyboard("{ArrowRight}");
@@ -199,20 +199,20 @@ describe("Keyboard Navigation Tests", () => {
     it("should have proper focus visible indicators", () => {
       render(<ContentTabs {...defaultTabProps} />);
 
-      const profileTab = screen.getByTestId("tab-profile");
-      profileTab.focus();
+      const updatesTab = screen.getByTestId("tab-updates");
+      updatesTab.focus();
 
-      expect(profileTab).toHaveFocus();
+      expect(updatesTab).toHaveFocus();
       // Focus indicator is handled by CSS, but element should receive focus
-      expect(document.activeElement).toBe(profileTab);
+      expect(document.activeElement).toBe(updatesTab);
     });
 
     it("should maintain focus within tablist using Home/End keys", async () => {
       const user = userEvent.setup();
       render(<ContentTabs {...defaultTabProps} />);
 
-      const profileTab = screen.getByTestId("tab-profile");
-      profileTab.focus();
+      const updatesTab = screen.getByTestId("tab-updates");
+      updatesTab.focus();
 
       // Home key should go to first tab
       await user.keyboard("{Home}");
@@ -299,22 +299,16 @@ describe("Keyboard Navigation Tests", () => {
       await user.tab();
       expect(screen.getByTestId("sort-select")).toHaveFocus();
 
-      // Tab to first filter
+      // Tab to first filter (Everything)
       await user.tab();
-      expect(screen.getByTestId("filter-funding")).toHaveFocus();
+      expect(screen.getByTestId("filter-everything")).toHaveFocus();
 
       // Tab through remaining filters
       await user.tab();
+      expect(screen.getByTestId("filter-funding")).toHaveFocus();
+
+      await user.tab();
       expect(screen.getByTestId("filter-updates")).toHaveFocus();
-
-      await user.tab();
-      expect(screen.getByTestId("filter-blog")).toHaveFocus();
-
-      await user.tab();
-      expect(screen.getByTestId("filter-socials")).toHaveFocus();
-
-      await user.tab();
-      expect(screen.getByTestId("filter-other")).toHaveFocus();
     });
 
     it("should have focus-visible styles on filter badges", () => {
@@ -711,15 +705,15 @@ describe("Keyboard Navigation Tests", () => {
     it("should allow keyboard interaction with content tabs", async () => {
       render(<ProjectMainContent {...defaultMainContentProps} />);
 
-      const profileTab = screen.getByTestId("tab-profile");
-      profileTab.focus();
+      const updatesTab = screen.getByTestId("tab-updates");
+      updatesTab.focus();
 
-      expect(profileTab).toHaveFocus();
+      expect(updatesTab).toHaveFocus();
 
       // Press Enter to activate
-      fireEvent.keyDown(profileTab, { key: "Enter", code: "Enter" });
+      fireEvent.keyDown(updatesTab, { key: "Enter", code: "Enter" });
 
-      expect(profileTab).toBeInTheDocument();
+      expect(updatesTab).toBeInTheDocument();
     });
   });
 

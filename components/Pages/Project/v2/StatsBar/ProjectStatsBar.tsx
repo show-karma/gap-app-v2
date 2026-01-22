@@ -126,11 +126,11 @@ export function ProjectStatsBar({
   return (
     <div className={cn("w-full", className)} data-testid="project-stats-bar">
       {/* Card wrapper matching Figma */}
-      <div className="rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 py-4 px-2">
+      <div className="py-6 px-4">
         {/* Desktop: Horizontal row with equal spacing */}
         <div className="hidden lg:block">
           <ScrollArea className="w-full whitespace-nowrap">
-            <div className="flex flex-row justify-around">
+            <div className="flex flex-row justify-between items-center px-2">
               {stats.map((stat) => (
                 <StatItem
                   key={stat.key}
@@ -147,7 +147,7 @@ export function ProjectStatsBar({
 
         {/* Mobile: Wrapping grid */}
         <div className="lg:hidden">
-          <div className="flex flex-row flex-wrap justify-center gap-4">
+          <div className="flex flex-row flex-wrap justify-center gap-6">
             {stats.map((stat) => (
               <StatItem
                 key={stat.key}

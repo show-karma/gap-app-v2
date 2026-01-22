@@ -26,6 +26,7 @@ import { cn } from "@/utilities/tailwind";
 import { containerClassName } from "../ActivityCard";
 import { ActivityAttribution } from "./ActivityAttribution";
 import { ActivityStatusHeader } from "./ActivityStatusHeader";
+import { GrantAssociation } from "./GrantAssociation";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -384,14 +385,9 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
         {/* Grants Related Section */}
         <div className="flex flex-col gap-3 w-full px-5 py-4">
           <div className="flex flex-col gap-3 w-full">
-            <ActivityStatusHeader
-              activityType="Milestone"
-              dueDate={type === "grant" && endsAt ? formatDate(endsAt) : null}
-              showCompletionStatus={true}
-              completed={!!completed}
-              completionStatusClassName="text-xs px-2 py-1"
-              milestone={milestone}
-            />
+            {/* Community/Grant Badge - only shown for grant milestones */}
+            {type === "grant" && <GrantAssociation milestone={milestone} />}
+
             {/* Title */}
             <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">{title}</p>
           </div>

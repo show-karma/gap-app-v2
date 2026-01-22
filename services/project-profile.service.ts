@@ -93,10 +93,17 @@ export function calculateProfileStats(
   const grantsCount = grants.length;
   const lastUpdate = updates.length > 0 ? new Date(updates[0].createdAt) : undefined;
 
+  // Calculate completion rate
+  const totalMilestones = updates.length;
+  const completedMilestones = countCompletedMilestones(updates);
+  const completeRate =
+    totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : undefined;
+
   return {
     grantsCount,
     endorsementsCount,
     lastUpdate,
+    completeRate,
   };
 }
 

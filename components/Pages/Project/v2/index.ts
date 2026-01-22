@@ -2,6 +2,9 @@
 
 // Header components
 export { ProjectHeader } from "./Header";
+
+// Icons
+export { VerificationBadge } from "./icons";
 // Main Content components
 export {
   ActivityFeed,

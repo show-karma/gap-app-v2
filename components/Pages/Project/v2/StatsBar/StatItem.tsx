@@ -6,7 +6,7 @@ import {
   CircleDollarSignIcon,
   CoinsIcon,
   FolderOpenIcon,
-  PercentIcon,
+  TargetIcon,
 } from "lucide-react";
 import type React from "react";
 import { cn } from "@/utilities/tailwind";
@@ -37,7 +37,7 @@ function getStatIcon(iconType?: StatIconType): React.ReactNode {
     case "endorsements":
       return <BadgeCheckIcon className="h-4 w-4" />;
     case "complete":
-      return <PercentIcon className="h-4 w-4" />;
+      return <TargetIcon className="h-4 w-4" />;
     case "lastUpdate":
       return <CalendarClockIcon className="h-4 w-4" />;
     default:
@@ -54,7 +54,7 @@ export function StatItem({ value, label, iconType, icon, className, onClick }: S
   const content = (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-1 flex-1 min-w-[100px] py-2",
+        "flex flex-col items-center justify-center gap-2 flex-1 min-w-[120px] py-2 px-4",
         onClick && "cursor-pointer hover:opacity-80 transition-opacity",
         className
       )}
@@ -62,7 +62,7 @@ export function StatItem({ value, label, iconType, icon, className, onClick }: S
     >
       {/* Value - top */}
       <span
-        className="text-lg font-semibold text-neutral-900 dark:text-white tracking-tight"
+        className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight"
         data-testid="stat-value"
       >
         {value}
@@ -70,11 +70,11 @@ export function StatItem({ value, label, iconType, icon, className, onClick }: S
 
       {/* Icon + Label - below */}
       <div className="flex flex-row items-center gap-1.5">
-        <span className="text-neutral-400 dark:text-neutral-500">
+        <span className="text-neutral-500 dark:text-neutral-400">
           {icon || getStatIcon(iconType)}
         </span>
         <span
-          className="text-xs text-neutral-500 dark:text-neutral-400 whitespace-nowrap"
+          className="text-sm text-neutral-500 dark:text-neutral-400 whitespace-nowrap font-normal"
           data-testid="stat-label"
         >
           {label}

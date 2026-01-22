@@ -1,11 +1,13 @@
 "use client";
 
-import { CheckCircle2Icon, RocketIcon } from "lucide-react";
+import { RocketIcon } from "lucide-react";
 import { useState } from "react";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useProjectSocials } from "@/hooks/useProjectSocials";
 import type { Project } from "@/types/v2/project";
 import { cn } from "@/utilities/tailwind";
+import { VerificationBadge } from "../icons/VerificationBadge";
 
 interface ProjectHeaderProps {
   project: Project;
@@ -38,7 +40,7 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
   return (
     <div className={cn("w-full", className)} data-testid="project-header">
       {/* Card wrapper matching Figma */}
-      <div className="relative rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 p-6 lg:p-8">
+      <div className="relative rounded-xl border border-border border-t-0 border-l-0 border-r-0 bg-card p-6 lg:p-8">
         {/* Social links - positioned in top-right corner */}
         {socials.length > 0 && (
           <div
@@ -54,7 +56,7 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                 className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
                 aria-label={`Visit ${social.name}`}
               >
-                <social.icon className="h-5 w-5 fill-current" />
+                <social.icon className="h-5 w-5" />
               </a>
             ))}
           </div>
@@ -62,7 +64,7 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
 
         <div className="flex flex-col gap-4">
           {/* Top row: Profile pic and name */}
-          <div className="flex flex-row items-start gap-4">
+          <div className="flex flex-row items-center gap-4 pr-24">
             {/* Profile Picture - Desktop: 82px, Mobile: 64px */}
             <ProfilePicture
               imageURL={project?.details?.logoUrl}
@@ -80,17 +82,17 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
             />
 
             {/* Name with verification badge */}
-            <div className="flex flex-col gap-1 pt-2">
-              <div className="flex flex-row items-center gap-2">
+            <div className="flex flex-col gap-1 flex-1 min-w-0">
+              <div className="flex flex-row items-center gap-2 flex-wrap">
                 <h1
-                  className="text-xl font-bold leading-tight line-clamp-2 lg:text-2xl text-neutral-900 dark:text-white tracking-tight"
+                  className="text-xl font-bold leading-tight lg:text-2xl text-neutral-900 dark:text-white tracking-tight"
                   data-testid="project-title"
                 >
                   {project?.details?.title}
                 </h1>
                 {isVerified && (
-                  <CheckCircle2Icon
-                    className="h-6 w-6 text-teal-500 dark:text-teal-400 shrink-0 fill-teal-500 stroke-white dark:fill-teal-400 dark:stroke-zinc-800"
+                  <VerificationBadge
+                    className="h-6 w-6"
                     data-testid="verification-badge"
                     aria-label="Verified project"
                   />
@@ -102,27 +104,24 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
           {/* Description with Read More */}
           {description && (
             <div className="flex flex-col gap-1 max-w-xl">
-              <p
-                className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed"
-                data-testid="project-description"
-              >
-                {displayDescription}
+              <div data-testid="project-description">
+                <MarkdownPreview
+                  source={displayDescription}
+                  className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed"
+                />
                 {shouldTruncate && (
-                  <>
-                    {" "}
-                    <button
-                      type="button"
-                      onClick={() => setIsExpanded(!isExpanded)}
-                      className="text-sm font-semibold text-neutral-900 hover:text-neutral-700 dark:text-white dark:hover:text-neutral-200 underline underline-offset-2"
-                      data-testid="read-more-button"
-                      aria-expanded={isExpanded}
-                      aria-controls="project-description"
-                    >
-                      {isExpanded ? "Show less" : "Read More"}
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="mt-2 text-sm font-semibold text-neutral-900 hover:text-neutral-700 dark:text-white dark:hover:text-neutral-200 underline underline-offset-2"
+                    data-testid="read-more-button"
+                    aria-expanded={isExpanded}
+                    aria-controls="project-description"
+                  >
+                    {isExpanded ? "Show less" : "Read More"}
+                  </button>
                 )}
-              </p>
+              </div>
             </div>
           )}
 

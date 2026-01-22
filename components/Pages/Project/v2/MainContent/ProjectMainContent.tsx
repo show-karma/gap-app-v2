@@ -32,7 +32,7 @@ export function ProjectMainContent({
   onTabChange,
   className,
 }: ProjectMainContentProps) {
-  const [activeTab, setActiveTab] = useState<ContentTab>("profile");
+  const [activeTab, setActiveTab] = useState<ContentTab>("updates");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [activeFilters, setActiveFilters] = useState<ActivityFilterType[]>([]);
 
@@ -62,8 +62,8 @@ export function ProjectMainContent({
         fundingCount={fundingCount}
       />
 
-      {/* Filters - only show on Profile tab */}
-      {activeTab === "profile" && (
+      {/* Filters - only show on Updates tab */}
+      {activeTab === "updates" && (
         <ActivityFilters
           sortBy={sortBy}
           onSortChange={setSortBy}
@@ -76,7 +76,7 @@ export function ProjectMainContent({
 
       {/* Tab Content */}
       <div className="flex-1" data-testid="tab-content">
-        {activeTab === "profile" && (
+        {activeTab === "updates" && (
           <ActivityFeed
             milestones={milestones}
             isAuthorized={isAuthorized}
@@ -84,11 +84,7 @@ export function ProjectMainContent({
             activeFilters={activeFilters}
           />
         )}
-        {activeTab === "updates" && (
-          <div className="text-gray-500 dark:text-gray-400" data-testid="updates-content">
-            Updates content will be displayed here
-          </div>
-        )}
+
         {activeTab === "about" && (
           <div className="text-gray-500 dark:text-gray-400" data-testid="about-content">
             About content will be displayed here

@@ -1,12 +1,6 @@
 import type { IProjectDetails } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { GithubIcon, GlobeIcon, LinkedinIcon, MessageCircleIcon, TwitterIcon } from "lucide-react";
 import React from "react";
-import {
-  DiscordIcon,
-  GithubIcon,
-  LinkedInIcon,
-  TwitterIcon,
-  WebsiteIcon,
-} from "@/components/Icons";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { formatFarcasterLink } from "@/utilities/farcaster";
 
@@ -27,9 +21,9 @@ export const useProjectSocials = (links?: IProjectDetails["data"]["links"]): Soc
         icon: TwitterIcon,
       },
       { name: "Github", prefix: "github.com/", icon: GithubIcon },
-      { name: "Discord", prefix: "discord.gg/", icon: DiscordIcon },
-      { name: "Website", prefix: "https://", icon: WebsiteIcon },
-      { name: "LinkedIn", prefix: "linkedin.com/", icon: LinkedInIcon },
+      { name: "Discord", prefix: "discord.gg/", icon: MessageCircleIcon },
+      { name: "Website", prefix: "https://", icon: GlobeIcon },
+      { name: "LinkedIn", prefix: "linkedin.com/", icon: LinkedinIcon },
       {
         name: "Farcaster",
         prefix: ["warpcast.com/", "farcaster.xyz/"],
@@ -91,6 +85,24 @@ export const useProjectSocials = (links?: IProjectDetails["data"]["links"]): Soc
             return {
               name,
               url: formatFarcasterLink(socialLink),
+              icon,
+            };
+          }
+
+          if (name === "Discord") {
+            // Discord links can be full URLs or short codes
+            // If it's already a full URL, use it directly
+            if (hasHttpOrWWW(socialLink)) {
+              return {
+                name,
+                url: socialLink,
+                icon,
+              };
+            }
+            // Otherwise format with discord.gg prefix
+            return {
+              name,
+              url: formatPrefix(prefix as string, socialLink),
               icon,
             };
           }
