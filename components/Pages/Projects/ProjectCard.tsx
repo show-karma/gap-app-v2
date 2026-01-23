@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { useMemo } from "react";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import type { Project } from "@/types/v2/project";
 import { formatDate } from "@/utilities/formatDate";
@@ -64,13 +63,10 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
             Created on {formatDate(createdAt)}
           </p>
 
-          {/* Description */}
-          <div className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 overflow-hidden mb-4 flex-1">
-            <MarkdownPreview
-              source={details.description || details.missionSummary || "No description available"}
-              className="!text-sm !leading-relaxed [&>*]:!m-0 [&>*]:!p-0"
-            />
-          </div>
+          {/* Description - plain text to avoid nested links inside card Link */}
+          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mb-4 flex-1">
+            {details.description || details.missionSummary || "No description available"}
+          </p>
 
           {/* Stats */}
           <div className="flex flex-wrap gap-2 mt-auto">

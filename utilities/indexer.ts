@@ -97,8 +97,8 @@ export const INDEXER = {
       }) => {
         const queryParams = new URLSearchParams();
         if (params?.q) queryParams.set("q", params.q);
-        if (params?.page) queryParams.set("page", params.page.toString());
-        if (params?.limit) queryParams.set("limit", params.limit.toString());
+        if (params?.page !== undefined) queryParams.set("page", params.page.toString());
+        if (params?.limit !== undefined) queryParams.set("limit", params.limit.toString());
         if (params?.sortBy) queryParams.set("sortBy", params.sortBy);
         if (params?.sortOrder) queryParams.set("sortOrder", params.sortOrder);
         if (params?.includeStats) queryParams.set("includeStats", "true");
@@ -246,7 +246,12 @@ export const INDEXER = {
           limit?: number;
           programId?: string;
           status?: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
-          sortBy?: "project_title" | "grant_title" | "payout_amount" | "disbursed_amount" | "status";
+          sortBy?:
+            | "project_title"
+            | "grant_title"
+            | "payout_amount"
+            | "disbursed_amount"
+            | "status";
           sortOrder?: "asc" | "desc";
         }
       ) => {
