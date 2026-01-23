@@ -74,6 +74,14 @@ export const useOnramp = ({
       setError(null);
 
       try {
+        // Build redirect URL with provider info for status lookup after redirect
+        const buildRedirectUrl = () => {
+          if (!redirectUrl) return undefined;
+          const url = new URL(redirectUrl);
+          url.searchParams.set("onrampProvider", provider);
+          return url.toString();
+        };
+
         const request: OnrampSessionRequest = {
           provider,
           projectUid,
@@ -85,8 +93,9 @@ export const useOnramp = ({
           donorAddress: address,
           // Only include country for Coinbase
           ...(provider === OnrampProvider.COINBASE && country && { country }),
-          // Include redirect URL for Coinbase to redirect user back after completion
-          ...(provider === OnrampProvider.COINBASE && redirectUrl && { redirectUrl }),
+          // Include redirect URL for providers that support redirect (Coinbase, Transak)
+          ...((provider === OnrampProvider.COINBASE || provider === OnrampProvider.TRANSAK) &&
+            redirectUrl && { redirectUrl: buildRedirectUrl() }),
         };
 
         const sessionResponse = await donationsService.createOnrampSession(request);
@@ -120,6 +129,27 @@ export const useOnramp = ({
           // Open in same tab so Coinbase can redirect back to our app
           window.location.href = sessionResponse.onrampUrl;
 
+          toast.success(`Redirecting to ${providerConfig.name}...`);
+          setIsLoading(false);
+          return;
+        }
+
+        // For Transak, redirect to onrampUrl (same pattern as Coinbase)
+        if (provider === OnrampProvider.TRANSAK && sessionResponse.onrampUrl) {
+          const isValidUrl = (() => {
+            try {
+              const parsed = new URL(sessionResponse.onrampUrl!);
+              return ALLOWED_ONRAMP_DOMAINS.some((domain) => parsed.hostname === domain);
+            } catch {
+              return false;
+            }
+          })();
+
+          if (!isValidUrl) {
+            throw OnrampError.invalidUrl();
+          }
+
+          window.location.href = sessionResponse.onrampUrl;
           toast.success(`Redirecting to ${providerConfig.name}...`);
           setIsLoading(false);
           return;

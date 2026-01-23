@@ -90,14 +90,47 @@ function ProjectPage() {
     }
   }, [project?.members, populateEns]);
 
-  // Detect onrampRef param and show status modal
+  // Detect onramp redirect params and show status modal
   useEffect(() => {
+    const onrampProvider = searchParams.get("onrampProvider") as
+      | "coinbase"
+      | "stripe"
+      | "transak"
+      | null;
     const onrampRef = searchParams.get("onrampRef");
-    if (onrampRef) {
-      openOnrampModal(onrampRef);
-      // Clear the param from URL without navigation
+    // Transak appends orderId to redirect URL
+    const transakOrderId = searchParams.get("orderId");
+
+    // Determine provider and orderId
+    let provider: "coinbase" | "stripe" | "transak" | null = onrampProvider;
+    let orderId: string | null = null;
+
+    if (transakOrderId) {
+      // Transak redirect - use Transak's orderId
+      provider = provider || "transak";
+      orderId = transakOrderId;
+    } else if (onrampRef) {
+      // Coinbase/Stripe redirect - use our partnerUserRef
+      provider = provider || "coinbase";
+      orderId = onrampRef;
+    }
+
+    if (provider && orderId) {
+      openOnrampModal(provider, orderId);
+      // Clear onramp params from URL without navigation
       const params = new URLSearchParams(searchParams.toString());
       params.delete("onrampRef");
+      params.delete("onrampProvider");
+      params.delete("orderId");
+      // Also clean up other Transak params
+      params.delete("fiatCurrency");
+      params.delete("cryptoCurrency");
+      params.delete("fiatAmount");
+      params.delete("cryptoAmount");
+      params.delete("status");
+      params.delete("walletAddress");
+      params.delete("network");
+      params.delete("partnerOrderId");
       const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
       router.replace(newUrl, { scroll: false });
     }

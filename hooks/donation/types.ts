@@ -44,6 +44,7 @@ export interface CreateDonationRequest {
 export enum OnrampProvider {
   COINBASE = "coinbase",
   STRIPE = "stripe",
+  TRANSAK = "transak",
 }
 
 export interface OnrampSessionRequest {

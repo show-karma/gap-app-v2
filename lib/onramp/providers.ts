@@ -3,7 +3,12 @@ import { OnrampProvider } from "@/hooks/donation/types";
 const COINBASE_PAY_URL = process.env.NEXT_PUBLIC_COINBASE_PAY_URL || "https://pay.coinbase.com";
 const STRIPE_ONRAMP_URL = process.env.NEXT_PUBLIC_STRIPE_ONRAMP_URL || "https://crypto.link.com";
 
-export const ALLOWED_ONRAMP_DOMAINS = ["pay.coinbase.com", "crypto.link.com"] as const;
+export const ALLOWED_ONRAMP_DOMAINS = [
+  "pay.coinbase.com",
+  "crypto.link.com",
+  "global.transak.com",
+  "global-stg.transak.com",
+] as const;
 
 export interface OnrampUrlParams {
   token: string;
@@ -74,6 +79,19 @@ const PROVIDER_CONFIGS: Record<OnrampProvider, OnrampProviderConfig> = {
       return `${STRIPE_ONRAMP_URL}/onramp?${params.toString()}`;
     },
     description: "Purchase crypto with card via Stripe",
+    supportedCurrencies: [
+      { code: "USD", symbol: "$" },
+      { code: "EUR", symbol: "€" },
+      { code: "GBP", symbol: "£" },
+    ],
+    supportedNetworks: ["ethereum", "base", "optimism", "polygon", "arbitrum"],
+  },
+  [OnrampProvider.TRANSAK]: {
+    id: OnrampProvider.TRANSAK,
+    name: "Transak",
+    // URL is returned from backend via onrampUrl in response
+    buildUrl: ({ token }: OnrampUrlParams) => token,
+    description: "Purchase crypto with card via Transak",
     supportedCurrencies: [
       { code: "USD", symbol: "$" },
       { code: "EUR", symbol: "€" },
