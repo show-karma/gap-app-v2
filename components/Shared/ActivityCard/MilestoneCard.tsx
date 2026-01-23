@@ -213,18 +213,14 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
     return (
       <div className={cn(containerClassName, "flex flex-col gap-1 w-full")}>
         <div className={"w-full flex-col flex gap-2 px-5 py-4"}>
-          <div className="flex flex-row items-center justify-between gap-2 flex-wrap">
-            <div className="flex flex-row items-center gap-3">
-              <ActivityStatusHeader
-                activityType="MilestoneUpdate"
-                dueDate={null}
-                showCompletionStatus={false}
-                completed={true}
-                completionStatusClassName="text-xs px-2 py-1"
-                milestone={milestone}
-              />
-            </div>
-          </div>
+          {/* UPDATE label - matches Figma design for nested milestone updates */}
+          <p className="text-xs font-medium text-muted-foreground tracking-wide">UPDATE</p>
+          {/* Title - shown prominently after UPDATE label per Figma */}
+          {title && (
+            <h4 className="text-xl font-semibold text-foreground leading-tight tracking-tight">
+              {title}
+            </h4>
+          )}
           {completionReason ? (
             <div className="flex flex-col gap-1">
               <ReadMore side="left">{completionReason}</ReadMore>
@@ -425,14 +421,17 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
       completionReason ||
       completionProof ||
       completionDeliverables ? (
-        <div className="flex flex-col gap-3 mt-4">
-          {/* Timeline header: Icon, Status, Due date, and Posted by */}
-          <div className="flex flex-row items-center justify-between gap-2 flex-wrap">
-            {/* Left side: Icon, Status and Due date */}
-            <div className="flex flex-row items-center gap-2 flex-wrap">
-              {/* Orange dot indicator */}
-              <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />
-              <span className="text-sm font-semibold text-foreground">Milestone Update</span>
+        <div className="relative flex flex-col gap-2.5 mt-4">
+          {/* Timeline badge - orange circle positioned on the gray line (matches Figma 24x24) */}
+          <div className="absolute left-[-40px] top-[0px] w-6 h-6 flex items-center justify-center z-10 bg-orange-50 dark:bg-orange-900/30 rounded-full">
+            <div className="w-3 h-3 rounded-full bg-orange-400" />
+          </div>
+
+          {/* Timeline header: Milestone, Due date, and Posted by */}
+          <div className="flex flex-row items-center justify-between gap-2 flex-wrap pl-10">
+            {/* Left side: Milestone label and Due date */}
+            <div className="flex flex-row items-center gap-2.5 flex-wrap">
+              <span className="text-sm font-semibold text-foreground">Milestone</span>
               {endsAt && (
                 <span className="text-sm font-semibold text-muted-foreground">
                   Due on {formatDate(new Date(endsAt * 1000).toISOString())}
@@ -442,11 +441,10 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
 
             {/* Right side: Posted by */}
             {completionDate && (
-              <div className="flex flex-row items-center gap-2 text-sm font-medium leading-5 text-muted-foreground">
-                <span>Posted {formatDate(completionDate)}</span>
+              <div className="flex flex-row items-center gap-3 text-sm font-medium leading-5 text-muted-foreground">
+                <span>Posted {formatDate(completionDate)} by</span>
                 {completionAttester && (
-                  <>
-                    <span>by</span>
+                  <div className="flex flex-row items-center gap-3">
                     <EthereumAddressToENSAvatar
                       address={completionAttester}
                       className="h-8 w-8 min-h-8 min-w-8 rounded-full"
@@ -454,14 +452,14 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
                     <span className="text-sm font-semibold leading-5 text-foreground">
                       <EthereumAddressToENSName address={completionAttester} />
                     </span>
-                  </>
+                  </div>
                 )}
               </div>
             )}
           </div>
 
-          {/* Completion card */}
-          {renderMilestoneCompletion()}
+          {/* Completion card - aligned with header */}
+          <div className="pl-10">{renderMilestoneCompletion()}</div>
         </div>
       ) : null}
     </div>
