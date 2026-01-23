@@ -876,27 +876,13 @@ registerMock("@/utilities/retries", {
 //   getProjectGrants: mockGetProjectGrants,
 // });
 
-// Mock @/src/features/funding-map/services/funding-programs.service for useFundingOpportunities tests
-const mockFundingProgramsGetAll = createMockFn();
-mock.module("@/src/features/funding-map/services/funding-programs.service", () => ({
-  fundingProgramsService: {
-    getAll: mockFundingProgramsGetAll,
-  },
-}));
-registerMock("@/src/features/funding-map/services/funding-programs.service", {
-  fundingProgramsService: {
-    getAll: mockFundingProgramsGetAll,
-  },
-});
+// NOTE: Do NOT mock @/src/features/funding-map/services/funding-programs.service globally
+// because it prevents unit tests from testing the real implementation.
+// Hook tests that need to mock this service should do so locally with a factory function.
 
-// Mock @/services/community-grants.service for useCommunityGrants tests
-const mockGetCommunityGrants = createMockFn();
-mock.module("@/services/community-grants.service", () => ({
-  getCommunityGrants: mockGetCommunityGrants,
-}));
-registerMock("@/services/community-grants.service", {
-  getCommunityGrants: mockGetCommunityGrants,
-});
+// NOTE: Do NOT mock @/services/community-grants.service globally
+// because it prevents unit tests from testing the real implementation.
+// Hook tests that need to mock this service should do so locally with a factory function.
 
 // Register mock for both aliased and relative paths
 mock.module("@/utilities/indexer", () => indexerMock);
@@ -1974,44 +1960,14 @@ mock.module("next-themes", () => ({
 // =============================================================================
 // These mocks provide configurable hooks that tests can manipulate via mockReturnValue
 
-// Mock @/hooks/useFundingOpportunities
-const mockUseFundingOpportunitiesFn = createMockFn(() => ({
-  data: undefined,
-  isLoading: false,
-  fetchNextPage: createMockFn(),
-  hasNextPage: false,
-  isFetchingNextPage: false,
-  error: null,
-  isError: false,
-  refetch: createMockFn(),
-  status: "success" as const,
-  fetchStatus: "idle" as const,
-  isSuccess: true,
-  isPending: false,
-  isRefetching: false,
-  isFetching: false,
-  dataUpdatedAt: 0,
-  errorUpdatedAt: 0,
-  failureCount: 0,
-  failureReason: null,
-  errorUpdateCount: 0,
-  isStale: false,
-  isPlaceholderData: false,
-  isFetchedAfterMount: true,
-  isFetched: true,
-  isLoadingError: false,
-  isRefetchError: false,
-  hasPreviousPage: false,
-  isFetchingPreviousPage: false,
-  fetchPreviousPage: createMockFn(),
-}));
-mock.module("@/hooks/useFundingOpportunities", () => ({
-  useFundingOpportunities: mockUseFundingOpportunitiesFn,
-}));
-registerMock("@/hooks/useFundingOpportunities", {
-  useFundingOpportunities: mockUseFundingOpportunitiesFn,
-});
-(globalThis as any).__mocks__.useFundingOpportunities = mockUseFundingOpportunitiesFn;
+// NOTE: @/hooks/useFundingOpportunities is NOT mocked globally because
+// hooks/__tests__/useFundingOpportunities.test.tsx needs to test the real implementation.
+// Component tests that need a mocked hook should define it locally:
+// Example:
+//   const mockUseFundingOpportunities = jest.fn(() => ({ data: undefined, isLoading: false, ... }));
+//   jest.mock("@/hooks/useFundingOpportunities", () => ({
+//     useFundingOpportunities: mockUseFundingOpportunities,
+//   }));
 
 // Mock @/hooks/useChosenCommunities (used by funders page tests)
 const mockChosenCommunities = createMockFn(() => []);
