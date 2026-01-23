@@ -75,9 +75,7 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
               className="!text-sm !leading-relaxed [&>*]:!m-0 [&>*]:!p-0"
               rehypeRewrite={(node) => demoteAllHeadings(node)}
               components={{
-                a: ({ children }) => (
-                  <span className="text-blue-600 dark:text-blue-400 underline">{children}</span>
-                ),
+                a: ({ children }) => <span>{children}</span>,
               }}
             />
           </div>
