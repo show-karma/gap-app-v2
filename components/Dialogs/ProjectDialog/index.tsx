@@ -223,6 +223,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { isProjectEditModalOpen, setIsProjectEditModalOpen } = useProjectEditModalStore();
 
   const [localIsOpen, setLocalIsOpen] = useState(false);
+  // Track if we should open modal after login completes
+  const [pendingOpenAfterLogin, setPendingOpenAfterLogin] = useState(false);
 
   // Determine which modal state to use
   const isOpen = useEditModalStore ? isProjectEditModalOpen : localIsOpen;
@@ -421,12 +423,23 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     setIsOpen(true);
   }
 
+  // Handle unauthenticated user trying to open modal
   useEffect(() => {
     if (isOpen && !isAuth) {
+      // Set flag to re-open modal after login completes
+      setPendingOpenAfterLogin(true);
       login?.();
       closeModal();
     }
   }, [isOpen, isAuth, closeModal, login]);
+
+  // Re-open modal after successful login if user was trying to create project
+  useEffect(() => {
+    if (isAuth && pendingOpenAfterLogin) {
+      setPendingOpenAfterLogin(false);
+      openModal();
+    }
+  }, [isAuth, pendingOpenAfterLogin]);
 
   const validateCustomLinks = () => {
     return customLinks.some((link) => !link.name.trim() || !link.url.trim());
