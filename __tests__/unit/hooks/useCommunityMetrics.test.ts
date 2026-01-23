@@ -3,24 +3,35 @@
  * @description Tests for community metrics data fetching hook
  */
 
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  spyOn,
+  test,
+} from "bun:test";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import React from "react";
 import { useCommunityMetrics } from "@/hooks/useCommunityMetrics";
-import { getCommunityMetrics } from "@/utilities/registry/getCommunityMetrics";
 
-jest.mock("@/utilities/registry/getCommunityMetrics", () => ({
-  getCommunityMetrics: jest.fn(),
-}));
+// Import module for spyOn
+import * as getCommunityMetricsModule from "@/utilities/registry/getCommunityMetrics";
+
+// NOTE: Do NOT use jest.mock("@/utilities/registry/getCommunityMetrics")
+// as it pollutes global mock state and breaks getCommunityMetrics.test.ts
+// Use spyOn instead with proper cleanup in afterEach
 
 jest.mock("next/navigation", () => ({
   useParams: jest.fn(() => ({ communityId: "filecoin" })),
 }));
 
-const mockGetCommunityMetrics = getCommunityMetrics as jest.MockedFunction<
-  typeof getCommunityMetrics
->;
+// Spy will be set up in beforeEach
+let mockGetCommunityMetrics: ReturnType<typeof spyOn>;
 
 describe("useCommunityMetrics", () => {
   let queryClient: QueryClient;
@@ -44,6 +55,17 @@ describe("useCommunityMetrics", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Set up spy for getCommunityMetrics
+    mockGetCommunityMetrics = spyOn(
+      getCommunityMetricsModule,
+      "getCommunityMetrics"
+    ).mockImplementation(() => Promise.resolve(null));
+  });
+
+  afterEach(() => {
+    // Restore spy to prevent pollution of other test files
+    mockGetCommunityMetrics?.mockRestore();
   });
 
   const mockMetricsResponse = {

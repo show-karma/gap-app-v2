@@ -78,13 +78,7 @@ jest.mock("@/utilities/formatDate", () => ({
   formatDate: jest.fn((_date: string | number) => "Jan 1, 2024"),
 }));
 
-jest.mock("@/utilities/pages", () => ({
-  PAGES: {
-    PROJECT: {
-      OVERVIEW: (slug: string) => `/project/${slug}`,
-    },
-  },
-}));
+// NOTE: @/utilities/pages is globally mocked in tests/bun-setup.ts with complete PAGES implementation
 
 jest.mock("@/utilities/markdown", () => ({
   rewriteHeadingsToLevel: jest.fn(() => jest.fn()),

@@ -3,23 +3,18 @@
  * @description Tests community data fetching with proper error handling and Sentry reporting
  */
 
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type React from "react";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import type { CommunityDetails } from "@/types/community";
 
-// Mock getCommunityDetails utility
-jest.mock("@/utilities/queries/v2/community", () => ({
-  getCommunityDetails: jest.fn(),
-}));
+// Import module for spyOn
+import * as communityModule from "@/utilities/queries/v2/community";
 
-import { getCommunityDetails } from "@/utilities/queries/v2/community";
-
-const mockGetCommunityDetails = getCommunityDetails as jest.MockedFunction<
-  typeof getCommunityDetails
->;
+// Use spyOn instead of jest.mock to avoid polluting global mock state
+let mockGetCommunityDetails: ReturnType<typeof spyOn>;
 
 // Test data
 const mockCommunity: CommunityDetails = {
@@ -58,13 +53,20 @@ describe("useCommunityDetails", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
-    jest.clearAllMocks();
     queryClient = createTestQueryClient();
+    // Set up spy for getCommunityDetails - create fresh mock in each test
+    mockGetCommunityDetails = spyOn(communityModule, "getCommunityDetails").mockImplementation(() =>
+      Promise.resolve(null)
+    );
+    // Clear the spy call history to prevent pollution from previous tests
+    mockGetCommunityDetails.mockClear();
   });
 
   afterEach(() => {
     queryClient.clear();
   });
+
+  // NOTE: No additional cleanup needed for spies - spyOn creates fresh mocks in beforeEach
 
   describe("getCommunityDetails integration", () => {
     it("should fetch community details successfully", async () => {

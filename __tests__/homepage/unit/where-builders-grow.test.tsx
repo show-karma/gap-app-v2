@@ -20,11 +20,7 @@ jest.mock("@/src/features/homepage/components/create-project-button", () => ({
 }));
 
 // Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
-  PAGES: {
-    FUNDERS: "/funders",
-  },
-}));
+// NOTE: @/utilities/pages is globally mocked in tests/bun-setup.ts with complete PAGES implementation
 
 describe("WhereBuildersGrow Component", () => {
   it("should render section heading", () => {

@@ -165,7 +165,6 @@ const mockErrorManager = createMockFn();
 
 // Register mocks globally so tests can configure them
 registerMock("@/utilities/fetchData", mockFetchData);
-registerMock("@/utilities/auth/token-manager", mockTokenManagerGetToken);
 registerMock("@/components/Utilities/errorManager", mockErrorManager);
 
 // Pre-register module mocks using mock.module()
@@ -445,15 +444,9 @@ mock.module("@/components/ui/spinner", () => ({
     React.createElement("svg", { role: "status", "aria-label": "Loading", ...props }),
 }));
 
-// Mock @/utilities/auth/token-manager
-mock.module("@/utilities/auth/token-manager", () => ({
-  TokenManager: {
-    getToken: mockTokenManagerGetToken,
-    setToken: createMockFn(),
-    clearToken: createMockFn(),
-  },
-  __esModule: true,
-}));
+// NOTE: @/utilities/auth/token-manager is NOT mocked globally because
+// utilities/auth/__tests__/token-manager.test.ts needs to test the real implementation.
+// Tests that need a mock should define it locally.
 
 // Mock mixpanel-browser (commonly used in hooks)
 const mockMixpanelInit = createMockFn();
@@ -893,6 +886,135 @@ mock.module(
   () => indexerMock
 );
 
+// Mock @/utilities/pages - complete implementation matching real utilities/pages.ts
+// This prevents test pollution from partial jest.mock() calls in individual test files
+mock.module("@/utilities/pages", () => ({
+  PAGES: {
+    HOME: `/`,
+    NOT_FOUND: `/not-found`,
+    PROJECTS_EXPLORER: `/projects`,
+    COMMUNITIES: `/communities`,
+    PRIVACY_POLICY: `/privacy-policy`,
+    TERMS_AND_CONDITIONS: `/terms-and-conditions`,
+    FUNDERS: `/funders`,
+    STATS: `/stats`,
+    MY_PROJECTS: `/my-projects`,
+    MY_REVIEWS: `/my-reviews`,
+    COMMUNITY: {
+      ALL_GRANTS: (community: string, programId?: string) =>
+        `/community/${community}${programId ? `?programId=${programId}` : ""}`,
+      FUNDING_OPPORTUNITIES: (community: string) => `/community/${community}/funding-opportunities`,
+      IMPACT: (community: string) => `/community/${community}/impact`,
+      DONATE: (community: string) => `/community/${community}/donate`,
+      DONATE_PROGRAM: (community: string, programId: string) =>
+        `/community/${community}/donate/${programId}`,
+      DONATE_PROGRAM_CHECKOUT: (community: string, programId: string) =>
+        `/community/${community}/donate/${programId}/checkout`,
+      PROJECT_DISCOVERY: (community: string) => `/community/${community}/impact/project-discovery`,
+      UPDATES: (community: string) => `/community/${community}/updates`,
+      RECEIVEPROJECTUPDATES: (community: string) =>
+        `/community/${community}/receive-project-updates`,
+    },
+    PROJECT: {
+      OVERVIEW: (project: string) => `/project/${project}`,
+      UPDATES: (project: string) => `/project/${project}/updates`,
+      GRANTS: (project: string) => `/project/${project}/funding`,
+      GRANT: (project: string, grant: string) => `/project/${project}/funding/${grant}`,
+      CONTACT_INFO: (project: string) => `/project/${project}/contact-info`,
+      MILESTONES_AND_UPDATES: (project: string, grant: string) =>
+        `/project/${project}/funding/${grant}/milestones-and-updates`,
+      IMPACT: {
+        ROOT: (project: string) => `/project/${project}/impact`,
+        ADD_IMPACT: (project: string) => `/project/${project}/impact?tab=add-impact`,
+      },
+      SCREENS: {
+        NEW_GRANT: (project: string) => `/project/${project}/funding/new`,
+        SELECTED_SCREEN: (project: string, grant: string, screen: string) =>
+          `/project/${project}/funding/${grant}/${screen}`,
+      },
+      TEAM: (project: string) => `/project/${project}/team`,
+    },
+    REVIEWER: {
+      DASHBOARD: (community: string) => `/community/${community}/reviewer/funding-platform`,
+      APPLICATIONS: (community: string, programId: string) =>
+        `/community/${community}/reviewer/funding-platform/${programId}/applications`,
+      APPLICATION_DETAIL: (community: string, programId: string, applicationId: string) =>
+        `/community/${community}/reviewer/funding-platform/${programId}/applications/${applicationId}`,
+      QUESTION_BUILDER: (community: string, programId: string) =>
+        `/community/${community}/reviewer/funding-platform/${programId}/question-builder`,
+    },
+    ADMIN: {
+      LIST: `/admin`,
+      ROOT: (community: string) => `/community/${community}/admin`,
+      EDIT_CATEGORIES: (community: string) => `/community/${community}/admin/edit-categories`,
+      EDIT_PROJECTS: (community: string) => `/community/${community}/admin/edit-projects`,
+      MILESTONES: (community: string) => `/community/${community}/admin/milestones-report`,
+      MANAGE_INDICATORS: (community: string) => `/community/${community}/admin/manage-indicators`,
+      TRACKS: (community: string) => `/community/${community}/admin/tracks`,
+      FUNDING_PLATFORM: (community: string) => `/community/${community}/admin/funding-platform`,
+      FUNDING_PLATFORM_QUESTION_BUILDER: (community: string, programId: string) =>
+        `/community/${community}/admin/funding-platform/${programId}/question-builder`,
+      FUNDING_PLATFORM_APPLICATIONS: (community: string, programId: string) =>
+        `/community/${community}/admin/funding-platform/${programId}/applications`,
+      COMMUNITIES: `/admin/communities`,
+      COMMUNITY_STATS: `/admin/communities/stats`,
+      PROJECTS: `/admin/projects`,
+      PAYOUTS: (community: string) => `/community/${community}/admin/payouts`,
+      PROGRAM_SCORES: (community: string) => `/community/${community}/admin/program-scores`,
+      PROJECT_MILESTONES: (community: string, projectId: string, programId: string) =>
+        `/community/${community}/admin/${projectId}/milestones?programIds=${programId}`,
+    },
+    REGISTRY: {
+      ROOT: `/funding-map`,
+      BY_PROGRAM_ID: (programId: string) => `/funding-map?programId=${programId}`,
+      ADD_PROGRAM: `/funding-map/add-program`,
+      MANAGE_PROGRAMS: `/funding-map/manage-programs`,
+    },
+    SUMUP_CONFIG: `/admin/sumup`,
+  },
+  FUNDING_PLATFORM_PAGES: (tenantId: string, _domain?: string) => {
+    const domain = _domain || `http://localhost/${tenantId}`;
+    return {
+      HOME: `${domain}/`,
+      PROGRAM_PAGE: (programId: string) => `${domain}/programs/${programId}`,
+      PROGRAM_APPLY: (programId: string) => `${domain}/programs/${programId}/apply`,
+      PROGRAM_APPLICATION: (applicationId: string) => `${domain}/applications/${applicationId}`,
+      PROGRAMS_BROWSE_APPLICATIONS: (programId?: string) =>
+        programId
+          ? `${domain}/browse-applications?programId=${programId}`
+          : `${domain}/browse-applications`,
+    };
+  },
+}));
+
+// Mock @/utilities/socials - complete implementation
+mock.module("@/utilities/socials", () => ({
+  SOCIALS: {
+    DISCORD: "https://discord.gg/X4fwgzPReJ",
+    TWITTER: "https://x.com/karmahq_",
+    LINKEDIN: "https://www.linkedin.com/company/karmaxyz/",
+    WEBSITE: "https://karmahq.xyz",
+    TELEGRAM: "https://t.me/karmahq",
+    PARAGRAPH: "https://paragraph.xyz/@karmahq",
+    X_HANDLE: "@karmahq_",
+    DOCS: "https://docs.gap.karmahq.xyz",
+    PARTNER_FORM: "https://tally.so/r/3NKZEl",
+  },
+}));
+
+// Mock @/utilities/karma/karma - complete implementation
+mock.module("@/utilities/karma/karma", () => ({
+  karmaLinks: {
+    website: "https://gov.karmahq.xyz",
+    githubSDK: "https://github.com/show-karma/karma-gap-sdk",
+    apiDocs: "https://documenter.getpostman.com/view/36647319/2sAXxQdrkZ",
+  },
+  karmaAPI: {
+    findDelegate: (dao: string, user: string) =>
+      `https://api.karmahq.xyz/dao/find-delegate?dao=${dao}&user=${user}`,
+  },
+}));
+
 // Mock next/navigation
 mock.module("next/navigation", () => ({
   useRouter: () => ({
@@ -1309,57 +1431,31 @@ registerMock("react-hot-toast", mockToast);
 // Add toast to global mocks for test access
 (globalThis as any).__mocks__.toast = mockToast;
 
-// Mock @/utilities/donations/errorMessages
-const mockGetDetailedErrorInfo = createMockFn(() => ({
-  code: "UNKNOWN_ERROR",
-  message: "An unexpected error occurred",
-  technicalMessage: "Test error",
-  actionableSteps: ["Try again", "Contact support"],
-}));
-const mockParseDonationError = createMockFn(() => ({
-  code: "UNKNOWN_ERROR",
-  message: "An unexpected error occurred",
-  actionableSteps: [],
-}));
+// NOTE: @/utilities/donations/errorMessages module is NOT mocked globally.
+// This allows the utility test (errorMessages.test.ts) to test the real implementation.
+// Component tests that need mocked errorMessages should use spyOn on the imported module.
+// Example:
+//   import * as errorMessages from "@/utilities/donations/errorMessages";
+//   spyOn(errorMessages, "getDetailedErrorInfo").mockImplementation(() => ({ ... }));
 
 // =============================================================================
 // Donation Flow Mocks
 // =============================================================================
 
-// Mock @/utilities/donations/batchDonations
-mock.module("@/utilities/donations/batchDonations", () => ({
-  BatchDonationsABI: [],
-  BATCH_DONATIONS_CONTRACTS: {
-    10: "0x1111111111111111111111111111111111111111",
-    8453: "0x2222222222222222222222222222222222222222",
-    42161: "0x3333333333333333333333333333333333333333",
-  },
-  PERMIT2_ADDRESS: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
-  getBatchDonationsContractAddress: createMockFn((chainId: number) => {
-    const contracts: Record<number, string> = {
-      10: "0x1111111111111111111111111111111111111111",
-      8453: "0x2222222222222222222222222222222222222222",
-      42161: "0x3333333333333333333333333333333333333333",
-    };
-    return contracts[chainId];
-  }),
-  getSupportedBatchDonationsChains: createMockFn(() => [10, 8453, 42161]),
-}));
-
-// Mock @/utilities/erc20
-const mockCheckTokenAllowances = createMockFn(() => Promise.resolve([]));
-const mockExecuteApprovals = createMockFn(() => Promise.resolve([]));
-const mockGetApprovalAmount = createMockFn((amount: bigint) => amount);
-const mockApproveToken = createMockFn(() => Promise.resolve("0xmockhash"));
-mock.module("@/utilities/erc20", () => ({
-  checkTokenAllowances: mockCheckTokenAllowances,
-  executeApprovals: mockExecuteApprovals,
-  getApprovalAmount: mockGetApprovalAmount,
-  approveToken: mockApproveToken,
-}));
-(globalThis as any).__mocks__.checkTokenAllowances = mockCheckTokenAllowances;
-(globalThis as any).__mocks__.executeApprovals = mockExecuteApprovals;
-(globalThis as any).__mocks__.getApprovalAmount = mockGetApprovalAmount;
+// NOTE: The following utility modules are NOT mocked globally because they have
+// their own unit tests that need the real implementation:
+// - @/utilities/donations/batchDonations
+// - @/utilities/erc20
+// - @/utilities/walletClientValidation
+// - @/utilities/grant-helpers
+// - @/utilities/indexer-notification
+// - @/utilities/attestation-polling
+// - @/utilities/chainSyncValidation
+//
+// Component tests that need these mocked should use spyOn on the imported module.
+// Example:
+//   import * as batchDonations from "@/utilities/donations/batchDonations";
+//   spyOn(batchDonations, "isBatchDonationsSupportedOnChain").mockReturnValue(true);
 
 // Mock @/utilities/rpcClient
 const mockGetRPCClient = createMockFn(() => Promise.resolve(null));
@@ -1371,33 +1467,7 @@ mock.module("@/utilities/rpcClient", () => ({
 (globalThis as any).__mocks__.getRPCClient = mockGetRPCClient;
 (globalThis as any).__mocks__.getRPCUrlByChainId = mockGetRPCUrlByChainId;
 
-// Mock @/utilities/walletClientValidation
-mock.module("@/utilities/walletClientValidation", () => ({
-  validateWalletClient: createMockFn(() => true),
-  getWalletClientReadinessScore: createMockFn(() => ({ score: 100, isReady: true })),
-}));
-
-// Mock @/utilities/grant-helpers
-const mockFetchGrantInstance = createMockFn(() => Promise.resolve(null));
-mock.module("@/utilities/grant-helpers", () => ({
-  fetchGrantInstance: mockFetchGrantInstance,
-}));
-(globalThis as any).__mocks__.fetchGrantInstance = mockFetchGrantInstance;
-
-// Mock @/utilities/indexer-notification
-const mockNotifyIndexerForMilestone = createMockFn(() => Promise.resolve());
-mock.module("@/utilities/indexer-notification", () => ({
-  notifyIndexerForMilestone: mockNotifyIndexerForMilestone,
-}));
-(globalThis as any).__mocks__.notifyIndexerForMilestone = mockNotifyIndexerForMilestone;
-
-// Mock @/utilities/attestation-polling
-const mockPollForMilestoneStatus = createMockFn(() => Promise.resolve({ status: "complete" }));
-mock.module("@/utilities/attestation-polling", () => ({
-  pollForMilestoneStatus: mockPollForMilestoneStatus,
-}));
-(globalThis as any).__mocks__.pollForMilestoneStatus = mockPollForMilestoneStatus;
-
+// NOTE: walletClientFallback is still mocked as it doesn't have its own tests
 // Mock @/utilities/walletClientFallback
 const mockGetWalletClientWithFallback = createMockFn(() => Promise.resolve(null));
 const mockIsWalletClientGoodEnough = createMockFn(() => true);
@@ -1407,41 +1477,6 @@ mock.module("@/utilities/walletClientFallback", () => ({
 }));
 (globalThis as any).__mocks__.getWalletClientWithFallback = mockGetWalletClientWithFallback;
 (globalThis as any).__mocks__.isWalletClientGoodEnough = mockIsWalletClientGoodEnough;
-
-// Mock @/utilities/chainSyncValidation
-const mockValidateChainSync = createMockFn(() => Promise.resolve(true));
-const mockWaitForChainSync = createMockFn(() => Promise.resolve(true));
-mock.module("@/utilities/chainSyncValidation", () => ({
-  validateChainSync: mockValidateChainSync,
-  waitForChainSync: mockWaitForChainSync,
-}));
-(globalThis as any).__mocks__.validateChainSync = mockValidateChainSync;
-(globalThis as any).__mocks__.waitForChainSync = mockWaitForChainSync;
-
-const mockGetShortErrorMessage = createMockFn(() => "An error occurred");
-mock.module("@/utilities/donations/errorMessages", () => ({
-  getDetailedErrorInfo: mockGetDetailedErrorInfo,
-  parseDonationError: mockParseDonationError,
-  getShortErrorMessage: mockGetShortErrorMessage,
-  DonationErrorCode: {
-    USER_REJECTED: "USER_REJECTED",
-    INSUFFICIENT_GAS: "INSUFFICIENT_GAS",
-    INSUFFICIENT_BALANCE: "INSUFFICIENT_BALANCE",
-    NETWORK_MISMATCH: "NETWORK_MISMATCH",
-    CONTRACT_ERROR: "CONTRACT_ERROR",
-    BALANCE_FETCH_ERROR: "BALANCE_FETCH_ERROR",
-    PAYOUT_ADDRESS_ERROR: "PAYOUT_ADDRESS_ERROR",
-    APPROVAL_ERROR: "APPROVAL_ERROR",
-    PERMIT_SIGNATURE_ERROR: "PERMIT_SIGNATURE_ERROR",
-    CHAIN_SYNC_ERROR: "CHAIN_SYNC_ERROR",
-    WALLET_CLIENT_ERROR: "WALLET_CLIENT_ERROR",
-    TRANSACTION_TIMEOUT: "TRANSACTION_TIMEOUT",
-    UNKNOWN_ERROR: "UNKNOWN_ERROR",
-  },
-}));
-(globalThis as any).__mocks__.getDetailedErrorInfo = mockGetDetailedErrorInfo;
-(globalThis as any).__mocks__.parseDonationError = mockParseDonationError;
-(globalThis as any).__mocks__.getShortErrorMessage = mockGetShortErrorMessage;
 
 // Mock rehype plugins (ESM-only packages)
 mock.module("rehype-sanitize", () => ({
@@ -1521,12 +1556,90 @@ class MockGAP {
   }
 }
 
+// Mock SDK entity classes that are imported by components
+class MockProjectUpdate extends MockSchema {
+  constructor(data?: any) {
+    super();
+    Object.assign(this, data);
+  }
+}
+
+class MockGrantUpdate extends MockSchema {
+  constructor(data?: any) {
+    super();
+    Object.assign(this, data);
+  }
+}
+
+class MockMilestone extends MockSchema {
+  constructor(data?: any) {
+    super();
+    Object.assign(this, data);
+  }
+}
+
+class MockGrant extends MockSchema {
+  constructor(data?: any) {
+    super();
+    Object.assign(this, data);
+  }
+}
+
+class MockGrantDetails extends MockSchema {
+  constructor(data?: any) {
+    super();
+    Object.assign(this, data);
+  }
+}
+
+class MockCommunity extends MockSchema {
+  constructor(data?: any) {
+    super();
+    Object.assign(this, data);
+  }
+}
+
+class MockContributorProfile extends MockSchema {
+  constructor(data?: any) {
+    super();
+    Object.assign(this, data);
+  }
+}
+
+class MockProjectPointer extends MockSchema {
+  constructor(data?: any) {
+    super();
+    Object.assign(this, data);
+  }
+}
+
+class MockProjectEndorsement extends MockSchema {
+  constructor(data?: any) {
+    super();
+    Object.assign(this, data);
+  }
+}
+
+// nullRef is a special constant in the SDK
+const nullRef = "0x0000000000000000000000000000000000000000000000000000000000000000";
+
 // Also mock the main SDK export paths for IpfsStorage
 mock.module("@show-karma/karma-gap-sdk", () => ({
   IpfsStorage: MockIpfsStorage,
   GAP: MockGAP,
   GapSchema: MockGapSchema,
   Schema: MockSchema,
+  // Entity classes used by components
+  ProjectUpdate: MockProjectUpdate,
+  GrantUpdate: MockGrantUpdate,
+  Milestone: MockMilestone,
+  Grant: MockGrant,
+  GrantDetails: MockGrantDetails,
+  Community: MockCommunity,
+  ContributorProfile: MockContributorProfile,
+  ProjectPointer: MockProjectPointer,
+  ProjectEndorsement: MockProjectEndorsement,
+  nullRef,
 }));
 
 // Mock internal SDK paths that may be imported directly
@@ -1550,6 +1663,14 @@ mock.module("@show-karma/karma-gap-sdk/core/class/contract/GapContract", () => (
 
 mock.module("@show-karma/karma-gap-sdk/core/utils/gelato/send-gelato-txn", () => ({
   sendGelatoTxn: createMockFn(() => Promise.resolve("0xmockhash")),
+}));
+
+// Mock SDK types path - these are TypeScript interfaces, but some components import them
+// The actual .js file is empty, so this mock just provides empty exports for type-only imports
+mock.module("@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types", () => ({
+  // All exports are TypeScript interfaces/types which don't need runtime values
+  // But we export empty objects to prevent import errors
+  __esModule: true,
 }));
 
 // Mock privy-config
@@ -1594,22 +1715,9 @@ mock.module("@/components/Pages/NewProjects", () => ({
     React.createElement("div", { "data-testid": "new-projects-page" }, "New Projects Page"),
 }));
 
-// Mock @/utilities/indexer/getNewProjects
-const mockGetNewProjects = createMockFn(() =>
-  Promise.resolve({
-    projects: Array(10).fill({}),
-    pageInfo: {
-      page: 0,
-      pageLimit: 10,
-      totalItems: 100,
-    },
-  })
-);
-mock.module("@/utilities/indexer/getNewProjects", () => ({
-  getNewProjects: mockGetNewProjects,
-}));
-registerMock("@/utilities/indexer/getNewProjects", { getNewProjects: mockGetNewProjects });
-(globalThis as any).__mocks__.getNewProjects = mockGetNewProjects;
+// NOTE: @/utilities/indexer/getNewProjects is NOT mocked globally because
+// utilities/indexer/__tests__/getNewProjects.test.ts needs to test the real implementation.
+// Tests that need a mock should define it locally.
 
 // Mock Stats component for stats page (named export)
 mock.module("@/components/Pages/Stats", () => ({
@@ -1711,6 +1819,73 @@ mock.module("@/components/FundingPlatform/ApplicationList/ReviewerAssignmentDrop
 }));
 
 // =============================================================================
+// Icon Component Mocks (for Footer and other components)
+// =============================================================================
+// These mocks provide data-testid attributes to icon components for testing
+
+// Mock @/components/Icons (index exports)
+mock.module("@/components/Icons", () => ({
+  BlogIcon: (props: any) => React.createElement("svg", { "data-testid": "blog-icon", ...props }),
+  ChevronDown: (props: any) =>
+    React.createElement("svg", { "data-testid": "chevron-down-icon", ...props }),
+  DiscordIcon: (props: any) =>
+    React.createElement("svg", { "data-testid": "discord-icon", ...props }),
+  Discord2Icon: (props: any) =>
+    React.createElement("svg", { "data-testid": "discord2-icon", ...props }),
+  DiscussionIcon: (props: any) =>
+    React.createElement("svg", { "data-testid": "discussion-icon", ...props }),
+  GithubIcon: (props: any) =>
+    React.createElement("svg", { "data-testid": "github-icon", ...props }),
+  Globe: (props: any) => React.createElement("svg", { "data-testid": "globe-icon", ...props }),
+  LinkedInIcon: (props: any) =>
+    React.createElement("svg", { "data-testid": "linkedin-icon", ...props }),
+  LogOutIcon: (props: any) =>
+    React.createElement("svg", { "data-testid": "logout-icon", ...props }),
+  MirrorIcon: (props: any) =>
+    React.createElement("svg", { "data-testid": "mirror-icon", ...props }),
+  OrganizationIcon: (props: any) =>
+    React.createElement("svg", { "data-testid": "organization-icon", ...props }),
+  StarIcon: (props: any) => React.createElement("svg", { "data-testid": "star-icon", ...props }),
+  TelegramIcon: (props: any) =>
+    React.createElement("svg", { "data-testid": "telegram-icon", ...props }),
+  Telegram2Icon: (props: any) =>
+    React.createElement("svg", { "data-testid": "telegram2-icon", ...props }),
+  TwitterIcon: (props: any) =>
+    React.createElement("svg", { "data-testid": "twitter-icon", ...props }),
+  Twitter2Icon: (props: any) =>
+    React.createElement("svg", { "data-testid": "twitter2-icon", ...props }),
+  WebsiteIcon: (props: any) =>
+    React.createElement("svg", { "data-testid": "website-icon", ...props }),
+}));
+
+// Mock @/components/Icons/Paragraph
+mock.module("@/components/Icons/Paragraph", () => ({
+  ParagraphIcon: (props: any) =>
+    React.createElement("svg", { "data-testid": "paragraph-icon", ...props }),
+}));
+
+// Mock @/src/components/shared/logo
+mock.module("@/src/components/shared/logo", () => ({
+  Logo: () => React.createElement("div", { "data-testid": "logo" }, "Karma GAP"),
+}));
+
+// Mock @/src/components/footer/newsletter
+mock.module("@/src/components/footer/newsletter", () => ({
+  Newsletter: () =>
+    React.createElement("div", { "data-testid": "newsletter" }, "Newsletter Signup"),
+}));
+
+// Mock @/components/Utilities/ExternalLink
+mock.module("@/components/Utilities/ExternalLink", () => ({
+  ExternalLink: ({ children, href, className, ...props }: any) =>
+    React.createElement(
+      "a",
+      { href, className, target: "_blank", rel: "noopener noreferrer", ...props },
+      children
+    ),
+}));
+
+// =============================================================================
 // Layout Component Mocks
 // =============================================================================
 
@@ -1771,6 +1946,123 @@ mock.module("next-themes", () => ({
     themes: ["light", "dark"],
   }),
 }));
+
+// =============================================================================
+// Hook Mocks for Component Tests
+// =============================================================================
+// These mocks provide configurable hooks that tests can manipulate via mockReturnValue
+
+// Mock @/hooks/useFundingOpportunities
+const mockUseFundingOpportunitiesFn = createMockFn(() => ({
+  data: undefined,
+  isLoading: false,
+  fetchNextPage: createMockFn(),
+  hasNextPage: false,
+  isFetchingNextPage: false,
+  error: null,
+  isError: false,
+  refetch: createMockFn(),
+  status: "success" as const,
+  fetchStatus: "idle" as const,
+  isSuccess: true,
+  isPending: false,
+  isRefetching: false,
+  isFetching: false,
+  dataUpdatedAt: 0,
+  errorUpdatedAt: 0,
+  failureCount: 0,
+  failureReason: null,
+  errorUpdateCount: 0,
+  isStale: false,
+  isPlaceholderData: false,
+  isFetchedAfterMount: true,
+  isFetched: true,
+  isLoadingError: false,
+  isRefetchError: false,
+  hasPreviousPage: false,
+  isFetchingPreviousPage: false,
+  fetchPreviousPage: createMockFn(),
+}));
+mock.module("@/hooks/useFundingOpportunities", () => ({
+  useFundingOpportunities: mockUseFundingOpportunitiesFn,
+}));
+registerMock("@/hooks/useFundingOpportunities", {
+  useFundingOpportunities: mockUseFundingOpportunitiesFn,
+});
+(globalThis as any).__mocks__.useFundingOpportunities = mockUseFundingOpportunitiesFn;
+
+// Mock @/hooks/useChosenCommunities (used by funders page tests)
+const mockChosenCommunities = createMockFn(() => []);
+mock.module("@/hooks/useChosenCommunities", () => ({
+  useChosenCommunities: () => ({
+    chosenCommunities: mockChosenCommunities,
+  }),
+  chosenCommunities: mockChosenCommunities,
+}));
+registerMock("@/hooks/useChosenCommunities", { chosenCommunities: mockChosenCommunities });
+(globalThis as any).__mocks__.chosenCommunities = mockChosenCommunities;
+
+// Mock react-infinite-scroll-component
+mock.module("react-infinite-scroll-component", () => ({
+  default: ({ children, loader, hasMore, next, dataLength }: any) =>
+    React.createElement(
+      "div",
+      {
+        "data-testid": "infinite-scroll",
+        "data-has-more": hasMore,
+        "data-length": dataLength,
+      },
+      [
+        children,
+        hasMore &&
+          React.createElement(
+            "button",
+            {
+              key: "load-more",
+              type: "button",
+              "data-testid": "load-more",
+              onClick: next,
+            },
+            "Load More"
+          ),
+      ]
+    ),
+}));
+
+// Mock @/components/CommunityGrants/FundingOpportunities/FundingOpportunitiesGrid
+mock.module("@/components/CommunityGrants/FundingOpportunities/FundingOpportunitiesGrid", () => ({
+  FundingOpportunitiesGrid: ({ programs }: { programs: any[] }) =>
+    React.createElement(
+      "div",
+      { "data-testid": "funding-opportunities-grid" },
+      programs?.map((program: any) =>
+        React.createElement(
+          "div",
+          { key: program._id, "data-testid": "program-card" },
+          program.name
+        )
+      )
+    ),
+}));
+
+// Mock @/components/CommunityGrants/FundingOpportunities/AlreadyAppliedBanner
+mock.module("@/components/CommunityGrants/FundingOpportunities/AlreadyAppliedBanner", () => ({
+  AlreadyAppliedBanner: ({ communitySlug }: { communitySlug: string }) =>
+    React.createElement(
+      "div",
+      { "data-testid": "already-applied-banner" },
+      `Already applied? - ${communitySlug}`
+    ),
+}));
+
+// Mock @/components/Utilities/Spinner
+mock.module("@/components/Utilities/Spinner", () => ({
+  Spinner: () => React.createElement("div", { "data-testid": "spinner" }, "Loading..."),
+}));
+
+// NOTE: @/utilities/formatNumber is NOT mocked globally because
+// utilities/__tests__/formatNumber.test.ts needs to test the real implementation.
+// Tests that need a mock should define it locally.
 
 // =============================================================================
 // Authentication & API Mocks for Integration Tests

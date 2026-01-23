@@ -46,16 +46,7 @@ jest.mock("@/utilities/chosenCommunities", () => ({
 }));
 
 // Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
-  PAGES: {
-    FUNDERS: "/funders",
-    PROJECTS_EXPLORER: "/projects",
-    COMMUNITIES: "/communities",
-    COMMUNITY: {
-      ALL_GRANTS: (slug: string) => `/community/${slug}`,
-    },
-  },
-}));
+// NOTE: @/utilities/pages is globally mocked in tests/bun-setup.ts with complete PAGES implementation
 
 // Mock CreateProjectButton
 jest.mock("@/src/features/homepage/components/create-project-button", () => ({

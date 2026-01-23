@@ -14,13 +14,29 @@
  * - UI state changes (button disabled states, spinner visibility, text changes)
  */
 
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  spyOn,
+  test,
+} from "bun:test";
 import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 import toast from "react-hot-toast";
 import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
 import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
 import type { GrantResponse } from "@/types/v2/grant";
 import type { ProjectResponse } from "@/types/v2/project";
+
+// Import modules for spyOn
+import * as fetchDataModule from "@/utilities/fetchData";
+
+// Create spy for fetchData
+let mockFetchDataSpy: ReturnType<typeof spyOn>;
 
 // Mock dependencies
 jest.mock("wagmi", () => ({
@@ -79,10 +95,7 @@ jest.mock("@/utilities/eas-wagmi-utils", () => ({
   walletClientToSigner: jest.fn(),
 }));
 
-jest.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: jest.fn(),
-}));
+// NOTE: fetchData is mocked via spyOn in beforeEach to avoid polluting global mock state
 
 jest.mock("@/hooks/useOffChainRevoke", () => ({
   useOffChainRevoke: jest.fn(() => ({
@@ -211,8 +224,15 @@ describe("Integration: Grant Completion Revocation Flow", () => {
 
   const mockCheckIfCompletionExists = jest.fn();
 
+  // NOTE: No afterEach cleanup needed - spyOn creates fresh mocks in beforeEach
+
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Setup spy for fetchData
+    mockFetchDataSpy = spyOn(fetchDataModule, "default").mockImplementation(() =>
+      Promise.resolve({})
+    );
 
     // Setup default mocks
     const wagmi = require("wagmi");
@@ -416,8 +436,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       const { buildRevocationPayload } = require("@/utilities/grantCompletionHelpers");
       buildRevocationPayload.mockReturnValue([{ schema: "0xschema123", data: [] }]);
 
-      const fetchData = (globalThis as any).__mocks__.fetchData;
-      fetchData.mockResolvedValue({});
+      mockFetchDataSpy.mockResolvedValue({});
 
       // Render component
       render(<GrantCompleteButton grant={mockGrant} project={mockProject} />);
@@ -835,8 +854,7 @@ describe("Integration: Grant Completion Revocation Flow", () => {
       const { buildRevocationPayload } = require("@/utilities/grantCompletionHelpers");
       buildRevocationPayload.mockReturnValue([{ schema: "0xschema123", data: [] }]);
 
-      const fetchData = (globalThis as any).__mocks__.fetchData;
-      fetchData.mockResolvedValue({});
+      mockFetchDataSpy.mockResolvedValue({});
 
       const { useAttestationToast } = require("@/hooks/useAttestationToast");
       const mockChangeStepperStep = jest.fn();

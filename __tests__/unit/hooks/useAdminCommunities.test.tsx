@@ -3,24 +3,30 @@
  * @description Tests for fetching communities where user is admin
  */
 
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  spyOn,
+  test,
+} from "bun:test";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type React from "react";
+import * as errorManagerModule from "@/components/Utilities/errorManager";
 import { useAdminCommunities } from "@/hooks/useAdminCommunities";
-import fetchData from "@/utilities/fetchData";
+
+// Import modules for spyOn
+import * as fetchDataModule from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-// Mock fetchData utility
-jest.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: jest.fn(),
-}));
-
-// Mock errorManager
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
-}));
+// Create spies
+let mockFetchData: ReturnType<typeof spyOn>;
+let mockErrorManager: ReturnType<typeof spyOn>;
 
 // Mock useAuth
 jest.mock("@/hooks/useAuth", () => ({
@@ -41,11 +47,9 @@ jest.mock("@/store/communities", () => ({
   })),
 }));
 
-import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
-const mockErrorManager = errorManager as jest.Mock;
 
 describe("useAdminCommunities (V2)", () => {
   const mockCommunities = [
@@ -100,15 +104,24 @@ describe("useAdminCommunities (V2)", () => {
     jest.clearAllMocks();
     queryClient = createTestQueryClient();
     mockUseAuth.mockReturnValue({ authenticated: true } as ReturnType<typeof useAuth>);
+
+    // Set up spies for fetchData and errorManager
+    mockFetchData = spyOn(fetchDataModule, "default").mockImplementation(() =>
+      Promise.resolve([null, null])
+    );
+    mockErrorManager = spyOn(errorManagerModule, "errorManager").mockImplementation(() => {});
   });
 
   afterEach(() => {
     queryClient.clear();
+    // Restore spies to prevent pollution of other test files
+    mockFetchData?.mockRestore();
+    mockErrorManager?.mockRestore();
   });
 
   describe("Successful fetch", () => {
     it("should fetch admin communities when authenticated", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockV2Response, null]);
+      mockFetchData.mockResolvedValue([mockV2Response, null]);
 
       const { result } = renderHook(() => useAdminCommunities("0xtest-address"), {
         wrapper: createWrapper(queryClient),
@@ -118,7 +131,7 @@ describe("useAdminCommunities (V2)", () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.USER.ADMIN_COMMUNITIES(),
         "GET",
         {},
@@ -130,7 +143,7 @@ describe("useAdminCommunities (V2)", () => {
     });
 
     it("should update zustand store with fetched communities", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockV2Response, null]);
+      mockFetchData.mockResolvedValue([mockV2Response, null]);
 
       const { result } = renderHook(() => useAdminCommunities("0xtest-address"), {
         wrapper: createWrapper(queryClient),
@@ -153,13 +166,14 @@ describe("useAdminCommunities (V2)", () => {
     it("should have errorManager properly mocked", () => {
       // This test verifies the fix for the bug where errorManager wasn't mocked
       // Previously, the test would fail because it tried to access mockErrorManager.mock.calls
-      // without first mocking errorManager with jest.mock()
+      // Now we use spyOn which creates a properly scoped mock
       expect(mockErrorManager).toBeDefined();
-      expect(jest.isMockFunction(mockErrorManager)).toBe(true);
+      // spyOn creates mocks that have mockRestore method
+      expect(typeof mockErrorManager.mockRestore).toBe("function");
     });
 
     it("should clear communities on fetch error", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([null, "Server error"]);
+      mockFetchData.mockResolvedValue([null, "Server error"]);
 
       renderHook(() => useAdminCommunities("0xtest-address"), {
         wrapper: createWrapper(queryClient),
@@ -167,7 +181,7 @@ describe("useAdminCommunities (V2)", () => {
 
       // Wait for fetchData to be called
       await waitFor(() => {
-        expect(fetchData).toHaveBeenCalled();
+        expect(mockFetchData).toHaveBeenCalled();
       });
 
       // Give React Query time to process the error through retries
@@ -197,7 +211,7 @@ describe("useAdminCommunities (V2)", () => {
         wrapper: createWrapper(queryClient),
       });
 
-      expect(fetchData).not.toHaveBeenCalled();
+      expect(mockFetchData).not.toHaveBeenCalled();
     });
 
     it("should not fetch when no address provided", async () => {
@@ -205,11 +219,11 @@ describe("useAdminCommunities (V2)", () => {
         wrapper: createWrapper(queryClient),
       });
 
-      expect(fetchData).not.toHaveBeenCalled();
+      expect(mockFetchData).not.toHaveBeenCalled();
     });
 
     it("should clear communities when address is removed", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockV2Response, null]);
+      mockFetchData.mockResolvedValue([mockV2Response, null]);
 
       const { rerender } = renderHook(({ address }) => useAdminCommunities(address), {
         wrapper: createWrapper(queryClient),
@@ -231,7 +245,7 @@ describe("useAdminCommunities (V2)", () => {
 
   describe("Loading state", () => {
     it("should sync loading state with zustand store", async () => {
-      (fetchData as jest.Mock).mockImplementation(
+      mockFetchData.mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve([mockV2Response, null]), 100))
       );
 
@@ -249,7 +263,7 @@ describe("useAdminCommunities (V2)", () => {
 
   describe("Return value", () => {
     it("should return refetch function", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockV2Response, null]);
+      mockFetchData.mockResolvedValue([mockV2Response, null]);
 
       const { result } = renderHook(() => useAdminCommunities("0xtest-address"), {
         wrapper: createWrapper(queryClient),

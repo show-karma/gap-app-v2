@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
 /**
  * @file Tests for ProgramDetailsTab component
  * @description Comprehensive tests for the program details tab
@@ -12,7 +12,14 @@ import { ProgramDetailsTab } from "@/components/FundingPlatform/QuestionBuilder/
 import "@testing-library/jest-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import * as errorManagerModule from "@/components/Utilities/errorManager";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
+// Import modules for spyOn
+import * as fetchDataModule from "@/utilities/fetchData";
+
+// Create spies
+let mockFetchData: ReturnType<typeof spyOn>;
+let mockErrorManager: ReturnType<typeof spyOn>;
 
 // Mock dependencies
 jest.mock("wagmi", () => ({
@@ -30,10 +37,7 @@ jest.mock("@/services/programRegistry.service", () => ({
   },
 }));
 
-jest.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: jest.fn(),
-}));
+// NOTE: fetchData is mocked via spyOn in beforeEach to avoid polluting global mock state
 
 jest.mock("@/utilities/indexer", () => ({
   INDEXER: {
@@ -52,9 +56,7 @@ jest.mock("react-hot-toast", () => ({
   },
 }));
 
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
-}));
+// NOTE: errorManager is mocked via spyOn in beforeEach to avoid polluting global mock state
 
 // Mock MarkdownEditor to render a simple textarea for testing
 jest.mock("@/components/Utilities/MarkdownEditor", () => ({
@@ -133,7 +135,6 @@ jest.mock("@/components/Utilities/DatePicker", () => ({
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
-import fetchData from "@/utilities/fetchData";
 
 // Test data
 const mockProgramId = "program-123";
@@ -208,6 +209,15 @@ describe("ProgramDetailsTab", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    // Set up spies for fetchData and errorManager
+    mockFetchData = spyOn(fetchDataModule, "default").mockImplementation(async (url: string) => {
+      if (url.includes("find")) {
+        return [mockProgram, null];
+      }
+      return [null, null];
+    });
+    mockErrorManager = spyOn(errorManagerModule, "errorManager").mockImplementation(() => {});
+
     // Default mocks
     (useAccount as jest.Mock).mockReturnValue({
       address: mockAddress,
@@ -221,14 +231,9 @@ describe("ProgramDetailsTab", () => {
 
     (ProgramRegistryService.extractProgramId as jest.Mock).mockReturnValue(mockProgramDbId);
     (ProgramRegistryService.updateProgram as jest.Mock).mockResolvedValue(undefined);
-
-    (fetchData as jest.Mock).mockImplementation(async (url: string) => {
-      if (url.includes("find")) {
-        return [mockProgram, null];
-      }
-      return [null, null];
-    });
   });
+
+  // NOTE: No afterEach cleanup needed - spyOn creates fresh mocks in beforeEach
 
   describe("Rendering", () => {
     it("should show loading state initially", () => {
@@ -263,7 +268,7 @@ describe("ProgramDetailsTab", () => {
     });
 
     it("should show error state when program fails to load", async () => {
-      (fetchData as jest.Mock).mockImplementation(async () => {
+      mockFetchData.mockImplementation(async () => {
         return [null, "Failed to load program"];
       });
 
@@ -277,7 +282,7 @@ describe("ProgramDetailsTab", () => {
     });
 
     it("should show 'Program not found' when program is null", async () => {
-      (fetchData as jest.Mock).mockImplementation(async () => {
+      mockFetchData.mockImplementation(async () => {
         return [null, null];
       });
 
@@ -289,7 +294,7 @@ describe("ProgramDetailsTab", () => {
     });
 
     it("should handle array response from API", async () => {
-      (fetchData as jest.Mock).mockImplementation(async () => {
+      mockFetchData.mockImplementation(async () => {
         return [[mockProgram], null];
       });
 
@@ -604,8 +609,8 @@ describe("ProgramDetailsTab", () => {
           // Update now uses ProgramRegistryService.updateProgram
           expect(ProgramRegistryService.updateProgram).toHaveBeenCalled();
           // fetchData should be called at least twice (initial load + refetch)
-          expect(fetchData).toHaveBeenCalledTimes(2);
-          const calls = (fetchData as jest.Mock).mock.calls;
+          expect(mockFetchData).toHaveBeenCalledTimes(2);
+          const calls = mockFetchData.mock.calls;
           const lastCall = calls[calls.length - 1];
           expect(lastCall[0]).toContain("find");
         },
@@ -763,7 +768,7 @@ describe("ProgramDetailsTab", () => {
     it("should allow retry when program fails to load", async () => {
       const user = userEvent.setup();
       let fetchAttempt = 0;
-      (fetchData as jest.Mock).mockImplementation(async () => {
+      mockFetchData.mockImplementation(async () => {
         fetchAttempt++;
         if (fetchAttempt === 1) {
           return [null, "Failed to load program"];
@@ -801,7 +806,7 @@ describe("ProgramDetailsTab", () => {
         },
       };
 
-      (fetchData as jest.Mock).mockImplementation(async () => {
+      mockFetchData.mockImplementation(async () => {
         return [programWithoutDates, null];
       });
 
@@ -825,7 +830,7 @@ describe("ProgramDetailsTab", () => {
         },
       };
 
-      (fetchData as jest.Mock).mockImplementation(async () => {
+      mockFetchData.mockImplementation(async () => {
         return [programWithoutBudget, null];
       });
 

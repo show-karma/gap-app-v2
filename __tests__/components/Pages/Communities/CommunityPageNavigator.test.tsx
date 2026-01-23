@@ -21,17 +21,7 @@ jest.mock("next/navigation", () => ({
   useSearchParams: () => mockUseSearchParams(),
 }));
 
-// Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
-  PAGES: {
-    COMMUNITY: {
-      FUNDING_OPPORTUNITIES: (id: string) => `/community/${id}/funding-opportunities`,
-      ALL_GRANTS: (id: string) => `/community/${id}`,
-      UPDATES: (id: string) => `/community/${id}/updates`,
-      IMPACT: (id: string) => `/community/${id}/impact`,
-    },
-  },
-}));
+// NOTE: @/utilities/pages is globally mocked in tests/bun-setup.ts with complete PAGES implementation
 
 // Mock lucide-react icons
 jest.mock("lucide-react", () => ({

@@ -8,27 +8,12 @@
  * - Error reporting integration
  */
 
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  mock,
-  spyOn,
-  test,
-} from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { fireEvent, render, screen } from "@testing-library/react";
 import type React from "react";
 import { DonationErrorBoundary } from "@/components/Donation/DonationErrorBoundary";
-
-// Access pre-registered mocks from bun-setup.ts
-const mockErrorManager = (globalThis as any).__mocks__.errorManager;
-const mockGetDetailedErrorInfo = (globalThis as any).__mocks__.getDetailedErrorInfo;
-
-// Mocks for errorManager and errorMessages are pre-registered in tests/bun-setup.ts
+import * as errorManagerModule from "@/components/Utilities/errorManager";
+import * as errorMessages from "@/utilities/donations/errorMessages";
 
 // Component that throws an error for testing
 const ThrowError = ({
@@ -46,6 +31,8 @@ const ThrowError = ({
 
 describe("DonationErrorBoundary", () => {
   let consoleErrorSpy: ReturnType<typeof spyOn>;
+  let getDetailedErrorInfoSpy: ReturnType<typeof spyOn>;
+  let errorManagerSpy: ReturnType<typeof spyOn>;
   let localStorageMock: {
     getItem: ReturnType<typeof mock>;
     setItem: ReturnType<typeof mock>;
@@ -54,20 +41,21 @@ describe("DonationErrorBoundary", () => {
   };
 
   beforeEach(() => {
-    // Clear mock call history
-    mockErrorManager.mockClear();
-    mockGetDetailedErrorInfo.mockClear();
-
     // Suppress React error boundary console errors
     consoleErrorSpy = spyOn(console, "error").mockImplementation(() => {});
 
-    // Setup default mock return for getDetailedErrorInfo
-    mockGetDetailedErrorInfo.mockImplementation(() => ({
-      code: "UNKNOWN_ERROR",
-      message: "An unexpected error occurred",
-      technicalMessage: "Test error",
-      actionableSteps: ["Try again", "Contact support"],
-    }));
+    // Setup spy for errorManager
+    errorManagerSpy = spyOn(errorManagerModule, "errorManager").mockImplementation(() => {});
+
+    // Setup spy for getDetailedErrorInfo with default return value
+    getDetailedErrorInfoSpy = spyOn(errorMessages, "getDetailedErrorInfo").mockImplementation(
+      () => ({
+        code: "UNKNOWN_ERROR",
+        message: "An unexpected error occurred",
+        technicalMessage: "Test error",
+        actionableSteps: ["Try again", "Contact support"],
+      })
+    );
 
     // Mock localStorage
     localStorageMock = {
@@ -85,6 +73,8 @@ describe("DonationErrorBoundary", () => {
 
   afterEach(() => {
     consoleErrorSpy.mockRestore();
+    getDetailedErrorInfoSpy.mockRestore();
+    errorManagerSpy.mockRestore();
   });
 
   describe("Error Catching", () => {
@@ -110,7 +100,7 @@ describe("DonationErrorBoundary", () => {
         </DonationErrorBoundary>
       );
 
-      expect(mockErrorManager).toHaveBeenCalledWith(
+      expect(errorManagerSpy).toHaveBeenCalledWith(
         "DonationErrorBoundary caught an error",
         expect.any(Error),
         expect.objectContaining({
@@ -126,13 +116,13 @@ describe("DonationErrorBoundary", () => {
         </DonationErrorBoundary>
       );
 
-      expect(mockGetDetailedErrorInfo).toHaveBeenCalledWith(expect.any(Error));
+      expect(getDetailedErrorInfoSpy).toHaveBeenCalledWith(expect.any(Error));
     });
   });
 
   describe("Error Display", () => {
     it("should display parsed error message", () => {
-      mockGetDetailedErrorInfo.mockImplementation(() => ({
+      getDetailedErrorInfoSpy.mockImplementation(() => ({
         code: "INSUFFICIENT_BALANCE",
         message: "Insufficient token balance",
         actionableSteps: ["Check your wallet balance", "Reduce the donation amount"],
@@ -148,7 +138,7 @@ describe("DonationErrorBoundary", () => {
     });
 
     it("should display actionable steps when available", () => {
-      mockGetDetailedErrorInfo.mockImplementation(() => ({
+      getDetailedErrorInfoSpy.mockImplementation(() => ({
         code: "NETWORK_MISMATCH",
         message: "Network mismatch detected",
         actionableSteps: ["Switch to the correct network", "Try again"],
@@ -166,7 +156,7 @@ describe("DonationErrorBoundary", () => {
     });
 
     it("should display technical details when available", () => {
-      mockGetDetailedErrorInfo.mockImplementation(() => ({
+      getDetailedErrorInfoSpy.mockImplementation(() => ({
         code: "CONTRACT_ERROR",
         message: "Contract execution failed",
         technicalMessage: "Error: execution reverted",
@@ -187,7 +177,7 @@ describe("DonationErrorBoundary", () => {
     });
 
     it("should not display actionable steps section when empty", () => {
-      mockGetDetailedErrorInfo.mockImplementation(() => ({
+      getDetailedErrorInfoSpy.mockImplementation(() => ({
         code: "UNKNOWN_ERROR",
         message: "An error occurred",
         actionableSteps: [],
@@ -390,7 +380,7 @@ describe("DonationErrorBoundary", () => {
       );
 
       expect(screen.getByText("Something went wrong")).toBeInTheDocument();
-      expect(mockErrorManager).toHaveBeenCalledTimes(2);
+      expect(errorManagerSpy).toHaveBeenCalledTimes(2);
     });
 
     it("should render children normally when no error occurs", () => {
@@ -402,7 +392,7 @@ describe("DonationErrorBoundary", () => {
 
       expect(screen.getByText("Normal content")).toBeInTheDocument();
       expect(screen.queryByText("Something went wrong")).not.toBeInTheDocument();
-      expect(mockErrorManager).not.toHaveBeenCalled();
+      expect(errorManagerSpy).not.toHaveBeenCalled();
     });
   });
 });

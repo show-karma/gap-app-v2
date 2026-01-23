@@ -3,15 +3,17 @@
  * @description Tests donation transfer functionality with wagmi hooks
  */
 
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import { act, renderHook } from "@testing-library/react";
 import type { Address } from "viem";
 import { parseUnits } from "viem";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import { useDonationTransfer, useTransactionStatus } from "@/hooks/useDonationTransfer";
 import type { DonationPayment } from "@/store/donationCart";
+import * as chainSyncModule from "@/utilities/chainSyncValidation";
+// Import modules for spying
+import * as erc20Module from "@/utilities/erc20";
 
-// All mocks are pre-registered in tests/bun-setup.ts
 // Access wagmi mock state via globalThis.__wagmiMockState__
 // Access utility mocks via globalThis.__mocks__
 
@@ -65,6 +67,11 @@ describe("useDonationTransfer", () => {
   let mocks: any;
   let wagmiState: any;
 
+  // Spied utility functions
+  let checkTokenAllowancesSpy: ReturnType<typeof spyOn>;
+  let executeApprovalsSpy: ReturnType<typeof spyOn>;
+  let validateChainSyncSpy: ReturnType<typeof spyOn>;
+
   beforeEach(() => {
     mocks = getMocks();
     wagmiState = getWagmiState();
@@ -106,13 +113,23 @@ describe("useDonationTransfer", () => {
       error: null,
     };
 
-    // Configure utility mocks with default success behavior
-    if (mocks.checkTokenAllowances?.mockImplementation) {
-      mocks.checkTokenAllowances.mockImplementation(() => Promise.resolve([]));
-    }
-    if (mocks.executeApprovals?.mockImplementation) {
-      mocks.executeApprovals.mockImplementation(() => Promise.resolve([]));
-    }
+    // Create spies for utility functions and add to mocks object
+    checkTokenAllowancesSpy = spyOn(erc20Module, "checkTokenAllowances").mockImplementation(() =>
+      Promise.resolve([])
+    );
+    executeApprovalsSpy = spyOn(erc20Module, "executeApprovals").mockImplementation(() =>
+      Promise.resolve([])
+    );
+    validateChainSyncSpy = spyOn(chainSyncModule, "validateChainSync").mockImplementation(() =>
+      Promise.resolve(undefined)
+    );
+
+    // Add spies to mocks object so tests can access them uniformly
+    mocks.checkTokenAllowances = checkTokenAllowancesSpy;
+    mocks.executeApprovals = executeApprovalsSpy;
+    mocks.validateChainSync = validateChainSyncSpy;
+
+    // Configure other utility mocks with default success behavior
     if (mocks.getRPCClient?.mockImplementation) {
       mocks.getRPCClient.mockImplementation(() => Promise.resolve(mockPublicClient));
     }
@@ -122,38 +139,18 @@ describe("useDonationTransfer", () => {
     if (mocks.isWalletClientGoodEnough?.mockImplementation) {
       mocks.isWalletClientGoodEnough.mockImplementation(() => true);
     }
-    if (mocks.validateChainSync?.mockImplementation) {
-      mocks.validateChainSync.mockImplementation(() => Promise.resolve(undefined));
-    }
 
     // Clear mocks
-    if (mocks.checkTokenAllowances?.mockClear) mocks.checkTokenAllowances.mockClear();
-    if (mocks.executeApprovals?.mockClear) mocks.executeApprovals.mockClear();
     if (mocks.getRPCClient?.mockClear) mocks.getRPCClient.mockClear();
     if (mocks.getWalletClientWithFallback?.mockClear) mocks.getWalletClientWithFallback.mockClear();
     if (mocks.isWalletClientGoodEnough?.mockClear) mocks.isWalletClientGoodEnough.mockClear();
-    if (mocks.validateChainSync?.mockClear) mocks.validateChainSync.mockClear();
   });
 
   afterEach(() => {
-    // Reset mock implementations
-    if (mockWalletClient?.signTypedData?.mockReset) {
-      mockWalletClient.signTypedData.mockReset();
-      mockWalletClient.signTypedData.mockResolvedValue("0xsignature");
-    }
-    if (wagmiState?.writeContract?.writeContractAsync?.mockReset) {
-      wagmiState.writeContract.writeContractAsync.mockReset();
-      wagmiState.writeContract.writeContractAsync.mockImplementation(() =>
-        Promise.resolve("0xtxhash")
-      );
-    }
-    if (mockPublicClient?.waitForTransactionReceipt?.mockReset) {
-      mockPublicClient.waitForTransactionReceipt.mockReset();
-      mockPublicClient.waitForTransactionReceipt.mockResolvedValue({
-        status: "success",
-        transactionHash: "0xtxhash",
-      });
-    }
+    // Restore spies to prevent pollution of other test files
+    checkTokenAllowancesSpy?.mockRestore();
+    executeApprovalsSpy?.mockRestore();
+    validateChainSyncSpy?.mockRestore();
   });
 
   describe("initialization", () => {
@@ -733,6 +730,7 @@ describe("useDonationTransfer", () => {
       wagmiState.writeContract.writeContractAsync.mockImplementation(() =>
         Promise.resolve("0xtxhash")
       );
+      wagmiState.writeContract.reset.mockClear();
       wagmiState.waitForTransactionReceipt = {
         data: null,
         isLoading: false,
@@ -741,25 +739,31 @@ describe("useDonationTransfer", () => {
         error: null,
       };
 
-      // Reset utility mocks
-      if (mocks.checkTokenAllowances?.mockImplementation) {
+      // Reset utility mocks - first clear call history, then set implementation
+      if (mocks.checkTokenAllowances?.mockClear) {
+        mocks.checkTokenAllowances.mockClear();
         mocks.checkTokenAllowances.mockImplementation(() => Promise.resolve([]));
       }
-      if (mocks.executeApprovals?.mockImplementation) {
+      if (mocks.executeApprovals?.mockClear) {
+        mocks.executeApprovals.mockClear();
         mocks.executeApprovals.mockImplementation(() => Promise.resolve([]));
       }
-      if (mocks.getRPCClient?.mockImplementation) {
+      if (mocks.getRPCClient?.mockClear) {
+        mocks.getRPCClient.mockClear();
         mocks.getRPCClient.mockImplementation(() => Promise.resolve(mockPublicClient));
       }
-      if (mocks.getWalletClientWithFallback?.mockImplementation) {
+      if (mocks.getWalletClientWithFallback?.mockClear) {
+        mocks.getWalletClientWithFallback.mockClear();
         mocks.getWalletClientWithFallback.mockImplementation(() =>
           Promise.resolve(mockWalletClient)
         );
       }
-      if (mocks.isWalletClientGoodEnough?.mockImplementation) {
+      if (mocks.isWalletClientGoodEnough?.mockClear) {
+        mocks.isWalletClientGoodEnough.mockClear();
         mocks.isWalletClientGoodEnough.mockImplementation(() => true);
       }
-      if (mocks.validateChainSync?.mockImplementation) {
+      if (mocks.validateChainSync?.mockClear) {
+        mocks.validateChainSync.mockClear();
         mocks.validateChainSync.mockImplementation(() => Promise.resolve(undefined));
       }
 

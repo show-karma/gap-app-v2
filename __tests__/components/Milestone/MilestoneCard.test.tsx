@@ -79,14 +79,7 @@ jest.mock("@/utilities/formatDate", () => ({
   }),
 }));
 
-// Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
-  PAGES: {
-    COMMUNITY: {
-      ALL_GRANTS: (slug: string, programId: string) => `/community/${slug}/grants/${programId}`,
-    },
-  },
-}));
+// NOTE: @/utilities/pages is globally mocked in tests/bun-setup.ts with complete PAGES implementation
 
 describe("MilestoneCard", () => {
   const mockProjectMilestone = {
@@ -263,7 +256,8 @@ describe("MilestoneCard", () => {
 
       expect(screen.getByText("Test Grant Program")).toBeInTheDocument();
       const link = screen.getByText("Test Grant Program").closest("a");
-      expect(link).toHaveAttribute("href", "/community/test-community/grants/program-123");
+      // PAGES.COMMUNITY.ALL_GRANTS uses format: /community/{community}?programId={programId}
+      expect(link).toHaveAttribute("href", "/community/test-community?programId=program-123");
     });
 
     it("should display community image for grant milestones", () => {

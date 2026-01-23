@@ -3,27 +3,40 @@
  * @description Tests for formatMetricValue, prepareCommunityMetricsChartData, and calculateDateRange
  */
 
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+  spyOn,
+  test,
+} from "bun:test";
 import {
   calculateDateRange,
   formatMetricValue,
   prepareCommunityMetricsChartData,
 } from "@/components/Pages/Communities/Impact/communityMetricsUtils";
 import type { CommunityMetric } from "@/types/community-metrics";
-import formatCurrency from "@/utilities/formatCurrency";
-import { formatDate } from "@/utilities/formatDate";
+import * as formatCurrencyModule from "@/utilities/formatCurrency";
+import * as formatDateModule from "@/utilities/formatDate";
 
-// Mock formatCurrency and formatDate
-jest.mock("@/utilities/formatCurrency");
-jest.mock("@/utilities/formatDate");
-
-const mockFormatCurrency = formatCurrency as jest.MockedFunction<typeof formatCurrency>;
-const mockFormatDate = formatDate as jest.MockedFunction<typeof formatDate>;
+// Spy on formatCurrency and formatDate
+let mockFormatCurrency: ReturnType<typeof spyOn>;
+let mockFormatDate: ReturnType<typeof spyOn>;
 
 describe("formatMetricValue", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockFormatCurrency.mockImplementation((val) => `$${val.toLocaleString()}`);
+    mockFormatCurrency = spyOn(formatCurrencyModule, "default").mockImplementation(
+      (val) => `$${val.toLocaleString()}`
+    );
+  });
+
+  afterEach(() => {
+    mockFormatCurrency.mockRestore();
   });
 
   it("should return value as-is for NaN", () => {
@@ -65,8 +78,13 @@ describe("formatMetricValue", () => {
 
 describe("prepareCommunityMetricsChartData", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockFormatDate.mockImplementation((date) => date.toISOString().split("T")[0]);
+    mockFormatDate = spyOn(formatDateModule, "formatDate").mockImplementation(
+      (date: any) => new Date(date).toISOString().split("T")[0]
+    );
+  });
+
+  afterEach(() => {
+    mockFormatDate.mockRestore();
   });
 
   it("should return empty array for metric with no datapoints", () => {

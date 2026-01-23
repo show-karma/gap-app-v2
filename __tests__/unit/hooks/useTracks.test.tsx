@@ -35,14 +35,9 @@ jest.mock("@/services/tracks", () => ({
   },
 }));
 
-// Mock react-hot-toast
-jest.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    success: jest.fn(),
-    error: jest.fn(),
-  },
-}));
+// NOTE: react-hot-toast mock is provided globally via bun-setup.ts
+// Access it via getMocks().toast in beforeEach to avoid polluting global mock state
+const getMocks = () => (globalThis as any).__mocks__;
 
 // Mock SDK tracks
 jest.mock("@/utilities/sdk/tracks", () => ({

@@ -3,47 +3,39 @@
  * @description Tests grant completion workflow with utilities
  */
 
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
+import * as attestationPollingModule from "@/utilities/attestation-polling";
+// Import modules for spyOn
+import * as grantHelpersModule from "@/utilities/grant-helpers";
+import * as indexerNotificationModule from "@/utilities/indexer-notification";
+import * as sanitizeModule from "@/utilities/sanitize";
 
 // Mock ALL dependencies to avoid ESM import issues
 const mockSetupChainAndWallet = jest.fn();
-const mockFetchGrantInstance = jest.fn();
-const mockNotifyIndexerForGrant = jest.fn();
-const mockPollForGrantCompletion = jest.fn();
-const mockToastSuccess = jest.fn();
+// NOTE: Toast mock removed - using global mock from bun-setup.ts
 const mockShowError = jest.fn();
 const mockShowSuccess = jest.fn();
 
-jest.mock("@/utilities/grant-helpers", () => ({
-  getSDKGrantInstance: mockFetchGrantInstance,
-}));
+// Spies for modules - will be set up in beforeEach
+let mockFetchGrantInstance: ReturnType<typeof spyOn>;
+let mockNotifyIndexerForGrant: ReturnType<typeof spyOn>;
+let mockPollForGrantCompletion: ReturnType<typeof spyOn>;
+let mockSanitizeObject: ReturnType<typeof spyOn>;
 
-jest.mock("@/utilities/indexer-notification", () => ({
-  notifyIndexerForGrant: mockNotifyIndexerForGrant,
-}));
+// NOTE: grant-helpers, attestation-polling, sanitize, and indexer-notification
+// are NOT mocked via jest.mock() to avoid polluting other test files.
+// Instead, we use spyOn in beforeEach/afterEach.
 
-jest.mock("@/utilities/attestation-polling", () => ({
-  pollForGrantCompletion: mockPollForGrantCompletion,
-}));
+// NOTE: react-hot-toast mock is provided globally via bun-setup.ts
+// Access it via getMocks().toast in beforeEach to avoid polluting global mock state
+const getMocks = () => (globalThis as any).__mocks__;
 
-jest.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: {
-    success: mockToastSuccess,
-    error: mockShowError,
-  },
-}));
+// NOTE: errorManager mock is provided globally via bun-setup.ts
+// Do NOT use jest.mock() here as it pollutes global mock state
 
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
-}));
-
-const mockUseAccount = jest.fn();
-const mockUseChainId = jest.fn(() => 1);
-jest.mock("wagmi", () => ({
-  useAccount: mockUseAccount,
-  useChainId: mockUseChainId,
-}));
+// Access wagmi mock state via globalThis.__wagmiMockState__
+// NOTE: Do NOT use jest.mock("wagmi", ...) as it pollutes global mock state
+const getWagmiState = () => (globalThis as any).__wagmiMockState__;
 
 jest.mock("@/hooks/useWallet", () => ({
   useWallet: jest.fn(() => ({ switchChainAsync: jest.fn() })),
@@ -72,16 +64,15 @@ jest.mock("@/hooks/useSetupChainAndWallet", () => ({
   })),
 }));
 
-jest.mock("@/utilities/sanitize", () => ({
-  sanitizeObject: jest.fn((obj) => obj),
-}));
-
 import { act, renderHook } from "@testing-library/react";
 
 // Import the hook to test AFTER mocking dependencies
 const { useGrantCompletion } = require("@/hooks/useGrantCompletion");
 
 describe("useGrantCompletion", () => {
+  let wagmiState: any;
+  let mockToast: any;
+
   const mockGrant = {
     uid: "grant-123",
     chainID: 42161,
@@ -100,8 +91,50 @@ describe("useGrantCompletion", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset useAccount mock to default values
-    mockUseAccount.mockReturnValue({ chain: { id: 1 }, address: "0x123" });
+
+    // Get wagmi state and toast mock from global mocks
+    wagmiState = getWagmiState();
+    const mocks = getMocks();
+    mockToast = mocks.toast;
+
+    // Configure wagmi mock state
+    wagmiState.account = {
+      address: "0x123",
+      isConnected: true,
+      connector: null,
+      chain: { id: 1 },
+    };
+    wagmiState.chainId = 1;
+
+    // Set up spies for utility modules
+    mockFetchGrantInstance = spyOn(grantHelpersModule, "getSDKGrantInstance").mockImplementation(
+      () => Promise.resolve({} as any)
+    );
+
+    mockNotifyIndexerForGrant = spyOn(
+      indexerNotificationModule,
+      "notifyIndexerForGrant"
+    ).mockImplementation(() => Promise.resolve(undefined));
+
+    mockPollForGrantCompletion = spyOn(
+      attestationPollingModule,
+      "pollForGrantCompletion"
+    ).mockImplementation(() => Promise.resolve(undefined));
+
+    mockSanitizeObject = spyOn(sanitizeModule, "sanitizeObject").mockImplementation((obj) => obj);
+
+    // Clear mock call history
+    if (mockToast?.mockClear) mockToast.mockClear();
+    if (mockToast?.success?.mockClear) mockToast.success.mockClear();
+    if (mockToast?.error?.mockClear) mockToast.error.mockClear();
+  });
+
+  afterEach(() => {
+    // Restore all spies
+    mockFetchGrantInstance?.mockRestore();
+    mockNotifyIndexerForGrant?.mockRestore();
+    mockPollForGrantCompletion?.mockRestore();
+    mockSanitizeObject?.mockRestore();
   });
 
   describe("Initialization", () => {
@@ -219,7 +252,13 @@ describe("useGrantCompletion", () => {
 
   describe("Validation", () => {
     it("should not proceed without address", async () => {
-      mockUseAccount.mockReturnValue({ chain: { id: 1 }, address: undefined });
+      // Configure wagmi state with no address
+      wagmiState.account = {
+        address: undefined,
+        isConnected: false,
+        connector: null,
+        chain: { id: 1 },
+      };
 
       const { result } = renderHook(() => useGrantCompletion({}));
 

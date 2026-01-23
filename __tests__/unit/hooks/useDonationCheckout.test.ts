@@ -5,31 +5,24 @@
 
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { act, renderHook } from "@testing-library/react";
-import toast from "react-hot-toast";
-import * as wagmi from "wagmi";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import { useDonationCheckout } from "@/hooks/donation/useDonationCheckout";
 
-// Mock dependencies
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(),
-}));
+// Access wagmi mock state via globalThis.__wagmiMockState__
+// NOTE: Do NOT use jest.mock("wagmi", ...) as it pollutes global mock state
+const getWagmiState = () => (globalThis as any).__wagmiMockState__;
 
-jest.mock("react-hot-toast");
+// NOTE: react-hot-toast mock is provided globally via bun-setup.ts
+// Access it via getMocks().toast in beforeEach to avoid polluting global mock state
+const getMocks = () => (globalThis as any).__mocks__;
 
 jest.mock("@/hooks/useDonationTransfer", () => ({
   useDonationTransfer: jest.fn(),
 }));
 
-jest.mock("@/utilities/donations/errorMessages", () => ({
-  getShortErrorMessage: jest.fn((error: any) => error?.message || "Unknown error"),
-  parseDonationError: jest.fn((error: any) => ({
-    message: error?.message || "Unknown error",
-    type: "unknown",
-    isRecoverable: false,
-    actionableSteps: [],
-  })),
-}));
+// NOTE: Do NOT use jest.mock("@/utilities/donations/errorMessages")
+// as it pollutes global mock state and breaks errorMessages.test.ts
+// The hook uses the real errorMessages functions internally
 
 jest.mock("@/hooks/donation/useCreateDonation", () => ({
   useCreateDonation: jest.fn(() => ({
@@ -39,6 +32,8 @@ jest.mock("@/hooks/donation/useCreateDonation", () => ({
 }));
 
 describe("useDonationCheckout", () => {
+  let wagmiState: any;
+  let mockToast: any;
   const mockAddress = "0x1234567890123456789012345678901234567890";
 
   const mockToken: SupportedToken = {
@@ -78,16 +73,27 @@ describe("useDonationCheckout", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    (wagmi.useAccount as jest.Mock).mockReturnValue({
+    // Get wagmi state and toast mock from global mocks
+    wagmiState = getWagmiState();
+    const mocks = getMocks();
+    mockToast = mocks.toast;
+
+    // Configure wagmi mock state
+    wagmiState.account = {
       address: mockAddress,
       isConnected: true,
-    });
+      connector: null,
+      chain: { id: 10 },
+    };
+    wagmiState.chainId = 10;
 
     const { useDonationTransfer } = require("@/hooks/useDonationTransfer");
     useDonationTransfer.mockReturnValue(mockUseDonationTransfer);
 
-    (toast.error as jest.Mock).mockImplementation(() => {});
-    (toast.success as jest.Mock).mockImplementation(() => {});
+    // Clear mock call history
+    if (mockToast?.mockClear) mockToast.mockClear();
+    if (mockToast?.success?.mockClear) mockToast.success.mockClear();
+    if (mockToast?.error?.mockClear) mockToast.error.mockClear();
   });
 
   describe("initialization", () => {
@@ -103,10 +109,13 @@ describe("useDonationCheckout", () => {
 
   describe("handleExecuteDonations", () => {
     it("should show error when wallet not connected", async () => {
-      (wagmi.useAccount as jest.Mock).mockReturnValue({
+      // Configure wagmi state with no address
+      wagmiState.account = {
         address: null,
         isConnected: false,
-      });
+        connector: null,
+        chain: { id: 10 },
+      };
 
       const { result } = renderHook(() => useDonationCheckout());
 
@@ -114,7 +123,7 @@ describe("useDonationCheckout", () => {
         await result.current.handleExecuteDonations([mockPayment]);
       });
 
-      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("Connect your wallet"));
+      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining("Connect your wallet"));
     });
 
     it("should show error when no payments provided", async () => {
@@ -124,7 +133,7 @@ describe("useDonationCheckout", () => {
         await result.current.handleExecuteDonations([]);
       });
 
-      expect(toast.error).toHaveBeenCalledWith(
+      expect(mockToast.error).toHaveBeenCalledWith(
         expect.stringContaining("Select at least one project")
       );
     });
@@ -215,7 +224,7 @@ describe("useDonationCheckout", () => {
         );
       });
 
-      expect(toast.error).toHaveBeenCalledWith(
+      expect(mockToast.error).toHaveBeenCalledWith(
         expect.stringContaining("payout addresses for the selected chains")
       );
       expect(mockSetMissingPayouts).toHaveBeenCalled();
@@ -270,7 +279,7 @@ describe("useDonationCheckout", () => {
       });
 
       expect(result.current.validationErrors).toEqual(["Insufficient balance"]);
-      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("Insufficient balance"));
+      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining("Insufficient balance"));
       expect(mockUseDonationTransfer.executeDonations).not.toHaveBeenCalled();
     });
 
@@ -315,7 +324,7 @@ describe("useDonationCheckout", () => {
         );
       });
 
-      expect(toast.error).toHaveBeenCalled();
+      expect(mockToast.error).toHaveBeenCalled();
       expect(mockUseDonationTransfer.executeDonations).not.toHaveBeenCalled();
     });
 
@@ -364,7 +373,7 @@ describe("useDonationCheckout", () => {
         );
       });
 
-      expect(toast.success).toHaveBeenCalledWith(expect.stringContaining("success"));
+      expect(mockToast.success).toHaveBeenCalledWith(expect.stringContaining("success"));
     });
 
     it("should show error toast when some donations fail", async () => {
@@ -390,7 +399,9 @@ describe("useDonationCheckout", () => {
         );
       });
 
-      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("Some donations failed"));
+      expect(mockToast.error).toHaveBeenCalledWith(
+        expect.stringContaining("Some donations failed")
+      );
     });
 
     it("should show special success message when approvals were needed", async () => {
@@ -423,7 +434,7 @@ describe("useDonationCheckout", () => {
         );
       });
 
-      expect(toast.success).toHaveBeenCalledWith(expect.stringContaining("approved"));
+      expect(mockToast.success).toHaveBeenCalledWith(expect.stringContaining("approved"));
     });
 
     it("should handle execution error", async () => {
@@ -447,7 +458,7 @@ describe("useDonationCheckout", () => {
         );
       });
 
-      expect(toast.error).toHaveBeenCalled();
+      expect(mockToast.error).toHaveBeenCalled();
     });
 
     it("should pass beforeTransfer callback to executeDonations", async () => {

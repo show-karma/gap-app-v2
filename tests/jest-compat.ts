@@ -62,6 +62,9 @@ let currentTime = Date.now();
 const pendingTimers: Array<{ callback: () => void; time: number; id: number }> = [];
 let timerIdCounter = 0;
 
+// Store the original Date constructor for restoration
+const RealDate = Date;
+
 interface MockCall {
   args: unknown[];
   result: unknown;
@@ -257,6 +260,32 @@ function useFakeTimers(config?: { now?: number | Date; advanceTimers?: boolean }
     }
   };
 
+  // Override Date constructor to return mocked time
+  const MockDate = class extends RealDate {
+    constructor(...args: any[]) {
+      if (args.length === 0) {
+        super(currentTime);
+      } else {
+        // @ts-expect-error - spread args to constructor
+        super(...args);
+      }
+    }
+    static now() {
+      return currentTime;
+    }
+    static parse(s: string) {
+      return RealDate.parse(s);
+    }
+    static UTC(...args: Parameters<typeof Date.UTC>) {
+      return RealDate.UTC(...args);
+    }
+  } as DateConstructor;
+
+  // Preserve static properties
+  Object.defineProperty(MockDate, "name", { value: "Date" });
+
+  (globalThis as any).Date = MockDate;
+
   return jestCompat;
 }
 
@@ -268,6 +297,8 @@ function useRealTimers() {
     globalThis.clearTimeout = (globalThis as any)._originalClearTimeout;
     globalThis.clearInterval = (globalThis as any)._originalClearInterval;
   }
+  // Restore the original Date constructor
+  (globalThis as any).Date = RealDate;
   return jestCompat;
 }
 

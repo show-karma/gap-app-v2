@@ -4,20 +4,18 @@
  * covering business logic, error handling, and response parsing
  */
 
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
 import type { CommunityDetails } from "@/types/community";
 import type { CreateProgramFormData } from "@/types/program-registry";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-// Mock fetchData utility
-jest.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: jest.fn(),
-}));
+// Use pre-registered mock from bun-setup.ts
+const getMocks = () => (globalThis as any).__mocks__;
 
 describe("ProgramRegistryService", () => {
+  let mockFetchData: any;
+
   const mockCommunity: CommunityDetails = {
     uid: "0x1234567890123456789012345678901234567890",
     chainID: 1,
@@ -43,7 +41,10 @@ describe("ProgramRegistryService", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    const mocks = getMocks();
+    mockFetchData = mocks.fetchData;
+    if (mockFetchData?.mockClear) mockFetchData.mockClear();
+    if (mockFetchData?.mockReset) mockFetchData.mockReset();
   });
 
   describe("buildProgramMetadata", () => {
@@ -174,7 +175,7 @@ describe("ProgramRegistryService", () => {
         isValid: true,
       };
 
-      (fetchData as jest.Mock).mockResolvedValue([mockResponse, null]);
+      mockFetchData.mockResolvedValue([mockResponse, null]);
 
       const result = await ProgramRegistryService.createProgram(
         mockOwner,
@@ -182,7 +183,7 @@ describe("ProgramRegistryService", () => {
         mockMetadata
       );
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.REGISTRY.V2.CREATE,
         "POST",
         {
@@ -219,7 +220,7 @@ describe("ProgramRegistryService", () => {
       ];
 
       for (const testCase of testCases) {
-        (fetchData as jest.Mock).mockResolvedValue([testCase.response, null]);
+        mockFetchData.mockResolvedValue([testCase.response, null]);
 
         const result = await ProgramRegistryService.createProgram(
           mockOwner,
@@ -234,7 +235,7 @@ describe("ProgramRegistryService", () => {
     });
 
     it("should handle missing program ID in response", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{}, null]);
+      mockFetchData.mockResolvedValue([{}, null]);
 
       const result = await ProgramRegistryService.createProgram(
         mockOwner,
@@ -251,7 +252,7 @@ describe("ProgramRegistryService", () => {
 
     it("should throw error when fetchData returns error", async () => {
       const mockError = "Creation failed";
-      (fetchData as jest.Mock).mockResolvedValue([null, mockError]);
+      mockFetchData.mockResolvedValue([null, mockError]);
 
       await expect(
         ProgramRegistryService.createProgram(mockOwner, mockChainId, mockMetadata)
@@ -260,7 +261,7 @@ describe("ProgramRegistryService", () => {
 
     it("should throw error when fetchData throws", async () => {
       const mockError = new Error("Network error");
-      (fetchData as jest.Mock).mockRejectedValue(mockError);
+      mockFetchData.mockRejectedValue(mockError);
 
       await expect(
         ProgramRegistryService.createProgram(mockOwner, mockChainId, mockMetadata)
@@ -272,11 +273,11 @@ describe("ProgramRegistryService", () => {
     const mockProgramId = "program-123";
 
     it("should approve program successfully", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{ success: true }, null]);
+      mockFetchData.mockResolvedValue([{ success: true }, null]);
 
       await ProgramRegistryService.approveProgram(mockProgramId);
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.REGISTRY.V2.APPROVE,
         "POST",
         {
@@ -291,7 +292,7 @@ describe("ProgramRegistryService", () => {
 
     it("should throw error when fetchData returns error", async () => {
       const mockError = "Approval failed";
-      (fetchData as jest.Mock).mockResolvedValue([null, mockError]);
+      mockFetchData.mockResolvedValue([null, mockError]);
 
       await expect(ProgramRegistryService.approveProgram(mockProgramId)).rejects.toThrow(
         "Approval failed"
@@ -300,7 +301,7 @@ describe("ProgramRegistryService", () => {
 
     it("should throw error when fetchData throws", async () => {
       const mockError = new Error("Network error");
-      (fetchData as jest.Mock).mockRejectedValue(mockError);
+      mockFetchData.mockRejectedValue(mockError);
 
       await expect(ProgramRegistryService.approveProgram(mockProgramId)).rejects.toThrow(
         "Network error"
@@ -315,7 +316,7 @@ describe("ProgramRegistryService", () => {
       const mockMetadata = ProgramRegistryService.buildProgramMetadata(mockFormData, mockCommunity);
 
       // Mock V2 creation response
-      (fetchData as jest.Mock)
+      mockFetchData
         .mockResolvedValueOnce([{ programId: "program-123", isValid: null }, null])
         .mockResolvedValueOnce([{ success: true }, null]);
 
@@ -330,8 +331,8 @@ describe("ProgramRegistryService", () => {
 
       await ProgramRegistryService.approveProgram(createResult.programId);
 
-      expect(fetchData).toHaveBeenCalledTimes(2);
-      expect(fetchData).toHaveBeenNthCalledWith(
+      expect(mockFetchData).toHaveBeenCalledTimes(2);
+      expect(mockFetchData).toHaveBeenNthCalledWith(
         1,
         INDEXER.REGISTRY.V2.CREATE,
         "POST",
@@ -343,7 +344,7 @@ describe("ProgramRegistryService", () => {
         {},
         true
       );
-      expect(fetchData).toHaveBeenNthCalledWith(
+      expect(mockFetchData).toHaveBeenNthCalledWith(
         2,
         INDEXER.REGISTRY.V2.APPROVE,
         "POST",

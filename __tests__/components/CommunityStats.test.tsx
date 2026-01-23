@@ -1,10 +1,23 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  spyOn,
+  test,
+} from "bun:test";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import CommunityStats from "@/components/CommunityStats";
-import fetchData from "@/utilities/fetchData";
+import * as errorManagerModule from "@/components/Utilities/errorManager";
+// Import modules for spyOn
+import * as fetchDataModule from "@/utilities/fetchData";
 
-// Mock fetchData
-jest.mock("@/utilities/fetchData");
+// Create spies
+let mockFetchData: ReturnType<typeof spyOn>;
+let mockErrorManager: ReturnType<typeof spyOn>;
 
 // Mock Headless UI Dialog
 jest.mock("@headlessui/react", () => {
@@ -93,10 +106,7 @@ jest.mock("@/components/Utilities/Button", () => ({
   ),
 }));
 
-// Mock errorManager
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
-}));
+// NOTE: errorManager is mocked via spyOn in beforeEach to avoid polluting global mock state
 
 describe("CommunityStats", () => {
   const mockCommunityId = "community-123";
@@ -119,8 +129,12 @@ describe("CommunityStats", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (fetchData as jest.Mock).mockResolvedValue([mockStatsData, null]);
+    // Set up spies
+    mockFetchData = spyOn(fetchDataModule, "default").mockResolvedValue([mockStatsData, null]);
+    mockErrorManager = spyOn(errorManagerModule, "errorManager").mockImplementation(() => {});
   });
+
+  // NOTE: No afterEach cleanup needed - spyOn creates fresh mocks in beforeEach
 
   describe("Rendering", () => {
     it("should render Stats button", () => {
@@ -169,12 +183,12 @@ describe("CommunityStats", () => {
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(fetchData).toHaveBeenCalledWith(expect.stringContaining(mockCommunityId));
+        expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining(mockCommunityId));
       });
     });
 
     it("should show loading state when fetching stats", async () => {
-      (fetchData as jest.Mock).mockImplementation(
+      mockFetchData.mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve([mockStatsData, null]), 100))
       );
 
@@ -291,7 +305,7 @@ describe("CommunityStats", () => {
       if (refreshButton) fireEvent.click(refreshButton);
 
       await waitFor(() => {
-        expect(fetchData).toHaveBeenCalledTimes(2);
+        expect(mockFetchData).toHaveBeenCalledTimes(2);
       });
     });
   });
@@ -299,7 +313,7 @@ describe("CommunityStats", () => {
   describe("Error Handling", () => {
     it("should display error message when fetch fails", async () => {
       const errorMessage = "Failed to fetch stats";
-      (fetchData as jest.Mock).mockResolvedValue([null, errorMessage]);
+      mockFetchData.mockResolvedValue([null, errorMessage]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -312,7 +326,7 @@ describe("CommunityStats", () => {
     });
 
     it("should display error when no stats found", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{}, null]);
+      mockFetchData.mockResolvedValue([{}, null]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -325,7 +339,7 @@ describe("CommunityStats", () => {
     });
 
     it("should display error when projects data is missing", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{ grants: 10 }, null]);
+      mockFetchData.mockResolvedValue([{ grants: 10 }, null]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -338,9 +352,8 @@ describe("CommunityStats", () => {
     });
 
     it("should call errorManager on fetch error", async () => {
-      const { errorManager } = require("@/components/Utilities/errorManager");
       const error = new Error("Network error");
-      (fetchData as jest.Mock).mockRejectedValue(error);
+      mockFetchData.mockRejectedValue(error);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -348,7 +361,7 @@ describe("CommunityStats", () => {
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(errorManager).toHaveBeenCalled();
+        expect(mockErrorManager).toHaveBeenCalled();
       });
     });
   });
@@ -466,7 +479,7 @@ describe("CommunityStats", () => {
         ProjectEdits: 0,
         ProjectEndorsements: 0,
       };
-      (fetchData as jest.Mock).mockResolvedValue([zeroStats, null]);
+      mockFetchData.mockResolvedValue([zeroStats, null]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -485,7 +498,7 @@ describe("CommunityStats", () => {
         ...mockStatsData,
         projects: 999999,
       };
-      (fetchData as jest.Mock).mockResolvedValue([largeStats, null]);
+      mockFetchData.mockResolvedValue([largeStats, null]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -502,7 +515,7 @@ describe("CommunityStats", () => {
         projects: 10,
         grants: 5,
       };
-      (fetchData as jest.Mock).mockResolvedValue([partialStats, null]);
+      mockFetchData.mockResolvedValue([partialStats, null]);
 
       render(<CommunityStats communityId={mockCommunityId} />);
 
@@ -521,14 +534,14 @@ describe("CommunityStats", () => {
       fireEvent.click(statsButton);
 
       await waitFor(() => {
-        expect(fetchData).toHaveBeenCalled();
+        expect(mockFetchData).toHaveBeenCalled();
       });
     });
   });
 
   describe("Loading States", () => {
     it("should show loading initially after opening modal", async () => {
-      (fetchData as jest.Mock).mockImplementation(
+      mockFetchData.mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve([mockStatsData, null]), 500))
       );
 
@@ -552,7 +565,7 @@ describe("CommunityStats", () => {
     });
 
     it("should show loading when refreshing stats", async () => {
-      (fetchData as jest.Mock).mockImplementation(
+      mockFetchData.mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve([mockStatsData, null]), 100))
       );
 

@@ -3,38 +3,12 @@ import { render, screen } from "@testing-library/react";
 import { Footer } from "@/src/components/footer/footer";
 import "@testing-library/jest-dom";
 
-// Mock child components
-jest.mock("@/src/components/shared/logo", () => ({
-  Logo: () => <div data-testid="logo">Karma GAP</div>,
-}));
-
-jest.mock("@/src/components/footer/newsletter", () => ({
-  Newsletter: () => <div data-testid="newsletter">Newsletter Signup</div>,
-}));
-
-// Mock icons
-jest.mock("@/components/Icons", () => ({
-  TwitterIcon: (props: any) => <svg {...props} data-testid="twitter-icon" aria-label="Twitter" />,
-  DiscordIcon: (props: any) => <svg {...props} data-testid="discord-icon" aria-label="Discord" />,
-  TelegramIcon: (props: any) => (
-    <svg {...props} data-testid="telegram-icon" aria-label="Telegram" />
-  ),
-}));
-
-jest.mock("@/components/Icons/Paragraph", () => ({
-  ParagraphIcon: (props: any) => (
-    <svg {...props} data-testid="paragraph-icon" aria-label="Paragraph" />
-  ),
-}));
-
-// Mock ExternalLink component
-jest.mock("@/components/Utilities/ExternalLink", () => ({
-  ExternalLink: ({ children, href, className, ...props }: any) => (
-    <a href={href} className={className} target="_blank" rel="noopener noreferrer" {...props}>
-      {children}
-    </a>
-  ),
-}));
+// NOTE: Child components are mocked globally in tests/bun-setup.ts:
+// - @/src/components/shared/logo (Logo)
+// - @/src/components/footer/newsletter (Newsletter)
+// - @/components/Icons (TwitterIcon, DiscordIcon, TelegramIcon, etc.)
+// - @/components/Icons/Paragraph (ParagraphIcon)
+// - @/components/Utilities/ExternalLink
 
 describe("Footer", () => {
   describe("Rendering", () => {
@@ -421,14 +395,33 @@ describe("Footer", () => {
 
   describe("Edge Cases", () => {
     it("should handle year transition correctly", () => {
-      const mockDate = new Date("2025-01-01");
-      jest.spyOn(global, "Date").mockImplementation(() => mockDate as any);
+      // Store the original Date constructor
+      const RealDate = global.Date;
+      const mockTime = new Date("2025-01-01T00:00:00Z").getTime();
 
-      render(<Footer />);
+      // Create a mock Date that preserves static methods
+      const MockDate = class extends RealDate {
+        constructor(...args: any[]) {
+          if (args.length === 0) {
+            super(mockTime);
+          } else {
+            super(...args);
+          }
+        }
+        static now() {
+          return mockTime;
+        }
+      };
 
-      expect(screen.getByText("© 2025 Karma. All rights reserved.")).toBeInTheDocument();
+      global.Date = MockDate as any;
 
-      jest.restoreAllMocks();
+      try {
+        render(<Footer />);
+        expect(screen.getByText("© 2025 Karma. All rights reserved.")).toBeInTheDocument();
+      } finally {
+        // Always restore the original Date
+        global.Date = RealDate;
+      }
     });
 
     it("should render all components without errors", () => {
