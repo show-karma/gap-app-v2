@@ -2,16 +2,19 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { FundingOpportunities } from "@/components/CommunityGrants/FundingOpportunities";
-import { useFundingOpportunities } from "@/hooks/useFundingOpportunities";
 import type { FundingProgram } from "@/src/features/funding-map/types/funding-program";
 
-// Mock the hook
-jest.mock("@/hooks/useFundingOpportunities");
+// Create mock function BEFORE jest.mock calls
+const mockUseFundingOpportunities = jest.fn();
+
+// Mock the hook with factory function
+jest.mock("@/hooks/useFundingOpportunities", () => ({
+  useFundingOpportunities: mockUseFundingOpportunities,
+}));
 
 // Mock InfiniteScroll
-jest.mock("react-infinite-scroll-component", () => {
-  return ({ children, loader, hasMore, next, dataLength }: any) => (
+jest.mock("react-infinite-scroll-component", () => ({
+  default: ({ children, loader, hasMore, next, dataLength }: any) => (
     <div data-testid="infinite-scroll" data-has-more={hasMore} data-length={dataLength}>
       {children}
       {hasMore && (
@@ -20,8 +23,8 @@ jest.mock("react-infinite-scroll-component", () => {
         </button>
       )}
     </div>
-  );
-});
+  ),
+}));
 
 // Mock sub-components
 jest.mock("@/components/CommunityGrants/FundingOpportunities/FundingOpportunitiesGrid", () => ({
@@ -52,9 +55,15 @@ jest.mock("lucide-react", () => ({
   Coins: (props: any) => <svg {...props} data-testid="coins-icon" />,
 }));
 
-const mockUseFundingOpportunities = useFundingOpportunities as jest.MockedFunction<
-  typeof useFundingOpportunities
->;
+// Dynamic import to ensure mocks are applied before module loads
+const getComponent = async () => {
+  const { FundingOpportunities } = await import(
+    "@/components/CommunityGrants/FundingOpportunities"
+  );
+  return FundingOpportunities;
+};
+
+let FundingOpportunities: Awaited<ReturnType<typeof getComponent>>;
 
 describe("FundingOpportunities", () => {
   let queryClient: QueryClient;
@@ -107,6 +116,10 @@ describe("FundingOpportunities", () => {
     isFetchingPreviousPage: false,
     fetchPreviousPage: jest.fn(),
   };
+
+  beforeAll(async () => {
+    FundingOpportunities = await getComponent();
+  });
 
   beforeEach(() => {
     queryClient = new QueryClient({
