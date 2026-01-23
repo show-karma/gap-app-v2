@@ -1,4 +1,4 @@
-import type { AxiosInstance } from "axios";
+import { afterEach, beforeEach, describe, expect, it, test } from "bun:test";
 import type {
   IApplicationStatistics,
   IApplicationStatusUpdateRequest,
@@ -10,46 +10,9 @@ import type {
   IPaginatedApplicationsResponse,
 } from "@/types/funding-platform";
 
-// Mock fetchData for GET requests (most queries now use fetchData)
-jest.mock("@/utilities/fetchData");
-
-jest.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
-  },
-}));
-
-// Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
-var mockAxiosInstance: jest.Mocked<AxiosInstance>;
-
-// Mock api-client for mutations (POST, PUT, DELETE)
-jest.mock("@/utilities/auth/api-client", () => {
-  const mockGet = jest.fn();
-  const mockPost = jest.fn();
-  const mockPut = jest.fn();
-  const mockDelete = jest.fn();
-
-  const instance = {
-    get: mockGet,
-    post: mockPost,
-    put: mockPut,
-    delete: mockDelete,
-    interceptors: {
-      request: { use: jest.fn() },
-      response: { use: jest.fn() },
-    },
-  };
-
-  mockAxiosInstance = instance as unknown as jest.Mocked<AxiosInstance>;
-
-  return {
-    createAuthenticatedApiClient: jest.fn(() => instance),
-    __mockGet: mockGet,
-    __mockPost: mockPost,
-    __mockPut: mockPut,
-    __mockDelete: mockDelete,
-  };
-});
+// Note: @/utilities/fetchData is pre-mocked in bun-setup.ts
+// Note: @/utilities/auth/api-client is pre-mocked in bun-setup.ts
+// Note: @/utilities/enviromentVars is pre-mocked in bun-setup.ts
 
 // Import fetchData mock to access it in tests
 import fetchData from "@/utilities/fetchData";
@@ -63,22 +26,27 @@ import {
 
 const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
 
-const {
-  __mockGet: mockGet,
-  __mockPost: mockPost,
-  __mockPut: mockPut,
-  __mockDelete: mockDelete,
-} = jest.requireMock("@/utilities/auth/api-client");
+// Get the pre-registered mocks from bun-setup.ts
+const apiClientMock = (globalThis as any).__mocks__.apiClient;
+const mockGet = apiClientMock.get;
+const mockPost = apiClientMock.post;
+const mockPut = apiClientMock.put;
+const mockDelete = apiClientMock.delete;
 
 describe("fundingPlatformService", () => {
+  let consoleErrorSpy: ReturnType<typeof jest.spyOn>;
+  let consoleWarnSpy: ReturnType<typeof jest.spyOn>;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.spyOn(console, "error").mockImplementation(() => {});
-    jest.spyOn(console, "warn").mockImplementation(() => {});
+    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    // Only restore console spies, not all mocks (which would break module-level mocks)
+    consoleErrorSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
   });
 
   describe("fundingProgramsAPI", () => {

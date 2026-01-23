@@ -1,11 +1,10 @@
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import { GrantPercentage } from "@/components/Pages/Project/Grants/components/GrantPercentage";
 import "@testing-library/jest-dom";
 
-// Mock formatPercentage utility
-jest.mock("@/utilities/formatNumber", () => ({
-  formatPercentage: jest.fn((value: number) => Math.round(value)),
-}));
+// NOTE: formatPercentage is a simple utility function - no need to mock it
+// The component uses it to format the percentage display
 
 describe("GrantPercentage", () => {
   const mockGrantWithMilestones = {

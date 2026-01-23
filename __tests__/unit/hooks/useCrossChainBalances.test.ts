@@ -3,17 +3,16 @@
  * @description Tests for cross-chain balance fetching hook covering multi-chain balance retrieval and caching
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import React from "react";
-import * as wagmi from "wagmi";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances";
 
-// Mock dependencies
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(),
-}));
+// Access wagmi mock state via globalThis.__wagmiMockState__
+// NOTE: Do NOT use jest.mock("wagmi", ...) as it pollutes global mock state
+const getWagmiState = () => (globalThis as any).__wagmiMockState__;
 
 jest.mock("@/utilities/rpcClient", () => ({
   getRPCClient: jest.fn(),
@@ -25,6 +24,7 @@ jest.mock("@/constants/supportedTokens", () => ({
 }));
 
 describe("useCrossChainBalances", () => {
+  let wagmiState: any;
   const mockAddress = "0x1234567890123456789012345678901234567890";
 
   const mockToken1: SupportedToken = {
@@ -71,10 +71,17 @@ describe("useCrossChainBalances", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    (wagmi.useAccount as jest.Mock).mockReturnValue({
+    // Get wagmi state from global mock
+    wagmiState = getWagmiState();
+
+    // Configure wagmi mock state
+    wagmiState.account = {
       address: mockAddress,
       isConnected: true,
-    });
+      connector: null,
+      chain: { id: 10 },
+    };
+    wagmiState.chainId = 10;
 
     const { getRPCClient } = require("@/utilities/rpcClient");
     const { getTokensByChain } = require("@/constants/supportedTokens");
@@ -100,10 +107,13 @@ describe("useCrossChainBalances", () => {
 
   describe("initialization", () => {
     it("should not fetch when wallet not connected", () => {
-      (wagmi.useAccount as jest.Mock).mockReturnValue({
+      // Configure wagmi state with no address
+      wagmiState.account = {
         address: null,
         isConnected: false,
-      });
+        connector: null,
+        chain: { id: 10 },
+      };
 
       const { result } = renderHook(() => useCrossChainBalances(10, [10, 8453]), {
         wrapper: createWrapper(),

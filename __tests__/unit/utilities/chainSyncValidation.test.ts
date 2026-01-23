@@ -1,3 +1,4 @@
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import type { WalletClient } from "viem";
 import {
   getCurrentChainId,
@@ -40,11 +41,11 @@ describe("chainSyncValidation utilities", () => {
       const walletClient = createMockWalletClient(10);
       const expectedChainId = 10;
 
+      // validateChainSync completes silently when chains match
+      // It should resolve without throwing an error
       await expect(
         validateChainSync(walletClient, expectedChainId, "donation")
-      ).resolves.not.toThrow();
-
-      // validateChainSync completes silently when chains match
+      ).resolves.toBeUndefined();
     });
 
     it("should throw error when wallet client is null", async () => {

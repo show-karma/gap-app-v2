@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 /**
  * Homepage Layout Integration Tests
  * Tests the overall layout structure and section rendering

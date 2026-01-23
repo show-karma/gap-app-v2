@@ -45,19 +45,13 @@ jobs:
             echo "tag=$tag_name" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
+          bun-version: latest
 
       - name: Install Vercel CLI
-        run: npm install -g vercel@latest
+        run: bun install -g vercel@latest
 
       - name: Pull Vercel Environment Information
         env:

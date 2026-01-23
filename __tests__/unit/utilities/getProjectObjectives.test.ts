@@ -3,15 +3,13 @@
  * @description Tests for fetching project milestones using V2 endpoint
  */
 
-import fetchData from "@/utilities/fetchData";
+import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
+import * as fetchDataModule from "@/utilities/fetchData";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
 
-// Mock fetchData utility
-jest.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: jest.fn(),
-}));
+// Use spyOn instead of jest.mock to avoid polluting global mock state
+let mockFetchData: ReturnType<typeof spyOn>;
 
 describe("getProjectObjectives (V2)", () => {
   const mockMilestones = [
@@ -48,18 +46,25 @@ describe("getProjectObjectives (V2)", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    mockFetchData = spyOn(fetchDataModule, "default").mockImplementation(() =>
+      Promise.resolve([null, null])
+    );
+  });
+
+  afterEach(() => {
+    // Restore spies to prevent pollution of other test files
+    mockFetchData?.mockRestore();
   });
 
   describe("getProjectObjectives", () => {
     const projectId = "project-123";
 
     it("should fetch project milestones successfully", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockV2Response, null]);
+      mockFetchData.mockResolvedValue([mockV2Response, null]);
 
       const result = await getProjectObjectives(projectId);
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.PROJECTS.MILESTONES(projectId),
         "GET",
         {},
@@ -71,7 +76,7 @@ describe("getProjectObjectives (V2)", () => {
     });
 
     it("should map V2 response to SDK format correctly", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockV2Response, null]);
+      mockFetchData.mockResolvedValue([mockV2Response, null]);
 
       const result = await getProjectObjectives(projectId);
 
@@ -94,7 +99,7 @@ describe("getProjectObjectives (V2)", () => {
     });
 
     it("should return empty array when fetch fails", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([null, "Not found"]);
+      mockFetchData.mockResolvedValue([null, "Not found"]);
 
       const result = await getProjectObjectives(projectId);
 
@@ -102,7 +107,7 @@ describe("getProjectObjectives (V2)", () => {
     });
 
     it("should return empty array when no milestones exist", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{ milestones: [] }, null]);
+      mockFetchData.mockResolvedValue([{ milestones: [] }, null]);
 
       const result = await getProjectObjectives(projectId);
 
@@ -123,7 +128,7 @@ describe("getProjectObjectives (V2)", () => {
         },
       ];
 
-      (fetchData as jest.Mock).mockResolvedValue([{ milestones: milestonesWithoutDueDate }, null]);
+      mockFetchData.mockResolvedValue([{ milestones: milestonesWithoutDueDate }, null]);
 
       const result = await getProjectObjectives(projectId);
 
@@ -132,11 +137,11 @@ describe("getProjectObjectives (V2)", () => {
 
     it("should work with project slug instead of UID", async () => {
       const projectSlug = "my-project-slug";
-      (fetchData as jest.Mock).mockResolvedValue([mockV2Response, null]);
+      mockFetchData.mockResolvedValue([mockV2Response, null]);
 
       await getProjectObjectives(projectSlug);
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.PROJECTS.MILESTONES(projectSlug),
         "GET",
         {},
@@ -147,7 +152,7 @@ describe("getProjectObjectives (V2)", () => {
     });
 
     it("should handle fetch throwing an error", async () => {
-      (fetchData as jest.Mock).mockRejectedValue(new Error("Network error"));
+      mockFetchData.mockRejectedValue(new Error("Network error"));
 
       const result = await getProjectObjectives(projectId);
 

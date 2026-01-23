@@ -3,6 +3,7 @@
  * @description Tests for grant card component rendering and color picking functionality
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import { GrantCard, pickColor } from "@/components/GrantCard";
 import type { GrantResponse } from "@/types/v2/grant";
@@ -77,13 +78,7 @@ jest.mock("@/utilities/formatDate", () => ({
   formatDate: jest.fn((_date: string | number) => "Jan 1, 2024"),
 }));
 
-jest.mock("@/utilities/pages", () => ({
-  PAGES: {
-    PROJECT: {
-      OVERVIEW: (slug: string) => `/project/${slug}`,
-    },
-  },
-}));
+// NOTE: @/utilities/pages is globally mocked in tests/bun-setup.ts with complete PAGES implementation
 
 jest.mock("@/utilities/markdown", () => ({
   rewriteHeadingsToLevel: jest.fn(() => jest.fn()),

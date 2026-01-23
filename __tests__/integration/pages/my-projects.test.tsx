@@ -1,15 +1,14 @@
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import { withTestProviders } from "@/__tests__/utils/testProviders";
 import Page from "@/app/my-projects/page";
 
-jest.mock("@/components/Pages/MyProjects", () => {
-  return function MockMyProjects() {
-    return <div data-testid="mock-my-projects">Mocked MyProjects Component</div>;
-  };
-});
+// Mock is pre-registered in bun-setup.ts
+
 describe("My Projects Page", () => {
   it("renders the MyProjects component", () => {
-    render(<Page />);
+    render(withTestProviders(<Page />));
     const myProjectsComponent = screen.getByTestId("mock-my-projects");
     expect(myProjectsComponent).toBeInTheDocument();
     expect(myProjectsComponent).toHaveTextContent("Mocked MyProjects Component");

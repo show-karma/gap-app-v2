@@ -8,6 +8,7 @@
  * - Accessibility (1)
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { CreateProfileButton } from "@/src/features/homepage/components/create-profile-button";
 import { fireEvent, renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";

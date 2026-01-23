@@ -3,20 +3,20 @@
  * @description Tests for fetching user-owned projects using V2 endpoint
  */
 
-import fetchData from "@/utilities/fetchData";
+import { beforeEach, describe, expect, it } from "bun:test";
 import { INDEXER } from "@/utilities/indexer";
 import {
   fetchMyProjects,
   fetchMyProjectsPaginated,
 } from "@/utilities/sdk/projects/fetchMyProjects";
 
-// Mock fetchData utility
-jest.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: jest.fn(),
-}));
+// All mocks are pre-registered in tests/bun-setup.ts
+// Access mocks via globalThis.__mocks__
+const getMocks = () => (globalThis as any).__mocks__;
 
 describe("User Projects Service (V2)", () => {
+  let mockFetchData: any;
+
   const mockProjects = [
     {
       uid: "0x1234567890123456789012345678901234567890123456789012345678901234",
@@ -55,18 +55,22 @@ describe("User Projects Service (V2)", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    const mocks = getMocks();
+    mockFetchData = mocks.fetchData;
+
+    // Clear mocks
+    if (mockFetchData?.mockClear) mockFetchData.mockClear();
   });
 
   describe("fetchMyProjects", () => {
     const mockAddress = "0xabcdef1234567890123456789012345678901234" as `0x${string}`;
 
     it("should fetch user projects successfully", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockPaginatedResponse, null]);
+      mockFetchData.mockResolvedValue([mockPaginatedResponse, null]);
 
       const result = await fetchMyProjects(mockAddress);
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.USER.PROJECTS(1, 100),
         "GET",
         {},
@@ -82,12 +86,12 @@ describe("User Projects Service (V2)", () => {
     it("should return empty array when no address provided", async () => {
       const result = await fetchMyProjects(undefined);
 
-      expect(fetchData).not.toHaveBeenCalled();
+      expect(mockFetchData).not.toHaveBeenCalled();
       expect(result).toEqual([]);
     });
 
     it("should return empty array when fetch fails", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([null, "Unauthorized"]);
+      mockFetchData.mockResolvedValue([null, "Unauthorized"]);
 
       const result = await fetchMyProjects(mockAddress);
 
@@ -95,11 +99,11 @@ describe("User Projects Service (V2)", () => {
     });
 
     it("should handle custom page and limit", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockPaginatedResponse, null]);
+      mockFetchData.mockResolvedValue([mockPaginatedResponse, null]);
 
       await fetchMyProjects(mockAddress, 2, 50);
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.USER.PROJECTS(2, 50),
         "GET",
         {},
@@ -113,11 +117,11 @@ describe("User Projects Service (V2)", () => {
 
   describe("fetchMyProjectsPaginated", () => {
     it("should fetch paginated user projects", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockPaginatedResponse, null]);
+      mockFetchData.mockResolvedValue([mockPaginatedResponse, null]);
 
       const result = await fetchMyProjectsPaginated(1, 20);
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.USER.PROJECTS(1, 20),
         "GET",
         {},
@@ -132,7 +136,7 @@ describe("User Projects Service (V2)", () => {
     });
 
     it("should return null when fetch fails", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([null, "Unauthorized"]);
+      mockFetchData.mockResolvedValue([null, "Unauthorized"]);
 
       const result = await fetchMyProjectsPaginated();
 
@@ -140,11 +144,11 @@ describe("User Projects Service (V2)", () => {
     });
 
     it("should use default pagination values", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockPaginatedResponse, null]);
+      mockFetchData.mockResolvedValue([mockPaginatedResponse, null]);
 
       await fetchMyProjectsPaginated();
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.USER.PROJECTS(1, 20),
         "GET",
         {},

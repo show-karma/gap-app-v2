@@ -1,1 +1,1 @@
-pnpm tsc --noEmit && pnpm lint-staged
+bun run tsc --noEmit && bun run lint-staged

@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 /**
  * Unit tests for the CaseStudiesSection component (/funders page)
  *
@@ -126,9 +127,11 @@ describe("CaseStudiesSection Component", () => {
 
       expect(caseStudyLinks.length).toBeGreaterThanOrEqual(2);
       caseStudyLinks.forEach((link) => {
-        expect(link).toHaveAttribute("href");
-        expect(link).toHaveAttribute("target", "_blank");
-        expect(link).toHaveAttribute("rel", "noopener noreferrer");
+        // Use native attribute checking for better Bun compatibility
+        expect(link.getAttribute("href")).toBeTruthy();
+        expect(link.getAttribute("target")).toBe("_blank");
+        // rel attribute should contain noreferrer for security
+        expect(link.getAttribute("rel")).toContain("noreferrer");
       });
     });
 

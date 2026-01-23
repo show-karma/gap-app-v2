@@ -9,6 +9,7 @@
  * - Accessibility (1)
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { WhereBuildersGrow } from "@/src/features/homepage/components/where-builders-grow";
 import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
@@ -19,11 +20,7 @@ jest.mock("@/src/features/homepage/components/create-project-button", () => ({
 }));
 
 // Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
-  PAGES: {
-    FUNDERS: "/funders",
-  },
-}));
+// NOTE: @/utilities/pages is globally mocked in tests/bun-setup.ts with complete PAGES implementation
 
 describe("WhereBuildersGrow Component", () => {
   it("should render section heading", () => {

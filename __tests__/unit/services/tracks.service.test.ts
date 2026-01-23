@@ -4,17 +4,17 @@
  * program/project associations, and error handling
  */
 
+import { beforeEach, describe, expect, it } from "bun:test";
 import { type Track, trackService } from "@/services/tracks";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-// Mock fetchData utility
-jest.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: jest.fn(),
-}));
+// All mocks are pre-registered in tests/bun-setup.ts
+// Access mocks via globalThis.__mocks__
+const getMocks = () => (globalThis as any).__mocks__;
 
 describe("trackService (V2)", () => {
+  let mockFetchData: any;
+
   const mockTrack: Track = {
     id: "track-123",
     name: "Test Track",
@@ -39,18 +39,22 @@ describe("trackService (V2)", () => {
   ];
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    const mocks = getMocks();
+    mockFetchData = mocks.fetchData;
+
+    // Clear mocks
+    if (mockFetchData?.mockClear) mockFetchData.mockClear();
   });
 
   describe("getAllTracks", () => {
     const communityUID = "0x1234567890123456789012345678901234567890";
 
     it("should fetch all tracks for a community", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{ tracks: mockTracks }, null]);
+      mockFetchData.mockResolvedValue([{ tracks: mockTracks }, null]);
 
       const result = await trackService.getAllTracks(communityUID);
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.LIST(communityUID, false),
         "GET",
         {},
@@ -64,11 +68,11 @@ describe("trackService (V2)", () => {
     });
 
     it("should include archived tracks when requested", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{ tracks: mockTracks }, null]);
+      mockFetchData.mockResolvedValue([{ tracks: mockTracks }, null]);
 
       await trackService.getAllTracks(communityUID, true);
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.LIST(communityUID, true),
         "GET",
         {},
@@ -80,13 +84,13 @@ describe("trackService (V2)", () => {
     });
 
     it("should throw error when fetch fails", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([null, "Network error"]);
+      mockFetchData.mockResolvedValue([null, "Network error"]);
 
       await expect(trackService.getAllTracks(communityUID)).rejects.toThrow("Network error");
     });
 
     it("should convert date strings to Date objects", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{ tracks: mockTracks }, null]);
+      mockFetchData.mockResolvedValue([{ tracks: mockTracks }, null]);
 
       const result = await trackService.getAllTracks(communityUID);
 
@@ -99,11 +103,11 @@ describe("trackService (V2)", () => {
     const programId = "program-123";
 
     it("should fetch tracks for a program", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{ tracks: mockTracks }, null]);
+      mockFetchData.mockResolvedValue([{ tracks: mockTracks }, null]);
 
       const result = await trackService.getProgramTracks(programId);
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.PROGRAM_TRACKS(programId),
         "GET",
         {},
@@ -116,7 +120,7 @@ describe("trackService (V2)", () => {
     });
 
     it("should throw error when fetch fails", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([null, "Program not found"]);
+      mockFetchData.mockResolvedValue([null, "Program not found"]);
 
       await expect(trackService.getProgramTracks(programId)).rejects.toThrow();
     });
@@ -124,7 +128,7 @@ describe("trackService (V2)", () => {
 
   describe("createTrack", () => {
     it("should create a new track", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([mockTrack, null]);
+      mockFetchData.mockResolvedValue([mockTrack, null]);
 
       const result = await trackService.createTrack(
         "Test Track",
@@ -132,7 +136,7 @@ describe("trackService (V2)", () => {
         "0x1234567890123456789012345678901234567890"
       );
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.CREATE(),
         "POST",
         {
@@ -149,7 +153,7 @@ describe("trackService (V2)", () => {
     });
 
     it("should throw error when creation fails", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([null, "Track already exists"]);
+      mockFetchData.mockResolvedValue([null, "Track already exists"]);
 
       await expect(
         trackService.createTrack(
@@ -164,7 +168,7 @@ describe("trackService (V2)", () => {
   describe("updateTrack", () => {
     it("should update an existing track", async () => {
       const updatedTrack = { ...mockTrack, name: "Updated Track" };
-      (fetchData as jest.Mock).mockResolvedValue([updatedTrack, null]);
+      mockFetchData.mockResolvedValue([updatedTrack, null]);
 
       const result = await trackService.updateTrack(
         "track-123",
@@ -172,7 +176,7 @@ describe("trackService (V2)", () => {
         "New description"
       );
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.UPDATE("track-123"),
         "PUT",
         {
@@ -188,7 +192,7 @@ describe("trackService (V2)", () => {
     });
 
     it("should throw error when update fails", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([null, "Track not found"]);
+      mockFetchData.mockResolvedValue([null, "Track not found"]);
 
       await expect(trackService.updateTrack("track-123", "Updated Track")).rejects.toThrow();
     });
@@ -197,11 +201,11 @@ describe("trackService (V2)", () => {
   describe("archiveTrack", () => {
     it("should archive a track", async () => {
       const archivedTrack = { ...mockTrack, isArchived: true };
-      (fetchData as jest.Mock).mockResolvedValue([archivedTrack, null]);
+      mockFetchData.mockResolvedValue([archivedTrack, null]);
 
       const result = await trackService.archiveTrack("track-123");
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.ARCHIVE("track-123"),
         "DELETE",
         {},
@@ -214,7 +218,7 @@ describe("trackService (V2)", () => {
     });
 
     it("should throw error when archive fails", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([null, "Track not found"]);
+      mockFetchData.mockResolvedValue([null, "Track not found"]);
 
       await expect(trackService.archiveTrack("track-123")).rejects.toThrow();
     });
@@ -225,11 +229,11 @@ describe("trackService (V2)", () => {
     const trackIds = ["track-1", "track-2"];
 
     it("should assign tracks to a program", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{}, null]);
+      mockFetchData.mockResolvedValue([{}, null]);
 
       await trackService.assignTracksToProgram(programId, trackIds);
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.ASSIGN_TO_PROGRAM(programId),
         "POST",
         { trackIds },
@@ -241,7 +245,7 @@ describe("trackService (V2)", () => {
     });
 
     it("should throw error when assignment fails", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([null, "Program not found"]);
+      mockFetchData.mockResolvedValue([null, "Program not found"]);
 
       await expect(trackService.assignTracksToProgram(programId, trackIds)).rejects.toThrow();
     });
@@ -249,11 +253,11 @@ describe("trackService (V2)", () => {
 
   describe("removeTrackFromProgram", () => {
     it("should remove a track from a program", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{}, null]);
+      mockFetchData.mockResolvedValue([{}, null]);
 
       await trackService.removeTrackFromProgram("program-123", "track-123");
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.UNASSIGN_FROM_PROGRAM("program-123", "track-123"),
         "DELETE",
         {},
@@ -270,11 +274,11 @@ describe("trackService (V2)", () => {
     const programId = "program-123";
 
     it("should fetch tracks for a project within a program", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{ tracks: mockTracks }, null]);
+      mockFetchData.mockResolvedValue([{ tracks: mockTracks }, null]);
 
       const result = await trackService.getProjectTracks(projectId, programId);
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.PROJECT_TRACKS(projectId, programId),
         "GET",
         {},
@@ -287,7 +291,7 @@ describe("trackService (V2)", () => {
     });
 
     it("should throw error when fetch fails", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([null, "Project not found"]);
+      mockFetchData.mockResolvedValue([null, "Project not found"]);
 
       await expect(trackService.getProjectTracks(projectId, programId)).rejects.toThrow();
     });
@@ -295,7 +299,7 @@ describe("trackService (V2)", () => {
 
   describe("assignTracksToProject", () => {
     it("should assign tracks to a project", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{}, null]);
+      mockFetchData.mockResolvedValue([{}, null]);
 
       await trackService.assignTracksToProject(
         "project-123",
@@ -303,7 +307,7 @@ describe("trackService (V2)", () => {
         "program-123"
       );
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.ASSIGN_TO_PROJECT("project-123"),
         "POST",
         { trackIds: ["track-1", "track-2"], programId: "program-123" },
@@ -317,11 +321,11 @@ describe("trackService (V2)", () => {
 
   describe("getProjectsByTrack", () => {
     it("should fetch projects by track", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{ projects: [] }, null]);
+      mockFetchData.mockResolvedValue([{ projects: [] }, null]);
 
       await trackService.getProjectsByTrack("community-123", "program-123", "track-123");
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.PROJECTS_BY_TRACK("community-123", "program-123", "track-123"),
         "GET",
         {},
@@ -333,11 +337,11 @@ describe("trackService (V2)", () => {
     });
 
     it("should work without track filter", async () => {
-      (fetchData as jest.Mock).mockResolvedValue([{ projects: [] }, null]);
+      mockFetchData.mockResolvedValue([{ projects: [] }, null]);
 
       await trackService.getProjectsByTrack("community-123", "program-123");
 
-      expect(fetchData).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         INDEXER.V2.TRACKS.PROJECTS_BY_TRACK("community-123", "program-123", undefined),
         "GET",
         {},

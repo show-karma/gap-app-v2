@@ -1,64 +1,41 @@
+import { beforeAll, describe, expect, it } from "bun:test";
 import { render, screen } from "@testing-library/react";
-import RootLayout from "@/app/layout";
 import "@testing-library/jest-dom";
 
-jest.mock("@vercel/speed-insights/next", () => ({
-  SpeedInsights: () => <div data-testid="speed-insights" />,
-}));
-
-jest.mock("@vercel/analytics/react", () => ({
-  Analytics: () => <div data-testid="analytics" />,
-}));
-
-jest.mock("@next/third-parties/google", () => ({
-  GoogleAnalytics: () => <div data-testid="google-analytics" />,
+// Local mocks for components that have their own unit tests
+// These are NOT mocked globally in bun-setup.ts to preserve unit test isolation
+jest.mock("@/src/components/navbar/navbar", () => ({
+  Navbar: () => <header data-testid="header">Navbar</header>,
 }));
 
 jest.mock("@/src/components/footer/footer", () => ({
-  Footer: () => <footer data-testid="footer" />,
+  Footer: () => <footer data-testid="footer">Footer</footer>,
 }));
 
-jest.mock("@/src/components/navbar/navbar", () => ({
-  Navbar: () => <header data-testid="header" />,
-}));
+// Dynamic import to ensure mocks are applied before module loads
+const getLayout = async () => {
+  const { default: RootLayout } = await import("@/app/layout");
+  return RootLayout;
+};
 
-jest.mock("react-hot-toast", () => ({
-  Toaster: () => <div data-testid="toaster" />,
-}));
+let RootLayout: Awaited<ReturnType<typeof getLayout>>;
 
-jest.mock("@/components/Utilities/PrivyProviderWrapper", () => ({
-  __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="privy-provider">{children}</div>
-  ),
-}));
+beforeAll(async () => {
+  RootLayout = await getLayout();
+});
 
-jest.mock("@/components/Dialogs/ContributorProfileDialog", () => ({
-  ContributorProfileDialog: () => <div data-testid="contributor-profile-dialog" />,
-}));
-
-jest.mock("@/components/Dialogs/OnboardingDialog", () => ({
-  OnboardingDialog: () => <div data-testid="onboarding-dialog" />,
-}));
-
-jest.mock("@/components/Utilities/PermissionsProvider", () => ({
-  PermissionsProvider: () => <div data-testid="permissions-provider" />,
-}));
-
-jest.mock("@/components/ProgressBarWrapper", () => ({
-  ProgressBarWrapper: () => <div data-testid="progress-bar-wrapper" />,
-}));
-
-jest.mock("@/components/Utilities/HotjarAnalytics", () => ({
-  __esModule: true,
-  default: () => <div data-testid="hotjar-analytics" />,
-}));
-
-jest.mock("next-themes", () => ({
-  ThemeProvider: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="theme-provider">{children}</div>
-  ),
-}));
+// All other mocks are pre-registered in tests/bun-setup.ts:
+// - @vercel/speed-insights/next
+// - @vercel/analytics/react
+// - @next/third-parties/google
+// - react-hot-toast
+// - @/components/Utilities/PrivyProviderWrapper
+// - @/components/Dialogs/ContributorProfileDialog
+// - @/components/Dialogs/OnboardingDialog
+// - @/components/Utilities/PermissionsProvider
+// - @/components/ProgressBarWrapper
+// - @/components/Utilities/HotjarAnalytics
+// - next-themes
 
 describe("RootLayout", () => {
   it("renders all components correctly", () => {

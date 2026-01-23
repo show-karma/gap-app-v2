@@ -1,3 +1,4 @@
+import { afterEach, describe, expect, it } from "bun:test";
 /**
  * Integration Tests: Authentication Flow
  * Tests complete authentication journeys including login, logout, profile modal, and state transitions

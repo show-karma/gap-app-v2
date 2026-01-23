@@ -3,19 +3,30 @@
  * @description Comprehensive tests for the indicator form component covering form validation, submission, and error handling
  */
 
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  spyOn,
+  test,
+} from "bun:test";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { IndicatorForm, type IndicatorFormData } from "@/components/Forms/IndicatorForm";
-import fetchData from "@/utilities/fetchData";
+import * as errorManagerModule from "@/components/Utilities/errorManager";
+
+// Import modules for spyOn
+import * as fetchDataModule from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-// Mock fetchData
-jest.mock("@/utilities/fetchData");
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+// Create spies - will be set up in beforeEach
+let mockFetchData: ReturnType<typeof spyOn>;
+let mockErrorManager: ReturnType<typeof spyOn>;
 
-// Mock errorManager
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
-}));
+// NOTE: errorManager is mocked via spyOn in beforeEach to avoid polluting global mock state
 
 // Mock Button component
 jest.mock("@/components/Utilities/Button", () => ({
@@ -45,7 +56,14 @@ describe("IndicatorForm", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Set up spies
+    mockFetchData = spyOn(fetchDataModule, "default").mockImplementation(() =>
+      Promise.resolve([null, null])
+    );
+    mockErrorManager = spyOn(errorManagerModule, "errorManager").mockImplementation(() => {});
   });
+
+  // NOTE: No afterEach cleanup needed - spyOn creates fresh mocks in beforeEach
 
   describe("Rendering", () => {
     it("should render form with all fields", () => {

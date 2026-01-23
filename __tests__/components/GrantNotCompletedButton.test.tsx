@@ -1,3 +1,4 @@
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import { GrantNotCompletedButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton/GrantNotCompletedButton";
 import "@testing-library/jest-dom";
@@ -18,17 +19,7 @@ jest.mock("@heroicons/react/24/outline", () => ({
   ),
 }));
 
-// Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
-  PAGES: {
-    PROJECT: {
-      SCREENS: {
-        SELECTED_SCREEN: (project: string, grant: string, screen: string) =>
-          `/project/${project}/funding/${grant}/${screen}`,
-      },
-    },
-  },
-}));
+// NOTE: @/utilities/pages is globally mocked in tests/bun-setup.ts with complete PAGES implementation
 
 describe("GrantNotCompletedButton", () => {
   const mockProject = {

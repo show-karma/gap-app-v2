@@ -3,28 +3,18 @@
  * @description Tests validation, payload building, and completion checking utilities
  */
 
-jest.mock("@/utilities/retries", () => ({
-  retryUntilConditionMet: jest.fn(),
-}));
-
-jest.mock("@/services/project-grants.service", () => ({
-  getProjectGrants: jest.fn(),
-}));
-
+import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
+import * as projectGrantsModule from "@/services/project-grants.service";
 import {
   buildRevocationPayload,
   createCheckIfCompletionExists,
   validateGrantCompletion,
 } from "@/utilities/grantCompletionHelpers";
+import * as retriesModule from "@/utilities/retries";
 
-// Get the mocked functions after jest.mock
-const { retryUntilConditionMet } = require("@/utilities/retries");
-const mockRetryUntilConditionMet = retryUntilConditionMet as jest.MockedFunction<
-  typeof retryUntilConditionMet
->;
-
-const { getProjectGrants } = require("@/services/project-grants.service");
-const mockGetProjectGrants = getProjectGrants as jest.MockedFunction<typeof getProjectGrants>;
+// Create spies for the modules
+let mockRetryUntilConditionMet: ReturnType<typeof spyOn>;
+let mockGetProjectGrants: ReturnType<typeof spyOn>;
 
 describe("grantCompletionHelpers", () => {
   describe("validateGrantCompletion", () => {
@@ -175,9 +165,20 @@ describe("grantCompletionHelpers", () => {
     const projectIdOrSlug = "project-456";
 
     beforeEach(() => {
-      jest.clearAllMocks();
-      mockRetryUntilConditionMet.mockResolvedValue(undefined);
-      mockGetProjectGrants.mockResolvedValue([]);
+      // Create spies for the module functions
+      mockRetryUntilConditionMet = spyOn(
+        retriesModule,
+        "retryUntilConditionMet"
+      ).mockImplementation(() => Promise.resolve(undefined));
+
+      mockGetProjectGrants = spyOn(projectGrantsModule, "getProjectGrants").mockImplementation(() =>
+        Promise.resolve([])
+      );
+    });
+
+    afterEach(() => {
+      mockRetryUntilConditionMet?.mockRestore();
+      mockGetProjectGrants?.mockRestore();
     });
 
     it("should return async function", () => {
@@ -266,7 +267,7 @@ describe("grantCompletionHelpers", () => {
     });
 
     it("should call callbackFn when condition is met", async () => {
-      const callbackFn = jest.fn();
+      const callbackFn = mock();
       mockRetryUntilConditionMet.mockImplementation(
         async (conditionFn: () => Promise<boolean>, cb?: () => void) => {
           const result = await conditionFn();

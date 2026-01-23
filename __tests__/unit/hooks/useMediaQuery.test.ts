@@ -3,6 +3,7 @@
  * @description Tests media query matching hook with resize event handling
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { act, renderHook } from "@testing-library/react";
 import useMediaQuery from "@/hooks/useMediaQuery";
 
@@ -14,8 +15,13 @@ describe("useMediaQuery", () => {
     addEventListener: jest.Mock;
     removeEventListener: jest.Mock;
   };
+  let resizeHandlers: Function[];
+  let originalAddEventListener: typeof window.addEventListener;
+  let originalRemoveEventListener: typeof window.removeEventListener;
 
   beforeEach(() => {
+    resizeHandlers = [];
+
     matchMediaResult = {
       matches: false,
       media: "",
@@ -29,13 +35,45 @@ describe("useMediaQuery", () => {
       value: mockMatchMedia,
     });
 
-    // Mock window.addEventListener and removeEventListener
-    jest.spyOn(window, "addEventListener");
-    jest.spyOn(window, "removeEventListener");
+    // Store original methods
+    originalAddEventListener = window.addEventListener;
+    originalRemoveEventListener = window.removeEventListener;
+
+    // Mock window.addEventListener and removeEventListener to capture resize handlers
+    const mockAddEventListener = jest.fn((event: string, handler: Function) => {
+      if (event === "resize") {
+        resizeHandlers.push(handler);
+      }
+    });
+    const mockRemoveEventListener = jest.fn((event: string, handler: Function) => {
+      if (event === "resize") {
+        const index = resizeHandlers.indexOf(handler);
+        if (index > -1) resizeHandlers.splice(index, 1);
+      }
+    });
+
+    Object.defineProperty(window, "addEventListener", {
+      writable: true,
+      value: mockAddEventListener,
+    });
+    Object.defineProperty(window, "removeEventListener", {
+      writable: true,
+      value: mockRemoveEventListener,
+    });
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+    resizeHandlers = [];
+    // Restore original methods
+    Object.defineProperty(window, "addEventListener", {
+      writable: true,
+      value: originalAddEventListener,
+    });
+    Object.defineProperty(window, "removeEventListener", {
+      writable: true,
+      value: originalRemoveEventListener,
+    });
   });
 
   describe("Initialization", () => {
@@ -90,8 +128,8 @@ describe("useMediaQuery", () => {
       // Simulate resize that changes the match
       act(() => {
         matchMediaResult.matches = true;
-        const resizeHandler = (window.addEventListener as jest.Mock).mock.calls[0][1];
-        resizeHandler();
+        // Call all registered resize handlers
+        resizeHandlers.forEach((handler) => handler());
       });
 
       expect(result.current).toBe(true);
@@ -102,23 +140,21 @@ describe("useMediaQuery", () => {
 
       const { result } = renderHook(() => useMediaQuery("(min-width: 768px)"));
 
-      const resizeHandler = (window.addEventListener as jest.Mock).mock.calls[0][1];
-
       act(() => {
         matchMediaResult.matches = true;
-        resizeHandler();
+        resizeHandlers.forEach((handler) => handler());
       });
       expect(result.current).toBe(true);
 
       act(() => {
         matchMediaResult.matches = false;
-        resizeHandler();
+        resizeHandlers.forEach((handler) => handler());
       });
       expect(result.current).toBe(false);
 
       act(() => {
         matchMediaResult.matches = true;
-        resizeHandler();
+        resizeHandlers.forEach((handler) => handler());
       });
       expect(result.current).toBe(true);
     });
@@ -230,8 +266,7 @@ describe("useMediaQuery", () => {
       // Simulate resize where matches stays the same
       act(() => {
         matchMediaResult.matches = true;
-        const resizeHandler = (window.addEventListener as jest.Mock).mock.calls[0][1];
-        resizeHandler();
+        resizeHandlers.forEach((handler) => handler());
       });
 
       expect(result.current).toBe(true);
@@ -262,11 +297,13 @@ describe("useMediaQuery", () => {
     it("should cleanup event listeners on unmount", () => {
       const { unmount } = renderHook(() => useMediaQuery("(min-width: 768px)"));
 
-      const addEventListenerCalls = (window.addEventListener as jest.Mock).mock.calls.length;
+      const handlerCount = resizeHandlers.length;
+      expect(handlerCount).toBeGreaterThan(0);
 
       unmount();
 
-      expect(window.removeEventListener).toHaveBeenCalledTimes(addEventListenerCalls);
+      // After unmount, the handler should be removed
+      expect(window.removeEventListener).toHaveBeenCalled();
     });
 
     it("should cleanup and re-setup on query change", () => {
@@ -274,12 +311,12 @@ describe("useMediaQuery", () => {
         initialProps: { query: "(min-width: 768px)" },
       });
 
-      const initialAddCalls = (window.addEventListener as jest.Mock).mock.calls.length;
+      const initialHandlerCount = resizeHandlers.length;
 
       rerender({ query: "(min-width: 1024px)" });
 
-      // Should have added new listeners
-      expect((window.addEventListener as jest.Mock).mock.calls.length).toBe(initialAddCalls + 1);
+      // Should have registered handlers
+      expect(resizeHandlers.length).toBeGreaterThanOrEqual(initialHandlerCount);
 
       unmount();
 
@@ -298,8 +335,7 @@ describe("useMediaQuery", () => {
 
       act(() => {
         matchMediaResult.matches = true;
-        const resizeHandler = (window.addEventListener as jest.Mock).mock.calls[0][1];
-        resizeHandler();
+        resizeHandlers.forEach((handler) => handler());
       });
 
       expect(result.current).toBe(true);

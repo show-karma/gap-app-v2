@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 import { getAIColumnVisibility } from "@/components/FundingPlatform/helper/getAIColumnVisibility";
 
 describe("getAIColumnVisibility", () => {

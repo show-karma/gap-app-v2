@@ -1,63 +1,32 @@
-import type { AxiosInstance } from "axios";
-import { TokenManager } from "@/utilities/auth/token-manager";
+import { beforeEach, describe, expect, it } from "bun:test";
 
-// Mock dependencies BEFORE importing the service
-jest.mock("@/utilities/auth/token-manager");
-jest.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "http://localhost:4000",
-  },
-}));
-
-// Mock fetchData for GET requests
-jest.mock("@/utilities/fetchData");
-
-// Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
-var mockAxiosInstance: jest.Mocked<AxiosInstance>;
-
-// Mock api-client for batch POST operations
-jest.mock("@/utilities/auth/api-client", () => {
-  const instance = {
-    get: jest.fn(),
-    post: jest.fn(),
-    delete: jest.fn(),
-    put: jest.fn(),
-    patch: jest.fn(),
-    request: jest.fn(),
-    head: jest.fn(),
-    options: jest.fn(),
-    interceptors: {
-      request: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
-      response: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
-    },
-    defaults: {} as any,
-    getUri: jest.fn(),
-    deleteUri: jest.fn(),
-  } as unknown as jest.Mocked<AxiosInstance>;
-
-  mockAxiosInstance = instance;
-
-  return {
-    createAuthenticatedApiClient: jest.fn(() => instance),
-  };
-});
+// All mocks are pre-registered in tests/bun-setup.ts
+// Access mocks via globalThis.__mocks__
 
 // Import the service AFTER all mocks are set up
 import { type PermissionCheckOptions, PermissionsService } from "@/services/permissions.service";
-// Import fetchData mock
-import fetchData from "@/utilities/fetchData";
 
-const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+// Get mocks from globalThis
+const getMocks = () => (globalThis as any).__mocks__;
 
 describe("PermissionsService", () => {
   let service: PermissionsService;
+  let mockFetchData: any;
+  let mockApiClient: any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockAxiosInstance.post.mockClear();
+    const mocks = getMocks();
+    mockFetchData = mocks.fetchData;
+    mockApiClient = mocks.apiClient;
 
-    // Mock TokenManager
-    (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue("test-token");
+    // Clear mocks
+    if (mockFetchData?.mockClear) mockFetchData.mockClear();
+    if (mockApiClient?.post?.mockClear) mockApiClient.post.mockClear();
+
+    // Setup default behavior for TokenManager
+    if (mocks.TokenManager?.getToken?.mockImplementation) {
+      mocks.TokenManager.getToken.mockImplementation(() => Promise.resolve("test-token"));
+    }
 
     service = new PermissionsService();
   });
@@ -393,11 +362,11 @@ describe("PermissionsService", () => {
         ],
       };
 
-      mockAxiosInstance.post.mockResolvedValue({ data: mockBatchResponse });
+      mockApiClient.post.mockResolvedValue({ data: mockBatchResponse });
 
       const result = await service.checkMultiplePermissions(programIds);
 
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith(
+      expect(mockApiClient.post).toHaveBeenCalledWith(
         "/v2/funding-program-configs/batch-check-permissions",
         { programs: programIds }
       );
@@ -416,7 +385,7 @@ describe("PermissionsService", () => {
       const programIds = [{ programId: "program-1" }, { programId: "program-2" }];
 
       // Batch endpoint fails
-      mockAxiosInstance.post.mockRejectedValue(new Error("Batch endpoint not available"));
+      mockApiClient.post.mockRejectedValue(new Error("Batch endpoint not available"));
 
       // Individual calls succeed via fetchData
       mockFetchData
@@ -433,7 +402,7 @@ describe("PermissionsService", () => {
       const programIds = [{ programId: "program-1" }, { programId: "program-2" }];
 
       // Batch endpoint fails
-      mockAxiosInstance.post.mockRejectedValue(new Error("Not available"));
+      mockApiClient.post.mockRejectedValue(new Error("Not available"));
 
       // First call succeeds, second fails
       mockFetchData
@@ -453,7 +422,7 @@ describe("PermissionsService", () => {
     });
 
     it("should return empty map for empty input", async () => {
-      mockAxiosInstance.post.mockResolvedValue({ data: { permissions: [] } });
+      mockApiClient.post.mockResolvedValue({ data: { permissions: [] } });
 
       const result = await service.checkMultiplePermissions([]);
 

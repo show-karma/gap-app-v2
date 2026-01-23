@@ -14,22 +14,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 10
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
+          bun-version: latest
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Run tests with coverage
-        run: pnpm run test:coverage
+        run: bun run test:coverage
         env:
           NODE_ENV: test
 
@@ -38,10 +32,10 @@ jobs:
         if: always()
         run: |
           if [ -f coverage/coverage-summary.json ]; then
-            LINES=$(node -p "JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')).total.lines.pct.toFixed(2)")
-            STATEMENTS=$(node -p "JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')).total.statements.pct.toFixed(2)")
-            FUNCTIONS=$(node -p "JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')).total.functions.pct.toFixed(2)")
-            BRANCHES=$(node -p "JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')).total.branches.pct.toFixed(2)")
+            LINES=$(bun -e "const data = JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')); console.log(data.total.lines.pct.toFixed(2))")
+            STATEMENTS=$(bun -e "const data = JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')); console.log(data.total.statements.pct.toFixed(2))")
+            FUNCTIONS=$(bun -e "const data = JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')); console.log(data.total.functions.pct.toFixed(2))")
+            BRANCHES=$(bun -e "const data = JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')); console.log(data.total.branches.pct.toFixed(2))")
             
             echo "lines=${LINES}" >> $GITHUB_OUTPUT
             echo "statements=${STATEMENTS}" >> $GITHUB_OUTPUT

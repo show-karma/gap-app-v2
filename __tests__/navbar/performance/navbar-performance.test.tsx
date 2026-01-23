@@ -3,6 +3,7 @@
  * Tests render performance, re-render optimization, memory management, and debouncing efficiency
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { fireEvent, screen } from "@testing-library/react";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { getAuthFixture } from "../fixtures/auth-fixtures";

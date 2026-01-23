@@ -1,17 +1,25 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { getCommunityGrants } from "@/services/community-grants.service";
 import type { CommunityGrant } from "@/types/v2/community-grant";
-import { useCommunityGrants } from "../useCommunityGrants";
 
-// Mock the service
-jest.mock("@/services/community-grants.service");
+// Set up the mock BEFORE importing the hook
+// This ensures mock.module() is called before the hook's dependencies are loaded
+const mockGetCommunityGrants = jest.fn();
+jest.mock("@/services/community-grants.service", () => ({
+  getCommunityGrants: mockGetCommunityGrants,
+}));
 
-const mockGetCommunityGrants = getCommunityGrants as jest.MockedFunction<typeof getCommunityGrants>;
+// Dynamic import to ensure the hook loads AFTER the mock is set up
+// This is required because Bun's mock.module() must be called before module resolution
+const getHook = async () => {
+  const { useCommunityGrants } = await import("../useCommunityGrants");
+  return useCommunityGrants;
+};
 
 describe("useCommunityGrants", () => {
   let queryClient: QueryClient;
+  let useCommunityGrants: Awaited<ReturnType<typeof getHook>>;
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -27,6 +35,10 @@ describe("useCommunityGrants", () => {
     projectSlug: "test-project",
     categories: ["DeFi", "Infrastructure"],
     ...overrides,
+  });
+
+  beforeAll(async () => {
+    useCommunityGrants = await getHook();
   });
 
   beforeEach(() => {

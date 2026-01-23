@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import type { AssignApplicationReviewersRequest } from "../application-reviewers.service";
 import { applicationReviewersService } from "../application-reviewers.service";
 
@@ -16,13 +17,16 @@ import fetchData from "@/utilities/fetchData";
 const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
 
 describe("applicationReviewersService", () => {
+  let consoleErrorSpy: ReturnType<typeof jest.spyOn>;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.spyOn(console, "error").mockImplementation(() => {});
+    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    // Only restore console spies, not all mocks (which would break module-level mocks)
+    consoleErrorSpy.mockRestore();
   });
 
   describe("assignReviewers", () => {

@@ -3,20 +3,18 @@
  * @description Tests polling utilities for grant and milestone completion
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+import * as projectGrantsService from "@/services/project-grants.service";
 import { pollForGrantCompletion, pollForMilestoneStatus } from "@/utilities/attestation-polling";
 import * as retriesModule from "@/utilities/retries";
 
-// Mock dependencies
-jest.mock("@/utilities/retries");
-jest.mock("@/services/project-grants.service", () => ({
-  getProjectGrants: jest.fn(),
-}));
-
-const { getProjectGrants } = require("@/services/project-grants.service");
-const mockGetProjectGrants = getProjectGrants as jest.MockedFunction<typeof getProjectGrants>;
-
+// These modules are pre-registered as mocks in bun-setup.ts
 const mockRetryUntilConditionMet = retriesModule.retryUntilConditionMet as jest.MockedFunction<
   typeof retriesModule.retryUntilConditionMet
+>;
+
+const mockGetProjectGrants = projectGrantsService.getProjectGrants as jest.MockedFunction<
+  typeof projectGrantsService.getProjectGrants
 >;
 
 describe("pollForGrantCompletion", () => {

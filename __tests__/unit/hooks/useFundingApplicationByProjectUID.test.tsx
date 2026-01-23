@@ -3,19 +3,25 @@
  * @description Tests fetching funding applications by project UID using React Query
  */
 
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  spyOn,
+  test,
+} from "bun:test";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
 import * as fundingApplicationsService from "@/services/funding-applications";
 
-// Mock the service
-jest.mock("@/services/funding-applications");
-
-const mockFetchApplicationByProjectUID =
-  fundingApplicationsService.fetchApplicationByProjectUID as jest.MockedFunction<
-    typeof fundingApplicationsService.fetchApplicationByProjectUID
-  >;
+// Spy on the service function
+let mockFetchApplicationByProjectUID: ReturnType<typeof spyOn>;
 
 describe("useFundingApplicationByProjectUID", () => {
   let queryClient: QueryClient;
@@ -32,11 +38,16 @@ describe("useFundingApplicationByProjectUID", () => {
         },
       },
     });
-    jest.clearAllMocks();
+    // Create spy for the service function
+    mockFetchApplicationByProjectUID = spyOn(
+      fundingApplicationsService,
+      "fetchApplicationByProjectUID"
+    );
   });
 
   afterEach(() => {
     queryClient.clear();
+    mockFetchApplicationByProjectUID?.mockRestore();
   });
 
   describe("Data Fetching", () => {

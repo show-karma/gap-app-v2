@@ -10,6 +10,7 @@
  * - Error Handling (3)
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { LiveFundingOpportunities } from "@/src/features/homepage/components/live-funding-opportunities";
 import { renderWithProviders, screen, within } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
@@ -23,16 +24,7 @@ jest.mock("@/src/services/funding/getLiveFundingOpportunities", () => ({
 }));
 
 // Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
-  PAGES: {
-    FUNDING_APP: "/funding-map",
-    REGISTRY: {
-      ROOT: "/funding-map",
-      ADD_PROGRAM: "/funding-map/add-program",
-      MANAGE_PROGRAMS: "/funding-map/manage-programs",
-    },
-  },
-}));
+// NOTE: @/utilities/pages is globally mocked in tests/bun-setup.ts with complete PAGES implementation
 
 // Mock LiveFundingOpportunitiesSkeleton
 jest.mock("@/src/features/homepage/components/live-funding-opportunities-skeleton", () => ({

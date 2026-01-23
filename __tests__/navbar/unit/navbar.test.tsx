@@ -3,6 +3,7 @@
  * Tests structural elements, child component integration, and context availability
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { screen } from "@testing-library/react";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { getAuthFixture } from "../fixtures/auth-fixtures";

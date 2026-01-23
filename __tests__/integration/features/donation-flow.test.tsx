@@ -18,8 +18,8 @@
  * - Error boundary recovery
  */
 
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import toast from "react-hot-toast";
 import type { Address } from "viem";
 import { useDonationTransfer } from "@/hooks/useDonationTransfer";
 import type { DonationPayment } from "@/store/donationCart";
@@ -34,115 +34,46 @@ import {
   mockTokenBalance,
   setupApprovalNeededMocks,
   setupDefaultMocks,
-  setupLocalStorageMock,
   setupMockPublicClient,
 } from "../test-utils";
 
-// Mock dependencies
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(),
-  usePublicClient: jest.fn(),
-  useWalletClient: jest.fn(),
-  useWriteContract: jest.fn(),
-  useWaitForTransactionReceipt: jest.fn(),
-  useChainId: jest.fn(),
-  useSwitchChain: jest.fn(),
-}));
-
-jest.mock("viem", () => {
-  const actual = jest.requireActual("viem");
-  return {
-    ...actual,
-    getAddress: jest.fn((addr: string) => addr as Address),
-    parseUnits: jest.fn((value: string, decimals: number) => {
-      // Handle decimal values by converting to smallest unit
-      const numValue = parseFloat(value);
-      const multiplier = 10 ** decimals;
-      return BigInt(Math.floor(numValue * multiplier));
-    }),
-    formatUnits: jest.fn((value: bigint, decimals: number) =>
-      String(Number(value) / 10 ** decimals)
-    ),
-  };
-});
-
-jest.mock("react-hot-toast");
-
-jest.mock("@/utilities/donations/batchDonations", () => ({
-  BatchDonationsABI: [],
-  BATCH_DONATIONS_CONTRACTS: {
-    10: "0x1111111111111111111111111111111111111111",
-    8453: "0x2222222222222222222222222222222222222222",
-    42161: "0x3333333333333333333333333333333333333333",
-  },
-  PERMIT2_ADDRESS: "0x000000000022D473030F116dDEE9F6B43aC78BA3" as Address,
-  getBatchDonationsContractAddress: jest.fn((chainId: number) => {
-    const contracts: Record<number, string> = {
-      10: "0x1111111111111111111111111111111111111111",
-      8453: "0x2222222222222222222222222222222222222222",
-      42161: "0x3333333333333333333333333333333333333333",
-    };
-    return contracts[chainId];
-  }),
-}));
-
-jest.mock("@/utilities/erc20", () => ({
-  checkTokenAllowances: jest.fn(),
-  executeApprovals: jest.fn(),
-  getApprovalAmount: jest.fn((amount: bigint) => amount),
-}));
-
-jest.mock("@/utilities/rpcClient", () => ({
-  getRPCClient: jest.fn(),
-}));
-
-jest.mock("@/utilities/walletClientValidation", () => ({
-  validateWalletClient: jest.fn(),
-  waitForValidWalletClient: jest.fn(),
-}));
-
-jest.mock("@/utilities/walletClientFallback", () => ({
-  getWalletClientWithFallback: jest.fn(),
-  isWalletClientGoodEnough: jest.fn(),
-}));
-
-jest.mock("@/utilities/chainSyncValidation", () => ({
-  validateChainSync: jest.fn(),
-}));
-
-jest.mock("@/utilities/donations/errorMessages", () => ({
-  getShortErrorMessage: jest.fn((error: any) => error?.message || "Unknown error"),
-  parseDonationError: jest.fn((error: any) => ({
-    message: error?.message || "Unknown error",
-    type: "unknown",
-    isRecoverable: false,
-    actionableSteps: [],
-  })),
-}));
+// All mocks are pre-registered in tests/bun-setup.ts
+// Access toast mock from global mocks
+const mockToast = (globalThis as any).__mocks__.toast;
 
 describe("Integration: Donation Flow", () => {
   const mockRecipientAddress = "0x9876543210987654321098765432109876543210" as Address;
 
   beforeEach(() => {
+    // Clear localStorage to reset zustand persisted stores
+    const mockLocalStorage = (globalThis as any).__mockLocalStorage__;
+    if (mockLocalStorage) {
+      mockLocalStorage.clear();
+    }
+
     clearDonationMocks();
     setupDefaultMocks();
-    setupLocalStorageMock();
 
     // Setup default toast mocks - track calls instead of silencing them
-    (toast.error as jest.Mock).mockImplementation((message: string) => {
-      // Store error messages for verification in tests
-      const _errorCalls = (toast.error as jest.Mock).mock.calls;
+    mockToast.error.mockImplementation((message: string) => {
       return `toast-error:${message}`;
     });
-    (toast.success as jest.Mock).mockImplementation((message: string) => {
+    mockToast.success.mockImplementation((message: string) => {
       return `toast-success:${message}`;
     });
+    mockToast.mockClear();
 
-    // Clear cart before each test
-    const { result } = renderHook(() => useDonationCart());
-    act(() => {
-      result.current.clear();
-    });
+    // Clear cart before each test - do this defensively
+    try {
+      const { result } = renderHook(() => useDonationCart());
+      if (result.current) {
+        act(() => {
+          result.current.clear();
+        });
+      }
+    } catch {
+      // Ignore errors during cart clear - it will be empty anyway after localStorage clear
+    }
   });
 
   describe("1. Single Token, Single Network Donation Flow", () => {
@@ -198,9 +129,15 @@ describe("Integration: Donation Flow", () => {
 
   describe("2. Multiple Tokens, Single Network Donation", () => {
     it("executes batch donation with 3 different tokens (USDC, DAI, ETH)", async () => {
-      // Arrange: Create 3 payments with different tokens
-      const usdcToken = createMockToken({ symbol: "USDC", address: "0xUSDC" });
-      const daiToken = createMockToken({ symbol: "DAI", address: "0xDAI" });
+      // Arrange: Create 3 payments with different tokens (using valid checksummed addresses)
+      const usdcToken = createMockToken({
+        symbol: "USDC",
+        address: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+      });
+      const daiToken = createMockToken({
+        symbol: "DAI",
+        address: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+      });
       const ethToken = createMockNativeToken(10);
 
       const payments: DonationPayment[] = [
@@ -390,8 +327,8 @@ describe("Integration: Donation Flow", () => {
   describe("7. Network Switch Mid-Flow", () => {
     it("detects when user is on wrong network", async () => {
       // Arrange: User on wrong network
-      const wagmi = require("wagmi");
-      (wagmi.useChainId as jest.Mock).mockReturnValue(1); // User on Ethereum
+      const wagmiState = (globalThis as any).__wagmiMockState__;
+      wagmiState.chainId = 1; // User on Ethereum
 
       const _payment = createMockPayment({ chainId: 10 }); // Payment on Optimism
       const _mockSwitchChain = createMockSwitchChain(true);
@@ -408,10 +345,10 @@ describe("Integration: Donation Flow", () => {
 
     it("validates chain synchronization before execution", async () => {
       // This test verifies that chain sync validation occurs
-      const { validateChainSync } = require("@/utilities/chainSyncValidation");
+      const mocks = (globalThis as any).__mocks__;
 
       // Setup validateChainSync to be called
-      validateChainSync.mockResolvedValue(true);
+      mocks.validateChainSync.mockImplementation(() => Promise.resolve(true));
 
       const payment = createMockPayment({ chainId: 10 });
       const transferHook = renderHook(() => useDonationTransfer());
@@ -426,7 +363,7 @@ describe("Integration: Donation Flow", () => {
       });
 
       // Assert: Chain sync was validated
-      expect(validateChainSync).toHaveBeenCalled();
+      expect(mocks.validateChainSync).toHaveBeenCalled();
     });
   });
 
@@ -511,21 +448,12 @@ describe("Integration: Donation Flow", () => {
       const payment = createMockPayment();
       const transferHook = renderHook(() => useDonationTransfer());
 
-      const viem = require("viem");
-      const mockGetAddress = viem.getAddress as jest.Mock;
-
-      mockGetAddress.mockImplementationOnce((addr: string) => {
-        if (addr === "invalid-address") {
-          throw new Error("Invalid address");
-        }
-        return addr as Address;
-      });
-
+      // Use an obviously invalid address format to trigger validation error
       const getInvalidRecipient = createPayoutAddressGetter({
-        [payment.projectId]: "invalid-address",
+        [payment.projectId]: "not-a-valid-hex-address",
       });
 
-      // Act & Assert: Should throw error
+      // Act & Assert: Should throw error due to invalid address
       await expect(
         act(async () => {
           await transferHook.result.current.executeDonations([payment], getInvalidRecipient);
@@ -543,7 +471,7 @@ describe("Integration: Donation Flow", () => {
       // In a real scenario, this would test the useCrossChainBalances hook
 
       // Arrange: Mock slow balance fetch
-      const mockFetchBalances = jest.fn();
+      const mockFetchBalances = mock();
 
       // Simulate timeout (takes longer than expected)
       mockFetchBalances.mockImplementation(
@@ -564,7 +492,7 @@ describe("Integration: Donation Flow", () => {
 
     it("successfully retries balance fetch after initial timeout", async () => {
       // Arrange: Mock balance fetch that fails first time, succeeds second time
-      const mockFetchBalances = jest.fn();
+      const mockFetchBalances = mock();
 
       let attemptCount = 0;
       mockFetchBalances.mockImplementation(() => {

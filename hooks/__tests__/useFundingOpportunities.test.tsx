@@ -1,19 +1,27 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { fundingProgramsService } from "@/src/features/funding-map/services/funding-programs.service";
 import type { FundingProgram } from "@/src/features/funding-map/types/funding-program";
-import { useFundingOpportunities } from "../useFundingOpportunities";
 
-// Mock the service
-jest.mock("@/src/features/funding-map/services/funding-programs.service");
+// Set up the mock BEFORE importing the hook
+// This ensures mock.module() is called before the hook's dependencies are loaded
+const mockGetAll = jest.fn();
+jest.mock("@/src/features/funding-map/services/funding-programs.service", () => ({
+  fundingProgramsService: {
+    getAll: mockGetAll,
+  },
+}));
 
-const mockGetAll = fundingProgramsService.getAll as jest.MockedFunction<
-  typeof fundingProgramsService.getAll
->;
+// Dynamic import to ensure the hook loads AFTER the mock is set up
+// This is required because Bun's mock.module() must be called before module resolution
+const getHook = async () => {
+  const { useFundingOpportunities } = await import("../useFundingOpportunities");
+  return useFundingOpportunities;
+};
 
 describe("useFundingOpportunities", () => {
   let queryClient: QueryClient;
+  let useFundingOpportunities: Awaited<ReturnType<typeof getHook>>;
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -32,6 +40,10 @@ describe("useFundingOpportunities", () => {
       communityName: "Test Community",
       ...overrides,
     }) as FundingProgram;
+
+  beforeAll(async () => {
+    useFundingOpportunities = await getHook();
+  });
 
   beforeEach(() => {
     queryClient = new QueryClient({

@@ -3,6 +3,8 @@
     "baseUrl": ".",
     "target": "ES2022",
     "lib": ["dom", "dom.iterable", "esnext"],
+    "types": ["bun-types"],
+    "moduleDetection": "force",
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,

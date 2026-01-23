@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from "bun:test";
 /**
  * Reviewer Status Change Tests
  * Tests the status change functionality for application reviewers
@@ -68,19 +69,7 @@ jest.mock("@/utilities/type-guards", () => ({
   isFundingProgramConfig: jest.fn(() => true),
 }));
 
-// Mock pages
-jest.mock("@/utilities/pages", () => ({
-  PAGES: {
-    REVIEWER: {
-      APPLICATIONS: (communityId: string, programId: string) =>
-        `/community/${communityId}/reviewer/funding-platform/${programId}/applications`,
-    },
-    ADMIN: {
-      PROJECT_MILESTONES: (communityId: string, projectUID: string, programId: string) =>
-        `/community/${communityId}/admin/project/${projectUID}/milestones?programId=${programId}`,
-    },
-  },
-}));
+// NOTE: @/utilities/pages is globally mocked in tests/bun-setup.ts with complete PAGES implementation
 
 // Mock theme
 jest.mock("@/src/helper/theme", () => ({

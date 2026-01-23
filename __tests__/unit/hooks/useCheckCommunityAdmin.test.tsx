@@ -3,45 +3,24 @@
  * @description Tests admin status verification with proper error handling
  */
 
+import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type React from "react";
 import { useCheckCommunityAdmin } from "@/hooks/communities/useCheckCommunityAdmin";
+// Import modules for spyOn
+import * as useAuthModule from "@/hooks/useAuth";
 import type { CommunityDetails } from "@/types/community";
+import * as easWagmiUtilsModule from "@/utilities/eas-wagmi-utils";
+import * as isCommunityAdminModule from "@/utilities/sdk/communities/isCommunityAdmin";
 
-// Mock wagmi useAccount
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(() => ({
-    address: "0xMockWalletAddress",
-  })),
-}));
+// Use spyOn instead of jest.mock to avoid polluting global mock state
+let mockUseAuth: ReturnType<typeof spyOn>;
+let mockUseSigner: ReturnType<typeof spyOn>;
+let mockIsCommunityAdminOf: ReturnType<typeof spyOn>;
 
-// Mock useAuth hook
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(() => ({
-    authenticated: true,
-  })),
-}));
-
-// Mock useSigner
-jest.mock("@/utilities/eas-wagmi-utils", () => ({
-  useSigner: jest.fn(() => "mockSigner"),
-}));
-
-// Mock isCommunityAdminOf
-jest.mock("@/utilities/sdk/communities/isCommunityAdmin", () => ({
-  isCommunityAdminOf: jest.fn(),
-}));
-
-import { useAccount } from "wagmi";
-import { useAuth } from "@/hooks/useAuth";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
-
-const mockUseAccount = useAccount as jest.MockedFunction<typeof useAccount>;
-const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
-const mockUseSigner = useSigner as jest.MockedFunction<typeof useSigner>;
-const mockIsCommunityAdminOf = isCommunityAdminOf as jest.MockedFunction<typeof isCommunityAdminOf>;
+// Access wagmi mock state via globalThis.__wagmiMockState__
+const getWagmiState = () => (globalThis as any).__wagmiMockState__;
 
 // Test data
 const mockCommunity: CommunityDetails = {
@@ -80,24 +59,46 @@ const createWrapper = (queryClient: QueryClient) => {
 
 describe("useCheckCommunityAdmin", () => {
   let queryClient: QueryClient;
+  let wagmiState: any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
     queryClient = createTestQueryClient();
+    wagmiState = getWagmiState();
 
-    // Reset default mock implementations
-    mockUseAccount.mockReturnValue({
+    // Configure wagmi mock state - use the global wagmi mock from bun-setup.ts
+    wagmiState.account = {
       address: mockAddress,
-    } as ReturnType<typeof useAccount>);
-    mockUseAuth.mockReturnValue({
-      authenticated: true,
-    } as ReturnType<typeof useAuth>);
-    mockUseSigner.mockReturnValue("mockSigner" as ReturnType<typeof useSigner>);
+      isConnected: true,
+      connector: null,
+    };
+
+    // Set up spies for other modules
+    mockUseAuth = spyOn(useAuthModule, "useAuth").mockImplementation(
+      () =>
+        ({
+          authenticated: true,
+        }) as any
+    );
+
+    mockUseSigner = spyOn(easWagmiUtilsModule, "useSigner").mockImplementation(
+      () => "mockSigner" as any
+    );
+
+    mockIsCommunityAdminOf = spyOn(isCommunityAdminModule, "isCommunityAdminOf").mockImplementation(
+      () => Promise.resolve(false)
+    );
+
+    // Clear spy call history
+    mockUseAuth.mockClear();
+    mockUseSigner.mockClear();
+    mockIsCommunityAdminOf.mockClear();
   });
 
   afterEach(() => {
     queryClient.clear();
   });
+
+  // NOTE: No additional cleanup needed for spies - spyOn creates fresh mocks in beforeEach
 
   describe("Admin Status Verification (Security-Critical)", () => {
     it("should return isAdmin: true when user is admin", async () => {
@@ -248,9 +249,12 @@ describe("useCheckCommunityAdmin", () => {
     });
 
     it("should not fetch when no address is available", () => {
-      mockUseAccount.mockReturnValue({
+      // Configure wagmi state with no address
+      wagmiState.account = {
         address: undefined,
-      } as ReturnType<typeof useAccount>);
+        isConnected: false,
+        connector: null,
+      };
 
       const { result } = renderHook(() => useCheckCommunityAdmin(mockCommunity), {
         wrapper: createWrapper(queryClient),

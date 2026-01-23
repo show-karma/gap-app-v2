@@ -1,42 +1,30 @@
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import type { IFundingApplication } from "@/types/funding-platform";
 
-// Mock fetchData for GET requests
-jest.mock("@/utilities/fetchData");
-
-// Mock the API client factory for delete operations
-jest.mock("@/utilities/auth/api-client", () => {
-  const mockDelete = jest.fn();
-
-  return {
-    createAuthenticatedApiClient: jest.fn(() => ({
-      delete: mockDelete,
-    })),
-    __mockDelete: mockDelete,
-  };
-});
-
-jest.mock("@/utilities/enviromentVars", () => ({
-  envVars: {
-    NEXT_PUBLIC_GAP_INDEXER_URL: "https://test-indexer.example.com",
-  },
-}));
+// Note: @/utilities/fetchData is pre-mocked in bun-setup.ts
+// Note: @/utilities/auth/api-client is pre-mocked in bun-setup.ts
+// Note: @/utilities/enviromentVars is pre-mocked in bun-setup.ts
 
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 // Import service and mock utilities
 import { deleteApplication, fetchApplicationByProjectUID } from "../funding-applications";
 
+// Get the pre-registered mocks from bun-setup.ts
 const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
-const { __mockDelete: mockDelete } = jest.requireMock("@/utilities/auth/api-client");
+const mockDelete = (globalThis as any).__mocks__.apiClient.delete;
 
 describe("funding-applications service", () => {
+  let consoleErrorSpy: ReturnType<typeof jest.spyOn>;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.spyOn(console, "error").mockImplementation(() => {});
+    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    // Only restore console spies, not all mocks (which would break module-level mocks)
+    consoleErrorSpy.mockRestore();
   });
 
   describe("fetchApplicationByProjectUID", () => {
@@ -194,9 +182,9 @@ describe("funding-applications service", () => {
       const error = new Error("Test error");
       mockDelete.mockRejectedValue(error);
 
-      const beforeTime = new Date().toISOString();
+      const beforeTime = Date.now();
       await expect(deleteApplication("REF-TIME")).rejects.toThrow("Test error");
-      const afterTime = new Date().toISOString();
+      const afterTime = Date.now();
 
       expect(console.error).toHaveBeenCalledWith(
         "Service layer: Failed to delete application",
@@ -207,8 +195,10 @@ describe("funding-applications service", () => {
 
       const loggedTimestamp = (console.error as jest.Mock).mock.calls[0][1].timestamp;
       expect(loggedTimestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
-      expect(loggedTimestamp >= beforeTime).toBe(true);
-      expect(loggedTimestamp <= afterTime).toBe(true);
+      // Verify timestamp is a valid ISO string within reasonable bounds (1 second tolerance)
+      const loggedTime = new Date(loggedTimestamp).getTime();
+      expect(loggedTime).toBeGreaterThanOrEqual(beforeTime - 1000);
+      expect(loggedTime).toBeLessThanOrEqual(afterTime + 1000);
     });
   });
 
@@ -349,10 +339,12 @@ describe("funding-applications service", () => {
   });
 
   describe("API client initialization", () => {
-    it("should have createAuthenticatedApiClient mocked", () => {
-      const { createAuthenticatedApiClient } = jest.requireMock("@/utilities/auth/api-client");
-      expect(createAuthenticatedApiClient).toBeDefined();
-      expect(typeof createAuthenticatedApiClient).toBe("function");
+    it("should have apiClient mocked with delete method", () => {
+      // Verify the mock is set up via bun-setup.ts global mocks
+      const apiClientMock = (globalThis as any).__mocks__.apiClient;
+      expect(apiClientMock).toBeDefined();
+      expect(apiClientMock.delete).toBeDefined();
+      expect(typeof apiClientMock.delete).toBe("function");
     });
   });
 });

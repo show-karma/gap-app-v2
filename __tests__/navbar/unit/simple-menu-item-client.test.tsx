@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 /**
  * @file simple-menu-item-client.test.tsx
  * @description Unit tests for SimpleMenuItemClient component

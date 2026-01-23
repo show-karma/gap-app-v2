@@ -1,52 +1,18 @@
+import { describe, expect, it, mock } from "bun:test";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
 import type React from "react";
 import { ApplicationList } from "@/components/FundingPlatform/ApplicationList/ApplicationList";
 import type { IFundingApplication } from "@/types/funding-platform";
 
-// Mock the helper functions
-jest.mock("@/components/FundingPlatform/helper/getAIScore", () => ({
-  formatAIScore: jest.fn(),
-}));
+// Mocks are pre-registered in bun-setup.ts:
+// - @/components/FundingPlatform/helper/getProjecTitle
+// - @/utilities/formatDate
+// - @/components/Utilities/SortableTableHeader
+// - @/components/FundingPlatform/ApplicationList/ReviewerAssignmentDropdown
+// Note: getAIScore/formatAIScore uses real implementation
 
-// Mock the other helper functions
-jest.mock("@/components/FundingPlatform/helper/getProjecTitle", () => ({
-  getProjectTitle: jest.fn(() => "Test Project"),
-}));
-
-jest.mock("@/utilities/formatDate", () => ({
-  formatDate: jest.fn(() => "2025-01-01"),
-}));
-
-// Mock SortableTableHeader
-jest.mock("@/components/Utilities/SortableTableHeader", () => {
-  return function MockSortableTableHeader({
-    label,
-    sortKey,
-    onSort,
-  }: {
-    label: string;
-    sortKey: string;
-    onSort?: (sortKey: string) => void;
-  }) {
-    return (
-      <th scope="col" data-testid={`header-${sortKey}`}>
-        <button onClick={() => onSort?.(sortKey)}>{label}</button>
-      </th>
-    );
-  };
-});
-
-// Mock ReviewerAssignmentDropdown
-jest.mock("@/components/FundingPlatform/ApplicationList/ReviewerAssignmentDropdown", () => ({
-  ReviewerAssignmentDropdown: () => <div data-testid="reviewer-assignment-dropdown" />,
-}));
-
-import { formatAIScore } from "@/components/FundingPlatform/helper/getAIScore";
-
-const mockFormatAIScore = formatAIScore as jest.MockedFunction<typeof formatAIScore>;
-
-// Helper to create mock application
+// Helper to create mock application with AI evaluation
 const createMockApplication = (overrides?: Partial<IFundingApplication>): IFundingApplication => ({
   id: "test-id",
   programId: "test-program",
@@ -60,6 +26,12 @@ const createMockApplication = (overrides?: Partial<IFundingApplication>): IFundi
   createdAt: "2025-01-01T00:00:00.000Z",
   updatedAt: "2025-01-01T00:00:00.000Z",
   ...overrides,
+});
+
+// Helper to create AI evaluation data
+const createAIEvaluation = (score: number) => ({
+  evaluation: JSON.stringify({ final_score: score }),
+  promptId: "test-prompt",
 });
 
 describe("ApplicationList - AI Score Column", () => {
@@ -81,9 +53,7 @@ describe("ApplicationList - AI Score Column", () => {
     return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
   };
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+  // Note: jest.clearAllMocks() is called automatically in bun-setup.ts afterEach
 
   describe("AI Score Column Header", () => {
     it("should render AI Score column header", () => {
@@ -96,7 +66,7 @@ describe("ApplicationList - AI Score Column", () => {
           applications={applications}
           sortBy="status"
           sortOrder="asc"
-          onSortChange={jest.fn()}
+          onSortChange={mock(() => {})}
           showAIScoreColumn={true}
         />
       );
@@ -106,7 +76,7 @@ describe("ApplicationList - AI Score Column", () => {
     });
 
     it("should call onSortChange when AI Score header is clicked", () => {
-      const mockOnSortChange = jest.fn();
+      const mockOnSortChange = mock(() => {});
       const applications = [createMockApplication()];
 
       renderWithQueryClient(
@@ -139,7 +109,7 @@ describe("ApplicationList - AI Score Column", () => {
           applications={applications}
           sortBy="aiEvaluationScore"
           sortOrder="desc"
-          onSortChange={jest.fn()}
+          onSortChange={mock(() => {})}
           showAIScoreColumn={true}
         />
       );
@@ -152,12 +122,14 @@ describe("ApplicationList - AI Score Column", () => {
 
   describe("AI Score Column Data", () => {
     it("should display formatted AI score for each application", () => {
-      mockFormatAIScore.mockReturnValueOnce("4.5").mockReturnValueOnce("0").mockReturnValueOnce("");
-
+      // Create applications with real AI evaluation data
       const applications = [
-        createMockApplication({ referenceNumber: "APP-001" }),
-        createMockApplication({ referenceNumber: "APP-002" }),
-        createMockApplication({ referenceNumber: "APP-003" }),
+        createMockApplication({
+          referenceNumber: "APP-001",
+          aiEvaluation: createAIEvaluation(4.5),
+        }),
+        createMockApplication({ referenceNumber: "APP-002", aiEvaluation: createAIEvaluation(0) }),
+        createMockApplication({ referenceNumber: "APP-003" }), // No AI evaluation
       ];
 
       renderWithQueryClient(
@@ -171,22 +143,13 @@ describe("ApplicationList - AI Score Column", () => {
         />
       );
 
-      // Check that formatAIScore was called for each application
-      expect(mockFormatAIScore).toHaveBeenCalledTimes(3);
-      expect(mockFormatAIScore).toHaveBeenCalledWith(applications[0]);
-      expect(mockFormatAIScore).toHaveBeenCalledWith(applications[1]);
-      expect(mockFormatAIScore).toHaveBeenCalledWith(applications[2]);
-
-      // The AI scores are rendered in the table cells
-      // We can check that the formatted scores are in the document
+      // The AI scores are rendered in the table cells using real formatAIScore
       expect(screen.getByText("4.5")).toBeInTheDocument();
       expect(screen.getByText("0")).toBeInTheDocument();
     });
 
     it("should apply correct CSS classes to AI score cells", () => {
-      mockFormatAIScore.mockReturnValue("4.5");
-
-      const applications = [createMockApplication()];
+      const applications = [createMockApplication({ aiEvaluation: createAIEvaluation(4.5) })];
 
       const { container } = renderWithQueryClient(
         <ApplicationList
@@ -218,8 +181,7 @@ describe("ApplicationList - AI Score Column", () => {
     });
 
     it("should display empty string for applications without scores", () => {
-      mockFormatAIScore.mockReturnValue("");
-
+      // Application without AI evaluation
       const applications = [createMockApplication()];
 
       const { container } = renderWithQueryClient(
@@ -242,9 +204,8 @@ describe("ApplicationList - AI Score Column", () => {
     });
 
     it('should display "0" for applications with zero scores', () => {
-      mockFormatAIScore.mockReturnValue("0");
-
-      const applications = [createMockApplication()];
+      // Application with AI evaluation score of 0
+      const applications = [createMockApplication({ aiEvaluation: createAIEvaluation(0) })];
 
       const { container } = renderWithQueryClient(
         <ApplicationList
@@ -260,17 +221,16 @@ describe("ApplicationList - AI Score Column", () => {
       const rows = container.querySelectorAll("tbody tr");
       const cells = rows[0].querySelectorAll("td");
       const aiScoreCell = cells[4];
-      const scoreSpan = aiScoreCell.querySelector("span");
+      // When there's evaluation data, it renders a button (clickable to see details)
+      const scoreButton = aiScoreCell.querySelector("button");
 
-      expect(scoreSpan).toHaveTextContent("0");
+      expect(scoreButton).toHaveTextContent("0");
     });
   });
 
   describe("Column Positioning", () => {
     it("should position AI Score column after Status column and before Created Date", () => {
-      mockFormatAIScore.mockReturnValue("4.5");
-
-      const applications = [createMockApplication()];
+      const applications = [createMockApplication({ aiEvaluation: createAIEvaluation(4.5) })];
 
       renderWithQueryClient(
         <ApplicationList
@@ -321,20 +281,18 @@ describe("ApplicationList - AI Score Column", () => {
   describe("Integration with Application Selection", () => {
     it("should open new tab when row with AI score is clicked", () => {
       // Mock window.open
-      const mockWindowOpen = jest.fn();
+      const mockWindowOpen = mock(() => {});
       const originalOpen = window.open;
       window.open = mockWindowOpen;
 
-      mockFormatAIScore.mockReturnValue("4.5");
-
-      const applications = [createMockApplication()];
+      const applications = [createMockApplication({ aiEvaluation: createAIEvaluation(4.5) })];
 
       const { container } = renderWithQueryClient(
         <ApplicationList
           programId="test-program"
           chainID={11155111}
           applications={applications}
-          onApplicationSelect={jest.fn()}
+          onApplicationSelect={mock(() => {})}
           sortBy="status"
           sortOrder="asc"
           showAIScoreColumn={true}
@@ -352,10 +310,9 @@ describe("ApplicationList - AI Score Column", () => {
     });
 
     it("should call onApplicationHover when row with AI score is hovered", () => {
-      const mockOnApplicationHover = jest.fn();
-      mockFormatAIScore.mockReturnValue("4.5");
+      const mockOnApplicationHover = mock(() => {});
 
-      const applications = [createMockApplication()];
+      const applications = [createMockApplication({ aiEvaluation: createAIEvaluation(4.5) })];
 
       const { container } = renderWithQueryClient(
         <ApplicationList

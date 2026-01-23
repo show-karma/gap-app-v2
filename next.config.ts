@@ -1,8 +1,39 @@
+/**
+ * Next.js Configuration
+ *
+ * Bun Compatibility Notes:
+ * - This config works with both Node.js (Vercel deployment) and Bun (local development)
+ * - ESM imports are used where packages support them
+ * - Some packages (next-remove-imports, @next/bundle-analyzer) only support CommonJS exports
+ * - Webpack fallbacks are still needed for client-side bundling regardless of runtime
+ * - Bun handles Node.js built-ins natively on the server, but webpack still bundles for browser
+ *
+ * Package Import Notes:
+ * - @next/bundle-analyzer: Uses `export =` syntax, requires CommonJS import
+ * - next-remove-imports: Only exports CommonJS
+ * - @sentry/nextjs: Supports ESM, uses named exports
+ */
+
+import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
-const withBundleAnalyzer = require("@next/bundle-analyzer")({
+/**
+ * @next/bundle-analyzer uses `export =` syntax which requires CommonJS import.
+ * This is compatible with both Node.js and Bun runtimes.
+ */
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const bundleAnalyzer = require("@next/bundle-analyzer");
+const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
 });
+
+/**
+ * next-remove-imports only exports CommonJS, so we need to use require()
+ * This is compatible with both Node.js and Bun runtimes
+ * See: https://github.com/vercel/next.js/discussions/27825
+ */
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const removeImports = require("next-remove-imports")();
 
 const securityHeaders = [
   {
@@ -16,9 +47,6 @@ const securityHeaders = [
   },
 ];
 
-const removeImports = require("next-remove-imports")();
-
-/** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   staticPageGenerationTimeout: 10000,
@@ -31,32 +59,46 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   webpack: (config, { isServer, webpack }) => {
-    // Fix for browserslist and other Node.js modules
+    /**
+     * Client-side Node.js polyfill fallbacks
+     *
+     * These fallbacks are required for webpack bundling regardless of the runtime (Node.js or Bun).
+     * They tell webpack to exclude Node.js built-in modules from the client bundle since they
+     * are not available in the browser environment.
+     *
+     * Note: While Bun provides native implementations of these modules on the server,
+     * webpack still needs these fallbacks for client-side bundling.
+     */
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
+        // File system modules - not available in browser
         fs: false,
-        net: false,
-        tls: false,
         path: false,
         os: false,
-        crypto: false,
-        stream: false,
+        // Network modules - not available in browser
+        net: false,
+        tls: false,
         http: false,
         https: false,
-        zlib: false,
-        querystring: false,
-        events: false,
-        url: false,
+        // Crypto and encoding - browser has native alternatives (Web Crypto API)
+        crypto: false,
         buffer: false,
+        // Stream and utility modules
+        stream: false,
+        zlib: false,
         util: false,
+        events: false,
+        // URL handling - browser has native URL API
+        url: false,
+        querystring: false,
       };
     }
 
-    // Add external modules that should not be bundled
+    // External modules that should not be bundled (server-only dependencies)
     config.externals.push("pino-pretty", "lokijs", "encoding");
 
-    // Ignore dynamic requires in browserslist
+    // Reduce bundle size by excluding moment.js locales
     config.plugins.push(
       new webpack.IgnorePlugin({
         resourceRegExp: /^\.\/locale$/,
@@ -64,7 +106,7 @@ const nextConfig: NextConfig = {
       })
     );
 
-    // Exclude Storybook story files from the build
+    // Exclude Storybook story files from production build
     config.plugins.push(
       new webpack.IgnorePlugin({
         resourceRegExp: /\.stories\.(tsx?|jsx?)$/,
@@ -92,53 +134,53 @@ const nextConfig: NextConfig = {
   },
 };
 
-const bundleAnalyzer = withBundleAnalyzer(removeImports(nextConfig));
+// Apply configuration wrappers in order: removeImports -> bundleAnalyzer -> Sentry
+const configWithPlugins = withBundleAnalyzer(removeImports(nextConfig));
 
-// Injected content via Sentry wizard below
+/**
+ * Sentry Configuration
+ * Provides error tracking and performance monitoring
+ *
+ * Note: Sentry SDK v9+ uses a single SentryBuildOptions object instead of separate arguments.
+ * See: https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+ */
+const finalConfig = withSentryConfig(configWithPlugins, {
+  // Organization and project settings
+  org: "karma-crypto-inc",
+  project: "gap-frontend",
 
-const { withSentryConfig } = require("@sentry/nextjs");
+  // Authentication for source map uploads
+  // Can also be set via SENTRY_AUTH_TOKEN environment variable
+  authToken: process.env.SENTRY_AUTH_TOKEN,
 
-const withSentry = withSentryConfig(
-  bundleAnalyzer,
-  {
-    // For all available options, see:
-    // https://github.com/getsentry/sentry-webpack-plugin#options
+  // Suppresses SDK build logs
+  silent: true,
 
-    // Suppresses source map uploading logs during build
-    // An auth token is required for uploading source maps.
-    authToken: process.env.SENTRY_AUTH_TOKEN,
-    silent: true,
-    org: "karma-crypto-inc",
-    project: "gap-frontend",
-    tunnelRoute: "/monitoring",
-    reactComponentAnnotation: true,
-    debug: true,
+  // Prints additional debug information during build
+  debug: true,
+
+  // Routes browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers
+  tunnelRoute: "/monitoring",
+
+  // Automatically annotate React components with Sentry-specific data attributes
+  reactComponentAnnotation: {
+    enabled: true,
   },
-  {
-    // Upload a larger set of source maps for prettier stack traces (increases build time)
-    widenClientFileUpload: true,
 
-    // Remove transpileClientSDK as it's deprecated in Next.js 15
-    // transpileClientSDK: true,
+  // Upload a larger set of source maps for prettier stack traces (increases build time)
+  widenClientFileUpload: true,
 
-    // Uncomment to route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
-    // This can increase your server load as well as your hosting bill.
-    // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
-    // side errors will fail.
-    // tunnelRoute: "/monitoring",
+  // Hides source maps from generated client bundles
+  sourcemaps: {
+    disable: true,
+  },
 
-    // Hides source maps from generated client bundles
-    hideSourceMaps: true,
+  // Automatically tree-shake Sentry logger statements to reduce bundle size
+  disableLogger: true,
 
-    // Automatically tree-shake Sentry logger statements to reduce bundle size
-    disableLogger: true,
+  // Enables automatic instrumentation of Vercel Cron Monitors
+  // See: https://docs.sentry.io/product/crons/
+  automaticVercelMonitors: true,
+});
 
-    // Enables automatic instrumentation of Vercel Cron Monitors.
-    // See the following for more information:
-    // https://docs.sentry.io/product/crons/
-    // https://vercel.com/docs/cron-jobs
-    automaticVercelMonitors: true,
-  }
-);
-
-export default withSentry;
+export default finalConfig;

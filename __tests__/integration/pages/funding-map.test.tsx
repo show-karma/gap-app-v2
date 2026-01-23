@@ -1,27 +1,29 @@
+import { beforeAll, describe, expect, it } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import FundingMapPage from "@/app/funding-map/page";
-import { FundingMapList } from "@/src/features/funding-map/components/funding-map-list";
-import { FundingMapSearch } from "@/src/features/funding-map/components/funding-map-search";
-import { FundingMapSidebar } from "@/src/features/funding-map/components/funding-map-sidebar";
 
+// Local mock for FundingMapList which has its own unit tests
+// NOT mocked globally in bun-setup.ts to preserve unit test isolation
 jest.mock("@/src/features/funding-map/components/funding-map-list", () => ({
-  FundingMapList: jest.fn(() => <div data-testid="funding-map-list" />),
+  FundingMapList: () => <div data-testid="funding-map-list">Funding Map List</div>,
 }));
 
-jest.mock("@/src/features/funding-map/components/funding-map-search", () => ({
-  FundingMapSearch: jest.fn(() => <div data-testid="funding-map-search" />),
-}));
+// Dynamic import to ensure mocks are applied before module loads
+const getPage = async () => {
+  const { default: FundingMapPage } = await import("@/app/funding-map/page");
+  return FundingMapPage;
+};
 
-jest.mock("@/src/features/funding-map/components/funding-map-sidebar", () => ({
-  FundingMapSidebar: jest.fn(() => <div data-testid="funding-map-sidebar" />),
-}));
+let FundingMapPage: Awaited<ReturnType<typeof getPage>>;
 
+beforeAll(async () => {
+  FundingMapPage = await getPage();
+});
+
+// Other mocks are pre-registered in tests/bun-setup.ts:
+// - FundingMapSearch, FundingMapSidebar
+// Note: jest.clearAllMocks() is called automatically in bun-setup.ts afterEach
 describe("FundingMapPage", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   it("renders the FundingMapList component", () => {
     render(<FundingMapPage />);
 
@@ -40,11 +42,13 @@ describe("FundingMapPage", () => {
     expect(screen.getByTestId("funding-map-sidebar")).toBeInTheDocument();
   });
 
-  it("calls all the FundingMap components", () => {
+  it("renders all FundingMap components on the page", () => {
     render(<FundingMapPage />);
 
-    expect(FundingMapList).toHaveBeenCalled();
-    expect(FundingMapSearch).toHaveBeenCalled();
-    expect(FundingMapSidebar).toHaveBeenCalled();
+    // The mocked components are rendered as divs with test IDs
+    // This confirms all components are present in the page layout
+    expect(screen.getByTestId("funding-map-list")).toBeInTheDocument();
+    expect(screen.getByTestId("funding-map-search")).toBeInTheDocument();
+    expect(screen.getByTestId("funding-map-sidebar")).toBeInTheDocument();
   });
 });

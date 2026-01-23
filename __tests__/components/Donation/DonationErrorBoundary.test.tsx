@@ -8,20 +8,12 @@
  * - Error reporting integration
  */
 
+import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { fireEvent, render, screen } from "@testing-library/react";
 import type React from "react";
 import { DonationErrorBoundary } from "@/components/Donation/DonationErrorBoundary";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
-
-// Mock dependencies
-jest.mock("@/components/Utilities/errorManager");
-jest.mock("@/utilities/donations/errorMessages");
-jest.mock("next/link", () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => {
-    return <a href={href}>{children}</a>;
-  };
-});
+import * as errorManagerModule from "@/components/Utilities/errorManager";
+import * as errorMessages from "@/utilities/donations/errorMessages";
 
 // Component that throws an error for testing
 const ThrowError = ({
@@ -38,37 +30,51 @@ const ThrowError = ({
 };
 
 describe("DonationErrorBoundary", () => {
-  const mockErrorManager = errorManager as jest.MockedFunction<typeof errorManager>;
-  const mockGetDetailedErrorInfo = getDetailedErrorInfo as jest.MockedFunction<
-    typeof getDetailedErrorInfo
-  >;
+  let consoleErrorSpy: ReturnType<typeof spyOn>;
+  let getDetailedErrorInfoSpy: ReturnType<typeof spyOn>;
+  let errorManagerSpy: ReturnType<typeof spyOn>;
+  let localStorageMock: {
+    getItem: ReturnType<typeof mock>;
+    setItem: ReturnType<typeof mock>;
+    removeItem: ReturnType<typeof mock>;
+    clear: ReturnType<typeof mock>;
+  };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.spyOn(console, "error").mockImplementation(() => {}); // Suppress React error boundary console errors
+    // Suppress React error boundary console errors
+    consoleErrorSpy = spyOn(console, "error").mockImplementation(() => {});
 
-    // Setup default mock return for getDetailedErrorInfo
-    mockGetDetailedErrorInfo.mockReturnValue({
-      code: "UNKNOWN_ERROR" as any,
-      message: "An unexpected error occurred",
-      technicalMessage: "Test error",
-      actionableSteps: ["Try again", "Contact support"],
-    });
+    // Setup spy for errorManager
+    errorManagerSpy = spyOn(errorManagerModule, "errorManager").mockImplementation(() => {});
+
+    // Setup spy for getDetailedErrorInfo with default return value
+    getDetailedErrorInfoSpy = spyOn(errorMessages, "getDetailedErrorInfo").mockImplementation(
+      () => ({
+        code: "UNKNOWN_ERROR",
+        message: "An unexpected error occurred",
+        technicalMessage: "Test error",
+        actionableSteps: ["Try again", "Contact support"],
+      })
+    );
 
     // Mock localStorage
+    localStorageMock = {
+      getItem: mock(() => null),
+      setItem: mock(() => {}),
+      removeItem: mock(() => {}),
+      clear: mock(() => {}),
+    };
     Object.defineProperty(window, "localStorage", {
-      value: {
-        getItem: jest.fn(),
-        setItem: jest.fn(),
-        removeItem: jest.fn(),
-        clear: jest.fn(),
-      },
+      value: localStorageMock,
       writable: true,
+      configurable: true,
     });
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    consoleErrorSpy.mockRestore();
+    getDetailedErrorInfoSpy.mockRestore();
+    errorManagerSpy.mockRestore();
   });
 
   describe("Error Catching", () => {
@@ -94,7 +100,7 @@ describe("DonationErrorBoundary", () => {
         </DonationErrorBoundary>
       );
 
-      expect(mockErrorManager).toHaveBeenCalledWith(
+      expect(errorManagerSpy).toHaveBeenCalledWith(
         "DonationErrorBoundary caught an error",
         expect.any(Error),
         expect.objectContaining({
@@ -110,17 +116,17 @@ describe("DonationErrorBoundary", () => {
         </DonationErrorBoundary>
       );
 
-      expect(mockGetDetailedErrorInfo).toHaveBeenCalledWith(expect.any(Error));
+      expect(getDetailedErrorInfoSpy).toHaveBeenCalledWith(expect.any(Error));
     });
   });
 
   describe("Error Display", () => {
     it("should display parsed error message", () => {
-      mockGetDetailedErrorInfo.mockReturnValue({
-        code: "INSUFFICIENT_BALANCE" as any,
+      getDetailedErrorInfoSpy.mockImplementation(() => ({
+        code: "INSUFFICIENT_BALANCE",
         message: "Insufficient token balance",
         actionableSteps: ["Check your wallet balance", "Reduce the donation amount"],
-      });
+      }));
 
       render(
         <DonationErrorBoundary>
@@ -132,11 +138,11 @@ describe("DonationErrorBoundary", () => {
     });
 
     it("should display actionable steps when available", () => {
-      mockGetDetailedErrorInfo.mockReturnValue({
-        code: "NETWORK_MISMATCH" as any,
+      getDetailedErrorInfoSpy.mockImplementation(() => ({
+        code: "NETWORK_MISMATCH",
         message: "Network mismatch detected",
         actionableSteps: ["Switch to the correct network", "Try again"],
-      });
+      }));
 
       render(
         <DonationErrorBoundary>
@@ -150,12 +156,12 @@ describe("DonationErrorBoundary", () => {
     });
 
     it("should display technical details when available", () => {
-      mockGetDetailedErrorInfo.mockReturnValue({
-        code: "CONTRACT_ERROR" as any,
+      getDetailedErrorInfoSpy.mockImplementation(() => ({
+        code: "CONTRACT_ERROR",
         message: "Contract execution failed",
         technicalMessage: "Error: execution reverted",
         actionableSteps: [],
-      });
+      }));
 
       render(
         <DonationErrorBoundary>
@@ -171,11 +177,11 @@ describe("DonationErrorBoundary", () => {
     });
 
     it("should not display actionable steps section when empty", () => {
-      mockGetDetailedErrorInfo.mockReturnValue({
-        code: "UNKNOWN_ERROR" as any,
+      getDetailedErrorInfoSpy.mockImplementation(() => ({
+        code: "UNKNOWN_ERROR",
         message: "An error occurred",
         actionableSteps: [],
-      });
+      }));
 
       render(
         <DonationErrorBoundary>
@@ -261,10 +267,10 @@ describe("DonationErrorBoundary", () => {
     });
 
     it("should clear localStorage and reload page when Clear Cart is clicked", () => {
-      const removeItemSpy = jest.spyOn(window.localStorage, "removeItem");
+      const removeItemSpy = spyOn(window.localStorage, "removeItem");
 
       // Mock window.location.href assignment
-      const hrefSetter = jest.fn();
+      const hrefSetter = mock(() => {});
       Object.defineProperty(window.location, "href", {
         set: hrefSetter,
         get: () => originalLocation.href,
@@ -285,11 +291,10 @@ describe("DonationErrorBoundary", () => {
     });
 
     it("should handle localStorage errors gracefully", () => {
-      const removeItemSpy = jest.spyOn(window.localStorage, "removeItem");
-      removeItemSpy.mockImplementation(() => {
+      const removeItemSpy = spyOn(window.localStorage, "removeItem").mockImplementation(() => {
         throw new Error("localStorage error");
       });
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      const localConsoleErrorSpy = spyOn(console, "error").mockImplementation(() => {});
 
       render(
         <DonationErrorBoundary>
@@ -300,7 +305,11 @@ describe("DonationErrorBoundary", () => {
       const clearCartButton = screen.getByText("Clear Cart and Start Over");
       fireEvent.click(clearCartButton);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to clear cart:", expect.any(Error));
+      expect(localConsoleErrorSpy).toHaveBeenCalledWith("Failed to clear cart:", expect.any(Error));
+
+      // Restore spies
+      removeItemSpy.mockRestore();
+      localConsoleErrorSpy.mockRestore();
     });
   });
 
@@ -371,7 +380,7 @@ describe("DonationErrorBoundary", () => {
       );
 
       expect(screen.getByText("Something went wrong")).toBeInTheDocument();
-      expect(mockErrorManager).toHaveBeenCalledTimes(2);
+      expect(errorManagerSpy).toHaveBeenCalledTimes(2);
     });
 
     it("should render children normally when no error occurs", () => {
@@ -383,7 +392,7 @@ describe("DonationErrorBoundary", () => {
 
       expect(screen.getByText("Normal content")).toBeInTheDocument();
       expect(screen.queryByText("Something went wrong")).not.toBeInTheDocument();
-      expect(mockErrorManager).not.toHaveBeenCalled();
+      expect(errorManagerSpy).not.toHaveBeenCalled();
     });
   });
 });

@@ -3,6 +3,8 @@
  * @description Tests chain switching and wallet connection for attestation operations
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
+
 // Mock ALL dependencies to avoid ESM import issues
 const mockEnsureCorrectChain = jest.fn();
 const mockSafeGetWalletClient = jest.fn();

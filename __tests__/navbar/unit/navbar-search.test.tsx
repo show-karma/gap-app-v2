@@ -3,6 +3,7 @@
  * Tests: Rendering, input behavior, debouncing, API integration, results display, dropdown management
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NavbarSearch } from "@/src/components/navbar/navbar-search";

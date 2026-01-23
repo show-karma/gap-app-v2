@@ -8,6 +8,7 @@
  * - Accessibility (1)
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { JoinDiscordButton } from "@/src/features/homepage/components/join-discord-button";
 import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";

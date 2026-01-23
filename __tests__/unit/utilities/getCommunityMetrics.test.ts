@@ -3,28 +3,13 @@
  * @description Tests for fetching community metrics from the API
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { getCommunityMetrics } from "@/utilities/registry/getCommunityMetrics";
 
-jest.mock("@/utilities/fetchData");
-jest.mock("@/components/Utilities/errorManager");
-jest.mock("@/utilities/indexer", () => ({
-  INDEXER: {
-    COMMUNITY: {
-      V2: {
-        COMMUNITY_METRICS: jest.fn((communityId, params) => {
-          const urlParams = new URLSearchParams();
-          if (params?.startDate) urlParams.append("startDate", params.startDate);
-          if (params?.endDate) urlParams.append("endDate", params.endDate);
-          if (params?.metricNames) urlParams.append("metricNames", params.metricNames);
-          const queryString = urlParams.toString();
-          return `/v2/communities/${communityId}/community-metrics${queryString ? `?${queryString}` : ""}`;
-        }),
-      },
-    },
-  },
-}));
+// Note: @/utilities/fetchData and @/components/Utilities/errorManager are pre-registered in bun-setup.ts
+// Note: @/utilities/indexer is pre-registered in bun-setup.ts with proper COMMUNITY_METRICS params handling
 
 const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
 const mockErrorManager = errorManager as jest.MockedFunction<typeof errorManager>;

@@ -3,40 +3,28 @@
  * @description Tests composed admin status hook with loading state composition and Zustand sync
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type React from "react";
+import * as useCheckCommunityAdminModule from "@/hooks/communities/useCheckCommunityAdmin";
+// Import modules for spyOn
+// NOTE: Do NOT use jest.mock() as it pollutes global mock state
+import * as useCommunityDetailsModule from "@/hooks/communities/useCommunityDetails";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import type { CommunityDetails } from "@/types/community";
 
-// Mock wagmi useAccount
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(() => ({
-    address: "0xMockWalletAddress",
-  })),
-}));
+// Use spyOn instead of jest.mock to avoid polluting global mock state
+let mockUseCommunityDetails: ReturnType<typeof spyOn>;
+let mockUseCheckCommunityAdmin: ReturnType<typeof spyOn>;
 
-// Mock useCommunityDetails
-jest.mock("@/hooks/communities/useCommunityDetails", () => ({
-  useCommunityDetails: jest.fn(),
-}));
+// Store original functions for restoration after all tests
+let originalUseCommunityDetails: typeof useCommunityDetailsModule.useCommunityDetails;
+let originalUseCheckCommunityAdmin: typeof useCheckCommunityAdminModule.useCheckCommunityAdmin;
 
-// Mock useCheckCommunityAdmin
-jest.mock("@/hooks/communities/useCheckCommunityAdmin", () => ({
-  useCheckCommunityAdmin: jest.fn(),
-}));
-
-import { useAccount } from "wagmi";
-import { useCheckCommunityAdmin } from "@/hooks/communities/useCheckCommunityAdmin";
-import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
-
-const mockUseAccount = useAccount as jest.MockedFunction<typeof useAccount>;
-const mockUseCommunityDetails = useCommunityDetails as jest.MockedFunction<
-  typeof useCommunityDetails
->;
-const mockUseCheckCommunityAdmin = useCheckCommunityAdmin as jest.MockedFunction<
-  typeof useCheckCommunityAdmin
->;
+// Access wagmi mock state via globalThis.__wagmiMockState__
+// NOTE: Do NOT use jest.mock("wagmi", ...) as it pollutes global mock state
+const getWagmiState = () => (globalThis as any).__wagmiMockState__;
 
 // Test data
 const mockCommunity: CommunityDetails = {
@@ -81,29 +69,66 @@ const defaultCommunityQueryResult = {
   error: null,
 };
 
+const mockRefetch = jest.fn();
 const defaultAdminQueryResult = {
   isAdmin: true,
   isLoading: false,
   isError: false,
   error: null,
-  refetch: jest.fn(),
+  refetch: mockRefetch,
 };
 
 describe("useIsCommunityAdmin", () => {
   let queryClient: QueryClient;
+  let wagmiState: any;
+
+  // Save original functions before any tests run
+  beforeAll(() => {
+    originalUseCommunityDetails = useCommunityDetailsModule.useCommunityDetails;
+    originalUseCheckCommunityAdmin = useCheckCommunityAdminModule.useCheckCommunityAdmin;
+  });
+
+  // Restore original functions after all tests complete to prevent pollution
+  afterAll(() => {
+    // Restore the original functions by reassigning them to the module exports
+    // This prevents the spies from persisting and affecting other test files
+    if (mockUseCommunityDetails) {
+      mockUseCommunityDetails.mockRestore();
+    }
+    if (mockUseCheckCommunityAdmin) {
+      mockUseCheckCommunityAdmin.mockRestore();
+    }
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
     queryClient = createTestQueryClient();
 
-    // Reset default mock implementations
-    mockUseAccount.mockReturnValue({
+    // Get wagmi state from global mock
+    wagmiState = getWagmiState();
+
+    // Configure wagmi mock state
+    wagmiState.account = {
       address: mockAddress,
-    } as ReturnType<typeof useAccount>);
-    mockUseCommunityDetails.mockReturnValue(
-      defaultCommunityQueryResult as ReturnType<typeof useCommunityDetails>
-    );
-    mockUseCheckCommunityAdmin.mockReturnValue(defaultAdminQueryResult);
+      isConnected: true,
+      connector: null,
+    };
+
+    // Set up spies for hooks
+    mockUseCommunityDetails = spyOn(
+      useCommunityDetailsModule,
+      "useCommunityDetails"
+    ).mockReturnValue(defaultCommunityQueryResult as any);
+
+    mockUseCheckCommunityAdmin = spyOn(
+      useCheckCommunityAdminModule,
+      "useCheckCommunityAdmin"
+    ).mockReturnValue(defaultAdminQueryResult as any);
+
+    // Clear mock call history
+    mockUseCommunityDetails.mockClear();
+    mockUseCheckCommunityAdmin.mockClear();
+    mockRefetch.mockClear();
   });
 
   afterEach(() => {
@@ -487,9 +512,12 @@ describe("useIsCommunityAdmin", () => {
     });
 
     it("should handle no connected wallet", () => {
-      mockUseAccount.mockReturnValue({
+      // Configure wagmi state with no address
+      wagmiState.account = {
         address: undefined,
-      } as ReturnType<typeof useAccount>);
+        isConnected: false,
+        connector: null,
+      };
       // When no wallet is connected, admin check should return false
       mockUseCheckCommunityAdmin.mockReturnValue({
         ...defaultAdminQueryResult,

@@ -3,32 +3,43 @@
  * @description Tests grant completion revocation workflow with dual paths (on-chain and off-chain)
  */
 
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+  spyOn,
+  test,
+} from "bun:test";
+import * as fetchDataModule from "@/utilities/fetchData";
+// Import modules for spyOn
+import * as grantCompletionHelpersModule from "@/utilities/grantCompletionHelpers";
+
 // Mock ALL dependencies to avoid ESM import issues
 const mockEnsureCorrectChain = jest.fn();
 const mockSafeGetWalletClient = jest.fn();
 const mockWalletClientToSigner = jest.fn();
-const mockFetchData = jest.fn();
 const mockPerformOffChainRevoke = jest.fn();
-const mockCreateCheckIfCompletionExists = jest.fn();
-const mockValidateGrantCompletion = jest.fn();
-const mockBuildRevocationPayload = jest.fn();
 const mockGetMulticall = jest.fn();
-const mockToastSuccess = jest.fn();
-const mockToastError = jest.fn();
-const mockToast = jest.fn();
-const mockErrorManager = jest.fn();
+// NOTE: Toast mocks (mockToastSuccess, mockToastError, mockToast) removed - using global mock from bun-setup.ts
+// NOTE: errorManager mock is provided globally via bun-setup.ts
+// Do NOT define mockErrorManager here - use getMocks().errorManager instead
 const mockShowError = jest.fn();
 const mockShowSuccess = jest.fn();
 
-// Create a mock toast function that can be called directly
-const createMockToastDefault = () => {
-  const fn = jest.fn();
-  fn.success = mockToastSuccess;
-  fn.error = mockToastError;
-  fn.loading = jest.fn();
-  fn.dismiss = jest.fn();
-  return fn;
-};
+// Spies for grantCompletionHelpers and fetchData - will be set up in beforeEach
+let mockCreateCheckIfCompletionExists: ReturnType<typeof spyOn>;
+let mockValidateGrantCompletion: ReturnType<typeof spyOn>;
+let mockBuildRevocationPayload: ReturnType<typeof spyOn>;
+let mockFetchData: ReturnType<typeof spyOn>;
+
+// Access toast mock via globalThis.__mocks__
+// NOTE: Do NOT use jest.mock("react-hot-toast", ...) as it pollutes global mock state
+const getMocks = () => (globalThis as any).__mocks__;
 
 jest.mock("@/utilities/ensureCorrectChain", () => ({
   ensureCorrectChain: mockEnsureCorrectChain,
@@ -42,10 +53,7 @@ jest.mock("@/utilities/eas-wagmi-utils", () => ({
   walletClientToSigner: mockWalletClientToSigner,
 }));
 
-jest.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: mockFetchData,
-}));
+// NOTE: fetchData is mocked via spyOn in beforeEach to avoid polluting global mock state
 
 jest.mock("@/hooks/useOffChainRevoke", () => ({
   useOffChainRevoke: jest.fn(() => ({
@@ -53,11 +61,9 @@ jest.mock("@/hooks/useOffChainRevoke", () => ({
   })),
 }));
 
-jest.mock("@/utilities/grantCompletionHelpers", () => ({
-  createCheckIfCompletionExists: mockCreateCheckIfCompletionExists,
-  validateGrantCompletion: mockValidateGrantCompletion,
-  buildRevocationPayload: mockBuildRevocationPayload,
-}));
+// NOTE: grantCompletionHelpers is NOT mocked via jest.mock() to allow
+// other test files to use the real implementation. Instead, we use spyOn
+// in beforeEach/afterEach to mock specific functions.
 
 jest.mock("@show-karma/karma-gap-sdk", () => ({
   GAP: {
@@ -65,22 +71,15 @@ jest.mock("@show-karma/karma-gap-sdk", () => ({
   },
 }));
 
-const mockToastDefault = createMockToastDefault();
-jest.mock("react-hot-toast", () => ({
-  __esModule: true,
-  default: mockToastDefault,
-}));
+// NOTE: react-hot-toast mock is provided globally via bun-setup.ts
+// Access it via getMocks().toast in beforeEach
 
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: mockErrorManager,
-}));
+// NOTE: errorManager mock is provided globally via bun-setup.ts
+// Access it via getMocks().errorManager in beforeEach to avoid polluting global mock state
 
-const mockUseAccount = jest.fn();
-const mockUseChainId = jest.fn(() => 1);
-jest.mock("wagmi", () => ({
-  useAccount: mockUseAccount,
-  useChainId: mockUseChainId,
-}));
+// Access wagmi mock state via globalThis.__wagmiMockState__
+// NOTE: Do NOT use jest.mock("wagmi", ...) as it pollutes global mock state
+const getWagmiState = () => (globalThis as any).__wagmiMockState__;
 
 const mockSwitchChainAsync = jest.fn();
 jest.mock("@/hooks/useWallet", () => ({
@@ -90,6 +89,8 @@ jest.mock("@/hooks/useWallet", () => ({
 const mockGap = { fetch: { projectById: jest.fn() } };
 jest.mock("@/hooks/useGap", () => ({
   useGap: jest.fn(() => ({ gap: mockGap })),
+  getDefaultGapChainId: jest.fn(() => 1),
+  getGapClient: jest.fn(() => mockGap),
 }));
 
 const mockSetupChainAndWallet = jest.fn();
@@ -175,11 +176,13 @@ import { MESSAGES } from "@/utilities/messages";
 // Import the hook to test AFTER mocking dependencies
 const { useGrantCompletionRevoke } = require("@/hooks/useGrantCompletionRevoke");
 
-// Get the mocked toast function
-const toast = require("react-hot-toast").default;
-const mockToastFn = (global as any).__mockToastFn || toast;
+// Toast mock is accessed via getMocks().toast in beforeEach
 
 describe("useGrantCompletionRevoke", () => {
+  let wagmiState: any;
+  let mockToast: any;
+  let mockErrorManager: any;
+
   const mockGrant = {
     uid: "grant-123",
     chainID: 42161,
@@ -238,12 +241,59 @@ describe("useGrantCompletionRevoke", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseAccount.mockReturnValue({ chain: { id: 42161 } });
+
+    // Get wagmi state, toast mock, and errorManager from global mocks
+    wagmiState = getWagmiState();
+    const mocks = getMocks();
+    mockToast = mocks.toast;
+    mockErrorManager = mocks.errorManager;
+
+    // Configure wagmi mock state
+    wagmiState.account = {
+      address: "0x1234567890123456789012345678901234567890",
+      isConnected: true,
+      connector: null,
+      chain: { id: 42161 },
+    };
+    wagmiState.chainId = 42161;
+
+    // Set up spies for grantCompletionHelpers
+    mockCreateCheckIfCompletionExists = spyOn(
+      grantCompletionHelpersModule,
+      "createCheckIfCompletionExists"
+    ).mockReturnValue(mockCheckIfCompletionExists);
+
+    mockValidateGrantCompletion = spyOn(
+      grantCompletionHelpersModule,
+      "validateGrantCompletion"
+    ).mockImplementation(() => undefined);
+
+    mockBuildRevocationPayload = spyOn(
+      grantCompletionHelpersModule,
+      "buildRevocationPayload"
+    ).mockReturnValue([{ schema: "0xschema123", data: [{ uid: "0xcompletion123", value: 0n }] }]);
+
+    // Set up spy for fetchData
+    mockFetchData = spyOn(fetchDataModule, "default").mockImplementation(() => Promise.resolve({}));
+
     mockIsProjectOwner.mockReturnValue(false);
     mockIsOwner.mockReturnValue(false);
-    mockCreateCheckIfCompletionExists.mockReturnValue(mockCheckIfCompletionExists);
     mockCheckIfCompletionExists.mockResolvedValue(undefined);
     mockRefetchGrants.mockResolvedValue(undefined);
+
+    // Clear mock call history
+    if (mockToast?.mockClear) mockToast.mockClear();
+    if (mockToast?.success?.mockClear) mockToast.success.mockClear();
+    if (mockToast?.error?.mockClear) mockToast.error.mockClear();
+    if (mockErrorManager?.mockClear) mockErrorManager.mockClear();
+  });
+
+  afterEach(() => {
+    // Restore spies to prevent pollution of other test files
+    mockCreateCheckIfCompletionExists?.mockRestore();
+    mockValidateGrantCompletion?.mockRestore();
+    mockBuildRevocationPayload?.mockRestore();
+    mockFetchData?.mockRestore();
   });
 
   describe("Initialization", () => {

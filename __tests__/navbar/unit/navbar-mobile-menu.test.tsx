@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from "bun:test";
 /**
  * Unit tests for NavbarMobileMenu component - Refactored to focus on behavior
  * Tests: Drawer behavior, authentication states, navigation structure

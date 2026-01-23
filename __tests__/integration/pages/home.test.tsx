@@ -1,38 +1,28 @@
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { render, screen } from "@testing-library/react";
-import Index from "@/app/page";
 import "@testing-library/jest-dom";
 
+// Local mocks for components that have their own unit tests
+// These are NOT mocked globally in bun-setup.ts to preserve unit test isolation
 jest.mock("@/src/features/homepage/components/hero", () => ({
-  Hero: () => <div data-testid="hero" />,
-}));
-
-jest.mock("@/src/features/homepage/components/live-funding-opportunities", () => ({
-  LiveFundingOpportunities: () => <div data-testid="live-funding-opportunities" />,
-}));
-
-jest.mock("@/src/features/homepage/components/live-funding-opportunities-skeleton", () => ({
-  LiveFundingOpportunitiesSkeleton: () => <div data-testid="live-funding-opportunities-skeleton" />,
-}));
-
-jest.mock("@/src/features/homepage/components/platform-features", () => ({
-  PlatformFeatures: () => <div data-testid="platform-features" />,
+  Hero: () => <section data-testid="hero">Hero Section</section>,
 }));
 
 jest.mock("@/src/features/homepage/components/how-it-works", () => ({
-  HowItWorks: () => <div data-testid="how-it-works" />,
+  HowItWorks: () => <section data-testid="how-it-works">How It Works</section>,
 }));
 
-jest.mock("@/src/features/homepage/components/where-builders-grow", () => ({
-  WhereBuildersGrow: () => <div data-testid="where-builders-grow" />,
-}));
+// Dynamic import to ensure mocks are applied before module loads
+const getPage = async () => {
+  const { default: Index } = await import("@/app/page");
+  return Index;
+};
 
-jest.mock("@/src/features/homepage/components/join-community", () => ({
-  JoinCommunity: () => <div data-testid="join-community" />,
-}));
+let Index: Awaited<ReturnType<typeof getPage>>;
 
-jest.mock("@/src/features/homepage/components/faq", () => ({
-  FAQ: () => <div data-testid="faq" />,
-}));
+beforeAll(async () => {
+  Index = await getPage();
+});
 
 describe("Homepage", () => {
   it("renders all main components correctly", () => {

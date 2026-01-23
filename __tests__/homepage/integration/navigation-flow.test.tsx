@@ -8,26 +8,13 @@
  * - Navigation Context (3)
  */
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import HomePage from "@/app/page";
 import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 // Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
-  PAGES: {
-    FUNDERS: "/funders",
-    FUNDING_APP: "/funding-map",
-    COMMUNITIES: "/communities",
-    COMMUNITY: {
-      ALL_GRANTS: (slug: string) => `/community/${slug}/grants`,
-    },
-    REGISTRY: {
-      ROOT: "/funding-map",
-      ADD_PROGRAM: "/funding-map/add-program",
-      MANAGE_PROGRAMS: "/funding-map/manage-programs",
-    },
-  },
-}));
+// NOTE: @/utilities/pages is globally mocked in tests/bun-setup.ts with complete PAGES implementation
 
 // Mock SOCIALS utility
 jest.mock("@/utilities/socials", () => ({

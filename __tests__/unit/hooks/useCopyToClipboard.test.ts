@@ -3,37 +3,53 @@
  * @description Tests clipboard utility hook with toast notifications
  */
 
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { act, renderHook } from "@testing-library/react";
-import toast from "react-hot-toast";
-import * as errorManagerModule from "@/components/Utilities/errorManager";
+
+// All mocks are pre-registered in tests/bun-setup.ts
+// Access mocks via globalThis.__mocks__
+
+// Import after mocks are set up
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 
-// Mock dependencies
-jest.mock("react-hot-toast");
-jest.mock("@/components/Utilities/errorManager");
-
-const mockToast = toast as jest.Mocked<typeof toast>;
-const mockErrorManager = errorManagerModule.errorManager as jest.MockedFunction<
-  typeof errorManagerModule.errorManager
->;
+// Get mocks from globalThis
+const getMocks = () => (globalThis as any).__mocks__;
 
 describe("useCopyToClipboard", () => {
-  const originalClipboard = navigator.clipboard;
-  const mockWriteText = jest.fn();
+  let originalClipboard: any;
+  let mockWriteText: any;
+  let mockToast: any;
+  let mockErrorManager: any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    // Mock clipboard API
-    Object.assign(navigator, {
-      clipboard: {
+    const mocks = getMocks();
+    mockToast = mocks.toast;
+    mockErrorManager = mocks.errorManager;
+
+    // Save original clipboard
+    originalClipboard = navigator.clipboard;
+
+    // Create a new mock writeText for each test
+    mockWriteText = jest.fn();
+    // Mock clipboard API using defineProperty to allow setting readonly property
+    Object.defineProperty(navigator, "clipboard", {
+      value: {
         writeText: mockWriteText,
       },
+      configurable: true,
+      writable: true,
     });
+
+    // Clear mocks
+    if (mockToast?.success?.mockClear) mockToast.success.mockClear();
+    if (mockErrorManager?.mockClear) mockErrorManager.mockClear();
   });
 
   afterEach(() => {
-    Object.assign(navigator, {
-      clipboard: originalClipboard,
+    Object.defineProperty(navigator, "clipboard", {
+      value: originalClipboard,
+      configurable: true,
+      writable: true,
     });
   });
 
@@ -214,8 +230,10 @@ describe("useCopyToClipboard", () => {
 
   describe("Clipboard API Unavailability", () => {
     it("should return false when clipboard API is not supported", async () => {
-      Object.assign(navigator, {
-        clipboard: undefined,
+      Object.defineProperty(navigator, "clipboard", {
+        value: undefined,
+        configurable: true,
+        writable: true,
       });
 
       const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation();
@@ -235,8 +253,10 @@ describe("useCopyToClipboard", () => {
     });
 
     it("should not attempt to write when clipboard is null", async () => {
-      Object.assign(navigator, {
-        clipboard: null,
+      Object.defineProperty(navigator, "clipboard", {
+        value: null,
+        configurable: true,
+        writable: true,
       });
 
       const { result } = renderHook(() => useCopyToClipboard());
