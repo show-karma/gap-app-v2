@@ -13,6 +13,11 @@ jest.mock("@/components/Shared/ActivityCard", () => ({
   ),
 }));
 
+// Mock the ImpactContent component to avoid loading external dependencies
+jest.mock("../MainContent/ImpactContent", () => ({
+  ImpactContent: () => <div data-testid="impact-content">Impact Content Mock</div>,
+}));
+
 // Mock useOwnerStore and useProjectStore
 jest.mock("@/store", () => ({
   useOwnerStore: () => ({ isOwner: false }),

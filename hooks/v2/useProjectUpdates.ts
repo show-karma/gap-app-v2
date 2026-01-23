@@ -104,9 +104,39 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
   data.grantMilestones.forEach((milestone: GrantMilestoneWithDetails) => {
     // A milestone is completed if status is "completed" (completionDetails may or may not be present)
     const isCompleted = milestone.status === "completed";
-    // Use recipient from API (the milestone owner)
-    const attester = milestone.recipient || "";
+    // Use recipient from API (the milestone owner), with extensive fallbacks
+    // The API may include additional fields not in the type definition
+    const milestoneAny = milestone as any;
+    const attester =
+      milestone.recipient ||
+      milestoneAny.attester ||
+      milestone.completionDetails?.completedBy ||
+      milestone.fundingApplicationCompletion?.ownerAddress ||
+      milestoneAny.data?.attester ||
+      milestoneAny.data?.recipient ||
+      "";
     const chainID = parseInt(milestone.chainId, 10) || 0;
+
+    // Extract dueDate with fallbacks - API may pass raw data with endsAt
+    let milestoneEndsAt: number | undefined;
+    if (milestone.dueDate) {
+      milestoneEndsAt = Math.floor(new Date(milestone.dueDate).getTime() / 1000);
+    } else if (milestoneAny.data?.endsAt) {
+      // Raw attestation data may have endsAt as Unix timestamp
+      const endsAt = Number(milestoneAny.data.endsAt);
+      if (!isNaN(endsAt) && endsAt > 0) {
+        // Check if seconds (10 digits) or milliseconds (13+ digits)
+        const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
+        milestoneEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
+      }
+    } else if (milestoneAny.endsAt) {
+      // Direct endsAt field
+      const endsAt = Number(milestoneAny.endsAt);
+      if (!isNaN(endsAt) && endsAt > 0) {
+        const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
+        milestoneEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
+      }
+    }
 
     // Use grant info directly from API response
     const grantInfo = milestone.grant;
@@ -130,9 +160,7 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
           }
         : false,
       createdAt: milestone.createdAt || new Date().toISOString(),
-      endsAt: milestone.dueDate
-        ? Math.floor(new Date(milestone.dueDate).getTime() / 1000)
-        : undefined,
+      endsAt: milestoneEndsAt,
       source: {
         type: "grant",
         grantMilestone: {
@@ -143,9 +171,7 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
             attester,
             title: milestone.title,
             description: milestone.description,
-            endsAt: milestone.dueDate
-              ? Math.floor(new Date(milestone.dueDate).getTime() / 1000)
-              : undefined,
+            endsAt: milestoneEndsAt,
             completed: isCompleted
               ? {
                   createdAt: milestone.completionDetails?.completedAt || milestone.createdAt || "",
@@ -192,9 +218,41 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
   });
 
   // Convert grant updates to unified format
-  data.grantUpdates?.forEach((update: GrantUpdateWithDetails) => {
+  data.grantUpdates?.forEach((update: GrantUpdateWithDetails, index: number) => {
     const grantInfo = update.grant;
     const chainID = update.chainId || 0;
+    // Extract recipient with fallbacks - API may include additional fields
+    const updateAny = update as any;
+
+    // Debug: log first grant update to see all available fields
+    if (index === 0) {
+      console.log("[useProjectUpdates] First grant update raw data:", update);
+      console.log("[useProjectUpdates] First grant update as any:", updateAny);
+    }
+    const updateRecipient =
+      update.recipient ||
+      updateAny.attester ||
+      updateAny.data?.recipient ||
+      updateAny.data?.attester ||
+      "";
+
+    // Extract endsAt with fallbacks - API may pass raw data with endsAt
+    let updateEndsAt: number | undefined;
+    if (updateAny.dueDate) {
+      updateEndsAt = Math.floor(new Date(updateAny.dueDate).getTime() / 1000);
+    } else if (updateAny.data?.endsAt) {
+      const endsAt = Number(updateAny.data.endsAt);
+      if (!isNaN(endsAt) && endsAt > 0) {
+        const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
+        updateEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
+      }
+    } else if (updateAny.endsAt) {
+      const endsAt = Number(updateAny.endsAt);
+      if (!isNaN(endsAt) && endsAt > 0) {
+        const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
+        updateEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
+      }
+    }
 
     unified.push({
       uid: update.uid,
@@ -205,13 +263,14 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
       description: update.text,
       completed: false,
       createdAt: update.createdAt || new Date().toISOString(),
+      endsAt: updateEndsAt,
       grantUpdate: {
         // Partial IGrantUpdate format for backward compatibility
         type: "GrantUpdate",
         uid: update.uid,
         refUID: update.refUID || "",
-        recipient: update.recipient || "",
-        attester: update.recipient || "",
+        recipient: updateRecipient,
+        attester: updateRecipient,
         createdAt: update.createdAt || new Date().toISOString(),
         data: {
           type: "grant-update",
@@ -228,6 +287,7 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
           milestone: {
             uid: "",
             chainID,
+            attester: updateRecipient, // Add attester for consistency with grant milestones
             title: update.title,
             verified: [],
           },

@@ -49,6 +49,11 @@ export function ProjectProfilePage({ className }: ProjectProfilePageProps) {
     projectId as string
   );
 
+  // Get team count from project
+  const teamCount = project
+    ? new Set([project?.owner, ...(project?.members?.map((m) => m.address) || [])]).size
+    : 0;
+
   // Loading state
   if (isLoading || !project) {
     return (
@@ -97,10 +102,12 @@ export function ProjectProfilePage({ className }: ProjectProfilePageProps) {
 
           {/* Main Content */}
           <ProjectMainContent
+            project={project}
             milestones={allUpdates}
             milestonesCount={allUpdates.length}
             completedCount={completedCount}
             fundingCount={stats.grantsCount}
+            teamCount={teamCount}
             isAuthorized={isProjectAdmin}
           />
         </div>

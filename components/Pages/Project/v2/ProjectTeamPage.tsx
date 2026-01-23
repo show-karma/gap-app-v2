@@ -1,0 +1,105 @@
+"use client";
+
+import { useParams } from "next/navigation";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
+import { IntroDialog } from "@/components/Pages/Project/IntroDialog";
+import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
+import { useEndorsementStore } from "@/store/modals/endorsement";
+import { useIntroModalStore } from "@/store/modals/intro";
+import { cn } from "@/utilities/tailwind";
+import { ProjectHeader } from "./Header/ProjectHeader";
+import { ProjectNavigationTabs } from "./Navigation/ProjectNavigationTabs";
+import { ProjectSidePanel } from "./SidePanel/ProjectSidePanel";
+import { ProjectStatsBar } from "./StatsBar/ProjectStatsBar";
+import { TeamContent } from "./TeamContent/TeamContent";
+
+interface ProjectTeamPageProps {
+  className?: string;
+}
+
+/**
+ * ProjectTeamPage displays the team members page for a project.
+ *
+ * Layout matches the main ProjectProfilePage:
+ * - Desktop: 2-column (Side Panel 324px + Main Content flex)
+ * - Mobile: Single column (Header, Stats, Tabs, Content)
+ *
+ * Components:
+ * - ProjectHeader: Profile, name, badge, socials, description, stage
+ * - ProjectStatsBar: Horizontal stats (desktop scroll, mobile grid)
+ * - ProjectSidePanel: Donate, Endorse, Subscribe, QuickLinks (desktop only)
+ * - ProjectNavigationTabs: URL-based navigation tabs
+ * - TeamContent: List of team members
+ */
+export function ProjectTeamPage({ className }: ProjectTeamPageProps) {
+  const { projectId } = useParams();
+
+  // Modal stores for dialogs
+  const { isEndorsementOpen } = useEndorsementStore();
+  const { isIntroModalOpen } = useIntroModalStore();
+
+  // Use unified hook for all project profile data
+  const { project, isLoading, isVerified, stats } = useProjectProfile(projectId as string);
+
+  // Get team count from project
+  const teamCount = project
+    ? new Set([project?.owner, ...(project?.members?.map((m) => m.address) || [])]).size
+    : 0;
+
+  // Loading state
+  if (isLoading || !project) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]" data-testid="loading-state">
+        <div className="animate-pulse text-gray-500">Loading project...</div>
+      </div>
+    );
+  }
+
+  return (
+    <ErrorBoundary
+      fallback={
+        <div className="p-6 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+          <h3 className="text-lg font-medium text-red-800 dark:text-red-400 mb-2">
+            Unable to load project
+          </h3>
+          <p className="text-sm text-red-700 dark:text-red-300">
+            Something went wrong while loading the project profile. Please try refreshing the page.
+          </p>
+        </div>
+      }
+    >
+      {/* Dialogs */}
+      {isEndorsementOpen && <EndorsementDialog />}
+      {isIntroModalOpen && <IntroDialog />}
+
+      <div className={cn("flex flex-col gap-6 w-full", className)} data-testid="project-team-page">
+        {/* Header + Stats Bar - Connected as one visual unit */}
+        <div className="flex flex-col bg-secondary border border-border rounded-xl">
+          <ProjectHeader project={project} isVerified={isVerified} />
+          <ProjectStatsBar
+            grants={stats.grantsCount}
+            endorsements={stats.endorsementsCount}
+            lastUpdate={stats.lastUpdate}
+            completeRate={stats.completeRate}
+          />
+        </div>
+
+        {/* Main Layout: Side Panel + Content */}
+        <div className="flex flex-row gap-6" data-testid="main-layout">
+          {/* Side Panel - Desktop Only */}
+          <ProjectSidePanel project={project} />
+
+          {/* Main Content */}
+          <div className="flex flex-col gap-6 flex-1 min-w-0" data-testid="team-main-content">
+            {/* Navigation Tabs */}
+            <ProjectNavigationTabs fundingCount={stats.grantsCount} teamCount={teamCount} />
+
+            {/* Team Content */}
+            <TeamContent />
+          </div>
+        </div>
+      </div>
+    </ErrorBoundary>
+  );
+}

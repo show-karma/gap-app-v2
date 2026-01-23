@@ -1,18 +1,24 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import type { Project } from "@/types/v2/project";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { cn } from "@/utilities/tailwind";
+import { AboutContent } from "./AboutContent";
 import { ActivityFeed } from "./ActivityFeed";
 import { ActivityFilters, type ActivityFilterType, type SortOption } from "./ActivityFilters";
 import { type ContentTab, ContentTabs } from "./ContentTabs";
+import { ImpactContent } from "./ImpactContent";
 
 interface ProjectMainContentProps {
+  project?: Project | null;
   milestones: UnifiedMilestone[];
   milestonesCount?: number;
   completedCount?: number;
   fundingCount?: number;
+  teamCount?: number;
   isAuthorized?: boolean;
+  initialTab?: ContentTab;
   onTabChange?: (tab: ContentTab) => void;
   className?: string;
 }
@@ -24,15 +30,18 @@ interface ProjectMainContentProps {
  * - Activity feed (Timeline of project activities)
  */
 export function ProjectMainContent({
+  project,
   milestones,
   milestonesCount = 0,
   completedCount = 0,
   fundingCount = 0,
+  teamCount = 0,
   isAuthorized = false,
+  initialTab = "updates",
   onTabChange,
   className,
 }: ProjectMainContentProps) {
-  const [activeTab, setActiveTab] = useState<ContentTab>("updates");
+  const [activeTab, setActiveTab] = useState<ContentTab>(initialTab);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [activeFilters, setActiveFilters] = useState<ActivityFilterType[]>([]);
 
@@ -60,6 +69,7 @@ export function ProjectMainContent({
         activeTab={activeTab}
         onTabChange={handleTabChange}
         fundingCount={fundingCount}
+        teamCount={teamCount}
       />
 
       {/* Filters - only show on Updates tab */}
@@ -85,21 +95,13 @@ export function ProjectMainContent({
           />
         )}
 
-        {activeTab === "about" && (
-          <div className="text-gray-500 dark:text-gray-400" data-testid="about-content">
-            About content will be displayed here
-          </div>
-        )}
+        {activeTab === "about" && project && <AboutContent project={project} />}
         {activeTab === "funding" && (
           <div className="text-gray-500 dark:text-gray-400" data-testid="funding-content">
             Funding content will be displayed here
           </div>
         )}
-        {activeTab === "impact" && (
-          <div className="text-gray-500 dark:text-gray-400" data-testid="impact-content">
-            Impact content will be displayed here
-          </div>
-        )}
+        {activeTab === "impact" && <ImpactContent />}
       </div>
     </div>
   );

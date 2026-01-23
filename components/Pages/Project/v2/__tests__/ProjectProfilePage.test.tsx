@@ -139,6 +139,11 @@ jest.mock("@/components/Shared/ActivityCard", () => ({
   ),
 }));
 
+// Mock ImpactContent to avoid loading external dependencies
+jest.mock("../MainContent/ImpactContent", () => ({
+  ImpactContent: () => <div data-testid="impact-content">Impact Content Mock</div>,
+}));
+
 describe("ProjectProfilePage", () => {
   describe("Rendering", () => {
     it("should render project profile page", () => {

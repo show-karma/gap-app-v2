@@ -189,6 +189,11 @@ jest.mock("@/components/Utilities/ProfilePicture", () => ({
   ),
 }));
 
+// Mock ImpactContent to avoid loading external dependencies
+jest.mock("../MainContent/ImpactContent", () => ({
+  ImpactContent: () => <div data-testid="impact-content">Impact Content Mock</div>,
+}));
+
 describe("ProjectProfilePage Accessibility", () => {
   describe("Full Page Accessibility", () => {
     it("full page passes axe with acceptable violations", async () => {
@@ -308,7 +313,7 @@ describe("ProjectProfilePage Accessibility", () => {
     it("tabs are keyboard navigable", async () => {
       render(<ProjectProfilePage />);
 
-      const tabsList = screen.getByTestId("tabs-list");
+      const tabsList = screen.getByTestId("content-tabs");
       expect(tabsList).toBeInTheDocument();
 
       // Check individual tabs have proper attributes
@@ -323,13 +328,10 @@ describe("ProjectProfilePage Accessibility", () => {
       // Verify tab list has proper role
       expect(tabsList).toHaveAttribute("role", "tablist");
 
-      // Note: Radix UI tabs in test environment have aria-controls pointing to unmounted
-      // content panels which causes aria-valid-attr-value violations. This is a known
-      // limitation when testing Radix components without rendering the full tab content.
-      // The tabs themselves have proper keyboard navigation built-in via Radix.
+      // The tabs use Link components with proper roles for navigation
       const results = await axe(tabsList);
 
-      // Filter out known Radix UI test environment issues
+      // Filter out known test environment issues
       const criticalViolations = results.violations.filter((v) => v.id !== "aria-valid-attr-value");
 
       expect(criticalViolations.length).toBe(0);

@@ -12,6 +12,7 @@ import {
   getActivityFilterType,
   processActivities,
   sortActivities,
+  transformGrantsToMilestones,
   transformImpactsToMilestones,
 } from "../project-profile.service";
 
@@ -47,6 +48,22 @@ const mockGrant: Grant = {
   chainID: 1,
   refUID: "0x5678" as `0x${string}`,
   recipient: "0xabcd" as `0x${string}`,
+  createdAt: "2024-01-20T10:00:00Z",
+  details: {
+    title: "Test Grant",
+    amount: "10000",
+    currency: "USDC",
+    description: "Grant description",
+  },
+  community: {
+    uid: "community-1",
+    chainID: 1,
+    details: {
+      name: "Test Community",
+      slug: "test-community",
+      imageURL: "https://example.com/logo.png",
+    },
+  },
 };
 
 const mockProject: Project = {
@@ -111,19 +128,89 @@ describe("transformImpactsToMilestones", () => {
 });
 
 // =============================================================================
+// transformGrantsToMilestones Tests
+// =============================================================================
+
+describe("transformGrantsToMilestones", () => {
+  it("should transform grants to grant_received milestone format", () => {
+    const result = transformGrantsToMilestones([mockGrant]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      uid: "grant-received-0x1234",
+      type: "grant_received",
+      title: "Test Grant",
+      description: "Grant description",
+      createdAt: "2024-01-20T10:00:00Z",
+      completed: false,
+      chainID: 1,
+      refUID: "0x1234",
+      source: { type: "grant_received" },
+      grantReceived: {
+        amount: "10000 USDC", // Combined amount and currency
+        currency: "USDC",
+        communityName: "Test Community",
+        communitySlug: "test-community",
+        communityImage: "https://example.com/logo.png",
+        grantTitle: "Test Grant",
+        grantUID: "0x1234",
+      },
+    });
+  });
+
+  it("should use default title when grant title is missing", () => {
+    const grantNoTitle: Grant = {
+      ...mockGrant,
+      details: { ...mockGrant.details, title: undefined } as any,
+    };
+
+    const result = transformGrantsToMilestones([grantNoTitle]);
+    expect(result[0].title).toBe("Grant Received");
+  });
+
+  it("should use current date when createdAt is missing", () => {
+    const grantNoDate: Grant = {
+      ...mockGrant,
+      createdAt: undefined,
+    };
+
+    const result = transformGrantsToMilestones([grantNoDate]);
+    expect(result[0].createdAt).toBeDefined();
+  });
+
+  it("should handle grant without community", () => {
+    const grantNoCommunity: Grant = {
+      ...mockGrant,
+      community: undefined,
+    };
+
+    const result = transformGrantsToMilestones([grantNoCommunity]);
+    expect(result[0].grantReceived?.communityName).toBeUndefined();
+    expect(result[0].grantReceived?.communityImage).toBeUndefined();
+  });
+
+  it("should return empty array for empty input", () => {
+    const result = transformGrantsToMilestones([]);
+    expect(result).toEqual([]);
+  });
+});
+
+// =============================================================================
 // combineUpdatesAndImpacts Tests
 // =============================================================================
 
 describe("combineUpdatesAndImpacts", () => {
-  it("should combine milestones and impacts", () => {
+  it("should combine milestones, impacts, and grants", () => {
     const milestones = [mockMilestone];
     const impacts = [mockImpact];
+    const grants = [mockGrant];
 
-    const result = combineUpdatesAndImpacts(milestones, impacts);
+    const result = combineUpdatesAndImpacts(milestones, impacts, grants);
 
-    expect(result).toHaveLength(2);
+    expect(result).toHaveLength(3);
     expect(result[0]).toEqual(mockMilestone);
     expect(result[1].type).toBe("impact");
+    expect(result[2].type).toBe("grant_received");
   });
 
   it("should handle empty milestones", () => {
@@ -139,6 +226,14 @@ describe("combineUpdatesAndImpacts", () => {
   it("should handle both empty", () => {
     const result = combineUpdatesAndImpacts([], []);
     expect(result).toEqual([]);
+  });
+
+  it("should include grants when provided", () => {
+    const result = combineUpdatesAndImpacts([mockMilestone], [], [mockGrant]);
+
+    expect(result).toHaveLength(2);
+    expect(result[1].type).toBe("grant_received");
+    expect(result[1].grantReceived?.amount).toBe("10000 USDC");
   });
 });
 
@@ -200,6 +295,7 @@ describe("calculateProfileStats", () => {
       grantsCount: 1,
       endorsementsCount: 2,
       lastUpdate: new Date("2024-01-10T10:00:00Z"),
+      completeRate: 100,
     });
   });
 
@@ -229,7 +325,7 @@ describe("calculateProfileStats", () => {
 // =============================================================================
 
 describe("aggregateProjectProfileData", () => {
-  it("should aggregate all data correctly", () => {
+  it("should aggregate all data correctly including grant_received items", () => {
     const result = aggregateProjectProfileData(
       mockProject,
       [mockGrant],
@@ -238,10 +334,16 @@ describe("aggregateProjectProfileData", () => {
     );
 
     expect(result.isVerified).toBe(true);
-    expect(result.allUpdates).toHaveLength(2);
+    // Should include: 1 milestone + 1 impact + 1 grant_received
+    expect(result.allUpdates).toHaveLength(3);
     expect(result.completedCount).toBe(1);
     expect(result.stats.grantsCount).toBe(1);
     expect(result.stats.endorsementsCount).toBe(2);
+
+    // Verify grant_received item is included
+    const grantReceivedItem = result.allUpdates.find((u) => u.type === "grant_received");
+    expect(grantReceivedItem).toBeDefined();
+    expect(grantReceivedItem?.grantReceived?.amount).toBe("10000 USDC");
   });
 
   it("should handle empty data", () => {
@@ -301,6 +403,11 @@ describe("getActivityFilterType", () => {
 
   it("should return funding for grant_update type", () => {
     const milestone = { ...mockMilestone, type: "grant_update" as const };
+    expect(getActivityFilterType(milestone)).toBe("funding");
+  });
+
+  it("should return funding for grant_received type", () => {
+    const milestone = { ...mockMilestone, type: "grant_received" as const };
     expect(getActivityFilterType(milestone)).toBe("funding");
   });
 

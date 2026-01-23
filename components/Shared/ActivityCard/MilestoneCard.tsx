@@ -421,18 +421,17 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
       completionReason ||
       completionProof ||
       completionDeliverables ? (
-        <div className="relative flex flex-col gap-2.5 mt-4">
-          {/* Timeline badge - orange circle positioned on the gray line (matches Figma 24x24) */}
-          <div className="absolute left-[-40px] top-[0px] w-6 h-6 flex items-center justify-center z-10 bg-orange-50 dark:bg-orange-900/30 rounded-full">
-            <div className="w-3 h-3 rounded-full bg-orange-400" />
-          </div>
-
+        <div className="flex flex-col gap-2.5 mt-4 pl-10">
           {/* Timeline header: Milestone, Due date, and Posted by */}
-          <div className="flex flex-row items-center justify-between gap-2 flex-wrap pl-10">
+          <div className="relative flex flex-row items-center justify-between gap-2 flex-wrap">
+            {/* Timeline badge - vertically centered relative to header row, -left-20 to reach main timeline */}
+            <div className="absolute -left-20 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center z-10 bg-orange-50 dark:bg-orange-900/30 rounded-full">
+              <div className="w-[3px] h-[3px] rounded-full bg-orange-400" />
+            </div>
             {/* Left side: Milestone label and Due date */}
             <div className="flex flex-row items-center gap-2.5 flex-wrap">
               <span className="text-sm font-semibold text-foreground">Milestone</span>
-              {endsAt && (
+              {endsAt && endsAt > 0 && new Date(endsAt * 1000).getFullYear() >= 2000 && (
                 <span className="text-sm font-semibold text-muted-foreground">
                   Due on {formatDate(new Date(endsAt * 1000).toISOString())}
                 </span>
@@ -459,7 +458,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
           </div>
 
           {/* Completion card - aligned with header */}
-          <div className="pl-10">{renderMilestoneCompletion()}</div>
+          <div>{renderMilestoneCompletion()}</div>
         </div>
       ) : null}
     </div>

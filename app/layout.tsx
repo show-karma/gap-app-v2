@@ -8,6 +8,7 @@ import "react-day-picker/dist/style.css";
 import "@uiw/react-markdown-preview/markdown.css";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Analytics } from "@vercel/analytics/react";
+import { Agentation } from "agentation";
 import { ThemeProvider } from "next-themes";
 import { Suspense } from "react";
 import { Toaster } from "react-hot-toast";
@@ -19,6 +20,7 @@ import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider"
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { Footer } from "@/src/components/footer/footer";
 import { Navbar } from "@/src/components/navbar/navbar";
+import { envVars } from "@/utilities/enviromentVars";
 
 export const metadata = defaultMetadata;
 
@@ -32,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <HotjarAnalytics />
       </Suspense>
       <body suppressHydrationWarning>
+        {envVars.VERCEL_ENV !== "production" && <Agentation />}
         <ThemeProvider
           defaultTheme="light"
           attribute="class"

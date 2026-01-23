@@ -41,18 +41,61 @@ export function transformImpactsToMilestones(impacts: ProjectImpact[]): UnifiedM
 }
 
 /**
- * Combines milestones and impacts into a unified activity list.
+ * Transforms grants into unified milestone format for "Grant Received" timeline items.
+ *
+ * @param grants - Array of grants from the API
+ * @returns Array of UnifiedMilestone items with type "grant_received"
+ */
+export function transformGrantsToMilestones(grants: Grant[]): UnifiedMilestone[] {
+  return grants.map((grant) => {
+    // Get amount - may already include currency (e.g., "80000 USDC")
+    const rawAmount = grant.details?.amount || grant.amount;
+    const currency = grant.details?.currency;
+
+    // Only append currency if rawAmount doesn't already contain it
+    const amountHasCurrency = rawAmount && currency && rawAmount.includes(currency);
+    const amount =
+      rawAmount && currency && !amountHasCurrency ? `${rawAmount} ${currency}` : rawAmount;
+
+    return {
+      uid: `grant-received-${grant.uid}`,
+      type: "grant_received" as const,
+      title: grant.details?.title || "Grant Received",
+      description: grant.details?.description,
+      createdAt: grant.createdAt || new Date().toISOString(),
+      completed: false,
+      chainID: grant.chainID,
+      refUID: grant.uid,
+      source: { type: "grant_received" },
+      grantReceived: {
+        amount,
+        currency,
+        communityName: grant.community?.details?.name,
+        communitySlug: grant.community?.details?.slug,
+        communityImage: grant.community?.details?.imageURL,
+        grantTitle: grant.details?.title,
+        grantUID: grant.uid,
+      },
+    };
+  });
+}
+
+/**
+ * Combines milestones, impacts, and grants into a unified activity list.
  *
  * @param milestones - Array of milestones from useProjectUpdates
  * @param impacts - Array of impacts from useProjectImpacts
+ * @param grants - Optional array of grants for "Grant Received" items
  * @returns Combined array of UnifiedMilestone items
  */
 export function combineUpdatesAndImpacts(
   milestones: UnifiedMilestone[],
-  impacts: ProjectImpact[]
+  impacts: ProjectImpact[],
+  grants: Grant[] = []
 ): UnifiedMilestone[] {
   const impactItems = transformImpactsToMilestones(impacts);
-  return [...milestones, ...impactItems];
+  const grantItems = transformGrantsToMilestones(grants);
+  return [...milestones, ...impactItems, ...grantItems];
 }
 
 /**
@@ -122,7 +165,7 @@ export function aggregateProjectProfileData(
   milestones: UnifiedMilestone[],
   impacts: ProjectImpact[]
 ): ProjectProfileData {
-  const allUpdates = combineUpdatesAndImpacts(milestones, impacts);
+  const allUpdates = combineUpdatesAndImpacts(milestones, impacts, grants);
   const completedCount = countCompletedMilestones(allUpdates);
   const isVerified = determineProjectVerification(grants);
   const stats = calculateProfileStats(project, grants, allUpdates);
@@ -167,6 +210,7 @@ export function getActivityFilterType(milestone: UnifiedMilestone): ActivityFilt
   switch (milestone.type) {
     case "grant":
     case "grant_update":
+    case "grant_received":
       return "funding";
     case "project":
     case "milestone":

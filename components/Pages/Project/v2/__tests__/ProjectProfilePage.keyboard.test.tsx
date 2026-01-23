@@ -90,6 +90,11 @@ jest.mock("@/store", () => ({
   useProjectStore: () => ({ isProjectAdmin: false }),
 }));
 
+// Mock ImpactContent to avoid loading external dependencies
+jest.mock("../MainContent/ImpactContent", () => ({
+  ImpactContent: () => <div data-testid="impact-content">Impact Content Mock</div>,
+}));
+
 const mockProject: Project = {
   uid: "0x1234567890123456789012345678901234567890" as `0x${string}`,
   chainID: 1,
@@ -151,7 +156,7 @@ describe("Keyboard Navigation Tests", () => {
       await user.tab();
 
       // One of the tab triggers should be focused
-      const tabsList = screen.getByTestId("tabs-list");
+      const tabsList = screen.getByTestId("content-tabs");
       expect(tabsList.contains(document.activeElement)).toBe(true);
     });
 
@@ -681,7 +686,7 @@ describe("Keyboard Navigation Tests", () => {
 
       // Tab to first tab
       await user.tab();
-      const tabsList = screen.getByTestId("tabs-list");
+      const tabsList = screen.getByTestId("content-tabs");
       expect(tabsList.contains(document.activeElement)).toBe(true);
     });
 

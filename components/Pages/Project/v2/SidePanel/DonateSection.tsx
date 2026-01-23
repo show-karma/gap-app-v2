@@ -94,6 +94,7 @@ export function DonateSection({ project, className }: DonateSectionProps) {
         isOpen={isDonateModalOpen}
         onClose={() => setIsDonateModalOpen(false)}
         project={donationProject}
+        initialAmount={amount}
       />
     </>
   );

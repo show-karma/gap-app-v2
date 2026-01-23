@@ -1,13 +1,12 @@
-import { Suspense } from "react";
-import { GrantsLayout } from "@/components/Pages/Project/Grants/Layout";
-import { ProjectGrantsLayoutLoading } from "@/components/Pages/Project/Loading/Grants/Layout";
-
-const Page = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <Suspense fallback={<ProjectGrantsLayoutLoading>{children}</ProjectGrantsLayoutLoading>}>
-      <GrantsLayout>{children}</GrantsLayout>
-    </Suspense>
-  );
+/**
+ * Funding Layout
+ *
+ * This layout is now a pass-through to support the v2 redesign.
+ * The main /funding page uses the new v2 ProjectFundingPage layout.
+ * Sub-routes like /funding/[grantUid] use GrantsLayout component directly.
+ */
+const FundingLayout = ({ children }: { children: React.ReactNode }) => {
+  return <>{children}</>;
 };
 
-export default Page;
+export default FundingLayout;

@@ -19,6 +19,8 @@ export interface SingleProjectDonateModalProps {
     imageURL?: string;
     chainID?: number;
   };
+  /** Initial amount to pre-fill in the donation input */
+  initialAmount?: string;
 }
 
 export interface PaymentMethodSelectorProps {

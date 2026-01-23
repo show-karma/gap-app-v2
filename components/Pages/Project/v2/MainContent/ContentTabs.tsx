@@ -1,55 +1,75 @@
 "use client";
 
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
-export type ContentTab = "updates" | "about" | "funding" | "impact";
+export type ContentTab = "updates" | "about" | "funding" | "impact" | "team";
 
 interface ContentTabsProps {
   activeTab: ContentTab;
-  onTabChange: (tab: ContentTab) => void;
+  onTabChange?: (tab: ContentTab) => void;
   fundingCount?: number;
+  teamCount?: number;
   className?: string;
 }
 
 /**
  * ContentTabs provides tab navigation for the project profile page.
- * Desktop: Below header
- * Mobile: At very top of page
+ * Uses Next.js Links for actual page navigation.
  */
-export function ContentTabs({ activeTab, onTabChange, fundingCount, className }: ContentTabsProps) {
-  const tabs: { value: ContentTab; label: string; count?: number }[] = [
-    { value: "updates", label: "Updates" },
-    { value: "about", label: "About" },
-    { value: "funding", label: "Funding", count: fundingCount },
-    { value: "impact", label: "Impact" },
+export function ContentTabs({
+  activeTab,
+  onTabChange,
+  fundingCount,
+  teamCount,
+  className,
+}: ContentTabsProps) {
+  const params = useParams();
+  const projectId = params?.projectId as string;
+
+  const tabs: { value: ContentTab; label: string; href: string; count?: number }[] = [
+    { value: "updates", label: "Updates", href: PAGES.PROJECT.OVERVIEW(projectId) },
+    { value: "about", label: "About", href: PAGES.PROJECT.ABOUT(projectId) },
+    {
+      value: "funding",
+      label: "Funding",
+      href: PAGES.PROJECT.GRANTS(projectId),
+      count: fundingCount,
+    },
+    { value: "impact", label: "Impact", href: PAGES.PROJECT.IMPACT.ROOT(projectId) },
+    { value: "team", label: "Team", href: PAGES.PROJECT.TEAM(projectId), count: teamCount },
   ];
 
   return (
-    <Tabs
-      value={activeTab}
-      onValueChange={(value) => onTabChange(value as ContentTab)}
-      className={cn("w-full", className)}
+    <div
+      role="tablist"
+      aria-label="Project sections"
+      className={cn("w-full flex justify-start border-b border-border gap-0", className)}
       data-testid="content-tabs"
     >
-      <TabsList
-        className="w-full justify-start bg-transparent border-b border-border rounded-none h-auto p-0 gap-0"
-        data-testid="tabs-list"
-      >
-        {tabs.map((tab) => (
-          <TabsTrigger
+      {tabs.map((tab) => {
+        const isActive = activeTab === tab.value;
+        return (
+          <Link
             key={tab.value}
-            value={tab.value}
+            href={tab.href}
+            role="tab"
+            aria-selected={isActive}
+            aria-controls={`${tab.value}-panel`}
+            onClick={() => onTabChange?.(tab.value)}
             className={cn(
-              "relative px-4 py-3 rounded-none bg-transparent shadow-none",
-              "text-muted-foreground font-medium",
-              "data-[state=active]:text-foreground",
-              "data-[state=active]:bg-transparent data-[state=active]:shadow-none",
+              "relative px-4 py-3 text-sm font-medium transition-colors",
+              "text-muted-foreground hover:text-foreground",
+              isActive && "text-foreground",
               "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5",
-              "after:bg-transparent data-[state=active]:after:bg-foreground"
+              "after:bg-transparent",
+              isActive && "after:bg-foreground"
             )}
             data-testid={`tab-${tab.value}`}
+            data-state={isActive ? "active" : "inactive"}
           >
             <span className="flex items-center gap-2">
               {tab.label}
@@ -63,9 +83,9 @@ export function ContentTabs({ activeTab, onTabChange, fundingCount, className }:
                 </Badge>
               )}
             </span>
-          </TabsTrigger>
-        ))}
-      </TabsList>
-    </Tabs>
+          </Link>
+        );
+      })}
+    </div>
   );
 }
