@@ -77,8 +77,35 @@ export const INDEXER = {
     PROJECTS: {
       GET: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}`,
       SLUG_CHECK: (slug: string) => `/v2/projects/slug/check/${slug}`,
+      LIST: (limit?: number) => `/v2/projects${limit ? `?limit=${limit}` : ""}`,
       SEARCH: (query: string, limit?: number) =>
         `/v2/projects?q=${encodeURIComponent(query)}${limit ? `&limit=${limit}` : ""}`,
+      /**
+       * Paginated list/search with sorting support
+       * Returns { payload: Project[], pagination: { ... } } when page is provided
+       * When includeStats is true, includes stats for each project (grantsCount, grantMilestonesCount, roadmapItemsCount)
+       * When excludeTestProjects is true, excludes projects with "test" in title
+       */
+      LIST_PAGINATED: (params?: {
+        q?: string;
+        page?: number;
+        limit?: number;
+        sortBy?: string;
+        sortOrder?: "asc" | "desc";
+        includeStats?: boolean;
+        excludeTestProjects?: boolean;
+      }) => {
+        const queryParams = new URLSearchParams();
+        if (params?.q) queryParams.set("q", params.q);
+        if (params?.page !== undefined) queryParams.set("page", params.page.toString());
+        if (params?.limit !== undefined) queryParams.set("limit", params.limit.toString());
+        if (params?.sortBy) queryParams.set("sortBy", params.sortBy);
+        if (params?.sortOrder) queryParams.set("sortOrder", params.sortOrder);
+        if (params?.includeStats) queryParams.set("includeStats", "true");
+        if (params?.excludeTestProjects) queryParams.set("excludeTestProjects", "true");
+        const query = queryParams.toString();
+        return `/v2/projects${query ? `?${query}` : ""}`;
+      },
       GRANTS: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/grants`,
       GRANT_MILESTONES: (projectUid: string, programId: string) =>
         `/v2/projects/${projectUid}/grants/${programId}/milestones`,
@@ -219,7 +246,12 @@ export const INDEXER = {
           limit?: number;
           programId?: string;
           status?: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
-          sortBy?: "project_title" | "grant_title" | "payout_amount" | "disbursed_amount" | "status";
+          sortBy?:
+            | "project_title"
+            | "grant_title"
+            | "payout_amount"
+            | "disbursed_amount"
+            | "status";
           sortOrder?: "asc" | "desc";
         }
       ) => {

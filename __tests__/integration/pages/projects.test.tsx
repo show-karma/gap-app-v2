@@ -2,34 +2,23 @@ import { render, screen } from "@testing-library/react";
 import Projects from "@/app/projects/page";
 import "@testing-library/jest-dom";
 
-jest.mock("@/components/Pages/NewProjects", () => ({
-  NewProjectsPage: () => <div data-testid="new-projects-page">New Projects Page</div>,
-}));
-
-jest.mock("@/utilities/indexer/getNewProjects", () => ({
-  getNewProjects: jest.fn().mockResolvedValue({
-    projects: Array(10).fill({}),
-    pageInfo: {
-      page: 0,
-      pageLimit: 10,
-      totalItems: 100,
-    },
-  }),
+jest.mock("@/components/Pages/Projects", () => ({
+  ProjectsExplorer: () => <div data-testid="projects-explorer">Projects Explorer</div>,
+  ProjectsHeroSection: () => <div data-testid="projects-hero">Projects Hero Section</div>,
+  ProjectsLoading: () => <div data-testid="projects-loading">Loading...</div>,
+  ProjectsStatsSection: () => <div data-testid="projects-stats">Stats Section</div>,
 }));
 
 describe("Projects Page", () => {
-  it("renders the NewProjectsPage component", () => {
+  it("renders the ProjectsExplorer component", () => {
     render(<Projects />);
-    expect(screen.getByTestId("new-projects-page")).toBeInTheDocument();
-    expect(screen.getByText("New Projects Page")).toBeInTheDocument();
+    expect(screen.getByTestId("projects-explorer")).toBeInTheDocument();
+    expect(screen.getByText("Projects Explorer")).toBeInTheDocument();
   });
 
-  it("mocks data fetching correctly", async () => {
-    const { getNewProjects } = require("@/utilities/indexer/getNewProjects");
-    const { projects, pageInfo } = await getNewProjects(10, 0, "createdAt", "desc");
-
-    expect(projects).toHaveLength(10);
-    expect(pageInfo.page).toEqual(0);
-    expect(pageInfo.pageLimit).toEqual(10);
+  it("renders the ProjectsHeroSection component", () => {
+    render(<Projects />);
+    expect(screen.getByTestId("projects-hero")).toBeInTheDocument();
+    expect(screen.getByText("Projects Hero Section")).toBeInTheDocument();
   });
 });
