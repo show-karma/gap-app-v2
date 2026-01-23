@@ -5,8 +5,7 @@ import { fundingProgramsService } from "@/src/features/funding-map/services/fund
 import type { FundingProgram } from "@/src/features/funding-map/types/funding-program";
 import { useFundingOpportunities } from "../useFundingOpportunities";
 
-// Mock the service
-jest.mock("@/src/features/funding-map/services/funding-programs.service");
+// NOTE: @/src/features/funding-map/services/funding-programs.service is globally mocked in tests/bun-setup.ts
 
 const mockGetAll = fundingProgramsService.getAll as jest.MockedFunction<
   typeof fundingProgramsService.getAll

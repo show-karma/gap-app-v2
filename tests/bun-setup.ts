@@ -876,6 +876,28 @@ registerMock("@/utilities/retries", {
 //   getProjectGrants: mockGetProjectGrants,
 // });
 
+// Mock @/src/features/funding-map/services/funding-programs.service for useFundingOpportunities tests
+const mockFundingProgramsGetAll = createMockFn();
+mock.module("@/src/features/funding-map/services/funding-programs.service", () => ({
+  fundingProgramsService: {
+    getAll: mockFundingProgramsGetAll,
+  },
+}));
+registerMock("@/src/features/funding-map/services/funding-programs.service", {
+  fundingProgramsService: {
+    getAll: mockFundingProgramsGetAll,
+  },
+});
+
+// Mock @/services/community-grants.service for useCommunityGrants tests
+const mockGetCommunityGrants = createMockFn();
+mock.module("@/services/community-grants.service", () => ({
+  getCommunityGrants: mockGetCommunityGrants,
+}));
+registerMock("@/services/community-grants.service", {
+  getCommunityGrants: mockGetCommunityGrants,
+});
+
 // Register mock for both aliased and relative paths
 mock.module("@/utilities/indexer", () => indexerMock);
 mock.module("./utilities/indexer", () => indexerMock);

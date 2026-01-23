@@ -5,8 +5,7 @@ import { getCommunityGrants } from "@/services/community-grants.service";
 import type { CommunityGrant } from "@/types/v2/community-grant";
 import { useCommunityGrants } from "../useCommunityGrants";
 
-// Mock the service
-jest.mock("@/services/community-grants.service");
+// NOTE: @/services/community-grants.service is globally mocked in tests/bun-setup.ts
 
 const mockGetCommunityGrants = getCommunityGrants as jest.MockedFunction<typeof getCommunityGrants>;
 
