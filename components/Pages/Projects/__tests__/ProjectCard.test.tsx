@@ -17,6 +17,11 @@ jest.mock("@/components/Utilities/ProfilePicture", () => ({
   ),
 }));
 
+// Mock MarkdownPreview component - renders source as plain text for testing
+jest.mock("@/components/Utilities/MarkdownPreview", () => ({
+  MarkdownPreview: ({ source }: { source: string }) => <span>{source}</span>,
+}));
+
 describe("ProjectCard", () => {
   const createMockProject = (overrides: Partial<Project> = {}): Project => ({
     uid: "0x123" as `0x${string}`,
