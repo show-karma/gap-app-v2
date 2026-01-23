@@ -4,7 +4,11 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import type { Project } from "@/types/v2/project";
 import { formatDate } from "@/utilities/formatDate";
+import { rewriteHeadingsToLevel } from "@/utilities/markdown";
 import { PAGES } from "@/utilities/pages";
+
+// Demote all headings (h1-h5) to h6 for card descriptions
+const demoteAllHeadings = rewriteHeadingsToLevel(6);
 
 interface ProjectCardProps {
   project: Project;
@@ -64,11 +68,12 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
             Created on {formatDate(createdAt)}
           </p>
 
-          {/* Description with markdown - links rendered as spans to avoid nested <a> tags */}
+          {/* Description with markdown - links rendered as spans to avoid nested <a> tags, headings demoted to h6 */}
           <div className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 overflow-hidden mb-4 flex-1">
             <MarkdownPreview
               source={details.description || details.missionSummary || "No description available"}
               className="!text-sm !leading-relaxed [&>*]:!m-0 [&>*]:!p-0"
+              rehypeRewrite={(node) => demoteAllHeadings(node)}
               components={{
                 a: ({ children }) => (
                   <span className="text-blue-600 dark:text-blue-400 underline">{children}</span>
