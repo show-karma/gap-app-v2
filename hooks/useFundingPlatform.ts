@@ -174,6 +174,7 @@ export const useProgramConfig = (programId: string) => {
     updateConfig: updateConfigMutation.mutate,
     updateFormSchema: updateFormSchemaMutation.mutate,
     toggleStatus: toggleStatusMutation.mutate,
+    toggleStatusAsync: toggleStatusMutation.mutateAsync,
     isUpdating:
       updateConfigMutation.isPending ||
       updateFormSchemaMutation.isPending ||

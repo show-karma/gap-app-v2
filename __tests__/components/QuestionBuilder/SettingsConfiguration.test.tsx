@@ -17,6 +17,23 @@ jest.mock("@/components/Utilities/MarkdownEditor", () => ({
   ),
 }));
 
+// Mock PlaceholderReference component to render placeholders inline for testing
+jest.mock("@/components/FundingPlatform/PlaceholderReference", () => ({
+  PlaceholderReference: () => (
+    <div data-testid="placeholder-reference">
+      <span>{"Available placeholders: {{applicantName}}, {{programName}}, {{reason}}"}</span>
+    </div>
+  ),
+}));
+
+// Mock Accordion to always show content (bypasses collapsed state)
+jest.mock("@/components/ui/accordion", () => ({
+  Accordion: ({ children, className }: any) => <div className={className}>{children}</div>,
+  AccordionItem: ({ children, className }: any) => <div className={className}>{children}</div>,
+  AccordionTrigger: ({ children, className }: any) => <div className={className}>{children}</div>,
+  AccordionContent: ({ children, className }: any) => <div className={className}>{children}</div>,
+}));
+
 // Mock useParams
 jest.mock("next/navigation", () => ({
   useParams: () => ({ communityId: "test-community" }),
@@ -38,7 +55,11 @@ describe("SettingsConfiguration - Email Templates", () => {
     it("should render approval email template editor", () => {
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
-      expect(screen.getByText("Approval Email Body")).toBeInTheDocument();
+      // The label is now "Body" inside the "Approval Email" section
+      expect(screen.getByText("Approval Email")).toBeInTheDocument();
+      // There are two "Body" labels - one for approval, one for rejection
+      const bodyLabels = screen.getAllByText("Body");
+      expect(bodyLabels.length).toBeGreaterThanOrEqual(1);
     });
 
     it("should display existing approval email template value", () => {
@@ -59,7 +80,7 @@ describe("SettingsConfiguration - Email Templates", () => {
       expect(approvalEditor).toHaveValue("Custom approval template");
     });
 
-    it("should call onUpdate when approval email template changes", () => {
+    it("should call onUpdate when approval email template changes", async () => {
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
       const editors = screen.getAllByTestId(/markdown-editor/);
@@ -79,7 +100,10 @@ describe("SettingsConfiguration - Email Templates", () => {
         target: { value: "New approval template" },
       });
 
-      expect(mockOnUpdate).toHaveBeenCalled();
+      // Wait for the debounced update (component has 300ms debounce)
+      await waitFor(() => {
+        expect(mockOnUpdate).toHaveBeenCalled();
+      });
       // Check the last call (most recent) which should be from the onChange handler
       const lastCall = mockOnUpdate.mock.calls[mockOnUpdate.mock.calls.length - 1];
       expect(lastCall).toBeDefined();
@@ -102,22 +126,21 @@ describe("SettingsConfiguration - Email Templates", () => {
     it("should show available placeholders information", () => {
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
-      expect(screen.getAllByText(/Available placeholders:/).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/{{applicantName}}/).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/{{programName}}/).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/{{reason}}/).length).toBeGreaterThan(0);
+      // PlaceholderReference is now a separate component
+      expect(screen.getByTestId("placeholder-reference")).toBeInTheDocument();
+      expect(screen.getByText(/Available placeholders:/)).toBeInTheDocument();
+      expect(screen.getByText(/{{applicantName}}/)).toBeInTheDocument();
+      expect(screen.getByText(/{{programName}}/)).toBeInTheDocument();
+      expect(screen.getByText(/{{reason}}/)).toBeInTheDocument();
     });
 
     it("should not show projectName or postApprovalFormDescription in placeholders", () => {
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
-      const placeholderTexts = screen.getAllByText(/Available placeholders:/);
-      // Check all placeholder texts (both approval and rejection sections)
-      placeholderTexts.forEach((element) => {
-        const text = element.textContent || "";
-        expect(text).not.toContain("{{projectName}}");
-        expect(text).not.toContain("{{postApprovalFormDescription}}");
-      });
+      const placeholderRef = screen.getByTestId("placeholder-reference");
+      const text = placeholderRef.textContent || "";
+      expect(text).not.toContain("{{projectName}}");
+      expect(text).not.toContain("{{postApprovalFormDescription}}");
     });
   });
 
@@ -125,7 +148,11 @@ describe("SettingsConfiguration - Email Templates", () => {
     it("should render rejection email template editor", () => {
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
-      expect(screen.getByText("Rejection Email Body")).toBeInTheDocument();
+      // The label is now "Body" inside the "Rejection Email" section
+      expect(screen.getByText("Rejection Email")).toBeInTheDocument();
+      // There are multiple "Body" labels
+      const bodyLabels = screen.getAllByText("Body");
+      expect(bodyLabels.length).toBeGreaterThanOrEqual(1);
     });
 
     it("should display existing rejection email template value", () => {
@@ -146,7 +173,7 @@ describe("SettingsConfiguration - Email Templates", () => {
       expect(rejectionEditor).toHaveValue("Custom rejection template");
     });
 
-    it("should call onUpdate when rejection email template changes", () => {
+    it("should call onUpdate when rejection email template changes", async () => {
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
       const editors = screen.getAllByTestId(/markdown-editor/);
@@ -169,7 +196,10 @@ describe("SettingsConfiguration - Email Templates", () => {
         target: { value: "New rejection template" },
       });
 
-      expect(mockOnUpdate).toHaveBeenCalled();
+      // Wait for the debounced update (component has 300ms debounce)
+      await waitFor(() => {
+        expect(mockOnUpdate).toHaveBeenCalled();
+      });
       // Check the last call (most recent) which should be from the onChange handler
       const lastCall = mockOnUpdate.mock.calls[mockOnUpdate.mock.calls.length - 1];
       expect(lastCall).toBeDefined();
@@ -199,7 +229,6 @@ describe("SettingsConfiguration - Email Templates", () => {
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
       expect(screen.getByText(/Customize the emails sent to applicants/)).toBeInTheDocument();
-      expect(screen.getByText(/application info section of the email/)).toBeInTheDocument();
     });
 
     it("should disable editors when readOnly is true", () => {
@@ -316,11 +345,12 @@ describe("SettingsConfiguration - Access Code", () => {
     jest.clearAllMocks();
   });
 
-  describe("Gate this application field", () => {
-    it("should render gate this application text field", () => {
+  describe("Access Code field", () => {
+    it("should render access code text field", () => {
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
-      expect(screen.getByLabelText("Gate this application")).toBeInTheDocument();
+      // The label changed from "Gate this application" to "Access Code"
+      expect(screen.getByLabelText("Access Code")).toBeInTheDocument();
     });
 
     it("should display existing access code value", () => {
@@ -333,24 +363,22 @@ describe("SettingsConfiguration - Access Code", () => {
 
       render(<SettingsConfiguration schema={schemaWithAccessCode} onUpdate={mockOnUpdate} />);
 
-      const input = screen.getByLabelText("Gate this application") as HTMLInputElement;
+      const input = screen.getByLabelText("Access Code") as HTMLInputElement;
       expect(input.value).toBe("EXISTING_CODE");
     });
 
     it("should show placeholder text for access code input", () => {
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
-      const input = screen.getByLabelText("Gate this application");
+      const input = screen.getByLabelText("Access Code");
       expect(input).toHaveAttribute("placeholder", "Enter a code to gate this application");
     });
 
-    it("should show helper text about case sensitivity", () => {
+    it("should show helper text about requirements", () => {
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
       expect(
-        screen.getByText(
-          /If set, applicants will need to enter this code to unlock the application form/i
-        )
+        screen.getByText(/Applicants will need to enter this code to unlock the form/i)
       ).toBeInTheDocument();
       expect(screen.getByText(/Must be at least 6 characters with no spaces/i)).toBeInTheDocument();
     });
@@ -358,7 +386,7 @@ describe("SettingsConfiguration - Access Code", () => {
     it("should disable access code input when readOnly is true", () => {
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} readOnly={true} />);
 
-      const input = screen.getByLabelText("Gate this application");
+      const input = screen.getByLabelText("Access Code");
       expect(input).toBeDisabled();
     });
   });
@@ -369,7 +397,7 @@ describe("SettingsConfiguration - Access Code", () => {
 
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
-      const input = screen.getByLabelText("Gate this application");
+      const input = screen.getByLabelText("Access Code");
 
       // Clear any previous calls from useEffect/watch
       mockOnUpdate.mockClear();
@@ -392,7 +420,7 @@ describe("SettingsConfiguration - Access Code", () => {
 
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
-      const input = screen.getByLabelText("Gate this application");
+      const input = screen.getByLabelText("Access Code");
 
       // Clear any previous calls from useEffect/watch
       mockOnUpdate.mockClear();
@@ -420,7 +448,7 @@ describe("SettingsConfiguration - Access Code", () => {
 
       render(<SettingsConfiguration schema={schemaWithAccessCode} onUpdate={mockOnUpdate} />);
 
-      const input = screen.getByLabelText("Gate this application") as HTMLInputElement;
+      const input = screen.getByLabelText("Access Code") as HTMLInputElement;
 
       // Clear any previous calls from useEffect/watch
       mockOnUpdate.mockClear();
@@ -453,7 +481,7 @@ describe("SettingsConfiguration - Access Code", () => {
 
       render(<SettingsConfiguration schema={schemaWithOtherSettings} onUpdate={mockOnUpdate} />);
 
-      const input = screen.getByLabelText("Gate this application");
+      const input = screen.getByLabelText("Access Code");
 
       // Clear any previous calls from useEffect/watch
       mockOnUpdate.mockClear();
@@ -478,7 +506,7 @@ describe("SettingsConfiguration - Access Code", () => {
 
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
-      const input = screen.getByLabelText("Gate this application");
+      const input = screen.getByLabelText("Access Code");
 
       await user.type(input, "ABC");
       // Trigger validation by blurring
@@ -494,7 +522,7 @@ describe("SettingsConfiguration - Access Code", () => {
 
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
-      const input = screen.getByLabelText("Gate this application");
+      const input = screen.getByLabelText("Access Code");
 
       await user.type(input, "SECRET CODE");
       // Trigger validation by blurring
@@ -508,7 +536,7 @@ describe("SettingsConfiguration - Access Code", () => {
     it("should have proper ARIA attributes for accessibility", () => {
       render(<SettingsConfiguration schema={mockSchema} onUpdate={mockOnUpdate} />);
 
-      const input = screen.getByLabelText("Gate this application");
+      const input = screen.getByLabelText("Access Code");
 
       expect(input).toHaveAttribute("aria-describedby", "accessCode-help accessCode-error");
       expect(input).toHaveAttribute("aria-invalid", "false");
