@@ -1,14 +1,33 @@
-import { describe, expect, it } from "bun:test";
+import { beforeAll, describe, expect, it } from "bun:test";
 import { render, screen } from "@testing-library/react";
-import RootLayout from "@/app/layout";
 import "@testing-library/jest-dom";
 
-// All mocks are pre-registered in tests/bun-setup.ts:
+// Local mocks for components that have their own unit tests
+// These are NOT mocked globally in bun-setup.ts to preserve unit test isolation
+jest.mock("@/src/components/navbar/navbar", () => ({
+  Navbar: () => <header data-testid="header">Navbar</header>,
+}));
+
+jest.mock("@/src/components/footer/footer", () => ({
+  Footer: () => <footer data-testid="footer">Footer</footer>,
+}));
+
+// Dynamic import to ensure mocks are applied before module loads
+const getLayout = async () => {
+  const { default: RootLayout } = await import("@/app/layout");
+  return RootLayout;
+};
+
+let RootLayout: Awaited<ReturnType<typeof getLayout>>;
+
+beforeAll(async () => {
+  RootLayout = await getLayout();
+});
+
+// All other mocks are pre-registered in tests/bun-setup.ts:
 // - @vercel/speed-insights/next
 // - @vercel/analytics/react
 // - @next/third-parties/google
-// - @/src/components/footer/footer
-// - @/src/components/navbar/navbar
 // - react-hot-toast
 // - @/components/Utilities/PrivyProviderWrapper
 // - @/components/Dialogs/ContributorProfileDialog

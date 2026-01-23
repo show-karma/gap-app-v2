@@ -1,9 +1,28 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from "bun:test";
 import { render, screen } from "@testing-library/react";
-import Index from "@/app/page";
 import "@testing-library/jest-dom";
 
-// Mocks are pre-registered in tests/bun-setup.ts
+// Local mocks for components that have their own unit tests
+// These are NOT mocked globally in bun-setup.ts to preserve unit test isolation
+jest.mock("@/src/features/homepage/components/hero", () => ({
+  Hero: () => <section data-testid="hero">Hero Section</section>,
+}));
+
+jest.mock("@/src/features/homepage/components/how-it-works", () => ({
+  HowItWorks: () => <section data-testid="how-it-works">How It Works</section>,
+}));
+
+// Dynamic import to ensure mocks are applied before module loads
+const getPage = async () => {
+  const { default: Index } = await import("@/app/page");
+  return Index;
+};
+
+let Index: Awaited<ReturnType<typeof getPage>>;
+
+beforeAll(async () => {
+  Index = await getPage();
+});
 
 describe("Homepage", () => {
   it("renders all main components correctly", () => {
