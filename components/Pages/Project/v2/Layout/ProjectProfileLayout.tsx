@@ -2,6 +2,7 @@
 
 import { useParams, usePathname } from "next/navigation";
 import { type ReactNode, useState } from "react";
+import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { IntroDialog } from "@/components/Pages/Project/IntroDialog";
@@ -9,6 +10,7 @@ import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
+import { useProgressModalStore } from "@/store/modals/progress";
 import { cn } from "@/utilities/tailwind";
 import { ProjectHeader } from "../Header/ProjectHeader";
 import { type ContentTab, ContentTabs } from "../MainContent/ContentTabs";
@@ -52,6 +54,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   // Modal stores for dialogs
   const { isEndorsementOpen } = useEndorsementStore();
   const { isIntroModalOpen } = useIntroModalStore();
+  const { isProgressModalOpen } = useProgressModalStore();
 
   // Use unified hook for all project profile data
   const { project, isLoading, isVerified, stats } = useProjectProfile(projectId as string);
@@ -117,6 +120,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
       {/* Dialogs */}
       {isEndorsementOpen && <EndorsementDialog />}
       {isIntroModalOpen && <IntroDialog />}
+      {isProgressModalOpen && <ProgressDialog />}
 
       <div
         className={cn("flex flex-col gap-6 w-full", className)}
