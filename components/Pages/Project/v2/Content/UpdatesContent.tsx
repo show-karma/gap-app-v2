@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import { Suspense, useCallback, useMemo } from "react";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { ActivityFeed } from "../MainContent/ActivityFeed";
@@ -10,6 +10,7 @@ import {
   type ActivityFilterType,
   type SortOption,
 } from "../MainContent/ActivityFilters";
+import { ActivityFeedSkeleton } from "../Skeletons";
 
 interface UpdatesContentProps {
   className?: string;
@@ -83,6 +84,9 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
     [activeFilters, updateURL]
   );
 
+  // Show loading state while data is being fetched
+  const isLoading = !allUpdates;
+
   return (
     <div className={className} data-testid="updates-content">
       {/* Filters */}
@@ -95,14 +99,20 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
         completedCount={completedCount}
       />
 
-      {/* Activity Feed */}
+      {/* Activity Feed with Suspense boundary */}
       <div className="mt-6">
-        <ActivityFeed
-          milestones={allUpdates}
-          isAuthorized={isAuthorized}
-          sortBy={sortBy}
-          activeFilters={activeFilters}
-        />
+        {isLoading ? (
+          <ActivityFeedSkeleton itemCount={4} />
+        ) : (
+          <Suspense fallback={<ActivityFeedSkeleton itemCount={4} />}>
+            <ActivityFeed
+              milestones={allUpdates}
+              isAuthorized={isAuthorized}
+              sortBy={sortBy}
+              activeFilters={activeFilters}
+            />
+          </Suspense>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { ImpactContentSkeleton } from "@/components/Pages/Project/v2/Skeletons";
 
 const ImpactContent = dynamic(
   () =>
@@ -8,7 +9,7 @@ const ImpactContent = dynamic(
       (mod) => mod.ImpactContent
     ),
   {
-    loading: () => <div className="animate-pulse text-gray-500">Loading impact...</div>,
+    loading: () => <ImpactContentSkeleton />,
   }
 );
 

@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { FundingContentSkeleton } from "@/components/Pages/Project/v2/Skeletons";
 
 const FundingContentWrapper = dynamic(
   () =>
@@ -8,7 +9,7 @@ const FundingContentWrapper = dynamic(
       (mod) => mod.FundingContentWrapper
     ),
   {
-    loading: () => <div className="animate-pulse text-gray-500">Loading funding...</div>,
+    loading: () => <FundingContentSkeleton />,
   }
 );
 

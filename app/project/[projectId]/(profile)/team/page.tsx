@@ -1,12 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { TeamContentSkeleton } from "@/components/Pages/Project/v2/Skeletons";
 
 const TeamContent = dynamic(
   () =>
     import("@/components/Pages/Project/v2/TeamContent/TeamContent").then((mod) => mod.TeamContent),
   {
-    loading: () => <div className="animate-pulse text-gray-500">Loading team...</div>,
+    loading: () => <TeamContentSkeleton />,
   }
 );
 

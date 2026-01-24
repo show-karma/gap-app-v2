@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
-import { ProjectOverviewLoading } from "@/components/Pages/Project/Loading/Overview";
+import { ProjectProfileLayoutSkeleton } from "@/components/Pages/Project/v2/Skeletons";
 
 const ProjectProfileLayout = dynamic(
   () =>
@@ -10,7 +10,7 @@ const ProjectProfileLayout = dynamic(
       (mod) => mod.ProjectProfileLayout
     ),
   {
-    loading: () => <ProjectOverviewLoading />,
+    loading: () => <ProjectProfileLayoutSkeleton />,
   }
 );
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, usePathname } from "next/navigation";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, Suspense, useState } from "react";
 import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
@@ -17,6 +17,14 @@ import { type ContentTab, ContentTabs } from "../MainContent/ContentTabs";
 import { MobileHeaderMinified } from "../Mobile/MobileHeaderMinified";
 import { MobileProfileContent } from "../Mobile/MobileProfileContent";
 import { ProjectSidePanel } from "../SidePanel/ProjectSidePanel";
+import {
+  ContentTabsSkeleton,
+  MobileHeaderMinifiedSkeleton,
+  MobileProfileContentSkeleton,
+  ProjectHeaderSkeleton,
+  ProjectSidePanelSkeleton,
+  ProjectStatsBarSkeleton,
+} from "../Skeletons";
 import { ProjectStatsBar } from "../StatsBar/ProjectStatsBar";
 
 interface ProjectProfileLayoutProps {
@@ -95,11 +103,38 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
     // Other tabs will navigate via Link href
   };
 
-  // Loading state
+  // Loading state - show full skeleton layout
   if (isLoading || !project) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]" data-testid="layout-loading">
-        <div className="animate-pulse text-gray-500">Loading project...</div>
+      <div className="flex flex-col gap-6 w-full" data-testid="layout-loading">
+        {/* Desktop: Header + Stats Bar Skeleton */}
+        <div className="hidden lg:flex flex-col bg-secondary border border-border rounded-xl">
+          <ProjectHeaderSkeleton />
+          <ProjectStatsBarSkeleton />
+        </div>
+
+        {/* Mobile: Tabs Skeleton */}
+        <div className="lg:hidden -mx-4 px-4">
+          <ContentTabsSkeleton />
+        </div>
+
+        {/* Mobile: Profile Content Skeleton */}
+        <div className="lg:hidden">
+          <MobileProfileContentSkeleton />
+        </div>
+
+        {/* Main Layout Skeleton */}
+        <div className="flex flex-row gap-6">
+          <ProjectSidePanelSkeleton />
+          <div className="flex flex-col gap-6 flex-1 min-w-0">
+            <div className="hidden lg:block">
+              <ContentTabsSkeleton />
+            </div>
+            <div className="flex-1">
+              <div className="animate-pulse bg-gray-100 dark:bg-zinc-800 rounded-xl h-96" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

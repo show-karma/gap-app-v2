@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { AboutContentSkeleton } from "@/components/Pages/Project/v2/Skeletons";
 
 const AboutContentWrapper = dynamic(
   () =>
@@ -8,7 +9,7 @@ const AboutContentWrapper = dynamic(
       (mod) => mod.AboutContentWrapper
     ),
   {
-    loading: () => <div className="animate-pulse text-gray-500">Loading about...</div>,
+    loading: () => <AboutContentSkeleton />,
   }
 );
 
