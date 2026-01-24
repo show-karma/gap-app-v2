@@ -44,9 +44,8 @@ export function ProjectImpactPage({ className }: ProjectImpactPageProps) {
   const { isIntroModalOpen } = useIntroModalStore();
 
   // Use unified hook for all project profile data
-  const { project, isLoading, isVerified, allUpdates, completedCount, stats } = useProjectProfile(
-    projectId as string
-  );
+  const { project, isLoading, isVerified, allUpdates, milestonesCount, completedCount, stats } =
+    useProjectProfile(projectId as string);
 
   // Get team count from project
   const teamCount = project
@@ -103,7 +102,7 @@ export function ProjectImpactPage({ className }: ProjectImpactPageProps) {
           <ProjectMainContent
             project={project}
             milestones={allUpdates}
-            milestonesCount={allUpdates.length}
+            milestonesCount={milestonesCount}
             completedCount={completedCount}
             fundingCount={stats.grantsCount}
             teamCount={teamCount}

@@ -201,8 +201,8 @@ export function ActivityFeed({
 
   return (
     <div className={cn("relative", className)} data-testid="activity-feed">
-      {/* Timeline line */}
-      <div className="absolute left-[11px] top-2 bottom-0 w-0.5 bg-neutral-200 dark:bg-zinc-700" />
+      {/* Timeline line - centered under icons (w-6=24px, so center at 12px on desktop, w-5=20px so 10px on mobile) */}
+      <div className="absolute left-[11px] max-lg:left-[9px] top-2 bottom-0 w-0.5 bg-neutral-200 dark:bg-zinc-700" />
 
       {/* Timeline items */}
       <div className="flex flex-col gap-6">
@@ -211,88 +211,92 @@ export function ActivityFeed({
           const uniqueKey = `${milestone.type}-${milestone.uid}-${index}`;
 
           return (
-            <div key={uniqueKey} className="pl-10" data-testid="activity-item">
-              {/* Status Text, Due Date, and Posted By */}
-              <div className="relative flex flex-row items-center justify-between gap-2 mb-3 flex-wrap">
-                {/* Timeline icon - circular, different styling for grant_received vs others */}
-                <div
-                  className={cn(
-                    "absolute -left-10 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border flex items-center justify-center",
-                    milestone.type === "grant_received"
-                      ? "border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-900/30 dark:bg-emerald-950/30 dark:text-emerald-400"
-                      : "border-orange-100 bg-orange-50 text-orange-600 dark:border-orange-900/30 dark:bg-orange-950/30 dark:text-orange-400"
-                  )}
-                  data-testid="timeline-icon"
-                >
-                  {milestone.type === "grant_received" ? (
-                    <ArrowLeftToLine className="w-3.5 h-3.5" />
-                  ) : (
-                    <FlagIcon />
-                  )}
-                </div>
+            <div key={uniqueKey} className="relative pl-8 max-lg:pl-7" data-testid="activity-item">
+              {/* Timeline icon - positioned relative to item, not content row */}
+              <div
+                className={cn(
+                  "absolute left-0 top-0 w-6 h-6 max-lg:w-5 max-lg:h-5 rounded-full border flex items-center justify-center",
+                  milestone.type === "grant_received"
+                    ? "border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-900/30 dark:bg-emerald-950/30 dark:text-emerald-400"
+                    : "border-orange-100 bg-orange-50 text-orange-600 dark:border-orange-900/30 dark:bg-orange-950/30 dark:text-orange-400"
+                )}
+                data-testid="timeline-icon"
+              >
+                {milestone.type === "grant_received" ? (
+                  <ArrowLeftToLine className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
+                ) : (
+                  <FlagIcon className="max-lg:scale-90" />
+                )}
+              </div>
 
+              {/* Status Text, Due Date, and Posted By */}
+              <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:justify-between lg:gap-2 mb-3">
                 {/* Grant Received - special format */}
                 {milestone.type === "grant_received" && milestone.grantReceived ? (
                   <>
                     {/* Left side: Amount + Grant Received from + Community */}
-                    <div className="flex flex-row items-center gap-2 flex-wrap">
+                    <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
                       {(() => {
                         const formattedAmount = formatGrantAmount(milestone.grantReceived.amount);
                         return formattedAmount ? (
-                          <span className="text-sm font-semibold text-foreground">
+                          <span className="text-xs lg:text-sm font-semibold text-foreground">
                             {formattedAmount}
                           </span>
                         ) : null;
                       })()}
-                      <span className="text-sm font-semibold text-foreground">Grant Received</span>
-                      <span className="text-sm font-semibold text-muted-foreground">from</span>
+                      <span className="text-xs lg:text-sm font-semibold text-foreground">
+                        Grant Received
+                      </span>
+                      <span className="text-xs lg:text-sm font-semibold text-muted-foreground">
+                        from
+                      </span>
                       <ProfilePicture
                         imageURL={milestone.grantReceived.communityImage}
                         name={milestone.grantReceived.communityName || "Community"}
-                        size="24"
-                        className="h-6 w-6 min-w-6 min-h-6 rounded-full"
+                        size="20"
+                        className="h-5 w-5 lg:h-6 lg:w-6 min-w-5 min-h-5 lg:min-w-6 lg:min-h-6 rounded-full"
                         alt={milestone.grantReceived.communityName || "Community"}
                       />
-                      <span className="text-sm font-semibold text-foreground">
+                      <span className="text-xs lg:text-sm font-semibold text-foreground">
                         {milestone.grantReceived.communityName ||
                           milestone.grantReceived.grantTitle}
                       </span>
                     </div>
 
                     {/* Right side: Date only */}
-                    <div className="flex flex-row items-center gap-2 text-sm font-medium leading-5 text-muted-foreground">
+                    <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
                       <span>{formatDisplayDate(milestone.createdAt)}</span>
                     </div>
                   </>
                 ) : (
                   <>
                     {/* Left side: Status and Due Date */}
-                    <div className="flex flex-row items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold text-foreground">
+                    <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
+                      <span className="text-xs lg:text-sm font-semibold text-foreground">
                         {getActivityTypeLabel(milestone.type)}
                       </span>
                       {isValidTimestamp(milestone.endsAt) && (
-                        <span className="text-sm font-semibold text-muted-foreground">
+                        <span className="text-xs lg:text-sm font-semibold text-muted-foreground">
                           Due by{" "}
                           {formatDisplayDate(new Date(milestone.endsAt! * 1000).toISOString())}
                         </span>
                       )}
                     </div>
 
-                    {/* Right side: Posted by */}
+                    {/* Posted by - stacks on mobile */}
                     {(() => {
                       const attester = getMilestoneAttester(milestone);
                       return (
-                        <div className="flex flex-row items-center gap-2 text-sm font-medium leading-5 text-muted-foreground">
+                        <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
                           <span>Posted {formatDisplayDate(milestone.createdAt)}</span>
                           {attester && (
                             <>
                               <span>by</span>
                               <EthereumAddressToENSAvatar
                                 address={attester}
-                                className="h-8 w-8 min-h-8 min-w-8 rounded-full"
+                                className="h-5 w-5 lg:h-6 lg:w-6 min-h-5 min-w-5 lg:min-h-6 lg:min-w-6 rounded-full"
                               />
-                              <span className="text-sm font-semibold leading-5 text-foreground">
+                              <span className="text-xs lg:text-sm font-semibold leading-5 text-foreground">
                                 <EthereumAddressToENSName address={attester} />
                               </span>
                             </>
@@ -319,8 +323,8 @@ export function ActivityFeed({
         })}
       </div>
 
-      {/* Timeline end dot */}
-      <div className="absolute left-[9px] bottom-0 w-1.5 h-1.5 rounded-full bg-neutral-300 dark:bg-zinc-600" />
+      {/* Timeline end dot - aligned with line */}
+      <div className="absolute left-[10px] max-lg:left-[8px] bottom-0 w-1.5 h-1.5 rounded-full bg-neutral-300 dark:bg-zinc-600" />
     </div>
   );
 }

@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
+import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import { useProjectStore } from "@/store";
 import { cn } from "@/utilities/tailwind";
 
@@ -54,7 +54,7 @@ const TIME_RANGE_OPTIONS: { value: TimeRange; label: string }[] = [
  */
 export function ProjectActivityChart({ className, embedded = false }: ProjectActivityChartProps) {
   const { project } = useProjectStore();
-  const { milestones, isLoading } = useProjectUpdates(project?.uid || "");
+  const { allUpdates: milestones, isLoading } = useProjectProfile(project?.uid || "");
 
   // Filter states
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
@@ -80,7 +80,7 @@ export function ProjectActivityChart({ className, embedded = false }: ProjectAct
 
   // Categorize milestone by type
   const getMilestoneCategory = (type: string): "Funding" | "Product updates" => {
-    if (type === "grant" || type === "grant_update") {
+    if (type === "grant" || type === "grant_update" || type === "grant_received") {
       return "Funding";
     }
     return "Product updates";
@@ -201,9 +201,6 @@ export function ProjectActivityChart({ className, embedded = false }: ProjectAct
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">Project Activity</h3>
-        <div className="text-sm text-gray-500 dark:text-zinc-400">
-          {stats.total} Milestones, {stats.completed} Completed
-        </div>
       </div>
 
       {/* Chart */}

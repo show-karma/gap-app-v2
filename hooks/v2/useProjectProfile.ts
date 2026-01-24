@@ -72,9 +72,11 @@ export function useProjectProfile(projectId: string): UseProjectProfileResult {
   const normalizedProject = project ?? null;
 
   // Aggregate all data using the service layer
-  const profileData = useMemo((): ProjectProfileData => {
-    return aggregateProjectProfileData(normalizedProject, grants, milestones, impacts);
-  }, [normalizedProject, grants, milestones, impacts]);
+  const profileData = useMemo(
+    (): ProjectProfileData =>
+      aggregateProjectProfileData(normalizedProject, grants, milestones, impacts),
+    [normalizedProject, grants, milestones, impacts]
+  );
 
   // Combined refetch function
   const refetch = async () => {

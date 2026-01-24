@@ -3,7 +3,7 @@
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
-import { useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 import { ActivityFeed } from "../MainContent/ActivityFeed";
 import {
   ActivityFilters,
@@ -21,11 +21,13 @@ interface UpdatesContentProps {
  */
 export function UpdatesContent({ className }: UpdatesContentProps) {
   const { projectId } = useParams();
-  const { isProjectAdmin } = useProjectStore();
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isAuthorized = isOwner || isProjectAdmin;
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const { allUpdates, completedCount } = useProjectProfile(projectId as string);
+  const { allUpdates, milestonesCount, completedCount } = useProjectProfile(projectId as string);
 
   // Read filter and sort state from URL
   const activeFilters = useMemo(() => {
@@ -89,7 +91,7 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
         onSortChange={handleSortChange}
         activeFilters={activeFilters}
         onFilterToggle={handleFilterToggle}
-        milestonesCount={allUpdates.length}
+        milestonesCount={milestonesCount}
         completedCount={completedCount}
       />
 
@@ -97,7 +99,7 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
       <div className="mt-6">
         <ActivityFeed
           milestones={allUpdates}
-          isAuthorized={isProjectAdmin}
+          isAuthorized={isAuthorized}
           sortBy={sortBy}
           activeFilters={activeFilters}
         />

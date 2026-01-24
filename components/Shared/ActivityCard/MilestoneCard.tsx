@@ -396,7 +396,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
         </div>
         {/* Bottom Actions (removed attribution since it's shown in timeline header) */}
         {isAuthorized && (
-          <div className="flex flex-row gap-6 items-center px-5 py-3 border-t border-gray-300 dark:border-zinc-400">
+          <div className="flex w-full flex-1 flex-row gap-6 items-center px-5 py-3 border-t border-gray-300 dark:border-zinc-400">
             {!completed && (
               <Button
                 className="flex flex-row gap-1 border border-brand-blue text-brand-blue  text-sm font-semibold bg-white hover:bg-white dark:bg-transparent dark:hover:bg-transparent p-3  rounded-md max-sm:px-2 max-sm:py-1"

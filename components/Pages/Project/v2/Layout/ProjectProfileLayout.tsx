@@ -1,16 +1,19 @@
 "use client";
 
 import { useParams, usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { IntroDialog } from "@/components/Pages/Project/IntroDialog";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { cn } from "@/utilities/tailwind";
 import { ProjectHeader } from "../Header/ProjectHeader";
 import { type ContentTab, ContentTabs } from "../MainContent/ContentTabs";
+import { MobileHeaderMinified } from "../Mobile/MobileHeaderMinified";
+import { MobileProfileContent } from "../Mobile/MobileProfileContent";
 import { ProjectSidePanel } from "../SidePanel/ProjectSidePanel";
 import { ProjectStatsBar } from "../StatsBar/ProjectStatsBar";
 
@@ -25,21 +28,26 @@ interface ProjectProfileLayoutProps {
  *
  * Layout:
  * - Desktop: 2-column (Side Panel 324px + Main Content flex)
- * - Mobile: Single column (Header, Stats, Tabs, Content)
+ * - Mobile: Single column with Profile/Updates view switching
+ *
+ * Mobile Behavior:
+ * - Profile tab (first, mobile-only): Shows full header, stats, actions, quick links
+ * - Updates tab: Shows updates content with minified header
+ * - Other tabs: Shows their content with minified header
  *
  * Shared Components:
  * - ProjectHeader: Profile, name, badge, socials, description, stage
  * - ProjectStatsBar: Horizontal stats (desktop scroll, mobile grid)
  * - ProjectSidePanel: Donate, Endorse, Subscribe, QuickLinks (desktop only)
- * - ContentTabs: Navigation tabs for Updates, About, Funding, Impact, Team
- *
- * Data Flow:
- * - Uses useProjectProfile hook to aggregate all data sources
- * - Active tab is determined from the current pathname
+ * - ContentTabs: Navigation tabs for Profile (mobile), Updates, About, Funding, Impact, Team
  */
 export function ProjectProfileLayout({ children, className }: ProjectProfileLayoutProps) {
   const { projectId } = useParams();
   const pathname = usePathname();
+
+  // Mobile view state: track if user is viewing Profile or other tabs on mobile
+  // Default to "profile" on mobile when at root URL
+  const [mobileView, setMobileView] = useState<"profile" | "content">("profile");
 
   // Modal stores for dialogs
   const { isEndorsementOpen } = useEndorsementStore();
@@ -48,12 +56,18 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   // Use unified hook for all project profile data
   const { project, isLoading, isVerified, stats } = useProjectProfile(projectId as string);
 
+  // Initialize project permissions in store (for authorization checks in ContentTabs)
+  useProjectPermissions();
+
   // Get team count from project
   const teamCount = project
     ? new Set([project?.owner, ...(project?.members?.map((m) => m.address) || [])]).size
     : 0;
 
-  // Determine active tab from pathname
+  // Check if we're on the root project page (where Profile/Updates toggle applies)
+  const isRootPage = pathname === `/project/${projectId}`;
+
+  // Determine active tab from pathname and mobile view state
   const getActiveTab = (): ContentTab => {
     const basePath = `/project/${projectId}`;
     if (pathname === `${basePath}/about`) return "about";
@@ -61,10 +75,22 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
       return "funding";
     if (pathname === `${basePath}/impact`) return "impact";
     if (pathname === `${basePath}/team`) return "team";
-    return "updates";
+    if (pathname === `${basePath}/contact-info`) return "contact-info";
+    // On root page, use mobile view state to determine active tab
+    return mobileView === "profile" ? "profile" : "updates";
   };
 
   const activeTab = getActiveTab();
+
+  // Handle tab changes - for Profile/Updates, just update state instead of navigating
+  const handleTabChange = (tab: ContentTab) => {
+    if (tab === "profile") {
+      setMobileView("profile");
+    } else if (tab === "updates" && isRootPage) {
+      setMobileView("content");
+    }
+    // Other tabs will navigate via Link href
+  };
 
   // Loading state
   if (isLoading || !project) {
@@ -96,8 +122,8 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
         className={cn("flex flex-col gap-6 w-full", className)}
         data-testid="project-profile-layout"
       >
-        {/* Header + Stats Bar - Connected as one visual unit */}
-        <div className="flex flex-col bg-secondary border border-border rounded-xl">
+        {/* Desktop: Header + Stats Bar - Always visible */}
+        <div className="hidden lg:flex flex-col bg-secondary border border-border rounded-xl">
           <ProjectHeader project={project} isVerified={isVerified} />
           <ProjectStatsBar
             grants={stats.grantsCount}
@@ -106,6 +132,31 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
             completeRate={stats.completeRate}
           />
         </div>
+
+        {/* Mobile: Navigation tabs at the top - always first on mobile */}
+        {/* Use negative margins to extend tabs full width beyond container padding */}
+        <div className="lg:hidden -mx-4 px-4">
+          <ContentTabs
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            fundingCount={stats.grantsCount}
+            teamCount={teamCount}
+          />
+        </div>
+
+        {/* Mobile: Minified header when NOT on Profile tab */}
+        {activeTab !== "profile" && (
+          <div className="lg:hidden">
+            <MobileHeaderMinified project={project} isVerified={isVerified} />
+          </div>
+        )}
+
+        {/* Mobile: Profile tab content (header, stats, actions, quick links) */}
+        {activeTab === "profile" && (
+          <div className="lg:hidden">
+            <MobileProfileContent project={project} isVerified={isVerified} stats={stats} />
+          </div>
+        )}
 
         {/* Main Layout: Side Panel + Content */}
         <div className="flex flex-row gap-6" data-testid="main-layout">
@@ -117,15 +168,21 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
             className="flex flex-col gap-6 flex-1 min-w-0"
             data-testid="project-main-content-area"
           >
-            {/* Content Tabs - Shared across all pages */}
-            <ContentTabs
-              activeTab={activeTab}
-              fundingCount={stats.grantsCount}
-              teamCount={teamCount}
-            />
+            {/* Desktop: Content Tabs */}
+            <div className="hidden lg:block">
+              <ContentTabs
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                fundingCount={stats.grantsCount}
+                teamCount={teamCount}
+              />
+            </div>
 
-            {/* Page-specific content */}
-            <div className="flex-1" data-testid="tab-content">
+            {/* Page-specific content - hidden on mobile when Profile tab is active */}
+            <div
+              className={cn("flex-1", activeTab === "profile" && "hidden lg:block")}
+              data-testid="tab-content"
+            >
               {children}
             </div>
           </div>

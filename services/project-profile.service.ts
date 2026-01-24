@@ -64,7 +64,7 @@ export function transformGrantsToMilestones(grants: Grant[]): UnifiedMilestone[]
       description: grant.details?.description,
       createdAt: grant.createdAt || new Date().toISOString(),
       completed: false,
-      chainID: grant.chainID,
+      chainID: grant.chainID || 0,
       refUID: grant.uid,
       source: { type: "grant_received" },
       grantReceived: {
@@ -99,13 +99,34 @@ export function combineUpdatesAndImpacts(
 }
 
 /**
- * Counts completed milestones in the activity list.
+ * Filters to only actual milestones (project milestones and grant milestones).
+ * Excludes project updates, grant updates, impacts, and other non-milestone types.
+ *
+ * @param updates - Array of unified milestones/updates
+ * @returns Array containing only items with type "milestone" or "grant"
+ */
+export function filterActualMilestones(updates: UnifiedMilestone[]): UnifiedMilestone[] {
+  return updates.filter((item) => item.type === "milestone" || item.type === "grant");
+}
+
+/**
+ * Counts actual milestones (project + grant milestones only).
  *
  * @param updates - Array of unified milestones
- * @returns Number of completed items
+ * @returns Number of actual milestones
+ */
+export function countActualMilestones(updates: UnifiedMilestone[]): number {
+  return filterActualMilestones(updates).length;
+}
+
+/**
+ * Counts completed milestones (project + grant milestones only).
+ *
+ * @param updates - Array of unified milestones
+ * @returns Number of completed milestones
  */
 export function countCompletedMilestones(updates: UnifiedMilestone[]): number {
-  return updates.filter((m) => m.completed).length;
+  return filterActualMilestones(updates).filter((m) => m.completed).length;
 }
 
 /**
@@ -166,6 +187,7 @@ export function aggregateProjectProfileData(
   impacts: ProjectImpact[]
 ): ProjectProfileData {
   const allUpdates = combineUpdatesAndImpacts(milestones, impacts, grants);
+  const milestonesCount = countActualMilestones(allUpdates);
   const completedCount = countCompletedMilestones(allUpdates);
   const isVerified = determineProjectVerification(grants);
   const stats = calculateProfileStats(project, grants, allUpdates);
@@ -173,6 +195,7 @@ export function aggregateProjectProfileData(
   return {
     isVerified,
     allUpdates,
+    milestonesCount,
     completedCount,
     stats,
   };

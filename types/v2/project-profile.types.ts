@@ -92,7 +92,9 @@ export interface ProjectProfileData {
   isVerified: boolean;
   /** All unified updates and milestones for activity feed */
   allUpdates: UnifiedMilestone[];
-  /** Count of completed milestones */
+  /** Count of actual milestones (project + grant milestones only) */
+  milestonesCount: number;
+  /** Count of completed milestones (project + grant milestones only) */
   completedCount: number;
   /** Statistics for the stats bar */
   stats: ProjectProfileStats;

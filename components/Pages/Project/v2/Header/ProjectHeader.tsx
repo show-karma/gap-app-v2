@@ -51,9 +51,9 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
         {/* Desktop: Two columns with divider (50/50) | Mobile: Single column */}
         <div className="flex flex-col lg:flex-row lg:gap-8">
           {/* Left side: Project Info - 50% width on desktop */}
-          <div className="flex flex-col gap-4 lg:flex-1 lg:basis-1/2 lg:min-w-0">
+          <div className="flex flex-col gap-4 lg:flex-1 lg:basis-1/2 lg:min-w-0 w-full">
             {/* Top row: Profile pic, name, and social links */}
-            <div className="flex flex-row items-center gap-4">
+            <div className="flex flex-row items-center gap-4 w-full">
               {/* Social links and options menu - positioned after name on desktop, absolute on mobile */}
               <div
                 className="absolute top-6 right-6 lg:hidden flex flex-row items-center gap-3 z-10"
@@ -90,8 +90,8 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                 alt={project?.details?.title || "Project"}
               />
 
-              {/* Name with verification badge and social links */}
-              <div className="flex flex-col gap-1 flex-1 min-w-0 pr-24 lg:pr-0">
+              {/* Name with verification badge and social links - spread apart */}
+              <div className="flex flex-row items-center justify-between flex-1 min-w-0 pr-24 lg:pr-0 flex-wrap">
                 <div className="flex flex-row items-center gap-2 flex-wrap">
                   <h1
                     className="text-xl font-bold leading-tight lg:text-2xl text-neutral-900 dark:text-white tracking-tight"
@@ -106,33 +106,33 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                       aria-label="Verified project"
                     />
                   )}
-                  {/* Social links - Desktop only, inline with name */}
-                  <div
-                    className="hidden lg:flex flex-row items-center gap-3 ml-2"
-                    data-testid="header-actions"
-                  >
-                    {socials.map((social) => (
-                      <a
-                        key={social.url}
-                        href={social.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
-                        aria-label={`Visit ${social.name}`}
-                        data-testid="social-link"
-                      >
-                        <social.icon className="h-5 w-5" />
-                      </a>
-                    ))}
-                    <ProjectOptionsMenu />
-                  </div>
+                </div>
+                {/* Social links - Desktop only, positioned at far right */}
+                <div
+                  className="hidden lg:flex flex-row items-center gap-3"
+                  data-testid="header-actions"
+                >
+                  {socials.map((social) => (
+                    <a
+                      key={social.url}
+                      href={social.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
+                      aria-label={`Visit ${social.name}`}
+                      data-testid="social-link"
+                    >
+                      <social.icon className="h-5 w-5" />
+                    </a>
+                  ))}
+                  <ProjectOptionsMenu />
                 </div>
               </div>
             </div>
 
             {/* Description with Read More */}
             {description && (
-              <div className="flex flex-col gap-1 max-w-xl">
+              <div className="flex flex-col gap-1 flex-1 w-full">
                 <div data-testid="project-description">
                   <MarkdownPreview
                     source={displayDescription}

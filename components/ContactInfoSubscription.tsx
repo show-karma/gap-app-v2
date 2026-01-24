@@ -6,6 +6,7 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { useContactInfo } from "@/hooks/useContactInfo";
+import { useStaff } from "@/hooks/useStaff";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { Contact } from "@/types/project";
 import fetchData from "@/utilities/fetchData";
@@ -114,7 +115,9 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
   const projectId = project?.uid;
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isAuthorized = isOwner || isProjectAdmin;
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const { isStaff } = useStaff();
+  const isAuthorized = isOwner || isProjectAdmin || isProjectOwner || isStaff;
   const { data: existingContacts, refetch: refreshContactInfo } = useContactInfo(
     projectId,
     isAuthorized
