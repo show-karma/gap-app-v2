@@ -55,20 +55,15 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
             {/* Top row: Profile pic, name, and social links */}
             <div className="flex flex-row items-center gap-4 w-full flex-wrap max-sm:flex-col">
               <div className="flex flex-row items-center justify-between flex-1 min-w-0 flex-wrap gap-4">
-                {/* Profile Picture - Desktop: 82px, Mobile: 64px */}
+                {/* Profile Picture - Single image with responsive sizing (Desktop: 82px, Mobile: 64px) */}
                 <ProfilePicture
                   imageURL={project?.details?.logoUrl}
                   name={project?.uid || ""}
                   size="82"
-                  className="hidden lg:block h-[82px] w-[82px] min-w-[82px] min-h-[82px] shrink-0 rounded-full border-2 border-white shadow-lg"
+                  className="h-16 w-16 min-w-16 min-h-16 lg:h-[82px] lg:w-[82px] lg:min-w-[82px] lg:min-h-[82px] shrink-0 rounded-full border-2 border-white shadow-lg"
                   alt={project?.details?.title || "Project"}
-                />
-                <ProfilePicture
-                  imageURL={project?.details?.logoUrl}
-                  name={project?.uid || ""}
-                  size="64"
-                  className="lg:hidden h-16 w-16 min-w-16 min-h-16 shrink-0 rounded-full border-2 border-white shadow-lg"
-                  alt={project?.details?.title || "Project"}
+                  priority
+                  sizes="(max-width: 1024px) 64px, 82px"
                 />
 
                 {/* Name with verification badge and social links - spread apart */}

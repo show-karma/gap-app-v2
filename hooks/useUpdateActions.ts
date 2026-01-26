@@ -22,7 +22,7 @@ import type { ConversionGrantUpdate } from "@/types/v2/roadmap";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { QUERY_KEYS } from "@/utilities/queryKeys";
+import { createProjectQueryPredicate } from "@/utilities/queryKeys";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
@@ -56,31 +56,37 @@ export const useUpdateActions = (update: UpdateType) => {
   // Function to refresh data after successful deletion
   const refreshDataAfterDeletion = async () => {
     try {
-      // Invalidate all relevant query caches
-      await Promise.all([
-        // Milestone-related queries
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.PROJECT.UPDATES(projectId),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ["projectMilestones", project?.uid],
-        }),
-        // Project-related queries
-        queryClient.invalidateQueries({
-          queryKey: ["project", project?.uid],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ["project", project?.details?.slug],
-        }),
-        // Grant-related queries
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.PROJECT.GRANTS(projectIdOrSlug),
-        }),
-        // Impact-related queries
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.PROJECT.IMPACTS(projectIdOrSlug),
-        }),
-      ]);
+      // Use predicate-based invalidation for efficient cache refresh
+      // This handles all project-related queries (details, updates, milestones,
+      // grants, impacts) in a single call, matching by project ID/slug
+      const invalidationPromises: Promise<void>[] = [];
+
+      // Invalidate using both uid and slug to cover all cache entries
+      // (queries may be keyed by either identifier)
+      if (project?.uid) {
+        invalidationPromises.push(
+          queryClient.invalidateQueries({
+            predicate: createProjectQueryPredicate(project.uid),
+          })
+        );
+      }
+      if (project?.details?.slug && project.details.slug !== project?.uid) {
+        invalidationPromises.push(
+          queryClient.invalidateQueries({
+            predicate: createProjectQueryPredicate(project.details.slug),
+          })
+        );
+      }
+      // Also invalidate by projectId from URL params if different
+      if (projectId && projectId !== project?.uid && projectId !== project?.details?.slug) {
+        invalidationPromises.push(
+          queryClient.invalidateQueries({
+            predicate: createProjectQueryPredicate(projectId),
+          })
+        );
+      }
+
+      await Promise.all(invalidationPromises);
 
       // Force a router refresh to update components that use direct API calls
       // This will refresh the ProjectFeed component which doesn't use React Query

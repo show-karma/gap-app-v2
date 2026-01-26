@@ -109,6 +109,8 @@ export function ContentTabs({
     >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.value;
+        // On desktop, when activeTab is "profile" (which is hidden), Updates should appear active
+        const isActiveOnDesktop = tab.value === "updates" && activeTab === "profile";
         // For mobile-only tabs or tabs without href, use button
         const isMobileOnlyTab = tab.mobileOnly;
 
@@ -138,12 +140,16 @@ export function ContentTabs({
             key={tab.value}
             href={tab.href || "#"}
             role="tab"
-            aria-selected={isActive}
+            aria-selected={isActive || isActiveOnDesktop}
             aria-controls={`${tab.value}-panel`}
             onClick={() => onTabChange?.(tab.value)}
-            className={tabClassName(isActive)}
+            className={cn(
+              tabClassName(isActive),
+              // On desktop, when Profile tab is active (but hidden), show Updates as active
+              isActiveOnDesktop && "lg:text-foreground lg:after:bg-foreground"
+            )}
             data-testid={`tab-${tab.value}`}
-            data-state={isActive ? "active" : "inactive"}
+            data-state={isActive || isActiveOnDesktop ? "active" : "inactive"}
           >
             <span className="flex items-center gap-2">
               {tab.label}

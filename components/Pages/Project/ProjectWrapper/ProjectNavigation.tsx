@@ -1,7 +1,8 @@
 "use client";
+
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ProminentDonateButton } from "@/components/Donation/SingleProject/ProminentDonateButton";
 import { Button } from "@/components/Utilities/Button";
@@ -13,24 +14,43 @@ import {
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useProgressModalStore } from "@/store/modals/progress";
+import type { Project } from "@/types/v2/project";
 import formatCurrency from "@/utilities/formatCurrency";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { ProjectOptionsMenu } from "./ProjectOptionsMenu";
+import { ProjectOptionsMenu } from "../ProjectOptionsMenu";
 
-export const ProjectNavigator = ({
+export interface ProjectNavigationProps {
+  /** The project ID or slug */
+  projectId: string;
+  /** Whether contact info exists for the project */
+  hasContactInfo: boolean;
+  /** Number of grants the project has */
+  grantsLength: number;
+  /** Project data from useProject hook */
+  project: Project | undefined;
+}
+
+interface Tab {
+  name: string;
+  href: string;
+}
+
+/**
+ * Navigation tabs and action buttons for project pages.
+ * Displays tabs for Project, Updates, Funding, Impact, Team, and optionally Contact Info.
+ * Also shows donation buttons and post update button based on user permissions.
+ */
+export const ProjectNavigation = ({
+  projectId,
   hasContactInfo,
   grantsLength,
-}: {
-  hasContactInfo: boolean;
-  grantsLength: number;
-}) => {
+  project,
+}: ProjectNavigationProps) => {
   const pathname = usePathname();
-  const projectId = useParams().projectId as string;
-  const project = useProjectStore((state) => state.project);
 
   // Memoize publicTabs to prevent recreation on every render
-  const publicTabs = useMemo(
+  const publicTabs = useMemo<Tab[]>(
     () => [
       {
         name: "Project",
@@ -56,7 +76,7 @@ export const ProjectNavigator = ({
     [project?.details?.slug, projectId]
   );
 
-  const [tabs, setTabs] = useState<typeof publicTabs>(publicTabs);
+  const [tabs, setTabs] = useState<Tab[]>(publicTabs);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
@@ -70,6 +90,7 @@ export const ProjectNavigator = ({
   // Wait for staff check to complete to avoid UI flicker
   const canSetPayoutAddress =
     isProjectOwner || isOwner || isProjectAdmin || isCommunityAdmin || (!isStaffLoading && isStaff);
+
   useEffect(() => {
     const mountTabs = () => {
       if (isAuthorized) {
@@ -88,6 +109,14 @@ export const ProjectNavigator = ({
   }, [isAuthorized, project?.details?.slug, projectId, publicTabs]);
 
   const { setIsProgressModalOpen } = useProgressModalStore();
+
+  /**
+   * Determines if a tab is currently active based on the pathname
+   */
+  const isTabActive = (tabHref: string): boolean => {
+    return tabHref.split("/")[3]?.split("?")[0] === pathname.split("/")[3];
+  };
+
   return (
     <div className="flex flex-row gap-2 justify-between items-end max-lg:flex-col-reverse max-lg:items-center">
       <nav className="gap-10 flex flex-row max-w-full w-max items-center max-lg:gap-8 overflow-x-auto">
@@ -97,7 +126,7 @@ export const ProjectNavigator = ({
             href={tab.href}
             className={cn(
               "whitespace-nowrap border-b-2 pb-2 text-base flex flex-row gap-2 items-center",
-              tab.href.split("/")[3]?.split("?")[0] === pathname.split("/")[3]
+              isTabActive(tab.href)
                 ? "border-blue-600 text-gray-700 font-bold px-0 dark:text-gray-200 max-lg:border-b-2"
                 : "border-transparent text-gray-600 px-0 hover:border-gray-300 hover:text-gray-700 dark:text-gray-200 font-normal"
             )}

@@ -1,8 +1,8 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -302,16 +302,16 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
                   >
                     <div className="flex flex-row w-full items-center gap-2 justify-between px-4 py-2">
                       <div className="flex flex-row items-center gap-2">
-                        <img
-                          src={item.icon}
-                          alt=""
-                          className={cn(
-                            item.current
-                              ? "text-primary-600"
-                              : "text-gray-400 group-hover:text-primary-600",
-                            "h-5 w-5 shrink-0 rounded-full object-cover"
-                          )}
-                        />
+                        {item.icon && (
+                          <Image
+                            src={item.icon}
+                            alt={item.name || "Grant icon"}
+                            width={20}
+                            height={20}
+                            className="shrink-0 rounded-full object-cover"
+                            unoptimized
+                          />
+                        )}
                         <p className="line-clamp-2 break-normal font-medium text-left text-lg">
                           {item.name}
                         </p>

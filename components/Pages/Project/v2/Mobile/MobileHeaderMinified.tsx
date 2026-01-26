@@ -44,6 +44,8 @@ export function MobileHeaderMinified({
           size="40"
           className="h-10 w-10 min-w-10 min-h-10 shrink-0 rounded-full border border-white shadow-sm"
           alt={project?.details?.title || "Project"}
+          priority
+          sizes="40px"
         />
         <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
           <h1 className="text-base font-semibold truncate" data-testid="project-title-minified">

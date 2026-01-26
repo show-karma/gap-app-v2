@@ -6,6 +6,7 @@ import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { IntroDialog } from "@/components/Pages/Project/IntroDialog";
+import { ProjectOptionsDialogs } from "@/components/Pages/Project/ProjectOptionsMenu";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import { useEndorsementStore } from "@/store/modals/endorsement";
@@ -156,6 +157,8 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
       {isEndorsementOpen && <EndorsementDialog />}
       {isIntroModalOpen && <IntroDialog />}
       {isProgressModalOpen && <ProgressDialog />}
+      {/* Project options dialogs - rendered once here to avoid duplicate modals */}
+      <ProjectOptionsDialogs />
 
       <div
         className={cn("flex flex-col gap-6 w-full", className)}

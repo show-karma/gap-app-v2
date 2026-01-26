@@ -1,7 +1,9 @@
 "use client";
 
-import { AreaChart, Card, Title } from "@tremor/react";
+import { Card, Title } from "@tremor/react";
+import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
+import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
 import type { AggregatedDatapoint } from "@/types/impactMeasurement";
 import type { RawDatapoint } from "@/types/indicator";
 import formatCurrency from "@/utilities/formatCurrency";
@@ -13,6 +15,12 @@ import {
   parseBreakdown,
 } from "@/utilities/indicator";
 import { cn } from "@/utilities/tailwind";
+
+// Dynamically import heavy Tremor chart component for bundle optimization
+const AreaChart = dynamic(() => import("@tremor/react").then((mod) => mod.AreaChart), {
+  ssr: false,
+  loading: () => <ChartSkeleton height="h-52" />,
+});
 
 interface AggregatedDataSectionProps {
   aggregatedData: Record<string, AggregatedDatapoint[]>;

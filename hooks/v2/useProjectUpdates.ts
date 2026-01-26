@@ -144,7 +144,7 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
     unified.push({
       uid: milestone.uid,
       chainID,
-      refUID: "",
+      refUID: grantInfo?.uid || "",
       type: "grant",
       title: milestone.title,
       description: milestone.description,
@@ -224,11 +224,6 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
     // Extract recipient with fallbacks - API may include additional fields
     const updateAny = update as any;
 
-    // Debug: log first grant update to see all available fields
-    if (index === 0) {
-      console.log("[useProjectUpdates] First grant update raw data:", update);
-      console.log("[useProjectUpdates] First grant update as any:", updateAny);
-    }
     const updateRecipient =
       update.recipient ||
       updateAny.attester ||

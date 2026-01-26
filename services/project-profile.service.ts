@@ -37,6 +37,26 @@ export function transformImpactsToMilestones(impacts: ProjectImpact[]): UnifiedM
     chainID: impact.chainID,
     refUID: impact.refUID,
     source: { type: "impact" },
+    // Include projectImpact for ActivityActionsWrapper to enable delete functionality
+    // Cast to IProjectImpact as ActivityActionsWrapper uses `as unknown as IProjectUpdate` anyway
+    projectImpact: {
+      type: "ProjectImpact",
+      uid: impact.uid,
+      refUID: impact.refUID,
+      chainID: impact.chainID,
+      attester: "",
+      recipient: "",
+      createdAt: impact.createdAt || new Date().toISOString(),
+      data: {
+        type: "ProjectImpact",
+        work: impact.data?.work || "",
+        impact: impact.data?.impact || "",
+        proof: impact.data?.proof || "",
+        startDate: impact.data?.startDate || 0,
+        endDate: impact.data?.endDate || 0,
+      },
+      verified: impact.verified || [],
+    } as any,
   }));
 }
 

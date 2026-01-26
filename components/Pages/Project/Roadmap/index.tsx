@@ -1,10 +1,12 @@
 "use client";
+import Image from "next/image";
 import { useParams, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { MilestonesList } from "@/components/Milestone/MilestonesList";
 import { Button } from "@/components/Utilities/Button";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
+import { transformImpactsToMilestones } from "@/services/project-profile.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import type { Project as ProjectResponse } from "@/types/v2/project";
@@ -57,25 +59,7 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
 
   // Combine V2 milestones with impacts from dedicated API endpoint
   const combinedUpdatesAndMilestones = useMemo(() => {
-    const impactItems = impacts.map((impact): UnifiedMilestone => {
-      const createdAt = impact.createdAt || new Date().toISOString();
-
-      return {
-        uid: impact.uid,
-        chainID: impact.chainID || 0,
-        refUID: impact.refUID || project?.uid || ("" as `0x${string}`),
-        title: "Project Impact",
-        description: impact.data?.work || impact.data?.impact || "",
-        type: "impact",
-        completed: false,
-        createdAt,
-        // Note: projectImpact property skipped as full IProjectImpact is not available
-        // Impact data is embedded in description for display purposes
-        source: {
-          type: "impact",
-        },
-      };
-    });
+    const impactItems = transformImpactsToMilestones(impacts);
 
     const allItems = [...apiMilestones, ...impactItems];
 
@@ -87,7 +71,7 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
     });
 
     return allSortedItems;
-  }, [impacts, project?.uid, apiMilestones]);
+  }, [impacts, apiMilestones]);
 
   // Filter items based on active filters
   const filteredItems = useMemo(() => {
@@ -204,10 +188,13 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
               ) : (
                 <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10">
                   <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-                    <img
+                    <Image
                       src="/images/comments.png"
-                      alt=""
-                      className="h-[185px] w-[438px] object-cover"
+                      alt="Project roadmap illustration"
+                      width={438}
+                      height={185}
+                      className="object-cover"
+                      loading="lazy"
                     />
                     <div className="flex w-full flex-col items-center justify-center gap-3">
                       <p className="text-center text-lg font-semibold text-black dark:text-zinc-100 ">

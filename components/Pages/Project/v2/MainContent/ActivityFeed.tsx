@@ -33,6 +33,55 @@ function FlagIcon({ className }: { className?: string }) {
   );
 }
 
+/**
+ * Thunder/lightning bolt icon for Project Activity.
+ * Matches the design specification for activity updates.
+ */
+function ThunderIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+    </svg>
+  );
+}
+
+/**
+ * Money bag icon for Grant Update.
+ * Outlined style to match other icons.
+ */
+function MoneyBagIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M9.5 2h5l-2.5 4-2.5-4z" />
+      <path d="M12 6c-5 0-8 4-8 8 0 5 4 8 8 8s8-3 8-8c0-4-3-8-8-8z" />
+      <path d="M12 11v6" />
+      <path d="M9.5 14h5" />
+    </svg>
+  );
+}
+
 interface ActivityFeedProps {
   milestones: UnifiedMilestone[];
   isAuthorized?: boolean;
@@ -65,6 +114,8 @@ function getMilestoneAttester(milestone: UnifiedMilestone): string | undefined {
 
 /**
  * Get the text label for an activity type.
+ * Note: "impact" type should display as "Milestone" to match staging behavior,
+ * where project impacts are shown as milestones with the title "Project Impact".
  */
 function getActivityTypeLabel(type: string): string {
   switch (type) {
@@ -73,13 +124,12 @@ function getActivityTypeLabel(type: string): string {
     case "grant_received":
       return "Grant Received";
     case "project":
-      return "Project Activity";
-    case "impact":
-      return "Project Impact";
-    case "grant":
-    case "milestone":
     case "activity":
     case "update":
+      return "Project Activity";
+    case "impact":
+    case "grant":
+    case "milestone":
     default:
       return "Milestone";
   }
@@ -216,14 +266,35 @@ export function ActivityFeed({
               <div
                 className={cn(
                   "absolute left-0 top-0 w-6 h-6 max-lg:w-5 max-lg:h-5 rounded-full border flex items-center justify-center",
-                  milestone.type === "grant_received"
-                    ? "border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-900/30 dark:bg-emerald-950/30 dark:text-emerald-400"
-                    : "border-orange-100 bg-orange-50 text-orange-600 dark:border-orange-900/30 dark:bg-orange-950/30 dark:text-orange-400"
+                  // Grant Received - emerald/green
+                  milestone.type === "grant_received" &&
+                    "border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-900/30 dark:bg-emerald-950/30 dark:text-emerald-400",
+                  // Grant Update - green (#DCFAE6 ~ green-100)
+                  milestone.type === "grant_update" &&
+                    "border-green-200 bg-green-100 text-green-600 dark:border-green-900/30 dark:bg-green-950/30 dark:text-green-400",
+                  // Project Activity (activity, update, project) - blue (#EFF4FF ~ blue-50)
+                  (milestone.type === "activity" ||
+                    milestone.type === "update" ||
+                    milestone.type === "project") &&
+                    "border-blue-100 bg-blue-50 text-blue-600 dark:border-blue-900/30 dark:bg-blue-950/30 dark:text-blue-400",
+                  // Default (Milestone, Impact, Grant) - orange
+                  milestone.type !== "grant_received" &&
+                    milestone.type !== "grant_update" &&
+                    milestone.type !== "activity" &&
+                    milestone.type !== "update" &&
+                    milestone.type !== "project" &&
+                    "border-orange-100 bg-orange-50 text-orange-600 dark:border-orange-900/30 dark:bg-orange-950/30 dark:text-orange-400"
                 )}
                 data-testid="timeline-icon"
               >
                 {milestone.type === "grant_received" ? (
                   <ArrowLeftToLine className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
+                ) : milestone.type === "grant_update" ? (
+                  <MoneyBagIcon className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
+                ) : milestone.type === "activity" ||
+                  milestone.type === "update" ||
+                  milestone.type === "project" ? (
+                  <ThunderIcon className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
                 ) : (
                   <FlagIcon className="max-lg:scale-90" />
                 )}

@@ -63,6 +63,49 @@ const MergeProjectDialog = dynamic(() =>
 
 const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 dark:hover:bg-brand-blue dark:hover:opacity-100 dark:hover:text-white hover:bg-brand-blue hover:opacity-100 hover:text-white flex w-full items-start justify-start rounded-md px-2 py-2 text-sm`;
 
+/**
+ * Renders all project-related dialogs that are controlled by global stores.
+ * This component should be rendered ONCE in the layout to avoid duplicate dialogs.
+ * The dialogs are controlled by Zustand stores (useProjectEditModalStore, useMergeModalStore, etc.)
+ */
+export const ProjectOptionsDialogs = () => {
+  const { project, refreshProject } = useProjectStore();
+  const params = useParams();
+  const projectId = params.projectId as string;
+  const { address, chain } = useAccount();
+  const router = useRouter();
+  const { switchChainAsync } = useWallet();
+  const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
+    useAttestationToast();
+  const { setupChainAndWallet } = useSetupChainAndWallet();
+  const { data: contactsInfo } = useContactInfo(projectId);
+
+  // Global modal stores
+  const { isProjectEditModalOpen } = useProjectEditModalStore();
+  const { isMergeModalOpen } = useMergeModalStore();
+  const { isGrantGenieModalOpen } = useGrantGenieModalStore();
+  const { isTransferOwnershipModalOpen } = useTransferOwnershipModalStore();
+  const { isAdminTransferOwnershipModalOpen } = useAdminTransferOwnershipModalStore();
+
+  return (
+    <>
+      {isProjectEditModalOpen ? (
+        <ProjectDialog
+          key={`${project?.uid}-${address}`}
+          buttonElement={null}
+          projectToUpdate={project}
+          previousContacts={contactsInfo || []}
+          useEditModalStore={true}
+        />
+      ) : null}
+      {isMergeModalOpen ? <MergeProjectDialog buttonElement={null} /> : null}
+      {isGrantGenieModalOpen ? <GrantsGenieDialog /> : null}
+      {isTransferOwnershipModalOpen && <TransferOwnershipDialog buttonElement={null} />}
+      {isAdminTransferOwnershipModalOpen && <AdminTransferOwnershipDialog />}
+    </>
+  );
+};
+
 export const ProjectOptionsMenu = () => {
   const { project } = useProjectStore();
   const params = useParams();
@@ -82,13 +125,11 @@ export const ProjectOptionsMenu = () => {
   const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
     useAttestationToast();
   const { setupChainAndWallet } = useSetupChainAndWallet();
-  const { isProjectEditModalOpen, openProjectEditModal } = useProjectEditModalStore();
-  const { isMergeModalOpen, openMergeModal } = useMergeModalStore();
-  const { openGrantGenieModal, isGrantGenieModalOpen } = useGrantGenieModalStore();
-  const { isTransferOwnershipModalOpen, openTransferOwnershipModal } =
-    useTransferOwnershipModalStore();
-  const { isAdminTransferOwnershipModalOpen, openAdminTransferOwnershipModal } =
-    useAdminTransferOwnershipModalStore();
+  const { openProjectEditModal } = useProjectEditModalStore();
+  const { openMergeModal } = useMergeModalStore();
+  const { openGrantGenieModal } = useGrantGenieModalStore();
+  const { openTransferOwnershipModal } = useTransferOwnershipModalStore();
+  const { openAdminTransferOwnershipModal } = useAdminTransferOwnershipModalStore();
   const { isProjectOwner, refreshProject } = useProjectStore();
   const { data: contactsInfo } = useContactInfo(projectId);
   const { isOwner: isContractOwner } = useOwnerStore();
@@ -169,21 +210,7 @@ export const ProjectOptionsMenu = () => {
 
   return (
     <>
-      {isProjectEditModalOpen ? (
-        <ProjectDialog
-          key={`${project?.uid}-${address}`}
-          buttonElement={null}
-          projectToUpdate={project}
-          previousContacts={contactsInfo || []}
-          useEditModalStore={true}
-        />
-      ) : null}
-      {isMergeModalOpen ? <MergeProjectDialog buttonElement={null} /> : null}
-      {isGrantGenieModalOpen ? <GrantsGenieDialog /> : null}
-      {isTransferOwnershipModalOpen && <TransferOwnershipDialog buttonElement={null} />}
-      {isAdminTransferOwnershipModalOpen && <AdminTransferOwnershipDialog />}
-
-      {/* Add the dialog components with visibility controlled by state */}
+      {/* Local dialogs controlled by component state - these are safe to render per instance */}
       {project && (
         <>
           {showLinkContractsDialog && (

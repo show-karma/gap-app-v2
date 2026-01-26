@@ -26,6 +26,7 @@ import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
 import { containerClassName } from "../ActivityCard";
+import { ActivityActionsWrapper } from "./ActivityActionsWrapper";
 import { ActivityAttribution } from "./ActivityAttribution";
 import { ActivityStatusHeader } from "./ActivityStatusHeader";
 import { GrantAssociation } from "./GrantAssociation";
@@ -82,6 +83,28 @@ interface MilestoneCardProps {
   milestone: UnifiedMilestone;
   isAuthorized: boolean;
 }
+
+/**
+ * Get the display label for an activity type.
+ */
+const getActivityTypeLabel = (type: string): string => {
+  switch (type) {
+    case "grant_update":
+      return "Grant Update";
+    case "grant_received":
+      return "Grant Received";
+    case "project":
+    case "activity":
+    case "update":
+      return "Project Activity";
+    case "impact":
+      return "Project Impact";
+    case "grant":
+    case "milestone":
+    default:
+      return "Milestone";
+  }
+};
 
 export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized }) => {
   const { isCompleting, handleCompleting, isEditing, handleEditing } = useMilestoneActions();
@@ -140,14 +163,17 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
   // Function to render project milestone completion form or details
   const renderMilestoneCompletion = () => {
     if (isCompleting) {
-      if (type === "milestone" && projectMilestone) {
+      if (type === "milestone") {
+        // Project milestone - use ProjectObjectiveCompletion form
+        // Use projectMilestone.uid if available, otherwise fall back to milestone.uid
         return (
           <ProjectObjectiveCompletion
-            objectiveUID={projectMilestone.uid}
+            objectiveUID={projectMilestone?.uid || milestone.uid}
             handleCompleting={handleCompleting}
           />
         );
       } else if (type === "grant") {
+        // Grant milestone - use GrantMilestoneCompletion form
         return (
           <GrantMilestoneCompletion milestone={milestone} handleCompleting={handleCompleting} />
         );
@@ -395,9 +421,10 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
           ) : null}
         </div>
         {/* Bottom Actions (removed attribution since it's shown in timeline header) */}
-        {isAuthorized && (
-          <div className="flex w-full flex-1 flex-row gap-6 items-center px-5 py-3 border-t border-gray-300 dark:border-zinc-400">
-            {!completed && (
+        {isAuthorized && (type === "milestone" || type === "grant") && (
+          <div className="flex w-full flex-1 flex-row gap-6 items-center justify-between px-5 py-3 border-t border-gray-300 dark:border-zinc-400">
+            {/* Only show completion button for milestone types that support completion */}
+            {!completed ? (
               <Button
                 className="flex flex-row gap-1 border border-brand-blue text-brand-blue  text-sm font-semibold bg-white hover:bg-white dark:bg-transparent dark:hover:bg-transparent p-3  rounded-md max-sm:px-2 max-sm:py-1"
                 onClick={() => handleCompleting(true)}
@@ -405,9 +432,11 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
                 Mark Milestone Complete
                 <CheckCircleIcon className="h-5 w-5" />
               </Button>
+            ) : (
+              <div />
             )}
 
-            {/* Options Menu with only Delete */}
+            {/* Options Menu with only Delete - right aligned */}
             {type === "milestone" && projectMilestone ? (
               <ObjectiveSimpleOptionsMenu objectiveId={projectMilestone.uid} />
             ) : type === "grant" && grantMilestone ? (
@@ -415,6 +444,16 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
             ) : null}
           </div>
         )}
+        {/* Bottom Actions for activity/update types - Share, Edit, Delete */}
+        {isAuthorized &&
+          (type === "activity" ||
+            type === "update" ||
+            type === "grant_update" ||
+            type === "impact") && (
+            <div className="flex w-full flex-1 flex-row gap-6 items-center justify-end px-5 py-3 border-t border-gray-300 dark:border-zinc-400">
+              <ActivityActionsWrapper milestone={milestone} />
+            </div>
+          )}
       </div>
       {isCompleting ||
       isEditing ||
@@ -422,40 +461,44 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
       completionProof ||
       completionDeliverables ? (
         <div className="flex flex-col gap-2.5 mt-4 pl-10">
-          {/* Timeline header: Milestone, Due date, and Posted by */}
-          <div className="relative flex flex-row items-center justify-between gap-2 flex-wrap">
-            {/* Timeline badge - vertically centered relative to header row, -left-20 to reach main timeline */}
-            <div className="absolute -left-20 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center z-10 bg-orange-50 dark:bg-orange-900/30 rounded-full">
-              <div className="w-[3px] h-[3px] rounded-full bg-orange-400" />
-            </div>
-            {/* Left side: Milestone label and Due date */}
-            <div className="flex flex-row items-center gap-2.5 flex-wrap">
-              <span className="text-sm font-semibold text-foreground">Milestone</span>
-              {endsAt && endsAt > 0 && new Date(endsAt * 1000).getFullYear() >= 2000 && (
-                <span className="text-sm font-semibold text-muted-foreground">
-                  Due on {formatDate(new Date(endsAt * 1000).toISOString())}
+          {/* Timeline header: Only show when viewing existing completion data, not during form input */}
+          {!isCompleting && (completionReason || completionProof || completionDeliverables) && (
+            <div className="relative flex flex-row items-center justify-between gap-2 flex-wrap">
+              {/* Timeline badge - vertically centered relative to header row, aligned with main timeline */}
+              <div className="absolute -left-[73px] max-lg:-left-[69px] top-1/2 -translate-y-1/2 w-6 h-6 max-lg:w-5 max-lg:h-5 flex items-center justify-center z-10 bg-orange-50 dark:bg-orange-900/30 rounded-full">
+                <div className="w-[3px] h-[3px] rounded-full bg-orange-400" />
+              </div>
+              {/* Left side: Activity type label and Due date */}
+              <div className="flex flex-row items-center gap-2.5 flex-wrap">
+                <span className="text-sm font-semibold text-foreground">
+                  {getActivityTypeLabel(type)}
                 </span>
-              )}
-            </div>
-
-            {/* Right side: Posted by */}
-            {completionDate && (
-              <div className="flex flex-row items-center gap-3 text-sm font-medium leading-5 text-muted-foreground">
-                <span>Posted {formatDate(completionDate)} by</span>
-                {completionAttester && (
-                  <div className="flex flex-row items-center gap-3">
-                    <EthereumAddressToENSAvatar
-                      address={completionAttester}
-                      className="h-8 w-8 min-h-8 min-w-8 rounded-full"
-                    />
-                    <span className="text-sm font-semibold leading-5 text-foreground">
-                      <EthereumAddressToENSName address={completionAttester} />
-                    </span>
-                  </div>
+                {endsAt && endsAt > 0 && new Date(endsAt * 1000).getFullYear() >= 2000 && (
+                  <span className="text-sm font-semibold text-muted-foreground">
+                    Due on {formatDate(new Date(endsAt * 1000).toISOString())}
+                  </span>
                 )}
               </div>
-            )}
-          </div>
+
+              {/* Right side: Posted by */}
+              {completionDate && (
+                <div className="flex flex-row items-center gap-3 text-sm font-medium leading-5 text-muted-foreground">
+                  <span>Posted {formatDate(completionDate)} by</span>
+                  {completionAttester && (
+                    <div className="flex flex-row items-center gap-3">
+                      <EthereumAddressToENSAvatar
+                        address={completionAttester}
+                        className="h-8 w-8 min-h-8 min-w-8 rounded-full"
+                      />
+                      <span className="text-sm font-semibold leading-5 text-foreground">
+                        <EthereumAddressToENSName address={completionAttester} />
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Completion card - aligned with header */}
           <div>{renderMilestoneCompletion()}</div>

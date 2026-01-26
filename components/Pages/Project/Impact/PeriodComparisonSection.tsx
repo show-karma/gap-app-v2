@@ -1,7 +1,9 @@
 "use client";
 
-import { AreaChart, BarChart, Card, Title } from "@tremor/react";
+import { Card, Title } from "@tremor/react";
+import dynamic from "next/dynamic";
 import React, { useMemo, useState } from "react";
+import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
 import type { PeriodDatapoint } from "@/types/indicator";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
@@ -15,6 +17,17 @@ import {
   rollingPeriodOrder,
 } from "@/utilities/indicator";
 import { cn } from "@/utilities/tailwind";
+
+// Dynamically import heavy Tremor chart components for bundle optimization
+const AreaChart = dynamic(() => import("@tremor/react").then((mod) => mod.AreaChart), {
+  ssr: false,
+  loading: () => <ChartSkeleton height="h-52" />,
+});
+
+const BarChart = dynamic(() => import("@tremor/react").then((mod) => mod.BarChart), {
+  ssr: false,
+  loading: () => <ChartSkeleton height="h-52" />,
+});
 
 interface PeriodComparisonSectionProps {
   datapoints: PeriodDatapoint[];

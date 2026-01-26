@@ -1,6 +1,7 @@
 import type { IProjectDetails } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { GithubIcon, GlobeIcon, LinkedinIcon, MessageCircleIcon, TwitterIcon } from "lucide-react";
+import { GithubIcon, GlobeIcon, LinkedinIcon, TwitterIcon } from "lucide-react";
 import React from "react";
+import { DiscordOutlinedIcon } from "@/components/Icons/DiscordOutlined";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { formatFarcasterLink } from "@/utilities/farcaster";
 
@@ -21,7 +22,7 @@ export const useProjectSocials = (links?: IProjectDetails["data"]["links"]): Soc
         icon: TwitterIcon,
       },
       { name: "Github", prefix: "github.com/", icon: GithubIcon },
-      { name: "Discord", prefix: "discord.gg/", icon: MessageCircleIcon },
+      { name: "Discord", prefix: "discord.gg/", icon: DiscordOutlinedIcon },
       { name: "Website", prefix: "https://", icon: GlobeIcon },
       { name: "LinkedIn", prefix: "linkedin.com/", icon: LinkedinIcon },
       {

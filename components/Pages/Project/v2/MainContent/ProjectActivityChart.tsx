@@ -1,7 +1,9 @@
 "use client";
 
-import { AreaChart, Card } from "@tremor/react";
-import { useMemo, useState } from "react";
+import { Card } from "@tremor/react";
+import dynamic from "next/dynamic";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
@@ -15,6 +17,12 @@ import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import { useProjectStore } from "@/store";
 import { cn } from "@/utilities/tailwind";
 
+// Dynamically import heavy Tremor chart component for bundle optimization
+const AreaChart = dynamic(() => import("@tremor/react").then((mod) => mod.AreaChart), {
+  ssr: false,
+  loading: () => <ChartSkeleton height="h-[200px]" />,
+});
+
 interface ProjectActivityChartProps {
   className?: string;
   /**
@@ -24,8 +32,8 @@ interface ProjectActivityChartProps {
   embedded?: boolean;
 }
 
-interface MonthlyActivity {
-  month: string;
+interface ActivityDataPoint {
+  period: string;
   Funding: number;
   "Product updates": number;
   sortKey: number;
@@ -55,6 +63,32 @@ const TIME_RANGE_OPTIONS: { value: TimeRange; label: string }[] = [
 export function ProjectActivityChart({ className, embedded = false }: ProjectActivityChartProps) {
   const { project } = useProjectStore();
   const { allUpdates: milestones, isLoading } = useProjectProfile(project?.uid || "");
+
+  // Track visibility to prevent chart rendering when container is hidden (e.g., lg:hidden on mobile header)
+  // This prevents Recharts warnings about width(0) and height(0) when chart is in a hidden container
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Use Intersection Observer to detect when container becomes visible
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Only set visible if element is actually intersecting and has dimensions
+        const entry = entries[0];
+        if (entry.isIntersecting && entry.boundingClientRect.width > 0) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0 }
+    );
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   // Filter states
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
@@ -96,41 +130,72 @@ export function ProjectActivityChart({ className, embedded = false }: ProjectAct
     return milestones.filter((m) => new Date(m.createdAt) >= cutoffDate);
   }, [milestones, timeRange]);
 
-  // Aggregate milestones/updates by month with separate categories
+  // Get period key and sort key based on time range granularity
+  const getPeriodKey = (date: Date, range: TimeRange): { periodKey: string; sortKey: number } => {
+    if (range === "1w" || range === "1m") {
+      // Daily granularity for 1 week and 1 month
+      const sortKey = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
+      const periodKey = date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+      return { periodKey, sortKey };
+    }
+    // Weekly granularity for 1 year and all time
+    // Get the week start date (Sunday) and end date (Saturday)
+    const weekStart = new Date(date);
+    weekStart.setDate(date.getDate() - date.getDay());
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+
+    const sortKey =
+      weekStart.getFullYear() * 10000 + (weekStart.getMonth() + 1) * 100 + weekStart.getDate();
+
+    // Format as "Jan 1-7" or "Dec 29-Jan 4" if spanning months
+    const startMonth = weekStart.toLocaleDateString("en-US", { month: "short" });
+    const endMonth = weekEnd.toLocaleDateString("en-US", { month: "short" });
+    const startDay = weekStart.getDate();
+    const endDay = weekEnd.getDate();
+
+    const periodKey =
+      startMonth === endMonth
+        ? `${startMonth} ${startDay}-${endDay}`
+        : `${startMonth} ${startDay}-${endMonth} ${endDay}`;
+
+    return { periodKey, sortKey };
+  };
+
+  // Aggregate milestones/updates with granularity based on time range
   const chartData = useMemo(() => {
     if (!filteredMilestones?.length) return [];
 
-    const monthlyData = new Map<string, { Funding: number; "Product updates": number }>();
+    const periodData = new Map<string, { Funding: number; "Product updates": number }>();
     const sortKeys = new Map<string, number>();
 
     for (const milestone of filteredMilestones) {
       const date = new Date(milestone.createdAt);
-      const sortKey = date.getFullYear() * 100 + date.getMonth();
-      const monthKey = date.toLocaleDateString("en-US", {
-        month: "short",
-        year: "2-digit",
-      });
+      const { periodKey, sortKey } = getPeriodKey(date, timeRange);
 
-      sortKeys.set(monthKey, sortKey);
+      sortKeys.set(periodKey, sortKey);
 
-      const existing = monthlyData.get(monthKey) || { Funding: 0, "Product updates": 0 };
+      const existing = periodData.get(periodKey) || { Funding: 0, "Product updates": 0 };
       const category = getMilestoneCategory(milestone.type);
       existing[category]++;
-      monthlyData.set(monthKey, existing);
+      periodData.set(periodKey, existing);
     }
 
-    const result: MonthlyActivity[] = [];
-    for (const [month, counts] of monthlyData.entries()) {
+    const result: ActivityDataPoint[] = [];
+    for (const [period, counts] of periodData.entries()) {
       result.push({
-        month,
+        period,
         Funding: counts.Funding,
         "Product updates": counts["Product updates"],
-        sortKey: sortKeys.get(month) || 0,
+        sortKey: sortKeys.get(period) || 0,
       });
     }
 
     return result.sort((a, b) => a.sortKey - b.sortKey);
-  }, [filteredMilestones]);
+  }, [filteredMilestones, timeRange]);
 
   // Calculate summary stats
   const stats = useMemo(() => {
@@ -161,7 +226,7 @@ export function ProjectActivityChart({ className, embedded = false }: ProjectAct
   // Get active categories for the chart
   const activeCategories = Array.from(selectedCategories);
 
-  if (isLoading) {
+  if (isLoading || !isVisible) {
     const loadingContent = (
       <div className="animate-pulse">
         <div className="h-6 w-48 bg-gray-200 dark:bg-zinc-700 rounded mb-4" />
@@ -170,30 +235,18 @@ export function ProjectActivityChart({ className, embedded = false }: ProjectAct
     );
 
     if (embedded) {
-      return <div className={cn("", className)}>{loadingContent}</div>;
-    }
-
-    return (
-      <div className={cn("", className)}>
-        <Card className="bg-white dark:bg-zinc-800 rounded-xl">{loadingContent}</Card>
-      </div>
-    );
-  }
-
-  if (!chartData.length) {
-    if (embedded) {
       return (
-        <div
-          className={cn("flex flex-col items-center justify-center h-full text-center", className)}
-        >
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100 mb-2">
-            Project Activity
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-zinc-400">No activity data yet</p>
+        <div ref={containerRef} className={cn("", className)}>
+          {loadingContent}
         </div>
       );
     }
-    return null;
+
+    return (
+      <div ref={containerRef} className={cn("", className)}>
+        <Card className="bg-white dark:bg-zinc-800 rounded-xl">{loadingContent}</Card>
+      </div>
+    );
   }
 
   const chartContent = (
@@ -203,18 +256,29 @@ export function ProjectActivityChart({ className, embedded = false }: ProjectAct
         <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">Project Activity</h3>
       </div>
 
-      {/* Chart */}
-      <AreaChart
-        className={embedded ? "h-[120px]" : "h-[200px]"}
-        data={chartData}
-        index="month"
-        categories={activeCategories}
-        colors={["blue", "emerald"]}
-        showLegend={false}
-        showGridLines={true}
-        showYAxis={false}
-        curveType="monotone"
-      />
+      {/* Chart - explicit dimensions prevent Recharts 0-dimension warning */}
+      <div
+        className="min-w-0 w-full"
+        style={{ height: embedded ? 120 : 200, minHeight: embedded ? 120 : 200 }}
+      >
+        {chartData.length > 0 ? (
+          <AreaChart
+            className="h-full w-full"
+            data={chartData}
+            index="period"
+            categories={activeCategories}
+            colors={["blue", "emerald"]}
+            showLegend={false}
+            showGridLines={true}
+            showYAxis={false}
+            curveType="monotone"
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full text-sm text-gray-500 dark:text-zinc-400">
+            No activity data for this period
+          </div>
+        )}
+      </div>
 
       {/* Filters Row */}
       <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">

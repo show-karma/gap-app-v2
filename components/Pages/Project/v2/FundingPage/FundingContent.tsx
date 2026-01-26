@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
@@ -42,10 +43,13 @@ function GrantCard({
       data-testid="grant-card"
     >
       {grant.community?.details?.imageURL && (
-        <img
+        <Image
           src={grant.community.details.imageURL}
           alt={grant.community.details.name || "Community"}
-          className="h-10 w-10 rounded-full object-cover shrink-0"
+          width={40}
+          height={40}
+          className="rounded-full object-cover shrink-0"
+          unoptimized
         />
       )}
       <div className="flex-1 min-w-0">
@@ -100,7 +104,14 @@ function EmptyFundingState({ isAuthorized, project }: { isAuthorized: boolean; p
       className="flex flex-col items-center justify-center gap-4 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 p-8"
       data-testid="empty-funding-public"
     >
-      <img src="/images/comments.png" alt="" className="h-32 w-auto object-contain opacity-60" />
+      <Image
+        src="/images/comments.png"
+        alt="No funding illustration"
+        width={438}
+        height={185}
+        className="h-32 w-auto object-contain opacity-60"
+        loading="lazy"
+      />
       <p className="text-center text-lg font-semibold text-gray-900 dark:text-white">
         No funding yet
       </p>
