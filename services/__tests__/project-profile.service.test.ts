@@ -76,7 +76,10 @@ const mockProject: Project = {
     slug: "test-project",
   },
   members: [],
-  endorsements: [{ id: "1" }, { id: "2" }],
+  endorsements: [
+    { id: "1", endorsedBy: "0x1111111111111111111111111111111111111111" },
+    { id: "2", endorsedBy: "0x2222222222222222222222222222222222222222" },
+  ],
 };
 
 // =============================================================================
@@ -322,6 +325,36 @@ describe("calculateProfileStats", () => {
     const result = calculateProfileStats(projectNoEndorsements as Project, [], []);
 
     expect(result.endorsementsCount).toBe(0);
+  });
+
+  it("should count unique endorsers (deduplicate by address)", () => {
+    const projectWithDuplicateEndorsers = {
+      ...mockProject,
+      endorsements: [
+        { id: "1", endorsedBy: "0x1111111111111111111111111111111111111111" },
+        { id: "2", endorsedBy: "0x1111111111111111111111111111111111111111" }, // Same address
+        { id: "3", endorsedBy: "0x2222222222222222222222222222222222222222" },
+        { id: "4", endorsedBy: "0x1111111111111111111111111111111111111111" }, // Same address again
+      ],
+    };
+    const result = calculateProfileStats(projectWithDuplicateEndorsers as Project, [], []);
+
+    // Should count 2 unique endorsers, not 4 total endorsements
+    expect(result.endorsementsCount).toBe(2);
+  });
+
+  it("should handle case-insensitive address deduplication", () => {
+    const projectWithMixedCaseAddresses = {
+      ...mockProject,
+      endorsements: [
+        { id: "1", endorsedBy: "0xABCD1111111111111111111111111111111111" },
+        { id: "2", endorsedBy: "0xabcd1111111111111111111111111111111111" }, // Same address, lowercase
+      ],
+    };
+    const result = calculateProfileStats(projectWithMixedCaseAddresses as Project, [], []);
+
+    // Should count 1 unique endorser (case-insensitive)
+    expect(result.endorsementsCount).toBe(1);
   });
 });
 

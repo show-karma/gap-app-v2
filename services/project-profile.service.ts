@@ -173,7 +173,12 @@ export function calculateProfileStats(
   grants: Grant[],
   updates: UnifiedMilestone[]
 ): ProjectProfileStats {
-  const endorsementsCount = project?.endorsements?.length || 0;
+  // Count unique endorsers (deduplicate by address)
+  const endorsements = project?.endorsements || [];
+  const uniqueEndorsers = new Set(
+    endorsements.map((e: { endorsedBy: string }) => e.endorsedBy?.toLowerCase())
+  );
+  const endorsementsCount = uniqueEndorsers.size;
   const grantsCount = grants.length;
   const lastUpdate = updates.length > 0 ? new Date(updates[0].createdAt) : undefined;
 
