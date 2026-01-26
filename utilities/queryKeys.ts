@@ -159,6 +159,21 @@ export const QUERY_KEYS = {
         params.chainID,
         params.isAuth,
       ] as const,
+    EXPLORER: (search?: string) => ["projects-explorer", search] as const,
+    EXPLORER_BASE: ["projects-explorer"] as const,
+    EXPLORER_INFINITE: (params: {
+      search?: string;
+      sortBy?: string;
+      sortOrder?: string;
+      limit?: number;
+    }) =>
+      [
+        "projects-explorer-infinite",
+        params.search || "",
+        params.sortBy || "updatedAt",
+        params.sortOrder || "desc",
+        params.limit ?? 50,
+      ] as const,
   },
   INDICATORS: {
     AUTOSYNCED: ["indicators", "autosynced"] as const,

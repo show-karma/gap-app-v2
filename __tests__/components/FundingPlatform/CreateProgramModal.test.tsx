@@ -13,6 +13,19 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { server } from "@/__tests__/utils/msw/setup";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
 
+// Mock useRouter from next/navigation
+const mockPush = jest.fn();
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: mockPush,
+    back: jest.fn(),
+    forward: jest.fn(),
+    refresh: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+  }),
+}));
+
 // Mock dependencies
 jest.mock("wagmi", () => ({
   useAccount: jest.fn(),
@@ -559,6 +572,7 @@ describe("CreateProgramModal", () => {
 
     it("should handle successful creation", async () => {
       const user = userEvent.setup();
+      mockPush.mockClear();
       renderWithProviders(
         <CreateProgramModal
           isOpen={true}
@@ -578,10 +592,16 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        // V2 API auto-approves if user is admin - approveProgram is not called separately
-        expect(toast.success).toHaveBeenCalledWith("Program created and approved successfully!");
+        // V2 API auto-approves if user is admin and redirects to setup wizard
+        expect(toast.success).toHaveBeenCalledWith("Program created! Let's set it up.", {
+          duration: 3000,
+        });
         expect(mockOnSuccess).toHaveBeenCalled();
         expect(mockOnClose).toHaveBeenCalled();
+        // Should redirect to setup wizard
+        expect(mockPush).toHaveBeenCalledWith(
+          "/community/test-community/admin/funding-platform/program-123/setup"
+        );
       });
     });
 
