@@ -86,7 +86,7 @@ const ContactBlock: FC<ContactBlockProps> = ({
                   deleteFunction(contact.id);
                 }}
               >
-                <TrashIcon className="w-6 h-6 max-md:w-7 max-md:h-7 text-red-500" />
+                <TrashIcon className="w-5 h-5 max-md:w-6 max-md:h-6 text-red-500" />
               </button>
             </div>
           </div>

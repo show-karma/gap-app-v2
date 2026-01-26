@@ -70,6 +70,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       if (!milestoneInstance) throw new Error("Milestone not found");
 
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
+        // Try to verify deletion with a reasonable timeout (30 retries = ~45 seconds)
         await retryUntilConditionMet(
           async () => {
             const { data: fetchedGrants } = await refetchGrants();
@@ -79,8 +80,15 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
           },
           () => {
             callbackFn?.();
-          }
+          },
+          30, // Reduced from 1000 to 30 retries (~45 seconds max)
+          1500
         );
+
+        // Always refresh the UI after the operation, even if deletion wasn't confirmed
+        // This ensures the UI updates and the user sees the current state
+        await refetchGrants();
+        await refreshGrant();
       };
       if (!isOnChainAuthorized) {
         await performOffChainRevoke({
