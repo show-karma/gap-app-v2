@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
 import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
+import { useStaff } from "@/hooks/useStaff";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { getProjectMemberRoles, type Member } from "@/utilities/getProjectMemberRoles";
 import { cn } from "@/utilities/tailwind";
@@ -33,7 +34,8 @@ export function TeamContent({ className }: TeamContentProps) {
 
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isProjectOwner || isContractOwner;
+  const isStaff = useStaff();
+  const isAuthorized = isProjectOwner || isContractOwner || isStaff;
   const { project: projectInstance } = useProjectInstance(
     project?.details?.slug || project?.uid || ""
   );
