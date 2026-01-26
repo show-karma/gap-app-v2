@@ -34,7 +34,7 @@ export function TeamContent({ className }: TeamContentProps) {
 
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isStaff = useStaff();
+  const { isStaff } = useStaff();
   const isAuthorized = isProjectOwner || isContractOwner || isStaff;
   const { project: projectInstance } = useProjectInstance(
     project?.details?.slug || project?.uid || ""
@@ -62,6 +62,8 @@ export function TeamContent({ className }: TeamContentProps) {
     return roleOrder[roleA] - roleOrder[roleB];
   });
 
+  const shouldDisableInvite = !isAuthorized;
+
   return (
     <div className={cn("flex flex-col gap-4", className)} data-testid="team-content">
       <ContributorProfileDialog />
@@ -71,7 +73,7 @@ export function TeamContent({ className }: TeamContentProps) {
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           Team Members ({members.length})
         </h2>
-        {isAuthorized && <InviteMemberDialog />}
+        {isAuthorized && <InviteMemberDialog shouldDisable={shouldDisableInvite} />}
       </div>
 
       {/* Team members list */}
