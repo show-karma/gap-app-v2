@@ -4,6 +4,14 @@
  */
 
 import { render, screen } from "@testing-library/react";
+
+// Mock ProjectOptionsMenu to avoid deep dependency chain (gasless utilities with ESM)
+jest.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({
+  ProjectOptionsDialogs: () => (
+    <div data-testid="project-options-dialogs">ProjectOptionsDialogs</div>
+  ),
+}));
+
 import { ProjectModals } from "@/components/Pages/Project/ProjectWrapper/ProjectModals";
 
 // Mock modal stores
@@ -73,22 +81,22 @@ describe("ProjectModals", () => {
 
   describe("Initial State", () => {
     it("should render without any modals when all are closed", () => {
-      const { container } = render(<ProjectModals />);
+      render(<ProjectModals />);
 
       expect(screen.queryByTestId("intro-dialog")).not.toBeInTheDocument();
       expect(screen.queryByTestId("endorsement-dialog")).not.toBeInTheDocument();
       expect(screen.queryByTestId("progress-dialog")).not.toBeInTheDocument();
       expect(screen.queryByTestId("share-dialog")).not.toBeInTheDocument();
 
-      // Container should be empty (only React fragment)
-      expect(container.children.length).toBe(0);
+      // ProjectOptionsDialogs is always rendered
+      expect(screen.getByTestId("project-options-dialogs")).toBeInTheDocument();
     });
 
-    it("should render only a fragment wrapper", () => {
-      const { container } = render(<ProjectModals />);
+    it("should render ProjectOptionsDialogs", () => {
+      render(<ProjectModals />);
 
-      // The component renders a React.Fragment, so no extra wrapper divs
-      expect(container.firstChild).toBeNull();
+      // ProjectOptionsDialogs is always rendered regardless of modal state
+      expect(screen.getByTestId("project-options-dialogs")).toBeInTheDocument();
     });
   });
 

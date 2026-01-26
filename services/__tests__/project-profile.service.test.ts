@@ -88,7 +88,7 @@ describe("transformImpactsToMilestones", () => {
     const result = transformImpactsToMilestones([mockImpact]);
 
     expect(result).toHaveLength(1);
-    expect(result[0]).toEqual({
+    expect(result[0]).toMatchObject({
       uid: "impact-1",
       type: "impact",
       title: "Work done",
@@ -99,6 +99,11 @@ describe("transformImpactsToMilestones", () => {
       refUID: "ref-1",
       source: { type: "impact" },
     });
+    // Verify projectImpact is included for delete functionality
+    expect(result[0].projectImpact).toBeDefined();
+    expect(result[0].projectImpact?.uid).toBe("impact-1");
+    expect(result[0].projectImpact?.data?.work).toBe("Work done");
+    expect(result[0].projectImpact?.data?.impact).toBe("Impact achieved");
   });
 
   it("should use default title when work is missing", () => {
