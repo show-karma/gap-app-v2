@@ -91,12 +91,46 @@ jest.mock("@/hooks/useProjectSocials", () => ({
   ],
 }));
 
+// Mock state for Zustand stores - must handle selectors
+const mockProjectStoreState = {
+  isProjectAdmin: false,
+  isProjectOwner: false,
+  refreshProject: jest.fn(),
+};
+
+const mockOwnerStoreState = {
+  isOwner: false,
+};
+
 jest.mock("@/store", () => ({
-  useProjectStore: () => ({
-    isProjectAdmin: false,
+  useProjectStore: jest.fn((selector?: (state: any) => any) => {
+    if (typeof selector === "function") {
+      return selector(mockProjectStoreState);
+    }
+    return mockProjectStoreState;
   }),
-  useOwnerStore: () => ({
-    isOwner: false,
+  useOwnerStore: jest.fn((selector?: (state: any) => any) => {
+    if (typeof selector === "function") {
+      return selector(mockOwnerStoreState);
+    }
+    return mockOwnerStoreState;
+  }),
+}));
+
+// Mock useStaff hook to prevent authorization
+jest.mock("@/hooks/useStaff", () => ({
+  useStaff: () => ({
+    isStaff: false,
+    isLoading: false,
+    error: null,
+  }),
+}));
+
+// Mock progress modal store
+jest.mock("@/store/modals/progress", () => ({
+  useProgressModalStore: () => ({
+    isProgressModalOpen: false,
+    setIsProgressModalOpen: jest.fn(),
   }),
 }));
 
@@ -174,6 +208,24 @@ jest.mock("@/components/Donation/SingleProject/SingleProjectDonateModal", () => 
 // Mock hasConfiguredPayoutAddresses
 jest.mock("@/src/features/chain-payout-address/hooks/use-chain-payout-address", () => ({
   hasConfiguredPayoutAddresses: jest.fn(() => true),
+  getPayoutAddressForChain: jest.fn(() => null),
+  useUpdateChainPayoutAddress: jest.fn(() => ({
+    mutate: jest.fn(),
+    isPending: false,
+  })),
+}));
+
+// Mock the barrel export for chain payout address feature
+jest.mock("@/src/features/chain-payout-address", () => ({
+  hasConfiguredPayoutAddresses: jest.fn(() => true),
+  getPayoutAddressForChain: jest.fn(() => null),
+  useUpdateChainPayoutAddress: jest.fn(() => ({
+    mutate: jest.fn(),
+    isPending: false,
+  })),
+  SetChainPayoutAddressModal: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? <div data-testid="set-payout-modal">Set Payout Modal</div> : null,
+  EnableDonationsButton: () => <button data-testid="enable-donations-button">Enable</button>,
 }));
 
 // Mock MarkdownPreview to avoid complex rendering
