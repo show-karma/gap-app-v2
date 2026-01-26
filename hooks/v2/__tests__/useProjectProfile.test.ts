@@ -105,12 +105,14 @@ describe("useProjectProfile", () => {
       expect(result.current.isVerified).toBe(true);
     });
 
-    it("should combine milestones and impacts into allUpdates", () => {
+    it("should combine milestones, impacts, and grants into allUpdates", () => {
       const { result } = renderHook(() => useProjectProfile("test-project"));
 
-      expect(result.current.allUpdates).toHaveLength(2);
+      // allUpdates should include milestones, impacts, and grant_received items
+      expect(result.current.allUpdates).toHaveLength(3);
       expect(result.current.allUpdates[0].type).toBe("milestone");
       expect(result.current.allUpdates[1].type).toBe("impact");
+      expect(result.current.allUpdates[2].type).toBe("grant_received");
     });
 
     it("should count completed milestones", () => {
@@ -211,6 +213,13 @@ describe("useProjectProfile", () => {
     });
 
     it("should handle empty milestones and impacts", () => {
+      const useProjectGrants = require("../useProjectGrants").useProjectGrants;
+      useProjectGrants.mockReturnValue({
+        grants: [],
+        isLoading: false,
+        refetch: jest.fn(),
+      });
+
       const useProjectUpdates = require("../useProjectUpdates").useProjectUpdates;
       useProjectUpdates.mockReturnValue({
         milestones: [],
