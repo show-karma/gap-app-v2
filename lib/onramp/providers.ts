@@ -1,10 +1,8 @@
 import { OnrampProvider } from "@/hooks/donation/types";
 
-const COINBASE_PAY_URL = process.env.NEXT_PUBLIC_COINBASE_PAY_URL || "https://pay.coinbase.com";
 const STRIPE_ONRAMP_URL = process.env.NEXT_PUBLIC_STRIPE_ONRAMP_URL || "https://crypto.link.com";
 
 export const ALLOWED_ONRAMP_DOMAINS = [
-  "pay.coinbase.com",
   "crypto.link.com",
   "global.transak.com",
   "global-stg.transak.com",
@@ -29,35 +27,6 @@ export interface OnrampProviderConfig {
 }
 
 const PROVIDER_CONFIGS: Record<OnrampProvider, OnrampProviderConfig> = {
-  [OnrampProvider.COINBASE]: {
-    id: OnrampProvider.COINBASE,
-    name: "Coinbase",
-    // Note: With the Quote-based flow, URL is returned from backend (onrampUrl in response)
-    // This buildUrl is kept as fallback for backwards compatibility only
-    buildUrl: ({
-      token,
-      fiatAmount,
-      fiatCurrency,
-      asset,
-      redirectUrl,
-      partnerUserRef,
-    }: OnrampUrlParams) => {
-      const params = new URLSearchParams({ sessionToken: token });
-      if (fiatAmount) params.set("presetFiatAmount", String(fiatAmount));
-      if (fiatCurrency) params.set("fiatCurrency", fiatCurrency);
-      if (asset) params.set("defaultAsset", asset);
-      if (redirectUrl) params.set("redirectUrl", redirectUrl);
-      if (partnerUserRef) params.set("partnerUserRef", partnerUserRef);
-      return `${COINBASE_PAY_URL}/buy/select-asset?${params.toString()}`;
-    },
-    description: "Purchase crypto with card via Coinbase",
-    supportedCurrencies: [
-      { code: "USD", symbol: "$" },
-      { code: "EUR", symbol: "€" },
-      { code: "GBP", symbol: "£" },
-    ],
-    supportedNetworks: ["ethereum", "base", "optimism", "polygon", "arbitrum"],
-  },
   [OnrampProvider.STRIPE]: {
     id: OnrampProvider.STRIPE,
     name: "Stripe",
@@ -101,7 +70,7 @@ const PROVIDER_CONFIGS: Record<OnrampProvider, OnrampProviderConfig> = {
   },
 };
 
-export const DEFAULT_ONRAMP_PROVIDER = OnrampProvider.COINBASE;
+export const DEFAULT_ONRAMP_PROVIDER = OnrampProvider.TRANSAK;
 
 export function getProviderConfig(provider: OnrampProvider): OnrampProviderConfig {
   const config = PROVIDER_CONFIGS[provider];

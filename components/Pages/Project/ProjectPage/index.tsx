@@ -92,17 +92,13 @@ function ProjectPage() {
 
   // Detect onramp redirect params and show status modal
   useEffect(() => {
-    const onrampProvider = searchParams.get("onrampProvider") as
-      | "coinbase"
-      | "stripe"
-      | "transak"
-      | null;
+    const onrampProvider = searchParams.get("onrampProvider") as "stripe" | "transak" | null;
     const onrampRef = searchParams.get("onrampRef");
     // Transak appends orderId to redirect URL
     const transakOrderId = searchParams.get("orderId");
 
     // Determine provider and orderId
-    let provider: "coinbase" | "stripe" | "transak" | null = onrampProvider;
+    let provider: "stripe" | "transak" | null = onrampProvider;
     let orderId: string | null = null;
 
     if (transakOrderId) {
@@ -110,8 +106,8 @@ function ProjectPage() {
       provider = provider || "transak";
       orderId = transakOrderId;
     } else if (onrampRef) {
-      // Coinbase/Stripe redirect - use our partnerUserRef
-      provider = provider || "coinbase";
+      // Stripe redirect - use our partnerUserRef
+      provider = provider || "stripe";
       orderId = onrampRef;
     }
 

@@ -15,7 +15,7 @@ interface UseOnrampParams {
   targetAsset: string;
   redirectUrl?: string;
   provider?: OnrampProvider;
-  country?: string | null; // ISO 3166-1 alpha-2 code (required for Coinbase)
+  country?: string | null; // ISO 3166-1 alpha-2 code
   onError?: (error: Error) => void;
 }
 
@@ -62,14 +62,6 @@ export const useOnramp = ({
         return;
       }
 
-      // Country is required for Coinbase
-      if (provider === OnrampProvider.COINBASE && !country) {
-        const err = new Error("Country detection in progress");
-        setError(err);
-        onError?.(err);
-        return;
-      }
-
       setIsLoading(true);
       setError(null);
 
@@ -91,10 +83,9 @@ export const useOnramp = ({
           network,
           targetAsset,
           donorAddress: address,
-          // Only include country for Coinbase
-          ...(provider === OnrampProvider.COINBASE && country && { country }),
-          // Include redirect URL for providers that support redirect (Coinbase, Transak)
-          ...((provider === OnrampProvider.COINBASE || provider === OnrampProvider.TRANSAK) &&
+          ...(country && { country }),
+          // Include redirect URL for providers that support redirect (Transak)
+          ...(provider === OnrampProvider.TRANSAK &&
             redirectUrl && { redirectUrl: buildRedirectUrl() }),
         };
 
@@ -110,31 +101,7 @@ export const useOnramp = ({
           return;
         }
 
-        // For Coinbase, use the onrampUrl from the response (Quote-based flow)
-        if (provider === OnrampProvider.COINBASE && sessionResponse.onrampUrl) {
-          // Validate URL before opening
-          const isValidUrl = (() => {
-            try {
-              const parsed = new URL(sessionResponse.onrampUrl!);
-              return ALLOWED_ONRAMP_DOMAINS.some((domain) => parsed.hostname === domain);
-            } catch {
-              return false;
-            }
-          })();
-
-          if (!isValidUrl) {
-            throw OnrampError.invalidUrl();
-          }
-
-          // Open in same tab so Coinbase can redirect back to our app
-          window.location.href = sessionResponse.onrampUrl;
-
-          toast.success(`Redirecting to ${providerConfig.name}...`);
-          setIsLoading(false);
-          return;
-        }
-
-        // For Transak, redirect to onrampUrl (same pattern as Coinbase)
+        // For Transak, redirect to onrampUrl
         if (provider === OnrampProvider.TRANSAK && sessionResponse.onrampUrl) {
           const isValidUrl = (() => {
             try {

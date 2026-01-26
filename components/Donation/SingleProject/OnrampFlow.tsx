@@ -170,24 +170,13 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
 
       <Button
         onClick={handleProceed}
-        disabled={
-          !isValidAmount ||
-          isLoading ||
-          !payoutAddress ||
-          !isChainSupported ||
-          (selectedProvider === OnrampProvider.COINBASE && isCountryLoading)
-        }
+        disabled={!isValidAmount || isLoading || !payoutAddress || !isChainSupported}
         className="w-full bg-brand-blue hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">
             <Loader2 className="animate-spin h-4 w-4" />
             Creating session...
-          </span>
-        ) : isCountryLoading && selectedProvider === OnrampProvider.COINBASE ? (
-          <span className="flex items-center justify-center gap-2">
-            <Loader2 className="animate-spin h-4 w-4" />
-            Detecting location...
           </span>
         ) : (
           <span className="flex items-center justify-center gap-2">

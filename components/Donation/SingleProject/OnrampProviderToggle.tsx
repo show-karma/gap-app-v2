@@ -12,7 +12,6 @@ interface OnrampProviderToggleProps {
 
 const PROVIDER_OPTIONS = [
   { id: OnrampProvider.STRIPE, label: "Stripe" },
-  { id: OnrampProvider.COINBASE, label: "Coinbase" },
   { id: OnrampProvider.TRANSAK, label: "Transak" },
 ] as const;
 
