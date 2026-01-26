@@ -57,12 +57,7 @@ export function StatItem({ value, label, iconType, icon, className, onClick }: S
     <div
       className={cn(
         "flex flex-col items-center justify-center gap-2 flex-1 min-w-[120px] py-2 px-4 rounded-lg transition-all duration-150",
-        isClickable && [
-          "cursor-pointer",
-          "hover:bg-neutral-100 dark:hover:bg-zinc-700/50",
-          "hover:scale-[1.02]",
-          "active:scale-[0.98]",
-        ],
+        isClickable && ["cursor-pointer", "hover:bg-neutral-100 dark:hover:bg-zinc-700/50"],
         className
       )}
       data-testid="stat-item"
