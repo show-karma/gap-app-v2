@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { IntroDialog } from "@/components/Pages/Project/IntroDialog";
@@ -9,6 +10,7 @@ import { useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { cn } from "@/utilities/tailwind";
+import { EndorsementsListDialog } from "./EndorsementsListDialog";
 import { ProjectHeader } from "./Header/ProjectHeader";
 import { ProjectMainContent } from "./MainContent/ProjectMainContent";
 import { ProjectSidePanel } from "./SidePanel/ProjectSidePanel";
@@ -43,6 +45,7 @@ export function ProjectProfilePage({ className }: ProjectProfilePageProps) {
   // Modal stores for dialogs
   const { isEndorsementOpen } = useEndorsementStore();
   const { isIntroModalOpen } = useIntroModalStore();
+  const [isEndorsementsListOpen, setIsEndorsementsListOpen] = useState(false);
 
   // Use unified hook for all project profile data
   const { project, isLoading, isVerified, allUpdates, milestonesCount, completedCount, stats } =
@@ -78,6 +81,10 @@ export function ProjectProfilePage({ className }: ProjectProfilePageProps) {
       {/* Dialogs */}
       {isEndorsementOpen && <EndorsementDialog />}
       {isIntroModalOpen && <IntroDialog />}
+      <EndorsementsListDialog
+        open={isEndorsementsListOpen}
+        onOpenChange={setIsEndorsementsListOpen}
+      />
 
       <div
         className={cn("flex flex-col gap-6 w-full", className)}
@@ -91,6 +98,7 @@ export function ProjectProfilePage({ className }: ProjectProfilePageProps) {
             endorsements={stats.endorsementsCount}
             lastUpdate={stats.lastUpdate}
             completeRate={stats.completeRate}
+            onEndorsementsClick={() => setIsEndorsementsListOpen(true)}
           />
         </div>
 
