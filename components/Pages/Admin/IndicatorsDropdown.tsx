@@ -14,6 +14,7 @@ import { IndicatorForm } from "@/components/Forms/IndicatorForm";
 import { Button } from "@/components/Utilities/Button";
 import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import type { ImpactIndicator } from "@/types/impactMeasurement";
+import { getIndicatorEffectiveId } from "@/utilities/indicatorUtils";
 
 // Debounce hook for search performance
 const useDebouncedValue = (value: string, delay: number) => {
@@ -101,14 +102,6 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
     () => [...indicators, ...newIndicators],
     [indicators, newIndicators]
   );
-
-  /**
-   * Get the effective ID for an indicator (uuid preferred, fallback to id)
-   * This ensures we use PostgreSQL UUIDs for impact segments when available
-   */
-  const getIndicatorEffectiveId = (indicator: ImpactIndicator): string => {
-    return indicator.uuid || indicator.id;
-  };
 
   // Get selected indicator names for display
   const selectedNames = useMemo(() => {

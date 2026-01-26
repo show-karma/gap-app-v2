@@ -13,6 +13,7 @@ import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import type { Category, ImpactIndicator, ImpactSegment } from "@/types/impactMeasurement";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { getIndicatorEffectiveId } from "@/utilities/indicatorUtils";
 import { IndicatorsDropdown } from "./IndicatorsDropdown";
 
 const OUTPUT_TYPES = ["output", "outcome"] as const;
@@ -92,14 +93,6 @@ export const ActivityOutcomeModal = ({
     mode: "onChange",
   });
 
-  /**
-   * Get the effective ID for an indicator (uuid preferred, fallback to id)
-   * This ensures we use PostgreSQL UUIDs for impact segments when available
-   */
-  const getIndicatorEffectiveId = (indicator: ImpactIndicator): string => {
-    return indicator.uuid || indicator.id;
-  };
-
   useEffect(() => {
     if (isOpen) {
       // When editing, map indicator names to PostgreSQL UUIDs from all available indicators
@@ -108,12 +101,14 @@ export const ActivityOutcomeModal = ({
       if (editingSegment?.impact_indicators) {
         selectedIndicatorIds = editingSegment.impact_indicators
           .map((segmentInd) => {
-            // First try to find by UUID or ID
+            // Try to find by UUID or ID (check both segmentInd.id and segmentInd.uuid)
+            const segmentEffectiveId = segmentInd.uuid || segmentInd.id;
             const byId = allIndicators.find(
               (ind) =>
-                getIndicatorEffectiveId(ind) === segmentInd.id ||
+                getIndicatorEffectiveId(ind) === segmentEffectiveId ||
                 ind.id === segmentInd.id ||
-                ind.uuid === segmentInd.id
+                ind.uuid === segmentInd.id ||
+                (segmentInd.uuid && ind.uuid === segmentInd.uuid)
             );
             if (byId) return getIndicatorEffectiveId(byId);
             // Fallback to matching by name (case-insensitive)
