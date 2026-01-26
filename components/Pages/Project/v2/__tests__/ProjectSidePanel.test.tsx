@@ -40,7 +40,10 @@ jest.mock("react-hot-toast", () => ({
 
 // Mock wagmi with all required hooks
 jest.mock("wagmi", () => ({
-  useAccount: () => ({ address: "0x1234567890123456789012345678901234567890" }),
+  useAccount: () => ({
+    address: "0x1234567890123456789012345678901234567890",
+    isConnected: true,
+  }),
   useChainId: () => 1,
   useSwitchChain: () => ({ switchChainAsync: jest.fn() }),
 }));

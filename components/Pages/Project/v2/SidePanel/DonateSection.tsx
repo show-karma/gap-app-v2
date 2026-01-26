@@ -2,6 +2,7 @@
 
 import { DollarSign, HandCoinsIcon } from "lucide-react";
 import { useState } from "react";
+import { useAccount } from "wagmi";
 import { SingleProjectDonateModal } from "@/components/Donation/SingleProject/SingleProjectDonateModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,9 @@ export function DonateSection({ project, className }: DonateSectionProps) {
   const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
   const [amount, setAmount] = useState("");
 
+  // Wallet connection state
+  const { isConnected } = useAccount();
+
   // Authorization checks
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
@@ -70,14 +74,24 @@ export function DonateSection({ project, className }: DonateSectionProps) {
 
   return (
     <>
-      <div className={cn("flex flex-col gap-4", className)} data-testid="donate-section">
+      <section
+        className={cn("flex flex-col gap-4", className)}
+        data-testid="donate-section"
+        aria-labelledby="donate-heading"
+      >
         {/* Header */}
         <div className="flex flex-col gap-1">
           <div className="flex flex-row items-center gap-2">
-            <HandCoinsIcon className="h-6 w-6 text-neutral-700 dark:text-neutral-300" />
-            <span className="text-xl font-semibold text-neutral-900 dark:text-white tracking-tight">
+            <HandCoinsIcon
+              className="h-6 w-6 text-neutral-700 dark:text-neutral-300"
+              aria-hidden="true"
+            />
+            <h3
+              id="donate-heading"
+              className="text-xl font-semibold text-neutral-900 dark:text-white tracking-tight"
+            >
               Donate
-            </span>
+            </h3>
           </div>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
             Support the project with a donation
@@ -89,26 +103,39 @@ export function DonateSection({ project, className }: DonateSectionProps) {
           /* Regular donation form when payout addresses are configured */
           <div className="flex flex-row gap-2">
             <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 dark:text-neutral-400">
+              <label htmlFor="donate-amount" className="sr-only">
+                Donation amount in USD
+              </label>
+              <span
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 dark:text-neutral-400"
+                aria-hidden="true"
+              >
                 $
               </span>
               <Input
+                id="donate-amount"
                 type="number"
                 placeholder="amount"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 min="0"
                 step="0.01"
+                aria-describedby="donate-help"
                 className="pl-7 bg-white dark:bg-zinc-900 border-neutral-200 dark:border-zinc-700 rounded-lg shadow-sm"
                 data-testid="donate-amount-input"
               />
+              <span id="donate-help" className="sr-only">
+                Enter the amount you wish to donate in USD
+              </span>
             </div>
             <Button
               onClick={handleDonateClick}
-              className="bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-lg px-4"
+              disabled={!isConnected}
+              title={!isConnected ? "Connect wallet to donate" : undefined}
+              className="bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-lg px-4 disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="donate-button"
             >
-              Donate
+              {isConnected ? "Donate" : "Connect Wallet"}
             </Button>
           </div>
         ) : canSetPayoutAddress ? (
@@ -132,7 +159,7 @@ export function DonateSection({ project, className }: DonateSectionProps) {
             Donations not available - project hasn't set up payout addresses yet.
           </p>
         )}
-      </div>
+      </section>
 
       {/* Donation Modal */}
       <SingleProjectDonateModal
