@@ -5,7 +5,7 @@ import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapCo
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import type { Transaction } from "ethers";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
@@ -72,12 +72,27 @@ type MilestoneFormData = z.infer<typeof milestoneSchema>;
 
 export const UnifiedMilestoneScreen = () => {
   const { project } = useProjectStore();
-  const { closeProgressModal } = useProgressModalStore();
+  const { closeProgressModal, preSelectedGrantId, setPreSelectedGrantId } = useProgressModalStore();
   const [selectedGrantIds, setSelectedGrantIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasInitializedSelection, setHasInitializedSelection] = useState(false);
 
   // Fetch grants using dedicated hook
   const { grants, refetch: refetchGrants } = useProjectGrants(project?.uid || "");
+
+  // Pre-select grant if provided via store (e.g., from "Add a new milestone" button on milestones page)
+  useEffect(() => {
+    if (preSelectedGrantId && grants.length > 0 && !hasInitializedSelection) {
+      // Check if the pre-selected grant exists in the available grants
+      const grantExists = grants.some((g) => g.uid === preSelectedGrantId);
+      if (grantExists) {
+        setSelectedGrantIds([preSelectedGrantId]);
+      }
+      setHasInitializedSelection(true);
+      // Clear the pre-selected grant ID from the store to avoid re-applying on subsequent opens
+      setPreSelectedGrantId(null);
+    }
+  }, [preSelectedGrantId, grants, hasInitializedSelection, setPreSelectedGrantId]);
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();

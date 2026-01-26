@@ -9,6 +9,7 @@ import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useGrantStore } from "@/store/grant";
 import type { GrantMilestone } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -31,6 +32,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
 
   const { project, isProjectOwner } = useProjectStore();
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
+  const { refreshGrant } = useGrantStore();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();
@@ -98,8 +100,10 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
               }
             );
           },
-          onSuccess: () => {
+          onSuccess: async () => {
             changeStepperStep("indexed");
+            // Refresh the grant store to update the UI
+            await refreshGrant();
           },
           toastMessages: {
             success: MESSAGES.MILESTONES.DELETE.SUCCESS,
@@ -119,8 +123,10 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
               {}
             );
           }
-          await checkIfAttestationExists(() => {
+          await checkIfAttestationExists(async () => {
             changeStepperStep("indexed");
+            // Refresh the grant store to update the UI
+            await refreshGrant();
           });
           showSuccess(MESSAGES.MILESTONES.DELETE.SUCCESS);
         } catch (onChainError: any) {
@@ -131,6 +137,10 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
             uid: milestoneInstance.uid as `0x${string}`,
             chainID: milestoneInstance.chainID,
             checkIfExists: checkIfAttestationExists,
+            onSuccess: async () => {
+              // Refresh the grant store to update the UI
+              await refreshGrant();
+            },
             toastMessages: {
               success: MESSAGES.MILESTONES.DELETE.SUCCESS,
               loading: MESSAGES.MILESTONES.DELETE.LOADING,

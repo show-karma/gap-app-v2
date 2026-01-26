@@ -1,21 +1,29 @@
+import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { cn } from "@/utilities/tailwind";
 
 interface VerificationBadgeProps {
   className?: string;
   "data-testid"?: string;
   "aria-label"?: string;
+  /** Custom tooltip text. Defaults to "This project has received grant funding" */
+  tooltipText?: string;
+  /** Whether to show the tooltip. Defaults to true */
+  showTooltip?: boolean;
 }
 
 /**
  * VerificationBadge displays a custom badge icon for verified projects.
  * Uses a seal/badge shape with a checkmark inside.
+ * Includes a tooltip explaining why the project has this badge.
  */
 export function VerificationBadge({
   className,
   "data-testid": dataTestId,
-  "aria-label": ariaLabel,
+  "aria-label": ariaLabel = "Verified project",
+  tooltipText = "This project has received grant funding",
+  showTooltip = true,
 }: VerificationBadgeProps) {
-  return (
+  const badgeIcon = (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="24"
@@ -42,5 +50,21 @@ export function VerificationBadge({
         strokeLinejoin="round"
       />
     </svg>
+  );
+
+  if (!showTooltip) {
+    return badgeIcon;
+  }
+
+  return (
+    <InfoTooltip
+      content={tooltipText}
+      side="bottom"
+      align="center"
+      delayDuration={200}
+      triggerAsChild
+    >
+      <span className="inline-flex cursor-help">{badgeIcon}</span>
+    </InfoTooltip>
   );
 }
