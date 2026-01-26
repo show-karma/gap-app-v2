@@ -56,6 +56,10 @@ const config: Config = {
     "^multiformats/cid$": "<rootDir>/__mocks__/multiformats.ts",
     "^@aa-sdk/core$": "<rootDir>/__mocks__/@aa-sdk/core.ts",
     "^@privy-io/wagmi$": "<rootDir>/__mocks__/@privy-io/wagmi.ts",
+    "^@account-kit/infra$": "<rootDir>/__mocks__/@account-kit/infra.ts",
+    "^@account-kit/infra/(.*)$": "<rootDir>/__mocks__/@account-kit/infra.ts",
+    "^@account-kit/smart-contracts$": "<rootDir>/__mocks__/@account-kit/smart-contracts.ts",
+    "^@account-kit/smart-contracts/(.*)$": "<rootDir>/__mocks__/@account-kit/smart-contracts.ts",
   },
 
   // Transform ESM modules that need to be compiled for Jest
