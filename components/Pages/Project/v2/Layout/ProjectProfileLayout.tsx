@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
-import { type ReactNode, Suspense, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
@@ -68,7 +69,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   const [isEndorsementsListOpen, setIsEndorsementsListOpen] = useState(false);
 
   // Use unified hook for all project profile data
-  const { project, isLoading, isVerified, stats } = useProjectProfile(projectId as string);
+  const { project, isLoading, isError, isVerified, stats } = useProjectProfile(projectId as string);
 
   // Initialize project permissions in store (for authorization checks in ContentTabs)
   useProjectPermissions();
@@ -105,6 +106,52 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
     }
     // Other tabs will navigate via Link href
   };
+
+  // Error state - show not found page when project doesn't exist
+  if (isError && !isLoading) {
+    return (
+      <div
+        className="flex flex-col items-center justify-center gap-6 w-full min-h-[60vh] px-4"
+        data-testid="project-not-found"
+      >
+        <div className="flex flex-col items-center gap-4 max-w-md text-center">
+          <div className="w-24 h-24 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center">
+            <svg
+              className="w-12 h-12 text-gray-400 dark:text-zinc-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100">Project Not Found</h1>
+          <p className="text-gray-600 dark:text-zinc-400">
+            The project you&apos;re looking for doesn&apos;t exist or may have been removed.
+          </p>
+          <div className="flex flex-row gap-3 mt-4">
+            <Link
+              href="/"
+              className="px-4 py-2 text-sm font-medium text-white bg-brand-blue hover:bg-brand-blue/90 rounded-lg transition-colors"
+            >
+              Go to Homepage
+            </Link>
+            <Link
+              href="/projects"
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-zinc-300 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-lg transition-colors"
+            >
+              Browse Projects
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Loading state - show full skeleton layout
   if (isLoading || !project) {

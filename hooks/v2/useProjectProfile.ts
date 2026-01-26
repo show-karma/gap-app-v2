@@ -21,6 +21,8 @@ import { useProjectUpdates } from "./useProjectUpdates";
 export interface UseProjectProfileResult extends ProjectProfileData, ProjectProfileState {
   /** The project data */
   project: Project | null;
+  /** Whether the project fetch failed (e.g., not found) */
+  isError: boolean;
   /** Refetch all project data */
   refetch: () => Promise<void>;
 }
@@ -42,7 +44,7 @@ export interface UseProjectProfileResult extends ProjectProfileData, ProjectProf
  */
 export function useProjectProfile(projectId: string): UseProjectProfileResult {
   // Fetch core project data
-  const { project, isLoading: isProjectLoading } = useProject(projectId);
+  const { project, isLoading: isProjectLoading, isError, error } = useProject(projectId);
 
   // Fetch grants using project UID or fallback to projectId
   const {
@@ -86,7 +88,8 @@ export function useProjectProfile(projectId: string): UseProjectProfileResult {
   return {
     project: normalizedProject,
     isLoading,
-    error: null,
+    isError,
+    error: error ?? null,
     refetch,
     ...profileData,
   };
