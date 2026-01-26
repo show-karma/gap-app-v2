@@ -235,17 +235,10 @@ jest.mock("remark-breaks", () => ({
   default: () => (tree) => tree, // Pass-through plugin for testing
 }));
 
-// Mock gasless utilities to avoid ESM parsing issues with @aa-sdk/core and @account-kit/infra
-jest.mock("@/utilities/gasless", () => ({
-  createGaslessClient: jest.fn().mockResolvedValue(null),
-  getGaslessSigner: jest.fn().mockResolvedValue(null),
-  isChainSupportedForGasless: jest.fn().mockReturnValue(false),
-  createPrivySignerForGasless: jest.fn().mockResolvedValue(null),
-  getChainGaslessConfig: jest.fn().mockReturnValue(null),
-  getProviderForChain: jest.fn().mockReturnValue(null),
-  SUPPORTED_GASLESS_CHAINS: [],
-  GaslessProviderError: class GaslessProviderError extends Error {},
-}));
+// NOTE: The gasless module is mocked via jest-resolver.js which redirects all gasless
+// imports to __mocks__/utilities/gasless/index.ts. This provides proper jest.fn() mocks
+// that can be configured in tests. We don't use jest.mock() here because the resolver
+// handles it more reliably (catches relative paths like ../../../../utilities/gasless).
 
 // Mock ProjectOptionsMenu to avoid deep dependency chain with gasless utilities
 jest.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({

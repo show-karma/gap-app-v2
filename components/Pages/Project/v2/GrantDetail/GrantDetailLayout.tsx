@@ -55,7 +55,7 @@ export function GrantDetailLayout({ children }: GrantDetailLayoutProps) {
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   // Check admin status
-  useIsCommunityAdmin(grant?.community?.uid || grant?.data?.communityUID, address, {
+  useIsCommunityAdmin(grant?.data?.communityUID, address, {
     zustandSync: { setIsCommunityAdmin },
   });
 
