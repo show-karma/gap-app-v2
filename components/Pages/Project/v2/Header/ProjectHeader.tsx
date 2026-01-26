@@ -1,15 +1,22 @@
 "use client";
 
-import { RocketIcon } from "lucide-react";
-import { useState } from "react";
+import { GlobeIcon, RocketIcon } from "lucide-react";
+import { useMemo, useState } from "react";
 import { ProjectOptionsMenu } from "@/components/Pages/Project/ProjectOptionsMenu";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useProjectSocials } from "@/hooks/useProjectSocials";
 import type { Project } from "@/types/v2/project";
+import { isCustomLink } from "@/utilities/customLink";
+import { ensureProtocol } from "@/utilities/ensureProtocol";
 import { cn } from "@/utilities/tailwind";
 import { VerificationBadge } from "../icons/VerificationBadge";
 import { ProjectActivityChart } from "../MainContent/ProjectActivityChart";
+
+interface CustomLink {
+  url: string;
+  name?: string;
+}
 
 interface ProjectHeaderProps {
   project: Project;
@@ -36,6 +43,11 @@ interface ProjectHeaderProps {
 export function ProjectHeader({ project, isVerified = false, className }: ProjectHeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const socials = useProjectSocials(project?.details?.links);
+
+  // Get custom links (links with name property that aren't standard socials)
+  const customLinks = useMemo<CustomLink[]>(() => {
+    return (project?.details?.links?.filter(isCustomLink) as CustomLink[]) || [];
+  }, [project?.details?.links]);
 
   const description = project?.details?.description || "";
   const shouldTruncate = description.length > 200;
@@ -101,6 +113,30 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                         <social.icon className="h-5 w-5" />
                       </a>
                     ))}
+                    {customLinks.length > 0 && (
+                      <div className="relative group">
+                        <GlobeIcon
+                          className="h-5 w-5 text-blue-800 hover:text-blue-900 dark:text-blue-200 dark:hover:text-blue-100 cursor-pointer transition-colors"
+                          data-testid="custom-links-trigger"
+                        />
+                        <div className="absolute right-0 top-6 mt-1 w-48 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                          <div className="py-2">
+                            {customLinks.map((link, index) => (
+                              <a
+                                key={link.url || index}
+                                href={ensureProtocol(link.url)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block px-4 py-2 text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors duration-150"
+                                data-testid="custom-link"
+                              >
+                                {link.name || link.url}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <ProjectOptionsMenu />
                   </div>
                 </div>
@@ -123,6 +159,30 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                     <social.icon className="h-5 w-5" />
                   </a>
                 ))}
+                {customLinks.length > 0 && (
+                  <div className="relative group">
+                    <GlobeIcon
+                      className="h-5 w-5 text-blue-800 hover:text-blue-900 dark:text-blue-200 dark:hover:text-blue-100 cursor-pointer transition-colors"
+                      data-testid="custom-links-trigger-mobile"
+                    />
+                    <div className="absolute right-0 top-6 mt-1 w-48 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                      <div className="py-2">
+                        {customLinks.map((link, index) => (
+                          <a
+                            key={link.url || index}
+                            href={ensureProtocol(link.url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block px-4 py-2 text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors duration-150"
+                            data-testid="custom-link"
+                          >
+                            {link.name || link.url}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <ProjectOptionsMenu />
               </div>
             </div>

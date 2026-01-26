@@ -1,16 +1,18 @@
 "use client";
 
 import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
+import { CalendarIcon, FlagIcon, PlayIcon, WalletIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
 import { useCommunitiesStore } from "@/store/communities";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import type { Grant } from "@/types/v2/grant";
 import type { Project } from "@/types/v2/project";
+import formatCurrency from "@/utilities/formatCurrency";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
@@ -20,7 +22,34 @@ interface FundingContentProps {
 }
 
 /**
- * GrantCard displays a single grant in the funding list
+ * Format a date relative to now (e.g., "2 months ago")
+ */
+function formatRelativeDate(date: string | undefined): string {
+  if (!date) return "";
+  const d = new Date(date);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`;
+  return `${Math.floor(diffDays / 365)}y ago`;
+}
+
+/**
+ * Format a date as "MMM YYYY" (e.g., "Jan 2024")
+ */
+function formatShortDate(date: string | undefined | null): string {
+  if (!date) return "";
+  const d = new Date(date);
+  return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+/**
+ * GrantCard displays a single grant in the funding list with enhanced information
  */
 function GrantCard({
   grant,
@@ -31,42 +60,132 @@ function GrantCard({
   project: Project;
   isSelected: boolean;
 }) {
+  // Calculate milestone progress
+  const milestones = grant.milestones || [];
+  const completedMilestones = milestones.filter((m) => m.completed).length;
+  const totalMilestones = milestones.length;
+  const hasAmount = grant.details?.amount && grant.details.amount !== "0";
+
+  // Get last activity date (most recent between createdAt, updatedAt, or last milestone update)
+  const lastActivity = grant.updatedAt || grant.createdAt;
+
+  // Get categories/tracks
+  const categories = grant.categories || [];
+
   return (
     <Link
       href={PAGES.PROJECT.GRANT(project.details?.slug || project.uid || "", grant.uid)}
       className={cn(
-        "flex items-center gap-3 p-4 rounded-lg border transition-colors",
+        "flex flex-col gap-3 p-4 rounded-xl border transition-all hover:shadow-md",
         isSelected
           ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
           : "bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-700 hover:border-gray-300 dark:hover:border-zinc-600"
       )}
       data-testid="grant-card"
     >
-      {grant.community?.details?.imageURL && (
-        <Image
-          src={grant.community.details.imageURL}
-          alt={grant.community.details.name || "Community"}
-          width={40}
-          height={40}
-          className="rounded-full object-cover shrink-0"
-          unoptimized
-        />
-      )}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">
-            {grant.details?.title || "Untitled Grant"}
-          </h3>
-          {grant.completed && (
-            <CheckCircleIcon className="h-5 w-5 text-green-600 shrink-0" aria-label="Completed" />
+      {/* Top row: Community logo, title, status */}
+      <div className="flex items-start gap-3">
+        {grant.community?.details?.imageURL && (
+          <Image
+            src={grant.community.details.imageURL}
+            alt={grant.community.details.name || "Community"}
+            width={48}
+            height={48}
+            className="rounded-full object-cover shrink-0"
+            unoptimized
+          />
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">
+              {grant.details?.title || "Untitled Grant"}
+            </h3>
+            {grant.completed && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                <CheckCircleIcon className="h-3.5 w-3.5" />
+                Completed
+              </span>
+            )}
+          </div>
+          {grant.community?.details?.name && (
+            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+              {grant.community.details.name}
+            </p>
           )}
         </div>
-        {grant.community?.details?.name && (
-          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-            {grant.community.details.name}
-          </p>
+      </div>
+
+      {/* Stats row */}
+      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+        {/* Funding amount */}
+        {hasAmount && (
+          <div className="flex items-center gap-1.5">
+            <WalletIcon className="h-4 w-4 text-gray-400" />
+            <span className="font-medium text-gray-900 dark:text-white">
+              {formatCurrency(Number(grant.details?.amount || 0))}
+            </span>
+            {grant.details?.currency && (
+              <span className="text-gray-500">{grant.details.currency}</span>
+            )}
+          </div>
+        )}
+
+        {/* Milestone progress */}
+        {totalMilestones > 0 && (
+          <div className="flex items-center gap-1.5">
+            <FlagIcon className="h-4 w-4 text-gray-400" />
+            <span>
+              <span className="font-medium text-gray-900 dark:text-white">
+                {completedMilestones}/{totalMilestones}
+              </span>{" "}
+              milestones
+            </span>
+          </div>
+        )}
+
+        {/* Start date */}
+        {grant.details?.startDate && (
+          <div className="flex items-center gap-1.5">
+            <PlayIcon className="h-4 w-4 text-gray-400" />
+            <span>Started {formatShortDate(grant.details.startDate)}</span>
+          </div>
+        )}
+
+        {/* End date (completedAt) */}
+        {grant.details?.completedAt && (
+          <div className="flex items-center gap-1.5">
+            <CheckCircleIcon className="h-4 w-4 text-gray-400" />
+            <span>Ended {formatShortDate(grant.details.completedAt)}</span>
+          </div>
+        )}
+
+        {/* Last activity */}
+        {lastActivity && (
+          <div className="flex items-center gap-1.5">
+            <CalendarIcon className="h-4 w-4 text-gray-400" />
+            <span>Last Activity {formatRelativeDate(lastActivity)}</span>
+          </div>
         )}
       </div>
+
+      {/* Categories/tracks */}
+      {categories.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {categories.slice(0, 3).map((category) => (
+            <span
+              key={category}
+              className="px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400"
+            >
+              {category}
+            </span>
+          ))}
+          {categories.length > 3 && (
+            <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400">
+              +{categories.length - 3} more
+            </span>
+          )}
+        </div>
+      )}
     </Link>
   );
 }
@@ -129,7 +248,6 @@ function EmptyFundingState({ isAuthorized, project }: { isAuthorized: boolean; p
  */
 export function FundingContent({ project, className }: FundingContentProps) {
   const params = useParams();
-  const router = useRouter();
   const selectedGrantUid = params.grantUid as string | undefined;
 
   const { isProjectAdmin } = useProjectPermissions();
@@ -142,6 +260,13 @@ export function FundingContent({ project, className }: FundingContentProps) {
 
   // Fetch grants using dedicated hook
   const { grants, isLoading } = useProjectGrants(project.uid || "");
+
+  // Sort grants by creation date (most recent first)
+  const sortedGrants = [...grants].sort((a, b) => {
+    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return dateB - dateA;
+  });
 
   if (isLoading) {
     return (
@@ -182,7 +307,7 @@ export function FundingContent({ project, className }: FundingContentProps) {
 
       {/* Grants list */}
       <div className="flex flex-col gap-3" data-testid="grants-list">
-        {grants.map((grant) => (
+        {sortedGrants.map((grant) => (
           <GrantCard
             key={grant.uid}
             grant={grant}
