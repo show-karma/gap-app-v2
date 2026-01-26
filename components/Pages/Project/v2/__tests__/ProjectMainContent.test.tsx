@@ -84,8 +84,8 @@ describe("ContentTabs", () => {
       expect(screen.getByTestId("tab-about")).toBeInTheDocument();
       expect(screen.getByTestId("tab-funding")).toBeInTheDocument();
       expect(screen.getByTestId("tab-impact")).toBeInTheDocument();
-      // Profile tab was renamed to Updates
-      expect(screen.queryByTestId("tab-profile")).not.toBeInTheDocument();
+      // Profile tab exists but is hidden on desktop (lg:hidden class)
+      expect(screen.getByTestId("tab-profile")).toHaveClass("lg:hidden");
     });
 
     it("should show funding count badge when provided", () => {
@@ -321,15 +321,15 @@ describe("ActivityFeed", () => {
 
       const icons = screen.getAllByTestId("timeline-icon");
       // First milestone is type "milestone" - should have orange background
-      expect(icons[0]).toHaveClass("bg-orange-100");
+      expect(icons[0]).toHaveClass("bg-orange-50");
     });
 
     it("should show green icon for grant/funding type", () => {
-      render(<ActivityFeed milestones={mockMilestones} />);
+      render(<ActivityFeed milestones={mockMilestones} activeFilters={["funding"]} />);
 
       const icons = screen.getAllByTestId("timeline-icon");
-      // Second milestone is type "grant" - should have green background
-      expect(icons[1]).toHaveClass("bg-green-100");
+      // With funding filter, only grant type shows - should have green background
+      expect(icons[0]).toHaveClass("bg-green-50");
     });
   });
 
@@ -397,8 +397,8 @@ describe("ProjectMainContent", () => {
       expect(screen.getByTestId("tab-about")).toBeInTheDocument();
       expect(screen.getByTestId("tab-funding")).toBeInTheDocument();
       expect(screen.getByTestId("tab-impact")).toBeInTheDocument();
-      // Profile tab was renamed to Updates
-      expect(screen.queryByTestId("tab-profile")).not.toBeInTheDocument();
+      // Profile tab exists but is hidden on desktop (lg:hidden class)
+      expect(screen.getByTestId("tab-profile")).toHaveClass("lg:hidden");
     });
   });
 

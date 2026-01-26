@@ -51,9 +51,18 @@ jest.mock("@/components/Donation/SingleProject/SingleProjectDonateModal", () => 
     isOpen ? <div data-testid="donate-modal">Donation Modal</div> : null,
 }));
 
-// Mock hasConfiguredPayoutAddresses
+// Mock chain payout address hooks
 jest.mock("@/src/features/chain-payout-address/hooks/use-chain-payout-address", () => ({
   hasConfiguredPayoutAddresses: jest.fn(() => true),
+  useChainPayoutAddress: jest.fn(() => ({
+    data: [],
+    isLoading: false,
+    isError: false,
+  })),
+  useUpdateChainPayoutAddress: jest.fn(() => ({
+    mutate: jest.fn(),
+    isPending: false,
+  })),
 }));
 
 const mockProject: Project = {

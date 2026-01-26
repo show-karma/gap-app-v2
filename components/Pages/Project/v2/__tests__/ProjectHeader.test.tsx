@@ -10,6 +10,16 @@ jest.mock("@/components/Utilities/MarkdownPreview", () => ({
   ),
 }));
 
+// Mock the ProjectActivityChart component to avoid QueryClient requirement
+jest.mock("../MainContent/ProjectActivityChart", () => ({
+  ProjectActivityChart: () => <div data-testid="project-activity-chart">Activity Chart</div>,
+}));
+
+// Mock the ProjectOptionsMenu to avoid ESM dependencies
+jest.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({
+  ProjectOptionsMenu: () => <div data-testid="project-options-menu">Options Menu</div>,
+}));
+
 // Mock the useProjectSocials hook
 jest.mock("@/hooks/useProjectSocials", () => ({
   useProjectSocials: jest.fn(() => [
@@ -118,12 +128,12 @@ describe("ProjectHeader", () => {
     it("should render social links in top-right corner", () => {
       render(<ProjectHeader project={mockProject} />);
 
-      // Check that social links container exists
-      expect(screen.getByTestId("social-links")).toBeInTheDocument();
+      // Check that header actions container exists (contains social links on desktop)
+      expect(screen.getByTestId("header-actions")).toBeInTheDocument();
 
-      // Check that social icons are rendered
-      expect(screen.getByTestId("twitter-icon")).toBeInTheDocument();
-      expect(screen.getByTestId("github-icon")).toBeInTheDocument();
+      // Check that social icons are rendered (multiple due to desktop/mobile views)
+      expect(screen.getAllByTestId("twitter-icon").length).toBeGreaterThan(0);
+      expect(screen.getAllByTestId("github-icon").length).toBeGreaterThan(0);
     });
   });
 
