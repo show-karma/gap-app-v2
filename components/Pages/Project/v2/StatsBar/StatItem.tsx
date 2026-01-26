@@ -51,18 +51,30 @@ function getStatIcon(iconType?: StatIconType): React.ReactNode {
  * Used within ProjectStatsBar for displaying project metrics.
  */
 export function StatItem({ value, label, iconType, icon, className, onClick }: StatItemProps) {
+  const isClickable = !!onClick;
+
   const content = (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-2 flex-1 min-w-[120px] py-2 px-4",
-        onClick && "cursor-pointer hover:opacity-80 transition-opacity",
+        "flex flex-col items-center justify-center gap-2 flex-1 min-w-[120px] py-2 px-4 rounded-lg transition-all duration-150",
+        isClickable && [
+          "cursor-pointer",
+          "hover:bg-neutral-100 dark:hover:bg-zinc-700/50",
+          "hover:scale-[1.02]",
+          "active:scale-[0.98]",
+        ],
         className
       )}
       data-testid="stat-item"
     >
       {/* Value - top */}
       <span
-        className="text-2xl font-bold text-neutral-900 dark:text-white tracking-tight"
+        className={cn(
+          "text-2xl font-bold tracking-tight transition-colors",
+          isClickable
+            ? "text-neutral-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400"
+            : "text-neutral-900 dark:text-white"
+        )}
         data-testid="stat-value"
       >
         {value}
@@ -70,11 +82,23 @@ export function StatItem({ value, label, iconType, icon, className, onClick }: S
 
       {/* Icon + Label - below */}
       <div className="flex flex-row items-center gap-1.5">
-        <span className="text-neutral-500 dark:text-neutral-400">
+        <span
+          className={cn(
+            "transition-colors",
+            isClickable
+              ? "text-neutral-500 dark:text-neutral-400 group-hover:text-blue-500 dark:group-hover:text-blue-400"
+              : "text-neutral-500 dark:text-neutral-400"
+          )}
+        >
           {icon || getStatIcon(iconType)}
         </span>
         <span
-          className="text-sm text-neutral-500 dark:text-neutral-400 whitespace-nowrap font-normal"
+          className={cn(
+            "text-sm whitespace-nowrap font-normal transition-colors",
+            isClickable
+              ? "text-neutral-500 dark:text-neutral-400 group-hover:text-blue-500 dark:group-hover:text-blue-400"
+              : "text-neutral-500 dark:text-neutral-400"
+          )}
           data-testid="stat-label"
         >
           {label}
@@ -88,7 +112,7 @@ export function StatItem({ value, label, iconType, icon, className, onClick }: S
       <button
         type="button"
         onClick={onClick}
-        className="focus:outline-none focus:ring-2 focus:ring-neutral-500 rounded-lg"
+        className="group focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
       >
         {content}
       </button>
