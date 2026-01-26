@@ -102,11 +102,19 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
     [indicators, newIndicators]
   );
 
+  /**
+   * Get the effective ID for an indicator (uuid preferred, fallback to id)
+   * This ensures we use PostgreSQL UUIDs for impact segments when available
+   */
+  const getIndicatorEffectiveId = (indicator: ImpactIndicator): string => {
+    return indicator.uuid || indicator.id;
+  };
+
   // Get selected indicator names for display
   const selectedNames = useMemo(() => {
     const allIndicators = [...allCommunityIndicators, ...autosyncedIndicators];
     return selectedIndicators
-      .map((id) => allIndicators.find((i) => i.id === id)?.name)
+      .map((id) => allIndicators.find((i) => getIndicatorEffectiveId(i) === id)?.name)
       .filter(Boolean);
   }, [selectedIndicators, allCommunityIndicators, autosyncedIndicators]);
 
@@ -118,14 +126,15 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
   }, [open]);
 
   const renderIndicatorItem = (indicator: ImpactIndicator, isDefault = false) => {
-    const isSelected = selectedIndicators.includes(indicator.id);
+    const effectiveId = getIndicatorEffectiveId(indicator);
+    const isSelected = selectedIndicators.includes(effectiveId);
 
     return (
       <button
-        key={indicator.id}
+        key={effectiveId}
         type="button"
         className="px-4 py-3 w-full hover:bg-gray-50 dark:hover:bg-zinc-700 cursor-pointer flex justify-between items-center gap-3 text-left"
-        onClick={() => handleIndicatorChange(indicator.id)}
+        onClick={() => handleIndicatorChange(effectiveId)}
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">

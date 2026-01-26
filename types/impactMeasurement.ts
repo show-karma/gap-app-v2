@@ -12,6 +12,8 @@ export interface AggregatedDatapoint {
 
 export interface ImpactIndicatorWithData {
   id: string;
+  /** PostgreSQL UUID - use this for impact segments when available */
+  uuid?: string | null;
   name: string;
   description: string;
   unitOfMeasure: string;
@@ -45,6 +47,8 @@ export interface ImpactIndicatorWithData {
 
 export interface ImpactIndicator {
   id: string;
+  /** PostgreSQL UUID - use this for impact segments when available */
+  uuid?: string | null;
   name: string;
   description: string;
   programs?: {
