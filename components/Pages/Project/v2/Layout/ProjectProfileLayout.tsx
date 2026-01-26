@@ -13,6 +13,7 @@ import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { cn } from "@/utilities/tailwind";
+import { EndorsementsListDialog } from "../EndorsementsListDialog";
 import { ProjectHeader } from "../Header/ProjectHeader";
 import { type ContentTab, ContentTabs } from "../MainContent/ContentTabs";
 import { MobileHeaderMinified } from "../Mobile/MobileHeaderMinified";
@@ -64,6 +65,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   const { isEndorsementOpen } = useEndorsementStore();
   const { isIntroModalOpen } = useIntroModalStore();
   const { isProgressModalOpen } = useProgressModalStore();
+  const [isEndorsementsListOpen, setIsEndorsementsListOpen] = useState(false);
 
   // Use unified hook for all project profile data
   const { project, isLoading, isVerified, stats } = useProjectProfile(projectId as string);
@@ -157,6 +159,10 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
       {isEndorsementOpen && <EndorsementDialog />}
       {isIntroModalOpen && <IntroDialog />}
       {isProgressModalOpen && <ProgressDialog />}
+      <EndorsementsListDialog
+        open={isEndorsementsListOpen}
+        onOpenChange={setIsEndorsementsListOpen}
+      />
       {/* Project options dialogs - rendered once here to avoid duplicate modals */}
       <ProjectOptionsDialogs />
 
@@ -172,6 +178,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
             endorsements={stats.endorsementsCount}
             lastUpdate={stats.lastUpdate}
             completeRate={stats.completeRate}
+            onEndorsementsClick={() => setIsEndorsementsListOpen(true)}
           />
         </div>
 
@@ -196,7 +203,12 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
         {/* Mobile: Profile tab content (header, stats, actions, quick links) */}
         {activeTab === "profile" && (
           <div className="lg:hidden">
-            <MobileProfileContent project={project} isVerified={isVerified} stats={stats} />
+            <MobileProfileContent
+              project={project}
+              isVerified={isVerified}
+              stats={stats}
+              onEndorsementsClick={() => setIsEndorsementsListOpen(true)}
+            />
           </div>
         )}
 

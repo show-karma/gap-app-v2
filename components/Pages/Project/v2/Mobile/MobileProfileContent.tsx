@@ -20,6 +20,7 @@ interface MobileProfileContentProps {
   isVerified?: boolean;
   stats: ProjectProfileStats;
   className?: string;
+  onEndorsementsClick?: () => void;
 }
 
 /**
@@ -45,6 +46,7 @@ export function MobileProfileContent({
   isVerified,
   stats,
   className,
+  onEndorsementsClick,
 }: MobileProfileContentProps) {
   const { setIsProgressModalOpen } = useProgressModalStore();
 
@@ -70,6 +72,7 @@ export function MobileProfileContent({
           endorsements={stats.endorsementsCount}
           lastUpdate={stats.lastUpdate}
           completeRate={stats.completeRate}
+          onEndorsementsClick={onEndorsementsClick}
         />
       </div>
 
