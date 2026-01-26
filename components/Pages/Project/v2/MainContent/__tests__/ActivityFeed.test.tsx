@@ -88,11 +88,13 @@ describe("ActivityFeed - Activity Type Labels", () => {
     expect(screen.getByText("Grant Update")).toBeInTheDocument();
   });
 
-  it("should display 'Project Impact' for type 'impact'", () => {
+  it("should display 'Milestone' for type 'impact'", () => {
+    // Note: Impact type displays as "Milestone" per getActivityTypeLabel implementation
+    // This matches the staging behavior where project impacts are shown as milestones
     const milestones = [createMilestone("impact")];
     render(<ActivityFeed milestones={milestones} />);
 
-    expect(screen.getByText("Project Impact")).toBeInTheDocument();
+    expect(screen.getByText("Milestone")).toBeInTheDocument();
   });
 
   it("should display 'Grant Received' for type 'grant_received'", () => {

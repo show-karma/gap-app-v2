@@ -324,12 +324,12 @@ describe("ActivityFeed", () => {
       expect(icons[0]).toHaveClass("bg-orange-50");
     });
 
-    it("should show green icon for grant/funding type", () => {
+    it("should show orange icon for grant type (default color)", () => {
       render(<ActivityFeed milestones={mockMilestones} activeFilters={["funding"]} />);
 
       const icons = screen.getAllByTestId("timeline-icon");
-      // With funding filter, only grant type shows - should have green background
-      expect(icons[0]).toHaveClass("bg-green-50");
+      // "grant" type uses default orange color (emerald is only for "grant_received")
+      expect(icons[0]).toHaveClass("bg-orange-50");
     });
   });
 

@@ -14,6 +14,11 @@ jest.mock("@/components/Pages/Project/Impact/AddImpactScreen", () => ({
   AddImpactScreen: () => <div data-testid="add-impact-screen">Add Impact Screen</div>,
 }));
 
+// Mock the ImpactStatsSummary component to avoid QueryClient dependency
+jest.mock("../MainContent/ImpactStatsSummary", () => ({
+  ImpactStatsSummary: () => <div data-testid="impact-stats-summary">Impact Stats Summary</div>,
+}));
+
 // Mock useOwnerStore
 jest.mock("@/store", () => ({
   useOwnerStore: jest.fn(),
