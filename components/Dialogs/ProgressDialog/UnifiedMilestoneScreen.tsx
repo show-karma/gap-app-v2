@@ -305,10 +305,6 @@ export const UnifiedMilestoneScreen = () => {
               {}
             );
           }
-
-          toast.success(`Created milestone successfully`, {
-            id: `chain-${chainId}`,
-          });
         } else {
           // Multiple grants on the same chain - use attestToMultipleGrants
           // Get the first grant as reference
@@ -373,10 +369,6 @@ export const UnifiedMilestoneScreen = () => {
             );
             await Promise.all(txPromises);
           }
-
-          toast.success(`Created milestones on ${chainName}`, {
-            id: `chain-${chainId}`,
-          });
         }
       }
 
