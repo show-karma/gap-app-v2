@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
-import { BanknotesIcon, CheckIcon } from "@heroicons/react/24/outline";
+import { BanknotesIcon, CheckIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -30,6 +30,7 @@ import {
   CreateDisbursementModal,
   type GrantDisbursementInfo,
   type PayoutConfigItem,
+  PayoutConfigurationModal,
   PayoutDisbursementStatus,
   PayoutHistoryDrawer,
   type SavePayoutConfigRequest,
@@ -93,6 +94,15 @@ export default function PayoutsAdminPage() {
     grantName: string;
     projectName: string;
     approvedAmount?: string;
+  } | null>(null);
+
+  // State for payout configuration modal
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [configGrant, setConfigGrant] = useState<{
+    grantUID: string;
+    projectUID: string;
+    grantName: string;
+    projectName: string;
   } | null>(null);
 
   // Get values from URL params or use defaults
@@ -668,6 +678,38 @@ export default function PayoutsAdminPage() {
     setIsHistoryDrawerOpen(true);
   };
 
+  // Open configuration modal for a specific grant
+  const handleOpenConfigModal = (item: PayoutsTableData) => {
+    setConfigGrant({
+      grantUID: item.uid,
+      projectUID: item.projectUid,
+      grantName: item.grantName,
+      projectName: item.projectName,
+    });
+    setIsConfigModalOpen(true);
+  };
+
+  // Handle configuration modal close
+  const handleConfigModalClose = () => {
+    setIsConfigModalOpen(false);
+    setConfigGrant(null);
+  };
+
+  // Handle configuration save success
+  const handleConfigSuccess = () => {
+    // Clear any edited fields for this grant since we saved the full config
+    if (configGrant) {
+      setEditedFields((prev) => {
+        const newEdited = { ...prev };
+        delete newEdited[configGrant.grantUID];
+        return newEdited;
+      });
+    }
+    handleConfigModalClose();
+    // Refresh the payouts data
+    refreshPayouts();
+  };
+
   // Handle disbursement modal close
   const handleDisbursementModalClose = () => {
     setIsDisbursementModalOpen(false);
@@ -976,13 +1018,13 @@ export default function PayoutsAdminPage() {
                       )}
                     </div>
                   </th>
+                  <th scope="col" className="h-12 px-4 text-center align-middle font-medium w-20">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="px-4 divide-y divide-gray-200 dark:divide-zinc-800">
                 {paginatedData.map((item) => {
-                  const fieldId = item.uid;
-                  const payoutError = errors[`${fieldId}-payoutAddress`];
-                  const amountError = errors[`${fieldId}-amount`];
                   const disbursementInfo = disbursementMap[item.uid];
                   const totalsByToken = disbursementInfo?.totalsByToken || [];
                   const displayStatus = computeDisplayStatus(item, disbursementInfo);
@@ -1019,8 +1061,11 @@ export default function PayoutsAdminPage() {
                         <ExternalLink
                           href={PAGES.PROJECT.OVERVIEW(item.projectSlug || item.projectUid)}
                           className="max-w-full line-clamp-2 underline"
+                          title={item.projectName}
                         >
-                          {item.projectName}
+                          {item.projectName.length > 50
+                            ? `${item.projectName.slice(0, 50)}...`
+                            : item.projectName}
                         </ExternalLink>
                       </td>
                       <td className="px-4 py-2">
@@ -1032,108 +1077,25 @@ export default function PayoutsAdminPage() {
                         </ExternalLink>
                       </td>
                       <td className="px-4 py-2">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="text"
-                              className={cn(
-                                "w-full px-3 py-2 border rounded-md bg-transparent placeholder:text-gray-400",
-                                "focus:outline-none focus:ring-2 focus:ring-blue-500",
-                                "dark:border-zinc-700 dark:text-white",
-                                payoutError ? "border-red-500" : "border-gray-300"
-                              )}
-                              placeholder="Enter payout address"
-                              value={
-                                editedFields[fieldId]?.hasOwnProperty("payoutAddress")
-                                  ? editedFields[fieldId].payoutAddress
-                                  : item.currentPayoutAddress || ""
-                              }
-                              onChange={(e) =>
-                                handleFieldChange(fieldId, "payoutAddress", e.target.value)
-                              }
-                              disabled={isSaving || savingFields.has(`${fieldId}-payoutAddress`)}
-                            />
-                            {editedFields[fieldId]?.hasOwnProperty("payoutAddress") && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleSaveField(fieldId, item.projectUid, "payoutAddress")
-                                }
-                                disabled={
-                                  savingFields.has(`${fieldId}-payoutAddress`) || !!payoutError
-                                }
-                                className={cn(
-                                  "flex-shrink-0 p-1.5 rounded-md transition-colors",
-                                  "bg-green-100 hover:bg-green-200 text-green-700",
-                                  "dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-400",
-                                  "disabled:opacity-50 disabled:cursor-not-allowed"
-                                )}
-                                title="Save payout address"
-                              >
-                                {savingFields.has(`${fieldId}-payoutAddress`) ? (
-                                  <Spinner className="h-4 w-4" />
-                                ) : (
-                                  <CheckIcon className="h-4 w-4" />
-                                )}
-                              </button>
-                            )}
-                          </div>
-                          {payoutError && (
-                            <span className="text-red-500 text-sm">{payoutError}</span>
+                        <span
+                          className="font-mono text-sm text-gray-700 dark:text-gray-300"
+                          title={item.currentPayoutAddress || "Not configured"}
+                        >
+                          {item.currentPayoutAddress ? (
+                            `${item.currentPayoutAddress.slice(0, 6)}...${item.currentPayoutAddress.slice(-4)}`
+                          ) : (
+                            <span className="text-gray-400 dark:text-gray-500">—</span>
                           )}
-                        </div>
+                        </span>
                       </td>
                       <td className="px-4 py-2">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="text"
-                              className={cn(
-                                "w-full px-3 py-2 border rounded-md bg-transparent placeholder:text-gray-400",
-                                "focus:outline-none focus:ring-2 focus:ring-blue-500",
-                                "dark:border-zinc-700 dark:text-white",
-                                amountError ? "border-red-500" : "border-gray-300"
-                              )}
-                              placeholder="0"
-                              value={
-                                editedFields[fieldId]?.hasOwnProperty("amount")
-                                  ? editedFields[fieldId].amount
-                                  : item.currentAmount || ""
-                              }
-                              onChange={(e) =>
-                                handleFieldChange(
-                                  fieldId,
-                                  "amount",
-                                  sanitizeNumericInput(e.target.value)
-                                )
-                              }
-                              disabled={isSaving || savingFields.has(`${fieldId}-amount`)}
-                            />
-                            {editedFields[fieldId]?.hasOwnProperty("amount") && (
-                              <button
-                                type="button"
-                                onClick={() => handleSaveField(fieldId, item.projectUid, "amount")}
-                                disabled={savingFields.has(`${fieldId}-amount`) || !!amountError}
-                                className={cn(
-                                  "flex-shrink-0 p-1.5 rounded-md transition-colors",
-                                  "bg-green-100 hover:bg-green-200 text-green-700",
-                                  "dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-400",
-                                  "disabled:opacity-50 disabled:cursor-not-allowed"
-                                )}
-                                title="Save grant amount"
-                              >
-                                {savingFields.has(`${fieldId}-amount`) ? (
-                                  <Spinner className="h-4 w-4" />
-                                ) : (
-                                  <CheckIcon className="h-4 w-4" />
-                                )}
-                              </button>
-                            )}
-                          </div>
-                          {amountError && (
-                            <span className="text-red-500 text-sm">{amountError}</span>
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {item.currentAmount ? (
+                            parseFloat(item.currentAmount).toLocaleString()
+                          ) : (
+                            <span className="text-gray-400 dark:text-gray-500">—</span>
                           )}
-                        </div>
+                        </span>
                       </td>
                       {/* Disbursed Amount column */}
                       <td className="px-4 py-2 text-left">
@@ -1150,6 +1112,20 @@ export default function PayoutsAdminPage() {
                           title="Click to view payout history"
                         >
                           {displayStatus.label}
+                        </button>
+                      </td>
+                      {/* Actions column */}
+                      <td className="px-4 py-2 text-center">
+                        <button
+                          onClick={() => handleOpenConfigModal(item)}
+                          className={cn(
+                            "p-2 rounded-md transition-colors",
+                            "text-gray-500 hover:text-gray-700 hover:bg-gray-100",
+                            "dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-zinc-800"
+                          )}
+                          title="Configure payout settings"
+                        >
+                          <Cog6ToothIcon className="h-5 w-5" />
                         </button>
                       </td>
                     </tr>
@@ -1205,6 +1181,20 @@ export default function PayoutsAdminPage() {
           grantName={historyGrant.grantName}
           projectName={historyGrant.projectName}
           approvedAmount={historyGrant.approvedAmount}
+        />
+      )}
+
+      {/* Payout Configuration Modal */}
+      {configGrant && (
+        <PayoutConfigurationModal
+          isOpen={isConfigModalOpen}
+          onClose={handleConfigModalClose}
+          grantUID={configGrant.grantUID}
+          projectUID={configGrant.projectUID}
+          communityUID={community?.uid || ""}
+          grantName={configGrant.grantName}
+          projectName={configGrant.projectName}
+          onSuccess={handleConfigSuccess}
         />
       )}
 

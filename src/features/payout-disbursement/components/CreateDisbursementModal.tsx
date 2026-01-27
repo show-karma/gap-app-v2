@@ -52,8 +52,10 @@ import {
 import type {
   GrantDisbursementInfo,
   GrantDisbursementRequest,
+  MilestoneAllocation,
   MilestoneBreakdown,
 } from "../types/payout-disbursement";
+import { calculateSelectedTotal, MilestoneSelectionStep } from "./MilestoneSelectionStep";
 
 export interface CreateDisbursementModalProps {
   isOpen: boolean;
@@ -217,6 +219,9 @@ export function CreateDisbursementModal({
   const [disbursementValidationErrors, setDisbursementValidationErrors] =
     useState<DisbursementValidationErrors>({});
 
+  // Selected allocation IDs per grant (for milestone allocation-based disbursements)
+  const [selectedAllocationIds, setSelectedAllocationIds] = useState<Record<string, string[]>>({});
+
   // Pre-flight checks state
   const [preflightChecks, setPreflightChecks] = useState<PreflightChecks>({
     isDeployed: null,
@@ -334,6 +339,51 @@ export function CreateDisbursementModal({
   const grantsWithMilestones = useMemo(() => {
     return grants.filter((g) => g.milestones && g.milestones.length > 0);
   }, [grants]);
+
+  // Check if grant uses allocation-based payments (has milestone allocations configured)
+  const grantsWithAllocations = useMemo(() => {
+    return grants.filter((g) => g.milestoneAllocations && g.milestoneAllocations.length > 0);
+  }, [grants]);
+
+  // Helper to check if a grant uses allocation-based payments
+  const usesAllocationBasedPayment = useCallback(
+    (grantUID: string): boolean => {
+      return grantsWithAllocations.some((g) => g.grantUID === grantUID);
+    },
+    [grantsWithAllocations]
+  );
+
+  // Helper to get unpaid allocations for a grant
+  const getUnpaidAllocations = useCallback(
+    (grant: GrantDisbursementInfo): MilestoneAllocation[] => {
+      if (!grant.milestoneAllocations) return [];
+      const paidIds = new Set(grant.paidAllocationIds || []);
+      return grant.milestoneAllocations.filter((a) => !paidIds.has(a.id));
+    },
+    []
+  );
+
+  // Handle allocation selection change
+  const handleAllocationSelectionChange = useCallback(
+    (grantUID: string, selectedIds: string[]) => {
+      setSelectedAllocationIds((prev) => ({
+        ...prev,
+        [grantUID]: selectedIds,
+      }));
+
+      // Auto-update disbursement amount based on selected allocations
+      const grant = grants.find((g) => g.grantUID === grantUID);
+      if (grant?.milestoneAllocations) {
+        const selectedTotal = calculateSelectedTotal(grant.milestoneAllocations, selectedIds);
+        const amountInTokenUnits = formatUnits(selectedTotal, selectedTokenDecimals);
+        setDisbursementAmounts((prev) => ({
+          ...prev,
+          [grantUID]: amountInTokenUnits,
+        }));
+      }
+    },
+    [grants, selectedTokenDecimals]
+  );
 
   // Current project being reviewed (for project-review step)
   // Uses grantsToReview so UI stays stable even when user enters 0
@@ -521,6 +571,7 @@ export function CreateDisbursementModal({
       setMilestoneValidationErrors({});
       setDisbursementAmounts({});
       setDisbursementValidationErrors({});
+      setSelectedAllocationIds({});
     }
   }, [isOpen, initialSafeAddress]);
 
@@ -723,12 +774,18 @@ export function CreateDisbursementModal({
             )
           : undefined;
 
+        // Get selected allocation IDs for this grant (for allocation-based payments)
+        const grantSelectedAllocationIds = selectedAllocationIds[grant.grantUID] || [];
+
         return {
           grantUID: grant.grantUID,
           projectUID: grant.projectUID,
           amount: amountInSmallestUnit,
           payoutAddress: effectivePayoutAddress,
           ...(convertedBreakdown && { milestoneBreakdown: convertedBreakdown }),
+          ...(grantSelectedAllocationIds.length > 0 && {
+            paidAllocationIds: grantSelectedAllocationIds,
+          }),
         };
       });
 
@@ -1059,6 +1116,10 @@ export function CreateDisbursementModal({
                     onBack={handlePreviousProject}
                     onNext={handleNextProject}
                     isLastProject={currentProjectIndex === grantsToReview.length - 1}
+                    selectedAllocationIds={selectedAllocationIds[currentProject.grantUID] || []}
+                    onAllocationSelectionChange={(ids) =>
+                      handleAllocationSelectionChange(currentProject.grantUID, ids)
+                    }
                   />
                 )}
 
@@ -1491,6 +1552,9 @@ function ProjectReviewStep({
   onBack,
   onNext,
   isLastProject,
+  // Allocation-based payment props
+  selectedAllocationIds,
+  onAllocationSelectionChange,
 }: {
   project: GrantDisbursementInfo;
   projectIndex: number;
@@ -1513,8 +1577,12 @@ function ProjectReviewStep({
   onBack: () => void;
   onNext: () => void;
   isLastProject: boolean;
+  // Allocation-based payment props
+  selectedAllocationIds: string[];
+  onAllocationSelectionChange: (selectedIds: string[]) => void;
 }) {
   const hasMilestones = project.milestones && project.milestones.length > 0;
+  const hasAllocations = project.milestoneAllocations && project.milestoneAllocations.length > 0;
   const approvedAmount = parseFloat(project.approvedAmount) || 0;
   // alreadyDisbursed is now passed in human-readable format from the parent
   const disbursedAmount = parseFloat(alreadyDisbursed) || 0;
@@ -1656,8 +1724,28 @@ function ProjectReviewStep({
         )}
       </div>
 
-      {/* Milestone Breakdown (Optional) */}
-      {hasMilestones && (
+      {/* Milestone Allocation Selection (New allocation-based system) */}
+      {hasAllocations && (
+        <div className="border border-gray-200 dark:border-zinc-700 rounded-lg p-4">
+          <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            Select Milestone Allocations to Pay
+          </h5>
+          <MilestoneSelectionStep
+            allocations={project.milestoneAllocations || []}
+            paidAllocationIds={project.paidAllocationIds || []}
+            selectedAllocationIds={selectedAllocationIds}
+            onSelectionChange={onAllocationSelectionChange}
+            tokenSymbol={tokenSymbol}
+            tokenDecimals={tokenDecimals}
+            grantName={project.grantName}
+            projectName={project.projectName}
+            compact
+          />
+        </div>
+      )}
+
+      {/* Milestone Breakdown (Legacy - Optional, only show if no allocations) */}
+      {hasMilestones && !hasAllocations && (
         <div>
           <button
             type="button"
