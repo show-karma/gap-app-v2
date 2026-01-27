@@ -128,6 +128,39 @@ jest.mock("@/components/Utilities/DatePicker", () => ({
   ),
 }));
 
+jest.mock("@/components/Utilities/DateTimePicker", () => ({
+  DateTimePicker: ({
+    selected,
+    onSelect,
+    placeholder,
+    buttonClassName,
+    clearButtonFn,
+    timeMode,
+  }: any) => (
+    <div data-testid="date-picker">
+      <button
+        data-testid={`date-picker-${placeholder?.toLowerCase().replace(/\s+/g, "-") || "default"}`}
+        onClick={() => {
+          if (onSelect) {
+            onSelect(selected || new Date("2024-06-01T00:00:00Z"));
+          }
+        }}
+        className={buttonClassName}
+      >
+        {selected ? selected.toISOString() : placeholder || "Pick a date"}
+      </button>
+      {clearButtonFn && (
+        <button
+          data-testid={`clear-date-${placeholder?.toLowerCase().replace(/\s+/g, "-") || "default"}`}
+          onClick={clearButtonFn}
+        >
+          Clear
+        </button>
+      )}
+    </div>
+  ),
+}));
+
 // Import mocked modules
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
