@@ -76,10 +76,7 @@ export const usePermissions = (options: PermissionOptions = {}) => {
   const { programId, action, role, enabled = true } = options;
 
   const query = useQuery({
-    // Note: isAuth is intentionally NOT in the query key to prevent cache misses
-    // during Privy hydration when isAuth transitions from false to true.
-    // Instead, isAuth is used in the `enabled` condition below.
-    queryKey: ["permissions", programId, action, role, wagmiAddress?.toLowerCase()],
+    queryKey: ["permissions", programId, action, role, wagmiAddress?.toLowerCase() ?? null, isAuth],
     queryFn: async () => {
       // These checks are defense-in-depth; the query shouldn't run if !enabled
       if (!isAuth || !wagmiAddress || !ready) {
@@ -171,10 +168,7 @@ export const usePermissions = (options: PermissionOptions = {}) => {
     },
     ...defaultQueryOptions,
     enabled: enabled && !!isAuth && !!wagmiAddress,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes (permissions rarely change)
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-    refetchOnMount: false, // Don't refetch when component mounts if data exists
-    refetchOnWindowFocus: false, // Permissions don't need to be refreshed on focus
+    staleTime: 1 * 60 * 1000, // Cache for 1 minute
     retry: (failureCount, error) => {
       // Retry only network errors, not auth issues
       if (axios.isAxiosError(error) && error.response?.status === 401) {

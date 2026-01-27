@@ -12,19 +12,54 @@ interface Props {
 }
 
 /**
- * Check if URL is an external ENS avatar service that doesn't support HEAD requests.
- * These services (like euc.li) return 503 for HEAD requests, causing unnecessary
- * network overhead. For these URLs, we skip Next.js Image optimization.
+ * List of problematic ENS avatar domains that should be blocked.
+ * These domains are known to cause issues such as:
+ * - 503 Service Unavailable errors
+ * - Slow response times that degrade UX
+ * - Unreliable uptime affecting avatar loading
+ *
+ * Add domains to this list as they are identified as problematic.
+ * Format: domain strings that will be matched against the URL hostname.
  */
-const isExternalEnsAvatar = (url: string): boolean => {
+const PROBLEMATIC_ENS_AVATAR_DOMAINS = [
+  // euc.li - ENS avatar service that frequently returns 503 errors
+  // and causes cascading failures in avatar loading
+  "euc.li",
+] as const;
+
+/**
+ * Checks if an ENS avatar URL is from a known problematic external service.
+ * These services may cause 503 errors or other reliability issues that
+ * degrade user experience and can cascade into application errors.
+ *
+ * @param url - The avatar URL to validate
+ * @returns true if the URL is from a problematic domain, false otherwise
+ */
+function isProblematicEnsAvatar(url: string): boolean {
   try {
-    const hostname = new URL(url).hostname;
-    // ENS avatar services that don't properly support HEAD requests
-    return hostname === "euc.li" || hostname.endsWith(".euc.li");
-  } catch {
-    return false;
+    const parsedUrl = new URL(url);
+    const hostname = parsedUrl.hostname.toLowerCase();
+
+    const isProblematic = PROBLEMATIC_ENS_AVATAR_DOMAINS.some(
+      (domain) => hostname === domain || hostname.endsWith(`.${domain}`)
+    );
+
+    if (isProblematic && process.env.NODE_ENV === "development") {
+      console.warn(
+        `[EthereumAddressToENSAvatar] Blocked problematic ENS avatar URL: ${url}. ` +
+          `Domain "${hostname}" is known to cause 503 errors. Falling back to blockie avatar.`
+      );
+    }
+
+    return isProblematic;
+  } catch (error) {
+    // Invalid URL - log in development and treat as problematic to be safe
+    if (process.env.NODE_ENV === "development") {
+      console.error(`[EthereumAddressToENSAvatar] Failed to parse avatar URL: ${url}`, error);
+    }
+    return true;
   }
-};
+}
 
 const EthereumAddressToENSAvatar: React.FC<Props> = ({ address, className }) => {
   const ensAvatars = useENS((state) => state.ensData);
@@ -41,26 +76,23 @@ const EthereumAddressToENSAvatar: React.FC<Props> = ({ address, className }) => 
     }
   }, [address, lowerCasedAddress, ensAvatars, populateEns]);
 
-  const avatar = ensAvatars[lowerCasedAddress as `0x${string}`]?.avatar;
-
-  // Determine if we should skip Next.js Image optimization for this avatar
-  // to avoid unnecessary HEAD requests to services that don't support them
-  const shouldSkipOptimization = useMemo(() => {
-    return avatar ? isExternalEnsAvatar(avatar) : false;
-  }, [avatar]);
+  // Get the avatar URL and validate it's not from a problematic domain
+  const rawAvatar = ensAvatars[lowerCasedAddress as `0x${string}`]?.avatar;
+  const avatar = useMemo(() => {
+    if (!rawAvatar) return null;
+    if (isProblematicEnsAvatar(rawAvatar)) return null;
+    return rawAvatar;
+  }, [rawAvatar]);
 
   if (!address || !address.startsWith("0x")) return null;
-
-  const imageSrc = !avatar ? blo(lowerCasedAddress as `0x${string}`) : avatar;
 
   return (
     <div>
       <Image
-        src={imageSrc}
+        src={avatar ?? blo(lowerCasedAddress as `0x${string}`)}
         alt="Recipient profile"
         width={24}
         height={24}
-        unoptimized={shouldSkipOptimization}
         className={cn(
           "h-6 w-6 min-h-6 min-w-6 items-center rounded-full border-1 border-gray-100 dark:border-zinc-900",
           className

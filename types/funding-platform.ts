@@ -76,11 +76,16 @@ export interface IFormSchema {
   settings?: {
     submitButtonText?: string;
     confirmationMessage?: string;
-    donationRound?: boolean;
+    privateApplications?: boolean; // Whether this program has private applications
+    donationRound?: boolean; // Whether this is a donation round
+    successPageContent?: string; // Markdown content for "What happens next?" section on success page
+    showCommentsOnPublicPage?: boolean; // Whether to show comments on public application pages
     approvalEmailTemplate?: string; // Markdown/HTML template for approval emails with variable placeholders
     approvalEmailSubject?: string; // Custom subject for approval emails with variable placeholders (e.g., {{programName}})
     rejectionEmailTemplate?: string; // Markdown/HTML template for rejection emails with variable placeholders
     rejectionEmailSubject?: string; // Custom subject for rejection emails with variable placeholders (e.g., {{programName}})
+    accessCodeEnabled?: boolean; // Whether access code gating is enabled (derived from accessCode, read-only for public)
+    accessCode?: string; // The access code required to submit the application (only returned for admins)
   };
 }
 

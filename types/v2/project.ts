@@ -35,6 +35,15 @@ export interface ProjectPointer {
   createdAt: string;
 }
 
+/**
+ * Project statistics returned when includeStats=true is passed to the API
+ */
+export interface ProjectStats {
+  grantsCount: number;
+  grantMilestonesCount: number;
+  roadmapItemsCount: number;
+}
+
 export interface Project {
   uid: `0x${string}`;
   chainID: number;
@@ -68,6 +77,8 @@ export interface Project {
   pointers?: ProjectPointer[];
   createdAt?: string;
   updatedAt?: string;
+  /** Stats field - only present when includeStats=true is passed to the API */
+  stats?: ProjectStats;
 }
 
 /**
@@ -77,4 +88,28 @@ export interface Project {
  */
 export interface ProjectWithGrantsResponse extends Project {
   grants?: Grant[];
+}
+
+/**
+ * Pagination metadata returned by paginated endpoints
+ * Matches the backend PaginatedContext.Pagination structure
+ */
+export interface ProjectsPagination {
+  totalCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  nextPage: number | null;
+  prevPage: number | null;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
+/**
+ * Paginated response for projects endpoints
+ * Returned when 'page' parameter is provided to GET /v2/projects
+ */
+export interface PaginatedProjectsResponse {
+  payload: Project[];
+  pagination: ProjectsPagination;
 }

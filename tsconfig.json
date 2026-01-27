@@ -16,6 +16,8 @@
     "jsx": "preserve",
     "incremental": true,
     "paths": {
+      "@/features/*": ["./src/features/*"],
+      "@/src/*": ["./src/*"],
       "@/*": ["./*"]
     },
     "plugins": [

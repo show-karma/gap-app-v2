@@ -69,7 +69,6 @@ const socialMediaLinks = [
 ];
 
 export function NavbarDesktopNavigation() {
-  // Use centralized permissions context to avoid duplicate API calls
   const { isLoggedIn, hasReviewerRole, hasAdminAccess, isRegistryAllowed } = useNavbarPermissions();
 
   return (

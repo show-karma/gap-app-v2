@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   CircleHelp,
   CircleUser,
+  Copy,
   FolderKanban,
   Heart,
   LogOutIcon,
@@ -28,6 +29,7 @@ import {
 } from "@/components/ui/menubar";
 import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
@@ -73,19 +75,22 @@ const _formatAddressLong = (addr: string) => {
 };
 
 export function NavbarUserMenu() {
+  // Get permission state from context (prevents duplicate hook calls across navbar)
+  const { isLoggedIn, address, ready, hasReviewerRole, hasAdminAccess, isRegistryAllowed } =
+    useNavbarPermissions();
+
+  // useAuth only needed for logout function
   const { logout } = useAuth();
+
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const toggleTheme = () => {
     changeCurrentTheme(currentTheme === "light" ? "dark" : "light");
   };
 
-  // Use centralized permissions context to avoid duplicate API calls
-  const { isLoggedIn, address, ready, hasReviewerRole, hasAdminAccess, isRegistryAllowed } =
-    useNavbarPermissions();
-
   const { profile } = useContributorProfile(address);
 
   const { openModal: openProfileModal } = useContributorProfileModalStore();
+  const [, copyToClipboard] = useCopyToClipboard();
 
   if (!ready) {
     return <NavbarUserSkeleton />;
@@ -127,12 +132,22 @@ export function NavbarUserMenu() {
             </MenubarTrigger>
             <MenubarContent align="end" className="flex flex-col gap-4 px-4 py-4 w-max">
               <div className="flex flex-col w-full">
-                <MenubarItem className="w-full hover:bg-transparent focus:bg-transparent text-muted-foreground cursor-pointer">
-                  <div className="flex flex-row items-center gap-2">
+                <MenubarItem
+                  className="w-full cursor-pointer"
+                  onClick={() => {
+                    if (address) {
+                      copyToClipboard(address, "Wallet address copied to clipboard");
+                    }
+                  }}
+                >
+                  <div className="flex flex-row items-center gap-2 justify-between w-full">
                     {address ? (
-                      <span className="text-sm break-all max-w-40 text-muted-foreground font-medium hover:text-muted-foreground">
-                        {address}
-                      </span>
+                      <>
+                        <span className="text-sm break-all max-w-40 text-muted-foreground font-medium">
+                          {address}
+                        </span>
+                        <Copy className={menuStyles.itemIcon} />
+                      </>
                     ) : (
                       <span className={menuStyles.itemText}>No wallet connected</span>
                     )}

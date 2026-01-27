@@ -152,8 +152,10 @@ describe("Navbar UI States", () => {
       cy.visit("/");
       waitForPageLoad();
 
-      // Use filter to find the visible Sign in button (mobile has its own button separate from desktop)
-      cy.contains("button", "Sign in").filter(":visible").should("exist");
+      // On mobile, the Sign in button is visible in the navbar header (not inside the drawer)
+      // The button is rendered alongside the menu hamburger icon
+      cy.contains("button", "Sign in").should("be.visible");
+      cy.contains("Contact sales").should("be.visible");
     });
   });
 });

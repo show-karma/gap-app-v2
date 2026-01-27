@@ -1,5 +1,40 @@
 import millify from "millify";
 
+const WEI_PER_ETH = 1e18;
+
+/**
+ * Convert wei to ETH and format for display.
+ * @param weiValue - Value in wei (10^18 wei = 1 ETH)
+ * @returns Formatted string with ETH suffix
+ */
+export function formatWeiToEth(weiValue: number): string {
+  if (weiValue === 0) return "0 ETH";
+
+  const ethValue = weiValue / WEI_PER_ETH;
+
+  // For very small ETH values, show more precision
+  if (ethValue < 0.0001) {
+    return `${ethValue.toExponential(2)} ETH`;
+  }
+
+  if (ethValue < 0.01) {
+    return `${ethValue.toFixed(6)} ETH`;
+  }
+
+  if (ethValue < 1) {
+    return `${ethValue.toFixed(4)} ETH`;
+  }
+
+  if (ethValue < 1000) {
+    // Show 2 decimals for values < 1000
+    const formatted = ethValue.toFixed(2);
+    return formatted.endsWith(".00") ? `${Math.round(ethValue)} ETH` : `${formatted} ETH`;
+  }
+
+  // For large ETH values, use K, M, B suffixes
+  return `${formatLargeNumber(ethValue)} ETH`;
+}
+
 /**
  * Format large numbers for display using K, M, B, T, P, E suffixes.
  * Handles very large numbers (up to Exa = 10^18) which are common for

@@ -17,6 +17,7 @@ import {
 import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView/DeleteApplicationModal";
 import { DiscussionTab } from "@/components/FundingPlatform/ApplicationView/DiscussionTab";
 import EditApplicationModal from "@/components/FundingPlatform/ApplicationView/EditApplicationModal";
+import EditPostApprovalModal from "@/components/FundingPlatform/ApplicationView/EditPostApprovalModal";
 import HeaderActions, {
   type ApplicationStatus,
 } from "@/components/FundingPlatform/ApplicationView/HeaderActions";
@@ -71,6 +72,9 @@ export default function ApplicationDetailPage() {
 
   // Edit modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Edit post-approval modal state
+  const [isEditPostApprovalModalOpen, setIsEditPostApprovalModalOpen] = useState(false);
 
   // Status change inline form state
   const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | null>(null);
@@ -233,6 +237,19 @@ export default function ApplicationDetailPage() {
     await Promise.all([refetchApplication(), refetchVersions(), refetchComments()]);
   };
 
+  // Handle post-approval edit
+  const handleEditPostApprovalClick = () => {
+    setIsEditPostApprovalModalOpen(true);
+  };
+
+  const handleEditPostApprovalClose = () => {
+    setIsEditPostApprovalModalOpen(false);
+  };
+
+  const handleEditPostApprovalSuccess = async () => {
+    await refetchApplication();
+  };
+
   const handleVersionClick = (versionId: string) => {
     // Select the version to view
     selectVersion(versionId, versions);
@@ -265,6 +282,14 @@ export default function ApplicationDetailPage() {
     hasAccess &&
     application &&
     !["approved", "rejected"].includes(application.status.toLowerCase());
+
+  // Check if post-approval edit should be enabled
+  // Only for approved applications with existing post-approval data
+  const canEditPostApproval =
+    hasAccess &&
+    application?.status?.toLowerCase() === "approved" &&
+    application?.postApprovalData &&
+    Object.keys(application.postApprovalData).length > 0;
 
   // Check loading states
   if (isLoadingAdmin || isLoadingApplication) {
@@ -332,6 +357,8 @@ export default function ApplicationDetailPage() {
               isDeleting={isDeleting}
               onEditClick={handleEditClick}
               canEdit={hasAccess && canEditApplication(application)}
+              onEditPostApprovalClick={handleEditPostApprovalClick}
+              canEditPostApproval={canEditPostApproval}
             />
           }
         />
@@ -452,6 +479,18 @@ export default function ApplicationDetailPage() {
           chainId={chainId}
           formSchema={config?.formSchema}
           onSuccess={handleEditSuccess}
+        />
+      )}
+
+      {/* Edit Post-Approval Modal */}
+      {application && canEditPostApproval && (
+        <EditPostApprovalModal
+          isOpen={isEditPostApprovalModalOpen}
+          onClose={handleEditPostApprovalClose}
+          application={application}
+          programId={programId}
+          postApprovalFormSchema={config?.postApprovalFormSchema}
+          onSuccess={handleEditPostApprovalSuccess}
         />
       )}
     </div>

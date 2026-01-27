@@ -83,8 +83,11 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
   const { address } = useAccount();
   const setIsCommunityAdmin = useCommunityAdminStore((state) => state.setIsCommunityAdmin);
 
+  // Get communityUID - prefer grant.data.communityUID, fallback to grant.community.uid
+  const communityUID = grant?.data?.communityUID || grant?.community?.uid;
+
   // Use React Query hook to check admin status with Zustand sync
-  useIsCommunityAdmin(grant?.community?.uid || grant?.data?.communityUID, address, {
+  useIsCommunityAdmin(communityUID, address, {
     zustandSync: { setIsCommunityAdmin },
   });
 

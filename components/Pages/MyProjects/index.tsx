@@ -7,11 +7,9 @@ import pluralize from "pluralize";
 import { useState } from "react";
 import { useAccount } from "wagmi";
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import Pagination from "@/components/Utilities/Pagination";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
-import { PROJECT_NAME } from "@/constants/brand";
 import { useAuth } from "@/hooks/useAuth";
 import { useMixpanel } from "@/hooks/useMixpanel";
 import { layoutTheme } from "@/src/helper/theme";
@@ -22,6 +20,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects";
+import { EmptyProjectsState } from "./EmptyProjectsState";
 import { LoadingCard } from "./LoadingCard";
 
 const ProjectDialog = dynamic(
@@ -45,39 +44,28 @@ const pickColor = (index: number) => {
   return cardColors[index % cardColors.length];
 };
 
-const OnboardingButton = () => {
-  const { setIsOnboarding } = useOnboarding();
-  const { mixpanel } = useMixpanel();
-  const { address } = useAccount();
-
-  return (
-    <Button
-      onClick={() => {
-        setIsOnboarding(true);
-        if (address) {
-          mixpanel.reportEvent({
-            event: "onboarding:popup",
-            properties: { address },
-          });
-          mixpanel.reportEvent({
-            event: "onboarding:navigation",
-            properties: { address, id: "welcome" },
-          });
-        }
-      }}
-      className="w-max h-max bg-transparent dark:bg-transparent hover:bg-transparent text-black border border-black"
-    >
-      {PROJECT_NAME} Platform Walkthrough
-    </Button>
-  );
-};
-
 export default function MyProjects() {
   const { isConnected, address } = useAccount();
   const { authenticated: isAuth } = useAuth();
   const { theme: currentTheme } = useTheme();
+  const { setIsOnboarding } = useOnboarding();
+  const { mixpanel } = useMixpanel();
   const itemsPerPage = 12;
   const [page, setPage] = useState<number>(1);
+
+  const handleStartWalkthrough = () => {
+    setIsOnboarding(true);
+    if (address) {
+      mixpanel.reportEvent({
+        event: "onboarding:popup",
+        properties: { address },
+      });
+      mixpanel.reportEvent({
+        event: "onboarding:navigation",
+        properties: { address, id: "welcome" },
+      });
+    }
+  };
 
   const {
     data: projects,
@@ -101,16 +89,19 @@ export default function MyProjects() {
       <div className="mt-5 w-full gap-5">
         {isConnected && isAuth ? (
           <div className="flex flex-col gap-4">
-            <div className="flex flex-row items-center justify-between mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">My Projects</h1>
-              <ProjectDialog
-                buttonElement={{
-                  text: "Create Project",
-                  styleClass:
-                    "flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-2 bg-brand-darkblue dark:bg-gray-700 px-5 py-2.5 text-base font-semibold text-white hover:bg-brand-darkblue",
-                }}
-              />
-            </div>
+            {/* Show header only when loading or when there are projects */}
+            {(isLoading || myProjects.length > 0) && (
+              <div className="flex flex-row items-center justify-between mb-6">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">My Projects</h1>
+                <ProjectDialog
+                  buttonElement={{
+                    text: "Create Project",
+                    styleClass:
+                      "flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-2 bg-brand-darkblue dark:bg-gray-700 px-5 py-2.5 text-base font-semibold text-white hover:bg-brand-darkblue",
+                  }}
+                />
+              </div>
+            )}
             {isLoading ? (
               <div className="flex flex-col gap-4 justify-start">
                 <div className="grid grid-cols-4 gap-7 pb-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
@@ -223,28 +214,8 @@ export default function MyProjects() {
                 ) : null}
               </div>
             ) : (
-              <div className="flex w-full flex-row items-center justify-center">
-                <div
-                  className="flex h-96 border-spacing-4 flex-col items-center justify-center gap-5 rounded border border-blue-600 bg-[#EEF4FF] px-8 max-sm:px-1"
-                  style={{
-                    border: "dashed 2px #155EEF",
-                  }}
-                >
-                  <p className="text-lg font-bold text-black">Attention!</p>
-                  <p className="w-max max-w-md break-normal max-sm:break-keep max-sm:whitespace-break-spaces text-left text-lg max-sm:max-w-full max-sm:text-center max-sm:text-base max-sm:w-full font-normal text-black">
-                    We were unable to locate any projects associated with your wallet address:{" "}
-                    {address}. <br />
-                    To find your project, please use the search function above. If your project
-                    isn&apos;t listed, feel free to create a new one.
-                  </p>
-                  <ProjectDialog />
-                </div>
-              </div>
+              <EmptyProjectsState onStartWalkthrough={handleStartWalkthrough} />
             )}
-
-            <div className="flex mt-20 justify-center items-center w-full">
-              <OnboardingButton />
-            </div>
           </div>
         ) : (
           <div className="flex w-full items-center justify-center">

@@ -230,6 +230,66 @@ describe("queryKeys", () => {
     });
   });
 
+  describe("PROJECT", () => {
+    describe("EXPLORER_INFINITE", () => {
+      it("should generate correct query key with all params", () => {
+        const params = {
+          search: "dao",
+          sortBy: "noOfGrants",
+          sortOrder: "asc",
+          limit: 25,
+        };
+        const key = QUERY_KEYS.PROJECT.EXPLORER_INFINITE(params);
+        expect(key[0]).toBe("projects-explorer-infinite");
+        expect(key[1]).toBe("dao");
+        expect(key[2]).toBe("noOfGrants");
+        expect(key[3]).toBe("asc");
+        expect(key[4]).toBe(25);
+      });
+
+      it("should use default values when params are not provided", () => {
+        const key = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({});
+        expect(key[0]).toBe("projects-explorer-infinite");
+        expect(key[1]).toBe(""); // empty search
+        expect(key[2]).toBe("updatedAt"); // default sortBy
+        expect(key[3]).toBe("desc"); // default sortOrder
+        expect(key[4]).toBe(50); // default limit
+      });
+
+      it("should handle undefined search", () => {
+        const key = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({
+          sortBy: "createdAt",
+          sortOrder: "desc",
+        });
+        expect(key[1]).toBe("");
+      });
+
+      it("should return as const tuple", () => {
+        const key = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ search: "test" });
+        expect(Array.isArray(key)).toBe(true);
+        expect(key.length).toBe(5);
+      });
+
+      it("should generate different keys for different search queries", () => {
+        const key1 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ search: "dao" });
+        const key2 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ search: "gitcoin" });
+        expect(key1).not.toEqual(key2);
+      });
+
+      it("should generate different keys for different sort options", () => {
+        const key1 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ sortBy: "createdAt" });
+        const key2 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ sortBy: "noOfGrants" });
+        expect(key1).not.toEqual(key2);
+      });
+
+      it("should generate different keys for different limit values", () => {
+        const key1 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ limit: 25 });
+        const key2 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ limit: 100 });
+        expect(key1).not.toEqual(key2);
+      });
+    });
+  });
+
   describe("integration tests", () => {
     it("should generate unique keys for different entities", () => {
       const milestoneKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES("id", "prog");

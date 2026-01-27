@@ -238,10 +238,26 @@ describe("settingsConfigSchema", () => {
   describe("edge cases", () => {
     it("should accept all boolean combinations", () => {
       const combinations = [
-        { privateApplications: true, donationRound: true, showCommentsOnPublicPage: true },
-        { privateApplications: true, donationRound: false, showCommentsOnPublicPage: false },
-        { privateApplications: false, donationRound: true, showCommentsOnPublicPage: true },
-        { privateApplications: false, donationRound: false, showCommentsOnPublicPage: false },
+        {
+          privateApplications: true,
+          donationRound: true,
+          showCommentsOnPublicPage: true,
+        },
+        {
+          privateApplications: true,
+          donationRound: false,
+          showCommentsOnPublicPage: false,
+        },
+        {
+          privateApplications: false,
+          donationRound: true,
+          showCommentsOnPublicPage: true,
+        },
+        {
+          privateApplications: false,
+          donationRound: false,
+          showCommentsOnPublicPage: false,
+        },
       ];
 
       combinations.forEach((combo) => {
@@ -317,6 +333,96 @@ describe("settingsConfigSchema", () => {
 
       // Optional fields should be allowed to be undefined
       expect(validData.successPageContent).toBeUndefined();
+    });
+  });
+
+  describe("accessCode field", () => {
+    it("should validate with accessCode set", () => {
+      const validData = {
+        privateApplications: true,
+        donationRound: false,
+        showCommentsOnPublicPage: false,
+        accessCode: "GRANT2024",
+      };
+
+      const result = settingsConfigSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.accessCode).toBe("GRANT2024");
+      }
+    });
+
+    it("should validate without accessCode (optional)", () => {
+      const validData = {
+        privateApplications: true,
+        donationRound: false,
+        showCommentsOnPublicPage: false,
+      };
+
+      const result = settingsConfigSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.accessCode).toBeUndefined();
+      }
+    });
+
+    it("should validate with empty accessCode", () => {
+      const validData = {
+        privateApplications: true,
+        donationRound: false,
+        showCommentsOnPublicPage: false,
+        accessCode: "",
+      };
+
+      const result = settingsConfigSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.accessCode).toBe("");
+      }
+    });
+
+    it("should reject if accessCode is not a string", () => {
+      const invalidData = {
+        privateApplications: true,
+        donationRound: false,
+        showCommentsOnPublicPage: false,
+        accessCode: 12345,
+      };
+
+      const result = settingsConfigSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+
+    it("should handle special characters in accessCode", () => {
+      const validData = {
+        privateApplications: true,
+        donationRound: false,
+        showCommentsOnPublicPage: false,
+        accessCode: "SECRET-CODE_2024!@#",
+      };
+
+      const result = settingsConfigSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.accessCode).toBe("SECRET-CODE_2024!@#");
+      }
+    });
+
+    it("should handle case-sensitive accessCode", () => {
+      const validData = {
+        privateApplications: true,
+        donationRound: false,
+        showCommentsOnPublicPage: false,
+        accessCode: "GrantCode2024",
+      };
+
+      const result = settingsConfigSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        // The code should preserve its case exactly
+        expect(result.data.accessCode).toBe("GrantCode2024");
+        expect(result.data.accessCode).not.toBe("grantcode2024");
+      }
     });
   });
 });
