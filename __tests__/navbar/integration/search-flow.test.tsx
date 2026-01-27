@@ -214,20 +214,19 @@ describe("Search Flow Integration Tests", () => {
 
       fireEvent.click(resultLink);
 
-      // Verify the search dropdown closes after clicking a search result
+      // Verify the drawer closes after clicking a search result
       // The onSelectItem callback triggers setMobileMenuOpen(false)
-      // The drawer body content is now unmounted when closed (lazy loading optimization)
-      // So we verify the search input and results are no longer in the document
+      // Note: Drawer content remains mounted when closed to prevent animation issues
+      // (see PRD issue: "Lazy Loading Drawer Animation")
+      // Instead of checking if content is unmounted, we verify the drawer's closed state
       await waitFor(() => {
-        // Search input should be unmounted when drawer closes
-        expect(
-          within(drawer).queryByPlaceholderText("Search Project/Community")
-        ).not.toBeInTheDocument();
-      });
-
-      // Verify search results are no longer visible (drawer content unmounted)
-      await waitFor(() => {
-        expect(within(drawer).queryByText(firstProject.details.title)).not.toBeInTheDocument();
+        // The drawer should transition to closed state
+        // When closed, the dialog role is removed or the drawer has data-state="closed"
+        const closedDrawer = screen.queryByRole("dialog");
+        // Either the dialog role is removed, or if still present, it should be in closed state
+        if (closedDrawer) {
+          expect(closedDrawer).toHaveAttribute("data-state", "closed");
+        }
       });
     });
   });
