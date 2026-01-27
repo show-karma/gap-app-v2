@@ -15,7 +15,10 @@ const mockProject = {
     slug: "test-project",
   },
   members: [],
-  endorsements: [{ id: "1" }, { id: "2" }],
+  endorsements: [
+    { id: "1", endorsedBy: "0x1111111111111111111111111111111111111111" },
+    { id: "2", endorsedBy: "0x2222222222222222222222222222222222222222" },
+  ],
 };
 
 const mockGrants = [

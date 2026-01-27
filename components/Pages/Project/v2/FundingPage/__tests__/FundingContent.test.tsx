@@ -126,12 +126,17 @@ describe("FundingContent", () => {
       expect(screen.getByText("Another Community")).toBeInTheDocument();
     });
 
-    it("should show completed icon for completed grants", () => {
+    it("should show completed badge for completed grants", () => {
       render(<FundingContent project={mockProject} />);
 
-      // The completed grant should have a check icon with aria-label
-      const completedIcon = screen.getByLabelText("Completed");
-      expect(completedIcon).toBeInTheDocument();
+      // The completed grant should have a "Completed" text badge
+      // Note: We use getAllByText because "Completed Grant" also contains "Completed"
+      const completedBadges = screen.getAllByText("Completed");
+      // Find the one that's in the badge span (exact match, not partial)
+      const badge = completedBadges.find((el) =>
+        el.closest("span")?.className.includes("bg-green-100")
+      );
+      expect(badge).toBeInTheDocument();
     });
   });
 
