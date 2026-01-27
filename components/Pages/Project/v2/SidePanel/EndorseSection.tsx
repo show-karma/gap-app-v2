@@ -8,6 +8,7 @@ import type { Project } from "@/types/v2/project";
 import { cn } from "@/utilities/tailwind";
 
 interface EndorseSectionProps {
+  /** Project data - reserved for future use when endorsement store needs project context */
   project: Project;
   className?: string;
 }
@@ -18,8 +19,12 @@ interface EndorseSectionProps {
  * Matches Figma design with Lucide icons and neutral color palette.
  *
  * Requires wallet connection to enable endorsement.
+ *
+ * Note: The project prop is accepted for API consistency with other SidePanel components.
+ * The EndorsementDialog currently gets project info from route params.
  */
-export function EndorseSection({ project: _project, className }: EndorseSectionProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function EndorseSection({ project, className }: EndorseSectionProps) {
   const { setIsEndorsementOpen } = useEndorsementStore();
   const { isConnected } = useAccount();
 

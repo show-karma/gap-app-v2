@@ -118,11 +118,18 @@ export function SubscribeSection({ project, className }: SubscribeSectionProps) 
             type="text"
             placeholder="First name"
             {...register("name")}
+            aria-invalid={!!errors.name}
+            aria-describedby={errors.name ? "subscribe-name-error" : undefined}
             className="w-full bg-white dark:bg-zinc-900 border-neutral-200 dark:border-zinc-700 rounded-lg shadow-sm"
             data-testid="subscribe-name-input"
           />
           {errors.name && (
-            <p className="text-xs text-red-500" data-testid="subscribe-name-error" role="alert">
+            <p
+              id="subscribe-name-error"
+              className="text-xs text-red-500"
+              data-testid="subscribe-name-error"
+              role="alert"
+            >
               {errors.name.message}
             </p>
           )}
@@ -139,11 +146,18 @@ export function SubscribeSection({ project, className }: SubscribeSectionProps) 
             placeholder="your@email.com*"
             {...register("email")}
             aria-required="true"
+            aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? "subscribe-email-error" : undefined}
             className="w-full bg-white dark:bg-zinc-900 border-neutral-200 dark:border-zinc-700 rounded-lg shadow-sm"
             data-testid="subscribe-email-input"
           />
           {errors.email && (
-            <p className="text-xs text-red-500" data-testid="subscribe-email-error" role="alert">
+            <p
+              id="subscribe-email-error"
+              className="text-xs text-red-500"
+              data-testid="subscribe-email-error"
+              role="alert"
+            >
               {errors.email.message}
             </p>
           )}

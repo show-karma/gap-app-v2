@@ -90,6 +90,8 @@ export function ActivityFilters({
             }
           }}
           data-testid="filter-everything"
+          aria-pressed={activeFilters.length === 0}
+          aria-label="Show everything"
           className="focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-neutral-500 dark:focus-visible:ring-neutral-400 rounded-md"
         >
           <Badge
@@ -114,6 +116,8 @@ export function ActivityFilters({
               type="button"
               onClick={() => onFilterToggle(filter.value)}
               data-testid={`filter-${filter.value}`}
+              aria-pressed={isActive}
+              aria-label={`Filter by ${filter.label}`}
               className="focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-neutral-500 dark:focus-visible:ring-neutral-400 rounded-md"
             >
               <Badge
