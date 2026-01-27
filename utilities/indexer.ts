@@ -599,4 +599,11 @@ export const INDEXER = {
       `/projects/${idOrSlug}/update/contact/${contactId}`,
     DELETE: (idOrSlug: string) => `/projects/${idOrSlug}/delete/contact`,
   },
+  KARMA_SEEDS: {
+    GET: (projectUID: string) => `/v2/projects/${projectUID}/karma-seeds`,
+    EXISTS: (projectUID: string) => `/v2/projects/${projectUID}/karma-seeds/exists`,
+    TOTAL_RAISED: (projectUID: string) => `/v2/projects/${projectUID}/karma-seeds/total-raised`,
+    CREATE: (projectUID: string) => `/v2/projects/${projectUID}/karma-seeds`,
+    SYNC: (projectUID: string) => `/v2/projects/${projectUID}/karma-seeds/sync`,
+  },
 };

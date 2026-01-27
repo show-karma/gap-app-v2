@@ -2,6 +2,7 @@ import { createConfig } from "@privy-io/wagmi";
 import { type Config, http } from "@wagmi/core";
 import {
   arbitrum,
+  base,
   baseSepolia,
   celo,
   lisk,
@@ -44,6 +45,7 @@ export const privyConfig = createConfig({
   transports: {
     [optimism.id]: http(envVars.RPC.OPTIMISM, httpTransportOptions),
     [arbitrum.id]: http(envVars.RPC.ARBITRUM, httpTransportOptions),
+    [base.id]: http(envVars.RPC.BASE, httpTransportOptions),
     [baseSepolia.id]: http(envVars.RPC.BASE_SEPOLIA, httpTransportOptions),
     [optimismSepolia.id]: http(envVars.RPC.OPT_SEPOLIA, httpTransportOptions),
     [celo.id]: http(envVars.RPC.CELO, httpTransportOptions),

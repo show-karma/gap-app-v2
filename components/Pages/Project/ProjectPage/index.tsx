@@ -11,12 +11,14 @@ import pluralize from "pluralize";
 import { useEffect } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
+import { LaunchKarmaSeedsDialog } from "@/components/Dialogs/LaunchKarmaSeedsDialog";
 import { MemberDialog } from "@/components/Dialogs/Member";
 import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember";
 import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember";
 import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
 import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import { BuySeedsDialog, KarmaSeedsCard, LaunchKarmaSeedsButton } from "@/components/KarmaSeeds";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
@@ -285,6 +287,8 @@ function ProjectPage() {
   return (
     <div className="flex flex-row max-lg:flex-col gap-6 max-md:gap-4 py-5 mb-20">
       <ContributorProfileDialog />
+      <LaunchKarmaSeedsDialog />
+      <BuySeedsDialog />
 
       <div className="flex flex-[2.5] gap-6 flex-col w-full max-lg:hidden">
         <Team />
@@ -300,6 +304,9 @@ function ProjectPage() {
         <ProjectImpact projectId={projectId} />
 
         {project ? <ProjectSubscription project={project} /> : null}
+
+        {project?.uid ? <LaunchKarmaSeedsButton projectUID={project.uid} /> : null}
+
         <div className="flex flex-col gap-1">
           <p className="text-black dark:text-zinc-400 font-bold text-sm">
             This project has received
@@ -345,6 +352,7 @@ function ProjectPage() {
               </div>
             </button>
           </div>
+          {project?.uid ? <KarmaSeedsCard projectUID={project.uid} /> : null}
         </div>
 
         <div className="flex w-full">
