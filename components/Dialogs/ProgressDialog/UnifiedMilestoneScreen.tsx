@@ -178,12 +178,19 @@ export const UnifiedMilestoneScreen = () => {
             );
           }
 
-          showLoading("Indexing milestone...");
+          changeStepperStep("indexing");
 
-          // More robust refetch with multiple attempts
-          await tryRefetch();
+          // Poll until milestone is indexed
+          const indexed = await pollForRoadmapMilestone(newObjective.uid);
 
-          showSuccess("Roadmap milestone created!");
+          if (indexed) {
+            changeStepperStep("indexed");
+            showSuccess("Roadmap milestone created!");
+          } else {
+            // Fallback: show success anyway but warn that it may take longer
+            showSuccess("Milestone created! It may take a moment to appear.");
+          }
+
           setTimeout(() => {
             dismiss();
             closeProgressModal();
@@ -198,15 +205,28 @@ export const UnifiedMilestoneScreen = () => {
     }
   };
 
-  // Function to attempt multiple refetches with delays between attempts
-  const tryRefetch = async (attempts = 3, delayMs = 2000) => {
-    for (let i = 0; i < attempts; i++) {
-      await refetchUpdates();
-      await refetchGrants();
-      if (i < attempts - 1) {
-        await sleep(delayMs);
+  // Poll until roadmap milestone (project objective) is indexed
+  const pollForRoadmapMilestone = async (
+    objectiveUid: string,
+    maxRetries = 30,
+    delayMs = 1500
+  ): Promise<boolean> => {
+    for (let i = 0; i < maxRetries; i++) {
+      const { data: updatesResponse } = await refetchUpdates();
+
+      // Check if the objective exists in project milestones
+      const found = updatesResponse?.projectMilestones?.some(
+        (milestone) => milestone.uid === objectiveUid
+      );
+
+      if (found) {
+        await refetchGrants();
+        return true;
       }
+
+      await sleep(delayMs);
     }
+    return false;
   };
 
   // Create grant milestone(s) for selected grants
@@ -372,13 +392,35 @@ export const UnifiedMilestoneScreen = () => {
         }
       }
 
-      showLoading("Indexing milestones...");
+      changeStepperStep("indexing");
 
-      // Wait a bit for indexing and perform multiple refetch attempts
-      await sleep(1500);
-      await tryRefetch();
+      // Poll until at least one milestone is indexed (indicates indexing is working)
+      let indexed = false;
+      for (let i = 0; i < 30; i++) {
+        const { data: updatedGrants } = await refetchGrants();
 
-      showSuccess("Milestones created!");
+        // Check if any of the selected grants now have a milestone with the title we just created
+        const foundNewMilestone = updatedGrants?.some((grant) => {
+          if (!selectedGrantIds.includes(grant.uid)) return false;
+          return grant.milestones?.some((m) => m.title === data.title);
+        });
+
+        if (foundNewMilestone) {
+          indexed = true;
+          break;
+        }
+
+        await sleep(1500);
+      }
+
+      await refetchUpdates();
+
+      if (indexed) {
+        changeStepperStep("indexed");
+        showSuccess("Milestones created!");
+      } else {
+        showSuccess("Milestones created! They may take a moment to appear.");
+      }
 
       setTimeout(() => {
         dismiss();
