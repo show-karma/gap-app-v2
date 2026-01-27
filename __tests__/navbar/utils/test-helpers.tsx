@@ -8,7 +8,7 @@ import { type RenderOptions, type RenderResult, render } from "@testing-library/
 import { ThemeProvider } from "next-themes";
 import type React from "react";
 import type { AuthFixture } from "../fixtures/auth-fixtures";
-import { mockAuthState, mockThemeState } from "../setup";
+import { mockAuthState, mockNavbarPermissionsState, mockThemeState } from "../setup";
 
 /**
  * Reset mock auth state to default
@@ -25,6 +25,23 @@ export const resetMockAuthState = () => {
     logout: jest.fn(),
     disconnect: jest.fn(),
     getAccessToken: jest.fn().mockResolvedValue("mock-token"),
+  };
+
+  // Also reset navbar permissions state
+  mockNavbarPermissionsState.current = {
+    isLoggedIn: false,
+    address: undefined,
+    ready: true,
+    isStaff: false,
+    isStaffLoading: false,
+    isOwner: false,
+    isCommunityAdmin: false,
+    hasReviewerRole: false,
+    reviewerPrograms: [],
+    isPoolManager: false,
+    isRegistryAdmin: false,
+    hasAdminAccess: false,
+    isRegistryAllowed: false,
   };
 };
 
@@ -271,6 +288,49 @@ export const createMockRouter = (overrides: any = {}) => ({
   ...overrides,
 });
 
+// Helper to update navbar permissions state based on auth and permissions
+const updateNavbarPermissionsState = (authMock?: any, permissionsMock?: any) => {
+  if (!authMock && !permissionsMock) return;
+
+  const isLoggedIn = authMock?.authenticated ?? mockNavbarPermissionsState.current.isLoggedIn;
+  const address = authMock?.address ?? mockNavbarPermissionsState.current.address;
+  const ready = authMock?.ready ?? mockNavbarPermissionsState.current.ready;
+
+  // Extract permissions from mockPermissions if provided
+  const communities = permissionsMock?.mockUseCommunitiesStore?.communities ?? [];
+  const reviewerPrograms = permissionsMock?.mockUseReviewerPrograms?.programs ?? [];
+  const isStaff = permissionsMock?.mockUseStaff?.isStaff ?? false;
+  const isStaffLoading = permissionsMock?.mockUseStaff?.isLoading ?? false;
+  const isOwner =
+    typeof permissionsMock?.mockUseOwnerStore === "function"
+      ? permissionsMock.mockUseOwnerStore((s: any) => s.isOwner)
+      : (permissionsMock?.mockUseOwnerStore?.isOwner ?? false);
+  const isPoolManager = permissionsMock?.mockUseRegistryStore?.isPoolManager ?? false;
+  const isRegistryAdmin = permissionsMock?.mockUseRegistryStore?.isRegistryAdmin ?? false;
+
+  // Compute derived values
+  const isCommunityAdmin = communities.length > 0;
+  const hasReviewerRole = reviewerPrograms.length > 0;
+  const hasAdminAccess = !isStaffLoading && (isStaff || isOwner || isCommunityAdmin);
+  const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
+
+  mockNavbarPermissionsState.current = {
+    isLoggedIn,
+    address,
+    ready,
+    isStaff,
+    isStaffLoading,
+    isOwner,
+    isCommunityAdmin,
+    hasReviewerRole,
+    reviewerPrograms,
+    isPoolManager,
+    isRegistryAdmin,
+    hasAdminAccess,
+    isRegistryAllowed,
+  };
+};
+
 // Helper to update auth mocks
 const updateAuthMock = (mockUseAuth?: any, mockUsePrivy?: any) => {
   if (mockUseAuth || mockUsePrivy) {
@@ -357,6 +417,12 @@ export const updateMocks = (options: Partial<CustomRenderOptions>) => {
   updateThemeMock(options.mockUseTheme);
   updateContributorProfileModalMock(options.mockUseContributorProfileModalStore);
   updatePermissionMocks(options.mockPermissions);
+
+  // Update navbar permissions state based on auth and permissions
+  updateNavbarPermissionsState(
+    options.mockUseAuth || options.mockUsePrivy,
+    options.mockPermissions
+  );
 
   if (options.mockUseCommunitiesStore) {
     const module = require("@/store/communities");
@@ -566,6 +632,9 @@ export const renderWithProviders = (
   updateThemeMock(mockUseTheme);
   updateContributorProfileModalMock(mockUseContributorProfileModalStore);
   updatePermissionMocks(mockPermissions);
+
+  // Update navbar permissions state based on auth and permissions
+  updateNavbarPermissionsState(mockUseAuth || mockUsePrivy, mockPermissions);
 
   // Setup mocks if auth state and permissions provided (legacy support)
   if (authState && permissions) {

@@ -1105,10 +1105,10 @@ describe("Integration: Grant Completion Revocation Flow", () => {
 
       render(<GrantCompleteButton grant={grantWithoutCompletion} project={mockProject} />);
 
-      // Verify not completed button is rendered (now a button that opens a dialog)
-      const button = screen.getByRole("button");
-      expect(button).toBeInTheDocument();
-      expect(button).toHaveTextContent("Mark as Complete");
+      // Verify not completed link is rendered (links to grant completion page)
+      const link = screen.getByRole("link");
+      expect(link).toBeInTheDocument();
+      expect(link).toHaveTextContent("Mark as Complete");
     });
   });
 });
