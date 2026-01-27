@@ -5,6 +5,7 @@ import { CalendarIcon, FlagIcon, PlayIcon, WalletIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { TrackTags } from "@/components/TrackTags";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore } from "@/store";
@@ -69,7 +70,12 @@ function GrantCard({
   // Get last activity date (most recent between createdAt, updatedAt, or last milestone update)
   const lastActivity = grant.updatedAt || grant.createdAt;
 
-  // Get categories/tracks
+  // Get tracks from selectedTrackIds (primary) or fallback to categories
+  const selectedTrackIds = grant.details?.selectedTrackIds || [];
+  const communityId = grant.communityUID || grant.community?.uid || "";
+  const hasTrackIds = selectedTrackIds.length > 0 && communityId;
+
+  // Get categories as fallback
   const categories = grant.categories || [];
 
   return (
@@ -168,23 +174,27 @@ function GrantCard({
         )}
       </div>
 
-      {/* Categories/tracks */}
-      {categories.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {categories.slice(0, 3).map((category) => (
-            <span
-              key={category}
-              className="px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400"
-            >
-              {category}
-            </span>
-          ))}
-          {categories.length > 3 && (
-            <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400">
-              +{categories.length - 3} more
-            </span>
-          )}
-        </div>
+      {/* Tracks (primary) or Categories (fallback) */}
+      {hasTrackIds ? (
+        <TrackTags communityId={communityId} trackIds={selectedTrackIds} />
+      ) : (
+        categories.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {categories.slice(0, 3).map((category) => (
+              <span
+                key={category}
+                className="px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400"
+              >
+                {category}
+              </span>
+            ))}
+            {categories.length > 3 && (
+              <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400">
+                +{categories.length - 3} more
+              </span>
+            )}
+          </div>
+        )
       )}
     </Link>
   );
