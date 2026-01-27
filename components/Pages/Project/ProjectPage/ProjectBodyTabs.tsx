@@ -28,6 +28,7 @@ export const InformationBlock: FC = () => {
             markdownClass="text-black dark:text-zinc-100 font-normal text-base w-full max-w-full"
             side="left"
             words={200}
+            preloadImages
           >
             {project?.details?.description || ""}
           </ReadMore>
