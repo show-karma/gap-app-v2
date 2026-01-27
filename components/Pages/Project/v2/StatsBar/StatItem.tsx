@@ -107,6 +107,7 @@ export function StatItem({ value, label, iconType, icon, className, onClick }: S
       <button
         type="button"
         onClick={onClick}
+        aria-label={`${label}: ${value}`}
         className="group flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
       >
         {content}
