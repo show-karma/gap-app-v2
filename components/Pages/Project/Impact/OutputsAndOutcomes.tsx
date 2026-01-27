@@ -498,249 +498,251 @@ export const OutputsAndOutcomes = () => {
                               isInvalidTimestamp={isInvalidTimestamp}
                               hasInvalidDatesSameRow={hasInvalidDatesSameRow}
                             />
+                          ) : form?.isEditing && isAuthorized ? (
+                            /* Card-based layout for edit mode */
+                            <div className="flex flex-col gap-3 overflow-y-auto max-h-80">
+                              {form.datapoints.map((datapoint, index: number) => (
+                                <div
+                                  key={`${datapoint.endDate || ""}-${datapoint.value || ""}-${index}`}
+                                  className="p-4 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50"
+                                >
+                                  {/* Row 1: Value + Proof + Delete */}
+                                  <div className="flex gap-3 items-start">
+                                    {/* Value input */}
+                                    <label className="flex-1 block">
+                                      <span className="block text-xs font-medium text-gray-600 dark:text-zinc-400 mb-1">
+                                        {item.name}
+                                      </span>
+                                      <div className="flex items-center gap-2">
+                                        <input
+                                          type="number"
+                                          value={datapoint.value || ""}
+                                          onChange={(e) =>
+                                            handleInputChange(
+                                              item.id,
+                                              "value",
+                                              e.target.value,
+                                              index
+                                            )
+                                          }
+                                          aria-invalid={isInvalidValue(
+                                            Number(datapoint.value),
+                                            form.unitOfMeasure || "int"
+                                          )}
+                                          className={cn(
+                                            "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 focus:outline-none dark:text-zinc-100",
+                                            isInvalidValue(
+                                              Number(datapoint.value),
+                                              form.unitOfMeasure || "int"
+                                            )
+                                              ? "border-2 border-red-500"
+                                              : "border-gray-300 dark:border-zinc-700"
+                                          )}
+                                        />
+                                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-zinc-700 text-gray-600 dark:text-zinc-300 whitespace-nowrap">
+                                          {form.unitOfMeasure || ""}
+                                        </span>
+                                      </div>
+                                      {datapoint.value &&
+                                        isInvalidValue(
+                                          Number(datapoint.value),
+                                          form.unitOfMeasure || "int"
+                                        ) && (
+                                          <span className="text-xs text-red-500 mt-1">
+                                            {form.unitOfMeasure === "int"
+                                              ? "Please enter an integer"
+                                              : "Please enter a valid number"}
+                                          </span>
+                                        )}
+                                    </label>
+                                    {/* Proof input */}
+                                    <label className="flex-[2] block">
+                                      <span className="block text-xs font-medium text-gray-600 dark:text-zinc-400 mb-1">
+                                        Proof
+                                      </span>
+                                      <input
+                                        type="text"
+                                        value={datapoint.proof || ""}
+                                        onChange={(e) =>
+                                          handleInputChange(item.id, "proof", e.target.value, index)
+                                        }
+                                        placeholder="Enter proof URL"
+                                        className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 focus:outline-none dark:text-zinc-100"
+                                      />
+                                    </label>
+                                    {/* Delete button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteEntry(item.id, index)}
+                                      aria-label={`Delete entry ${index + 1}`}
+                                      className="mt-6 p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors"
+                                    >
+                                      <TrashIcon
+                                        className="w-4 h-4 text-red-500"
+                                        aria-hidden="true"
+                                      />
+                                    </button>
+                                  </div>
+                                  {/* Row 2: Start Date + End Date */}
+                                  <div className="flex gap-3 mt-3">
+                                    <label className="flex-1 block">
+                                      <span className="block text-xs font-medium text-gray-600 dark:text-zinc-400 mb-1">
+                                        Start Date
+                                      </span>
+                                      <input
+                                        type="date"
+                                        value={
+                                          datapoint.startDate?.split("T")[0] ||
+                                          new Date().toISOString().split("T")[0]
+                                        }
+                                        onChange={(e) =>
+                                          handleInputChange(
+                                            item.id,
+                                            "startDate",
+                                            e.target.value,
+                                            index
+                                          )
+                                        }
+                                        aria-invalid={hasInvalidDatesSameRow(
+                                          item.id,
+                                          datapoint.startDate,
+                                          datapoint.endDate
+                                        )}
+                                        className={cn(
+                                          "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 focus:outline-none dark:text-zinc-100",
+                                          hasInvalidDatesSameRow(
+                                            item.id,
+                                            datapoint.startDate,
+                                            datapoint.endDate
+                                          )
+                                            ? "border-2 border-red-500"
+                                            : "border-gray-300 dark:border-zinc-700"
+                                        )}
+                                      />
+                                    </label>
+                                    <label className="flex-1 block">
+                                      <span className="block text-xs font-medium text-gray-600 dark:text-zinc-400 mb-1">
+                                        End Date
+                                      </span>
+                                      <input
+                                        type="date"
+                                        value={
+                                          datapoint.endDate?.split("T")[0] ||
+                                          datapoint.outputTimestamp?.split("T")[0] ||
+                                          new Date().toISOString().split("T")[0]
+                                        }
+                                        onChange={(e) =>
+                                          handleInputChange(
+                                            item.id,
+                                            "endDate",
+                                            e.target.value,
+                                            index
+                                          )
+                                        }
+                                        aria-invalid={
+                                          isInvalidTimestamp(
+                                            item.id,
+                                            datapoint.endDate || datapoint.outputTimestamp || ""
+                                          ) ||
+                                          hasInvalidDatesSameRow(
+                                            item.id,
+                                            datapoint.startDate,
+                                            datapoint.endDate
+                                          )
+                                        }
+                                        className={cn(
+                                          "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 focus:outline-none dark:text-zinc-100",
+                                          (isInvalidTimestamp(
+                                            item.id,
+                                            datapoint.endDate || datapoint.outputTimestamp || ""
+                                          ) ||
+                                            hasInvalidDatesSameRow(
+                                              item.id,
+                                              datapoint.startDate,
+                                              datapoint.endDate
+                                            )) &&
+                                            "border-2 border-red-500"
+                                        )}
+                                      />
+                                    </label>
+                                  </div>
+                                </div>
+                              ))}
+                              <Button onClick={() => handleAddEntry(item.id)} className="w-fit">
+                                Add new entry
+                              </Button>
+                            </div>
                           ) : (
-                            /* Regular table for read-only mode or small editing lists */
+                            /* Table for read-only mode */
                             <div className="overflow-y-auto overflow-x-auto max-h-80 rounded border border-gray-200 dark:border-zinc-700">
                               <table
-                                className="min-w-full table-fixed divide-y divide-gray-200 dark:divide-zinc-700"
+                                className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700"
                                 aria-label={`${item.name} data entries breakdown`}
                               >
                                 <thead className="bg-gray-50 dark:bg-zinc-800 sticky top-0">
                                   <tr>
                                     <th
                                       scope="col"
-                                      className="w-[22%] px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400"
+                                      className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400"
                                     >
                                       {item.name}
                                     </th>
                                     <th
                                       scope="col"
-                                      className="w-[18%] px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400"
+                                      className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400"
                                     >
                                       Start Date
                                     </th>
                                     <th
                                       scope="col"
-                                      className="w-[18%] px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400"
+                                      className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400"
                                     >
                                       End Date
                                     </th>
                                     <th
                                       scope="col"
-                                      className="w-[32%] px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400"
+                                      className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400"
                                     >
                                       Proof
-                                    </th>
-                                    <th
-                                      scope="col"
-                                      className="w-[50px] px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400"
-                                    >
-                                      <span className="sr-only">Actions</span>
                                     </th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                                  {(form?.isEditing
-                                    ? form.datapoints
-                                    : item.datapoints.slice(0, 10)
-                                  ).map((datapoint, index: number) => (
+                                  {item.datapoints.slice(0, 10).map((datapoint, index: number) => (
                                     <tr
                                       key={`${datapoint.endDate || ""}-${datapoint.value || ""}-${index}`}
                                     >
                                       <td className="px-4 py-2">
-                                        {!autosyncedIndicators.find((i) => i.name === item.name) &&
-                                        form?.isEditing ? (
-                                          <div className="flex flex-col gap-1">
-                                            <div className="flex items-center gap-2">
-                                              <input
-                                                type={"number"}
-                                                value={form?.datapoints?.[index]?.value || ""}
-                                                onChange={(e) =>
-                                                  handleInputChange(
-                                                    item.id,
-                                                    "value",
-                                                    e.target.value,
-                                                    index
-                                                  )
-                                                }
-                                                aria-label={`${item.name} value for entry ${index + 1}`}
-                                                aria-invalid={isInvalidValue(
-                                                  Number(form?.datapoints?.[index]?.value),
-                                                  form?.unitOfMeasure || "int"
-                                                )}
-                                                aria-describedby={
-                                                  isInvalidValue(
-                                                    Number(form?.datapoints?.[index]?.value),
-                                                    form?.unitOfMeasure || "int"
-                                                  )
-                                                    ? `value-error-${item.id}-${index}`
-                                                    : undefined
-                                                }
-                                                className={cn(
-                                                  "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 focus:outline-none dark:text-zinc-100",
-                                                  isInvalidValue(
-                                                    Number(form?.datapoints?.[index]?.value),
-                                                    form?.unitOfMeasure || "int"
-                                                  )
-                                                    ? "border-2 border-red-500"
-                                                    : " border-gray-300"
-                                                )}
-                                              />
-                                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-zinc-700 text-gray-600 dark:text-zinc-300">
-                                                {form?.unitOfMeasure || ""}
-                                              </span>
-                                            </div>
-                                            {form?.datapoints?.[index]?.value &&
-                                            isInvalidValue(
-                                              Number(form?.datapoints?.[index]?.value),
-                                              form?.unitOfMeasure || "int"
-                                            ) ? (
-                                              <span
-                                                id={`value-error-${item.id}-${index}`}
-                                                role="alert"
-                                                className="text-xs text-red-500"
-                                              >
-                                                {form?.unitOfMeasure === "int"
-                                                  ? "Please enter an integer number"
-                                                  : "Please enter a valid number"}
-                                              </span>
-                                            ) : null}
-                                          </div>
-                                        ) : (
-                                          <span className="text-gray-900 dark:text-zinc-100">
-                                            {form?.datapoints?.[index]?.value || "-"}
-                                          </span>
-                                        )}
+                                        <span className="text-gray-900 dark:text-zinc-100">
+                                          {form?.datapoints?.[index]?.value ||
+                                            datapoint.value ||
+                                            "-"}
+                                        </span>
                                       </td>
                                       <td className="px-4 py-2">
-                                        {form?.isEditing && isAuthorized ? (
-                                          <input
-                                            type="date"
-                                            value={
-                                              form?.datapoints?.[index]?.startDate?.split("T")[0] ||
-                                              new Date().toISOString().split("T")[0]
-                                            }
-                                            onChange={(e) =>
-                                              handleInputChange(
-                                                item.id,
-                                                "startDate",
-                                                e.target.value,
-                                                index
-                                              )
-                                            }
-                                            aria-label={`Start date for entry ${index + 1}`}
-                                            aria-invalid={hasInvalidDatesSameRow(
-                                              item.id,
-                                              form?.datapoints?.[index]?.startDate,
-                                              form?.datapoints?.[index]?.endDate
-                                            )}
-                                            className={cn(
-                                              "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 focus:outline-none dark:text-zinc-100",
-                                              hasInvalidDatesSameRow(
-                                                item.id,
-                                                form?.datapoints?.[index]?.startDate,
-                                                form?.datapoints?.[index]?.endDate
-                                              ) && "border-2 border-red-500"
-                                            )}
-                                          />
-                                        ) : (
-                                          <span className="text-gray-900 dark:text-zinc-100">
-                                            {form?.datapoints?.[index]?.startDate
+                                        <span className="text-gray-900 dark:text-zinc-100">
+                                          {datapoint.startDate
+                                            ? formatDate(new Date(datapoint.startDate), "UTC")
+                                            : "-"}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-2">
+                                        <span className="text-gray-900 dark:text-zinc-100">
+                                          {datapoint.endDate
+                                            ? formatDate(new Date(datapoint.endDate), "UTC")
+                                            : datapoint.outputTimestamp
                                               ? formatDate(
-                                                  new Date(form.datapoints?.[index].startDate),
+                                                  new Date(datapoint.outputTimestamp),
                                                   "UTC"
                                                 )
                                               : "-"}
-                                          </span>
-                                        )}
+                                        </span>
                                       </td>
                                       <td className="px-4 py-2">
-                                        {form?.isEditing && isAuthorized ? (
-                                          <input
-                                            type="date"
-                                            value={
-                                              form?.datapoints?.[index]?.endDate?.split("T")[0] ||
-                                              form?.datapoints?.[index]?.outputTimestamp?.split(
-                                                "T"
-                                              )[0] ||
-                                              new Date().toISOString().split("T")[0]
-                                            }
-                                            onChange={(e) =>
-                                              handleInputChange(
-                                                item.id,
-                                                "endDate",
-                                                e.target.value,
-                                                index
-                                              )
-                                            }
-                                            aria-label={`End date for entry ${index + 1}`}
-                                            aria-invalid={
-                                              isInvalidTimestamp(
-                                                item.id,
-                                                form?.datapoints?.[index]?.endDate ||
-                                                  form?.datapoints?.[index]?.outputTimestamp ||
-                                                  ""
-                                              ) ||
-                                              hasInvalidDatesSameRow(
-                                                item.id,
-                                                form?.datapoints?.[index]?.startDate,
-                                                form?.datapoints?.[index]?.endDate
-                                              )
-                                            }
-                                            className={cn(
-                                              "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 focus:outline-none dark:text-zinc-100",
-                                              (isInvalidTimestamp(
-                                                item.id,
-                                                form?.datapoints?.[index]?.endDate ||
-                                                  form?.datapoints?.[index]?.outputTimestamp ||
-                                                  ""
-                                              ) ||
-                                                hasInvalidDatesSameRow(
-                                                  item.id,
-                                                  form?.datapoints?.[index]?.startDate,
-                                                  form?.datapoints?.[index]?.endDate
-                                                )) &&
-                                                "border-2 border-red-500"
-                                            )}
-                                          />
-                                        ) : (
-                                          <span className="text-gray-900 dark:text-zinc-100">
-                                            {form?.datapoints?.[index]?.endDate
-                                              ? formatDate(
-                                                  new Date(form.datapoints?.[index].endDate),
-                                                  "UTC"
-                                                )
-                                              : datapoint.outputTimestamp
-                                                ? formatDate(
-                                                    new Date(datapoint.outputTimestamp),
-                                                    "UTC"
-                                                  )
-                                                : "-"}
-                                          </span>
-                                        )}
-                                      </td>
-                                      <td className="px-4 py-2">
-                                        {form?.isEditing && isAuthorized ? (
-                                          <input
-                                            type="text"
-                                            value={form?.datapoints?.[index]?.proof || ""}
-                                            onChange={(e) =>
-                                              handleInputChange(
-                                                item.id,
-                                                "proof",
-                                                e.target.value,
-                                                index
-                                              )
-                                            }
-                                            aria-label={`Proof URL for entry ${index + 1}`}
-                                            placeholder="Enter proof URL"
-                                            className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 focus:outline-none dark:text-zinc-100"
-                                          />
-                                        ) : form?.datapoints?.[index]?.proof ? (
+                                        {datapoint.proof ? (
                                           <div className="flex flex-col gap-1">
-                                            {parseProofUrls(form?.datapoints?.[index]?.proof)
-                                              .length > 0 ? (
-                                              parseProofUrls(form?.datapoints?.[index]?.proof).map(
+                                            {parseProofUrls(datapoint.proof).length > 0 ? (
+                                              parseProofUrls(datapoint.proof).map(
                                                 (url, urlIndex) => (
                                                   <a
                                                     key={urlIndex}
@@ -755,8 +757,7 @@ export const OutputsAndOutcomes = () => {
                                               )
                                             ) : (
                                               <span className="text-gray-900 dark:text-zinc-100">
-                                                {form?.datapoints?.[index]?.proof ||
-                                                  "No proof provided"}
+                                                {datapoint.proof}
                                               </span>
                                             )}
                                           </div>
@@ -766,32 +767,8 @@ export const OutputsAndOutcomes = () => {
                                           </span>
                                         )}
                                       </td>
-                                      <td className="px-4 py-2">
-                                        {form?.isEditing && isAuthorized ? (
-                                          <button
-                                            type="button"
-                                            onClick={() => handleDeleteEntry(item.id, index)}
-                                            aria-label={`Delete entry ${index + 1}`}
-                                            className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors"
-                                          >
-                                            <TrashIcon
-                                              className="w-4 h-4 text-red-500"
-                                              aria-hidden="true"
-                                            />
-                                          </button>
-                                        ) : null}
-                                      </td>
                                     </tr>
                                   ))}
-                                  {form?.isEditing && isAuthorized && (
-                                    <tr>
-                                      <td colSpan={5} className="px-4 py-2">
-                                        <Button onClick={() => handleAddEntry(item.id)}>
-                                          Add new entry
-                                        </Button>
-                                      </td>
-                                    </tr>
-                                  )}
                                 </tbody>
                               </table>
                             </div>
