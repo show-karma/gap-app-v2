@@ -6,7 +6,8 @@ import {
 } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
-import type { FC } from "react";
+import { type FC, useState } from "react";
+import { DeleteDialog } from "@/components/DeleteDialog";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
@@ -109,7 +110,18 @@ const getActivityTypeLabel = (type: string): string => {
 export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized }) => {
   const { isCompleting, handleCompleting, isEditing, handleEditing } = useMilestoneActions();
   const { multiGrantUndoCompletion } = useMilestone();
+  const [isUndoing, setIsUndoing] = useState(false);
   const { title, description, completed, type } = milestone;
+
+  // Wrapper for undo completion with loading state
+  const handleUndoCompletion = async () => {
+    setIsUndoing(true);
+    try {
+      await multiGrantUndoCompletion(milestone);
+    } finally {
+      setIsUndoing(false);
+    }
+  };
   const { project } = useProjectStore();
   const { projectId } = useParams();
   const { refetch } = useProjectUpdates(projectId as string);
@@ -384,12 +396,21 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
                 </Button>
 
                 {/* Revoke Completion Button */}
-                <Button
-                  className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-red-500 hover:bg-transparent hover:opacity-75  h-6 w-6 p-0 items-center justify-center"
-                  onClick={() => multiGrantUndoCompletion(milestone)}
-                >
-                  <TrashIcon className="h-5 w-5" />
-                </Button>
+                <DeleteDialog
+                  deleteFunction={handleUndoCompletion}
+                  isLoading={isUndoing}
+                  title={
+                    <p className="font-normal">
+                      Are you sure you want to revoke the completion of <b>{milestone.title}</b>?
+                    </p>
+                  }
+                  buttonElement={{
+                    text: "",
+                    icon: <TrashIcon className="h-5 w-5" />,
+                    styleClass:
+                      "bg-transparent text-sm font-semibold text-red-500 hover:bg-transparent hover:opacity-75 h-6 w-6 p-0 items-center justify-center",
+                  }}
+                />
               </div>
             ) : undefined
           }

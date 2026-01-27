@@ -100,8 +100,10 @@ export const useUpdateActions = (update: UpdateType) => {
     try {
       setIsDeletingUpdate(true);
       startAttestation(`Deleting ${update.type.toLowerCase()}...`);
-      const updateChainID = "chainID" in update ? update.chainID : undefined;
-      if (!updateChainID) {
+      // Get chainID from update, falling back to project's chainID for project updates
+      const updateChainID =
+        "chainID" in update && update.chainID ? update.chainID : project?.chainID;
+      if (updateChainID === undefined || updateChainID === null) {
         errorManager("Cannot delete update: missing chain ID", new Error("Missing chainID"));
         setIsDeletingUpdate(false);
         return;

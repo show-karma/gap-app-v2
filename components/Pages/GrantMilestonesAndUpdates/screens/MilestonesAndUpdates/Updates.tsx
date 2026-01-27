@@ -4,6 +4,7 @@ import { PencilSquareIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outl
 import type { IMilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, useEffect, useState } from "react";
 import { useAccount } from "wagmi";
+import { DeleteDialog } from "@/components/DeleteDialog";
 import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -17,6 +18,7 @@ import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useGrantStore } from "@/store/grant";
 import type { GrantMilestone } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -35,6 +37,7 @@ interface UpdatesProps {
 
 export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Get normalized completion data (handles both object and array formats)
   const completionData = getCompletionData(milestone);
@@ -50,6 +53,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const { project, isProjectOwner } = useProjectStore();
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
+  const { refreshGrant } = useGrantStore();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();
@@ -57,8 +61,9 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   // Fetch grants using dedicated hook
   const { grants } = useProjectGrants(project?.uid || "");
 
-  const undoMilestoneCompletion = async (milestone: GrantMilestone) => {
+  const undoMilestoneCompletion = async () => {
     if (!address || !project) return;
+    setIsDeleting(true);
     startAttestation("Revoking milestone completion...");
     try {
       const setup = await setupChainAndWallet({
@@ -91,7 +96,9 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             const fetchedMilestone = foundGrant?.milestones?.find((u) => u.uid === milestone.uid);
             return !!fetchedMilestone?.completed;
           },
-          () => {
+          async () => {
+            // Refresh both React Query cache and Zustand store
+            await refreshGrant();
             callbackFn?.();
           }
         );
@@ -159,6 +166,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
         { error: MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR }
       );
     } finally {
+      setIsDeleting(false);
       setIsStepper(false);
     }
   };
@@ -305,13 +313,22 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                     >
                       <PencilSquareIcon className="h-5 w-5" />
                     </Button>
-                    <Button
-                      type="button"
-                      className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
-                      onClick={() => undoMilestoneCompletion(milestone)}
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </Button>
+                    <DeleteDialog
+                      deleteFunction={undoMilestoneCompletion}
+                      isLoading={isDeleting}
+                      title={
+                        <p className="font-normal">
+                          Are you sure you want to revoke the completion of <b>{milestone.title}</b>
+                          ?
+                        </p>
+                      }
+                      buttonElement={{
+                        text: "",
+                        icon: <TrashIcon className="h-5 w-5" />,
+                        styleClass:
+                          "bg-transparent p-0 w-max h-max text-gray-600 dark:text-zinc-100 hover:bg-transparent",
+                      }}
+                    />
                   </div>
                 ) : null}
               </div>

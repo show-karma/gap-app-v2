@@ -1,7 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { ProjectOptionsDialogs } from "@/components/Pages/Project/ProjectOptionsMenu";
+import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
@@ -37,6 +40,14 @@ const ShareDialog = dynamic(
   { ssr: false }
 );
 
+const ContributorProfileDialog = dynamic(
+  () =>
+    import("@/components/Dialogs/ContributorProfileDialog").then(
+      (mod) => mod.ContributorProfileDialog
+    ),
+  { ssr: false }
+);
+
 /**
  * ProjectModals - Consolidates all modal components for the project page.
  *
@@ -49,6 +60,7 @@ const ShareDialog = dynamic(
  * - EndorsementDialog: Impact endorsement modal
  * - ProgressDialog: Progress/loading state modal
  * - ShareDialog: Social sharing modal
+ * - ContributorProfileDialog: Invite member/contributor profile modal
  * - ProjectOptionsDialogs: Project edit, merge, transfer ownership, and grant genie modals
  */
 export const ProjectModals = () => {
@@ -56,6 +68,18 @@ export const ProjectModals = () => {
   const { isEndorsementOpen } = useEndorsementStore();
   const { isProgressModalOpen } = useProgressModalStore();
   const { isOpen: isShareDialogOpen } = useShareDialogStore();
+  const { isModalOpen: isContributorProfileOpen, openModal: openContributorProfileModal } =
+    useContributorProfileModalStore();
+
+  const searchParams = useSearchParams();
+  const inviteCode = searchParams?.get("invite-code");
+
+  // Auto-open contributor profile modal when invite code is present
+  useEffect(() => {
+    if (inviteCode && !isContributorProfileOpen) {
+      openContributorProfileModal();
+    }
+  }, [inviteCode, isContributorProfileOpen, openContributorProfileModal]);
 
   return (
     <>
@@ -63,6 +87,7 @@ export const ProjectModals = () => {
       {isEndorsementOpen ? <EndorsementDialog /> : null}
       {isProgressModalOpen ? <ProgressDialog /> : null}
       {isShareDialogOpen ? <ShareDialog /> : null}
+      {isContributorProfileOpen ? <ContributorProfileDialog /> : null}
       {/* Project options dialogs - rendered once here to avoid duplicate modals */}
       <ProjectOptionsDialogs />
     </>

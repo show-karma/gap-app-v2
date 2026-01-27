@@ -19,6 +19,20 @@ let mockIsIntroModalOpen = false;
 let mockIsEndorsementOpen = false;
 let mockIsProgressModalOpen = false;
 let mockIsShareDialogOpen = false;
+let mockIsContributorProfileOpen = false;
+let mockOpenContributorProfileModal = jest.fn();
+
+// Mock search params
+let mockInviteCode: string | null = null;
+
+jest.mock("next/navigation", () => ({
+  useSearchParams: () => ({
+    get: (key: string) => {
+      if (key === "invite-code") return mockInviteCode;
+      return null;
+    },
+  }),
+}));
 
 jest.mock("@/store/modals/intro", () => ({
   useIntroModalStore: () => ({
@@ -44,6 +58,13 @@ jest.mock("@/store/modals/shareDialog", () => ({
   }),
 }));
 
+jest.mock("@/store/modals/contributorProfile", () => ({
+  useContributorProfileModalStore: () => ({
+    isModalOpen: mockIsContributorProfileOpen,
+    openModal: mockOpenContributorProfileModal,
+  }),
+}));
+
 // Mock dynamic imports for modal components
 jest.mock("next/dynamic", () => {
   return (loader: () => Promise<any>, options?: { ssr?: boolean }) => {
@@ -63,6 +84,9 @@ jest.mock("next/dynamic", () => {
       if (loaderStr.includes("ShareDialog")) {
         return <div data-testid="share-dialog">ShareDialog Content</div>;
       }
+      if (loaderStr.includes("ContributorProfileDialog")) {
+        return <div data-testid="contributor-profile-dialog">ContributorProfileDialog Content</div>;
+      }
       return <div data-testid="unknown-modal">Unknown Modal</div>;
     };
     DynamicComponent.displayName = "DynamicComponent";
@@ -77,6 +101,9 @@ describe("ProjectModals", () => {
     mockIsEndorsementOpen = false;
     mockIsProgressModalOpen = false;
     mockIsShareDialogOpen = false;
+    mockIsContributorProfileOpen = false;
+    mockOpenContributorProfileModal = jest.fn();
+    mockInviteCode = null;
   });
 
   describe("Initial State", () => {
@@ -87,6 +114,7 @@ describe("ProjectModals", () => {
       expect(screen.queryByTestId("endorsement-dialog")).not.toBeInTheDocument();
       expect(screen.queryByTestId("progress-dialog")).not.toBeInTheDocument();
       expect(screen.queryByTestId("share-dialog")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("contributor-profile-dialog")).not.toBeInTheDocument();
 
       // ProjectOptionsDialogs is always rendered
       expect(screen.getByTestId("project-options-dialogs")).toBeInTheDocument();
@@ -164,6 +192,48 @@ describe("ProjectModals", () => {
     });
   });
 
+  describe("ContributorProfileDialog Modal", () => {
+    it("should render ContributorProfileDialog when isContributorProfileOpen is true", () => {
+      mockIsContributorProfileOpen = true;
+      render(<ProjectModals />);
+
+      expect(screen.getByTestId("contributor-profile-dialog")).toBeInTheDocument();
+    });
+
+    it("should not render ContributorProfileDialog when isContributorProfileOpen is false", () => {
+      mockIsContributorProfileOpen = false;
+      render(<ProjectModals />);
+
+      expect(screen.queryByTestId("contributor-profile-dialog")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Invite Code Auto-Open", () => {
+    it("should call openModal when invite-code is present in URL", () => {
+      mockInviteCode = "test-invite-code-123";
+      mockIsContributorProfileOpen = false;
+      render(<ProjectModals />);
+
+      expect(mockOpenContributorProfileModal).toHaveBeenCalled();
+    });
+
+    it("should not call openModal when invite-code is not present", () => {
+      mockInviteCode = null;
+      mockIsContributorProfileOpen = false;
+      render(<ProjectModals />);
+
+      expect(mockOpenContributorProfileModal).not.toHaveBeenCalled();
+    });
+
+    it("should not call openModal when modal is already open", () => {
+      mockInviteCode = "test-invite-code-123";
+      mockIsContributorProfileOpen = true;
+      render(<ProjectModals />);
+
+      expect(mockOpenContributorProfileModal).not.toHaveBeenCalled();
+    });
+  });
+
   describe("Multiple Modals", () => {
     it("should render multiple modals when multiple are open", () => {
       mockIsIntroModalOpen = true;
@@ -174,6 +244,7 @@ describe("ProjectModals", () => {
       expect(screen.getByTestId("endorsement-dialog")).toBeInTheDocument();
       expect(screen.queryByTestId("progress-dialog")).not.toBeInTheDocument();
       expect(screen.queryByTestId("share-dialog")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("contributor-profile-dialog")).not.toBeInTheDocument();
     });
 
     it("should render all modals when all are open", () => {
@@ -181,12 +252,14 @@ describe("ProjectModals", () => {
       mockIsEndorsementOpen = true;
       mockIsProgressModalOpen = true;
       mockIsShareDialogOpen = true;
+      mockIsContributorProfileOpen = true;
       render(<ProjectModals />);
 
       expect(screen.getByTestId("intro-dialog")).toBeInTheDocument();
       expect(screen.getByTestId("endorsement-dialog")).toBeInTheDocument();
       expect(screen.getByTestId("progress-dialog")).toBeInTheDocument();
       expect(screen.getByTestId("share-dialog")).toBeInTheDocument();
+      expect(screen.getByTestId("contributor-profile-dialog")).toBeInTheDocument();
     });
 
     it("should render correct combination of open modals", () => {
@@ -198,6 +271,7 @@ describe("ProjectModals", () => {
       expect(screen.queryByTestId("endorsement-dialog")).not.toBeInTheDocument();
       expect(screen.getByTestId("progress-dialog")).toBeInTheDocument();
       expect(screen.getByTestId("share-dialog")).toBeInTheDocument();
+      expect(screen.queryByTestId("contributor-profile-dialog")).not.toBeInTheDocument();
     });
   });
 
@@ -225,6 +299,7 @@ describe("ProjectModals", () => {
       mockIsEndorsementOpen = false;
       mockIsProgressModalOpen = true;
       mockIsShareDialogOpen = false;
+      mockIsContributorProfileOpen = true;
 
       render(<ProjectModals />);
 
@@ -232,6 +307,7 @@ describe("ProjectModals", () => {
       expect(screen.queryByTestId("endorsement-dialog")).not.toBeInTheDocument();
       expect(screen.getByTestId("progress-dialog")).toBeInTheDocument();
       expect(screen.queryByTestId("share-dialog")).not.toBeInTheDocument();
+      expect(screen.getByTestId("contributor-profile-dialog")).toBeInTheDocument();
     });
   });
 
