@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { type KycStatusResponse, KycVerificationStatus } from "@/types/kyc";
+import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 
 interface KycStatusIconProps {
@@ -78,15 +79,6 @@ export function KycStatusIcon({
 
   const config = statusConfig[effectiveStatus];
   const Icon = config.icon;
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return null;
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
 
   const tooltipContent = (
     <div className="space-y-1 text-xs">

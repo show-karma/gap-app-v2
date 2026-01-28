@@ -13,7 +13,7 @@ import { KycStatusBadge } from "@/components/KycStatusIcon";
 import { Button } from "@/components/Utilities/Button";
 import { useKycFormUrl } from "@/hooks/useKycStatus";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
-import type { KycConfigResponse, KycStatusResponse, KycVerificationType } from "@/types/kyc";
+import { type KycConfigResponse, type KycStatusResponse, KycVerificationType } from "@/types/kyc";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { getProjectTitle } from "../helper/getProjecTitle";
@@ -191,8 +191,8 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
                   variant="secondary"
                   className="text-xs px-3 py-1.5"
                   disabled={copyingType !== null}
-                  isLoading={copyingType === "KYC"}
-                  onClick={() => handleCopyLink("KYC" as KycVerificationType)}
+                  isLoading={copyingType === KycVerificationType.KYC}
+                  onClick={() => handleCopyLink(KycVerificationType.KYC)}
                 >
                   <ClipboardIcon className="h-4 w-4 mr-1" />
                   Copy KYC Link
@@ -203,8 +203,8 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
                   variant="secondary"
                   className="text-xs px-3 py-1.5"
                   disabled={copyingType !== null}
-                  isLoading={copyingType === "KYB"}
-                  onClick={() => handleCopyLink("KYB" as KycVerificationType)}
+                  isLoading={copyingType === KycVerificationType.KYB}
+                  onClick={() => handleCopyLink(KycVerificationType.KYB)}
                 >
                   <ClipboardIcon className="h-4 w-4 mr-1" />
                   Copy KYB Link

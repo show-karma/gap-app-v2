@@ -12,6 +12,10 @@ import type {
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
+// Cache duration constants
+const KYC_STATUS_STALE_TIME = 5 * 60 * 1000; // 5 minutes
+const KYC_CONFIG_STALE_TIME = 10 * 60 * 1000; // 10 minutes
+
 export const KYC_QUERY_KEYS = {
   all: ["kyc"] as const,
   status: (projectUID: string, communityUID: string) =>
@@ -51,7 +55,7 @@ export const useKycStatus = (
       return data;
     },
     enabled: options?.enabled !== false && !!projectUID && !!communityUID,
-    staleTime: 5 * 60 * 1000,
+    staleTime: KYC_STATUS_STALE_TIME,
   });
 
   return {
@@ -86,14 +90,13 @@ export const useKycConfig = (
       );
 
       if (error) {
-        console.warn("KYC config fetch failed:", error);
-        return null;
+        throw new Error(error);
       }
 
       return data ?? null;
     },
     enabled: options?.enabled !== false && !!communityIdOrSlug,
-    staleTime: 10 * 60 * 1000,
+    staleTime: KYC_CONFIG_STALE_TIME,
   });
 
   return {
@@ -145,7 +148,7 @@ export const useKycBatchStatuses = (
       return statusMap;
     },
     enabled: options?.enabled !== false && !!communityUID && projectUIDs.length > 0,
-    staleTime: 5 * 60 * 1000,
+    staleTime: KYC_STATUS_STALE_TIME,
   });
 
   return {
@@ -202,8 +205,14 @@ export const useKycFormUrl = () => {
       return data;
     },
     onSuccess: (_, variables) => {
+      // Invalidate single status query
       queryClient.invalidateQueries({
         queryKey: KYC_QUERY_KEYS.status(variables.projectUID, variables.communityIdOrSlug),
+      });
+      // Also invalidate batch statuses that might contain this project
+      queryClient.invalidateQueries({
+        queryKey: [...KYC_QUERY_KEYS.all, "batch", variables.communityIdOrSlug],
+        exact: false,
       });
     },
   });
