@@ -34,27 +34,27 @@ function FeatureCard({ icon, title, description }: FeatureCardProps) {
 const features: FeatureCardProps[] = [
   {
     icon: <CurrencyDollarIcon className="w-6 h-6" />,
-    title: "Fixed $1 Price",
+    title: "Fixed $1 Price Per Seed",
     description:
-      "Each Seed is always worth $1. No speculation, no volatility—just straightforward support for projects you believe in.",
+      "No complex tokenomics. No price speculation. Each Karma Seed equals exactly $1 USD, making funding predictable for both supporters and projects.",
   },
   {
     icon: <CheckBadgeIcon className="w-6 h-6" />,
-    title: "97% to Projects",
+    title: "97% Direct to Projects",
     description:
-      "Nearly all funds go directly to the project treasury. Only a 3% platform fee keeps the ecosystem sustainable.",
+      "Nearly all funds go directly to the project treasury instantly. Only a 3% platform fee keeps the ecosystem sustainable. No middlemen, no delays.",
   },
   {
     icon: <ArrowsRightLeftIcon className="w-6 h-6" />,
-    title: "Multiple Payment Options",
+    title: "Pay With What You Have",
     description:
-      "Buy Seeds with ETH or stablecoins like USDC. Pay with whatever you have—we convert it automatically.",
+      "Support projects using ETH, USDC, USDT, or any token with a Uniswap pool on Base. The smart contract handles conversions automatically.",
   },
   {
     icon: <RocketLaunchIcon className="w-6 h-6" />,
-    title: "Instant Launch",
+    title: "5-Minute Setup",
     description:
-      "Project owners can launch their Seeds in minutes. No liquidity pools, no complex setup—just deploy and share.",
+      "Project owners deploy their custom Seed token in a single transaction. No liquidity provision, no complex DeFi knowledge required.",
   },
 ];
 
@@ -66,7 +66,8 @@ export function WhyKarmaSeeds() {
         <div className="flex flex-col items-center gap-4 text-center max-w-2xl">
           <h2 className="section-title text-foreground">Why Karma Seeds?</h2>
           <p className="text-muted-foreground text-lg">
-            Traditional tokens are volatile and complex. Seeds are simple, stable, and direct.
+            Traditional funding is complex. Grant cycles are slow. Token launches require DeFi
+            expertise. Karma Seeds makes project funding simple, stable, and instant.
           </p>
         </div>
 

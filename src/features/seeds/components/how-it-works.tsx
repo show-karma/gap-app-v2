@@ -30,29 +30,35 @@ function StepCard({ number, title, description }: StepCardProps) {
 const steps: StepCardProps[] = [
   {
     number: "01",
-    title: "Project Creates Seeds",
-    description: "Project owners launch their custom Seed token with a single transaction.",
+    title: "Launch Your Seeds",
+    description:
+      "Project owners deploy a custom Seed token in one transaction. Set your treasury address and optional cap.",
   },
   {
     number: "02",
-    title: "Supporters Purchase",
-    description: "Anyone can buy Seeds using ETH or stablecoins at a fixed $1 price.",
+    title: "Supporters Buy Seeds",
+    description:
+      "Anyone can purchase Seeds using ETH, USDC, or any token with a Uniswap pool. Price is always $1.",
   },
   {
     number: "03",
-    title: "Funds Flow Directly",
-    description: "97% goes instantly to the project treasury. No waiting, no middlemen.",
+    title: "Instant Treasury Funding",
+    description:
+      "97% of every purchase goes directly to your project treasury. Funds arrive immediately.",
   },
   {
     number: "04",
-    title: "Project Thrives",
-    description: "Teams focus on building while the community provides sustainable support.",
+    title: "Build With Confidence",
+    description: "Focus on your roadmap with predictable, sustainable funding from your community.",
   },
 ];
 
 export function HowItWorks() {
   return (
-    <section className={cn(marketingLayoutTheme.padding, "py-16 lg:py-24 w-full")}>
+    <section
+      id="how-it-works"
+      className={cn(marketingLayoutTheme.padding, "py-16 lg:py-24 w-full")}
+    >
       <SectionContainer className="flex flex-col items-center gap-12">
         {/* Header */}
         <div className="flex flex-col items-center gap-4 text-center max-w-2xl">

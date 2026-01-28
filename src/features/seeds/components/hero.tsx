@@ -19,18 +19,19 @@ export function Hero() {
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-sm font-medium">
           <SparklesIcon className="w-4 h-4" />
-          <span>Now available on Sepolia Testnet</span>
+          <span>Now Live on Base</span>
         </div>
 
         {/* Main Heading */}
         <div className="flex flex-col items-center gap-4 text-center max-w-3xl">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">
-            Fund Projects with{" "}
-            <span className="text-emerald-600 dark:text-emerald-400">Karma Seeds</span>
+            A Modern Way to Support{" "}
+            <span className="text-emerald-600 dark:text-emerald-400">Open Source</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
-            A new way to support open source and public goods. Fixed price, no volatility, direct
-            funding to project treasuries.
+            Karma Seeds lets anyone fund open source projects and public goods with stable,
+            dollar-pegged tokens. 97% goes directly to project treasuries&mdash;no speculation, no
+            volatility.
           </p>
         </div>
 
@@ -50,9 +51,7 @@ export function Hero() {
             variant="outline"
             className="h-12 px-6 text-base font-medium rounded-xl border-2"
           >
-            <a href="https://sepolia.etherscan.io" target="_blank" rel="noopener noreferrer">
-              View Contract
-            </a>
+            <a href="#how-it-works">Learn How It Works</a>
           </Button>
         </div>
       </SectionContainer>

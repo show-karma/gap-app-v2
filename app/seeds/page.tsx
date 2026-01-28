@@ -3,17 +3,19 @@ import { CtaSection } from "@/src/features/seeds/components/cta-section";
 import { FeeStructure } from "@/src/features/seeds/components/fee-structure";
 import { Hero } from "@/src/features/seeds/components/hero";
 import { HowItWorks } from "@/src/features/seeds/components/how-it-works";
+import { TechnicalOverview } from "@/src/features/seeds/components/technical-overview";
+import { UseCases } from "@/src/features/seeds/components/use-cases";
 import { WhyKarmaSeeds } from "@/src/features/seeds/components/why-karma-seeds";
 import { cn } from "@/utilities/tailwind";
 
 export const metadata: Metadata = {
-  title: "Karma Seeds - Fund Projects with Stable Tokens | Karma",
+  title: "Karma Seeds - A Modern Way to Support Open Source | Karma",
   description:
-    "A new way to support open source and public goods. Fixed $1 price, no volatility, 97% goes directly to project treasuries.",
+    "Fund open source projects and public goods with stable, dollar-pegged tokens. 97% goes directly to project treasuries. No speculation, no volatility.",
   openGraph: {
-    title: "Karma Seeds - Fund Projects with Stable Tokens",
+    title: "Karma Seeds - A Modern Way to Support Open Source",
     description:
-      "A new way to support open source and public goods. Fixed $1 price, no volatility, 97% goes directly to project treasuries.",
+      "Fund open source projects and public goods with stable, dollar-pegged tokens. 97% goes directly to project treasuries. No speculation, no volatility.",
   },
 };
 
@@ -31,7 +33,11 @@ export default function SeedsPage() {
         <HorizontalLine />
         <HowItWorks />
         <HorizontalLine />
+        <UseCases />
+        <HorizontalLine />
         <FeeStructure />
+        <HorizontalLine />
+        <TechnicalOverview />
         <HorizontalLine />
         <CtaSection />
       </div>
