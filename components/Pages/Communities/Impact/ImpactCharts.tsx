@@ -40,9 +40,12 @@ export const prepareChartData = (
 
 export const CommunityImpactCharts = () => {
   const searchParams = useSearchParams();
-  const projectSelected = searchParams.get("projectId");
   const programSelected = searchParams.get("programId");
-  const { data, isLoading } = useImpactMeasurement(projectSelected);
+  const projectSelected = searchParams.get("projectId");
+  const { data, isLoading } = useImpactMeasurement({
+    programId: programSelected ?? undefined,
+    projectId: projectSelected ?? undefined,
+  });
 
   const categories = data?.data as ProgramImpactDataResponse[] | undefined;
 

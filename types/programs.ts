@@ -45,7 +45,7 @@ export interface ProgramImpactData {
   stats: {
     totalCategories: number;
     totalProjects: number;
-    totalFundingAllocated: string;
+    totalFundingAllocated: string | undefined;
   };
   data: ProgramImpactDataResponse[];
 }
