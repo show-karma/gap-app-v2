@@ -1,0 +1,254 @@
+[
+  {
+    "type": "function",
+    "name": "buy",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "buyWithToken",
+    "inputs": [{ "name": "token", "type": "address" }, { "name": "amount", "type": "uint256" }],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "previewBuyWithETH",
+    "inputs": [{ "name": "ethAmount", "type": "uint256" }],
+    "outputs": [{ "name": "", "type": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "previewBuyWithToken",
+    "inputs": [{ "name": "token", "type": "address" }, { "name": "amount", "type": "uint256" }],
+    "outputs": [{ "name": "", "type": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getEthPrice",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "setMaxSupply",
+    "inputs": [{ "name": "newMaxSupply", "type": "uint256" }],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "name",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "string" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "symbol",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "string" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "decimals",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint8" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "totalSupply",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "balanceOf",
+    "inputs": [{ "name": "account", "type": "address" }],
+    "outputs": [{ "name": "", "type": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "allowance",
+    "inputs": [{ "name": "owner", "type": "address" }, { "name": "spender", "type": "address" }],
+    "outputs": [{ "name": "", "type": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "approve",
+    "inputs": [{ "name": "spender", "type": "address" }, { "name": "amount", "type": "uint256" }],
+    "outputs": [{ "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "transfer",
+    "inputs": [{ "name": "to", "type": "address" }, { "name": "amount", "type": "uint256" }],
+    "outputs": [{ "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "transferFrom",
+    "inputs": [
+      { "name": "from", "type": "address" },
+      { "name": "to", "type": "address" },
+      { "name": "amount", "type": "uint256" }
+    ],
+    "outputs": [{ "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "projectName",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "string" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "treasury",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "address" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "maxSupply",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "remainingSupply",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "factory",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "address" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "version",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "KARMA_FEE_BPS",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "BPS_DENOMINATOR",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "type": "event",
+    "name": "TokensPurchased",
+    "inputs": [
+      { "name": "buyer", "type": "address", "indexed": true },
+      { "name": "paymentToken", "type": "address", "indexed": true },
+      { "name": "paymentAmount", "type": "uint256", "indexed": false },
+      { "name": "usdValue", "type": "uint256", "indexed": false },
+      { "name": "tokensMinted", "type": "uint256", "indexed": false },
+      { "name": "karmaFee", "type": "uint256", "indexed": false },
+      { "name": "treasuryAmount", "type": "uint256", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "MaxSupplyUpdated",
+    "inputs": [
+      { "name": "oldMaxSupply", "type": "uint256", "indexed": false },
+      { "name": "newMaxSupply", "type": "uint256", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "Transfer",
+    "inputs": [
+      { "name": "from", "type": "address", "indexed": true },
+      { "name": "to", "type": "address", "indexed": true },
+      { "name": "value", "type": "uint256", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "Approval",
+    "inputs": [
+      { "name": "owner", "type": "address", "indexed": true },
+      { "name": "spender", "type": "address", "indexed": true },
+      { "name": "value", "type": "uint256", "indexed": false }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ZeroAmount",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TokenNotSupported",
+    "inputs": [{ "name": "token", "type": "address" }]
+  },
+  {
+    "type": "error",
+    "name": "ETHTransferFailed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidPrice",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "StalePrice",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MaxSupplyExceeded",
+    "inputs": [
+      { "name": "requested", "type": "uint256" },
+      { "name": "available", "type": "uint256" }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ZeroAddress",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotFactory",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotAuthorized",
+    "inputs": []
+  }
+]
