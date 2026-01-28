@@ -1,6 +1,5 @@
 import type { Hex } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
-import type { Community } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { getCommunityDetails } from "../queries/v2/community";

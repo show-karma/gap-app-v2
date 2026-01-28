@@ -55,8 +55,6 @@ export async function createGaslessClient(
 
   const provider = getProvider(providerType);
 
-  console.log(`[Gasless] Creating client for chain ${chainId} using ${provider.name} provider`);
-
   return provider.createClient({
     chainId,
     signer,

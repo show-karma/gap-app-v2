@@ -160,7 +160,7 @@ export const MilestonesList = ({
     return Array.from(mergedMap.values());
   };
 
-  const isUpdateType = (item: UnifiedMilestone): boolean => {
+  const _isUpdateType = (item: UnifiedMilestone): boolean => {
     return (
       item.type === "update" ||
       item.type === "impact" ||

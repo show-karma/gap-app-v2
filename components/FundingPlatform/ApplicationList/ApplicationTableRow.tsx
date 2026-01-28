@@ -1,7 +1,7 @@
 "use client";
 
-import React, { type FC, useState } from "react";
 import { ClipboardDocumentCheckIcon } from "@heroicons/react/24/solid";
+import React, { type FC, useState } from "react";
 import { ReviewerType } from "@/hooks/useReviewerAssignment";
 import type { MilestoneReviewer } from "@/services/milestone-reviewers.service";
 import type { ProgramReviewer } from "@/services/program-reviewers.service";

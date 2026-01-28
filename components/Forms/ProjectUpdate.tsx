@@ -530,7 +530,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   }));
 
   const createProjectUpdate = async (data: UpdateType) => {
-    const gapClient = gap;
+    const _gapClient = gap;
     if (!address || !project) return;
 
     startAttestation(isEditMode ? "Updating activity..." : "Posting activity...");

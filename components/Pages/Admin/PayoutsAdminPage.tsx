@@ -41,7 +41,6 @@ import {
   useSavePayoutConfig,
 } from "@/src/features/payout-disbursement";
 import { MESSAGES } from "@/utilities/messages";
-import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { sanitizeNumericInput } from "@/utilities/validation";
@@ -236,7 +235,7 @@ export default function PayoutsAdminPage() {
   // 6. "Pending" - default
   const computeDisplayStatus = useCallback(
     (
-      item: PayoutsTableData,
+      _item: PayoutsTableData,
       disbursementInfo?: { totalsByToken: TokenTotal[]; status: string; history: any[] }
     ): { label: string; color: string } => {
       const aggregatedStatus = disbursementInfo?.status;
