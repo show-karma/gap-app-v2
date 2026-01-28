@@ -94,8 +94,9 @@ export default function ApplicationDetailPage() {
   // Get chainId from program config if needed for V1 components
   const chainId = program?.chainID;
 
-  // Fetch KYC status for the application's project
-  const { status: kycStatus } = useKycStatus(application?.projectUID, communityId);
+  // Fetch KYC status for the application - use referenceNumber as project identifier
+  // (referenceNumber is the consistent identifier used across all apps for KYC)
+  const { status: kycStatus } = useKycStatus(application?.referenceNumber, communityId);
 
   // Fetch KYC config to get form URLs
   const { config: kycConfig, isEnabled: isKycEnabled } = useKycConfig(communityId);

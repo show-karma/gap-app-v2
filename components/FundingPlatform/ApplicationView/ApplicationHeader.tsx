@@ -87,7 +87,7 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
   const { mutateAsync: getFormUrl } = useKycFormUrl();
 
   const handleCopyLink = async (verificationType: KycVerificationType) => {
-    if (!communityId || !application.projectUID) {
+    if (!communityId || !application.referenceNumber) {
       toast.error("Unable to generate verification link");
       return;
     }
@@ -96,7 +96,7 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
     try {
       const result = await getFormUrl({
         communityIdOrSlug: communityId,
-        projectUID: application.projectUID,
+        projectUID: application.referenceNumber,
         verificationType,
       });
       await navigator.clipboard.writeText(result.formUrl);
@@ -111,7 +111,7 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
   const showKycLinks =
     isKycEnabled &&
     communityId &&
-    application.projectUID &&
+    application.referenceNumber &&
     (kycConfig?.kycFormUrl || kycConfig?.kybFormUrl);
 
   return (
