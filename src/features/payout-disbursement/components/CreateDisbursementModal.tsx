@@ -372,17 +372,18 @@ export function CreateDisbursementModal({
       }));
 
       // Auto-update disbursement amount based on selected allocations
+      // Note: Allocation amounts are stored as human-readable values (e.g., "10" for 10 USDC)
       const grant = grants.find((g) => g.grantUID === grantUID);
       if (grant?.milestoneAllocations) {
         const selectedTotal = calculateSelectedTotal(grant.milestoneAllocations, selectedIds);
-        const amountInTokenUnits = formatUnits(selectedTotal, selectedTokenDecimals);
+        // selectedTotal is already human-readable, just convert to string
         setDisbursementAmounts((prev) => ({
           ...prev,
-          [grantUID]: amountInTokenUnits,
+          [grantUID]: selectedTotal.toString(),
         }));
       }
     },
-    [grants, selectedTokenDecimals]
+    [grants]
   );
 
   // Current project being reviewed (for project-review step)
@@ -1706,7 +1707,12 @@ function ProjectReviewStep({
             value={disbursementAmount}
             onChange={(e) => onDisbursementAmountChange(sanitizeNumericInput(e.target.value))}
             placeholder="0"
-            className={`w-full px-3 py-2 pr-16 border rounded-md bg-white dark:bg-zinc-700 text-gray-900 dark:text-white text-lg font-semibold ${
+            disabled={hasAllocations && selectedAllocationIds.length > 0}
+            className={`w-full px-3 py-2 pr-16 border rounded-md text-gray-900 dark:text-white text-lg font-semibold ${
+              hasAllocations && selectedAllocationIds.length > 0
+                ? "bg-gray-100 dark:bg-zinc-800 cursor-not-allowed"
+                : "bg-white dark:bg-zinc-700"
+            } ${
               disbursementError
                 ? "border-red-500 dark:border-red-500"
                 : "border-gray-300 dark:border-zinc-600"
@@ -1716,6 +1722,12 @@ function ProjectReviewStep({
             {tokenSymbol}
           </span>
         </div>
+        {hasAllocations && selectedAllocationIds.length > 0 && (
+          <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
+            Amount calculated from {selectedAllocationIds.length} selected{" "}
+            {selectedAllocationIds.length === 1 ? "allocation" : "allocations"}
+          </p>
+        )}
         {disbursementError && (
           <div className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
             <ExclamationTriangleIcon className="h-4 w-4" />

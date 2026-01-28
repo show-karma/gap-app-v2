@@ -6,7 +6,6 @@ import {
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useMemo } from "react";
-import { formatUnits } from "viem";
 import { cn } from "@/utilities/tailwind";
 import type { MilestoneAllocation, PayoutDisbursement } from "../types/payout-disbursement";
 
@@ -67,12 +66,13 @@ export function MilestoneSelectionStep({
   }, [allocations, paidIds]);
 
   // Calculate totals
+  // Note: Allocation amounts are stored as human-readable values (e.g., "10" for 10 USDC)
   const { totalUnpaid, selectedTotal } = useMemo(() => {
-    let unpaidSum = BigInt(0);
-    let selectedSum = BigInt(0);
+    let unpaidSum = 0;
+    let selectedSum = 0;
 
     for (const allocation of unpaidAllocations) {
-      const amount = BigInt(allocation.amount);
+      const amount = parseFloat(allocation.amount) || 0;
       unpaidSum += amount;
       if (selectedAllocationIds.includes(allocation.id)) {
         selectedSum += amount;
@@ -86,12 +86,16 @@ export function MilestoneSelectionStep({
   }, [unpaidAllocations, selectedAllocationIds]);
 
   // Format amount for display
+  // Note: Allocation amounts are stored as human-readable values (e.g., "10" for 10 USDC),
+  // NOT as raw token units. So we just format them nicely without conversion.
   const formatAmount = (amount: string): string => {
-    try {
-      return formatUnits(BigInt(amount), tokenDecimals);
-    } catch {
-      return amount;
-    }
+    const num = parseFloat(amount);
+    if (Number.isNaN(num)) return amount;
+    // Format with up to 6 decimal places, removing trailing zeros
+    return num.toLocaleString("en-US", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 6,
+    });
   };
 
   // Handle toggle selection for a single allocation
@@ -214,7 +218,11 @@ export function MilestoneSelectionStep({
         <div className="text-sm">
           <span className="text-gray-500 dark:text-gray-400">Selected: </span>
           <span className="font-medium text-gray-900 dark:text-white">
-            {formatUnits(selectedTotal, tokenDecimals)} {tokenSymbol}
+            {selectedTotal.toLocaleString("en-US", {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 6,
+            })}{" "}
+            {tokenSymbol}
           </span>
         </div>
       </div>
@@ -306,39 +314,53 @@ export function MilestoneSelectionStep({
 }
 
 /**
- * Helper function to get paid allocation IDs from disbursement history.
- * Extracts all paidAllocationIds from completed disbursements for a grant.
+ * Statuses that indicate an allocation is unavailable for selection.
+ * Includes both completed (DISBURSED) and in-flight (AWAITING_SIGNATURES, PENDING) states.
+ */
+const UNAVAILABLE_STATUSES = new Set(["DISBURSED", "AWAITING_SIGNATURES", "PENDING"]);
+
+/**
+ * Helper function to get unavailable allocation IDs from disbursement history.
+ * Extracts all paidAllocationIds from disbursements that are either completed
+ * or in-flight (pending Safe signatures). This prevents double-selection of
+ * allocations that are already being processed.
+ *
+ * Note: When a disbursement is CANCELLED or FAILED, its allocations become
+ * available again for selection.
  */
 export function getPaidAllocationIds(disbursements: PayoutDisbursement[]): string[] {
-  const paidIds: string[] = [];
+  const unavailableIds: string[] = [];
 
   for (const disbursement of disbursements) {
-    // Only count allocations from successfully disbursed transactions
+    // Include allocations from DISBURSED, AWAITING_SIGNATURES, and PENDING statuses
+    // This prevents selecting allocations that are already in-flight
     if (
-      disbursement.status === "DISBURSED" &&
+      UNAVAILABLE_STATUSES.has(disbursement.status) &&
       disbursement.paidAllocationIds &&
       disbursement.paidAllocationIds.length > 0
     ) {
-      paidIds.push(...disbursement.paidAllocationIds);
+      unavailableIds.push(...disbursement.paidAllocationIds);
     }
   }
 
-  return paidIds;
+  return unavailableIds;
 }
 
 /**
  * Helper function to calculate the total amount from selected allocations.
+ * Note: Allocation amounts are stored as human-readable values (e.g., "10" for 10 USDC).
+ * Returns the sum as a number (not bigint) since amounts can have decimals.
  */
 export function calculateSelectedTotal(
   allocations: MilestoneAllocation[],
   selectedIds: string[]
-): bigint {
+): number {
   const selectedSet = new Set(selectedIds);
-  let total = BigInt(0);
+  let total = 0;
 
   for (const allocation of allocations) {
     if (selectedSet.has(allocation.id)) {
-      total += BigInt(allocation.amount);
+      total += parseFloat(allocation.amount) || 0;
     }
   }
 

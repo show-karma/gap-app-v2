@@ -29,14 +29,17 @@ import {
   type CommunityPayoutsSorting,
   CreateDisbursementModal,
   type GrantDisbursementInfo,
+  getPaidAllocationIds,
   type PayoutConfigItem,
   PayoutConfigurationModal,
   PayoutDisbursementStatus,
+  type PayoutGrantConfig,
   PayoutHistoryDrawer,
   type SavePayoutConfigRequest,
   TokenBreakdown,
   type TokenTotal,
   useCommunityPayouts,
+  usePayoutConfigsByCommunity,
   useSavePayoutConfig,
 } from "@/src/features/payout-disbursement";
 import { MESSAGES } from "@/utilities/messages";
@@ -162,6 +165,22 @@ export default function PayoutsAdminPage() {
 
   const payouts = payoutsData?.payload || [];
   const totalItems = payoutsData?.pagination?.totalCount || 0;
+
+  // Fetch payout configs to get milestone allocations
+  const { data: payoutConfigs } = usePayoutConfigsByCommunity(community?.uid || "", {
+    enabled: !!community?.uid && authReady,
+  });
+
+  // Create a map of grant UID to payout config for quick lookup
+  const payoutConfigMap = useMemo(() => {
+    const map: Record<string, PayoutGrantConfig> = {};
+    if (payoutConfigs) {
+      for (const config of payoutConfigs) {
+        map[config.grantUID] = config;
+      }
+    }
+    return map;
+  }, [payoutConfigs]);
 
   // Save payout config mutation (saves to payout_grant_config collection)
   const { mutate: saveConfigs, isPending: isSaving } = useSavePayoutConfig();
@@ -644,6 +663,14 @@ export default function PayoutsAdminPage() {
         ? editedFields[item.uid].amount || "0"
         : item.currentAmount || "0";
 
+      // Get milestone allocations from payout config
+      const payoutConfig = payoutConfigMap[item.uid];
+      const milestoneAllocations = payoutConfig?.milestoneAllocations || [];
+
+      // Get paid allocation IDs from disbursement history (excluding failed/cancelled)
+      const disbursementHistory = disbursementMap[item.uid]?.history || [];
+      const paidAllocationIds = getPaidAllocationIds(disbursementHistory);
+
       return {
         grantUID: item.uid,
         projectUID: item.projectUid,
@@ -654,6 +681,10 @@ export default function PayoutsAdminPage() {
         // Pass totalsByToken so the modal can correctly calculate remaining amount
         // (converts from raw BigInt to human-readable using token decimals)
         totalsByToken: disbursementMap[item.uid]?.totalsByToken || [],
+        // Milestone allocations for selection-based disbursement
+        milestoneAllocations,
+        // Allocation IDs already paid or in-flight (prevents double-selection)
+        paidAllocationIds,
       };
     });
 

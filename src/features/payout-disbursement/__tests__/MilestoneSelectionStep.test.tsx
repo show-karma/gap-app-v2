@@ -8,10 +8,11 @@ import type { MilestoneAllocation, PayoutDisbursement } from "../types/payout-di
 import { PayoutDisbursementStatus } from "../types/payout-disbursement";
 
 describe("MilestoneSelectionStep", () => {
+  // Note: Allocation amounts are stored as human-readable values (e.g., "10" for 10 USDC)
   const mockAllocations: MilestoneAllocation[] = [
-    { id: "alloc-1", milestoneUID: "ms-1", label: "Milestone 1", amount: "1000000" },
-    { id: "alloc-2", milestoneUID: "ms-2", label: "Milestone 2", amount: "2000000" },
-    { id: "alloc-3", milestoneUID: "ms-3", label: "Milestone 3", amount: "3000000" },
+    { id: "alloc-1", milestoneUID: "ms-1", label: "Milestone 1", amount: "1" },
+    { id: "alloc-2", milestoneUID: "ms-2", label: "Milestone 2", amount: "2" },
+    { id: "alloc-3", milestoneUID: "ms-3", label: "Milestone 3", amount: "3" },
   ];
 
   const defaultProps = {
@@ -234,7 +235,9 @@ describe("getPaidAllocationIds", () => {
     expect(result).toEqual(["alloc-1", "alloc-2"]);
   });
 
-  it("should not include allocation IDs from non-disbursed transactions", () => {
+  it("should include allocation IDs from PENDING transactions (in-flight)", () => {
+    // PENDING transactions are in-flight and should be treated as unavailable
+    // to prevent race conditions where the same allocation is selected twice
     const disbursements: PayoutDisbursement[] = [
       {
         id: "1",
@@ -256,6 +259,58 @@ describe("getPaidAllocationIds", () => {
         createdBy: "0xadmin",
         createdAt: "2026-01-13T10:00:00.000Z",
         updatedAt: "2026-01-13T10:00:00.000Z",
+      },
+    ];
+
+    const result = getPaidAllocationIds(disbursements);
+
+    expect(result).toEqual(["alloc-1"]);
+  });
+
+  it("should not include allocation IDs from FAILED or CANCELLED transactions", () => {
+    // FAILED and CANCELLED transactions free up the allocations for re-selection
+    const disbursements: PayoutDisbursement[] = [
+      {
+        id: "1",
+        grantUID: "grant-1",
+        projectUID: "project-1",
+        communityUID: "community-1",
+        chainID: 10,
+        safeAddress: "0x123",
+        safeTransactionHash: "0xabc",
+        disbursedAmount: "1000000",
+        token: "USDC",
+        tokenAddress: "0x456",
+        tokenDecimals: 6,
+        payoutAddress: "0x789",
+        milestoneBreakdown: null,
+        paidAllocationIds: ["alloc-1"],
+        status: PayoutDisbursementStatus.FAILED,
+        executedAt: null,
+        createdBy: "0xadmin",
+        createdAt: "2026-01-13T10:00:00.000Z",
+        updatedAt: "2026-01-13T10:00:00.000Z",
+      },
+      {
+        id: "2",
+        grantUID: "grant-1",
+        projectUID: "project-1",
+        communityUID: "community-1",
+        chainID: 10,
+        safeAddress: "0x123",
+        safeTransactionHash: "0xdef",
+        disbursedAmount: "2000000",
+        token: "USDC",
+        tokenAddress: "0x456",
+        tokenDecimals: 6,
+        payoutAddress: "0x789",
+        milestoneBreakdown: null,
+        paidAllocationIds: ["alloc-2"],
+        status: PayoutDisbursementStatus.CANCELLED,
+        executedAt: null,
+        createdBy: "0xadmin",
+        createdAt: "2026-01-14T10:00:00.000Z",
+        updatedAt: "2026-01-14T10:00:00.000Z",
       },
     ];
 
@@ -323,33 +378,34 @@ describe("getPaidAllocationIds", () => {
 });
 
 describe("calculateSelectedTotal", () => {
+  // Note: Allocation amounts are stored as human-readable values (e.g., "10" for 10 USDC)
   const allocations: MilestoneAllocation[] = [
-    { id: "alloc-1", label: "Allocation 1", amount: "1000000" },
-    { id: "alloc-2", label: "Allocation 2", amount: "2000000" },
-    { id: "alloc-3", label: "Allocation 3", amount: "3000000" },
+    { id: "alloc-1", label: "Allocation 1", amount: "10" },
+    { id: "alloc-2", label: "Allocation 2", amount: "20" },
+    { id: "alloc-3", label: "Allocation 3", amount: "30.5" },
   ];
 
   it("should calculate total from selected allocations", () => {
     const result = calculateSelectedTotal(allocations, ["alloc-1", "alloc-2"]);
 
-    expect(result).toBe(BigInt(3000000)); // 1000000 + 2000000
+    expect(result).toBe(30); // 10 + 20
   });
 
   it("should return 0 when no allocations selected", () => {
     const result = calculateSelectedTotal(allocations, []);
 
-    expect(result).toBe(BigInt(0));
+    expect(result).toBe(0);
   });
 
   it("should handle all allocations selected", () => {
     const result = calculateSelectedTotal(allocations, ["alloc-1", "alloc-2", "alloc-3"]);
 
-    expect(result).toBe(BigInt(6000000)); // 1 + 2 + 3
+    expect(result).toBe(60.5); // 10 + 20 + 30.5
   });
 
   it("should ignore non-existent allocation IDs", () => {
     const result = calculateSelectedTotal(allocations, ["alloc-1", "non-existent"]);
 
-    expect(result).toBe(BigInt(1000000)); // Only alloc-1
+    expect(result).toBe(10); // Only alloc-1
   });
 });
