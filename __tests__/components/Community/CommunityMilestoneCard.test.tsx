@@ -113,6 +113,7 @@ describe("CommunityMilestoneCard", () => {
     },
     grant: {
       uid: "grant-abc",
+      programId: "program-123",
       details: {
         data: {
           title: "Test Grant Program",
@@ -325,6 +326,7 @@ describe("CommunityMilestoneCard", () => {
       const milestone = createMockMilestone({
         grant: {
           uid: "grant-123",
+          programId: "program-456",
           details: {
             data: {
               title: "Filecoin ProPGF Batch 1",
@@ -336,6 +338,50 @@ describe("CommunityMilestoneCard", () => {
       render(<CommunityMilestoneCard milestone={milestone} />);
 
       expect(screen.getByText("Filecoin ProPGF Batch 1")).toBeInTheDocument();
+    });
+
+    it("should link grant title to projects page with programId filter when programId is available", () => {
+      const milestone = createMockMilestone({
+        communityUID: "community-789",
+        grant: {
+          uid: "grant-123",
+          programId: "program-456",
+          details: {
+            data: {
+              title: "Test Grant Program",
+            },
+          },
+        },
+      });
+
+      render(<CommunityMilestoneCard milestone={milestone} />);
+
+      const grantLink = screen.getByText("Test Grant Program").closest("a");
+      expect(grantLink).toHaveAttribute(
+        "href",
+        "/community/community-789/projects?programId=program-456"
+      );
+    });
+
+    it("should render grant title as plain text when programId is not available", () => {
+      const milestone = createMockMilestone({
+        grant: {
+          uid: "grant-123",
+          programId: null,
+          details: {
+            data: {
+              title: "Test Grant No Program",
+            },
+          },
+        },
+      });
+
+      render(<CommunityMilestoneCard milestone={milestone} />);
+
+      const grantText = screen.getByText("Test Grant No Program");
+      const grantLink = grantText.closest("a");
+      // Should not be a link when no programId
+      expect(grantLink).toBeNull();
     });
 
     it('should display "Project Milestone" when grant title is not available', () => {
@@ -361,6 +407,7 @@ describe("CommunityMilestoneCard", () => {
         },
         grant: {
           uid: "0xgrant123abc",
+          programId: "program-xyz",
           details: {
             data: {
               title: "Test Grant",
@@ -648,6 +695,7 @@ describe("CommunityMilestoneCard", () => {
       const milestone = createMockMilestone({
         grant: {
           uid: "grant-123",
+          programId: null,
           details: {
             data: {
               title: "",

@@ -152,13 +152,20 @@ describe("queryKeys", () => {
     describe("PROJECT_UPDATES", () => {
       it("should generate correct query key", () => {
         const key = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("community-123", "all", 1);
-        expect(key).toEqual(["community-project-updates", "community-123", "all", 1]);
+        expect(key).toEqual([
+          "community-project-updates",
+          "community-123",
+          "all",
+          1,
+          undefined,
+          undefined,
+        ]);
       });
 
       it("should return as const tuple", () => {
         const key = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "active", 0);
         expect(Array.isArray(key)).toBe(true);
-        expect(key.length).toBe(4);
+        expect(key.length).toBe(6);
       });
 
       it("should handle different filters and pages", () => {
@@ -167,6 +174,27 @@ describe("queryKeys", () => {
         const key3 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "all", 2);
         expect(key1).not.toEqual(key2);
         expect(key1).not.toEqual(key3);
+      });
+
+      it("should handle programId and projectId filters", () => {
+        const key1 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "all", 1, "program-1", null);
+        const key2 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES(
+          "comm-1",
+          "all",
+          1,
+          "program-1",
+          "project-1"
+        );
+        expect(key1).toEqual(["community-project-updates", "comm-1", "all", 1, "program-1", null]);
+        expect(key2).toEqual([
+          "community-project-updates",
+          "comm-1",
+          "all",
+          1,
+          "program-1",
+          "project-1",
+        ]);
+        expect(key1).not.toEqual(key2);
       });
     });
   });
