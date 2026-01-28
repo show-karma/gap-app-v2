@@ -19,19 +19,8 @@ export interface KarmaSeeds {
   treasuryAddress: string;
   creatorAddress: string;
   deploymentTxHash: string;
-  totalRaised: string | null;
   createdAt: string;
   updatedAt: string;
-  lastSyncedAt: string | null;
-}
-
-/**
- * Total raised response from the API
- */
-export interface TotalRaisedResponse {
-  projectUID: string;
-  totalRaised: string;
-  lastSyncedAt: string | null;
 }
 
 /**
@@ -56,13 +45,6 @@ export interface CreateKarmaSeedsRequest {
   factoryAddress: string;
   deploymentTxHash: string;
   chainID?: number;
-}
-
-/**
- * Exists check response
- */
-export interface KarmaSeedsExistsResponse {
-  exists: boolean;
 }
 
 /**
