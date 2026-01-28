@@ -9,6 +9,8 @@ export interface ProgramReference {
 
 export interface Indicator {
   id: string;
+  /** PostgreSQL UUID - use this for impact segments when available */
+  uuid?: string | null;
   name: string;
   description: string;
   unitOfMeasure: string;
@@ -41,6 +43,7 @@ export interface GroupedIndicators {
 // V2 API response type (programId is number from backend)
 interface V2Indicator {
   id: string;
+  uuid?: string | null;
   name: string;
   description: string;
   unitOfMeasure: string;
@@ -57,6 +60,7 @@ interface V2Indicator {
 function transformIndicator(v2Indicator: V2Indicator): Indicator {
   return {
     ...v2Indicator,
+    uuid: v2Indicator.uuid || null,
     programs:
       v2Indicator.programs?.map((p) => ({
         programId: String(p.programId),

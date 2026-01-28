@@ -14,6 +14,7 @@ import { IndicatorForm } from "@/components/Forms/IndicatorForm";
 import { Button } from "@/components/Utilities/Button";
 import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import type { ImpactIndicator } from "@/types/impactMeasurement";
+import { getIndicatorEffectiveId } from "@/utilities/indicatorUtils";
 
 // Debounce hook for search performance
 const useDebouncedValue = (value: string, delay: number) => {
@@ -106,7 +107,7 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
   const selectedNames = useMemo(() => {
     const allIndicators = [...allCommunityIndicators, ...autosyncedIndicators];
     return selectedIndicators
-      .map((id) => allIndicators.find((i) => i.id === id)?.name)
+      .map((id) => allIndicators.find((i) => getIndicatorEffectiveId(i) === id)?.name)
       .filter(Boolean);
   }, [selectedIndicators, allCommunityIndicators, autosyncedIndicators]);
 
@@ -118,14 +119,15 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
   }, [open]);
 
   const renderIndicatorItem = (indicator: ImpactIndicator, isDefault = false) => {
-    const isSelected = selectedIndicators.includes(indicator.id);
+    const effectiveId = getIndicatorEffectiveId(indicator);
+    const isSelected = selectedIndicators.includes(effectiveId);
 
     return (
       <button
-        key={indicator.id}
+        key={effectiveId}
         type="button"
         className="px-4 py-3 w-full hover:bg-gray-50 dark:hover:bg-zinc-700 cursor-pointer flex justify-between items-center gap-3 text-left"
-        onClick={() => handleIndicatorChange(indicator.id)}
+        onClick={() => handleIndicatorChange(effectiveId)}
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">

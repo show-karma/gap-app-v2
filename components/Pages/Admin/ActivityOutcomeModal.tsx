@@ -13,6 +13,7 @@ import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import type { Category, ImpactIndicator, ImpactSegment } from "@/types/impactMeasurement";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { getIndicatorEffectiveId } from "@/utilities/indicatorUtils";
 import { IndicatorsDropdown } from "./IndicatorsDropdown";
 
 const OUTPUT_TYPES = ["output", "outcome"] as const;
@@ -94,20 +95,27 @@ export const ActivityOutcomeModal = ({
 
   useEffect(() => {
     if (isOpen) {
-      // When editing, map indicator names to PostgreSQL IDs from all available indicators
-      // This handles the case where segment has MongoDB ObjectIDs but dropdown uses PostgreSQL UUIDs
+      // When editing, map indicator names to PostgreSQL UUIDs from all available indicators
+      // Use uuid when available, fallback to id for backward compatibility
       let selectedIndicatorIds: string[] = [];
       if (editingSegment?.impact_indicators) {
         selectedIndicatorIds = editingSegment.impact_indicators
           .map((segmentInd) => {
-            // First try to find by ID (in case IDs match)
-            const byId = allIndicators.find((ind) => ind.id === segmentInd.id);
-            if (byId) return byId.id;
+            // Try to find by UUID or ID (check both segmentInd.id and segmentInd.uuid)
+            const segmentEffectiveId = segmentInd.uuid || segmentInd.id;
+            const byId = allIndicators.find(
+              (ind) =>
+                getIndicatorEffectiveId(ind) === segmentEffectiveId ||
+                ind.id === segmentInd.id ||
+                ind.uuid === segmentInd.id ||
+                (segmentInd.uuid && ind.uuid === segmentInd.uuid)
+            );
+            if (byId) return getIndicatorEffectiveId(byId);
             // Fallback to matching by name (case-insensitive)
             const byName = allIndicators.find(
               (ind) => ind.name.toLowerCase() === segmentInd.name.toLowerCase()
             );
-            return byName?.id;
+            return byName ? getIndicatorEffectiveId(byName) : undefined;
           })
           .filter((id): id is string => !!id);
       }
