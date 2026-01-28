@@ -5,34 +5,29 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import type {
   CreateKarmaSeedsRequest,
   KarmaSeeds,
-  KarmaSeedsExistsResponse,
   KarmaSeedsStats,
   PreviewBuyResponse,
-  TotalRaisedResponse,
 } from "@/types/karmaSeeds";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 /**
- * Query key factory for Karma Seeds
+ * Query key factory for Seeds
  */
-export const KARMA_SEEDS_QUERY_KEYS = {
-  all: ["karmaSeeds"] as const,
-  byProject: (projectUID: string) => [...KARMA_SEEDS_QUERY_KEYS.all, projectUID] as const,
-  totalRaised: (projectUID: string) =>
-    [...KARMA_SEEDS_QUERY_KEYS.all, "totalRaised", projectUID] as const,
-  exists: (projectUID: string) => [...KARMA_SEEDS_QUERY_KEYS.all, "exists", projectUID] as const,
-  stats: (projectUID: string) => [...KARMA_SEEDS_QUERY_KEYS.all, "stats", projectUID] as const,
-  preview: (projectUID: string, paymentToken: string, amount: string) =>
-    [...KARMA_SEEDS_QUERY_KEYS.all, "preview", projectUID, paymentToken, amount] as const,
+export const SEEDS_QUERY_KEYS = {
+  all: ["seeds"] as const,
+  byProject: (projectIdOrSlug: string) => [...SEEDS_QUERY_KEYS.all, projectIdOrSlug] as const,
+  stats: (projectIdOrSlug: string) => [...SEEDS_QUERY_KEYS.all, "stats", projectIdOrSlug] as const,
+  preview: (projectIdOrSlug: string, paymentToken: string, amount: string) =>
+    [...SEEDS_QUERY_KEYS.all, "preview", projectIdOrSlug, paymentToken, amount] as const,
 };
 
 /**
- * Fetch Karma Seeds for a project
+ * Fetch Seeds for a project
  */
-async function fetchKarmaSeeds(projectUID: string): Promise<KarmaSeeds | null> {
+async function fetchSeeds(projectIdOrSlug: string): Promise<KarmaSeeds | null> {
   const [data, error] = await fetchData<KarmaSeeds>(
-    INDEXER.KARMA_SEEDS.GET(projectUID),
+    INDEXER.SEEDS.GET(projectIdOrSlug),
     "GET",
     {},
     {},
@@ -41,51 +36,7 @@ async function fetchKarmaSeeds(projectUID: string): Promise<KarmaSeeds | null> {
   );
 
   if (error) {
-    // 404 means no Karma Seeds for this project (expected case)
-    if (error.includes("not found") || error.includes("404")) {
-      return null;
-    }
-    throw new Error(error);
-  }
-
-  return data;
-}
-
-/**
- * Check if Karma Seeds exists for a project
- */
-async function checkKarmaSeedsExists(projectUID: string): Promise<boolean> {
-  const [data, error] = await fetchData<KarmaSeedsExistsResponse>(
-    INDEXER.KARMA_SEEDS.EXISTS(projectUID),
-    "GET",
-    {},
-    {},
-    {},
-    false
-  );
-
-  if (error) {
-    console.error("Error checking Karma Seeds existence:", error);
-    return false;
-  }
-
-  return data?.exists ?? false;
-}
-
-/**
- * Fetch total raised amount for a project
- */
-async function fetchTotalRaised(projectUID: string): Promise<TotalRaisedResponse | null> {
-  const [data, error] = await fetchData<TotalRaisedResponse>(
-    INDEXER.KARMA_SEEDS.TOTAL_RAISED(projectUID),
-    "GET",
-    {},
-    {},
-    {},
-    false
-  );
-
-  if (error) {
+    // 404 means no Seeds for this project (expected case)
     if (error.includes("not found") || error.includes("404")) {
       return null;
     }
@@ -98,9 +49,9 @@ async function fetchTotalRaised(projectUID: string): Promise<TotalRaisedResponse
 /**
  * Fetch live contract stats from blockchain
  */
-async function fetchKarmaSeedsStats(projectUID: string): Promise<KarmaSeedsStats | null> {
+async function fetchSeedsStats(projectIdOrSlug: string): Promise<KarmaSeedsStats | null> {
   const [data, error] = await fetchData<KarmaSeedsStats>(
-    INDEXER.KARMA_SEEDS.STATS(projectUID),
+    INDEXER.SEEDS.STATS(projectIdOrSlug),
     "GET",
     {},
     {},
@@ -122,13 +73,13 @@ async function fetchKarmaSeedsStats(projectUID: string): Promise<KarmaSeedsStats
  * Fetch preview buy calculation
  */
 async function fetchPreviewBuy(
-  projectUID: string,
+  projectIdOrSlug: string,
   paymentToken: string,
   amount: string,
   decimals?: number
 ): Promise<PreviewBuyResponse | null> {
   const [data, error] = await fetchData<PreviewBuyResponse>(
-    INDEXER.KARMA_SEEDS.PREVIEW(projectUID, paymentToken, amount, decimals),
+    INDEXER.SEEDS.PREVIEW(projectIdOrSlug, paymentToken, amount, decimals),
     "GET",
     {},
     {},
@@ -147,14 +98,14 @@ async function fetchPreviewBuy(
 }
 
 /**
- * Create Karma Seeds record (after contract deployment)
+ * Create Seeds record (after contract deployment)
  */
-async function createKarmaSeeds(
-  projectUID: string,
+async function createSeeds(
+  projectIdOrSlug: string,
   request: CreateKarmaSeedsRequest
 ): Promise<KarmaSeeds> {
   const [data, error] = await fetchData<KarmaSeeds>(
-    INDEXER.KARMA_SEEDS.CREATE(projectUID),
+    INDEXER.SEEDS.CREATE(projectIdOrSlug),
     "POST",
     request,
     {},
@@ -167,48 +118,21 @@ async function createKarmaSeeds(
   }
 
   if (!data) {
-    throw new Error("Failed to create Karma Seeds record");
+    throw new Error("Failed to create Seeds record");
   }
 
   return data;
 }
 
 /**
- * Hook to fetch Karma Seeds for a project
+ * Hook to fetch Seeds for a project
  */
-export function useKarmaSeeds(projectUID: string | undefined) {
+export function useKarmaSeeds(projectIdOrSlug: string | undefined) {
   return useQuery({
-    queryKey: KARMA_SEEDS_QUERY_KEYS.byProject(projectUID || ""),
-    queryFn: () => fetchKarmaSeeds(projectUID!),
-    enabled: !!projectUID,
+    queryKey: SEEDS_QUERY_KEYS.byProject(projectIdOrSlug || ""),
+    queryFn: () => fetchSeeds(projectIdOrSlug!),
+    enabled: !!projectIdOrSlug,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 1,
-  });
-}
-
-/**
- * Hook to check if Karma Seeds exists for a project
- */
-export function useKarmaSeedsExists(projectUID: string | undefined) {
-  return useQuery({
-    queryKey: KARMA_SEEDS_QUERY_KEYS.exists(projectUID || ""),
-    queryFn: () => checkKarmaSeedsExists(projectUID!),
-    enabled: !!projectUID,
-    staleTime: 5 * 60 * 1000,
-    retry: 1,
-  });
-}
-
-/**
- * Hook to fetch total raised amount (with auto-refresh)
- */
-export function useTotalRaised(projectUID: string | undefined, enabled = true) {
-  return useQuery({
-    queryKey: KARMA_SEEDS_QUERY_KEYS.totalRaised(projectUID || ""),
-    queryFn: () => fetchTotalRaised(projectUID!),
-    enabled: !!projectUID && enabled,
-    staleTime: 30 * 1000, // 30 seconds (refresh more frequently)
-    refetchInterval: 30 * 1000, // Auto-refresh every 30 seconds
     retry: 1,
   });
 }
@@ -216,11 +140,11 @@ export function useTotalRaised(projectUID: string | undefined, enabled = true) {
 /**
  * Hook to fetch live contract stats from blockchain
  */
-export function useKarmaSeedsStats(projectUID: string | undefined, enabled = true) {
+export function useKarmaSeedsStats(projectIdOrSlug: string | undefined, enabled = true) {
   return useQuery({
-    queryKey: KARMA_SEEDS_QUERY_KEYS.stats(projectUID || ""),
-    queryFn: () => fetchKarmaSeedsStats(projectUID!),
-    enabled: !!projectUID && enabled,
+    queryKey: SEEDS_QUERY_KEYS.stats(projectIdOrSlug || ""),
+    queryFn: () => fetchSeedsStats(projectIdOrSlug!),
+    enabled: !!projectIdOrSlug && enabled,
     staleTime: 30 * 1000, // 30 seconds
     refetchInterval: 30 * 1000, // Auto-refresh every 30 seconds
     retry: 1,
@@ -231,57 +155,45 @@ export function useKarmaSeedsStats(projectUID: string | undefined, enabled = tru
  * Hook to preview buy calculation
  */
 export function usePreviewBuy(
-  projectUID: string | undefined,
+  projectIdOrSlug: string | undefined,
   paymentToken: string | undefined,
   amount: string | undefined,
   decimals?: number,
   enabled = true
 ) {
   return useQuery({
-    queryKey: KARMA_SEEDS_QUERY_KEYS.preview(projectUID || "", paymentToken || "", amount || ""),
-    queryFn: () => fetchPreviewBuy(projectUID!, paymentToken!, amount!, decimals),
-    enabled: !!projectUID && !!paymentToken && !!amount && parseFloat(amount) > 0 && enabled,
+    queryKey: SEEDS_QUERY_KEYS.preview(projectIdOrSlug || "", paymentToken || "", amount || ""),
+    queryFn: () => fetchPreviewBuy(projectIdOrSlug!, paymentToken!, amount!, decimals),
+    enabled: !!projectIdOrSlug && !!paymentToken && !!amount && parseFloat(amount) > 0 && enabled,
     staleTime: 10 * 1000, // 10 seconds (prices can change)
     retry: 1,
   });
 }
 
 /**
- * Hook to create Karma Seeds record
+ * Hook to create Seeds record
  */
-export function useCreateKarmaSeeds() {
+export function useCreateSeeds() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({
-      projectUID,
+      projectIdOrSlug,
       request,
     }: {
-      projectUID: string;
+      projectIdOrSlug: string;
       request: CreateKarmaSeedsRequest;
-    }) => createKarmaSeeds(projectUID, request),
+    }) => createSeeds(projectIdOrSlug, request),
     onSuccess: (data, variables) => {
       // Invalidate and refetch queries
       queryClient.invalidateQueries({
-        queryKey: KARMA_SEEDS_QUERY_KEYS.byProject(variables.projectUID),
-      });
-      queryClient.invalidateQueries({
-        queryKey: KARMA_SEEDS_QUERY_KEYS.exists(variables.projectUID),
-      });
-      queryClient.invalidateQueries({
-        queryKey: KARMA_SEEDS_QUERY_KEYS.totalRaised(variables.projectUID),
+        queryKey: SEEDS_QUERY_KEYS.byProject(variables.projectIdOrSlug),
       });
     },
     onError: (error: Error) => {
-      errorManager("Error creating Karma Seeds", error);
+      errorManager("Error creating Seeds", error);
     },
   });
 }
 
-export type {
-  KarmaSeeds,
-  TotalRaisedResponse,
-  CreateKarmaSeedsRequest,
-  KarmaSeedsStats,
-  PreviewBuyResponse,
-};
+export type { KarmaSeeds, CreateKarmaSeedsRequest, KarmaSeedsStats, PreviewBuyResponse };

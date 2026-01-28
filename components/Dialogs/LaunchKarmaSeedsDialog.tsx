@@ -7,7 +7,7 @@ import { type FC, Fragment, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
 import { z } from "zod";
-import { useCreateKarmaSeeds } from "@/hooks/useKarmaSeeds";
+import { useCreateSeeds } from "@/hooks/useKarmaSeeds";
 import { type LaunchSeedsParams, useLaunchKarmaSeeds } from "@/hooks/useKarmaSeedsContract";
 import { getPayoutAddressForChain } from "@/src/features/chain-payout-address/hooks/use-chain-payout-address";
 import { useProjectStore } from "@/store";
@@ -61,7 +61,7 @@ export const LaunchKarmaSeedsDialog: FC = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const { launch, state: launchState, reset: resetLaunch } = useLaunchKarmaSeeds();
-  const { mutateAsync: createKarmaSeedsRecord } = useCreateKarmaSeeds();
+  const { mutateAsync: createKarmaSeedsRecord } = useCreateSeeds();
 
   const treasuryAddress = useMemo(() => {
     if (!project?.chainPayoutAddress) {
@@ -152,7 +152,7 @@ export const LaunchKarmaSeedsDialog: FC = () => {
       setStep("registering");
 
       await createKarmaSeedsRecord({
-        projectUID: project.uid,
+        projectIdOrSlug: project.uid,
         request: {
           tokenName: data.tokenName,
           tokenSymbol: data.tokenSymbol,

@@ -3,7 +3,7 @@
 import { RocketLaunchIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
 import { Button } from "@/components/ui/button";
-import { useKarmaSeedsExists } from "@/hooks/useKarmaSeeds";
+import { useKarmaSeeds } from "@/hooks/useKarmaSeeds";
 import { useProjectStore } from "@/store";
 import { useKarmaSeedsModalStore } from "@/store/modals/karmaSeeds";
 
@@ -15,11 +15,11 @@ export const LaunchKarmaSeedsButton: FC<LaunchKarmaSeedsButtonProps> = ({ projec
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const { openLaunchModal } = useKarmaSeedsModalStore();
-  const { data: exists, isLoading } = useKarmaSeedsExists(projectUID);
+  const { data: karmaSeeds, isLoading } = useKarmaSeeds(projectUID);
 
   const canLaunch = isProjectOwner || isProjectAdmin;
 
-  if (!canLaunch || exists || isLoading) {
+  if (!canLaunch || karmaSeeds || isLoading) {
     return null;
   }
 
