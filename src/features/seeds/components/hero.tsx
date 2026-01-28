@@ -25,13 +25,14 @@ export function Hero() {
         {/* Main Heading */}
         <div className="flex flex-col items-center gap-4 text-center max-w-3xl">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">
-            A Modern Way to Support{" "}
-            <span className="text-emerald-600 dark:text-emerald-400">Open Source</span>
+            Introducing <span className="text-emerald-600 dark:text-emerald-400">Karma Seeds</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
-            Karma Seeds lets anyone fund open source projects and public goods with stable,
-            dollar-pegged tokens. 97% goes directly to project treasuries&mdash;no speculation, no
-            volatility.
+          <p className="text-xl md:text-2xl text-foreground/80 font-medium">
+            A simple building block for funding, community, and trust
+          </p>
+          <p className="text-lg text-muted-foreground max-w-2xl">
+            Karma Seeds is a $1 receipt. Anyone can contribute to a project and receive an on-chain
+            record of their support. No promises. No speculation. Just transparent backing.
           </p>
         </div>
 

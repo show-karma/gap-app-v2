@@ -2,20 +2,22 @@ import type { Metadata } from "next";
 import { CtaSection } from "@/src/features/seeds/components/cta-section";
 import { FeeStructure } from "@/src/features/seeds/components/fee-structure";
 import { Hero } from "@/src/features/seeds/components/hero";
-import { HowItWorks } from "@/src/features/seeds/components/how-it-works";
-import { TechnicalOverview } from "@/src/features/seeds/components/technical-overview";
-import { UseCases } from "@/src/features/seeds/components/use-cases";
+import { WhySimple } from "@/src/features/seeds/components/technical-overview";
+import { CoreHypotheses } from "@/src/features/seeds/components/use-cases";
+import { WhatAreSeeds } from "@/src/features/seeds/components/what-are-seeds";
+import { WhatWeDontKnow } from "@/src/features/seeds/components/what-we-dont-know";
 import { WhyKarmaSeeds } from "@/src/features/seeds/components/why-karma-seeds";
+import { WhySeedsNaming } from "@/src/features/seeds/components/why-seeds-naming";
 import { cn } from "@/utilities/tailwind";
 
 export const metadata: Metadata = {
-  title: "Karma Seeds - A Modern Way to Support Open Source | Karma",
+  title: "Karma Seeds - A Simple Building Block for Funding | Karma",
   description:
-    "Fund open source projects and public goods with stable, dollar-pegged tokens. 97% goes directly to project treasuries. No speculation, no volatility.",
+    "A $1 receipt for supporting projects. No speculation, no volatility. Just transparent, on-chain support for open source and public goods.",
   openGraph: {
-    title: "Karma Seeds - A Modern Way to Support Open Source",
+    title: "Karma Seeds - A Simple Building Block for Funding",
     description:
-      "Fund open source projects and public goods with stable, dollar-pegged tokens. 97% goes directly to project treasuries. No speculation, no volatility.",
+      "A $1 receipt for supporting projects. No speculation, no volatility. Just transparent, on-chain support for open source and public goods.",
   },
 };
 
@@ -31,13 +33,17 @@ export default function SeedsPage() {
         <HorizontalLine className="max-w-full" />
         <WhyKarmaSeeds />
         <HorizontalLine />
-        <HowItWorks />
+        <WhatAreSeeds />
         <HorizontalLine />
-        <UseCases />
+        <WhySeedsNaming />
+        <HorizontalLine />
+        <WhySimple />
+        <HorizontalLine />
+        <CoreHypotheses />
+        <HorizontalLine />
+        <WhatWeDontKnow />
         <HorizontalLine />
         <FeeStructure />
-        <HorizontalLine />
-        <TechnicalOverview />
         <HorizontalLine />
         <CtaSection />
       </div>
