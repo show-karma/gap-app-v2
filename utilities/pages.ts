@@ -50,6 +50,7 @@ export const PAGES = {
     COMMUNITY_STATS: `/admin/communities/stats`,
     PROJECTS: `/admin/projects`,
     PAYOUTS: (community: string) => `/community/${community}/admin/payouts`,
+    KYC_SETTINGS: (community: string) => `/community/${community}/admin/kyc-settings`,
     PROGRAM_SCORES: (community: string) => `/community/${community}/admin/program-scores`,
     PROJECT_MILESTONES: (community: string, projectId: string, programId: string) =>
       `/community/${community}/admin/${projectId}/milestones?programIds=${programId}`,

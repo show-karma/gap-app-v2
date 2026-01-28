@@ -599,4 +599,13 @@ export const INDEXER = {
       `/projects/${idOrSlug}/update/contact/${contactId}`,
     DELETE: (idOrSlug: string) => `/projects/${idOrSlug}/delete/contact`,
   },
+  KYC: {
+    GET_STATUS: (projectUID: string, communityUID: string) =>
+      `/v2/projects/${projectUID}/communities/${communityUID}/kyc-status`,
+    GET_CONFIG: (communityIdOrSlug: string) => `/v2/communities/${communityIdOrSlug}/kyc-config`,
+    GET_BATCH_STATUSES: (communityUID: string) =>
+      `/v2/communities/${communityUID}/kyc-batch-status`,
+    GET_FORM_URL: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/kyc-form-url`,
+  },
 };

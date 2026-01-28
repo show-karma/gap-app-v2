@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { formatUnits, isAddress } from "viem";
 import { useAccount } from "wagmi";
+import { KycStatusBadge } from "@/components/KycStatusIcon";
 import { ProgramFilter } from "@/components/Pages/Communities/Impact/ProgramFilter";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -23,6 +24,7 @@ import {
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
+import { useKycBatchStatuses, useKycConfig } from "@/hooks/useKycStatus";
 import {
   AggregatedDisbursementStatus,
   type CommunityPayoutsOptions,
@@ -189,6 +191,29 @@ export default function PayoutsAdminPage() {
     });
     return map;
   }, [payouts]);
+
+  // KYC: Get unique project UIDs from the table data
+  const projectUIDs = useMemo(() => {
+    const uids = new Set<string>();
+    for (const item of tableData) {
+      uids.add(item.projectUid);
+    }
+    return Array.from(uids);
+  }, [tableData]);
+
+  // KYC: Fetch KYC configuration for the community
+  const { config: kycConfig, isEnabled: isKycEnabled } = useKycConfig(community?.uid, {
+    enabled: !!community?.uid,
+  });
+
+  // KYC: Fetch batch KYC statuses for all projects in the table
+  const { statuses: kycStatuses, isLoading: isLoadingKycStatuses } = useKycBatchStatuses(
+    community?.uid,
+    projectUIDs,
+    {
+      enabled: !!community?.uid && projectUIDs.length > 0 && isKycEnabled,
+    }
+  );
 
   // Helper to calculate total disbursed amount from totalsByToken (converting from raw to human-readable)
   const getTotalDisbursed = useCallback((totalsByToken: TokenTotal[]): number => {
@@ -901,6 +926,11 @@ export default function PayoutsAdminPage() {
                       )}
                     </div>
                   </th>
+                  {isKycEnabled && (
+                    <th scope="col" className="h-12 px-4 text-center align-middle font-medium w-24">
+                      KYC
+                    </th>
+                  )}
                   <th
                     scope="col"
                     className="h-12 px-4 text-left align-middle font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800 select-none"
@@ -1023,6 +1053,11 @@ export default function PayoutsAdminPage() {
                           {item.projectName}
                         </ExternalLink>
                       </td>
+                      {isKycEnabled && (
+                        <td className="px-4 py-2 text-center">
+                          <KycStatusBadge status={kycStatuses.get(item.projectUid) ?? null} />
+                        </td>
+                      )}
                       <td className="px-4 py-2">
                         <ExternalLink
                           href={PAGES.PROJECT.GRANT(item.projectSlug || item.projectUid, item.uid)}

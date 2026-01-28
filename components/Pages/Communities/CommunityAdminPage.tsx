@@ -7,6 +7,7 @@ import {
   CurrencyDollarIcon,
   FlagIcon,
   GlobeAltIcon,
+  IdentificationIcon,
   Square2StackIcon,
   TagIcon,
 } from "@heroicons/react/24/outline";
@@ -145,6 +146,14 @@ export const CommunityAdminPage = ({
             description="Upload CSV scores for program participants"
             colorClass=""
             icon={<ArrowTrendingUpIcon className="w-6 h-6" />}
+          />
+
+          <AdminButton
+            href={PAGES.ADMIN.KYC_SETTINGS(slug)}
+            label="KYC/KYB Settings"
+            description="Configure identity verification for grantees"
+            colorClass=""
+            icon={<IdentificationIcon className="w-6 h-6" />}
           />
         </div>
       ) : (
