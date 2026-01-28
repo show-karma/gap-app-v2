@@ -9,10 +9,11 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 import { useCreateSeeds } from "@/hooks/useKarmaSeeds";
 import { type LaunchSeedsParams, useLaunchKarmaSeeds } from "@/hooks/useKarmaSeedsContract";
+import { getSupportedChains, type SupportedChain } from "@/services/karmaSeedsConfig";
 import { getPayoutAddressForChain } from "@/src/features/chain-payout-address/hooks/use-chain-payout-address";
 import { useProjectStore } from "@/store";
 import { useKarmaSeedsModalStore } from "@/store/modals/karmaSeeds";
-import { DEFAULT_MAX_SUPPLY, KARMA_SEEDS_CONFIG } from "@/types/karmaSeeds";
+import { DEFAULT_MAX_SUPPLY } from "@/types/karmaSeeds";
 import { cn } from "@/utilities/tailwind";
 import { errorManager } from "../Utilities/errorManager";
 import { Button } from "../ui/button";
@@ -55,24 +56,49 @@ export const LaunchKarmaSeedsDialog: FC = () => {
   } = useKarmaSeedsModalStore();
 
   const project = useProjectStore((state) => state.project);
-  const { address, chain } = useAccount();
+  const { address } = useAccount();
 
   const [step, setStep] = useState<TransactionStep>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [supportedChains, setSupportedChains] = useState<SupportedChain[]>([]);
+  const [selectedChainId, setSelectedChainId] = useState<number | null>(null);
+  const [loadingChains, setLoadingChains] = useState(false);
 
-  const { launch, state: launchState, reset: resetLaunch } = useLaunchKarmaSeeds();
+  const { launch, reset: resetLaunch } = useLaunchKarmaSeeds();
   const { mutateAsync: createKarmaSeedsRecord } = useCreateSeeds();
 
-  const treasuryAddress = useMemo(() => {
-    if (!project?.chainPayoutAddress) {
-      return project?.payoutAddress || project?.owner;
+  // Fetch supported chains when dialog opens
+  useEffect(() => {
+    if (isOpen && supportedChains.length === 0) {
+      setLoadingChains(true);
+      getSupportedChains()
+        .then((chains) => {
+          setSupportedChains(chains);
+          // Auto-select first chain if available
+          if (chains.length > 0 && !selectedChainId) {
+            setSelectedChainId(chains[0].chainId);
+          }
+        })
+        .catch((err) => {
+          errorManager("Failed to load supported networks", err);
+        })
+        .finally(() => {
+          setLoadingChains(false);
+        });
     }
-    const baseAddress = getPayoutAddressForChain(
-      project.chainPayoutAddress,
-      KARMA_SEEDS_CONFIG.chainID
-    );
-    return baseAddress || project?.payoutAddress || project?.owner;
-  }, [project]);
+  }, [isOpen, supportedChains.length, selectedChainId]);
+
+  const selectedChain = useMemo(() => {
+    return supportedChains.find((c) => c.chainId === selectedChainId);
+  }, [supportedChains, selectedChainId]);
+
+  // Strictly require chain-specific payout address - no fallbacks
+  const treasuryAddress = useMemo(() => {
+    if (!project?.chainPayoutAddress || !selectedChainId) {
+      return undefined;
+    }
+    return getPayoutAddressForChain(project.chainPayoutAddress, selectedChainId);
+  }, [project, selectedChainId]);
 
   const {
     register,
@@ -125,13 +151,8 @@ export const LaunchKarmaSeedsDialog: FC = () => {
   };
 
   const onSubmit = async (data: LaunchFormSchema) => {
-    if (!project || !address || !treasuryAddress) {
+    if (!project || !address || !treasuryAddress || !selectedChain) {
       setErrorMessage("Missing required data. Please try again.");
-      return;
-    }
-
-    if (KARMA_SEEDS_CONFIG.factoryAddress === "0x0000000000000000000000000000000000000000") {
-      setErrorMessage("Karma Seeds factory contract is not yet deployed. Please check back later.");
       return;
     }
 
@@ -145,6 +166,8 @@ export const LaunchKarmaSeedsDialog: FC = () => {
         tokenSymbol: data.tokenSymbol,
         treasury: treasuryAddress as `0x${string}`,
         maxSupply: data.maxSupply,
+        factoryAddress: selectedChain.factoryAddress as `0x${string}`,
+        chainId: selectedChain.chainId,
       };
 
       const result = await launch(launchParams);
@@ -159,9 +182,9 @@ export const LaunchKarmaSeedsDialog: FC = () => {
           maxSupply: data.maxSupply,
           treasuryAddress: treasuryAddress,
           contractAddress: result.tokenAddress,
-          factoryAddress: KARMA_SEEDS_CONFIG.factoryAddress,
+          factoryAddress: selectedChain.factoryAddress,
           deploymentTxHash: result.txHash,
-          chainID: KARMA_SEEDS_CONFIG.chainID,
+          chainID: selectedChain.chainId,
         },
       });
 
@@ -321,93 +344,115 @@ export const LaunchKarmaSeedsDialog: FC = () => {
                       work. Each token costs $1 USD equivalent.
                     </p>
 
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                      <div>
-                        <label htmlFor="tokenName" className={labelStyle}>
-                          Token Name
-                        </label>
-                        <input
-                          {...register("tokenName")}
-                          id="tokenName"
-                          type="text"
-                          placeholder="e.g., KSEED-MyProject"
-                          className={cn(inputStyle, errors.tokenName && "border-red-500")}
-                        />
-                        {errors.tokenName && (
-                          <p className={errorStyle}>{errors.tokenName.message}</p>
-                        )}
+                    {loadingChains ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
                       </div>
-
-                      <div>
-                        <label htmlFor="tokenSymbol" className={labelStyle}>
-                          Token Symbol
-                        </label>
-                        <input
-                          {...register("tokenSymbol")}
-                          id="tokenSymbol"
-                          type="text"
-                          placeholder="e.g., KS-MP"
-                          className={cn(inputStyle, errors.tokenSymbol && "border-red-500")}
-                        />
-                        {errors.tokenSymbol && (
-                          <p className={errorStyle}>{errors.tokenSymbol.message}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label htmlFor="maxSupply" className={labelStyle}>
-                          Max Supply
-                        </label>
-                        <input
-                          {...register("maxSupply")}
-                          id="maxSupply"
-                          type="text"
-                          placeholder="1000000"
-                          className={cn(inputStyle, errors.maxSupply && "border-red-500")}
-                        />
-                        {errors.maxSupply && (
-                          <p className={errorStyle}>{errors.maxSupply.message}</p>
-                        )}
-                        <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
-                          Maximum number of tokens that can be minted (each worth $1 USD)
+                    ) : supportedChains.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500 dark:text-zinc-400">
+                          Karma Seeds is not available yet. Please check back later.
                         </p>
                       </div>
+                    ) : (
+                      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                        <div>
+                          <label htmlFor="network" className={labelStyle}>
+                            Network
+                          </label>
+                          <select
+                            id="network"
+                            value={selectedChainId || ""}
+                            onChange={(e) => setSelectedChainId(Number(e.target.value))}
+                            className={inputStyle}
+                          >
+                            {supportedChains.map((chain) => (
+                              <option key={chain.chainId} value={chain.chainId}>
+                                {chain.chainName}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
 
-                      <div>
-                        <span className={labelStyle}>Treasury Address</span>
-                        <div className="bg-gray-50 dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md p-3 mt-1">
-                          <p className="text-sm text-gray-700 dark:text-zinc-300 font-mono break-all">
-                            {treasuryAddress || "Not configured"}
-                          </p>
+                        <div>
+                          <label htmlFor="tokenName" className={labelStyle}>
+                            Token Name
+                          </label>
+                          <input
+                            {...register("tokenName")}
+                            id="tokenName"
+                            type="text"
+                            placeholder="e.g., KSEED-MyProject"
+                            className={cn(inputStyle, errors.tokenName && "border-red-500")}
+                          />
+                          {errors.tokenName && (
+                            <p className={errorStyle}>{errors.tokenName.message}</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label htmlFor="tokenSymbol" className={labelStyle}>
+                            Token Symbol
+                          </label>
+                          <input
+                            {...register("tokenSymbol")}
+                            id="tokenSymbol"
+                            type="text"
+                            placeholder="e.g., KS-MP"
+                            className={cn(inputStyle, errors.tokenSymbol && "border-red-500")}
+                          />
+                          {errors.tokenSymbol && (
+                            <p className={errorStyle}>{errors.tokenSymbol.message}</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label htmlFor="maxSupply" className={labelStyle}>
+                            Max Supply
+                          </label>
+                          <input
+                            {...register("maxSupply")}
+                            id="maxSupply"
+                            type="text"
+                            placeholder="1000000"
+                            className={cn(inputStyle, errors.maxSupply && "border-red-500")}
+                          />
+                          {errors.maxSupply && (
+                            <p className={errorStyle}>{errors.maxSupply.message}</p>
+                          )}
                           <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
-                            97% of proceeds will be sent to this address
+                            Maximum number of tokens that can be minted (each worth $1 USD)
                           </p>
                         </div>
-                        {!treasuryAddress && (
-                          <p className={errorStyle}>
-                            Please configure a payout address for Base network in project settings
-                          </p>
-                        )}
-                      </div>
 
-                      <div>
-                        <span className={labelStyle}>Network</span>
-                        <div className="bg-gray-50 dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md p-3 mt-1">
-                          <p className="text-sm text-gray-700 dark:text-zinc-300">
-                            Base (Chain ID: {KARMA_SEEDS_CONFIG.chainID})
-                          </p>
+                        <div>
+                          <span className={labelStyle}>Treasury Address</span>
+                          <div className="bg-gray-50 dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md p-3 mt-1">
+                            <p className="text-sm text-gray-700 dark:text-zinc-300 font-mono break-all">
+                              {treasuryAddress || "Not configured"}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
+                              97% of proceeds will be sent to this address
+                            </p>
+                          </div>
+                          {!treasuryAddress && selectedChain && (
+                            <p className={errorStyle}>
+                              Please configure a payout address for {selectedChain.chainName} in
+                              project settings
+                            </p>
+                          )}
                         </div>
-                      </div>
 
-                      <div className="flex flex-row gap-4 mt-8 justify-end">
-                        <Button type="button" variant="outline" onClick={handleClose}>
-                          Cancel
-                        </Button>
-                        <Button type="submit" disabled={!isValid || !treasuryAddress}>
-                          Launch Karma Seeds
-                        </Button>
-                      </div>
-                    </form>
+                        <div className="flex flex-row gap-4 mt-8 justify-end">
+                          <Button type="button" variant="outline" onClick={handleClose}>
+                            Cancel
+                          </Button>
+                          <Button type="submit" disabled={!isValid || !treasuryAddress}>
+                            Launch Karma Seeds
+                          </Button>
+                        </div>
+                      </form>
+                    )}
                   </>
                 )}
               </Dialog.Panel>

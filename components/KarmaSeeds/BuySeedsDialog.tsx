@@ -19,8 +19,6 @@ const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-3 dark:bg-zinc-900 w-full text-lg";
 const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
-const STABLECOINS = ["USDC", "USDT", "cUSD", "USDGLO"];
-
 export const BuySeedsDialog: FC = () => {
   const { isBuyModalOpen: isOpen, closeBuyModal: closeModal } = useKarmaSeedsModalStore();
 
@@ -45,7 +43,6 @@ export const BuySeedsDialog: FC = () => {
 
   const {
     buyWithEth,
-    buyWithStablecoin,
     buyWithToken,
     state: buyState,
     reset: resetBuy,
@@ -157,13 +154,8 @@ export const BuySeedsDialog: FC = () => {
     try {
       if (isNativeToken) {
         await buyWithEth({ ethAmount: amount });
-      } else if (STABLECOINS.includes(selectedTokenSymbol)) {
-        await buyWithStablecoin({
-          stablecoinAddress: tokenAddress!,
-          amount,
-          decimals: selectedDecimals,
-        });
       } else {
+        // All ERC20 tokens (including stablecoins) use buyWithToken
         await buyWithToken({
           tokenAddress: tokenAddress!,
           amount,

@@ -85,12 +85,12 @@ export interface KarmaSeedsConfig {
 }
 
 /**
- * Base Mainnet Karma Seeds configuration
+ * Base Mainnet Karma Seeds configuration (Beacon Proxy Pattern)
  */
 export const KARMA_SEEDS_CONFIG: KarmaSeedsConfig = {
   chainID: 8453,
   chainName: "Base",
-  factoryAddress: "0x7c65DD7ddef0A4b5d97dc5d447894083f4e56d37" as `0x${string}`,
+  factoryAddress: "0xA459b855fa03AB80c92a79F341db8020FC67e047" as `0x${string}`,
   ethUsdFeed: "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70" as `0x${string}`,
   usdc: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as `0x${string}`,
   weth: "0x4200000000000000000000000000000000000006" as `0x${string}`,

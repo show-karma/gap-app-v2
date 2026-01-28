@@ -11,7 +11,6 @@ import {
   useWalletClient,
   useWriteContract,
 } from "wagmi";
-import { base } from "wagmi/chains";
 import { KARMA_SEEDS_CONFIG, type KarmaSeedsConfig } from "@/types/karmaSeeds";
 import KarmaSeedFactoryABI from "@/utilities/abi/KarmaSeedFactoryV2.json";
 import KarmaSeedABI from "@/utilities/abi/KarmaSeedV2.json";
@@ -46,6 +45,8 @@ export interface LaunchSeedsParams {
   tokenSymbol: string;
   treasury: Address;
   maxSupply: string;
+  factoryAddress: Address;
+  chainId: number;
 }
 
 export interface LaunchSeedsResult {
@@ -55,12 +56,6 @@ export interface LaunchSeedsResult {
 
 export interface BuySeedsWithEthParams {
   ethAmount: string;
-}
-
-export interface BuySeedsWithStablecoinParams {
-  stablecoinAddress: Address;
-  amount: string;
-  decimals: number;
 }
 
 export interface BuySeedsWithTokenParams {
@@ -90,8 +85,9 @@ export interface TransactionState {
 
 /**
  * Hook for launching Karma Seeds via factory contract
+ * Factory address and chainId are now passed in LaunchSeedsParams (lazy loaded)
  */
-export function useLaunchKarmaSeeds(config: KarmaSeedsConfig = KARMA_SEEDS_CONFIG) {
+export function useLaunchKarmaSeeds() {
   const { address, chainId: currentChainId } = useAccount();
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
@@ -104,22 +100,24 @@ export function useLaunchKarmaSeeds(config: KarmaSeedsConfig = KARMA_SEEDS_CONFI
         throw new Error("Wallet not connected");
       }
 
-      if (config.factoryAddress === "0x0000000000000000000000000000000000000000") {
-        throw new Error("Factory contract not yet deployed");
+      const { factoryAddress, chainId } = params;
+
+      if (!factoryAddress || factoryAddress === "0x0000000000000000000000000000000000000000") {
+        throw new Error("Factory contract not available for this network");
       }
 
       setState({ phase: "pending" });
 
       try {
-        // Switch to Base if not already on it
-        if (currentChainId !== config.chainID) {
-          await switchChainAsync({ chainId: config.chainID });
+        // Switch to target chain if not already on it
+        if (currentChainId !== chainId) {
+          await switchChainAsync({ chainId });
         }
 
         const maxSupplyWei = parseUnits(params.maxSupply, 18);
 
         const txHash = await writeContractAsync({
-          address: config.factoryAddress,
+          address: factoryAddress,
           abi: KarmaSeedFactoryABI,
           functionName: "createKarmaSeed",
           args: [
@@ -131,15 +129,13 @@ export function useLaunchKarmaSeeds(config: KarmaSeedsConfig = KARMA_SEEDS_CONFI
               maxSupply: maxSupplyWei,
             },
           ],
-          chain: base,
+          chainId,
         });
 
         setState({ phase: "confirming", txHash });
 
         const chainClient =
-          publicClient?.chain?.id === config.chainID
-            ? publicClient
-            : await getRPCClient(config.chainID);
+          publicClient?.chain?.id === chainId ? publicClient : await getRPCClient(chainId);
 
         const receipt = await chainClient.waitForTransactionReceipt({
           hash: txHash,
@@ -152,7 +148,7 @@ export function useLaunchKarmaSeeds(config: KarmaSeedsConfig = KARMA_SEEDS_CONFI
 
         const karmaSeedCreatedLog = receipt.logs.find((log) => {
           return (
-            log.topics[0] === "0xc8d9d0ef7b62bda1a8bc556fbb9c35de0aefb1fa15df789fffecf3a0c83f5d0e"
+            log.topics[0] === "0x15985ceb3e66d4b6ed07ac1156f138e903f8a114eedf4401e45cdbe2cb10f422"
           );
         });
 
@@ -161,7 +157,7 @@ export function useLaunchKarmaSeeds(config: KarmaSeedsConfig = KARMA_SEEDS_CONFI
           tokenAddress = getAddress(`0x${karmaSeedCreatedLog.topics[2].slice(26)}`) as Address;
         } else {
           const projectAddress = (await chainClient.readContract({
-            address: config.factoryAddress,
+            address: factoryAddress,
             abi: KarmaSeedFactoryABI,
             functionName: "projects",
             args: [params.projectName],
@@ -186,7 +182,7 @@ export function useLaunchKarmaSeeds(config: KarmaSeedsConfig = KARMA_SEEDS_CONFI
         throw error;
       }
     },
-    [address, publicClient, writeContractAsync, config]
+    [address, currentChainId, publicClient, writeContractAsync, switchChainAsync]
   );
 
   const reset = useCallback(() => {
@@ -264,79 +260,6 @@ export function useBuyKarmaSeeds(
       }
     },
     [address, contractAddress, publicClient, writeContractAsync, config]
-  );
-
-  const buyWithStablecoin = useCallback(
-    async (params: BuySeedsWithStablecoinParams): Promise<BuySeedsResult> => {
-      if (!address || !contractAddress || !walletClient) {
-        throw new Error("Wallet not connected or contract not set");
-      }
-
-      setState({ phase: "approving" });
-
-      try {
-        const amountWei = parseUnits(params.amount, params.decimals);
-        const chainClient =
-          publicClient?.chain?.id === config.chainID
-            ? publicClient
-            : await getRPCClient(config.chainID);
-
-        const allowance = (await chainClient.readContract({
-          address: params.stablecoinAddress,
-          abi: ERC20_ABI,
-          functionName: "allowance",
-          args: [address, contractAddress],
-        })) as bigint;
-
-        if (allowance < amountWei) {
-          const approveTxHash = await writeContractAsync({
-            address: params.stablecoinAddress,
-            abi: ERC20_ABI,
-            functionName: "approve",
-            args: [contractAddress, amountWei],
-            chainId: config.chainID,
-          });
-
-          await chainClient.waitForTransactionReceipt({
-            hash: approveTxHash,
-            confirmations: 1,
-          });
-        }
-
-        setState({ phase: "pending" });
-
-        const txHash = await writeContractAsync({
-          address: contractAddress,
-          abi: KarmaSeedABI,
-          functionName: "buyWithStablecoin",
-          args: [params.stablecoinAddress, amountWei],
-          chainId: config.chainID,
-        });
-
-        setState({ phase: "confirming", txHash });
-
-        const receipt = await chainClient.waitForTransactionReceipt({
-          hash: txHash,
-          confirmations: 1,
-        });
-
-        if (receipt.status !== "success") {
-          throw new Error("Transaction failed");
-        }
-
-        setState({ phase: "success", txHash });
-
-        return {
-          txHash,
-          tokensMinted: "0",
-        };
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        setState({ phase: "error", error: errorMessage });
-        throw error;
-      }
-    },
-    [address, contractAddress, publicClient, walletClient, writeContractAsync, config]
   );
 
   const buyWithToken = useCallback(
@@ -418,7 +341,6 @@ export function useBuyKarmaSeeds(
 
   return {
     buyWithEth,
-    buyWithStablecoin,
     buyWithToken,
     state,
     reset,
@@ -545,31 +467,6 @@ export function usePreviewBuySeeds(
     [contractAddress, publicClient, config]
   );
 
-  const previewBuyWithStablecoin = useCallback(
-    async (amount: string, decimals: number): Promise<string> => {
-      if (!contractAddress) {
-        throw new Error("Contract address not set");
-      }
-
-      const chainClient =
-        publicClient?.chain?.id === config.chainID
-          ? publicClient
-          : await getRPCClient(config.chainID);
-
-      const amountWei = parseUnits(amount, decimals);
-
-      const tokensAmount = (await chainClient.readContract({
-        address: contractAddress,
-        abi: KarmaSeedABI,
-        functionName: "previewBuyWithStablecoin",
-        args: [amountWei],
-      })) as bigint;
-
-      return formatUnits(tokensAmount, 18);
-    },
-    [contractAddress, publicClient, config]
-  );
-
   const previewBuyWithToken = useCallback(
     async (tokenAddress: Address, amount: string, decimals: number): Promise<string> => {
       if (!contractAddress) {
@@ -597,7 +494,6 @@ export function usePreviewBuySeeds(
 
   return {
     previewBuyWithEth,
-    previewBuyWithStablecoin,
     previewBuyWithToken,
   };
 }
@@ -628,5 +524,3 @@ export function useKarmaSeedsBalance(
     refetch,
   };
 }
-
-export { KARMA_SEEDS_CONFIG };

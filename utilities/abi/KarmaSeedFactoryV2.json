@@ -74,23 +74,9 @@
   },
   {
     "type": "function",
-    "name": "getStablecoins",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "address[]" }],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "projects",
     "inputs": [{ "name": "", "type": "string" }],
     "outputs": [{ "name": "", "type": "address" }],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "isStablecoin",
-    "inputs": [{ "name": "", "type": "address" }],
-    "outputs": [{ "name": "", "type": "bool" }],
     "stateMutability": "view"
   },
   {
