@@ -86,10 +86,11 @@ export const useKycConfig = (
       );
 
       if (error) {
+        console.warn("KYC config fetch failed:", error);
         return null;
       }
 
-      return data;
+      return data ?? null;
     },
     enabled: options?.enabled !== false && !!communityIdOrSlug,
     staleTime: 10 * 60 * 1000,
@@ -194,7 +195,11 @@ export const useKycFormUrl = () => {
         throw new Error(error);
       }
 
-      return data!;
+      if (!data) {
+        throw new Error("No data returned from KYC form URL request");
+      }
+
+      return data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
@@ -238,7 +243,11 @@ export const useSaveKycConfig = (communityIdOrSlug: string | undefined) => {
         throw new Error(error);
       }
 
-      return data!;
+      if (!data) {
+        throw new Error("No data returned from save KYC config request");
+      }
+
+      return data;
     },
     onSuccess: () => {
       if (communityIdOrSlug) {

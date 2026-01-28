@@ -25,8 +25,8 @@ export const getProjectCachedData = cache(async (projectId: string): Promise<Pro
     project.pointers[0].originalProjectUID !== project.uid
   ) {
     const original = await getProject(project.pointers[0].originalProjectUID);
-    if (original?.details.slug && original?.details.slug !== projectId) {
-      redirect(PAGES.PROJECT.OVERVIEW(original?.details.slug as string));
+    if (original?.details?.slug && original.details.slug !== projectId) {
+      redirect(PAGES.PROJECT.OVERVIEW(original.details.slug));
     }
   }
 
