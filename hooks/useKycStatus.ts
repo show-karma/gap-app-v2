@@ -16,10 +16,17 @@ import { INDEXER } from "@/utilities/indexer";
 const KYC_STATUS_STALE_TIME = 5 * 60 * 1000; // 5 minutes
 const KYC_CONFIG_STALE_TIME = 10 * 60 * 1000; // 10 minutes
 
+/**
+ * Determine if identifier is an application reference (APP-...) vs project UID (0x...)
+ */
+const isApplicationReference = (identifier: string): boolean => identifier.startsWith("APP-");
+
 export const KYC_QUERY_KEYS = {
   all: ["kyc"] as const,
   status: (projectUID: string, communityUID: string) =>
     [...KYC_QUERY_KEYS.all, "status", projectUID, communityUID] as const,
+  statusByAppRef: (referenceNumber: string) =>
+    [...KYC_QUERY_KEYS.all, "status-by-app-ref", referenceNumber] as const,
   config: (communityIdOrSlug: string) =>
     [...KYC_QUERY_KEYS.all, "config", communityIdOrSlug] as const,
   batchStatuses: (communityUID: string, projectUIDs: string[]) =>
@@ -27,20 +34,53 @@ export const KYC_QUERY_KEYS = {
 };
 
 /**
- * Hook to fetch KYC verification status for a single project in a community
+ * Hook to fetch KYC verification status
+ *
+ * Automatically uses the correct endpoint based on identifier type:
+ * - Application references (APP-...) use /v2/funding-applications/:referenceNumber/kyc-status
+ * - Project UIDs (0x...) use /v2/projects/:projectUID/communities/:communityUID/kyc-status
+ *
+ * @param identifier - Can be projectUID (0x...) or application referenceNumber (APP-...)
+ * @param communityUID - Required only when identifier is a projectUID
+ * @param options - Query options
  */
 export const useKycStatus = (
-  projectUID: string | undefined,
+  identifier: string | undefined,
   communityUID: string | undefined,
   options?: { enabled?: boolean }
 ) => {
+  const isAppRef = identifier ? isApplicationReference(identifier) : false;
+
   const query = useQuery<KycStatusResponse | null>({
-    queryKey: KYC_QUERY_KEYS.status(projectUID || "", communityUID || ""),
+    queryKey: isAppRef
+      ? KYC_QUERY_KEYS.statusByAppRef(identifier || "")
+      : KYC_QUERY_KEYS.status(identifier || "", communityUID || ""),
     queryFn: async () => {
-      if (!projectUID || !communityUID) return null;
+      if (!identifier) return null;
+
+      // Use application-specific endpoint for APP- references
+      if (isAppRef) {
+        const [data, error] = await fetchData<KycStatusResponse>(
+          INDEXER.KYC.GET_STATUS_BY_APP_REF(identifier),
+          "GET",
+          {},
+          {},
+          {},
+          true
+        );
+
+        if (error) {
+          throw new Error(error);
+        }
+
+        return data;
+      }
+
+      // Use project endpoint for 0x... identifiers (requires communityUID)
+      if (!communityUID) return null;
 
       const [data, error] = await fetchData<KycStatusResponse>(
-        INDEXER.KYC.GET_STATUS(projectUID, communityUID),
+        INDEXER.KYC.GET_STATUS(identifier, communityUID),
         "GET",
         {},
         {},
@@ -54,7 +94,7 @@ export const useKycStatus = (
 
       return data;
     },
-    enabled: options?.enabled !== false && !!projectUID && !!communityUID,
+    enabled: options?.enabled !== false && !!identifier && (isAppRef || !!communityUID),
     staleTime: KYC_STATUS_STALE_TIME,
   });
 
