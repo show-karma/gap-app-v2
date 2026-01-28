@@ -66,6 +66,31 @@ export interface KarmaSeedsExistsResponse {
 }
 
 /**
+ * Live contract stats from blockchain
+ */
+export interface KarmaSeedsStats {
+  projectUID: string;
+  contractAddress: string;
+  chainID: number;
+  totalSupply: string;
+  maxSupply: string;
+  remainingSupply: string;
+  ethPrice: string;
+  tokenName: string;
+  tokenSymbol: string;
+}
+
+/**
+ * Preview buy response
+ */
+export interface PreviewBuyResponse {
+  tokensToReceive: string;
+  paymentToken: string;
+  paymentAmount: string;
+  usdValue: string;
+}
+
+/**
  * Configuration for Karma Seeds contracts on different chains
  */
 export interface KarmaSeedsConfig {

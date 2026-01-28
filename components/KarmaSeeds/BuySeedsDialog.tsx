@@ -3,17 +3,13 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { type FC, Fragment, useCallback, useEffect, useMemo, useState } from "react";
-import { type Address, formatUnits, parseUnits } from "viem";
-import { base } from "viem/chains";
-import { useAccount, useBalance, useSwitchChain } from "wagmi";
+import type { Address } from "viem";
+import { useAccount, useSwitchChain } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
-import { useKarmaSeeds } from "@/hooks/useKarmaSeeds";
-import {
-  useBuyKarmaSeeds,
-  useKarmaSeedsTokenData,
-  usePreviewBuySeeds,
-} from "@/hooks/useKarmaSeedsContract";
+import { useKarmaSeeds, useKarmaSeedsStats, usePreviewBuy } from "@/hooks/useKarmaSeeds";
+import { useBuyKarmaSeeds } from "@/hooks/useKarmaSeedsContract";
+import { useTokenBalances } from "@/hooks/useTokenBalances";
 import { useProjectStore } from "@/store";
 import { useKarmaSeedsModalStore } from "@/store/modals/karmaSeeds";
 import { KARMA_SEEDS_CONFIG } from "@/types/karmaSeeds";
@@ -23,33 +19,7 @@ const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-3 dark:bg-zinc-900 w-full text-lg";
 const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
-type PaymentMethod = "eth" | "usdc";
-
-interface PaymentOption {
-  id: PaymentMethod;
-  name: string;
-  symbol: string;
-  decimals: number;
-  address?: Address;
-}
-
-const PAYMENT_OPTIONS: PaymentOption[] = [
-  {
-    id: "eth",
-    name: "Ethereum",
-    symbol: "ETH",
-    decimals: 18,
-  },
-  {
-    id: "usdc",
-    name: "USD Coin",
-    symbol: "USDC",
-    decimals: 6,
-    address: KARMA_SEEDS_CONFIG.usdc,
-  },
-];
-
-type TransactionStep = "idle" | "approving" | "pending" | "confirming" | "success" | "error";
+const STABLECOINS = ["USDC", "USDT", "cUSD", "USDGLO"];
 
 export const BuySeedsDialog: FC = () => {
   const { isBuyModalOpen: isOpen, closeBuyModal: closeModal } = useKarmaSeedsModalStore();
@@ -66,8 +36,7 @@ export const BuySeedsDialog: FC = () => {
   }, [isOpen, chain?.id, switchChain]);
 
   const [amount, setAmount] = useState<string>("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("eth");
-  const [previewTokens, setPreviewTokens] = useState<string>("0");
+  const [selectedTokenSymbol, setSelectedTokenSymbol] = useState<string>("ETH");
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const { data: karmaSeeds } = useKarmaSeeds(project?.uid);
@@ -77,96 +46,78 @@ export const BuySeedsDialog: FC = () => {
   const {
     buyWithEth,
     buyWithStablecoin,
+    buyWithToken,
     state: buyState,
     reset: resetBuy,
     isLoading: isBuying,
   } = useBuyKarmaSeeds(contractAddress);
 
-  const { previewBuyWithEth, previewBuyWithStablecoin } = usePreviewBuySeeds(contractAddress);
+  // Use API for stats instead of direct contract calls
+  const { data: stats } = useKarmaSeedsStats(project?.uid, !!karmaSeeds);
 
-  const { totalSupply, maxSupply, remainingSupply, ethPrice } =
-    useKarmaSeedsTokenData(contractAddress);
+  const totalSupply = stats?.totalSupply || "0";
+  const maxSupply = stats?.maxSupply || "0";
+  const ethPrice = stats?.ethPrice;
 
-  const { data: ethBalance, refetch: refetchEthBalance } = useBalance({
-    address,
-    chainId: KARMA_SEEDS_CONFIG.chainID,
-    query: {
-      enabled: !!address && paymentMethod === "eth",
-      refetchInterval: 10000, // Refetch every 10 seconds
-    },
-  });
+  // Get user's token balances on Base
+  const { tokensWithBalance, isLoading: balancesLoading } = useTokenBalances(
+    KARMA_SEEDS_CONFIG.chainID
+  );
 
-  const { data: usdcBalance, refetch: refetchUsdcBalance } = useBalance({
-    address,
-    token: KARMA_SEEDS_CONFIG.usdc,
-    chainId: KARMA_SEEDS_CONFIG.chainID,
-    query: {
-      enabled: !!address && paymentMethod === "usdc",
-      refetchInterval: 10000,
-    },
-  });
+  // Find selected token data
+  const selectedToken = useMemo(() => {
+    return tokensWithBalance.find((t) => t.token.symbol === selectedTokenSymbol);
+  }, [tokensWithBalance, selectedTokenSymbol]);
 
-  // Refetch balances when chain changes to Base
+  const currentBalance = selectedToken?.formattedBalance || "0";
+  const selectedDecimals = selectedToken?.token.decimals || 18;
+  const isNativeToken = selectedToken?.token.isNative || selectedTokenSymbol === "ETH";
+  const tokenAddress = selectedToken?.token.address as Address | undefined;
+
+  // Get the payment token for the API (ETH or contract address)
+  const paymentToken = useMemo(() => {
+    if (isNativeToken) return "ETH";
+    return tokenAddress || "";
+  }, [isNativeToken, tokenAddress]);
+
+  // Use API for preview calculation instead of direct contract calls
+  const { data: previewData } = usePreviewBuy(
+    project?.uid,
+    paymentToken,
+    amount,
+    selectedDecimals,
+    !!karmaSeeds && !!amount && parseFloat(amount) > 0
+  );
+
+  const previewTokens = previewData?.tokensToReceive || "0";
+
+  // Set default token when balances load
   useEffect(() => {
-    if (chain?.id === KARMA_SEEDS_CONFIG.chainID) {
-      refetchEthBalance();
-      refetchUsdcBalance();
-    }
-  }, [chain?.id, refetchEthBalance, refetchUsdcBalance]);
-
-  const selectedPaymentOption = useMemo(
-    () => PAYMENT_OPTIONS.find((opt) => opt.id === paymentMethod) || PAYMENT_OPTIONS[0],
-    [paymentMethod]
-  );
-
-  const currentBalance = useMemo(() => {
-    if (paymentMethod === "eth" && ethBalance) {
-      return formatUnits(ethBalance.value, 18);
-    }
-    if (paymentMethod === "usdc" && usdcBalance) {
-      return formatUnits(usdcBalance.value, 6);
-    }
-    return "0";
-  }, [paymentMethod, ethBalance, usdcBalance]);
-
-  const updatePreview = useCallback(
-    async (inputAmount: string) => {
-      if (!inputAmount || parseFloat(inputAmount) <= 0) {
-        setPreviewTokens("0");
-        return;
+    if (tokensWithBalance.length > 0 && !selectedToken) {
+      // Prefer ETH, then USDC, then first available
+      const eth = tokensWithBalance.find((t) => t.token.symbol === "ETH");
+      const usdc = tokensWithBalance.find((t) => t.token.symbol === "USDC");
+      if (eth) {
+        setSelectedTokenSymbol("ETH");
+      } else if (usdc) {
+        setSelectedTokenSymbol("USDC");
+      } else {
+        setSelectedTokenSymbol(tokensWithBalance[0].token.symbol);
       }
+    }
+  }, [tokensWithBalance, selectedToken]);
 
-      try {
-        let tokens: string;
-        if (paymentMethod === "eth") {
-          tokens = await previewBuyWithEth(inputAmount);
-        } else {
-          tokens = await previewBuyWithStablecoin(inputAmount, selectedPaymentOption.decimals);
-        }
-        setPreviewTokens(tokens);
-      } catch (error) {
-        setPreviewTokens("0");
-      }
-    },
-    [paymentMethod, previewBuyWithEth, previewBuyWithStablecoin, selectedPaymentOption.decimals]
-  );
+  const handleAmountChange = useCallback((value: string) => {
+    const sanitized = value.replace(/[^0-9.]/g, "");
+    const parts = sanitized.split(".");
+    const formatted = parts.length > 2 ? parts[0] + "." + parts.slice(1).join("") : sanitized;
+    setAmount(formatted);
+    setErrorMessage("");
+  }, []);
 
-  const handleAmountChange = useCallback(
-    (value: string) => {
-      const sanitized = value.replace(/[^0-9.]/g, "");
-      const parts = sanitized.split(".");
-      const formatted = parts.length > 2 ? parts[0] + "." + parts.slice(1).join("") : sanitized;
-      setAmount(formatted);
-      setErrorMessage("");
-      updatePreview(formatted);
-    },
-    [updatePreview]
-  );
-
-  const handlePaymentMethodChange = useCallback((method: PaymentMethod) => {
-    setPaymentMethod(method);
+  const handleTokenChange = useCallback((symbol: string) => {
+    setSelectedTokenSymbol(symbol);
     setAmount("");
-    setPreviewTokens("0");
     setErrorMessage("");
   }, []);
 
@@ -180,8 +131,7 @@ export const BuySeedsDialog: FC = () => {
 
   const resetForm = () => {
     setAmount("");
-    setPaymentMethod("eth");
-    setPreviewTokens("0");
+    setSelectedTokenSymbol("ETH");
     setErrorMessage("");
     resetBuy();
   };
@@ -205,13 +155,19 @@ export const BuySeedsDialog: FC = () => {
     setErrorMessage("");
 
     try {
-      if (paymentMethod === "eth") {
+      if (isNativeToken) {
         await buyWithEth({ ethAmount: amount });
-      } else {
+      } else if (STABLECOINS.includes(selectedTokenSymbol)) {
         await buyWithStablecoin({
-          stablecoinAddress: KARMA_SEEDS_CONFIG.usdc,
+          stablecoinAddress: tokenAddress!,
           amount,
-          decimals: 6,
+          decimals: selectedDecimals,
+        });
+      } else {
+        await buyWithToken({
+          tokenAddress: tokenAddress!,
+          amount,
+          decimals: selectedDecimals,
         });
       }
     } catch (error) {
@@ -220,7 +176,7 @@ export const BuySeedsDialog: FC = () => {
       errorManager("Error buying Karma Seeds", error, {
         project: project?.details?.slug || project?.uid,
         amount,
-        paymentMethod,
+        token: selectedTokenSymbol,
         address,
       });
     }
@@ -231,7 +187,9 @@ export const BuySeedsDialog: FC = () => {
       return (
         <div className="flex flex-col items-center justify-center py-8 gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
-          <p className="text-lg font-medium text-gray-900 dark:text-zinc-100">Approving USDC...</p>
+          <p className="text-lg font-medium text-gray-900 dark:text-zinc-100">
+            Approving {selectedTokenSymbol}...
+          </p>
           <p className="text-sm text-gray-500 dark:text-zinc-400">
             Please confirm the approval in your wallet
           </p>
@@ -351,36 +309,49 @@ export const BuySeedsDialog: FC = () => {
 
                     <div className="space-y-4">
                       <div>
-                        <span className={labelStyle}>Payment Method</span>
-                        <div className="flex gap-2 mt-2">
-                          {PAYMENT_OPTIONS.map((option) => (
-                            <button
-                              key={option.id}
-                              type="button"
-                              onClick={() => handlePaymentMethodChange(option.id)}
-                              className={cn(
-                                "flex-1 py-2 px-4 rounded-lg border-2 transition-colors",
-                                paymentMethod === option.id
-                                  ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30"
-                                  : "border-gray-200 dark:border-zinc-600 hover:border-gray-300"
-                              )}
-                            >
-                              <span className="font-medium text-gray-900 dark:text-zinc-100">
-                                {option.symbol}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
+                        <span className={labelStyle}>Payment Token</span>
+                        {balancesLoading ? (
+                          <div className="flex gap-2 mt-2">
+                            <div className="h-10 bg-gray-200 dark:bg-zinc-700 rounded-lg animate-pulse flex-1" />
+                          </div>
+                        ) : tokensWithBalance.length === 0 ? (
+                          <p className="text-sm text-gray-500 dark:text-zinc-400 mt-2">
+                            No tokens with balance found on Base network
+                          </p>
+                        ) : (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {tokensWithBalance.map((tokenBalance) => (
+                              <button
+                                key={`${tokenBalance.token.symbol}-${tokenBalance.token.address}`}
+                                type="button"
+                                onClick={() => handleTokenChange(tokenBalance.token.symbol)}
+                                className={cn(
+                                  "py-2 px-3 rounded-lg border-2 transition-colors flex flex-col items-center min-w-[70px]",
+                                  selectedTokenSymbol === tokenBalance.token.symbol
+                                    ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30"
+                                    : "border-gray-200 dark:border-zinc-600 hover:border-gray-300"
+                                )}
+                                disabled={isProcessing}
+                              >
+                                <span className="font-medium text-gray-900 dark:text-zinc-100 text-sm">
+                                  {tokenBalance.token.symbol}
+                                </span>
+                                <span className="text-xs text-gray-500 dark:text-zinc-400">
+                                  {parseFloat(tokenBalance.formattedBalance).toFixed(4)}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       <div>
                         <div className="flex justify-between items-center mb-1">
                           <label htmlFor="seeds-amount" className={labelStyle}>
-                            Amount ({selectedPaymentOption.symbol})
+                            Amount ({selectedTokenSymbol})
                           </label>
                           <span className="text-xs text-gray-500 dark:text-zinc-400">
-                            Balance: {parseFloat(currentBalance).toFixed(4)}{" "}
-                            {selectedPaymentOption.symbol}
+                            Balance: {parseFloat(currentBalance).toFixed(4)} {selectedTokenSymbol}
                           </span>
                         </div>
                         <div className="relative">
@@ -423,7 +394,7 @@ export const BuySeedsDialog: FC = () => {
                           <span>Token</span>
                           <span>{karmaSeeds.tokenSymbol}</span>
                         </div>
-                        {paymentMethod === "eth" && ethPrice && (
+                        {selectedTokenSymbol === "ETH" && ethPrice && (
                           <div className="flex justify-between items-center mt-1 text-xs text-gray-500 dark:text-zinc-400">
                             <span>ETH Price</span>
                             <span>${parseFloat(ethPrice).toFixed(2)}</span>
@@ -457,7 +428,8 @@ export const BuySeedsDialog: FC = () => {
                             !amount ||
                             parseFloat(amount) <= 0 ||
                             isProcessing ||
-                            chain?.id !== KARMA_SEEDS_CONFIG.chainID
+                            chain?.id !== KARMA_SEEDS_CONFIG.chainID ||
+                            tokensWithBalance.length === 0
                           }
                           className="w-full bg-emerald-600 hover:bg-emerald-700"
                         >

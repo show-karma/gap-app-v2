@@ -603,6 +603,9 @@ export const INDEXER = {
     GET: (projectUID: string) => `/v2/projects/${projectUID}/karma-seeds`,
     EXISTS: (projectUID: string) => `/v2/projects/${projectUID}/karma-seeds/exists`,
     TOTAL_RAISED: (projectUID: string) => `/v2/projects/${projectUID}/karma-seeds/total-raised`,
+    STATS: (projectUID: string) => `/v2/projects/${projectUID}/karma-seeds/stats`,
+    PREVIEW: (projectUID: string, paymentToken: string, amount: string, decimals?: number) =>
+      `/v2/projects/${projectUID}/karma-seeds/preview?paymentToken=${encodeURIComponent(paymentToken)}&amount=${amount}${decimals ? `&decimals=${decimals}` : ""}`,
     CREATE: (projectUID: string) => `/v2/projects/${projectUID}/karma-seeds`,
     SYNC: (projectUID: string) => `/v2/projects/${projectUID}/karma-seeds/sync`,
   },

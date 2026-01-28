@@ -6,6 +6,8 @@ import type {
   CreateKarmaSeedsRequest,
   KarmaSeeds,
   KarmaSeedsExistsResponse,
+  KarmaSeedsStats,
+  PreviewBuyResponse,
   TotalRaisedResponse,
 } from "@/types/karmaSeeds";
 import fetchData from "@/utilities/fetchData";
@@ -20,6 +22,9 @@ export const KARMA_SEEDS_QUERY_KEYS = {
   totalRaised: (projectUID: string) =>
     [...KARMA_SEEDS_QUERY_KEYS.all, "totalRaised", projectUID] as const,
   exists: (projectUID: string) => [...KARMA_SEEDS_QUERY_KEYS.all, "exists", projectUID] as const,
+  stats: (projectUID: string) => [...KARMA_SEEDS_QUERY_KEYS.all, "stats", projectUID] as const,
+  preview: (projectUID: string, paymentToken: string, amount: string) =>
+    [...KARMA_SEEDS_QUERY_KEYS.all, "preview", projectUID, paymentToken, amount] as const,
 };
 
 /**
@@ -73,6 +78,57 @@ async function checkKarmaSeedsExists(projectUID: string): Promise<boolean> {
 async function fetchTotalRaised(projectUID: string): Promise<TotalRaisedResponse | null> {
   const [data, error] = await fetchData<TotalRaisedResponse>(
     INDEXER.KARMA_SEEDS.TOTAL_RAISED(projectUID),
+    "GET",
+    {},
+    {},
+    {},
+    false
+  );
+
+  if (error) {
+    if (error.includes("not found") || error.includes("404")) {
+      return null;
+    }
+    throw new Error(error);
+  }
+
+  return data;
+}
+
+/**
+ * Fetch live contract stats from blockchain
+ */
+async function fetchKarmaSeedsStats(projectUID: string): Promise<KarmaSeedsStats | null> {
+  const [data, error] = await fetchData<KarmaSeedsStats>(
+    INDEXER.KARMA_SEEDS.STATS(projectUID),
+    "GET",
+    {},
+    {},
+    {},
+    false
+  );
+
+  if (error) {
+    if (error.includes("not found") || error.includes("404")) {
+      return null;
+    }
+    throw new Error(error);
+  }
+
+  return data;
+}
+
+/**
+ * Fetch preview buy calculation
+ */
+async function fetchPreviewBuy(
+  projectUID: string,
+  paymentToken: string,
+  amount: string,
+  decimals?: number
+): Promise<PreviewBuyResponse | null> {
+  const [data, error] = await fetchData<PreviewBuyResponse>(
+    INDEXER.KARMA_SEEDS.PREVIEW(projectUID, paymentToken, amount, decimals),
     "GET",
     {},
     {},
@@ -158,6 +214,39 @@ export function useTotalRaised(projectUID: string | undefined, enabled = true) {
 }
 
 /**
+ * Hook to fetch live contract stats from blockchain
+ */
+export function useKarmaSeedsStats(projectUID: string | undefined, enabled = true) {
+  return useQuery({
+    queryKey: KARMA_SEEDS_QUERY_KEYS.stats(projectUID || ""),
+    queryFn: () => fetchKarmaSeedsStats(projectUID!),
+    enabled: !!projectUID && enabled,
+    staleTime: 30 * 1000, // 30 seconds
+    refetchInterval: 30 * 1000, // Auto-refresh every 30 seconds
+    retry: 1,
+  });
+}
+
+/**
+ * Hook to preview buy calculation
+ */
+export function usePreviewBuy(
+  projectUID: string | undefined,
+  paymentToken: string | undefined,
+  amount: string | undefined,
+  decimals?: number,
+  enabled = true
+) {
+  return useQuery({
+    queryKey: KARMA_SEEDS_QUERY_KEYS.preview(projectUID || "", paymentToken || "", amount || ""),
+    queryFn: () => fetchPreviewBuy(projectUID!, paymentToken!, amount!, decimals),
+    enabled: !!projectUID && !!paymentToken && !!amount && parseFloat(amount) > 0 && enabled,
+    staleTime: 10 * 1000, // 10 seconds (prices can change)
+    retry: 1,
+  });
+}
+
+/**
  * Hook to create Karma Seeds record
  */
 export function useCreateKarmaSeeds() {
@@ -189,4 +278,10 @@ export function useCreateKarmaSeeds() {
   });
 }
 
-export type { KarmaSeeds, TotalRaisedResponse, CreateKarmaSeedsRequest };
+export type {
+  KarmaSeeds,
+  TotalRaisedResponse,
+  CreateKarmaSeedsRequest,
+  KarmaSeedsStats,
+  PreviewBuyResponse,
+};
