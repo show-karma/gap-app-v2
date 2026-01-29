@@ -24,6 +24,17 @@ interface LiveFundingOpportunitiesCarouselProps {
   programs: FundingProgramResponse[];
 }
 
+/**
+ * Generate a stable unique key for a program.
+ * Uses programId-chainID when available, falls back to _id for uniqueness.
+ */
+function getProgramKey(program: FundingProgramResponse): string {
+  if (program.programId && program.chainID) {
+    return `${program.programId}-${program.chainID}`;
+  }
+  return typeof program._id === "string" ? program._id : program._id.$oid;
+}
+
 function getProgramDetailUrl(program: FundingProgramResponse): string | null {
   const communitySlug = program.communities?.[0]?.slug;
   const programId = program.programId;
@@ -109,7 +120,7 @@ export function LiveFundingOpportunitiesCarousel({
 
             return (
               <CarouselItem
-                key={`${program.programId}-${program.chainID}`}
+                key={getProgramKey(program)}
                 className="pl-2 md:pl-4 basis-full sm:basis-1/2 xl:basis-1/3 flex flex-col"
               >
                 <FundingMapCard
