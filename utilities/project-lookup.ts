@@ -30,7 +30,14 @@ export function findProjectBySlugOrUid(
     return undefined;
   }
 
-  return projects.find((project) => project.slug === identifier || project.uid === identifier);
+  // Two-pass lookup: prioritize slug match over UID match
+  // This prevents edge cases where a UID equals another project's slug
+  const slugMatch = projects.find((project) => project.slug === identifier);
+  if (slugMatch) {
+    return slugMatch;
+  }
+
+  return projects.find((project) => project.uid === identifier);
 }
 
 /**

@@ -53,16 +53,8 @@ export default function CommunityUpdatesPage() {
     "programId",
     {
       defaultValue: null,
-      serialize: (value) => {
-        if (!value) return "";
-        const normalized = value.includes("_") ? value.split("_")[0] : value;
-        return normalized;
-      },
-      parse: (value) => {
-        if (!value) return null;
-        const normalized = value.includes("_") ? value.split("_")[0] : value;
-        return normalized;
-      },
+      serialize: (value) => value ?? "",
+      parse: (value) => value || null,
     }
   );
 
@@ -111,6 +103,11 @@ export default function CommunityUpdatesPage() {
       previousProgramRef.current = selectedProgramId;
     }
   }, [selectedProgramId, changeSelectedProjectIdQuery]);
+
+  // Reset pagination when program or project filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedProgramId, selectedProjectId]);
 
   // Fetch community updates from API using custom hook
   const { data, isLoading, error } = useCommunityProjectUpdates(communityId, {

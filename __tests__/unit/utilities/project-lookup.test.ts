@@ -75,11 +75,11 @@ describe("project-lookup utilities", () => {
       ];
 
       // When searching for "slug-of-other", it should match Project B's slug first
-      // because Array.find returns the first match
+      // because slug matches take priority over UID matches (two-pass lookup)
       const result = findProjectBySlugOrUid(edgeCaseProjects, "slug-of-other");
 
-      // Should match Project A by uid (first in array) because find checks slug || uid
-      expect(result?.title).toBe("Project A");
+      // Should match Project B by slug (slug has priority over UID)
+      expect(result?.title).toBe("Project B");
     });
   });
 
