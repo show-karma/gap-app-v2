@@ -20,22 +20,23 @@ function ProjectsSkeleton() {
       {Array.from({ length: 8 }).map((_, index) => (
         <div
           key={index}
-          className="border border-gray-200 dark:border-zinc-700 rounded-lg overflow-hidden bg-white dark:bg-zinc-900 animate-pulse"
+          className="rounded-2xl overflow-hidden bg-gradient-to-br from-white/80 to-white/40 dark:from-white/5 dark:to-white/[0.02] border border-emerald-100/30 dark:border-emerald-800/20 animate-pulse"
+          style={{ animationDelay: `${index * 0.05}s` }}
         >
-          <div className="h-2 bg-gray-200 dark:bg-zinc-700" />
-          <div className="p-4">
+          <div className="h-2 bg-gradient-to-r from-emerald-200 to-green-200 dark:from-emerald-800 dark:to-green-800" />
+          <div className="p-5">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-zinc-700" />
-              <div className="flex-1 h-5 bg-gray-200 dark:bg-zinc-700 rounded" />
+              <div className="w-12 h-12 rounded-xl bg-emerald-100/50 dark:bg-emerald-900/30" />
+              <div className="flex-1 h-5 bg-emerald-100/50 dark:bg-emerald-900/30 rounded-lg" />
             </div>
-            <div className="h-4 bg-gray-200 dark:bg-zinc-700 rounded mb-2 w-1/2" />
+            <div className="h-4 bg-emerald-100/30 dark:bg-emerald-900/20 rounded-lg mb-2 w-1/2" />
             <div className="space-y-2 mb-4">
-              <div className="h-4 bg-gray-200 dark:bg-zinc-700 rounded" />
-              <div className="h-4 bg-gray-200 dark:bg-zinc-700 rounded w-3/4" />
+              <div className="h-4 bg-emerald-100/30 dark:bg-emerald-900/20 rounded-lg" />
+              <div className="h-4 bg-emerald-100/30 dark:bg-emerald-900/20 rounded-lg w-3/4" />
             </div>
             <div className="flex gap-2">
-              <div className="h-6 w-20 bg-gray-200 dark:bg-zinc-700 rounded" />
-              <div className="h-6 w-20 bg-gray-200 dark:bg-zinc-700 rounded" />
+              <div className="h-7 w-20 bg-emerald-100/30 dark:bg-emerald-900/20 rounded-lg" />
+              <div className="h-7 w-20 bg-emerald-100/30 dark:bg-emerald-900/20 rounded-lg" />
             </div>
           </div>
         </div>
@@ -46,18 +47,24 @@ function ProjectsSkeleton() {
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-6">
-        <Sprout className="w-10 h-10 text-green-600 dark:text-green-400" />
+    <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+      <div className="relative mb-8">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/30 to-green-400/30 rounded-full blur-2xl scale-150" />
+        <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-emerald-100 to-green-100 dark:from-emerald-900/50 dark:to-green-900/30 flex items-center justify-center border border-emerald-200/50 dark:border-emerald-800/30">
+          <Sprout className="w-12 h-12 text-emerald-600 dark:text-emerald-400" />
+        </div>
       </div>
-      <h3 className="text-2xl font-semibold text-foreground mb-2">Be among the first</h3>
-      <p className="text-muted-foreground max-w-md mb-6">
+      <h3 className="text-2xl font-bold text-foreground mb-3">Be among the first</h3>
+      <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">
         Projects are preparing to launch Seeds. Check back soon, or launch Seeds for your own
         project.
       </p>
-      <Button asChild className="bg-green-600 hover:bg-green-700 text-white">
+      <Button
+        asChild
+        className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl font-semibold px-8 py-6 seeds-glow group"
+      >
         <Link href={PAGES.SEEDS_LAUNCH}>
-          <Sprout className="w-4 h-4 mr-2" />
+          <Sprout className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" />
           Launch Seeds
         </Link>
       </Button>
@@ -89,31 +96,33 @@ export function SeedsProjectsSection() {
   return (
     <section
       id="projects"
-      className={cn(marketingLayoutTheme.padding, "py-16 w-full scroll-mt-20")}
+      className={cn(marketingLayoutTheme.padding, "py-16 md:py-24 w-full scroll-mt-20")}
     >
       <SectionContainer maxWidth="wide">
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12">
-          <div className="flex flex-col gap-4">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
+          <div className="flex flex-col gap-5">
             <Badge
               variant="secondary"
-              className="w-fit bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800"
+              className="w-fit bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/50 dark:to-green-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-700/50 px-4 py-1.5 text-sm font-medium"
             >
               Featured Projects
             </Badge>
-            <h2 className="section-title text-foreground">Projects accepting Seeds</h2>
-            <p className="text-xl font-normal text-muted-foreground leading-[30px] tracking-normal max-w-2xl">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
+              Projects accepting Seeds
+            </h2>
+            <p className="text-lg md:text-xl font-normal text-muted-foreground leading-relaxed max-w-2xl">
               Back the projects you believe in. Seeds live in your wallet as proof of early support.
             </p>
           </div>
           <Button
             asChild
             variant="outline"
-            className="w-fit border-green-600 text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-950/50"
+            className="w-fit border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950/50 rounded-xl font-medium px-6 group"
           >
             <Link href={PAGES.PROJECTS_EXPLORER}>
               View All Projects
-              <ArrowRight className="w-4 h-4 ml-2" />
+              <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
             </Link>
           </Button>
         </div>

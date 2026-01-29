@@ -12,73 +12,71 @@ export function SeedsCTA() {
       id="cta"
       className={cn(
         marketingLayoutTheme.padding,
-        "py-20 w-full scroll-mt-20 relative overflow-hidden"
+        "py-24 md:py-32 w-full scroll-mt-20 relative overflow-hidden"
       )}
     >
-      {/* Background gradient */}
-      <div
-        className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-green-600/10 dark:from-green-900/20 dark:via-emerald-900/10 dark:to-green-800/20"
-        aria-hidden="true"
-      />
+      {/* Multi-layered gradient background */}
+      <div className="absolute inset-0" aria-hidden="true">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/60 via-green-50/40 to-teal-100/60 dark:from-emerald-950/40 dark:via-green-950/20 dark:to-teal-950/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-background/80" />
+      </div>
 
       {/* Decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute top-10 left-10 w-32 h-32 rounded-full bg-green-400/10 blur-3xl" />
-        <div className="absolute bottom-10 right-10 w-40 h-40 rounded-full bg-emerald-400/10 blur-3xl" />
-        <div className="absolute top-1/2 left-1/4 w-24 h-24 rounded-full bg-green-300/10 blur-2xl" />
+        <div className="seeds-blob seeds-float absolute top-10 left-10 w-48 h-48 bg-gradient-to-br from-emerald-400/20 to-green-400/10 blur-3xl" />
+        <div className="seeds-blob seeds-float-delayed absolute bottom-10 right-10 w-56 h-56 bg-gradient-to-br from-teal-400/20 to-emerald-400/10 blur-3xl" />
+        <div className="seeds-blob seeds-float-slow absolute top-1/2 left-1/4 w-36 h-36 bg-gradient-to-br from-green-300/15 to-teal-300/10 blur-2xl" />
+
+        {/* Floating sprout icons */}
+        <Sprout className="absolute top-1/4 right-[20%] w-8 h-8 text-emerald-300/25 dark:text-emerald-500/20 seeds-float rotate-12" />
+        <Sprout className="absolute bottom-1/3 left-[15%] w-6 h-6 text-green-300/25 dark:text-green-500/20 seeds-float-delayed -rotate-12" />
       </div>
 
       <SectionContainer className="relative z-10">
-        <div className="flex flex-col items-center text-center gap-6 max-w-3xl mx-auto">
+        <div className="flex flex-col items-center text-center gap-8 max-w-3xl mx-auto">
           <Badge
             variant="secondary"
-            className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800"
+            className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/50 dark:to-green-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-700/50 px-4 py-1.5 text-sm font-medium seeds-pulse"
           >
-            <Sprout className="w-4 h-4 mr-1.5" />
+            <Sprout className="w-4 h-4 mr-2" />
             Get Started
           </Badge>
 
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground leading-tight">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-[1.1] tracking-tight">
             Find a project to support
           </h2>
 
-          <p className="text-xl text-muted-foreground max-w-2xl">
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl leading-relaxed">
             Browse projects on Karma and find ones building things you care about. For every dollar
             you contribute, you'll receive a Seed in your wallet—proof that you believed early.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 mt-4">
-            <div className="relative">
-              {/* Blurred gradient background for primary CTA */}
-              <div
-                className="pointer-events-none absolute -inset-1 bg-gradient-to-r from-green-400 to-emerald-400 opacity-50 blur-md rounded-lg"
-                aria-hidden="true"
-              />
-              <Button
-                asChild
-                size="lg"
-                className="relative bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg"
-              >
-                <Link href="#projects">
-                  <Sprout className="w-5 h-5 mr-2" />
-                  Explore Projects
-                </Link>
-              </Button>
-            </div>
+          <div className="flex flex-col sm:flex-row gap-5 mt-4">
+            <Button
+              asChild
+              size="lg"
+              className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl font-semibold px-10 py-7 text-lg seeds-glow group"
+            >
+              <Link href="#projects">
+                <Sprout className="w-6 h-6 mr-2 transition-transform group-hover:scale-110" />
+                Explore Projects
+              </Link>
+            </Button>
           </div>
 
           {/* Soft CTA for builders */}
-          <div className="mt-8 pt-8 border-t border-green-200/50 dark:border-green-800/50 w-full max-w-md">
-            <p className="text-muted-foreground mb-3">Building something?</p>
+          <div className="mt-12 pt-10 w-full max-w-lg">
+            <div className="seeds-line mb-8" />
+            <p className="text-muted-foreground mb-4 text-lg">Building something?</p>
             <Button
               asChild
               variant="ghost"
-              className="text-green-700 hover:text-green-800 hover:bg-green-100/50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/30"
+              className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-100/50 dark:text-emerald-400 dark:hover:text-emerald-300 dark:hover:bg-emerald-900/30 rounded-xl font-medium px-6 py-5 group"
             >
               <Link href="/seeds/launch">
-                <Rocket className="w-4 h-4 mr-2" />
+                <Rocket className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" />
                 Launch Seeds for your project
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
               </Link>
             </Button>
           </div>
