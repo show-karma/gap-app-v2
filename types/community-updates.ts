@@ -19,6 +19,7 @@ export interface ProjectInfo {
 
 export interface GrantInfo {
   uid: string;
+  programId?: string | null;
   details: {
     data: {
       title: string;

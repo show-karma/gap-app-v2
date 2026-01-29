@@ -9,13 +9,15 @@ export interface FetchCommunityProjectUpdatesParams {
   communityId: string;
   page?: number;
   limit?: number;
-  status?: "all" | "pending" | "completed";
+  status?: "all" | "pending" | "completed" | "past_due";
+  programId?: string | null;
+  projectId?: string | null;
 }
 
 export async function fetchCommunityProjectUpdates(
   params: FetchCommunityProjectUpdatesParams
 ): Promise<CommunityUpdatesResponse> {
-  const { communityId, page = 1, limit = 25, status = "all" } = params;
+  const { communityId, page = 1, limit = 25, status = "all", programId, projectId } = params;
 
   try {
     const searchParams = new URLSearchParams({
@@ -24,7 +26,16 @@ export async function fetchCommunityProjectUpdates(
     });
 
     if (status !== "all") {
+      // Send status directly to API - backend handles all filtering including past_due
       searchParams.append("status", status);
+    }
+
+    if (programId) {
+      searchParams.append("programId", programId);
+    }
+
+    if (projectId) {
+      searchParams.append("projectId", projectId);
     }
 
     const url = `${API_URL}${INDEXER.COMMUNITY.PROJECT_UPDATES(
