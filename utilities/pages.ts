@@ -27,11 +27,7 @@ export const PAGES = {
     DASHBOARD: (community: string) => `/community/${community}/reviewer/funding-platform`,
     APPLICATIONS: (community: string, programId: string) =>
       `/community/${community}/reviewer/funding-platform/${programId}/applications`,
-    APPLICATION_DETAIL: (
-      community: string,
-      programId: string,
-      applicationId: string
-    ) =>
+    APPLICATION_DETAIL: (community: string, programId: string, applicationId: string) =>
       `/community/${community}/reviewer/funding-platform/${programId}/applications/${applicationId}`,
     QUESTION_BUILDER: (community: string, programId: string) =>
       `/community/${community}/reviewer/funding-platform/${programId}/question-builder`,
@@ -86,6 +82,8 @@ export const PAGES = {
   STATS: `/stats`,
   SUMUP_CONFIG: `/admin/sumup`,
   FUNDERS: `/funders`,
+  SEEDS: `/seeds`,
+  SEEDS_LAUNCH: `/seeds/launch`,
 };
 
 export const FUNDING_PLATFORM_PAGES = (tenantId: string, _domain?: string) => {
