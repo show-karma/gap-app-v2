@@ -14,12 +14,7 @@ import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProje
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useApplicationVersions } from "@/hooks/useFundingPlatform";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
-import type {
-  IFormField,
-  IFundingApplication,
-  IFundingProgramConfig,
-  ProgramWithFormSchema,
-} from "@/types/funding-platform";
+import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";

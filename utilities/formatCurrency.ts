@@ -1,5 +1,3 @@
-import millify from "millify";
-
 const WEI_PER_ETH = 1e18;
 
 /**

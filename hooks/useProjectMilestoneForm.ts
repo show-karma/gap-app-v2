@@ -143,7 +143,7 @@ export function useProjectMilestoneForm({
 
   const updateMilestone = async (data: ProjectMilestoneFormData) => {
     if (!gap || !previousMilestone) return;
-    const gapClient = gap;
+    const _gapClient = gap;
     setIsLoading(true);
     startAttestation("Updating milestone...");
 

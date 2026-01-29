@@ -32,21 +32,21 @@ interface SettingsConfigurationProps {
 }
 
 // Convert local datetime-local value to UTC ISO string
-const convertLocalToUTC = (localDatetime: string | undefined): string | undefined => {
+const _convertLocalToUTC = (localDatetime: string | undefined): string | undefined => {
   if (!localDatetime) return undefined;
 
   const localDate = new Date(localDatetime);
-  if (isNaN(localDate.getTime())) return undefined;
+  if (Number.isNaN(localDate.getTime())) return undefined;
 
   return formatDate(localDate, "ISO");
 };
 
 // Convert UTC ISO string to local datetime-local format (YYYY-MM-DDTHH:mm)
-const convertUTCToLocal = (utcDatetime: string | undefined): string => {
+const _convertUTCToLocal = (utcDatetime: string | undefined): string => {
   if (!utcDatetime) return "";
 
   const date = new Date(utcDatetime);
-  if (isNaN(date.getTime())) return "";
+  if (Number.isNaN(date.getTime())) return "";
 
   return formatDate(date, "local", "datetime-local");
 };

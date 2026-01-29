@@ -229,10 +229,8 @@ describe("TabPanel", () => {
     it("handles fragment children", () => {
       render(
         <TabPanel>
-          <>
-            <span data-testid="fragment-child-1">One</span>
-            <span data-testid="fragment-child-2">Two</span>
-          </>
+          <span data-testid="fragment-child-1">One</span>
+          <span data-testid="fragment-child-2">Two</span>
         </TabPanel>
       );
 

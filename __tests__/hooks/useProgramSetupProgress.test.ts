@@ -3,7 +3,7 @@
  * @description Tests the setup progress calculation logic for funding programs
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import { useProgramSetupProgress } from "@/hooks/useProgramSetupProgress";
 
 // Mock dependencies

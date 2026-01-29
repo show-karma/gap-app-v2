@@ -1,7 +1,6 @@
 import {
   createFieldLabelsMap,
   createFieldTypeMap,
-  type ExtractedAmountField,
   extractAmountField,
   extractApplicationSummary,
 } from "@/utilities/form-schema-helpers";

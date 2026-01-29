@@ -29,7 +29,7 @@ export const ALCHEMY_POLICY_ID = envVars.ALCHEMY_POLICY_ID || "";
  * Generates ZeroDev RPC URLs for a given chain.
  * Uses the v3 pattern: https://rpc.zerodev.app/api/v3/{projectId}/chain/{chainId}
  */
-function getZeroDevRpcUrl(chainId: number): string {
+function _getZeroDevRpcUrl(chainId: number): string {
   return `https://rpc.zerodev.app/api/v3/${ZERODEV_PROJECT_ID}/chain/${chainId}`;
 }
 

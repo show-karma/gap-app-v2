@@ -3,12 +3,12 @@ import { isValidProjectUid, PROJECT_UID_REGEX, sanitizeNumericInput } from "../v
 describe("validation utilities", () => {
   describe("PROJECT_UID_REGEX", () => {
     it("should match valid 66-character hex UIDs starting with 0x", () => {
-      const validUID = "0x" + "a".repeat(64);
+      const validUID = `0x${"a".repeat(64)}`;
       expect(PROJECT_UID_REGEX.test(validUID)).toBe(true);
     });
 
     it("should match UIDs with mixed case hex characters", () => {
-      const validUID = "0xaBcDeF0123456789" + "a".repeat(48);
+      const validUID = `0xaBcDeF0123456789${"a".repeat(48)}`;
       expect(PROJECT_UID_REGEX.test(validUID)).toBe(true);
     });
 
@@ -18,21 +18,21 @@ describe("validation utilities", () => {
     });
 
     it("should not match UIDs with incorrect length", () => {
-      const shortUID = "0x" + "a".repeat(63);
-      const longUID = "0x" + "a".repeat(65);
+      const shortUID = `0x${"a".repeat(63)}`;
+      const longUID = `0x${"a".repeat(65)}`;
       expect(PROJECT_UID_REGEX.test(shortUID)).toBe(false);
       expect(PROJECT_UID_REGEX.test(longUID)).toBe(false);
     });
 
     it("should not match UIDs with non-hex characters", () => {
-      const invalidUID = "0x" + "g".repeat(64);
+      const invalidUID = `0x${"g".repeat(64)}`;
       expect(PROJECT_UID_REGEX.test(invalidUID)).toBe(false);
     });
   });
 
   describe("isValidProjectUid", () => {
     it("should return true for valid project UIDs", () => {
-      const validUID = "0x" + "a".repeat(64);
+      const validUID = `0x${"a".repeat(64)}`;
       expect(isValidProjectUid(validUID)).toBe(true);
     });
 

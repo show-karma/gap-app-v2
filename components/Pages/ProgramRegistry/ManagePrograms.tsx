@@ -18,7 +18,6 @@ import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramLis
 import {
   getProgramIdForUrl,
   normalizeGrantTypesArray,
-  parseProgramIdAndChainId,
 } from "@/components/Pages/ProgramRegistry/programUtils";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";

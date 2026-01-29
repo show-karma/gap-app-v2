@@ -40,7 +40,7 @@ export const formatDate = (
   const d = new Date(normalizedDate);
 
   // Handle invalid dates
-  if (isNaN(d.getTime())) {
+  if (Number.isNaN(d.getTime())) {
     return "";
   }
 

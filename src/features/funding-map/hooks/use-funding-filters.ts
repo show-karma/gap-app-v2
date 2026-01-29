@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  createParser,
-  parseAsArrayOf,
-  parseAsBoolean,
-  parseAsInteger,
-  parseAsString,
-  useQueryState,
-} from "nuqs";
+import { createParser, parseAsBoolean, parseAsInteger, parseAsString, useQueryState } from "nuqs";
 import { useCallback, useMemo } from "react";
 import { FUNDING_MAP_PAGE_SIZE } from "../constants/filter-options";
 import type { FetchFundingProgramsParams } from "../types/funding-program";

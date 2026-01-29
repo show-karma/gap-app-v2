@@ -12,7 +12,6 @@ import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompleti
 import { useIsReviewer, useReviewerPrograms } from "@/hooks/usePermissions";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
-import { useOwnerStore } from "@/store";
 import { PAGES } from "@/utilities/pages";
 import { CommentsAndActivity } from "./CommentsAndActivity";
 import { GrantCompleteButtonForReviewer } from "./GrantCompleteButtonForReviewer";

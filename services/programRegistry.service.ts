@@ -1,7 +1,5 @@
 import type {
   CreateProgramFormData,
-  ProgramApprovalRequest,
-  ProgramCreationRequest,
   ProgramCreationResult,
   ProgramMetadata,
 } from "@/types/program-registry";
@@ -152,7 +150,7 @@ export class ProgramRegistryService {
    * Create a program (V2 endpoint)
    */
   static async createProgram(
-    owner: string,
+    _owner: string,
     chainId: number,
     metadata: ProgramMetadata
   ): Promise<ProgramCreationResult> {

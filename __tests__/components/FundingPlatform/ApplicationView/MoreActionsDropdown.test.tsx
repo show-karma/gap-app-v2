@@ -33,11 +33,7 @@ beforeAll(() => {
   // Mock PointerEvent for Radix UI
   Object.defineProperty(window, "PointerEvent", {
     writable: true,
-    value: class PointerEvent extends MouseEvent {
-      constructor(type: string, props: PointerEventInit) {
-        super(type, props);
-      }
-    },
+    value: class PointerEvent extends MouseEvent {},
   });
 
   // Setup clipboard mock

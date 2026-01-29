@@ -300,7 +300,7 @@ function formatSummaryValue(value: unknown): string | null {
 
   // Truncate long strings
   if (stringValue.length > 100) {
-    return stringValue.substring(0, 97) + "...";
+    return `${stringValue.substring(0, 97)}...`;
   }
 
   return stringValue;

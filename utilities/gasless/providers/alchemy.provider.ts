@@ -8,7 +8,6 @@ import type {
   ChainGaslessConfig,
   CreateClientParams,
   IGaslessProvider,
-  LocalAccountWithEIP7702,
   SmartAccountClient,
 } from "../types";
 import { GaslessProviderError } from "../types";
@@ -61,8 +60,6 @@ export class AlchemyProvider implements IGaslessProvider {
     }
 
     try {
-      console.log("[Alchemy] Creating EIP-7702 Modular Account V2 client for chain:", chainId);
-
       // Create Alchemy signer from the Privy LocalAccount
       // Cast to 'any' because LocalAccountSigner expects viem's LocalAccount type,
       // but our LocalAccountWithEIP7702 is compatible at runtime
@@ -77,9 +74,6 @@ export class AlchemyProvider implements IGaslessProvider {
         signer: alchemySigner,
         policyId: config.alchemy.policyId,
       });
-
-      console.log("[Alchemy] Smart account client created successfully");
-      console.log("[Alchemy] Account address:", smartAccountClient.account?.address);
 
       return smartAccountClient;
     } catch (error) {
@@ -126,11 +120,6 @@ export class AlchemyProvider implements IGaslessProvider {
         // Route transaction-related calls through the smart account client
         if (method === "eth_sendTransaction") {
           const tx = (params as Array<{ to: string; data: string; value?: string }>)[0];
-          console.log("[Alchemy] Sending transaction via smart account client:", {
-            to: tx.to,
-            dataLength: tx.data?.length || 0,
-            value: tx.value,
-          });
 
           try {
             // Alchemy uses sendUserOperation for smart account transactions
@@ -144,7 +133,6 @@ export class AlchemyProvider implements IGaslessProvider {
 
             // Wait for the user operation to be included
             const txHash = await client.waitForUserOperationTransaction(result);
-            console.log("[Alchemy] Transaction successful:", txHash);
             return txHash;
           } catch (txError) {
             console.error("[Alchemy] Transaction failed:", txError);

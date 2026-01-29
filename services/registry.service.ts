@@ -1,5 +1,4 @@
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { parseProgramIdAndChainId } from "@/components/Pages/ProgramRegistry/programUtils";
 import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
