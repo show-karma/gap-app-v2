@@ -196,18 +196,18 @@ export default function CommunityUpdatesPage() {
 
   return (
     <div className="flex flex-col items-center justify-start">
-      <div className="flex flex-col gap-6 my-10 max-lg:my-5 max-w-full w-full">
+      <div className="flex flex-col gap-6 max-w-full w-full">
         {/* Filter row */}
-        <div className="px-3 py-4 bg-gray-100 dark:bg-zinc-900 rounded-lg flex flex-row items-center w-full gap-8 max-lg:flex-col max-lg:gap-4 max-lg:justify-start max-lg:items-start">
+        <div className="px-3 py-4 bg-gray-100 dark:bg-zinc-900 rounded-lg flex flex-row  flex-wrap items-center w-full gap-4 max-lg:flex-col max-lg:gap-4 max-lg:justify-start max-lg:items-start">
           {/* Left side - Filters */}
-          <div className="flex flex-row items-center gap-6 flex-wrap max-lg:w-full">
+          <div className="flex flex-row items-center gap-4 max-lg:w-full max-lg:flex-col max-lg:items-start">
             {/* Status filter dropdown */}
             <Select
               value={selectedFilter}
               onValueChange={(value) => handleFilterChange(value as FilterOption)}
             >
               <SelectTrigger
-                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-blue dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-600 min-w-[120px]"
+                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-blue dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-600 w-[130px]"
                 aria-label="Filter by status"
               >
                 <SelectValue />
@@ -222,7 +222,7 @@ export default function CommunityUpdatesPage() {
             </Select>
 
             {/* Program filter */}
-            <div className="flex flex-row gap-2 items-center flex-1 max-w-[350px]">
+            <div className="flex flex-row gap-2 items-center max-lg:w-full">
               <Image
                 src="/icons/program.svg"
                 alt="program"
@@ -240,7 +240,7 @@ export default function CommunityUpdatesPage() {
                 type="Programs"
                 selected={selectedProgram ? [selectedProgram.title] : []}
                 prefixUnselected="All"
-                buttonClassname="w-full max-w-full"
+                buttonClassname="w-[200px] max-lg:w-full"
                 isMultiple={false}
                 cleanFunction={() => changeSelectedProgramIdQuery(null)}
                 isLoading={programsLoading}
@@ -248,7 +248,7 @@ export default function CommunityUpdatesPage() {
             </div>
 
             {/* Project filter */}
-            <div className="flex flex-row gap-2 items-center flex-1 max-w-[350px]">
+            <div className="flex flex-row gap-2 items-center max-lg:w-full">
               <Image
                 src="/icons/project.png"
                 alt="Project"
@@ -266,7 +266,7 @@ export default function CommunityUpdatesPage() {
                 type="Projects"
                 selected={selectedProject ? [selectedProject.title] : []}
                 prefixUnselected="All"
-                buttonClassname="w-full max-w-full"
+                buttonClassname="w-[200px] max-lg:w-full"
                 isMultiple={false}
                 cleanFunction={() => changeSelectedProjectIdQuery(null)}
                 isLoading={projectsLoading}
