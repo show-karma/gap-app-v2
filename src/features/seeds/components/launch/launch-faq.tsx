@@ -61,18 +61,25 @@ const launchFAQs: FAQItem[] = [
 
 export function LaunchFAQ() {
   return (
-    <section className={cn(marketingLayoutTheme.padding, "py-16 w-full bg-muted/30")}>
-      <SectionContainer>
+    <section
+      className={cn(marketingLayoutTheme.padding, "py-16 md:py-24 w-full relative overflow-hidden")}
+    >
+      {/* Subtle background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-50/30 to-transparent dark:via-emerald-950/10" />
+
+      <SectionContainer className="relative z-10">
         {/* Section Header */}
-        <div className="flex flex-col items-center gap-4 mb-12 text-center">
+        <div className="flex flex-col items-center gap-5 mb-16 text-center">
           <Badge
             variant="secondary"
-            className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800"
+            className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/50 dark:to-green-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-700/50 px-4 py-1.5 text-sm font-medium"
           >
             FAQs for Projects
           </Badge>
-          <h2 className="section-title text-foreground">Frequently asked questions</h2>
-          <p className="text-xl font-normal text-muted-foreground leading-[30px] tracking-normal">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
+            Frequently asked questions
+          </h2>
+          <p className="text-lg md:text-xl font-normal text-muted-foreground leading-relaxed">
             Common questions about launching Seeds for your project.
           </p>
         </div>
@@ -83,22 +90,24 @@ export function LaunchFAQ() {
         </div>
 
         {/* Contact Section */}
-        <div className="mt-12 text-center">
-          <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-6 rounded-lg bg-card border border-border">
-            <div className="text-center sm:text-left">
-              <h3 className="font-semibold text-foreground">Still have questions?</h3>
-              <p className="text-sm text-muted-foreground">
+        <div className="mt-16 text-center">
+          <div className="relative inline-flex flex-col sm:flex-row items-center gap-6 p-8 rounded-3xl overflow-hidden">
+            {/* Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/40 dark:from-white/5 dark:to-white/[0.02] border border-emerald-100/50 dark:border-emerald-800/30 rounded-3xl" />
+
+            <div className="relative text-center sm:text-left">
+              <h3 className="font-bold text-xl text-foreground mb-1">Still have questions?</h3>
+              <p className="text-muted-foreground">
                 Reach out to us and we'll help you get started.
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="relative">
               <Button
                 asChild
-                variant="outline"
-                className="border-green-600 text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-950/50"
+                className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl font-medium px-6 py-5 seeds-glow group"
               >
                 <Link href={SOCIALS.TELEGRAM} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="w-4 h-4 mr-2" />
+                  <MessageCircle className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" />
                   Ask in Telegram
                 </Link>
               </Button>
