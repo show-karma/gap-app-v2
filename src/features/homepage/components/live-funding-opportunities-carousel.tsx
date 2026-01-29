@@ -4,7 +4,7 @@ import { ArrowRightIcon } from "@heroicons/react/20/solid";
 import { FolderOpen } from "lucide-react";
 import Link from "next/link";
 import pluralize from "pluralize";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Carousel,
@@ -14,21 +14,20 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import type { FundingProgram } from "@/services/fundingPlatformService";
 import { FundingMapCard } from "@/src/features/funding-map/components/funding-map-card";
+import type { FundingProgramResponse } from "@/src/features/funding-map/types/funding-program";
 import { FUNDING_PLATFORM_DOMAINS } from "@/src/features/funding-map/utils/funding-platform-domains";
-import { mapFundingProgramToResponse } from "@/src/features/funding-map/utils/map-funding-program";
 import { envVars } from "@/utilities/enviromentVars";
 import { FUNDING_PLATFORM_PAGES, PAGES } from "@/utilities/pages";
 
 interface LiveFundingOpportunitiesCarouselProps {
-  programs: FundingProgram[];
+  programs: FundingProgramResponse[];
 }
 
-function getProgramDetailUrl(
-  communitySlug: string | undefined,
-  programId: string | undefined
-): string | null {
+function getProgramDetailUrl(program: FundingProgramResponse): string | null {
+  const communitySlug = program.communities?.[0]?.slug;
+  const programId = program.programId;
+
   if (!communitySlug || !programId) {
     return null;
   }
@@ -51,12 +50,6 @@ export function LiveFundingOpportunitiesCarousel({
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [totalSlides, setTotalSlides] = useState(0);
-
-  // Map FundingProgram to FundingProgramResponse for FundingMapCard
-  const mappedPrograms = useMemo(
-    () => programs.map((program) => mapFundingProgramToResponse(program)),
-    [programs]
-  );
 
   useEffect(() => {
     if (!api) {
@@ -111,20 +104,16 @@ export function LiveFundingOpportunitiesCarousel({
         className="w-full"
       >
         <CarouselContent className="-ml-2 md:-ml-4 flex items-stretch">
-          {mappedPrograms.map((mappedProgram, index) => {
-            const originalProgram = programs[index];
-            const detailUrl = getProgramDetailUrl(
-              originalProgram.communitySlug,
-              originalProgram.programId
-            );
+          {programs.map((program) => {
+            const detailUrl = getProgramDetailUrl(program);
 
             return (
               <CarouselItem
-                key={`${originalProgram.programId}-${originalProgram.chainID}`}
+                key={`${program.programId}-${program.chainID}`}
                 className="pl-2 md:pl-4 basis-full sm:basis-1/2 xl:basis-1/3 flex flex-col"
               >
                 <FundingMapCard
-                  program={mappedProgram}
+                  program={program}
                   hideDescription
                   hideCategories
                   onClick={
