@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
 import { Suspense } from "react";
 import type { Hex } from "viem";
 import { GrantCompletionCard } from "@/components/Pages/Grants/MilestonesAndUpdates";
@@ -130,10 +131,13 @@ export const GrantOverview = () => {
                   )}
                 >
                   <div className="w-full inline-flex items-center gap-x-2 rounded-3xl bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
-                    <img
-                      src={grant?.community?.details?.imageURL}
-                      alt=""
-                      className="h-5 w-5 rounded-full"
+                    <Image
+                      src={grant?.community?.details?.imageURL || ""}
+                      alt={grant?.community?.details?.name || "Community"}
+                      width={20}
+                      height={20}
+                      className="rounded-full"
+                      unoptimized
                     />
                     <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm w-full break-words whitespace-break-spaces">
                       {grant?.community?.details?.name}
@@ -147,12 +151,17 @@ export const GrantOverview = () => {
                 </div>
 
                 <div className="inline-flex items-center gap-x-2 rounded-full bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
-                  <img
+                  <Image
                     src={chainImgDictionary(
                       grant?.community?.chainID || (grant?.chainID as number)
                     )}
-                    alt=""
-                    className="h-5 w-5 rounded-full"
+                    alt={chainNameDictionary(
+                      grant?.community?.chainID || (grant?.chainID as number)
+                    )}
+                    width={20}
+                    height={20}
+                    className="rounded-full"
+                    unoptimized
                   />
                   <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm  w-full break-words whitespace-break-spaces">
                     {chainNameDictionary(grant?.community?.chainID || (grant?.chainID as number))}

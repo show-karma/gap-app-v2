@@ -66,24 +66,35 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
       );
       if (!grantInstance) return;
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
+        let shouldRedirect = false;
+
+        // Try to verify deletion with a reasonable timeout (30 retries = ~45 seconds)
         await retryUntilConditionMet(
           async () => {
             const { data: fetchedGrants } = await refetchGrants();
             const stillExist = fetchedGrants?.find(
               (g) => g.uid?.toLowerCase() === grantUID?.toLowerCase()
             );
-            if (!stillExist) {
-              if (fetchedGrants && fetchedGrants.length > 0) {
-                router.push(PAGES.PROJECT.GRANTS(project?.uid || project?.details?.slug || ""));
-              }
+            if (!stillExist && fetchedGrants && fetchedGrants.length > 0) {
+              shouldRedirect = true;
             }
 
             return !stillExist;
           },
           () => {
             callbackFn?.();
-          }
+          },
+          30, // Reduced from 1000 to 30 retries (~45 seconds max)
+          1500
         );
+
+        // Always refresh the UI after the operation
+        await refetchGrants();
+
+        // Redirect if the grant was deleted and there are other grants
+        if (shouldRedirect) {
+          router.push(PAGES.PROJECT.GRANTS(project?.uid || project?.details?.slug || ""));
+        }
       };
       if (!isOnChainAuthorized) {
         await performOffChainRevoke({
@@ -154,7 +165,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
       deleteFunction={deleteFn}
       isLoading={isDeletingGrant}
       buttonElement={{
-        icon: <TrashIcon className="w-6 h-6" />,
+        icon: <TrashIcon className="w-5 h-5" />,
         text: "",
         styleClass: "bg-transparent text-red-500 p-1 px-2 hover:opacity-75 hover:bg-transparent",
       }}

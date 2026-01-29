@@ -2,6 +2,7 @@ const isDev = process.env.NEXT_PUBLIC_ENV === "staging";
 
 export const envVars = {
   isDev,
+  VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
   NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
   NEXT_PUBLIC_KARMA_API: "https://api.karmahq.xyz/api",
   NEXT_PUBLIC_GAP_INDEXER_URL: process.env.NEXT_PUBLIC_GAP_INDEXER_URL as string,

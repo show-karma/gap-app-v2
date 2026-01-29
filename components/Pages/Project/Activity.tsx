@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ActivityList } from "@/components/Shared/ActivityList";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
+import { transformImpactsToMilestones } from "@/services/project-profile.service";
 import { useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { cn } from "@/utilities/tailwind";
@@ -20,18 +21,7 @@ export const ProjectActivity = () => {
 
   // Convert impacts to match expected format and combine with milestones
   const allUpdates = useMemo(() => {
-    const impactItems = impacts.map((impact) => ({
-      uid: impact.uid,
-      type: "impact" as const,
-      title: impact.data?.work || "Impact",
-      description: impact.data?.impact,
-      createdAt: impact.createdAt || new Date().toISOString(),
-      completed: false,
-      chainID: 0,
-      refUID: impact.refUID,
-      source: { type: "impact" },
-    }));
-
+    const impactItems = transformImpactsToMilestones(impacts);
     return [...milestones, ...impactItems];
   }, [milestones, impacts]);
   const isAuthorized = isProjectAdmin;

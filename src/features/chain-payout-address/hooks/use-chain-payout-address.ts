@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { chainPayoutAddressService } from "../services/chain-payout-address.service";
 import type { ChainPayoutAddressMap } from "../types/chain-payout-address";
 
@@ -35,7 +36,7 @@ export function useUpdateChainPayoutAddress(
       // Invalidate chain payout address queries
       queryClient.invalidateQueries({ queryKey: chainPayoutAddressKeys.project(projectId) });
       // Invalidate project queries to refresh the data
-      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PROJECT.DETAILS(projectId) });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       options?.onSuccess?.(data);
     },

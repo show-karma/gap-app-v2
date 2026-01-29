@@ -142,7 +142,7 @@ export function CartItemRow({
             aria-label={`Remove ${item.title} from donation cart`}
             title={`Remove ${item.title}`}
           >
-            <TrashIcon className="w-6 h-6" />
+            <TrashIcon className="w-5 h-5" />
           </button>
         </div>
       </div>

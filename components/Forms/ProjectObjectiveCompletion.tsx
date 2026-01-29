@@ -101,7 +101,10 @@ export const ProjectObjectiveCompletionForm = ({
   const { refetch } = useProjectUpdates(projectId as string);
 
   const onSubmit = async (data: SchemaType) => {
-    if (!address || !project) return;
+    if (!address || !project) {
+      showError("Please connect your wallet to complete the milestone.");
+      return;
+    }
     setIsCompleting(true);
     startAttestation("Completing milestone...");
     try {
@@ -112,20 +115,50 @@ export const ProjectObjectiveCompletionForm = ({
       });
 
       if (!setup) {
+        showError("Failed to set up wallet connection. Please try again.");
         setIsCompleting(false);
+        setIsStepper(false);
         return;
       }
 
       const { gapClient, walletSigner } = setup;
       const fetchedProject = await getProjectById(projectId);
-      if (!fetchedProject) return;
-      const fetchedMilestones = await getProjectObjectives(projectId);
-      if (!fetchedMilestones || !gapClient?.network) return;
+      if (!fetchedProject) {
+        showError("Could not find project. Please refresh and try again.");
+        setIsCompleting(false);
+        setIsStepper(false);
+        return;
+      }
+      const projectRecipient = fetchedProject.recipient;
+      const fetchedMilestones = await getProjectObjectives(
+        projectId,
+        fetchedProject.uid,
+        projectRecipient,
+        fetchedProject.chainID
+      );
+      if (!fetchedMilestones || fetchedMilestones.length === 0) {
+        showError("Could not find milestones for this project.");
+        setIsCompleting(false);
+        setIsStepper(false);
+        return;
+      }
+      if (!gapClient?.network) {
+        showError("Network configuration error. Please refresh and try again.");
+        setIsCompleting(false);
+        setIsStepper(false);
+        return;
+      }
       const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient?.network);
       const objectiveInstance = objectivesInstances.find(
         (item) => item.uid.toLowerCase() === objectiveUID.toLowerCase()
       );
-      if (!objectiveInstance) return;
+      if (!objectiveInstance) {
+        showError("Could not find the milestone to complete. Please refresh and try again.");
+        setIsCompleting(false);
+        setIsStepper(false);
+        return;
+      }
+
       await objectiveInstance
         .complete(
           walletSigner,

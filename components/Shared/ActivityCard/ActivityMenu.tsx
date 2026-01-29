@@ -68,7 +68,7 @@ export const ActivityMenu = ({
           title={deleteTitle}
           buttonElement={{
             text: "",
-            icon: <TrashIcon className="h-6 w-6 text-[#D92D20] dark:text-red-500" />,
+            icon: <TrashIcon className="h-5 w-5 text-[#D92D20] dark:text-red-500" />,
             styleClass: cn(buttonClassName, "text-[#D92D20] dark:text-red-500 w-max p-0"),
           }}
         />

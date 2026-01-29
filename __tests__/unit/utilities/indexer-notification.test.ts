@@ -120,7 +120,7 @@ describe("notifyIndexerForGrant", () => {
 
       expect(mockFetchData).toHaveBeenCalled();
       expect(mockInvalidateQueries).toHaveBeenCalledWith({
-        queryKey: ["project", "project-123"],
+        queryKey: queryKeysModule.QUERY_KEYS.PROJECT.DETAILS("project-123"),
       });
     });
 
@@ -136,7 +136,7 @@ describe("notifyIndexerForGrant", () => {
       await notifyIndexerForGrant("0x123abc", 42161, "project-123", "program-1");
 
       expect(mockInvalidateQueries).toHaveBeenCalledWith({
-        queryKey: ["project", "project-123"],
+        queryKey: queryKeysModule.QUERY_KEYS.PROJECT.DETAILS("project-123"),
       });
 
       expect(mockInvalidateQueries).toHaveBeenCalledWith({
@@ -149,7 +149,7 @@ describe("notifyIndexerForGrant", () => {
 
       expect(mockFetchData).not.toHaveBeenCalled();
       expect(mockInvalidateQueries).toHaveBeenCalledWith({
-        queryKey: ["project", "project-123"],
+        queryKey: queryKeysModule.QUERY_KEYS.PROJECT.DETAILS("project-123"),
       });
     });
 
@@ -160,7 +160,7 @@ describe("notifyIndexerForGrant", () => {
 
       expect(mockInvalidateQueries).toHaveBeenCalledTimes(1);
       expect(mockInvalidateQueries).toHaveBeenCalledWith({
-        queryKey: ["project", "project-123"],
+        queryKey: queryKeysModule.QUERY_KEYS.PROJECT.DETAILS("project-123"),
       });
     });
   });

@@ -1,5 +1,5 @@
-import { ProjectOverviewLoading } from "@/components/Pages/Project/Loading/Overview";
+import { LoadingSpinner } from "@/components/Utilities/LoadingSpinner";
 
 export default function Loading() {
-  return <ProjectOverviewLoading />;
+  return <LoadingSpinner />;
 }

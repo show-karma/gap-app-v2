@@ -5,13 +5,18 @@ import { CheckIcon } from "@heroicons/react/20/solid";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
-import { Fragment, useMemo } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import { ActivityCard } from "@/components/Shared/ActivityCard";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import type { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
+import { mergeDuplicateMilestones } from "@/utilities/milestones/mergeDuplicateMilestones";
 import { cn } from "@/utilities/tailwind";
 import { ObjectivesSub } from "../Pages/Project/Objective/ObjectivesSub";
+
+/** Number of milestones to show initially and per "Load More" click */
+const MILESTONES_PER_PAGE = 15;
 
 // Filter options for the content type filter
 const CONTENT_TYPE_OPTIONS: Record<string, string> = {
@@ -22,6 +27,53 @@ const CONTENT_TYPE_OPTIONS: Record<string, string> = {
   activities: "Project Activity",
   updates: "Grant Updates",
 };
+
+/**
+ * Skeleton component for a single milestone/activity item.
+ * Matches the ActivityCard visual structure.
+ */
+function MilestoneItemSkeleton() {
+  return (
+    <div
+      className="border bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-400 rounded-xl p-6 gap-3 flex flex-col"
+      data-testid="milestone-item-skeleton"
+    >
+      {/* Title row */}
+      <div className="flex flex-row gap-3 items-start justify-between w-full">
+        <div className="flex flex-row gap-3 items-center w-full">
+          <Skeleton className="w-2/3 h-6 pl-4 border-l-4 border-l-gray-300" />
+          <Skeleton className="w-20 h-6 rounded-full" />
+        </div>
+      </div>
+
+      {/* Description */}
+      <div className="flex flex-col gap-1 w-full">
+        <Skeleton className="w-full h-4" />
+        <Skeleton className="w-full h-4" />
+        <Skeleton className="w-2/3 h-4" />
+      </div>
+
+      {/* Footer */}
+      <div className="flex flex-row gap-x-4 gap-y-2 items-center justify-between w-full flex-wrap">
+        <Skeleton className="w-48 h-5" />
+        <Skeleton className="w-20 h-8 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Skeleton loader for showing multiple milestone items during loading.
+ */
+function MilestonesLoadingSkeleton({ count = 3 }: { count?: number }) {
+  return (
+    <div className="flex flex-col gap-6" data-testid="milestones-loading-skeleton">
+      {Array.from({ length: count }, (_, i) => (
+        <MilestoneItemSkeleton key={i} />
+      ))}
+    </div>
+  );
+}
 
 interface MilestonesListProps {
   milestones: UnifiedMilestone[];
@@ -55,109 +107,14 @@ export const MilestonesList = ({
     parse: (value) => value || "all",
   });
 
-  // Handle content type filter change
+  // Pagination state - tracks how many items to display
+  const [visibleCount, setVisibleCount] = useState(MILESTONES_PER_PAGE);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Handle content type filter change - reset pagination when filter changes
   const handleContentTypeChange = (newContentType: string) => {
+    setVisibleCount(MILESTONES_PER_PAGE);
     setSelectedContentTypeQuery(newContentType);
-  };
-
-  // Merge duplicate milestones based on content
-  const mergeDuplicateMilestones = (milestones: UnifiedMilestone[]): UnifiedMilestone[] => {
-    const mergedMap = new Map<string, UnifiedMilestone>();
-
-    milestones.forEach((milestone) => {
-      // Skip updates, impacts, activities from merging as they're unique
-      if (
-        milestone.type === "update" ||
-        milestone.type === "impact" ||
-        milestone.type === "activity" ||
-        milestone.type === "grant_update"
-      ) {
-        mergedMap.set(milestone.uid, milestone);
-        return;
-      }
-
-      // Skip project milestones from merging (they're unique by nature)
-      if (milestone.type === "project" || milestone.type === "milestone") {
-        mergedMap.set(milestone.uid, {
-          ...milestone,
-          uid: milestone.uid || "",
-          chainID: milestone.chainID || 0,
-          refUID: milestone.source.projectMilestone?.uid || milestone.refUID || "",
-        });
-        return;
-      }
-
-      // Create a unique key based on title, description, and dates
-      const startDate = milestone.startsAt;
-      const endDate = milestone.endsAt;
-
-      const key = `${milestone.title}|${milestone.description || ""}|${
-        startDate || ""
-      }|${endDate || ""}`;
-
-      if (mergedMap.has(key)) {
-        // Milestone exists, add this grant to the merged list
-        const existingMilestone = mergedMap.get(key)!;
-
-        if (!existingMilestone.mergedGrants) {
-          // Initialize mergedGrants if this is the first duplicate
-          const firstGrant = existingMilestone.source.grantMilestone;
-          const firstGrantDetails = firstGrant?.grant.details as
-            | { title?: string; programId?: string }
-            | undefined;
-          const firstCommunityDetails = firstGrant?.grant.community?.details as
-            | { name?: string; imageURL?: string }
-            | undefined;
-          existingMilestone.mergedGrants = [
-            {
-              grantUID: firstGrant?.grant.uid || "",
-              grantTitle: firstGrantDetails?.title,
-              communityName: firstCommunityDetails?.name,
-              communityImage: firstCommunityDetails?.imageURL,
-              chainID: firstGrant?.grant.chainID || 0,
-              milestoneUID: firstGrant?.milestone.uid || "",
-              programId: firstGrantDetails?.programId,
-            },
-          ];
-        }
-
-        // Add the current grant to the merged list
-        const currentGrantDetails = milestone.source.grantMilestone?.grant.details as
-          | { title?: string; programId?: string }
-          | undefined;
-        const currentCommunityDetails = milestone.source.grantMilestone?.grant.community?.details as
-          | { name?: string; imageURL?: string }
-          | undefined;
-        existingMilestone.mergedGrants.push({
-          grantUID: milestone.source.grantMilestone?.grant.uid || "",
-          grantTitle: currentGrantDetails?.title,
-          communityName: currentCommunityDetails?.name,
-          communityImage: currentCommunityDetails?.imageURL,
-          chainID: milestone.source.grantMilestone?.grant.chainID || 0,
-          milestoneUID: milestone.source.grantMilestone?.milestone.uid || "",
-          programId: currentGrantDetails?.programId,
-        });
-
-        // Sort the merged grants alphabetically
-        existingMilestone.mergedGrants.sort((a, b) => {
-          const titleA = a.grantTitle || "Untitled Grant";
-          const titleB = b.grantTitle || "Untitled Grant";
-          return titleA.localeCompare(titleB);
-        });
-
-        mergedMap.set(key, existingMilestone);
-      } else {
-        // Add as new milestone with required properties
-        mergedMap.set(key, {
-          ...milestone,
-          uid: milestone.uid || "",
-          chainID: milestone.source.grantMilestone?.grant.chainID || 0,
-          refUID: milestone.source.grantMilestone?.grant.uid || "",
-        });
-      }
-    });
-
-    return Array.from(mergedMap.values());
   };
 
   const isUpdateType = (item: UnifiedMilestone): boolean => {
@@ -237,9 +194,29 @@ export const MilestonesList = ({
       return true;
     });
 
-    // Merge duplicates for regular milestones
+    // Merge duplicates for regular milestones (extracted pure function for memoization efficiency)
     return mergeDuplicateMilestones(filteredMilestones);
-  }, [milestones, showAllTypes, status, selectedContentType, mergeDuplicateMilestones]);
+  }, [milestones, showAllTypes, status, selectedContentType]);
+
+  // Apply pagination to the merged milestones
+  const displayedMilestones = useMemo(
+    () => unifiedMilestones.slice(0, visibleCount),
+    [unifiedMilestones, visibleCount]
+  );
+
+  // Calculate pagination state
+  const hasMore = visibleCount < unifiedMilestones.length;
+  const remainingCount = unifiedMilestones.length - visibleCount;
+
+  // Load more handler with simulated loading state for smooth UX
+  const loadMore = useCallback(() => {
+    setIsLoadingMore(true);
+    // Small delay to show loading state and prevent rapid clicks
+    setTimeout(() => {
+      setVisibleCount((prev) => Math.min(prev + MILESTONES_PER_PAGE, unifiedMilestones.length));
+      setIsLoadingMore(false);
+    }, 300);
+  }, [unifiedMilestones.length]);
 
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -313,36 +290,55 @@ export const MilestonesList = ({
 
           {/* Content Type Filter */}
         </div>
-        {unifiedMilestones && unifiedMilestones.length > 0 ? (
-          unifiedMilestones.map((item, index) =>
-            hasProjectUpdate(item) && item.projectUpdate ? (
-              <ActivityCard
-                key={`update-${item.uid}-${index}`}
-                activity={{
-                  type: "projectUpdate",
-                  data: item.projectUpdate,
-                  index: index,
-                }}
-                isAuthorized={isAuthorized}
-              />
-            ) : hasSdkUpdate(item) ? (
-              <ActivityCard
-                key={`sdk-update-${item.uid}-${index}`}
-                activity={{
-                  type: "update",
-                  data: item.grantUpdate || item.projectImpact!,
-                  index: index,
-                }}
-                isAuthorized={isAuthorized}
-              />
-            ) : (
-              <ActivityCard
-                key={`milestone-${item.uid}-${index}`}
-                activity={{ type: "milestone", data: item }}
-                isAuthorized={isAuthorized}
-              />
-            )
-          )
+        {displayedMilestones && displayedMilestones.length > 0 ? (
+          <>
+            {displayedMilestones.map((item, index) =>
+              hasProjectUpdate(item) && item.projectUpdate ? (
+                <ActivityCard
+                  key={`update-${item.uid}-${index}`}
+                  activity={{
+                    type: "projectUpdate",
+                    data: item.projectUpdate,
+                    index: index,
+                  }}
+                  isAuthorized={isAuthorized}
+                />
+              ) : hasSdkUpdate(item) ? (
+                <ActivityCard
+                  key={`sdk-update-${item.uid}-${index}`}
+                  activity={{
+                    type: "update",
+                    data: item.grantUpdate || item.projectImpact!,
+                    index: index,
+                  }}
+                  isAuthorized={isAuthorized}
+                />
+              ) : (
+                <ActivityCard
+                  key={`milestone-${item.uid}-${index}`}
+                  activity={{ type: "milestone", data: item }}
+                  isAuthorized={isAuthorized}
+                />
+              )
+            )}
+
+            {/* Loading skeleton while fetching more */}
+            {isLoadingMore && <MilestonesLoadingSkeleton count={3} />}
+
+            {/* Load More button */}
+            {hasMore && !isLoadingMore && (
+              <div className="flex justify-center w-full mt-4">
+                <button
+                  type="button"
+                  onClick={loadMore}
+                  className="px-6 py-2.5 text-sm font-medium text-brand-blue bg-brand-blue/10 hover:bg-brand-blue/20 dark:text-blue-400 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-blue/50"
+                  aria-label={`Load ${Math.min(MILESTONES_PER_PAGE, remainingCount)} more items`}
+                >
+                  Load More ({remainingCount} remaining)
+                </button>
+              </div>
+            )}
+          </>
         ) : !isAuthorized ? (
           <div className="flex flex-col gap-2 justify-center items-start border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-8 w-full">
             <p className="text-zinc-900 font-bold text-center text-lg w-full dark:text-zinc-300">

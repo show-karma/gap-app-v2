@@ -68,7 +68,7 @@ export const notifyIndexerForGrant = async (
     invalidateQueries: async () => {
       // Invalidate project queries
       await queryClient.invalidateQueries({
-        queryKey: ["project", projectUid],
+        queryKey: QUERY_KEYS.PROJECT.DETAILS(projectUid),
       });
 
       // Invalidate grant milestones if programId provided

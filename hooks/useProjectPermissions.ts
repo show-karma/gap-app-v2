@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectStore } from "@/store";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { getRPCClient } from "@/utilities/rpcClient";
 import { useProjectInstance } from "./useProjectInstance";
 
@@ -58,10 +59,25 @@ export const useProjectPermissions = () => {
     }
   };
 
+  // Normalize chainID to null to prevent query key instability when project loads
+  const chainID = project?.chainID ?? null;
+
+  // Memoize query key to ensure stable reference
+  const queryKey = useMemo(
+    () =>
+      QUERY_KEYS.PROJECT.PERMISSIONS({
+        address: address ?? null,
+        projectId: projectId ?? null,
+        chainID,
+        isAuth,
+      }),
+    [address, projectId, chainID, isAuth]
+  );
+
   const query = useQuery({
-    queryKey: ["project-permissions", address, projectId, project?.chainID, isAuth],
+    queryKey,
     queryFn: checkPermissions,
-    enabled: !!projectInstance && !!project?.chainID && !!isAuth && !!address,
+    enabled: !!projectInstance && chainID !== null && !!isAuth && !!address,
     ...defaultQueryOptions,
     gcTime: 1 * 60 * 1000, // 1 minutes
   });

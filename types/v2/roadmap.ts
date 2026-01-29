@@ -215,7 +215,15 @@ export type UnifiedMilestoneSource = {
 
 export type UnifiedMilestone = {
   uid: string;
-  type: "project" | "grant" | "update" | "impact" | "activity" | "grant_update" | "milestone";
+  type:
+    | "project"
+    | "grant"
+    | "update"
+    | "impact"
+    | "activity"
+    | "grant_update"
+    | "milestone"
+    | "grant_received";
   title: string;
   description?: string;
   completed:
@@ -249,4 +257,14 @@ export type UnifiedMilestone = {
     chainID: number;
     programId?: string;
   }>;
+  /** Grant received info for grant_received type items */
+  grantReceived?: {
+    amount?: string;
+    currency?: string;
+    communityName?: string;
+    communitySlug?: string;
+    communityImage?: string;
+    grantTitle?: string;
+    grantUID: string;
+  };
 };

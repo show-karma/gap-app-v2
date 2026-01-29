@@ -13,6 +13,9 @@ interface ProgressModalStore {
   progressModalScreen: ProgressModalScreen;
   setProgressModalScreen: (progressModalScreen: ProgressModalScreen) => void;
   closeProgressModal: () => void;
+  preSelectedGrantId: string | null;
+  setPreSelectedGrantId: (grantId: string | null) => void;
+  openProgressModalWithScreen: (screen: ProgressModalScreen, grantId?: string) => void;
 }
 
 export const useProgressModalStore = create<ProgressModalStore>((set, _get) => ({
@@ -25,5 +28,14 @@ export const useProgressModalStore = create<ProgressModalStore>((set, _get) => (
     set({
       isProgressModalOpen: false,
       progressModalScreen: "menu",
+      preSelectedGrantId: null,
+    }),
+  preSelectedGrantId: null,
+  setPreSelectedGrantId: (grantId: string | null) => set({ preSelectedGrantId: grantId }),
+  openProgressModalWithScreen: (screen: ProgressModalScreen, grantId?: string) =>
+    set({
+      isProgressModalOpen: true,
+      progressModalScreen: screen,
+      preSelectedGrantId: grantId || null,
     }),
 }));

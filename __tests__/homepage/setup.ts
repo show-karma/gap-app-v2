@@ -110,6 +110,28 @@ jest.mock("next/navigation", () => ({
   useSearchParams: jest.fn(() => new URLSearchParams()),
 }));
 
+// Mock wagmi hooks - required for components that use wallet functionality
+jest.mock("wagmi", () => ({
+  useAccount: () => ({
+    address: undefined,
+    isConnected: false,
+    isDisconnected: true,
+  }),
+  useChainId: () => 1,
+  useSwitchChain: () => ({
+    switchChainAsync: jest.fn(),
+    isPending: false,
+  }),
+  useConnect: () => ({
+    connect: jest.fn(),
+    connectors: [],
+    isPending: false,
+  }),
+  useDisconnect: () => ({
+    disconnect: jest.fn(),
+  }),
+}));
+
 // Mock infinite moving cards (community carousel)
 jest.mock("@/src/components/ui/infinite-moving-cards", () => ({
   InfiniteMovingCards: ({ items }: any) =>

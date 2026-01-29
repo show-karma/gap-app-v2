@@ -12,6 +12,7 @@ import type { AttestationStep } from "@/hooks/useAttestationToast";
 import { checkSlugExists, getProject } from "@/services/project.service";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 function _getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -127,10 +128,10 @@ export const updateProject = async (
             // Invalidate React Query cache to force refresh of project data
             await Promise.all([
               queryClient.invalidateQueries({
-                queryKey: ["project", project.uid],
+                queryKey: QUERY_KEYS.PROJECT.DETAILS(project.uid),
               }),
               queryClient.invalidateQueries({
-                queryKey: ["project", project.details?.slug],
+                queryKey: QUERY_KEYS.PROJECT.DETAILS(project.details?.slug || ""),
               }),
             ]);
 

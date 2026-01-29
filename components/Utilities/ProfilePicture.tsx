@@ -1,6 +1,7 @@
 "use client";
 
 import Avatar from "boring-avatars";
+import Image from "next/image";
 import { cn } from "@/utilities/tailwind";
 
 interface ProfilePictureProps {
@@ -9,6 +10,10 @@ interface ProfilePictureProps {
   size?: string;
   className?: string;
   alt?: string;
+  /** Set to true for above-fold images to prioritize loading */
+  priority?: boolean;
+  /** Responsive sizes hint for Next.js Image optimization */
+  sizes?: string;
 }
 
 const isValidUrl = (url?: string): boolean => {
@@ -27,16 +32,23 @@ export const ProfilePicture = ({
   size = "32",
   className,
   alt,
+  priority = false,
+  sizes,
 }: ProfilePictureProps) => {
   const isValid = isValidUrl(imageURL);
+  const numericSize = Number.parseInt(size, 10) || 32;
 
   if (isValid && imageURL) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
+      <Image
         alt={alt || name || "Profile"}
         src={imageURL}
+        width={numericSize}
+        height={numericSize}
         className={cn("rounded-full object-cover", className)}
+        priority={priority}
+        sizes={sizes}
+        unoptimized
       />
     );
   }

@@ -36,11 +36,17 @@ const config: Config = {
     "^@/components/(.*)$": "<rootDir>/components/$1",
     "^@/contexts/(.*)$": "<rootDir>/contexts/$1",
     "^@/features/(.*)$": "<rootDir>/src/features/$1",
+    "^@/hooks/useZeroDevSigner$": "<rootDir>/__mocks__/hooks/useZeroDevSigner.ts",
+    "^@/hooks/useSetupChainAndWallet$": "<rootDir>/__mocks__/hooks/useSetupChainAndWallet.ts",
     "^@/hooks/(.*)$": "<rootDir>/hooks/$1",
     "^@/lib/(.*)$": "<rootDir>/lib/$1",
     "^@/store$": "<rootDir>/store/index.ts",
     "^@/store/(.*)$": "<rootDir>/store/$1",
     "^@/types/(.*)$": "<rootDir>/types/$1",
+    "^@/utilities/gasless$": "<rootDir>/__mocks__/utilities/gasless/index.ts",
+    "^@/utilities/gasless/(.*)$": "<rootDir>/__mocks__/utilities/gasless/index.ts",
+    "^utilities/gasless$": "<rootDir>/__mocks__/utilities/gasless/index.ts",
+    "^utilities/gasless/(.*)$": "<rootDir>/__mocks__/utilities/gasless/index.ts",
     "^@/utilities/(.*)$": "<rootDir>/utilities/$1",
     "^@/constants/(.*)$": "<rootDir>/constants/$1",
     "^@/services/(.*)$": "<rootDir>/services/$1",
@@ -48,12 +54,18 @@ const config: Config = {
     "^@/__tests__/(.*)$": "<rootDir>/__tests__/$1",
     "^until-async$": "<rootDir>/__mocks__/until-async.js",
     "^multiformats/cid$": "<rootDir>/__mocks__/multiformats.ts",
+    "^@aa-sdk/core$": "<rootDir>/__mocks__/@aa-sdk/core.ts",
+    "^@privy-io/wagmi$": "<rootDir>/__mocks__/@privy-io/wagmi.ts",
+    "^@account-kit/infra$": "<rootDir>/__mocks__/@account-kit/infra.ts",
+    "^@account-kit/infra/(.*)$": "<rootDir>/__mocks__/@account-kit/infra.ts",
+    "^@account-kit/smart-contracts$": "<rootDir>/__mocks__/@account-kit/smart-contracts.ts",
+    "^@account-kit/smart-contracts/(.*)$": "<rootDir>/__mocks__/@account-kit/smart-contracts.ts",
   },
 
   // Transform ESM modules that need to be compiled for Jest
   // Include MSW and all its dependencies (including nested pnpm packages)
   transformIgnorePatterns: [
-    "/node_modules/(?!(@show-karma|@ethereum-attestation-service|multiformats|wagmi|@wagmi|@wagmi/core|@wagmi/connectors|viem|@privy-io|@coinbase|rehype-sanitize|hast-util-sanitize|msw|@mswjs|until-async|rehype-external-links|@noble)/)",
+    "/node_modules/(?!(@show-karma|@ethereum-attestation-service|multiformats|wagmi|@wagmi|@wagmi/core|@wagmi/connectors|viem|@privy-io|@coinbase|rehype-sanitize|hast-util-sanitize|msw|@mswjs|until-async|rehype-external-links|@noble|@aa-sdk)/)",
   ],
 
   globalSetup: "./tests/global.js",
@@ -80,6 +92,14 @@ const createJestConfig = nextJest({
 });
 
 // Create the async config function and ensure transformIgnorePatterns are preserved
-const jestConfig = createJestConfig(config);
-
-export default jestConfig;
+// next/jest may override transformIgnorePatterns, so we need to merge them manually
+export default async () => {
+  const jestConfig = await createJestConfig(config)();
+  return {
+    ...jestConfig,
+    // Override transformIgnorePatterns to ensure ESM modules are transformed
+    transformIgnorePatterns: [
+      "/node_modules/(?!(@show-karma|@ethereum-attestation-service|multiformats|wagmi|@wagmi|@wagmi/core|@wagmi/connectors|viem|@privy-io|@coinbase|rehype-sanitize|hast-util-sanitize|msw|@mswjs|until-async|rehype-external-links|@noble|@aa-sdk)/)",
+    ],
+  };
+};

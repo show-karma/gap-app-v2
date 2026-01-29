@@ -2,27 +2,31 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import Link from "next/link";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useTracksForProgram } from "@/hooks/useTracks";
 import type { Track } from "@/services/tracks";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
+import { useProgressModalStore } from "@/store/modals/progress";
 import type { Grant } from "@/types/v2/grant";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
-import { PAGES } from "@/utilities/pages";
 import { ReadMore } from "@/utilities/ReadMore";
 import { ProjectGrantsMilestonesListLoading } from "../../Project/Loading/Grants/MilestonesAndUpdate";
 
-const EmptyMilestone = ({ grant, project }: { grant?: Grant; project?: ProjectResponse }) => {
+const EmptyMilestone = ({ grant }: { grant?: Grant; project?: ProjectResponse }) => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const { openProgressModalWithScreen } = useProgressModalStore();
 
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+
+  const handleAddMilestone = () => {
+    openProgressModalWithScreen("unified_milestone", grant?.uid);
+  };
 
   if (!isAuthorized) {
     return (
@@ -50,17 +54,14 @@ const EmptyMilestone = ({ grant, project }: { grant?: Grant; project?: ProjectRe
             {MESSAGES.PROJECT.EMPTY.GRANTS.NOT_ADDED_MILESTONE}
           </p>
           <div className="flex w-max flex-row flex-wrap gap-6 max-sm:w-full max-sm:flex-col">
-            <Link
-              href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                project?.details?.slug || project?.uid || "",
-                grant?.uid || "",
-                "create-milestone"
-              )}
+            <button
+              type="button"
+              onClick={handleAddMilestone}
               className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 dark:bg-blue-800 bg-brand-blue px-4 py-2.5 text-base font-semibold text-white hover:bg-brand-blue"
             >
               <img src="/icons/plus.svg" alt="Add" className="relative h-5 w-5" />
               Add a new Milestone
-            </Link>
+            </button>
           </div>
         </div>
       </div>
@@ -218,11 +219,17 @@ const MilestonesList = dynamic(
 export default function MilestonesAndUpdates() {
   const { grant } = useGrantStore();
   const project = useProjectStore((state) => state.project);
+  const { openProgressModalWithScreen } = useProgressModalStore();
   const hasMilestonesOrUpdates = grant?.milestones?.length || grant?.updates?.length;
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
+
+  const handleAddMilestone = () => {
+    openProgressModalWithScreen("unified_milestone", grant?.uid);
+  };
 
   return (
     <div className="w-full">
@@ -238,16 +245,13 @@ export default function MilestonesAndUpdates() {
                     </p>
                     <div className="flex flex-row justify-start gap-4 max-sm:w-full max-sm:flex-col">
                       {isAuthorized && (
-                        <Link
-                          href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                            project?.details?.slug || project?.uid || "",
-                            grant?.uid || "",
-                            "create-milestone"
-                          )}
+                        <button
+                          type="button"
+                          onClick={handleAddMilestone}
                           className="flex h-max w-max  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-1 text-sm font-semibold text-white   max-sm:w-full"
                         >
                           <p>Add a new milestone</p>
-                        </Link>
+                        </button>
                       )}
                     </div>
                   </div>

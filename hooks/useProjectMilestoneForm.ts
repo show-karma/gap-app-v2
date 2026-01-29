@@ -165,7 +165,13 @@ export function useProjectMilestoneForm({
         text: sanitizeInput(data.text),
       };
 
-      const fetchedMilestones = await getProjectObjectives(projectId);
+      const projectRecipient = project?.owner;
+      const fetchedMilestones = await getProjectObjectives(
+        projectId,
+        project?.uid,
+        projectRecipient,
+        project?.chainID
+      );
 
       if (!fetchedMilestones || !gapClient?.network) return;
 

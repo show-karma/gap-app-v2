@@ -23,6 +23,8 @@ interface ProjectMilestoneV2 {
   statusUpdatedAt: string | null;
   completed: ProjectMilestoneCompletedV2 | null;
   createdAt: string;
+  recipient?: string;
+  attester?: string;
 }
 
 interface GetMilestonesV2Response {
@@ -31,10 +33,18 @@ interface GetMilestonesV2Response {
 
 // Map V2 response to SDK-compatible format
 // Using type assertion since V2 response has slightly different shape
-const mapV2ToSdkFormat = (milestone: ProjectMilestoneV2): IProjectMilestoneResponse =>
+const mapV2ToSdkFormat = (
+  milestone: ProjectMilestoneV2,
+  projectUID?: string,
+  projectRecipient?: string,
+  chainID?: number
+): IProjectMilestoneResponse =>
   ({
     uid: milestone.uid,
-    refUID: milestone.uid, // Using uid as refUID
+    refUID: projectUID || milestone.uid, // Use project UID as refUID if provided
+    recipient: milestone.recipient || projectRecipient, // Use milestone recipient or fallback to project recipient
+    attester: milestone.attester || milestone.recipient || projectRecipient, // Attester for the attestation
+    chainID: chainID, // Chain ID is required by the SDK
     data: {
       title: milestone.title,
       text: milestone.description,
@@ -44,6 +54,8 @@ const mapV2ToSdkFormat = (milestone: ProjectMilestoneV2): IProjectMilestoneRespo
       ? ({
           uid: milestone.completed.attestationUID,
           createdAt: new Date(milestone.completed.timestamp),
+          attester: milestone.completed.attester,
+          chainID: chainID, // Chain ID for completed attestation
           data: {
             reason: milestone.completed.reason || undefined,
             proofOfWork: milestone.completed.proofOfWork || undefined,
@@ -61,7 +73,10 @@ const mapV2ToSdkFormat = (milestone: ProjectMilestoneV2): IProjectMilestoneRespo
   }) as unknown as IProjectMilestoneResponse;
 
 export async function getProjectObjectives(
-  uidOrSlug: string
+  uidOrSlug: string,
+  projectUID?: string,
+  projectRecipient?: string,
+  chainID?: number
 ): Promise<IProjectMilestoneResponse[]> {
   try {
     const [data, error] = await fetchData<GetMilestonesV2Response>(
@@ -80,7 +95,9 @@ export async function getProjectObjectives(
       return [];
     }
 
-    return (data.milestones || []).map(mapV2ToSdkFormat);
+    return (data.milestones || []).map((m) =>
+      mapV2ToSdkFormat(m, projectUID, projectRecipient, chainID)
+    );
   } catch (error) {
     errorManager("Error fetching project objectives", error, {
       projectId: uidOrSlug,

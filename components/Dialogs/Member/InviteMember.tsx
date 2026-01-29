@@ -11,10 +11,13 @@ import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useInviteLink, useInviteUrl } from "@/hooks/useInviteLink";
 import { useProjectStore } from "@/store";
 
-export const InviteMemberDialog: FC = () => {
+interface InviteMemberDialogProps {
+  shouldDisable?: boolean;
+}
+
+export const InviteMemberDialog: FC<InviteMemberDialogProps> = ({ shouldDisable = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const project = useProjectStore((state) => state.project);
   const [, copyToClipboard] = useCopyToClipboard();
 
@@ -40,7 +43,7 @@ export const InviteMemberDialog: FC = () => {
   return (
     <>
       <Button
-        disabled={!isProjectOwner}
+        disabled={shouldDisable}
         onClick={openModal}
         className={
           "flex items-center gap-x-1 rounded-md px-3 py-2 text-base font-semibold text-center justify-center"

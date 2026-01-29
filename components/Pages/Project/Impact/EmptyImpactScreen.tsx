@@ -1,5 +1,5 @@
-/* eslint-disable @next/next/no-img-element */
-
+import { PlusIcon } from "@heroicons/react/20/solid";
+import Image from "next/image";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useOwnerStore, useProjectStore } from "@/store";
@@ -15,7 +15,14 @@ export const EmptyImpactScreen: FC = () => {
     return (
       <div className="flex h-max flex-1 items-center justify-center rounded border border-gray-200 px-6 py-10">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-          <img src="/images/comments.png" alt="" className="h-[185px] w-[438px] object-cover" />
+          <Image
+            src="/images/comments.png"
+            alt="Project impact illustration"
+            width={438}
+            height={185}
+            className="object-cover"
+            loading="lazy"
+          />
           <div className="flex w-full flex-col items-center justify-center gap-3">
             <p className="text-center text-lg font-semibold text-black dark:text-zinc-100 ">
               Project Impact
@@ -45,13 +52,20 @@ export const EmptyImpactScreen: FC = () => {
             changeTab("add-impact");
           }}
         >
-          <img src="/icons/plus.svg" alt="Add" className="relative h-5 w-5" />
+          <PlusIcon className="h-5 w-5" aria-hidden="true" />
           Add impact
         </button>
       </div>
       <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10 dark:bg-zinc-900">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-          <img src="/images/comments.png" alt="" className="h-[185px] w-[438px] object-cover" />
+          <Image
+            src="/images/comments.png"
+            alt="Project impact illustration"
+            width={438}
+            height={185}
+            className="object-cover"
+            loading="lazy"
+          />
           <div className="flex w-full flex-col items-center justify-center gap-3">
             <p className="text-center text-lg font-semibold text-black dark:text-white">
               {`Project Impact`}
