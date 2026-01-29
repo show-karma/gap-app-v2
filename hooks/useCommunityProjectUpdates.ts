@@ -18,7 +18,14 @@ export const useCommunityProjectUpdates = (
   const { page = 1, limit = 25, status = "all", programId, projectId } = options;
 
   return useQuery<CommunityUpdatesResponse, Error>({
-    queryKey: QUERY_KEYS.COMMUNITY.PROJECT_UPDATES(communityId, status, page, programId, projectId),
+    queryKey: QUERY_KEYS.COMMUNITY.PROJECT_UPDATES(
+      communityId,
+      status,
+      page,
+      limit,
+      programId,
+      projectId
+    ),
     queryFn: () =>
       fetchCommunityProjectUpdates({
         communityId,

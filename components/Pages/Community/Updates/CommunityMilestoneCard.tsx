@@ -15,7 +15,7 @@ interface CommunityMilestoneCardProps {
 
 const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({ milestone }) => {
   const isCompleted = milestone.status === "completed";
-  const projectSlug = milestone.project.details?.data?.slug;
+  const projectSlug = milestone.project.details?.data?.slug || milestone.project.uid;
   const projectTitle = milestone.project.details?.data?.title;
   const grantTitle = milestone.grant?.details?.data?.title || "Project Milestone";
 

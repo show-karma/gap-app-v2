@@ -52,9 +52,19 @@ export const QUERY_KEYS = {
       communityId: string,
       filter: string,
       page: number,
+      limit: number,
       programId?: string | null,
       projectId?: string | null
-    ) => ["community-project-updates", communityId, filter, page, programId, projectId] as const,
+    ) =>
+      [
+        "community-project-updates",
+        communityId,
+        filter,
+        page,
+        limit,
+        programId ?? "",
+        projectId ?? "",
+      ] as const,
   },
   GRANTS: {
     DUPLICATE_CHECK_BASE: ["duplicate-grant-check"] as const,

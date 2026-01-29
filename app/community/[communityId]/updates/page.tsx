@@ -1,21 +1,26 @@
 "use client";
 
-import { Listbox, Transition } from "@headlessui/react";
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
 import { CommunityMilestoneCard } from "@/components/Pages/Community/Updates/CommunityMilestoneCard";
 import { SimplePagination } from "@/components/Pages/Community/Updates/SimplePagination";
 import { Spinner } from "@/components/Utilities/Spinner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useCommunityProjects } from "@/hooks/useCommunityProjects";
 import { useCommunityProjectUpdates } from "@/hooks/useCommunityProjectUpdates";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
+import { findProjectOptionBySlugOrUid, projectsToOptions } from "@/utilities/project-lookup";
 import { sortCommunityMilestones } from "@/utilities/sorting/communityMilestoneSort";
-import { cn } from "@/utilities/tailwind";
 
 type FilterOption = "all" | "pending" | "completed" | "past_due";
 
@@ -85,13 +90,9 @@ export default function CommunityUpdatesPage() {
   // Fetch projects filtered by selected program
   const { data: projectsData, isLoading: projectsLoading } =
     useCommunityProjects(selectedProgramId);
-  const projectOptions =
-    projectsData?.map((project) => ({
-      title: project.title,
-      value: project.slug || project.uid, // Prefer slug for URL-friendly values
-    })) || [];
-  // Support both UID and slug for selected project lookup
-  const selectedProject = projectOptions.find((project) => project.value === selectedProjectId);
+  const projectOptions = projectsToOptions(projectsData);
+  // Support both UID and slug for selected project lookup (handles legacy UID URLs)
+  const selectedProject = findProjectOptionBySlugOrUid(projectsData, selectedProjectId);
 
   // Track previous program to detect actual changes (not initial load)
   const previousProgramRef = useRef<string | null>(null);
@@ -204,46 +205,24 @@ export default function CommunityUpdatesPage() {
           {/* Left side - Filters */}
           <div className="flex flex-row items-center gap-6 flex-wrap max-lg:w-full">
             {/* Status filter dropdown */}
-            <Listbox value={selectedFilter} onChange={handleFilterChange}>
-              <div className="relative">
-                <Listbox.Button className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-blue dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-600 min-w-[120px]">
-                  {filterOptions.find((opt) => opt.value === selectedFilter)?.label}
-                  <ChevronDownIcon className="w-4 h-4 ml-auto" />
-                </Listbox.Button>
-                <Transition
-                  as={Fragment}
-                  leave="transition ease-in duration-100"
-                  leaveFrom="opacity-100"
-                  leaveTo="opacity-0"
-                >
-                  <Listbox.Options className="absolute left-0 z-10 mt-1 max-h-60 w-full min-w-[120px] overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm dark:bg-zinc-800">
-                    {filterOptions.map((option) => (
-                      <Listbox.Option
-                        key={option.value}
-                        className={({ active }) =>
-                          cn(
-                            "relative cursor-pointer select-none py-2 px-4",
-                            active ? "bg-brand-blue text-white" : "text-gray-900 dark:text-zinc-200"
-                          )
-                        }
-                        value={option.value}
-                      >
-                        {({ selected }) => (
-                          <span
-                            className={cn(
-                              "block truncate",
-                              selected ? "font-medium" : "font-normal"
-                            )}
-                          >
-                            {option.label}
-                          </span>
-                        )}
-                      </Listbox.Option>
-                    ))}
-                  </Listbox.Options>
-                </Transition>
-              </div>
-            </Listbox>
+            <Select
+              value={selectedFilter}
+              onValueChange={(value) => handleFilterChange(value as FilterOption)}
+            >
+              <SelectTrigger
+                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-blue dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-600 min-w-[120px]"
+                aria-label="Filter by status"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {filterOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             {/* Program filter */}
             <div className="flex flex-row gap-2 items-center flex-1 max-w-[350px]">

@@ -303,7 +303,7 @@ describe("CommunityMilestoneCard", () => {
       expect(screen.getByText("My Awesome Project")).toBeInTheDocument();
     });
 
-    it("should correctly link to project using details.data.slug", () => {
+    it("should display project title as text (not a link)", () => {
       const milestone = createMockMilestone({
         project: {
           uid: "project-123",
@@ -318,8 +318,10 @@ describe("CommunityMilestoneCard", () => {
 
       render(<CommunityMilestoneCard milestone={milestone} />);
 
-      const projectLink = screen.getByText("Test Project").closest("a");
-      expect(projectLink).toHaveAttribute("href", "/project/correct-project-slug");
+      const projectTitle = screen.getByText("Test Project");
+      // Project title should be a span, not wrapped in a link
+      expect(projectTitle.tagName).toBe("SPAN");
+      expect(projectTitle.closest("a")).toBeNull();
     });
 
     it("should correctly display grant title from details.data.title", () => {
@@ -340,9 +342,18 @@ describe("CommunityMilestoneCard", () => {
       expect(screen.getByText("Filecoin ProPGF Batch 1")).toBeInTheDocument();
     });
 
-    it("should link grant title to projects page with programId filter when programId is available", () => {
+    it("should link grant title to funding page with project slug and grant uid", () => {
       const milestone = createMockMilestone({
         communityUID: "community-789",
+        project: {
+          uid: "project-123",
+          details: {
+            data: {
+              title: "Test Project",
+              slug: "test-project-slug",
+            },
+          },
+        },
         grant: {
           uid: "grant-123",
           programId: "program-456",
@@ -357,14 +368,20 @@ describe("CommunityMilestoneCard", () => {
       render(<CommunityMilestoneCard milestone={milestone} />);
 
       const grantLink = screen.getByText("Test Grant Program").closest("a");
-      expect(grantLink).toHaveAttribute(
-        "href",
-        "/community/community-789/projects?programId=program-456"
-      );
+      expect(grantLink).toHaveAttribute("href", "/project/test-project-slug/funding/grant-123");
     });
 
-    it("should render grant title as plain text when programId is not available", () => {
+    it("should still link grant title when programId is not available", () => {
       const milestone = createMockMilestone({
+        project: {
+          uid: "project-123",
+          details: {
+            data: {
+              title: "Test Project",
+              slug: "test-project",
+            },
+          },
+        },
         grant: {
           uid: "grant-123",
           programId: null,
@@ -378,10 +395,9 @@ describe("CommunityMilestoneCard", () => {
 
       render(<CommunityMilestoneCard milestone={milestone} />);
 
-      const grantText = screen.getByText("Test Grant No Program");
-      const grantLink = grantText.closest("a");
-      // Should not be a link when no programId
-      expect(grantLink).toBeNull();
+      const grantLink = screen.getByText("Test Grant No Program").closest("a");
+      // Grant title should link to the funding page regardless of programId
+      expect(grantLink).toHaveAttribute("href", "/project/test-project/funding/grant-123");
     });
 
     it('should display "Project Milestone" when grant title is not available', () => {
@@ -445,7 +461,7 @@ describe("CommunityMilestoneCard", () => {
       expect(viewUpdatesLink).toHaveAttribute("href", "/project/my-project-slug/updates");
     });
 
-    it("should handle missing project details gracefully", () => {
+    it("should handle missing project details gracefully by using project uid as fallback", () => {
       const milestone = createMockMilestone({
         project: {
           uid: "project-123",
@@ -456,9 +472,47 @@ describe("CommunityMilestoneCard", () => {
       // Should not throw an error
       render(<CommunityMilestoneCard milestone={milestone} />);
 
-      // Project title link should exist but with undefined slug
-      const projectLink = screen.getByRole("link", { name: "" });
-      expect(projectLink).toHaveAttribute("href", "/project/undefined");
+      // Grant link should use project uid as fallback when slug is not available
+      const grantLink = screen.getByText("Test Grant Program").closest("a");
+      expect(grantLink).toHaveAttribute("href", "/project/project-123/funding/grant-abc");
+    });
+
+    it("should use project uid as fallback when project slug is undefined", () => {
+      const milestone = createMockMilestone({
+        project: {
+          uid: "fallback-uid-456",
+          details: {
+            data: {
+              title: "Project With Missing Slug",
+              slug: undefined,
+            },
+          },
+        },
+      });
+
+      render(<CommunityMilestoneCard milestone={milestone} />);
+
+      // Should use project uid when slug is undefined
+      const viewLink = screen.getByText("View full milestone →");
+      expect(viewLink).toHaveAttribute("href", "/project/fallback-uid-456/funding/grant-abc");
+    });
+
+    it("should use project uid as fallback when project details.data is missing", () => {
+      const milestone = createMockMilestone({
+        project: {
+          uid: "fallback-uid-789",
+          details: {
+            data: undefined as any,
+          },
+        },
+        grant: undefined,
+      });
+
+      render(<CommunityMilestoneCard milestone={milestone} />);
+
+      // Should use project uid when details.data is undefined
+      const viewLink = screen.getByText("View project updates →");
+      expect(viewLink).toHaveAttribute("href", "/project/fallback-uid-789/updates");
     });
   });
 
@@ -621,14 +675,15 @@ describe("CommunityMilestoneCard", () => {
   });
 
   describe("Links and Navigation", () => {
-    it("should have proper external link attributes on project link", () => {
+    it("should display project title as plain text without link attributes", () => {
       const milestone = createMockMilestone();
 
       render(<CommunityMilestoneCard milestone={milestone} />);
 
-      const projectLink = screen.getByText("Test Project").closest("a");
-      expect(projectLink).toHaveAttribute("target", "_blank");
-      expect(projectLink).toHaveAttribute("rel", "noopener noreferrer");
+      const projectTitle = screen.getByText("Test Project");
+      // Project title should be a span, not a link
+      expect(projectTitle.tagName).toBe("SPAN");
+      expect(projectTitle.closest("a")).toBeNull();
     });
 
     it("should have proper external link attributes on view milestone link", () => {
