@@ -1,6 +1,25 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import ApplicationHeader from "@/components/FundingPlatform/ApplicationView/ApplicationHeader";
 import type { IFundingApplication } from "@/types/funding-platform";
+
+// Create a wrapper with QueryClientProvider for tests
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+  return ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+};
+
+const renderWithProviders = (ui: React.ReactElement) => {
+  return render(ui, { wrapper: createWrapper() });
+};
 
 // Mock the formatDate utility
 jest.mock("@/utilities/formatDate", () => ({
@@ -53,35 +72,35 @@ describe("ApplicationHeader", () => {
   describe("Rendering", () => {
     it("should render project title", () => {
       const application = createMockApplication();
-      render(<ApplicationHeader application={application} />);
+      renderWithProviders(<ApplicationHeader application={application} />);
 
       expect(screen.getByText("Test Project")).toBeInTheDocument();
     });
 
     it("should render reference number", () => {
       const application = createMockApplication();
-      render(<ApplicationHeader application={application} />);
+      renderWithProviders(<ApplicationHeader application={application} />);
 
       expect(screen.getByText("APP-TEST-12345")).toBeInTheDocument();
     });
 
     it("should render applicant email", () => {
       const application = createMockApplication();
-      render(<ApplicationHeader application={application} />);
+      renderWithProviders(<ApplicationHeader application={application} />);
 
       expect(screen.getByText("test@example.com")).toBeInTheDocument();
     });
 
     it("should render submitted date", () => {
       const application = createMockApplication();
-      render(<ApplicationHeader application={application} />);
+      renderWithProviders(<ApplicationHeader application={application} />);
 
       expect(screen.getByText(/Submitted:/)).toBeInTheDocument();
     });
 
     it("should render last updated date", () => {
       const application = createMockApplication();
-      render(<ApplicationHeader application={application} />);
+      renderWithProviders(<ApplicationHeader application={application} />);
 
       expect(screen.getByText(/Last updated:/)).toBeInTheDocument();
     });
@@ -90,7 +109,7 @@ describe("ApplicationHeader", () => {
   describe("Status Badge", () => {
     it("should display pending status", () => {
       const application = createMockApplication({ status: "pending" });
-      render(<ApplicationHeader application={application} />);
+      renderWithProviders(<ApplicationHeader application={application} />);
 
       expect(screen.getByText("Pending")).toBeInTheDocument();
       expect(screen.getByTestId("clock-icon")).toBeInTheDocument();
@@ -98,14 +117,14 @@ describe("ApplicationHeader", () => {
 
     it("should display under_review status formatted correctly", () => {
       const application = createMockApplication({ status: "under_review" });
-      render(<ApplicationHeader application={application} />);
+      renderWithProviders(<ApplicationHeader application={application} />);
 
       expect(screen.getByText("Under Review")).toBeInTheDocument();
     });
 
     it("should display revision_requested status formatted correctly", () => {
       const application = createMockApplication({ status: "revision_requested" });
-      render(<ApplicationHeader application={application} />);
+      renderWithProviders(<ApplicationHeader application={application} />);
 
       expect(screen.getByText("Revision Requested")).toBeInTheDocument();
       expect(screen.getByTestId("warning-icon")).toBeInTheDocument();
@@ -113,7 +132,7 @@ describe("ApplicationHeader", () => {
 
     it("should display approved status", () => {
       const application = createMockApplication({ status: "approved" });
-      render(<ApplicationHeader application={application} />);
+      renderWithProviders(<ApplicationHeader application={application} />);
 
       expect(screen.getByText("Approved")).toBeInTheDocument();
       expect(screen.getByTestId("check-icon")).toBeInTheDocument();
@@ -121,7 +140,7 @@ describe("ApplicationHeader", () => {
 
     it("should display rejected status", () => {
       const application = createMockApplication({ status: "rejected" });
-      render(<ApplicationHeader application={application} />);
+      renderWithProviders(<ApplicationHeader application={application} />);
 
       expect(screen.getByText("Rejected")).toBeInTheDocument();
       expect(screen.getByTestId("x-icon")).toBeInTheDocument();
@@ -129,7 +148,7 @@ describe("ApplicationHeader", () => {
 
     it("should display resubmitted status", () => {
       const application = createMockApplication({ status: "resubmitted" });
-      render(<ApplicationHeader application={application} />);
+      renderWithProviders(<ApplicationHeader application={application} />);
 
       expect(screen.getByText("Resubmitted")).toBeInTheDocument();
     });
@@ -138,7 +157,7 @@ describe("ApplicationHeader", () => {
   describe("Status Colors", () => {
     it("should apply blue color for pending status", () => {
       const application = createMockApplication({ status: "pending" });
-      const { container } = render(<ApplicationHeader application={application} />);
+      const { container } = renderWithProviders(<ApplicationHeader application={application} />);
 
       const statusBadge = container.querySelector('[class*="bg-blue-100"]');
       expect(statusBadge).toBeInTheDocument();
@@ -146,7 +165,7 @@ describe("ApplicationHeader", () => {
 
     it("should apply purple color for under_review status", () => {
       const application = createMockApplication({ status: "under_review" });
-      const { container } = render(<ApplicationHeader application={application} />);
+      const { container } = renderWithProviders(<ApplicationHeader application={application} />);
 
       const statusBadge = container.querySelector('[class*="bg-purple-100"]');
       expect(statusBadge).toBeInTheDocument();
@@ -154,7 +173,7 @@ describe("ApplicationHeader", () => {
 
     it("should apply yellow color for revision_requested status", () => {
       const application = createMockApplication({ status: "revision_requested" });
-      const { container } = render(<ApplicationHeader application={application} />);
+      const { container } = renderWithProviders(<ApplicationHeader application={application} />);
 
       const statusBadge = container.querySelector('[class*="bg-yellow-100"]');
       expect(statusBadge).toBeInTheDocument();
@@ -162,7 +181,7 @@ describe("ApplicationHeader", () => {
 
     it("should apply green color for approved status", () => {
       const application = createMockApplication({ status: "approved" });
-      const { container } = render(<ApplicationHeader application={application} />);
+      const { container } = renderWithProviders(<ApplicationHeader application={application} />);
 
       const statusBadge = container.querySelector('[class*="bg-green-100"]');
       expect(statusBadge).toBeInTheDocument();
@@ -170,7 +189,7 @@ describe("ApplicationHeader", () => {
 
     it("should apply red color for rejected status", () => {
       const application = createMockApplication({ status: "rejected" });
-      const { container } = render(<ApplicationHeader application={application} />);
+      const { container } = renderWithProviders(<ApplicationHeader application={application} />);
 
       const statusBadge = container.querySelector('[class*="bg-red-100"]');
       expect(statusBadge).toBeInTheDocument();
@@ -182,7 +201,7 @@ describe("ApplicationHeader", () => {
       const application = createMockApplication({
         applicationData: {},
       });
-      render(<ApplicationHeader application={application} />);
+      renderWithProviders(<ApplicationHeader application={application} />);
 
       expect(screen.getByText("Untitled Project")).toBeInTheDocument();
     });
@@ -191,7 +210,7 @@ describe("ApplicationHeader", () => {
       const application = createMockApplication({
         status: "unknown_status" as any,
       });
-      render(<ApplicationHeader application={application} />);
+      renderWithProviders(<ApplicationHeader application={application} />);
 
       expect(screen.getByText("Unknown Status")).toBeInTheDocument();
     });
@@ -200,7 +219,7 @@ describe("ApplicationHeader", () => {
   describe("Dark Mode Support", () => {
     it("should have dark mode classes", () => {
       const application = createMockApplication();
-      const { container } = render(<ApplicationHeader application={application} />);
+      const { container } = renderWithProviders(<ApplicationHeader application={application} />);
 
       const htmlContent = container.innerHTML;
       expect(htmlContent).toContain("dark:bg-zinc-800");
@@ -211,7 +230,7 @@ describe("ApplicationHeader", () => {
   describe("Actions", () => {
     it("should render status actions when provided", () => {
       const application = createMockApplication();
-      render(
+      renderWithProviders(
         <ApplicationHeader application={application} statusActions={<button>Test Action</button>} />
       );
 
@@ -220,14 +239,16 @@ describe("ApplicationHeader", () => {
 
     it("should render more actions when provided", () => {
       const application = createMockApplication();
-      render(<ApplicationHeader application={application} moreActions={<button>More</button>} />);
+      renderWithProviders(
+        <ApplicationHeader application={application} moreActions={<button>More</button>} />
+      );
 
       expect(screen.getByRole("button", { name: /more/i })).toBeInTheDocument();
     });
 
     it("should show actions section with divider when status actions are provided", () => {
       const application = createMockApplication();
-      const { container } = render(
+      const { container } = renderWithProviders(
         <ApplicationHeader application={application} statusActions={<button>Approve</button>} />
       );
 
@@ -236,7 +257,7 @@ describe("ApplicationHeader", () => {
 
     it("should not show actions section when no status actions", () => {
       const application = createMockApplication();
-      const { container } = render(
+      const { container } = renderWithProviders(
         <ApplicationHeader application={application} moreActions={<button>More</button>} />
       );
 

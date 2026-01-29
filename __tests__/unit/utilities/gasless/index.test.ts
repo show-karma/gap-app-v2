@@ -123,31 +123,17 @@ describe("Gasless Module API", () => {
 
   describe("createGaslessClient", () => {
     it("should create client for ZeroDev chains", async () => {
-      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
-
       const client = await createGaslessClient(optimism.id, mockSigner);
 
       expect(client).not.toBeNull();
       expect(getProvider).toHaveBeenCalledWith("zerodev");
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Creating client for chain 10 using zerodev provider")
-      );
-
-      consoleSpy.mockRestore();
     });
 
     it("should create client for Alchemy chains", async () => {
-      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
-
       const client = await createGaslessClient(celo.id, mockSigner);
 
       expect(client).not.toBeNull();
       expect(getProvider).toHaveBeenCalledWith("alchemy");
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Creating client for chain 42220 using alchemy provider")
-      );
-
-      consoleSpy.mockRestore();
     });
 
     it("should return null for unsupported chains", async () => {

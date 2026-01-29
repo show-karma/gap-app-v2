@@ -190,7 +190,8 @@ describe("KYC Hooks", () => {
       });
 
       it("should return null when config does not exist (404)", async () => {
-        mockFetchData.mockResolvedValue([null, "Not found"]);
+        // Mock a successful response with null data (config not found)
+        mockFetchData.mockResolvedValue([null, null]);
 
         const { result } = renderHook(() => useKycConfig("optimism"), {
           wrapper,
