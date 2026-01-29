@@ -41,18 +41,28 @@ export interface CreateDonationRequest {
   metadata?: Record<string, unknown>;
 }
 
-export interface OnrampRequest {
-  projectId: string;
+export enum OnrampProvider {
+  STRIPE = "stripe",
+  TRANSAK = "transak",
+}
+
+export interface OnrampSessionRequest {
+  provider: OnrampProvider;
+  projectUid: string;
   payoutAddress: string;
   fiatAmount: number;
   fiatCurrency: string;
-  targetToken: string;
-  network: number;
-  userEmail?: string;
-  redirectUrl?: string;
+  network: string;
+  targetAsset: string;
+  donorAddress?: string;
+  country?: string; // ISO 3166-1 alpha-2 code
+  redirectUrl?: string; // URL to redirect user after completing onramp
 }
 
-export interface OnrampResponse {
-  url: string;
+export interface OnrampSessionResponse {
+  sessionToken: string;
   sessionId: string;
+  donationUid: string;
+  expiresAt: string;
+  onrampUrl?: string;
 }

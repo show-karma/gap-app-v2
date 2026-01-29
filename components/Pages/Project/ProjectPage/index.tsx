@@ -6,7 +6,7 @@ import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
 import { useEffect } from "react";
 import type { Hex } from "viem";
@@ -28,6 +28,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useActivityTabStore } from "@/store/activityTab";
 import { useENS } from "@/store/ens";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { useOnrampStatusModalStore } from "@/store/modals/onrampStatus";
 import fetchData from "@/utilities/fetchData";
 import formatCurrency from "@/utilities/formatCurrency";
 import type { Member } from "@/utilities/getProjectMemberRoles";
@@ -65,7 +66,11 @@ function ProjectPage() {
   const { teamProfiles } = useTeamProfiles(project);
   const { address } = useAccount();
   const { openModal } = useContributorProfileModalStore();
-  const inviteCodeParam = useSearchParams().get("invite-code");
+  const { openModal: openOnrampModal } = useOnrampStatusModalStore();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const inviteCodeParam = searchParams.get("invite-code");
   const params = useParams();
   const projectId = params.projectId as string;
   const { populateEns, ensData } = useENS();
@@ -84,6 +89,48 @@ function ProjectPage() {
       populateEns(addresses);
     }
   }, [project?.members, populateEns]);
+
+  // Detect onramp redirect params and show status modal
+  useEffect(() => {
+    const onrampProvider = searchParams.get("onrampProvider") as "stripe" | "transak" | null;
+    const onrampRef = searchParams.get("onrampRef");
+    // Transak appends orderId to redirect URL
+    const transakOrderId = searchParams.get("orderId");
+
+    // Determine provider and orderId
+    let provider: "stripe" | "transak" | null = onrampProvider;
+    let orderId: string | null = null;
+
+    if (transakOrderId) {
+      // Transak redirect - use Transak's orderId
+      provider = provider || "transak";
+      orderId = transakOrderId;
+    } else if (onrampRef) {
+      // Stripe redirect - use our partnerUserRef
+      provider = provider || "stripe";
+      orderId = onrampRef;
+    }
+
+    if (provider && orderId) {
+      openOnrampModal(provider, orderId);
+      // Clear onramp params from URL without navigation
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("onrampRef");
+      params.delete("onrampProvider");
+      params.delete("orderId");
+      // Also clean up other Transak params
+      params.delete("fiatCurrency");
+      params.delete("cryptoCurrency");
+      params.delete("fiatAmount");
+      params.delete("cryptoAmount");
+      params.delete("status");
+      params.delete("walletAddress");
+      params.delete("network");
+      params.delete("partnerOrderId");
+      const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [searchParams, openOnrampModal, router, pathname]);
 
   const [, copy] = useCopyToClipboard();
 
