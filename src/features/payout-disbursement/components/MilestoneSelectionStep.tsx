@@ -66,7 +66,7 @@ export function MilestoneSelectionStep({
   }, [allocations, paidIds]);
 
   // Calculate totals
-  // Note: Allocation amounts are stored as human-readable values (e.g., "10" for 10 USDC)
+  // Note: Allocation amounts are passed as human-readable values (converted from smallest units by parent)
   const { totalUnpaid, selectedTotal } = useMemo(() => {
     let unpaidSum = 0;
     let selectedSum = 0;
@@ -86,8 +86,8 @@ export function MilestoneSelectionStep({
   }, [unpaidAllocations, selectedAllocationIds]);
 
   // Format amount for display
-  // Note: Allocation amounts are stored as human-readable values (e.g., "10" for 10 USDC),
-  // NOT as raw token units. So we just format them nicely without conversion.
+  // Note: Allocation amounts are passed as human-readable values (converted from smallest units by parent),
+  // so we just format them nicely without additional conversion.
   const formatAmount = (amount: string): string => {
     const num = parseFloat(amount);
     if (Number.isNaN(num)) return amount;
@@ -201,6 +201,11 @@ export function MilestoneSelectionStep({
           <button
             type="button"
             onClick={allSelected ? handleClearAll : handleSelectAll}
+            aria-label={
+              allSelected
+                ? "Deselect all milestone allocations"
+                : "Select all milestone allocations"
+            }
             className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
           >
             {allSelected ? "Deselect All" : "Select All"}
@@ -209,6 +214,7 @@ export function MilestoneSelectionStep({
             <button
               type="button"
               onClick={handleClearAll}
+              aria-label="Clear all selections"
               className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
             >
               Clear
@@ -348,7 +354,7 @@ export function getPaidAllocationIds(disbursements: PayoutDisbursement[]): strin
 
 /**
  * Helper function to calculate the total amount from selected allocations.
- * Note: Allocation amounts are stored as human-readable values (e.g., "10" for 10 USDC).
+ * Note: Allocation amounts should be passed as human-readable values (converted from smallest units).
  * Returns the sum as a number (not bigint) since amounts can have decimals.
  */
 export function calculateSelectedTotal(

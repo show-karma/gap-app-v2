@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getTokenDecimals } from "@/config/tokens";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
@@ -663,9 +664,24 @@ export default function PayoutsAdminPage() {
         ? editedFields[item.uid].amount || "0"
         : item.currentAmount || "0";
 
-      // Get milestone allocations from payout config
+      // Get milestone allocations from payout config and convert to human-readable
       const payoutConfig = payoutConfigMap[item.uid];
-      const milestoneAllocations = payoutConfig?.milestoneAllocations || [];
+      const tokenDecimals = getTokenDecimals(
+        payoutConfig?.tokenAddress || null,
+        payoutConfig?.chainId || undefined
+      );
+
+      // Convert allocation amounts from smallest units to human-readable
+      const milestoneAllocations = (payoutConfig?.milestoneAllocations || []).map((alloc) => {
+        if (!alloc.amount || alloc.amount === "0") return alloc;
+        try {
+          const humanReadable = formatUnits(BigInt(alloc.amount), tokenDecimals);
+          return { ...alloc, amount: humanReadable };
+        } catch {
+          // If conversion fails (e.g., already human-readable), use as-is
+          return alloc;
+        }
+      });
 
       // Get paid allocation IDs from disbursement history (excluding failed/cancelled)
       const disbursementHistory = disbursementMap[item.uid]?.history || [];

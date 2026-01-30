@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { isAddress } from "viem";
+import { formatUnits, isAddress, parseUnits } from "viem";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import {
@@ -51,6 +51,13 @@ type TokenType = "usdc" | "native" | "custom";
 
 /** Get available networks based on environment */
 const getSupportedNetworks = () => getAvailableNetworks(envVars.isDev);
+
+/** Token decimals by type - USDC uses 6 decimals, native tokens use 18 */
+const TOKEN_DECIMALS: Record<TokenType, number> = {
+  usdc: 6,
+  native: 18,
+  custom: 18, // Default to 18 for custom tokens
+};
 
 export function PayoutConfigurationModal({
   isOpen,
@@ -122,6 +129,11 @@ export function PayoutConfigurationModal({
     return NETWORKS[selectedNetwork]?.name || `Chain ${selectedNetwork}`;
   }, [selectedNetwork]);
 
+  // Get token decimals based on selected token type
+  const selectedTokenDecimals = useMemo(() => {
+    return TOKEN_DECIMALS[tokenType];
+  }, [tokenType]);
+
   /**
    * Generate milestone allocations from grant milestones.
    * Structure: First payment, Milestone 1, 2, 3..., Final payment
@@ -178,45 +190,58 @@ export function PayoutConfigurationModal({
 
   // Initialize form from existing config
   useEffect(() => {
-    console.log("[PayoutConfig] useEffect triggered", {
-      isOpen,
-      currentConfig,
-      isLoadingConfig,
-      isLoadingMilestones,
-      milestoneAllocations: currentConfig?.milestoneAllocations,
-    });
-
     if (isOpen && currentConfig) {
-      console.log("[PayoutConfig] Loading existing config:", currentConfig);
       setPayoutAddress(currentConfig.payoutAddress || "");
-      setTotalGrantAmount(currentConfig.totalGrantAmount || "");
+
+      // Determine token type from token address first (needed for decimals)
+      let detectedTokenType: TokenType = "usdc";
+      if (currentConfig.tokenAddress) {
+        const usdcAddresses = Object.values(TOKEN_ADDRESSES.usdc) as string[];
+        if (usdcAddresses.includes(currentConfig.tokenAddress)) {
+          detectedTokenType = "usdc";
+        } else {
+          detectedTokenType = "custom";
+          setCustomTokenAddress(currentConfig.tokenAddress);
+        }
+      }
+      setTokenType(detectedTokenType);
 
       if (currentConfig.chainId) {
         setSelectedNetwork(currentConfig.chainId as SupportedChainId);
       }
 
-      // Determine token type from token address
-      if (currentConfig.tokenAddress) {
-        const usdcAddresses = Object.values(TOKEN_ADDRESSES.usdc) as string[];
-        if (usdcAddresses.includes(currentConfig.tokenAddress)) {
-          setTokenType("usdc");
-        } else {
-          setTokenType("custom");
-          setCustomTokenAddress(currentConfig.tokenAddress);
+      // Convert totalGrantAmount from smallest units to human-readable
+      const decimals = TOKEN_DECIMALS[detectedTokenType];
+      if (currentConfig.totalGrantAmount) {
+        try {
+          const humanReadable = formatUnits(BigInt(currentConfig.totalGrantAmount), decimals);
+          setTotalGrantAmount(humanReadable);
+        } catch {
+          // If conversion fails, use the raw value (might already be human-readable from old data)
+          setTotalGrantAmount(currentConfig.totalGrantAmount);
         }
+      } else {
+        setTotalGrantAmount("");
       }
 
-      // If we have saved allocations, use them directly; otherwise generate fresh ones
+      // Convert allocation amounts from smallest units to human-readable
       if (currentConfig.milestoneAllocations && currentConfig.milestoneAllocations.length > 0) {
-        console.log("[PayoutConfig] Using saved allocations:", currentConfig.milestoneAllocations);
-        setMilestoneAllocations(currentConfig.milestoneAllocations);
+        const convertedAllocations = currentConfig.milestoneAllocations.map((alloc) => {
+          if (!alloc.amount) return alloc;
+          try {
+            const humanReadable = formatUnits(BigInt(alloc.amount), decimals);
+            return { ...alloc, amount: humanReadable };
+          } catch {
+            // If conversion fails, use the raw value
+            return alloc;
+          }
+        });
+        setMilestoneAllocations(convertedAllocations);
       } else {
-        console.log("[PayoutConfig] No saved allocations, generating fresh");
         setMilestoneAllocations(generateAllocationsFromMilestones(null));
       }
     } else if (isOpen && !currentConfig && !isLoadingConfig && !isLoadingMilestones) {
       // No existing config, generate fresh allocations
-      console.log("[PayoutConfig] No config found, generating fresh allocations");
       setMilestoneAllocations(generateAllocationsFromMilestones(null));
     }
   }, [
@@ -356,14 +381,45 @@ export function PayoutConfigurationModal({
       return;
     }
 
+    // Convert totalGrantAmount from human-readable to smallest units
+    let totalGrantAmountInSmallestUnit: string | null = null;
+    if (totalGrantAmount) {
+      try {
+        totalGrantAmountInSmallestUnit = parseUnits(
+          totalGrantAmount,
+          selectedTokenDecimals
+        ).toString();
+      } catch {
+        toast.error("Invalid total grant amount format");
+        return;
+      }
+    }
+
+    // Convert milestone allocation amounts from human-readable to smallest units
+    let convertedAllocations: MilestoneAllocation[] | null = null;
+    if (milestoneAllocations.length > 0) {
+      try {
+        convertedAllocations = milestoneAllocations.map((alloc) => {
+          if (!alloc.amount || alloc.amount === "0" || alloc.amount === "") {
+            return { ...alloc, amount: "0" };
+          }
+          const amountInSmallestUnit = parseUnits(alloc.amount, selectedTokenDecimals).toString();
+          return { ...alloc, amount: amountInSmallestUnit };
+        });
+      } catch {
+        toast.error("Invalid allocation amount format");
+        return;
+      }
+    }
+
     const configItem: PayoutConfigItem = {
       grantUID,
       projectUID,
       payoutAddress: payoutAddress || null,
-      totalGrantAmount: totalGrantAmount || null,
+      totalGrantAmount: totalGrantAmountInSmallestUnit,
       tokenAddress: selectedTokenAddress || null,
       chainId: selectedNetwork,
-      milestoneAllocations: milestoneAllocations.length > 0 ? milestoneAllocations : null,
+      milestoneAllocations: convertedAllocations,
     };
 
     await saveConfigMutation.mutateAsync({
@@ -418,6 +474,7 @@ export function PayoutConfigurationModal({
                   </div>
                   <button
                     onClick={onClose}
+                    aria-label="Close payout configuration"
                     className="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"
                   >
                     <XMarkIcon className="h-6 w-6" />
@@ -601,7 +658,7 @@ export function PayoutConfigurationModal({
                       </div>
 
                       <div className="space-y-2">
-                        {milestoneAllocations.map((alloc, index) => {
+                        {milestoneAllocations.map((alloc) => {
                           const isFirstPayment = alloc.label === "First payment";
                           const isFinalPayment = alloc.label === "Final payment";
                           const isMilestone = !isFirstPayment && !isFinalPayment;
