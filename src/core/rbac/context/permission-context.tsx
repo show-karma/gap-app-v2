@@ -6,6 +6,7 @@ import { hasAllPermissions, hasAnyPermission, hasPermission } from "../policies"
 import type { GetPermissionsParams } from "../services/authorization.service";
 import {
   isRoleAtLeast,
+  isValidRole,
   type Permission,
   type PermissionContextValue,
   type ResourceContext,
@@ -58,8 +59,9 @@ export function PermissionProvider({ children, resourceContext = {} }: Permissio
       can: (permission: Permission) => hasPermission(permissions, permission),
       canAny: (perms: Permission[]) => hasAnyPermission(permissions, perms),
       canAll: (perms: Permission[]) => hasAllPermissions(permissions, perms),
-      hasRole: (role: string) => roles.roles.includes(role as Role),
-      hasRoleOrHigher: (role: string) => isRoleAtLeast(roles.primaryRole, role as Role),
+      hasRole: (role: string) => isValidRole(role) && roles.roles.includes(role),
+      hasRoleOrHigher: (role: string) =>
+        isValidRole(role) && isRoleAtLeast(roles.primaryRole, role),
       isReviewerType: (type: ReviewerType) => roles.reviewerTypes?.includes(type) ?? false,
     };
   }, [data, isLoading]);

@@ -10,6 +10,7 @@ export {
   getHighestRole,
   getRoleLevel,
   isRoleAtLeast,
+  isValidRole,
   ReviewerType,
   ROLE_HIERARCHY,
   Role,

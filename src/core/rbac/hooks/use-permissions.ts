@@ -12,7 +12,9 @@ export function usePermissionsQuery(params: GetPermissionsParams = {}) {
   return useQuery({
     queryKey: permissionsKeys.context(params),
     queryFn: () => authorizationService.getPermissions(params),
-    staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes - permissions don't change frequently
+    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
+    refetchOnWindowFocus: false, // Avoid excessive refetches on tab switch
+    retry: 2, // Retry failed requests twice
   });
 }

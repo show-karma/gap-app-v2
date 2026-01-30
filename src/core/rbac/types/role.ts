@@ -8,6 +8,12 @@ export enum Role {
   GUEST = "GUEST",
 }
 
+const ROLE_VALUES = new Set(Object.values(Role));
+
+export function isValidRole(role: string): role is Role {
+  return ROLE_VALUES.has(role as Role);
+}
+
 export const ROLE_HIERARCHY: Record<Role, number> = {
   [Role.GUEST]: 0,
   [Role.APPLICANT]: 1,

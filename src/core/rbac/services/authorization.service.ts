@@ -1,3 +1,4 @@
+import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import type {
@@ -31,6 +32,16 @@ export interface GetPermissionsParams {
   chainId?: number;
 }
 
+const DEFAULT_GUEST_PERMISSIONS: PermissionsResponse = {
+  roles: {
+    primaryRole: "GUEST" as Role,
+    roles: ["GUEST" as Role],
+    reviewerTypes: [],
+  },
+  permissions: [],
+  resourceContext: {},
+};
+
 export const authorizationService = {
   async getPermissions(params: GetPermissionsParams = {}): Promise<PermissionsResponse> {
     const [response, error] = await fetchData<AuthPermissionsApiResponse>(
@@ -38,15 +49,15 @@ export const authorizationService = {
     );
 
     if (error || !response) {
-      return {
-        roles: {
-          primaryRole: "GUEST" as Role,
-          roles: ["GUEST" as Role],
-          reviewerTypes: [],
-        },
-        permissions: [],
-        resourceContext: {},
-      };
+      // Log error for monitoring but don't show intrusive UI
+      // Users will still have guest access, just with limited permissions
+      if (error) {
+        errorManager("Failed to fetch user permissions", error, {
+          context: "authorization.service.getPermissions",
+          params,
+        });
+      }
+      return DEFAULT_GUEST_PERMISSIONS;
     }
 
     return {
