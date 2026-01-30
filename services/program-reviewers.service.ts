@@ -22,7 +22,9 @@ export interface UserProfile {
   id: string;
   publicAddress: string;
   name: string;
-  email: string;
+  loginEmail: string;
+  notificationEmail?: string;
+  privyUserId?: string;
   telegram?: string;
   createdAt: string;
   updatedAt: string;
@@ -45,20 +47,22 @@ export interface ProgramReviewerResponse {
  */
 export interface ProgramReviewer {
   publicAddress: string;
+  loginEmail: string;
   name: string;
-  email: string;
+  notificationEmail?: string;
   telegram?: string;
   assignedAt: string;
   assignedBy?: string;
 }
 
 /**
- * Add reviewer request
+ * Add reviewer request - now uses email-based identification
+ * Wallet address is generated automatically from loginEmail via Privy
  */
 export interface AddReviewerRequest {
-  publicAddress: string;
+  loginEmail: string;
   name: string;
-  email: string;
+  notificationEmail?: string;
   telegram?: string;
 }
 
@@ -86,8 +90,9 @@ export const programReviewersService = {
     // Map the API response to the expected format
     return (data?.reviewers || []).map((reviewer) => ({
       publicAddress: reviewer.publicAddress,
+      loginEmail: reviewer.userProfile?.loginEmail || "",
       name: reviewer.userProfile?.name || "",
-      email: reviewer.userProfile?.email || "",
+      notificationEmail: reviewer.userProfile?.notificationEmail,
       telegram: reviewer.userProfile?.telegram || "",
       assignedAt: reviewer.assignedAt,
       assignedBy: reviewer.assignedBy,
@@ -96,6 +101,7 @@ export const programReviewersService = {
 
   /**
    * Add a reviewer to a program
+   * Wallet address is generated automatically from loginEmail via Privy
    */
   async addReviewer(programId: string, reviewerData: AddReviewerRequest): Promise<ProgramReviewer> {
     const response = await apiClient.post<{ reviewer?: ProgramReviewerResponse }>(
@@ -109,10 +115,12 @@ export const programReviewersService = {
     // Handle case where reviewer might be undefined or API returns success without data
     if (!reviewer) {
       // Return the input data as the reviewer was likely added successfully
+      // Note: publicAddress will be assigned by backend via Privy
       return {
-        publicAddress: reviewerData.publicAddress,
+        publicAddress: "",
+        loginEmail: reviewerData.loginEmail,
         name: reviewerData.name,
-        email: reviewerData.email,
+        notificationEmail: reviewerData.notificationEmail,
         telegram: reviewerData.telegram,
         assignedAt: new Date().toISOString(),
         assignedBy: undefined,
@@ -121,8 +129,9 @@ export const programReviewersService = {
 
     return {
       publicAddress: reviewer.publicAddress,
+      loginEmail: reviewer.userProfile?.loginEmail || reviewerData.loginEmail,
       name: reviewer.userProfile?.name || reviewerData.name,
-      email: reviewer.userProfile?.email || reviewerData.email,
+      notificationEmail: reviewer.userProfile?.notificationEmail || reviewerData.notificationEmail,
       telegram: reviewer.userProfile?.telegram || reviewerData.telegram,
       assignedAt: reviewer.assignedAt,
       assignedBy: reviewer.assignedBy,
@@ -130,10 +139,12 @@ export const programReviewersService = {
   },
 
   /**
-   * Remove a reviewer from a program
+   * Remove a reviewer from a program by their login email
    */
-  async removeReviewer(programId: string, publicAddress: string): Promise<void> {
-    await apiClient.delete(`/v2/funding-program-configs/${programId}/reviewers/${publicAddress}`);
+  async removeReviewer(programId: string, loginEmail: string): Promise<void> {
+    await apiClient.delete(
+      `/v2/funding-program-configs/${programId}/reviewers/${encodeURIComponent(loginEmail)}`
+    );
   },
 
   /**
@@ -204,9 +215,34 @@ export const programReviewersService = {
 
   /**
    * Validate reviewer data before submission
-   * Uses shared validation utilities for consistency
+   * Now uses email-based validation (no wallet address required)
    */
-  validateReviewerData(data: AddReviewerRequest): { valid: boolean; errors: string[] } {
-    return validateReviewerDataUtil(data);
+  validateReviewerData(data: {
+    loginEmail: string;
+    name: string;
+    notificationEmail?: string;
+    telegram?: string;
+  }): { valid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    if (!data.loginEmail) {
+      errors.push("Login email is required");
+    } else if (!validateEmail(data.loginEmail)) {
+      errors.push("Invalid login email format");
+    }
+
+    if (!data.name || !data.name.trim()) {
+      errors.push("Name is required");
+    }
+
+    if (data.notificationEmail && !validateEmail(data.notificationEmail)) {
+      errors.push("Invalid notification email format");
+    }
+
+    if (data.telegram && !validateTelegram(data.telegram)) {
+      errors.push("Invalid Telegram handle format");
+    }
+
+    return { valid: errors.length === 0, errors };
   },
 };

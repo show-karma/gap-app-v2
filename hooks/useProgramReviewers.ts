@@ -21,12 +21,13 @@ export function useProgramReviewers(programId: string) {
   });
 
   // Mutation for adding a program reviewer
+  // Uses email-based identification - wallet is generated via Privy
   const addMutation = useMutation({
     mutationFn: async (data: Record<string, string>) => {
       const validation = programReviewersService.validateReviewerData({
-        publicAddress: data.publicAddress,
+        loginEmail: data.loginEmail,
         name: data.name,
-        email: data.email,
+        notificationEmail: data.notificationEmail,
         telegram: data.telegram,
       });
 
@@ -35,10 +36,10 @@ export function useProgramReviewers(programId: string) {
       }
 
       return programReviewersService.addReviewer(programId, {
-        publicAddress: data.publicAddress,
+        loginEmail: data.loginEmail,
         name: data.name,
-        email: data.email,
-        telegram: data.telegram,
+        notificationEmail: data.notificationEmail || undefined,
+        telegram: data.telegram || undefined,
       });
     },
     onSuccess: async () => {
@@ -56,9 +57,10 @@ export function useProgramReviewers(programId: string) {
   });
 
   // Mutation for removing a program reviewer
+  // Accepts loginEmail (new) or publicAddress (legacy) as identifier
   const removeMutation = useMutation({
-    mutationFn: async (publicAddress: string) => {
-      return programReviewersService.removeReviewer(programId, publicAddress);
+    mutationFn: async (identifier: string) => {
+      return programReviewersService.removeReviewer(programId, identifier);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({

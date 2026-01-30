@@ -3,12 +3,7 @@ import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import {
-  validateEmail,
-  validateReviewerData as validateReviewerDataUtil,
-  validateTelegram,
-  validateWalletAddress,
-} from "@/utilities/validators";
+import { validateEmail, validateTelegram, validateWalletAddress } from "@/utilities/validators";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
@@ -22,7 +17,9 @@ export interface UserProfile {
   id: string;
   publicAddress: string;
   name: string;
-  email: string;
+  loginEmail: string;
+  notificationEmail?: string;
+  privyUserId?: string;
   telegram?: string;
   createdAt: string;
   updatedAt: string;
@@ -45,20 +42,22 @@ export interface MilestoneReviewerResponse {
  */
 export interface MilestoneReviewer {
   publicAddress: string;
+  loginEmail: string;
   name: string;
-  email: string;
+  notificationEmail?: string;
   telegram?: string;
   assignedAt: string;
   assignedBy?: string;
 }
 
 /**
- * Add milestone reviewer request
+ * Add milestone reviewer request - now uses email-based identification
+ * Wallet address is generated automatically from loginEmail via Privy
  */
 export interface AddMilestoneReviewerRequest {
-  publicAddress: string;
+  loginEmail: string;
   name: string;
-  email: string;
+  notificationEmail?: string;
   telegram?: string;
 }
 
@@ -86,8 +85,9 @@ export const milestoneReviewersService = {
     // Map the API response to the expected format
     return (data || []).map((reviewer) => ({
       publicAddress: reviewer.publicAddress,
+      loginEmail: reviewer.userProfile?.loginEmail || "",
       name: reviewer.userProfile?.name || "",
-      email: reviewer.userProfile?.email || "",
+      notificationEmail: reviewer.userProfile?.notificationEmail,
       telegram: reviewer.userProfile?.telegram || "",
       assignedAt: reviewer.assignedAt,
       assignedBy: reviewer.assignedBy,
@@ -96,6 +96,7 @@ export const milestoneReviewersService = {
 
   /**
    * Add a milestone reviewer to a program
+   * Wallet address is generated automatically from loginEmail via Privy
    */
   async addReviewer(
     programId: string,
@@ -111,10 +112,12 @@ export const milestoneReviewersService = {
     // Handle case where reviewer might be undefined or API returns success without data
     if (!reviewer) {
       // Return the input data as the reviewer was likely added successfully
+      // Note: publicAddress will be assigned by backend via Privy
       return {
-        publicAddress: reviewerData.publicAddress,
+        publicAddress: "",
+        loginEmail: reviewerData.loginEmail,
         name: reviewerData.name,
-        email: reviewerData.email,
+        notificationEmail: reviewerData.notificationEmail,
         telegram: reviewerData.telegram,
         assignedAt: new Date().toISOString(),
         assignedBy: undefined,
@@ -123,8 +126,9 @@ export const milestoneReviewersService = {
 
     return {
       publicAddress: reviewer.publicAddress,
+      loginEmail: reviewer.userProfile?.loginEmail || reviewerData.loginEmail,
       name: reviewer.userProfile?.name || reviewerData.name,
-      email: reviewer.userProfile?.email || reviewerData.email,
+      notificationEmail: reviewer.userProfile?.notificationEmail || reviewerData.notificationEmail,
       telegram: reviewer.userProfile?.telegram || reviewerData.telegram,
       assignedAt: reviewer.assignedAt,
       assignedBy: reviewer.assignedBy,
@@ -132,10 +136,12 @@ export const milestoneReviewersService = {
   },
 
   /**
-   * Remove a milestone reviewer from a program
+   * Remove a milestone reviewer from a program by their login email
    */
-  async removeReviewer(programId: string, publicAddress: string): Promise<void> {
-    await apiClient.delete(`/v2/programs/${programId}/milestone-reviewers/${publicAddress}`);
+  async removeReviewer(programId: string, loginEmail: string): Promise<void> {
+    await apiClient.delete(
+      `/v2/programs/${programId}/milestone-reviewers/${encodeURIComponent(loginEmail)}`
+    );
   },
 
   /**
@@ -209,12 +215,34 @@ export const milestoneReviewersService = {
 
   /**
    * Validate milestone reviewer data before submission
-   * Uses shared validation utilities for consistency
+   * Now uses email-based validation (no wallet address required)
    */
-  validateReviewerData(data: AddMilestoneReviewerRequest): {
-    valid: boolean;
-    errors: string[];
-  } {
-    return validateReviewerDataUtil(data);
+  validateReviewerData(data: {
+    loginEmail: string;
+    name: string;
+    notificationEmail?: string;
+    telegram?: string;
+  }): { valid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    if (!data.loginEmail) {
+      errors.push("Login email is required");
+    } else if (!validateEmail(data.loginEmail)) {
+      errors.push("Invalid login email format");
+    }
+
+    if (!data.name || !data.name.trim()) {
+      errors.push("Name is required");
+    }
+
+    if (data.notificationEmail && !validateEmail(data.notificationEmail)) {
+      errors.push("Invalid notification email format");
+    }
+
+    if (data.telegram && !validateTelegram(data.telegram)) {
+      errors.push("Invalid Telegram handle format");
+    }
+
+    return { valid: errors.length === 0, errors };
   },
 };

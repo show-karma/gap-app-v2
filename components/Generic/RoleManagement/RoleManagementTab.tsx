@@ -3,6 +3,8 @@
 import {
   CheckIcon,
   DocumentDuplicateIcon,
+  EnvelopeIcon,
+  KeyIcon,
   PlusIcon,
   UserIcon,
   XMarkIcon,
@@ -362,7 +364,13 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                   placeholder={field.placeholder}
                   disabled={isAddingMember}
                   aria-invalid={!!formErrors[field.name]}
-                  aria-describedby={formErrors[field.name] ? `${field.name}-error` : undefined}
+                  aria-describedby={
+                    formErrors[field.name]
+                      ? `${field.name}-error`
+                      : field.helperText
+                        ? `${field.name}-helper`
+                        : undefined
+                  }
                   aria-required={field.required}
                   className={cn(
                     "block w-full rounded-md border-gray-300 dark:border-gray-600",
@@ -374,6 +382,14 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                       "border-red-500 focus:border-red-500 focus:ring-red-500"
                   )}
                 />
+                {field.helperText && !formErrors[field.name] && (
+                  <p
+                    id={`${field.name}-helper`}
+                    className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                  >
+                    {field.helperText}
+                  </p>
+                )}
                 {formErrors[field.name] && (
                   <p
                     id={`${field.name}-error`}
@@ -472,28 +488,61 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                             </div>
                           )}
 
-                          {/* Email and Telegram on same line */}
-                          {(member.email || member.telegram) && (
+                          {/* Login Email - Primary identifier with key icon */}
+                          {member.loginEmail && (
                             <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                              {member.email && <span>{member.email}</span>}
-                              {member.email && member.telegram && (
-                                <span className="mx-2 text-gray-400 dark:text-gray-500">|</span>
-                              )}
-                              {member.telegram && (
-                                <span className="flex items-center space-x-1">
-                                  <TelegramIcon className="h-4 w-4" />
-                                  <span>
-                                    {member.telegram?.[0] === "@" ? "" : "@"}
-                                    {member.telegram}
-                                  </span>
-                                </span>
-                              )}
+                              <KeyIcon
+                                className="h-4 w-4 mr-1.5 text-gray-500 dark:text-gray-400"
+                                aria-hidden="true"
+                              />
+                              <span>{member.loginEmail}</span>
                             </div>
                           )}
 
-                          {/* Copiable address */}
+                          {/* Notification email and Telegram on same line */}
+                          {/* Show notification email only if different from login email */}
+                          {(() => {
+                            const hasDistinctNotificationEmail =
+                              member.notificationEmail &&
+                              member.notificationEmail !== member.loginEmail;
+                            const showEmail =
+                              hasDistinctNotificationEmail || (!member.loginEmail && member.email);
+                            const emailToShow = hasDistinctNotificationEmail
+                              ? member.notificationEmail
+                              : member.email;
+
+                            return (
+                              (showEmail || member.telegram) && (
+                                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                  {showEmail && emailToShow && (
+                                    <span className="flex items-center">
+                                      <EnvelopeIcon className="h-4 w-4 mr-1.5" aria-hidden="true" />
+                                      <span>{emailToShow}</span>
+                                    </span>
+                                  )}
+                                  {showEmail && member.telegram && (
+                                    <span className="mx-2 text-gray-400 dark:text-gray-500">|</span>
+                                  )}
+                                  {member.telegram && (
+                                    <span className="flex items-center space-x-1">
+                                      <TelegramIcon className="h-4 w-4" />
+                                      <span>
+                                        {member.telegram?.[0] === "@" ? "" : "@"}
+                                        {member.telegram}
+                                      </span>
+                                    </span>
+                                  )}
+                                </div>
+                              )
+                            );
+                          })()}
+
+                          {/* Copiable wallet address - shown as derived/secondary info */}
                           {(member.publicAddress || member.walletAddress) && (
                             <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                              <span className="mr-1.5 text-xs text-gray-400 dark:text-gray-500">
+                                Wallet:
+                              </span>
                               <button
                                 onClick={() =>
                                   handleCopyAddress(
@@ -533,7 +582,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                     <button
                       onClick={() => handleRemove(member.id)}
                       disabled={removingMemberId === member.id}
-                      aria-label={`Remove ${config.roleDisplayName.toLowerCase()} ${member.name || member.publicAddress || member.id}`}
+                      aria-label={`Remove ${config.roleDisplayName.toLowerCase()} ${member.name || member.loginEmail || member.publicAddress || member.id}`}
                       className={cn(
                         "ml-4 p-2 rounded-md",
                         "text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400",

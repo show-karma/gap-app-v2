@@ -189,13 +189,18 @@ export function validateProgramIdentifiers(programIds: string[]): {
 }
 
 /**
- * Parses a reviewer member ID in format: role-publicAddress
+ * Parses a reviewer member ID in format: role-identifier
+ * Supports both email-based (new) and wallet-based (legacy) formats:
+ * - New format: role-loginEmail (e.g., "program-reviewer@example.com")
+ * - Legacy format: role-publicAddress (e.g., "program-0x1234...5678")
+ *
  * @param memberId - The member ID to parse
  * @returns Object with parsing result and components
  */
 export function parseReviewerMemberId(memberId: string): {
   valid: boolean;
   role?: "program" | "milestone";
+  loginEmail?: string;
   publicAddress?: string;
   error?: string;
 } {
@@ -203,18 +208,18 @@ export function parseReviewerMemberId(memberId: string): {
     return { valid: false, error: "Invalid member ID" };
   }
 
-  // Find the first hyphen to split role and address
+  // Find the first hyphen to split role and identifier
   const hyphenIndex = memberId.indexOf("-");
 
   if (hyphenIndex === -1) {
     return {
       valid: false,
-      error: "Member ID must be in format: role-publicAddress",
+      error: "Member ID must be in format: role-identifier",
     };
   }
 
   const role = memberId.substring(0, hyphenIndex);
-  const publicAddress = memberId.substring(hyphenIndex + 1);
+  const identifier = memberId.substring(hyphenIndex + 1);
 
   // Validate role is one of the known types
   if (role !== "program" && role !== "milestone") {
@@ -224,18 +229,29 @@ export function parseReviewerMemberId(memberId: string): {
     };
   }
 
-  // Validate public address format
-  if (!validateWalletAddress(publicAddress)) {
+  // Determine if identifier is an email or wallet address
+  if (validateEmail(identifier)) {
+    // New format: email-based identification
     return {
-      valid: false,
-      error: "Invalid wallet address in member ID",
+      valid: true,
+      role: role as "program" | "milestone",
+      loginEmail: identifier,
     };
   }
 
+  if (validateWalletAddress(identifier)) {
+    // Legacy format: wallet-based identification
+    return {
+      valid: true,
+      role: role as "program" | "milestone",
+      publicAddress: identifier,
+    };
+  }
+
+  // If it's neither a valid email nor wallet address
   return {
-    valid: true,
-    role: role as "program" | "milestone",
-    publicAddress,
+    valid: false,
+    error: "Identifier must be a valid email or wallet address",
   };
 }
 
@@ -254,10 +270,58 @@ export function sanitizeString(input: string): string {
 
 /**
  * Validates reviewer data before submission
+ * Uses email-based identification (no wallet address required)
+ * Wallet address is generated automatically via Privy
+ *
  * @param data - Reviewer data to validate
  * @returns Object with validation result and errors
  */
 export function validateReviewerData(data: {
+  loginEmail: string;
+  name: string;
+  notificationEmail?: string;
+  telegram?: string;
+}): {
+  valid: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+
+  if (!data.loginEmail) {
+    errors.push("Login email is required");
+  } else if (!validateEmail(data.loginEmail)) {
+    errors.push("Invalid login email format");
+  }
+
+  if (!data.name || !data.name.trim()) {
+    errors.push("Name is required");
+  } else if (data.name.trim().length < 2) {
+    errors.push("Name must be at least 2 characters");
+  } else if (data.name.trim().length > 100) {
+    errors.push("Name must be less than 100 characters");
+  }
+
+  if (data.notificationEmail && !validateEmail(data.notificationEmail)) {
+    errors.push("Invalid notification email format");
+  }
+
+  if (data.telegram && !validateTelegram(data.telegram)) {
+    errors.push("Invalid Telegram handle format (5-32 alphanumeric characters, optional @ prefix)");
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}
+
+/**
+ * Validates reviewer data before submission (legacy format)
+ * @deprecated Use validateReviewerData with loginEmail instead
+ * @param data - Reviewer data to validate
+ * @returns Object with validation result and errors
+ */
+export function validateReviewerDataLegacy(data: {
   publicAddress: string;
   name: string;
   email: string;

@@ -21,12 +21,13 @@ export function useMilestoneReviewers(programId: string) {
   });
 
   // Mutation for adding a milestone reviewer
+  // Uses email-based identification - wallet is generated via Privy
   const addMutation = useMutation({
     mutationFn: async (data: Record<string, string>) => {
       const validation = milestoneReviewersService.validateReviewerData({
-        publicAddress: data.publicAddress,
+        loginEmail: data.loginEmail,
         name: data.name,
-        email: data.email,
+        notificationEmail: data.notificationEmail,
         telegram: data.telegram,
       });
 
@@ -35,10 +36,10 @@ export function useMilestoneReviewers(programId: string) {
       }
 
       return milestoneReviewersService.addReviewer(programId, {
-        publicAddress: data.publicAddress,
+        loginEmail: data.loginEmail,
         name: data.name,
-        email: data.email,
-        telegram: data.telegram,
+        notificationEmail: data.notificationEmail || undefined,
+        telegram: data.telegram || undefined,
       });
     },
     onSuccess: async () => {
@@ -56,9 +57,10 @@ export function useMilestoneReviewers(programId: string) {
   });
 
   // Mutation for removing a milestone reviewer
+  // Accepts loginEmail (new) or publicAddress (legacy) as identifier
   const removeMutation = useMutation({
-    mutationFn: async (publicAddress: string) => {
-      return milestoneReviewersService.removeReviewer(programId, publicAddress);
+    mutationFn: async (identifier: string) => {
+      return milestoneReviewersService.removeReviewer(programId, identifier);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
