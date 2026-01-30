@@ -4,5 +4,6 @@
       "main": false,
       "*": true
     }
-  }
+  },
+  "ignoreCommand": "bash vercel-ignore.sh"
 }
