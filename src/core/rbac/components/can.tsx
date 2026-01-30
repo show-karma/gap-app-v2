@@ -2,7 +2,8 @@
 
 import type { ReactNode } from "react";
 import { usePermissionContext } from "../context/permission-context";
-import type { Permission, ReviewerType, Role } from "../types";
+import type { Permission, ReviewerType } from "../types";
+import { Role } from "../types";
 
 interface CanProps {
   permission?: Permission;
@@ -144,8 +145,7 @@ export function RequireReviewer({ type, children, fallback = null }: RequireRevi
   }
 
   const isReviewer =
-    roles.roles.includes("PROGRAM_REVIEWER" as Role) ||
-    roles.roles.includes("MILESTONE_REVIEWER" as Role);
+    roles.roles.includes(Role.PROGRAM_REVIEWER) || roles.roles.includes(Role.MILESTONE_REVIEWER);
 
   if (!isReviewer) {
     return <>{fallback}</>;
@@ -166,9 +166,9 @@ interface AdminOnlyProps {
 
 export function AdminOnly({ children, fallback = null, level = "program" }: AdminOnlyProps) {
   const roleMap: Record<string, Role> = {
-    program: "PROGRAM_ADMIN" as Role,
-    community: "COMMUNITY_ADMIN" as Role,
-    super: "SUPER_ADMIN" as Role,
+    program: Role.PROGRAM_ADMIN,
+    community: Role.COMMUNITY_ADMIN,
+    super: Role.SUPER_ADMIN,
   };
 
   return (

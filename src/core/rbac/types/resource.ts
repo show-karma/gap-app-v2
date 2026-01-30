@@ -12,6 +12,7 @@ export interface PermissionContextValue {
   roles: UserRoles;
   permissions: Permission[];
   isLoading: boolean;
+  isGuestDueToError: boolean;
   resourceContext: ResourceContext;
   can: (permission: Permission) => boolean;
   canAny: (permissions: Permission[]) => boolean;

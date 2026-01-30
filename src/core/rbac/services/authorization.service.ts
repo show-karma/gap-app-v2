@@ -1,13 +1,8 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import type {
-  Permission,
-  PermissionsResponse,
-  ResourceContext,
-  ReviewerType,
-  Role,
-} from "../types";
+import type { Permission, PermissionsResponse, ResourceContext, ReviewerType } from "../types";
+import { Role } from "../types";
 
 interface AuthPermissionsApiResponse {
   roles: {
@@ -34,8 +29,8 @@ export interface GetPermissionsParams {
 
 const DEFAULT_GUEST_PERMISSIONS: PermissionsResponse = {
   roles: {
-    primaryRole: "GUEST" as Role,
-    roles: ["GUEST" as Role],
+    primaryRole: Role.GUEST,
+    roles: [Role.GUEST],
     reviewerTypes: [],
   },
   permissions: [],

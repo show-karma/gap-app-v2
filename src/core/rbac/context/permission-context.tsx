@@ -11,13 +11,13 @@ import {
   type PermissionContextValue,
   type ResourceContext,
   type ReviewerType,
-  type Role,
+  Role,
   type UserRoles,
 } from "../types";
 
 const defaultUserRoles: UserRoles = {
-  primaryRole: "GUEST" as Role,
-  roles: ["GUEST" as Role],
+  primaryRole: Role.GUEST,
+  roles: [Role.GUEST],
   reviewerTypes: [],
 };
 
@@ -27,6 +27,7 @@ const defaultContextValue: PermissionContextValue = {
   roles: defaultUserRoles,
   permissions: [],
   isLoading: true,
+  isGuestDueToError: false,
   resourceContext: defaultResourceContext,
   can: () => false,
   canAny: () => false,
@@ -44,17 +45,23 @@ interface PermissionProviderProps {
 }
 
 export function PermissionProvider({ children, resourceContext = {} }: PermissionProviderProps) {
-  const { data, isLoading } = usePermissionsQuery(resourceContext);
+  const { data, isLoading, isError } = usePermissionsQuery(resourceContext);
 
   const contextValue = useMemo<PermissionContextValue>(() => {
     const roles = data?.roles ?? defaultUserRoles;
     const permissions = data?.permissions ?? [];
     const context = data?.resourceContext ?? defaultResourceContext;
 
+    // User is in guest mode due to error if:
+    // 1. There was an error fetching permissions, OR
+    // 2. No data was returned and loading is complete
+    const isGuestDueToError = isError || (!isLoading && !data);
+
     return {
       roles,
       permissions,
       isLoading,
+      isGuestDueToError,
       resourceContext: context,
       can: (permission: Permission) => hasPermission(permissions, permission),
       canAny: (perms: Permission[]) => hasAnyPermission(permissions, perms),
@@ -64,7 +71,7 @@ export function PermissionProvider({ children, resourceContext = {} }: Permissio
         isValidRole(role) && isRoleAtLeast(roles.primaryRole, role),
       isReviewerType: (type: ReviewerType) => roles.reviewerTypes?.includes(type) ?? false,
     };
-  }, [data, isLoading]);
+  }, [data, isLoading, isError]);
 
   return <PermissionContext.Provider value={contextValue}>{children}</PermissionContext.Provider>;
 }
@@ -114,24 +121,28 @@ export function useUserRoles(): UserRoles {
 
 export function useIsAdmin(): boolean {
   const { hasRoleOrHigher, isLoading } = usePermissionContext();
-  return !isLoading && hasRoleOrHigher("PROGRAM_ADMIN" as Role);
+  return !isLoading && hasRoleOrHigher(Role.PROGRAM_ADMIN);
 }
 
 export function useIsCommunityAdmin(): boolean {
   const { hasRoleOrHigher, isLoading } = usePermissionContext();
-  return !isLoading && hasRoleOrHigher("COMMUNITY_ADMIN" as Role);
+  return !isLoading && hasRoleOrHigher(Role.COMMUNITY_ADMIN);
 }
 
 export function useIsSuperAdmin(): boolean {
   const { hasRole, isLoading } = usePermissionContext();
-  return !isLoading && hasRole("SUPER_ADMIN" as Role);
+  return !isLoading && hasRole(Role.SUPER_ADMIN);
 }
 
 export function useIsReviewer(): boolean {
   const { roles, isLoading } = usePermissionContext();
   return (
     !isLoading &&
-    (roles.roles.includes("PROGRAM_REVIEWER" as Role) ||
-      roles.roles.includes("MILESTONE_REVIEWER" as Role))
+    (roles.roles.includes(Role.PROGRAM_REVIEWER) || roles.roles.includes(Role.MILESTONE_REVIEWER))
   );
+}
+
+export function useIsGuestDueToError(): boolean {
+  const { isGuestDueToError } = usePermissionContext();
+  return isGuestDueToError;
 }
