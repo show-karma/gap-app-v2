@@ -23,7 +23,21 @@ const defaultUserRoles: UserRoles = {
 
 const defaultResourceContext: ResourceContext = {};
 
-const PermissionContext = createContext<PermissionContextValue | null>(null);
+const defaultContextValue: PermissionContextValue = {
+  roles: defaultUserRoles,
+  permissions: [],
+  isLoading: false,
+  isGuestDueToError: true, // Indicates usage outside PermissionProvider
+  resourceContext: defaultResourceContext,
+  can: () => false,
+  canAny: () => false,
+  canAll: () => false,
+  hasRole: () => false,
+  hasRoleOrHigher: () => false,
+  isReviewerType: () => false,
+};
+
+const PermissionContext = createContext<PermissionContextValue>(defaultContextValue);
 
 interface PermissionProviderProps {
   children: ReactNode;
@@ -63,11 +77,7 @@ export function PermissionProvider({ children, resourceContext = {} }: Permissio
 }
 
 export function usePermissionContext(): PermissionContextValue {
-  const context = useContext(PermissionContext);
-  if (context === null) {
-    throw new Error("usePermissionContext must be used within a PermissionProvider");
-  }
-  return context;
+  return useContext(PermissionContext);
 }
 
 export function useCan(permission: Permission): boolean {
