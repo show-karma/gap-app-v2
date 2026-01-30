@@ -46,7 +46,7 @@ export const useCommunityAdminAccess = (communityId?: string): UseCommunityAdmin
 
   const isLoading = useMemo(
     () => isCheckingAdmin || isStaffLoading || isOwnerLoading,
-    [isCheckingAdmin, isStaffLoading]
+    [isCheckingAdmin, isStaffLoading, isOwnerLoading]
   );
 
   const checks = useMemo(

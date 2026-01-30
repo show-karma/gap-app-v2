@@ -1,6 +1,7 @@
 "use client";
 
 import React, { type FC, useState } from "react";
+import { ClipboardDocumentCheckIcon } from "@heroicons/react/24/solid";
 import { ReviewerType } from "@/hooks/useReviewerAssignment";
 import type { MilestoneReviewer } from "@/services/milestone-reviewers.service";
 import type { ProgramReviewer } from "@/services/program-reviewers.service";
@@ -116,7 +117,19 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
         <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
           {application.applicantEmail}
         </td>
-        <td className="px-4 py-4 whitespace-nowrap">{getStatusBadge(application.status)}</td>
+        <td className="px-4 py-4 whitespace-nowrap">
+          <div className="flex items-center gap-2">
+            {getStatusBadge(application.status)}
+            {application.status === "approved" && application.postApprovalCompleted && (
+              <span
+                title="Post-approval form completed"
+                className="inline-flex items-center text-emerald-600 dark:text-emerald-400"
+              >
+                <ClipboardDocumentCheckIcon className="h-5 w-5" aria-hidden="true" />
+              </span>
+            )}
+          </div>
+        </td>
         {showAIScoreColumn && (
           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 text-center">
             {application.aiEvaluation?.evaluation ? (

@@ -605,9 +605,11 @@ describe("CreateProgramModal", () => {
       });
     });
 
-    it("should handle manual approval required", async () => {
+    it("should redirect to setup even when on-chain creation status is pending", async () => {
       const user = userEvent.setup();
-      // V2 API returns requiresManualApproval when auto-approval is not possible
+      mockPush.mockClear();
+      // Even when requiresManualApproval is true (on-chain pending),
+      // funding-platform flow should redirect to setup
       (ProgramRegistryService.createProgram as jest.Mock).mockResolvedValue({
         programId: "program-123",
         success: true,
@@ -633,12 +635,15 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith(
-          expect.stringContaining("approve it manually"),
-          expect.objectContaining({ duration: 10000 })
-        );
+        // Should show success message and redirect to setup regardless of approval status
+        expect(toast.success).toHaveBeenCalledWith("Program created! Let's set it up.", {
+          duration: 3000,
+        });
         expect(mockOnSuccess).toHaveBeenCalled();
         expect(mockOnClose).toHaveBeenCalled();
+        expect(mockPush).toHaveBeenCalledWith(
+          "/community/test-community/admin/funding-platform/program-123/setup"
+        );
       });
     });
 
@@ -786,9 +791,10 @@ describe("CreateProgramModal", () => {
     });
   });
 
-  describe("Manual Approval Flow", () => {
-    it("should handle manual approval requirement", async () => {
+  describe("Program Creation Flow", () => {
+    it("should show error if programId is missing from response", async () => {
       const user = userEvent.setup();
+      mockPush.mockClear();
       (ProgramRegistryService.createProgram as jest.Mock).mockResolvedValue({
         programId: "",
         success: true,
@@ -814,13 +820,13 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith(
-          expect.stringContaining("Please approve it manually"),
-          { duration: 10000 }
-        );
-        expect(ProgramRegistryService.approveProgram).not.toHaveBeenCalled();
-        expect(mockOnSuccess).toHaveBeenCalled();
-        expect(mockOnClose).toHaveBeenCalled();
+        // Should show error when programId is missing
+        expect(toast.error).toHaveBeenCalledWith("Failed to create program. Please try again.");
+        // Should NOT show success or redirect
+        expect(toast.success).not.toHaveBeenCalled();
+        expect(mockOnSuccess).not.toHaveBeenCalled();
+        expect(mockOnClose).not.toHaveBeenCalled();
+        expect(mockPush).not.toHaveBeenCalled();
       });
     });
   });

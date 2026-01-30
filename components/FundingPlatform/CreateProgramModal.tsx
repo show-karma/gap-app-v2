@@ -103,27 +103,24 @@ export function CreateProgramModal({
         metadata
       );
 
-      // Note: V2 auto-approves if user is community admin
-      // If requiresManualApproval is false, program is already approved
-      if (result.requiresManualApproval) {
-        toast.success(
-          "Program created successfully. Please approve it manually from the manage programs page.",
-          { duration: 10000 }
-        );
-        reset();
-        onSuccess();
-        onClose();
-      } else {
-        // Program created and approved - redirect to setup wizard
-        toast.success("Program created! Let's set it up.", { duration: 3000 });
-        reset();
-        onSuccess();
-        onClose();
-        // Redirect to setup wizard if we have a programId
-        if (result.programId) {
-          router.push(`/community/${communityId}/admin/funding-platform/${result.programId}/setup`);
-        }
+      // Verify we got a valid programId - without it we can't proceed to setup
+      if (!result.programId) {
+        errorManager("Program creation returned empty programId", new Error("Missing programId"), {
+          address,
+          data,
+          result,
+        });
+        toast.error("Failed to create program. Please try again.");
+        return;
       }
+
+      // For funding-platform flow, community admins always go to setup
+      // On-chain creation status doesn't affect the ability to configure the program
+      toast.success("Program created! Let's set it up.", { duration: 3000 });
+      reset();
+      onSuccess();
+      onClose();
+      router.push(`/community/${communityId}/admin/funding-platform/${result.programId}/setup`);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage?.includes("already exists")) {

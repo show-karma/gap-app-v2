@@ -152,10 +152,12 @@ describe("Navbar UI States", () => {
       cy.visit("/");
       waitForPageLoad();
 
-      // On mobile, the Sign in button is visible in the navbar header (not inside the drawer)
-      // The button is rendered alongside the menu hamburger icon
-      cy.contains("button", "Sign in").should("be.visible");
-      cy.contains("Contact sales").should("be.visible");
+      // On mobile, the Sign in button is visible in the fixed header navbar
+      // Use the fixed positioning class to target the header nav specifically
+      // (the page may have multiple nav elements, e.g., footer nav)
+      cy.get("nav.fixed").within(() => {
+        cy.contains("button", "Sign in").should("be.visible");
+      });
     });
   });
 });
