@@ -75,7 +75,8 @@ describe("milestoneReviewersService", () => {
             id: "user-1",
             publicAddress: "0x1234567890123456789012345678901234567890",
             name: "John Doe",
-            email: "john@example.com",
+            loginEmail: "john@example.com",
+            notificationEmail: "john-notifications@example.com",
             telegram: "@johndoe",
             createdAt: "2024-01-01T00:00:00Z",
             updatedAt: "2024-01-01T00:00:00Z",
@@ -93,8 +94,9 @@ describe("milestoneReviewersService", () => {
       expect(result).toEqual([
         {
           publicAddress: "0x1234567890123456789012345678901234567890",
+          loginEmail: "john@example.com",
           name: "John Doe",
-          email: "john@example.com",
+          notificationEmail: "john-notifications@example.com",
           telegram: "@johndoe",
           assignedAt: "2024-01-01T00:00:00Z",
           assignedBy: "0x9876543210987654321098765432109876543210",
@@ -135,8 +137,9 @@ describe("milestoneReviewersService", () => {
 
       expect(result[0]).toEqual({
         publicAddress: "0x1234567890123456789012345678901234567890",
+        loginEmail: "",
         name: "",
-        email: "",
+        notificationEmail: undefined,
         telegram: "",
         assignedAt: "2024-01-01T00:00:00Z",
         assignedBy: undefined,
@@ -155,9 +158,8 @@ describe("milestoneReviewersService", () => {
   describe("addReviewer", () => {
     it("should add a milestone reviewer successfully", async () => {
       const reviewerData: AddMilestoneReviewerRequest = {
-        publicAddress: "0x1234567890123456789012345678901234567890",
+        loginEmail: "jane@example.com",
         name: "Jane Smith",
-        email: "jane@example.com",
         telegram: "@janesmith",
       };
 
@@ -170,7 +172,7 @@ describe("milestoneReviewersService", () => {
             id: "user-2",
             publicAddress: "0x1234567890123456789012345678901234567890",
             name: "Jane Smith",
-            email: "jane@example.com",
+            loginEmail: "jane@example.com",
             telegram: "@janesmith",
             createdAt: "2024-01-01T00:00:00Z",
             updatedAt: "2024-01-01T00:00:00Z",
@@ -190,8 +192,9 @@ describe("milestoneReviewersService", () => {
       );
       expect(result).toEqual({
         publicAddress: "0x1234567890123456789012345678901234567890",
+        loginEmail: "jane@example.com",
         name: "Jane Smith",
-        email: "jane@example.com",
+        notificationEmail: undefined,
         telegram: "@janesmith",
         assignedAt: "2024-01-01T00:00:00Z",
         assignedBy: "0x9876543210987654321098765432109876543210",
@@ -200,26 +203,23 @@ describe("milestoneReviewersService", () => {
 
     it("should handle case where API returns success without reviewer data", async () => {
       const reviewerData: AddMilestoneReviewerRequest = {
-        publicAddress: "0x1234567890123456789012345678901234567890",
+        loginEmail: "jane@example.com",
         name: "Jane Smith",
-        email: "jane@example.com",
       };
 
       mockAxiosInstance.post.mockResolvedValue({ data: {} });
 
       const result = await milestoneReviewersService.addReviewer("program-1", reviewerData);
 
-      expect(result.publicAddress).toBe(reviewerData.publicAddress);
+      expect(result.loginEmail).toBe(reviewerData.loginEmail);
       expect(result.name).toBe(reviewerData.name);
-      expect(result.email).toBe(reviewerData.email);
       expect(result.assignedAt).toBeDefined();
     });
 
     it("should add reviewer without telegram", async () => {
       const reviewerData: AddMilestoneReviewerRequest = {
-        publicAddress: "0x1234567890123456789012345678901234567890",
+        loginEmail: "bob@example.com",
         name: "Bob Jones",
-        email: "bob@example.com",
       };
 
       const mockApiResponse = {
@@ -231,7 +231,7 @@ describe("milestoneReviewersService", () => {
             id: "user-3",
             publicAddress: "0x1234567890123456789012345678901234567890",
             name: "Bob Jones",
-            email: "bob@example.com",
+            loginEmail: "bob@example.com",
             createdAt: "2024-01-01T00:00:00Z",
             updatedAt: "2024-01-01T00:00:00Z",
           },
@@ -278,14 +278,12 @@ describe("milestoneReviewersService", () => {
     it("should add multiple reviewers successfully", async () => {
       const reviewers: AddMilestoneReviewerRequest[] = [
         {
-          publicAddress: "0x1234567890123456789012345678901234567890",
+          loginEmail: "reviewer1@example.com",
           name: "Reviewer 1",
-          email: "reviewer1@example.com",
         },
         {
-          publicAddress: "0x0987654321098765432109876543210987654321",
+          loginEmail: "reviewer2@example.com",
           name: "Reviewer 2",
-          email: "reviewer2@example.com",
         },
       ];
 
@@ -299,7 +297,7 @@ describe("milestoneReviewersService", () => {
               id: "user-1",
               publicAddress: "0x1234567890123456789012345678901234567890",
               name: "Reviewer 1",
-              email: "reviewer1@example.com",
+              loginEmail: "reviewer1@example.com",
               createdAt: "2024-01-01T00:00:00Z",
               updatedAt: "2024-01-01T00:00:00Z",
             },
@@ -317,14 +315,12 @@ describe("milestoneReviewersService", () => {
     it("should handle partial failures when adding multiple reviewers", async () => {
       const reviewers: AddMilestoneReviewerRequest[] = [
         {
-          publicAddress: "0x1234567890123456789012345678901234567890",
+          loginEmail: "reviewer1@example.com",
           name: "Reviewer 1",
-          email: "reviewer1@example.com",
         },
         {
-          publicAddress: "0x0987654321098765432109876543210987654321",
+          loginEmail: "invalid-email",
           name: "Reviewer 2",
-          email: "invalid-email",
         },
       ];
 
@@ -344,7 +340,7 @@ describe("milestoneReviewersService", () => {
                 id: "user-1",
                 publicAddress: "0x1234567890123456789012345678901234567890",
                 name: "Reviewer 1",
-                email: "reviewer1@example.com",
+                loginEmail: "reviewer1@example.com",
                 createdAt: "2024-01-01T00:00:00Z",
                 updatedAt: "2024-01-01T00:00:00Z",
               },
@@ -371,9 +367,8 @@ describe("milestoneReviewersService", () => {
     it("should handle axios errors in batch operations", async () => {
       const reviewers: AddMilestoneReviewerRequest[] = [
         {
-          publicAddress: "0x1234567890123456789012345678901234567890",
+          loginEmail: "reviewer1@example.com",
           name: "Reviewer 1",
-          email: "reviewer1@example.com",
         },
       ];
 
@@ -402,9 +397,8 @@ describe("milestoneReviewersService", () => {
     it("should handle non-axios errors", async () => {
       const reviewers: AddMilestoneReviewerRequest[] = [
         {
-          publicAddress: "0x1234567890123456789012345678901234567890",
+          loginEmail: "reviewer1@example.com",
           name: "Reviewer 1",
-          email: "reviewer1@example.com",
         },
       ];
 
@@ -422,9 +416,8 @@ describe("milestoneReviewersService", () => {
     it("should handle string errors", async () => {
       const reviewers: AddMilestoneReviewerRequest[] = [
         {
-          publicAddress: "0x1234567890123456789012345678901234567890",
+          loginEmail: "reviewer1@example.com",
           name: "Reviewer 1",
-          email: "reviewer1@example.com",
         },
       ];
 
@@ -439,9 +432,8 @@ describe("milestoneReviewersService", () => {
   describe("validateReviewerData", () => {
     it("should validate correct reviewer data", () => {
       const data: AddMilestoneReviewerRequest = {
-        publicAddress: "0x1234567890123456789012345678901234567890",
+        loginEmail: "john@example.com",
         name: "John Doe",
-        email: "john@example.com",
         telegram: "@johndoe",
       };
 
@@ -451,24 +443,22 @@ describe("milestoneReviewersService", () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it("should reject invalid wallet address", () => {
+    it("should reject invalid login email", () => {
       const data: AddMilestoneReviewerRequest = {
-        publicAddress: "invalid-address",
+        loginEmail: "invalid-email",
         name: "John Doe",
-        email: "john@example.com",
       };
 
       const result = milestoneReviewersService.validateReviewerData(data);
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain("Invalid wallet address format");
+      expect(result.errors).toContain("Invalid login email format");
     });
 
     it("should reject missing required fields", () => {
       const data: AddMilestoneReviewerRequest = {
-        publicAddress: "",
+        loginEmail: "",
         name: "",
-        email: "",
       };
 
       const result = milestoneReviewersService.validateReviewerData(data);
@@ -479,9 +469,8 @@ describe("milestoneReviewersService", () => {
 
     it("should accept valid data without telegram", () => {
       const data: AddMilestoneReviewerRequest = {
-        publicAddress: "0x1234567890123456789012345678901234567890",
+        loginEmail: "john@example.com",
         name: "John Doe",
-        email: "john@example.com",
       };
 
       const result = milestoneReviewersService.validateReviewerData(data);
@@ -491,9 +480,8 @@ describe("milestoneReviewersService", () => {
 
     it("should reject invalid telegram handle", () => {
       const data: AddMilestoneReviewerRequest = {
-        publicAddress: "0x1234567890123456789012345678901234567890",
+        loginEmail: "john@example.com",
         name: "John Doe",
-        email: "john@example.com",
         telegram: "ab",
       };
 
