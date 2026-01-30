@@ -42,7 +42,7 @@ export const ProjectsHeroSection = () => {
 
       {/* Tagline - Text xl/Semibold: 20px, 600, 30px line height */}
       <p className="text-blue-600 dark:text-blue-400 text-xl font-semibold leading-[30px] text-center mb-5">
-        Show your work. Build your rep. Earn trust onchain
+        Discover projects. Evaluate track records and traction. Fund with confidence
       </p>
 
       {/* Title - Display xl/Bold: 60px, 700, 72px line height, -2% letter spacing */}
@@ -52,8 +52,8 @@ export const ProjectsHeroSection = () => {
 
       {/* Subtitle - Text xl/Regular: 20px, 400, 30px line height */}
       <p className="text-gray-600 dark:text-gray-400 text-xl font-normal leading-[30px] text-center max-w-2xl mb-8">
-        Track milestones, grow reputation, and connect with funders using the Grantee Accountability
-        Protocol.
+        Explore thousands of Web3 projects with verified milestones and onchain reputation. See
+        who's shipping, who's funded, and who delivers.
       </p>
 
       {/* Buttons */}
@@ -70,8 +70,8 @@ export const ProjectsHeroSection = () => {
       {/* Grant operator link */}
       <p className="text-sm text-gray-500 dark:text-gray-400">
         Are you a <span className="font-semibold">grant operator</span>?{" "}
-        <Link href={PAGES.REGISTRY.ADD_PROGRAM} className="text-blue-600 hover:underline">
-          Add your program
+        <Link href="https://tally.so/r/3NKZEl" className="text-blue-600 hover:underline">
+          Run your program on Karma
         </Link>
       </p>
     </section>

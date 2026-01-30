@@ -1,6 +1,6 @@
 import type { CommunityMilestoneUpdate } from "@/types/community-updates";
 
-type FilterOption = "all" | "pending" | "completed";
+type FilterOption = "all" | "pending" | "completed" | "past_due";
 
 /**
  * Validates if a milestone item has all required fields
@@ -79,7 +79,10 @@ export function sortCommunityMilestones(
       }
 
       // For specific filters, use appropriate comparison
-      return filter === "pending" ? comparePending(a, b) : compareCompleted(a, b);
+      if (filter === "pending" || filter === "past_due") {
+        return comparePending(a, b);
+      }
+      return compareCompleted(a, b);
     });
   } catch (error) {
     console.error("Error sorting community updates:", error, {

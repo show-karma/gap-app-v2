@@ -37,7 +37,7 @@ export function useCommunityProjects(programId?: string | null) {
     return projects.map((project: any) => ({
       uid: project.uid,
       title: project.details?.title || project.title || "Untitled Project",
-      slug: project.slug,
+      slug: project.details?.slug || project.slug || "",
     }));
   };
 

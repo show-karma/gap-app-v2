@@ -6,7 +6,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { DatePicker } from "@/components/Utilities/DatePicker";
+import { DateTimePicker } from "@/components/Utilities/DateTimePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Button } from "@/components/ui/button";
@@ -441,10 +441,11 @@ export function ProgramDetailsTab({
                 return (
                   <div className="flex w-full flex-col gap-2">
                     <Label htmlFor="start-date">Start Date (optional)</Label>
-                    <DatePicker
+                    <DateTimePicker
                       selected={field.value}
                       onSelect={datePickerProps.onSelect}
-                      placeholder="Pick a date"
+                      timeMode="start"
+                      placeholder="Pick a date (UTC)"
                       buttonClassName={cn(
                         DATE_PICKER_BUTTON_CLASS,
                         isDisabled && "opacity-50 cursor-not-allowed"
@@ -470,11 +471,12 @@ export function ProgramDetailsTab({
                 return (
                   <div className="flex w-full flex-col gap-2">
                     <Label htmlFor="end-date">End Date (optional)</Label>
-                    <DatePicker
+                    <DateTimePicker
                       selected={field.value}
                       onSelect={datePickerProps.onSelect}
+                      timeMode="end"
                       minDate={startDate}
-                      placeholder="Pick a date"
+                      placeholder="Pick a date (UTC)"
                       buttonClassName={cn(
                         DATE_PICKER_BUTTON_CLASS,
                         isDisabled && "opacity-50 cursor-not-allowed"
