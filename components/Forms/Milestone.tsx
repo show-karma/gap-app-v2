@@ -21,8 +21,8 @@ import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import type { Grant } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -100,7 +100,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isCommunityAdmin = useIsCommunityAdmin();
   const project = useProjectStore((state) => state.project);
   const projectUID = project?.uid;
   const { refetch: refetchGrants } = useProjectGrants(projectUID || "");

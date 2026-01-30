@@ -4,8 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import { QuestionBuilder } from "@/components/QuestionBuilder";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { usePermissions } from "@/hooks/usePermissions";
 import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
+import { useIsReviewer, usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { layoutTheme } from "@/src/helper/theme";
 import { PAGES } from "@/utilities/pages";
 
@@ -26,11 +26,10 @@ export default function ReviewerQuestionBuilderPage() {
     ? combinedProgramId.split("_")[0]
     : combinedProgramId;
 
-  // Check if user is a reviewer for this program
-  const { hasPermission: canView, isLoading: isLoadingPermission } = usePermissions({
-    programId,
-    action: "read",
-  });
+  // Use RBAC to check if user is a reviewer for this program
+  const isReviewer = useIsReviewer();
+  const { isLoading: isLoadingPermission } = usePermissionContext();
+  const canView = isReviewer;
 
   // Load the existing schema
   const {

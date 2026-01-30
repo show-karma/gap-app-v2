@@ -3,15 +3,15 @@ import { useMemo } from "react";
 import { useAccount } from "wagmi";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { FilteredOutputsAndOutcomes, filterIndicators } from "../Impact/FilteredOutputsAndOutcomes";
 
 export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate }) => {
   const { project, isProjectOwner } = useProjectStore();
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isCommunityAdmin = useIsCommunityAdmin();
 
   const indicatorIds = activity.data?.indicators?.map((indicator) => indicator.indicatorId);
 

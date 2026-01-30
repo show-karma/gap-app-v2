@@ -4,9 +4,9 @@ import Link from "next/link";
 import { GrantCompletionCard } from "@/components/Pages/Grants/MilestonesAndUpdates";
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 /* eslint-disable @next/next/no-img-element */
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
 // import { MilestonesList } from "./MilestonesList";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
 import type { Grant } from "@/types/v2/grant";
 import type { Project as ProjectResponse } from "@/types/v2/project";
@@ -32,7 +32,7 @@ export const EmptyMilestone = ({
 }) => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isCommunityAdmin = useIsCommunityAdmin();
 
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
@@ -87,8 +87,8 @@ export const MilestonesAndUpdates = () => {
   const hasMilestonesOrUpdates = grant?.milestones?.length || grant?.updates?.length;
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isCommunityAdminRole = useIsCommunityAdmin();
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdminRole;
 
   return (
     <div className="space-y-5">

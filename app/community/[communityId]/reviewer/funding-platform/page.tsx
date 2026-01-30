@@ -27,6 +27,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import type { FundingProgram } from "@/services/fundingPlatformService";
+import { useIsReviewer, usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { layoutTheme } from "@/src/helper/theme";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
@@ -43,8 +44,15 @@ export default function ReviewerFundingPlatformPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Get reviewer programs and filter by community
-  const { programs: reviewerPrograms, isLoading: isLoadingReviewer } = useReviewerPrograms();
+  // Use RBAC to check if user is a reviewer
+  const isReviewer = useIsReviewer();
+  const { isLoading: isLoadingRbac } = usePermissionContext();
+
+  // Get reviewer programs and filter by community (still needed for program list)
+  const { programs: reviewerPrograms, isLoading: isLoadingReviewerPrograms } =
+    useReviewerPrograms();
+
+  const isLoadingReviewer = isLoadingRbac || isLoadingReviewerPrograms;
 
   // Get all programs for the community
   const {

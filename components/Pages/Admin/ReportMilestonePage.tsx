@@ -17,7 +17,8 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import TablePagination from "@/components/Utilities/TablePagination";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useAuth } from "@/hooks/useAuth";
-import { useReviewerPrograms } from "@/hooks/usePermissions";
+import { useIsReviewerType } from "@/src/core/rbac/context/permission-context";
+import { ReviewerType } from "@/src/core/rbac/types";
 import type { Community } from "@/types/v2/community";
 import { downloadCommunityReport } from "@/utilities/downloadReports";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
@@ -120,29 +121,12 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
   const { authenticated: isAuth } = useAuth();
   const { hasAccess, checks } = useCommunityAdminAccess(community?.uid);
 
-  // Get milestone reviewer programs for access control
-  const { programs: reviewerPrograms } = useReviewerPrograms();
+  // Use RBAC to check milestone reviewer status
+  const isMilestoneReviewer = useIsReviewerType(ReviewerType.MILESTONE);
 
-  // Build set of allowed program IDs for milestone reviewers
-  const allowedProgramIds = useMemo(() => {
-    // Admins, staff and contract owners can see all programs
-    if (checks.isCommunityAdmin || checks.isOwner || checks.isStaff) {
-      return null; // null means no filtering
-    }
-
-    // Build set of programs where user is a milestone reviewer
-    const allowedSet = new Set<string>();
-    reviewerPrograms?.forEach((program) => {
-      // Filter to programs in this community that user is milestone reviewer for
-      const programCommunityId = program.communitySlug || program.communityUID;
-      if (programCommunityId === communityId && program.isMilestoneReviewer) {
-        // Use normalized programId (without chainId suffix)
-        allowedSet.add(program.programId);
-      }
-    });
-
-    return allowedSet.size > 0 ? allowedSet : null;
-  }, [checks.isCommunityAdmin, checks.isOwner, checks.isStaff, reviewerPrograms, communityId]);
+  // With the new RBAC system, program-level filtering is handled at the API level
+  // All authorized users (admins, staff, owners, milestone reviewers) see all programs
+  // The authorization check in isAuthorized ensures only valid users can access this page
 
   const isAuthorized = useMemo(() => {
     if (!isConnected || !isAuth) {
@@ -154,9 +138,9 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
       return true;
     }
 
-    // Milestone reviewers have access if they have programs assigned
-    return allowedProgramIds !== null && allowedProgramIds.size > 0;
-  }, [isConnected, isAuth, hasAccess, allowedProgramIds]);
+    // Milestone reviewers have access via RBAC
+    return isMilestoneReviewer;
+  }, [isConnected, isAuth, hasAccess, isMilestoneReviewer]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("totalMilestones");
@@ -190,13 +174,10 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
         return { value, label };
       });
 
-    // Filter programs based on milestone reviewer permissions
-    if (allowedProgramIds) {
-      return allPrograms.filter((option) => allowedProgramIds.has(option.value));
-    }
-
+    // With RBAC, all authorized users see all programs
+    // Program-level filtering is handled at the API level
     return allPrograms;
-  }, [grantPrograms, allowedProgramIds]);
+  }, [grantPrograms]);
 
   const valueToLabelMap = useMemo(() => {
     return new Map(programOptions.map(({ value, label }) => [value, label]));

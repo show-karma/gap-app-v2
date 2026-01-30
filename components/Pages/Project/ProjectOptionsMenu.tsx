@@ -26,9 +26,9 @@ import { useContactInfo } from "@/hooks/useContactInfo";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useStaff } from "@/hooks/useStaff";
 import { useWallet } from "@/hooks/useWallet";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { SetChainPayoutAddressModal } from "@/src/features/chain-payout-address";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
 import { useGrantGenieModalStore } from "@/store/modals/genie";
 import { useMergeModalStore } from "@/store/modals/merge";
@@ -92,7 +92,7 @@ export const ProjectOptionsMenu = () => {
   const { isProjectOwner, refreshProject } = useProjectStore();
   const { data: contactsInfo } = useContactInfo(projectId);
   const { isOwner: isContractOwner } = useOwnerStore();
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isCommunityAdmin = useIsCommunityAdmin();
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
   const { isStaff, isLoading: isStaffLoading } = useStaff();
 

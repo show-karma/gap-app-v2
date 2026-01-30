@@ -29,7 +29,8 @@ import {
   useApplicationVersions,
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
-import { usePermissions } from "@/hooks/usePermissions";
+import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
+import { Permission } from "@/src/core/rbac/types";
 import { layoutTheme } from "@/src/helper/theme";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import { PAGES } from "@/utilities/pages";
@@ -57,11 +58,11 @@ export default function ReviewerApplicationDetailPage() {
     ? combinedProgramId.split("_")[0]
     : combinedProgramId;
 
-  // Check if user is a reviewer for this program
-  const { hasPermission: canView, isLoading: isLoadingPermission } = usePermissions({
-    programId,
-    action: "read",
-  });
+  // Use RBAC to check user permissions for this program
+  const { can, isLoading: isLoadingPermission } = usePermissionContext();
+
+  // User can view if they have permission to view assigned applications
+  const canView = can(Permission.APPLICATION_VIEW_ASSIGNED) || can(Permission.APPLICATION_VIEW_ALL);
 
   // Get current user address for comments
   const { address: currentUserAddress } = useAccount();
@@ -203,9 +204,15 @@ export default function ReviewerApplicationDetailPage() {
     return null;
   }, [application?.status, application?.projectUID, communityId, combinedProgramId]);
 
-  // Check if status actions should be shown (reviewer has permission and app not finalized)
+  // Check if status actions should be shown based on user permissions
+  // User needs at least one of the status-changing permissions and the application must not be finalized
   const showStatusActions =
-    canView && application && !["approved", "rejected"].includes(application.status.toLowerCase());
+    application &&
+    !["approved", "rejected"].includes(application.status.toLowerCase()) &&
+    (can(Permission.APPLICATION_CHANGE_STATUS) ||
+      can(Permission.APPLICATION_APPROVE) ||
+      can(Permission.APPLICATION_REJECT) ||
+      can(Permission.APPLICATION_REVIEW));
 
   // Check loading states
   if (isLoadingPermission || isLoadingApplication) {

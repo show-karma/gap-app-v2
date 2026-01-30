@@ -127,6 +127,20 @@ jest.mock("@/hooks/usePermissions", () => ({
   })),
 }));
 
+// Mock RBAC permission context
+jest.mock("@/src/core/rbac/context/permission-context", () => ({
+  usePermissionContext: jest.fn(() => ({
+    can: jest.fn(() => true),
+    canAny: jest.fn(() => true),
+    canAll: jest.fn(() => true),
+    isLoading: false,
+    roles: { primaryRole: "PROGRAM_REVIEWER", roles: ["PROGRAM_REVIEWER"] },
+    permissions: ["application:view_assigned", "application:review"],
+  })),
+  useIsReviewer: jest.fn(() => true),
+  useCan: jest.fn(() => true),
+}));
+
 // Mock UI components
 jest.mock("@/components/Utilities/Button", () => ({
   Button: ({ children, onClick, className, variant, ...props }: any) =>
@@ -327,6 +341,23 @@ describe("Reviewer Status Change Functionality", () => {
       hasPermission: true,
       isLoading: false,
     });
+
+    // Reset RBAC context to default values
+    const {
+      usePermissionContext,
+      useIsReviewer,
+      useCan,
+    } = require("@/src/core/rbac/context/permission-context");
+    usePermissionContext.mockReturnValue({
+      can: jest.fn(() => true),
+      canAny: jest.fn(() => true),
+      canAll: jest.fn(() => true),
+      isLoading: false,
+      roles: { primaryRole: "PROGRAM_REVIEWER", roles: ["PROGRAM_REVIEWER"] },
+      permissions: ["application:view_assigned", "application:review"],
+    });
+    useIsReviewer.mockReturnValue(true);
+    useCan.mockReturnValue(true);
   });
 
   describe("Status Actions Rendering", () => {
@@ -502,10 +533,15 @@ describe("Reviewer Status Change Functionality", () => {
 
   describe("Permission Checks", () => {
     it("should not render page content when reviewer has no permission", () => {
-      const { usePermissions } = require("@/hooks/usePermissions");
-      usePermissions.mockReturnValue({
-        hasPermission: false,
+      // Mock RBAC context with no permissions
+      const { usePermissionContext } = require("@/src/core/rbac/context/permission-context");
+      usePermissionContext.mockReturnValue({
+        can: jest.fn(() => false),
+        canAny: jest.fn(() => false),
+        canAll: jest.fn(() => false),
         isLoading: false,
+        roles: { primaryRole: "GUEST", roles: ["GUEST"] },
+        permissions: [],
       });
 
       render(React.createElement(ReviewerApplicationDetailPage));
@@ -514,10 +550,15 @@ describe("Reviewer Status Change Functionality", () => {
     });
 
     it("should show loading spinner when permissions are loading", () => {
-      const { usePermissions } = require("@/hooks/usePermissions");
-      usePermissions.mockReturnValue({
-        hasPermission: false,
+      // Mock RBAC context with loading state
+      const { usePermissionContext } = require("@/src/core/rbac/context/permission-context");
+      usePermissionContext.mockReturnValue({
+        can: jest.fn(() => false),
+        canAny: jest.fn(() => false),
+        canAll: jest.fn(() => false),
         isLoading: true,
+        roles: { primaryRole: null, roles: [] },
+        permissions: [],
       });
 
       render(React.createElement(ReviewerApplicationDetailPage));

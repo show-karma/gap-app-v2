@@ -8,8 +8,8 @@ import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities";
 import { useApplication, useApplicationStatus } from "@/hooks/useFundingPlatform";
-import { usePermissions } from "@/hooks/usePermissions";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
+import { useIsReviewer, usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { layoutTheme } from "@/src/helper/theme";
 import type { IFundingApplication } from "@/types/funding-platform";
 import { PAGES } from "@/utilities/pages";
@@ -60,11 +60,10 @@ export default function ReviewerApplicationsPage() {
     return filters;
   }, [searchParams]);
 
-  // Check if user is a reviewer for this program
-  const { hasPermission: canView, isLoading: isLoadingPermission } = usePermissions({
-    programId,
-    action: "read",
-  });
+  // Use RBAC to check if user is a reviewer for this program
+  const isReviewer = useIsReviewer();
+  const { isLoading: isLoadingPermission } = usePermissionContext();
+  const canView = isReviewer;
 
   const { hasAccess, isLoading: isLoadingAdmin } = useCommunityAdminAccess(communityId);
 

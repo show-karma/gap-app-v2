@@ -6,12 +6,12 @@ import { useEffect, useMemo, useState } from "react";
 import { ProminentDonateButton } from "@/components/Donation/SingleProject/ProminentDonateButton";
 import { Button } from "@/components/Utilities/Button";
 import { useStaff } from "@/hooks/useStaff";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import {
   EnableDonationsButton,
   hasConfiguredPayoutAddresses,
 } from "@/src/features/chain-payout-address";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useProgressModalStore } from "@/store/modals/progress";
 import formatCurrency from "@/utilities/formatCurrency";
 import { PAGES } from "@/utilities/pages";
@@ -62,7 +62,7 @@ export const ProjectNavigator = ({
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isCommunityAdmin = useIsCommunityAdmin();
   const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   const isAuthorized = isOwner || isProjectAdmin;
