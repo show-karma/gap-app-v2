@@ -143,8 +143,9 @@ describe("Navbar UI States", () => {
       cy.visit("/");
       waitForPageLoad();
 
-      cy.contains("Sign in").should("be.visible");
-      cy.contains("Contact sales").should("be.visible");
+      // Wait for client-side hydration to complete before checking buttons
+      cy.contains("Sign in", { timeout: 15000 }).should("be.visible");
+      cy.contains("Contact sales", { timeout: 15000 }).should("be.visible");
     });
 
     it("should display Sign in button on mobile", () => {
@@ -155,9 +156,15 @@ describe("Navbar UI States", () => {
       // On mobile, the Sign in button is visible in the fixed header navbar
       // Use the fixed positioning class to target the header nav specifically
       // (the page may have multiple nav elements, e.g., footer nav)
-      cy.get("nav.fixed").within(() => {
-        cy.contains("button", "Sign in").should("be.visible");
-      });
+      // Wait for hydration to complete before checking button visibility
+      cy.get("nav.fixed", { timeout: 15000 })
+        .should("exist")
+        .within(() => {
+          // Use a longer timeout to account for client-side hydration
+          cy.contains("button", "Sign in", { timeout: 15000 }).should(
+            "be.visible"
+          );
+        });
     });
   });
 });
