@@ -48,8 +48,23 @@ export const QUERY_KEYS = {
     IS_ADMIN: (communityUid?: string, chainId?: number, address?: string, signer?: unknown) =>
       ["isCommunityAdmin", communityUid, chainId, address, signer] as const,
     IS_ADMIN_BASE: ["isCommunityAdmin"] as const,
-    PROJECT_UPDATES: (communityId: string, filter: string, page: number) =>
-      ["community-project-updates", communityId, filter, page] as const,
+    PROJECT_UPDATES: (
+      communityId: string,
+      filter: string,
+      page: number,
+      limit: number,
+      programId?: string | null,
+      projectId?: string | null
+    ) =>
+      [
+        "community-project-updates",
+        communityId,
+        filter,
+        page,
+        limit,
+        programId ?? "",
+        projectId ?? "",
+      ] as const,
   },
   GRANTS: {
     DUPLICATE_CHECK_BASE: ["duplicate-grant-check"] as const,

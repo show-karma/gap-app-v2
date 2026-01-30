@@ -15,7 +15,7 @@ interface CommunityMilestoneCardProps {
 
 const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({ milestone }) => {
   const isCompleted = milestone.status === "completed";
-  const projectSlug = milestone.project.details?.data?.slug;
+  const projectSlug = milestone.project.details?.data?.slug || milestone.project.uid;
   const projectTitle = milestone.project.details?.data?.title;
   const grantTitle = milestone.grant?.details?.data?.title || "Project Milestone";
 
@@ -30,15 +30,17 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({ mile
           {/* Project and Grant Info */}
           <div className="flex flex-col gap-1 text-sm">
             <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-              <Link
-                href={`/project/${projectSlug}`}
-                className="font-medium hover:text-brand-blue hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {projectTitle}
-              </Link>
-              <span>{grantTitle}</span>
+              <span className="font-bold">{projectTitle}</span>
+              {milestone.grant ? (
+                <Link
+                  href={`/project/${projectSlug}/funding/${milestone.grant.uid}`}
+                  className="hover:text-brand-blue hover:underline"
+                >
+                  {grantTitle}
+                </Link>
+              ) : (
+                <span>{grantTitle}</span>
+              )}
             </div>
           </div>
 
@@ -69,9 +71,7 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({ mile
           </div>
 
           {/* Title */}
-          <h3 className="text-xl font-bold text-[#101828] dark:text-zinc-100">
-            {milestone.details.title}
-          </h3>
+          <h3 className="text-xl text-[#101828] dark:text-zinc-100">{milestone.details.title}</h3>
 
           {/* Description */}
           {milestone.details.description && (

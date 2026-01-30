@@ -15,9 +15,10 @@ This plan addresses the core usability issues in the Funding Platform admin modu
 - User is back at dashboard, must manually find their program
 - No guidance on next steps
 
-### 2. Incorrect "Manual Approval" Message
-- Code bug: duplicate logic shows wrong message to admins
-- Location: `CreateProgramModal.tsx:104-124`
+### 2. Incorrect "Manual Approval" Message ✅ FIXED
+- ~~Code bug: duplicate logic shows wrong message to admins~~
+- ~~Location: `CreateProgramModal.tsx:104-124`~~
+- **Fixed**: Now always shows success and redirects to setup wizard
 
 ### 3. Scattered Configuration (6 Hidden Tabs)
 - Build, Settings, Post Approval, AI Config, Reviewers, Program Details
@@ -42,47 +43,38 @@ This plan addresses the core usability issues in the Funding Platform admin modu
 
 ## Implementation Plan
 
-### Phase 1: Fix Manual Approval Bug (P0 - Immediate)
+### Phase 1: Fix Manual Approval Bug (P0 - Immediate) ✅ COMPLETED
 
 **File**: `components/FundingPlatform/CreateProgramModal.tsx`
 
-**Problem**: Lines 104-124 have duplicate logic checking `requiresManualApproval`
+**Problem**: The `requiresManualApproval` flag was tied to on-chain creation status, not actual approval requirements. Community admins creating programs from the funding-platform should always proceed to setup regardless of on-chain status.
 
-**Fix**: Remove the duplicate block (lines 117-124) since lines 104-113 already handle it with an early return.
+**Solution Implemented**:
+1. Removed conditional logic based on `requiresManualApproval`
+2. Added validation for empty `programId` (shows error if missing)
+3. Always redirect to setup wizard when `programId` is valid
 
-**Before**:
+**Current Implementation**:
 ```typescript
-if (result.requiresManualApproval) {
-  toast.success("Program created successfully. Please approve it manually...");
-  reset();
-  onSuccess();
-  onClose();
-  return;  // Early return
+// Verify we got a valid programId - without it we can't proceed to setup
+if (!result.programId) {
+  errorManager("Program creation returned empty programId", new Error("Missing programId"), {
+    address, data, result,
+  });
+  toast.error("Failed to create program. Please try again.");
+  return;
 }
 
-// This code is unreachable when requiresManualApproval is true
-if (result.requiresManualApproval) {  // Duplicate check
-  toast.success("Program created successfully. Please approve it manually...");
-} else {
-  toast.success("Program created and approved successfully!");
-}
-```
-
-**After**:
-```typescript
-if (result.requiresManualApproval) {
-  toast.success(
-    "Program created successfully. Please approve it manually from the manage programs page.",
-    { duration: 10000 }
-  );
-} else {
-  toast.success("Program created and approved successfully!");
-}
-
+// For funding-platform flow, community admins always go to setup
+// On-chain creation status doesn't affect the ability to configure the program
+toast.success("Program created! Let's set it up.", { duration: 3000 });
 reset();
 onSuccess();
 onClose();
+router.push(`/community/${communityId}/admin/funding-platform/${result.programId}/setup`);
 ```
+
+**Note**: The public `/funding-map` page (`AddProgram.tsx`) still shows "We will review and approve the program shortly" message, which is correct for public submissions that require Karma staff review.
 
 ---
 
@@ -139,16 +131,15 @@ onClose();
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-#### 2.2 Modify CreateProgramModal to Redirect to Setup Wizard
+#### 2.2 Modify CreateProgramModal to Redirect to Setup Wizard ✅ COMPLETED
 
 **File**: `components/FundingPlatform/CreateProgramModal.tsx`
 
 **Change**: After successful creation, redirect to setup wizard instead of just closing modal
 
 ```typescript
-// After successful creation
-const programId = result.programId;
-router.push(`/community/${communityId}/admin/funding-platform/${programId}/setup`);
+// After successful creation (already implemented in Phase 1 fix)
+router.push(`/community/${communityId}/admin/funding-platform/${result.programId}/setup`);
 ```
 
 #### 2.3 Create Setup Progress Tracking
@@ -437,13 +428,13 @@ When a section is empty, show helpful guidance:
 
 ```
 Week 1: Foundation
-├── Phase 1: Fix manual approval bug (1 hour)
+├── Phase 1: Fix manual approval bug (1 hour) ✅ DONE
 ├── Phase 2.3: Create useProgramSetupProgress hook (4 hours)
 └── Phase 3.1: Add setup status to program cards (4 hours)
 
 Week 2: Setup Wizard
 ├── Phase 2.1: Create setup wizard page (8 hours)
-├── Phase 2.2: Modify CreateProgramModal redirect (2 hours)
+├── Phase 2.2: Modify CreateProgramModal redirect (2 hours) ✅ DONE (with Phase 1)
 └── Phase 3.2: Create ProgramCardActions component (4 hours)
 
 Week 3: Navigation Improvements
