@@ -11,7 +11,11 @@ import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplication
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
-import { useIsReviewer, useIsReviewerType } from "@/src/core/rbac/context/permission-context";
+import {
+  useIsReviewer,
+  useIsReviewerType,
+  usePermissionContext,
+} from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
 import { useOwnerStore } from "@/store";
 import { PAGES } from "@/utilities/pages";
@@ -64,9 +68,7 @@ export function MilestonesReviewPage({
   // Check if user is a reviewer for this program using RBAC
   const isReviewer = useIsReviewer();
   const isMilestoneReviewer = useIsReviewerType(ReviewerType.MILESTONE);
-
-  // Combined loading state for reviewer checks is handled by the permission context
-  const isLoadingReviewer = false; // RBAC context handles loading state internally
+  const { isLoading: isLoadingReviewer } = usePermissionContext();
 
   // Determine if user can verify milestones (must be before early returns)
   // Only milestone reviewers, admins, contract owners, and staff can verify/complete/sync

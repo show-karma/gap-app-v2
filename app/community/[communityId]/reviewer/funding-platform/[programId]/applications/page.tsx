@@ -28,8 +28,9 @@ export default function ReviewerApplicationsPage() {
   };
 
   // Extract programId from the combined format if present (e.g., "777_11155111" -> "777")
+  // Use lastIndexOf to handle programIds that may contain underscores
   const programId = combinedProgramId.includes("_")
-    ? combinedProgramId.split("_")[0]
+    ? combinedProgramId.slice(0, combinedProgramId.lastIndexOf("_"))
     : combinedProgramId;
 
   // Parse initial filters from URL

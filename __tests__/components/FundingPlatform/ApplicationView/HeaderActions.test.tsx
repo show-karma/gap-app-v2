@@ -251,14 +251,9 @@ describe("HeaderActions", () => {
     });
   });
 
-  describe("Permission-based button visibility (with restricted mock)", () => {
-    beforeEach(() => {
-      // Reset mock to restricted behavior for these tests
-      jest.resetModules();
-    });
-
-    it("should only show buttons user has permission for", () => {
-      // With the default mock (all permissions granted), all buttons show
+  describe("Permission-based button visibility", () => {
+    it("should render all buttons when user has all permissions", () => {
+      // With the Can mock granting all permissions, all buttons show
       render(<HeaderActions {...defaultProps} currentStatus="under_review" />);
 
       const buttons = screen.getAllByRole("button");

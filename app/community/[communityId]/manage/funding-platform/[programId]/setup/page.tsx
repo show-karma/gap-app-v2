@@ -5,9 +5,9 @@ import { SetupWizard } from "@/components/FundingPlatform/SetupWizard";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import { useProgramSetupProgress } from "@/hooks/useProgramSetupProgress";
-import { RequireRole } from "@/src/core/rbac";
+import { Can } from "@/src/core/rbac";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
-import { Role } from "@/src/core/rbac/types/role";
+import { Permission } from "@/src/core/rbac/types";
 import { layoutTheme } from "@/src/helper/theme";
 
 export default function ProgramSetupPage() {
@@ -17,17 +17,18 @@ export default function ProgramSetupPage() {
   };
 
   // Extract normalized programId (remove chainId suffix if present)
+  // Use lastIndexOf to handle programIds that may contain underscores
   const programId = combinedProgramId.includes("_")
-    ? combinedProgramId.split("_")[0]
+    ? combinedProgramId.slice(0, combinedProgramId.lastIndexOf("_"))
     : combinedProgramId;
 
   const { isLoading: isLoadingPermissions } = usePermissionContext();
-  const { programs, isLoading: isLoadingPrograms } = useFundingPrograms(communityId);
+  const {
+    programs = [],
+    isLoading: isLoadingPrograms,
+    error: programsError,
+  } = useFundingPrograms(communityId);
   const progress = useProgramSetupProgress(communityId, programId);
-
-  // Find the program to get its name
-  const program = programs.find((p) => p.programId === programId);
-  const programName = program?.metadata?.title || program?.name || "Untitled Program";
 
   if (isLoadingPermissions || isLoadingPrograms) {
     return (
@@ -37,9 +38,25 @@ export default function ProgramSetupPage() {
     );
   }
 
+  if (programsError) {
+    return (
+      <div className={layoutTheme.padding}>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <p className="text-red-700 dark:text-red-300">
+            Failed to load program data. Please try again.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Find the program to get its name (moved after loading/error checks)
+  const program = programs.find((p) => p.programId === programId);
+  const programName = program?.metadata?.title || program?.name || "Untitled Program";
+
   if (!program) {
     return (
-      <RequireRole role={Role.PROGRAM_ADMIN}>
+      <Can permission={Permission.PROGRAM_EDIT}>
         <div className={layoutTheme.padding}>
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <p className="text-red-700 dark:text-red-300">
@@ -47,12 +64,12 @@ export default function ProgramSetupPage() {
             </p>
           </div>
         </div>
-      </RequireRole>
+      </Can>
     );
   }
 
   return (
-    <RequireRole role={Role.PROGRAM_ADMIN}>
+    <Can permission={Permission.PROGRAM_EDIT}>
       <div className="sm:px-3 md:px-4 px-6 py-6">
         <SetupWizard
           communityId={communityId}
@@ -61,6 +78,6 @@ export default function ProgramSetupPage() {
           progress={progress}
         />
       </div>
-    </RequireRole>
+    </Can>
   );
 }

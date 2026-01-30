@@ -75,8 +75,6 @@ export default function ApplicationsPage() {
 
   // Use RBAC to check permissions
   const canView = useCan(Permission.APPLICATION_READ);
-  const _canComment = useCan(Permission.APPLICATION_COMMENT);
-  const isLoadingPermission = false; // RBAC context handles loading internally
 
   // Use the funding applications hook to get applications data
   const { applications: _applications } = useFundingApplications(programId, initialFilters);
@@ -111,7 +109,7 @@ export default function ApplicationsPage() {
     return updateStatusAsync({ applicationId, status, note });
   };
 
-  if (isLoadingAdmin || isLoadingPermission) {
+  if (isLoadingAdmin) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />
