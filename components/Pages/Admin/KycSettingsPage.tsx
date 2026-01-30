@@ -3,19 +3,23 @@
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useKycConfig, useSaveKycConfig } from "@/hooks/useKycStatus";
+import { KycProviderType } from "@/types/kyc";
 import type { Community } from "@/types/v2/community";
 import { envVars } from "@/utilities/enviromentVars";
 import { PAGES } from "@/utilities/pages";
 
+// Use enum values for provider type validation
+const providerTypeValues = Object.values(KycProviderType) as [string, ...string[]];
+
 const kycConfigSchema = z.object({
-  providerType: z.enum(["TREOVA"]),
+  providerType: z.enum(providerTypeValues),
   providerName: z.string().min(1, "Provider name is required"),
   kycFormUrl: z.string().url("Must be a valid URL"),
   kybFormUrl: z.string().url("Must be a valid URL"),
@@ -33,12 +37,14 @@ export function KycSettingsPage({ community }: KycSettingsPageProps) {
   const communityUID = community.uid;
   const { config, isLoading, error } = useKycConfig(communityUID);
   const { mutate: saveConfig, isPending: isSaving } = useSaveKycConfig(communityUID);
-  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Track the config version to detect external changes
+  const lastConfigVersionRef = useRef<string | null>(null);
 
   const form = useForm<KycConfigFormData>({
     resolver: zodResolver(kycConfigSchema),
     defaultValues: {
-      providerType: "TREOVA",
+      providerType: KycProviderType.TREOVA,
       providerName: "Treova",
       kycFormUrl: "",
       kybFormUrl: "",
@@ -47,30 +53,57 @@ export function KycSettingsPage({ community }: KycSettingsPageProps) {
     },
   });
 
-  // Reset form when config loads
+  // Create a stable reset function using useCallback
+  const resetFormWithConfig = useCallback(() => {
+    if (!config) return;
+
+    form.reset({
+      providerType: (config.providerType as KycProviderType) || KycProviderType.TREOVA,
+      providerName: config.providerName || "Treova",
+      kycFormUrl: config.kycFormUrl || "",
+      kybFormUrl: config.kybFormUrl || "",
+      validityMonths: config.validityMonths || 12,
+      isEnabled: config.isEnabled ?? true,
+    });
+  }, [config, form]);
+
+  // Reset form when config changes (including external updates)
   useEffect(() => {
-    if (config && !isInitialized) {
-      form.reset({
-        providerType: (config.providerType as "TREOVA") || "TREOVA",
-        providerName: config.providerName || "Treova",
-        kycFormUrl: config.kycFormUrl || "",
-        kybFormUrl: config.kybFormUrl || "",
-        validityMonths: config.validityMonths || 12,
-        isEnabled: config.isEnabled ?? true,
-      });
-      setIsInitialized(true);
+    if (!config) return;
+
+    // Create a version key to detect changes
+    const configVersion = JSON.stringify({
+      providerType: config.providerType,
+      providerName: config.providerName,
+      kycFormUrl: config.kycFormUrl,
+      kybFormUrl: config.kybFormUrl,
+      validityMonths: config.validityMonths,
+      isEnabled: config.isEnabled,
+    });
+
+    // Only reset if the config actually changed
+    if (lastConfigVersionRef.current !== configVersion) {
+      lastConfigVersionRef.current = configVersion;
+      resetFormWithConfig();
     }
-  }, [config, form, isInitialized]);
+  }, [config, resetFormWithConfig]);
 
   const onSubmit = (data: KycConfigFormData) => {
-    saveConfig(data, {
-      onSuccess: () => {
-        toast.success("KYC configuration saved successfully");
+    // Cast providerType to KycProviderType as Zod infers string
+    saveConfig(
+      {
+        ...data,
+        providerType: data.providerType as KycProviderType,
       },
-      onError: (err) => {
-        toast.error(err.message || "Failed to save configuration");
-      },
-    });
+      {
+        onSuccess: () => {
+          toast.success("KYC configuration saved successfully");
+        },
+        onError: (err) => {
+          toast.error(err.message || "Failed to save configuration");
+        },
+      }
+    );
   };
 
   const webhookUrl = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/v2/webhooks/kyc/treova`;
@@ -143,7 +176,11 @@ export function KycSettingsPage({ community }: KycSettingsPageProps) {
             {...form.register("providerType")}
             className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
           >
-            <option value="TREOVA">Treova</option>
+            {Object.values(KycProviderType).map((provider) => (
+              <option key={provider} value={provider}>
+                {provider.charAt(0) + provider.slice(1).toLowerCase()}
+              </option>
+            ))}
           </select>
         </div>
 

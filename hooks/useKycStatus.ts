@@ -6,6 +6,7 @@ import type {
   KycConfigResponse,
   KycFormUrlRequest,
   KycFormUrlResponse,
+  KycProviderType,
   KycStatusResponse,
   KycVerificationType,
 } from "@/types/kyc";
@@ -262,7 +263,7 @@ export const useKycFormUrl = () => {
  * Hook to save KYC provider configuration for a community
  */
 export interface SaveKycConfigRequest {
-  providerType: "TREOVA";
+  providerType: KycProviderType;
   providerName: string;
   kycFormUrl: string;
   kybFormUrl: string;

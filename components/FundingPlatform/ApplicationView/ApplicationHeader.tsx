@@ -94,15 +94,24 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
 
     setCopyingType(verificationType);
     try {
+      // Generate the form URL from the backend
+      // Note: projectUID accepts both projectUID (0x...) and referenceNumber (APP-...)
       const result = await getFormUrl({
         communityIdOrSlug: communityId,
         projectUID: application.referenceNumber,
         verificationType,
       });
-      await navigator.clipboard.writeText(result.formUrl);
-      toast.success(`${verificationType} verification link copied!`);
+
+      // Separate clipboard operation from API call for better error handling
+      try {
+        await navigator.clipboard.writeText(result.formUrl);
+        toast.success(`${verificationType} verification link copied!`);
+      } catch {
+        // Clipboard API can fail in insecure contexts or without permission
+        toast.error("Could not copy to clipboard. Please check browser permissions.");
+      }
     } catch {
-      toast.error(`Failed to generate ${verificationType} link`);
+      toast.error(`Failed to generate ${verificationType} verification link`);
     } finally {
       setCopyingType(null);
     }

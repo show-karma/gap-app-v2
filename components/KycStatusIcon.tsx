@@ -67,20 +67,28 @@ const statusConfig: Record<
   },
 };
 
-export function KycStatusIcon({
-  status,
-  size = "md",
-  showTooltip = true,
-  className,
-}: KycStatusIconProps) {
-  const effectiveStatus = status?.isExpired
+/**
+ * Shared helper to get the effective status accounting for expiration
+ */
+export function getEffectiveKycStatus(status: KycStatusResponse | null): KycVerificationStatus {
+  return status?.isExpired
     ? KycVerificationStatus.EXPIRED
     : (status?.status ?? KycVerificationStatus.NOT_STARTED);
+}
 
+/**
+ * Shared tooltip content component to reduce duplication
+ */
+interface KycTooltipContentProps {
+  status: KycStatusResponse | null;
+  showDates?: boolean;
+}
+
+export function KycTooltipContent({ status, showDates = true }: KycTooltipContentProps) {
+  const effectiveStatus = getEffectiveKycStatus(status);
   const config = statusConfig[effectiveStatus];
-  const Icon = config.icon;
 
-  const tooltipContent = (
+  return (
     <div className="space-y-1 text-xs">
       <p className="font-medium">{config.label}</p>
       <p className="text-gray-400">{config.description}</p>
@@ -89,12 +97,12 @@ export function KycStatusIcon({
           Type: <span className="font-medium">{status.verificationType}</span>
         </p>
       )}
-      {status?.verifiedAt && (
+      {showDates && status?.verifiedAt && (
         <p>
           Verified: <span className="font-medium">{formatDate(status.verifiedAt)}</span>
         </p>
       )}
-      {status?.expiresAt && (
+      {showDates && status?.expiresAt && (
         <p>
           {status.isExpired ? "Expired" : "Expires"}:{" "}
           <span className="font-medium">{formatDate(status.expiresAt)}</span>
@@ -102,6 +110,17 @@ export function KycStatusIcon({
       )}
     </div>
   );
+}
+
+export function KycStatusIcon({
+  status,
+  size = "md",
+  showTooltip = true,
+  className,
+}: KycStatusIconProps) {
+  const effectiveStatus = getEffectiveKycStatus(status);
+  const config = statusConfig[effectiveStatus];
+  const Icon = config.icon;
 
   const iconElement = (
     <Icon className={cn(sizeClasses[size], config.color, className)} aria-label={config.label} />
@@ -118,12 +137,26 @@ export function KycStatusIcon({
           <span className="inline-flex cursor-help">{iconElement}</span>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs">
-          {tooltipContent}
+          <KycTooltipContent status={status} showDates />
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
 }
+
+const badgeColors: Record<KycVerificationStatus, string> = {
+  [KycVerificationStatus.NOT_STARTED]:
+    "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+  [KycVerificationStatus.PENDING]:
+    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+  [KycVerificationStatus.OUTREACH]:
+    "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+  [KycVerificationStatus.VERIFIED]:
+    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  [KycVerificationStatus.REJECTED]: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  [KycVerificationStatus.EXPIRED]:
+    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+};
 
 /**
  * Compact badge version of KYC status for table cells
@@ -135,26 +168,8 @@ export function KycStatusBadge({
   status: KycStatusResponse | null;
   className?: string;
 }) {
-  const effectiveStatus = status?.isExpired
-    ? KycVerificationStatus.EXPIRED
-    : (status?.status ?? KycVerificationStatus.NOT_STARTED);
-
+  const effectiveStatus = getEffectiveKycStatus(status);
   const config = statusConfig[effectiveStatus];
-
-  const badgeColors: Record<KycVerificationStatus, string> = {
-    [KycVerificationStatus.NOT_STARTED]:
-      "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
-    [KycVerificationStatus.PENDING]:
-      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-    [KycVerificationStatus.OUTREACH]:
-      "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-    [KycVerificationStatus.VERIFIED]:
-      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-    [KycVerificationStatus.REJECTED]:
-      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-    [KycVerificationStatus.EXPIRED]:
-      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  };
 
   return (
     <TooltipProvider>
@@ -172,15 +187,7 @@ export function KycStatusBadge({
           </span>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs">
-          <div className="space-y-1 text-xs">
-            <p className="font-medium">{config.label}</p>
-            <p className="text-gray-400">{config.description}</p>
-            {status?.verificationType && (
-              <p>
-                Type: <span className="font-medium">{status.verificationType}</span>
-              </p>
-            )}
-          </div>
+          <KycTooltipContent status={status} showDates={false} />
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
