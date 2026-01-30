@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { toast } from "react-hot-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { programReviewersService } from "@/services/program-reviewers.service";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
@@ -10,14 +11,16 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
  */
 export function useProgramReviewers(programId: string) {
   const queryClient = useQueryClient();
+  const { authenticated } = useAuth();
 
   // Query for fetching program reviewers
+  // Only fetch when authenticated since this endpoint requires authorization
   const query = useQuery({
     queryKey: QUERY_KEYS.REVIEWERS.PROGRAM(programId),
     queryFn: async () => {
       return programReviewersService.getReviewers(programId);
     },
-    enabled: !!programId,
+    enabled: !!programId && authenticated,
   });
 
   // Mutation for adding a program reviewer
