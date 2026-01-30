@@ -172,7 +172,7 @@ export const INDEXER = {
         if (params?.programId) queryParams.set("programId", params.programId);
         if (params?.applicationId) queryParams.set("applicationId", params.applicationId);
         if (params?.milestoneId) queryParams.set("milestoneId", params.milestoneId);
-        if (params?.chainId) queryParams.set("chainId", params.chainId.toString());
+        if (params?.chainId !== undefined) queryParams.set("chainId", params.chainId.toString());
         const query = queryParams.toString();
         return `/v2/auth/permissions${query ? `?${query}` : ""}`;
       },
@@ -391,7 +391,7 @@ export const INDEXER = {
         const queryParams = new URLSearchParams();
         if (params?.communityUID) queryParams.set("communityUID", params.communityUID);
         if (params?.programId) queryParams.set("programId", params.programId.toString());
-        if (params?.chainId) queryParams.set("chainId", params.chainId.toString());
+        if (params?.chainId !== undefined) queryParams.set("chainId", params.chainId.toString());
         if (params?.syncType) queryParams.set("syncType", params.syncType);
         if (params?.page) queryParams.set("page", params.page.toString());
         if (params?.limit) queryParams.set("limit", params.limit.toString());

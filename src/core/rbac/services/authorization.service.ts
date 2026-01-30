@@ -2,7 +2,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import type { Permission, PermissionsResponse, ResourceContext, ReviewerType } from "../types";
-import { Role } from "../types";
+import { isValidRole, Role } from "../types";
 
 interface AuthPermissionsApiResponse {
   roles: {
@@ -55,10 +55,15 @@ export const authorizationService = {
       return DEFAULT_GUEST_PERMISSIONS;
     }
 
+    const primaryRole = isValidRole(response.roles.primaryRole)
+      ? response.roles.primaryRole
+      : Role.GUEST;
+    const validRoles = response.roles.roles.filter(isValidRole);
+
     return {
       roles: {
-        primaryRole: response.roles.primaryRole as Role,
-        roles: response.roles.roles as Role[],
+        primaryRole,
+        roles: validRoles.length > 0 ? validRoles : [Role.GUEST],
         reviewerTypes: (response.roles.reviewerTypes || []) as ReviewerType[],
       },
       permissions: response.permissions as Permission[],
