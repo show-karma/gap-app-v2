@@ -59,8 +59,7 @@ export function useProgramReviewers(programId: string) {
     },
   });
 
-  // Mutation for removing a program reviewer
-  // Accepts loginEmail (new) or publicAddress (legacy) as identifier
+  // Mutation for removing a program reviewer by loginEmail
   const removeMutation = useMutation({
     mutationFn: async (identifier: string) => {
       return programReviewersService.removeReviewer(programId, identifier);

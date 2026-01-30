@@ -3,7 +3,12 @@ import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { validateEmail, validateTelegram, validateWalletAddress } from "@/utilities/validators";
+import {
+  validateEmail,
+  validateReviewerData as validateReviewerDataUtil,
+  validateTelegram,
+  validateWalletAddress,
+} from "@/utilities/validators";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
@@ -215,34 +220,7 @@ export const milestoneReviewersService = {
 
   /**
    * Validate milestone reviewer data before submission
-   * Now uses email-based validation (no wallet address required)
+   * Uses the shared validateReviewerData utility for consistent validation
    */
-  validateReviewerData(data: {
-    loginEmail: string;
-    name: string;
-    notificationEmail?: string;
-    telegram?: string;
-  }): { valid: boolean; errors: string[] } {
-    const errors: string[] = [];
-
-    if (!data.loginEmail) {
-      errors.push("Login email is required");
-    } else if (!validateEmail(data.loginEmail)) {
-      errors.push("Invalid login email format");
-    }
-
-    if (!data.name || !data.name.trim()) {
-      errors.push("Name is required");
-    }
-
-    if (data.notificationEmail && !validateEmail(data.notificationEmail)) {
-      errors.push("Invalid notification email format");
-    }
-
-    if (data.telegram && !validateTelegram(data.telegram)) {
-      errors.push("Invalid Telegram handle format");
-    }
-
-    return { valid: errors.length === 0, errors };
-  },
+  validateReviewerData: validateReviewerDataUtil,
 };

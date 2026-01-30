@@ -525,7 +525,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                                   )}
                                   {member.telegram && (
                                     <span className="flex items-center space-x-1">
-                                      <TelegramIcon className="h-4 w-4" />
+                                      <TelegramIcon className="h-4 w-4" aria-hidden="true" />
                                       <span>
                                         {member.telegram?.[0] === "@" ? "" : "@"}
                                         {member.telegram}

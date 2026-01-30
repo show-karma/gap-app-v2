@@ -59,8 +59,7 @@ export function useMilestoneReviewers(programId: string) {
     },
   });
 
-  // Mutation for removing a milestone reviewer
-  // Accepts loginEmail (new) or publicAddress (legacy) as identifier
+  // Mutation for removing a milestone reviewer by loginEmail
   const removeMutation = useMutation({
     mutationFn: async (identifier: string) => {
       return milestoneReviewersService.removeReviewer(programId, identifier);
