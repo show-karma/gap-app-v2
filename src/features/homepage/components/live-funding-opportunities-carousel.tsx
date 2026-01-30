@@ -32,6 +32,9 @@ function getProgramKey(program: FundingProgramResponse): string {
   if (program.programId && program.chainID) {
     return `${program.programId}-${program.chainID}`;
   }
+  if (!program._id) {
+    return `program-${program.programId ?? ""}-${program.chainID ?? ""}-${program.createdAt ?? Date.now()}`;
+  }
   return typeof program._id === "string" ? program._id : program._id.$oid;
 }
 
