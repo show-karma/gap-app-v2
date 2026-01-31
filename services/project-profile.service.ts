@@ -182,8 +182,8 @@ export function calculateProfileStats(
   const grantsCount = grants.length;
   const lastUpdate = updates.length > 0 ? new Date(updates[0].createdAt) : undefined;
 
-  // Calculate completion rate
-  const totalMilestones = updates.length;
+  // Calculate completion rate (only count actual milestones, not updates/impacts)
+  const totalMilestones = countActualMilestones(updates);
   const completedMilestones = countCompletedMilestones(updates);
   const completeRate =
     totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : undefined;

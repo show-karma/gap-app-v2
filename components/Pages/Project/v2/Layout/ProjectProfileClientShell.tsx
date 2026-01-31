@@ -71,11 +71,12 @@ export function ProjectProfileClientShell({
     ? new Set([project?.owner, ...(project?.members?.map((m) => m.address) || [])]).size
     : 0;
 
-  // Check if we're on the root project page (where Profile/Updates toggle applies)
-  const isRootPage = pathname === `/project/${projectId}`;
-
   // Determine active tab from pathname and mobile view state
   const getActiveTab = (): ContentTab => {
+    // On mobile, if user clicked Profile tab, always show profile regardless of pathname
+    // This allows Profile tab to work from any page
+    if (mobileView === "profile") return "profile";
+
     const basePath = `/project/${projectId}`;
     if (pathname === `${basePath}/about`) return "about";
     if (pathname === `${basePath}/funding` || pathname?.startsWith(`${basePath}/funding/`))
@@ -83,21 +84,20 @@ export function ProjectProfileClientShell({
     if (pathname === `${basePath}/impact`) return "impact";
     if (pathname === `${basePath}/team`) return "team";
     if (pathname === `${basePath}/contact-info`) return "contact-info";
-    // On root page, use mobile view state to determine active tab
-    // On desktop, ContentTabs handles showing Updates as active when Profile is selected
-    return mobileView === "profile" ? "profile" : "updates";
+    // Default to updates for root page
+    return "updates";
   };
 
   const activeTab = getActiveTab();
 
-  // Handle tab changes - for Profile/Updates, just update state instead of navigating
+  // Handle tab changes - Profile toggles mobile view, other tabs navigate via Link
   const handleTabChange = (tab: ContentTab) => {
     if (tab === "profile") {
       setMobileView("profile");
-    } else if (tab === "updates" && isRootPage) {
+    } else {
+      // Any other tab should switch to content view on mobile
       setMobileView("content");
     }
-    // Other tabs will navigate via Link href
   };
 
   // Loading state for mobile components - show skeletons

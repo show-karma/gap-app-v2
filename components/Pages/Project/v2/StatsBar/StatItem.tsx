@@ -9,6 +9,7 @@ import {
   TargetIcon,
 } from "lucide-react";
 import type React from "react";
+import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { cn } from "@/utilities/tailwind";
 
 type StatIconType = "received" | "token" | "grants" | "endorsements" | "complete" | "lastUpdate";
@@ -20,6 +21,7 @@ interface StatItemProps {
   icon?: React.ReactNode;
   className?: string;
   onClick?: () => void;
+  tooltip?: string;
 }
 
 /**
@@ -50,7 +52,15 @@ function getStatIcon(iconType?: StatIconType): React.ReactNode {
  * Matches Figma design with neutral color palette and type-specific icons.
  * Used within ProjectStatsBar for displaying project metrics.
  */
-export function StatItem({ value, label, iconType, icon, className, onClick }: StatItemProps) {
+export function StatItem({
+  value,
+  label,
+  iconType,
+  icon,
+  className,
+  onClick,
+  tooltip,
+}: StatItemProps) {
   const isClickable = !!onClick;
 
   const content = (
@@ -98,6 +108,32 @@ export function StatItem({ value, label, iconType, icon, className, onClick }: S
         >
           {label}
         </span>
+        {tooltip && (
+          <InfoTooltip content={tooltip} side="top" triggerAsChild>
+            <button
+              type="button"
+              className="rounded-full p-0.5 hover:bg-gray-100 dark:hover:bg-zinc-800 cursor-help"
+              aria-label="More information"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-gray-400"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4" />
+                <path d="M12 8h.01" />
+              </svg>
+            </button>
+          </InfoTooltip>
+        )}
       </div>
     </div>
   );

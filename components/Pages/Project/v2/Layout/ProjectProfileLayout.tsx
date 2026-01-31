@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
-import { type ReactNode, useState } from "react";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
@@ -57,10 +57,41 @@ interface ProjectProfileLayoutProps {
 export function ProjectProfileLayout({ children, className }: ProjectProfileLayoutProps) {
   const { projectId } = useParams();
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Mobile view state: track if user is viewing Profile or other tabs on mobile
-  // Default to "profile" on mobile when at root URL
-  const [mobileView, setMobileView] = useState<"profile" | "content">("profile");
+  // Read initial state from URL param: ?view=profile shows profile, otherwise show content
+  const viewParam = searchParams.get("view");
+  const initialView = viewParam === "profile" ? "profile" : "content";
+  const [mobileView, setMobileView] = useState<"profile" | "content">(initialView);
+
+  // Sync state with URL param changes (e.g., browser back/forward)
+  useEffect(() => {
+    const newView = viewParam === "profile" ? "profile" : "content";
+    if (newView !== mobileView) {
+      setMobileView(newView);
+    }
+  }, [viewParam]);
+
+  // Update URL when mobile view changes
+  const updateMobileView = useCallback(
+    (newView: "profile" | "content") => {
+      setMobileView(newView);
+
+      // Update URL with view param (shallow navigation, no scroll)
+      const params = new URLSearchParams(searchParams.toString());
+      if (newView === "profile") {
+        params.set("view", "profile");
+      } else {
+        params.delete("view"); // Content is default, no param needed
+      }
+
+      const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+      router.replace(newUrl, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
 
   // Modal stores for dialogs
   const { isEndorsementOpen } = useEndorsementStore();
@@ -79,11 +110,12 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
     ? new Set([project?.owner, ...(project?.members?.map((m) => m.address) || [])]).size
     : 0;
 
-  // Check if we're on the root project page (where Profile/Updates toggle applies)
-  const isRootPage = pathname === `/project/${projectId}`;
-
   // Determine active tab from pathname and mobile view state
   const getActiveTab = (): ContentTab => {
+    // On mobile, if user clicked Profile tab, always show profile regardless of pathname
+    // This allows Profile tab to work from any page (about, funding, etc.)
+    if (mobileView === "profile") return "profile";
+
     const basePath = `/project/${projectId}`;
     if (pathname === `${basePath}/about`) return "about";
     if (pathname === `${basePath}/funding` || pathname?.startsWith(`${basePath}/funding/`))
@@ -91,20 +123,20 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
     if (pathname === `${basePath}/impact`) return "impact";
     if (pathname === `${basePath}/team`) return "team";
     if (pathname === `${basePath}/contact-info`) return "contact-info";
-    // On root page, use mobile view state to determine active tab
-    return mobileView === "profile" ? "profile" : "updates";
+    // Default to updates for root page
+    return "updates";
   };
 
   const activeTab = getActiveTab();
 
-  // Handle tab changes - for Profile/Updates, just update state instead of navigating
+  // Handle tab changes - Profile toggles mobile view, other tabs navigate via Link
   const handleTabChange = (tab: ContentTab) => {
     if (tab === "profile") {
-      setMobileView("profile");
-    } else if (tab === "updates" && isRootPage) {
-      setMobileView("content");
+      updateMobileView("profile");
+    } else {
+      // Any other tab should switch to content view on mobile
+      updateMobileView("content");
     }
-    // Other tabs will navigate via Link href
   };
 
   // Error state - show not found page when project doesn't exist

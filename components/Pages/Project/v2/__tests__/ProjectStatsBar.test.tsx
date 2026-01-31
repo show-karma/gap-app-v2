@@ -55,6 +55,20 @@ describe("StatItem", () => {
       expect(screen.getByTestId("stat-item")).toHaveClass("cursor-pointer");
     });
   });
+
+  describe("Tooltip", () => {
+    it("should render tooltip icon when tooltip prop is provided", () => {
+      render(<StatItem value="50%" label="Complete Rate" tooltip="Test tooltip content" />);
+
+      expect(screen.getByLabelText("More information")).toBeInTheDocument();
+    });
+
+    it("should not render tooltip icon when tooltip prop is not provided", () => {
+      render(<StatItem value={10} label="Grants" />);
+
+      expect(screen.queryByLabelText("More information")).not.toBeInTheDocument();
+    });
+  });
 });
 
 describe("ProjectStatsBar", () => {
@@ -119,6 +133,14 @@ describe("ProjectStatsBar", () => {
 
       expect(screen.getAllByText("100%")).toHaveLength(2);
       expect(screen.getAllByText("Complete Rate")).toHaveLength(2);
+    });
+
+    it("should render tooltip for completeRate", () => {
+      render(<ProjectStatsBar {...defaultProps} completeRate={75} />);
+
+      // There should be 2 tooltip icons (desktop and mobile layouts)
+      const tooltipIcons = screen.getAllByLabelText("More information");
+      expect(tooltipIcons).toHaveLength(2);
     });
 
     it("should not render optional stats when not provided", () => {

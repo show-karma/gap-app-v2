@@ -1,8 +1,8 @@
 "use client";
 
 import { BadgeCheckIcon } from "lucide-react";
-import { useAccount } from "wagmi";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import type { Project } from "@/types/v2/project";
 import { cn } from "@/utilities/tailwind";
@@ -18,7 +18,8 @@ interface EndorseSectionProps {
  * Opens EndorsementDialog modal for the actual endorsement flow.
  * Matches Figma design with Lucide icons and neutral color palette.
  *
- * Requires wallet connection to enable endorsement.
+ * If user is not logged in, clicking the button triggers login flow.
+ * If user is logged in, clicking opens the endorsement dialog.
  *
  * Note: The project prop is accepted for API consistency with other SidePanel components.
  * The EndorsementDialog currently gets project info from route params.
@@ -26,10 +27,14 @@ interface EndorseSectionProps {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function EndorseSection({ project, className }: EndorseSectionProps) {
   const { setIsEndorsementOpen } = useEndorsementStore();
-  const { isConnected } = useAccount();
+  const { authenticated, login } = useAuth();
 
-  const handleOpenEndorsementDialog = () => {
-    setIsEndorsementOpen(true);
+  const handleClick = () => {
+    if (authenticated) {
+      setIsEndorsementOpen(true);
+    } else {
+      login();
+    }
   };
 
   return (
@@ -55,16 +60,14 @@ export function EndorseSection({ project, className }: EndorseSectionProps) {
         <p className="text-sm text-neutral-500 dark:text-neutral-400">Vouch for this project</p>
       </div>
 
-      {/* Endorse Button - Opens EndorsementDialog for full endorsement flow */}
+      {/* Endorse Button - Opens EndorsementDialog for full endorsement flow, or login if not connected */}
       <Button
-        onClick={handleOpenEndorsementDialog}
-        disabled={!isConnected}
-        title={!isConnected ? "Connect wallet to endorse" : undefined}
-        className="w-full bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-lg px-3 disabled:opacity-50 disabled:cursor-not-allowed"
+        onClick={handleClick}
+        className="w-full bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-lg px-3"
         data-testid="endorse-button"
         aria-describedby="endorse-description"
       >
-        {isConnected ? "Endorse this project" : "Connect Wallet to Endorse"}
+        {authenticated ? "Endorse this project" : "Login to Endorse"}
       </Button>
       <span id="endorse-description" className="sr-only">
         Endorsing this project creates an on-chain attestation vouching for its legitimacy

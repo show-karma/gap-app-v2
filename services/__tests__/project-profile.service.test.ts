@@ -356,6 +356,64 @@ describe("calculateProfileStats", () => {
     // Should count 1 unique endorser (case-insensitive)
     expect(result.endorsementsCount).toBe(1);
   });
+
+  it("should calculate completeRate using only actual milestones, not impacts or updates", () => {
+    // Create a mix of milestone and non-milestone types
+    const completedMilestone: UnifiedMilestone = {
+      ...mockMilestone,
+      uid: "milestone-1",
+      type: "milestone",
+      completed: true,
+    };
+    const incompleteMilestone: UnifiedMilestone = {
+      ...mockMilestone,
+      uid: "milestone-2",
+      type: "milestone",
+      completed: false,
+    };
+    const impactItem: UnifiedMilestone = {
+      ...mockMilestone,
+      uid: "impact-1",
+      type: "impact",
+      completed: false,
+    };
+    const updateItem: UnifiedMilestone = {
+      ...mockMilestone,
+      uid: "update-1",
+      type: "update",
+      completed: false,
+    };
+
+    // Total items: 4, but only 2 are actual milestones (type "milestone" or "grant")
+    // Of those 2 milestones, 1 is completed
+    // Complete rate should be 50% (1/2), NOT 25% (1/4)
+    const updates = [completedMilestone, incompleteMilestone, impactItem, updateItem];
+    const result = calculateProfileStats(mockProject, [], updates);
+
+    expect(result.completeRate).toBe(50);
+  });
+
+  it("should return undefined completeRate when no actual milestones exist", () => {
+    // Only impacts and updates, no actual milestones
+    const impactItem: UnifiedMilestone = {
+      ...mockMilestone,
+      uid: "impact-1",
+      type: "impact",
+      completed: false,
+    };
+    const updateItem: UnifiedMilestone = {
+      ...mockMilestone,
+      uid: "update-1",
+      type: "update",
+      completed: false,
+    };
+
+    const updates = [impactItem, updateItem];
+    const result = calculateProfileStats(mockProject, [], updates);
+
+    // No actual milestones, so completeRate should be undefined
+    expect(result.completeRate).toBeUndefined();
+  });
 });
 
 // =============================================================================

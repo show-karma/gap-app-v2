@@ -22,15 +22,36 @@ interface DonateSectionProps {
 }
 
 /**
+ * Hook to determine if the donate section should be visible.
+ * Returns true if:
+ * - Payout addresses are configured, OR
+ * - User is authorized to set up payout addresses (owner/admin/staff)
+ */
+export function useDonationVisibility(project: Project): boolean {
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
+
+  const canSetPayoutAddress =
+    isProjectOwner || isOwner || isProjectAdmin || isCommunityAdmin || (!isStaffLoading && isStaff);
+
+  const hasPayoutAddresses = hasConfiguredPayoutAddresses(project.chainPayoutAddress);
+
+  return hasPayoutAddresses || canSetPayoutAddress;
+}
+
+/**
  * DonateSection provides an inline donation form with amount input.
  * Opens SingleProjectDonateModal for the actual donation flow.
  *
  * For authorized users (project owner/admin/staff/contract owner):
- * - If no payout addresses configured: shows CTA to enable donations
+ * - If no payout addresses configured: shows CTA to set up payout address
  * - If payout addresses configured: shows regular donation form
  *
  * For regular users:
- * - If no payout addresses: shows "donations not available" message
+ * - If no payout addresses: section is hidden (returns null)
  * - If payout addresses configured: shows regular donation form
  */
 export function DonateSection({ project, className }: DonateSectionProps) {
@@ -63,6 +84,11 @@ export function DonateSection({ project, className }: DonateSectionProps) {
   };
 
   const hasPayoutAddresses = hasConfiguredPayoutAddresses(project.chainPayoutAddress);
+
+  // Don't show section for regular users if payout addresses aren't configured
+  if (!hasPayoutAddresses && !canSetPayoutAddress) {
+    return null;
+  }
 
   const handleDonateClick = () => {
     setIsDonateModalOpen(true);
@@ -98,7 +124,7 @@ export function DonateSection({ project, className }: DonateSectionProps) {
           </p>
         </div>
 
-        {/* Show different content based on payout address status and authorization */}
+        {/* Show different content based on payout address status */}
         {hasPayoutAddresses ? (
           /* Regular donation form when payout addresses are configured */
           <div className="flex flex-row gap-2">
@@ -138,26 +164,16 @@ export function DonateSection({ project, className }: DonateSectionProps) {
               {isConnected ? "Donate" : "Connect Wallet"}
             </Button>
           </div>
-        ) : canSetPayoutAddress ? (
-          /* Enable donations CTA for authorized users */
-          <div className="flex flex-col gap-3">
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Set up a payout address to start receiving donations from supporters.
-            </p>
-            <Button
-              onClick={handleEnableDonationsClick}
-              className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center justify-center gap-2"
-              data-testid="enable-donations-button"
-            >
-              <DollarSign className="h-4 w-4" />
-              Enable Donations
-            </Button>
-          </div>
         ) : (
-          /* Message for non-authorized users when no payout addresses */
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            Donations not available - project hasn't set up payout addresses yet.
-          </p>
+          /* Enable donations CTA for authorized users (project owner/admin/staff) */
+          <Button
+            onClick={handleEnableDonationsClick}
+            className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center justify-center gap-2"
+            data-testid="enable-donations-button"
+          >
+            <DollarSign className="h-4 w-4" />
+            Set up payout address
+          </Button>
         )}
       </section>
 

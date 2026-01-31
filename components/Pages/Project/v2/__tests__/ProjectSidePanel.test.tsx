@@ -48,6 +48,18 @@ jest.mock("wagmi", () => ({
   useSwitchChain: () => ({ switchChainAsync: jest.fn() }),
 }));
 
+// Mock useAuth hook - authenticated = wallet connected + Privy login
+const mockLogin = jest.fn();
+jest.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({
+    authenticated: true,
+    login: mockLogin,
+    logout: jest.fn(),
+    isConnected: true,
+    ready: true,
+  }),
+}));
+
 // Mock SingleProjectDonateModal to avoid complex wagmi/web3 dependencies
 jest.mock("@/components/Donation/SingleProject/SingleProjectDonateModal", () => ({
   SingleProjectDonateModal: ({ isOpen }: { isOpen: boolean }) =>
@@ -227,6 +239,7 @@ describe("DonateSection", () => {
 describe("EndorseSection", () => {
   beforeEach(() => {
     mockSetIsEndorsementOpen.mockClear();
+    mockLogin.mockClear();
   });
 
   describe("Rendering", () => {

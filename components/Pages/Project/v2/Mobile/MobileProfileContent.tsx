@@ -9,7 +9,7 @@ import type { Project } from "@/types/v2/project";
 import type { ProjectProfileStats } from "@/types/v2/project-profile.types";
 import { cn } from "@/utilities/tailwind";
 import { ProjectHeader } from "../Header/ProjectHeader";
-import { DonateSection } from "../SidePanel/DonateSection";
+import { DonateSection, useDonationVisibility } from "../SidePanel/DonateSection";
 import { EndorseSection } from "../SidePanel/EndorseSection";
 import { QuickLinksCard } from "../SidePanel/QuickLinksCard";
 import { SubscribeSection } from "../SidePanel/SubscribeSection";
@@ -57,6 +57,7 @@ export function MobileProfileContent({
   const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   const isAuthorized = isOwner || isProjectAdmin || isProjectOwner || (!isStaffLoading && isStaff);
+  const showDonateSection = useDonationVisibility(project);
 
   const handlePostUpdate = () => {
     setIsProgressModalOpen(true);
@@ -90,8 +91,12 @@ export function MobileProfileContent({
 
       {/* Actions Card - Same content as side panel */}
       <div className="flex flex-col gap-8 p-6 rounded-xl border border-neutral-200 dark:border-zinc-700 bg-neutral-100 dark:bg-zinc-800/50">
-        <DonateSection project={project} />
-        <Separator />
+        {showDonateSection && (
+          <>
+            <DonateSection project={project} />
+            <Separator />
+          </>
+        )}
         <EndorseSection project={project} />
         <Separator />
         <SubscribeSection project={project} />

@@ -60,6 +60,7 @@ export function ProjectStatsBar({
     iconType: "received" | "token" | "grants" | "endorsements" | "complete" | "lastUpdate";
     onClick?: () => void;
     key: string;
+    tooltip?: string;
   }> = [
     // Received comes first if available
     ...(totalReceived !== undefined
@@ -107,6 +108,7 @@ export function ProjectStatsBar({
             label: "Complete Rate",
             iconType: "complete" as const,
             key: "complete",
+            tooltip: "Percentage of completed milestones across all grants",
           },
         ]
       : []),
@@ -138,6 +140,7 @@ export function ProjectStatsBar({
                   label={stat.label}
                   iconType={stat.iconType}
                   onClick={stat.onClick}
+                  tooltip={stat.tooltip}
                 />
               ))}
             </div>
@@ -155,6 +158,7 @@ export function ProjectStatsBar({
                 label={stat.label}
                 iconType={stat.iconType}
                 onClick={stat.onClick}
+                tooltip={stat.tooltip}
               />
             ))}
           </div>

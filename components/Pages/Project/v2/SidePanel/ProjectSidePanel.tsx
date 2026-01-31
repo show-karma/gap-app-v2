@@ -7,7 +7,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import type { Project } from "@/types/v2/project";
 import { cn } from "@/utilities/tailwind";
-import { DonateSection } from "./DonateSection";
+import { DonateSection, useDonationVisibility } from "./DonateSection";
 import { EndorseSection } from "./EndorseSection";
 import { QuickLinksCard } from "./QuickLinksCard";
 import { SubscribeSection } from "./SubscribeSection";
@@ -44,6 +44,7 @@ export function ProjectSidePanel({ project, className }: ProjectSidePanelProps) 
   const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   const isAuthorized = isOwner || isProjectAdmin || isProjectOwner || (!isStaffLoading && isStaff);
+  const showDonateSection = useDonationVisibility(project);
 
   const handlePostUpdate = () => {
     setIsProgressModalOpen(true);
@@ -68,10 +69,13 @@ export function ProjectSidePanel({ project, className }: ProjectSidePanelProps) 
 
       {/* Main Card with Donate, Endorse, Subscribe */}
       <div className="flex flex-col gap-8 p-8 rounded-xl border border-neutral-200 dark:border-zinc-700 bg-neutral-100 dark:bg-zinc-800/50 shadow-sm">
-        {/* Donate Section */}
-        <DonateSection project={project} />
-
-        <Separator />
+        {/* Donate Section - only visible if payout addresses configured or user can set them */}
+        {showDonateSection && (
+          <>
+            <DonateSection project={project} />
+            <Separator />
+          </>
+        )}
 
         {/* Endorse Section */}
         <EndorseSection project={project} />
