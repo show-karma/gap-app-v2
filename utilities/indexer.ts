@@ -606,4 +606,11 @@ export const INDEXER = {
       `/projects/${idOrSlug}/update/contact/${contactId}`,
     DELETE: (idOrSlug: string) => `/projects/${idOrSlug}/delete/contact`,
   },
+  SEEDS: {
+    GET: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/seeds`,
+    STATS: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/seeds/stats`,
+    PREVIEW: (projectIdOrSlug: string, paymentToken: string, amount: string, decimals?: number) =>
+      `/v2/projects/${projectIdOrSlug}/seeds/preview?paymentToken=${encodeURIComponent(paymentToken)}&amount=${amount}${decimals ? `&decimals=${decimals}` : ""}`,
+    CREATE: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}/seeds`,
+  },
 };
