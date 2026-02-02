@@ -7,6 +7,7 @@ import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
+import { useKycConfig } from "@/hooks/useKycStatus";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
 import { layoutTheme } from "@/src/helper/theme";
@@ -58,6 +59,9 @@ export default function QuestionBuilderPage() {
   // Fetch reviewers to check if any are configured
   const { data: reviewers, isLoading: isLoadingReviewers } = useProgramReviewers(programId);
 
+  // Fetch KYC config to check if KYC is enabled for the community
+  const { isEnabled: kycEnabled, isLoading: isLoadingKycConfig } = useKycConfig(communityId);
+
   // Derive computed values for sidebar completion status
   const hasReviewers = reviewers && reviewers.length > 0;
   const hasAIConfig = Boolean(existingConfig?.systemPrompt);
@@ -71,6 +75,22 @@ export default function QuestionBuilderPage() {
     updatePostApprovalSchema({ schema, existingConfig: existingConfig || null });
   };
 
+  const handleKycSettingsChange = (kycSettings: { kycFormUrl?: string; kybFormUrl?: string }) => {
+    if (!existingSchema) {
+      return;
+    }
+    // Merge KYC settings into the existing formSchema.settings
+    const updatedSchema: FormSchema = {
+      ...existingSchema,
+      settings: {
+        ...existingSchema.settings,
+        kycFormUrl: kycSettings.kycFormUrl,
+        kybFormUrl: kycSettings.kybFormUrl,
+      },
+    };
+    updateSchema({ schema: updatedSchema, existingConfig: existingConfig || null });
+  };
+
   const handleBackClick = () => {
     router.push(`/community/${communityId}/admin/funding-platform`);
   };
@@ -80,7 +100,8 @@ export default function QuestionBuilderPage() {
     isLoadingPrograms ||
     isLoadingSchema ||
     isLoadingPostApprovalSchema ||
-    isLoadingReviewers
+    isLoadingReviewers ||
+    isLoadingKycConfig
   ) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
@@ -145,10 +166,12 @@ export default function QuestionBuilderPage() {
           communityId={communityId}
           initialPostApprovalSchema={existingPostApprovalSchema || undefined}
           onSavePostApproval={handlePostApprovalSchemaChange}
+          onSaveKycSettings={handleKycSettingsChange}
           programTitle={programTitle}
           hasReviewers={hasReviewers}
           hasAIConfig={hasAIConfig}
           program={program}
+          kycEnabled={kycEnabled}
         />
       </FormBuilderErrorBoundary>
     </div>

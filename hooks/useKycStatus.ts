@@ -130,7 +130,13 @@ export const useKycConfig = (
         false
       );
 
+      // Treat "not found" as "not configured yet" - return null instead of throwing
+      // This allows admin pages to show empty form for initial setup
       if (error) {
+        const errorLower = error.toLowerCase();
+        if (errorLower.includes("not found") || errorLower.includes("not configured")) {
+          return null;
+        }
         throw new Error(error);
       }
 

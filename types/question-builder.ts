@@ -50,6 +50,8 @@ export interface FormSchema {
     rejectionEmailTemplate?: string; // Markdown/HTML template for rejection emails with variable placeholders
     rejectionEmailSubject?: string; // Custom subject for rejection emails with variable placeholders (e.g., {{programName}})
     accessCode?: string; // The access code required to submit the application (backend derives accessCodeEnabled from this)
+    kycFormUrl?: string; // Program-specific KYC form URL (overrides community-level)
+    kybFormUrl?: string; // Program-specific KYB form URL (overrides community-level)
   };
   // AI configuration for the entire form
   aiConfig?: {
