@@ -231,20 +231,24 @@ export default function ApplicationDetailPage() {
   useEffect(() => {
     if (shouldOpenEdit && application && hasAccess && canEditApplication(application)) {
       setIsEditModalOpen(true);
-      // Clean up URL by removing the edit param
-      const url = new URL(window.location.href);
-      url.searchParams.delete("edit");
-      window.history.replaceState({}, "", url.toString());
     }
   }, [shouldOpenEdit, application, hasAccess]);
 
   // Handle edit application
   const handleEditClick = () => {
     setIsEditModalOpen(true);
+    // Add edit=true to URL
+    const url = new URL(window.location.href);
+    url.searchParams.set("edit", "true");
+    window.history.replaceState({}, "", url.toString());
   };
 
   const handleEditClose = () => {
     setIsEditModalOpen(false);
+    // Remove edit param from URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete("edit");
+    window.history.replaceState({}, "", url.toString());
   };
 
   const handleEditSuccess = async () => {
