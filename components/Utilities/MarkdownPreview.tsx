@@ -8,8 +8,10 @@ import remarkGfm from "remark-gfm";
 import styles from "@/styles/markdown.module.css";
 import { cn } from "@/utilities/tailwind";
 
+// Lazy load the heavy markdown preview library with a loading state
 const Preview = dynamic(() => import("@uiw/react-markdown-preview"), {
   ssr: false,
+  loading: () => <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded h-4 w-full" />,
 });
 
 export const MarkdownPreview: typeof Preview = (props) => {

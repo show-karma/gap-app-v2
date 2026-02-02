@@ -78,6 +78,7 @@ export const usePermissions = (options: PermissionOptions = {}) => {
   const query = useQuery({
     queryKey: ["permissions", programId, action, role, wagmiAddress?.toLowerCase() ?? null, isAuth],
     queryFn: async () => {
+      // These checks are defense-in-depth; the query shouldn't run if !enabled
       if (!isAuth || !wagmiAddress || !ready) {
         return {
           hasPermission: false,

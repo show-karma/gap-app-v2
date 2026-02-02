@@ -26,6 +26,8 @@ export interface PayoutDisbursement {
   tokenDecimals: number;
   payoutAddress: string;
   milestoneBreakdown: MilestoneBreakdown | null;
+  /** IDs of milestone allocations paid in this disbursement (prevents double payment) */
+  paidAllocationIds: string[];
   status: PayoutDisbursementStatus;
   executedAt: string | null;
   createdBy: string;
@@ -39,6 +41,8 @@ export interface GrantDisbursementRequest {
   amount: string;
   payoutAddress: string;
   milestoneBreakdown?: MilestoneBreakdown;
+  /** IDs of milestone allocations being paid in this disbursement */
+  paidAllocationIds?: string[];
 }
 
 export interface CreateDisbursementsRequest {
@@ -117,6 +121,10 @@ export interface GrantDisbursementInfo {
   milestones?: MilestoneInfo[];
   /** Token totals breakdown (passed from page to avoid re-fetching with wrong units) */
   totalsByToken?: TokenTotal[];
+  /** Milestone allocations configured for this grant (from payout config) */
+  milestoneAllocations?: MilestoneAllocation[];
+  /** IDs of allocations already paid in previous disbursements */
+  paidAllocationIds?: string[];
 }
 
 /**
@@ -223,13 +231,34 @@ export interface CommunityPayoutsOptions {
 }
 
 /**
- * Item for saving payout config (payout address and total grant amount)
+ * Milestone allocation within a payout configuration.
+ * Each allocation can be linked to an actual milestone (via milestoneUID) or be a custom allocation.
+ */
+export interface MilestoneAllocation {
+  /** Unique identifier for this allocation (UUID) */
+  id: string;
+  /** Optional link to an actual milestone UID */
+  milestoneUID?: string;
+  /** Human-readable label for this allocation */
+  label: string;
+  /** Amount allocated in smallest token unit (wei-like) */
+  amount: string;
+}
+
+/**
+ * Item for saving payout config (payout address, total grant amount, token, and milestone allocations)
  */
 export interface PayoutConfigItem {
   grantUID: string;
   projectUID: string;
-  payoutAddress?: string;
-  totalGrantAmount?: string;
+  payoutAddress?: string | null;
+  totalGrantAmount?: string | null;
+  /** Token contract address for payouts */
+  tokenAddress?: string | null;
+  /** Chain ID where the payout token is deployed */
+  chainId?: number | null;
+  /** Breakdown of how the total grant amount is allocated across milestones */
+  milestoneAllocations?: MilestoneAllocation[] | null;
 }
 
 /**
@@ -250,6 +279,12 @@ export interface PayoutGrantConfig {
   communityUID: string;
   payoutAddress: string | null;
   totalGrantAmount: string | null;
+  /** Token contract address for payouts */
+  tokenAddress: string | null;
+  /** Chain ID where the payout token is deployed */
+  chainId: number | null;
+  /** Breakdown of how the total grant amount is allocated across milestones */
+  milestoneAllocations: MilestoneAllocation[] | null;
   createdBy: string;
   updatedBy: string | null;
   createdAt: string;

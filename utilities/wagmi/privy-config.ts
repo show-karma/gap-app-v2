@@ -17,6 +17,9 @@ import { appNetwork } from "../network";
 /**
  * HTTP Transport Configuration
  *
+ * batch: true - Enables request batching to reduce RPC calls by combining
+ *   multiple requests into a single HTTP call when possible.
+ *
  * retryCount: 4 - Increased from default (3) to handle network congestion better.
  *   During high traffic periods or temporary RPC provider issues, additional retries
  *   help ensure blockchain operations succeed without immediately failing to users.
@@ -30,6 +33,7 @@ import { appNetwork } from "../network";
  *   for complex contract reads or during high network load.
  */
 const httpTransportOptions = {
+  batch: true,
   retryCount: 4,
   retryDelay: 200,
   timeout: 20_000,

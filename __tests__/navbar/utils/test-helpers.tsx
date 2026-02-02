@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type RenderOptions, type RenderResult, render } from "@testing-library/react";
 import { ThemeProvider } from "next-themes";
 import type React from "react";
+import { NavbarPermissionsProvider } from "@/src/components/navbar/navbar-permissions-context";
 import type { AuthFixture } from "../fixtures/auth-fixtures";
 import { mockAuthState, mockNavbarPermissionsState, mockThemeState } from "../setup";
 
@@ -599,7 +600,7 @@ export const AllProviders: React.FC<{
         enableSystem={false}
         disableTransitionOnChange
       >
-        {children}
+        <NavbarPermissionsProvider>{children}</NavbarPermissionsProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

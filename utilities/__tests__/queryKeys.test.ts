@@ -157,22 +157,68 @@ describe("queryKeys", () => {
   describe("COMMUNITY", () => {
     describe("PROJECT_UPDATES", () => {
       it("should generate correct query key", () => {
-        const key = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("community-123", "all", 1);
-        expect(key).toEqual(["community-project-updates", "community-123", "all", 1]);
+        const key = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("community-123", "all", 1, 25);
+        expect(key).toEqual(["community-project-updates", "community-123", "all", 1, 25, "", ""]);
       });
 
       it("should return as const tuple", () => {
-        const key = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "active", 0);
+        const key = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "active", 0, 25);
         expect(Array.isArray(key)).toBe(true);
-        expect(key.length).toBe(4);
+        expect(key.length).toBe(7);
       });
 
-      it("should handle different filters and pages", () => {
-        const key1 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "all", 1);
-        const key2 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "active", 1);
-        const key3 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "all", 2);
+      it("should handle different filters, pages, and limits", () => {
+        const key1 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "all", 1, 25);
+        const key2 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "active", 1, 25);
+        const key3 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "all", 2, 25);
+        const key4 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "all", 1, 50);
         expect(key1).not.toEqual(key2);
         expect(key1).not.toEqual(key3);
+        expect(key1).not.toEqual(key4);
+      });
+
+      it("should handle programId and projectId filters with empty string fallback", () => {
+        const key1 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES(
+          "comm-1",
+          "all",
+          1,
+          25,
+          "program-1",
+          null
+        );
+        const key2 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES(
+          "comm-1",
+          "all",
+          1,
+          25,
+          "program-1",
+          "project-1"
+        );
+        expect(key1).toEqual([
+          "community-project-updates",
+          "comm-1",
+          "all",
+          1,
+          25,
+          "program-1",
+          "",
+        ]);
+        expect(key2).toEqual([
+          "community-project-updates",
+          "comm-1",
+          "all",
+          1,
+          25,
+          "program-1",
+          "project-1",
+        ]);
+        expect(key1).not.toEqual(key2);
+      });
+
+      it("should convert null programId and projectId to empty strings", () => {
+        const key = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "all", 1, 25, null, null);
+        expect(key[5]).toBe("");
+        expect(key[6]).toBe("");
       });
     });
   });
@@ -312,7 +358,7 @@ describe("queryKeys", () => {
       expect(QUERY_KEYS.APPLICATIONS.BY_PROJECT_UID("a")[0]).toContain("application");
       expect(QUERY_KEYS.REVIEWERS.PROGRAM("a")[0]).toContain("reviewer");
       expect(QUERY_KEYS.CONTRACTS.VALIDATION.ALL[0]).toContain("validation");
-      expect(QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("a", "b", 1)[0]).toContain("community");
+      expect(QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("a", "b", 1, 25)[0]).toContain("community");
       expect(QUERY_KEYS.GRANTS.DUPLICATE_CHECK({ community: "a", title: "b" })[0]).toContain(
         "grant"
       );
@@ -326,7 +372,7 @@ describe("queryKeys", () => {
       expect(
         Array.isArray(QUERY_KEYS.CONTRACTS.VALIDATION.VALIDATE({ address: "a", network: "b" }))
       ).toBe(true);
-      expect(Array.isArray(QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("a", "b", 1))).toBe(true);
+      expect(Array.isArray(QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("a", "b", 1, 25))).toBe(true);
       expect(Array.isArray(QUERY_KEYS.GRANTS.DUPLICATE_CHECK({ community: "a", title: "b" }))).toBe(
         true
       );

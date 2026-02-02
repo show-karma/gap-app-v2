@@ -59,8 +59,9 @@ REGISTRY: {
 
 **Changes**:
 - Removed auto-approve logic (V2 handles this automatically)
-- Checks `requiresManualApproval` flag from response
-- Shows appropriate success message based on approval status
+- Validates `programId` is returned - shows error if missing
+- Always redirects to setup wizard for funding-platform flow
+- On-chain approval status (`requiresManualApproval`) doesn't affect the setup flow
 
 **Before**:
 ```typescript
@@ -70,12 +71,22 @@ await ProgramRegistryService.approveProgram(result.programId);
 
 **After**:
 ```typescript
-// V2 auto-approves if user is community admin
-if (result.requiresManualApproval) {
-  toast.success("Program created successfully. Please approve it manually...");
-} else {
-  toast.success("Program created and approved successfully!");
+// Verify we got a valid programId - without it we can't proceed to setup
+if (!result.programId) {
+  errorManager("Program creation returned empty programId", new Error("Missing programId"), {
+    address, data, result,
+  });
+  toast.error("Failed to create program. Please try again.");
+  return;
 }
+
+// For funding-platform flow, community admins always go to setup
+// On-chain creation status doesn't affect the ability to configure the program
+toast.success("Program created! Let's set it up.", { duration: 3000 });
+reset();
+onSuccess();
+onClose();
+router.push(`/community/${communityId}/admin/funding-platform/${result.programId}/setup`);
 ```
 
 #### ProgramDetailsTab.tsx

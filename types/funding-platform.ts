@@ -146,6 +146,7 @@ export interface IFundingApplication {
   };
   appReviewers?: string[]; // Array of program reviewer addresses assigned to this application
   milestoneReviewers?: string[]; // Array of milestone reviewer addresses assigned to this application
+  postApprovalCompleted?: boolean; // Indicates if post-approval form has been completed
   createdAt: string | Date;
   updatedAt: string | Date;
 }
