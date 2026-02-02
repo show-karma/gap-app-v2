@@ -34,7 +34,7 @@ jest.mock("@/utilities/formatDate", () => ({
 }));
 
 // Mock the getProjectTitle helper
-jest.mock("@/components/FundingPlatform/helper/getProjecTitle", () => ({
+jest.mock("@/components/FundingPlatform/helper/getProjectTitle", () => ({
   getProjectTitle: (application: any) =>
     application.applicationData?.projectName || "Untitled Project",
 }));

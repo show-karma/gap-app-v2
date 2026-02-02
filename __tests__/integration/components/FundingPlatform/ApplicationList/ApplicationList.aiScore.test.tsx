@@ -10,7 +10,7 @@ jest.mock("@/components/FundingPlatform/helper/getAIScore", () => ({
 }));
 
 // Mock the other helper functions
-jest.mock("@/components/FundingPlatform/helper/getProjecTitle", () => ({
+jest.mock("@/components/FundingPlatform/helper/getProjectTitle", () => ({
   getProjectTitle: jest.fn(() => "Test Project"),
 }));
 

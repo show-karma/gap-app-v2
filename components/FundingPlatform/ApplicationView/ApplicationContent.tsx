@@ -20,7 +20,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { isFundingProgramConfig } from "@/utilities/type-guards";
 import { isValidProjectUid } from "@/utilities/validation";
-import { getProjectTitle } from "../helper/getProjecTitle";
+import { getProjectTitle } from "../helper/getProjectTitle";
 import { AIEvaluationDisplay } from "./AIEvaluation";
 import AIEvaluationButton from "./AIEvaluationButton";
 import ApplicationVersionSelector from "./ApplicationVersionSelector";

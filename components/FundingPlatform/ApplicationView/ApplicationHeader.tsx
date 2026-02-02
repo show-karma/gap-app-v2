@@ -16,7 +16,7 @@ import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding
 import { type KycConfigResponse, type KycStatusResponse, KycVerificationType } from "@/types/kyc";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
-import { getProjectTitle } from "../helper/getProjecTitle";
+import { getProjectTitle } from "../helper/getProjectTitle";
 
 const statusColors: Record<string, string> = {
   pending:
@@ -106,11 +106,13 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
       try {
         await navigator.clipboard.writeText(result.formUrl);
         toast.success(`${verificationType} verification link copied!`);
-      } catch {
+      } catch (clipboardError) {
         // Clipboard API can fail in insecure contexts or without permission
+        console.error("Clipboard copy failed:", clipboardError);
         toast.error("Could not copy to clipboard. Please check browser permissions.");
       }
-    } catch {
+    } catch (apiError) {
+      console.error(`Failed to generate ${verificationType} verification link:`, apiError);
       toast.error(`Failed to generate ${verificationType} verification link`);
     } finally {
       setCopyingType(null);

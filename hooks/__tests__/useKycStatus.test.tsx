@@ -1,7 +1,14 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import type { KycBatchStatusResponse, KycConfigResponse, KycStatusResponse } from "@/types/kyc";
+import {
+  type KycBatchStatusResponse,
+  type KycConfigResponse,
+  KycProviderType,
+  type KycStatusResponse,
+  KycVerificationStatus,
+  KycVerificationType,
+} from "@/types/kyc";
 import fetchData from "@/utilities/fetchData";
 import {
   KYC_QUERY_KEYS,
@@ -27,8 +34,8 @@ describe("KYC Hooks", () => {
   const createMockKycStatus = (overrides: Partial<KycStatusResponse> = {}): KycStatusResponse => ({
     projectUID: "project-123",
     communityUID: "community-456",
-    status: "VERIFIED",
-    verificationType: "KYC",
+    status: KycVerificationStatus.VERIFIED,
+    verificationType: KycVerificationType.KYC,
     verifiedAt: "2024-01-01T00:00:00Z",
     expiresAt: "2025-01-01T00:00:00Z",
     isExpired: false,
@@ -37,7 +44,7 @@ describe("KYC Hooks", () => {
 
   const createMockKycConfig = (overrides: Partial<KycConfigResponse> = {}): KycConfigResponse => ({
     communityUID: "community-456",
-    providerType: "TREOVA",
+    providerType: KycProviderType.TREOVA,
     providerName: "Treova",
     kycFormUrl: "https://kyc.treova.ai/cmp_test",
     kybFormUrl: "https://kyb.treova.ai/cmp_test",
@@ -95,7 +102,7 @@ describe("KYC Hooks", () => {
 
       it("should handle expired status", async () => {
         const mockStatus = createMockKycStatus({
-          status: "EXPIRED",
+          status: KycVerificationStatus.EXPIRED,
           isExpired: true,
         });
         mockFetchData.mockResolvedValue([mockStatus, null]);
@@ -108,7 +115,7 @@ describe("KYC Hooks", () => {
           expect(result.current.isLoading).toBe(false);
         });
 
-        expect(result.current.status?.status).toBe("EXPIRED");
+        expect(result.current.status?.status).toBe(KycVerificationStatus.EXPIRED);
         expect(result.current.status?.isExpired).toBe(true);
       });
     });
@@ -226,7 +233,7 @@ describe("KYC Hooks", () => {
             "project-1": createMockKycStatus({ projectUID: "project-1" }),
             "project-2": createMockKycStatus({
               projectUID: "project-2",
-              status: "PENDING",
+              status: KycVerificationStatus.PENDING,
             }),
             "project-3": null,
           },
@@ -244,8 +251,8 @@ describe("KYC Hooks", () => {
         });
 
         expect(result.current.statuses.size).toBe(3);
-        expect(result.current.getStatus("project-1")?.status).toBe("VERIFIED");
-        expect(result.current.getStatus("project-2")?.status).toBe("PENDING");
+        expect(result.current.getStatus("project-1")?.status).toBe(KycVerificationStatus.VERIFIED);
+        expect(result.current.getStatus("project-2")?.status).toBe(KycVerificationStatus.PENDING);
         expect(result.current.getStatus("project-3")).toBeNull();
       });
 
@@ -343,7 +350,7 @@ describe("KYC Hooks", () => {
       let mutationResult: typeof mockConfig | undefined;
       await act(async () => {
         mutationResult = await result.current.mutateAsync({
-          providerType: "TREOVA",
+          providerType: KycProviderType.TREOVA,
           providerName: "Treova",
           kycFormUrl: "https://kyc.treova.ai/test",
           kybFormUrl: "https://kyb.treova.ai/test",
@@ -363,7 +370,7 @@ describe("KYC Hooks", () => {
       await expect(
         act(async () => {
           await result.current.mutateAsync({
-            providerType: "TREOVA",
+            providerType: KycProviderType.TREOVA,
             providerName: "Treova",
             kycFormUrl: "https://kyc.treova.ai/test",
             kybFormUrl: "https://kyb.treova.ai/test",
@@ -386,7 +393,7 @@ describe("KYC Hooks", () => {
 
       await act(async () => {
         await result.current.mutateAsync({
-          providerType: "TREOVA",
+          providerType: KycProviderType.TREOVA,
           providerName: "Treova",
           kycFormUrl: "https://kyc.treova.ai/test",
           kybFormUrl: "https://kyb.treova.ai/test",

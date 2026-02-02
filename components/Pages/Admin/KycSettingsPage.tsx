@@ -9,10 +9,12 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useKycConfig, useSaveKycConfig } from "@/hooks/useKycStatus";
 import { KycProviderType } from "@/types/kyc";
 import type { Community } from "@/types/v2/community";
 import { envVars } from "@/utilities/enviromentVars";
+import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 
 // Use enum values for provider type validation
@@ -35,6 +37,7 @@ interface KycSettingsPageProps {
 
 export function KycSettingsPage({ community }: KycSettingsPageProps) {
   const communityUID = community.uid;
+  const { hasAccess, isLoading: loadingAdmin } = useCommunityAdminAccess(communityUID);
   const { config, isLoading, error } = useKycConfig(communityUID);
   const { mutate: saveConfig, isPending: isSaving } = useSaveKycConfig(communityUID);
 
@@ -54,6 +57,7 @@ export function KycSettingsPage({ community }: KycSettingsPageProps) {
   });
 
   // Create a stable reset function using useCallback
+  // Note: form.reset is stable and doesn't need to be in dependencies
   const resetFormWithConfig = useCallback(() => {
     if (!config) return;
 
@@ -65,7 +69,8 @@ export function KycSettingsPage({ community }: KycSettingsPageProps) {
       validityMonths: config.validityMonths || 12,
       isEnabled: config.isEnabled ?? true,
     });
-  }, [config, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config]);
 
   // Reset form when config changes (including external updates)
   useEffect(() => {
@@ -117,10 +122,20 @@ export function KycSettingsPage({ community }: KycSettingsPageProps) {
     }
   };
 
-  if (isLoading) {
+  // Show loading state while checking admin access
+  if (loadingAdmin || isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <Spinner />
+      </div>
+    );
+  }
+
+  // Show access denied if user is not an admin
+  if (!hasAccess) {
+    return (
+      <div className="flex w-full items-center justify-center h-96">
+        <p className="text-lg">{MESSAGES.ADMIN.NOT_AUTHORIZED(communityUID)}</p>
       </div>
     );
   }

@@ -17,10 +17,14 @@ import { INDEXER } from "@/utilities/indexer";
 const KYC_STATUS_STALE_TIME = 5 * 60 * 1000; // 5 minutes
 const KYC_CONFIG_STALE_TIME = 10 * 60 * 1000; // 10 minutes
 
+// Application reference prefix constant
+export const APPLICATION_REFERENCE_PREFIX = "APP-";
+
 /**
  * Determine if identifier is an application reference (APP-...) vs project UID (0x...)
  */
-const isApplicationReference = (identifier: string): boolean => identifier.startsWith("APP-");
+const isApplicationReference = (identifier: string): boolean =>
+  identifier.startsWith(APPLICATION_REFERENCE_PREFIX);
 
 export const KYC_QUERY_KEYS = {
   all: ["kyc"] as const,

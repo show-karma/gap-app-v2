@@ -10,7 +10,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { formatAIScore } from "../helper/getAIScore";
 import { formatInternalAIScore } from "../helper/getInternalAIScore";
-import { getProjectTitle } from "../helper/getProjecTitle";
+import { getProjectTitle } from "../helper/getProjectTitle";
 import { AIEvaluationModal, type EvaluationType } from "./AIEvaluationModal";
 import { ReviewerAssignmentDropdown } from "./ReviewerAssignmentDropdown";
 import { TableStatusActionButtons } from "./TableStatusActionButtons";
