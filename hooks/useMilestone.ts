@@ -993,7 +993,13 @@ export const useMilestone = () => {
           // Project milestone editing
           const fetchedProject = await getProjectById(project?.uid as string);
           if (!fetchedProject) return;
-          const fetchedMilestones = await getProjectObjectives(project?.uid as string);
+          const projectRecipient = fetchedProject.recipient;
+          const fetchedMilestones = await getProjectObjectives(
+            project?.uid as string,
+            fetchedProject.uid,
+            projectRecipient,
+            fetchedProject.chainID
+          );
           if (!fetchedMilestones || !gapClient?.network) return;
           const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient?.network);
           const objectiveInstance = objectivesInstances.find(
@@ -1010,7 +1016,12 @@ export const useMilestone = () => {
           const checkIfCompletionUpdated = async (callbackFn?: () => void) => {
             await retryUntilConditionMet(
               async () => {
-                const fetchedObjectives = await getProjectObjectives(project?.uid as string);
+                const fetchedObjectives = await getProjectObjectives(
+                  project?.uid as string,
+                  fetchedProject.uid,
+                  projectRecipient,
+                  fetchedProject.chainID
+                );
                 const stillExists = fetchedObjectives.find(
                   (item: any) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
                 );

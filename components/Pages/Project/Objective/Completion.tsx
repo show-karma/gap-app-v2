@@ -4,7 +4,9 @@ import type { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/c
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import { useAccount } from "wagmi";
+import { DeleteDialog } from "@/components/DeleteDialog";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -40,6 +42,7 @@ export const ObjectiveCardComplete = ({
   isCompleting: boolean;
   handleCompleting: (isCompleting: boolean) => void;
 }) => {
+  const [isDeleting, setIsDeleting] = useState(false);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectAdmin || isContractOwner;
@@ -62,6 +65,7 @@ export const ObjectiveCardComplete = ({
   });
 
   const deleteObjectiveCompletion = async () => {
+    setIsDeleting(true);
     startAttestation("Removing milestone completion...");
     try {
       const setup = await setupChainAndWallet({
@@ -77,7 +81,13 @@ export const ObjectiveCardComplete = ({
       const { gapClient, walletSigner } = setup;
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) return;
-      const fetchedMilestones = await getProjectObjectives(projectId);
+      const projectRecipient = fetchedProject.recipient;
+      const fetchedMilestones = await getProjectObjectives(
+        projectId,
+        fetchedProject.uid,
+        projectRecipient,
+        fetchedProject.chainID
+      );
       if (!fetchedMilestones || !gapClient?.network) return;
       const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient?.network);
       const objectiveInstance = objectivesInstances.find(
@@ -88,7 +98,12 @@ export const ObjectiveCardComplete = ({
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
           async () => {
-            const fetchedObjectives = await getProjectObjectives(projectId);
+            const fetchedObjectives = await getProjectObjectives(
+              projectId,
+              fetchedProject.uid,
+              projectRecipient,
+              fetchedProject.chainID
+            );
             const stillExists = fetchedObjectives.find(
               (item) => item.uid.toLowerCase() === objective.uid.toLowerCase()
             )?.completed;
@@ -164,6 +179,7 @@ export const ObjectiveCardComplete = ({
         { error: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR }
       );
     } finally {
+      setIsDeleting(false);
       setIsStepper(false);
     }
   };
@@ -212,14 +228,21 @@ export const ObjectiveCardComplete = ({
             <div className="flex flex-1 flex-row items-center justify-end">
               {isAuthorized ? (
                 <div className="flex w-max flex-row items-center gap-2">
-                  <Button
-                    type="button"
-                    className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent max-lg:px-0"
-                    onClick={() => deleteObjectiveCompletion()}
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                    Remove
-                  </Button>
+                  <DeleteDialog
+                    deleteFunction={deleteObjectiveCompletion}
+                    isLoading={isDeleting}
+                    title={
+                      <p className="font-normal">
+                        Are you sure you want to remove the completion of this milestone?
+                      </p>
+                    }
+                    buttonElement={{
+                      text: "Remove",
+                      icon: <TrashIcon className="h-5 w-5" />,
+                      styleClass:
+                        "bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent max-lg:px-0",
+                    }}
+                  />
                 </div>
               ) : null}
             </div>

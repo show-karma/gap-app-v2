@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { getProjectGrants } from "@/services/project-grants.service";
 import type { Grant } from "@/types/v2/grant";
-import { QUERY_KEYS } from "@/utilities/queryKeys";
+import { createProjectQueryPredicate, QUERY_KEYS } from "@/utilities/queryKeys";
 
 /**
  * Hook to fetch project grants using the dedicated API endpoint.
@@ -12,8 +12,6 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
  */
 export function useProjectGrants(projectIdOrSlug: string) {
   const queryKey = QUERY_KEYS.PROJECT.GRANTS(projectIdOrSlug);
-  const updateQueryKey = QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug);
-  const milestonesQueryKey = QUERY_KEYS.PROJECT.MILESTONES(projectIdOrSlug);
 
   const {
     data,
@@ -30,9 +28,12 @@ export function useProjectGrants(projectIdOrSlug: string) {
   const grants = data || [];
 
   const refetch = async () => {
-    await queryClient.invalidateQueries({ queryKey });
-    await queryClient.invalidateQueries({ queryKey: updateQueryKey });
-    await queryClient.invalidateQueries({ queryKey: milestonesQueryKey });
+    // Use predicate-based invalidation to refresh all project-related queries
+    // This automatically handles grants, updates, milestones, impacts, and details
+    // in a single call, and is more maintainable as new query types are added
+    await queryClient.invalidateQueries({
+      predicate: createProjectQueryPredicate(projectIdOrSlug),
+    });
     return originalRefetch();
   };
 

@@ -1,0 +1,77 @@
+"use client";
+
+import { BadgeCheckIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { useEndorsementStore } from "@/store/modals/endorsement";
+import type { Project } from "@/types/v2/project";
+import { cn } from "@/utilities/tailwind";
+
+interface EndorseSectionProps {
+  /** Project data - reserved for future use when endorsement store needs project context */
+  project: Project;
+  className?: string;
+}
+
+/**
+ * EndorseSection provides an inline endorsement button.
+ * Opens EndorsementDialog modal for the actual endorsement flow.
+ * Matches Figma design with Lucide icons and neutral color palette.
+ *
+ * If user is not logged in, clicking the button triggers login flow.
+ * If user is logged in, clicking opens the endorsement dialog.
+ *
+ * Note: The project prop is accepted for API consistency with other SidePanel components.
+ * The EndorsementDialog currently gets project info from route params.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function EndorseSection({ project, className }: EndorseSectionProps) {
+  const { setIsEndorsementOpen } = useEndorsementStore();
+  const { authenticated, login } = useAuth();
+
+  const handleClick = () => {
+    if (authenticated) {
+      setIsEndorsementOpen(true);
+    } else {
+      login();
+    }
+  };
+
+  return (
+    <section
+      className={cn("flex flex-col gap-4", className)}
+      data-testid="endorse-section"
+      aria-labelledby="endorse-heading"
+    >
+      {/* Header */}
+      <div className="flex flex-col gap-1">
+        <div className="flex flex-row items-center gap-2">
+          <BadgeCheckIcon
+            className="h-6 w-6 text-neutral-700 dark:text-neutral-300"
+            aria-hidden="true"
+          />
+          <h3
+            id="endorse-heading"
+            className="text-xl font-semibold text-neutral-900 dark:text-white tracking-tight"
+          >
+            Endorse
+          </h3>
+        </div>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">Vouch for this project</p>
+      </div>
+
+      {/* Endorse Button - Opens EndorsementDialog for full endorsement flow, or login if not connected */}
+      <Button
+        onClick={handleClick}
+        className="w-full bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100 rounded-lg px-3"
+        data-testid="endorse-button"
+        aria-describedby="endorse-description"
+      >
+        {authenticated ? "Endorse this project" : "Login to Endorse"}
+      </Button>
+      <span id="endorse-description" className="sr-only">
+        Endorsing this project creates an on-chain attestation vouching for its legitimacy
+      </span>
+    </section>
+  );
+}

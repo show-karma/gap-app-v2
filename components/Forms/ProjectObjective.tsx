@@ -209,7 +209,13 @@ export const ProjectObjectiveForm = ({
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),
       };
-      const fetchedMilestones = await getProjectObjectives(projectId);
+      const projectRecipient = project?.owner;
+      const fetchedMilestones = await getProjectObjectives(
+        projectId,
+        project?.uid,
+        projectRecipient,
+        project?.chainID
+      );
       if (!fetchedMilestones || !gapClient?.network) return;
       const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient?.network);
       const objectiveInstance = objectivesInstances.find(

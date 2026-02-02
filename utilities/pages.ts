@@ -56,7 +56,8 @@ export const PAGES = {
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,
-    UPDATES: (project: string) => `/project/${project}/updates`,
+    UPDATES: (project: string) => `/project/${project}`,
+    ABOUT: (project: string) => `/project/${project}/about`,
     GRANTS: (project: string) => `/project/${project}/funding`,
 
     GRANT: (project: string, grant: string) => `/project/${project}/funding/${grant}`,

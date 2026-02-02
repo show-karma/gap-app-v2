@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import type { FC } from "react";
 import { ActivityList } from "@/components/Shared/ActivityList";
 import { Button } from "@/components/Utilities/Button";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
+import { transformImpactsToMilestones } from "@/services/project-profile.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { MESSAGES } from "@/utilities/messages";
@@ -25,20 +27,7 @@ export const UpdatesPage: FC = () => {
   const { impacts } = useProjectImpacts(project?.uid || "");
 
   // Combine updates and impacts, then sort by date
-  const combinedUpdates = [
-    ...allUpdates,
-    ...impacts.map((impact) => ({
-      uid: impact.uid,
-      type: "impact" as const,
-      title: impact.data?.work || "Impact",
-      description: impact.data?.impact,
-      createdAt: impact.createdAt || new Date().toISOString(),
-      completed: false,
-      chainID: 0,
-      refUID: impact.refUID,
-      source: { type: "impact" },
-    })),
-  ].sort((a, b) => {
+  const combinedUpdates = [...allUpdates, ...transformImpactsToMilestones(impacts)].sort((a, b) => {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
@@ -80,10 +69,13 @@ export const UpdatesPage: FC = () => {
             ) : (
               <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10">
                 <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-                  <img
+                  <Image
                     src="/images/comments.png"
-                    alt=""
-                    className="h-[185px] w-[438px] object-cover"
+                    alt="Project updates illustration"
+                    width={438}
+                    height={185}
+                    className="object-cover"
+                    loading="lazy"
                   />
                   <div className="flex w-full flex-col items-center justify-center gap-3">
                     <p className="text-center text-lg font-semibold text-black dark:text-zinc-100 ">

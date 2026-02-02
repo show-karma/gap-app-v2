@@ -90,6 +90,20 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/project/:projectId/update",
+        destination: "/project/:projectId",
+        permanent: true,
+      },
+      {
+        source: "/project/:projectId/updates",
+        destination: "/project/:projectId",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 const bundleAnalyzer = withBundleAnalyzer(removeImports(nextConfig));

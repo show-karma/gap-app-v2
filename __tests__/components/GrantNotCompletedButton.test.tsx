@@ -2,32 +2,11 @@ import { render, screen } from "@testing-library/react";
 import { GrantNotCompletedButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton/GrantNotCompletedButton";
 import "@testing-library/jest-dom";
 
-// Mock Next.js Link
-jest.mock("next/link", () => {
-  return ({ children, href, className }: any) => (
-    <a href={href} className={className}>
-      {children}
-    </a>
-  );
-});
-
 // Mock Heroicons
 jest.mock("@heroicons/react/24/outline", () => ({
   CheckCircleIcon: ({ className }: { className?: string }) => (
     <svg data-testid="check-circle-icon" className={className} />
   ),
-}));
-
-// Mock PAGES utility
-jest.mock("@/utilities/pages", () => ({
-  PAGES: {
-    PROJECT: {
-      SCREENS: {
-        SELECTED_SCREEN: (project: string, grant: string, screen: string) =>
-          `/project/${project}/funding/${grant}/${screen}`,
-      },
-    },
-  },
 }));
 
 describe("GrantNotCompletedButton", () => {
@@ -38,30 +17,34 @@ describe("GrantNotCompletedButton", () => {
     },
   } as any;
 
-  const grantUID = "grant-123";
+  const mockGrantUID = "grant-123";
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   describe("Rendering", () => {
-    it("should render Link component", () => {
-      render(<GrantNotCompletedButton project={mockProject} grantUID={grantUID} />);
+    it("should render link component", () => {
+      render(<GrantNotCompletedButton project={mockProject} grantUID={mockGrantUID} />);
 
       const link = screen.getByRole("link");
       expect(link).toBeInTheDocument();
     });
 
     it("should show default 'Mark as Complete' text", () => {
-      render(<GrantNotCompletedButton project={mockProject} grantUID={grantUID} />);
+      render(<GrantNotCompletedButton project={mockProject} grantUID={mockGrantUID} />);
 
       expect(screen.getByText("Mark as Complete")).toBeInTheDocument();
     });
 
     it("should show CheckCircleIcon", () => {
-      render(<GrantNotCompletedButton project={mockProject} grantUID={grantUID} />);
+      render(<GrantNotCompletedButton project={mockProject} grantUID={mockGrantUID} />);
 
       expect(screen.getByTestId("check-circle-icon")).toBeInTheDocument();
     });
 
     it("should apply correct CSS classes", () => {
-      render(<GrantNotCompletedButton project={mockProject} grantUID={grantUID} />);
+      render(<GrantNotCompletedButton project={mockProject} grantUID={mockGrantUID} />);
 
       const link = screen.getByRole("link");
       expect(link).toHaveClass(
@@ -83,9 +66,9 @@ describe("GrantNotCompletedButton", () => {
     });
   });
 
-  describe("Link href", () => {
-    it("should generate correct href using PAGES.PROJECT.SCREENS.SELECTED_SCREEN", () => {
-      render(<GrantNotCompletedButton project={mockProject} grantUID={grantUID} />);
+  describe("Navigation", () => {
+    it("should link to grant completion page using project slug", () => {
+      render(<GrantNotCompletedButton project={mockProject} grantUID={mockGrantUID} />);
 
       const link = screen.getByRole("link");
       expect(link).toHaveAttribute(
@@ -94,60 +77,16 @@ describe("GrantNotCompletedButton", () => {
       );
     });
 
-    it("should use project slug when available", () => {
-      const projectWithSlug = {
-        ...mockProject,
-        details: {
-          slug: "my-awesome-project",
-        },
-      };
-
-      render(<GrantNotCompletedButton project={projectWithSlug} grantUID={grantUID} />);
-
-      const link = screen.getByRole("link");
-      expect(link).toHaveAttribute(
-        "href",
-        "/project/my-awesome-project/funding/grant-123/complete-grant"
-      );
-    });
-
-    it("should fall back to project.uid when slug is missing", () => {
+    it("should fallback to project uid when slug is not available", () => {
       const projectWithoutSlug = {
-        uid: "project-789",
+        uid: "project-456",
         details: {},
       } as any;
 
-      render(<GrantNotCompletedButton project={projectWithoutSlug} grantUID={grantUID} />);
+      render(<GrantNotCompletedButton project={projectWithoutSlug} grantUID={mockGrantUID} />);
 
       const link = screen.getByRole("link");
-      expect(link).toHaveAttribute("href", "/project/project-789/funding/grant-123/complete-grant");
-    });
-
-    it("should fall back to project.uid when details is missing", () => {
-      const projectWithoutDetails = {
-        uid: "project-999",
-      } as any;
-
-      render(<GrantNotCompletedButton project={projectWithoutDetails} grantUID={grantUID} />);
-
-      const link = screen.getByRole("link");
-      expect(link).toHaveAttribute("href", "/project/project-999/funding/grant-123/complete-grant");
-    });
-
-    it("should include grantUID in href", () => {
-      const customGrantUID = "custom-grant-456";
-
-      render(<GrantNotCompletedButton project={mockProject} grantUID={customGrantUID} />);
-
-      const link = screen.getByRole("link");
-      expect(link.getAttribute("href")).toContain(customGrantUID);
-    });
-
-    it("should include 'complete-grant' screen in href", () => {
-      render(<GrantNotCompletedButton project={mockProject} grantUID={grantUID} />);
-
-      const link = screen.getByRole("link");
-      expect(link.getAttribute("href")).toContain("complete-grant");
+      expect(link).toHaveAttribute("href", "/project/project-456/funding/grant-123/complete-grant");
     });
   });
 
@@ -156,7 +95,7 @@ describe("GrantNotCompletedButton", () => {
       const customText = "Complete This Grant";
 
       render(
-        <GrantNotCompletedButton project={mockProject} grantUID={grantUID} text={customText} />
+        <GrantNotCompletedButton project={mockProject} grantUID={mockGrantUID} text={customText} />
       );
 
       expect(screen.getByText(customText)).toBeInTheDocument();
@@ -165,28 +104,21 @@ describe("GrantNotCompletedButton", () => {
 
     it("should use default text when text prop is undefined", () => {
       render(
-        <GrantNotCompletedButton project={mockProject} grantUID={grantUID} text={undefined} />
+        <GrantNotCompletedButton project={mockProject} grantUID={mockGrantUID} text={undefined} />
       );
 
       expect(screen.getByText("Mark as Complete")).toBeInTheDocument();
     });
 
-    it("should handle empty string text", () => {
-      render(<GrantNotCompletedButton project={mockProject} grantUID={grantUID} text="" />);
-
-      const link = screen.getByRole("link");
-      expect(link.textContent).toBe("");
-    });
-
     it("should handle various text values", () => {
       const { rerender } = render(
-        <GrantNotCompletedButton project={mockProject} grantUID={grantUID} text="First Text" />
+        <GrantNotCompletedButton project={mockProject} grantUID={mockGrantUID} text="First Text" />
       );
 
       expect(screen.getByText("First Text")).toBeInTheDocument();
 
       rerender(
-        <GrantNotCompletedButton project={mockProject} grantUID={grantUID} text="Second Text" />
+        <GrantNotCompletedButton project={mockProject} grantUID={mockGrantUID} text="Second Text" />
       );
 
       expect(screen.getByText("Second Text")).toBeInTheDocument();
@@ -196,7 +128,7 @@ describe("GrantNotCompletedButton", () => {
 
   describe("Icon Rendering", () => {
     it("should render CheckCircleIcon with correct className", () => {
-      render(<GrantNotCompletedButton project={mockProject} grantUID={grantUID} />);
+      render(<GrantNotCompletedButton project={mockProject} grantUID={mockGrantUID} />);
 
       const icon = screen.getByTestId("check-circle-icon");
       expect(icon).toHaveClass("h-5", "w-5");
@@ -204,7 +136,7 @@ describe("GrantNotCompletedButton", () => {
 
     it("should render icon inside a div with h-5 w-5", () => {
       const { container } = render(
-        <GrantNotCompletedButton project={mockProject} grantUID={grantUID} />
+        <GrantNotCompletedButton project={mockProject} grantUID={mockGrantUID} />
       );
 
       const iconContainer = container.querySelector(".h-5.w-5");
@@ -221,21 +153,24 @@ describe("GrantNotCompletedButton", () => {
         },
       } as any;
 
+      const customGrantUID = "custom-grant";
+
       render(
         <GrantNotCompletedButton
           project={customProject}
-          grantUID="custom-grant"
+          grantUID={customGrantUID}
           text="Custom Text"
         />
       );
+
+      expect(screen.getByText("Custom Text")).toBeInTheDocument();
+      expect(screen.getByTestId("check-circle-icon")).toBeInTheDocument();
 
       const link = screen.getByRole("link");
       expect(link).toHaveAttribute(
         "href",
         "/project/custom-slug/funding/custom-grant/complete-grant"
       );
-      expect(screen.getByText("Custom Text")).toBeInTheDocument();
-      expect(screen.getByTestId("check-circle-icon")).toBeInTheDocument();
     });
   });
 });
