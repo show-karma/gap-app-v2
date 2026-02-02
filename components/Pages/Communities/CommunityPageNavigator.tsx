@@ -83,7 +83,7 @@ export const CommunityPageNavigator = () => {
     communityUid: community?.uid,
   });
 
-  const isAdminPage = pathname.includes("/admin");
+  const isAdminPage = pathname.includes("/manage");
 
   const visibleNavigationItems = useMemo(() => {
     return NAVIGATION_ITEMS.filter((item) => {

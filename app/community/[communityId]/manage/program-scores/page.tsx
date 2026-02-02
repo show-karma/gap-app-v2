@@ -9,6 +9,7 @@ import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAc
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
 
 export default function ProgramScoresPage() {
   const { communityId } = useParams() as { communityId: string };
@@ -38,11 +39,11 @@ export default function ProgramScoresPage() {
     <div className="max-w-full w-full">
       <div className="mb-8">
         <Link
-          href={`/community/${communityId}/admin`}
+          href={PAGES.ADMIN.ROOT(communityId)}
           className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-500 mb-4"
         >
           <ArrowLeftIcon className="h-4 w-4" />
-          Back to Admin Dashboard
+          Back to Manage Dashboard
         </Link>
         <h1 className="text-3xl font-bold text-primary">Program Scores Upload</h1>
         <p className="text-foreground mt-2">

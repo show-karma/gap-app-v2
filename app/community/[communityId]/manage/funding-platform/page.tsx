@@ -34,6 +34,7 @@ import { LoadingOverlay } from "@/components/Utilities/LoadingOverlay";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
+import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { type FundingProgram, fundingPlatformService } from "@/services/fundingPlatformService";
 import { AdminOnly, FundingPlatformGuard, useIsFundingPlatformAdmin } from "@/src/core/rbac";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
@@ -53,11 +54,38 @@ function FundingPlatformContent() {
   const { roles } = usePermissionContext();
 
   const {
-    programs,
+    programs: allPrograms,
     isLoading: isLoadingPrograms,
     error: programsError,
     refetch,
   } = useFundingPrograms(communityId);
+
+  // Get reviewer programs for filtering (only used for non-admin users)
+  const { programs: reviewerPrograms, isLoading: isLoadingReviewerPrograms } =
+    useReviewerPrograms();
+
+  // For non-admin users, filter programs to only show those they're a reviewer for
+  const programs = useMemo(() => {
+    if (!allPrograms) return [];
+
+    // Admins see all programs
+    if (isAdmin) {
+      return allPrograms;
+    }
+
+    // Non-admins see only programs they're a reviewer for in this community
+    if (!reviewerPrograms || reviewerPrograms.length === 0) {
+      return [];
+    }
+
+    const reviewerProgramIds = new Set(
+      reviewerPrograms
+        .filter((p) => p.communityUID === communityId || p.communitySlug === communityId)
+        .map((p) => p.programId)
+    );
+
+    return allPrograms.filter((program) => reviewerProgramIds.has(program.programId));
+  }, [allPrograms, isAdmin, reviewerPrograms, communityId]);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [togglingPrograms, setTogglingPrograms] = useState<Set<string>>(new Set());
@@ -167,7 +195,10 @@ function FundingPlatformContent() {
     router.push(newUrl, { scroll: false });
   }, [searchTerm, enabledFilter, communityId, router]);
 
-  if (isLoadingPrograms) {
+  // For non-admins, also wait for reviewer programs to load
+  const isLoading = isLoadingPrograms || (!isAdmin && isLoadingReviewerPrograms);
+
+  if (isLoading) {
     return (
       <div className="flex w-full items-center justify-center min-h-[400px]">
         <Spinner />
@@ -617,21 +648,26 @@ function FundingPlatformContent() {
                       </Button>
                     </Link>
 
-                    {/* Settings - Admin Only */}
-                    <AdminOnly>
-                      <Link
-                        href={PAGES.MANAGE.FUNDING_PLATFORM.SETUP(communityId, program.programId)}
-                        className="flex-1"
+                    {/* Settings (admins) / View Config (reviewers) */}
+                    <Link
+                      href={
+                        isAdmin
+                          ? PAGES.MANAGE.FUNDING_PLATFORM.SETUP(communityId, program.programId)
+                          : PAGES.MANAGE.FUNDING_PLATFORM.QUESTION_BUILDER(
+                              communityId,
+                              program.programId
+                            )
+                      }
+                      className="flex-1"
+                    >
+                      <Button
+                        variant="secondary"
+                        className="w-full hover:shadow flex items-center justify-center text-sm"
                       >
-                        <Button
-                          variant="secondary"
-                          className="w-full hover:shadow flex items-center justify-center text-sm"
-                        >
-                          <Cog6ToothIcon className="w-4 h-4 mr-2" />
-                          Settings
-                        </Button>
-                      </Link>
-                    </AdminOnly>
+                        <Cog6ToothIcon className="w-4 h-4 mr-2" />
+                        {isAdmin ? "Settings" : "View Config"}
+                      </Button>
+                    </Link>
 
                     {/* View Form Link */}
                     <Link

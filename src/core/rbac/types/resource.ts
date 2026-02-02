@@ -14,6 +14,11 @@ export interface PermissionContextValue {
   isLoading: boolean;
   isGuestDueToError: boolean;
   resourceContext: ResourceContext;
+  /**
+   * When true, indicates the user has reviewer access to at least one program
+   * in the current community context. Only set when communityId is provided without programId.
+   */
+  hasReviewerAccessInCommunity: boolean;
   can: (permission: Permission) => boolean;
   canAny: (permissions: Permission[]) => boolean;
   canAll: (permissions: Permission[]) => boolean;
@@ -26,4 +31,11 @@ export interface PermissionsResponse {
   roles: UserRoles;
   permissions: Permission[];
   resourceContext: ResourceContext;
+  /**
+   * When true, indicates the user has reviewer access to at least one program
+   * in the specified community. Only set when communityId is provided without programId.
+   * Use the /v2/funding-program-configs/my-reviewer-programs endpoint to get the
+   * specific programs the user can review.
+   */
+  hasReviewerAccessInCommunity?: boolean;
 }

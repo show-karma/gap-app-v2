@@ -55,6 +55,7 @@ export const useAuth = () => {
       queryClient.removeQueries({ queryKey: QUERY_KEYS.COMMUNITY.IS_ADMIN_BASE });
       queryClient.removeQueries({ queryKey: QUERY_KEYS.AUTH.STAFF_AUTHORIZATION_BASE });
       queryClient.removeQueries({ queryKey: QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE });
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.AUTH.PERMISSIONS_BASE });
     }
     prevAuthRef.current = authenticated;
   }, [authenticated]);

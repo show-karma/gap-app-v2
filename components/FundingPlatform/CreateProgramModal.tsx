@@ -26,6 +26,7 @@ import { ProgramRegistryService } from "@/services/programRegistry.service";
 import type { CreateProgramFormData } from "@/types/program-registry";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
 
 interface CreateProgramModalProps {
   isOpen: boolean;
@@ -120,7 +121,7 @@ export function CreateProgramModal({
       reset();
       onSuccess();
       onClose();
-      router.push(`/community/${communityId}/admin/funding-platform/${result.programId}/setup`);
+      router.push(PAGES.MANAGE.FUNDING_PLATFORM.SETUP(communityId, result.programId));
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage?.includes("already exists")) {

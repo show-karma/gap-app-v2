@@ -17,6 +17,7 @@ interface AuthPermissionsApiResponse {
     applicationId?: string;
     milestoneId?: string;
   };
+  hasReviewerAccessInCommunity?: boolean;
 }
 
 export interface GetPermissionsParams {
@@ -68,6 +69,7 @@ export const authorizationService = {
       },
       permissions: response.permissions as Permission[],
       resourceContext: response.resourceContext as ResourceContext,
+      hasReviewerAccessInCommunity: response.hasReviewerAccessInCommunity,
     };
   },
 };

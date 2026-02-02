@@ -73,11 +73,17 @@ jest.mock("@/utilities/pages", () => ({
   PAGES: {
     REVIEWER: {
       APPLICATIONS: (communityId: string, programId: string) =>
-        `/community/${communityId}/reviewer/funding-platform/${programId}/applications`,
+        `/community/${communityId}/manage/funding-platform/${programId}/applications`,
+    },
+    MANAGE: {
+      FUNDING_PLATFORM: {
+        APPLICATIONS: (communityId: string, programId: string) =>
+          `/community/${communityId}/manage/funding-platform/${programId}/applications`,
+      },
     },
     ADMIN: {
       PROJECT_MILESTONES: (communityId: string, projectUID: string, programId: string) =>
-        `/community/${communityId}/admin/project/${projectUID}/milestones?programId=${programId}`,
+        `/community/${communityId}/manage/project/${projectUID}/milestones?programId=${programId}`,
     },
   },
 }));
@@ -118,6 +124,14 @@ jest.mock("@/hooks/useFundingPlatform", () => ({
   useApplicationVersions: jest.fn(() => ({
     versions: [],
   })),
+  useDeleteApplication: jest.fn(() => ({
+    deleteApplicationAsync: jest.fn(),
+    isDeleting: false,
+  })),
+  useApplicationUpdateV2: jest.fn(() => ({
+    updateApplicationAsync: jest.fn(),
+    isUpdating: false,
+  })),
 }));
 
 jest.mock("@/hooks/usePermissions", () => ({
@@ -133,6 +147,8 @@ jest.mock("@/src/core/rbac/context/permission-context", () => ({
     can: jest.fn(() => true),
     canAny: jest.fn(() => true),
     canAll: jest.fn(() => true),
+    hasRole: jest.fn(() => true),
+    hasRoleOrHigher: jest.fn(() => true),
     isLoading: false,
     roles: { primaryRole: "PROGRAM_REVIEWER", roles: ["PROGRAM_REVIEWER"] },
     permissions: ["application:view_assigned", "application:review"],
@@ -314,8 +330,8 @@ jest.mock("@/components/FundingPlatform/ApplicationView/TabPanel", () => ({
     React.createElement("div", { "data-testid": "tab-panel" }, children),
 }));
 
-// Import the page component after mocks
-import ReviewerApplicationDetailPage from "@/app/community/[communityId]/reviewer/funding-platform/[programId]/applications/[applicationId]/page";
+// Import the page component after mocks (now uses unified manage route)
+import ReviewerApplicationDetailPage from "@/app/community/[communityId]/manage/funding-platform/[programId]/applications/[applicationId]/page";
 
 describe("Reviewer Status Change Functionality", () => {
   beforeEach(() => {
@@ -352,6 +368,8 @@ describe("Reviewer Status Change Functionality", () => {
       can: jest.fn(() => true),
       canAny: jest.fn(() => true),
       canAll: jest.fn(() => true),
+      hasRole: jest.fn(() => true),
+      hasRoleOrHigher: jest.fn(() => true),
       isLoading: false,
       roles: { primaryRole: "PROGRAM_REVIEWER", roles: ["PROGRAM_REVIEWER"] },
       permissions: ["application:view_assigned", "application:review"],
@@ -539,6 +557,8 @@ describe("Reviewer Status Change Functionality", () => {
         can: jest.fn(() => false),
         canAny: jest.fn(() => false),
         canAll: jest.fn(() => false),
+        hasRole: jest.fn(() => false),
+        hasRoleOrHigher: jest.fn(() => false),
         isLoading: false,
         roles: { primaryRole: "GUEST", roles: ["GUEST"] },
         permissions: [],
@@ -556,6 +576,8 @@ describe("Reviewer Status Change Functionality", () => {
         can: jest.fn(() => false),
         canAny: jest.fn(() => false),
         canAll: jest.fn(() => false),
+        hasRole: jest.fn(() => false),
+        hasRoleOrHigher: jest.fn(() => false),
         isLoading: true,
         roles: { primaryRole: null, roles: [] },
         permissions: [],

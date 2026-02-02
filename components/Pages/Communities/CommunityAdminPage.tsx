@@ -11,11 +11,12 @@ import {
   TagIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import { useMemo } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { Skeleton } from "@/components/Utilities/Skeleton";
-import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
+import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
+import { Permission } from "@/src/core/rbac/types/permission";
 import type { Community } from "@/types/v2/community";
-import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
@@ -63,6 +64,73 @@ const LoadingSkeleton = () => (
   </div>
 );
 
+interface NavigationItem {
+  href: (slug: string) => string;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  requiredPermissions: Permission[];
+}
+
+const NAVIGATION_ITEMS: NavigationItem[] = [
+  {
+    href: PAGES.ADMIN.FUNDING_PLATFORM,
+    label: "Funding Platform",
+    description: "Review and manage funding applications",
+    icon: <CurrencyDollarIcon className="w-6 h-6" />,
+    requiredPermissions: [Permission.PROGRAM_VIEW],
+  },
+  {
+    href: PAGES.ADMIN.EDIT_CATEGORIES,
+    label: "Categories",
+    description: "Manage and organize community categories",
+    icon: <Square2StackIcon className="w-6 h-6" />,
+    requiredPermissions: [Permission.COMMUNITY_EDIT],
+  },
+  {
+    href: PAGES.ADMIN.MILESTONES,
+    label: "Milestones",
+    description: "Track and update project milestones",
+    icon: <FlagIcon className="w-6 h-6" />,
+    requiredPermissions: [Permission.MILESTONE_VIEW_ALL],
+  },
+  {
+    href: PAGES.ADMIN.MANAGE_INDICATORS,
+    label: "Impact Measurement",
+    description: "Setup and manage impact indicators",
+    icon: <ChartBarIcon className="w-6 h-6" />,
+    requiredPermissions: [Permission.COMMUNITY_EDIT],
+  },
+  {
+    href: PAGES.ADMIN.TRACKS,
+    label: "Tracks",
+    description: "Manage tracks and assign them to programs",
+    icon: <TagIcon className="w-6 h-6" />,
+    requiredPermissions: [Permission.COMMUNITY_EDIT],
+  },
+  {
+    href: PAGES.ADMIN.EDIT_PROJECTS,
+    label: "Projects",
+    description: "Manage your projects and assign regions",
+    icon: <GlobeAltIcon className="w-6 h-6" />,
+    requiredPermissions: [Permission.COMMUNITY_EDIT],
+  },
+  {
+    href: PAGES.ADMIN.PAYOUTS,
+    label: "Payouts",
+    description: "Manage payout addresses and amounts",
+    icon: <BanknotesIcon className="w-6 h-6" />,
+    requiredPermissions: [Permission.COMMUNITY_EDIT],
+  },
+  {
+    href: PAGES.ADMIN.PROGRAM_SCORES,
+    label: "Program Scores",
+    description: "Upload CSV scores for program participants",
+    icon: <ArrowTrendingUpIcon className="w-6 h-6" />,
+    requiredPermissions: [Permission.COMMUNITY_EDIT],
+  },
+];
+
 export const CommunityAdminPage = ({
   communityId,
   community,
@@ -70,87 +138,41 @@ export const CommunityAdminPage = ({
   communityId: string;
   community: Community;
 }) => {
-  const { hasAccess, isLoading: loading } = useCommunityAdminAccess(community?.uid);
+  const { canAny, isLoading } = usePermissionContext();
 
   const slug = community?.details?.slug || communityId;
 
+  // Filter navigation items based on user permissions
+  const visibleItems = useMemo(() => {
+    if (isLoading) return [];
+    return NAVIGATION_ITEMS.filter((item) => canAny(item.requiredPermissions));
+  }, [canAny, isLoading]);
+
+  const hasAnyAccess = visibleItems.length > 0;
+
   return (
     <div className="max-w-full w-full">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
-        Community Admin Dashboard
-      </h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">Community Dashboard</h1>
 
-      {loading ? (
+      {isLoading ? (
         <LoadingSkeleton />
-      ) : hasAccess ? (
+      ) : hasAnyAccess ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <AdminButton
-            href={PAGES.ADMIN.EDIT_CATEGORIES(slug)}
-            label="Categories"
-            description="Manage and organize community categories"
-            colorClass=""
-            icon={<Square2StackIcon className="w-6 h-6" />}
-          />
-
-          <AdminButton
-            href={PAGES.ADMIN.MILESTONES(slug)}
-            label="Milestones"
-            description="Track and update project milestones"
-            colorClass=""
-            icon={<FlagIcon className="w-6 h-6" />}
-          />
-
-          <AdminButton
-            href={PAGES.ADMIN.MANAGE_INDICATORS(slug)}
-            label="Impact Measurement"
-            description="Setup and manage impact indicators"
-            colorClass=""
-            icon={<ChartBarIcon className="w-6 h-6" />}
-          />
-
-          <AdminButton
-            href={PAGES.ADMIN.TRACKS(slug)}
-            label="Tracks"
-            description="Manage tracks and assign them to programs"
-            colorClass=""
-            icon={<TagIcon className="w-6 h-6" />}
-          />
-
-          <AdminButton
-            href={PAGES.ADMIN.EDIT_PROJECTS(slug)}
-            label="Projects"
-            description="Manage your projects and assign regions"
-            colorClass=""
-            icon={<GlobeAltIcon className="w-6 h-6" />}
-          />
-
-          <AdminButton
-            href={PAGES.ADMIN.FUNDING_PLATFORM(slug)}
-            label="Funding Platform"
-            description="Create forms and manage funding applications"
-            colorClass=""
-            icon={<CurrencyDollarIcon className="w-6 h-6" />}
-          />
-          <AdminButton
-            href={PAGES.ADMIN.PAYOUTS(slug)}
-            label="Payouts"
-            description="Manage payout addresses and amounts"
-            colorClass=""
-            icon={<BanknotesIcon className="w-6 h-6" />}
-          />
-
-          <AdminButton
-            href={PAGES.ADMIN.PROGRAM_SCORES(slug)}
-            label="Program Scores"
-            description="Upload CSV scores for program participants"
-            colorClass=""
-            icon={<ArrowTrendingUpIcon className="w-6 h-6" />}
-          />
+          {visibleItems.map((item) => (
+            <AdminButton
+              key={item.label}
+              href={item.href(slug)}
+              label={item.label}
+              description={item.description}
+              colorClass=""
+              icon={item.icon}
+            />
+          ))}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
           <p className="text-gray-600 dark:text-gray-300 text-center">
-            {MESSAGES.ADMIN.NOT_AUTHORIZED(community?.details?.name || communityId)}
+            You don&apos;t have permission to access any management features for this community.
           </p>
           <Button className="mt-4" onClick={() => window.history.back()}>
             Go Back

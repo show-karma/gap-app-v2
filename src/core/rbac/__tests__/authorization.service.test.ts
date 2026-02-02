@@ -126,5 +126,51 @@ describe("authorizationService", () => {
       expect(result.roles.primaryRole).toBe("GUEST");
       expect(mockFetchData).toHaveBeenCalledWith("/v2/auth/permissions");
     });
+
+    it("should include hasReviewerAccessInCommunity when present", async () => {
+      mockFetchData.mockResolvedValue([
+        {
+          roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
+          permissions: ["community:view", "program:view"],
+          resourceContext: { communityId: "optimism" },
+          hasReviewerAccessInCommunity: true,
+        },
+        null,
+        null,
+        200,
+      ]);
+
+      const result = await authorizationService.getPermissions({
+        communityId: "optimism",
+      });
+
+      expect(result.hasReviewerAccessInCommunity).toBe(true);
+      expect(result.roles.primaryRole).toBe("GUEST");
+    });
+
+    it("should not include hasReviewerAccessInCommunity when not in response", async () => {
+      mockFetchData.mockResolvedValue([
+        {
+          roles: {
+            primaryRole: "PROGRAM_REVIEWER",
+            roles: ["PROGRAM_REVIEWER"],
+            reviewerTypes: ["PROGRAM"],
+          },
+          permissions: ["application:review"],
+          resourceContext: { communityId: "optimism", programId: "program-123" },
+        },
+        null,
+        null,
+        200,
+      ]);
+
+      const result = await authorizationService.getPermissions({
+        communityId: "optimism",
+        programId: "program-123",
+      });
+
+      expect(result.hasReviewerAccessInCommunity).toBeUndefined();
+      expect(result.roles.primaryRole).toBe("PROGRAM_REVIEWER");
+    });
   });
 });

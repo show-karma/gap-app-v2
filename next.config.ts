@@ -92,32 +92,26 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // Redirect old admin/funding-platform routes to new manage/funding-platform routes
+      // Redirect all old /community/:communityId/admin routes to /community/:communityId/manage
       {
-        source: "/community/:communityId/admin/funding-platform",
-        destination: "/community/:communityId/manage/funding-platform",
+        source: "/community/:communityId/admin",
+        destination: "/community/:communityId/manage",
         permanent: true,
       },
       {
-        source: "/community/:communityId/admin/funding-platform/:programId/applications",
-        destination: "/community/:communityId/manage/funding-platform/:programId/applications",
+        source: "/community/:communityId/admin/:path*",
+        destination: "/community/:communityId/manage/:path*",
+        permanent: true,
+      },
+      // Redirect all old /community/:communityId/reviewer routes to /community/:communityId/manage
+      {
+        source: "/community/:communityId/reviewer",
+        destination: "/community/:communityId/manage",
         permanent: true,
       },
       {
-        source:
-          "/community/:communityId/admin/funding-platform/:programId/applications/:applicationId",
-        destination:
-          "/community/:communityId/manage/funding-platform/:programId/applications/:applicationId",
-        permanent: true,
-      },
-      {
-        source: "/community/:communityId/admin/funding-platform/:programId/question-builder",
-        destination: "/community/:communityId/manage/funding-platform/:programId/question-builder",
-        permanent: true,
-      },
-      {
-        source: "/community/:communityId/admin/funding-platform/:programId/setup",
-        destination: "/community/:communityId/manage/funding-platform/:programId/setup",
+        source: "/community/:communityId/reviewer/:path*",
+        destination: "/community/:communityId/manage/:path*",
         permanent: true,
       },
     ];

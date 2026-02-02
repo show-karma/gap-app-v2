@@ -14,6 +14,7 @@ export const QUERY_KEYS = {
     CONTRACT_OWNER: (address?: string, chainId?: number) =>
       ["contract-owner", address, chainId] as const,
     CONTRACT_OWNER_BASE: ["contract-owner"] as const,
+    PERMISSIONS_BASE: ["permissions"] as const,
   },
   MILESTONES: {
     PROJECT_GRANT_MILESTONES: (projectId: string, programId: string) =>

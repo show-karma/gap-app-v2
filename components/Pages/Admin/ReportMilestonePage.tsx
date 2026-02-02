@@ -17,7 +17,12 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import TablePagination from "@/components/Utilities/TablePagination";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useAuth } from "@/hooks/useAuth";
-import { useIsReviewerType } from "@/src/core/rbac/context/permission-context";
+import { useReviewerPrograms } from "@/hooks/usePermissions";
+import {
+  useHasReviewerAccessInCommunity,
+  useIsReviewerType,
+  usePermissionContext,
+} from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
 import type { Community } from "@/types/v2/community";
 import { downloadCommunityReport } from "@/utilities/downloadReports";
@@ -119,10 +124,21 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
   const communityId = params.communityId as string;
   const { address, isConnected } = useAccount();
   const { authenticated: isAuth } = useAuth();
-  const { hasAccess, checks } = useCommunityAdminAccess(community?.uid);
+  const {
+    hasAccess,
+    isLoading: isLoadingAdminAccess,
+    checks,
+  } = useCommunityAdminAccess(community?.uid);
 
   // Use RBAC to check milestone reviewer status
   const isMilestoneReviewer = useIsReviewerType(ReviewerType.MILESTONE);
+  // Check if user has reviewer access to any program in the community (community-level check)
+  const hasReviewerAccessInCommunity = useHasReviewerAccessInCommunity();
+  // Get RBAC loading state to wait before showing unauthorized message
+  const { isLoading: isLoadingRbac } = usePermissionContext();
+  // Get programs where user is a reviewer (for filtering dropdown)
+  const { programs: reviewerPrograms, isLoading: isLoadingReviewerPrograms } =
+    useReviewerPrograms();
 
   // With the new RBAC system, program-level filtering is handled at the API level
   // All authorized users (admins, staff, owners, milestone reviewers) see all programs
@@ -138,9 +154,9 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
       return true;
     }
 
-    // Milestone reviewers have access via RBAC
-    return isMilestoneReviewer;
-  }, [isConnected, isAuth, hasAccess, isMilestoneReviewer]);
+    // Milestone reviewers have access via RBAC (program-level or community-level)
+    return isMilestoneReviewer || hasReviewerAccessInCommunity;
+  }, [isConnected, isAuth, hasAccess, isMilestoneReviewer, hasReviewerAccessInCommunity]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("totalMilestones");
@@ -159,6 +175,18 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     },
   });
 
+  // Get the set of program IDs the user is a reviewer for (normalized)
+  const reviewerProgramIds = useMemo(() => {
+    if (!reviewerPrograms || reviewerPrograms.length === 0) return new Set<string>();
+    return new Set(
+      reviewerPrograms.map((p) => {
+        // Normalize programId (remove chainId suffix if present)
+        const id = p.programId;
+        return id.includes("_") ? id.split("_")[0] : id;
+      })
+    );
+  }, [reviewerPrograms]);
+
   const programOptions = useMemo(() => {
     const allPrograms = grantPrograms
       .filter(
@@ -174,10 +202,15 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
         return { value, label };
       });
 
-    // With RBAC, all authorized users see all programs
-    // Program-level filtering is handled at the API level
-    return allPrograms;
-  }, [grantPrograms]);
+    // Admins, staff, and contract owners see all programs
+    // Reviewers only see programs they are assigned to
+    if (hasAccess) {
+      return allPrograms;
+    }
+
+    // For reviewers, filter to only show their assigned programs
+    return allPrograms.filter((program) => reviewerProgramIds.has(program.value));
+  }, [grantPrograms, hasAccess, reviewerProgramIds]);
 
   const valueToLabelMap = useMemo(() => {
     return new Map(programOptions.map(({ value, label }) => [value, label]));
@@ -289,6 +322,20 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
       <div className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow">
         <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{title}</h3>
         <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400">{value}</p>
+      </div>
+    );
+  }
+
+  // Show loading while checking permissions (includes RBAC, admin access, and reviewer programs)
+  const isCheckingPermissions = isLoadingRbac || isLoadingAdminAccess || isLoadingReviewerPrograms;
+
+  if (isCheckingPermissions) {
+    return (
+      <div className="container mx-auto mt-4 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          <p className="text-gray-500 dark:text-gray-400">Checking permissions...</p>
+        </div>
       </div>
     );
   }

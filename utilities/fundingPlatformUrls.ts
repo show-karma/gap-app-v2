@@ -2,7 +2,7 @@
  * Centralized URL generation for the Funding Platform
  *
  * Consolidates URL generation logic that was previously duplicated across:
- * - app/community/[communityId]/admin/funding-platform/page.tsx
+ * - app/community/[communityId]/manage/funding-platform/page.tsx
  * - components/QuestionBuilder/SettingsConfiguration.tsx
  * - src/features/funding-map/components/funding-program-details-dialog.tsx
  */

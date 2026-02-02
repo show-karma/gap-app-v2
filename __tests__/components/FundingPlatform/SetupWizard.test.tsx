@@ -66,7 +66,7 @@ describe("SetupWizard", () => {
         description: "Program details have been saved",
         status: "completed",
         required: true,
-        href: `/community/${communityId}/admin/funding-platform/${programId}/question-builder?tab=program-details`,
+        href: `/community/${communityId}/manage/funding-platform/${programId}/question-builder?tab=program-details`,
         actionLabel: "Edit Details",
       },
       {
@@ -75,7 +75,7 @@ describe("SetupWizard", () => {
         description: "Define the questions applicants will answer",
         status: "pending",
         required: true,
-        href: `/community/${communityId}/admin/funding-platform/${programId}/question-builder?tab=build`,
+        href: `/community/${communityId}/manage/funding-platform/${programId}/question-builder?tab=build`,
         actionLabel: "Start Building",
       },
       {
@@ -84,7 +84,7 @@ describe("SetupWizard", () => {
         description: "Invite team members to review applications",
         status: "pending",
         required: false,
-        href: `/community/${communityId}/admin/funding-platform/${programId}/question-builder?tab=reviewers`,
+        href: `/community/${communityId}/manage/funding-platform/${programId}/question-builder?tab=reviewers`,
         actionLabel: "Add Reviewers",
       },
       {
@@ -93,7 +93,7 @@ describe("SetupWizard", () => {
         description: "Customize approval and rejection emails",
         status: "pending",
         required: false,
-        href: `/community/${communityId}/admin/funding-platform/${programId}/question-builder?tab=settings`,
+        href: `/community/${communityId}/manage/funding-platform/${programId}/question-builder?tab=settings`,
         actionLabel: "Configure",
       },
       {
@@ -102,7 +102,7 @@ describe("SetupWizard", () => {
         description: "Configure AI-powered application scoring",
         status: "pending",
         required: false,
-        href: `/community/${communityId}/admin/funding-platform/${programId}/question-builder?tab=ai-config`,
+        href: `/community/${communityId}/manage/funding-platform/${programId}/question-builder?tab=ai-config`,
         actionLabel: "Set Up",
       },
       {
@@ -111,7 +111,7 @@ describe("SetupWizard", () => {
         description: "Make your program live and start accepting applications",
         status: "disabled",
         required: true,
-        href: `/community/${communityId}/admin/funding-platform/${programId}/question-builder?tab=program-details`,
+        href: `/community/${communityId}/manage/funding-platform/${programId}/question-builder?tab=program-details`,
         actionLabel: "Enable Program",
       },
     ],
@@ -243,7 +243,7 @@ describe("SetupWizard", () => {
       expect(backLink).toBeInTheDocument();
       expect(backLink.closest("a")).toHaveAttribute(
         "href",
-        `/community/${communityId}/admin/funding-platform`
+        `/community/${communityId}/manage/funding-platform`
       );
     });
 
@@ -540,7 +540,7 @@ describe("SetupWizard", () => {
       await waitFor(() => {
         expect(mockToggleStatusAsync).toHaveBeenCalledWith(true);
         expect(mockRefetch).toHaveBeenCalled();
-        expect(mockPush).toHaveBeenCalledWith(`/community/${communityId}/admin/funding-platform`);
+        expect(mockPush).toHaveBeenCalledWith(`/community/${communityId}/manage/funding-platform`);
       });
     });
 

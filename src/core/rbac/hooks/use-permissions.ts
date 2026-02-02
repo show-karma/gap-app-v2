@@ -8,7 +8,17 @@ export const permissionsKeys = {
   context: (params: GetPermissionsParams) => [...permissionsKeys.all, params] as const,
 };
 
-export function usePermissionsQuery(params: GetPermissionsParams = {}) {
+interface UsePermissionsQueryOptions {
+  /** Whether the user is authenticated - query will only run when true */
+  enabled?: boolean;
+}
+
+export function usePermissionsQuery(
+  params: GetPermissionsParams = {},
+  options: UsePermissionsQueryOptions = {}
+) {
+  const { enabled = true } = options;
+
   return useQuery({
     queryKey: permissionsKeys.context(params),
     queryFn: () => authorizationService.getPermissions(params),
@@ -16,5 +26,6 @@ export function usePermissionsQuery(params: GetPermissionsParams = {}) {
     gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
     refetchOnWindowFocus: false, // Avoid excessive refetches on tab switch
     retry: 2, // Retry failed requests twice
+    enabled, // Only fetch when user is authenticated
   });
 }

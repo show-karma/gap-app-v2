@@ -178,7 +178,7 @@ describe("CommunityPageNavigator", () => {
 
   describe("Admin Page", () => {
     it("should return null when on admin page", () => {
-      mockUsePathname.mockReturnValue("/community/test-community/admin");
+      mockUsePathname.mockReturnValue("/community/test-community/manage");
 
       const { container } = render(<CommunityPageNavigator />, { wrapper });
 
@@ -186,7 +186,7 @@ describe("CommunityPageNavigator", () => {
     });
 
     it("should return null when on admin subpage", () => {
-      mockUsePathname.mockReturnValue("/community/test-community/admin/project/milestones");
+      mockUsePathname.mockReturnValue("/community/test-community/manage/project/milestones");
 
       const { container } = render(<CommunityPageNavigator />, { wrapper });
 

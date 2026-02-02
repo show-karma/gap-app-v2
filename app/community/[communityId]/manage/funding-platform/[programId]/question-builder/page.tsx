@@ -9,10 +9,8 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
-import { RequireRole } from "@/src/core/rbac";
+import { FundingPlatformGuard, useIsFundingPlatformAdmin } from "@/src/core/rbac";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
-import { Role } from "@/src/core/rbac/types/role";
-import { layoutTheme } from "@/src/helper/theme";
 import type { FormSchema } from "@/types/question-builder";
 import { PAGES } from "@/utilities/pages";
 
@@ -29,6 +27,7 @@ export default function QuestionBuilderPage() {
     : combinedProgramId;
 
   const { isLoading: isLoadingPermissions } = usePermissionContext();
+  const isAdmin = useIsFundingPlatformAdmin();
 
   // Fetch all programs to get program metadata (title) and chainID
   const { programs, isLoading: isLoadingPrograms } = useFundingPrograms(communityId);
@@ -94,7 +93,7 @@ export default function QuestionBuilderPage() {
 
   if (schemaError || postApprovalSchemaError) {
     return (
-      <RequireRole role={Role.PROGRAM_ADMIN}>
+      <FundingPlatformGuard communityId={communityId}>
         <div className="sm:px-3 md:px-4 px-6 py-2">
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-red-700 dark:text-red-300 mb-2">
@@ -118,15 +117,27 @@ export default function QuestionBuilderPage() {
             </div>
           </div>
         </div>
-      </RequireRole>
+      </FundingPlatformGuard>
     );
   }
 
+  // Reviewers get read-only access
+  const readOnly = !isAdmin;
+
   return (
-    <RequireRole role={Role.PROGRAM_ADMIN}>
+    <FundingPlatformGuard communityId={communityId}>
       <div className="min-h-screen flex flex-col bg-white dark:bg-gray-800">
-        {/* Saving indicator - minimal header */}
-        {(isUpdating || isUpdatingPostApproval) && (
+        {/* Read-only banner for reviewers */}
+        {readOnly && (
+          <div className="bg-blue-50 dark:bg-blue-900/30 border-b border-blue-200 dark:border-blue-700 px-4 py-2">
+            <p className="text-sm text-blue-700 dark:text-blue-300 text-center">
+              You are viewing this page in read-only mode. Only program admins can make changes.
+            </p>
+          </div>
+        )}
+
+        {/* Saving indicator - minimal header (only for admins) */}
+        {!readOnly && (isUpdating || isUpdatingPostApproval) && (
           <div className="absolute top-4 right-4 flex items-center text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 px-3 py-2 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
             <Spinner />
             <span className="ml-2">Saving...</span>
@@ -137,12 +148,13 @@ export default function QuestionBuilderPage() {
         <FormBuilderErrorBoundary>
           <QuestionBuilder
             initialSchema={existingSchema || undefined}
-            onSave={handleSchemaChange}
+            onSave={readOnly ? undefined : handleSchemaChange}
             programId={programId}
             chainId={chainId}
             communityId={communityId}
+            readOnly={readOnly}
             initialPostApprovalSchema={existingPostApprovalSchema || undefined}
-            onSavePostApproval={handlePostApprovalSchemaChange}
+            onSavePostApproval={readOnly ? undefined : handlePostApprovalSchemaChange}
             programTitle={programTitle}
             hasReviewers={hasReviewers}
             hasAIConfig={hasAIConfig}
@@ -150,6 +162,6 @@ export default function QuestionBuilderPage() {
           />
         </FormBuilderErrorBoundary>
       </div>
-    </RequireRole>
+    </FundingPlatformGuard>
   );
 }

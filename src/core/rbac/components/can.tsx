@@ -137,20 +137,31 @@ interface RequireReviewerProps {
   fallback?: ReactNode;
 }
 
+/**
+ * Renders children only if user has reviewer access.
+ * At community level (no programId), checks hasReviewerAccessInCommunity.
+ * At program level, checks for actual reviewer roles.
+ * If `type` is specified, also requires that specific reviewer type.
+ */
 export function RequireReviewer({ type, children, fallback = null }: RequireReviewerProps) {
-  const { roles, isLoading } = usePermissionContext();
+  const { roles, isLoading, hasReviewerAccessInCommunity } = usePermissionContext();
 
   if (isLoading) {
     return <>{fallback}</>;
   }
 
-  const isReviewer =
+  const hasReviewerRole =
     roles.roles.includes(Role.PROGRAM_REVIEWER) || roles.roles.includes(Role.MILESTONE_REVIEWER);
+
+  // User has reviewer access if they have a reviewer role (program-level)
+  // or have reviewer access in the community (community-level)
+  const isReviewer = hasReviewerRole || hasReviewerAccessInCommunity;
 
   if (!isReviewer) {
     return <>{fallback}</>;
   }
 
+  // If a specific type is required, check it (only applies at program level)
   if (type && !roles.reviewerTypes?.includes(type)) {
     return <>{fallback}</>;
   }

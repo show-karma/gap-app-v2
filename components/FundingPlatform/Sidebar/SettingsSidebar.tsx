@@ -10,6 +10,7 @@ import {
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
 export type SidebarTabKey =
@@ -125,7 +126,7 @@ export function SettingsSidebar({
       {/* Back button and program title */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <Link
-          href={`/community/${communityId}/admin/funding-platform`}
+          href={PAGES.MANAGE.FUNDING_PLATFORM.ROOT(communityId)}
           className="flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-3"
         >
           <ChevronLeftIcon className="w-4 h-4 mr-1" />
