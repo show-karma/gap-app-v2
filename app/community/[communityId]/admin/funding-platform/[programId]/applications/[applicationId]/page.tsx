@@ -2,8 +2,8 @@
 
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { AIAnalysisTab } from "@/components/FundingPlatform/ApplicationView/AIAnalysisTab";
@@ -58,6 +58,10 @@ export default function ApplicationDetailPage() {
   const programId = combinedProgramId.includes("_")
     ? combinedProgramId.split("_")[0]
     : combinedProgramId;
+
+  // Check for edit parameter in URL
+  const searchParams = useSearchParams();
+  const shouldOpenEdit = searchParams.get("edit") === "true";
 
   const { hasAccess, isLoading: isLoadingAdmin, checks } = useCommunityAdminAccess(communityId);
 
@@ -222,6 +226,17 @@ export default function ApplicationDetailPage() {
     const restrictedStatuses = ["under_review", "approved"];
     return !restrictedStatuses.includes(app.status.toLowerCase());
   };
+
+  // Auto-open edit modal when ?edit=true is present in URL
+  useEffect(() => {
+    if (shouldOpenEdit && application && hasAccess && canEditApplication(application)) {
+      setIsEditModalOpen(true);
+      // Clean up URL by removing the edit param
+      const url = new URL(window.location.href);
+      url.searchParams.delete("edit");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [shouldOpenEdit, application, hasAccess]);
 
   // Handle edit application
   const handleEditClick = () => {
