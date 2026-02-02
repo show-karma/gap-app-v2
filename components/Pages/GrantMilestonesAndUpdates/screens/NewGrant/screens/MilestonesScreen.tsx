@@ -2,6 +2,7 @@ import { PlusIcon } from "@heroicons/react/24/outline";
 import { Grant, GrantDetails, Milestone as MilestoneSDK, nullRef } from "@show-karma/karma-gap-sdk";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
@@ -27,6 +28,7 @@ import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
 
 export const MilestonesScreen: React.FC = () => {
+  const [isCreating, setIsCreating] = useState(false);
   const {
     setCurrentStep,
     flowType,
@@ -89,10 +91,14 @@ export const MilestonesScreen: React.FC = () => {
   };
 
   const createNewGrant = async () => {
-    if (!address || !selectedProject || !gap) return;
+    if (!address || !selectedProject || !gap || isCreating) return;
 
+    setIsCreating(true);
     try {
-      if (!isConnected || !isAuth) return;
+      if (!isConnected || !isAuth) {
+        setIsCreating(false);
+        return;
+      }
       startAttestation(
         flowType === "grant" ? "Creating grant..." : "Applying to funding program..."
       );
@@ -104,6 +110,7 @@ export const MilestonesScreen: React.FC = () => {
       });
 
       if (!setup) {
+        setIsCreating(false);
         return;
       }
 
@@ -294,6 +301,7 @@ export const MilestonesScreen: React.FC = () => {
         }
       );
       setIsStepper(false);
+      setIsCreating(false);
     }
   };
 
@@ -348,7 +356,8 @@ export const MilestonesScreen: React.FC = () => {
             />
             <NextButton
               onClick={createNewGrant}
-              disabled={!allMilestonesValidated}
+              disabled={!allMilestonesValidated || isCreating}
+              isLoading={isCreating}
               text={flowType === "grant" ? (isEditing ? "Update grant" : "Create grant") : "Apply"}
               className="max-md:px-5 max-md:items-center max-md:justify-center max-md:flex-col max-md:w-full"
             />

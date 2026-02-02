@@ -1,0 +1,520 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import type { Project } from "@/types/v2/project";
+import { DonateSection } from "../SidePanel/DonateSection";
+import { EndorseSection } from "../SidePanel/EndorseSection";
+import { ProjectSidePanel } from "../SidePanel/ProjectSidePanel";
+import { QuickLinksCard } from "../SidePanel/QuickLinksCard";
+import { SubscribeSection } from "../SidePanel/SubscribeSection";
+
+// Mock the stores
+const mockSetIsEndorsementOpen = jest.fn();
+const mockSetIsIntroModalOpen = jest.fn();
+
+jest.mock("@/store/modals/endorsement", () => ({
+  useEndorsementStore: () => ({
+    setIsEndorsementOpen: mockSetIsEndorsementOpen,
+  }),
+}));
+
+jest.mock("@/store/modals/intro", () => ({
+  useIntroModalStore: () => ({
+    setIsIntroModalOpen: mockSetIsIntroModalOpen,
+  }),
+}));
+
+// Mock fetchData for SubscribeSection
+jest.mock("@/utilities/fetchData", () => ({
+  __esModule: true,
+  default: jest.fn(() => Promise.resolve([{}, null])),
+}));
+
+// Mock react-hot-toast
+jest.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
+// Mock wagmi with all required hooks
+jest.mock("wagmi", () => ({
+  useAccount: () => ({
+    address: "0x1234567890123456789012345678901234567890",
+    isConnected: true,
+  }),
+  useChainId: () => 1,
+  useSwitchChain: () => ({ switchChainAsync: jest.fn() }),
+}));
+
+// Mock useAuth hook - authenticated = wallet connected + Privy login
+const mockLogin = jest.fn();
+jest.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({
+    authenticated: true,
+    login: mockLogin,
+    logout: jest.fn(),
+    isConnected: true,
+    ready: true,
+  }),
+}));
+
+// Mock SingleProjectDonateModal to avoid complex wagmi/web3 dependencies
+jest.mock("@/components/Donation/SingleProject/SingleProjectDonateModal", () => ({
+  SingleProjectDonateModal: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? <div data-testid="donate-modal">Donation Modal</div> : null,
+}));
+
+// Mock chain payout address hooks
+jest.mock("@/src/features/chain-payout-address/hooks/use-chain-payout-address", () => ({
+  hasConfiguredPayoutAddresses: jest.fn(() => true),
+  getPayoutAddressForChain: jest.fn(() => null),
+  useChainPayoutAddress: jest.fn(() => ({
+    data: [],
+    isLoading: false,
+    isError: false,
+  })),
+  useUpdateChainPayoutAddress: jest.fn(() => ({
+    mutate: jest.fn(),
+    isPending: false,
+  })),
+}));
+
+// Mock the barrel export for chain payout address feature
+jest.mock("@/src/features/chain-payout-address", () => ({
+  hasConfiguredPayoutAddresses: jest.fn(() => true),
+  getPayoutAddressForChain: jest.fn(() => null),
+  useUpdateChainPayoutAddress: jest.fn(() => ({
+    mutate: jest.fn(),
+    isPending: false,
+  })),
+  SetChainPayoutAddressModal: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? <div data-testid="set-payout-modal">Set Payout Modal</div> : null,
+  EnableDonationsButton: () => <button data-testid="enable-donations-button">Enable</button>,
+}));
+
+// Mock state for Zustand stores - must handle selectors
+const mockProjectStoreState = {
+  isProjectAdmin: false,
+  isProjectOwner: false,
+  refreshProject: jest.fn(),
+};
+
+const mockOwnerStoreState = {
+  isOwner: false,
+};
+
+jest.mock("@/store", () => ({
+  useOwnerStore: jest.fn((selector?: (state: any) => any) => {
+    if (typeof selector === "function") {
+      return selector(mockOwnerStoreState);
+    }
+    return mockOwnerStoreState;
+  }),
+  useProjectStore: jest.fn((selector?: (state: any) => any) => {
+    if (typeof selector === "function") {
+      return selector(mockProjectStoreState);
+    }
+    return mockProjectStoreState;
+  }),
+}));
+
+// Mock useStaff hook to prevent authorization
+jest.mock("@/hooks/useStaff", () => ({
+  useStaff: () => ({
+    isStaff: false,
+    isLoading: false,
+    error: null,
+  }),
+}));
+
+// Mock progress modal store
+jest.mock("@/store/modals/progress", () => ({
+  useProgressModalStore: () => ({
+    isProgressModalOpen: false,
+    setIsProgressModalOpen: jest.fn(),
+  }),
+}));
+
+// Mock community admin store
+jest.mock("@/store/communityAdmin", () => ({
+  useCommunityAdminStore: () => ({
+    isCommunityAdmin: false,
+  }),
+}));
+
+const mockProject: Project = {
+  uid: "0x1234567890123456789012345678901234567890" as `0x${string}`,
+  chainID: 1,
+  owner: "0x1234567890123456789012345678901234567890" as `0x${string}`,
+  details: {
+    title: "Test Project",
+    description: "A test project description",
+    slug: "test-project",
+    links: [
+      { type: "website", url: "https://example.com" },
+      { type: "pitchDeck", url: "https://docs.example.com/deck" },
+      { type: "demoVideo", url: "https://youtube.com/watch?v=123" },
+    ],
+  },
+  members: [],
+};
+
+const mockProjectNoLinks: Project = {
+  ...mockProject,
+  details: {
+    ...mockProject.details,
+    links: [],
+  },
+};
+
+describe("DonateSection", () => {
+  describe("Rendering", () => {
+    it("should render donate section", () => {
+      render(<DonateSection project={mockProject} />);
+
+      expect(screen.getByTestId("donate-section")).toBeInTheDocument();
+    });
+
+    it("should render amount input", () => {
+      render(<DonateSection project={mockProject} />);
+
+      expect(screen.getByTestId("donate-amount-input")).toBeInTheDocument();
+      expect(screen.getByPlaceholderText("amount")).toBeInTheDocument();
+    });
+
+    it("should render donate button", () => {
+      render(<DonateSection project={mockProject} />);
+
+      const button = screen.getByTestId("donate-button");
+      expect(button).toBeInTheDocument();
+      expect(button).toHaveTextContent("Donate");
+    });
+
+    it("should render header with icon", () => {
+      render(<DonateSection project={mockProject} />);
+
+      // Check for subtitle text in header
+      expect(screen.getByText("Support the project with a donation")).toBeInTheDocument();
+    });
+  });
+
+  describe("Interactions", () => {
+    it("should allow typing in amount input", () => {
+      render(<DonateSection project={mockProject} />);
+
+      const input = screen.getByTestId("donate-amount-input");
+      fireEvent.change(input, { target: { value: "10" } });
+
+      expect(input).toHaveValue(10);
+    });
+
+    it("should open donation modal when button is clicked", () => {
+      render(<DonateSection project={mockProject} />);
+
+      const button = screen.getByTestId("donate-button");
+      fireEvent.click(button);
+
+      expect(screen.getByTestId("donate-modal")).toBeInTheDocument();
+    });
+
+    it("should enable button when payout addresses are configured", () => {
+      render(<DonateSection project={mockProject} />);
+
+      const button = screen.getByTestId("donate-button");
+      expect(button).not.toBeDisabled();
+    });
+  });
+
+  describe("Styling", () => {
+    it("should accept custom className", () => {
+      render(<DonateSection project={mockProject} className="custom-class" />);
+
+      expect(screen.getByTestId("donate-section")).toHaveClass("custom-class");
+    });
+  });
+});
+
+describe("EndorseSection", () => {
+  beforeEach(() => {
+    mockSetIsEndorsementOpen.mockClear();
+    mockLogin.mockClear();
+  });
+
+  describe("Rendering", () => {
+    it("should render endorse section", () => {
+      render(<EndorseSection project={mockProject} />);
+
+      expect(screen.getByTestId("endorse-section")).toBeInTheDocument();
+    });
+
+    it("should render endorse button", () => {
+      render(<EndorseSection project={mockProject} />);
+
+      expect(screen.getByTestId("endorse-button")).toBeInTheDocument();
+      expect(screen.getByText("Endorse this project")).toBeInTheDocument();
+    });
+
+    it("should render header with icon", () => {
+      render(<EndorseSection project={mockProject} />);
+
+      expect(screen.getByText("Endorse")).toBeInTheDocument();
+      expect(screen.getByText("Vouch for this project")).toBeInTheDocument();
+    });
+  });
+
+  describe("Interactions", () => {
+    it("should open endorsement dialog when button is clicked", () => {
+      render(<EndorseSection project={mockProject} />);
+
+      const button = screen.getByTestId("endorse-button");
+      fireEvent.click(button);
+
+      expect(mockSetIsEndorsementOpen).toHaveBeenCalledWith(true);
+    });
+  });
+
+  describe("Styling", () => {
+    it("should accept custom className", () => {
+      render(<EndorseSection project={mockProject} className="custom-class" />);
+
+      expect(screen.getByTestId("endorse-section")).toHaveClass("custom-class");
+    });
+  });
+});
+
+describe("SubscribeSection", () => {
+  describe("Rendering", () => {
+    it("should render subscribe section", () => {
+      render(<SubscribeSection project={mockProject} />);
+
+      expect(screen.getByTestId("subscribe-section")).toBeInTheDocument();
+    });
+
+    it("should render name input", () => {
+      render(<SubscribeSection project={mockProject} />);
+
+      expect(screen.getByTestId("subscribe-name-input")).toBeInTheDocument();
+      expect(screen.getByPlaceholderText("First name")).toBeInTheDocument();
+    });
+
+    it("should render email input", () => {
+      render(<SubscribeSection project={mockProject} />);
+
+      expect(screen.getByTestId("subscribe-email-input")).toBeInTheDocument();
+      expect(screen.getByPlaceholderText("your@email.com*")).toBeInTheDocument();
+    });
+
+    it("should render subscribe button", () => {
+      render(<SubscribeSection project={mockProject} />);
+
+      expect(screen.getByTestId("subscribe-button")).toBeInTheDocument();
+      expect(screen.getByText("Subscribe")).toBeInTheDocument();
+    });
+
+    it("should render header with icon", () => {
+      render(<SubscribeSection project={mockProject} />);
+
+      expect(screen.getByText("Stay updated")).toBeInTheDocument();
+    });
+  });
+
+  describe("Form Validation", () => {
+    it("should show error for invalid email", async () => {
+      render(<SubscribeSection project={mockProject} />);
+
+      const emailInput = screen.getByTestId("subscribe-email-input");
+      fireEvent.change(emailInput, { target: { value: "invalid-email" } });
+      fireEvent.blur(emailInput);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("subscribe-email-error")).toBeInTheDocument();
+      });
+    });
+
+    it("should not show error for valid email", async () => {
+      render(<SubscribeSection project={mockProject} />);
+
+      const emailInput = screen.getByTestId("subscribe-email-input");
+      fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+      fireEvent.blur(emailInput);
+
+      await waitFor(() => {
+        expect(screen.queryByTestId("subscribe-email-error")).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("Styling", () => {
+    it("should accept custom className", () => {
+      render(<SubscribeSection project={mockProject} className="custom-class" />);
+
+      expect(screen.getByTestId("subscribe-section")).toHaveClass("custom-class");
+    });
+  });
+});
+
+describe("QuickLinksCard", () => {
+  beforeEach(() => {
+    mockSetIsIntroModalOpen.mockClear();
+  });
+
+  describe("Rendering", () => {
+    it("should render quick links card", () => {
+      render(<QuickLinksCard project={mockProject} />);
+
+      expect(screen.getByTestId("quick-links-card")).toBeInTheDocument();
+    });
+
+    it("should always render Request Intro link", () => {
+      render(<QuickLinksCard project={mockProject} />);
+
+      expect(screen.getByTestId("quick-link-request-intro")).toBeInTheDocument();
+      expect(screen.getByText("Request Intro")).toBeInTheDocument();
+    });
+
+    it("should render website link when available", () => {
+      render(<QuickLinksCard project={mockProject} />);
+
+      expect(screen.getByTestId("quick-link-website")).toBeInTheDocument();
+      expect(screen.getByText("Website")).toBeInTheDocument();
+    });
+
+    it("should render pitch deck link when available", () => {
+      render(<QuickLinksCard project={mockProject} />);
+
+      expect(screen.getByTestId("quick-link-pitch-deck")).toBeInTheDocument();
+      expect(screen.getByText("Pitch Deck")).toBeInTheDocument();
+    });
+
+    it("should render demo video link when available", () => {
+      render(<QuickLinksCard project={mockProject} />);
+
+      expect(screen.getByTestId("quick-link-demo-video")).toBeInTheDocument();
+      expect(screen.getByText("Demo Video")).toBeInTheDocument();
+    });
+
+    it("should only render Request Intro when no links available", () => {
+      render(<QuickLinksCard project={mockProjectNoLinks} />);
+
+      expect(screen.getByText("Request Intro")).toBeInTheDocument();
+      expect(screen.queryByText("Website")).not.toBeInTheDocument();
+      expect(screen.queryByText("Pitch Deck")).not.toBeInTheDocument();
+      expect(screen.queryByText("Demo Video")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Interactions", () => {
+    it("should open intro modal when Request Intro is clicked", () => {
+      render(<QuickLinksCard project={mockProject} />);
+
+      const requestIntroButton = screen.getByTestId("quick-link-request-intro");
+      fireEvent.click(requestIntroButton);
+
+      expect(mockSetIsIntroModalOpen).toHaveBeenCalledWith(true);
+    });
+  });
+
+  describe("URL Protocol Handling", () => {
+    it("should handle URLs without protocol", () => {
+      const projectWithNoProtocol: Project = {
+        ...mockProject,
+        details: {
+          ...mockProject.details,
+          links: [{ type: "website", url: "example.com" }],
+        },
+      };
+
+      render(<QuickLinksCard project={projectWithNoProtocol} />);
+
+      const websiteLink = screen.getByTestId("quick-link-website");
+      expect(websiteLink).toHaveAttribute("href", "https://example.com");
+    });
+
+    it("should preserve URLs with protocol", () => {
+      render(<QuickLinksCard project={mockProject} />);
+
+      const websiteLink = screen.getByTestId("quick-link-website");
+      expect(websiteLink).toHaveAttribute("href", "https://example.com");
+    });
+  });
+
+  describe("Styling", () => {
+    it("should accept custom className", () => {
+      render(<QuickLinksCard project={mockProject} className="custom-class" />);
+
+      expect(screen.getByTestId("quick-links-card")).toHaveClass("custom-class");
+    });
+  });
+});
+
+describe("ProjectSidePanel", () => {
+  describe("Rendering", () => {
+    it("should render side panel container", () => {
+      render(<ProjectSidePanel project={mockProject} />);
+
+      expect(screen.getByTestId("project-side-panel")).toBeInTheDocument();
+    });
+
+    it("should render donate section", () => {
+      render(<ProjectSidePanel project={mockProject} />);
+
+      expect(screen.getByTestId("donate-section")).toBeInTheDocument();
+    });
+
+    it("should render endorse section", () => {
+      render(<ProjectSidePanel project={mockProject} />);
+
+      expect(screen.getByTestId("endorse-section")).toBeInTheDocument();
+    });
+
+    it("should render subscribe section", () => {
+      render(<ProjectSidePanel project={mockProject} />);
+
+      expect(screen.getByTestId("subscribe-section")).toBeInTheDocument();
+    });
+
+    it("should render quick links card", () => {
+      render(<ProjectSidePanel project={mockProject} />);
+
+      expect(screen.getByTestId("quick-links-card")).toBeInTheDocument();
+    });
+  });
+
+  describe("Layout", () => {
+    it("should have desktop-only visibility class", () => {
+      render(<ProjectSidePanel project={mockProject} />);
+
+      const sidePanel = screen.getByTestId("project-side-panel");
+      expect(sidePanel).toHaveClass("hidden");
+      expect(sidePanel).toHaveClass("lg:flex");
+    });
+
+    it("should have fixed width class", () => {
+      render(<ProjectSidePanel project={mockProject} />);
+
+      const sidePanel = screen.getByTestId("project-side-panel");
+      expect(sidePanel).toHaveClass("w-[324px]");
+    });
+  });
+
+  describe("Integration", () => {
+    it("should open donation modal when donate button is clicked", () => {
+      render(<ProjectSidePanel project={mockProject} />);
+
+      const button = screen.getByTestId("donate-button");
+      fireEvent.click(button);
+
+      expect(screen.getByTestId("donate-modal")).toBeInTheDocument();
+    });
+  });
+
+  describe("Styling", () => {
+    it("should accept custom className", () => {
+      render(<ProjectSidePanel project={mockProject} className="custom-class" />);
+
+      expect(screen.getByTestId("project-side-panel")).toHaveClass("custom-class");
+    });
+  });
+});

@@ -3,17 +3,22 @@ import { ContactInfoSubscription } from "@/components/ContactInfoSubscription";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { useStaff } from "@/hooks/useStaff";
 import { useOwnerStore, useProjectStore } from "@/store";
 
 const ContactInfoPage = () => {
   const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
   const { isLoading: isPermissionLoading } = useProjectPermissions();
   const project = useProjectStore((state) => state.project);
-  const isAuthorized = useProjectStore((state) => state.isProjectAdmin);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const isAuthorized = isProjectAdmin || isProjectOwner || isContractOwner || isStaff;
 
   const projectId = project?.uid;
   const { data: contactsInfo, isLoading } = useContactInfo(projectId, isAuthorized);
-  const isAuthorizationLoading = isOwnerLoading || isPermissionLoading;
+  const isAuthorizationLoading = isOwnerLoading || isPermissionLoading || isStaffLoading;
 
   return (
     <div className="pt-5 pb-20">
