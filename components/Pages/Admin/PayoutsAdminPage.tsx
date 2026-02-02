@@ -222,13 +222,18 @@ export default function PayoutsAdminPage() {
   }, [payouts]);
 
   // KYC: Get unique project UIDs from the table data
-  const projectUIDs = useMemo(() => {
-    const uids = new Set<string>();
-    for (const item of tableData) {
-      uids.add(item.projectUid);
-    }
-    return Array.from(uids);
-  }, [tableData]);
+  // Memoize based on sorted UID string to avoid new array reference when non-UID fields change
+  const projectUIDsKey = useMemo(
+    () =>
+      Array.from(new Set(tableData.map((t) => t.projectUid)))
+        .sort()
+        .join(","),
+    [tableData]
+  );
+  const projectUIDs = useMemo(
+    () => (projectUIDsKey ? projectUIDsKey.split(",") : []),
+    [projectUIDsKey]
+  );
 
   // KYC: Fetch KYC configuration for the community
   const { config: kycConfig, isEnabled: isKycEnabled } = useKycConfig(community?.uid, {

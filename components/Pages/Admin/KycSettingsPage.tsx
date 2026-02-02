@@ -57,7 +57,8 @@ export function KycSettingsPage({ community }: KycSettingsPageProps) {
   });
 
   // Create a stable reset function using useCallback
-  // Note: form.reset is stable and doesn't need to be in dependencies
+  // form.reset is a stable function from react-hook-form that doesn't change between renders,
+  // so it's safe to exclude from dependencies to prevent unnecessary callback recreation
   const resetFormWithConfig = useCallback(() => {
     if (!config) return;
 
@@ -69,7 +70,7 @@ export function KycSettingsPage({ community }: KycSettingsPageProps) {
       validityMonths: config.validityMonths || 12,
       isEnabled: config.isEnabled ?? true,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- form.reset is stable per react-hook-form docs
   }, [config]);
 
   // Reset form when config changes (including external updates)

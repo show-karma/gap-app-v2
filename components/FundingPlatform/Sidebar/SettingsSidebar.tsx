@@ -109,9 +109,6 @@ const getSidebarSections = (kycEnabled: boolean): SidebarSection[] => [
   },
 ];
 
-// For backward compatibility, export a static version (kycEnabled = false)
-const SIDEBAR_SECTIONS: SidebarSection[] = getSidebarSections(false);
-
 interface SettingsSidebarProps {
   activeTab: SidebarTabKey;
   onTabChange: (tab: SidebarTabKey) => void;
@@ -243,5 +240,5 @@ export function SettingsSidebar({
   );
 }
 
-export { SIDEBAR_SECTIONS };
+export { getSidebarSections };
 export type { SidebarSection, SidebarItem };
