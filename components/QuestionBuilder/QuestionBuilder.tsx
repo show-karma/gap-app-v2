@@ -373,6 +373,38 @@ export function QuestionBuilder({
     [readOnly, setCurrentSchema]
   );
 
+  // Handle KYC settings changes - merge with internal schema state and save
+  const handleKycSettingsChange = useCallback(
+    (kycSettings: { kycFormUrl?: string; kybFormUrl?: string }) => {
+      if (readOnly) return;
+
+      // Merge KYC settings into the schema's settings
+      const newSettings = { ...schema.settings };
+      if (kycSettings.kycFormUrl) {
+        newSettings.kycFormUrl = kycSettings.kycFormUrl;
+      } else {
+        delete newSettings.kycFormUrl;
+      }
+      if (kycSettings.kybFormUrl) {
+        newSettings.kybFormUrl = kycSettings.kybFormUrl;
+      } else {
+        delete newSettings.kybFormUrl;
+      }
+
+      const updatedSchema: FormSchema = {
+        ...schema,
+        settings: newSettings,
+      };
+
+      // Update local state
+      setSchema(updatedSchema);
+
+      // Save to backend
+      onSave?.(updatedSchema);
+    },
+    [readOnly, schema, onSave]
+  );
+
   const handleDragEnd = (event: DragEndEvent) => {
     try {
       const { active, over } = event;
@@ -881,7 +913,7 @@ export function QuestionBuilder({
                   kycFormUrl: schema.settings?.kycFormUrl,
                   kybFormUrl: schema.settings?.kybFormUrl,
                 }}
-                onSave={onSaveKycSettings}
+                onSave={handleKycSettingsChange}
               />
             </div>
           </div>

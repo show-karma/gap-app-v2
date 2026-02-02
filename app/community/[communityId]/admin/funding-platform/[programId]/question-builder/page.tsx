@@ -77,17 +77,28 @@ export default function QuestionBuilderPage() {
 
   const handleKycSettingsChange = (kycSettings: { kycFormUrl?: string; kybFormUrl?: string }) => {
     if (!existingSchema) {
+      console.warn("handleKycSettingsChange: existingSchema is null, cannot save");
       return;
     }
     // Merge KYC settings into the existing formSchema.settings
+    // Only include non-empty values to properly clear fields
+    const newSettings = { ...existingSchema.settings };
+    if (kycSettings.kycFormUrl) {
+      newSettings.kycFormUrl = kycSettings.kycFormUrl;
+    } else {
+      delete newSettings.kycFormUrl;
+    }
+    if (kycSettings.kybFormUrl) {
+      newSettings.kybFormUrl = kycSettings.kybFormUrl;
+    } else {
+      delete newSettings.kybFormUrl;
+    }
+
     const updatedSchema: FormSchema = {
       ...existingSchema,
-      settings: {
-        ...existingSchema.settings,
-        kycFormUrl: kycSettings.kycFormUrl,
-        kybFormUrl: kycSettings.kybFormUrl,
-      },
+      settings: newSettings,
     };
+    console.log("handleKycSettingsChange: saving schema", updatedSchema);
     updateSchema({ schema: updatedSchema, existingConfig: existingConfig || null });
   };
 

@@ -2,9 +2,7 @@
 
 import { IdentificationIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { z } from "zod";
 import { PageHeader } from "../FundingPlatform/PageHeader";
 import { Button } from "../Utilities/Button";
@@ -57,37 +55,16 @@ export function KycSettingsConfiguration({
     },
   });
 
-  // Track if we just saved to avoid resetting form immediately after
-  const justSavedRef = useRef(false);
-
-  // Reset form when initialSettings change (but not right after we saved)
-  useEffect(() => {
-    if (justSavedRef.current) {
-      justSavedRef.current = false;
-      return;
-    }
-    reset({
-      kycFormUrl: initialSettings?.kycFormUrl || "",
-      kybFormUrl: initialSettings?.kybFormUrl || "",
-    });
-  }, [initialSettings?.kycFormUrl, initialSettings?.kybFormUrl, reset]);
-
   const onSubmit = async (data: KycSettingsFormData) => {
     if (readOnly || !onSave) return;
 
-    try {
-      justSavedRef.current = true;
-      onSave({
-        kycFormUrl: data.kycFormUrl || undefined,
-        kybFormUrl: data.kybFormUrl || undefined,
-      });
-      toast.success("KYC/KYB settings saved");
-      reset(data);
-    } catch (error) {
-      justSavedRef.current = false;
-      console.error("Failed to save KYC URLs:", error);
-      toast.error("Failed to save KYC/KYB settings");
-    }
+    // Call parent's save handler - the mutation's onSuccess will show the toast
+    onSave({
+      kycFormUrl: data.kycFormUrl || undefined,
+      kybFormUrl: data.kybFormUrl || undefined,
+    });
+    // Reset form with new values so isDirty becomes false
+    reset(data);
   };
 
   return (
