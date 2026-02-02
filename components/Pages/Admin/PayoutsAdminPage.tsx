@@ -1054,7 +1054,11 @@ export default function PayoutsAdminPage() {
                       </td>
                       {isKycEnabled && (
                         <td className="px-4 py-2 text-center">
-                          <KycStatusBadge status={kycStatuses.get(item.projectUid) ?? null} />
+                          {isLoadingKycStatuses ? (
+                            <Spinner className="w-4 h-4" />
+                          ) : (
+                            <KycStatusBadge status={kycStatuses.get(item.projectUid) ?? null} />
+                          )}
                         </td>
                       )}
                       <td className="px-4 py-2">

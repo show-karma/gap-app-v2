@@ -108,9 +108,13 @@ export function KycSettingsPage({ community }: KycSettingsPageProps) {
 
   const webhookUrl = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/v2/webhooks/kyc/treova`;
 
-  const copyWebhookUrl = () => {
-    navigator.clipboard.writeText(webhookUrl);
-    toast.success("Webhook URL copied to clipboard");
+  const copyWebhookUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(webhookUrl);
+      toast.success("Webhook URL copied to clipboard");
+    } catch {
+      toast.error("Could not copy to clipboard. Please check browser permissions.");
+    }
   };
 
   if (isLoading) {

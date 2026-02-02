@@ -75,33 +75,6 @@ export default function QuestionBuilderPage() {
     updatePostApprovalSchema({ schema, existingConfig: existingConfig || null });
   };
 
-  const handleKycSettingsChange = (kycSettings: { kycFormUrl?: string; kybFormUrl?: string }) => {
-    if (!existingSchema) {
-      console.warn("handleKycSettingsChange: existingSchema is null, cannot save");
-      return;
-    }
-    // Merge KYC settings into the existing formSchema.settings
-    // Only include non-empty values to properly clear fields
-    const newSettings = { ...existingSchema.settings };
-    if (kycSettings.kycFormUrl) {
-      newSettings.kycFormUrl = kycSettings.kycFormUrl;
-    } else {
-      delete newSettings.kycFormUrl;
-    }
-    if (kycSettings.kybFormUrl) {
-      newSettings.kybFormUrl = kycSettings.kybFormUrl;
-    } else {
-      delete newSettings.kybFormUrl;
-    }
-
-    const updatedSchema: FormSchema = {
-      ...existingSchema,
-      settings: newSettings,
-    };
-    console.log("handleKycSettingsChange: saving schema", updatedSchema);
-    updateSchema({ schema: updatedSchema, existingConfig: existingConfig || null });
-  };
-
   const handleBackClick = () => {
     router.push(`/community/${communityId}/admin/funding-platform`);
   };
@@ -177,7 +150,6 @@ export default function QuestionBuilderPage() {
           communityId={communityId}
           initialPostApprovalSchema={existingPostApprovalSchema || undefined}
           onSavePostApproval={handlePostApprovalSchemaChange}
-          onSaveKycSettings={handleKycSettingsChange}
           programTitle={programTitle}
           hasReviewers={hasReviewers}
           hasAIConfig={hasAIConfig}

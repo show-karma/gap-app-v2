@@ -77,7 +77,6 @@ interface QuestionBuilderProps {
   readOnly?: boolean;
   initialPostApprovalSchema?: FormSchema;
   onSavePostApproval?: (schema: FormSchema) => void;
-  onSaveKycSettings?: (settings: { kycFormUrl?: string; kybFormUrl?: string }) => void;
   programTitle?: string;
   hasReviewers?: boolean;
   hasAIConfig?: boolean;
@@ -97,7 +96,6 @@ export function QuestionBuilder({
   readOnly = false,
   initialPostApprovalSchema,
   onSavePostApproval,
-  onSaveKycSettings,
   programTitle,
   hasReviewers = false,
   hasAIConfig = false,
@@ -907,7 +905,6 @@ export function QuestionBuilder({
           <div className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-4xl mx-auto">
               <KycSettingsConfiguration
-                programId={programId}
                 readOnly={readOnly}
                 initialSettings={{
                   kycFormUrl: schema.settings?.kycFormUrl,

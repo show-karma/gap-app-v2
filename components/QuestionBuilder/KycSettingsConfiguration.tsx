@@ -26,7 +26,6 @@ const kycSettingsSchema = z.object({
 type KycSettingsFormData = z.infer<typeof kycSettingsSchema>;
 
 interface KycSettingsConfigurationProps {
-  programId: string;
   readOnly?: boolean;
   initialSettings?: {
     kycFormUrl?: string;
@@ -36,7 +35,6 @@ interface KycSettingsConfigurationProps {
 }
 
 export function KycSettingsConfiguration({
-  programId,
   readOnly = false,
   initialSettings,
   onSave,
