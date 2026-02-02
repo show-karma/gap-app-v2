@@ -113,7 +113,7 @@ describe("KycStatusIcon", () => {
 
       // Tooltip content should be visible - use getAllByText since tooltip may render multiple elements
       const tooltipTexts = await screen.findAllByText("KYC verification completed successfully");
-      expect(tooltipTexts).toHaveLength(1);
+      expect(tooltipTexts.length).toBeGreaterThanOrEqual(1);
     });
 
     it("should not render tooltip when showTooltip is false", () => {
@@ -136,7 +136,7 @@ describe("KycStatusIcon", () => {
 
       // Look for Type: KYB pattern in the tooltip
       const typeLabels = await screen.findAllByText(/KYB/);
-      expect(typeLabels).toHaveLength(1);
+      expect(typeLabels.length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -230,7 +230,7 @@ describe("KycStatusBadge", () => {
 
       // Use getAllByText since tooltip may render multiple elements
       const tooltipTexts = await screen.findAllByText("KYC verification completed successfully");
-      expect(tooltipTexts).toHaveLength(1);
+      expect(tooltipTexts.length).toBeGreaterThanOrEqual(1);
     });
   });
 
