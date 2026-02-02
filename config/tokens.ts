@@ -222,3 +222,25 @@ export function getAvailableNetworks(includeTestnets: boolean = false) {
 export function isTestnet(chainId: number): boolean {
   return NETWORKS[chainId as SupportedChainId]?.isTestnet ?? false;
 }
+
+/** Get token decimals from token address. Returns 6 for USDC, 18 for native/unknown tokens */
+export function getTokenDecimals(tokenAddress: string | null, chainId?: number): number {
+  if (!tokenAddress) {
+    // Native token - use chain-specific decimals or default to 18
+    if (chainId && NATIVE_TOKENS[chainId]) {
+      return NATIVE_TOKENS[chainId].decimals;
+    }
+    return 18;
+  }
+
+  // Check if it's a USDC address
+  const normalizedAddress = tokenAddress.toLowerCase();
+  const usdcAddresses = Object.values(TOKEN_ADDRESSES.usdc).map((a) => a.toLowerCase());
+
+  if (usdcAddresses.includes(normalizedAddress)) {
+    return TOKENS.usdc.decimals; // 6
+  }
+
+  // Default to 18 for unknown tokens
+  return 18;
+}

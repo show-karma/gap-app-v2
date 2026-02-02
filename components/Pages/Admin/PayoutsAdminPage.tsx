@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
-import { BanknotesIcon, CheckIcon } from "@heroicons/react/24/outline";
+import { BanknotesIcon, CheckIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getTokenDecimals } from "@/config/tokens";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,13 +32,17 @@ import {
   type CommunityPayoutsSorting,
   CreateDisbursementModal,
   type GrantDisbursementInfo,
+  getPaidAllocationIds,
   type PayoutConfigItem,
+  PayoutConfigurationModal,
   PayoutDisbursementStatus,
+  type PayoutGrantConfig,
   PayoutHistoryDrawer,
   type SavePayoutConfigRequest,
   TokenBreakdown,
   type TokenTotal,
   useCommunityPayouts,
+  usePayoutConfigsByCommunity,
   useSavePayoutConfig,
 } from "@/src/features/payout-disbursement";
 import { MESSAGES } from "@/utilities/messages";
@@ -94,6 +99,15 @@ export default function PayoutsAdminPage() {
     grantName: string;
     projectName: string;
     approvedAmount?: string;
+  } | null>(null);
+
+  // State for payout configuration modal
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [configGrant, setConfigGrant] = useState<{
+    grantUID: string;
+    projectUID: string;
+    grantName: string;
+    projectName: string;
   } | null>(null);
 
   // Get values from URL params or use defaults
@@ -153,6 +167,22 @@ export default function PayoutsAdminPage() {
 
   const payouts = payoutsData?.payload || [];
   const totalItems = payoutsData?.pagination?.totalCount || 0;
+
+  // Fetch payout configs to get milestone allocations
+  const { data: payoutConfigs } = usePayoutConfigsByCommunity(community?.uid || "", {
+    enabled: !!community?.uid && authReady,
+  });
+
+  // Create a map of grant UID to payout config for quick lookup
+  const payoutConfigMap = useMemo(() => {
+    const map: Record<string, PayoutGrantConfig> = {};
+    if (payoutConfigs) {
+      for (const config of payoutConfigs) {
+        map[config.grantUID] = config;
+      }
+    }
+    return map;
+  }, [payoutConfigs]);
 
   // Save payout config mutation (saves to payout_grant_config collection)
   const { mutate: saveConfigs, isPending: isSaving } = useSavePayoutConfig();
@@ -658,6 +688,29 @@ export default function PayoutsAdminPage() {
         ? editedFields[item.uid].amount || "0"
         : item.currentAmount || "0";
 
+      // Get milestone allocations from payout config and convert to human-readable
+      const payoutConfig = payoutConfigMap[item.uid];
+      const tokenDecimals = getTokenDecimals(
+        payoutConfig?.tokenAddress || null,
+        payoutConfig?.chainId || undefined
+      );
+
+      // Convert allocation amounts from smallest units to human-readable
+      const milestoneAllocations = (payoutConfig?.milestoneAllocations || []).map((alloc) => {
+        if (!alloc.amount || alloc.amount === "0") return alloc;
+        try {
+          const humanReadable = formatUnits(BigInt(alloc.amount), tokenDecimals);
+          return { ...alloc, amount: humanReadable };
+        } catch {
+          // If conversion fails (e.g., already human-readable), use as-is
+          return alloc;
+        }
+      });
+
+      // Get paid allocation IDs from disbursement history (excluding failed/cancelled)
+      const disbursementHistory = disbursementMap[item.uid]?.history || [];
+      const paidAllocationIds = getPaidAllocationIds(disbursementHistory);
+
       return {
         grantUID: item.uid,
         projectUID: item.projectUid,
@@ -668,6 +721,10 @@ export default function PayoutsAdminPage() {
         // Pass totalsByToken so the modal can correctly calculate remaining amount
         // (converts from raw BigInt to human-readable using token decimals)
         totalsByToken: disbursementMap[item.uid]?.totalsByToken || [],
+        // Milestone allocations for selection-based disbursement
+        milestoneAllocations,
+        // Allocation IDs already paid or in-flight (prevents double-selection)
+        paidAllocationIds,
       };
     });
 
@@ -690,6 +747,38 @@ export default function PayoutsAdminPage() {
       approvedAmount,
     });
     setIsHistoryDrawerOpen(true);
+  };
+
+  // Open configuration modal for a specific grant
+  const handleOpenConfigModal = (item: PayoutsTableData) => {
+    setConfigGrant({
+      grantUID: item.uid,
+      projectUID: item.projectUid,
+      grantName: item.grantName,
+      projectName: item.projectName,
+    });
+    setIsConfigModalOpen(true);
+  };
+
+  // Handle configuration modal close
+  const handleConfigModalClose = () => {
+    setIsConfigModalOpen(false);
+    setConfigGrant(null);
+  };
+
+  // Handle configuration save success
+  const handleConfigSuccess = () => {
+    // Clear any edited fields for this grant since we saved the full config
+    if (configGrant) {
+      setEditedFields((prev) => {
+        const newEdited = { ...prev };
+        delete newEdited[configGrant.grantUID];
+        return newEdited;
+      });
+    }
+    handleConfigModalClose();
+    // Refresh the payouts data
+    refreshPayouts();
   };
 
   // Handle disbursement modal close
@@ -1005,13 +1094,13 @@ export default function PayoutsAdminPage() {
                       )}
                     </div>
                   </th>
+                  <th scope="col" className="h-12 px-4 text-center align-middle font-medium w-20">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="px-4 divide-y divide-gray-200 dark:divide-zinc-800">
                 {paginatedData.map((item) => {
-                  const fieldId = item.uid;
-                  const payoutError = errors[`${fieldId}-payoutAddress`];
-                  const amountError = errors[`${fieldId}-amount`];
                   const disbursementInfo = disbursementMap[item.uid];
                   const totalsByToken = disbursementInfo?.totalsByToken || [];
                   const displayStatus = computeDisplayStatus(item, disbursementInfo);
@@ -1048,8 +1137,11 @@ export default function PayoutsAdminPage() {
                         <ExternalLink
                           href={PAGES.PROJECT.OVERVIEW(item.projectSlug || item.projectUid)}
                           className="max-w-full line-clamp-2 underline"
+                          title={item.projectName}
                         >
-                          {item.projectName}
+                          {item.projectName.length > 50
+                            ? `${item.projectName.slice(0, 50)}...`
+                            : item.projectName}
                         </ExternalLink>
                       </td>
                       {isKycEnabled && (
@@ -1070,108 +1162,25 @@ export default function PayoutsAdminPage() {
                         </ExternalLink>
                       </td>
                       <td className="px-4 py-2">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="text"
-                              className={cn(
-                                "w-full px-3 py-2 border rounded-md bg-transparent placeholder:text-gray-400",
-                                "focus:outline-none focus:ring-2 focus:ring-blue-500",
-                                "dark:border-zinc-700 dark:text-white",
-                                payoutError ? "border-red-500" : "border-gray-300"
-                              )}
-                              placeholder="Enter payout address"
-                              value={
-                                editedFields[fieldId]?.hasOwnProperty("payoutAddress")
-                                  ? editedFields[fieldId].payoutAddress
-                                  : item.currentPayoutAddress || ""
-                              }
-                              onChange={(e) =>
-                                handleFieldChange(fieldId, "payoutAddress", e.target.value)
-                              }
-                              disabled={isSaving || savingFields.has(`${fieldId}-payoutAddress`)}
-                            />
-                            {editedFields[fieldId]?.hasOwnProperty("payoutAddress") && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleSaveField(fieldId, item.projectUid, "payoutAddress")
-                                }
-                                disabled={
-                                  savingFields.has(`${fieldId}-payoutAddress`) || !!payoutError
-                                }
-                                className={cn(
-                                  "flex-shrink-0 p-1.5 rounded-md transition-colors",
-                                  "bg-green-100 hover:bg-green-200 text-green-700",
-                                  "dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-400",
-                                  "disabled:opacity-50 disabled:cursor-not-allowed"
-                                )}
-                                title="Save payout address"
-                              >
-                                {savingFields.has(`${fieldId}-payoutAddress`) ? (
-                                  <Spinner className="h-4 w-4" />
-                                ) : (
-                                  <CheckIcon className="h-4 w-4" />
-                                )}
-                              </button>
-                            )}
-                          </div>
-                          {payoutError && (
-                            <span className="text-red-500 text-sm">{payoutError}</span>
+                        <span
+                          className="font-mono text-sm text-gray-700 dark:text-gray-300"
+                          title={item.currentPayoutAddress || "Not configured"}
+                        >
+                          {item.currentPayoutAddress ? (
+                            `${item.currentPayoutAddress.slice(0, 6)}...${item.currentPayoutAddress.slice(-4)}`
+                          ) : (
+                            <span className="text-gray-400 dark:text-gray-500">—</span>
                           )}
-                        </div>
+                        </span>
                       </td>
                       <td className="px-4 py-2">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="text"
-                              className={cn(
-                                "w-full px-3 py-2 border rounded-md bg-transparent placeholder:text-gray-400",
-                                "focus:outline-none focus:ring-2 focus:ring-blue-500",
-                                "dark:border-zinc-700 dark:text-white",
-                                amountError ? "border-red-500" : "border-gray-300"
-                              )}
-                              placeholder="0"
-                              value={
-                                editedFields[fieldId]?.hasOwnProperty("amount")
-                                  ? editedFields[fieldId].amount
-                                  : item.currentAmount || ""
-                              }
-                              onChange={(e) =>
-                                handleFieldChange(
-                                  fieldId,
-                                  "amount",
-                                  sanitizeNumericInput(e.target.value)
-                                )
-                              }
-                              disabled={isSaving || savingFields.has(`${fieldId}-amount`)}
-                            />
-                            {editedFields[fieldId]?.hasOwnProperty("amount") && (
-                              <button
-                                type="button"
-                                onClick={() => handleSaveField(fieldId, item.projectUid, "amount")}
-                                disabled={savingFields.has(`${fieldId}-amount`) || !!amountError}
-                                className={cn(
-                                  "flex-shrink-0 p-1.5 rounded-md transition-colors",
-                                  "bg-green-100 hover:bg-green-200 text-green-700",
-                                  "dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-400",
-                                  "disabled:opacity-50 disabled:cursor-not-allowed"
-                                )}
-                                title="Save grant amount"
-                              >
-                                {savingFields.has(`${fieldId}-amount`) ? (
-                                  <Spinner className="h-4 w-4" />
-                                ) : (
-                                  <CheckIcon className="h-4 w-4" />
-                                )}
-                              </button>
-                            )}
-                          </div>
-                          {amountError && (
-                            <span className="text-red-500 text-sm">{amountError}</span>
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {item.currentAmount ? (
+                            parseFloat(item.currentAmount).toLocaleString()
+                          ) : (
+                            <span className="text-gray-400 dark:text-gray-500">—</span>
                           )}
-                        </div>
+                        </span>
                       </td>
                       {/* Disbursed Amount column */}
                       <td className="px-4 py-2 text-left">
@@ -1188,6 +1197,20 @@ export default function PayoutsAdminPage() {
                           title="Click to view payout history"
                         >
                           {displayStatus.label}
+                        </button>
+                      </td>
+                      {/* Actions column */}
+                      <td className="px-4 py-2 text-center">
+                        <button
+                          onClick={() => handleOpenConfigModal(item)}
+                          className={cn(
+                            "p-2 rounded-md transition-colors",
+                            "text-gray-500 hover:text-gray-700 hover:bg-gray-100",
+                            "dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-zinc-800"
+                          )}
+                          title="Configure payout settings"
+                        >
+                          <Cog6ToothIcon className="h-5 w-5" />
                         </button>
                       </td>
                     </tr>
@@ -1243,6 +1266,20 @@ export default function PayoutsAdminPage() {
           grantName={historyGrant.grantName}
           projectName={historyGrant.projectName}
           approvedAmount={historyGrant.approvedAmount}
+        />
+      )}
+
+      {/* Payout Configuration Modal */}
+      {configGrant && (
+        <PayoutConfigurationModal
+          isOpen={isConfigModalOpen}
+          onClose={handleConfigModalClose}
+          grantUID={configGrant.grantUID}
+          projectUID={configGrant.projectUID}
+          communityUID={community?.uid || ""}
+          grantName={configGrant.grantName}
+          projectName={configGrant.projectName}
+          onSuccess={handleConfigSuccess}
         />
       )}
 
