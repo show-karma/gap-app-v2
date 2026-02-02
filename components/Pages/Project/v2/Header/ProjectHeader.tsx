@@ -2,7 +2,6 @@
 
 import { GlobeIcon, RocketIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { ProjectOptionsMenu } from "@/components/Pages/Project/ProjectOptionsMenu";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useProjectSocials } from "@/hooks/useProjectSocials";
@@ -137,11 +136,10 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                         </div>
                       </div>
                     )}
-                    <ProjectOptionsMenu />
                   </div>
                 </div>
               </div>
-              {/* Social links and options menu - positioned after name on desktop, absolute on mobile */}
+              {/* Social links - Mobile only */}
               <div
                 className="lg:hidden flex flex-row items-center gap-3 z-10 flex-wrap"
                 data-testid="header-actions-mobile"
@@ -183,7 +181,6 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
                     </div>
                   </div>
                 )}
-                <ProjectOptionsMenu />
               </div>
             </div>
 

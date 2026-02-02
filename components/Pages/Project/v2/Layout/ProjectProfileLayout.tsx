@@ -7,7 +7,10 @@ import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { IntroDialog } from "@/components/Pages/Project/IntroDialog";
-import { ProjectOptionsDialogs } from "@/components/Pages/Project/ProjectOptionsMenu";
+import {
+  ProjectOptionsDialogs,
+  ProjectOptionsMenu,
+} from "@/components/Pages/Project/ProjectOptionsMenu";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import { useEndorsementStore } from "@/store/modals/endorsement";
@@ -261,6 +264,11 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
           />
         </div>
 
+        {/* Mobile: Project Settings above tabs - right aligned */}
+        <div className="lg:hidden flex justify-end">
+          <ProjectOptionsMenu />
+        </div>
+
         {/* Mobile: Navigation tabs at the top - always first on mobile */}
         {/* Use negative margins to extend tabs full width beyond container padding */}
         <div className="lg:hidden -mx-4 px-4">
@@ -301,6 +309,11 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
             className="flex flex-col gap-6 flex-1 min-w-0"
             data-testid="project-main-content-area"
           >
+            {/* Desktop: Project Settings above tabs */}
+            <div className="hidden lg:flex lg:justify-end">
+              <ProjectOptionsMenu />
+            </div>
+
             {/* Desktop: Content Tabs */}
             <div className="hidden lg:block">
               <ContentTabs

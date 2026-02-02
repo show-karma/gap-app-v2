@@ -1,6 +1,5 @@
 "use client";
 
-import { ProjectOptionsMenu } from "@/components/Pages/Project/ProjectOptionsMenu";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useProjectSocials } from "@/hooks/useProjectSocials";
 import type { Project } from "@/types/v2/project";
@@ -20,9 +19,9 @@ interface MobileHeaderMinifiedProps {
  * - Project avatar (small)
  * - Project title with verification badge
  * - Social links
- * - Options dropdown menu
  *
  * Displayed only on mobile (lg:hidden) when not on Profile tab.
+ * Note: Project Settings is now displayed above the tabs in the layout.
  */
 export function MobileHeaderMinified({
   project,
@@ -61,8 +60,8 @@ export function MobileHeaderMinified({
         </div>
       </div>
 
-      {/* Row 2: Socials + Dropdown */}
-      <div className="flex items-center justify-between">
+      {/* Row 2: Social links */}
+      {socials.length > 0 && (
         <div className="flex items-center gap-3">
           {socials.map((social) => (
             <a
@@ -78,8 +77,7 @@ export function MobileHeaderMinified({
             </a>
           ))}
         </div>
-        <ProjectOptionsMenu />
-      </div>
+      )}
     </div>
   );
 }

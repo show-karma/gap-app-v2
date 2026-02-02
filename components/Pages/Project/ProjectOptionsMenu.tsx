@@ -1,9 +1,10 @@
 "use client";
 
-import { Menu, Transition } from "@headlessui/react";
 import {
   ArrowDownOnSquareIcon,
   ArrowsRightLeftIcon,
+  ChevronDownIcon,
+  Cog6ToothIcon,
   CurrencyDollarIcon,
   FingerPrintIcon,
   LightBulbIcon,
@@ -12,14 +13,19 @@ import {
   TrashIcon,
   WalletIcon,
 } from "@heroicons/react/24/outline";
-import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { useAccount } from "wagmi";
 import { AdminTransferOwnershipDialog } from "@/components/Dialogs/AdminTransferOwnershipDialog";
 import { GithubIcon } from "@/components/Icons";
 import { errorManager } from "@/components/Utilities/errorManager";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useContactInfo } from "@/hooks/useContactInfo";
@@ -61,7 +67,7 @@ const MergeProjectDialog = dynamic(() =>
   import("@/components/Dialogs/MergeProjectDialog").then((mod) => mod.MergeProjectDialog)
 );
 
-const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 dark:hover:bg-brand-blue dark:hover:opacity-100 dark:hover:text-white hover:bg-brand-blue hover:opacity-100 hover:text-white flex w-full items-start justify-start rounded-md px-2 py-2 text-sm`;
+const buttonClassName = `group cursor-pointer font-normal text-gray-900 dark:text-zinc-100 hover:bg-brand-blue hover:text-white dark:hover:bg-brand-blue dark:hover:text-white flex w-full items-center justify-start gap-2 rounded-md px-2 py-2 text-sm transition-colors`;
 
 /**
  * Renders all project-related dialogs that are controlled by global stores.
@@ -281,200 +287,110 @@ export const ProjectOptionsMenu = () => {
       )}
 
       {!isStaffLoading && (isAuthorized || isStaff || isAuthenticated) && (
-        <Menu
-          as="div"
-          className={`relative inline-block text-left z-1`}
-          data-testid="project-options-menu"
-        >
-          <div>
-            <Menu.Button className="w-max bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-2 rounded-lg">
-              <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />
-            </Menu.Button>
-          </div>
-          <Transition
-            as={Fragment}
-            enter="transition ease-out duration-100"
-            enterFrom="transform opacity-0 scale-95"
-            enterTo="transform opacity-100 scale-100"
-            leave="transition ease-in duration-75"
-            leaveFrom="transform opacity-100 scale-100"
-            leaveTo="transform opacity-0 scale-95"
-          >
-            <Menu.Items
-              modal
-              className="z-[10000] absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none"
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white font-medium text-sm hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
+              data-testid="project-options-menu"
             >
-              <div className="flex flex-col gap-1 px-1 py-1 h-full max-h-96 overflow-y-auto">
-                {(isAuthorized || isStaff) && (
+              <Cog6ToothIcon className="h-5 w-5" aria-hidden="true" />
+              <span className="hidden sm:inline">Project Settings</span>
+              <ChevronDownIcon className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 max-h-96 overflow-y-auto">
+            {(isAuthorized || isStaff) && (
+              <>
+                <DropdownMenuItem onClick={openProjectEditModal} className={buttonClassName}>
+                  <PencilSquareIcon className="h-5 w-5" aria-hidden="true" />
+                  Edit project
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={openMergeModal} className={buttonClassName}>
+                  <ArrowDownOnSquareIcon className="h-5 w-5" aria-hidden="true" />
+                  Merge
+                </DropdownMenuItem>
+                {!isStaff ? (
+                  <DropdownMenuItem
+                    onClick={openTransferOwnershipModal}
+                    className={buttonClassName}
+                  >
+                    <ArrowsRightLeftIcon className="h-5 w-5" aria-hidden="true" />
+                    Transfer ownership
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    onClick={openAdminTransferOwnershipModal}
+                    className={buttonClassName}
+                  >
+                    <ArrowsRightLeftIcon className="h-5 w-5" aria-hidden="true" />
+                    Transfer ownership
+                  </DropdownMenuItem>
+                )}
+                {project && (
                   <>
-                    <Menu.Item>
-                      {({ active }) => (
-                        <button
-                          type="button"
-                          onClick={openProjectEditModal}
-                          className={buttonClassName}
-                        >
-                          <PencilSquareIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-                          Edit project
-                        </button>
-                      )}
-                    </Menu.Item>
-                    <Menu.Item>
-                      {({ active }) => (
-                        <button type="button" onClick={openMergeModal} className={buttonClassName}>
-                          <ArrowDownOnSquareIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-                          Merge
-                        </button>
-                      )}
-                    </Menu.Item>
-                    {!isStaff ? (
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            type="button"
-                            onClick={openTransferOwnershipModal}
-                            className={buttonClassName}
-                          >
-                            <ArrowsRightLeftIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-                            Transfer ownership
-                          </button>
-                        )}
-                      </Menu.Item>
-                    ) : (
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            type="button"
-                            onClick={openAdminTransferOwnershipModal}
-                            className={buttonClassName}
-                          >
-                            <ArrowsRightLeftIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-                            Transfer ownership
-                          </button>
-                        )}
-                      </Menu.Item>
-                    )}
-                    <Menu.Item>
-                      {({ active }) => {
-                        if (!project) return <span></span>;
-                        return (
-                          <button
-                            type="button"
-                            onClick={() => setShowLinkContractsDialog(true)}
-                            className={buttonClassName}
-                          >
-                            <LinkIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-                            Link Contracts
-                          </button>
-                        );
-                      }}
-                    </Menu.Item>
-
-                    <Menu.Item>
-                      {({ active }) => {
-                        if (!project) return <span></span>;
-                        return (
-                          <button
-                            type="button"
-                            onClick={() => setShowLinkGithubDialog(true)}
-                            className={buttonClassName}
-                          >
-                            <GithubIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-                            Link GitHub Repo
-                          </button>
-                        );
-                      }}
-                    </Menu.Item>
-                    <Menu.Item>
-                      {({ active }) => {
-                        if (!project) return <span></span>;
-                        return (
-                          <button
-                            type="button"
-                            onClick={() => setShowLinkOSODialog(true)}
-                            className={buttonClassName}
-                          >
-                            <FingerPrintIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-                            Link OSO Profile
-                          </button>
-                        );
-                      }}
-                    </Menu.Item>
-                    <Menu.Item>
-                      {({ active }) => {
-                        if (!project) return <span></span>;
-                        return (
-                          <button
-                            type="button"
-                            onClick={() => setShowLinkDivviDialog(true)}
-                            className={buttonClassName}
-                          >
-                            <WalletIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-                            Link Divvi Identifier
-                          </button>
-                        );
-                      }}
-                    </Menu.Item>
-                    <Menu.Item>
-                      {({ active }) => {
-                        if (!project) return <span></span>;
-                        return (
-                          <button
-                            type="button"
-                            onClick={() => setShowSetPayoutDialog(true)}
-                            className={buttonClassName}
-                          >
-                            <CurrencyDollarIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-                            Set Payout Address
-                          </button>
-                        );
-                      }}
-                    </Menu.Item>
-                    <Menu.Item>
-                      {({ active }) => (
-                        <button
-                          type="button"
-                          onClick={openGrantGenieModal}
-                          className={buttonClassName}
-                        >
-                          <LightBulbIcon className="h-5 w-5 mr-2" />
-                          Grant genie
-                        </button>
-                      )}
-                    </Menu.Item>
-                    <Menu.Item>
-                      {({ active }) => (
-                        <button
-                          type="button"
-                          onClick={() => setShowDeleteDialog(true)}
-                          className={buttonClassName}
-                        >
-                          <TrashIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-                          Delete project
-                        </button>
-                      )}
-                    </Menu.Item>
+                    <DropdownMenuItem
+                      onClick={() => setShowLinkContractsDialog(true)}
+                      className={buttonClassName}
+                    >
+                      <LinkIcon className="h-5 w-5" aria-hidden="true" />
+                      Link Contracts
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setShowLinkGithubDialog(true)}
+                      className={buttonClassName}
+                    >
+                      <GithubIcon className="h-5 w-5" aria-hidden="true" />
+                      Link GitHub Repo
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setShowLinkOSODialog(true)}
+                      className={buttonClassName}
+                    >
+                      <FingerPrintIcon className="h-5 w-5" aria-hidden="true" />
+                      Link OSO Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setShowLinkDivviDialog(true)}
+                      className={buttonClassName}
+                    >
+                      <WalletIcon className="h-5 w-5" aria-hidden="true" />
+                      Link Divvi Identifier
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setShowSetPayoutDialog(true)}
+                      className={buttonClassName}
+                    >
+                      <CurrencyDollarIcon className="h-5 w-5" aria-hidden="true" />
+                      Set Payout Address
+                    </DropdownMenuItem>
                   </>
                 )}
-                {/* Non-authorized but logged-in users: View Contracts only */}
-                {!isAuthorized && !isStaff && isAuthenticated && project && (
-                  <Menu.Item>
-                    {({ active }) => (
-                      <button
-                        type="button"
-                        onClick={() => setShowViewContractsDialog(true)}
-                        className={buttonClassName}
-                      >
-                        <LinkIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-                        View Contracts
-                      </button>
-                    )}
-                  </Menu.Item>
-                )}
-              </div>
-            </Menu.Items>
-          </Transition>
-        </Menu>
+                <DropdownMenuItem onClick={openGrantGenieModal} className={buttonClassName}>
+                  <LightBulbIcon className="h-5 w-5" aria-hidden="true" />
+                  Grant genie
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setShowDeleteDialog(true)}
+                  className={buttonClassName}
+                >
+                  <TrashIcon className="h-5 w-5" aria-hidden="true" />
+                  Delete project
+                </DropdownMenuItem>
+              </>
+            )}
+            {/* Non-authorized but logged-in users: View Contracts only */}
+            {!isAuthorized && !isStaff && isAuthenticated && project && (
+              <DropdownMenuItem
+                onClick={() => setShowViewContractsDialog(true)}
+                className={buttonClassName}
+              >
+                <LinkIcon className="h-5 w-5" aria-hidden="true" />
+                View Contracts
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
     </>
   );
