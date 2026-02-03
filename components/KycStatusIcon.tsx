@@ -159,6 +159,36 @@ const badgeColors: Record<KycVerificationStatus, string> = {
 };
 
 /**
+ * Format the badge label based on verification type and status
+ */
+function getBadgeLabel(
+  status: KycStatusResponse | null,
+  effectiveStatus: KycVerificationStatus
+): string {
+  const config = statusConfig[effectiveStatus];
+  const verificationType = status?.verificationType;
+
+  // For NOT_STARTED, no verification type is known yet
+  if (effectiveStatus === KycVerificationStatus.NOT_STARTED) {
+    return `KYC/KYB: ${config.label}`;
+  }
+
+  // For VERIFIED status, include validity date
+  if (effectiveStatus === KycVerificationStatus.VERIFIED && status?.expiresAt) {
+    const expiresDate = formatDate(status.expiresAt);
+    return `${verificationType} ${config.label} (valid until ${expiresDate})`;
+  }
+
+  // For EXPIRED status
+  if (effectiveStatus === KycVerificationStatus.EXPIRED) {
+    return `${verificationType || "KYC/KYB"} ${config.label}`;
+  }
+
+  // For other statuses (PENDING, OUTREACH, REJECTED)
+  return `${verificationType || "KYC/KYB"} ${config.label}`;
+}
+
+/**
  * Compact badge version of KYC status for table cells
  */
 export function KycStatusBadge({
@@ -169,7 +199,7 @@ export function KycStatusBadge({
   className?: string;
 }) {
   const effectiveStatus = getEffectiveKycStatus(status);
-  const config = statusConfig[effectiveStatus];
+  const badgeLabel = getBadgeLabel(status, effectiveStatus);
 
   return (
     <TooltipProvider>
@@ -183,7 +213,7 @@ export function KycStatusBadge({
             )}
           >
             <KycStatusIcon status={status} size="sm" showTooltip={false} />
-            <span className="hidden sm:inline">{config.label}</span>
+            <span className="hidden sm:inline">{badgeLabel}</span>
           </span>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs">

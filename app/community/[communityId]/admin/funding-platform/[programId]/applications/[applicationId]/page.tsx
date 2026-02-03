@@ -103,7 +103,7 @@ export default function ApplicationDetailPage() {
   const { status: kycStatus } = useKycStatus(application?.referenceNumber, communityId);
 
   // Fetch KYC config to get form URLs
-  const { config: kycConfig, isEnabled: isKycEnabled } = useKycConfig(communityId);
+  const { isEnabled: isKycEnabled } = useKycConfig(communityId);
 
   // Use the application status hook
   const { updateStatusAsync } = useApplicationStatus(programId);
@@ -368,9 +368,7 @@ export default function ApplicationDetailPage() {
           program={program}
           connectedToTabs={!milestoneReviewUrl && !selectedStatus}
           kycStatus={kycStatus}
-          kycConfig={kycConfig}
           isKycEnabled={isKycEnabled}
-          communityId={communityId}
           statusActions={
             showStatusActions ? (
               <HeaderActions

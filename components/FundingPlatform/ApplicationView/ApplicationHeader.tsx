@@ -2,18 +2,14 @@
 
 import {
   CheckCircleIcon,
-  ClipboardIcon,
   ClockIcon,
   ExclamationTriangleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { type FC, type ReactNode, useState } from "react";
-import toast from "react-hot-toast";
+import type { FC, ReactNode } from "react";
 import { KycStatusBadge } from "@/components/KycStatusIcon";
-import { Button } from "@/components/Utilities/Button";
-import { useKycFormUrl } from "@/hooks/useKycStatus";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
-import { type KycConfigResponse, type KycStatusResponse, KycVerificationType } from "@/types/kyc";
+import type { KycStatusResponse } from "@/types/kyc";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { getProjectTitle } from "../helper/getProjectTitle";
@@ -60,12 +56,8 @@ export interface ApplicationHeaderProps {
   connectedToTabs?: boolean;
   /** KYC verification status for the application's project */
   kycStatus?: KycStatusResponse | null;
-  /** KYC configuration for the community */
-  kycConfig?: KycConfigResponse | null;
   /** Whether KYC is enabled for the community */
   isKycEnabled?: boolean;
-  /** Community ID or slug for generating KYC links */
-  communityId?: string;
 }
 
 export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
@@ -75,55 +67,11 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
   moreActions,
   connectedToTabs = false,
   kycStatus,
-  kycConfig,
   isKycEnabled = false,
-  communityId,
 }) => {
   const StatusIcon = statusIcons[application.status] || ClockIcon;
   const projectTitle = getProjectTitle(application);
   const hasActions = statusActions || moreActions;
-
-  const [copyingType, setCopyingType] = useState<KycVerificationType | null>(null);
-  const { mutateAsync: getFormUrl } = useKycFormUrl();
-
-  const handleCopyLink = async (verificationType: KycVerificationType) => {
-    if (!communityId || !application.referenceNumber) {
-      toast.error("Unable to generate verification link");
-      return;
-    }
-
-    setCopyingType(verificationType);
-    try {
-      // Generate the form URL from the backend
-      // Note: projectUID accepts both projectUID (0x...) and referenceNumber (APP-...)
-      const result = await getFormUrl({
-        communityIdOrSlug: communityId,
-        projectUID: application.referenceNumber,
-        verificationType,
-      });
-
-      // Separate clipboard operation from API call for better error handling
-      try {
-        await navigator.clipboard.writeText(result.formUrl);
-        toast.success(`${verificationType} verification link copied!`);
-      } catch (clipboardError) {
-        // Clipboard API can fail in insecure contexts or without permission
-        console.error("Clipboard copy failed:", clipboardError);
-        toast.error("Could not copy to clipboard. Please check browser permissions.");
-      }
-    } catch (apiError) {
-      console.error(`Failed to generate ${verificationType} verification link:`, apiError);
-      toast.error(`Failed to generate ${verificationType} verification link`);
-    } finally {
-      setCopyingType(null);
-    }
-  };
-
-  const showKycLinks =
-    isKycEnabled &&
-    communityId &&
-    application.referenceNumber &&
-    (kycConfig?.kycFormUrl || kycConfig?.kybFormUrl);
 
   return (
     <div
@@ -189,41 +137,6 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
             </div>
           )}
         </div>
-
-        {/* KYC Verification Links */}
-        {showKycLinks && (
-          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                KYC Verification Links:
-              </span>
-              {kycConfig?.kycFormUrl && (
-                <Button
-                  variant="secondary"
-                  className="text-xs px-3 py-1.5"
-                  disabled={copyingType !== null}
-                  isLoading={copyingType === KycVerificationType.KYC}
-                  onClick={() => handleCopyLink(KycVerificationType.KYC)}
-                >
-                  <ClipboardIcon className="h-4 w-4 mr-1" />
-                  Copy KYC Link
-                </Button>
-              )}
-              {kycConfig?.kybFormUrl && (
-                <Button
-                  variant="secondary"
-                  className="text-xs px-3 py-1.5"
-                  disabled={copyingType !== null}
-                  isLoading={copyingType === KycVerificationType.KYB}
-                  onClick={() => handleCopyLink(KycVerificationType.KYB)}
-                >
-                  <ClipboardIcon className="h-4 w-4 mr-1" />
-                  Copy KYB Link
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Actions row - only if there are status actions */}
