@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { formatUnits, isAddress, parseUnits } from "viem";
+import { isAddress } from "viem";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import {
@@ -47,17 +47,10 @@ export interface PayoutConfigurationModalProps {
 }
 
 /** Token type selection */
-type TokenType = "usdc" | "native" | "custom";
+type TokenType = "usdc" | "native";
 
 /** Get available networks based on environment */
 const getSupportedNetworks = () => getAvailableNetworks(envVars.isDev);
-
-/** Token decimals by type - USDC uses 6 decimals, native tokens use 18 */
-const TOKEN_DECIMALS: Record<TokenType, number> = {
-  usdc: 6,
-  native: 18,
-  custom: 18, // Default to 18 for custom tokens
-};
 
 export function PayoutConfigurationModal({
   isOpen,
@@ -99,40 +92,29 @@ export function PayoutConfigurationModal({
   const [totalGrantAmount, setTotalGrantAmount] = useState("");
   const [selectedNetwork, setSelectedNetwork] = useState<SupportedChainId>(10);
   const [tokenType, setTokenType] = useState<TokenType>("usdc");
-  const [customTokenAddress, setCustomTokenAddress] = useState("");
   const [milestoneAllocations, setMilestoneAllocations] = useState<MilestoneAllocation[]>([]);
 
   // Validation state
   const [addressError, setAddressError] = useState<string | null>(null);
   const [amountError, setAmountError] = useState<string | null>(null);
-  const [tokenAddressError, setTokenAddressError] = useState<string | null>(null);
   const [allocationErrors, setAllocationErrors] = useState<Record<string, string>>({});
 
   // Computed token values
   const selectedTokenSymbol = useMemo(() => {
     if (tokenType === "usdc") return "USDC";
-    if (tokenType === "native") return getNativeTokenSymbol(selectedNetwork);
-    return "Custom";
+    return getNativeTokenSymbol(selectedNetwork);
   }, [tokenType, selectedNetwork]);
 
   const selectedTokenAddress = useMemo(() => {
     if (tokenType === "usdc") {
       return TOKEN_ADDRESSES.usdc[selectedNetwork as keyof typeof TOKEN_ADDRESSES.usdc] || "";
     }
-    if (tokenType === "custom") {
-      return customTokenAddress;
-    }
     return ""; // Native token has no address
-  }, [tokenType, selectedNetwork, customTokenAddress]);
+  }, [tokenType, selectedNetwork]);
 
   const selectedNetworkName = useMemo(() => {
     return NETWORKS[selectedNetwork]?.name || `Chain ${selectedNetwork}`;
   }, [selectedNetwork]);
-
-  // Get token decimals based on selected token type
-  const selectedTokenDecimals = useMemo(() => {
-    return TOKEN_DECIMALS[tokenType];
-  }, [tokenType]);
 
   /**
    * Generate milestone allocations from grant milestones.
@@ -193,16 +175,20 @@ export function PayoutConfigurationModal({
     if (isOpen && currentConfig) {
       setPayoutAddress(currentConfig.payoutAddress || "");
 
-      // Determine token type from token address first (needed for decimals)
+      // Determine token type from token address (case-insensitive comparison)
       let detectedTokenType: TokenType = "usdc";
       if (currentConfig.tokenAddress) {
-        const usdcAddresses = Object.values(TOKEN_ADDRESSES.usdc) as string[];
-        if (usdcAddresses.includes(currentConfig.tokenAddress)) {
+        const normalizedAddress = currentConfig.tokenAddress.toLowerCase();
+        const usdcAddresses = Object.values(TOKEN_ADDRESSES.usdc).map((a) => a.toLowerCase());
+        if (usdcAddresses.includes(normalizedAddress)) {
           detectedTokenType = "usdc";
         } else {
-          detectedTokenType = "custom";
-          setCustomTokenAddress(currentConfig.tokenAddress);
+          // Unknown token address, default to native
+          detectedTokenType = "native";
         }
+      } else {
+        // No token address means native token
+        detectedTokenType = "native";
       }
       setTokenType(detectedTokenType);
 
@@ -210,33 +196,16 @@ export function PayoutConfigurationModal({
         setSelectedNetwork(currentConfig.chainId as SupportedChainId);
       }
 
-      // Convert totalGrantAmount from smallest units to human-readable
-      const decimals = TOKEN_DECIMALS[detectedTokenType];
+      // Set totalGrantAmount directly (stored in human-readable format)
       if (currentConfig.totalGrantAmount) {
-        try {
-          const humanReadable = formatUnits(BigInt(currentConfig.totalGrantAmount), decimals);
-          setTotalGrantAmount(humanReadable);
-        } catch {
-          // If conversion fails, use the raw value (might already be human-readable from old data)
-          setTotalGrantAmount(currentConfig.totalGrantAmount);
-        }
+        setTotalGrantAmount(currentConfig.totalGrantAmount);
       } else {
         setTotalGrantAmount("");
       }
 
-      // Convert allocation amounts from smallest units to human-readable
+      // Set allocation amounts directly (stored in human-readable format)
       if (currentConfig.milestoneAllocations && currentConfig.milestoneAllocations.length > 0) {
-        const convertedAllocations = currentConfig.milestoneAllocations.map((alloc) => {
-          if (!alloc.amount) return alloc;
-          try {
-            const humanReadable = formatUnits(BigInt(alloc.amount), decimals);
-            return { ...alloc, amount: humanReadable };
-          } catch {
-            // If conversion fails, use the raw value
-            return alloc;
-          }
-        });
-        setMilestoneAllocations(convertedAllocations);
+        setMilestoneAllocations(currentConfig.milestoneAllocations);
       } else {
         setMilestoneAllocations(generateAllocationsFromMilestones(null));
       }
@@ -259,11 +228,9 @@ export function PayoutConfigurationModal({
       setTotalGrantAmount("");
       setSelectedNetwork(10);
       setTokenType("usdc");
-      setCustomTokenAddress("");
       setMilestoneAllocations([]);
       setAddressError(null);
       setAmountError(null);
-      setTokenAddressError(null);
       setAllocationErrors({});
     }
   }, [isOpen]);
@@ -305,26 +272,6 @@ export function PayoutConfigurationModal({
     setAmountError(null);
     return true;
   }, []);
-
-  const validateTokenAddress = useCallback(
-    (address: string): boolean => {
-      if (tokenType !== "custom") {
-        setTokenAddressError(null);
-        return true;
-      }
-      if (!address) {
-        setTokenAddressError("Token address is required for custom token");
-        return false;
-      }
-      if (!isAddress(address)) {
-        setTokenAddressError("Invalid token address");
-        return false;
-      }
-      setTokenAddressError(null);
-      return true;
-    },
-    [tokenType]
-  );
 
   const validateAllocations = useCallback((): boolean => {
     if (milestoneAllocations.length === 0) {
@@ -374,52 +321,29 @@ export function PayoutConfigurationModal({
     // Validate all fields
     const isAddressValid = validateAddress(payoutAddress);
     const isAmountValid = validateAmount(totalGrantAmount);
-    const isTokenAddressValid = validateTokenAddress(customTokenAddress);
     const areAllocationsValid = validateAllocations();
 
-    if (!isAddressValid || !isAmountValid || !isTokenAddressValid || !areAllocationsValid) {
+    if (!isAddressValid || !isAmountValid || !areAllocationsValid) {
       return;
     }
 
-    // Convert totalGrantAmount from human-readable to smallest units
-    let totalGrantAmountInSmallestUnit: string | null = null;
-    if (totalGrantAmount) {
-      try {
-        totalGrantAmountInSmallestUnit = parseUnits(
-          totalGrantAmount,
-          selectedTokenDecimals
-        ).toString();
-      } catch {
-        toast.error("Invalid total grant amount format");
-        return;
-      }
-    }
-
-    // Convert milestone allocation amounts from human-readable to smallest units
-    let convertedAllocations: MilestoneAllocation[] | null = null;
-    if (milestoneAllocations.length > 0) {
-      try {
-        convertedAllocations = milestoneAllocations.map((alloc) => {
-          if (!alloc.amount || alloc.amount === "0" || alloc.amount === "") {
-            return { ...alloc, amount: "0" };
-          }
-          const amountInSmallestUnit = parseUnits(alloc.amount, selectedTokenDecimals).toString();
-          return { ...alloc, amount: amountInSmallestUnit };
-        });
-      } catch {
-        toast.error("Invalid allocation amount format");
-        return;
-      }
-    }
+    // Prepare allocations (ensure empty amounts are "0")
+    const preparedAllocations: MilestoneAllocation[] | null =
+      milestoneAllocations.length > 0
+        ? milestoneAllocations.map((alloc) => ({
+            ...alloc,
+            amount: alloc.amount || "0",
+          }))
+        : null;
 
     const configItem: PayoutConfigItem = {
       grantUID,
       projectUID,
       payoutAddress: payoutAddress || null,
-      totalGrantAmount: totalGrantAmountInSmallestUnit,
+      totalGrantAmount: totalGrantAmount || null,
       tokenAddress: selectedTokenAddress || null,
       chainId: selectedNetwork,
-      milestoneAllocations: convertedAllocations,
+      milestoneAllocations: preparedAllocations,
     };
 
     await saveConfigMutation.mutateAsync({
@@ -565,43 +489,9 @@ export function PayoutConfigurationModal({
                           <option value="native">
                             {getNativeTokenSymbol(selectedNetwork)} (Native)
                           </option>
-                          <option value="custom">Custom Token</option>
                         </select>
                       </div>
                     </div>
-
-                    {/* Custom Token Address */}
-                    {tokenType === "custom" && (
-                      <div>
-                        <label
-                          htmlFor="custom-token-address"
-                          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                        >
-                          Custom Token Address
-                        </label>
-                        <input
-                          id="custom-token-address"
-                          type="text"
-                          value={customTokenAddress}
-                          onChange={(e) => {
-                            setCustomTokenAddress(e.target.value);
-                            setTokenAddressError(null);
-                          }}
-                          onBlur={() => validateTokenAddress(customTokenAddress)}
-                          placeholder="0x..."
-                          className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-zinc-700 text-gray-900 dark:text-white font-mono text-sm ${
-                            tokenAddressError
-                              ? "border-red-500 dark:border-red-500"
-                              : "border-gray-300 dark:border-zinc-600"
-                          }`}
-                        />
-                        {tokenAddressError && (
-                          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                            {tokenAddressError}
-                          </p>
-                        )}
-                      </div>
-                    )}
 
                     {/* Total Grant Amount */}
                     <div>
