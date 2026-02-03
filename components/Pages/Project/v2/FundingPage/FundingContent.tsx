@@ -152,11 +152,9 @@ function GrantCard({
       {/* Row 2: Amount + Date range */}
       {(hasAmount || dateRange) && (
         <div className="flex items-center justify-between text-sm gap-2">
-          {hasAmount && (
-            <span className="font-medium text-gray-900 dark:text-white">
-              ${displayAmount} {displayCurrency}
-            </span>
-          )}
+          <span className="font-medium text-gray-900 dark:text-white">
+            {hasAmount ? `$${displayAmount} ${displayCurrency}` : ""}
+          </span>
           {dateRange && (
             <span className="text-gray-500 dark:text-gray-400 text-right">{dateRange}</span>
           )}
