@@ -1154,7 +1154,10 @@ export default function PayoutsAdminPage() {
                           {isLoadingKycStatuses ? (
                             <Spinner className="w-4 h-4" />
                           ) : (
-                            <KycStatusBadge status={kycStatuses.get(item.projectUid) ?? null} />
+                            <KycStatusBadge
+                              status={kycStatuses.get(item.projectUid) ?? null}
+                              showValidityInLabel={false}
+                            />
                           )}
                         </td>
                       )}

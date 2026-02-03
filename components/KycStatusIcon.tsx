@@ -163,14 +163,19 @@ const badgeColors: Record<KycVerificationStatus, string> = {
  */
 function getBadgeLabel(
   status: KycStatusResponse | null,
-  effectiveStatus: KycVerificationStatus
+  effectiveStatus: KycVerificationStatus,
+  showValidityInLabel: boolean
 ): string {
   const config = statusConfig[effectiveStatus];
   const verificationType = status?.verificationType ?? "KYC/KYB";
   const statusLabel = config.label.toLowerCase();
 
   // For VERIFIED status, include validity date
-  if (effectiveStatus === KycVerificationStatus.VERIFIED && status?.expiresAt) {
+  if (
+    effectiveStatus === KycVerificationStatus.VERIFIED &&
+    status?.expiresAt &&
+    showValidityInLabel
+  ) {
     const expiresDate = formatDate(status.expiresAt);
     return `${verificationType} ${statusLabel} (valid until ${expiresDate})`;
   }
@@ -190,12 +195,14 @@ function getBadgeLabel(
 export function KycStatusBadge({
   status,
   className,
+  showValidityInLabel = true,
 }: {
   status: KycStatusResponse | null;
   className?: string;
+  showValidityInLabel?: boolean;
 }) {
   const effectiveStatus = getEffectiveKycStatus(status);
-  const badgeLabel = getBadgeLabel(status, effectiveStatus);
+  const badgeLabel = getBadgeLabel(status, effectiveStatus, showValidityInLabel);
 
   return (
     <TooltipProvider>
@@ -213,7 +220,7 @@ export function KycStatusBadge({
           </span>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs">
-          <KycTooltipContent status={status} showDates={false} />
+          <KycTooltipContent status={status} showDates={!showValidityInLabel} />
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
