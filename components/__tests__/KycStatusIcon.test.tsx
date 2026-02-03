@@ -237,6 +237,18 @@ describe("KycStatusBadge", () => {
       const tooltipTexts = await screen.findAllByText("KYC verification completed successfully");
       expect(tooltipTexts.length).toBeGreaterThanOrEqual(1);
     });
+
+    it("should show validity in tooltip when validity is hidden in label", async () => {
+      const user = userEvent.setup();
+
+      render(<KycStatusBadge status={createMockStatus()} showValidityInLabel={false} />);
+
+      const badge = screen.getByText("KYC verified").closest("span");
+      await user.hover(badge!);
+
+      const expiresRows = await screen.findAllByText(/Expires:/);
+      expect(expiresRows.length).toBeGreaterThanOrEqual(1);
+    });
   });
 
   describe("custom className", () => {
