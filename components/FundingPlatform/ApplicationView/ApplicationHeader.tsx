@@ -132,7 +132,7 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
           </div>
           {isKycEnabled && (
             <div className="flex items-center gap-1.5">
-              <span className="text-gray-500 dark:text-gray-500">KYC:</span>
+              <span className="text-gray-500 dark:text-gray-500">KYC/KYB:</span>
               <KycStatusBadge status={kycStatus ?? null} />
             </div>
           )}

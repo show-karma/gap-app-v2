@@ -166,8 +166,8 @@ describe("KycStatusBadge", () => {
     it("should render badge with correct label for VERIFIED status", () => {
       render(<KycStatusBadge status={createMockStatus()} />);
 
-      // New format: "{verificationType} Verified (valid until {date})"
-      expect(screen.getByText(/KYC Verified \(valid until/)).toBeInTheDocument();
+      // Badge shows only status with validity date
+      expect(screen.getByText(/Verified \(valid until/)).toBeInTheDocument();
     });
 
     it("should render badge with correct label for PENDING status", () => {
@@ -175,8 +175,8 @@ describe("KycStatusBadge", () => {
         <KycStatusBadge status={createMockStatus({ status: KycVerificationStatus.PENDING })} />
       );
 
-      // New format: "{verificationType} Pending"
-      expect(screen.getByText("KYC Pending")).toBeInTheDocument();
+      // Badge shows only status label
+      expect(screen.getByText("Pending")).toBeInTheDocument();
     });
 
     it("should render badge with correct colors for each status", () => {
@@ -211,15 +211,15 @@ describe("KycStatusBadge", () => {
         />
       );
 
-      // New format: "{verificationType} Expired"
-      expect(screen.getByText("KYC Expired")).toBeInTheDocument();
+      // Badge shows only status label
+      expect(screen.getByText("Expired")).toBeInTheDocument();
     });
 
     it("should render NOT_STARTED badge when status is null", () => {
       render(<KycStatusBadge status={null} />);
 
-      // New format: "KYC/KYB: Not Started"
-      expect(screen.getByText("KYC/KYB: Not Started")).toBeInTheDocument();
+      // Badge shows only status label
+      expect(screen.getByText("Not Started")).toBeInTheDocument();
     });
   });
 
@@ -229,8 +229,8 @@ describe("KycStatusBadge", () => {
 
       render(<KycStatusBadge status={createMockStatus()} />);
 
-      // New format includes verificationType and validity date
-      const badge = screen.getByText(/KYC Verified/).closest("span");
+      // Badge shows status with validity date
+      const badge = screen.getByText(/Verified \(valid until/).closest("span");
       await user.hover(badge!);
 
       // Use getAllByText since tooltip may render multiple elements

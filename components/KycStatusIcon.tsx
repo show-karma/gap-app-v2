@@ -159,33 +159,22 @@ const badgeColors: Record<KycVerificationStatus, string> = {
 };
 
 /**
- * Format the badge label based on verification type and status
+ * Format the badge label - shows only status (the "KYC/KYB:" label is shown separately)
  */
 function getBadgeLabel(
   status: KycStatusResponse | null,
   effectiveStatus: KycVerificationStatus
 ): string {
   const config = statusConfig[effectiveStatus];
-  const verificationType = status?.verificationType;
-
-  // For NOT_STARTED, no verification type is known yet
-  if (effectiveStatus === KycVerificationStatus.NOT_STARTED) {
-    return `KYC/KYB: ${config.label}`;
-  }
 
   // For VERIFIED status, include validity date
   if (effectiveStatus === KycVerificationStatus.VERIFIED && status?.expiresAt) {
     const expiresDate = formatDate(status.expiresAt);
-    return `${verificationType} ${config.label} (valid until ${expiresDate})`;
+    return `${config.label} (valid until ${expiresDate})`;
   }
 
-  // For EXPIRED status
-  if (effectiveStatus === KycVerificationStatus.EXPIRED) {
-    return `${verificationType || "KYC/KYB"} ${config.label}`;
-  }
-
-  // For other statuses (PENDING, OUTREACH, REJECTED)
-  return `${verificationType || "KYC/KYB"} ${config.label}`;
+  // For all other statuses, just show the label
+  return config.label;
 }
 
 /**
