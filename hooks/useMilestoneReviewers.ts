@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { toast } from "react-hot-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { milestoneReviewersService } from "@/services/milestone-reviewers.service";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
@@ -10,6 +11,7 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
  */
 export function useMilestoneReviewers(programId: string) {
   const queryClient = useQueryClient();
+  const { authenticated } = useAuth();
 
   // Query for fetching milestone reviewers
   const query = useQuery({
@@ -17,7 +19,7 @@ export function useMilestoneReviewers(programId: string) {
     queryFn: async () => {
       return milestoneReviewersService.getReviewers(programId);
     },
-    enabled: !!programId,
+    enabled: !!programId && authenticated,
   });
 
   // Mutation for adding a milestone reviewer
