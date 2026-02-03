@@ -5,7 +5,6 @@ import { useAccount } from "wagmi";
 import type { MilestoneCompletedFormData } from "@/components/Forms/GrantMilestoneCompletion";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { getProjectGrants } from "@/services/project-grants.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";

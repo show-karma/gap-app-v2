@@ -7,10 +7,12 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import type { FC, ReactNode } from "react";
+import { KycStatusBadge } from "@/components/KycStatusIcon";
 import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
+import type { KycStatusResponse } from "@/types/kyc";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
-import { getProjectTitle } from "../helper/getProjecTitle";
+import { getProjectTitle } from "../helper/getProjectTitle";
 
 const statusColors: Record<string, string> = {
   pending:
@@ -52,6 +54,10 @@ export interface ApplicationHeaderProps {
   moreActions?: ReactNode;
   /** When true, removes bottom border and rounding to connect with tabs below */
   connectedToTabs?: boolean;
+  /** KYC verification status for the application's project */
+  kycStatus?: KycStatusResponse | null;
+  /** Whether KYC is enabled for the community */
+  isKycEnabled?: boolean;
 }
 
 export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
@@ -60,6 +66,8 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
   statusActions,
   moreActions,
   connectedToTabs = false,
+  kycStatus,
+  isKycEnabled = false,
 }) => {
   const StatusIcon = statusIcons[application.status] || ClockIcon;
   const projectTitle = getProjectTitle(application);
@@ -122,6 +130,12 @@ export const ApplicationHeader: FC<ApplicationHeaderProps> = ({
               {formatDate(application.updatedAt)}
             </span>
           </div>
+          {isKycEnabled && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-500 dark:text-gray-500">KYC/KYB:</span>
+              <KycStatusBadge status={kycStatus ?? null} />
+            </div>
+          )}
         </div>
       </div>
 

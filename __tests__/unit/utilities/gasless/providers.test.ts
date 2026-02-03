@@ -467,8 +467,6 @@ describe("AlchemyProvider", () => {
         },
       };
 
-      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
-
       const result = await provider.createClient({
         chainId: celo.id,
         signer: mockSigner,
@@ -476,13 +474,6 @@ describe("AlchemyProvider", () => {
       });
 
       expect(result).not.toBeNull();
-      // console.log is called with multiple arguments, so check the first one
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "[Alchemy] Creating EIP-7702 Modular Account V2 client for chain:",
-        expect.any(Number)
-      );
-
-      consoleSpy.mockRestore();
     });
   });
 

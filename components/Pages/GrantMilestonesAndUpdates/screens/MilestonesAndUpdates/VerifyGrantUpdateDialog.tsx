@@ -158,7 +158,6 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
         });
       closeModal();
     } catch (error: any) {
-      console.log("[VerifyGrantUpdateDialog] error:", error);
       showError(MESSAGES.GRANT.GRANT_UPDATE.VERIFY.ERROR);
       errorManager(
         MESSAGES.GRANT.GRANT_UPDATE.VERIFY.ERROR,

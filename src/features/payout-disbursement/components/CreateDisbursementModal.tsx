@@ -22,7 +22,7 @@ import {
 import pluralize from "pluralize";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { erc20Abi, formatUnits, isAddress, parseUnits } from "viem";
+import { formatUnits, isAddress, parseUnits } from "viem";
 import { useAccount, useChainId, useWalletClient } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -235,7 +235,7 @@ export function CreateDisbursementModal({
   });
 
   // Transaction state
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [_isProcessing, setIsProcessing] = useState(false);
   const [transactionResult, setTransactionResult] = useState<{
     txHash: string;
     safeUrl: string;
@@ -855,8 +855,8 @@ export function CreateDisbursementModal({
     }
   };
 
-  const hasMilestoneErrors = Object.keys(milestoneValidationErrors).length > 0;
-  const hasDisbursementErrors = Object.keys(disbursementValidationErrors).length > 0;
+  const _hasMilestoneErrors = Object.keys(milestoneValidationErrors).length > 0;
+  const _hasDisbursementErrors = Object.keys(disbursementValidationErrors).length > 0;
 
   const canProceed =
     validGrants.length > 0 &&

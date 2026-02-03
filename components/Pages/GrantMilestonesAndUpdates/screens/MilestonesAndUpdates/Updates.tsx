@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { PencilSquareIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
-import type { IMilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
@@ -15,7 +14,6 @@ import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
-import { getProjectGrants } from "@/services/project-grants.service";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
