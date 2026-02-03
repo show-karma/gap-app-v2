@@ -19,6 +19,11 @@ export interface PermissionContextValue {
    * in the current community context. Only set when communityId is provided without programId.
    */
   hasReviewerAccessInCommunity: boolean;
+  /**
+   * When true, indicates the user has admin access to at least one community.
+   * Only set when no communityId is provided (global context).
+   */
+  hasAdminAccessInAnyCommunity: boolean;
   can: (permission: Permission) => boolean;
   canAny: (permissions: Permission[]) => boolean;
   canAll: (permissions: Permission[]) => boolean;
@@ -38,4 +43,10 @@ export interface PermissionsResponse {
    * specific programs the user can review.
    */
   hasReviewerAccessInCommunity?: boolean;
+  /**
+   * When true, indicates the user has admin access to at least one community.
+   * Only set when no communityId is provided (global context).
+   * Use the /v2/user/communities/admin endpoint to get the specific communities.
+   */
+  hasAdminAccessInAnyCommunity?: boolean;
 }

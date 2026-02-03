@@ -30,9 +30,10 @@ import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
-import { useStaff } from "@/hooks/useStaff";
 import { useWallet } from "@/hooks/useWallet";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
+import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
+import { Role } from "@/src/core/rbac/types";
 import { SetChainPayoutAddressModal } from "@/src/features/chain-payout-address";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
@@ -141,7 +142,12 @@ export const ProjectOptionsMenu = () => {
   const { isOwner: isContractOwner } = useOwnerStore();
   const isCommunityAdmin = useIsCommunityAdmin();
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { authenticated } = useAuth();
+  const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
+    {},
+    { enabled: authenticated }
+  );
+  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
 
   // Event handlers to reset state when dialogs close
   const handleLinkContractsDialogClose = () => {
@@ -286,7 +292,7 @@ export const ProjectOptionsMenu = () => {
         </>
       )}
 
-      {!isStaffLoading && (isAuthorized || isStaff || isAuthenticated) && (
+      {!isPermissionsLoading && (isAuthorized || isSuperAdmin || isAuthenticated) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -300,7 +306,7 @@ export const ProjectOptionsMenu = () => {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 max-h-96 overflow-y-auto">
-            {(isAuthorized || isStaff) && (
+            {(isAuthorized || isSuperAdmin) && (
               <>
                 <DropdownMenuItem onClick={openProjectEditModal} className={buttonClassName}>
                   <PencilSquareIcon className="h-5 w-5" aria-hidden="true" />
@@ -310,7 +316,7 @@ export const ProjectOptionsMenu = () => {
                   <ArrowDownOnSquareIcon className="h-5 w-5" aria-hidden="true" />
                   Merge
                 </DropdownMenuItem>
-                {!isStaff ? (
+                {!isSuperAdmin ? (
                   <DropdownMenuItem
                     onClick={openTransferOwnershipModal}
                     className={buttonClassName}
@@ -380,7 +386,7 @@ export const ProjectOptionsMenu = () => {
               </>
             )}
             {/* Non-authorized but logged-in users: View Contracts only */}
-            {!isAuthorized && !isStaff && isAuthenticated && project && (
+            {!isAuthorized && !isSuperAdmin && isAuthenticated && project && (
               <DropdownMenuItem
                 onClick={() => setShowViewContractsDialog(true)}
                 className={buttonClassName}

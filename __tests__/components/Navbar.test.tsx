@@ -39,9 +39,12 @@ jest.mock("@/hooks/usePermissions", () => ({
   })),
 }));
 
-jest.mock("@/hooks/useStaff", () => ({
-  useStaff: jest.fn(() => ({
-    isStaff: false,
+// Mock RBAC permissions hook (replaces legacy useStaff)
+jest.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+  usePermissionsQuery: jest.fn(() => ({
+    data: null,
+    isLoading: false,
+    isError: false,
   })),
 }));
 

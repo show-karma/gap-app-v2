@@ -12,6 +12,7 @@ import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompleti
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import {
+  PermissionProvider,
   useIsReviewer,
   useIsReviewerType,
   usePermissionContext,
@@ -31,6 +32,39 @@ interface MilestonesReviewPageProps {
 }
 
 export function MilestonesReviewPage({
+  communityId,
+  projectId,
+  programId,
+  referrer,
+}: MilestonesReviewPageProps) {
+  // Extract programId from URL param (supports both "959" and legacy "959_42161" formats)
+  const { parsedProgramId } = useMemo(() => {
+    if (programId.includes("_")) {
+      const [id] = programId.split("_");
+      return { parsedProgramId: id };
+    }
+    return { parsedProgramId: programId };
+  }, [programId]);
+
+  // Wrap with PermissionProvider that includes programId for proper reviewer role detection
+  return (
+    <PermissionProvider
+      resourceContext={{
+        communityId,
+        programId: parsedProgramId,
+      }}
+    >
+      <MilestonesReviewPageContent
+        communityId={communityId}
+        projectId={projectId}
+        programId={programId}
+        referrer={referrer}
+      />
+    </PermissionProvider>
+  );
+}
+
+function MilestonesReviewPageContent({
   communityId,
   projectId,
   programId,

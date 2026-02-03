@@ -41,8 +41,8 @@ export const useAuth = () => {
    * IMPORTANT: When creating new auth/permission hooks, add their query key here
    * using the centralized QUERY_KEYS from utilities/queryKeys.ts:
    * - useCheckCommunityAdmin → QUERY_KEYS.COMMUNITY.IS_ADMIN_BASE
-   * - useStaff → QUERY_KEYS.AUTH.STAFF_AUTHORIZATION_BASE
    * - useContractOwner → QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE
+   * - RBAC permissions (usePermissionsQuery) → QUERY_KEYS.AUTH.PERMISSIONS_BASE
    */
   useEffect(() => {
     // Detect logout: was authenticated, now not authenticated
@@ -53,7 +53,6 @@ export const useAuth = () => {
       // - resetQueries also triggers refetches for active queries
       // - removeQueries cleanly removes from cache without any refetch
       queryClient.removeQueries({ queryKey: QUERY_KEYS.COMMUNITY.IS_ADMIN_BASE });
-      queryClient.removeQueries({ queryKey: QUERY_KEYS.AUTH.STAFF_AUTHORIZATION_BASE });
       queryClient.removeQueries({ queryKey: QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE });
       queryClient.removeQueries({ queryKey: QUERY_KEYS.AUTH.PERMISSIONS_BASE });
     }

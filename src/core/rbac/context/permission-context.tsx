@@ -32,6 +32,7 @@ const defaultContextValue: PermissionContextValue = {
   isGuestDueToError: true, // Indicates usage outside PermissionProvider
   resourceContext: defaultResourceContext,
   hasReviewerAccessInCommunity: false,
+  hasAdminAccessInAnyCommunity: false,
   can: () => false,
   canAny: () => false,
   canAll: () => false,
@@ -79,6 +80,7 @@ export function PermissionProvider({ children, resourceContext = {} }: Permissio
       isGuestDueToError,
       resourceContext: context,
       hasReviewerAccessInCommunity: data?.hasReviewerAccessInCommunity ?? false,
+      hasAdminAccessInAnyCommunity: data?.hasAdminAccessInAnyCommunity ?? false,
       can: (permission: Permission) => hasPermission(permissions, permission),
       canAny: (perms: Permission[]) => hasAnyPermission(permissions, perms),
       canAll: (perms: Permission[]) => hasAllPermissions(permissions, perms),
@@ -141,11 +143,6 @@ export function useIsCommunityAdmin(): boolean {
   return !isLoading && hasRoleOrHigher(Role.COMMUNITY_ADMIN);
 }
 
-export function useIsSuperAdmin(): boolean {
-  const { hasRole, isLoading } = usePermissionContext();
-  return !isLoading && hasRole(Role.SUPER_ADMIN);
-}
-
 /**
  * Checks if user has reviewer role for the current program context.
  * When at community level (no programId), this returns false.
@@ -167,6 +164,16 @@ export function useIsReviewer(): boolean {
 export function useHasReviewerAccessInCommunity(): boolean {
   const { hasReviewerAccessInCommunity, isLoading } = usePermissionContext();
   return !isLoading && hasReviewerAccessInCommunity;
+}
+
+/**
+ * Checks if user has admin access to at least one community.
+ * Only meaningful when at global level (no communityId provided).
+ * When at community level, use `useIsCommunityAdmin` instead.
+ */
+export function useHasAdminAccessInAnyCommunity(): boolean {
+  const { hasAdminAccessInAnyCommunity, isLoading } = usePermissionContext();
+  return !isLoading && hasAdminAccessInAnyCommunity;
 }
 
 export function useIsGuestDueToError(): boolean {

@@ -13,9 +13,9 @@ import {
   createMockUseCommunitiesStore,
   createMockUseContributorProfileModalStore,
   createMockUseOwnerStore,
+  createMockUsePermissionsQuery,
   createMockUseRegistryStore,
   createMockUseReviewerPrograms,
-  createMockUseStaff,
   createMockUseTheme,
   renderWithProviders,
   resetMockAuthState,
@@ -88,7 +88,7 @@ describe("NavbarUserMenu", () => {
         mockUseReviewerPrograms: createMockUseReviewerPrograms(
           authFixture.permissions.reviewerPrograms
         ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
+        mockUsePermissionsQuery: createMockUsePermissionsQuery(authFixture.permissions.isStaff),
         mockUseOwnerStore: createMockUseOwnerStore(authFixture.permissions.isOwner),
         mockUseRegistryStore: createMockUseRegistryStore(
           authFixture.permissions.isPoolManager,

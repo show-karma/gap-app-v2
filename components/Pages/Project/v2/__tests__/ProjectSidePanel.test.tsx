@@ -120,12 +120,12 @@ jest.mock("@/store", () => ({
   }),
 }));
 
-// Mock useStaff hook to prevent authorization
-jest.mock("@/hooks/useStaff", () => ({
-  useStaff: () => ({
-    isStaff: false,
+// Mock RBAC permissions hook (replaces legacy useStaff)
+jest.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+  usePermissionsQuery: () => ({
+    data: null,
     isLoading: false,
-    error: null,
+    isError: false,
   }),
 }));
 

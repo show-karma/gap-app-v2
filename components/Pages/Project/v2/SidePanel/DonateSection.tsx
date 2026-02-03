@@ -6,7 +6,9 @@ import { useAccount } from "wagmi";
 import { SingleProjectDonateModal } from "@/components/Donation/SingleProject/SingleProjectDonateModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useStaff } from "@/hooks/useStaff";
+import { useAuth } from "@/hooks/useAuth";
+import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
+import { Role } from "@/src/core/rbac/types";
 import {
   hasConfiguredPayoutAddresses,
   SetChainPayoutAddressModal,
@@ -32,10 +34,19 @@ export function useDonationVisibility(project: Project): boolean {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { authenticated } = useAuth();
+  const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
+    {},
+    { enabled: authenticated }
+  );
+  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
 
   const canSetPayoutAddress =
-    isProjectOwner || isOwner || isProjectAdmin || isCommunityAdmin || (!isStaffLoading && isStaff);
+    isProjectOwner ||
+    isOwner ||
+    isProjectAdmin ||
+    isCommunityAdmin ||
+    (!isPermissionsLoading && isSuperAdmin);
 
   const hasPayoutAddresses = hasConfiguredPayoutAddresses(project.chainPayoutAddress);
 
@@ -68,11 +79,20 @@ export function DonateSection({ project, className }: DonateSectionProps) {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { authenticated } = useAuth();
+  const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
+    {},
+    { enabled: authenticated }
+  );
+  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
 
   // Can set payout address: project member/owner/admin/staff
   const canSetPayoutAddress =
-    isProjectOwner || isOwner || isProjectAdmin || isCommunityAdmin || (!isStaffLoading && isStaff);
+    isProjectOwner ||
+    isOwner ||
+    isProjectAdmin ||
+    isCommunityAdmin ||
+    (!isPermissionsLoading && isSuperAdmin);
 
   // Create project data for donation modal
   const donationProject = {

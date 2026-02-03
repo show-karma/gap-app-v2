@@ -4,10 +4,10 @@ import { createContext, type ReactNode, useContext, useMemo } from "react";
 import type { Hex } from "viem";
 import { useAuth } from "@/hooks/useAuth";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
-import { useStaff } from "@/hooks/useStaff";
 import type { FundingProgram } from "@/services/fundingPlatformService";
+import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
+import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore } from "@/store";
-import { useCommunitiesStore } from "@/store/communities";
 import { useRegistryStore } from "@/store/registry";
 
 /**
@@ -95,11 +95,11 @@ export function NavbarPermissionsProvider({ children }: NavbarPermissionsProvide
   // Auth state - called once
   const { authenticated: isLoggedIn, address, ready } = useAuth();
 
-  // Staff permissions - called once
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
-
-  // Community admin state - called once
-  const { communities } = useCommunitiesStore();
+  // RBAC permissions (global context - no specific community/program)
+  const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
+    {},
+    { enabled: isLoggedIn }
+  );
 
   // Owner state - called once
   const isOwner = useOwnerStore((state) => state.isOwner);
@@ -111,14 +111,12 @@ export function NavbarPermissionsProvider({ children }: NavbarPermissionsProvide
   const { programs: reviewerPrograms } = useReviewerPrograms();
 
   // Memoize the context value to prevent unnecessary re-renders
-  // Only include primitive values and stable references in dependencies
-  // Derived values (isCommunityAdmin, hasReviewerRole, hasAdminAccess, isRegistryAllowed)
-  // are computed inside useMemo and should NOT be in the dependency array
   const value = useMemo<NavbarPermissionsContextValue>(() => {
-    // Compute derived values inside useMemo
-    const isCommunityAdmin = communities.length !== 0;
+    // Extract from RBAC permissions
+    const isStaff = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+    const isCommunityAdmin = permissions?.hasAdminAccessInAnyCommunity ?? false;
     const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
-    const hasAdminAccess = !isStaffLoading && (isStaff || isOwner || isCommunityAdmin);
+    const hasAdminAccess = !isPermissionsLoading && (isStaff || isOwner || isCommunityAdmin);
     const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
 
     return {
@@ -127,9 +125,9 @@ export function NavbarPermissionsProvider({ children }: NavbarPermissionsProvide
       address,
       ready,
 
-      // Staff permissions
+      // Staff permissions (from RBAC)
       isStaff,
-      isStaffLoading,
+      isStaffLoading: isPermissionsLoading,
 
       // Project/Community ownership
       isOwner,
@@ -148,14 +146,12 @@ export function NavbarPermissionsProvider({ children }: NavbarPermissionsProvide
       isRegistryAllowed,
     };
   }, [
-    // Only primitive dependencies - NOT derived values
     isLoggedIn,
     address,
     ready,
-    isStaff,
-    isStaffLoading,
+    permissions,
+    isPermissionsLoading,
     isOwner,
-    communities.length, // Use .length instead of communities array for stable comparison
     reviewerPrograms,
     isPoolManager,
     isRegistryAdmin,

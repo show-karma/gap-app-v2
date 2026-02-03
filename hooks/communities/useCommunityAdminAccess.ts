@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
-import { useStaff } from "@/hooks/useStaff";
+import { useAuth } from "@/hooks/useAuth";
+import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
+import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore } from "@/store";
 import { useContractOwner } from "../useContractOwner";
 
@@ -10,7 +12,7 @@ interface UseCommunityAdminAccessResult {
   checks: {
     isCommunityAdmin: boolean;
     isOwner: boolean;
-    isStaff: boolean;
+    isSuperAdmin: boolean;
   };
 }
 
@@ -20,7 +22,7 @@ interface UseCommunityAdminAccessResult {
  * Combines three access checks:
  * - Community admin status
  * - Contract owner status
- * - Staff status
+ * - Super admin status (RBAC)
  *
  * @param communityId - The community UID or slug
  * @returns Object containing hasAccess flag, loading state, and individual check results
@@ -36,22 +38,27 @@ interface UseCommunityAdminAccessResult {
 export const useCommunityAdminAccess = (communityId?: string): UseCommunityAdminAccessResult => {
   const { isCommunityAdmin, isLoading: isCheckingAdmin } = useIsCommunityAdmin(communityId);
   const { isOwner, isOwnerLoading } = useOwnerStore();
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { authenticated } = useAuth();
+  const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
+    {},
+    { enabled: authenticated }
+  );
+  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
 
   // Memoize computed values
   const hasAccess = useMemo(
-    () => isCommunityAdmin || isOwner || isStaff,
-    [isCommunityAdmin, isOwner, isStaff]
+    () => isCommunityAdmin || isOwner || isSuperAdmin,
+    [isCommunityAdmin, isOwner, isSuperAdmin]
   );
 
   const isLoading = useMemo(
-    () => isCheckingAdmin || isStaffLoading || isOwnerLoading,
-    [isCheckingAdmin, isStaffLoading, isOwnerLoading]
+    () => isCheckingAdmin || isPermissionsLoading || isOwnerLoading,
+    [isCheckingAdmin, isPermissionsLoading, isOwnerLoading]
   );
 
   const checks = useMemo(
-    () => ({ isCommunityAdmin, isOwner, isStaff }),
-    [isCommunityAdmin, isOwner, isStaff]
+    () => ({ isCommunityAdmin, isOwner, isSuperAdmin }),
+    [isCommunityAdmin, isOwner, isSuperAdmin]
   );
 
   return {

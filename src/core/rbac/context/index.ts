@@ -3,6 +3,7 @@ export {
   useCan,
   useCanAll,
   useCanAny,
+  useHasAdminAccessInAnyCommunity,
   useHasReviewerAccessInCommunity,
   useHasRole,
   useHasRoleOrHigher,
@@ -11,7 +12,6 @@ export {
   useIsGuestDueToError,
   useIsReviewer,
   useIsReviewerType,
-  useIsSuperAdmin,
   usePermissionContext,
   useUserRoles,
 } from "./permission-context";

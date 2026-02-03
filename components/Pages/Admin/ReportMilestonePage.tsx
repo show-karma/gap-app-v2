@@ -266,6 +266,27 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
 
   const programLabels = useMemo(() => programOptions.map(({ label }) => label), [programOptions]);
 
+  // For reviewers (non-admins), automatically filter by their programs if no explicit filter is set
+  // This ensures reviewers only see grants from programs they have access to
+  const effectiveProgramIds = useMemo(() => {
+    // If user has explicit filter selection, use that
+    if (normalizedProgramIds.length > 0) {
+      // For reviewers, ensure they can only filter by their assigned programs
+      if (!hasAccess && reviewerProgramIds.size > 0) {
+        return normalizedProgramIds.filter((id) => reviewerProgramIds.has(id));
+      }
+      return normalizedProgramIds;
+    }
+
+    // If no filter and user is a reviewer (not admin), auto-filter by their programs
+    if (!hasAccess && reviewerProgramIds.size > 0) {
+      return Array.from(reviewerProgramIds);
+    }
+
+    // Admins/staff/owners see all programs by default
+    return normalizedProgramIds;
+  }, [normalizedProgramIds, hasAccess, reviewerProgramIds]);
+
   const { data, isLoading } = useQuery<ReportAPIResponse>({
     queryKey: [
       "reportMilestones",
@@ -273,10 +294,10 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
       currentPage,
       sortBy,
       sortOrder,
-      normalizedProgramIds,
+      effectiveProgramIds,
     ],
     queryFn: async () =>
-      fetchReports(communityId, currentPage, itemsPerPage, sortBy, sortOrder, normalizedProgramIds),
+      fetchReports(communityId, currentPage, itemsPerPage, sortBy, sortOrder, effectiveProgramIds),
     enabled: Boolean(communityId) && isAuthorized,
   });
 
@@ -624,12 +645,12 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
                           <td className="px-4 py-2">
                             {report.programId && (
                               <Link
-                                href={PAGES.ADMIN.PROJECT_MILESTONES(
+                                href={PAGES.REVIEWER.FUNDING_PLATFORM.MILESTONES(
                                   communityId,
-                                  report.projectUid,
                                   report.programId.includes("_")
                                     ? report.programId.split("_")[0]
-                                    : report.programId
+                                    : report.programId,
+                                  report.projectUid
                                 )}
                                 target="_blank"
                                 rel="noopener noreferrer"

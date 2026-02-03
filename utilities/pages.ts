@@ -33,6 +33,10 @@ export const PAGES = {
       `/community/${community}/manage/funding-platform/${programId}/applications/${applicationId}`,
     QUESTION_BUILDER: (community: string, programId: string) =>
       `/community/${community}/manage/funding-platform/${programId}/question-builder`,
+    FUNDING_PLATFORM: {
+      MILESTONES: (community: string, programId: string, projectId: string) =>
+        `/community/${community}/manage/funding-platform/${programId}/milestones/${projectId}`,
+    },
   },
   MANAGE: {
     ROOT: (community: string) => `/community/${community}/manage`,
@@ -68,8 +72,6 @@ export const PAGES = {
     PROJECTS: `/admin/projects`,
     PAYOUTS: (community: string) => `/community/${community}/manage/payouts`,
     PROGRAM_SCORES: (community: string) => `/community/${community}/manage/program-scores`,
-    PROJECT_MILESTONES: (community: string, projectId: string, programId: string) =>
-      `/community/${community}/manage/${projectId}/milestones?programIds=${programId}`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,

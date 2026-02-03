@@ -79,11 +79,9 @@ jest.mock("@/utilities/pages", () => ({
       FUNDING_PLATFORM: {
         APPLICATIONS: (communityId: string, programId: string) =>
           `/community/${communityId}/manage/funding-platform/${programId}/applications`,
+        MILESTONES: (communityId: string, programId: string, projectId: string) =>
+          `/community/${communityId}/manage/funding-platform/${programId}/milestones/${projectId}`,
       },
-    },
-    ADMIN: {
-      PROJECT_MILESTONES: (communityId: string, projectUID: string, programId: string) =>
-        `/community/${communityId}/manage/project/${projectUID}/milestones?programId=${programId}`,
     },
   },
 }));
