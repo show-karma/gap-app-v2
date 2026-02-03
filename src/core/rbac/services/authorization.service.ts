@@ -17,8 +17,8 @@ interface AuthPermissionsApiResponse {
     applicationId?: string;
     milestoneId?: string;
   };
-  hasReviewerAccessInCommunity?: boolean;
-  hasAdminAccessInAnyCommunity?: boolean;
+  isAdmin: boolean;
+  isReviewer: boolean;
 }
 
 export interface GetPermissionsParams {
@@ -37,6 +37,8 @@ const DEFAULT_GUEST_PERMISSIONS: PermissionsResponse = {
   },
   permissions: [],
   resourceContext: {},
+  isAdmin: false,
+  isReviewer: false,
 };
 
 export const authorizationService = {
@@ -46,8 +48,6 @@ export const authorizationService = {
     );
 
     if (error || !response) {
-      // Log error for monitoring but don't show intrusive UI
-      // Users will still have guest access, just with limited permissions
       if (error) {
         errorManager("Failed to fetch user permissions", error, {
           context: "authorization.service.getPermissions",
@@ -70,8 +70,8 @@ export const authorizationService = {
       },
       permissions: response.permissions as Permission[],
       resourceContext: response.resourceContext as ResourceContext,
-      hasReviewerAccessInCommunity: response.hasReviewerAccessInCommunity,
-      hasAdminAccessInAnyCommunity: response.hasAdminAccessInAnyCommunity,
+      isAdmin: response.isAdmin,
+      isReviewer: response.isReviewer,
     };
   },
 };

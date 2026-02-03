@@ -19,7 +19,6 @@ import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAc
 import { useAuth } from "@/hooks/useAuth";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import {
-  useHasReviewerAccessInCommunity,
   useIsReviewerType,
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
@@ -132,10 +131,8 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
 
   // Use RBAC to check milestone reviewer status
   const isMilestoneReviewer = useIsReviewerType(ReviewerType.MILESTONE);
-  // Check if user has reviewer access to any program in the community (community-level check)
-  const hasReviewerAccessInCommunity = useHasReviewerAccessInCommunity();
-  // Get RBAC loading state to wait before showing unauthorized message
-  const { isLoading: isLoadingRbac } = usePermissionContext();
+  // Get RBAC context for loading state and reviewer access (context-aware)
+  const { isLoading: isLoadingRbac, isReviewer } = usePermissionContext();
   // Get programs where user is a reviewer (for filtering dropdown)
   const { programs: reviewerPrograms, isLoading: isLoadingReviewerPrograms } =
     useReviewerPrograms();
@@ -154,9 +151,9 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
       return true;
     }
 
-    // Milestone reviewers have access via RBAC (program-level or community-level)
-    return isMilestoneReviewer || hasReviewerAccessInCommunity;
-  }, [isConnected, isAuth, hasAccess, isMilestoneReviewer, hasReviewerAccessInCommunity]);
+    // Milestone reviewers have access via RBAC (context-aware: checks community/program level)
+    return isMilestoneReviewer || isReviewer;
+  }, [isConnected, isAuth, hasAccess, isMilestoneReviewer, isReviewer]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("totalMilestones");

@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useAccount } from "wagmi";
-import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useAuth } from "@/hooks/useAuth";
 import { useContractOwner } from "@/hooks/useContractOwner";
 import { useRegistryStore } from "@/store/registry";
@@ -13,7 +12,6 @@ import { errorManager } from "./errorManager";
 export function PermissionsProvider() {
   const { address, isConnected } = useAuth();
   const { chain } = useAccount();
-  useAdminCommunities(address);
   useContractOwner();
 
   const { setIsRegistryAdmin, setIsPoolManager } = useRegistryStore();

@@ -29,10 +29,10 @@ const defaultContextValue: PermissionContextValue = {
   roles: defaultUserRoles,
   permissions: [],
   isLoading: false,
-  isGuestDueToError: true, // Indicates usage outside PermissionProvider
+  isGuestDueToError: true,
   resourceContext: defaultResourceContext,
-  hasReviewerAccessInCommunity: false,
-  hasAdminAccessInAnyCommunity: false,
+  isAdmin: false,
+  isReviewer: false,
   can: () => false,
   canAny: () => false,
   canAll: () => false,
@@ -49,7 +49,6 @@ interface PermissionProviderProps {
 }
 
 export function PermissionProvider({ children, resourceContext = {} }: PermissionProviderProps) {
-  // Check authentication status - only fetch permissions when user is logged in
   const { authenticated, ready } = usePrivy();
   const { isConnected } = useAccount();
   const isAuthenticated = ready && authenticated && isConnected;
@@ -63,14 +62,7 @@ export function PermissionProvider({ children, resourceContext = {} }: Permissio
     const permissions = data?.permissions ?? [];
     const context = data?.resourceContext ?? defaultResourceContext;
 
-    // Include Privy ready state in loading calculation
-    // We're loading if Privy isn't ready OR the query is loading
     const effectiveIsLoading = !ready || isLoading;
-
-    // User is in guest mode due to error if:
-    // 1. There was an error fetching permissions, OR
-    // 2. User is not authenticated (expected - they should be guest), OR
-    // 3. No data was returned and loading is complete for an authenticated user
     const isGuestDueToError = isError || (!effectiveIsLoading && isAuthenticated && !data);
 
     return {
@@ -79,8 +71,8 @@ export function PermissionProvider({ children, resourceContext = {} }: Permissio
       isLoading: effectiveIsLoading,
       isGuestDueToError,
       resourceContext: context,
-      hasReviewerAccessInCommunity: data?.hasReviewerAccessInCommunity ?? false,
-      hasAdminAccessInAnyCommunity: data?.hasAdminAccessInAnyCommunity ?? false,
+      isAdmin: data?.isAdmin ?? false,
+      isReviewer: data?.isReviewer ?? false,
       can: (permission: Permission) => hasPermission(permissions, permission),
       canAny: (perms: Permission[]) => hasAnyPermission(permissions, perms),
       canAll: (perms: Permission[]) => hasAllPermissions(permissions, perms),
@@ -134,8 +126,8 @@ export function useUserRoles(): UserRoles {
 }
 
 export function useIsAdmin(): boolean {
-  const { hasRoleOrHigher, isLoading } = usePermissionContext();
-  return !isLoading && hasRoleOrHigher(Role.PROGRAM_ADMIN);
+  const { isAdmin, isLoading } = usePermissionContext();
+  return !isLoading && isAdmin;
 }
 
 export function useIsCommunityAdmin(): boolean {
@@ -143,37 +135,9 @@ export function useIsCommunityAdmin(): boolean {
   return !isLoading && hasRoleOrHigher(Role.COMMUNITY_ADMIN);
 }
 
-/**
- * Checks if user has reviewer role for the current program context.
- * When at community level (no programId), this returns false.
- * Use `useHasReviewerAccessInCommunity` to check community-level reviewer access.
- */
 export function useIsReviewer(): boolean {
-  const { roles, isLoading } = usePermissionContext();
-  return (
-    !isLoading &&
-    (roles.roles.includes(Role.PROGRAM_REVIEWER) || roles.roles.includes(Role.MILESTONE_REVIEWER))
-  );
-}
-
-/**
- * Checks if user has reviewer access to at least one program in the current community.
- * Only meaningful when at community level (communityId provided, no programId).
- * When at program level, use `useIsReviewer` instead.
- */
-export function useHasReviewerAccessInCommunity(): boolean {
-  const { hasReviewerAccessInCommunity, isLoading } = usePermissionContext();
-  return !isLoading && hasReviewerAccessInCommunity;
-}
-
-/**
- * Checks if user has admin access to at least one community.
- * Only meaningful when at global level (no communityId provided).
- * When at community level, use `useIsCommunityAdmin` instead.
- */
-export function useHasAdminAccessInAnyCommunity(): boolean {
-  const { hasAdminAccessInAnyCommunity, isLoading } = usePermissionContext();
-  return !isLoading && hasAdminAccessInAnyCommunity;
+  const { isReviewer, isLoading } = usePermissionContext();
+  return !isLoading && isReviewer;
 }
 
 export function useIsGuestDueToError(): boolean {

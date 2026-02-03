@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useAuth } from "@/hooks/useAuth";
 import { getCommunities } from "@/services/communities.service";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
@@ -75,7 +76,11 @@ export default function CommunitiesToAdminPage() {
   }, [searchQuery]);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { authenticated } = useAuth();
+  const { authenticated, address } = useAuth();
+
+  // Fetch admin communities when page loads (lazy-loaded, not on every page)
+  useAdminCommunities(address);
+
   const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
     {},
     { enabled: authenticated }

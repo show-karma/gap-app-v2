@@ -17,7 +17,7 @@ export function FundingPlatformGuard({
   communityId,
   programId,
 }: FundingPlatformGuardProps) {
-  const { isLoading, hasRoleOrHigher, hasReviewerAccessInCommunity } = usePermissionContext();
+  const { isLoading, hasRoleOrHigher, isReviewer } = usePermissionContext();
 
   if (isLoading) {
     return (
@@ -29,8 +29,8 @@ export function FundingPlatformGuard({
 
   // User has access if they:
   // 1. Have a role at or above MILESTONE_REVIEWER (admin, community admin, program admin, or program-level reviewer), OR
-  // 2. Have reviewer access to at least one program in this community (community-level check)
-  const hasAccess = hasRoleOrHigher(Role.MILESTONE_REVIEWER) || hasReviewerAccessInCommunity;
+  // 2. Have reviewer access (context-aware: checks community or program level based on current context)
+  const hasAccess = hasRoleOrHigher(Role.MILESTONE_REVIEWER) || isReviewer;
 
   if (!hasAccess) {
     return (
@@ -58,12 +58,12 @@ export function useIsFundingPlatformAdmin(): boolean {
 
 /**
  * Checks if user has reviewer access to the funding platform.
- * At community level (no programId), checks hasReviewerAccessInCommunity.
- * At program level, checks for actual reviewer roles.
+ * Uses context-aware `isReviewer` which is computed by the backend based on:
+ * - Global context: true if reviewer in any program
+ * - Community context: true if reviewer in any program of that community
+ * - Program context: true if reviewer in that specific program
  */
 export function useIsFundingPlatformReviewer(): boolean {
-  const { roles, isLoading, hasReviewerAccessInCommunity } = usePermissionContext();
-  const hasReviewerRole =
-    roles.roles.includes(Role.PROGRAM_REVIEWER) || roles.roles.includes(Role.MILESTONE_REVIEWER);
-  return !isLoading && (hasReviewerRole || hasReviewerAccessInCommunity);
+  const { isLoading, isReviewer } = usePermissionContext();
+  return !isLoading && isReviewer;
 }

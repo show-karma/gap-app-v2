@@ -15,15 +15,19 @@ export interface PermissionContextValue {
   isGuestDueToError: boolean;
   resourceContext: ResourceContext;
   /**
-   * When true, indicates the user has reviewer access to at least one program
-   * in the current community context. Only set when communityId is provided without programId.
+   * Whether the user has admin access at the current context level.
+   * - Global context: admin of any community
+   * - Community context: admin of this community
+   * - Program context: admin of this program
    */
-  hasReviewerAccessInCommunity: boolean;
+  isAdmin: boolean;
   /**
-   * When true, indicates the user has admin access to at least one community.
-   * Only set when no communityId is provided (global context).
+   * Whether the user has reviewer access at the current context level.
+   * - Global context: reviewer of any program
+   * - Community context: reviewer of any program in this community
+   * - Program context: reviewer of this program
    */
-  hasAdminAccessInAnyCommunity: boolean;
+  isReviewer: boolean;
   can: (permission: Permission) => boolean;
   canAny: (permissions: Permission[]) => boolean;
   canAll: (permissions: Permission[]) => boolean;
@@ -37,16 +41,11 @@ export interface PermissionsResponse {
   permissions: Permission[];
   resourceContext: ResourceContext;
   /**
-   * When true, indicates the user has reviewer access to at least one program
-   * in the specified community. Only set when communityId is provided without programId.
-   * Use the /v2/funding-program-configs/my-reviewer-programs endpoint to get the
-   * specific programs the user can review.
+   * Whether the user has admin access at the current context level.
    */
-  hasReviewerAccessInCommunity?: boolean;
+  isAdmin: boolean;
   /**
-   * When true, indicates the user has admin access to at least one community.
-   * Only set when no communityId is provided (global context).
-   * Use the /v2/user/communities/admin endpoint to get the specific communities.
+   * Whether the user has reviewer access at the current context level.
    */
-  hasAdminAccessInAnyCommunity?: boolean;
+  isReviewer: boolean;
 }

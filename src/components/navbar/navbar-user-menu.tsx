@@ -76,7 +76,7 @@ const _formatAddressLong = (addr: string) => {
 
 export function NavbarUserMenu() {
   // Get permission state from context (prevents duplicate hook calls across navbar)
-  const { isLoggedIn, address, ready, hasReviewerRole, hasAdminAccess, isRegistryAllowed } =
+  const { isLoggedIn, address, ready, isReviewer, hasAdminAccess, isRegistryAllowed } =
     useNavbarPermissions();
 
   // useAuth only needed for logout function
@@ -198,7 +198,7 @@ export function NavbarUserMenu() {
                     <span className={menuStyles.itemText}>My donations</span>
                   </Link>
                 </MenubarItem>
-                {hasReviewerRole && (
+                {isReviewer && (
                   <MenubarItem asChild className="w-full cursor-pointer">
                     <Link href={PAGES.MY_REVIEWS} className="flex items-center gap-2 w-full">
                       <CheckCircle2 className={menuStyles.itemIcon} />

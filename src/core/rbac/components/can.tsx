@@ -139,23 +139,18 @@ interface RequireReviewerProps {
 
 /**
  * Renders children only if user has reviewer access.
- * At community level (no programId), checks hasReviewerAccessInCommunity.
- * At program level, checks for actual reviewer roles.
+ * Uses context-aware `isReviewer` which is computed by the backend based on:
+ * - Global context: true if reviewer in any program
+ * - Community context: true if reviewer in any program of that community
+ * - Program context: true if reviewer in that specific program
  * If `type` is specified, also requires that specific reviewer type.
  */
 export function RequireReviewer({ type, children, fallback = null }: RequireReviewerProps) {
-  const { roles, isLoading, hasReviewerAccessInCommunity } = usePermissionContext();
+  const { roles, isLoading, isReviewer } = usePermissionContext();
 
   if (isLoading) {
     return <>{fallback}</>;
   }
-
-  const hasReviewerRole =
-    roles.roles.includes(Role.PROGRAM_REVIEWER) || roles.roles.includes(Role.MILESTONE_REVIEWER);
-
-  // User has reviewer access if they have a reviewer role (program-level)
-  // or have reviewer access in the community (community-level)
-  const isReviewer = hasReviewerRole || hasReviewerAccessInCommunity;
 
   if (!isReviewer) {
     return <>{fallback}</>;

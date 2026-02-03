@@ -3,8 +3,6 @@ export {
   useCan,
   useCanAll,
   useCanAny,
-  useHasAdminAccessInAnyCommunity,
-  useHasReviewerAccessInCommunity,
   useHasRole,
   useHasRoleOrHigher,
   useIsAdmin,
