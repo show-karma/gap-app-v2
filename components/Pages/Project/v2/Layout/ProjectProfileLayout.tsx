@@ -259,7 +259,6 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
             grants={stats.grantsCount}
             endorsements={stats.endorsementsCount}
             lastUpdate={stats.lastUpdate}
-            completeRate={stats.completeRate}
             onEndorsementsClick={() => setIsEndorsementsListOpen(true)}
           />
         </div>

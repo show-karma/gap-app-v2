@@ -23,17 +23,15 @@ interface GrantDetailLayoutProps {
   children: React.ReactNode;
 }
 
-type GrantTab = "overview" | "milestones-and-updates" | "impact-criteria";
+type GrantTab = "overview" | "milestones-and-updates";
 
 const tabs: { name: string; tabName: GrantTab }[] = [
   { name: "Overview", tabName: "overview" },
   { name: "Milestones and Updates", tabName: "milestones-and-updates" },
-  { name: "Impact Criteria", tabName: "impact-criteria" },
 ];
 
 function getActiveTab(pathname: string): GrantTab {
   if (pathname.endsWith("/milestones-and-updates")) return "milestones-and-updates";
-  if (pathname.endsWith("/impact-criteria")) return "impact-criteria";
   return "overview";
 }
 

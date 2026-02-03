@@ -86,7 +86,6 @@ export async function ProjectStatsBarAsync({ projectId }: ProjectStatsBarAsyncPr
       grants={stats.grantsCount}
       endorsements={stats.endorsementsCount}
       lastUpdate={stats.lastUpdate}
-      completeRate={stats.completeRate}
     />
   );
 }
