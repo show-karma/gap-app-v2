@@ -1,6 +1,8 @@
 "use client";
 
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getProjectGrants } from "@/services/project-grants.service";
+import type { Grant, GrantMilestone } from "@/types/v2/grant";
 import * as payoutService from "../services/payout-disbursement.service";
 import type {
   CommunityPayoutsOptions,
@@ -434,5 +436,29 @@ export function useDeletePayoutConfig(options?: {
     onError: (error) => {
       options?.onError?.(error);
     },
+  });
+}
+
+/**
+ * Hook for fetching milestones for a specific grant
+ * Fetches all grants for the project and filters to find the specific grant's milestones
+ */
+export function useGrantMilestones(
+  projectUID: string,
+  grantUID: string,
+  options?: { enabled?: boolean }
+) {
+  return useQuery<GrantMilestone[], Error>({
+    queryKey: ["grantMilestones", projectUID, grantUID],
+    queryFn: async () => {
+      if (!projectUID || !grantUID) return [];
+
+      const grants = await getProjectGrants(projectUID);
+      const grant = grants.find((g) => g.uid.toLowerCase() === grantUID.toLowerCase());
+
+      return grant?.milestones || [];
+    },
+    enabled: options?.enabled ?? (!!projectUID && !!grantUID),
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }

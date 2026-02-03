@@ -12,6 +12,7 @@ import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useGrantStore } from "@/store/grant";
 import type { GrantUpdate as GrantUpdateType } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -76,7 +77,9 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
   const { performOffChainRevoke } = useOffChainRevoke();
 
   // Fetch grants using dedicated hook
-  const { grants, refetch: refetchGrants } = useProjectGrants(projectIdOrSlug);
+  const { grants, refetch: refetchProjectGrants } = useProjectGrants(projectIdOrSlug);
+  // Get refreshGrant from store to update the UI after deletion
+  const { refreshGrant } = useGrantStore();
 
   const undoGrantUpdate = async () => {
     if (!address || !project) return;
@@ -108,6 +111,8 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
       if (!grantUpdateInstance) return;
 
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
+        // Try to verify deletion with a reasonable timeout (30 retries = ~45 seconds)
+        let deletionConfirmed = false;
         await retryUntilConditionMet(
           async () => {
             const fetchedGrants = await getProjectGrants(projectIdOrSlug);
@@ -117,13 +122,22 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
             const stillExists = foundGrant?.updates?.find(
               (grantUpdate) => grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
             );
+            if (!stillExists) {
+              deletionConfirmed = true;
+            }
             return !stillExists;
           },
           async () => {
-            await refetchGrants();
             callbackFn?.();
-          }
+          },
+          30, // Reduced from 1000 to 30 retries (~45 seconds max)
+          1500
         );
+
+        // Always refresh the UI after the operation, even if deletion wasn't confirmed
+        // This ensures the UI updates and the user sees the current state
+        await refetchProjectGrants();
+        await refreshGrant();
       };
 
       if (!isOnChainAuthorized) {

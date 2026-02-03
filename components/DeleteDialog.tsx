@@ -69,7 +69,8 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
   return (
     <>
       {buttonElement ? (
-        <Button
+        <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -80,14 +81,13 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
             buttonElement.styleClass
           )}
           data-delete-project-button={dataAttr}
-          variant="ghost"
         >
           {buttonElement.icon}
           {buttonElement.text}
-        </Button>
+        </button>
       ) : null}
       <Transition appear show={isOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={closeModal}>
+        <Dialog as="div" className="relative z-50" onClose={closeModal}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"

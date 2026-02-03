@@ -2,8 +2,8 @@
 
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { AIAnalysisTab } from "@/components/FundingPlatform/ApplicationView/AIAnalysisTab";
@@ -67,6 +67,10 @@ export default function ApplicationDetailPage() {
 
   const isAdmin = useIsFundingPlatformAdmin();
   const { isLoading: isLoadingPermissions } = usePermissionContext();
+
+  // Check for edit parameter in URL
+  const searchParams = useSearchParams();
+  const shouldOpenEdit = searchParams.get("edit") === "true";
 
   // Get current user address
   const { address: currentUserAddress } = useAccount();
@@ -230,13 +234,28 @@ export default function ApplicationDetailPage() {
     return !restrictedStatuses.includes(app.status.toLowerCase());
   };
 
+  // Auto-open edit modal when ?edit=true is present in URL
+  useEffect(() => {
+    if (shouldOpenEdit && application && isAdmin && canEditApplication(application)) {
+      setIsEditModalOpen(true);
+    }
+  }, [shouldOpenEdit, application, isAdmin]);
+
   // Handle edit application
   const handleEditClick = () => {
     setIsEditModalOpen(true);
+    // Add edit=true to URL
+    const url = new URL(window.location.href);
+    url.searchParams.set("edit", "true");
+    window.history.replaceState({}, "", url.toString());
   };
 
   const handleEditClose = () => {
     setIsEditModalOpen(false);
+    // Remove edit param from URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete("edit");
+    window.history.replaceState({}, "", url.toString());
   };
 
   const handleEditSuccess = async () => {

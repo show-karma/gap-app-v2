@@ -114,6 +114,17 @@ const nextConfig: NextConfig = {
         destination: "/community/:communityId/manage/:path*",
         permanent: true,
       },
+      // Redirect old project update routes
+      {
+        source: "/project/:projectId/update",
+        destination: "/project/:projectId",
+        permanent: true,
+      },
+      {
+        source: "/project/:projectId/updates",
+        destination: "/project/:projectId",
+        permanent: true,
+      },
     ];
   },
 };

@@ -19,6 +19,7 @@ import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider"
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { Footer } from "@/src/components/footer/footer";
 import { Navbar } from "@/src/components/navbar/navbar";
+import { envVars } from "@/utilities/enviromentVars";
 
 export const metadata = defaultMetadata;
 
