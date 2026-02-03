@@ -65,7 +65,7 @@ export const useKycStatus = (
 
       // Use application-specific endpoint for APP- references
       if (isAppRef) {
-        const [data, error] = await fetchData<KycStatusResponse>(
+        const [data, error, _pageInfo, statusCode] = await fetchData<KycStatusResponse>(
           INDEXER.KYC.GET_STATUS_BY_APP_REF(identifier),
           "GET",
           {},
@@ -73,6 +73,10 @@ export const useKycStatus = (
           {},
           true
         );
+
+        if (statusCode === 404) {
+          return null;
+        }
 
         if (error) {
           throw new Error(error);
@@ -84,7 +88,7 @@ export const useKycStatus = (
       // Use project endpoint for 0x... identifiers (requires communityUID)
       if (!communityUID) return null;
 
-      const [data, error] = await fetchData<KycStatusResponse>(
+      const [data, error, _pageInfo, statusCode] = await fetchData<KycStatusResponse>(
         INDEXER.KYC.GET_STATUS(identifier, communityUID),
         "GET",
         {},
@@ -92,6 +96,10 @@ export const useKycStatus = (
         {},
         true
       );
+
+      if (statusCode === 404) {
+        return null;
+      }
 
       if (error) {
         throw new Error(error);

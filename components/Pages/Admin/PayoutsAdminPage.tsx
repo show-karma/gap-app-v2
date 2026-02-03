@@ -1021,7 +1021,7 @@ export default function PayoutsAdminPage() {
                   </th>
                   {isKycEnabled && (
                     <th scope="col" className="h-12 px-4 text-center align-middle font-medium w-24">
-                      KYC
+                      KYC/KYB
                     </th>
                   )}
                   <th

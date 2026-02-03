@@ -167,7 +167,7 @@ describe("KycStatusBadge", () => {
       render(<KycStatusBadge status={createMockStatus()} />);
 
       // Badge shows only status with validity date
-      expect(screen.getByText(/Verified \(valid until/)).toBeInTheDocument();
+      expect(screen.getByText(/KYC verified \(valid until/)).toBeInTheDocument();
     });
 
     it("should render badge with correct label for PENDING status", () => {
@@ -176,7 +176,7 @@ describe("KycStatusBadge", () => {
       );
 
       // Badge shows only status label
-      expect(screen.getByText("Pending")).toBeInTheDocument();
+      expect(screen.getByText("KYC pending")).toBeInTheDocument();
     });
 
     it("should render badge with correct colors for each status", () => {
@@ -212,7 +212,7 @@ describe("KycStatusBadge", () => {
       );
 
       // Badge shows only status label
-      expect(screen.getByText("Expired")).toBeInTheDocument();
+      expect(screen.getByText("KYC expired")).toBeInTheDocument();
     });
 
     it("should render NOT_STARTED badge when status is null", () => {
@@ -230,7 +230,7 @@ describe("KycStatusBadge", () => {
       render(<KycStatusBadge status={createMockStatus()} />);
 
       // Badge shows status with validity date
-      const badge = screen.getByText(/Verified \(valid until/).closest("span");
+      const badge = screen.getByText(/KYC verified \(valid until/).closest("span");
       await user.hover(badge!);
 
       // Use getAllByText since tooltip may render multiple elements

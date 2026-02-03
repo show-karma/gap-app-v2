@@ -166,15 +166,22 @@ function getBadgeLabel(
   effectiveStatus: KycVerificationStatus
 ): string {
   const config = statusConfig[effectiveStatus];
+  const verificationType = status?.verificationType ?? "KYC/KYB";
+  const statusLabel = config.label.toLowerCase();
 
   // For VERIFIED status, include validity date
   if (effectiveStatus === KycVerificationStatus.VERIFIED && status?.expiresAt) {
     const expiresDate = formatDate(status.expiresAt);
-    return `${config.label} (valid until ${expiresDate})`;
+    return `${verificationType} ${statusLabel} (valid until ${expiresDate})`;
   }
 
-  // For all other statuses, just show the label
-  return config.label;
+  // For NOT_STARTED, show only the label (type-agnostic)
+  if (effectiveStatus === KycVerificationStatus.NOT_STARTED) {
+    return config.label;
+  }
+
+  // For all other statuses, include verification type
+  return `${verificationType} ${statusLabel}`;
 }
 
 /**
