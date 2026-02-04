@@ -1,5 +1,6 @@
 "use client";
 
+import { UserGroupIcon } from "@heroicons/react/24/solid";
 import type React from "react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -19,6 +20,7 @@ import {
   validateTelegram,
   validateWalletAddress,
 } from "@/utilities/validators";
+import { PAGE_HEADER_CONTENT, PageHeader } from "../PageHeader";
 
 /**
  * Props for ReviewerManagementTab
@@ -215,14 +217,12 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       const parsed = parseReviewerMemberId(memberId);
 
       if (!parsed.valid) {
-        console.error("Invalid member ID:", parsed.error);
         toast.error(parsed.error || "Invalid reviewer ID format");
         return;
       }
 
       // Type guard ensures we have the required properties
       if (!parsed.role || !parsed.publicAddress) {
-        console.error("Missing role or publicAddress in parsed member ID");
         toast.error("Failed to remove reviewer: Invalid ID");
         return;
       }
@@ -235,10 +235,9 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         } else {
           toast.error(`Unknown reviewer role: ${parsed.role}`);
         }
-      } catch (error) {
+      } catch {
         // Error handling is already done in the mutations, but we catch here
         // to prevent unhandled promise rejections
-        console.error("Error in handleRemove:", error);
       }
     },
     [removeProgramReviewer, removeMilestoneReviewer]
@@ -273,17 +272,26 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   }
 
   return (
-    <RoleManagementTab
-      config={programReviewerConfig}
-      members={members}
-      isLoading={isLoadingReviewers}
-      canManage={!readOnly && isCommunityAdmin}
-      onAdd={!readOnly ? handleAdd : undefined}
-      onRemove={!readOnly ? handleRemove : undefined}
-      onRefresh={handleRefresh}
-      roleOptions={roleOptions}
-      selectedRole={selectedRole}
-      onRoleChange={(role) => setSelectedRole(role as ReviewerRole)}
-    />
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="max-w-4xl mx-auto">
+        <PageHeader
+          title={PAGE_HEADER_CONTENT.reviewers.title}
+          description={PAGE_HEADER_CONTENT.reviewers.description}
+          icon={UserGroupIcon}
+        />
+        <RoleManagementTab
+          config={programReviewerConfig}
+          members={members}
+          isLoading={isLoadingReviewers}
+          canManage={!readOnly && isCommunityAdmin}
+          onAdd={!readOnly ? handleAdd : undefined}
+          onRemove={!readOnly ? handleRemove : undefined}
+          onRefresh={handleRefresh}
+          roleOptions={roleOptions}
+          selectedRole={selectedRole}
+          onRoleChange={(role) => setSelectedRole(role as ReviewerRole)}
+        />
+      </div>
+    </div>
   );
 };

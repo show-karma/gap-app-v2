@@ -4,12 +4,13 @@ import { getProject } from "@/services/project.service";
 import { useProjectStore } from "@/store";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 export const useProject = (projectId: string) => {
   const setProject = useProjectStore((state) => state.setProject);
 
   const query = useQuery({
-    queryKey: ["project", projectId],
+    queryKey: QUERY_KEYS.PROJECT.DETAILS(projectId),
     queryFn: async (): Promise<ProjectResponse> => {
       const data = await getProject(projectId);
       if (!data) {

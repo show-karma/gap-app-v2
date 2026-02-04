@@ -1,5 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -39,6 +40,7 @@ export function CreateProgramModal({
   communityId,
   onSuccess,
 }: CreateProgramModalProps) {
+  const router = useRouter();
   const { address, isConnected } = useAccount();
   const { authenticated: isAuth, login } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,31 +103,24 @@ export function CreateProgramModal({
         metadata
       );
 
-      if (result.requiresManualApproval) {
-        toast.success(
-          "Program created successfully. Please approve it manually from the manage programs page.",
-          { duration: 10000 }
-        );
-        reset();
-        onSuccess();
-        onClose();
+      // Verify we got a valid programId - without it we can't proceed to setup
+      if (!result.programId) {
+        errorManager("Program creation returned empty programId", new Error("Missing programId"), {
+          address,
+          data,
+          result,
+        });
+        toast.error("Failed to create program. Please try again.");
         return;
       }
 
-      // Note: V2 auto-approves if user is community admin
-      // If requiresManualApproval is false, program is already approved
-      if (result.requiresManualApproval) {
-        toast.success(
-          "Program created successfully. Please approve it manually from the manage programs page.",
-          { duration: 10000 }
-        );
-      } else {
-        toast.success("Program created and approved successfully!");
-      }
-
+      // For funding-platform flow, community admins always go to setup
+      // On-chain creation status doesn't affect the ability to configure the program
+      toast.success("Program created! Let's set it up.", { duration: 3000 });
       reset();
       onSuccess();
       onClose();
+      router.push(`/community/${communityId}/admin/funding-platform/${result.programId}/setup`);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage?.includes("already exists")) {

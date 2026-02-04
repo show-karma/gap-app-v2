@@ -21,12 +21,7 @@ import {
 } from "@/components/ui/drawer";
 import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
-import { useReviewerPrograms } from "@/hooks/usePermissions";
-import { useStaff } from "@/hooks/useStaff";
-import { useOwnerStore } from "@/store";
-import { useCommunitiesStore } from "@/store/communities";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
-import { useRegistryStore } from "@/store/registry";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { Logo } from "../shared/logo";
@@ -37,6 +32,7 @@ import {
   MenuSection,
   ResourcesContent,
 } from "./menu-components";
+import { useNavbarPermissions } from "./navbar-permissions-context";
 import { NavbarSearch } from "./navbar-search";
 
 const menuStyles = {
@@ -73,7 +69,7 @@ const _formatAddress = (addr: string) => {
 
 export function NavbarMobileMenu() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { authenticated: isLoggedIn, authenticate: login, logout, address } = useAuth();
+  const { authenticate: login, logout } = useAuth();
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const toggleTheme = () => {
     changeCurrentTheme(currentTheme === "light" ? "dark" : "light");
@@ -81,19 +77,11 @@ export function NavbarMobileMenu() {
 
   const { openModal: openProfileModal } = useContributorProfileModalStore();
 
+  // Get permissions from centralized context (prevents duplicate hook calls)
+  const { isLoggedIn, address, hasReviewerRole, hasAdminAccess, isRegistryAllowed } =
+    useNavbarPermissions();
+
   const { profile } = useContributorProfile(address);
-
-  // Check admin and reviewer permissions
-  const { communities } = useCommunitiesStore();
-  const { programs: reviewerPrograms } = useReviewerPrograms();
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isPoolManager, isRegistryAdmin } = useRegistryStore();
-
-  const isCommunityAdmin = communities.length !== 0;
-  const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
-  const hasAdminAccess = !isStaffLoading && (isStaff || isOwner || isCommunityAdmin);
-  const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
 
   const quickActions = [
     {

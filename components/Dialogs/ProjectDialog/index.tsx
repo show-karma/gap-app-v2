@@ -65,7 +65,6 @@ import { cn } from "@/utilities/tailwind";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
 import { ContactInfoSection } from "./ContactInfoSection";
-import { FaucetSection } from "./FaucetSection";
 import { NetworkDropdown } from "./NetworkDropdown";
 
 const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -223,6 +222,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { isProjectEditModalOpen, setIsProjectEditModalOpen } = useProjectEditModalStore();
 
   const [localIsOpen, setLocalIsOpen] = useState(false);
+  // Track if we should open modal after login completes
+  const [pendingOpenAfterLogin, setPendingOpenAfterLogin] = useState(false);
 
   // Determine which modal state to use
   const isOpen = useEditModalStore ? isProjectEditModalOpen : localIsOpen;
@@ -243,7 +244,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { setupChainAndWallet, smartWalletAddress } = useSetupChainAndWallet();
   const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
     useAttestationToast();
-  const [walletSigner, setWalletSigner] = useState<any>(null);
+  const [_walletSigner, setWalletSigner] = useState<any>(null);
   const [_faucetFunded, setFaucetFunded] = useState(false);
   // Flag to prevent form reset when reopening after an error
   const [shouldResetOnOpen, setShouldResetOnOpen] = useState(true);
@@ -421,12 +422,23 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     setIsOpen(true);
   }
 
+  // Handle unauthenticated user trying to open modal
   useEffect(() => {
     if (isOpen && !isAuth) {
+      // Set flag to re-open modal after login completes
+      setPendingOpenAfterLogin(true);
       login?.();
       closeModal();
     }
   }, [isOpen, isAuth, closeModal, login]);
+
+  // Re-open modal after successful login if user was trying to create project
+  useEffect(() => {
+    if (isAuth && pendingOpenAfterLogin) {
+      setPendingOpenAfterLogin(false);
+      openModal();
+    }
+  }, [isAuth, pendingOpenAfterLogin]);
 
   const validateCustomLinks = () => {
     return customLinks.some((link) => !link.name.trim() || !link.url.trim());

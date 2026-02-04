@@ -105,7 +105,7 @@ export const useReviewerAssignment = ({
     assignReviewers: async (selectedAddresses: string[]) => {
       try {
         await mutation.mutateAsync(selectedAddresses);
-      } catch (error) {
+      } catch (_error) {
         // Error is already handled in onError callback, just prevent unhandled rejection
         // The error toast is shown via onError handler
       }

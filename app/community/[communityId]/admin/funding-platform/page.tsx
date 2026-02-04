@@ -1,11 +1,13 @@
 "use client";
 import {
+  ArrowTopRightOnSquareIcon,
   CalendarIcon,
   CheckCircleIcon,
   ClockIcon,
   Cog6ToothIcon,
   CurrencyDollarIcon,
   EyeIcon as EyeIconOutline,
+  ListBulletIcon,
   MagnifyingGlassIcon,
   UsersIcon,
   XCircleIcon,
@@ -14,7 +16,7 @@ import {
   ArrowLeftIcon,
   ArrowTrendingUpIcon,
   ChevronDownIcon,
-  EyeIcon,
+  ClipboardDocumentListIcon,
   PlusIcon,
 } from "@heroicons/react/24/solid";
 import Link from "next/link";
@@ -23,6 +25,10 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { CreateProgramModal } from "@/components/FundingPlatform/CreateProgramModal";
 import { FundingPlatformStatsCard } from "@/components/FundingPlatform/Dashboard/card";
+import {
+  hasFormConfigured,
+  ProgramSetupStatus,
+} from "@/components/FundingPlatform/ProgramSetupStatus";
 import { Button } from "@/components/Utilities/Button";
 import { LoadingOverlay } from "@/components/Utilities/LoadingOverlay";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
@@ -30,27 +36,13 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import { type FundingProgram, fundingPlatformService } from "@/services/fundingPlatformService";
-import { FUNDING_PLATFORM_DOMAINS } from "@/src/features/funding-map/utils/funding-platform-domains";
 import { layoutTheme } from "@/src/helper/theme";
-import { envVars } from "@/utilities/enviromentVars";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
+import { getProgramApplyUrl } from "@/utilities/fundingPlatformUrls";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-
-const getApplyUrlByCommunityId = (communityId: string, programId: string) => {
-  if (communityId in FUNDING_PLATFORM_DOMAINS) {
-    const domain = FUNDING_PLATFORM_DOMAINS[communityId as keyof typeof FUNDING_PLATFORM_DOMAINS];
-    return envVars.isDev
-      ? `${domain.dev}/programs/${programId}/apply`
-      : `${domain.prod}/programs/${programId}/apply`;
-  } else {
-    return envVars.isDev
-      ? `${FUNDING_PLATFORM_DOMAINS.shared.dev}/${communityId}/programs/${programId}/apply`
-      : `${FUNDING_PLATFORM_DOMAINS.shared.prod}/${communityId}/programs/${programId}/apply`;
-  }
-};
 
 export default function FundingPlatformAdminPage() {
   const { communityId } = useParams() as { communityId: string };
@@ -84,8 +76,7 @@ export default function FundingPlatformAdminPage() {
       toast.success(`Program ${!currentEnabled ? "enabled" : "disabled"} successfully`);
       // Refresh the programs list
       await refetch();
-    } catch (error) {
-      console.error("Error toggling program status:", error);
+    } catch {
       toast.error("Failed to update program status");
     } finally {
       setTogglingPrograms((prev) => {
@@ -222,57 +213,75 @@ export default function FundingPlatformAdminPage() {
     );
   }
 
-  const stats = [
+  // Filter stats to show essential ones always, and others only if they have values
+  const allStats = [
     {
       title: "Total Programs",
       value: formatCurrency(statistics.totalPrograms),
+      rawValue: statistics.totalPrograms,
       color: "text-blue-600",
       bgColor: "bg-blue-50 dark:bg-blue-900",
       icon: <ArrowTrendingUpIcon className="w-5 h-5 text-blue-700 dark:text-blue-100" />,
+      alwaysShow: true,
     },
     {
       title: "Total Applications",
       value: formatCurrency(statistics.totalApplications),
+      rawValue: statistics.totalApplications,
       color: "text-purple-600",
       bgColor: "bg-purple-50 dark:bg-purple-900",
       icon: <UsersIcon className="h-5 w-5 text-purple-700 dark:text-purple-100" />,
+      alwaysShow: true,
     },
     {
       title: "Approved",
       value: formatCurrency(statistics.approved),
+      rawValue: statistics.approved,
       color: "text-green-600",
       bgColor: "bg-green-50 dark:bg-green-900",
       icon: <CheckCircleIcon className="h-5 w-5 text-green-700 dark:text-green-100" />,
+      alwaysShow: false,
     },
     {
       title: "Rejected",
       value: formatCurrency(statistics.rejected),
+      rawValue: statistics.rejected,
       color: "text-red-600",
       bgColor: "bg-red-50 dark:bg-red-900",
       icon: <XCircleIcon className="h-5 w-5 text-red-700 dark:text-red-100" />,
+      alwaysShow: false,
     },
     {
       title: "Pending Review",
       value: formatCurrency(statistics.pending),
+      rawValue: statistics.pending,
       color: "text-orange-600",
       bgColor: "bg-orange-50 dark:bg-orange-900",
       icon: <ClockIcon className="h-5 w-5 text-orange-700 dark:text-orange-100" />,
+      alwaysShow: false,
     },
     {
       title: "Under Review",
       value: formatCurrency(statistics.underReview),
+      rawValue: statistics.underReview,
       color: "text-pink-600",
       bgColor: "bg-pink-50 dark:bg-pink-900",
       icon: <EyeIconOutline className="h-5 w-5 text-pink-700 dark:text-pink-100" />,
+      alwaysShow: false,
     },
     {
       title: "Revision Requested",
       value: formatCurrency(statistics.revisionRequested),
+      rawValue: statistics.revisionRequested,
       color: "text-indigo-600",
       bgColor: "bg-indigo-50 dark:bg-indigo-900",
       icon: <MagnifyingGlassIcon className="h-5 w-5 text-indigo-700 dark:text-indigo-100" />,
+      alwaysShow: false,
     },
   ];
+
+  // Show essential stats always, others only when they have values
+  const stats = allStats.filter((stat) => stat.alwaysShow || stat.rawValue > 0);
 
   const _cardStats = (program: Record<string, any>) => [
     {
@@ -315,19 +324,19 @@ export default function FundingPlatformAdminPage() {
         bgColor: "bg-red-500",
       },
       {
-        title: "Pending Review",
+        title: "Pending",
         value: pendingApplications,
         color: "text-orange-600",
         bgColor: "bg-orange-500",
       },
       {
-        title: "Under Review",
+        title: "In Review",
         value: underReviewApplications,
         color: "text-pink-600",
         bgColor: "bg-pink-500",
       },
       {
-        title: "Revision Requested",
+        title: "Revision",
         value: revisionRequestedApplications,
         color: "text-indigo-600",
         bgColor: "bg-indigo-500",
@@ -421,6 +430,9 @@ export default function FundingPlatformAdminPage() {
                     role="menuitem"
                   >
                     <div className="flex items-center">
+                      {status === "all" && (
+                        <ListBulletIcon className="mr-2 h-4 w-4 text-blue-600" />
+                      )}
                       {status === "enabled" && (
                         <CheckCircleIcon className="mr-2 h-4 w-4 text-green-600" />
                       )}
@@ -443,234 +455,210 @@ export default function FundingPlatformAdminPage() {
       {programs && programs.length > 0 ? (
         filteredPrograms.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredPrograms.map((program) => (
-              <div
-                key={program.programId}
-                className="px-4 py-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1 rounded-lg border border-gray-200 bg-white dark:bg-zinc-800 dark:border-gray-700 relative"
-              >
-                {/* Loading Overlay */}
-                {togglingPrograms.has(program.programId) && (
-                  <LoadingOverlay message="Updating program status..." isLoading={true} />
-                )}
+            {filteredPrograms.map((program) => {
+              const hasFormConfig = hasFormConfigured(program.applicationConfig);
+              const isEnabled = program.applicationConfig?.isEnabled || false;
 
-                {/* Header with Toggle and Quick Actions */}
-                <div className="flex items-center justify-between mb-3 gap-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {/* Program Enable/Disable Toggle */}
+              return (
+                <div
+                  key={program.programId}
+                  className="px-4 py-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1 rounded-lg border border-gray-200 bg-white dark:bg-zinc-800 dark:border-gray-700 relative"
+                >
+                  {/* Loading Overlay */}
+                  {togglingPrograms.has(program.programId) && (
+                    <LoadingOverlay message="Updating program status..." isLoading={true} />
+                  )}
+
+                  {/* Program Title - Most Prominent */}
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white line-clamp-2">
+                      {program.metadata?.title || program.name}
+                    </h3>
+                    <ProgramSetupStatus
+                      programId={program.programId}
+                      communityId={communityId}
+                      hasFormFields={hasFormConfigured(program.applicationConfig)}
+                      isEnabled={isEnabled}
+                    />
+                  </div>
+
+                  {/* Toggle and Status Row */}
+                  <div className="flex items-center gap-3 mb-3">
+                    {/* Accepting Submissions Toggle */}
                     <div
                       className={cn(
                         "relative group",
-                        !program.applicationConfig ||
-                          Object.keys(program.applicationConfig).length === 1
-                          ? "cursor-not-allowed"
-                          : "cursor-pointer"
+                        !hasFormConfig ? "cursor-not-allowed" : "cursor-pointer"
                       )}
-                      title={
-                        !program.applicationConfig ||
-                        Object.keys(program.applicationConfig).length === 1
-                          ? "Program doesn't have configured form"
-                          : undefined
-                      }
                     >
                       <button
                         type="button"
+                        role="switch"
+                        aria-checked={isEnabled}
+                        aria-label={`${isEnabled ? "Disable" : "Enable"} submissions for ${program.metadata?.title || program.name}`}
+                        aria-disabled={!hasFormConfig}
                         className={cn(
-                          "flex items-center space-x-2 text-sm text-zinc-900 px-2 py-1 rounded-full",
-                          program.applicationConfig?.isEnabled
-                            ? "bg-green-100 dark:bg-green-900"
-                            : "bg-gray-100 dark:bg-zinc-700",
-                          !program.applicationConfig ||
-                            Object.keys(program.applicationConfig).length === 1
-                            ? "cursor-not-allowed opacity-50"
-                            : "cursor-pointer"
+                          "flex items-center gap-2 text-sm px-2 py-1.5 rounded-lg border",
+                          isEnabled
+                            ? "bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800"
+                            : "bg-gray-50 dark:bg-zinc-700 border-gray-200 dark:border-gray-600",
+                          !hasFormConfig && "opacity-50 cursor-not-allowed"
                         )}
                         onClick={() => {
-                          if (program.applicationConfig) {
-                            handleToggleProgram(
-                              program.programId,
-                              program.applicationConfig?.isEnabled || false
-                            );
+                          if (hasFormConfig) {
+                            handleToggleProgram(program.programId, isEnabled);
                           }
                         }}
-                        disabled={
-                          !program.applicationConfig ||
-                          Object.keys(program.applicationConfig).length === 1 ||
-                          togglingPrograms.has(program.programId)
-                        }
+                        disabled={!hasFormConfig || togglingPrograms.has(program.programId)}
                       >
                         <div
                           className={cn(
-                            "relative inline-flex h-6 w-12 items-center rounded-full transition-colors",
-                            program.applicationConfig?.isEnabled
-                              ? "bg-green-600 dark:bg-green-600"
-                              : "bg-gray-200 dark:bg-gray-400",
-                            (!program.applicationConfig ||
-                              Object.keys(program.applicationConfig).length === 1) &&
-                              "bg-gray-300 dark:bg-gray-600"
+                            "relative inline-flex h-5 w-9 items-center rounded-full transition-colors",
+                            isEnabled ? "bg-green-600" : "bg-gray-300 dark:bg-gray-500",
+                            !hasFormConfig && "bg-gray-200 dark:bg-gray-600"
                           )}
                         >
                           <span
                             className={cn(
-                              "inline-block h-5 w-5 transform rounded-full bg-white transition-transform",
-                              program.applicationConfig?.isEnabled
-                                ? "translate-x-6"
-                                : "translate-x-1"
+                              "inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm",
+                              isEnabled ? "translate-x-4" : "translate-x-0.5"
                             )}
                           />
                         </div>
                         <span
                           className={cn(
-                            "text-sm font-medium",
-                            program.applicationConfig?.isEnabled
+                            "text-xs font-medium",
+                            isEnabled
                               ? "text-green-700 dark:text-green-400"
                               : "text-gray-500 dark:text-gray-400"
                           )}
                         >
                           {togglingPrograms.has(program.programId)
                             ? "Updating..."
-                            : program.applicationConfig?.isEnabled
-                              ? "Enabled"
-                              : "Disabled"}
+                            : isEnabled
+                              ? "Accepting submissions"
+                              : "Form hidden"}
                         </span>
                       </button>
                       {/* Tooltip for disabled state */}
-                      {(!program.applicationConfig ||
-                        Object.keys(program.applicationConfig).length === 1) && (
+                      {!hasFormConfig && (
                         <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                          Program doesn&apos;t have configured form
+                          Configure form first to enable submissions
                           <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
                             <div className="border-4 border-transparent border-t-gray-900"></div>
                           </div>
                         </div>
                       )}
                     </div>
-                    <span className="text-xs text-zinc-600 bg-gray-100 dark:bg-zinc-900 dark:text-zinc-400 px-2 py-1 rounded-full">
-                      ID {program.programId}
-                    </span>
-                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded-full">
-                      {program.metadata?.type || "program"}
+                  </div>
+
+                  {/* Description */}
+                  <div className="mb-3">
+                    <MarkdownPreview
+                      source={
+                        program.metadata?.shortDescription ||
+                        (program.metadata?.description as string)
+                      }
+                      className="text-sm overflow-hidden text-ellipsis line-clamp-2 text-gray-600 dark:text-gray-400"
+                    />
+                  </div>
+
+                  {/* Compact Stats Row */}
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div className="bg-purple-50 dark:bg-purple-900/20 p-2 rounded-md">
+                      <div className="flex items-center gap-1 mb-1">
+                        <UsersIcon className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                        <p className="text-xs text-purple-600 dark:text-purple-400">Applicants</p>
+                      </div>
+                      <p className="text-sm font-bold text-purple-700 dark:text-purple-300">
+                        {formatCurrency(program.metrics?.totalApplications || 0)}
+                      </p>
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-900/20 p-2 rounded-md">
+                      <div className="flex items-center gap-1 mb-1">
+                        <CheckCircleIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
+                        <p className="text-xs text-green-600 dark:text-green-400">Approval %</p>
+                      </div>
+                      <p className="text-sm font-bold text-green-700 dark:text-green-300">
+                        {applicationProgressPct(program)}%
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Deadline */}
+                  <div className="flex flex-row gap-2 items-center text-xs text-gray-500 dark:text-gray-400 bg-orange-50 dark:bg-orange-900/20 p-2 rounded-md mb-3">
+                    <CalendarIcon className="w-4 h-4 text-orange-700 dark:text-orange-300" />
+                    <span className="text-orange-700 dark:text-orange-300">
+                      Deadline:{" "}
+                      {program.metadata?.endsAt
+                        ? formatDate(program.metadata.endsAt, "UTC", "YYYY-MM-DD, HH:mm UTC")
+                        : "No deadline set"}
                     </span>
                   </div>
 
-                  {/* Quick Action Icon */}
-                  <div className="flex items-center gap-1">
+                  {/* Application Status Breakdown */}
+                  <div className="mb-3">
+                    <div className="grid grid-cols-5 gap-2">
+                      {applicationProgress(program).map((item) => (
+                        <div key={item.title} className="text-center">
+                          <p className={cn("text-xs font-bold", item.color)}>{item.value}</p>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                            {item.title}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(
+                        communityId,
+                        program.programId
+                      )}
+                      className="flex-1"
+                    >
+                      <Button
+                        variant="primary"
+                        className="w-full hover:shadow flex items-center justify-center text-sm bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:text-white dark:hover:bg-blue-600"
+                      >
+                        <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
+                        Applications
+                      </Button>
+                    </Link>
+
                     <Link
                       href={PAGES.ADMIN.FUNDING_PLATFORM_QUESTION_BUILDER(
                         communityId,
                         program.programId
                       )}
-                      title="Configure Form"
+                      className="flex-1"
                     >
-                      <button
-                        type="button"
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-md transition-colors"
+                      <Button
+                        variant="secondary"
+                        className="w-full hover:shadow flex items-center justify-center text-sm"
                       >
-                        <Cog6ToothIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                      </button>
+                        <Cog6ToothIcon className="w-4 h-4 mr-2" />
+                        Settings
+                      </Button>
+                    </Link>
+
+                    {/* Link to Public Application Form */}
+                    <Link
+                      href={getProgramApplyUrl(communityId, program.programId)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="View public application form"
+                      className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600"
+                    >
+                      <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                      <span>View Form</span>
                     </Link>
                   </div>
                 </div>
-
-                {/* Program Title and Description */}
-                <div className="mb-3">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 text-ellipsis line-clamp-2">
-                    {program.metadata?.title || program.name}
-                  </h3>
-                  <MarkdownPreview
-                    source={
-                      program.metadata?.shortDescription ||
-                      (program.metadata?.description as string)
-                    }
-                    className="text-sm mb-3 overflow-hidden text-ellipsis line-clamp-2"
-                  />
-                </div>
-
-                {/* Compact Stats Row */}
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div className="bg-purple-50 dark:bg-purple-900/20 p-2 rounded-md">
-                    <div className="flex items-center gap-1 mb-1">
-                      <UsersIcon className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                      <p className="text-xs text-purple-600 dark:text-purple-400">Applicants</p>
-                    </div>
-                    <p className="text-sm font-bold text-purple-700 dark:text-purple-300">
-                      {formatCurrency(program.metrics?.totalApplications || 0)}
-                    </p>
-                  </div>
-                  <div className="bg-green-50 dark:bg-green-900/20 p-2 rounded-md">
-                    <div className="flex items-center gap-1 mb-1">
-                      <CheckCircleIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
-                      <p className="text-xs text-green-600 dark:text-green-400">Approval %</p>
-                    </div>
-                    <p className="text-sm font-bold text-green-700 dark:text-green-300">
-                      {applicationProgressPct(program)}%
-                    </p>
-                  </div>
-                </div>
-
-                {/* Deadline */}
-                <div className="flex flex-row gap-2 items-center text-xs text-gray-500 dark:text-gray-400 bg-orange-50 dark:bg-orange-900/20 p-2 rounded-md mb-3">
-                  <CalendarIcon className="w-4 h-4 text-orange-700 dark:text-orange-300" />
-                  <span className="text-orange-700 dark:text-orange-300">
-                    Deadline:{" "}
-                    {program.metadata?.endsAt
-                      ? formatDate(program.metadata.endsAt, "UTC", "YYYY-MM-DD, HH:mm UTC")
-                      : "N/A"}
-                  </span>
-                </div>
-
-                {/* Application Status Breakdown */}
-                <div className="mb-3">
-                  <div className="grid grid-cols-5 gap-2">
-                    {applicationProgress(program).map((item) => (
-                      <div key={item.title} className="text-center">
-                        <p className={cn("text-xs font-bold", item.color)}>{item.value}</p>
-                        <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
-                          {item.title.split(" ")[0]}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Primary CTA - View Applications */}
-                <div className="flex items-center gap-2">
-                  <Link
-                    href={PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, program.programId)}
-                    className="flex-1"
-                  >
-                    <Button
-                      variant="primary"
-                      className="w-full hover:shadow flex items-center justify-center text-sm bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:text-white dark:hover:bg-blue-600"
-                    >
-                      <EyeIcon className="w-4 h-4 mr-2" />
-                      View Applications
-                    </Button>
-                  </Link>
-
-                  {/* Link to Application Icon */}
-                  <Link
-                    href={getApplyUrlByCommunityId(communityId, program.programId)}
-                    target="_blank"
-                    title="Link to application"
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-md transition-colors"
-                  >
-                    <svg
-                      className="w-5 h-5 text-gray-600 dark:text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      />
-                    </svg>
-                  </Link>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-12">

@@ -174,6 +174,7 @@ export const useProgramConfig = (programId: string) => {
     updateConfig: updateConfigMutation.mutate,
     updateFormSchema: updateFormSchemaMutation.mutate,
     toggleStatus: toggleStatusMutation.mutate,
+    toggleStatusAsync: toggleStatusMutation.mutateAsync,
     isUpdating:
       updateConfigMutation.isPending ||
       updateFormSchemaMutation.isPending ||
@@ -365,7 +366,7 @@ export const useFundingApplication = (applicationId: string) => {
 /**
  * Hook for form schema management with auto-save
  */
-export const useFormSchemaManager = (programId: string, chainId: number) => {
+export const useFormSchemaManager = (programId: string, _chainId: number) => {
   const [isDirty, setIsDirty] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
@@ -397,7 +398,7 @@ export const useFormSchemaManager = (programId: string, chainId: number) => {
 /**
  * Hook for V2 application submission with better error handling
  */
-export const useApplicationSubmissionV2 = (programId: string, chainId: number) => {
+export const useApplicationSubmissionV2 = (programId: string, _chainId: number) => {
   const queryClient = useQueryClient();
 
   // Check if user already has an application
@@ -735,7 +736,7 @@ export const useApplication = (applicationId: string | null) => {
 /**
  * Hook for managing application status updates
  */
-export const useApplicationStatus = (programId?: string, chainId?: number) => {
+export const useApplicationStatus = (programId?: string, _chainId?: number) => {
   const queryClient = useQueryClient();
 
   const statusMutation = useMutation({

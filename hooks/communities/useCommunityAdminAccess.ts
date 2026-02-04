@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useStaff } from "@/hooks/useStaff";
 import { useOwnerStore } from "@/store";
-import { useContractOwner } from "../useContractOwner";
 
 interface UseCommunityAdminAccessResult {
   hasAccess: boolean;
@@ -46,7 +45,7 @@ export const useCommunityAdminAccess = (communityId?: string): UseCommunityAdmin
 
   const isLoading = useMemo(
     () => isCheckingAdmin || isStaffLoading || isOwnerLoading,
-    [isCheckingAdmin, isStaffLoading]
+    [isCheckingAdmin, isStaffLoading, isOwnerLoading]
   );
 
   const checks = useMemo(

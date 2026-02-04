@@ -1,4 +1,10 @@
-import { QUERY_KEYS } from "../queryKeys";
+import type { Query } from "@tanstack/react-query";
+import { createProjectQueryPredicate, QUERY_KEYS } from "../queryKeys";
+
+// Helper to create a mock Query object for testing predicates
+const createMockQuery = (queryKey: unknown[]): Query => {
+  return { queryKey } as Query;
+};
 
 describe("queryKeys", () => {
   describe("MILESTONES", () => {
@@ -151,22 +157,68 @@ describe("queryKeys", () => {
   describe("COMMUNITY", () => {
     describe("PROJECT_UPDATES", () => {
       it("should generate correct query key", () => {
-        const key = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("community-123", "all", 1);
-        expect(key).toEqual(["community-project-updates", "community-123", "all", 1]);
+        const key = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("community-123", "all", 1, 25);
+        expect(key).toEqual(["community-project-updates", "community-123", "all", 1, 25, "", ""]);
       });
 
       it("should return as const tuple", () => {
-        const key = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "active", 0);
+        const key = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "active", 0, 25);
         expect(Array.isArray(key)).toBe(true);
-        expect(key.length).toBe(4);
+        expect(key.length).toBe(7);
       });
 
-      it("should handle different filters and pages", () => {
-        const key1 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "all", 1);
-        const key2 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "active", 1);
-        const key3 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "all", 2);
+      it("should handle different filters, pages, and limits", () => {
+        const key1 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "all", 1, 25);
+        const key2 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "active", 1, 25);
+        const key3 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "all", 2, 25);
+        const key4 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "all", 1, 50);
         expect(key1).not.toEqual(key2);
         expect(key1).not.toEqual(key3);
+        expect(key1).not.toEqual(key4);
+      });
+
+      it("should handle programId and projectId filters with empty string fallback", () => {
+        const key1 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES(
+          "comm-1",
+          "all",
+          1,
+          25,
+          "program-1",
+          null
+        );
+        const key2 = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES(
+          "comm-1",
+          "all",
+          1,
+          25,
+          "program-1",
+          "project-1"
+        );
+        expect(key1).toEqual([
+          "community-project-updates",
+          "comm-1",
+          "all",
+          1,
+          25,
+          "program-1",
+          "",
+        ]);
+        expect(key2).toEqual([
+          "community-project-updates",
+          "comm-1",
+          "all",
+          1,
+          25,
+          "program-1",
+          "project-1",
+        ]);
+        expect(key1).not.toEqual(key2);
+      });
+
+      it("should convert null programId and projectId to empty strings", () => {
+        const key = QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("comm-1", "all", 1, 25, null, null);
+        expect(key[5]).toBe("");
+        expect(key[6]).toBe("");
       });
     });
   });
@@ -230,6 +282,66 @@ describe("queryKeys", () => {
     });
   });
 
+  describe("PROJECT", () => {
+    describe("EXPLORER_INFINITE", () => {
+      it("should generate correct query key with all params", () => {
+        const params = {
+          search: "dao",
+          sortBy: "noOfGrants",
+          sortOrder: "asc",
+          limit: 25,
+        };
+        const key = QUERY_KEYS.PROJECT.EXPLORER_INFINITE(params);
+        expect(key[0]).toBe("projects-explorer-infinite");
+        expect(key[1]).toBe("dao");
+        expect(key[2]).toBe("noOfGrants");
+        expect(key[3]).toBe("asc");
+        expect(key[4]).toBe(25);
+      });
+
+      it("should use default values when params are not provided", () => {
+        const key = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({});
+        expect(key[0]).toBe("projects-explorer-infinite");
+        expect(key[1]).toBe(""); // empty search
+        expect(key[2]).toBe("updatedAt"); // default sortBy
+        expect(key[3]).toBe("desc"); // default sortOrder
+        expect(key[4]).toBe(50); // default limit
+      });
+
+      it("should handle undefined search", () => {
+        const key = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({
+          sortBy: "createdAt",
+          sortOrder: "desc",
+        });
+        expect(key[1]).toBe("");
+      });
+
+      it("should return as const tuple", () => {
+        const key = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ search: "test" });
+        expect(Array.isArray(key)).toBe(true);
+        expect(key.length).toBe(5);
+      });
+
+      it("should generate different keys for different search queries", () => {
+        const key1 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ search: "dao" });
+        const key2 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ search: "gitcoin" });
+        expect(key1).not.toEqual(key2);
+      });
+
+      it("should generate different keys for different sort options", () => {
+        const key1 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ sortBy: "createdAt" });
+        const key2 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ sortBy: "noOfGrants" });
+        expect(key1).not.toEqual(key2);
+      });
+
+      it("should generate different keys for different limit values", () => {
+        const key1 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ limit: 25 });
+        const key2 = QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ limit: 100 });
+        expect(key1).not.toEqual(key2);
+      });
+    });
+  });
+
   describe("integration tests", () => {
     it("should generate unique keys for different entities", () => {
       const milestoneKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES("id", "prog");
@@ -246,7 +358,7 @@ describe("queryKeys", () => {
       expect(QUERY_KEYS.APPLICATIONS.BY_PROJECT_UID("a")[0]).toContain("application");
       expect(QUERY_KEYS.REVIEWERS.PROGRAM("a")[0]).toContain("reviewer");
       expect(QUERY_KEYS.CONTRACTS.VALIDATION.ALL[0]).toContain("validation");
-      expect(QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("a", "b", 1)[0]).toContain("community");
+      expect(QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("a", "b", 1, 25)[0]).toContain("community");
       expect(QUERY_KEYS.GRANTS.DUPLICATE_CHECK({ community: "a", title: "b" })[0]).toContain(
         "grant"
       );
@@ -260,10 +372,195 @@ describe("queryKeys", () => {
       expect(
         Array.isArray(QUERY_KEYS.CONTRACTS.VALIDATION.VALIDATE({ address: "a", network: "b" }))
       ).toBe(true);
-      expect(Array.isArray(QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("a", "b", 1))).toBe(true);
+      expect(Array.isArray(QUERY_KEYS.COMMUNITY.PROJECT_UPDATES("a", "b", 1, 25))).toBe(true);
       expect(Array.isArray(QUERY_KEYS.GRANTS.DUPLICATE_CHECK({ community: "a", title: "b" }))).toBe(
         true
       );
+    });
+  });
+});
+
+describe("createProjectQueryPredicate", () => {
+  const projectId = "0x1234567890abcdef";
+  const projectSlug = "my-awesome-project";
+
+  describe("matching project queries", () => {
+    it("should match project details query by project ID", () => {
+      const predicate = createProjectQueryPredicate(projectId);
+      const query = createMockQuery(QUERY_KEYS.PROJECT.DETAILS(projectId));
+
+      expect(predicate(query)).toBe(true);
+    });
+
+    it("should match project details query by project slug", () => {
+      const predicate = createProjectQueryPredicate(projectSlug);
+      const query = createMockQuery(QUERY_KEYS.PROJECT.DETAILS(projectSlug));
+
+      expect(predicate(query)).toBe(true);
+    });
+
+    it("should match project-updates query", () => {
+      const predicate = createProjectQueryPredicate(projectId);
+      const query = createMockQuery(QUERY_KEYS.PROJECT.UPDATES(projectId));
+
+      expect(predicate(query)).toBe(true);
+    });
+
+    it("should match project-impacts query", () => {
+      const predicate = createProjectQueryPredicate(projectId);
+      const query = createMockQuery(QUERY_KEYS.PROJECT.IMPACTS(projectId));
+
+      expect(predicate(query)).toBe(true);
+    });
+
+    it("should match project-milestones query", () => {
+      const predicate = createProjectQueryPredicate(projectId);
+      const query = createMockQuery(QUERY_KEYS.PROJECT.MILESTONES(projectId));
+
+      expect(predicate(query)).toBe(true);
+    });
+
+    it("should match project-grants query", () => {
+      const predicate = createProjectQueryPredicate(projectId);
+      const query = createMockQuery(QUERY_KEYS.PROJECT.GRANTS(projectId));
+
+      expect(predicate(query)).toBe(true);
+    });
+
+    it("should match legacy projectMilestones query format", () => {
+      const predicate = createProjectQueryPredicate(projectId);
+      const query = createMockQuery(["projectMilestones", projectId]);
+
+      expect(predicate(query)).toBe(true);
+    });
+  });
+
+  describe("case-insensitive matching", () => {
+    it("should match project ID regardless of case", () => {
+      const predicate = createProjectQueryPredicate(projectId.toLowerCase());
+      const query = createMockQuery(QUERY_KEYS.PROJECT.DETAILS(projectId.toUpperCase()));
+
+      expect(predicate(query)).toBe(true);
+    });
+
+    it("should match project slug regardless of case", () => {
+      const predicate = createProjectQueryPredicate(projectSlug.toUpperCase());
+      const query = createMockQuery(QUERY_KEYS.PROJECT.DETAILS(projectSlug.toLowerCase()));
+
+      expect(predicate(query)).toBe(true);
+    });
+  });
+
+  describe("non-matching scenarios", () => {
+    it("should not match queries for different projects", () => {
+      const predicate = createProjectQueryPredicate(projectId);
+      const otherProjectId = "0xdifferentproject";
+      const query = createMockQuery(QUERY_KEYS.PROJECT.DETAILS(otherProjectId));
+
+      expect(predicate(query)).toBe(false);
+    });
+
+    it("should not match non-project queries", () => {
+      const predicate = createProjectQueryPredicate(projectId);
+
+      // Test various non-project query keys
+      expect(predicate(createMockQuery(["applications", projectId]))).toBe(false);
+      expect(predicate(createMockQuery(["community-details", projectId]))).toBe(false);
+      expect(predicate(createMockQuery(["staffAuthorization", projectId]))).toBe(false);
+      expect(predicate(createMockQuery(["donations", "project", projectId]))).toBe(false);
+    });
+
+    it("should not match empty query keys", () => {
+      const predicate = createProjectQueryPredicate(projectId);
+      const query = createMockQuery([]);
+
+      expect(predicate(query)).toBe(false);
+    });
+
+    it("should not match query keys with only the prefix", () => {
+      const predicate = createProjectQueryPredicate(projectId);
+      const query = createMockQuery(["project"]);
+
+      expect(predicate(query)).toBe(false);
+    });
+
+    it("should not match when project ID is at index 0", () => {
+      const predicate = createProjectQueryPredicate(projectId);
+      // This should not match because the projectId is at index 0
+      const query = createMockQuery([projectId, "project"]);
+
+      expect(predicate(query)).toBe(false);
+    });
+  });
+
+  describe("edge cases", () => {
+    it("should handle queries with non-array keys gracefully", () => {
+      const predicate = createProjectQueryPredicate(projectId);
+      const query = { queryKey: null } as unknown as Query;
+
+      // Should return false without throwing
+      expect(predicate(query)).toBe(false);
+    });
+
+    it("should handle queries with non-string key parts", () => {
+      const predicate = createProjectQueryPredicate(projectId);
+      const query = createMockQuery(["project", 12345, projectId]);
+
+      // Should still match because projectId is at index 2
+      expect(predicate(query)).toBe(true);
+    });
+
+    it("should handle special characters in project IDs", () => {
+      const specialId = "project_with-special.chars_123";
+      const predicate = createProjectQueryPredicate(specialId);
+      const query = createMockQuery(QUERY_KEYS.PROJECT.DETAILS(specialId));
+
+      expect(predicate(query)).toBe(true);
+    });
+
+    it("should handle ethereum addresses as project IDs", () => {
+      const ethereumAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f1dBf3";
+      const predicate = createProjectQueryPredicate(ethereumAddress);
+      const query = createMockQuery(QUERY_KEYS.PROJECT.DETAILS(ethereumAddress));
+
+      expect(predicate(query)).toBe(true);
+    });
+  });
+
+  describe("matching all PROJECT query types", () => {
+    it("should match all QUERY_KEYS.PROJECT types for same project", () => {
+      const predicate = createProjectQueryPredicate(projectId);
+
+      const projectQueryTypes = [
+        QUERY_KEYS.PROJECT.DETAILS(projectId),
+        QUERY_KEYS.PROJECT.UPDATES(projectId),
+        QUERY_KEYS.PROJECT.IMPACTS(projectId),
+        QUERY_KEYS.PROJECT.MILESTONES(projectId),
+        QUERY_KEYS.PROJECT.GRANTS(projectId),
+      ];
+
+      projectQueryTypes.forEach((queryKey) => {
+        const query = createMockQuery(queryKey);
+        expect(predicate(query)).toBe(true);
+      });
+    });
+
+    it("should not match any PROJECT query types for different project", () => {
+      const predicate = createProjectQueryPredicate(projectId);
+      const differentProject = "0xdifferent";
+
+      const projectQueryTypes = [
+        QUERY_KEYS.PROJECT.DETAILS(differentProject),
+        QUERY_KEYS.PROJECT.UPDATES(differentProject),
+        QUERY_KEYS.PROJECT.IMPACTS(differentProject),
+        QUERY_KEYS.PROJECT.MILESTONES(differentProject),
+        QUERY_KEYS.PROJECT.GRANTS(differentProject),
+      ];
+
+      projectQueryTypes.forEach((queryKey) => {
+        const query = createMockQuery(queryKey);
+        expect(predicate(query)).toBe(false);
+      });
     });
   });
 });

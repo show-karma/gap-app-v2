@@ -6,7 +6,10 @@ import {
 } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
-import type { FC } from "react";
+import { type FC, useState } from "react";
+import { DeleteDialog } from "@/components/DeleteDialog";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -24,8 +27,10 @@ import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { cn } from "@/utilities/tailwind";
 import { containerClassName } from "../ActivityCard";
+import { ActivityActionsWrapper } from "./ActivityActionsWrapper";
 import { ActivityAttribution } from "./ActivityAttribution";
 import { ActivityStatusHeader } from "./ActivityStatusHeader";
+import { GrantAssociation } from "./GrantAssociation";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -80,10 +85,43 @@ interface MilestoneCardProps {
   isAuthorized: boolean;
 }
 
+/**
+ * Get the display label for an activity type.
+ */
+const getActivityTypeLabel = (type: string): string => {
+  switch (type) {
+    case "grant_update":
+      return "Grant Update";
+    case "grant_received":
+      return "Grant Received";
+    case "project":
+    case "activity":
+    case "update":
+      return "Project Activity";
+    case "impact":
+      return "Project Impact";
+    case "grant":
+    case "milestone":
+    default:
+      return "Milestone";
+  }
+};
+
 export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized }) => {
   const { isCompleting, handleCompleting, isEditing, handleEditing } = useMilestoneActions();
   const { multiGrantUndoCompletion } = useMilestone();
+  const [isUndoing, setIsUndoing] = useState(false);
   const { title, description, completed, type } = milestone;
+
+  // Wrapper for undo completion with loading state
+  const handleUndoCompletion = async () => {
+    setIsUndoing(true);
+    try {
+      await multiGrantUndoCompletion(milestone);
+    } finally {
+      setIsUndoing(false);
+    }
+  };
   const { project } = useProjectStore();
   const { projectId } = useParams();
   const { refetch } = useProjectUpdates(projectId as string);
@@ -95,9 +133,6 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
 
   // project milestone-specific properties
   const projectMilestone = milestone.source.projectMilestone;
-  const attester =
-    projectMilestone?.attester || milestone.source.grantMilestone?.milestone.attester || "";
-  const createdAt = milestone.createdAt;
 
   // grant milestone-specific properties
   const grantMilestone = milestone.source.grantMilestone;
@@ -122,7 +157,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
   const completionAttester =
     projectMilestone?.completed?.attester || grantMilestone?.milestone.completed?.attester;
   // V2: verified is an array for both grant and project milestones
-  const isVerified =
+  const _isVerified =
     Boolean(
       projectMilestone?.verified &&
         Array.isArray(projectMilestone.verified) &&
@@ -140,14 +175,17 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
   // Function to render project milestone completion form or details
   const renderMilestoneCompletion = () => {
     if (isCompleting) {
-      if (type === "milestone" && projectMilestone) {
+      if (type === "milestone") {
+        // Project milestone - use ProjectObjectiveCompletion form
+        // Use projectMilestone.uid if available, otherwise fall back to milestone.uid
         return (
           <ProjectObjectiveCompletion
-            objectiveUID={projectMilestone.uid}
+            objectiveUID={projectMilestone?.uid || milestone.uid}
             handleCompleting={handleCompleting}
           />
         );
       } else if (type === "grant") {
+        // Grant milestone - use GrantMilestoneCompletion form
         return (
           <GrantMilestoneCompletion milestone={milestone} handleCompleting={handleCompleting} />
         );
@@ -213,18 +251,14 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
     return (
       <div className={cn(containerClassName, "flex flex-col gap-1 w-full")}>
         <div className={"w-full flex-col flex gap-2 px-5 py-4"}>
-          <div className="flex flex-row items-center justify-between gap-2 flex-wrap">
-            <div className="flex flex-row items-center gap-3">
-              <ActivityStatusHeader
-                activityType="MilestoneUpdate"
-                dueDate={null}
-                showCompletionStatus={false}
-                completed={true}
-                completionStatusClassName="text-xs px-2 py-1"
-                milestone={milestone}
-              />
-            </div>
-          </div>
+          {/* UPDATE label - matches Figma design for nested milestone updates */}
+          <p className="text-xs font-medium text-muted-foreground tracking-wide">UPDATE</p>
+          {/* Title - shown prominently after UPDATE label per Figma */}
+          {title && (
+            <h4 className="text-xl font-semibold text-foreground leading-tight tracking-tight">
+              {title}
+            </h4>
+          )}
           {completionReason ? (
             <div className="flex flex-col gap-1">
               <ReadMore side="left">{completionReason}</ReadMore>
@@ -362,12 +396,21 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
                 </Button>
 
                 {/* Revoke Completion Button */}
-                <Button
-                  className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-red-500 hover:bg-transparent hover:opacity-75  h-6 w-6 p-0 items-center justify-center"
-                  onClick={() => multiGrantUndoCompletion(milestone)}
-                >
-                  <TrashIcon className="h-5 w-5" />
-                </Button>
+                <DeleteDialog
+                  deleteFunction={handleUndoCompletion}
+                  isLoading={isUndoing}
+                  title={
+                    <p className="font-normal">
+                      Are you sure you want to revoke the completion of <b>{milestone.title}</b>?
+                    </p>
+                  }
+                  buttonElement={{
+                    text: "",
+                    icon: <TrashIcon className="h-5 w-5" />,
+                    styleClass:
+                      "bg-transparent text-sm font-semibold text-red-500 hover:bg-transparent hover:opacity-75 h-6 w-6 p-0 items-center justify-center",
+                  }}
+                />
               </div>
             ) : undefined
           }
@@ -384,14 +427,9 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
         {/* Grants Related Section */}
         <div className="flex flex-col gap-3 w-full px-5 py-4">
           <div className="flex flex-col gap-3 w-full">
-            <ActivityStatusHeader
-              activityType="Milestone"
-              dueDate={type === "grant" && endsAt ? formatDate(endsAt) : null}
-              showCompletionStatus={true}
-              completed={!!completed}
-              completionStatusClassName="text-xs px-2 py-1"
-              milestone={milestone}
-            />
+            {/* Community/Grant Badge - only shown for grant milestones */}
+            {type === "grant" && <GrantAssociation milestone={milestone} />}
+
             {/* Title */}
             <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">{title}</p>
           </div>
@@ -403,40 +441,89 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
             </div>
           ) : null}
         </div>
-        {/* Bottom Attribution with Actions */}
-        <ActivityAttribution
-          date={createdAt}
-          attester={attester}
-          actions={
-            isAuthorized ? (
-              <div className="flex flex-row gap-6 items-center">
-                {!completed && (
-                  <Button
-                    className="flex flex-row gap-1 border border-brand-blue text-brand-blue  text-sm font-semibold bg-white hover:bg-white dark:bg-transparent dark:hover:bg-transparent p-3  rounded-md max-sm:px-2 max-sm:py-1"
-                    onClick={() => handleCompleting(true)}
-                  >
-                    Mark Milestone Complete
-                    <CheckCircleIcon className="h-5 w-5" />
-                  </Button>
-                )}
+        {/* Bottom Actions (removed attribution since it's shown in timeline header) */}
+        {isAuthorized && (type === "milestone" || type === "grant") && (
+          <div className="flex w-full flex-1 flex-row gap-6 items-center justify-between px-5 py-3 border-t border-gray-300 dark:border-zinc-400">
+            {/* Only show completion button for milestone types that support completion */}
+            {!completed ? (
+              <Button
+                className="flex flex-row gap-1 border border-brand-blue text-brand-blue  text-sm font-semibold bg-white hover:bg-white dark:bg-transparent dark:hover:bg-transparent p-3  rounded-md max-sm:px-2 max-sm:py-1"
+                onClick={() => handleCompleting(true)}
+              >
+                Mark Milestone Complete
+                <CheckCircleIcon className="h-5 w-5" />
+              </Button>
+            ) : (
+              <div />
+            )}
 
-                {/* Options Menu with only Delete */}
-                {type === "milestone" && projectMilestone ? (
-                  <ObjectiveSimpleOptionsMenu objectiveId={projectMilestone.uid} />
-                ) : type === "grant" && grantMilestone ? (
-                  <GrantMilestoneSimpleOptionsMenu milestone={milestone} />
-                ) : null}
-              </div>
-            ) : undefined
-          }
-        />
+            {/* Options Menu with only Delete - right aligned */}
+            {type === "milestone" && projectMilestone ? (
+              <ObjectiveSimpleOptionsMenu objectiveId={projectMilestone.uid} />
+            ) : type === "grant" && grantMilestone ? (
+              <GrantMilestoneSimpleOptionsMenu milestone={milestone} />
+            ) : null}
+          </div>
+        )}
+        {/* Bottom Actions for activity/update types - Share, Edit, Delete */}
+        {isAuthorized &&
+          (type === "activity" ||
+            type === "update" ||
+            type === "grant_update" ||
+            type === "impact") && (
+            <div className="flex w-full flex-1 flex-row gap-6 items-center justify-end px-5 py-3 border-t border-gray-300 dark:border-zinc-400">
+              <ActivityActionsWrapper milestone={milestone} />
+            </div>
+          )}
       </div>
       {isCompleting ||
       isEditing ||
       completionReason ||
       completionProof ||
       completionDeliverables ? (
-        <div className="flex flex-col w-full pl-8 md:pl-[120px]">{renderMilestoneCompletion()}</div>
+        <div className="flex flex-col gap-2.5 mt-4 pl-10">
+          {/* Timeline header: Only show when viewing existing completion data, not during form input */}
+          {!isCompleting && (completionReason || completionProof || completionDeliverables) && (
+            <div className="relative flex flex-row items-center justify-between gap-2 flex-wrap">
+              {/* Timeline badge - vertically centered relative to header row, aligned with main timeline */}
+              <div className="absolute -left-[73px] max-lg:-left-[69px] top-1/2 -translate-y-1/2 w-6 h-6 max-lg:w-5 max-lg:h-5 flex items-center justify-center z-10 bg-orange-50 dark:bg-orange-900/30 rounded-full">
+                <div className="w-[3px] h-[3px] rounded-full bg-orange-400" />
+              </div>
+              {/* Left side: Activity type label and Due date */}
+              <div className="flex flex-row items-center gap-2.5 flex-wrap">
+                <span className="text-sm font-semibold text-foreground">
+                  {getActivityTypeLabel(type)}
+                </span>
+                {endsAt && endsAt > 0 && new Date(endsAt * 1000).getFullYear() >= 2000 && (
+                  <span className="text-sm font-semibold text-muted-foreground">
+                    Due on {formatDate(new Date(endsAt * 1000).toISOString())}
+                  </span>
+                )}
+              </div>
+
+              {/* Right side: Posted by */}
+              {completionDate && (
+                <div className="flex flex-row items-center gap-3 text-sm font-medium leading-5 text-muted-foreground">
+                  <span>Posted {formatDate(completionDate)} by</span>
+                  {completionAttester && (
+                    <div className="flex flex-row items-center gap-3">
+                      <EthereumAddressToENSAvatar
+                        address={completionAttester}
+                        className="h-8 w-8 min-h-8 min-w-8 rounded-full"
+                      />
+                      <span className="text-sm font-semibold leading-5 text-foreground">
+                        <EthereumAddressToENSName address={completionAttester} />
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Completion card - aligned with header */}
+          <div>{renderMilestoneCompletion()}</div>
+        </div>
       ) : null}
     </div>
   );

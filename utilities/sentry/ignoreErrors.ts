@@ -23,6 +23,11 @@ const browserExtensionErrors = [
   "chrome.runtime.sendMessage() called from a webpage must specify an Extension ID",
 ];
 
+// Expected "not found" errors when users access non-existent resources (e.g., deleted projects, old URLs)
+// These are normal 404-type scenarios, not bugs worth tracking
+// See https://karma-crypto-inc.sentry.io/issues/7205405990
+const notFoundErrors = ["Project not found", "Community not found"];
+
 export const sentryIgnoreErrors = [
   // user rejected a confirmation in the wallet
   "rejected the request",
@@ -36,4 +41,5 @@ export const sentryIgnoreErrors = [
   ...unsupportedWalletErrors,
   ...walletConnectErrors,
   ...browserExtensionErrors,
+  ...notFoundErrors,
 ];

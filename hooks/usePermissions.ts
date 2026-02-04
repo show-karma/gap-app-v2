@@ -76,8 +76,9 @@ export const usePermissions = (options: PermissionOptions = {}) => {
   const { programId, action, role, enabled = true } = options;
 
   const query = useQuery({
-    queryKey: ["permissions", programId, action, role, wagmiAddress, isAuth],
+    queryKey: ["permissions", programId, action, role, wagmiAddress?.toLowerCase() ?? null, isAuth],
     queryFn: async () => {
+      // These checks are defense-in-depth; the query shouldn't run if !enabled
       if (!isAuth || !wagmiAddress || !ready) {
         return {
           hasPermission: false,
@@ -167,7 +168,7 @@ export const usePermissions = (options: PermissionOptions = {}) => {
     },
     ...defaultQueryOptions,
     enabled: enabled && !!isAuth && !!wagmiAddress,
-    staleTime: 1 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 1 * 60 * 1000, // Cache for 1 minute
     retry: (failureCount, error) => {
       // Retry only network errors, not auth issues
       if (axios.isAxiosError(error) && error.response?.status === 401) {

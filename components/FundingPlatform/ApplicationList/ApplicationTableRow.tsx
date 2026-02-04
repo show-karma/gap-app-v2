@@ -1,5 +1,6 @@
 "use client";
 
+import { ClipboardDocumentCheckIcon } from "@heroicons/react/24/solid";
 import React, { type FC, useState } from "react";
 import { ReviewerType } from "@/hooks/useReviewerAssignment";
 import type { MilestoneReviewer } from "@/services/milestone-reviewers.service";
@@ -9,7 +10,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { formatAIScore } from "../helper/getAIScore";
 import { formatInternalAIScore } from "../helper/getInternalAIScore";
-import { getProjectTitle } from "../helper/getProjecTitle";
+import { getProjectTitle } from "../helper/getProjectTitle";
 import { AIEvaluationModal, type EvaluationType } from "./AIEvaluationModal";
 import { ReviewerAssignmentDropdown } from "./ReviewerAssignmentDropdown";
 import { TableStatusActionButtons } from "./TableStatusActionButtons";
@@ -116,7 +117,19 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
         <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
           {application.applicantEmail}
         </td>
-        <td className="px-4 py-4 whitespace-nowrap">{getStatusBadge(application.status)}</td>
+        <td className="px-4 py-4 whitespace-nowrap">
+          <div className="flex items-center gap-2">
+            {getStatusBadge(application.status)}
+            {application.status === "approved" && application.postApprovalCompleted && (
+              <span
+                title="Post-approval form completed"
+                className="inline-flex items-center text-emerald-600 dark:text-emerald-400"
+              >
+                <ClipboardDocumentCheckIcon className="h-5 w-5" aria-hidden="true" />
+              </span>
+            )}
+          </div>
+        </td>
         {showAIScoreColumn && (
           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 text-center">
             {application.aiEvaluation?.evaluation ? (

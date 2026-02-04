@@ -23,8 +23,7 @@ import { PaymentMethodSelector } from "./PaymentMethodSelector";
 import type { SingleProjectDonateModalProps } from "./types";
 
 export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps>(
-  ({ isOpen, onClose, project }) => {
-    const { login, authenticated, connectWallet } = useAuth();
+  ({ isOpen, onClose, project, initialAmount }) => {
     const {
       paymentMethod,
       selectedToken,
@@ -37,7 +36,7 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
       handleProceed,
       setSelectedToken,
       address,
-    } = useSingleProjectDonation(project, onClose);
+    } = useSingleProjectDonation(project, onClose, initialAmount);
 
     const handleOpenChange = useCallback(
       (open: boolean) => {

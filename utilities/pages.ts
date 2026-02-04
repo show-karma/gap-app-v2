@@ -50,13 +50,15 @@ export const PAGES = {
     COMMUNITY_STATS: `/admin/communities/stats`,
     PROJECTS: `/admin/projects`,
     PAYOUTS: (community: string) => `/community/${community}/admin/payouts`,
+    KYC_SETTINGS: (community: string) => `/community/${community}/admin/kyc-settings`,
     PROGRAM_SCORES: (community: string) => `/community/${community}/admin/program-scores`,
     PROJECT_MILESTONES: (community: string, projectId: string, programId: string) =>
       `/community/${community}/admin/${projectId}/milestones?programIds=${programId}`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,
-    UPDATES: (project: string) => `/project/${project}/updates`,
+    UPDATES: (project: string) => `/project/${project}`,
+    ABOUT: (project: string) => `/project/${project}/about`,
     GRANTS: (project: string) => `/project/${project}/funding`,
 
     GRANT: (project: string, grant: string) => `/project/${project}/funding/${grant}`,

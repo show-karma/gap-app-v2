@@ -86,6 +86,8 @@ export interface IFormSchema {
     rejectionEmailSubject?: string; // Custom subject for rejection emails with variable placeholders (e.g., {{programName}})
     accessCodeEnabled?: boolean; // Whether access code gating is enabled (derived from accessCode, read-only for public)
     accessCode?: string; // The access code required to submit the application (only returned for admins)
+    kycFormUrl?: string; // Program-specific KYC form URL (overrides community-level)
+    kybFormUrl?: string; // Program-specific KYB form URL (overrides community-level)
   };
 }
 
@@ -146,6 +148,7 @@ export interface IFundingApplication {
   };
   appReviewers?: string[]; // Array of program reviewer addresses assigned to this application
   milestoneReviewers?: string[]; // Array of milestone reviewer addresses assigned to this application
+  postApprovalCompleted?: boolean; // Indicates if post-approval form has been completed
   createdAt: string | Date;
   updatedAt: string | Date;
 }

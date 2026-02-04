@@ -325,6 +325,38 @@ jest.mock("@/store/modals/contributorProfile", () => ({
   })),
 }));
 
+// Mock the NavbarPermissionsContext - this is needed because NavbarDesktopNavigation
+// uses useNavbarPermissions() which reads from context, not from individual hooks directly
+export const mockNavbarPermissionsState = {
+  current: {
+    isLoggedIn: false,
+    address: undefined,
+    ready: true,
+    isStaff: false,
+    isStaffLoading: false,
+    isOwner: false,
+    isCommunityAdmin: false,
+    hasReviewerRole: false,
+    reviewerPrograms: [],
+    isPoolManager: false,
+    isRegistryAdmin: false,
+    hasAdminAccess: false,
+    isRegistryAllowed: false,
+  },
+};
+
+jest.mock("@/src/components/navbar/navbar-permissions-context", () => ({
+  useNavbarPermissions: jest.fn(() => {
+    const { mockNavbarPermissionsState } = require("@/__tests__/navbar/setup");
+    return mockNavbarPermissionsState.current;
+  }),
+  NavbarPermissionsProvider: ({ children }: { children: any }) => children,
+  NavbarPermissionsContext: {
+    Provider: ({ children }: { children: any }) => children,
+    Consumer: ({ children }: { children: any }) => children(mockNavbarPermissionsState.current),
+  },
+}));
+
 // Mock unified search service for search functionality
 // This mock will be controlled by tests via module mocking
 export const mockSearchFunction = jest.fn();

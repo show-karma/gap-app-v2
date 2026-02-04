@@ -14,18 +14,13 @@ import { KarmaProjectLink } from "@/components/FundingPlatform/shared/KarmaProje
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useApplicationVersions } from "@/hooks/useFundingPlatform";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
-import type {
-  IFormField,
-  IFundingApplication,
-  IFundingProgramConfig,
-  ProgramWithFormSchema,
-} from "@/types/funding-platform";
+import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 import { createFieldLabelsMap, createFieldTypeMap } from "@/utilities/form-schema-helpers";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { isFundingProgramConfig } from "@/utilities/type-guards";
 import { isValidProjectUid } from "@/utilities/validation";
-import { getProjectTitle } from "../helper/getProjecTitle";
+import { getProjectTitle } from "../helper/getProjectTitle";
 import { AIEvaluationDisplay } from "./AIEvaluation";
 import AIEvaluationButton from "./AIEvaluationButton";
 import ApplicationVersionSelector from "./ApplicationVersionSelector";

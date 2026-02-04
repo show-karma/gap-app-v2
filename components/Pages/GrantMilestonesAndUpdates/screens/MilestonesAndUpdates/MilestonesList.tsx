@@ -50,7 +50,7 @@ const TabButton: FC<TabButtonProps> = ({ handleSelection, tab, tabName, selected
 export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
   const { milestones, updates } = grant;
 
-  const [selectedMilestoneType, setSelectedMilestoneType] = useState<Tab>("completed");
+  const [selectedMilestoneType, setSelectedMilestoneType] = useState<Tab>("all");
 
   // Initialize selection from hash on mount
   useEffect(() => {

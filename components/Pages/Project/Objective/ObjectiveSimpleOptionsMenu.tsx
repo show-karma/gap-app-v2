@@ -72,7 +72,13 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
       const { gapClient, walletSigner } = setup;
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) return;
-      const fetchedMilestones = await getProjectObjectives(projectId);
+      const projectRecipient = fetchedProject.recipient;
+      const fetchedMilestones = await getProjectObjectives(
+        projectId,
+        fetchedProject.uid,
+        projectRecipient,
+        fetchedProject.chainID
+      );
       if (!fetchedMilestones || !gapClient?.network) return;
       const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient?.network);
       const objectiveInstance = objectivesInstances.find(
@@ -83,7 +89,12 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
           async () => {
-            const fetchedObjectives = await getProjectObjectives(projectId);
+            const fetchedObjectives = await getProjectObjectives(
+              projectId,
+              fetchedProject.uid,
+              projectRecipient,
+              fetchedProject.chainID
+            );
             const stillExists = fetchedObjectives.find(
               (item) => item.uid.toLowerCase() === objectiveId.toLowerCase()
             );

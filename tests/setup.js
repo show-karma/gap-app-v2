@@ -234,3 +234,16 @@ jest.mock("remark-breaks", () => ({
   __esModule: true,
   default: () => (tree) => tree, // Pass-through plugin for testing
 }));
+
+// NOTE: The gasless module is mocked via jest-resolver.js which redirects all gasless
+// imports to __mocks__/utilities/gasless/index.ts. This provides proper jest.fn() mocks
+// that can be configured in tests. We don't use jest.mock() here because the resolver
+// handles it more reliably (catches relative paths like ../../../../utilities/gasless).
+
+// Mock ProjectOptionsMenu to avoid deep dependency chain with gasless utilities
+jest.mock("@/components/Pages/Project/ProjectOptionsMenu", () => ({
+  __esModule: true,
+  ProjectOptionsMenu: () => null,
+  ProjectOptionsDialogs: () => null,
+  default: () => null,
+}));
