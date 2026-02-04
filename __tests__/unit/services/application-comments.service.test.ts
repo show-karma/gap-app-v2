@@ -81,14 +81,13 @@ describe("applicationCommentsService", () => {
       });
 
       // Call the service
-      await applicationCommentsService.createComment("app-123", "Test comment", "Test User");
+      await applicationCommentsService.createComment("app-123", "Test comment");
 
       // Verify axios.post was called with correct parameters
       expect(mockAxiosInstance.post).toHaveBeenCalledWith(
         expect.stringContaining("app-123"),
         expect.objectContaining({
           content: "Test comment",
-          authorName: "Test User",
         })
       );
     });
