@@ -49,7 +49,7 @@ const PROVIDER_CONFIGS: Record<OnrampProvider, OnrampProviderConfig> = {
       { code: "EUR", symbol: "€" },
       { code: "GBP", symbol: "£" },
     ],
-    supportedNetworks: ["ethereum", "base", "optimism", "polygon", "arbitrum"],
+    supportedNetworks: ["ethereum", "base", "polygon", "avalanche"],
   },
 };
 

@@ -22,6 +22,10 @@ import { OnrampFlow } from "./OnrampFlow";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
 import type { SingleProjectDonateModalProps } from "./types";
 
+// Stripe-supported chain IDs for fiat onramp
+// Maps to: ethereum (1), base (8453), polygon (137), avalanche (43114)
+const STRIPE_SUPPORTED_CHAIN_IDS = [1, 8453, 137, 43114];
+
 export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps>(
   ({ isOpen, onClose, project, initialAmount }) => {
     const { authenticated, login, connectWallet } = useAuth();
@@ -94,19 +98,24 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
       return getPayoutAddressForChain(project.chainPayoutAddress, selectedToken.chainId) || "";
     }, [selectedToken, project.chainPayoutAddress]);
 
-    // Get default payout address for fiat flow (prefer Base, then first available)
+    // Get payout address for fiat flow, validating against Stripe-supported chains
     const fiatPayoutConfig = useMemo(() => {
-      if (!project.chainPayoutAddress) return { address: "", chainId: 8453 };
-      // Prefer Base (8453), then first available chain
-      const baseAddress = getPayoutAddressForChain(project.chainPayoutAddress, 8453);
-      if (baseAddress) return { address: baseAddress, chainId: 8453 };
-      const firstChainId = configuredChainIds[0];
-      if (firstChainId) {
-        const address = getPayoutAddressForChain(project.chainPayoutAddress, firstChainId) || "";
-        return { address, chainId: firstChainId };
+      if (!project.chainPayoutAddress) {
+        return { address: "", chainId: 8453, isSupported: false };
       }
-      return { address: "", chainId: 8453 };
-    }, [project.chainPayoutAddress, configuredChainIds]);
+
+      // Find first Stripe-supported chain with a payout address
+      // Order: Base (8453), Ethereum (1), Polygon (137), Avalanche (43114)
+      for (const chainId of STRIPE_SUPPORTED_CHAIN_IDS) {
+        const address = getPayoutAddressForChain(project.chainPayoutAddress, chainId);
+        if (address) {
+          return { address, chainId, isSupported: true };
+        }
+      }
+
+      // No supported chain has a payout address
+      return { address: "", chainId: 8453, isSupported: false };
+    }, [project.chainPayoutAddress]);
 
     return (
       <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -231,15 +240,19 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
                       Login to Continue
                     </Button>
                   </div>
-                ) : fiatPayoutConfig.address ? (
+                ) : fiatPayoutConfig.address && fiatPayoutConfig.isSupported ? (
                   <OnrampFlow
                     projectUid={project.uid}
                     payoutAddress={fiatPayoutConfig.address}
                     chainId={fiatPayoutConfig.chainId}
                   />
+                ) : configuredChainIds.length > 0 ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                    Card payments are not available for this project&apos;s configured networks.
+                  </p>
                 ) : (
                   <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
-                    This project hasn't set up donation addresses yet.
+                    This project hasn&apos;t set up donation addresses yet.
                   </p>
                 )}
               </>
