@@ -24,6 +24,7 @@ import type { SingleProjectDonateModalProps } from "./types";
 
 export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps>(
   ({ isOpen, onClose, project, initialAmount }) => {
+    const { authenticated, login, connectWallet } = useAuth();
     const {
       paymentMethod,
       selectedToken,
