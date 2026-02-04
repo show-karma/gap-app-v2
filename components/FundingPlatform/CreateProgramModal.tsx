@@ -23,9 +23,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { type CreateProgramFormSchema, createProgramSchema } from "@/schemas/programFormSchema";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
 import type { CreateProgramFormData } from "@/types/program-registry";
-import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
-import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 
 interface CreateProgramModalProps {
@@ -96,23 +94,8 @@ export function CreateProgramModal({
         community
       );
 
-      // Create program using fetchData directly (response body is not used,
-      // only the error status matters — same pattern as AddProgram)
-      const [, error] = await fetchData(
-        INDEXER.REGISTRY.V2.CREATE,
-        "POST",
-        {
-          chainId: community.chainID,
-          metadata,
-        },
-        {},
-        {},
-        true
-      );
-
-      if (error) {
-        throw new Error(error);
-      }
+      // Create program using service
+      await ProgramRegistryService.createProgram(address, community.chainID, metadata);
 
       toast.success("Program created successfully!", { duration: 3000 });
       reset();
