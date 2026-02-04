@@ -276,6 +276,13 @@ export const INDEXER = {
   PROGRAMS: {
     GET: (programId: string) => `/programs/${programId}`,
     COMMUNITY: (communityId: string) => `/communities/${communityId}/programs`,
+    FINANCIALS: (programId: string, page?: number, limit?: number) => {
+      const params = new URLSearchParams();
+      if (page) params.set("page", page.toString());
+      if (limit) params.set("limit", limit.toString());
+      const query = params.toString();
+      return `/v2/programs/${programId}/financials${query ? `?${query}` : ""}`;
+    },
   },
   PROJECT: {
     EXTERNAL: {

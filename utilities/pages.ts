@@ -20,6 +20,7 @@ export const PAGES = {
       `/community/${community}/donate/${programId}/checkout`,
     PROJECT_DISCOVERY: (community: string) => `/community/${community}/impact/project-discovery`,
     UPDATES: (community: string) => `/community/${community}/updates`,
+    FINANCIALS: (community: string) => `/community/${community}/financials`,
     RECEIVEPROJECTUPDATES: (community: string) => `/community/${community}/receive-project-updates`,
   },
   MY_PROJECTS: `/my-projects`,
