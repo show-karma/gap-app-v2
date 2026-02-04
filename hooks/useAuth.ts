@@ -74,29 +74,47 @@ export const useAuth = () => {
   }, [authenticated, ready, login]);
 
   // Cross-tab logout synchronization
+  // Compatible with both localStorage (default) and HttpOnly cookies
   useEffect(() => {
     if (!ready || !authenticated) return;
 
+    // Check if privy-session cookie exists
+    // If session exists, user might be in the middle of token refresh (HttpOnly cookies mode)
+    const hasPrivySession = () => {
+      if (typeof document === "undefined") return false;
+      return document.cookie.includes("privy-session");
+    };
+
     const checkAuthStatus = async () => {
       const hasToken = await TokenManager.getToken();
-      if (!hasToken && authenticated) {
+
+      // Only logout if:
+      // 1. No token available AND
+      // 2. No privy-session cookie (which would indicate a refresh in progress)
+      // This prevents false logouts when using HttpOnly cookies where
+      // getAccessToken() might return null during token refresh
+      if (!hasToken && authenticated && !hasPrivySession()) {
         logout?.();
       }
     };
 
     const handleStorageChange = (e: StorageEvent) => {
+      // For localStorage mode: detect cross-tab logout
       if (e.key === "privy:token" && !e.newValue) {
         checkAuthStatus();
       }
     };
 
-    checkAuthStatus();
+    // Don't check immediately on mount - give time for token refresh
+    // This prevents false logouts when using HttpOnly cookies
+    const initialCheckTimeout = setTimeout(checkAuthStatus, 2000);
 
     const intervalId = setInterval(checkAuthStatus, 5000);
 
     window.addEventListener("storage", handleStorageChange);
 
     return () => {
+      clearTimeout(initialCheckTimeout);
       clearInterval(intervalId);
       window.removeEventListener("storage", handleStorageChange);
     };
