@@ -5,12 +5,13 @@ import { loadStripeOnramp } from "@stripe/crypto";
 import { Loader2, X } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import type { StripeOnrampSessionData } from "@/hooks/donation/types";
 import { envVars } from "@/utilities/enviromentVars";
 
 interface StripeOnrampEmbedProps {
   clientSecret: string;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (sessionData: StripeOnrampSessionData) => void;
 }
 
 export const StripeOnrampEmbed = React.memo<StripeOnrampEmbedProps>(
@@ -18,13 +19,23 @@ export const StripeOnrampEmbed = React.memo<StripeOnrampEmbedProps>(
     const containerRef = useRef<HTMLDivElement>(null);
     const sessionRef = useRef<OnrampSession | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const hasTriggeredSuccess = useRef(false);
 
     const handleSessionUpdate = useCallback(
-      (event: { payload: { session: { status: string } } }) => {
-        const status = event.payload.session.status;
+      (event: { payload: { session: StripeOnrampSessionData } }) => {
+        console.log(event);
+        const session = event.payload.session;
+        const status = session.status;
 
-        if (status === "fulfillment_complete") {
-          onSuccess?.();
+        // Trigger success on fulfillment_processing (payment complete, crypto delivery in progress)
+        // or fulfillment_complete (crypto delivered)
+        // Use ref to prevent double-triggering
+        if (
+          (status === "fulfillment_processing" || status === "fulfillment_complete") &&
+          !hasTriggeredSuccess.current
+        ) {
+          hasTriggeredSuccess.current = true;
+          onSuccess?.(session);
         }
       },
       [onSuccess]

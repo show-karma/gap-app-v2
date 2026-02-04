@@ -3,12 +3,13 @@
 import { CreditCard, Loader2 } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { OnrampProvider } from "@/hooks/donation/types";
+import { OnrampProvider, type StripeOnrampSessionData } from "@/hooks/donation/types";
 import { useOnramp } from "@/hooks/donation/useOnramp";
 import { useCountryDetection } from "@/hooks/useCountryDetection";
 import { DEFAULT_ONRAMP_PROVIDER, getProviderConfig } from "@/lib/onramp";
 import { getChainNameById } from "@/utilities/network";
 import { OnrampProviderToggle } from "./OnrampProviderToggle";
+import { OnrampSuccessModal } from "./OnrampSuccessModal";
 import { StripeOnrampEmbed } from "./StripeOnrampEmbed";
 
 const ONRAMP_LIMITS = {
@@ -29,6 +30,9 @@ const CURRENCY_SYMBOL = "$";
 export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddress, chainId }) => {
   const [amount, setAmount] = useState("");
   const [selectedProvider, setSelectedProvider] = useState<OnrampProvider>(DEFAULT_ONRAMP_PROVIDER);
+  const [successSessionData, setSuccessSessionData] = useState<StripeOnrampSessionData | null>(
+    null
+  );
 
   const { country, isLoading: isCountryLoading } = useCountryDetection();
 
@@ -55,9 +59,18 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
     country,
   });
 
-  const handleStripeSuccess = useCallback(() => {
-    clearSession();
-  }, [clearSession]);
+  const handleStripeSuccess = useCallback(
+    (sessionData: StripeOnrampSessionData) => {
+      clearSession();
+      setSuccessSessionData(sessionData);
+    },
+    [clearSession]
+  );
+
+  const handleSuccessModalClose = useCallback(() => {
+    setSuccessSessionData(null);
+    setAmount("");
+  }, []);
 
   const handleProviderChange = useCallback((provider: OnrampProvider) => {
     setSelectedProvider(provider);
@@ -104,6 +117,14 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
           clientSecret={session.clientSecret}
           onClose={clearSession}
           onSuccess={handleStripeSuccess}
+        />
+      )}
+
+      {successSessionData && (
+        <OnrampSuccessModal
+          sessionData={successSessionData}
+          network={network}
+          onClose={handleSuccessModalClose}
         />
       )}
 

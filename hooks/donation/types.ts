@@ -66,3 +66,18 @@ export interface OnrampSessionResponse {
   expiresAt: string;
   onrampUrl?: string;
 }
+
+export interface StripeOnrampSessionData {
+  id: string;
+  status: string;
+  transaction_details?: {
+    destination_currency?: string;
+    destination_amount?: string;
+    destination_network?: string;
+    source_currency?: string;
+    source_amount?: string;
+    transaction_id?: string;
+    wallet_address?: string;
+    wallet_addresses?: Record<string, string>;
+  };
+}
