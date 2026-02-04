@@ -8,7 +8,8 @@ import { useOnramp } from "@/hooks/donation/useOnramp";
 import { useCountryDetection } from "@/hooks/useCountryDetection";
 import { DEFAULT_ONRAMP_PROVIDER, getProviderConfig } from "@/lib/onramp";
 import { getChainNameById } from "@/utilities/network";
-import { OnrampProviderToggle } from "./OnrampProviderToggle";
+// TODO: Re-enable when TRANSAK is ready
+// import { OnrampProviderToggle } from "./OnrampProviderToggle";
 import { OnrampSuccessModal } from "./OnrampSuccessModal";
 import { StripeOnrampEmbed } from "./StripeOnrampEmbed";
 
@@ -29,7 +30,9 @@ const CURRENCY_SYMBOL = "$";
 
 export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddress, chainId }) => {
   const [amount, setAmount] = useState("");
-  const [selectedProvider, setSelectedProvider] = useState<OnrampProvider>(DEFAULT_ONRAMP_PROVIDER);
+  // TODO: Re-enable when TRANSAK is ready
+  // const [selectedProvider, setSelectedProvider] = useState<OnrampProvider>(DEFAULT_ONRAMP_PROVIDER);
+  const selectedProvider = OnrampProvider.STRIPE;
   const [successSessionData, setSuccessSessionData] = useState<StripeOnrampSessionData | null>(
     null
   );
@@ -72,9 +75,10 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
     setAmount("");
   }, []);
 
-  const handleProviderChange = useCallback((provider: OnrampProvider) => {
-    setSelectedProvider(provider);
-  }, []);
+  // TODO: Re-enable when TRANSAK is ready
+  // const handleProviderChange = useCallback((provider: OnrampProvider) => {
+  //   setSelectedProvider(provider);
+  // }, []);
 
   const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -128,7 +132,8 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
         />
       )}
 
-      <OnrampProviderToggle selected={selectedProvider} onSelect={handleProviderChange} />
+      {/* TODO: Re-enable when TRANSAK is ready */}
+      {/* <OnrampProviderToggle selected={selectedProvider} onSelect={handleProviderChange} /> */}
 
       <div className="space-y-2">
         <label
