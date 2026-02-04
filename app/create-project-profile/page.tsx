@@ -1,4 +1,12 @@
+"use client";
+
+import { SparklesIcon } from "@heroicons/react/24/outline";
+import { OnboardingAssistantDrawer } from "@/components/Pages/OnboardingAssistant";
+import { useOnboardingAssistantModalStore } from "@/store/modals/onboardingAssistant";
+
 export default function CreateProjectProfilePage() {
+  const { openOnboardingAssistant } = useOnboardingAssistantModalStore();
+
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
       <article className="space-y-8">
@@ -87,15 +95,25 @@ export default function CreateProjectProfilePage() {
           </p>
         </section>
 
-        <section className="pt-4">
+        <section className="pt-4 flex flex-wrap gap-4">
           <a
             href="https://www.karmahq.xyz"
             className="inline-block rounded-lg bg-blue-600 px-6 py-3 text-lg font-semibold text-white hover:bg-blue-700"
           >
             Create your project profile
           </a>
+          <button
+            type="button"
+            onClick={openOnboardingAssistant}
+            className="inline-flex items-center gap-2 rounded-lg border-2 border-blue-600 px-6 py-3 text-lg font-semibold text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-950/30 transition-colors"
+          >
+            <SparklesIcon className="h-5 w-5" />
+            Create with AI Assistant
+          </button>
         </section>
       </article>
+
+      <OnboardingAssistantDrawer />
     </main>
   );
 }

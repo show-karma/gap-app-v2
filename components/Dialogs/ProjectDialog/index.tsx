@@ -47,6 +47,7 @@ import { searchProjects } from "@/services/project-search.service";
 import { useProjectStore } from "@/store";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
+import { useOnboardingAssistantDataStore } from "@/store/onboardingAssistantData";
 import { useOwnerStore } from "@/store/owner";
 import type { Contact } from "@/types/project";
 import type { Project as ProjectResponse } from "@/types/v2/project";
@@ -376,29 +377,58 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setLogoUploadProgress(0);
         setTempLogoKey(null);
       } else {
-        // Create mode - reset to empty form
-        reset({
-          title: "",
-          description: "",
-          problem: "",
-          solution: "",
-          missionSummary: "",
-          locationOfImpact: "",
-          twitter: "",
-          github: "",
-          discord: "",
-          website: "",
-          linkedin: "",
-          pitchDeck: "",
-          demoVideo: "",
-          farcaster: "",
-          profilePicture: "",
-          businessModel: "",
-          stageIn: "",
-          raisedMoney: "",
-          pathToTake: "",
-          recipient: "",
-        });
+        // Create mode - check for onboarding assistant data first
+        const onboardingData = useOnboardingAssistantDataStore.getState().extractedData;
+        const formData = onboardingData
+          ? {
+              title: onboardingData.project.title || "",
+              description: onboardingData.project.description || "",
+              problem: onboardingData.project.problem || "",
+              solution: onboardingData.project.solution || "",
+              missionSummary: onboardingData.project.missionSummary || "",
+              locationOfImpact: onboardingData.project.locationOfImpact || "",
+              twitter: onboardingData.project.links?.twitter || "",
+              github: onboardingData.project.links?.github || "",
+              discord: onboardingData.project.links?.discord || "",
+              website: onboardingData.project.links?.website || "",
+              linkedin: onboardingData.project.links?.linkedin || "",
+              pitchDeck: onboardingData.project.links?.pitchDeck || "",
+              demoVideo: onboardingData.project.links?.demoVideo || "",
+              farcaster: onboardingData.project.links?.farcaster || "",
+              profilePicture: "",
+              businessModel: onboardingData.project.businessModel || "",
+              stageIn: onboardingData.project.stageIn || "",
+              raisedMoney: onboardingData.project.raisedMoney || "",
+              pathToTake: onboardingData.project.pathToTake || "",
+              recipient: "",
+            }
+          : {
+              title: "",
+              description: "",
+              problem: "",
+              solution: "",
+              missionSummary: "",
+              locationOfImpact: "",
+              twitter: "",
+              github: "",
+              discord: "",
+              website: "",
+              linkedin: "",
+              pitchDeck: "",
+              demoVideo: "",
+              farcaster: "",
+              profilePicture: "",
+              businessModel: "",
+              stageIn: "",
+              raisedMoney: "",
+              pathToTake: "",
+              recipient: "",
+            };
+        reset(formData);
+        // Clear onboarding data after consuming it
+        if (onboardingData) {
+          useOnboardingAssistantDataStore.getState().clearData();
+        }
         setContacts([]);
         setCustomLinks([]);
         setStep(0);

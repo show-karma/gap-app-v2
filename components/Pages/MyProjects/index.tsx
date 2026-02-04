@@ -1,4 +1,5 @@
 "use client";
+import { SparklesIcon } from "@heroicons/react/24/outline";
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -7,6 +8,7 @@ import pluralize from "pluralize";
 import { useState } from "react";
 import { useAccount } from "wagmi";
 /* eslint-disable @next/next/no-img-element */
+import { OnboardingAssistantDrawer } from "@/components/Pages/OnboardingAssistant";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import Pagination from "@/components/Utilities/Pagination";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
@@ -14,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMixpanel } from "@/hooks/useMixpanel";
 import { layoutTheme } from "@/src/helper/theme";
 import { useOnboarding } from "@/store/modals/onboarding";
+import { useOnboardingAssistantModalStore } from "@/store/modals/onboardingAssistant";
 import type { ProjectWithGrantsResponse } from "@/types/v2/project";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
@@ -49,6 +52,7 @@ export default function MyProjects() {
   const { authenticated: isAuth } = useAuth();
   const { theme: currentTheme } = useTheme();
   const { setIsOnboarding } = useOnboarding();
+  const { openOnboardingAssistant } = useOnboardingAssistantModalStore();
   const { mixpanel } = useMixpanel();
   const itemsPerPage = 12;
   const [page, setPage] = useState<number>(1);
@@ -93,13 +97,23 @@ export default function MyProjects() {
             {(isLoading || myProjects.length > 0) && (
               <div className="flex flex-row items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">My Projects</h1>
-                <ProjectDialog
-                  buttonElement={{
-                    text: "Create Project",
-                    styleClass:
-                      "flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-2 bg-brand-darkblue dark:bg-gray-700 px-5 py-2.5 text-base font-semibold text-white hover:bg-brand-darkblue",
-                  }}
-                />
+                <div className="flex flex-row items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={openOnboardingAssistant}
+                    className="flex rounded-md hover:opacity-75 border border-brand-darkblue dark:border-gray-500 transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-2 px-5 py-2.5 text-base font-semibold text-brand-darkblue dark:text-gray-200"
+                  >
+                    <SparklesIcon className="h-4 w-4" />
+                    AI Assistant
+                  </button>
+                  <ProjectDialog
+                    buttonElement={{
+                      text: "Create Project",
+                      styleClass:
+                        "flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-2 bg-brand-darkblue dark:bg-gray-700 px-5 py-2.5 text-base font-semibold text-white hover:bg-brand-darkblue",
+                    }}
+                  />
+                </div>
               </div>
             )}
             {isLoading ? (
@@ -214,7 +228,10 @@ export default function MyProjects() {
                 ) : null}
               </div>
             ) : (
-              <EmptyProjectsState onStartWalkthrough={handleStartWalkthrough} />
+              <EmptyProjectsState
+                onStartWalkthrough={handleStartWalkthrough}
+                onOpenAssistant={openOnboardingAssistant}
+              />
             )}
           </div>
         ) : (
@@ -225,6 +242,7 @@ export default function MyProjects() {
           </div>
         )}
       </div>
+      <OnboardingAssistantDrawer />
     </div>
   );
 }

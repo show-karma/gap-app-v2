@@ -116,6 +116,7 @@
     "next-sitemap": "^4.2.3",
     "next-themes": "^0.3.0",
     "nuqs": "^1.17.0",
+    "openai": "^6.17.0",
     "papaparse": "^5.5.3",
     "permissionless": "^0.3.2",
     "pluralize": "^8.0.0",
