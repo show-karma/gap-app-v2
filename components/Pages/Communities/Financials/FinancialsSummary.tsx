@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode, useMemo } from "react";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import type { CurrencyBreakdown, ProgramFinancialSummary } from "@/types/financials";
@@ -61,7 +61,12 @@ function CurrencyBreakdownTooltip({ breakdown }: { breakdown: CurrencyBreakdown[
           className="flex justify-between gap-3 text-xs"
         >
           <span className="text-gray-600 dark:text-gray-400">{item.currency}</span>
-          <span className="font-medium">{formatCurrency(Number(item.allocated))} allocated</span>
+          <span className="font-medium">
+            {Number.isNaN(Number(item.allocated))
+              ? item.allocated
+              : formatCurrency(Number(item.allocated))}{" "}
+            allocated
+          </span>
         </div>
       ))}
     </div>
@@ -77,29 +82,32 @@ export function FinancialsSummary({ summary, isLoading }: FinancialsSummaryProps
   const hasMultipleCurrencies = (summary?.currencyBreakdown?.length ?? 0) > 1;
   const currency = summary?.primaryCurrency || "USD";
 
-  const stats = [
-    {
-      title: "Total Allocated",
-      value: summary ? formatAmount(summary.totalAllocated, currency) : "-",
-      color: "#84ADFF",
-      tooltip:
-        hasMultipleCurrencies && summary?.currencyBreakdown ? (
-          <CurrencyBreakdownTooltip breakdown={summary.currencyBreakdown} />
-        ) : null,
-    },
-    {
-      title: "Total Disbursed",
-      value: summary ? formatAmount(summary.totalDisbursed, currency) : "-",
-      color: "#67E3F9",
-      tooltip: null,
-    },
-    {
-      title: "Remaining",
-      value: summary ? formatAmount(summary.totalRemaining, currency) : "-",
-      color: "#A6EF67",
-      tooltip: null,
-    },
-  ];
+  const stats = useMemo(
+    () => [
+      {
+        title: "Total Allocated",
+        value: summary ? formatAmount(summary.totalAllocated, currency) : "-",
+        color: "#84ADFF",
+        tooltip:
+          hasMultipleCurrencies && summary?.currencyBreakdown ? (
+            <CurrencyBreakdownTooltip breakdown={summary.currencyBreakdown} />
+          ) : null,
+      },
+      {
+        title: "Total Disbursed",
+        value: summary ? formatAmount(summary.totalDisbursed, currency) : "-",
+        color: "#67E3F9",
+        tooltip: null,
+      },
+      {
+        title: "Remaining",
+        value: summary ? formatAmount(summary.totalRemaining, currency) : "-",
+        color: "#A6EF67",
+        tooltip: null,
+      },
+    ],
+    [summary, currency, hasMultipleCurrencies]
+  );
 
   return (
     <div

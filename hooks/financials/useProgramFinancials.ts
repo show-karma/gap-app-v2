@@ -72,7 +72,7 @@ export function useProgramFinancialsSummary(
   options?: { enabled?: boolean }
 ) {
   return useQuery<ProgramFinancialsResponse, Error>({
-    queryKey: [...programFinancialsKeys.program(programId ?? ""), "summary"],
+    queryKey: [...QUERY_KEYS.FINANCIALS.PROGRAM(programId ?? ""), "summary"],
     queryFn: () => {
       if (!programId) {
         throw new Error("Program ID is required");

@@ -9,7 +9,6 @@ import { ProjectFinancialRow } from "./ProjectFinancialRow";
 interface ProjectFinancialsListProps {
   data: InfiniteData<ProgramFinancialsResponse> | undefined;
   isLoading: boolean;
-  isFetchingNextPage: boolean;
   hasNextPage: boolean;
   fetchNextPage: () => void;
 }
@@ -64,7 +63,6 @@ function EmptyProjectsList() {
 export function ProjectFinancialsList({
   data,
   isLoading,
-  isFetchingNextPage,
   hasNextPage,
   fetchNextPage,
 }: ProjectFinancialsListProps) {
@@ -103,12 +101,6 @@ export function ProjectFinancialsList({
           ))}
         </div>
       </InfiniteScroll>
-
-      {isFetchingNextPage && (
-        <div className="flex justify-center py-4">
-          <div className="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full" />
-        </div>
-      )}
     </div>
   );
 }

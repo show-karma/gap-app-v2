@@ -69,7 +69,14 @@ export function ProjectFinancialRow({ project }: ProjectFinancialRowProps) {
 
       {/* Progress Bar */}
       <div className="flex flex-col gap-1">
-        <div className="h-2 bg-gray-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+        <div
+          className="h-2 bg-gray-200 dark:bg-zinc-700 rounded-full overflow-hidden"
+          role="progressbar"
+          aria-label={`Disbursement progress: ${project.disbursementPercentage.toFixed(0)}%`}
+          aria-valuenow={project.disbursementPercentage}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
           <div
             className={cn("h-full rounded-full transition-all", progressBarColor)}
             style={{ width: `${Math.min(project.disbursementPercentage, 100)}%` }}

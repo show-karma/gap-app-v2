@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { useProgramFinancials, useSelectedProgram } from "@/hooks/financials/useProgramFinancials";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { FinancialsEmptyState } from "./FinancialsEmptyState";
@@ -10,18 +11,31 @@ import { ProjectFinancialsList } from "./ProjectFinancialsList";
 
 export function CommunityFinancials() {
   const { communityId } = useParams();
-  const { data: programs, isLoading: isLoadingPrograms } = useCommunityPrograms(
-    communityId as string
-  );
+  const {
+    data: programs,
+    isLoading: isLoadingPrograms,
+    isError: isProgramsError,
+    error: programsError,
+  } = useCommunityPrograms(communityId as string);
   const [selectedProgramId] = useSelectedProgram();
 
   const {
     data,
     isLoading: isLoadingFinancials,
-    isFetchingNextPage,
+    isError: isFinancialsError,
+    error: financialsError,
     hasNextPage,
     fetchNextPage,
   } = useProgramFinancials(selectedProgramId || null);
+
+  if (isProgramsError || isFinancialsError) {
+    errorManager("Failed to load financials", programsError ?? financialsError);
+    return (
+      <div className="flex items-center justify-center rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+        Unable to load financials. Please try again.
+      </div>
+    );
+  }
 
   const hasPrograms = (programs?.length ?? 0) > 0;
   const hasProgramSelected = !!selectedProgramId;
@@ -56,7 +70,6 @@ export function CommunityFinancials() {
           <ProjectFinancialsList
             data={data}
             isLoading={isLoadingFinancials}
-            isFetchingNextPage={isFetchingNextPage}
             hasNextPage={hasNextPage ?? false}
             fetchNextPage={fetchNextPage}
           />

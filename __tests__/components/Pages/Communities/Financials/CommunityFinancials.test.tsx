@@ -10,6 +10,11 @@ import type { ProgramFinancialsResponse } from "@/types/financials";
 jest.mock("@/hooks/financials/useProgramFinancials");
 jest.mock("@/hooks/usePrograms");
 
+// Mock errorManager
+jest.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: jest.fn(),
+}));
+
 // Mock next/navigation
 jest.mock("next/navigation", () => ({
   useParams: jest.fn(() => ({ communityId: "test-community" })),
@@ -103,6 +108,8 @@ describe("CommunityFinancials", () => {
     mockUseCommunityPrograms.mockReturnValue({
       data: mockPrograms,
       isLoading: false,
+      isError: false,
+      error: null,
     } as any);
 
     mockUseSelectedProgram.mockReturnValue(["program-1", jest.fn()] as any);
@@ -110,7 +117,8 @@ describe("CommunityFinancials", () => {
     mockUseProgramFinancials.mockReturnValue({
       data: { pages: [mockFinancialsResponse] },
       isLoading: false,
-      isFetchingNextPage: false,
+      isError: false,
+      error: null,
       hasNextPage: false,
       fetchNextPage: jest.fn(),
     } as any);
@@ -139,6 +147,8 @@ describe("CommunityFinancials", () => {
     mockUseCommunityPrograms.mockReturnValue({
       data: undefined,
       isLoading: true,
+      isError: false,
+      error: null,
     } as any);
 
     const { container } = render(<CommunityFinancials />, { wrapper });
@@ -150,6 +160,8 @@ describe("CommunityFinancials", () => {
     mockUseCommunityPrograms.mockReturnValue({
       data: [],
       isLoading: false,
+      isError: false,
+      error: null,
     } as any);
 
     render(<CommunityFinancials />, { wrapper });
@@ -176,7 +188,8 @@ describe("CommunityFinancials", () => {
     mockUseProgramFinancials.mockReturnValue({
       data: undefined,
       isLoading: true,
-      isFetchingNextPage: false,
+      isError: false,
+      error: null,
       hasNextPage: false,
       fetchNextPage: jest.fn(),
     } as any);
@@ -191,5 +204,33 @@ describe("CommunityFinancials", () => {
     render(<CommunityFinancials />, { wrapper });
 
     expect(screen.getByTestId("community-financials")).toBeInTheDocument();
+  });
+
+  it("should show error state when programs fetch fails", () => {
+    mockUseCommunityPrograms.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error("Failed to fetch programs"),
+    } as any);
+
+    render(<CommunityFinancials />, { wrapper });
+
+    expect(screen.getByText("Unable to load financials. Please try again.")).toBeInTheDocument();
+  });
+
+  it("should show error state when financials fetch fails", () => {
+    mockUseProgramFinancials.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error("Failed to fetch financials"),
+      hasNextPage: false,
+      fetchNextPage: jest.fn(),
+    } as any);
+
+    render(<CommunityFinancials />, { wrapper });
+
+    expect(screen.getByText("Unable to load financials. Please try again.")).toBeInTheDocument();
   });
 });

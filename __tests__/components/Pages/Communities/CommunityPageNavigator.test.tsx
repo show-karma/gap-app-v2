@@ -443,7 +443,7 @@ describe("CommunityPageNavigator", () => {
 
       render(<CommunityPageNavigator />, { wrapper });
 
-      // Tab should be visible while loading (programs.length ?? 0 handles undefined)
+      // Tab is hidden while loading because programs?.length ?? 0 evaluates to 0 when programs is undefined
       expect(screen.queryByText("Financials")).not.toBeInTheDocument();
     });
 
