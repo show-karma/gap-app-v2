@@ -12,7 +12,7 @@ import { OnrampSuccessModal } from "./OnrampSuccessModal";
 import { StripeOnrampEmbed } from "./StripeOnrampEmbed";
 
 const ONRAMP_LIMITS = {
-  MIN_AMOUNT: 1,
+  MIN_AMOUNT: 10,
   MAX_AMOUNT: 10000,
   MAX_DECIMALS: 2,
 } as const;
