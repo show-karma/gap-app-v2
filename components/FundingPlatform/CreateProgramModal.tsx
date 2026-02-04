@@ -1,6 +1,5 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -24,7 +23,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { type CreateProgramFormSchema, createProgramSchema } from "@/schemas/programFormSchema";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
 import type { CreateProgramFormData } from "@/types/program-registry";
+import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 
 interface CreateProgramModalProps {
@@ -40,7 +41,6 @@ export function CreateProgramModal({
   communityId,
   onSuccess,
 }: CreateProgramModalProps) {
-  const router = useRouter();
   const { address, isConnected } = useAccount();
   const { authenticated: isAuth, login } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -96,31 +96,28 @@ export function CreateProgramModal({
         community
       );
 
-      // Create program using service
-      const result = await ProgramRegistryService.createProgram(
-        address,
-        community.chainID,
-        metadata
+      // Create program using fetchData directly (response body is not used,
+      // only the error status matters — same pattern as AddProgram)
+      const [, error] = await fetchData(
+        INDEXER.REGISTRY.V2.CREATE,
+        "POST",
+        {
+          chainId: community.chainID,
+          metadata,
+        },
+        {},
+        {},
+        true
       );
 
-      // Verify we got a valid programId - without it we can't proceed to setup
-      if (!result.programId) {
-        errorManager("Program creation returned empty programId", new Error("Missing programId"), {
-          address,
-          data,
-          result,
-        });
-        toast.error("Failed to create program. Please try again.");
-        return;
+      if (error) {
+        throw new Error(error);
       }
 
-      // For funding-platform flow, community admins always go to setup
-      // On-chain creation status doesn't affect the ability to configure the program
-      toast.success("Program created! Let's set it up.", { duration: 3000 });
+      toast.success("Program created successfully!", { duration: 3000 });
       reset();
       onSuccess();
       onClose();
-      router.push(`/community/${communityId}/admin/funding-platform/${result.programId}/setup`);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage?.includes("already exists")) {
