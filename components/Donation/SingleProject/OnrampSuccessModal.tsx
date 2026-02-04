@@ -4,21 +4,13 @@ import { CheckCircle, ExternalLink, Loader2, X } from "lucide-react";
 import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import type { StripeOnrampSessionData } from "@/hooks/donation/types";
-import { getExplorerUrl } from "@/utilities/network";
+import { getExplorerUrl, NETWORK_CHAIN_IDS } from "@/utilities/network";
 
 interface OnrampSuccessModalProps {
   sessionData: StripeOnrampSessionData;
   network: string;
   onClose: () => void;
 }
-
-const NETWORK_CHAIN_IDS: Record<string, number> = {
-  base: 8453,
-  ethereum: 1,
-  polygon: 137,
-  optimism: 10,
-  arbitrum: 42161,
-};
 
 export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
   ({ sessionData, network, onClose }) => {

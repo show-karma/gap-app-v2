@@ -37,7 +37,7 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
     null
   );
 
-  const { country, isLoading: isCountryLoading } = useCountryDetection();
+  const { country } = useCountryDetection();
 
   const providerConfig = getProviderConfig(selectedProvider);
 

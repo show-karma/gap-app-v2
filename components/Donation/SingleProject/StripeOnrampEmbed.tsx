@@ -3,6 +3,7 @@
 import type { OnrampSession } from "@stripe/crypto";
 import { loadStripeOnramp } from "@stripe/crypto";
 import { Loader2, X } from "lucide-react";
+import { useTheme } from "next-themes";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { StripeOnrampSessionData } from "@/hooks/donation/types";
@@ -20,10 +21,10 @@ export const StripeOnrampEmbed = React.memo<StripeOnrampEmbedProps>(
     const sessionRef = useRef<OnrampSession | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const hasTriggeredSuccess = useRef(false);
+    const { resolvedTheme } = useTheme();
 
     const handleSessionUpdate = useCallback(
       (event: { payload: { session: StripeOnrampSessionData } }) => {
-        console.log(event);
         const session = event.payload.session;
         const status = session.status;
 
@@ -55,7 +56,7 @@ export const StripeOnrampEmbed = React.memo<StripeOnrampEmbedProps>(
           const session = stripeOnramp.createSession({
             clientSecret,
             appearance: {
-              theme: "dark",
+              theme: resolvedTheme === "light" ? "light" : "dark",
             },
           });
 
@@ -80,7 +81,7 @@ export const StripeOnrampEmbed = React.memo<StripeOnrampEmbedProps>(
       return () => {
         mounted = false;
       };
-    }, [clientSecret, handleSessionUpdate]);
+    }, [clientSecret, handleSessionUpdate, resolvedTheme]);
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

@@ -1,12 +1,26 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { OnrampError } from "@/hooks/donation/onramp-errors";
 import { OnrampProvider, type OnrampSessionRequest } from "@/hooks/donation/types";
 import { ALLOWED_ONRAMP_DOMAINS, DEFAULT_ONRAMP_PROVIDER, getProviderConfig } from "@/lib/onramp";
 import { donationsService } from "@/services/donations.service";
+
+/**
+ * Validates that a URL belongs to an allowed onramp domain.
+ * @param url - The URL to validate
+ * @returns true if the URL is valid and belongs to an allowed domain
+ */
+export function isValidOnrampUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return ALLOWED_ONRAMP_DOMAINS.some((domain) => parsed.hostname === domain);
+  } catch {
+    return false;
+  }
+}
 
 interface UseOnrampParams {
   projectUid: string;
@@ -46,6 +60,15 @@ export const useOnramp = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [session, setSession] = useState<OnrampSession | null>(null);
+  const mountedRef = useRef(true);
+
+  // Track component mount state to prevent setState after unmount
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const providerConfig = getProviderConfig(provider);
 
@@ -91,6 +114,9 @@ export const useOnramp = ({
 
         const sessionResponse = await donationsService.createOnrampSession(request);
 
+        // Check if component is still mounted before updating state
+        if (!mountedRef.current) return;
+
         // For Stripe, use embedded widget instead of redirect
         if (provider === OnrampProvider.STRIPE) {
           setSession({
@@ -103,22 +129,12 @@ export const useOnramp = ({
 
         // For Transak, redirect to onrampUrl
         if (provider === OnrampProvider.TRANSAK && sessionResponse.onrampUrl) {
-          const isValidUrl = (() => {
-            try {
-              const parsed = new URL(sessionResponse.onrampUrl!);
-              return ALLOWED_ONRAMP_DOMAINS.some((domain) => parsed.hostname === domain);
-            } catch {
-              return false;
-            }
-          })();
-
-          if (!isValidUrl) {
+          if (!isValidOnrampUrl(sessionResponse.onrampUrl)) {
             throw OnrampError.invalidUrl();
           }
 
           window.location.href = sessionResponse.onrampUrl;
-          toast.success(`Redirecting to ${providerConfig.name}...`);
-          setIsLoading(false);
+          // Note: No state updates after redirect as component will unmount
           return;
         }
 
@@ -141,24 +157,16 @@ export const useOnramp = ({
         });
 
         // Validate URL before opening
-        const isValidUrl = (() => {
-          try {
-            const parsed = new URL(onrampUrl);
-            return ALLOWED_ONRAMP_DOMAINS.some((domain) => parsed.hostname === domain);
-          } catch {
-            return false;
-          }
-        })();
-
-        if (!isValidUrl) {
+        if (!isValidOnrampUrl(onrampUrl)) {
           throw OnrampError.invalidUrl();
         }
 
         window.open(onrampUrl, "_blank", "noopener,noreferrer");
-
-        toast.success(`Redirecting to ${providerConfig.name}...`);
         setIsLoading(false);
       } catch (err) {
+        // Check if component is still mounted before updating state
+        if (!mountedRef.current) return;
+
         const error =
           err instanceof OnrampError
             ? err
