@@ -10,10 +10,7 @@ interface OnrampProviderToggleProps {
   onSelect: (provider: OnrampProvider) => void;
 }
 
-const PROVIDER_OPTIONS = [
-  { id: OnrampProvider.STRIPE, label: "Stripe" },
-  { id: OnrampProvider.TRANSAK, label: "Transak" },
-] as const;
+const PROVIDER_OPTIONS = [{ id: OnrampProvider.STRIPE, label: "Stripe" }] as const;
 
 export const OnrampProviderToggle = React.memo<OnrampProviderToggleProps>(
   ({ selected, onSelect }) => {

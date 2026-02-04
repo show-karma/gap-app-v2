@@ -4,30 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { OnrampError } from "@/hooks/donation/onramp-errors";
-import { OnrampProvider, type OnrampSessionRequest } from "@/hooks/donation/types";
-import { ALLOWED_ONRAMP_DOMAINS, DEFAULT_ONRAMP_PROVIDER, getProviderConfig } from "@/lib/onramp";
+import type { OnrampProvider, OnrampSessionRequest } from "@/hooks/donation/types";
+import { DEFAULT_ONRAMP_PROVIDER } from "@/lib/onramp";
 import { donationsService } from "@/services/donations.service";
-
-/**
- * Validates that a URL belongs to an allowed onramp domain.
- * @param url - The URL to validate
- * @returns true if the URL is valid and belongs to an allowed domain
- */
-export function isValidOnrampUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return ALLOWED_ONRAMP_DOMAINS.some((domain) => parsed.hostname === domain);
-  } catch {
-    return false;
-  }
-}
 
 interface UseOnrampParams {
   projectUid: string;
   payoutAddress: string;
   network: string;
   targetAsset: string;
-  redirectUrl?: string;
   provider?: OnrampProvider;
   country?: string | null; // ISO 3166-1 alpha-2 code
   onError?: (error: Error) => void;
@@ -51,7 +36,6 @@ export const useOnramp = ({
   payoutAddress,
   network,
   targetAsset,
-  redirectUrl,
   provider = DEFAULT_ONRAMP_PROVIDER,
   country,
   onError,
@@ -70,8 +54,6 @@ export const useOnramp = ({
     };
   }, []);
 
-  const providerConfig = getProviderConfig(provider);
-
   const clearSession = useCallback(() => {
     setSession(null);
   }, []);
@@ -89,14 +71,6 @@ export const useOnramp = ({
       setError(null);
 
       try {
-        // Build redirect URL with provider info for status lookup after redirect
-        const buildRedirectUrl = () => {
-          if (!redirectUrl) return undefined;
-          const url = new URL(redirectUrl);
-          url.searchParams.set("onrampProvider", provider);
-          return url.toString();
-        };
-
         const request: OnrampSessionRequest = {
           provider,
           projectUid,
@@ -107,9 +81,6 @@ export const useOnramp = ({
           targetAsset,
           donorAddress: address,
           ...(country && { country }),
-          // Include redirect URL for providers that support redirect (Transak)
-          ...(provider === OnrampProvider.TRANSAK &&
-            redirectUrl && { redirectUrl: buildRedirectUrl() }),
         };
 
         const sessionResponse = await donationsService.createOnrampSession(request);
@@ -117,51 +88,11 @@ export const useOnramp = ({
         // Check if component is still mounted before updating state
         if (!mountedRef.current) return;
 
-        // For Stripe, use embedded widget instead of redirect
-        if (provider === OnrampProvider.STRIPE) {
-          setSession({
-            clientSecret: sessionResponse.sessionToken,
-            donationUid: sessionResponse.donationUid,
-          });
-          setIsLoading(false);
-          return;
-        }
-
-        // For Transak, redirect to onrampUrl
-        if (provider === OnrampProvider.TRANSAK && sessionResponse.onrampUrl) {
-          if (!isValidOnrampUrl(sessionResponse.onrampUrl)) {
-            throw OnrampError.invalidUrl();
-          }
-
-          window.location.href = sessionResponse.onrampUrl;
-          // Note: No state updates after redirect as component will unmount
-          return;
-        }
-
-        // Fallback: build URL manually (for backwards compatibility)
-        const redirectWithRef = redirectUrl
-          ? (() => {
-              const url = new URL(redirectUrl);
-              url.searchParams.set("onrampRef", sessionResponse.donationUid);
-              return url.toString();
-            })()
-          : undefined;
-
-        const onrampUrl = providerConfig.buildUrl({
-          token: sessionResponse.sessionToken,
-          fiatAmount,
-          fiatCurrency,
-          asset: targetAsset,
-          redirectUrl: redirectWithRef,
-          partnerUserRef: sessionResponse.donationUid,
+        // Use Stripe embedded widget
+        setSession({
+          clientSecret: sessionResponse.sessionToken,
+          donationUid: sessionResponse.donationUid,
         });
-
-        // Validate URL before opening
-        if (!isValidOnrampUrl(onrampUrl)) {
-          throw OnrampError.invalidUrl();
-        }
-
-        window.open(onrampUrl, "_blank", "noopener,noreferrer");
         setIsLoading(false);
       } catch (err) {
         // Check if component is still mounted before updating state
@@ -179,18 +110,7 @@ export const useOnramp = ({
         onError?.(error);
       }
     },
-    [
-      projectUid,
-      payoutAddress,
-      network,
-      targetAsset,
-      redirectUrl,
-      provider,
-      providerConfig,
-      address,
-      country,
-      onError,
-    ]
+    [projectUid, payoutAddress, network, targetAsset, provider, address, country, onError]
   );
 
   return {

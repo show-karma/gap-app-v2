@@ -8,8 +8,6 @@ import { useOnramp } from "@/hooks/donation/useOnramp";
 import { useCountryDetection } from "@/hooks/useCountryDetection";
 import { DEFAULT_ONRAMP_PROVIDER, getProviderConfig } from "@/lib/onramp";
 import { getChainNameById } from "@/utilities/network";
-// TODO: Re-enable when TRANSAK is ready
-// import { OnrampProviderToggle } from "./OnrampProviderToggle";
 import { OnrampSuccessModal } from "./OnrampSuccessModal";
 import { StripeOnrampEmbed } from "./StripeOnrampEmbed";
 
@@ -30,8 +28,6 @@ const CURRENCY_SYMBOL = "$";
 
 export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddress, chainId }) => {
   const [amount, setAmount] = useState("");
-  // TODO: Re-enable when TRANSAK is ready
-  // const [selectedProvider, setSelectedProvider] = useState<OnrampProvider>(DEFAULT_ONRAMP_PROVIDER);
   const selectedProvider = OnrampProvider.STRIPE;
   const [successSessionData, setSuccessSessionData] = useState<StripeOnrampSessionData | null>(
     null
@@ -47,17 +43,11 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
     return { network: chainName, isChainSupported: supported };
   }, [chainId, providerConfig.supportedNetworks]);
 
-  const redirectUrl = useMemo(() => {
-    if (typeof window === "undefined") return undefined;
-    return `${window.location.origin}/project/${projectUid}`;
-  }, [projectUid]);
-
   const { initiateOnramp, isLoading, session, clearSession } = useOnramp({
     projectUid,
     payoutAddress,
     network,
     targetAsset: "USDC",
-    redirectUrl,
     provider: selectedProvider,
     country,
   });
@@ -74,11 +64,6 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
     setSuccessSessionData(null);
     setAmount("");
   }, []);
-
-  // TODO: Re-enable when TRANSAK is ready
-  // const handleProviderChange = useCallback((provider: OnrampProvider) => {
-  //   setSelectedProvider(provider);
-  // }, []);
 
   const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -131,9 +116,6 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
           onClose={handleSuccessModalClose}
         />
       )}
-
-      {/* TODO: Re-enable when TRANSAK is ready */}
-      {/* <OnrampProviderToggle selected={selectedProvider} onSelect={handleProviderChange} /> */}
 
       <div className="space-y-2">
         <label

@@ -2,11 +2,7 @@ import { OnrampProvider } from "@/hooks/donation/types";
 
 const STRIPE_ONRAMP_URL = process.env.NEXT_PUBLIC_STRIPE_ONRAMP_URL || "https://crypto.link.com";
 
-export const ALLOWED_ONRAMP_DOMAINS = [
-  "crypto.link.com",
-  "global.transak.com",
-  "global-stg.transak.com",
-] as const;
+export const ALLOWED_ONRAMP_DOMAINS = ["crypto.link.com"] as const;
 
 export interface OnrampUrlParams {
   token: string;
@@ -55,22 +51,9 @@ const PROVIDER_CONFIGS: Record<OnrampProvider, OnrampProviderConfig> = {
     ],
     supportedNetworks: ["ethereum", "base", "optimism", "polygon", "arbitrum"],
   },
-  [OnrampProvider.TRANSAK]: {
-    id: OnrampProvider.TRANSAK,
-    name: "Transak",
-    // URL is returned from backend via onrampUrl in response
-    buildUrl: ({ token }: OnrampUrlParams) => token,
-    description: "Purchase crypto with card via Transak",
-    supportedCurrencies: [
-      { code: "USD", symbol: "$" },
-      { code: "EUR", symbol: "€" },
-      { code: "GBP", symbol: "£" },
-    ],
-    supportedNetworks: ["ethereum", "base", "optimism", "polygon", "arbitrum"],
-  },
 };
 
-export const DEFAULT_ONRAMP_PROVIDER = OnrampProvider.TRANSAK;
+export const DEFAULT_ONRAMP_PROVIDER = OnrampProvider.STRIPE;
 
 export function getProviderConfig(provider: OnrampProvider): OnrampProviderConfig {
   const config = PROVIDER_CONFIGS[provider];

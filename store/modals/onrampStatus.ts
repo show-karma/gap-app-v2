@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import fetchData from "@/utilities/fetchData";
 
-type OnrampProvider = "stripe" | "transak";
+type OnrampProvider = "stripe";
 
 interface OnrampTransaction {
   status: "pending" | "success" | "failed" | "NOT_FOUND" | "unknown";
