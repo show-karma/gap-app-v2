@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useEffect } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useProgramFinancials, useSelectedProgram } from "@/hooks/financials/useProgramFinancials";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
@@ -28,8 +29,13 @@ export function CommunityFinancials() {
     fetchNextPage,
   } = useProgramFinancials(selectedProgramId || null);
 
+  useEffect(() => {
+    if (isProgramsError || isFinancialsError) {
+      errorManager("Failed to load financials", programsError ?? financialsError);
+    }
+  }, [isProgramsError, isFinancialsError, programsError, financialsError]);
+
   if (isProgramsError || isFinancialsError) {
-    errorManager("Failed to load financials", programsError ?? financialsError);
     return (
       <div className="flex items-center justify-center rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
         Unable to load financials. Please try again.

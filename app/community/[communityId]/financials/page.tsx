@@ -1,5 +1,3 @@
-"use client";
-
 import { CommunityFinancials } from "@/components/Pages/Communities/Financials";
 
 export default function FinancialsPage() {

@@ -17,6 +17,11 @@ function getProgressBarColor(percentage: number): string {
   return "bg-gray-400 dark:bg-gray-500";
 }
 
+function safeFormatCurrency(value: string, currency: string): string {
+  const num = Number(value);
+  return Number.isNaN(num) ? `${value} ${currency}` : `${formatCurrency(num)} ${currency}`;
+}
+
 export function ProjectFinancialRow({ project }: ProjectFinancialRowProps) {
   const progressBarColor = getProgressBarColor(project.disbursementPercentage);
 
@@ -50,19 +55,19 @@ export function ProjectFinancialRow({ project }: ProjectFinancialRowProps) {
         <div className="flex flex-col">
           <span className="text-sm text-gray-500 dark:text-gray-400">Approved</span>
           <span className="text-base font-semibold text-gray-900 dark:text-white">
-            {formatCurrency(Number(project.approved))} {project.currency}
+            {safeFormatCurrency(project.approved, project.currency)}
           </span>
         </div>
         <div className="flex flex-col">
           <span className="text-sm text-gray-500 dark:text-gray-400">Disbursed</span>
           <span className="text-base font-semibold text-gray-900 dark:text-white">
-            {formatCurrency(Number(project.disbursed))} {project.currency}
+            {safeFormatCurrency(project.disbursed, project.currency)}
           </span>
         </div>
         <div className="flex flex-col">
           <span className="text-sm text-gray-500 dark:text-gray-400">Remaining</span>
           <span className="text-base font-semibold text-gray-900 dark:text-white">
-            {formatCurrency(Number(project.remaining))} {project.currency}
+            {safeFormatCurrency(project.remaining, project.currency)}
           </span>
         </div>
       </div>

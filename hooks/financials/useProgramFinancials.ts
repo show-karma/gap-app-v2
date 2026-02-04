@@ -7,14 +7,6 @@ import type { ProgramFinancialsResponse } from "@/types/financials";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 /**
- * Query key factory for program financials queries
- */
-export const programFinancialsKeys = {
-  all: ["program-financials"] as const,
-  program: (programId: string) => [...programFinancialsKeys.all, programId] as const,
-} as const;
-
-/**
  * Hook for managing the selected program ID in URL state
  * Uses nuqs for URL persistence - enables shareable links and back button support
  */
@@ -81,6 +73,5 @@ export function useProgramFinancialsSummary(
     },
     enabled: options?.enabled !== false && !!programId,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    select: (data) => data, // Can be used to transform data if needed
   });
 }

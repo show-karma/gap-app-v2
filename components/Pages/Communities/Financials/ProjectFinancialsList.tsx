@@ -1,6 +1,7 @@
 "use client";
 
 import type { InfiniteData } from "@tanstack/react-query";
+import { useMemo } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import type { ProgramFinancialsResponse } from "@/types/financials";
@@ -66,11 +67,11 @@ export function ProjectFinancialsList({
   hasNextPage,
   fetchNextPage,
 }: ProjectFinancialsListProps) {
+  const projects = useMemo(() => data?.pages.flatMap((page) => page.projects) ?? [], [data?.pages]);
+
   if (isLoading) {
     return <LoadingSkeleton />;
   }
-
-  const projects = data?.pages.flatMap((page) => page.projects) ?? [];
 
   if (projects.length === 0) {
     return <EmptyProjectsList />;

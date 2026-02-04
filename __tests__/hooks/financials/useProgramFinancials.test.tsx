@@ -2,12 +2,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import {
-  programFinancialsKeys,
   useProgramFinancials,
   useProgramFinancialsSummary,
 } from "@/hooks/financials/useProgramFinancials";
 import { getProgramFinancials } from "@/services/financialsService";
 import type { ProgramFinancialsResponse } from "@/types/financials";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 jest.mock("@/services/financialsService");
 
@@ -79,10 +79,9 @@ describe("useProgramFinancials hooks", () => {
     queryClient.clear();
   });
 
-  describe("programFinancialsKeys", () => {
+  describe("QUERY_KEYS.FINANCIALS", () => {
     it("should generate correct query keys", () => {
-      expect(programFinancialsKeys.all).toEqual(["program-financials"]);
-      expect(programFinancialsKeys.program("program-123")).toEqual([
+      expect(QUERY_KEYS.FINANCIALS.PROGRAM("program-123")).toEqual([
         "program-financials",
         "program-123",
       ]);
