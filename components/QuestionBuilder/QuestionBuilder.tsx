@@ -35,6 +35,7 @@ import {
   PostApprovalEmptyState,
 } from "@/components/FundingPlatform/EmptyStateGuidance";
 import { PAGE_HEADER_CONTENT, PageHeader } from "@/components/FundingPlatform/PageHeader";
+import { ProgramContactsTab } from "@/components/FundingPlatform/QuestionBuilder/ProgramContactsTab";
 import { ProgramDetailsTab } from "@/components/FundingPlatform/QuestionBuilder/ProgramDetailsTab";
 import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
 import { SettingsSidebar, type SidebarTabKey } from "@/components/FundingPlatform/Sidebar";
@@ -55,6 +56,7 @@ const TAB_KEYS = [
   "post-approval",
   "ai-config",
   "reviewers",
+  "contacts",
   "program-details",
   "kyc-settings",
 ] as const;
@@ -163,6 +165,15 @@ export function QuestionBuilder({
       schema.settings?.successPageContent
     ) {
       completed.add("settings");
+    }
+
+    // Check if admin contacts are configured
+    if (
+      schema.settings?.adminEmails &&
+      Array.isArray(schema.settings.adminEmails) &&
+      schema.settings.adminEmails.length > 0
+    ) {
+      completed.add("contacts");
     }
 
     // Check if reviewers are added (passed as prop)
@@ -894,6 +905,8 @@ export function QuestionBuilder({
               )}
             </div>
           </div>
+        ) : activeTab === "contacts" ? (
+          <ProgramContactsTab programId={programId} communityId={communityId} readOnly={readOnly} />
         ) : activeTab === "program-details" ? (
           <ProgramDetailsTab
             programId={programId}

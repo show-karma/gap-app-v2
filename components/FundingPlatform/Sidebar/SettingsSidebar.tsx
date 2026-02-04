@@ -6,6 +6,7 @@ import {
   Cog6ToothIcon,
   CpuChipIcon,
   DocumentTextIcon,
+  EnvelopeIcon,
   IdentificationIcon,
   UserGroupIcon,
   WrenchScrewdriverIcon,
@@ -19,6 +20,7 @@ export type SidebarTabKey =
   | "post-approval"
   | "ai-config"
   | "reviewers"
+  | "contacts"
   | "program-details"
   | "kyc-settings";
 
@@ -71,6 +73,12 @@ const getSidebarSections = (kycEnabled: boolean): SidebarSection[] => [
         label: "Reviewers",
         icon: UserGroupIcon,
         description: "Manage who reviews applications",
+      },
+      {
+        key: "contacts",
+        label: "Program Contacts",
+        icon: EnvelopeIcon,
+        description: "Admin and finance email contacts",
       },
     ],
   },

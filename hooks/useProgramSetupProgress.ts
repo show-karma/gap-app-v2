@@ -48,6 +48,15 @@ export function useProgramSetupProgress(communityId: string, programId: string):
     // Check if reviewers are added
     const hasReviewers = reviewers && reviewers.length > 0;
 
+    // Check if admin and finance contacts are configured (both required)
+    const hasAdminEmails =
+      config?.formSchema?.settings?.adminEmails &&
+      config.formSchema.settings.adminEmails.length > 0;
+    const hasFinanceEmails =
+      config?.formSchema?.settings?.financeEmails &&
+      config.formSchema.settings.financeEmails.length > 0;
+    const hasContacts = hasAdminEmails && hasFinanceEmails;
+
     // Check if email templates are customized (non-default)
     const hasCustomEmailTemplates =
       config?.formSchema?.settings?.approvalEmailTemplate ||
@@ -86,6 +95,15 @@ export function useProgramSetupProgress(communityId: string, programId: string):
         required: false,
         href: `${baseUrl}/question-builder?tab=reviewers`,
         actionLabel: hasReviewers ? "Manage Reviewers" : "Add Reviewers",
+      },
+      {
+        id: "program-contacts",
+        title: "Add Program Contacts",
+        description: "Add admin and finance email addresses for program communications",
+        status: hasContacts ? "completed" : "pending",
+        required: true,
+        href: `${baseUrl}/question-builder?tab=contacts`,
+        actionLabel: hasContacts ? "Manage Contacts" : "Add Contacts",
       },
       {
         id: "email-templates",

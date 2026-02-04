@@ -88,6 +88,8 @@ export interface IFormSchema {
     accessCode?: string; // The access code required to submit the application (only returned for admins)
     kycFormUrl?: string; // Program-specific KYC form URL (overrides community-level)
     kybFormUrl?: string; // Program-specific KYB form URL (overrides community-level)
+    adminEmails?: string[]; // Admin contact emails for program communications (reply-to on applicant emails)
+    financeEmails?: string[]; // Finance contact emails notified when milestones are verified
   };
 }
 

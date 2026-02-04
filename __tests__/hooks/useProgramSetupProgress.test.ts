@@ -63,10 +63,10 @@ describe("useProgramSetupProgress", () => {
   });
 
   describe("steps calculation", () => {
-    it("should return 6 steps", () => {
+    it("should return 7 steps", () => {
       const { result } = renderHook(() => useProgramSetupProgress(communityId, programId));
 
-      expect(result.current.steps).toHaveLength(6);
+      expect(result.current.steps).toHaveLength(7);
     });
 
     it("should mark program-created as always completed", () => {
@@ -122,6 +122,119 @@ describe("useProgramSetupProgress", () => {
 
       const reviewerStep = result.current.steps.find((s) => s.id === "reviewers");
       expect(reviewerStep?.status).toBe("completed");
+    });
+
+    it("should mark program-contacts as pending when no emails configured", () => {
+      mockUseProgramConfig.mockReturnValue({
+        config: { formSchema: { settings: {} } },
+        isLoading: false,
+      });
+
+      const { result } = renderHook(() => useProgramSetupProgress(communityId, programId));
+
+      const contactsStep = result.current.steps.find((s) => s.id === "program-contacts");
+      expect(contactsStep?.status).toBe("pending");
+      expect(contactsStep?.required).toBe(true);
+    });
+
+    it("should mark program-contacts as pending when only admin emails exist (no finance)", () => {
+      mockUseProgramConfig.mockReturnValue({
+        config: {
+          formSchema: {
+            settings: { adminEmails: ["admin@example.com"] },
+          },
+        },
+        isLoading: false,
+      });
+
+      const { result } = renderHook(() => useProgramSetupProgress(communityId, programId));
+
+      const contactsStep = result.current.steps.find((s) => s.id === "program-contacts");
+      expect(contactsStep?.status).toBe("pending");
+    });
+
+    it("should mark program-contacts as pending when only finance emails exist (no admin)", () => {
+      mockUseProgramConfig.mockReturnValue({
+        config: {
+          formSchema: {
+            settings: { financeEmails: ["finance@example.com"] },
+          },
+        },
+        isLoading: false,
+      });
+
+      const { result } = renderHook(() => useProgramSetupProgress(communityId, programId));
+
+      const contactsStep = result.current.steps.find((s) => s.id === "program-contacts");
+      expect(contactsStep?.status).toBe("pending");
+    });
+
+    it("should mark program-contacts as completed when both admin and finance emails exist", () => {
+      mockUseProgramConfig.mockReturnValue({
+        config: {
+          formSchema: {
+            settings: {
+              adminEmails: ["admin@example.com"],
+              financeEmails: ["finance@example.com"],
+            },
+          },
+        },
+        isLoading: false,
+      });
+
+      const { result } = renderHook(() => useProgramSetupProgress(communityId, programId));
+
+      const contactsStep = result.current.steps.find((s) => s.id === "program-contacts");
+      expect(contactsStep?.status).toBe("completed");
+    });
+
+    it("should mark program-contacts as pending when emails arrays are empty", () => {
+      mockUseProgramConfig.mockReturnValue({
+        config: {
+          formSchema: {
+            settings: { adminEmails: [], financeEmails: [] },
+          },
+        },
+        isLoading: false,
+      });
+
+      const { result } = renderHook(() => useProgramSetupProgress(communityId, programId));
+
+      const contactsStep = result.current.steps.find((s) => s.id === "program-contacts");
+      expect(contactsStep?.status).toBe("pending");
+    });
+
+    it("should use correct actionLabel for program-contacts based on status", () => {
+      // Pending state
+      mockUseProgramConfig.mockReturnValue({
+        config: { formSchema: { settings: {} } },
+        isLoading: false,
+      });
+
+      const { result: pendingResult } = renderHook(() =>
+        useProgramSetupProgress(communityId, programId)
+      );
+      const pendingStep = pendingResult.current.steps.find((s) => s.id === "program-contacts");
+      expect(pendingStep?.actionLabel).toBe("Add Contacts");
+
+      // Completed state
+      mockUseProgramConfig.mockReturnValue({
+        config: {
+          formSchema: {
+            settings: {
+              adminEmails: ["admin@example.com"],
+              financeEmails: ["finance@example.com"],
+            },
+          },
+        },
+        isLoading: false,
+      });
+
+      const { result: completedResult } = renderHook(() =>
+        useProgramSetupProgress(communityId, programId)
+      );
+      const completedStep = completedResult.current.steps.find((s) => s.id === "program-contacts");
+      expect(completedStep?.actionLabel).toBe("Manage Contacts");
     });
 
     it("should mark email-templates as pending when no custom templates", () => {
@@ -224,7 +337,11 @@ describe("useProgramSetupProgress", () => {
         config: {
           formSchema: {
             fields: [{ id: "field-1", type: "text", label: "Name" }],
-            settings: { approvalEmailTemplate: "Custom" },
+            settings: {
+              approvalEmailTemplate: "Custom",
+              adminEmails: ["admin@test.com"],
+              financeEmails: ["finance@test.com"],
+            },
           },
           systemPrompt: "AI prompt",
           isEnabled: true,
@@ -238,22 +355,22 @@ describe("useProgramSetupProgress", () => {
 
       const { result } = renderHook(() => useProgramSetupProgress(communityId, programId));
 
-      // program-created (always), application-form, reviewers, email-templates, ai-config, enable-program
-      expect(result.current.completedCount).toBe(6);
+      // program-created (always), application-form, reviewers, program-contacts, email-templates, ai-config, enable-program
+      expect(result.current.completedCount).toBe(7);
     });
 
     it("should calculate correct percentComplete", () => {
-      // Only program-created is completed (1 out of 6)
+      // Only program-created is completed (1 out of 7)
       const { result } = renderHook(() => useProgramSetupProgress(communityId, programId));
 
-      expect(result.current.percentComplete).toBe(17); // 1/6 = 16.67% rounded to 17%
+      expect(result.current.percentComplete).toBe(14); // 1/7 = 14.29% rounded to 14%
     });
 
     it("should identify required steps correctly", () => {
       const { result } = renderHook(() => useProgramSetupProgress(communityId, programId));
 
       const requiredSteps = result.current.steps.filter((s) => s.required);
-      expect(requiredSteps).toHaveLength(3); // program-created, application-form, enable-program
+      expect(requiredSteps).toHaveLength(4); // program-created, application-form, admin-contacts, enable-program
     });
   });
 
@@ -261,7 +378,13 @@ describe("useProgramSetupProgress", () => {
     it("should be true when all required steps are completed (except enable)", () => {
       mockUseProgramConfig.mockReturnValue({
         config: {
-          formSchema: { fields: [{ id: "field-1", type: "text", label: "Name" }] },
+          formSchema: {
+            fields: [{ id: "field-1", type: "text", label: "Name" }],
+            settings: {
+              adminEmails: ["admin@example.com"],
+              financeEmails: ["finance@example.com"],
+            },
+          },
           isEnabled: false,
         },
         isLoading: false,
@@ -282,6 +405,23 @@ describe("useProgramSetupProgress", () => {
 
       expect(result.current.isReadyToEnable).toBe(false);
     });
+
+    it("should be false when program contacts are not configured", () => {
+      mockUseProgramConfig.mockReturnValue({
+        config: {
+          formSchema: {
+            fields: [{ id: "field-1", type: "text", label: "Name" }],
+            settings: {},
+          },
+          isEnabled: false,
+        },
+        isLoading: false,
+      });
+
+      const { result } = renderHook(() => useProgramSetupProgress(communityId, programId));
+
+      expect(result.current.isReadyToEnable).toBe(false);
+    });
   });
 
   describe("missingRequired", () => {
@@ -295,12 +435,19 @@ describe("useProgramSetupProgress", () => {
 
       expect(result.current.missingRequired).toContain("Build Application Form");
       expect(result.current.missingRequired).toContain("Enable Program");
+      expect(result.current.missingRequired).toContain("Add Program Contacts");
     });
 
     it("should be empty when all required steps are completed", () => {
       mockUseProgramConfig.mockReturnValue({
         config: {
-          formSchema: { fields: [{ id: "field-1", type: "text", label: "Name" }] },
+          formSchema: {
+            fields: [{ id: "field-1", type: "text", label: "Name" }],
+            settings: {
+              adminEmails: ["admin@example.com"],
+              financeEmails: ["finance@example.com"],
+            },
+          },
           isEnabled: true,
         },
         isLoading: false,
@@ -326,6 +473,9 @@ describe("useProgramSetupProgress", () => {
       );
       expect(result.current.steps.find((s) => s.id === "reviewers")?.href).toBe(
         `${baseUrl}/question-builder?tab=reviewers`
+      );
+      expect(result.current.steps.find((s) => s.id === "program-contacts")?.href).toBe(
+        `${baseUrl}/question-builder?tab=contacts`
       );
       expect(result.current.steps.find((s) => s.id === "email-templates")?.href).toBe(
         `${baseUrl}/question-builder?tab=settings`
