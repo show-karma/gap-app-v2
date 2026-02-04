@@ -215,4 +215,7 @@ export const QUERY_KEYS = {
     APPLICATION_STATS: (programId: string, chainId: number) =>
       ["application-stats", programId, chainId] as const,
   },
+  FINANCIALS: {
+    PROGRAM: (programId: string) => ["program-financials", programId] as const,
+  },
 };

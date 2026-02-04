@@ -4,10 +4,12 @@ import type { ReactNode } from "react";
 import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useFundingOpportunitiesCount } from "@/hooks/useFundingOpportunitiesCount";
+import { useCommunityPrograms } from "@/hooks/usePrograms";
 
 // Mock hooks
 jest.mock("@/hooks/communities/useCommunityDetails");
 jest.mock("@/hooks/useFundingOpportunitiesCount");
+jest.mock("@/hooks/usePrograms");
 
 // Mock next/navigation
 const mockUseParams = jest.fn();
@@ -28,6 +30,7 @@ jest.mock("@/utilities/pages", () => ({
       ALL_GRANTS: (id: string) => `/community/${id}`,
       UPDATES: (id: string) => `/community/${id}/updates`,
       IMPACT: (id: string) => `/community/${id}/impact`,
+      FINANCIALS: (id: string) => `/community/${id}/financials`,
     },
   },
 }));
@@ -38,6 +41,7 @@ jest.mock("lucide-react", () => ({
   DollarSign: (props: any) => <svg data-testid="dollar-sign-icon" {...props} />,
   LandPlot: (props: any) => <svg data-testid="land-plot-icon" {...props} />,
   SquareUser: (props: any) => <svg data-testid="square-user-icon" {...props} />,
+  Wallet: (props: any) => <svg data-testid="wallet-icon" {...props} />,
 }));
 
 const mockUseCommunityDetails = useCommunityDetails as jest.MockedFunction<
@@ -45,6 +49,9 @@ const mockUseCommunityDetails = useCommunityDetails as jest.MockedFunction<
 >;
 const mockUseFundingOpportunitiesCount = useFundingOpportunitiesCount as jest.MockedFunction<
   typeof useFundingOpportunitiesCount
+>;
+const mockUseCommunityPrograms = useCommunityPrograms as jest.MockedFunction<
+  typeof useCommunityPrograms
 >;
 
 describe("CommunityPageNavigator", () => {
@@ -83,6 +90,10 @@ describe("CommunityPageNavigator", () => {
       data: 5, // Default to having some funding opportunities
       isLoading: false,
     } as any);
+    mockUseCommunityPrograms.mockReturnValue({
+      data: [{ programId: "program-1", metadata: { title: "Program One" } }],
+      isLoading: false,
+    } as any);
   });
 
   afterEach(() => {
@@ -97,6 +108,7 @@ describe("CommunityPageNavigator", () => {
       expect(screen.getByText(/View.*community projects/)).toBeInTheDocument();
       expect(screen.getByText("Milestone updates")).toBeInTheDocument();
       expect(screen.getByText("Impact")).toBeInTheDocument();
+      expect(screen.getByText("Financials")).toBeInTheDocument();
     });
 
     it("should render all icons", () => {
@@ -106,6 +118,7 @@ describe("CommunityPageNavigator", () => {
       expect(screen.getByTestId("square-user-icon")).toBeInTheDocument();
       expect(screen.getByTestId("land-plot-icon")).toBeInTheDocument();
       expect(screen.getByTestId("chart-line-icon")).toBeInTheDocument();
+      expect(screen.getByTestId("wallet-icon")).toBeInTheDocument();
     });
 
     it("should render links with correct hrefs", () => {
@@ -394,6 +407,99 @@ describe("CommunityPageNavigator", () => {
 
       // Tab should be visible while loading (undefined !== 0)
       expect(screen.getByText("Funding opportunities")).toBeInTheDocument();
+    });
+  });
+
+  describe("Financials Tab Visibility", () => {
+    it("should hide financials tab when programs count is 0", () => {
+      mockUseCommunityPrograms.mockReturnValue({
+        data: [],
+        isLoading: false,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(screen.queryByText("Financials")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("wallet-icon")).not.toBeInTheDocument();
+    });
+
+    it("should show financials tab when programs exist", () => {
+      mockUseCommunityPrograms.mockReturnValue({
+        data: [{ programId: "program-1", metadata: { title: "Program One" } }],
+        isLoading: false,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(screen.getByText("Financials")).toBeInTheDocument();
+      expect(screen.getByTestId("wallet-icon")).toBeInTheDocument();
+    });
+
+    it("should show financials tab when programs are loading (undefined !== empty)", () => {
+      mockUseCommunityPrograms.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      // Tab should be visible while loading (programs.length ?? 0 handles undefined)
+      expect(screen.queryByText("Financials")).not.toBeInTheDocument();
+    });
+
+    it("should show financials tab with multiple programs", () => {
+      mockUseCommunityPrograms.mockReturnValue({
+        data: [
+          { programId: "program-1", metadata: { title: "Program One" } },
+          { programId: "program-2", metadata: { title: "Program Two" } },
+        ],
+        isLoading: false,
+      } as any);
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      expect(screen.getByText("Financials")).toBeInTheDocument();
+    });
+
+    it("should render financials link with correct href", () => {
+      render(<CommunityPageNavigator />, { wrapper });
+
+      const financialsLink = screen.getByText("Financials").closest("a");
+      expect(financialsLink).toHaveAttribute("href", "/community/test-community/financials");
+    });
+
+    it("should append programId to financials link when present", () => {
+      mockUseSearchParams.mockReturnValue({
+        get: (key: string) => (key === "programId" ? "program-123" : null),
+      });
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      const financialsLink = screen.getByText("Financials").closest("a");
+      expect(financialsLink).toHaveAttribute(
+        "href",
+        "/community/test-community/financials?programId=program-123"
+      );
+    });
+
+    it("should apply active styles to financials link when on financials page", () => {
+      mockUsePathname.mockReturnValue("/community/test-community/financials");
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      const link = screen.getByText("Financials").closest("a");
+      expect(link?.className).toContain("text-gray-900");
+      expect(link?.className).toContain("border-b-4");
+      expect(link?.className).toContain("border-b-gray-900");
+    });
+
+    it("should not mark community projects as active on financials page", () => {
+      mockUsePathname.mockReturnValue("/community/test-community/financials");
+
+      render(<CommunityPageNavigator />, { wrapper });
+
+      const link = screen.getByText(/View.*community projects/).closest("a");
+      expect(link?.className).toContain("text-gray-500");
     });
   });
 });
