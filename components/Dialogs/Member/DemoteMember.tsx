@@ -5,7 +5,6 @@ import { type FC, Fragment, useState } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
@@ -14,6 +13,7 @@ import { useProjectStore } from "@/store";
 import fetchData from "@/utilities/fetchData";
 import { getProjectMemberRoles } from "@/utilities/getProjectMemberRoles";
 import { INDEXER } from "@/utilities/indexer";
+import { queryClient } from "@/utilities/query-client";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
 
@@ -90,11 +90,19 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({ memberAddress 
               {}
             );
           }
+          // Invalidate cache immediately after indexer notification
+          // so UI can start refetching while polling continues
+          queryClient.invalidateQueries({
+            queryKey: ["memberRoles", project?.uid],
+          });
+          refreshProject();
+
           await checkIfAttestationExists(() => {
             changeStepperStep("indexed");
           }).then(async () => {
             showSuccess("Member removed as admin successfully");
             closeModal();
+            // Final invalidation to ensure fresh data after confirmation
             await refreshProject();
             queryClient.invalidateQueries({
               queryKey: ["memberRoles", project?.uid],
