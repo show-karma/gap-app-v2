@@ -22,12 +22,27 @@ export interface PermissionContextValue {
    */
   isAdmin: boolean;
   /**
+   * Whether the user has program-level admin access.
+   * Used for "Manage Program" button visibility.
+   */
+  isProgramAdmin: boolean;
+  /**
    * Whether the user has reviewer access at the current context level.
    * - Global context: reviewer of any program
    * - Community context: reviewer of any program in this community
    * - Program context: reviewer of this program
    */
   isReviewer: boolean;
+  /**
+   * Whether the user is a Registry Admin (member of Karma Allo profile).
+   * Registry admins have elevated permissions across the platform.
+   */
+  isRegistryAdmin: boolean;
+  /**
+   * Whether the user is a Program Creator (has created programs in the registry).
+   * Program creators can manage their own programs in the funding map.
+   */
+  isProgramCreator: boolean;
   can: (permission: Permission) => boolean;
   canAny: (permissions: Permission[]) => boolean;
   canAll: (permissions: Permission[]) => boolean;
@@ -45,7 +60,19 @@ export interface PermissionsResponse {
    */
   isAdmin: boolean;
   /**
+   * Whether the user has program-level admin access.
+   */
+  isProgramAdmin: boolean;
+  /**
    * Whether the user has reviewer access at the current context level.
    */
   isReviewer: boolean;
+  /**
+   * Whether the user is a Registry Admin (member of Karma Allo profile).
+   */
+  isRegistryAdmin: boolean;
+  /**
+   * Whether the user is a Program Creator (has created programs in the registry).
+   */
+  isProgramCreator: boolean;
 }

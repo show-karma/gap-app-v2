@@ -4,6 +4,14 @@ import { Role } from "../types/role";
 export const PERMISSION_MATRIX: Record<Role, PermissionString[]> = {
   [Role.SUPER_ADMIN]: ["*"],
 
+  [Role.REGISTRY_ADMIN]: ["*"],
+
+  [Role.PROGRAM_CREATOR]: [
+    Permission.PROGRAM_VIEW,
+    Permission.PROGRAM_EDIT,
+    Permission.PROGRAM_VIEW_ANALYTICS,
+  ],
+
   [Role.COMMUNITY_ADMIN]: [
     "community:*",
     "program:*",

@@ -18,7 +18,10 @@ interface AuthPermissionsApiResponse {
     milestoneId?: string;
   };
   isAdmin: boolean;
+  isProgramAdmin: boolean;
   isReviewer: boolean;
+  isRegistryAdmin: boolean;
+  isProgramCreator: boolean;
 }
 
 export interface GetPermissionsParams {
@@ -38,7 +41,10 @@ const DEFAULT_GUEST_PERMISSIONS: PermissionsResponse = {
   permissions: [],
   resourceContext: {},
   isAdmin: false,
+  isProgramAdmin: false,
   isReviewer: false,
+  isRegistryAdmin: false,
+  isProgramCreator: false,
 };
 
 export const authorizationService = {
@@ -71,7 +77,10 @@ export const authorizationService = {
       permissions: response.permissions as Permission[],
       resourceContext: response.resourceContext as ResourceContext,
       isAdmin: response.isAdmin,
+      isProgramAdmin: response.isProgramAdmin,
       isReviewer: response.isReviewer,
+      isRegistryAdmin: response.isRegistryAdmin,
+      isProgramCreator: response.isProgramCreator,
     };
   },
 };
