@@ -83,6 +83,8 @@ export const StripeOnrampEmbed = React.memo<StripeOnrampEmbedProps>(
           session.mount(containerRef.current);
           sessionRef.current = session;
         } catch (err) {
+          // Log detailed error for debugging
+          console.error("[StripeOnrampEmbed] Initialization failed:", err);
           errorManager(
             "Failed to initialize Stripe Onramp",
             err instanceof Error ? err : new Error(String(err)),
