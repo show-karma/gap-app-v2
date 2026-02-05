@@ -19,7 +19,7 @@ const launchFAQs: FAQItem[] = [
     id: "how-do-seeds-show-in-wallet",
     question: "How do these seeds show up in buyer's wallet?",
     answer:
-      "Karma Seeds are regular ERC-20 tokens. The name will be Karma Seeds - <Project Name> and code will be KSEED-<code>. You choose the name and code while creating Karma Seeds for your project.",
+      "Karma Seeds are regular ERC-20 tokens. The name will be `Karma Seeds - <Project Name>` and code will be `KSEED-<code>`. You choose the name and code while creating Karma Seeds for your project.",
   },
 
   {
