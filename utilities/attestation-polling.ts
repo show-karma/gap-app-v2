@@ -1,5 +1,4 @@
 import type { GAP } from "@show-karma/karma-gap-sdk";
-import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getProjectGrants } from "@/services/project-grants.service";
 import { retryUntilConditionMet } from "@/utilities/retries";
 

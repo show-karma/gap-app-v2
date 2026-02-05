@@ -6,8 +6,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
+  getSidebarSections,
   SettingsSidebar,
-  SIDEBAR_SECTIONS,
   type SidebarTabKey,
 } from "@/components/FundingPlatform/Sidebar";
 import "@testing-library/jest-dom";
@@ -189,22 +189,42 @@ describe("SettingsSidebar", () => {
     });
   });
 
-  describe("SIDEBAR_SECTIONS constant", () => {
-    it("should have 4 sections", () => {
-      expect(SIDEBAR_SECTIONS).toHaveLength(4);
+  describe("getSidebarSections function", () => {
+    it("should return 4 sections when kycEnabled is false", () => {
+      const sections = getSidebarSections(false);
+      expect(sections).toHaveLength(4);
     });
 
     it("should have correct section titles", () => {
-      const sectionTitles = SIDEBAR_SECTIONS.map((s) => s.title);
+      const sections = getSidebarSections(false);
+      const sectionTitles = sections.map((s) => s.title);
       expect(sectionTitles).toEqual(["Setup", "Team", "Configuration", "Advanced"]);
     });
 
     it("should have the required flag only on Application Form", () => {
-      const allItems = SIDEBAR_SECTIONS.flatMap((s) => s.items);
+      const sections = getSidebarSections(false);
+      const allItems = sections.flatMap((s) => s.items);
       const requiredItems = allItems.filter((item) => item.required);
 
       expect(requiredItems).toHaveLength(1);
       expect(requiredItems[0].key).toBe("build");
+    });
+
+    it("should include KYC settings when kycEnabled is true", () => {
+      const sections = getSidebarSections(true);
+      const configSection = sections.find((s) => s.title === "Configuration");
+      const kycItem = configSection?.items.find((item) => item.key === "kyc-settings");
+
+      expect(kycItem).toBeDefined();
+      expect(kycItem?.label).toBe("KYC/KYB Settings");
+    });
+
+    it("should not include KYC settings when kycEnabled is false", () => {
+      const sections = getSidebarSections(false);
+      const configSection = sections.find((s) => s.title === "Configuration");
+      const kycItem = configSection?.items.find((item) => item.key === "kyc-settings");
+
+      expect(kycItem).toBeUndefined();
     });
   });
 

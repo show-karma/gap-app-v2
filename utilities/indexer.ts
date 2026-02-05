@@ -294,6 +294,13 @@ export const INDEXER = {
   PROGRAMS: {
     GET: (programId: string) => `/programs/${programId}`,
     COMMUNITY: (communityId: string) => `/communities/${communityId}/programs`,
+    FINANCIALS: (programId: string, page?: number, limit?: number) => {
+      const params = new URLSearchParams();
+      if (page) params.set("page", page.toString());
+      if (limit) params.set("limit", limit.toString());
+      const query = params.toString();
+      return `/v2/programs/${programId}/financials${query ? `?${query}` : ""}`;
+    },
   },
   PROJECT: {
     EXTERNAL: {
@@ -623,5 +630,16 @@ export const INDEXER = {
     UPDATE: (idOrSlug: string, contactId: string) =>
       `/projects/${idOrSlug}/update/contact/${contactId}`,
     DELETE: (idOrSlug: string) => `/projects/${idOrSlug}/delete/contact`,
+  },
+  KYC: {
+    GET_STATUS: (projectUID: string, communityUID: string) =>
+      `/v2/projects/${projectUID}/communities/${communityUID}/kyc-status`,
+    GET_STATUS_BY_APP_REF: (referenceNumber: string) =>
+      `/v2/funding-applications/${referenceNumber}/kyc-status`,
+    GET_CONFIG: (communityIdOrSlug: string) => `/v2/communities/${communityIdOrSlug}/kyc-config`,
+    GET_BATCH_STATUSES: (communityUID: string) =>
+      `/v2/communities/${communityUID}/kyc-batch-status`,
+    GET_FORM_URL: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/kyc-form-url`,
   },
 };

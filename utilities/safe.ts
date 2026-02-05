@@ -1,7 +1,7 @@
 import SafeApiKit from "@safe-global/api-kit";
 import Safe from "@safe-global/protocol-kit";
 import { encodeFunctionData, erc20Abi, formatUnits, parseUnits } from "viem";
-import { NATIVE_TOKENS, NETWORKS, type SupportedChainId, TOKEN_ADDRESSES } from "../config/tokens";
+import { NATIVE_TOKENS, NETWORKS, type SupportedChainId } from "../config/tokens";
 import type { DisbursementRecipient } from "../types/disbursement";
 import { getRPCClient } from "./rpcClient";
 
@@ -55,7 +55,6 @@ export async function isSafeOwner(
 ): Promise<boolean> {
   try {
     const rpcUrl = NETWORKS[chainId].rpcUrl;
-    console.log("Checking Safe ownership:", { safeAddress, signerAddress, chainId, rpcUrl });
 
     // Initialize Safe SDK with RPC URL
     const safe = await Safe.init({
@@ -65,11 +64,9 @@ export async function isSafeOwner(
 
     // Get Safe owners
     const owners = await safe.getOwners();
-    console.log("Safe owners:", owners);
 
     // Check if signer is one of the owners
     const isOwner = owners.some((owner) => owner.toLowerCase() === signerAddress.toLowerCase());
-    console.log("Is owner:", isOwner);
     return isOwner;
   } catch (error) {
     console.error("Error checking Safe ownership:", error);
@@ -117,8 +114,6 @@ export async function canProposeToSafe(
   signerAddress: string,
   chainId: SupportedChainId
 ): Promise<{ canPropose: boolean; isOwner: boolean; isDelegate: boolean }> {
-  console.log("canProposeToSafe called:", { safeAddress, signerAddress, chainId });
-
   // Run checks in parallel but handle errors individually
   const [ownerResult, delegateResult] = await Promise.allSettled([
     isSafeOwner(safeAddress, signerAddress, chainId),
@@ -134,12 +129,6 @@ export async function canProposeToSafe(
   if (delegateResult.status === "rejected") {
     console.error("Delegate check failed:", delegateResult.reason);
   }
-
-  console.log("canProposeToSafe result:", {
-    isOwner,
-    isDelegate,
-    canPropose: isOwner || isDelegate,
-  });
 
   return {
     canPropose: isOwner || isDelegate,
@@ -534,8 +523,6 @@ export async function signAndProposeDisbursement(
     );
   }
 
-  console.log("Using Safe Transaction Service URL:", txServiceUrl);
-
   try {
     // Create provider that can handle signing
     const provider = createEthereumProvider(walletClient, chainId);
@@ -586,7 +573,6 @@ export async function signAndProposeDisbursement(
     // Check if the signer is an owner of the Safe
     const owners = await safe.getOwners();
     const isOwner = owners.some((owner) => owner.toLowerCase() === signerAddress.toLowerCase());
-    console.log("Is signer an owner?", isOwner);
 
     // Check if user is a delegate (can propose even if not owner)
     let isDelegate = false;
@@ -598,7 +584,6 @@ export async function signAndProposeDisbursement(
         const delegatesData = await delegatesResponse.json();
         isDelegate = delegatesData.count > 0;
       }
-      console.log("Is signer a delegate?", isDelegate);
     } catch (e) {
       console.warn("Could not check delegate status:", e);
     }
@@ -608,10 +593,6 @@ export async function signAndProposeDisbursement(
     if (!isOwner && !isDelegate) {
       console.warn("User is neither owner nor delegate - attempting to propose anyway...");
     }
-
-    // Sign the transaction hash using signHash (as per SDK documentation)
-    // This works for both owners and delegates
-    console.log("Signing transaction hash...");
     const signature = await safe.signHash(txHash).catch((signError: unknown) => {
       const errorMessage =
         signError instanceof Error ? signError.message : "User rejected or wallet error";
@@ -621,13 +602,11 @@ export async function signAndProposeDisbursement(
           `Please try again and approve the signature request in your wallet.`
       );
     });
-    console.log("Transaction hash signed successfully");
 
     // Propose the transaction using direct API call
     // Note: Safe API Kit ignores txServiceUrl and uses api.safe.global which returns 404
     // So we use direct fetch to the correct URL: safe-transaction-{network}.safe.global
     const proposalUrl = `${txServiceUrl}/api/v1/safes/${safeAddress}/multisig-transactions/`;
-    console.log("Proposing transaction to:", proposalUrl);
 
     const proposalBody = {
       to: safeTx.data.to,
@@ -645,8 +624,6 @@ export async function signAndProposeDisbursement(
       signature: signature.data,
       origin: "GAP Disbursement",
     };
-
-    console.log("Proposal body:", JSON.stringify(proposalBody, null, 2));
 
     try {
       const response = await fetch(proposalUrl, {
@@ -685,8 +662,6 @@ export async function signAndProposeDisbursement(
 
         throw new Error(`Failed to propose transaction: ${response.status} ${response.statusText}`);
       }
-
-      console.log("Transaction successfully proposed to Safe Transaction Service");
     } catch (apiError: unknown) {
       if (apiError instanceof Error) {
         throw apiError;

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { type FC, useState } from "react";
 import { ClipboardDocumentCheckIcon } from "@heroicons/react/24/solid";
+import React, { type FC, useState } from "react";
 import { ReviewerType } from "@/hooks/useReviewerAssignment";
 import type { MilestoneReviewer } from "@/services/milestone-reviewers.service";
 import type { ProgramReviewer } from "@/services/program-reviewers.service";
@@ -10,7 +10,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { formatAIScore } from "../helper/getAIScore";
 import { formatInternalAIScore } from "../helper/getInternalAIScore";
-import { getProjectTitle } from "../helper/getProjecTitle";
+import { getProjectTitle } from "../helper/getProjectTitle";
 import { AIEvaluationModal, type EvaluationType } from "./AIEvaluationModal";
 import { ReviewerAssignmentDropdown } from "./ReviewerAssignmentDropdown";
 import { TableStatusActionButtons } from "./TableStatusActionButtons";

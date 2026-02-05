@@ -34,6 +34,7 @@ import {
   useDeleteApplication,
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
+import { useKycConfig, useKycStatus } from "@/hooks/useKycStatus";
 import {
   AdminOnly,
   Can,
@@ -103,6 +104,13 @@ export default function ApplicationDetailPage() {
 
   // Get chainId from program config if needed for V1 components
   const chainId = program?.chainID;
+
+  // Fetch KYC status for the application - use referenceNumber as project identifier
+  // (referenceNumber is the consistent identifier used across all apps for KYC)
+  const { status: kycStatus } = useKycStatus(application?.referenceNumber, communityId);
+
+  // Fetch KYC config to get form URLs
+  const { isEnabled: isKycEnabled } = useKycConfig(communityId);
 
   // Use the application status hook
   const { updateStatusAsync } = useApplicationStatus(programId);
@@ -379,6 +387,8 @@ export default function ApplicationDetailPage() {
             application={application}
             program={program}
             connectedToTabs={!milestoneReviewUrl && !selectedStatus}
+            kycStatus={kycStatus}
+            isKycEnabled={isKycEnabled}
             statusActions={
               showStatusActions ? (
                 <HeaderActions

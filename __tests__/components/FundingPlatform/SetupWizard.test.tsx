@@ -3,7 +3,7 @@
  * @description Tests for the setup wizard UI that guides users through program setup
  */
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SetupWizard } from "@/components/FundingPlatform/SetupWizard";
 import type { SetupProgress, SetupStep } from "@/hooks/useProgramSetupProgress";
@@ -43,8 +43,6 @@ jest.mock("react-hot-toast", () => ({
     error: jest.fn(),
   },
 }));
-
-import toast from "react-hot-toast";
 
 describe("SetupWizard", () => {
   const communityId = "test-community";

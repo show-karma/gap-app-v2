@@ -4,7 +4,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore } from "@/store";
-import { useContractOwner } from "../useContractOwner";
 
 interface UseCommunityAdminAccessResult {
   hasAccess: boolean;

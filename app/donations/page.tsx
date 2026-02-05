@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { useDonationHistory } from "@/hooks/donation/useDonationHistory";

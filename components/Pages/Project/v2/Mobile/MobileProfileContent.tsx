@@ -80,7 +80,6 @@ export function MobileProfileContent({
           grants={stats.grantsCount}
           endorsements={stats.endorsementsCount}
           lastUpdate={stats.lastUpdate}
-          completeRate={stats.completeRate}
           onEndorsementsClick={onEndorsementsClick}
         />
       </div>

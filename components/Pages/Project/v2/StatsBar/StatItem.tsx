@@ -6,13 +6,12 @@ import {
   CircleDollarSignIcon,
   CoinsIcon,
   FolderOpenIcon,
-  TargetIcon,
 } from "lucide-react";
 import type React from "react";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { cn } from "@/utilities/tailwind";
 
-type StatIconType = "received" | "token" | "grants" | "endorsements" | "complete" | "lastUpdate";
+type StatIconType = "received" | "token" | "grants" | "endorsements" | "lastUpdate";
 
 interface StatItemProps {
   value: string | number;
@@ -38,8 +37,6 @@ function getStatIcon(iconType?: StatIconType): React.ReactNode {
       return <FolderOpenIcon className="h-4 w-4" />;
     case "endorsements":
       return <BadgeCheckIcon className="h-4 w-4" />;
-    case "complete":
-      return <TargetIcon className="h-4 w-4" />;
     case "lastUpdate":
       return <CalendarClockIcon className="h-4 w-4" />;
     default:

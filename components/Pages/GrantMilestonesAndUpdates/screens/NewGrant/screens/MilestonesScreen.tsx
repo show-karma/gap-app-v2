@@ -216,7 +216,7 @@ export const MilestonesScreen: React.FC = () => {
 
             // Check that grant exists AND has non-empty details (GrantDetails attestation processed)
             const foundGrant = polledGrants?.find((oldGrant) => oldGrant.uid === grant.uid);
-            if (foundGrant && foundGrant.details?.title) {
+            if (foundGrant?.details?.title) {
               clearMilestonesForms();
               retries = 0;
               changeStepperStep("indexed");

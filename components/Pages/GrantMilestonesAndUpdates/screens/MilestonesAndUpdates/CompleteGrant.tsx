@@ -59,7 +59,7 @@ export const GrantCompletion: FC = () => {
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const _refreshProject = useProjectStore((state) => state.refreshProject);
   const { refetch: refetchGrants } = useProjectGrants(project?.uid || "");
 
   const { startAttestation, changeStepperStep, setIsStepper, showSuccess, showError } =
@@ -188,7 +188,7 @@ export const GrantCompletion: FC = () => {
           const maxRetries = 40; // 60 seconds total (40 * 1.5s)
           let retries = maxRetries;
           changeStepperStep("indexing");
-          const fetchedProject = null;
+          const _fetchedProject = null;
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(

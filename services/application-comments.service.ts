@@ -37,14 +37,9 @@ export const applicationCommentsService = {
   /**
    * Create a new comment
    */
-  async createComment(
-    applicationId: string,
-    content: string,
-    authorName?: string
-  ): Promise<ApplicationComment> {
+  async createComment(applicationId: string, content: string): Promise<ApplicationComment> {
     const response = await apiClient.post(INDEXER.V2.APPLICATIONS.COMMENTS(applicationId), {
       content,
-      authorName,
     });
 
     return response.data.comment;

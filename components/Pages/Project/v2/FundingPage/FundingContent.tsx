@@ -1,11 +1,9 @@
 "use client";
 
 import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
-import { CalendarIcon, FlagIcon, PlayIcon, WalletIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { TrackTags } from "@/components/TrackTags";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore } from "@/store";
@@ -23,30 +21,37 @@ interface FundingContentProps {
 }
 
 /**
- * Format a date relative to now (e.g., "2 months ago")
+ * Format a date range as "Apr - Aug 2024" or just "Apr 2024" if only start
  */
-function formatRelativeDate(date: string | undefined): string {
-  if (!date) return "";
-  const d = new Date(date);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+function formatDateRange(
+  startDate: string | undefined | null,
+  endDate: string | undefined | null
+): string {
+  if (!startDate && !endDate) return "";
 
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays}d ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`;
-  return `${Math.floor(diffDays / 365)}y ago`;
-}
+  const start = startDate ? new Date(startDate) : null;
+  const end = endDate ? new Date(endDate) : null;
 
-/**
- * Format a date as "MMM YYYY" (e.g., "Jan 2024")
- */
-function formatShortDate(date: string | undefined | null): string {
-  if (!date) return "";
-  const d = new Date(date);
-  return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  if (start && end) {
+    const startMonth = start.toLocaleDateString("en-US", { month: "short" });
+    const endMonth = end.toLocaleDateString("en-US", { month: "short" });
+    const endYear = end.getFullYear();
+    // If same year, show "Apr - Aug 2024", otherwise "Apr 2023 - Aug 2024"
+    if (start.getFullYear() === end.getFullYear()) {
+      return `${startMonth} - ${endMonth} ${endYear}`;
+    }
+    return `${startMonth} ${start.getFullYear()} - ${endMonth} ${endYear}`;
+  }
+
+  if (start) {
+    return start.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  }
+
+  if (end) {
+    return end.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  }
+
+  return "";
 }
 
 /**
@@ -65,18 +70,43 @@ function GrantCard({
   const milestones = grant.milestones || [];
   const completedMilestones = milestones.filter((m) => m.completed).length;
   const totalMilestones = milestones.length;
-  const hasAmount = grant.details?.amount && grant.details.amount !== "0";
+  const rawAmount = grant.details?.amount?.trim() || "";
 
-  // Get last activity date (most recent between createdAt, updatedAt, or last milestone update)
-  const lastActivity = grant.updatedAt || grant.createdAt;
+  // Parse amount: extract numeric part and currency suffix
+  // Matches: "5686.59 USD", "40K USDC", "2500 ARB", "80000", "40K"
+  const amountMatch = rawAmount.match(/^([\d,.]+[KMBTkmbt]?)\s*([a-zA-Z]{2,})?$/);
+  const numericPart = amountMatch?.[1] || rawAmount;
+  const currencyInAmount = amountMatch?.[2] || "";
 
-  // Get tracks from selectedTrackIds (primary) or fallback to categories
-  const selectedTrackIds = grant.details?.selectedTrackIds || [];
-  const communityId = grant.communityUID || grant.community?.uid || "";
-  const hasTrackIds = selectedTrackIds.length > 0 && communityId;
+  // Check if numeric part is already formatted (like "40K", "5M")
+  const isAlreadyFormatted = /[KMBTkmbt]$/.test(numericPart);
+  // Parse the numeric value (remove commas for parsing)
+  const cleanNumber = numericPart.replace(/,/g, "").replace(/[KMBTkmbt]$/, "");
+  const multiplier = /[Kk]$/.test(numericPart)
+    ? 1000
+    : /[Mm]$/.test(numericPart)
+      ? 1e6
+      : /[Bb]$/.test(numericPart)
+        ? 1e9
+        : /[Tt]$/.test(numericPart)
+          ? 1e12
+          : 1;
+  const amountValue = Number(cleanNumber) * multiplier;
+  const isValidNumber = !Number.isNaN(amountValue) && amountValue !== 0;
+  const hasAmount = rawAmount && rawAmount !== "0";
 
-  // Get categories as fallback
-  const categories = grant.categories || [];
+  // Format the display amount
+  const displayAmount = isAlreadyFormatted
+    ? numericPart
+    : isValidNumber
+      ? formatCurrency(amountValue)
+      : numericPart;
+  // Use currency from the amount string, or from grant.details.currency
+  const displayCurrency = currencyInAmount || grant.details?.currency || "";
+
+  // Date range for display
+  const dateRange = formatDateRange(grant.details?.startDate, grant.details?.completedAt);
+  const progressPercent = totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0;
 
   return (
     <Link
@@ -89,112 +119,62 @@ function GrantCard({
       )}
       data-testid="grant-card"
     >
-      {/* Top row: Community logo, title, status */}
-      <div className="flex items-start gap-3">
+      {/* Row 1: Logo + Title/Community + Completed badge */}
+      <div className="flex items-center gap-3">
         {grant.community?.details?.imageURL && (
           <Image
             src={grant.community.details.imageURL}
             alt={grant.community.details.name || "Community"}
-            width={48}
-            height={48}
+            width={40}
+            height={40}
             className="rounded-full object-cover shrink-0"
             unoptimized
           />
         )}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">
-              {grant.details?.title || "Untitled Grant"}
-            </h3>
-            {grant.completed && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                <CheckCircleIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                Completed
-              </span>
-            )}
-          </div>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+            {grant.details?.title || "Untitled Grant"}
+          </h3>
           {grant.community?.details?.name && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {grant.community.details.name}
             </p>
           )}
         </div>
-      </div>
-
-      {/* Stats row */}
-      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-        {/* Funding amount */}
-        {hasAmount && (
-          <div className="flex items-center gap-1.5">
-            <WalletIcon className="h-4 w-4 text-gray-400" />
-            <span className="font-medium text-gray-900 dark:text-white">
-              {formatCurrency(Number(grant.details?.amount || 0))}
-            </span>
-            {grant.details?.currency && (
-              <span className="text-gray-500">{grant.details.currency}</span>
-            )}
-          </div>
-        )}
-
-        {/* Milestone progress */}
-        {totalMilestones > 0 && (
-          <div className="flex items-center gap-1.5">
-            <FlagIcon className="h-4 w-4 text-gray-400" />
-            <span>
-              <span className="font-medium text-gray-900 dark:text-white">
-                {completedMilestones}/{totalMilestones}
-              </span>{" "}
-              milestones
-            </span>
-          </div>
-        )}
-
-        {/* Start date */}
-        {grant.details?.startDate && (
-          <div className="flex items-center gap-1.5">
-            <PlayIcon className="h-4 w-4 text-gray-400" />
-            <span>Started {formatShortDate(grant.details.startDate)}</span>
-          </div>
-        )}
-
-        {/* End date (completedAt) */}
-        {grant.details?.completedAt && (
-          <div className="flex items-center gap-1.5">
-            <CheckCircleIcon className="h-4 w-4 text-gray-400" />
-            <span>Ended {formatShortDate(grant.details.completedAt)}</span>
-          </div>
-        )}
-
-        {/* Last activity */}
-        {lastActivity && (
-          <div className="flex items-center gap-1.5">
-            <CalendarIcon className="h-4 w-4 text-gray-400" />
-            <span>Last Activity {formatRelativeDate(lastActivity)}</span>
-          </div>
+        {grant.completed && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 shrink-0">
+            <CheckCircleIcon className="h-3.5 w-3.5" aria-hidden="true" />
+            Completed
+          </span>
         )}
       </div>
 
-      {/* Tracks (primary) or Categories (fallback) */}
-      {hasTrackIds ? (
-        <TrackTags communityId={communityId} trackIds={selectedTrackIds} />
-      ) : (
-        categories.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {categories.slice(0, 3).map((category) => (
-              <span
-                key={category}
-                className="px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400"
-              >
-                {category}
-              </span>
-            ))}
-            {categories.length > 3 && (
-              <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400">
-                +{categories.length - 3} more
-              </span>
-            )}
+      {/* Row 2: Amount + Date range */}
+      {(hasAmount || dateRange) && (
+        <div className="flex items-center justify-between text-sm gap-2">
+          <span className="font-medium text-gray-900 dark:text-white">
+            {hasAmount ? `$${displayAmount} ${displayCurrency}` : ""}
+          </span>
+          {dateRange && (
+            <span className="text-gray-500 dark:text-gray-400 text-right">{dateRange}</span>
+          )}
+        </div>
+      )}
+
+      {/* Row 3: Milestones progress bar */}
+      {totalMilestones > 0 && (
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-600 dark:text-gray-400 shrink-0">Milestones</span>
+          <div className="flex-1 h-2 bg-gray-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-green-500 dark:bg-green-400 rounded-full transition-all"
+              style={{ width: `${progressPercent}%` }}
+            />
           </div>
-        )
+          <span className="text-sm font-medium text-gray-900 dark:text-white shrink-0">
+            {completedMilestones}/{totalMilestones}
+          </span>
+        </div>
       )}
     </Link>
   );
@@ -315,8 +295,11 @@ export function FundingContent({ project, className }: FundingContentProps) {
         )}
       </div>
 
-      {/* Grants list */}
-      <div className="flex flex-col gap-3" data-testid="grants-list">
+      {/* Grants grid */}
+      <div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+        data-testid="grants-list"
+      >
         {sortedGrants.map((grant) => (
           <GrantCard
             key={grant.uid}

@@ -6,6 +6,7 @@ import {
   Cog6ToothIcon,
   CpuChipIcon,
   DocumentTextIcon,
+  IdentificationIcon,
   UserGroupIcon,
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/solid";
@@ -19,7 +20,8 @@ export type SidebarTabKey =
   | "post-approval"
   | "ai-config"
   | "reviewers"
-  | "program-details";
+  | "program-details"
+  | "kyc-settings";
 
 interface SidebarSection {
   title: string;
@@ -37,7 +39,7 @@ interface SidebarItem {
 // Module-level constant to avoid creating new Set on every render
 const EMPTY_COMPLETED_STEPS = new Set<SidebarTabKey>();
 
-const SIDEBAR_SECTIONS: SidebarSection[] = [
+const getSidebarSections = (kycEnabled: boolean): SidebarSection[] => [
   {
     title: "Setup",
     items: [
@@ -82,6 +84,17 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
         icon: Cog6ToothIcon,
         description: "Email templates and privacy settings",
       },
+      // Only show KYC settings if KYC is enabled for the community
+      ...(kycEnabled
+        ? [
+            {
+              key: "kyc-settings" as SidebarTabKey,
+              label: "KYC/KYB Settings",
+              icon: IdentificationIcon,
+              description: "Program-specific verification URLs",
+            },
+          ]
+        : []),
     ],
   },
   {
@@ -105,6 +118,7 @@ interface SettingsSidebarProps {
   programTitle?: string;
   completedSteps?: Set<SidebarTabKey>;
   className?: string;
+  kycEnabled?: boolean;
 }
 
 export function SettingsSidebar({
@@ -115,7 +129,10 @@ export function SettingsSidebar({
   programTitle,
   completedSteps = EMPTY_COMPLETED_STEPS,
   className,
+  kycEnabled = false,
 }: SettingsSidebarProps) {
+  const sections = getSidebarSections(kycEnabled);
+
   return (
     <div
       className={cn(
@@ -141,7 +158,7 @@ export function SettingsSidebar({
 
       {/* Sidebar navigation sections */}
       <nav className="p-3 space-y-4">
-        {SIDEBAR_SECTIONS.map((section) => (
+        {sections.map((section) => (
           <div key={section.title}>
             <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
               {section.title}
@@ -224,5 +241,5 @@ export function SettingsSidebar({
   );
 }
 
-export { SIDEBAR_SECTIONS };
+export { getSidebarSections };
 export type { SidebarSection, SidebarItem };

@@ -7,6 +7,7 @@ import {
   CurrencyDollarIcon,
   FlagIcon,
   GlobeAltIcon,
+  IdentificationIcon,
   Square2StackIcon,
   TagIcon,
 } from "@heroicons/react/24/outline";
@@ -127,6 +128,13 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     label: "Program Scores",
     description: "Upload CSV scores for program participants",
     icon: <ArrowTrendingUpIcon className="w-6 h-6" />,
+    requiredPermissions: [Permission.COMMUNITY_EDIT],
+  },
+  {
+    href: PAGES.ADMIN.KYC_SETTINGS,
+    label: "KYC/KYB Settings",
+    description: "Configure identity verification for grantees",
+    icon: <IdentificationIcon className="w-6 h-6" />,
     requiredPermissions: [Permission.COMMUNITY_EDIT],
   },
 ];

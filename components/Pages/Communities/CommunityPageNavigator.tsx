@@ -1,10 +1,11 @@
 "use client";
-import { ChartLine, DollarSign, LandPlot, SquareUser } from "lucide-react";
+import { ChartLine, DollarSign, LandPlot, SquareUser, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useFundingOpportunitiesCount } from "@/hooks/useFundingOpportunitiesCount";
+import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
@@ -50,7 +51,8 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
       !pathname.includes("/project-discovery") &&
       !pathname.includes("/updates") &&
       !pathname.includes("/donate") &&
-      !pathname.includes("/funding-opportunities"),
+      !pathname.includes("/funding-opportunities") &&
+      !pathname.includes("/financials"),
   },
   {
     id: "milestone-updates",
@@ -65,6 +67,14 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     title: () => "Impact",
     Icon: ChartLine,
     isActive: (pathname: string) => pathname.includes("/impact"),
+  },
+  {
+    id: "financials",
+    path: (communityId: string) => PAGES.COMMUNITY.FINANCIALS(communityId),
+    title: () => "Financials",
+    Icon: Wallet,
+    isActive: (pathname: string) => pathname.includes("/financials"),
+    showNewTag: true,
   },
 ] as const;
 
@@ -82,6 +92,8 @@ export const CommunityPageNavigator = () => {
   const { data: fundingOpportunitiesCount } = useFundingOpportunitiesCount({
     communityUid: community?.uid,
   });
+  const { data: programs } = useCommunityPrograms(communityId);
+  const programsCount = programs?.length ?? 0;
 
   const isAdminPage = pathname.includes("/manage");
 
@@ -91,9 +103,13 @@ export const CommunityPageNavigator = () => {
       if (item.id === "funding-opportunities" && fundingOpportunitiesCount === 0) {
         return false;
       }
+      // Hide financials tab if there are no programs
+      if (item.id === "financials" && programsCount === 0) {
+        return false;
+      }
       return true;
     });
-  }, [fundingOpportunitiesCount]);
+  }, [fundingOpportunitiesCount, programsCount]);
 
   if (isAdminPage) return null;
 

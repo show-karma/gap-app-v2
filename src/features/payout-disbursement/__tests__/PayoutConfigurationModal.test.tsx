@@ -29,13 +29,6 @@ jest.mock("../hooks/use-payout-disbursement", () => ({
 // Mock viem
 jest.mock("viem", () => ({
   isAddress: jest.fn((addr: string) => addr.startsWith("0x") && addr.length === 42),
-  parseUnits: jest.fn((value: string, decimals: number) => {
-    const num = parseFloat(value);
-    return BigInt(Math.round(num * 10 ** decimals));
-  }),
-  formatUnits: jest.fn((value: bigint, decimals: number) => {
-    return (Number(value) / 10 ** decimals).toString();
-  }),
 }));
 
 // Mock toast
@@ -55,7 +48,6 @@ Object.defineProperty(global, "crypto", {
 });
 
 import toast from "react-hot-toast";
-import { formatUnits, parseUnits } from "viem";
 // Import mocks after jest.mock calls
 import { useGrantMilestones, usePayoutConfigByGrant } from "../hooks/use-payout-disbursement";
 
@@ -152,12 +144,12 @@ describe("PayoutConfigurationModal", () => {
       projectUID: "project-456",
       communityUID: "community-789",
       payoutAddress: "0x1234567890123456789012345678901234567890",
-      totalGrantAmount: "100000000", // 100 USDC in smallest units (6 decimals)
+      totalGrantAmount: "100.50", // Human-readable format
       tokenAddress: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", // Optimism USDC
       chainId: 10,
       milestoneAllocations: [
-        { id: "alloc-1", label: "First payment", amount: "30000000" }, // 30 USDC
-        { id: "alloc-2", label: "Final payment", amount: "70000000" }, // 70 USDC
+        { id: "alloc-1", label: "First payment", amount: "30" },
+        { id: "alloc-2", label: "Final payment", amount: "70.50" },
       ],
       createdBy: "0xadmin",
       updatedBy: null,
@@ -179,12 +171,9 @@ describe("PayoutConfigurationModal", () => {
         const addressInput = screen.getByLabelText("Payout Address") as HTMLInputElement;
         expect(addressInput.value).toBe("0x1234567890123456789012345678901234567890");
       });
-
-      // Check that formatUnits was called to convert amounts
-      expect(formatUnits).toHaveBeenCalled();
     });
 
-    it("should convert smallest unit amounts to human-readable on load", async () => {
+    it("should load total grant amount directly without conversion", async () => {
       mockedUsePayoutConfigByGrant.mockReturnValue({
         data: existingConfig,
         isLoading: false,
@@ -194,9 +183,9 @@ describe("PayoutConfigurationModal", () => {
         wrapper: createWrapper(),
       });
 
-      // formatUnits should be called for totalGrantAmount conversion
       await waitFor(() => {
-        expect(formatUnits).toHaveBeenCalledWith(BigInt("100000000"), 6);
+        const amountInput = screen.getByLabelText("Total Grant Amount") as HTMLInputElement;
+        expect(amountInput.value).toBe("100.50");
       });
     });
   });
@@ -356,7 +345,7 @@ describe("PayoutConfigurationModal", () => {
       expect(tokenSelect.value).toBe("usdc");
     });
 
-    it("should show custom token address input when custom is selected", async () => {
+    it("should allow selecting native token", async () => {
       const user = userEvent.setup();
 
       render(<PayoutConfigurationModal {...defaultProps} />, {
@@ -364,30 +353,23 @@ describe("PayoutConfigurationModal", () => {
       });
 
       const tokenSelect = screen.getByLabelText("Token");
-      await user.selectOptions(tokenSelect, "custom");
+      await user.selectOptions(tokenSelect, "native");
 
       await waitFor(() => {
-        expect(screen.getByLabelText("Custom Token Address")).toBeInTheDocument();
+        expect((tokenSelect as HTMLSelectElement).value).toBe("native");
       });
     });
 
-    it("should validate custom token address", async () => {
-      const user = userEvent.setup();
-
+    it("should not have custom token option", () => {
       render(<PayoutConfigurationModal {...defaultProps} />, {
         wrapper: createWrapper(),
       });
 
-      const tokenSelect = screen.getByLabelText("Token");
-      await user.selectOptions(tokenSelect, "custom");
-
-      const customTokenInput = screen.getByLabelText("Custom Token Address");
-      await user.type(customTokenInput, "invalid");
-      await user.tab();
-
-      await waitFor(() => {
-        expect(screen.getByText("Invalid token address")).toBeInTheDocument();
-      });
+      const tokenSelect = screen.getByLabelText("Token") as HTMLSelectElement;
+      const options = Array.from(tokenSelect.options).map((opt) => opt.value);
+      expect(options).toContain("usdc");
+      expect(options).toContain("native");
+      expect(options).not.toContain("custom");
     });
   });
 

@@ -4,7 +4,6 @@ import { Popover } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Milestone } from "@show-karma/karma-gap-sdk";
-import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
 import { useState } from "react";

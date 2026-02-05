@@ -10,7 +10,6 @@ interface ProjectStatsBarProps {
   endorsements: number;
   totalReceived?: number;
   tokenPrice?: number;
-  completeRate?: number;
   lastUpdate?: Date | string;
   onGrantsClick?: () => void;
   onEndorsementsClick?: () => void;
@@ -32,7 +31,6 @@ export function ProjectStatsBar({
   endorsements,
   totalReceived,
   tokenPrice,
-  completeRate,
   lastUpdate,
   onGrantsClick,
   onEndorsementsClick,
@@ -57,7 +55,7 @@ export function ProjectStatsBar({
   const stats: Array<{
     value: string;
     label: string;
-    iconType: "received" | "token" | "grants" | "endorsements" | "complete" | "lastUpdate";
+    iconType: "received" | "token" | "grants" | "endorsements" | "lastUpdate";
     onClick?: () => void;
     key: string;
     tooltip?: string;
@@ -100,18 +98,6 @@ export function ProjectStatsBar({
       onClick: onEndorsementsClick,
       key: "endorsements",
     },
-    // Complete rate if available
-    ...(completeRate !== undefined
-      ? [
-          {
-            value: `${completeRate}%`,
-            label: "Complete Rate",
-            iconType: "complete" as const,
-            key: "complete",
-            tooltip: "Percentage of completed milestones across all grants",
-          },
-        ]
-      : []),
     // Last update if available
     ...(lastUpdate
       ? [

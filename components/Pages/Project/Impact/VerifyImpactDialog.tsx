@@ -8,7 +8,6 @@ import type {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, Fragment, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
-import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";

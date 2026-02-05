@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { PencilSquareIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
-import type { IMilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
