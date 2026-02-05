@@ -9,6 +9,7 @@ import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramLis
 import { DateTimePicker } from "@/components/Utilities/DateTimePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { MultiEmailInput } from "@/components/Utilities/MultiEmailInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,6 +65,8 @@ function buildFormValuesFromMetadata(metadata: GrantProgram["metadata"]) {
       endsAt: metadata.endsAt ? new Date(metadata.endsAt) : undefined,
     },
     budget: metadata.programBudget ? parseFloat(metadata.programBudget.toString()) : undefined,
+    adminEmails: metadata.adminEmails || [],
+    financeEmails: metadata.financeEmails || [],
   };
 }
 
@@ -81,6 +84,8 @@ function buildUpdateMetadata(
     programBudget: formData.budget,
     startsAt: formData.dates.startsAt,
     endsAt: formData.dates.endsAt,
+    adminEmails: formData.adminEmails,
+    financeEmails: formData.financeEmails,
   };
 
   return sanitizeObject({
@@ -126,6 +131,8 @@ export function ProgramDetailsTab({
         endsAt: undefined,
       },
       budget: undefined,
+      adminEmails: [],
+      financeEmails: [],
     },
   });
 
@@ -516,6 +523,54 @@ export function ProgramDetailsTab({
             )}
             <AriaLiveError error={errors.budget} />
           </div>
+
+          {/* Admin Emails */}
+          <Controller
+            name="adminEmails"
+            control={control}
+            render={({ field, fieldState }) => (
+              <div className="flex w-full flex-col gap-1">
+                <Label htmlFor="admin-emails">
+                  Admin Emails <span className="text-destructive">*</span>
+                </Label>
+                <p className="text-xs text-muted-foreground mb-1">
+                  Applicants will reply to these email addresses when responding to notifications
+                </p>
+                <MultiEmailInput
+                  emails={field.value}
+                  onChange={field.onChange}
+                  placeholder="Enter admin email"
+                  disabled={isDisabled}
+                  error={fieldState.error?.message}
+                />
+                <AriaLiveError error={fieldState.error} />
+              </div>
+            )}
+          />
+
+          {/* Finance Emails */}
+          <Controller
+            name="financeEmails"
+            control={control}
+            render={({ field, fieldState }) => (
+              <div className="flex w-full flex-col gap-1">
+                <Label htmlFor="finance-emails">
+                  Finance Emails <span className="text-destructive">*</span>
+                </Label>
+                <p className="text-xs text-muted-foreground mb-1">
+                  Finance team will be notified when milestones are verified
+                </p>
+                <MultiEmailInput
+                  emails={field.value}
+                  onChange={field.onChange}
+                  placeholder="Enter finance email"
+                  disabled={isDisabled}
+                  error={fieldState.error?.message}
+                />
+                <AriaLiveError error={fieldState.error} />
+              </div>
+            )}
+          />
 
           {/* Actions */}
           {!readOnly && (
