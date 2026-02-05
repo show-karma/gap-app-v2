@@ -19,6 +19,7 @@ import { Twitter2Icon } from "@/components/Icons/Twitter2";
 import { Button } from "@/components/Utilities/Button";
 import { DateTimePicker } from "@/components/Utilities/DateTimePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { MultiEmailInput } from "@/components/Utilities/MultiEmailInput";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
@@ -147,6 +148,12 @@ const createProgramSchema = z.object({
   platformsUsed: z.array(z.string()),
   communityRef: z.array(z.string()),
   status: z.string().optional().or(z.literal("Active")),
+  adminEmails: z
+    .array(z.string().email({ message: "Invalid email address" }))
+    .min(1, { message: "At least one admin email is required" }),
+  financeEmails: z
+    .array(z.string().email({ message: "Invalid email address" }))
+    .min(1, { message: "At least one finance email is required" }),
 });
 
 type CreateProgramType = z.infer<typeof createProgramSchema>;
@@ -234,6 +241,8 @@ export default function AddProgram({
       platformsUsed: programToEdit?.metadata?.platformsUsed || [],
       communityRef: programToEdit?.metadata?.communityRef || [],
       status: programToEdit?.metadata?.status || "Active",
+      adminEmails: programToEdit?.metadata?.adminEmails || [],
+      financeEmails: programToEdit?.metadata?.financeEmails || [],
     },
   });
 
@@ -322,6 +331,8 @@ export default function AddProgram({
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
         communityRef: data.communityRef,
+        adminEmails: data.adminEmails,
+        financeEmails: data.financeEmails,
       };
 
       // Use V2 endpoint - owner comes from JWT session
@@ -433,6 +444,8 @@ export default function AddProgram({
         tags: ["karma-gap", "grant-program-registry"],
         status: data.status,
         communityRef: data.communityRef,
+        adminEmails: data.adminEmails,
+        financeEmails: data.financeEmails,
       });
 
       // Always use V2 update endpoint (off-chain)
@@ -633,6 +646,50 @@ export default function AddProgram({
                   placeholder="Please provide a description of this program"
                 />
                 <p className="text-base text-red-400">{errors.description?.message}</p>
+              </div>
+              <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
+                <Controller
+                  name="adminEmails"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <div className="flex w-full flex-col gap-1">
+                      <label htmlFor="admin-emails" className={labelStyle}>
+                        Admin Emails *
+                      </label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        Applicants will reply to these emails
+                      </p>
+                      <MultiEmailInput
+                        emails={field.value}
+                        onChange={field.onChange}
+                        placeholder="Enter admin email"
+                        disabled={isLoading}
+                        error={fieldState.error?.message}
+                      />
+                    </div>
+                  )}
+                />
+                <Controller
+                  name="financeEmails"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <div className="flex w-full flex-col gap-1">
+                      <label htmlFor="finance-emails" className={labelStyle}>
+                        Finance Emails *
+                      </label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        Notified when milestones are verified
+                      </p>
+                      <MultiEmailInput
+                        emails={field.value}
+                        onChange={field.onChange}
+                        placeholder="Enter finance email"
+                        disabled={isLoading}
+                        error={fieldState.error?.message}
+                      />
+                    </div>
+                  )}
+                />
               </div>
               <div className="grid grid-cols-4  max-sm:grid-cols-1 max-md:grid-cols-2 gap-4 justify-between">
                 <div className="flex w-full flex-col gap-1">

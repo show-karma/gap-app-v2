@@ -30,6 +30,12 @@ export const createProgramSchema = z.object({
       }
     ),
   budget: z.coerce.number().min(0, { message: "Budget must be a positive number" }).optional(),
+  adminEmails: z
+    .array(z.string().email({ message: "Invalid email address" }))
+    .min(1, { message: "At least one admin email is required" }),
+  financeEmails: z
+    .array(z.string().email({ message: "Invalid email address" }))
+    .min(1, { message: "At least one finance email is required" }),
 });
 
 export type CreateProgramFormSchema = z.infer<typeof createProgramSchema>;

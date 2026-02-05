@@ -38,6 +38,8 @@ export interface ProgramMetadata {
   type: string;
   tags: string[];
   communityRef: string[];
+  adminEmails?: string[];
+  financeEmails?: string[];
 }
 
 export interface ProgramCreationRequest {
@@ -67,4 +69,6 @@ export interface CreateProgramFormData {
     endsAt?: Date;
   };
   budget?: number;
+  adminEmails?: string[];
+  financeEmails?: string[];
 }
