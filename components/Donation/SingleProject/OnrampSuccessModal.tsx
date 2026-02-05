@@ -12,6 +12,9 @@ interface OnrampSuccessModalProps {
   onClose: () => void;
 }
 
+/** Default chain ID for Base network */
+const DEFAULT_CHAIN_ID = 8453;
+
 export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
   ({ sessionData, network, onClose }) => {
     const txDetails = sessionData.transaction_details;
@@ -20,7 +23,7 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
 
     const chainId = useMemo(() => {
       const networkKey = txDetails?.destination_network?.toLowerCase() || network.toLowerCase();
-      return NETWORK_CHAIN_IDS[networkKey] || 8453;
+      return NETWORK_CHAIN_IDS[networkKey] || DEFAULT_CHAIN_ID;
     }, [txDetails?.destination_network, network]);
 
     const explorerUrl = useMemo(() => {
@@ -51,7 +54,13 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               {isProcessing ? "Payment Successful" : "Donation Complete"}
             </h3>
-            <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-8 w-8 p-0"
+              aria-label="Close"
+            >
               <X className="h-4 w-4" />
             </Button>
           </div>
