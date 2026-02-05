@@ -18,12 +18,8 @@ const steps: Step[] = [
     number: 1,
     icon: Settings,
     title: "Set up your project on Karma",
-    description: "Create your project profile with a description, logo, and links.",
-    details: [
-      "Connect your wallet to Karma",
-      "Create or claim your project",
-      "Add a description and social links",
-    ],
+    description: "Create your project profile, share roadmap and updates",
+    details: ["Login to Karma", "Create or navigate to your project", "Update project details"],
   },
   {
     number: 2,
@@ -32,8 +28,8 @@ const steps: Step[] = [
     description: "Set your treasury address where funds will be sent.",
     details: [
       "Go to your project dashboard",
-      "Click 'Launch Seeds'",
       "Set your treasury wallet address",
+      "Choose Seed code and Click 'Launch Seeds'",
       "Review and confirm",
     ],
   },
@@ -44,7 +40,7 @@ const steps: Step[] = [
     description: "Let your supporters know they can now back you with Seeds.",
     details: [
       "Share your project link on social media",
-      "Add Seeds to your README or website",
+      "Link to your Karma profile on your website",
       "Announce to your community",
     ],
   },
@@ -106,10 +102,6 @@ export function LaunchHowTo() {
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight max-w-3xl">
             Get started in three steps
           </h2>
-          <p className="text-lg md:text-xl font-normal text-muted-foreground leading-relaxed max-w-2xl">
-            Launching Seeds for your project takes just a few minutes. No smart contract deployment
-            needed—we handle the infrastructure.
-          </p>
         </div>
 
         {/* Steps Grid */}

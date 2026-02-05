@@ -16,6 +16,13 @@ const launchFAQs: FAQItem[] = [
       "Karma Seeds are ERC-20 tokens that represent $1 contributions to your project. For every dollar a supporter contributes, they receive one Seed. The funds go directly to your treasury address. Seeds are designed as receipts of support—not speculative tokens with price expectations.",
   },
   {
+    id: "how-do-seeds-show-in-wallet",
+    question: "How do these seeds show up in buyer's wallet?",
+    answer:
+      "Karma Seeds are regular ERC-20 tokens. The name will be Karma Seeds - <Project Name> and code will be KSEED-<code>. You choose the name and code while creating Karma Seeds for your project.",
+  },
+
+  {
     id: "fees",
     question: "What are the fees?",
     answer:

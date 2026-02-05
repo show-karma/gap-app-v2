@@ -104,9 +104,8 @@ export function LaunchUseCases() {
             One building block, infinite possibilities
           </h2>
           <p className="text-lg md:text-xl font-normal text-muted-foreground leading-relaxed max-w-3xl">
-            Complex systems are built by composing simple ones. The internet was built on small,
-            dumb protocols. Blockchains work because primitives are minimal and composable. Karma
-            Seeds is meant to be one of those Lego blocks.
+            Complex systems are built by composing simple ones. Karma Seeds is meant to be one of
+            those Lego blocks.
           </p>
         </div>
 
