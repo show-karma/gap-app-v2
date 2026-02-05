@@ -18,10 +18,12 @@ export function useCountryDetection(): CountryData {
   });
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const detectCountry = async () => {
       try {
         // Use our API route which reads Vercel's x-vercel-ip-country header
-        const response = await fetch("/api/geo");
+        const response = await fetch("/api/geo", { signal: controller.signal });
         if (!response.ok) throw new Error("Geolocation failed");
 
         const result = await response.json();
@@ -30,7 +32,12 @@ export function useCountryDetection(): CountryData {
           isLoading: false,
           error: null,
         });
-      } catch {
+      } catch (error) {
+        // Ignore abort errors when component unmounts
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
+        }
+
         // Fallback to browser locale
         const locale = navigator.language || "en-US";
         const countryFromLocale = locale.split("-")[1]?.toUpperCase();
@@ -44,6 +51,10 @@ export function useCountryDetection(): CountryData {
     };
 
     detectCountry();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   return data;
