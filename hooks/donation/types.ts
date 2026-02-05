@@ -66,9 +66,22 @@ export interface OnrampSessionResponse {
   onrampUrl?: string;
 }
 
+/**
+ * Stripe onramp session status values.
+ * Matches the OnrampSessionStatus type from @stripe/crypto.
+ * @see https://docs.stripe.com/crypto/onramp
+ */
+export type StripeOnrampStatus =
+  | "initialized"
+  | "rejected"
+  | "requires_payment"
+  | "fulfillment_processing"
+  | "fulfillment_complete"
+  | "error";
+
 export interface StripeOnrampSessionData {
   id: string;
-  status: string;
+  status: StripeOnrampStatus;
   transaction_details?: {
     destination_currency?: string;
     destination_amount?: string;

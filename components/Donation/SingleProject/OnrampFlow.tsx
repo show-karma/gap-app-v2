@@ -17,6 +17,9 @@ const ONRAMP_LIMITS = {
   MAX_DECIMALS: 2,
 } as const;
 
+/** Regex for validating decimal amounts - moved to module scope to avoid recreation */
+const DECIMAL_REGEX = new RegExp(`^\\d*\\.?\\d{0,${ONRAMP_LIMITS.MAX_DECIMALS}}$`);
+
 interface OnrampFlowProps {
   projectUid: string;
   payoutAddress: string;
@@ -33,9 +36,9 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
     null
   );
 
-  const { country } = useCountryDetection();
+  const { country, isLoading: isCountryLoading } = useCountryDetection();
 
-  const providerConfig = getProviderConfig(selectedProvider);
+  const providerConfig = useMemo(() => getProviderConfig(selectedProvider), [selectedProvider]);
 
   const { network, isChainSupported } = useMemo(() => {
     const chainName = getChainNameById(chainId);
@@ -67,31 +70,30 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
 
   const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Allow numbers with up to MAX_DECIMALS decimal places
-    const decimalRegex = new RegExp(`^\\d*\\.?\\d{0,${ONRAMP_LIMITS.MAX_DECIMALS}}$`);
-    if (value === "" || decimalRegex.test(value)) {
+    if (value === "" || DECIMAL_REGEX.test(value)) {
       setAmount(value);
     }
   }, []);
 
-  const validationError = useMemo(() => {
-    if (!amount) return null;
+  const { validationError, isValidAmount } = useMemo(() => {
+    if (!amount) return { validationError: null, isValidAmount: false };
     const numAmount = parseFloat(amount);
-    if (Number.isNaN(numAmount)) return "Please enter a valid amount";
-    if (numAmount < ONRAMP_LIMITS.MIN_AMOUNT)
-      return `Minimum amount is ${ONRAMP_LIMITS.MIN_AMOUNT}`;
-    if (numAmount > ONRAMP_LIMITS.MAX_AMOUNT)
-      return `Maximum amount is ${ONRAMP_LIMITS.MAX_AMOUNT.toLocaleString()}`;
-    return null;
-  }, [amount]);
-
-  const isValidAmount = useMemo(() => {
-    const numAmount = parseFloat(amount);
-    return (
-      !Number.isNaN(numAmount) &&
-      numAmount >= ONRAMP_LIMITS.MIN_AMOUNT &&
-      numAmount <= ONRAMP_LIMITS.MAX_AMOUNT
-    );
+    if (Number.isNaN(numAmount)) {
+      return { validationError: "Please enter a valid amount", isValidAmount: false };
+    }
+    if (numAmount < ONRAMP_LIMITS.MIN_AMOUNT) {
+      return {
+        validationError: `Minimum amount is ${ONRAMP_LIMITS.MIN_AMOUNT}`,
+        isValidAmount: false,
+      };
+    }
+    if (numAmount > ONRAMP_LIMITS.MAX_AMOUNT) {
+      return {
+        validationError: `Maximum amount is ${ONRAMP_LIMITS.MAX_AMOUNT.toLocaleString()}`,
+        isValidAmount: false,
+      };
+    }
+    return { validationError: null, isValidAmount: true };
   }, [amount]);
 
   const handleProceed = useCallback(() => {
@@ -178,7 +180,9 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
 
       <Button
         onClick={handleProceed}
-        disabled={!isValidAmount || isLoading || !payoutAddress || !isChainSupported}
+        disabled={
+          !isValidAmount || isLoading || !payoutAddress || !isChainSupported || isCountryLoading
+        }
         className="w-full bg-brand-blue hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isLoading ? (

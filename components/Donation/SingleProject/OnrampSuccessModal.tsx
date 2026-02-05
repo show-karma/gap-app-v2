@@ -47,12 +47,22 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
       return `${amount.toFixed(6)} ${currency}`;
     }, [txDetails?.destination_amount, txDetails?.destination_currency]);
 
+    const title = isProcessing ? "Payment Successful" : "Donation Complete";
+
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="onramp-success-title"
+      >
         <div className="relative w-full max-w-md mx-4 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl overflow-hidden">
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-zinc-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {isProcessing ? "Payment Successful" : "Donation Complete"}
+            <h3
+              id="onramp-success-title"
+              className="text-lg font-semibold text-gray-900 dark:text-white"
+            >
+              {title}
             </h3>
             <Button
               variant="ghost"

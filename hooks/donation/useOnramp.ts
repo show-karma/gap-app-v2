@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useCallback } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { OnrampError } from "@/hooks/donation/onramp-errors";
@@ -14,7 +15,7 @@ interface UseOnrampParams {
   network: string;
   targetAsset: string;
   provider?: OnrampProvider;
-  country?: string | null; // ISO 3166-1 alpha-2 code
+  country?: string | null;
   onError?: (error: Error) => void;
 }
 
@@ -23,8 +24,13 @@ interface OnrampSession {
   donationUid: string;
 }
 
+interface InitiateOnrampParams {
+  fiatAmount: number;
+  fiatCurrency: string;
+}
+
 interface UseOnrampReturn {
-  initiateOnramp: (fiatAmount: number, fiatCurrency: string) => Promise<void>;
+  initiateOnramp: (fiatAmount: number, fiatCurrency: string) => void;
   isLoading: boolean;
   error: Error | null;
   session: OnrampSession | null;
@@ -41,83 +47,60 @@ export const useOnramp = ({
   onError,
 }: UseOnrampParams): UseOnrampReturn => {
   const { address } = useAccount();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [session, setSession] = useState<OnrampSession | null>(null);
-  const mountedRef = useRef(true);
 
-  // Track component mount state to prevent setState after unmount
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+  const mutation = useMutation<OnrampSession, Error, InitiateOnrampParams>({
+    mutationFn: async ({ fiatAmount, fiatCurrency }) => {
+      if (!payoutAddress) {
+        throw new Error("Payout address is required");
+      }
 
-  const clearSession = useCallback(() => {
-    setSession(null);
-  }, []);
+      const request: OnrampSessionRequest = {
+        provider,
+        projectUid,
+        payoutAddress,
+        fiatAmount,
+        fiatCurrency,
+        network,
+        targetAsset,
+        donorAddress: address,
+        ...(country && { country }),
+      };
+
+      const sessionResponse = await donationsService.createOnrampSession(request);
+
+      return {
+        clientSecret: sessionResponse.sessionToken,
+        donationUid: sessionResponse.donationUid,
+      };
+    },
+    onError: (err) => {
+      const error =
+        err instanceof OnrampError
+          ? err
+          : err instanceof Error
+            ? OnrampError.sessionCreationFailed(err.message)
+            : OnrampError.sessionCreationFailed();
+      toast.error(error.userMessage);
+      onError?.(error);
+    },
+  });
 
   const initiateOnramp = useCallback(
-    async (fiatAmount: number, fiatCurrency: string) => {
-      if (!payoutAddress) {
-        const err = new Error("Payout address is required");
-        setError(err);
-        onError?.(err);
-        return;
-      }
-
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const request: OnrampSessionRequest = {
-          provider,
-          projectUid,
-          payoutAddress,
-          fiatAmount,
-          fiatCurrency,
-          network,
-          targetAsset,
-          donorAddress: address,
-          ...(country && { country }),
-        };
-
-        const sessionResponse = await donationsService.createOnrampSession(request);
-
-        // Check if component is still mounted before updating state
-        if (!mountedRef.current) return;
-
-        // Use Stripe embedded widget
-        setSession({
-          clientSecret: sessionResponse.sessionToken,
-          donationUid: sessionResponse.donationUid,
-        });
-        setIsLoading(false);
-      } catch (err) {
-        // Check if component is still mounted before updating state
-        if (!mountedRef.current) return;
-
-        const error =
-          err instanceof OnrampError
-            ? err
-            : err instanceof Error
-              ? OnrampError.sessionCreationFailed(err.message)
-              : OnrampError.sessionCreationFailed();
-        setError(error);
-        setIsLoading(false);
-        toast.error(error.userMessage);
-        onError?.(error);
-      }
+    (fiatAmount: number, fiatCurrency: string) => {
+      mutation.mutate({ fiatAmount, fiatCurrency });
     },
-    [projectUid, payoutAddress, network, targetAsset, provider, address, country, onError]
+    [mutation]
   );
+
+  const clearSession = useCallback(() => {
+    mutation.reset();
+  }, [mutation]);
 
   return {
     initiateOnramp,
-    isLoading,
-    error,
-    session,
+    isLoading: mutation.isPending,
+    error: mutation.error,
+    session: mutation.data ?? null,
     clearSession,
   };
 };

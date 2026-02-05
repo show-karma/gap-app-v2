@@ -5,6 +5,7 @@ import { loadStripeOnramp } from "@stripe/crypto";
 import { AlertCircle, Loader2, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
 import type { StripeOnrampSessionData } from "@/hooks/donation/types";
 import { envVars } from "@/utilities/enviromentVars";
@@ -43,6 +44,11 @@ export const StripeOnrampEmbed = React.memo<StripeOnrampEmbedProps>(
       [onSuccess]
     );
 
+    // Reset success trigger when a new session starts
+    useEffect(() => {
+      hasTriggeredSuccess.current = false;
+    }, [clientSecret]);
+
     useEffect(() => {
       let mounted = true;
 
@@ -77,7 +83,11 @@ export const StripeOnrampEmbed = React.memo<StripeOnrampEmbedProps>(
           session.mount(containerRef.current);
           sessionRef.current = session;
         } catch (err) {
-          console.error("Failed to initialize Stripe Onramp:", err);
+          errorManager(
+            "Failed to initialize Stripe Onramp",
+            err instanceof Error ? err : new Error(String(err)),
+            { component: "StripeOnrampEmbed" }
+          );
           if (mounted) {
             setError("Unable to load payment form. Please disable ad blockers or try again.");
             setIsLoading(false);
@@ -95,13 +105,24 @@ export const StripeOnrampEmbed = React.memo<StripeOnrampEmbedProps>(
           session.removeEventListener("onramp_session_updated", handleSessionUpdate);
         }
       };
-    }, [clientSecret, handleSessionUpdate, resolvedTheme]);
+      // Note: resolvedTheme intentionally excluded to prevent re-initialization on theme change.
+      // Users can close and reopen the modal to get theme updates.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [clientSecret, handleSessionUpdate]);
 
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="stripe-onramp-title"
+      >
         <div className="relative w-full max-w-md mx-4 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl overflow-hidden">
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-zinc-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h3
+              id="stripe-onramp-title"
+              className="text-lg font-semibold text-gray-900 dark:text-white"
+            >
               Complete Purchase
             </h3>
             <Button

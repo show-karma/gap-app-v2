@@ -24,9 +24,8 @@ const PROVIDER_CONFIGS: Record<OnrampProvider, OnrampProviderConfig> = {
     supportedCurrencies: [
       { code: "USD", symbol: "$" },
       { code: "EUR", symbol: "€" },
-      { code: "GBP", symbol: "£" },
     ],
-    supportedNetworks: ["ethereum", "base", "polygon", "avalanche"],
+    supportedNetworks: ["mainnet", "base", "polygon"],
   },
 };
 
@@ -38,10 +37,6 @@ export function getProviderConfig(provider: OnrampProvider): OnrampProviderConfi
     throw new Error(`Unsupported onramp provider: ${provider}`);
   }
   return config;
-}
-
-export function getDefaultProvider(): OnrampProviderConfig {
-  return getProviderConfig(DEFAULT_ONRAMP_PROVIDER);
 }
 
 export function getSupportedProviders(): OnrampProviderConfig[] {

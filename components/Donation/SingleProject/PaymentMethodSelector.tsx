@@ -2,11 +2,8 @@
 
 import { CreditCard, Zap } from "lucide-react";
 import React, { useCallback } from "react";
-import { getDefaultProvider } from "@/lib/onramp";
 import { PaymentMethod } from "@/types/donations";
 import type { PaymentMethodSelectorProps } from "./types";
-
-const defaultProvider = getDefaultProvider();
 
 export const PaymentMethodSelector = React.memo<PaymentMethodSelectorProps>(
   ({ selected, onSelect }) => {
