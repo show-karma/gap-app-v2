@@ -158,5 +158,6 @@ export const useSingleProjectDonation = (
     handleAmountChange,
     handleProceed,
     setSelectedToken,
+    address,
   };
 };
