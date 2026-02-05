@@ -162,8 +162,8 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
       <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-3 text-sm text-blue-800 dark:text-blue-200 border border-blue-100 dark:border-blue-800">
         <p className="font-medium mb-2">How this works:</p>
         <ol className="list-decimal list-inside space-y-1 text-blue-700 dark:text-blue-300">
-          <li>You&apos;ll be redirected to {providerConfig.name}</li>
-          <li>Complete your card payment to purchase USDC</li>
+          <li>Complete your payment in the secure {providerConfig.name} form below</li>
+          <li>Your card payment is used to purchase USDC</li>
           <li>
             Funds are sent directly to:{" "}
             <code className="bg-blue-100 dark:bg-blue-800/50 px-1 py-0.5 rounded text-xs font-mono">
