@@ -40,6 +40,7 @@ export interface FundingProgramMetadata {
   platformsUsed?: string[];
   status: string;
   communityRef?: string[];
+  anyoneCanJoin?: boolean;
 }
 
 /**

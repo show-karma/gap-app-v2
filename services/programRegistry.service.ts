@@ -15,10 +15,15 @@ import { INDEXER } from "@/utilities/indexer";
 export class ProgramRegistryService {
   /**
    * Build program metadata from form data and community
+   * @param formData - Form data with program details
+   * @param community - Community to associate with the program
+   * @param options - Optional settings for the program
+   * @param options.anyoneCanJoin - Whether anyone can add this program to their project (defaults to false for admin-created programs)
    */
   static buildProgramMetadata(
     formData: CreateProgramFormData,
-    community: Community
+    community: Community,
+    options?: { anyoneCanJoin?: boolean }
   ): ProgramMetadata {
     return {
       title: formData.name,
@@ -55,6 +60,7 @@ export class ProgramRegistryService {
       type: "program",
       tags: ["karma-gap", "grant-program-registry"],
       communityRef: [community.uid], // Use community UID (hex address), not slug
+      anyoneCanJoin: options?.anyoneCanJoin ?? false, // Default to restricted for admin-created programs
     };
   }
 

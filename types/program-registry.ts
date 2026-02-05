@@ -38,6 +38,7 @@ export interface ProgramMetadata {
   type: string;
   tags: string[];
   communityRef: string[];
+  anyoneCanJoin?: boolean;
 }
 
 export interface ProgramCreationRequest {

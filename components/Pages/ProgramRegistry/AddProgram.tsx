@@ -147,6 +147,7 @@ const createProgramSchema = z.object({
   platformsUsed: z.array(z.string()),
   communityRef: z.array(z.string()),
   status: z.string().optional().or(z.literal("Active")),
+  anyoneCanJoin: z.boolean().default(true).optional(),
 });
 
 type CreateProgramType = z.infer<typeof createProgramSchema>;
@@ -234,6 +235,7 @@ export default function AddProgram({
       platformsUsed: programToEdit?.metadata?.platformsUsed || [],
       communityRef: programToEdit?.metadata?.communityRef || [],
       status: programToEdit?.metadata?.status || "Active",
+      anyoneCanJoin: programToEdit?.metadata?.anyoneCanJoin ?? true,
     },
   });
 
@@ -322,6 +324,7 @@ export default function AddProgram({
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
         communityRef: data.communityRef,
+        anyoneCanJoin: data.anyoneCanJoin ?? true,
       };
 
       // Use V2 endpoint - owner comes from JWT session
@@ -433,6 +436,7 @@ export default function AddProgram({
         tags: ["karma-gap", "grant-program-registry"],
         status: data.status,
         communityRef: data.communityRef,
+        anyoneCanJoin: data.anyoneCanJoin,
       });
 
       // Always use V2 update endpoint (off-chain)
@@ -755,6 +759,22 @@ export default function AddProgram({
                     />
                   </div>
                 )}
+              </div>
+              <div className="flex w-full flex-col gap-2 mt-2">
+                <span className={labelStyle}>Open Enrollment</span>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    {...register("anyoneCanJoin")}
+                    className="w-4 h-4 rounded border-gray-300 dark:border-zinc-600 dark:bg-zinc-700"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-zinc-300">
+                    Anyone can add this program to their project
+                  </span>
+                </label>
+                <p className="text-xs text-gray-500 dark:text-zinc-400">
+                  When unchecked, projects must contact the program manager to join
+                </p>
               </div>
             </div>
 

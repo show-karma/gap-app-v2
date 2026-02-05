@@ -84,6 +84,49 @@ describe("ProgramRegistryService", () => {
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
         communityRef: [mockCommunity.uid],
+        anyoneCanJoin: false,
+      });
+    });
+
+    describe("anyoneCanJoin option", () => {
+      it("should default anyoneCanJoin to false when no options provided", () => {
+        const metadata = ProgramRegistryService.buildProgramMetadata(mockFormData, mockCommunity);
+
+        expect(metadata.anyoneCanJoin).toBe(false);
+      });
+
+      it("should set anyoneCanJoin to false when explicitly passed as false", () => {
+        const metadata = ProgramRegistryService.buildProgramMetadata(mockFormData, mockCommunity, {
+          anyoneCanJoin: false,
+        });
+
+        expect(metadata.anyoneCanJoin).toBe(false);
+      });
+
+      it("should set anyoneCanJoin to true when explicitly passed as true", () => {
+        const metadata = ProgramRegistryService.buildProgramMetadata(mockFormData, mockCommunity, {
+          anyoneCanJoin: true,
+        });
+
+        expect(metadata.anyoneCanJoin).toBe(true);
+      });
+
+      it("should default anyoneCanJoin to false when options object is empty", () => {
+        const metadata = ProgramRegistryService.buildProgramMetadata(
+          mockFormData,
+          mockCommunity,
+          {}
+        );
+
+        expect(metadata.anyoneCanJoin).toBe(false);
+      });
+
+      it("should default anyoneCanJoin to false when options.anyoneCanJoin is undefined", () => {
+        const metadata = ProgramRegistryService.buildProgramMetadata(mockFormData, mockCommunity, {
+          anyoneCanJoin: undefined,
+        });
+
+        expect(metadata.anyoneCanJoin).toBe(false);
       });
     });
 

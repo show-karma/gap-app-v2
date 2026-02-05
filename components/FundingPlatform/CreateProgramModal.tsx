@@ -89,9 +89,11 @@ export function CreateProgramModal({
     setIsSubmitting(true);
     try {
       // Build metadata using service
+      // Admin-created programs default to restricted (anyoneCanJoin: false)
       const metadata = ProgramRegistryService.buildProgramMetadata(
         data as CreateProgramFormData,
-        community
+        community,
+        { anyoneCanJoin: false }
       );
 
       // Create program using service
