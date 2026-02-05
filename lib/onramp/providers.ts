@@ -9,14 +9,10 @@ export const STRIPE_SUPPORTED_CHAIN_IDS = [1, 8453, 137, 43114] as const;
 export const ALLOWED_ONRAMP_DOMAINS = ["crypto.link.com"] as const;
 
 /**
- * Countries where Stripe Crypto Onramp is available.
- * Currently limited to US and EU member states.
- * ISO 3166-1 alpha-2 country codes.
+ * EU member states (27 countries) - ISO 3166-1 alpha-2 country codes.
+ * Used for EUR currency selection and as part of allowed countries.
  */
-export const STRIPE_ALLOWED_COUNTRIES = new Set([
-  // United States
-  "US",
-  // EU member states (27 countries)
+const EU_COUNTRIES = new Set([
   "AT", // Austria
   "BE", // Belgium
   "BG", // Bulgaria
@@ -46,36 +42,11 @@ export const STRIPE_ALLOWED_COUNTRIES = new Set([
   "SE", // Sweden
 ]);
 
-/** EU member states - used for EUR currency selection */
-const EU_COUNTRIES = new Set([
-  "AT",
-  "BE",
-  "BG",
-  "HR",
-  "CY",
-  "CZ",
-  "DK",
-  "EE",
-  "FI",
-  "FR",
-  "DE",
-  "GR",
-  "HU",
-  "IE",
-  "IT",
-  "LV",
-  "LT",
-  "LU",
-  "MT",
-  "NL",
-  "PL",
-  "PT",
-  "RO",
-  "SK",
-  "SI",
-  "ES",
-  "SE",
-]);
+/**
+ * Countries where Stripe Crypto Onramp is available.
+ * Currently limited to US and EU member states.
+ */
+export const STRIPE_ALLOWED_COUNTRIES = new Set(["US", ...EU_COUNTRIES]);
 
 /**
  * Check if a country is supported for Stripe onramp.
@@ -130,7 +101,7 @@ const PROVIDER_CONFIGS: Record<OnrampProvider, OnrampProviderConfig> = {
       { code: "USD", symbol: "$" },
       { code: "EUR", symbol: "€" },
     ],
-    supportedNetworks: ["mainnet", "base", "polygon"],
+    supportedNetworks: ["mainnet", "base", "polygon", "avalanche"],
   },
 };
 
