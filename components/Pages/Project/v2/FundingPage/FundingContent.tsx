@@ -4,6 +4,7 @@ import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useMemo } from "react";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useOwnerStore } from "@/store";
@@ -54,6 +55,19 @@ function formatDateRange(
   return "";
 }
 
+/** Maps currency codes to symbols for common currencies */
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  USD: "$",
+  USDC: "$",
+  USDT: "$",
+  EUR: "€",
+  GBP: "£",
+  ETH: "Ξ",
+};
+
+/** Currencies that use prefix symbol (e.g., $100) vs suffix code (e.g., 100 ARB) */
+const PREFIX_CURRENCIES = ["USD", "USDC", "USDT", "EUR", "GBP"];
+
 /**
  * GrantCard displays a single grant in the funding list with enhanced information
  */
@@ -71,8 +85,35 @@ function GrantCard({
   const completedMilestones = milestones.filter((m) => m.completed).length;
   const totalMilestones = milestones.length;
 
-  // Get amount using utility that prioritizes approvedAmount over details.amount
-  const { displayAmount, currency: displayCurrency, hasAmount } = getGrantDisplayAmount(grant);
+  // Memoize amount calculation to avoid re-parsing on every render
+  const {
+    displayAmount,
+    currency: displayCurrency,
+    hasAmount,
+  } = useMemo(() => getGrantDisplayAmount(grant), [grant]);
+
+  // Format amount with proper currency symbol/code for display and accessibility
+  const { formattedAmount, ariaLabel } = useMemo(() => {
+    if (!hasAmount || !displayAmount) {
+      return { formattedAmount: "", ariaLabel: "" };
+    }
+    const upperCurrency = displayCurrency.toUpperCase();
+    const symbol = CURRENCY_SYMBOLS[upperCurrency] || "";
+
+    // Use symbol prefix for USD-like currencies, otherwise suffix with code
+    if (symbol && PREFIX_CURRENCIES.includes(upperCurrency)) {
+      return {
+        formattedAmount: `${symbol}${displayAmount}`,
+        ariaLabel: `${displayAmount} ${displayCurrency}`,
+      };
+    }
+    // For other currencies (ARB, OP, etc.), show amount followed by code
+    const formatted = displayCurrency ? `${displayAmount} ${displayCurrency}` : displayAmount;
+    return {
+      formattedAmount: formatted,
+      ariaLabel: formatted,
+    };
+  }, [hasAmount, displayAmount, displayCurrency]);
 
   // Date range for display
   const dateRange = formatDateRange(grant.details?.startDate, grant.details?.completedAt);
@@ -122,9 +163,15 @@ function GrantCard({
       {/* Row 2: Amount + Date range */}
       {(hasAmount || dateRange) && (
         <div className="flex items-center justify-between text-sm gap-2">
-          <span className="font-medium text-gray-900 dark:text-white">
-            {hasAmount ? `$${displayAmount} ${displayCurrency}` : ""}
-          </span>
+          {hasAmount && (
+            <span className="font-medium text-gray-900 dark:text-white">
+              {formattedAmount}
+              {/* Screen reader text for full currency name */}
+              <span className="sr-only">
+                {ariaLabel !== formattedAmount ? ` (${ariaLabel})` : ""}
+              </span>
+            </span>
+          )}
           {dateRange && (
             <span className="text-gray-500 dark:text-gray-400 text-right">{dateRange}</span>
           )}

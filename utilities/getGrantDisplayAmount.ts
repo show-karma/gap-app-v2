@@ -14,63 +14,82 @@ interface GrantAmountInfo {
   hasAmount: boolean;
 }
 
+interface ParsedAmount {
+  numericPart: string;
+  currencyInAmount: string;
+  /** Parsed numeric value, or undefined if parsing failed */
+  parsedValue: number | undefined;
+  isAlreadyFormatted: boolean;
+}
+
 /**
  * Parses an amount string that may contain currency (e.g., "50000 USDC", "40K", "5686.59 USD")
  * Returns the numeric value and extracted currency
  */
-function parseAmountString(amount: string): {
-  numericPart: string;
-  currencyInAmount: string;
-  parsedValue: number;
-  isAlreadyFormatted: boolean;
-} {
-  const trimmed = amount.trim();
+function parseAmountString(amount: string): ParsedAmount {
+  try {
+    const trimmed = amount.trim();
 
-  // Match patterns like: "5686.59 USD", "40K USDC", "2500 ARB", "80000", "40K"
-  const amountMatch = trimmed.match(/^([\d,.]+[KMBTkmbt]?)\s*([a-zA-Z]{2,})?$/);
-  const numericPart = amountMatch?.[1] || trimmed;
-  const currencyInAmount = amountMatch?.[2] || "";
+    // Match patterns like: "5686.59 USD", "40K USDC", "2500 ARB", "80000", "40K"
+    const amountMatch = trimmed.match(/^([\d,.]+[KMBTkmbt]?)\s*([a-zA-Z]{2,})?$/);
+    const numericPart = amountMatch?.[1] || trimmed;
+    const currencyInAmount = amountMatch?.[2] || "";
 
-  // Check if numeric part is already formatted (like "40K", "5M")
-  const isAlreadyFormatted = /[KMBTkmbt]$/.test(numericPart);
+    // Check if numeric part is already formatted (like "40K", "5M")
+    const isAlreadyFormatted = /[KMBTkmbt]$/.test(numericPart);
 
-  // Parse the numeric value (remove commas for parsing)
-  const cleanNumber = numericPart.replace(/,/g, "").replace(/[KMBTkmbt]$/, "");
-  const multiplier = /[Kk]$/.test(numericPart)
-    ? 1000
-    : /[Mm]$/.test(numericPart)
-      ? 1e6
-      : /[Bb]$/.test(numericPart)
-        ? 1e9
-        : /[Tt]$/.test(numericPart)
-          ? 1e12
-          : 1;
+    // Parse the numeric value (remove commas for parsing)
+    const cleanNumber = numericPart.replace(/,/g, "").replace(/[KMBTkmbt]$/, "");
+    const multiplier = /[Kk]$/.test(numericPart)
+      ? 1000
+      : /[Mm]$/.test(numericPart)
+        ? 1e6
+        : /[Bb]$/.test(numericPart)
+          ? 1e9
+          : /[Tt]$/.test(numericPart)
+            ? 1e12
+            : 1;
 
-  const parsedValue = Number(cleanNumber) * multiplier;
+    const rawValue = Number(cleanNumber) * multiplier;
+    const parsedValue = Number.isNaN(rawValue) ? undefined : rawValue;
 
-  return {
-    numericPart,
-    currencyInAmount,
-    parsedValue,
-    isAlreadyFormatted,
-  };
+    return {
+      numericPart,
+      currencyInAmount,
+      parsedValue,
+      isAlreadyFormatted,
+    };
+  } catch {
+    // Fallback for malformed strings
+    return {
+      numericPart: amount,
+      currencyInAmount: "",
+      parsedValue: undefined,
+      isAlreadyFormatted: false,
+    };
+  }
 }
 
 /**
  * Formats an amount for display, handling various input formats
  */
 function formatAmount(rawAmount: string): string {
-  const { numericPart, parsedValue, isAlreadyFormatted } = parseAmountString(rawAmount);
+  try {
+    const { numericPart, parsedValue, isAlreadyFormatted } = parseAmountString(rawAmount);
 
-  if (isAlreadyFormatted) {
+    if (isAlreadyFormatted) {
+      return numericPart;
+    }
+
+    if (parsedValue !== undefined && parsedValue !== 0) {
+      return formatCurrency(parsedValue);
+    }
+
     return numericPart;
+  } catch {
+    // Fallback to original string if formatting fails
+    return rawAmount;
   }
-
-  if (!Number.isNaN(parsedValue) && parsedValue !== 0) {
-    return formatCurrency(parsedValue);
-  }
-
-  return numericPart;
 }
 
 /**
@@ -114,7 +133,7 @@ export function getGrantDisplayAmount(grant: Grant | undefined | null): GrantAmo
       displayAmount: formatAmount(grant.approvedAmount),
       currency,
       isFromFinancialConfig: true,
-      hasAmount: !Number.isNaN(parsedValue) && parsedValue > 0,
+      hasAmount: parsedValue !== undefined && parsedValue > 0,
     };
   }
 
@@ -153,7 +172,7 @@ export function getGrantDisplayAmount(grant: Grant | undefined | null): GrantAmo
     displayAmount: formatAmount(detailsAmount),
     currency,
     isFromFinancialConfig: false,
-    hasAmount: !Number.isNaN(parsedValue) && parsedValue > 0,
+    hasAmount: parsedValue !== undefined && parsedValue > 0,
   };
 }
 
