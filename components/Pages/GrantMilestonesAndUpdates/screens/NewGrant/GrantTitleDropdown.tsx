@@ -240,6 +240,7 @@ export const GrantTitleDropdown: FC<{
                 <CommandItem key={index}>
                   <button
                     type="button"
+                    aria-disabled={isRestricted || undefined}
                     onClick={() => {
                       if (isRestricted) {
                         toast.error(
@@ -257,7 +258,7 @@ export const GrantTitleDropdown: FC<{
                     }}
                     className={cn(
                       "w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left",
-                      isRestricted && "opacity-60 cursor-not-allowed"
+                      isRestricted && "opacity-60 cursor-not-allowed hover:opacity-60"
                     )}
                   >
                     <div className="flex flex-row gap-2 items-center justify-start w-full">

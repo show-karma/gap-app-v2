@@ -147,7 +147,7 @@ const createProgramSchema = z.object({
   platformsUsed: z.array(z.string()),
   communityRef: z.array(z.string()),
   status: z.string().optional().or(z.literal("Active")),
-  anyoneCanJoin: z.boolean().default(true).optional(),
+  anyoneCanJoin: z.boolean().optional(),
 });
 
 type CreateProgramType = z.infer<typeof createProgramSchema>;
@@ -324,7 +324,7 @@ export default function AddProgram({
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
         communityRef: data.communityRef,
-        anyoneCanJoin: data.anyoneCanJoin ?? true,
+        anyoneCanJoin: data.anyoneCanJoin,
       };
 
       // Use V2 endpoint - owner comes from JWT session
