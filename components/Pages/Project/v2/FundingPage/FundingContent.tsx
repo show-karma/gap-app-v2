@@ -11,7 +11,7 @@ import { useCommunitiesStore } from "@/store/communities";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import type { Grant } from "@/types/v2/grant";
 import type { Project } from "@/types/v2/project";
-import formatCurrency from "@/utilities/formatCurrency";
+import { getGrantDisplayAmount } from "@/utilities/getGrantDisplayAmount";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
@@ -70,39 +70,9 @@ function GrantCard({
   const milestones = grant.milestones || [];
   const completedMilestones = milestones.filter((m) => m.completed).length;
   const totalMilestones = milestones.length;
-  const rawAmount = grant.details?.amount?.trim() || "";
 
-  // Parse amount: extract numeric part and currency suffix
-  // Matches: "5686.59 USD", "40K USDC", "2500 ARB", "80000", "40K"
-  const amountMatch = rawAmount.match(/^([\d,.]+[KMBTkmbt]?)\s*([a-zA-Z]{2,})?$/);
-  const numericPart = amountMatch?.[1] || rawAmount;
-  const currencyInAmount = amountMatch?.[2] || "";
-
-  // Check if numeric part is already formatted (like "40K", "5M")
-  const isAlreadyFormatted = /[KMBTkmbt]$/.test(numericPart);
-  // Parse the numeric value (remove commas for parsing)
-  const cleanNumber = numericPart.replace(/,/g, "").replace(/[KMBTkmbt]$/, "");
-  const multiplier = /[Kk]$/.test(numericPart)
-    ? 1000
-    : /[Mm]$/.test(numericPart)
-      ? 1e6
-      : /[Bb]$/.test(numericPart)
-        ? 1e9
-        : /[Tt]$/.test(numericPart)
-          ? 1e12
-          : 1;
-  const amountValue = Number(cleanNumber) * multiplier;
-  const isValidNumber = !Number.isNaN(amountValue) && amountValue !== 0;
-  const hasAmount = rawAmount && rawAmount !== "0";
-
-  // Format the display amount
-  const displayAmount = isAlreadyFormatted
-    ? numericPart
-    : isValidNumber
-      ? formatCurrency(amountValue)
-      : numericPart;
-  // Use currency from the amount string, or from grant.details.currency
-  const displayCurrency = currencyInAmount || grant.details?.currency || "";
+  // Get amount using utility that prioritizes approvedAmount over details.amount
+  const { displayAmount, currency: displayCurrency, hasAmount } = getGrantDisplayAmount(grant);
 
   // Date range for display
   const dateRange = formatDateRange(grant.details?.startDate, grant.details?.completedAt);

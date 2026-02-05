@@ -178,4 +178,10 @@ export interface Grant {
   amount?: string;
   createdAt?: string;
   updatedAt?: string;
+  /**
+   * Approved amount from payout_grant_config (admin-configured).
+   * This takes priority over details.amount for financial display.
+   * Human-readable format (e.g., "80000" for 80,000 USDC).
+   */
+  approvedAmount?: string | null;
 }

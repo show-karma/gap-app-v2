@@ -11,46 +11,28 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useGrantStore } from "@/store/grant";
 import { useOwnerStore } from "@/store/owner";
 import markdownStyles from "@/styles/markdown.module.css";
+import type { Grant } from "@/types/v2/grant";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
+import { getGrantDisplayAmount } from "@/utilities/getGrantDisplayAmount";
 import { PAGES } from "@/utilities/pages";
 import { ProjectGrantsOverviewLoading } from "../Loading/Grants/Overview";
 import { GrantPercentage } from "./components/GrantPercentage";
 
-const isValidAmount = (grant?: { amount?: string; details?: { amount?: string } }) => {
-  // First check root-level amount (Hex format)
-  if (grant?.amount) {
-    const formattedAmount = formatCurrency(Number(grant?.amount));
-    if (formattedAmount === "0.00") return "0";
-    if (Number.isNaN(formattedAmount)) return grant?.amount;
-    return formattedAmount;
+/**
+ * Gets the formatted amount display for a grant.
+ * Prioritizes approvedAmount (financial config) over details.amount (attestation).
+ */
+const getFormattedAmount = (grant: Grant | undefined): string | undefined => {
+  const { displayAmount, currency, hasAmount } = getGrantDisplayAmount(grant);
+  if (!hasAmount || !displayAmount) return undefined;
+
+  // Include currency if available
+  if (currency) {
+    return `${displayAmount} ${currency}`;
   }
-
-  // Fallback to details.amount (V2 format)
-  const detailsAmount = grant?.details?.amount;
-  if (!detailsAmount) return undefined;
-
-  let amountToFormat = detailsAmount;
-
-  const split = amountToFormat.split(" ");
-  const split0 = split[0]?.replace(",", "");
-  if (!Number.isNaN(Number(split0)) && split.length > 1) {
-    if (+split0 < 1000) {
-      amountToFormat = new Intl.NumberFormat("en-US", {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
-      }).format(+split0);
-      return amountToFormat + " " + split[1];
-    }
-    // it should format and round to 2 decimal places without use formatCurrency
-    return formatCurrency(+split0) + " " + split[1];
-  }
-  const number = Number(amountToFormat);
-  if (Number.isNaN(number)) return amountToFormat;
-
-  return formatCurrency(+amountToFormat);
+  return displayAmount;
 };
 export const GrantOverview = () => {
   const { grant, loading, refreshGrant } = useGrantStore();
@@ -58,7 +40,7 @@ export const GrantOverview = () => {
 
   const grantData: { stat?: number | string; title: string }[] = [
     {
-      stat: isValidAmount(grant),
+      stat: getFormattedAmount(grant),
       title: "Total Grant Amount",
     },
     {
