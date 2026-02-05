@@ -174,13 +174,14 @@ export const ContributorProfileDialog: FC = () => {
           );
           if (error) throw error;
         }
-        let retries = 1000;
+        let retries = 20; // ~30 seconds max wait time
         const txHash = res?.tx[0]?.hash;
         if (txHash) {
           await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, targetChainId), "POST", {});
         }
 
-        while (retries > 0) {
+        let success = false;
+        while (retries > 0 && !success) {
           if (!isProjectMember && !isGlobal) {
             await refreshProject().then(async (refreshedProject) => {
               // Check if the member is already in the project
@@ -190,7 +191,7 @@ export const ContributorProfileDialog: FC = () => {
               );
               // If the member is already in the project, update the profile
               if (hasMember) {
-                retries = 0;
+                success = true;
                 showSuccess("Congrats! You have joined the team successfully");
                 refetchTeamProfiles();
                 setTimeout(() => {
@@ -217,7 +218,7 @@ export const ContributorProfileDialog: FC = () => {
                   profileFetched[key as keyof SchemaType] === data[key as keyof SchemaType]
               );
               if (isUpdated) {
-                retries = 0;
+                success = true;
                 showSuccess("Profile updated successfully");
                 refetchTeamProfiles();
                 setTimeout(() => {
@@ -227,9 +228,21 @@ export const ContributorProfileDialog: FC = () => {
               }
             }
           }
-          retries -= 1;
-          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-          await new Promise((resolve) => setTimeout(resolve, 1500));
+          if (!success) {
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
+        }
+
+        // If we exhausted retries without success, show a message and allow closing
+        if (!success) {
+          showSuccess("Profile saved! It may take a moment to appear.");
+          refetchTeamProfiles();
+          setTimeout(() => {
+            dismiss();
+            closeModal();
+          }, 2000);
         }
       });
       return;
@@ -298,14 +311,31 @@ export const ContributorProfileDialog: FC = () => {
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
-                <Dialog.Title
-                  as="h3"
-                  className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
-                >
-                  {isEditing
-                    ? "Edit your profile"
-                    : `Accept invite to join ${project?.details?.title || "this project"}`}
-                </Dialog.Title>
+                <div className="flex items-start justify-between">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
+                  >
+                    {isEditing
+                      ? "Edit your profile"
+                      : `Accept invite to join ${project?.details?.title || "this project"}`}
+                  </Dialog.Title>
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                    aria-label="Close dialog"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
                 {isAllowed ? (
                   <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="flex flex-col gap-2 mt-8">
