@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { OnrampProvider, type StripeOnrampSessionData } from "@/hooks/donation/types";
 import { useOnramp } from "@/hooks/donation/useOnramp";
 import { useCountryDetection } from "@/hooks/useCountryDetection";
-import { getProviderConfig, isCountrySupported } from "@/lib/onramp";
+import { getCurrencyForCountry, getProviderConfig, isCountrySupported } from "@/lib/onramp";
 import { getChainNameById } from "@/utilities/network";
 import { OnrampSuccessModal } from "./OnrampSuccessModal";
 import { StripeOnrampEmbed } from "./StripeOnrampEmbed";
@@ -26,9 +26,6 @@ interface OnrampFlowProps {
   chainId: number;
 }
 
-const DEFAULT_CURRENCY = "USD";
-const CURRENCY_SYMBOL = "$";
-
 export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddress, chainId }) => {
   const [amount, setAmount] = useState("");
   const selectedProvider = OnrampProvider.STRIPE;
@@ -38,6 +35,7 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
 
   const { country, isLoading: isCountryLoading } = useCountryDetection();
   const isCountryAllowed = useMemo(() => isCountrySupported(country), [country]);
+  const currency = useMemo(() => getCurrencyForCountry(country), [country]);
 
   const providerConfig = useMemo(() => getProviderConfig(selectedProvider), [selectedProvider]);
 
@@ -99,8 +97,8 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
 
   const handleProceed = useCallback(() => {
     if (!isValidAmount) return;
-    initiateOnramp(parseFloat(amount), DEFAULT_CURRENCY);
-  }, [isValidAmount, initiateOnramp, amount]);
+    initiateOnramp(parseFloat(amount), currency.code);
+  }, [isValidAmount, initiateOnramp, amount, currency.code]);
 
   return (
     <div className="space-y-4">
@@ -125,11 +123,11 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
           htmlFor="fiat-amount"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          Amount ({DEFAULT_CURRENCY})
+          Amount ({currency.code})
         </label>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
-            {CURRENCY_SYMBOL}
+            {currency.symbol}
           </span>
           <input
             id="fiat-amount"
@@ -149,8 +147,8 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
           </p>
         ) : (
           <p id="fiat-amount-hint" className="text-xs text-gray-500 dark:text-gray-400">
-            Min: {CURRENCY_SYMBOL}
-            {ONRAMP_LIMITS.MIN_AMOUNT} · Max: {CURRENCY_SYMBOL}
+            Min: {currency.symbol}
+            {ONRAMP_LIMITS.MIN_AMOUNT} · Max: {currency.symbol}
             {ONRAMP_LIMITS.MAX_AMOUNT.toLocaleString()}
           </p>
         )}

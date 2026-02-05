@@ -46,12 +46,71 @@ export const STRIPE_ALLOWED_COUNTRIES = new Set([
   "SE", // Sweden
 ]);
 
+/** EU member states - used for EUR currency selection */
+const EU_COUNTRIES = new Set([
+  "AT",
+  "BE",
+  "BG",
+  "HR",
+  "CY",
+  "CZ",
+  "DK",
+  "EE",
+  "FI",
+  "FR",
+  "DE",
+  "GR",
+  "HU",
+  "IE",
+  "IT",
+  "LV",
+  "LT",
+  "LU",
+  "MT",
+  "NL",
+  "PL",
+  "PT",
+  "RO",
+  "SK",
+  "SI",
+  "ES",
+  "SE",
+]);
+
 /**
  * Check if a country is supported for Stripe onramp.
  */
 export function isCountrySupported(countryCode: string | null | undefined): boolean {
   if (!countryCode) return false;
   return STRIPE_ALLOWED_COUNTRIES.has(countryCode.toUpperCase());
+}
+
+export interface CurrencyInfo {
+  code: string;
+  symbol: string;
+}
+
+/**
+ * Get the appropriate currency based on user's country.
+ * US users get USD, EU users get EUR.
+ */
+export function getCurrencyForCountry(countryCode: string | null | undefined): CurrencyInfo {
+  if (!countryCode) {
+    return { code: "USD", symbol: "$" };
+  }
+
+  const upperCode = countryCode.toUpperCase();
+
+  if (upperCode === "US") {
+    return { code: "USD", symbol: "$" };
+  }
+
+  if (EU_COUNTRIES.has(upperCode)) {
+    return { code: "EUR", symbol: "€" };
+  }
+
+  // Default to USD for any other case
+  return { code: "USD", symbol: "$" };
 }
 
 export interface OnrampProviderConfig {

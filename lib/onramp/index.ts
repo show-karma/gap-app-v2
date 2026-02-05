@@ -1,6 +1,8 @@
 export {
   ALLOWED_ONRAMP_DOMAINS,
+  type CurrencyInfo,
   DEFAULT_ONRAMP_PROVIDER,
+  getCurrencyForCountry,
   getProviderConfig,
   getSupportedProviders,
   isCountrySupported,
