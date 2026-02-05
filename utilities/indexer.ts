@@ -292,7 +292,7 @@ export const INDEXER = {
     },
   },
   PROGRAMS: {
-    GET: (programId: string) => `/programs/${programId}`,
+    GET: (programId: string) => `/v2/funding-program-configs/${programId}`,
     COMMUNITY: (communityId: string) => `/communities/${communityId}/programs`,
     FINANCIALS: (programId: string, page?: number, limit?: number) => {
       const params = new URLSearchParams();

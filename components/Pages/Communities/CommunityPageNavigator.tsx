@@ -88,14 +88,21 @@ export const CommunityPageNavigator = () => {
   const communityId = params.communityId as string;
   const pathname = usePathname();
   const programId = searchParams.get("programId");
+
+  // Check if we're on an admin page early to avoid unnecessary data fetching
+  const isAdminPage = pathname.includes("/manage");
+
   const { data: community } = useCommunityDetails(communityId);
+  // Skip fetching funding opportunities count on admin pages
   const { data: fundingOpportunitiesCount } = useFundingOpportunitiesCount({
     communityUid: community?.uid,
+    enabled: !isAdminPage,
   });
-  const { data: programs } = useCommunityPrograms(communityId);
+  // Skip fetching programs on admin pages - the component returns null anyway
+  const { data: programs } = useCommunityPrograms(communityId, {
+    enabled: !isAdminPage,
+  });
   const programsCount = programs?.length ?? 0;
-
-  const isAdminPage = pathname.includes("/manage");
 
   const visibleNavigationItems = useMemo(() => {
     return NAVIGATION_ITEMS.filter((item) => {
