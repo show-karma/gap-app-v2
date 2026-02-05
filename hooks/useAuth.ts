@@ -11,6 +11,27 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
 
 /**
+ * Grace period (in ms) before initial auth status check.
+ * Allows time for Privy's token refresh to complete when using HttpOnly cookies.
+ * Note: This is a timing-based workaround since Privy doesn't expose a "token refresh complete" event.
+ * If token refresh takes longer (slow network, cold start), consider increasing this value.
+ */
+const AUTH_INIT_DELAY_MS = 2000;
+
+/**
+ * Interval (in ms) for periodic auth status checks.
+ * Used for cross-tab logout synchronization.
+ */
+const AUTH_CHECK_INTERVAL_MS = 5000;
+
+/**
+ * Cookie name used by Privy for session persistence in HttpOnly mode.
+ * This is an implementation detail of Privy - if Privy changes this, the check may need updating.
+ * @see https://docs.privy.io/guide/react/configuration/cookies
+ */
+const PRIVY_SESSION_COOKIE_NAME = "privy-session";
+
+/**
  * Authentication hook that wraps Privy's built-in authentication
  *
  * Privy handles all the complexity:
@@ -78,11 +99,13 @@ export const useAuth = () => {
   useEffect(() => {
     if (!ready || !authenticated) return;
 
-    // Check if privy-session cookie exists
-    // If session exists, user might be in the middle of token refresh (HttpOnly cookies mode)
+    // Check if privy-session cookie exists using proper cookie parsing.
+    // If session exists, user might be in the middle of token refresh (HttpOnly cookies mode).
     const hasPrivySession = () => {
       if (typeof document === "undefined") return false;
-      return document.cookie.includes("privy-session");
+      return document.cookie
+        .split(";")
+        .some((c) => c.trim().startsWith(`${PRIVY_SESSION_COOKIE_NAME}=`));
     };
 
     const checkAuthStatus = async () => {
@@ -105,11 +128,13 @@ export const useAuth = () => {
       }
     };
 
-    // Don't check immediately on mount - give time for token refresh
-    // This prevents false logouts when using HttpOnly cookies
-    const initialCheckTimeout = setTimeout(checkAuthStatus, 2000);
+    // Don't check immediately on mount - give time for token refresh.
+    // This prevents false logouts when using HttpOnly cookies.
+    // Note: Privy's `ready` state doesn't guarantee token refresh is complete,
+    // so we use a grace period as a workaround.
+    const initialCheckTimeout = setTimeout(checkAuthStatus, AUTH_INIT_DELAY_MS);
 
-    const intervalId = setInterval(checkAuthStatus, 5000);
+    const intervalId = setInterval(checkAuthStatus, AUTH_CHECK_INTERVAL_MS);
 
     window.addEventListener("storage", handleStorageChange);
 
