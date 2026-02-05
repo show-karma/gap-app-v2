@@ -217,7 +217,7 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
                       ) : (
                         <span className="flex items-center justify-center gap-2">
                           <Zap className="w-4 h-4" />
-                          Send Donation
+                          Donate
                         </span>
                       )}
                     </Button>
