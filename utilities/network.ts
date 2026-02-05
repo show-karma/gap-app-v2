@@ -89,49 +89,58 @@ export function getExplorerUrl(chainId: number, transactionHash: string) {
 
 /**
  * Mapping of network names (lowercase) to chain IDs.
- * Comprehensive lookup table supporting various name formats.
  * Used for onramp providers that return network names as strings.
  */
 export const NETWORK_CHAIN_IDS: Record<string, number> = {
-  // Ethereum mainnet
-  mainnet: 1,
-  ethereum: 1,
-  // Optimism
-  optimism: 10,
-  "op mainnet": 10,
-  // Arbitrum
-  arbitrum: 42161,
-  "arbitrum-one": 42161,
-  arbitrumone: 42161,
-  // Base
   base: 8453,
-  // Polygon
+  ethereum: 1,
   polygon: 137,
-  matic: 137,
-  // Celo
-  celo: 42220,
-  // Sei
-  sei: 1329,
-  // Lisk
-  lisk: 1135,
-  // Scroll
-  scroll: 534352,
-  // Testnets
-  sepolia: 11155111,
-  "optimism-sepolia": 11155420,
-  "optimism sepolia": 11155420,
-  optimismsepolia: 11155420,
-  optimismgoerli: 420,
-  "optimism goerli": 420,
-  "optimism-goerli": 420,
-  "base-sepolia": 84532,
-  "base sepolia": 84532,
-  basesepolia: 84532,
+  optimism: 10,
+  arbitrum: 42161,
 };
 
 export function getChainIdByName(name: string): number {
-  const normalized = name.toLowerCase();
-  return NETWORK_CHAIN_IDS[normalized] ?? appNetwork[0].id;
+  switch (name.toLowerCase()) {
+    case "mainnet":
+    case "ethereum":
+      return 1;
+    case "op mainnet":
+    case "optimism":
+      return 10;
+    case "arbitrum":
+    case "arbitrum-one":
+    case "arbitrumone":
+      return 42161;
+    case "base":
+      return 8453;
+    case "celo":
+      return 42220;
+    case "polygon":
+    case "matic":
+      return 137;
+    case "optimismgoerli":
+    case "optimism goerli":
+    case "optimism-goerli":
+      return 420;
+    case "optimism sepolia":
+    case "optimism-sepolia":
+    case "optimismsepolia":
+      return 11155420;
+    case "sepolia":
+      return 11155111;
+    case "base-sepolia":
+    case "base sepolia":
+    case "basesepolia":
+      return 84532;
+    case "lisk":
+      return 1135;
+    case "scroll":
+      return 534352;
+    case "sei":
+      return 1329;
+    default:
+      return appNetwork[0].id;
+  }
 }
 
 export function getChainNameById(id: number): TNetwork {

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { OnrampProvider, type StripeOnrampSessionData } from "@/hooks/donation/types";
 import { useOnramp } from "@/hooks/donation/useOnramp";
 import { useCountryDetection } from "@/hooks/useCountryDetection";
-import { getProviderConfig } from "@/lib/onramp";
+import { getProviderConfig, isCountrySupported } from "@/lib/onramp";
 import { getChainNameById } from "@/utilities/network";
 import { OnrampSuccessModal } from "./OnrampSuccessModal";
 import { StripeOnrampEmbed } from "./StripeOnrampEmbed";
@@ -37,6 +37,7 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
   );
 
   const { country, isLoading: isCountryLoading } = useCountryDetection();
+  const isCountryAllowed = useMemo(() => isCountrySupported(country), [country]);
 
   const providerConfig = useMemo(() => getProviderConfig(selectedProvider), [selectedProvider]);
 
@@ -161,6 +162,13 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
         </div>
       )}
 
+      {!isCountryLoading && !isCountryAllowed && (
+        <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 p-3 text-sm text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-800">
+          Card payments are not available in your region at this time. This service is currently
+          only available in the US and EU.
+        </div>
+      )}
+
       <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-3 text-sm text-blue-800 dark:text-blue-200 border border-blue-100 dark:border-blue-800">
         <p className="font-medium mb-2">How this works:</p>
         <ol className="list-decimal list-inside space-y-1 text-blue-700 dark:text-blue-300">
@@ -181,7 +189,12 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(({ projectUid, payoutAddre
       <Button
         onClick={handleProceed}
         disabled={
-          !isValidAmount || isLoading || !payoutAddress || !isChainSupported || isCountryLoading
+          !isValidAmount ||
+          isLoading ||
+          !payoutAddress ||
+          !isChainSupported ||
+          isCountryLoading ||
+          !isCountryAllowed
         }
         className="w-full bg-brand-blue hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
       >
