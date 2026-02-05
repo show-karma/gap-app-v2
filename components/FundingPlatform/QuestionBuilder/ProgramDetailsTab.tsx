@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
-import { type CreateProgramFormSchema, createProgramSchema } from "@/schemas/programFormSchema";
+import { type UpdateProgramFormSchema, updateProgramSchema } from "@/schemas/programFormSchema";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -74,7 +74,7 @@ function buildFormValuesFromMetadata(metadata: GrantProgram["metadata"]) {
  * Helper function to build metadata object for API update
  */
 function buildUpdateMetadata(
-  formData: CreateProgramFormSchema,
+  formData: UpdateProgramFormSchema,
   existingMetadata: GrantProgram["metadata"]
 ) {
   const updatedFields = {
@@ -120,8 +120,8 @@ export function ProgramDetailsTab({
     control,
     formState: { errors, isSubmitting, isDirty },
     reset,
-  } = useForm<CreateProgramFormSchema>({
-    resolver: zodResolver(createProgramSchema),
+  } = useForm<UpdateProgramFormSchema>({
+    resolver: zodResolver(updateProgramSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -276,7 +276,7 @@ export function ProgramDetailsTab({
     [isDisabled, watch, setValue]
   );
 
-  const onSubmit = async (data: CreateProgramFormSchema) => {
+  const onSubmit = async (data: UpdateProgramFormSchema) => {
     const validationError = validateSubmissionPrerequisites();
     if (validationError) {
       toast.error(validationError);
@@ -530,14 +530,12 @@ export function ProgramDetailsTab({
             control={control}
             render={({ field, fieldState }) => (
               <div className="flex w-full flex-col gap-1">
-                <Label htmlFor="admin-emails">
-                  Admin Emails <span className="text-destructive">*</span>
-                </Label>
+                <Label htmlFor="admin-emails">Admin Emails (optional)</Label>
                 <p className="text-xs text-muted-foreground mb-1">
                   Applicants will reply to these email addresses when responding to notifications
                 </p>
                 <MultiEmailInput
-                  emails={field.value}
+                  emails={field.value || []}
                   onChange={field.onChange}
                   placeholder="Enter admin email"
                   disabled={isDisabled}
@@ -554,14 +552,12 @@ export function ProgramDetailsTab({
             control={control}
             render={({ field, fieldState }) => (
               <div className="flex w-full flex-col gap-1">
-                <Label htmlFor="finance-emails">
-                  Finance Emails <span className="text-destructive">*</span>
-                </Label>
+                <Label htmlFor="finance-emails">Finance Emails (optional)</Label>
                 <p className="text-xs text-muted-foreground mb-1">
                   Finance team will be notified when milestones are verified
                 </p>
                 <MultiEmailInput
-                  emails={field.value}
+                  emails={field.value || []}
                   onChange={field.onChange}
                   placeholder="Enter finance email"
                   disabled={isDisabled}

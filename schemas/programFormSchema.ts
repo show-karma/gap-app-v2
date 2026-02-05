@@ -1,10 +1,9 @@
 import { z } from "zod";
 
 /**
- * Shared Zod schema for program form validation
- * Used in both CreateProgramModal and ProgramDetailsTab
+ * Base schema fields shared between create and update
  */
-export const createProgramSchema = z.object({
+const baseProgramFields = {
   name: z
     .string()
     .min(3, { message: "Program name must be at least 3 characters" })
@@ -30,6 +29,14 @@ export const createProgramSchema = z.object({
       }
     ),
   budget: z.coerce.number().min(0, { message: "Budget must be a positive number" }).optional(),
+};
+
+/**
+ * Schema for creating new programs - emails are REQUIRED
+ * Used in CreateProgramModal and AddProgram
+ */
+export const createProgramSchema = z.object({
+  ...baseProgramFields,
   adminEmails: z
     .array(z.string().email({ message: "Invalid email address" }))
     .min(1, { message: "At least one admin email is required" }),
@@ -38,4 +45,16 @@ export const createProgramSchema = z.object({
     .min(1, { message: "At least one finance email is required" }),
 });
 
+/**
+ * Schema for updating existing programs - emails are OPTIONAL
+ * Used in ProgramDetailsTab (question-builder)
+ * Existing programs without emails can still be updated
+ */
+export const updateProgramSchema = z.object({
+  ...baseProgramFields,
+  adminEmails: z.array(z.string().email({ message: "Invalid email address" })).optional(),
+  financeEmails: z.array(z.string().email({ message: "Invalid email address" })).optional(),
+});
+
 export type CreateProgramFormSchema = z.infer<typeof createProgramSchema>;
+export type UpdateProgramFormSchema = z.infer<typeof updateProgramSchema>;
