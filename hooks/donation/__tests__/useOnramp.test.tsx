@@ -71,8 +71,7 @@ describe("useOnramp", () => {
         result.current.initiateOnramp(100, "USD");
       });
 
-      expect(result.current.isLoading).toBe(true);
-
+      // Wait for mutation to complete (isLoading transitions async in React Query)
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
@@ -242,7 +241,10 @@ describe("useOnramp", () => {
         result.current.clearSession();
       });
 
-      expect(result.current.session).toBeNull();
+      // Wait for reset to propagate (React Query reset is async)
+      await waitFor(() => {
+        expect(result.current.session).toBeNull();
+      });
       expect(result.current.error).toBeNull();
     });
   });

@@ -150,6 +150,7 @@
     "@biomejs/biome": "2.3.5",
     "@chromatic-com/storybook": "^4.1.2",
     "@lhci/cli": "^0.15.1",
+    "@mswjs/interceptors": "^0.41.0",
     "@storybook/addon-a11y": "^10.0.5",
     "@storybook/addon-docs": "^10.0.5",
     "@storybook/addon-essentials": "^8.6.14",
