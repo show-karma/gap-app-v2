@@ -11,18 +11,23 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
 
 /**
- * Grace period (in ms) before initial auth status check.
- * Allows time for Privy's token refresh to complete when using HttpOnly cookies.
- * Note: This is a timing-based workaround since Privy doesn't expose a "token refresh complete" event.
- * If token refresh takes longer (slow network, cold start), consider increasing this value.
+ * Initial delay (in ms) before first auth status check.
+ * Gives Privy a moment to initialize before we start checking.
  */
-const AUTH_INIT_DELAY_MS = 2000;
+const AUTH_INIT_DELAY_MS = 500;
 
 /**
  * Interval (in ms) for periodic auth status checks.
  * Used for cross-tab logout synchronization.
  */
 const AUTH_CHECK_INTERVAL_MS = 5000;
+
+/**
+ * Number of consecutive failures (no token AND no session) required before logging out.
+ * This prevents false logouts during temporary network issues or slow token refresh.
+ * With a 500ms initial delay and checks every 5s, 3 failures = ~10.5s of no auth state.
+ */
+const AUTH_FAILURE_THRESHOLD = 3;
 
 /**
  * Cookie name used by Privy for session persistence in HttpOnly mode.
@@ -52,6 +57,7 @@ export const useAuth = () => {
 
   const shouldLoginAfterLogout = useRef(false);
   const prevAuthRef = useRef(authenticated);
+  const authFailureCount = useRef(0);
 
   /**
    * AUTH CACHE INVALIDATION
@@ -76,6 +82,9 @@ export const useAuth = () => {
       queryClient.removeQueries({ queryKey: QUERY_KEYS.COMMUNITY.IS_ADMIN_BASE });
       queryClient.removeQueries({ queryKey: QUERY_KEYS.AUTH.STAFF_AUTHORIZATION_BASE });
       queryClient.removeQueries({ queryKey: QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE });
+
+      // Reset auth failure counter on logout to avoid carrying over state to next login
+      authFailureCount.current = 0;
     }
     prevAuthRef.current = authenticated;
   }, [authenticated]);
@@ -110,13 +119,23 @@ export const useAuth = () => {
 
     const checkAuthStatus = async () => {
       const hasToken = await TokenManager.getToken();
+      const hasSession = hasPrivySession();
 
-      // Only logout if:
-      // 1. No token available AND
-      // 2. No privy-session cookie (which would indicate a refresh in progress)
-      // This prevents false logouts when using HttpOnly cookies where
-      // getAccessToken() might return null during token refresh
-      if (!hasToken && authenticated && !hasPrivySession()) {
+      // If we have either a token or session, auth is valid - reset failure counter
+      if (hasToken || hasSession) {
+        authFailureCount.current = 0;
+        return;
+      }
+
+      // No token AND no session - increment failure counter
+      // Only logout after multiple consecutive failures to handle:
+      // - Slow network during token refresh
+      // - Temporary network hiccups
+      // - Privy initialization timing
+      authFailureCount.current += 1;
+
+      if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD && authenticated) {
+        authFailureCount.current = 0;
         logout?.();
       }
     };
