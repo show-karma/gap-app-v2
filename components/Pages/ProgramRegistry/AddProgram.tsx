@@ -153,10 +153,19 @@ const createProgramSchema = z.object({
     .min(1, { message: "At least one admin email is required" }),
   financeEmails: z
     .array(z.string().email({ message: "Invalid email address" }))
-    .min(1, { message: "At least one finance email is required" }),
+    .optional()
+    .default([]),
+});
+
+// Schema for updating existing programs - both email fields are optional
+// Allows updating existing programs without adding email contacts
+const updateProgramSchema = createProgramSchema.extend({
+  adminEmails: z.array(z.string().email({ message: "Invalid email address" })).optional(),
+  financeEmails: z.array(z.string().email({ message: "Invalid email address" })).optional(),
 });
 
 type CreateProgramType = z.infer<typeof createProgramSchema>;
+type UpdateProgramType = z.infer<typeof updateProgramSchema>;
 
 export default function AddProgram({
   programToEdit,
@@ -192,6 +201,11 @@ export default function AddProgram({
     if (allCommunities.length === 0) fetchCommunitiesData();
   }, [allCommunities]);
 
+  // Use different schema for edit vs create
+  // Create: adminEmails required, financeEmails optional
+  // Edit: both optional (existing programs may not have them)
+  const formSchema = programToEdit ? updateProgramSchema : createProgramSchema;
+
   const {
     register,
     handleSubmit,
@@ -200,7 +214,7 @@ export default function AddProgram({
     control,
     formState: { errors, isSubmitting, isValid },
   } = useForm<CreateProgramType>({
-    resolver: zodResolver(createProgramSchema),
+    resolver: zodResolver(formSchema),
     reValidateMode: "onChange",
     mode: "onChange",
     defaultValues: {
@@ -654,7 +668,12 @@ export default function AddProgram({
                   render={({ field, fieldState }) => (
                     <div className="flex w-full flex-col gap-1">
                       <label htmlFor="admin-emails" className={labelStyle}>
-                        Admin Emails *
+                        Admin Emails {!programToEdit && "*"}
+                        {programToEdit && (
+                          <span className="font-normal text-gray-500 dark:text-gray-400 ml-1">
+                            (optional)
+                          </span>
+                        )}
                       </label>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
                         Applicants will reply to these emails
@@ -675,7 +694,10 @@ export default function AddProgram({
                   render={({ field, fieldState }) => (
                     <div className="flex w-full flex-col gap-1">
                       <label htmlFor="finance-emails" className={labelStyle}>
-                        Finance Emails *
+                        Finance Emails
+                        <span className="font-normal text-gray-500 dark:text-gray-400 ml-1">
+                          (optional)
+                        </span>
                       </label>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
                         Notified when milestones are verified

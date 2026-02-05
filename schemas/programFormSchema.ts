@@ -32,8 +32,9 @@ const baseProgramFields = {
 };
 
 /**
- * Schema for creating new programs - emails are REQUIRED
- * Used in CreateProgramModal and AddProgram
+ * Schema for creating new programs
+ * - adminEmails: REQUIRED for new programs
+ * - financeEmails: OPTIONAL (used for milestone verification notifications)
  */
 export const createProgramSchema = z.object({
   ...baseProgramFields,
@@ -42,7 +43,8 @@ export const createProgramSchema = z.object({
     .min(1, { message: "At least one admin email is required" }),
   financeEmails: z
     .array(z.string().email({ message: "Invalid email address" }))
-    .min(1, { message: "At least one finance email is required" }),
+    .optional()
+    .default([]),
 });
 
 /**
