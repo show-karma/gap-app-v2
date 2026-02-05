@@ -75,7 +75,8 @@ describe("programReviewersService", () => {
               id: "user-1",
               publicAddress: "0x1234567890123456789012345678901234567890",
               name: "Alice Admin",
-              email: "alice@example.com",
+              loginEmail: "alice@example.com",
+              notificationEmail: "alice-notifications@example.com",
               telegram: "@aliceadmin",
               createdAt: "2024-01-01T00:00:00Z",
               updatedAt: "2024-01-01T00:00:00Z",
@@ -94,8 +95,9 @@ describe("programReviewersService", () => {
       expect(result).toEqual([
         {
           publicAddress: "0x1234567890123456789012345678901234567890",
+          loginEmail: "alice@example.com",
           name: "Alice Admin",
-          email: "alice@example.com",
+          notificationEmail: "alice-notifications@example.com",
           telegram: "@aliceadmin",
           assignedAt: "2024-01-01T00:00:00Z",
           assignedBy: "0x9876543210987654321098765432109876543210",
@@ -131,9 +133,8 @@ describe("programReviewersService", () => {
   describe("addReviewer", () => {
     it("should add a program reviewer successfully", async () => {
       const reviewerData: AddReviewerRequest = {
-        publicAddress: "0x1234567890123456789012345678901234567890",
+        loginEmail: "bob@example.com",
         name: "Bob Reviewer",
-        email: "bob@example.com",
         telegram: "@bobreviewer",
       };
 
@@ -146,7 +147,7 @@ describe("programReviewersService", () => {
             id: "user-2",
             publicAddress: "0x1234567890123456789012345678901234567890",
             name: "Bob Reviewer",
-            email: "bob@example.com",
+            loginEmail: "bob@example.com",
             telegram: "@bobreviewer",
             createdAt: "2024-01-01T00:00:00Z",
             updatedAt: "2024-01-01T00:00:00Z",
@@ -164,37 +165,33 @@ describe("programReviewersService", () => {
         reviewerData
       );
       expect(result.name).toBe("Bob Reviewer");
-      expect(result.email).toBe("bob@example.com");
+      expect(result.loginEmail).toBe("bob@example.com");
     });
 
     it("should handle response without reviewer data", async () => {
       const reviewerData: AddReviewerRequest = {
-        publicAddress: "0x1234567890123456789012345678901234567890",
+        loginEmail: "carol@example.com",
         name: "Carol Reviewer",
-        email: "carol@example.com",
       };
 
       mockAxiosInstance.post.mockResolvedValue({ data: {} });
 
       const result = await programReviewersService.addReviewer("program-1", reviewerData);
 
-      expect(result.publicAddress).toBe(reviewerData.publicAddress);
+      expect(result.loginEmail).toBe(reviewerData.loginEmail);
       expect(result.name).toBe(reviewerData.name);
       expect(result.assignedAt).toBeDefined();
     });
   });
 
   describe("removeReviewer", () => {
-    it("should remove a program reviewer successfully", async () => {
+    it("should remove a program reviewer successfully by email", async () => {
       mockAxiosInstance.delete.mockResolvedValue({ data: {} });
 
-      await programReviewersService.removeReviewer(
-        "program-1",
-        "0x1234567890123456789012345678901234567890"
-      );
+      await programReviewersService.removeReviewer("program-1", "reviewer@example.com");
 
       expect(mockAxiosInstance.delete).toHaveBeenCalledWith(
-        "/v2/funding-program-configs/program-1/reviewers/0x1234567890123456789012345678901234567890"
+        "/v2/funding-program-configs/program-1/reviewers/reviewer%40example.com"
       );
     });
   });
@@ -203,14 +200,12 @@ describe("programReviewersService", () => {
     it("should add multiple reviewers successfully", async () => {
       const reviewers: AddReviewerRequest[] = [
         {
-          publicAddress: "0x1111111111111111111111111111111111111111",
+          loginEmail: "reviewer1@example.com",
           name: "Reviewer 1",
-          email: "reviewer1@example.com",
         },
         {
-          publicAddress: "0x2222222222222222222222222222222222222222",
+          loginEmail: "reviewer2@example.com",
           name: "Reviewer 2",
-          email: "reviewer2@example.com",
         },
       ];
 
@@ -224,7 +219,7 @@ describe("programReviewersService", () => {
               id: "user-1",
               publicAddress: "0x1111111111111111111111111111111111111111",
               name: "Reviewer 1",
-              email: "reviewer1@example.com",
+              loginEmail: "reviewer1@example.com",
               createdAt: "2024-01-01T00:00:00Z",
               updatedAt: "2024-01-01T00:00:00Z",
             },
@@ -242,14 +237,12 @@ describe("programReviewersService", () => {
     it("should handle partial failures", async () => {
       const reviewers: AddReviewerRequest[] = [
         {
-          publicAddress: "0x1111111111111111111111111111111111111111",
+          loginEmail: "reviewer1@example.com",
           name: "Reviewer 1",
-          email: "reviewer1@example.com",
         },
         {
-          publicAddress: "invalid",
+          loginEmail: "invalid-email",
           name: "Reviewer 2",
-          email: "reviewer2@example.com",
         },
       ];
 
@@ -269,7 +262,7 @@ describe("programReviewersService", () => {
                 id: "user-1",
                 publicAddress: "0x1111111111111111111111111111111111111111",
                 name: "Reviewer 1",
-                email: "reviewer1@example.com",
+                loginEmail: "reviewer1@example.com",
                 createdAt: "2024-01-01T00:00:00Z",
                 updatedAt: "2024-01-01T00:00:00Z",
               },
@@ -281,7 +274,7 @@ describe("programReviewersService", () => {
           isAxiosError: true,
           response: {
             data: {
-              message: "Invalid wallet address",
+              message: "Invalid email format",
             },
           },
         });
@@ -290,16 +283,15 @@ describe("programReviewersService", () => {
 
       expect(result.added).toHaveLength(1);
       expect(result.errors).toHaveLength(1);
-      expect(result.errors[0].error).toBe("Invalid wallet address");
+      expect(result.errors[0].error).toBe("Invalid email format");
     });
   });
 
   describe("validateReviewerData", () => {
     it("should validate correct reviewer data", () => {
       const data: AddReviewerRequest = {
-        publicAddress: "0x1234567890123456789012345678901234567890",
+        loginEmail: "valid@example.com",
         name: "Valid User",
-        email: "valid@example.com",
         telegram: "@validuser",
       };
 
@@ -311,9 +303,8 @@ describe("programReviewersService", () => {
 
     it("should reject invalid data", () => {
       const data: AddReviewerRequest = {
-        publicAddress: "invalid",
+        loginEmail: "invalid-email",
         name: "",
-        email: "invalid-email",
       };
 
       const result = programReviewersService.validateReviewerData(data);

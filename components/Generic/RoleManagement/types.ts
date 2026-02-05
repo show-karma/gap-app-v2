@@ -7,6 +7,7 @@ export interface RoleFieldConfig {
   type: "text" | "email" | "wallet";
   placeholder?: string;
   required: boolean;
+  helperText?: string;
   validation?: (value: string) => boolean | string;
 }
 
@@ -33,12 +34,15 @@ export type ReviewerRole = "program" | "milestone";
 export interface RoleMember {
   id: string;
   publicAddress?: string;
+  walletAddress?: string;
+  loginEmail?: string;
+  notificationEmail?: string;
   name?: string;
   email?: string;
   telegram?: string;
   assignedAt?: string;
-  role?: ReviewerRole; // Optional role field for multi-role support
-  [key: string]: string | undefined; // Additional dynamic fields based on configuration
+  role?: ReviewerRole;
+  [key: string]: string | undefined;
 }
 
 /**

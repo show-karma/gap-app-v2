@@ -7,11 +7,13 @@ import { type ReviewerType, useReviewerAssignment } from "@/hooks/useReviewerAss
 /**
  * Shared base interface for reviewer types
  * Both ProgramReviewer and MilestoneReviewer share these common properties
+ * Uses email-based identification - wallet is generated via Privy
  */
 export interface ReviewerBase {
   publicAddress: string;
+  loginEmail: string;
   name: string;
-  email: string;
+  notificationEmail?: string;
   telegram?: string;
   assignedAt: string;
   assignedBy?: string;
@@ -45,7 +47,7 @@ export const ReviewerAssignmentDropdown: FC<ReviewerAssignmentDropdownProps> = (
     () =>
       availableReviewers.map((reviewer) => ({
         id: reviewer.publicAddress.toLowerCase(),
-        label: reviewer.name || reviewer.email || reviewer.publicAddress,
+        label: reviewer.name || reviewer.loginEmail || reviewer.publicAddress,
         value: reviewer,
       })),
     [availableReviewers]

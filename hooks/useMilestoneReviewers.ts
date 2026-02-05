@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { toast } from "react-hot-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { milestoneReviewersService } from "@/services/milestone-reviewers.service";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
@@ -10,23 +11,26 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
  */
 export function useMilestoneReviewers(programId: string) {
   const queryClient = useQueryClient();
+  const { authenticated } = useAuth();
 
   // Query for fetching milestone reviewers
+  // Only fetch when authenticated since this endpoint requires authorization
   const query = useQuery({
     queryKey: QUERY_KEYS.REVIEWERS.MILESTONE(programId),
     queryFn: async () => {
       return milestoneReviewersService.getReviewers(programId);
     },
-    enabled: !!programId,
+    enabled: !!programId && authenticated,
   });
 
   // Mutation for adding a milestone reviewer
+  // Uses email-based identification - wallet is generated via Privy
   const addMutation = useMutation({
     mutationFn: async (data: Record<string, string>) => {
       const validation = milestoneReviewersService.validateReviewerData({
-        publicAddress: data.publicAddress,
+        loginEmail: data.loginEmail,
         name: data.name,
-        email: data.email,
+        notificationEmail: data.notificationEmail,
         telegram: data.telegram,
       });
 
@@ -35,10 +39,10 @@ export function useMilestoneReviewers(programId: string) {
       }
 
       return milestoneReviewersService.addReviewer(programId, {
-        publicAddress: data.publicAddress,
+        loginEmail: data.loginEmail,
         name: data.name,
-        email: data.email,
-        telegram: data.telegram,
+        notificationEmail: data.notificationEmail || undefined,
+        telegram: data.telegram || undefined,
       });
     },
     onSuccess: async () => {
@@ -55,10 +59,10 @@ export function useMilestoneReviewers(programId: string) {
     },
   });
 
-  // Mutation for removing a milestone reviewer
+  // Mutation for removing a milestone reviewer by loginEmail
   const removeMutation = useMutation({
-    mutationFn: async (publicAddress: string) => {
-      return milestoneReviewersService.removeReviewer(programId, publicAddress);
+    mutationFn: async (identifier: string) => {
+      return milestoneReviewersService.removeReviewer(programId, identifier);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({

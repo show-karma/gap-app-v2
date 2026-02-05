@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { toast } from "react-hot-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { programReviewersService } from "@/services/program-reviewers.service";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
@@ -10,23 +11,26 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
  */
 export function useProgramReviewers(programId: string) {
   const queryClient = useQueryClient();
+  const { authenticated } = useAuth();
 
   // Query for fetching program reviewers
+  // Only fetch when authenticated since this endpoint requires authorization
   const query = useQuery({
     queryKey: QUERY_KEYS.REVIEWERS.PROGRAM(programId),
     queryFn: async () => {
       return programReviewersService.getReviewers(programId);
     },
-    enabled: !!programId,
+    enabled: !!programId && authenticated,
   });
 
   // Mutation for adding a program reviewer
+  // Uses email-based identification - wallet is generated via Privy
   const addMutation = useMutation({
     mutationFn: async (data: Record<string, string>) => {
       const validation = programReviewersService.validateReviewerData({
-        publicAddress: data.publicAddress,
+        loginEmail: data.loginEmail,
         name: data.name,
-        email: data.email,
+        notificationEmail: data.notificationEmail,
         telegram: data.telegram,
       });
 
@@ -35,10 +39,10 @@ export function useProgramReviewers(programId: string) {
       }
 
       return programReviewersService.addReviewer(programId, {
-        publicAddress: data.publicAddress,
+        loginEmail: data.loginEmail,
         name: data.name,
-        email: data.email,
-        telegram: data.telegram,
+        notificationEmail: data.notificationEmail || undefined,
+        telegram: data.telegram || undefined,
       });
     },
     onSuccess: async () => {
@@ -55,10 +59,10 @@ export function useProgramReviewers(programId: string) {
     },
   });
 
-  // Mutation for removing a program reviewer
+  // Mutation for removing a program reviewer by loginEmail
   const removeMutation = useMutation({
-    mutationFn: async (publicAddress: string) => {
-      return programReviewersService.removeReviewer(programId, publicAddress);
+    mutationFn: async (identifier: string) => {
+      return programReviewersService.removeReviewer(programId, identifier);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({

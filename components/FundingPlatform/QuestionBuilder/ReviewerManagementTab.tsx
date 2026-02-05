@@ -14,12 +14,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
-import {
-  parseReviewerMemberId,
-  validateEmail,
-  validateTelegram,
-  validateWalletAddress,
-} from "@/utilities/validators";
+import { parseReviewerMemberId, validateEmail, validateTelegram } from "@/utilities/validators";
 import { PAGE_HEADER_CONTENT, PageHeader } from "../PageHeader";
 
 /**
@@ -73,17 +68,22 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   } = useMilestoneReviewers(programId);
 
   // Common field configuration for both roles
+  // Now uses email-based identification - wallet is generated automatically via Privy
   const commonFields: RoleManagementConfig["fields"] = useMemo(
     () => [
       {
-        name: "publicAddress",
-        label: "Wallet Address",
-        type: "wallet" as const,
-        placeholder: "0x...",
+        name: "loginEmail",
+        label: "Login Email",
+        type: "email" as const,
+        placeholder: "reviewer@example.com",
         required: true,
+        helperText: "The reviewer will use this email to log in",
         validation: (value: string) => {
-          if (!validateWalletAddress(value)) {
-            return "Please enter a valid Ethereum wallet address";
+          if (!value) {
+            return "Login email is required";
+          }
+          if (!validateEmail(value)) {
+            return "Please enter a valid email address";
           }
           return true;
         },
@@ -102,16 +102,14 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         },
       },
       {
-        name: "email",
-        label: "Email",
+        name: "notificationEmail",
+        label: "Notification Email (optional)",
         type: "email" as const,
-        placeholder: "reviewer@example.com",
-        required: true,
+        placeholder: "alternate@example.com",
+        required: false,
+        helperText: "Optional alternate email for notifications",
         validation: (value: string) => {
-          if (!value) {
-            return "Email is required";
-          }
-          if (!validateEmail(value)) {
+          if (value && !validateEmail(value)) {
             return "Please enter a valid email address";
           }
           return true;
@@ -178,20 +176,22 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   // Merge reviewers from both types with role information
   const members: ReviewerMemberWithRole[] = useMemo(() => {
     const programMembers: ReviewerMemberWithRole[] = programReviewers.map((reviewer) => ({
-      id: `program-${reviewer.publicAddress}`,
+      id: `program-${reviewer.loginEmail}`,
       publicAddress: reviewer.publicAddress,
+      loginEmail: reviewer.loginEmail,
       name: reviewer.name,
-      email: reviewer.email,
+      notificationEmail: reviewer.notificationEmail,
       telegram: reviewer.telegram || "",
       assignedAt: reviewer.assignedAt,
       role: "program" as ReviewerRole,
     }));
 
     const milestoneMembers: ReviewerMemberWithRole[] = milestoneReviewers.map((reviewer) => ({
-      id: `milestone-${reviewer.publicAddress}`,
+      id: `milestone-${reviewer.loginEmail}`,
       publicAddress: reviewer.publicAddress,
+      loginEmail: reviewer.loginEmail,
       name: reviewer.name,
-      email: reviewer.email,
+      notificationEmail: reviewer.notificationEmail,
       telegram: reviewer.telegram || "",
       assignedAt: reviewer.assignedAt,
       role: "milestone" as ReviewerRole,
@@ -221,17 +221,20 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         return;
       }
 
+      // Get the identifier (loginEmail for new format, publicAddress for legacy)
+      const identifier = parsed.loginEmail || parsed.publicAddress;
+
       // Type guard ensures we have the required properties
-      if (!parsed.role || !parsed.publicAddress) {
+      if (!parsed.role || !identifier) {
         toast.error("Failed to remove reviewer: Invalid ID");
         return;
       }
 
       try {
         if (parsed.role === "program") {
-          await removeProgramReviewer(parsed.publicAddress);
+          await removeProgramReviewer(identifier);
         } else if (parsed.role === "milestone") {
-          await removeMilestoneReviewer(parsed.publicAddress);
+          await removeMilestoneReviewer(identifier);
         } else {
           toast.error(`Unknown reviewer role: ${parsed.role}`);
         }

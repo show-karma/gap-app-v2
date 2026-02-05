@@ -73,13 +73,13 @@ describe("ReviewerAssignmentDropdown", () => {
     {
       publicAddress: "0x1111111111111111111111111111111111111111",
       name: "John Doe",
-      email: "john@example.com",
+      loginEmail: "john@example.com",
       assignedAt: "2024-01-01T00:00:00Z",
     },
     {
       publicAddress: "0x2222222222222222222222222222222222222222",
       name: "Jane Smith",
-      email: "jane@example.com",
+      loginEmail: "jane@example.com",
       assignedAt: "2024-01-02T00:00:00Z",
     },
   ];
@@ -88,7 +88,7 @@ describe("ReviewerAssignmentDropdown", () => {
     {
       publicAddress: "0x3333333333333333333333333333333333333333",
       name: "Bob Wilson",
-      email: "bob@example.com",
+      loginEmail: "bob@example.com",
       assignedAt: "2024-01-03T00:00:00Z",
     },
   ];
@@ -170,12 +170,12 @@ describe("ReviewerAssignmentDropdown", () => {
       ).toHaveTextContent("Jane Smith");
     });
 
-    it("should use email as label when name is not available", () => {
+    it("should use loginEmail as label when name is not available", () => {
       const reviewersWithoutName: ProgramReviewer[] = [
         {
           publicAddress: "0x1111111111111111111111111111111111111111",
           name: "",
-          email: "john@example.com",
+          loginEmail: "john@example.com",
           assignedAt: "2024-01-01T00:00:00Z",
         },
       ];
@@ -187,12 +187,12 @@ describe("ReviewerAssignmentDropdown", () => {
       ).toHaveTextContent("john@example.com");
     });
 
-    it("should use address as label when name and email are not available", () => {
+    it("should use address as label when name and loginEmail are not available", () => {
       const reviewersWithoutNameOrEmail: ProgramReviewer[] = [
         {
           publicAddress: "0x1111111111111111111111111111111111111111",
           name: "",
-          email: "",
+          loginEmail: "",
           assignedAt: "2024-01-01T00:00:00Z",
         },
       ];

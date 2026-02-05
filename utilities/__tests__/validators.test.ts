@@ -324,9 +324,8 @@ describe("validators", () => {
   describe("validateReviewerData", () => {
     it("should validate correct reviewer data", () => {
       const result = validateReviewerData({
-        publicAddress: "0x1234567890123456789012345678901234567890",
+        loginEmail: "john@example.com",
         name: "John Doe",
-        email: "john@example.com",
         telegram: "@johndoe",
       });
       expect(result.valid).toBe(true);
@@ -335,38 +334,53 @@ describe("validators", () => {
 
     it("should validate data without telegram", () => {
       const result = validateReviewerData({
-        publicAddress: "0x1234567890123456789012345678901234567890",
+        loginEmail: "john@example.com",
         name: "John Doe",
-        email: "john@example.com",
+      });
+      expect(result.valid).toBe(true);
+    });
+
+    it("should validate data with notification email", () => {
+      const result = validateReviewerData({
+        loginEmail: "john@example.com",
+        name: "John Doe",
+        notificationEmail: "notifications@example.com",
       });
       expect(result.valid).toBe(true);
     });
 
     it("should reject missing required fields", () => {
       const result = validateReviewerData({
-        publicAddress: "",
+        loginEmail: "",
         name: "",
-        email: "",
       });
       expect(result.valid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(2);
+      expect(result.errors.length).toBeGreaterThan(1);
     });
 
-    it("should reject invalid wallet address", () => {
+    it("should reject invalid login email", () => {
       const result = validateReviewerData({
-        publicAddress: "invalid",
+        loginEmail: "invalid-email",
         name: "John Doe",
-        email: "john@example.com",
       });
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain("Invalid wallet address format");
+      expect(result.errors).toContain("Invalid login email format");
+    });
+
+    it("should reject invalid notification email", () => {
+      const result = validateReviewerData({
+        loginEmail: "john@example.com",
+        name: "John Doe",
+        notificationEmail: "invalid-email",
+      });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain("Invalid notification email format");
     });
 
     it("should reject name that is too short", () => {
       const result = validateReviewerData({
-        publicAddress: "0x1234567890123456789012345678901234567890",
+        loginEmail: "john@example.com",
         name: "J",
-        email: "john@example.com",
       });
       expect(result.valid).toBe(false);
       expect(result.errors.some((e) => e.includes("at least 2 characters"))).toBe(true);
@@ -374,29 +388,17 @@ describe("validators", () => {
 
     it("should reject name that is too long", () => {
       const result = validateReviewerData({
-        publicAddress: "0x1234567890123456789012345678901234567890",
+        loginEmail: "john@example.com",
         name: "A".repeat(101),
-        email: "john@example.com",
       });
       expect(result.valid).toBe(false);
       expect(result.errors.some((e) => e.includes("less than 100 characters"))).toBe(true);
     });
 
-    it("should reject invalid email", () => {
-      const result = validateReviewerData({
-        publicAddress: "0x1234567890123456789012345678901234567890",
-        name: "John Doe",
-        email: "invalid-email",
-      });
-      expect(result.valid).toBe(false);
-      expect(result.errors).toContain("Invalid email format");
-    });
-
     it("should reject invalid telegram handle", () => {
       const result = validateReviewerData({
-        publicAddress: "0x1234567890123456789012345678901234567890",
+        loginEmail: "john@example.com",
         name: "John Doe",
-        email: "john@example.com",
         telegram: "ab",
       });
       expect(result.valid).toBe(false);
@@ -405,9 +407,8 @@ describe("validators", () => {
 
     it("should accept name with whitespace trimmed to valid length", () => {
       const result = validateReviewerData({
-        publicAddress: "0x1234567890123456789012345678901234567890",
+        loginEmail: "john@example.com",
         name: "  John Doe  ",
-        email: "john@example.com",
       });
       expect(result.valid).toBe(true);
     });
