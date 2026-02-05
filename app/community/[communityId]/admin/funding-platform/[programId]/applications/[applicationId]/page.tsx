@@ -2,8 +2,8 @@
 
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { AIAnalysisTab } from "@/components/FundingPlatform/ApplicationView/AIAnalysisTab";
@@ -35,6 +35,7 @@ import {
   useDeleteApplication,
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
+import { useKycConfig, useKycStatus } from "@/hooks/useKycStatus";
 import { layoutTheme } from "@/src/helper/theme";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import type { IFundingApplication } from "@/types/funding-platform";
@@ -58,6 +59,10 @@ export default function ApplicationDetailPage() {
   const programId = combinedProgramId.includes("_")
     ? combinedProgramId.split("_")[0]
     : combinedProgramId;
+
+  // Check for edit parameter in URL
+  const searchParams = useSearchParams();
+  const shouldOpenEdit = searchParams.get("edit") === "true";
 
   const { hasAccess, isLoading: isLoadingAdmin, checks } = useCommunityAdminAccess(communityId);
 
@@ -92,6 +97,13 @@ export default function ApplicationDetailPage() {
 
   // Get chainId from program config if needed for V1 components
   const chainId = program?.chainID;
+
+  // Fetch KYC status for the application - use referenceNumber as project identifier
+  // (referenceNumber is the consistent identifier used across all apps for KYC)
+  const { status: kycStatus } = useKycStatus(application?.referenceNumber, communityId);
+
+  // Fetch KYC config to get form URLs
+  const { isEnabled: isKycEnabled } = useKycConfig(communityId);
 
   // Use the application status hook
   const { updateStatusAsync } = useApplicationStatus(programId);
@@ -223,13 +235,28 @@ export default function ApplicationDetailPage() {
     return !restrictedStatuses.includes(app.status.toLowerCase());
   };
 
+  // Auto-open edit modal when ?edit=true is present in URL
+  useEffect(() => {
+    if (shouldOpenEdit && application && hasAccess && canEditApplication(application)) {
+      setIsEditModalOpen(true);
+    }
+  }, [shouldOpenEdit, application, hasAccess]);
+
   // Handle edit application
   const handleEditClick = () => {
     setIsEditModalOpen(true);
+    // Add edit=true to URL
+    const url = new URL(window.location.href);
+    url.searchParams.set("edit", "true");
+    window.history.replaceState({}, "", url.toString());
   };
 
   const handleEditClose = () => {
     setIsEditModalOpen(false);
+    // Remove edit param from URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete("edit");
+    window.history.replaceState({}, "", url.toString());
   };
 
   const handleEditSuccess = async () => {
@@ -340,6 +367,8 @@ export default function ApplicationDetailPage() {
           application={application}
           program={program}
           connectedToTabs={!milestoneReviewUrl && !selectedStatus}
+          kycStatus={kycStatus}
+          isKycEnabled={isKycEnabled}
           statusActions={
             showStatusActions ? (
               <HeaderActions

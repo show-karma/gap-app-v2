@@ -46,6 +46,7 @@ import { MarkdownPreview } from "../Utilities/MarkdownPreview";
 import { AIPromptConfiguration } from "./AIPromptConfiguration";
 import { FieldEditor } from "./FieldEditor";
 import { FieldTypeSelector, fieldTypes } from "./FieldTypeSelector";
+import { KycSettingsConfiguration } from "./KycSettingsConfiguration";
 import { SettingsConfiguration } from "./SettingsConfiguration";
 
 const TAB_KEYS = [
@@ -55,6 +56,7 @@ const TAB_KEYS = [
   "ai-config",
   "reviewers",
   "program-details",
+  "kyc-settings",
 ] as const;
 
 const DEFAULT_TAB: SidebarTabKey = "build";
@@ -80,6 +82,8 @@ interface QuestionBuilderProps {
   hasAIConfig?: boolean;
   /** Program data for ProgramDetailsTab - avoids V1 registry fetch */
   program?: { programId: string; chainID: number; metadata: Record<string, any> } | null;
+  /** Whether KYC is enabled for the community - controls visibility of KYC settings tab */
+  kycEnabled?: boolean;
 }
 
 export function QuestionBuilder({
@@ -96,6 +100,7 @@ export function QuestionBuilder({
   hasReviewers = false,
   hasAIConfig = false,
   program,
+  kycEnabled = false,
 }: QuestionBuilderProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -366,6 +371,38 @@ export function QuestionBuilder({
     [readOnly, setCurrentSchema]
   );
 
+  // Handle KYC settings changes - merge with internal schema state and save
+  const handleKycSettingsChange = useCallback(
+    (kycSettings: { kycFormUrl?: string; kybFormUrl?: string }) => {
+      if (readOnly) return;
+
+      // Merge KYC settings into the schema's settings
+      const newSettings = { ...schema.settings };
+      if (kycSettings.kycFormUrl) {
+        newSettings.kycFormUrl = kycSettings.kycFormUrl;
+      } else {
+        delete newSettings.kycFormUrl;
+      }
+      if (kycSettings.kybFormUrl) {
+        newSettings.kybFormUrl = kycSettings.kybFormUrl;
+      } else {
+        delete newSettings.kybFormUrl;
+      }
+
+      const updatedSchema: FormSchema = {
+        ...schema,
+        settings: newSettings,
+      };
+
+      // Update local state
+      setSchema(updatedSchema);
+
+      // Save to backend
+      onSave?.(updatedSchema);
+    },
+    [readOnly, schema, onSave]
+  );
+
   const handleDragEnd = (event: DragEndEvent) => {
     try {
       const { active, over } = event;
@@ -575,6 +612,7 @@ export function QuestionBuilder({
         programId={programId}
         programTitle={programTitle}
         completedSteps={completedSteps}
+        kycEnabled={kycEnabled}
       />
 
       {/* Main Content Area */}
@@ -863,6 +901,19 @@ export function QuestionBuilder({
             readOnly={readOnly}
             initialProgram={program as any}
           />
+        ) : activeTab === "kyc-settings" ? (
+          <div className="p-4 sm:p-6 lg:p-8">
+            <div className="max-w-4xl mx-auto">
+              <KycSettingsConfiguration
+                readOnly={readOnly}
+                initialSettings={{
+                  kycFormUrl: schema.settings?.kycFormUrl,
+                  kybFormUrl: schema.settings?.kybFormUrl,
+                }}
+                onSave={handleKycSettingsChange}
+              />
+            </div>
+          </div>
         ) : null}
       </div>
     </div>

@@ -1,11 +1,13 @@
 "use client";
 
 import { TrashIcon } from "@heroicons/react/24/outline";
-import { AreaChart, Card, Title } from "@tremor/react";
+import { Card, Title } from "@tremor/react";
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
+import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
 import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useOwnerStore, useProjectStore } from "@/store";
@@ -19,6 +21,12 @@ import { cn } from "@/utilities/tailwind";
 import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { GroupedLinks } from "./GroupedLinks";
+
+// Dynamically import heavy Tremor chart component for bundle optimization
+const AreaChart = dynamic(() => import("@tremor/react").then((mod) => mod.AreaChart), {
+  ssr: false,
+  loading: () => <ChartSkeleton height="h-48" />,
+});
 
 type OutputForm = {
   id: string;

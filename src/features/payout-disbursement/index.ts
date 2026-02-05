@@ -3,6 +3,14 @@ export type { CreateDisbursementModalProps } from "./components/CreateDisburseme
 // Components
 export { CreateDisbursementModal } from "./components/CreateDisbursementModal";
 export { DisbursementSummaryCard } from "./components/DisbursementSummaryCard";
+export type { MilestoneSelectionStepProps } from "./components/MilestoneSelectionStep";
+export {
+  calculateSelectedTotal,
+  getPaidAllocationIds,
+  MilestoneSelectionStep,
+} from "./components/MilestoneSelectionStep";
+export type { PayoutConfigurationModalProps } from "./components/PayoutConfigurationModal";
+export { PayoutConfigurationModal } from "./components/PayoutConfigurationModal";
 export {
   AwaitingSignaturesWidget,
   PayoutDashboardWidgets,

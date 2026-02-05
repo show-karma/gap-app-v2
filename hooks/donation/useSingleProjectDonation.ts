@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import type { Hex } from "viem";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
@@ -14,7 +14,8 @@ import type { DonationPayment } from "@/utilities/donations/donationExecution";
 
 export const useSingleProjectDonation = (
   project: SingleProjectDonateModalProps["project"],
-  onClose: () => void
+  onClose: () => void,
+  initialAmount?: string
 ) => {
   const { address } = useAccount();
   const currentChainId = useChainId();
@@ -24,7 +25,14 @@ export const useSingleProjectDonation = (
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CRYPTO);
   const [selectedToken, setSelectedToken] = useState<SupportedToken | null>(null);
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(initialAmount || "");
+
+  // Sync amount when initialAmount changes (e.g., modal reopens with new value)
+  useEffect(() => {
+    if (initialAmount) {
+      setAmount(initialAmount);
+    }
+  }, [initialAmount]);
 
   const supportedChains = useMemo(() => getAllSupportedChains(), []);
   const { balanceByTokenKey } = useCrossChainBalances(currentChainId ?? null, supportedChains);

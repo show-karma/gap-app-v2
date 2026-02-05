@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import ProjectPageIndex from "@/app/project/[projectId]/page";
 
+// Mock next/dynamic to render loading state
 jest.mock("next/dynamic", () => ({
   __esModule: true,
   default: (_callback: () => Promise<any>, options: { loading: () => React.ReactNode }) => {
@@ -11,29 +11,31 @@ jest.mock("next/dynamic", () => ({
   },
 }));
 
-jest.mock("@/components/Pages/Project/ProjectPage", () => {
-  return function MockProjectPage() {
-    return <div data-testid="mock-project-page">Mocked Project Page</div>;
-  };
-});
-
-jest.mock("@/components/Pages/Project/Loading/Overview", () => ({
-  ProjectOverviewLoading: () => <div data-testid="project-overview-loading">Loading...</div>,
+// Mock the UpdatesContent component
+jest.mock("@/components/Pages/Project/v2/Content/UpdatesContent", () => ({
+  UpdatesContent: function MockUpdatesContent() {
+    return <div data-testid="mock-updates-content">Mocked Updates Content</div>;
+  },
 }));
 
-describe("Project Page", () => {
-  it("renders the loading component while the main component is loading", () => {
-    render(<ProjectPageIndex />);
+// Mock the skeleton component
+jest.mock("@/components/Pages/Project/v2/Skeletons", () => ({
+  UpdatesContentSkeleton: () => <div data-testid="updates-content-skeleton">Loading...</div>,
+}));
 
-    expect(screen.getByTestId("project-overview-loading")).toBeInTheDocument();
+// Import the actual page component after mocks
+import UpdatesPage from "@/app/project/[projectId]/(profile)/page";
+
+describe("Project Updates Page", () => {
+  it("renders the loading skeleton while the main component is loading", () => {
+    render(<UpdatesPage />);
+
+    expect(screen.getByTestId("updates-content-skeleton")).toBeInTheDocument();
   });
 
-  it("renders the ProjectPage component when loaded", async () => {
-    render(<ProjectPageIndex />);
+  it("displays loading text in skeleton", () => {
+    render(<UpdatesPage />);
 
-    // The dynamic import is mocked to always return the loading component
-    // So we should only expect to see the loading component
-    expect(screen.getByTestId("project-overview-loading")).toBeInTheDocument();
-    expect(screen.queryByTestId("mock-project-page")).not.toBeInTheDocument();
+    expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
 });

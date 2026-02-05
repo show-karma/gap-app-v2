@@ -7,6 +7,7 @@ import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
+import { useKycConfig } from "@/hooks/useKycStatus";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
 import { layoutTheme } from "@/src/helper/theme";
@@ -58,6 +59,9 @@ export default function QuestionBuilderPage() {
   // Fetch reviewers to check if any are configured
   const { data: reviewers, isLoading: isLoadingReviewers } = useProgramReviewers(programId);
 
+  // Fetch KYC config to check if KYC is enabled for the community
+  const { isEnabled: kycEnabled, isLoading: isLoadingKycConfig } = useKycConfig(communityId);
+
   // Derive computed values for sidebar completion status
   const hasReviewers = reviewers && reviewers.length > 0;
   const hasAIConfig = Boolean(existingConfig?.systemPrompt);
@@ -80,7 +84,8 @@ export default function QuestionBuilderPage() {
     isLoadingPrograms ||
     isLoadingSchema ||
     isLoadingPostApprovalSchema ||
-    isLoadingReviewers
+    isLoadingReviewers ||
+    isLoadingKycConfig
   ) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
@@ -149,6 +154,7 @@ export default function QuestionBuilderPage() {
           hasReviewers={hasReviewers}
           hasAIConfig={hasAIConfig}
           program={program}
+          kycEnabled={kycEnabled}
         />
       </FormBuilderErrorBoundary>
     </div>

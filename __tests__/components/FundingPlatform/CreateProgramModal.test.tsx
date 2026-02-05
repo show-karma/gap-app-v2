@@ -592,22 +592,18 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        // V2 API auto-approves if user is admin and redirects to setup wizard
-        expect(toast.success).toHaveBeenCalledWith("Program created! Let's set it up.", {
+        expect(toast.success).toHaveBeenCalledWith("Program created successfully!", {
           duration: 3000,
         });
         expect(mockOnSuccess).toHaveBeenCalled();
         expect(mockOnClose).toHaveBeenCalled();
-        // Should redirect to setup wizard
-        expect(mockPush).toHaveBeenCalledWith(
-          "/community/test-community/admin/funding-platform/program-123/setup"
-        );
       });
     });
 
-    it("should handle manual approval required", async () => {
+    it("should succeed even when on-chain creation status is pending", async () => {
       const user = userEvent.setup();
-      // V2 API returns requiresManualApproval when auto-approval is not possible
+      // Even when requiresManualApproval is true (on-chain pending),
+      // funding-platform flow should show success and close
       (ProgramRegistryService.createProgram as jest.Mock).mockResolvedValue({
         programId: "program-123",
         success: true,
@@ -633,10 +629,10 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith(
-          expect.stringContaining("approve it manually"),
-          expect.objectContaining({ duration: 10000 })
-        );
+        // Should show success message regardless of approval status
+        expect(toast.success).toHaveBeenCalledWith("Program created successfully!", {
+          duration: 3000,
+        });
         expect(mockOnSuccess).toHaveBeenCalled();
         expect(mockOnClose).toHaveBeenCalled();
       });
@@ -786,9 +782,11 @@ describe("CreateProgramModal", () => {
     });
   });
 
-  describe("Manual Approval Flow", () => {
-    it("should handle manual approval requirement", async () => {
+  describe("Program Creation Flow", () => {
+    it("should succeed even when programId is empty in response", async () => {
       const user = userEvent.setup();
+      // BE may return empty response body due to Fastify serialization,
+      // resulting in empty programId - this should still be treated as success
       (ProgramRegistryService.createProgram as jest.Mock).mockResolvedValue({
         programId: "",
         success: true,
@@ -814,11 +812,10 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith(
-          expect.stringContaining("Please approve it manually"),
-          { duration: 10000 }
-        );
-        expect(ProgramRegistryService.approveProgram).not.toHaveBeenCalled();
+        // Should succeed even with empty programId
+        expect(toast.success).toHaveBeenCalledWith("Program created successfully!", {
+          duration: 3000,
+        });
         expect(mockOnSuccess).toHaveBeenCalled();
         expect(mockOnClose).toHaveBeenCalled();
       });

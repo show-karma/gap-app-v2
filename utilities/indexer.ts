@@ -276,6 +276,13 @@ export const INDEXER = {
   PROGRAMS: {
     GET: (programId: string) => `/programs/${programId}`,
     COMMUNITY: (communityId: string) => `/communities/${communityId}/programs`,
+    FINANCIALS: (programId: string, page?: number, limit?: number) => {
+      const params = new URLSearchParams();
+      if (page) params.set("page", page.toString());
+      if (limit) params.set("limit", limit.toString());
+      const query = params.toString();
+      return `/v2/programs/${programId}/financials${query ? `?${query}` : ""}`;
+    },
   },
   PROJECT: {
     EXTERNAL: {
@@ -453,6 +460,13 @@ export const INDEXER = {
       GET: (slug: string) => `/v2/communities/${slug}`,
       GRANTS: (slug: string) => `/v2/communities/${slug}/grants`,
       STATS: (slug: string) => `/v2/communities/${slug}/stats`,
+      IMPACT: (slug: string, params?: { programId?: string; projectId?: string }) => {
+        const queryParams = new URLSearchParams();
+        if (params?.programId) queryParams.set("programId", params.programId);
+        if (params?.projectId) queryParams.set("projectId", params.projectId);
+        const query = queryParams.toString();
+        return `/v2/communities/${slug}/impact${query ? `?${query}` : ""}`;
+      },
       IMPACT_SEGMENTS: (communityUID: string) => `/v2/impact-segments/${communityUID}`,
       INDICATORS: {
         AGGREGATED: (
@@ -598,5 +612,16 @@ export const INDEXER = {
     UPDATE: (idOrSlug: string, contactId: string) =>
       `/projects/${idOrSlug}/update/contact/${contactId}`,
     DELETE: (idOrSlug: string) => `/projects/${idOrSlug}/delete/contact`,
+  },
+  KYC: {
+    GET_STATUS: (projectUID: string, communityUID: string) =>
+      `/v2/projects/${projectUID}/communities/${communityUID}/kyc-status`,
+    GET_STATUS_BY_APP_REF: (referenceNumber: string) =>
+      `/v2/funding-applications/${referenceNumber}/kyc-status`,
+    GET_CONFIG: (communityIdOrSlug: string) => `/v2/communities/${communityIdOrSlug}/kyc-config`,
+    GET_BATCH_STATUSES: (communityUID: string) =>
+      `/v2/communities/${communityUID}/kyc-batch-status`,
+    GET_FORM_URL: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/kyc-form-url`,
   },
 };

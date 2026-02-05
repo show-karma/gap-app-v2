@@ -20,6 +20,7 @@ export const PAGES = {
       `/community/${community}/donate/${programId}/checkout`,
     PROJECT_DISCOVERY: (community: string) => `/community/${community}/impact/project-discovery`,
     UPDATES: (community: string) => `/community/${community}/updates`,
+    FINANCIALS: (community: string) => `/community/${community}/financials`,
     RECEIVEPROJECTUPDATES: (community: string) => `/community/${community}/receive-project-updates`,
   },
   MY_PROJECTS: `/my-projects`,
@@ -50,13 +51,15 @@ export const PAGES = {
     COMMUNITY_STATS: `/admin/communities/stats`,
     PROJECTS: `/admin/projects`,
     PAYOUTS: (community: string) => `/community/${community}/admin/payouts`,
+    KYC_SETTINGS: (community: string) => `/community/${community}/admin/kyc-settings`,
     PROGRAM_SCORES: (community: string) => `/community/${community}/admin/program-scores`,
     PROJECT_MILESTONES: (community: string, projectId: string, programId: string) =>
       `/community/${community}/admin/${projectId}/milestones?programIds=${programId}`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,
-    UPDATES: (project: string) => `/project/${project}/updates`,
+    UPDATES: (project: string) => `/project/${project}`,
+    ABOUT: (project: string) => `/project/${project}/about`,
     GRANTS: (project: string) => `/project/${project}/funding`,
 
     GRANT: (project: string, grant: string) => `/project/${project}/funding/${grant}`,
@@ -83,6 +86,8 @@ export const PAGES = {
   STATS: `/stats`,
   SUMUP_CONFIG: `/admin/sumup`,
   FUNDERS: `/funders`,
+  SEEDS: `/seeds`,
+  SEEDS_FUND: `/seeds/fund`,
 };
 
 export const FUNDING_PLATFORM_PAGES = (tenantId: string, _domain?: string) => {

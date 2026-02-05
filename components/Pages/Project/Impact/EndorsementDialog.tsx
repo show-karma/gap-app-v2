@@ -1,10 +1,9 @@
 "use client";
 import { Dialog, Transition } from "@headlessui/react";
-import { type Project, ProjectEndorsement } from "@show-karma/karma-gap-sdk";
+import { ProjectEndorsement } from "@show-karma/karma-gap-sdk";
 import type { IProjectEndorsement } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import { type FC, Fragment, useState } from "react";
-import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";

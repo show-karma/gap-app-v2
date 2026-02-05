@@ -1,7 +1,5 @@
 import type {
   CreateProgramFormData,
-  ProgramApprovalRequest,
-  ProgramCreationRequest,
   ProgramCreationResult,
   ProgramMetadata,
 } from "@/types/program-registry";
@@ -152,7 +150,7 @@ export class ProgramRegistryService {
    * Create a program (V2 endpoint)
    */
   static async createProgram(
-    owner: string,
+    _owner: string,
     chainId: number,
     metadata: ProgramMetadata
   ): Promise<ProgramCreationResult> {
@@ -176,27 +174,19 @@ export class ProgramRegistryService {
       throw new Error(createError);
     }
 
-    // V2 response: { programId: "...", isValid: true | null, ... }
+    // Extract programId from response if available (may be empty due to
+    // BE response serialization stripping properties)
     const programId = ProgramRegistryService.extractProgramId(createResponse);
     const isValid =
       typeof createResponse === "object" && createResponse !== null && "isValid" in createResponse
         ? (createResponse as { isValid?: unknown }).isValid
         : null;
 
-    if (!programId) {
-      // If we can't get the ID immediately, return success but indicate manual approval needed
-      return {
-        programId: "",
-        success: true,
-        requiresManualApproval: true,
-      };
-    }
-
     // If program is auto-approved (isValid: true), no manual approval needed
     const requiresManualApproval = isValid !== true;
 
     return {
-      programId,
+      programId: programId || "",
       success: true,
       requiresManualApproval,
     };

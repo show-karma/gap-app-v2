@@ -91,6 +91,23 @@ function resolveInterceptor(subpath) {
 }
 
 module.exports = (request, options) => {
+  // Handle gasless module - force redirect to mock to avoid ESM parsing issues
+  // Only redirect the main gasless module (index), NOT submodules like config
+  // This catches both @/utilities/gasless and relative paths like ../../../../utilities/gasless
+  const isMainGaslessModule =
+    request === "@/utilities/gasless" ||
+    request === "utilities/gasless" ||
+    request.endsWith("/utilities/gasless") ||
+    request.endsWith("/utilities/gasless/index") ||
+    request.endsWith("/utilities/gasless/index.ts");
+
+  if (isMainGaslessModule) {
+    const mockPath = path.join(process.cwd(), "__mocks__", "utilities", "gasless", "index.ts");
+    if (fs.existsSync(mockPath)) {
+      return mockPath;
+    }
+  }
+
   // Handle MSW node import
   if (request === "msw/node") {
     const resolved = resolveMSWNode();
