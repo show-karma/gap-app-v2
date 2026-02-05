@@ -2,7 +2,7 @@
 
 import type { OnrampSession } from "@stripe/crypto";
 import { loadStripeOnramp } from "@stripe/crypto";
-import { Loader2, X } from "lucide-react";
+import { AlertCircle, Loader2, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ export const StripeOnrampEmbed = React.memo<StripeOnrampEmbedProps>(
     const containerRef = useRef<HTMLDivElement>(null);
     const sessionRef = useRef<OnrampSession | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const hasTriggeredSuccess = useRef(false);
     const { resolvedTheme } = useTheme();
 
@@ -45,6 +46,12 @@ export const StripeOnrampEmbed = React.memo<StripeOnrampEmbedProps>(
     useEffect(() => {
       let mounted = true;
 
+      const handleLoaded = () => {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      };
+
       const initializeOnramp = async () => {
         if (!containerRef.current || !clientSecret) return;
 
@@ -60,19 +67,17 @@ export const StripeOnrampEmbed = React.memo<StripeOnrampEmbedProps>(
             },
           });
 
-          session.addEventListener("onramp_ui_loaded", () => {
-            if (mounted) {
-              setIsLoading(false);
-            }
-          });
-
+          session.addEventListener("onramp_ui_loaded", handleLoaded);
           session.addEventListener("onramp_session_updated", handleSessionUpdate);
 
           session.mount(containerRef.current);
           sessionRef.current = session;
-        } catch (error) {
-          console.error("Failed to initialize Stripe Onramp:", error);
-          setIsLoading(false);
+        } catch (err) {
+          console.error("Failed to initialize Stripe Onramp:", err);
+          if (mounted) {
+            setError("Unable to load payment form. Please disable ad blockers or try again.");
+            setIsLoading(false);
+          }
         }
       };
 
@@ -80,6 +85,11 @@ export const StripeOnrampEmbed = React.memo<StripeOnrampEmbedProps>(
 
       return () => {
         mounted = false;
+        const session = sessionRef.current;
+        if (session) {
+          session.removeEventListener("onramp_ui_loaded", handleLoaded);
+          session.removeEventListener("onramp_session_updated", handleSessionUpdate);
+        }
       };
     }, [clientSecret, handleSessionUpdate, resolvedTheme]);
 
@@ -90,7 +100,13 @@ export const StripeOnrampEmbed = React.memo<StripeOnrampEmbedProps>(
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               Complete Purchase
             </h3>
-            <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-8 w-8 p-0"
+              aria-label="Close"
+            >
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -99,6 +115,16 @@ export const StripeOnrampEmbed = React.memo<StripeOnrampEmbedProps>(
             {isLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-zinc-900 z-10">
                 <Loader2 className="h-8 w-8 animate-spin text-brand-blue" />
+              </div>
+            )}
+
+            {error && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white dark:bg-zinc-900 z-10 p-6 text-center">
+                <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+                <p className="text-gray-700 dark:text-gray-300 mb-4">{error}</p>
+                <Button onClick={onClose} variant="outline">
+                  Close
+                </Button>
               </div>
             )}
 
