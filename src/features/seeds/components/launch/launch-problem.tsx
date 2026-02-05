@@ -40,7 +40,7 @@ export function LaunchProblem() {
         <div className="flex flex-col items-center gap-5 mb-16 text-center">
           <Badge
             variant="secondary"
-            className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/50 dark:to-green-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-700/50 px-4 py-1.5 text-sm font-medium"
+            className="bg-gradient-to-r from-seeds-300/10 to-seeds-300/5 dark:from-seeds-300/20 dark:to-seeds-300/10 text-seeds-400 dark:text-seeds-300 border border-seeds-300/30 px-4 py-1.5 text-sm font-medium"
           >
             The Problem
           </Badge>
@@ -59,18 +59,18 @@ export function LaunchProblem() {
           {/* What you want */}
           <div className="group relative p-8 rounded-3xl overflow-hidden seeds-card-hover">
             {/* Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/80 via-green-50/60 to-emerald-100/40 dark:from-emerald-950/50 dark:via-green-950/30 dark:to-emerald-950/20 border border-emerald-200/50 dark:border-emerald-800/30 rounded-3xl" />
+            <div className="absolute inset-0 bg-gradient-to-br from-seeds-300/15 via-seeds-300/5 to-seeds-300/10 dark:from-seeds-300/10 dark:via-seeds-300/5 dark:to-seeds-300/5 border border-seeds-300/30 dark:border-seeds-300/20 rounded-3xl" />
 
             {/* Decorative corner */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-emerald-200/50 to-transparent dark:from-emerald-800/30 rounded-tr-3xl rounded-bl-[60px]" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-seeds-300/30 to-transparent dark:from-seeds-300/15 rounded-tr-3xl rounded-bl-[60px]" />
 
             <div className="relative">
               <h3 className="text-2xl font-bold text-foreground mb-6">What you want</h3>
               <ul className="space-y-4">
                 {whatProjectsWant.map((item) => (
                   <li key={item.text} className="flex items-center gap-4">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                      <CheckCircle2 className="w-5 h-5 text-white" />
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-seeds-300 to-seeds-400 flex items-center justify-center shadow-lg shadow-seeds-300/20">
+                      <CheckCircle2 className="w-5 h-5 text-seeds-600" />
                     </div>
                     <span className="text-lg text-foreground font-medium">{item.text}</span>
                   </li>
@@ -122,7 +122,7 @@ export function LaunchProblem() {
 
         {/* Conclusion */}
         <div className="text-center">
-          <div className="inline-block px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-50/80 via-green-50/60 to-emerald-50/80 dark:from-emerald-950/40 dark:via-green-950/20 dark:to-emerald-950/40 border border-emerald-200/50 dark:border-emerald-800/30">
+          <div className="inline-block px-8 py-4 rounded-2xl bg-gradient-to-r from-seeds-300/15 via-seeds-300/5 to-seeds-300/15 dark:from-seeds-300/10 dark:via-seeds-300/5 dark:to-seeds-300/10 border border-seeds-300/30 dark:border-seeds-300/20">
             <p className="text-xl md:text-2xl text-foreground font-semibold seeds-gradient-text">
               We think there's room for something simpler.
             </p>

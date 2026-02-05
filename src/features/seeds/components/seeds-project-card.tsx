@@ -52,11 +52,11 @@ export const SeedsProjectCard = ({ project }: SeedsProjectCardProps) => {
     <Link
       href={PAGES.PROJECT.OVERVIEW(details.slug)}
       aria-label={`View ${details.title} project details`}
-      className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 rounded-lg group"
+      className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-seeds-300 focus-visible:ring-offset-2 rounded-lg group"
     >
       <div className="border border-gray-200 dark:border-zinc-700 rounded-lg overflow-hidden hover:shadow-lg transition-shadow bg-white dark:bg-zinc-900 h-full">
         {/* Green accent bar for seeds projects */}
-        <div className="h-2 bg-gradient-to-r from-green-500 to-emerald-500" aria-hidden="true" />
+        <div className="h-2 bg-gradient-to-r from-seeds-300 to-seeds-400" aria-hidden="true" />
 
         <div className="p-4 flex flex-col h-[calc(100%-8px)]">
           {/* Logo + Title row */}
@@ -75,7 +75,7 @@ export const SeedsProjectCard = ({ project }: SeedsProjectCardProps) => {
             </div>
             {/* Seeds badge */}
             <div className="flex-shrink-0">
-              <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full">
+              <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-seeds-300/20 dark:bg-seeds-300/10 text-seeds-400 dark:text-seeds-300 rounded-full">
                 <Sprout className="w-3 h-3" />
                 Seeds
               </span>
@@ -101,11 +101,11 @@ export const SeedsProjectCard = ({ project }: SeedsProjectCardProps) => {
 
           {/* Seeds Stats */}
           <div className="flex flex-wrap gap-2 mb-4">
-            <span className="px-2 py-1 text-xs bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-green-700 dark:text-green-400 flex items-center gap-1">
+            <span className="px-2 py-1 text-xs bg-seeds-300/10 border border-seeds-300/30 dark:border-seeds-300/20 rounded text-seeds-400 dark:text-seeds-300 flex items-center gap-1">
               <Sprout className="w-3 h-3" />
               {seedsData.totalSeeds.toLocaleString()} seeds
             </span>
-            <span className="px-2 py-1 text-xs bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-green-700 dark:text-green-400 flex items-center gap-1">
+            <span className="px-2 py-1 text-xs bg-seeds-300/10 border border-seeds-300/30 dark:border-seeds-300/20 rounded text-seeds-400 dark:text-seeds-300 flex items-center gap-1">
               <Users className="w-3 h-3" />
               {seedsData.supporters} supporters
             </span>
@@ -130,7 +130,7 @@ export const SeedsProjectCard = ({ project }: SeedsProjectCardProps) => {
           >
             <Button
               size="sm"
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              className="w-full bg-seeds-300 hover:bg-seeds-400 text-seeds-600"
               onClick={(e) => {
                 e.preventDefault();
                 // Will navigate to project seeds page when implemented

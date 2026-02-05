@@ -16,9 +16,9 @@ export function LaunchHero() {
     >
       {/* Decorative rocket icons floating */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <Rocket className="absolute top-24 left-[12%] w-6 h-6 text-emerald-300/30 dark:text-emerald-400/20 seeds-float rotate-45" />
-        <Rocket className="absolute top-36 right-[18%] w-8 h-8 text-green-300/25 dark:text-green-400/15 seeds-float-delayed -rotate-12" />
-        <Rocket className="absolute bottom-24 left-[22%] w-5 h-5 text-teal-300/30 dark:text-teal-400/20 seeds-float-slow rotate-[30deg]" />
+        <Rocket className="absolute top-24 left-[12%] w-6 h-6 text-seeds-300/30 dark:text-seeds-300/20 seeds-float rotate-45" />
+        <Rocket className="absolute top-36 right-[18%] w-8 h-8 text-seeds-300/25 dark:text-seeds-300/15 seeds-float-delayed -rotate-12" />
+        <Rocket className="absolute bottom-24 left-[22%] w-5 h-5 text-seeds-300/30 dark:text-seeds-300/20 seeds-float-slow rotate-[30deg]" />
       </div>
 
       <SectionContainer className="flex flex-col items-center gap-8 relative z-10">
@@ -26,7 +26,7 @@ export function LaunchHero() {
         <div className="seeds-fade-in">
           <Badge
             variant="secondary"
-            className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/50 dark:to-green-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-700/50 px-4 py-1.5 text-sm font-medium shadow-sm seeds-pulse"
+            className="bg-gradient-to-r from-seeds-300/10 to-seeds-300/5 dark:from-seeds-300/20 dark:to-seeds-300/10 text-seeds-400 dark:text-seeds-300 border border-seeds-300/30 px-4 py-1.5 text-sm font-medium shadow-sm seeds-pulse"
           >
             <Rocket className="w-4 h-4 mr-2" />
             For Projects
@@ -63,7 +63,7 @@ export function LaunchHero() {
         <div className="w-full flex flex-col sm:flex-row justify-start md:justify-center gap-4 max-w-[768px] md:mx-auto seeds-fade-in seeds-fade-in-delay-3">
           <Button
             asChild
-            className="relative bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl font-semibold px-8 py-6 text-base seeds-glow transition-all duration-300 group"
+            className="relative bg-gradient-to-r from-seeds-300 to-seeds-400 hover:from-seeds-200 hover:to-seeds-300 text-seeds-600 rounded-xl font-semibold px-8 py-6 text-base seeds-glow transition-all duration-300 group"
           >
             <Link href="#get-started">
               <Rocket className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" />
@@ -75,15 +75,15 @@ export function LaunchHero() {
         {/* Stats Row */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-16 mt-12 pt-10 w-full max-w-[800px] seeds-fade-in seeds-fade-in-delay-4">
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-transparent rounded-2xl blur-xl" />
-            <div className="relative flex flex-col items-center p-6 rounded-2xl bg-gradient-to-br from-white/80 to-white/40 dark:from-white/10 dark:to-white/5 border border-emerald-100/50 dark:border-emerald-800/30 backdrop-blur-sm">
+            <div className="absolute inset-0 bg-gradient-to-br from-seeds-300/20 to-transparent rounded-2xl blur-xl" />
+            <div className="relative flex flex-col items-center p-6 rounded-2xl bg-gradient-to-br from-white/80 to-white/40 dark:from-white/10 dark:to-white/5 border border-seeds-300/30 dark:border-seeds-300/20 backdrop-blur-sm">
               <span className="text-4xl font-bold seeds-gradient-text">$1</span>
               <span className="text-sm text-muted-foreground mt-1 font-medium">per Seed</span>
             </div>
           </div>
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-transparent rounded-2xl blur-xl" />
-            <div className="relative flex flex-col items-center p-6 rounded-2xl bg-gradient-to-br from-white/80 to-white/40 dark:from-white/10 dark:to-white/5 border border-green-100/50 dark:border-green-800/30 backdrop-blur-sm">
+            <div className="absolute inset-0 bg-gradient-to-br from-seeds-300/20 to-transparent rounded-2xl blur-xl" />
+            <div className="relative flex flex-col items-center p-6 rounded-2xl bg-gradient-to-br from-white/80 to-white/40 dark:from-white/10 dark:to-white/5 border border-seeds-300/30 dark:border-seeds-300/20 backdrop-blur-sm">
               <span className="text-4xl font-bold seeds-gradient-text">Direct</span>
               <span className="text-sm text-muted-foreground mt-1 font-medium">
                 to your treasury
@@ -91,8 +91,8 @@ export function LaunchHero() {
             </div>
           </div>
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-teal-500/20 to-transparent rounded-2xl blur-xl" />
-            <div className="relative flex flex-col items-center p-6 rounded-2xl bg-gradient-to-br from-white/80 to-white/40 dark:from-white/10 dark:to-white/5 border border-teal-100/50 dark:border-teal-800/30 backdrop-blur-sm">
+            <div className="absolute inset-0 bg-gradient-to-br from-seeds-300/20 to-transparent rounded-2xl blur-xl" />
+            <div className="relative flex flex-col items-center p-6 rounded-2xl bg-gradient-to-br from-white/80 to-white/40 dark:from-white/10 dark:to-white/5 border border-seeds-300/30 dark:border-seeds-300/20 backdrop-blur-sm">
               <span className="text-4xl font-bold seeds-gradient-text">No</span>
               <span className="text-sm text-muted-foreground mt-1 font-medium">token baggage</span>
             </div>

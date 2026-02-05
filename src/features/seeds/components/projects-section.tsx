@@ -20,23 +20,23 @@ function ProjectsSkeleton() {
       {Array.from({ length: 8 }).map((_, index) => (
         <div
           key={index}
-          className="rounded-2xl overflow-hidden bg-gradient-to-br from-white/80 to-white/40 dark:from-white/5 dark:to-white/[0.02] border border-emerald-100/30 dark:border-emerald-800/20 animate-pulse"
+          className="rounded-2xl overflow-hidden bg-gradient-to-br from-white/80 to-white/40 dark:from-white/5 dark:to-white/[0.02] border border-seeds-300/20 dark:border-seeds-300/10 animate-pulse"
           style={{ animationDelay: `${index * 0.05}s` }}
         >
-          <div className="h-2 bg-gradient-to-r from-emerald-200 to-green-200 dark:from-emerald-800 dark:to-green-800" />
+          <div className="h-2 bg-gradient-to-r from-seeds-300/50 to-seeds-300/30 dark:from-seeds-300/30 dark:to-seeds-300/20" />
           <div className="p-5">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-100/50 dark:bg-emerald-900/30" />
-              <div className="flex-1 h-5 bg-emerald-100/50 dark:bg-emerald-900/30 rounded-lg" />
+              <div className="w-12 h-12 rounded-xl bg-seeds-300/20 dark:bg-seeds-300/10" />
+              <div className="flex-1 h-5 bg-seeds-300/20 dark:bg-seeds-300/10 rounded-lg" />
             </div>
-            <div className="h-4 bg-emerald-100/30 dark:bg-emerald-900/20 rounded-lg mb-2 w-1/2" />
+            <div className="h-4 bg-seeds-300/15 dark:bg-seeds-300/10 rounded-lg mb-2 w-1/2" />
             <div className="space-y-2 mb-4">
-              <div className="h-4 bg-emerald-100/30 dark:bg-emerald-900/20 rounded-lg" />
-              <div className="h-4 bg-emerald-100/30 dark:bg-emerald-900/20 rounded-lg w-3/4" />
+              <div className="h-4 bg-seeds-300/15 dark:bg-seeds-300/10 rounded-lg" />
+              <div className="h-4 bg-seeds-300/15 dark:bg-seeds-300/10 rounded-lg w-3/4" />
             </div>
             <div className="flex gap-2">
-              <div className="h-7 w-20 bg-emerald-100/30 dark:bg-emerald-900/20 rounded-lg" />
-              <div className="h-7 w-20 bg-emerald-100/30 dark:bg-emerald-900/20 rounded-lg" />
+              <div className="h-7 w-20 bg-seeds-300/15 dark:bg-seeds-300/10 rounded-lg" />
+              <div className="h-7 w-20 bg-seeds-300/15 dark:bg-seeds-300/10 rounded-lg" />
             </div>
           </div>
         </div>
@@ -49,9 +49,9 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
       <div className="relative mb-8">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/30 to-green-400/30 rounded-full blur-2xl scale-150" />
-        <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-emerald-100 to-green-100 dark:from-emerald-900/50 dark:to-green-900/30 flex items-center justify-center border border-emerald-200/50 dark:border-emerald-800/30">
-          <Sprout className="w-12 h-12 text-emerald-600 dark:text-emerald-400" />
+        <div className="absolute inset-0 bg-gradient-to-br from-seeds-300/30 to-seeds-300/30 rounded-full blur-2xl scale-150" />
+        <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-seeds-300/20 to-seeds-300/10 dark:from-seeds-300/30 dark:to-seeds-300/10 flex items-center justify-center border border-seeds-300/30 dark:border-seeds-300/20">
+          <Sprout className="w-12 h-12 text-seeds-400 dark:text-seeds-300" />
         </div>
       </div>
       <h3 className="text-2xl font-bold text-foreground mb-3">Be among the first</h3>
@@ -61,9 +61,9 @@ function EmptyState() {
       </p>
       <Button
         asChild
-        className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl font-semibold px-8 py-6 seeds-glow group"
+        className="bg-gradient-to-r from-seeds-300 to-seeds-400 hover:from-seeds-200 hover:to-seeds-300 text-seeds-600 rounded-xl font-semibold px-8 py-6 seeds-glow group"
       >
-        <Link href={PAGES.SEEDS_LAUNCH}>
+        <Link href={PAGES.SEEDS}>
           <Sprout className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" />
           Launch Seeds
         </Link>
@@ -104,7 +104,7 @@ export function SeedsProjectsSection() {
           <div className="flex flex-col gap-5">
             <Badge
               variant="secondary"
-              className="w-fit bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/50 dark:to-green-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-700/50 px-4 py-1.5 text-sm font-medium"
+              className="w-fit bg-gradient-to-r from-seeds-300/10 to-seeds-300/5 dark:from-seeds-300/20 dark:to-seeds-300/10 text-seeds-400 dark:text-seeds-300 border border-seeds-300/30 px-4 py-1.5 text-sm font-medium"
             >
               Featured Projects
             </Badge>
@@ -118,7 +118,7 @@ export function SeedsProjectsSection() {
           <Button
             asChild
             variant="outline"
-            className="w-fit border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950/50 rounded-xl font-medium px-6 group"
+            className="w-fit border-seeds-300 text-seeds-400 hover:bg-seeds-300/10 dark:border-seeds-300/50 dark:text-seeds-300 dark:hover:bg-seeds-300/10 rounded-xl font-medium px-6 group"
           >
             <Link href={PAGES.PROJECTS_EXPLORER}>
               View All Projects

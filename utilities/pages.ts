@@ -87,7 +87,7 @@ export const PAGES = {
   SUMUP_CONFIG: `/admin/sumup`,
   FUNDERS: `/funders`,
   SEEDS: `/seeds`,
-  SEEDS_LAUNCH: `/seeds/launch`,
+  SEEDS_FUND: `/seeds/fund`,
 };
 
 export const FUNDING_PLATFORM_PAGES = (tenantId: string, _domain?: string) => {

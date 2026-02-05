@@ -54,17 +54,17 @@ function StepCard({ step, index }: { step: Step; index: number }) {
   const Icon = step.icon;
   return (
     <div
-      className="group relative p-6 md:p-8 rounded-2xl bg-gradient-to-br from-white/80 to-white/40 dark:from-white/5 dark:to-white/[0.02] border border-emerald-100/50 dark:border-emerald-800/30 backdrop-blur-sm seeds-card-hover h-full"
+      className="group relative p-6 md:p-8 rounded-2xl bg-gradient-to-br from-white/80 to-white/40 dark:from-white/5 dark:to-white/[0.02] border border-seeds-300/30 dark:border-seeds-300/20 backdrop-blur-sm seeds-card-hover h-full"
       style={{ animationDelay: `${index * 0.1}s` }}
     >
       <div className="flex flex-col gap-6 h-full">
         {/* Step number and icon */}
         <div className="flex items-center gap-4">
-          <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-emerald-500/30">
+          <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-seeds-300 to-seeds-400 flex items-center justify-center text-seeds-600 text-lg font-bold shadow-lg shadow-seeds-300/30">
             {step.number}
           </div>
-          <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-100 to-green-100 dark:from-emerald-900/50 dark:to-green-900/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-            <Icon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+          <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-seeds-300/20 to-seeds-300/10 dark:from-seeds-300/30 dark:to-seeds-300/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <Icon className="w-6 h-6 text-seeds-400 dark:text-seeds-300" />
           </div>
         </div>
 
@@ -75,10 +75,10 @@ function StepCard({ step, index }: { step: Step; index: number }) {
         </div>
 
         {/* Details */}
-        <ul className="space-y-3 mt-auto pt-4 border-t border-emerald-100/50 dark:border-emerald-800/30">
+        <ul className="space-y-3 mt-auto pt-4 border-t border-seeds-300/30 dark:border-seeds-300/20">
           {step.details.map((detail) => (
             <li key={detail} className="flex items-start gap-3 text-sm text-muted-foreground">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-seeds-300 flex-shrink-0 mt-0.5" />
               <span>{detail}</span>
             </li>
           ))}
@@ -99,7 +99,7 @@ export function LaunchHowTo() {
         <div className="flex flex-col items-center gap-5 mb-16 text-center">
           <Badge
             variant="secondary"
-            className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/50 dark:to-green-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-700/50 px-4 py-1.5 text-sm font-medium"
+            className="bg-gradient-to-r from-seeds-300/10 to-seeds-300/5 dark:from-seeds-300/20 dark:to-seeds-300/10 text-seeds-400 dark:text-seeds-300 border border-seeds-300/30 px-4 py-1.5 text-sm font-medium"
           >
             How to Launch
           </Badge>
@@ -116,7 +116,7 @@ export function LaunchHowTo() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 relative">
           {/* Connecting line (desktop only) */}
           <div className="hidden md:block absolute top-20 left-[20%] right-[20%] h-[2px]">
-            <div className="w-full h-full bg-gradient-to-r from-emerald-200 via-green-300 to-emerald-200 dark:from-emerald-800 dark:via-green-700 dark:to-emerald-800 rounded-full" />
+            <div className="w-full h-full bg-gradient-to-r from-seeds-300/30 via-seeds-300/50 to-seeds-300/30 dark:from-seeds-300/20 dark:via-seeds-300/40 dark:to-seeds-300/20 rounded-full" />
           </div>
 
           {steps.map((step, index) => (
@@ -126,7 +126,7 @@ export function LaunchHowTo() {
 
         {/* Additional info */}
         <div className="mt-16 text-center max-w-2xl mx-auto">
-          <div className="inline-block px-8 py-5 rounded-2xl bg-gradient-to-r from-emerald-50/50 via-green-50/30 to-emerald-50/50 dark:from-emerald-950/30 dark:via-green-950/20 dark:to-emerald-950/30 border border-emerald-100/50 dark:border-emerald-800/30">
+          <div className="inline-block px-8 py-5 rounded-2xl bg-gradient-to-r from-seeds-300/10 via-seeds-300/5 to-seeds-300/10 border border-seeds-300/30 dark:border-seeds-300/20">
             <p className="text-muted-foreground leading-relaxed">
               Once launched, your supporters can buy Seeds directly through your project page. Funds
               go straight to your treasury address. You can track contributions in your dashboard.

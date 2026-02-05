@@ -65,14 +65,14 @@ export function LaunchFAQ() {
       className={cn(marketingLayoutTheme.padding, "py-16 md:py-24 w-full relative overflow-hidden")}
     >
       {/* Subtle background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-50/30 to-transparent dark:via-emerald-950/10" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-seeds-300/10 to-transparent dark:via-seeds-300/5" />
 
       <SectionContainer className="relative z-10">
         {/* Section Header */}
         <div className="flex flex-col items-center gap-5 mb-16 text-center">
           <Badge
             variant="secondary"
-            className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/50 dark:to-green-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-700/50 px-4 py-1.5 text-sm font-medium"
+            className="bg-gradient-to-r from-seeds-300/10 to-seeds-300/5 dark:from-seeds-300/20 dark:to-seeds-300/10 text-seeds-400 dark:text-seeds-300 border border-seeds-300/30 px-4 py-1.5 text-sm font-medium"
           >
             FAQs for Projects
           </Badge>
@@ -93,7 +93,7 @@ export function LaunchFAQ() {
         <div className="mt-16 text-center">
           <div className="relative inline-flex flex-col sm:flex-row items-center gap-6 p-8 rounded-3xl overflow-hidden">
             {/* Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/40 dark:from-white/5 dark:to-white/[0.02] border border-emerald-100/50 dark:border-emerald-800/30 rounded-3xl" />
+            <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/40 dark:from-white/5 dark:to-white/[0.02] border border-seeds-300/30 dark:border-seeds-300/20 rounded-3xl" />
 
             <div className="relative text-center sm:text-left">
               <h3 className="font-bold text-xl text-foreground mb-1">Still have questions?</h3>
@@ -104,7 +104,7 @@ export function LaunchFAQ() {
             <div className="relative">
               <Button
                 asChild
-                className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl font-medium px-6 py-5 seeds-glow group"
+                className="bg-gradient-to-r from-seeds-300 to-seeds-400 hover:from-seeds-200 hover:to-seeds-300 text-seeds-600 rounded-xl font-medium px-6 py-5 seeds-glow group"
               >
                 <Link href={SOCIALS.TELEGRAM} target="_blank" rel="noopener noreferrer">
                   <MessageCircle className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" />

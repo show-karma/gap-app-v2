@@ -17,26 +17,26 @@ export function LaunchCTA() {
     >
       {/* Multi-layered gradient background */}
       <div className="absolute inset-0" aria-hidden="true">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/60 via-green-50/40 to-teal-100/60 dark:from-emerald-950/40 dark:via-green-950/20 dark:to-teal-950/40" />
+        <div className="absolute inset-0 bg-gradient-to-br from-seeds-300/15 via-seeds-300/5 to-seeds-300/15 dark:from-seeds-300/10 dark:via-seeds-300/5 dark:to-seeds-300/10" />
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-background/80" />
       </div>
 
       {/* Decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="seeds-blob seeds-float absolute top-10 right-10 w-48 h-48 bg-gradient-to-br from-emerald-400/20 to-green-400/10 blur-3xl" />
-        <div className="seeds-blob seeds-float-delayed absolute bottom-10 left-10 w-56 h-56 bg-gradient-to-br from-teal-400/20 to-emerald-400/10 blur-3xl" />
-        <div className="seeds-blob seeds-float-slow absolute top-1/2 right-1/4 w-36 h-36 bg-gradient-to-br from-green-300/15 to-teal-300/10 blur-2xl" />
+        <div className="seeds-blob seeds-float absolute top-10 right-10 w-48 h-48 bg-gradient-to-br from-seeds-300/20 to-seeds-300/10 blur-3xl" />
+        <div className="seeds-blob seeds-float-delayed absolute bottom-10 left-10 w-56 h-56 bg-gradient-to-br from-seeds-300/20 to-seeds-300/10 blur-3xl" />
+        <div className="seeds-blob seeds-float-slow absolute top-1/2 right-1/4 w-36 h-36 bg-gradient-to-br from-seeds-300/15 to-seeds-300/10 blur-2xl" />
 
         {/* Floating rocket icons */}
-        <Rocket className="absolute top-1/4 left-[20%] w-8 h-8 text-emerald-300/25 dark:text-emerald-500/20 seeds-float rotate-45" />
-        <Rocket className="absolute bottom-1/3 right-[15%] w-6 h-6 text-green-300/25 dark:text-green-500/20 seeds-float-delayed rotate-12" />
+        <Rocket className="absolute top-1/4 left-[20%] w-8 h-8 text-seeds-300/25 dark:text-seeds-300/20 seeds-float rotate-45" />
+        <Rocket className="absolute bottom-1/3 right-[15%] w-6 h-6 text-seeds-300/25 dark:text-seeds-300/20 seeds-float-delayed rotate-12" />
       </div>
 
       <SectionContainer className="relative z-10">
         <div className="flex flex-col items-center text-center gap-8 max-w-3xl mx-auto">
           <Badge
             variant="secondary"
-            className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/50 dark:to-green-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-700/50 px-4 py-1.5 text-sm font-medium seeds-pulse"
+            className="bg-gradient-to-r from-seeds-300/10 to-seeds-300/5 dark:from-seeds-300/20 dark:to-seeds-300/10 text-seeds-400 dark:text-seeds-300 border border-seeds-300/30 px-4 py-1.5 text-sm font-medium seeds-pulse"
           >
             <Rocket className="w-4 h-4 mr-2" />
             Ready to Launch?
@@ -55,7 +55,7 @@ export function LaunchCTA() {
             <Button
               asChild
               size="lg"
-              className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl font-semibold px-10 py-7 text-lg seeds-glow group"
+              className="bg-gradient-to-r from-seeds-300 to-seeds-400 hover:from-seeds-200 hover:to-seeds-300 text-seeds-600 rounded-xl font-semibold px-10 py-7 text-lg seeds-glow group"
             >
               <Link href="/dashboard">
                 <Rocket className="w-6 h-6 mr-2 transition-transform group-hover:scale-110" />
@@ -66,7 +66,7 @@ export function LaunchCTA() {
               asChild
               variant="outline"
               size="lg"
-              className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950/50 rounded-xl font-medium px-10 py-7 text-lg group"
+              className="border-seeds-300 text-seeds-400 hover:bg-seeds-300/10 dark:border-seeds-300/50 dark:text-seeds-300 dark:hover:bg-seeds-300/10 rounded-xl font-medium px-10 py-7 text-lg group"
             >
               <Link href={SOCIALS.TELEGRAM} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="w-6 h-6 mr-2 transition-transform group-hover:scale-110" />
@@ -88,9 +88,9 @@ export function LaunchCTA() {
             <Button
               asChild
               variant="ghost"
-              className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-100/50 dark:text-emerald-400 dark:hover:text-emerald-300 dark:hover:bg-emerald-900/30 rounded-xl font-medium px-6 py-5 group"
+              className="text-seeds-400 hover:text-seeds-500 hover:bg-seeds-300/10 dark:text-seeds-300 dark:hover:text-seeds-200 dark:hover:bg-seeds-300/10 rounded-xl font-medium px-6 py-5 group"
             >
-              <Link href="/seeds">
+              <Link href="/seeds/fund">
                 Explore projects with Seeds
                 <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
               </Link>

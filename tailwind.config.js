@@ -249,6 +249,16 @@ module.exports = {
           4: "hsl(var(--chart-4))",
           5: "hsl(var(--chart-5))",
         },
+        // Karma Seeds teal color palette
+        seeds: {
+          50: "#E0F7F4", // Lightest - subtle backgrounds
+          100: "#A7FFEB", // Very light - dark mode gradient end
+          200: "#64FFDA", // Light - hover states
+          300: "#1DE9B6", // Primary - main brand color
+          400: "#00BFA5", // Medium - text/icons light mode
+          500: "#00897B", // Darker - hover text light mode
+          600: "#004D40", // Darkest - button text on light bg
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
