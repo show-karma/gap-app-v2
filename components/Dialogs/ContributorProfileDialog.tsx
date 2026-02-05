@@ -3,6 +3,7 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
+import { X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { type FC, Fragment, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -326,14 +327,7 @@ export const ContributorProfileDialog: FC = () => {
                     className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-300 transition-colors"
                     aria-label="Close dialog"
                   >
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
                 {isAllowed ? (
