@@ -13,6 +13,7 @@ import {
 import { SUPPORTED_TOKENS } from "@/constants/supportedTokens";
 import { useSingleProjectDonation } from "@/hooks/donation/useSingleProjectDonation";
 import { useAuth } from "@/hooks/useAuth";
+import { STRIPE_SUPPORTED_CHAIN_IDS } from "@/lib/onramp";
 import { getPayoutAddressForChain } from "@/src/features/chain-payout-address/hooks/use-chain-payout-address";
 import { PaymentMethod } from "@/types/donations";
 import { appNetwork } from "@/utilities/network";
@@ -21,10 +22,6 @@ import { TokenSelector } from "../TokenSelector";
 import { OnrampFlow } from "./OnrampFlow";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
 import type { SingleProjectDonateModalProps } from "./types";
-
-// Stripe-supported chain IDs for fiat onramp
-// Maps to: ethereum (1), base (8453), polygon (137), avalanche (43114)
-const STRIPE_SUPPORTED_CHAIN_IDS = [1, 8453, 137, 43114];
 
 export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps>(
   ({ isOpen, onClose, project, initialAmount }) => {

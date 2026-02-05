@@ -146,7 +146,7 @@ export function getChainIdByName(name: string) {
 export function getChainNameById(id: number): TNetwork {
   switch (id) {
     case 1:
-      return "mainnet" as TNetwork;
+      return "ethereum" as TNetwork;
     case 10:
       return "optimism";
     case 42161:

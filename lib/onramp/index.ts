@@ -5,5 +5,5 @@ export {
   getProviderConfig,
   getSupportedProviders,
   type OnrampProviderConfig,
-  type OnrampUrlParams,
+  STRIPE_SUPPORTED_CHAIN_IDS,
 } from "./providers";

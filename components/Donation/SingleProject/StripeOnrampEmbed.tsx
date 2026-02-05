@@ -56,6 +56,10 @@ export const StripeOnrampEmbed = React.memo<StripeOnrampEmbedProps>(
         if (!containerRef.current || !clientSecret) return;
 
         try {
+          if (!envVars.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+            throw new Error("Stripe publishable key is not configured");
+          }
+
           const stripeOnramp = await loadStripeOnramp(envVars.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
           if (!stripeOnramp || !mounted) return;

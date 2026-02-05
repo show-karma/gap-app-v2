@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { OnrampProvider, type StripeOnrampSessionData } from "@/hooks/donation/types";
 import { useOnramp } from "@/hooks/donation/useOnramp";
 import { useCountryDetection } from "@/hooks/useCountryDetection";
-import { DEFAULT_ONRAMP_PROVIDER, getProviderConfig } from "@/lib/onramp";
+import { getProviderConfig } from "@/lib/onramp";
 import { getChainNameById } from "@/utilities/network";
 import { OnrampSuccessModal } from "./OnrampSuccessModal";
 import { StripeOnrampEmbed } from "./StripeOnrampEmbed";
