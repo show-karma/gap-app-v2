@@ -2,6 +2,7 @@ export {
   AdminOnly,
   Can,
   Cannot,
+  PermissionDeniedMessage,
   RequirePermission,
   RequireReviewer,
   RequireRole,

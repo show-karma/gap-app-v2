@@ -4,18 +4,31 @@ import { Role } from "../types/role";
 export const PERMISSION_MATRIX: Record<Role, PermissionString[]> = {
   [Role.SUPER_ADMIN]: ["*"],
 
-  [Role.REGISTRY_ADMIN]: ["*"],
-
-  [Role.PROGRAM_CREATOR]: [
-    Permission.PROGRAM_VIEW,
-    Permission.PROGRAM_EDIT,
-    Permission.PROGRAM_VIEW_ANALYTICS,
-  ],
+  // Registry Admin: Only manages the program registry (approve/reject programs)
+  [Role.REGISTRY_ADMIN]: ["registry:*", Permission.PROGRAM_VIEW],
 
   [Role.COMMUNITY_ADMIN]: [
     "community:*",
     "program:*",
+    "application:*",
+    "comment:*",
+    Permission.MILESTONE_VIEW_ALL,
+    Permission.MILESTONE_APPROVE,
+    Permission.MILESTONE_REJECT,
+    Permission.REVIEW_VIEW_ALL,
+    Permission.REVIEW_CREATE,
+  ],
+
+  // Program Creator: Above Program Admin, can manage admins (program context required)
+  [Role.PROGRAM_CREATOR]: [
+    Permission.PROGRAM_VIEW,
+    Permission.PROGRAM_EDIT,
+    Permission.PROGRAM_MANAGE_ADMINS,
+    Permission.PROGRAM_MANAGE_REVIEWERS,
+    Permission.PROGRAM_VIEW_ANALYTICS,
     Permission.APPLICATION_VIEW_ALL,
+    Permission.APPLICATION_READ,
+    Permission.APPLICATION_COMMENT,
     Permission.APPLICATION_APPROVE,
     Permission.APPLICATION_REJECT,
     Permission.APPLICATION_CHANGE_STATUS,
@@ -23,14 +36,20 @@ export const PERMISSION_MATRIX: Record<Role, PermissionString[]> = {
     Permission.MILESTONE_APPROVE,
     Permission.MILESTONE_REJECT,
     Permission.REVIEW_VIEW_ALL,
+    Permission.REVIEW_CREATE,
+    Permission.COMMENT_EDIT_OWN,
+    Permission.COMMENT_DELETE_OWN,
   ],
 
+  // Program Admin: Manages program operations (assigned by Program Creator)
   [Role.PROGRAM_ADMIN]: [
     Permission.PROGRAM_VIEW,
     Permission.PROGRAM_EDIT,
     Permission.PROGRAM_MANAGE_REVIEWERS,
     Permission.PROGRAM_VIEW_ANALYTICS,
     Permission.APPLICATION_VIEW_ALL,
+    Permission.APPLICATION_READ,
+    Permission.APPLICATION_COMMENT,
     Permission.APPLICATION_APPROVE,
     Permission.APPLICATION_REJECT,
     Permission.APPLICATION_CHANGE_STATUS,
@@ -38,14 +57,22 @@ export const PERMISSION_MATRIX: Record<Role, PermissionString[]> = {
     Permission.MILESTONE_APPROVE,
     Permission.MILESTONE_REJECT,
     Permission.REVIEW_VIEW_ALL,
+    Permission.REVIEW_CREATE,
+    Permission.COMMENT_EDIT_OWN,
+    Permission.COMMENT_DELETE_OWN,
   ],
 
   [Role.PROGRAM_REVIEWER]: [
     Permission.PROGRAM_VIEW,
     Permission.APPLICATION_VIEW_ASSIGNED,
+    Permission.APPLICATION_READ,
+    Permission.APPLICATION_COMMENT,
     Permission.APPLICATION_REVIEW,
+    Permission.APPLICATION_CHANGE_STATUS,
     Permission.REVIEW_CREATE,
     Permission.REVIEW_EDIT_OWN,
+    Permission.COMMENT_EDIT_OWN,
+    Permission.COMMENT_DELETE_OWN,
   ],
 
   [Role.MILESTONE_REVIEWER]: [
@@ -54,8 +81,11 @@ export const PERMISSION_MATRIX: Record<Role, PermissionString[]> = {
     Permission.MILESTONE_REVIEW,
     Permission.MILESTONE_APPROVE,
     Permission.MILESTONE_REJECT,
+    Permission.APPLICATION_CHANGE_STATUS,
     Permission.REVIEW_CREATE,
     Permission.REVIEW_EDIT_OWN,
+    Permission.COMMENT_EDIT_OWN,
+    Permission.COMMENT_DELETE_OWN,
   ],
 
   [Role.APPLICANT]: [
@@ -63,11 +93,22 @@ export const PERMISSION_MATRIX: Record<Role, PermissionString[]> = {
     Permission.APPLICATION_VIEW_OWN,
     Permission.APPLICATION_CREATE,
     Permission.APPLICATION_EDIT_OWN,
+    Permission.APPLICATION_READ,
+    Permission.APPLICATION_COMMENT,
     Permission.MILESTONE_VIEW_OWN,
     Permission.MILESTONE_SUBMIT,
+    Permission.COMMENT_EDIT_OWN,
+    Permission.COMMENT_DELETE_OWN,
   ],
 
-  [Role.GUEST]: [Permission.PROGRAM_VIEW],
+  [Role.GUEST]: [
+    Permission.PROGRAM_VIEW,
+    Permission.APPLICATION_READ,
+    Permission.COMMENT_EDIT_OWN,
+    Permission.COMMENT_DELETE_OWN,
+  ],
+
+  [Role.NONE]: [],
 };
 
 export function getPermissionsForRole(role: Role): PermissionString[] {

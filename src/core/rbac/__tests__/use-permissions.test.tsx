@@ -1,14 +1,26 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { permissionsKeys, usePermissionsQuery } from "../hooks/use-permissions";
 import { authorizationService } from "../services/authorization.service";
 import { Permission } from "../types/permission";
 import { Role } from "../types/role";
 
+// Unmock the hook so we test the real implementation (navbar setup globally mocks it)
+jest.unmock("@/src/core/rbac/hooks/use-permissions");
+
 jest.mock("../services/authorization.service");
 
 const mockService = authorizationService as jest.Mocked<typeof authorizationService>;
+
+// Dynamic import after unmocking
+let permissionsKeys: typeof import("../hooks/use-permissions")["permissionsKeys"];
+let usePermissionsQuery: typeof import("../hooks/use-permissions")["usePermissionsQuery"];
+
+beforeAll(async () => {
+  const mod = await import("../hooks/use-permissions");
+  permissionsKeys = mod.permissionsKeys;
+  usePermissionsQuery = mod.usePermissionsQuery;
+});
 
 describe("usePermissions hooks", () => {
   let queryClient: QueryClient;
@@ -53,6 +65,11 @@ describe("usePermissions hooks", () => {
         },
         permissions: [Permission.COMMUNITY_VIEW, Permission.PROGRAM_VIEW],
         resourceContext: {},
+        isCommunityAdmin: false,
+        isProgramAdmin: false,
+        isReviewer: false,
+        isRegistryAdmin: false,
+        isProgramCreator: false,
       });
 
       const { result } = renderHook(() => usePermissionsQuery(), { wrapper });
@@ -75,6 +92,11 @@ describe("usePermissions hooks", () => {
         },
         permissions: [Permission.PROGRAM_VIEW, Permission.PROGRAM_EDIT],
         resourceContext: { programId: "program-123" },
+        isCommunityAdmin: false,
+        isProgramAdmin: true,
+        isReviewer: false,
+        isRegistryAdmin: false,
+        isProgramCreator: false,
       });
 
       const params = {
@@ -102,6 +124,11 @@ describe("usePermissions hooks", () => {
                   roles: { primaryRole: Role.GUEST, roles: [Role.GUEST], reviewerTypes: [] },
                   permissions: [],
                   resourceContext: {},
+                  isCommunityAdmin: false,
+                  isProgramAdmin: false,
+                  isReviewer: false,
+                  isRegistryAdmin: false,
+                  isProgramCreator: false,
                 }),
               100
             )
@@ -124,6 +151,11 @@ describe("usePermissions hooks", () => {
         roles: { primaryRole: Role.GUEST, roles: [Role.GUEST], reviewerTypes: [] },
         permissions: [],
         resourceContext: {},
+        isCommunityAdmin: false,
+        isProgramAdmin: false,
+        isReviewer: false,
+        isRegistryAdmin: false,
+        isProgramCreator: false,
       });
 
       const { result } = renderHook(() => usePermissionsQuery(), { wrapper });
@@ -143,6 +175,11 @@ describe("usePermissions hooks", () => {
         roles: { primaryRole: Role.GUEST, roles: [Role.GUEST], reviewerTypes: [] },
         permissions: [],
         resourceContext: {},
+        isCommunityAdmin: false,
+        isProgramAdmin: false,
+        isReviewer: false,
+        isRegistryAdmin: false,
+        isProgramCreator: false,
       });
 
       const { result, rerender } = renderHook(() => usePermissionsQuery(), { wrapper });

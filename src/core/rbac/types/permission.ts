@@ -8,6 +8,7 @@ export enum Permission {
   PROGRAM_EDIT = "program:edit",
   PROGRAM_MANAGE_REVIEWERS = "program:manage_reviewers",
   PROGRAM_VIEW_ANALYTICS = "program:view_analytics",
+  PROGRAM_MANAGE_ADMINS = "program:manage_admins",
 
   APPLICATION_VIEW_OWN = "application:view_own",
   APPLICATION_VIEW_ASSIGNED = "application:view_assigned",
@@ -29,10 +30,24 @@ export enum Permission {
   MILESTONE_APPROVE = "milestone:approve",
   MILESTONE_REJECT = "milestone:reject",
 
+  REGISTRY_VIEW = "registry:view",
+  REGISTRY_EDIT = "registry:edit",
+  REGISTRY_APPROVE = "registry:approve",
+  REGISTRY_REJECT = "registry:reject",
+
   REVIEW_CREATE = "review:create",
   REVIEW_EDIT_OWN = "review:edit_own",
   REVIEW_VIEW_ALL = "review:view_all",
   REVIEW_DELETE_OWN = "review:delete_own",
+
+  COMMENT_EDIT_OWN = "comment:edit_own",
+  COMMENT_DELETE_OWN = "comment:delete_own",
+}
+
+const PERMISSION_VALUES = new Set(Object.values(Permission));
+
+export function isValidPermission(permission: string): permission is Permission {
+  return PERMISSION_VALUES.has(permission as Permission);
 }
 
 export type PermissionString = Permission | "*" | `${string}:*`;

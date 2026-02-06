@@ -127,13 +127,17 @@ describe("authorizationService", () => {
       expect(mockFetchData).toHaveBeenCalledWith("/v2/auth/permissions");
     });
 
-    it("should include hasReviewerAccessInCommunity when present", async () => {
+    it("should return isReviewer flag from API response", async () => {
       mockFetchData.mockResolvedValue([
         {
           roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
           permissions: ["community:view", "program:view"],
           resourceContext: { communityId: "optimism" },
-          hasReviewerAccessInCommunity: true,
+          isCommunityAdmin: false,
+          isProgramAdmin: false,
+          isReviewer: true,
+          isRegistryAdmin: false,
+          isProgramCreator: false,
         },
         null,
         null,
@@ -144,20 +148,25 @@ describe("authorizationService", () => {
         communityId: "optimism",
       });
 
-      expect(result.hasReviewerAccessInCommunity).toBe(true);
+      expect(result.isReviewer).toBe(true);
       expect(result.roles.primaryRole).toBe("GUEST");
     });
 
-    it("should not include hasReviewerAccessInCommunity when not in response", async () => {
+    it("should return boolean flags from API response", async () => {
       mockFetchData.mockResolvedValue([
         {
           roles: {
-            primaryRole: "PROGRAM_REVIEWER",
-            roles: ["PROGRAM_REVIEWER"],
-            reviewerTypes: ["PROGRAM"],
+            primaryRole: "COMMUNITY_ADMIN",
+            roles: ["COMMUNITY_ADMIN"],
+            reviewerTypes: [],
           },
-          permissions: ["application:review"],
-          resourceContext: { communityId: "optimism", programId: "program-123" },
+          permissions: ["community:view", "community:edit"],
+          resourceContext: { communityId: "optimism" },
+          isCommunityAdmin: true,
+          isProgramAdmin: false,
+          isReviewer: false,
+          isRegistryAdmin: false,
+          isProgramCreator: false,
         },
         null,
         null,
@@ -166,11 +175,12 @@ describe("authorizationService", () => {
 
       const result = await authorizationService.getPermissions({
         communityId: "optimism",
-        programId: "program-123",
       });
 
-      expect(result.hasReviewerAccessInCommunity).toBeUndefined();
-      expect(result.roles.primaryRole).toBe("PROGRAM_REVIEWER");
+      expect(result.isCommunityAdmin).toBe(true);
+      expect(result.isProgramAdmin).toBe(false);
+      expect(result.isReviewer).toBe(false);
+      expect(result.roles.primaryRole).toBe("COMMUNITY_ADMIN");
     });
   });
 });

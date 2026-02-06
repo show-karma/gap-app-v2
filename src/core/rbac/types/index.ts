@@ -1,5 +1,5 @@
 export type { PermissionString } from "./permission";
-export { Permission } from "./permission";
+export { isValidPermission, Permission } from "./permission";
 export type {
   PermissionContextValue,
   PermissionsResponse,
@@ -10,6 +10,7 @@ export {
   getHighestRole,
   getRoleLevel,
   isRoleAtLeast,
+  isValidReviewerType,
   isValidRole,
   ReviewerType,
   ROLE_HIERARCHY,

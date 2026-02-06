@@ -183,3 +183,30 @@ export function AdminOnly({ children, fallback = null, level = "program" }: Admi
     </Can>
   );
 }
+
+/**
+ * Accessible permission denied message component.
+ * Use as a fallback in Can/RequirePermission when users need to understand
+ * why they can't see content.
+ *
+ * @example
+ * ```tsx
+ * <Can
+ *   permission={Permission.PROGRAM_EDIT}
+ *   fallback={<PermissionDeniedMessage message="You need editor access to modify this program." />}
+ * >
+ *   <EditForm />
+ * </Can>
+ * ```
+ */
+export function PermissionDeniedMessage({
+  message = "You do not have permission to view this content.",
+}: {
+  message?: string;
+}) {
+  return (
+    <output aria-live="polite">
+      <p>{message}</p>
+    </output>
+  );
+}

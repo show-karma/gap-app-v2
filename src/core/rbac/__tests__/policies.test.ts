@@ -12,8 +12,10 @@ describe("RBAC Policies", () => {
   describe("PERMISSION_MATRIX", () => {
     it("should have entries for all roles", () => {
       expect(PERMISSION_MATRIX[Role.SUPER_ADMIN]).toBeDefined();
+      expect(PERMISSION_MATRIX[Role.REGISTRY_ADMIN]).toBeDefined();
       expect(PERMISSION_MATRIX[Role.COMMUNITY_ADMIN]).toBeDefined();
       expect(PERMISSION_MATRIX[Role.PROGRAM_ADMIN]).toBeDefined();
+      expect(PERMISSION_MATRIX[Role.PROGRAM_CREATOR]).toBeDefined();
       expect(PERMISSION_MATRIX[Role.PROGRAM_REVIEWER]).toBeDefined();
       expect(PERMISSION_MATRIX[Role.MILESTONE_REVIEWER]).toBeDefined();
       expect(PERMISSION_MATRIX[Role.APPLICANT]).toBeDefined();
@@ -24,9 +26,29 @@ describe("RBAC Policies", () => {
       expect(PERMISSION_MATRIX[Role.SUPER_ADMIN]).toContain("*");
     });
 
+    it("should NOT assign global wildcard to REGISTRY_ADMIN", () => {
+      expect(PERMISSION_MATRIX[Role.REGISTRY_ADMIN]).not.toContain("*");
+    });
+
+    it("should assign registry wildcard and PROGRAM_VIEW to REGISTRY_ADMIN", () => {
+      expect(PERMISSION_MATRIX[Role.REGISTRY_ADMIN]).toContain("registry:*");
+      expect(PERMISSION_MATRIX[Role.REGISTRY_ADMIN]).toContain(Permission.PROGRAM_VIEW);
+    });
+
     it("should assign view permissions to GUEST", () => {
-      // GUEST only has PROGRAM_VIEW (not COMMUNITY_VIEW for security)
       expect(PERMISSION_MATRIX[Role.GUEST]).toContain(Permission.PROGRAM_VIEW);
+      expect(PERMISSION_MATRIX[Role.GUEST]).toContain(Permission.APPLICATION_READ);
+      expect(PERMISSION_MATRIX[Role.GUEST]).toContain(Permission.COMMENT_EDIT_OWN);
+      expect(PERMISSION_MATRIX[Role.GUEST]).toContain(Permission.COMMENT_DELETE_OWN);
+    });
+
+    it("should assign COMMENT_EDIT_OWN and COMMENT_DELETE_OWN to APPLICANT", () => {
+      expect(PERMISSION_MATRIX[Role.APPLICANT]).toContain(Permission.COMMENT_EDIT_OWN);
+      expect(PERMISSION_MATRIX[Role.APPLICANT]).toContain(Permission.COMMENT_DELETE_OWN);
+    });
+
+    it("should assign empty permissions to NONE", () => {
+      expect(PERMISSION_MATRIX[Role.NONE]).toEqual([]);
     });
   });
 
@@ -58,9 +80,11 @@ describe("RBAC Policies", () => {
 
     it("should deduplicate permissions", () => {
       const permissions = getPermissionsForRoles([Role.GUEST, Role.APPLICANT]);
-      // Both GUEST and APPLICANT have PROGRAM_VIEW, should be deduplicated
+      // Both GUEST and APPLICANT share PROGRAM_VIEW, APPLICATION_READ, COMMENT_EDIT_OWN, COMMENT_DELETE_OWN
       const viewCount = permissions.filter((p) => p === Permission.PROGRAM_VIEW).length;
       expect(viewCount).toBe(1);
+      const readCount = permissions.filter((p) => p === Permission.APPLICATION_READ).length;
+      expect(readCount).toBe(1);
     });
   });
 
