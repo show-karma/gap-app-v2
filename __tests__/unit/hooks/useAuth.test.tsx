@@ -7,7 +7,6 @@
 import { act, renderHook } from "@testing-library/react";
 import React, { type ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { TokenManager } from "@/utilities/auth/token-manager";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 // Controllable mock functions for hook tests
@@ -17,6 +16,7 @@ const mockGetAccessToken = jest.fn();
 const mockUsePrivy = jest.fn();
 const mockUseWallets = jest.fn();
 const mockUseAccount = jest.fn();
+const mockGetToken = jest.fn();
 
 // Override global mocks for per-test control
 jest.mock("@privy-io/react-auth", () => ({
@@ -39,6 +39,15 @@ jest.mock("@wagmi/core", () => ({
 jest.mock("@/utilities/query-client", () => ({
   queryClient: {
     removeQueries: jest.fn(),
+  },
+}));
+
+// Mock TokenManager module-level to ensure next/jest resolves the same mock instance
+jest.mock("@/utilities/auth/token-manager", () => ({
+  TokenManager: {
+    getToken: (...args: unknown[]) => mockGetToken(...args),
+    setPrivyInstance: jest.fn(),
+    clearTokens: jest.fn(),
   },
 }));
 
@@ -137,7 +146,6 @@ describe("Cache invalidation pattern verification", () => {
 });
 
 describe("useAuth - Cross-tab logout synchronization", () => {
-  let getTokenSpy: jest.MockedFunction<typeof TokenManager.getToken>;
   let consoleErrorSpy: jest.SpyInstance;
 
   const mockPrivyUser = {
@@ -155,9 +163,7 @@ describe("useAuth - Cross-tab logout synchronization", () => {
   beforeEach(() => {
     jest.useFakeTimers();
     consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-    getTokenSpy = jest
-      .spyOn(TokenManager, "getToken")
-      .mockResolvedValue(null) as jest.MockedFunction<typeof TokenManager.getToken>;
+    mockGetToken.mockResolvedValue(null);
 
     mockUsePrivy.mockReturnValue({
       ready: true,
@@ -183,6 +189,7 @@ describe("useAuth - Cross-tab logout synchronization", () => {
   afterEach(() => {
     jest.useRealTimers();
     jest.restoreAllMocks();
+    mockGetToken.mockReset();
     document.cookie = "privy-session=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   });
 
@@ -222,7 +229,7 @@ describe("useAuth - Cross-tab logout synchronization", () => {
   });
 
   it("should reset failure counter when token becomes available", async () => {
-    getTokenSpy
+    mockGetToken
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(null)
       .mockResolvedValue("valid-token");
@@ -270,19 +277,19 @@ describe("useAuth - Cross-tab logout synchronization", () => {
   it("should delay initial auth check by 500ms", async () => {
     renderHook(() => useAuth(), { wrapper });
 
-    expect(getTokenSpy).not.toHaveBeenCalled();
+    expect(mockGetToken).not.toHaveBeenCalled();
 
     await act(async () => {
       await jest.advanceTimersByTimeAsync(500);
     });
 
-    expect(getTokenSpy).toHaveBeenCalledTimes(1);
+    expect(mockGetToken).toHaveBeenCalledTimes(1);
   });
 
   it("should cleanup timers on unmount", async () => {
     const { unmount } = renderHook(() => useAuth(), { wrapper });
 
-    expect(getTokenSpy).not.toHaveBeenCalled();
+    expect(mockGetToken).not.toHaveBeenCalled();
 
     act(() => {
       unmount();
@@ -290,7 +297,7 @@ describe("useAuth - Cross-tab logout synchronization", () => {
 
     await jest.advanceTimersByTimeAsync(20000);
 
-    expect(getTokenSpy).not.toHaveBeenCalled();
+    expect(mockGetToken).not.toHaveBeenCalled();
   });
 
   it("should trigger checkAuthStatus on storage event", async () => {
@@ -306,7 +313,7 @@ describe("useAuth - Cross-tab logout synchronization", () => {
       await Promise.resolve();
     });
 
-    expect(getTokenSpy).toHaveBeenCalled();
+    expect(mockGetToken).toHaveBeenCalled();
   });
 
   it("should not set up auth checks when not authenticated", async () => {
@@ -325,7 +332,7 @@ describe("useAuth - Cross-tab logout synchronization", () => {
       await jest.advanceTimersByTimeAsync(20000);
     });
 
-    expect(getTokenSpy).not.toHaveBeenCalled();
+    expect(mockGetToken).not.toHaveBeenCalled();
     expect(mockLogout).not.toHaveBeenCalled();
   });
 
