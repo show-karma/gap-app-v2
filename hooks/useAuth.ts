@@ -37,6 +37,17 @@ const AUTH_FAILURE_THRESHOLD = 3;
 const PRIVY_SESSION_COOKIE_NAME = "privy-session";
 
 /**
+ * Check if privy-session cookie exists using proper cookie parsing.
+ * If session exists, user might be in the middle of token refresh (HttpOnly cookies mode).
+ */
+const hasPrivySession = () => {
+  if (typeof document === "undefined") return false;
+  return document.cookie
+    .split(";")
+    .some((c) => c.trim().startsWith(`${PRIVY_SESSION_COOKIE_NAME}=`));
+};
+
+/**
  * Authentication hook that wraps Privy's built-in authentication
  *
  * Privy handles all the complexity:
@@ -108,35 +119,35 @@ export const useAuth = () => {
   useEffect(() => {
     if (!ready || !authenticated) return;
 
-    // Check if privy-session cookie exists using proper cookie parsing.
-    // If session exists, user might be in the middle of token refresh (HttpOnly cookies mode).
-    const hasPrivySession = () => {
-      if (typeof document === "undefined") return false;
-      return document.cookie
-        .split(";")
-        .some((c) => c.trim().startsWith(`${PRIVY_SESSION_COOKIE_NAME}=`));
-    };
-
     const checkAuthStatus = async () => {
-      const hasToken = await TokenManager.getToken();
-      const hasSession = hasPrivySession();
+      try {
+        const hasToken = await TokenManager.getToken();
+        const hasSession = hasPrivySession();
 
-      // If we have either a token or session, auth is valid - reset failure counter
-      if (hasToken || hasSession) {
-        authFailureCount.current = 0;
-        return;
-      }
+        // If we have either a token or session, auth is valid - reset failure counter
+        if (hasToken || hasSession) {
+          authFailureCount.current = 0;
+          return;
+        }
 
-      // No token AND no session - increment failure counter
-      // Only logout after multiple consecutive failures to handle:
-      // - Slow network during token refresh
-      // - Temporary network hiccups
-      // - Privy initialization timing
-      authFailureCount.current += 1;
+        // No token AND no session - increment failure counter
+        // Only logout after multiple consecutive failures to handle:
+        // - Slow network during token refresh
+        // - Temporary network hiccups
+        // - Privy initialization timing
+        authFailureCount.current += 1;
 
-      if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
-        authFailureCount.current = 0;
-        logout();
+        if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
+          authFailureCount.current = 0;
+          logout();
+        }
+      } catch {
+        // Token check failed (network error, etc.) - treat as a failure
+        authFailureCount.current += 1;
+        if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
+          authFailureCount.current = 0;
+          logout();
+        }
       }
     };
 
