@@ -54,7 +54,7 @@ jest.mock("@/store/owner", () => ({
 
 jest.mock("@/store/registry", () => ({
   useRegistryStore: jest.fn(() => ({
-    isPoolManager: false,
+    isProgramCreator: false,
     isRegistryAdmin: false,
   })),
 }));

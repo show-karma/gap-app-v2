@@ -25,7 +25,6 @@ import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { getCommunities } from "@/services/communities.service";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
-import { useRegistryStore } from "@/store/registry";
 import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import fetchData from "@/utilities/fetchData";
@@ -272,8 +271,6 @@ export default function AddProgram({
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const { changeStepperStep, setIsStepper } = useAttestationToast();
-
-  const { isRegistryAdmin } = useRegistryStore();
 
   const createProgram = async (data: CreateProgramType) => {
     setIsLoading(true);

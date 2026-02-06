@@ -91,7 +91,7 @@ describe("NavbarUserMenu", () => {
         mockUsePermissionsQuery: createMockUsePermissionsQuery(authFixture.permissions.isStaff),
         mockUseOwnerStore: createMockUseOwnerStore(authFixture.permissions.isOwner),
         mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
+          authFixture.permissions.isProgramCreator,
           authFixture.permissions.isRegistryAdmin
         ),
         mockUseTheme: createMockUseTheme(),
@@ -302,8 +302,8 @@ describe("NavbarUserMenu", () => {
       expect(screen.getByText("Manage Programs")).toBeInTheDocument();
     });
 
-    it('should show "Manage Programs" when isPoolManager', async () => {
-      await setupAuthAndOpenMenu("pool-manager");
+    it('should show "Manage Programs" when isProgramCreator', async () => {
+      await setupAuthAndOpenMenu("program-creator");
       expect(screen.getByText("Manage Programs")).toBeInTheDocument();
     });
   });

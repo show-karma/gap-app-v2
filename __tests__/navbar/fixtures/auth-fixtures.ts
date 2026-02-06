@@ -36,7 +36,7 @@ export interface MockPermissionsState {
   isOwner: boolean;
 
   // Registry
-  isPoolManager: boolean;
+  isProgramCreator: boolean;
   isRegistryAdmin: boolean;
 }
 
@@ -97,7 +97,7 @@ export const authFixtures: AuthFixture[] = [
       reviewerPrograms: [],
       isStaff: false,
       isOwner: false,
-      isPoolManager: false,
+      isProgramCreator: false,
       isRegistryAdmin: false,
     },
     expectedElements: {
@@ -133,7 +133,7 @@ export const authFixtures: AuthFixture[] = [
       reviewerPrograms: [],
       isStaff: false,
       isOwner: false,
-      isPoolManager: false,
+      isProgramCreator: false,
       isRegistryAdmin: false,
     },
     expectedElements: {
@@ -163,7 +163,7 @@ export const authFixtures: AuthFixture[] = [
       reviewerPrograms: [],
       isStaff: false,
       isOwner: false,
-      isPoolManager: false,
+      isProgramCreator: false,
       isRegistryAdmin: false,
     },
     expectedElements: {
@@ -197,7 +197,7 @@ export const authFixtures: AuthFixture[] = [
       reviewerPrograms: [],
       isStaff: false,
       isOwner: false,
-      isPoolManager: false,
+      isProgramCreator: false,
       isRegistryAdmin: false,
     },
     expectedElements: {
@@ -227,7 +227,7 @@ export const authFixtures: AuthFixture[] = [
       reviewerPrograms: [createMockProgram()],
       isStaff: false,
       isOwner: false,
-      isPoolManager: false,
+      isProgramCreator: false,
       isRegistryAdmin: false,
     },
     expectedElements: {
@@ -270,7 +270,7 @@ export const authFixtures: AuthFixture[] = [
       ],
       isStaff: false,
       isOwner: false,
-      isPoolManager: false,
+      isProgramCreator: false,
       isRegistryAdmin: false,
     },
     expectedElements: {
@@ -300,7 +300,7 @@ export const authFixtures: AuthFixture[] = [
       reviewerPrograms: [],
       isStaff: true,
       isOwner: false,
-      isPoolManager: false,
+      isProgramCreator: false,
       isRegistryAdmin: false,
     },
     expectedElements: {
@@ -330,7 +330,7 @@ export const authFixtures: AuthFixture[] = [
       reviewerPrograms: [],
       isStaff: false,
       isOwner: true,
-      isPoolManager: false,
+      isProgramCreator: false,
       isRegistryAdmin: false,
     },
     expectedElements: {
@@ -345,10 +345,10 @@ export const authFixtures: AuthFixture[] = [
     },
   },
 
-  // 9. Pool Manager
+  // 9. Program Creator
   {
-    name: "pool-manager",
-    description: "Registry pool manager",
+    name: "program-creator",
+    description: "User who has created programs in the registry",
     authState: {
       ready: true,
       authenticated: true,
@@ -360,7 +360,7 @@ export const authFixtures: AuthFixture[] = [
       reviewerPrograms: [],
       isStaff: false,
       isOwner: false,
-      isPoolManager: true,
+      isProgramCreator: true,
       isRegistryAdmin: false,
     },
     expectedElements: {
@@ -390,7 +390,7 @@ export const authFixtures: AuthFixture[] = [
       reviewerPrograms: [],
       isStaff: false,
       isOwner: false,
-      isPoolManager: false,
+      isProgramCreator: false,
       isRegistryAdmin: true,
     },
     expectedElements: {
@@ -420,7 +420,7 @@ export const authFixtures: AuthFixture[] = [
       reviewerPrograms: [createMockProgram()],
       isStaff: false,
       isOwner: false,
-      isPoolManager: false,
+      isProgramCreator: false,
       isRegistryAdmin: false,
     },
     expectedElements: {
@@ -450,7 +450,7 @@ export const authFixtures: AuthFixture[] = [
       reviewerPrograms: [createMockProgram()],
       isStaff: true,
       isOwner: false,
-      isPoolManager: false,
+      isProgramCreator: false,
       isRegistryAdmin: false,
     },
     expectedElements: {
@@ -480,7 +480,7 @@ export const authFixtures: AuthFixture[] = [
       reviewerPrograms: [],
       isStaff: false,
       isOwner: false,
-      isPoolManager: false,
+      isProgramCreator: false,
       isRegistryAdmin: true,
     },
     expectedElements: {
@@ -510,7 +510,7 @@ export const authFixtures: AuthFixture[] = [
       reviewerPrograms: [createMockProgram()],
       isStaff: true,
       isOwner: true,
-      isPoolManager: true,
+      isProgramCreator: true,
       isRegistryAdmin: true,
     },
     expectedElements: {
@@ -540,7 +540,7 @@ export const authFixtures: AuthFixture[] = [
       reviewerPrograms: [],
       isStaff: false,
       isOwner: false,
-      isPoolManager: false,
+      isProgramCreator: false,
       isRegistryAdmin: false,
     },
     expectedElements: {

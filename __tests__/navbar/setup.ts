@@ -319,7 +319,7 @@ jest.mock("@/store", () => ({
 }));
 
 jest.mock("@/store/registry", () => ({
-  useRegistryStore: jest.fn(() => ({ isPoolManager: false, isRegistryAdmin: false })),
+  useRegistryStore: jest.fn(() => ({ isProgramCreator: false, isRegistryAdmin: false })),
 }));
 
 jest.mock("@/store/modals/contributorProfile", () => ({
@@ -343,7 +343,7 @@ export const mockNavbarPermissionsState = {
     isCommunityAdmin: false,
     hasReviewerRole: false,
     reviewerPrograms: [],
-    isPoolManager: false,
+    isProgramCreator: false,
     isRegistryAdmin: false,
     hasAdminAccess: false,
     isRegistryAllowed: false,

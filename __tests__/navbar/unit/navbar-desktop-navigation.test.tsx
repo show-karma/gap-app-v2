@@ -347,7 +347,7 @@ describe("NavbarDesktopNavigation", () => {
         mockUsePermissionsQuery: createMockUsePermissionsQuery(authFixture.permissions.isStaff),
         mockUseOwnerStore: createMockUseOwnerStore(authFixture.permissions.isOwner),
         mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
+          authFixture.permissions.isProgramCreator,
           authFixture.permissions.isRegistryAdmin
         ),
         mockUseTheme: createMockUseTheme(),
