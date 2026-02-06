@@ -1,9 +1,46 @@
 /**
  * @file Tests for useAuth hook
  * @description Tests cache invalidation on logout using centralized QUERY_KEYS
+ * and cross-tab logout synchronization with failure threshold
  */
 
+import { act, renderHook } from "@testing-library/react";
+import React, { type ReactNode } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { TokenManager } from "@/utilities/auth/token-manager";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
+
+// Controllable mock functions for hook tests
+const mockLogin = jest.fn();
+const mockLogout = jest.fn();
+const mockGetAccessToken = jest.fn();
+const mockUsePrivy = jest.fn();
+const mockUseWallets = jest.fn();
+const mockUseAccount = jest.fn();
+
+// Override global mocks for per-test control
+jest.mock("@privy-io/react-auth", () => ({
+  usePrivy: () => mockUsePrivy(),
+  useWallets: () => mockUseWallets(),
+}));
+
+jest.mock("wagmi", () => ({
+  useAccount: () => mockUseAccount(),
+  useConnect: jest.fn(() => ({ connect: jest.fn(), connectors: [] })),
+  useDisconnect: jest.fn(() => ({ disconnect: jest.fn() })),
+  useSwitchChain: jest.fn(() => ({ switchChain: jest.fn() })),
+  createConfig: jest.fn(),
+}));
+
+jest.mock("@wagmi/core", () => ({
+  watchAccount: jest.fn(() => jest.fn()),
+}));
+
+jest.mock("@/utilities/query-client", () => ({
+  queryClient: {
+    removeQueries: jest.fn(),
+  },
+}));
 
 describe("useAuth - Query Key Consistency", () => {
   describe("QUERY_KEYS structure for cache invalidation", () => {
@@ -96,5 +133,264 @@ describe("Cache invalidation pattern verification", () => {
     const ownerBase = QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE;
     const ownerFull = QUERY_KEYS.AUTH.CONTRACT_OWNER("0xaddr", 10);
     expect(ownerFull[0]).toBe(ownerBase[0]);
+  });
+});
+
+describe("useAuth - Cross-tab logout synchronization", () => {
+  let getTokenSpy: jest.MockedFunction<typeof TokenManager.getToken>;
+  let consoleErrorSpy: jest.SpyInstance;
+
+  const mockPrivyUser = {
+    id: "user-123",
+    wallet: { address: "0x1234567890123456789012345678901234567890" },
+  };
+
+  const mockWallet = {
+    address: "0x1234567890123456789012345678901234567890",
+    chainId: "eip155:10",
+  };
+
+  const wrapper = ({ children }: { children: ReactNode }) => <>{children}</>;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    getTokenSpy = jest
+      .spyOn(TokenManager, "getToken")
+      .mockResolvedValue(null) as jest.MockedFunction<typeof TokenManager.getToken>;
+
+    mockUsePrivy.mockReturnValue({
+      ready: true,
+      authenticated: true,
+      user: mockPrivyUser,
+      login: mockLogin,
+      logout: mockLogout,
+      getAccessToken: mockGetAccessToken,
+    });
+
+    mockUseWallets.mockReturnValue({
+      wallets: [mockWallet],
+    });
+
+    mockUseAccount.mockReturnValue({
+      address: mockWallet.address,
+      isConnected: true,
+      isConnecting: false,
+      isDisconnected: false,
+    });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+    document.cookie = "privy-session=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  });
+
+  it("should not logout when under failure threshold", async () => {
+    renderHook(() => useAuth(), { wrapper });
+
+    // 1st failure: initial delayed check at 500ms
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(500);
+    });
+    expect(mockLogout).not.toHaveBeenCalled();
+
+    // 2nd failure: first interval tick at 5000ms
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(4500);
+    });
+    expect(mockLogout).not.toHaveBeenCalled();
+  });
+
+  it("should logout after 3 consecutive failures", async () => {
+    renderHook(() => useAuth(), { wrapper });
+
+    // 1st failure at 500ms
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(500);
+    });
+    // 2nd failure at 5000ms
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(4500);
+    });
+    // 3rd failure at 10000ms → triggers logout
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(5000);
+    });
+
+    expect(mockLogout).toHaveBeenCalled();
+  });
+
+  it("should reset failure counter when token becomes available", async () => {
+    getTokenSpy
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValue("valid-token");
+
+    renderHook(() => useAuth(), { wrapper });
+
+    // 1st failure
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(500);
+    });
+    // 2nd failure
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(4500);
+    });
+    // 3rd call: token available → counter resets
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(5000);
+    });
+
+    expect(mockLogout).not.toHaveBeenCalled();
+  });
+
+  it("should detect privy-session cookie and prevent logout", async () => {
+    document.cookie = "privy-session=abc123";
+
+    renderHook(() => useAuth(), { wrapper });
+
+    // Advance through 4 check intervals
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(500);
+    });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(4500);
+    });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(5000);
+    });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(5000);
+    });
+
+    expect(mockLogout).not.toHaveBeenCalled();
+  });
+
+  it("should delay initial auth check by 500ms", async () => {
+    renderHook(() => useAuth(), { wrapper });
+
+    expect(getTokenSpy).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(500);
+    });
+
+    expect(getTokenSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("should cleanup timers on unmount", async () => {
+    const { unmount } = renderHook(() => useAuth(), { wrapper });
+
+    expect(getTokenSpy).not.toHaveBeenCalled();
+
+    act(() => {
+      unmount();
+    });
+
+    await jest.advanceTimersByTimeAsync(20000);
+
+    expect(getTokenSpy).not.toHaveBeenCalled();
+  });
+
+  it("should trigger checkAuthStatus on storage event", async () => {
+    renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "privy:token",
+          newValue: null,
+        })
+      );
+      await Promise.resolve();
+    });
+
+    expect(getTokenSpy).toHaveBeenCalled();
+  });
+
+  it("should not set up auth checks when not authenticated", async () => {
+    mockUsePrivy.mockReturnValue({
+      ready: true,
+      authenticated: false,
+      user: null,
+      login: mockLogin,
+      logout: mockLogout,
+      getAccessToken: mockGetAccessToken,
+    });
+
+    renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(20000);
+    });
+
+    expect(getTokenSpy).not.toHaveBeenCalled();
+    expect(mockLogout).not.toHaveBeenCalled();
+  });
+
+  it("should reset failure counter on logout and re-login", async () => {
+    const { rerender } = renderHook(() => useAuth(), { wrapper });
+
+    // Accumulate 2 failures
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(500);
+    });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(4500);
+    });
+
+    // Simulate logout: authenticated → false
+    mockUsePrivy.mockReturnValue({
+      ready: true,
+      authenticated: false,
+      user: null,
+      login: mockLogin,
+      logout: mockLogout,
+      getAccessToken: mockGetAccessToken,
+    });
+    mockUseWallets.mockReturnValue({ wallets: [] });
+
+    await act(async () => {
+      rerender();
+    });
+
+    // Simulate re-login: authenticated → true
+    mockUsePrivy.mockReturnValue({
+      ready: true,
+      authenticated: true,
+      user: mockPrivyUser,
+      login: mockLogin,
+      logout: mockLogout,
+      getAccessToken: mockGetAccessToken,
+    });
+    mockUseWallets.mockReturnValue({ wallets: [mockWallet] });
+    mockUseAccount.mockReturnValue({
+      address: mockWallet.address,
+      isConnected: true,
+      isConnecting: false,
+      isDisconnected: false,
+    });
+
+    await act(async () => {
+      rerender();
+    });
+
+    mockLogout.mockClear();
+
+    // Need 3 new failures (counter was reset)
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(500);
+    });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(4500);
+    });
+    expect(mockLogout).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(5000);
+    });
+
+    expect(mockLogout).toHaveBeenCalled();
   });
 });
