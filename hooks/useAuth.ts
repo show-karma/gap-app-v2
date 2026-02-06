@@ -56,6 +56,31 @@ const hasPrivySession = () => {
 };
 
 /**
+ * Clear wagmi's persisted localStorage state.
+ * Wagmi persists wallet connection state (address, connector) to localStorage
+ * with the "wagmi" prefix. Without clearing this on logout, the next login
+ * will read stale wallet data from the previous user's session, causing
+ * address mismatches between Privy (correct) and wagmi (stale).
+ */
+const clearWagmiState = () => {
+  if (typeof window === "undefined") return;
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith("wagmi")) {
+        keysToRemove.push(key);
+      }
+    }
+    for (const key of keysToRemove) {
+      localStorage.removeItem(key);
+    }
+  } catch {
+    // Ignore localStorage errors (e.g., private browsing, storage full)
+  }
+};
+
+/**
  * Authentication hook that wraps Privy's built-in authentication
  *
  * Privy handles all the complexity:
@@ -98,6 +123,7 @@ export const useAuth = () => {
       // - clear() is safe on logout since unauthenticated state needs fresh data anyway
       queryClient.clear();
       TokenManager.clearCache();
+      clearWagmiState();
       authFailureCount.current = 0;
     }
 
@@ -108,6 +134,7 @@ export const useAuth = () => {
     if (authenticated && user?.id && prevUserIdRef.current && user.id !== prevUserIdRef.current) {
       queryClient.clear();
       TokenManager.clearCache();
+      clearWagmiState();
       logout();
     }
 
@@ -134,9 +161,13 @@ export const useAuth = () => {
   useEffect(() => {
     if (!ready || !authenticated) return;
 
-    const handleAuthFailure = () => {
+    const handleAuthFailure = (reason: string) => {
       authFailureCount.current += 1;
+      console.debug(
+        `[useAuth] Auth failure #${authFailureCount.current}/${AUTH_FAILURE_THRESHOLD}: ${reason}`
+      );
       if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
+        console.debug("[useAuth] Failure threshold reached, logging out");
         authFailureCount.current = 0;
         logout();
       }
@@ -158,10 +189,10 @@ export const useAuth = () => {
         // - Slow network during token refresh
         // - Temporary network hiccups
         // - Privy initialization timing
-        handleAuthFailure();
+        handleAuthFailure("no token and no session");
       } catch {
         // Token check failed (network error, etc.) - treat as a failure
-        handleAuthFailure();
+        handleAuthFailure("token check threw an error");
       }
     };
 

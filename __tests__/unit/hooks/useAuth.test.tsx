@@ -151,6 +151,16 @@ describe("Cache invalidation on logout", () => {
     });
   });
 
+  afterEach(() => {
+    // Clean up any wagmi keys set during tests
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith("wagmi")) keysToRemove.push(key);
+    }
+    for (const key of keysToRemove) localStorage.removeItem(key);
+  });
+
   it("should clear all query caches on logout", async () => {
     const { rerender } = renderHook(() => useAuth(), { wrapper });
 
@@ -208,6 +218,92 @@ describe("Cache invalidation on logout", () => {
 
     expect(mockQueryClientClear).not.toHaveBeenCalled();
     expect(mockLogout).not.toHaveBeenCalled();
+  });
+
+  it("should clear wagmi localStorage keys on logout", async () => {
+    // Seed localStorage with wagmi keys
+    localStorage.setItem("wagmi.store", JSON.stringify({ state: { connections: {} } }));
+    localStorage.setItem("wagmi.recentConnectorId", '"injected"');
+    localStorage.setItem("wagmi.cache", "some-cache-data");
+
+    const { rerender } = renderHook(() => useAuth(), { wrapper });
+
+    // Simulate logout: authenticated → false
+    mockUsePrivy.mockReturnValue({
+      ready: true,
+      authenticated: false,
+      user: null,
+      login: mockLogin,
+      logout: mockLogout,
+      getAccessToken: mockGetAccessToken,
+    });
+
+    await act(async () => {
+      rerender();
+    });
+
+    expect(localStorage.getItem("wagmi.store")).toBeNull();
+    expect(localStorage.getItem("wagmi.recentConnectorId")).toBeNull();
+    expect(localStorage.getItem("wagmi.cache")).toBeNull();
+  });
+
+  it("should clear wagmi localStorage keys on user identity change", async () => {
+    // Seed localStorage with wagmi keys
+    localStorage.setItem("wagmi.store", JSON.stringify({ state: { connections: {} } }));
+    localStorage.setItem("wagmi.recentConnectorId", '"injected"');
+
+    const { rerender } = renderHook(() => useAuth(), { wrapper });
+
+    // Simulate user switch: different user.id, still authenticated
+    const newUser = { id: "user-456", wallet: { address: "0xABCD" } };
+    mockUsePrivy.mockReturnValue({
+      ready: true,
+      authenticated: true,
+      user: newUser,
+      login: mockLogin,
+      logout: mockLogout,
+      getAccessToken: mockGetAccessToken,
+    });
+
+    await act(async () => {
+      rerender();
+    });
+
+    expect(localStorage.getItem("wagmi.store")).toBeNull();
+    expect(localStorage.getItem("wagmi.recentConnectorId")).toBeNull();
+  });
+
+  it("should not clear non-wagmi localStorage keys on logout", async () => {
+    // Seed localStorage with wagmi and non-wagmi keys
+    localStorage.setItem("wagmi.store", "wagmi-data");
+    localStorage.setItem("app-preference", "dark-mode");
+    localStorage.setItem("privy:token", "some-token");
+
+    const { rerender } = renderHook(() => useAuth(), { wrapper });
+
+    // Simulate logout
+    mockUsePrivy.mockReturnValue({
+      ready: true,
+      authenticated: false,
+      user: null,
+      login: mockLogin,
+      logout: mockLogout,
+      getAccessToken: mockGetAccessToken,
+    });
+
+    await act(async () => {
+      rerender();
+    });
+
+    // wagmi key should be cleared
+    expect(localStorage.getItem("wagmi.store")).toBeNull();
+    // Non-wagmi keys should remain untouched
+    expect(localStorage.getItem("app-preference")).toBe("dark-mode");
+    expect(localStorage.getItem("privy:token")).toBe("some-token");
+
+    // Clean up non-wagmi keys
+    localStorage.removeItem("app-preference");
+    localStorage.removeItem("privy:token");
   });
 });
 
