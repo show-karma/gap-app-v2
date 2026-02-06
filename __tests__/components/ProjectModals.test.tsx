@@ -20,19 +20,8 @@ let mockIsEndorsementOpen = false;
 let mockIsProgressModalOpen = false;
 let mockIsShareDialogOpen = false;
 let mockIsContributorProfileOpen = false;
-let mockOpenContributorProfileModal = jest.fn();
-
-// Mock search params
-let mockInviteCode: string | null = null;
-
-jest.mock("next/navigation", () => ({
-  useSearchParams: () => ({
-    get: (key: string) => {
-      if (key === "invite-code") return mockInviteCode;
-      return null;
-    },
-  }),
-}));
+// Note: Invite-code auto-open logic has been moved to ProjectProfileLayout (v2).
+// ProjectModals no longer handles invite-code detection.
 
 jest.mock("@/store/modals/intro", () => ({
   useIntroModalStore: () => ({
@@ -61,7 +50,6 @@ jest.mock("@/store/modals/shareDialog", () => ({
 jest.mock("@/store/modals/contributorProfile", () => ({
   useContributorProfileModalStore: () => ({
     isModalOpen: mockIsContributorProfileOpen,
-    openModal: mockOpenContributorProfileModal,
   }),
 }));
 
@@ -102,8 +90,6 @@ describe("ProjectModals", () => {
     mockIsProgressModalOpen = false;
     mockIsShareDialogOpen = false;
     mockIsContributorProfileOpen = false;
-    mockOpenContributorProfileModal = jest.fn();
-    mockInviteCode = null;
   });
 
   describe("Initial State", () => {
@@ -205,32 +191,6 @@ describe("ProjectModals", () => {
       render(<ProjectModals />);
 
       expect(screen.queryByTestId("contributor-profile-dialog")).not.toBeInTheDocument();
-    });
-  });
-
-  describe("Invite Code Auto-Open", () => {
-    it("should call openModal when invite-code is present in URL", () => {
-      mockInviteCode = "test-invite-code-123";
-      mockIsContributorProfileOpen = false;
-      render(<ProjectModals />);
-
-      expect(mockOpenContributorProfileModal).toHaveBeenCalled();
-    });
-
-    it("should not call openModal when invite-code is not present", () => {
-      mockInviteCode = null;
-      mockIsContributorProfileOpen = false;
-      render(<ProjectModals />);
-
-      expect(mockOpenContributorProfileModal).not.toHaveBeenCalled();
-    });
-
-    it("should not call openModal when modal is already open", () => {
-      mockInviteCode = "test-invite-code-123";
-      mockIsContributorProfileOpen = true;
-      render(<ProjectModals />);
-
-      expect(mockOpenContributorProfileModal).not.toHaveBeenCalled();
     });
   });
 

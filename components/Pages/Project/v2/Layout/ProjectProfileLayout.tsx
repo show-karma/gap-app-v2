@@ -101,8 +101,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   const { isEndorsementOpen } = useEndorsementStore();
   const { isIntroModalOpen } = useIntroModalStore();
   const { isProgressModalOpen } = useProgressModalStore();
-  const { isModalOpen: isContributorProfileOpen, openModal: openContributorProfileModal } =
-    useContributorProfileModalStore();
+  const { openModal: openContributorProfileModal } = useContributorProfileModalStore();
   const [isEndorsementsListOpen, setIsEndorsementsListOpen] = useState(false);
 
   // Auto-open contributor profile modal when invite code is present in URL (only once)
