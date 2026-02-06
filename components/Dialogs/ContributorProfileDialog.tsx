@@ -3,6 +3,7 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
+import { X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { type FC, Fragment, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -161,77 +162,81 @@ export const ContributorProfileDialog: FC = () => {
         recipient: (smartWalletAddress || address) as `0x${string}`,
         schema: gapClient.findSchema("ContributorProfile"),
       });
-      await contributorProfile.attest(walletSigner as any, changeStepperStep).then(async (res) => {
-        showLoading("Indexing profile...");
+      const res = await contributorProfile.attest(walletSigner as any, changeStepperStep);
+      showLoading("Indexing profile...");
 
-        if (!isProjectMember && !isGlobal && inviteCodeParam) {
-          const [_data, error] = await fetchData(
-            INDEXER.PROJECT.INVITATION.ACCEPT_LINK(project?.uid as string),
-            "POST",
-            {
-              hash: inviteCodeParam,
-            }
+      if (!isProjectMember && !isGlobal && inviteCodeParam) {
+        const [_data, error] = await fetchData(
+          INDEXER.PROJECT.INVITATION.ACCEPT_LINK(project?.uid as string),
+          "POST",
+          {
+            hash: inviteCodeParam,
+          }
+        );
+        if (error) throw error;
+      }
+
+      const txHash = res?.tx[0]?.hash;
+      if (txHash) {
+        await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, targetChainId), "POST", {});
+      } else {
+        await fetchData(INDEXER.ATTESTATION_LISTENER(contributorProfile.uid, targetChainId), "POST", {});
+      }
+
+      for (let attempt = 0; attempt < 20; attempt++) {
+        if (!isProjectMember && !isGlobal) {
+          const refreshedProject = await refreshProject();
+          const hasMember = refreshedProject?.members.find(
+            (item: { address: string; role: string; joinedAt: string }) =>
+              item.address?.toLowerCase() === address?.toLowerCase()
           );
-          if (error) throw error;
-        }
-        let retries = 1000;
-        const txHash = res?.tx[0]?.hash;
-        if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, targetChainId), "POST", {});
-        }
+          if (hasMember) {
+            showSuccess("Congrats! You have joined the team successfully");
+            refetchTeamProfiles();
+            setTimeout(() => {
+              dismiss();
+              closeModal();
+            }, 1500);
+            return;
+          }
+        } else {
+          const { data: updatedProfile } = await refetchProfile();
+          if (updatedProfile?.data) {
+            const profileFetched = {
+              aboutMe: updatedProfile.data.aboutMe,
+              github: updatedProfile.data.github,
+              linkedin: updatedProfile.data.linkedin,
+              name: updatedProfile.data.name,
+              twitter: updatedProfile.data.twitter,
+              farcaster: updatedProfile.data.farcaster,
+            } as SchemaType;
 
-        while (retries > 0) {
-          if (!isProjectMember && !isGlobal) {
-            await refreshProject().then(async (refreshedProject) => {
-              // Check if the member is already in the project
-              const hasMember = refreshedProject?.members.find(
-                (item: { address: string; role: string; joinedAt: string }) =>
-                  item.address?.toLowerCase() === address?.toLowerCase()
-              );
-              // If the member is already in the project, update the profile
-              if (hasMember) {
-                retries = 0;
-                showSuccess("Congrats! You have joined the team successfully");
-                refetchTeamProfiles();
-                setTimeout(() => {
-                  dismiss();
-                  closeModal();
-                }, 1500);
-              }
-            });
-          } else {
-            // Refetch profile to check if it's updated
-            const { data: updatedProfile } = await refetchProfile();
-            if (updatedProfile?.data) {
-              const profileFetched = {
-                aboutMe: updatedProfile.data.aboutMe,
-                github: updatedProfile.data.github,
-                linkedin: updatedProfile.data.linkedin,
-                name: updatedProfile.data.name,
-                twitter: updatedProfile.data.twitter,
-                farcaster: updatedProfile.data.farcaster,
-              } as SchemaType;
-
-              const isUpdated = Object.keys(profileFetched).every(
-                (key: string) =>
-                  profileFetched[key as keyof SchemaType] === data[key as keyof SchemaType]
-              );
-              if (isUpdated) {
-                retries = 0;
-                showSuccess("Profile updated successfully");
-                refetchTeamProfiles();
-                setTimeout(() => {
-                  dismiss();
-                  closeModal();
-                }, 1500);
-              }
+            const isUpdated = Object.keys(profileFetched).every(
+              (key: string) =>
+                profileFetched[key as keyof SchemaType] === data[key as keyof SchemaType]
+            );
+            if (isUpdated) {
+              showSuccess("Profile updated successfully");
+              refetchTeamProfiles();
+              setTimeout(() => {
+                dismiss();
+                closeModal();
+              }, 1500);
+              return;
             }
           }
-          retries -= 1;
-          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-          await new Promise((resolve) => setTimeout(resolve, 1500));
         }
-      });
+        // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+
+      // Retries exhausted — profile was submitted but indexer hasn't confirmed yet
+      showLoading("Profile submitted. It may take a moment to appear.");
+      refetchTeamProfiles();
+      setTimeout(() => {
+        dismiss();
+        closeModal();
+      }, 2000);
       return;
     } catch (e) {
       showError("Failed to save profile");
@@ -273,7 +278,7 @@ export const ContributorProfileDialog: FC = () => {
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-[100]" onClose={closeModal}>
+      <Dialog as="div" className="relative z-[100]" onClose={isLoading ? () => {} : closeModal}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -298,14 +303,28 @@ export const ContributorProfileDialog: FC = () => {
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
-                <Dialog.Title
-                  as="h3"
-                  className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
-                >
-                  {isEditing
-                    ? "Edit your profile"
-                    : `Accept invite to join ${project?.details?.title || "this project"}`}
-                </Dialog.Title>
+                <div className="flex items-start justify-between">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
+                  >
+                    {isEditing
+                      ? "Edit your profile"
+                      : `Accept invite to join ${project?.details?.title || "this project"}`}
+                  </Dialog.Title>
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    disabled={isLoading}
+                    className={cn(
+                      "rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-300 transition-colors",
+                      isLoading && "opacity-50 cursor-not-allowed"
+                    )}
+                    aria-label="Close dialog"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
                 {isAllowed ? (
                   <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="flex flex-col gap-2 mt-8">

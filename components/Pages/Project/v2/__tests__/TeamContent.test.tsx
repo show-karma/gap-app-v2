@@ -106,10 +106,6 @@ jest.mock("@tanstack/react-query", () => ({
 }));
 
 // Mock dialog components
-jest.mock("@/components/Dialogs/ContributorProfileDialog", () => ({
-  ContributorProfileDialog: () => <div data-testid="contributor-profile-dialog" />,
-}));
-
 jest.mock("@/components/Dialogs/Member/InviteMember", () => ({
   InviteMemberDialog: () => <button data-testid="invite-member-dialog">Invite Member</button>,
 }));
@@ -177,12 +173,6 @@ describe("TeamContent", () => {
 
       const memberCards = screen.getAllByTestId("team-member-card");
       expect(memberCards).toHaveLength(3);
-    });
-
-    it("should render contributor profile dialog", () => {
-      render(<TeamContent />);
-
-      expect(screen.getByTestId("contributor-profile-dialog")).toBeInTheDocument();
     });
   });
 

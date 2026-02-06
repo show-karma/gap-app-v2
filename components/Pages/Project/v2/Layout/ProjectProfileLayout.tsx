@@ -13,6 +13,7 @@ import {
 } from "@/components/Pages/Project/ProjectOptionsMenu";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
+import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
@@ -100,7 +101,18 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   const { isEndorsementOpen } = useEndorsementStore();
   const { isIntroModalOpen } = useIntroModalStore();
   const { isProgressModalOpen } = useProgressModalStore();
+  const { openModal: openContributorProfileModal } = useContributorProfileModalStore();
   const [isEndorsementsListOpen, setIsEndorsementsListOpen] = useState(false);
+
+  // Auto-open contributor profile modal when invite code is present in URL (only once)
+  const inviteCode = searchParams.get("invite-code");
+  const [hasOpenedInviteModal, setHasOpenedInviteModal] = useState(false);
+  useEffect(() => {
+    if (inviteCode && !hasOpenedInviteModal) {
+      setHasOpenedInviteModal(true);
+      openContributorProfileModal();
+    }
+  }, [inviteCode, hasOpenedInviteModal, openContributorProfileModal]);
 
   // Use unified hook for all project profile data
   const { project, isLoading, isError, isVerified, stats } = useProjectProfile(projectId as string);
