@@ -40,6 +40,8 @@ export interface FundingProgramMetadata {
   platformsUsed?: string[];
   status: string;
   communityRef?: string[];
+  adminEmails?: string[];
+  financeEmails?: string[];
 }
 
 /**
