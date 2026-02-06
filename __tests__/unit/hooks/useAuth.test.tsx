@@ -150,8 +150,6 @@ describe("Cache invalidation pattern verification", () => {
 });
 
 describe("useAuth - Cross-tab logout synchronization", () => {
-  let consoleErrorSpy: jest.SpyInstance;
-
   const mockPrivyUser = {
     id: "user-123",
     wallet: { address: "0x1234567890123456789012345678901234567890" },
@@ -166,7 +164,7 @@ describe("useAuth - Cross-tab logout synchronization", () => {
 
   beforeEach(() => {
     jest.useFakeTimers();
-    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    jest.spyOn(console, "error").mockImplementation(() => {});
     mockGetToken.mockResolvedValue(null);
 
     mockUsePrivy.mockReturnValue({
@@ -398,6 +396,27 @@ describe("useAuth - Cross-tab logout synchronization", () => {
     });
     expect(mockLogout).not.toHaveBeenCalled();
 
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(5000);
+    });
+
+    expect(mockLogout).toHaveBeenCalled();
+  });
+
+  it("should treat token check errors as failures", async () => {
+    mockGetToken.mockRejectedValue(new Error("network error"));
+
+    renderHook(() => useAuth(), { wrapper });
+
+    // 1st failure (error) at 500ms
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(500);
+    });
+    // 2nd failure (error) at 5000ms
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(4500);
+    });
+    // 3rd failure (error) at 10000ms → triggers logout
     await act(async () => {
       await jest.advanceTimersByTimeAsync(5000);
     });
