@@ -7,7 +7,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { PAGE_HEADER_CONTENT, PageHeader } from "@/components/FundingPlatform/PageHeader";
 import { useAvailableAIModels } from "@/hooks/useAvailableAIModels";
-import { useProgram } from "@/hooks/usePrograms";
 import { MigrationBanner, PromptEditor, useProgramPrompts } from "@/src/features/prompt-management";
 import type { FormSchema } from "@/types/question-builder";
 import { TabContent } from "../Utilities/Tabs/TabContent";
@@ -118,16 +117,11 @@ export function AIPromptConfiguration({
   chainId,
   readOnly = false,
 }: AIPromptConfigurationProps) {
-  // Fetch program data for default langfusePromptId
-  const { data: program } = useProgram(programId || "");
-
   // Fetch available AI models from backend
   const { data: availableModels = [DEFAULT_AI_MODEL], isLoading: isLoadingModels } =
     useAvailableAIModels();
 
-  // Get default langfusePromptId from program registry if not set in schema
-  const defaultLangfusePromptId =
-    schema.aiConfig?.langfusePromptId || program?.langfusePromptId || "";
+  const defaultLangfusePromptId = schema.aiConfig?.langfusePromptId || "";
 
   // Get default model - use schema value if valid, otherwise use first available model
   const defaultModel = useMemo(() => {
@@ -165,13 +159,6 @@ export function AIPromptConfiguration({
       }
     }
   }, [availableModels, isLoadingModels, defaultModel, getValues, setValue]);
-
-  // Update form value when program data loads and no langfusePromptId is set
-  useEffect(() => {
-    if (program?.langfusePromptId && !schema.aiConfig?.langfusePromptId) {
-      setValue("langfusePromptId", program.langfusePromptId);
-    }
-  }, [program?.langfusePromptId, schema.aiConfig?.langfusePromptId, setValue]);
 
   // Refs to hold latest values without causing stale closures in watch subscription
   const schemaRef = useRef(schema);

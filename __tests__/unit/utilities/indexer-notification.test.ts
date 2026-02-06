@@ -13,7 +13,7 @@ import * as queryKeysModule from "@/utilities/queryKeys";
 
 // Mock dependencies
 jest.mock("@/utilities/fetchData");
-jest.mock("@/components/Utilities/PrivyProviderWrapper", () => ({
+jest.mock("@/utilities/query-client", () => ({
   queryClient: {
     invalidateQueries: jest.fn(),
   },
@@ -24,7 +24,7 @@ const mockFetchData = fetchDataModule.default as jest.MockedFunction<
 >;
 
 // Import queryClient after mocking
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { queryClient } from "@/utilities/query-client";
 
 const mockInvalidateQueries = queryClient.invalidateQueries as jest.MockedFunction<
   typeof queryClient.invalidateQueries

@@ -444,6 +444,205 @@ body * {
   }
 }
 
+/* Karma Seeds - Modern organic design system */
+@layer components {
+  /* Animated gradient background for hero sections */
+  .seeds-gradient-bg {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(29, 233, 182, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 40% at 100% 50%, rgba(29, 233, 182, 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 30% at 0% 80%, rgba(29, 233, 182, 0.08) 0%, transparent 50%);
+  }
+
+  .dark .seeds-gradient-bg {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(29, 233, 182, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 40% at 100% 50%, rgba(29, 233, 182, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 30% at 0% 80%, rgba(29, 233, 182, 0.04) 0%, transparent 50%);
+  }
+
+  /* Noise texture overlay */
+  .seeds-noise {
+    position: relative;
+  }
+
+  .seeds-noise::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+
+  /* Organic blob shapes */
+  .seeds-blob {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    animation: blob-morph 8s ease-in-out infinite;
+  }
+
+  @keyframes blob-morph {
+    0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+    25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+    50% { border-radius: 40% 60% 60% 40% / 40% 40% 60% 50%; }
+    75% { border-radius: 60% 30% 50% 50% / 30% 50% 40% 70%; }
+  }
+
+  /* Staggered fade-in animation */
+  .seeds-fade-in {
+    animation: seeds-fade-up 0.8s ease-out forwards;
+    opacity: 0;
+  }
+
+  .seeds-fade-in-delay-1 { animation-delay: 0.1s; }
+  .seeds-fade-in-delay-2 { animation-delay: 0.2s; }
+  .seeds-fade-in-delay-3 { animation-delay: 0.3s; }
+  .seeds-fade-in-delay-4 { animation-delay: 0.4s; }
+  .seeds-fade-in-delay-5 { animation-delay: 0.5s; }
+
+  @keyframes seeds-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Floating animation for decorative elements */
+  .seeds-float {
+    animation: seeds-float 6s ease-in-out infinite;
+  }
+
+  .seeds-float-delayed {
+    animation: seeds-float 6s ease-in-out infinite;
+    animation-delay: 2s;
+  }
+
+  .seeds-float-slow {
+    animation: seeds-float 10s ease-in-out infinite;
+    animation-delay: 1s;
+  }
+
+  @keyframes seeds-float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(2deg); }
+  }
+
+  /* Glassmorphism card effect */
+  .seeds-glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .dark .seeds-glass {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Organic border radius */
+  .seeds-organic-radius {
+    border-radius: 24px 8px 24px 8px;
+  }
+
+  /* Gradient text for headings */
+  .seeds-gradient-text {
+    background: linear-gradient(135deg, #00BFA5 0%, #1DE9B6 50%, #64FFDA 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .dark .seeds-gradient-text {
+    background: linear-gradient(135deg, #1DE9B6 0%, #64FFDA 50%, #A7FFEB 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glow effect for buttons */
+  .seeds-glow {
+    box-shadow: 0 0 20px rgba(29, 233, 182, 0.3), 0 0 40px rgba(29, 233, 182, 0.1);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .seeds-glow:hover {
+    box-shadow: 0 0 30px rgba(29, 233, 182, 0.4), 0 0 60px rgba(29, 233, 182, 0.2);
+  }
+
+  /* Card hover effect */
+  .seeds-card-hover {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .seeds-card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -15px rgba(29, 233, 182, 0.2);
+  }
+
+  /* Decorative line */
+  .seeds-line {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(29, 233, 182, 0.3) 20%, rgba(29, 233, 182, 0.3) 80%, transparent 100%);
+  }
+
+  /* Card with edge shading effect - similar to organic design reference */
+  .seeds-card-shaded {
+    position: relative;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+    border-radius: 1.5rem;
+    overflow: hidden;
+  }
+
+  .seeds-card-shaded::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 100% 100% at 0% 0%, rgba(29, 233, 182, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse 100% 100% at 100% 100%, rgba(29, 233, 182, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .dark .seeds-card-shaded {
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.95) 0%, rgba(20, 20, 20, 0.9) 100%);
+  }
+
+  .dark .seeds-card-shaded::before {
+    background:
+      radial-gradient(ellipse 100% 100% at 0% 0%, rgba(29, 233, 182, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse 100% 100% at 100% 100%, rgba(29, 233, 182, 0.05) 0%, transparent 50%);
+  }
+
+  /* Gradient button for seeds - matching the reference design */
+  .seeds-btn-gradient {
+    background: linear-gradient(135deg, #1DE9B6 0%, #00BFA5 100%);
+    color: #004D40;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .seeds-btn-gradient:hover {
+    background: linear-gradient(135deg, #64FFDA 0%, #1DE9B6 100%);
+    box-shadow: 0 4px 20px rgba(29, 233, 182, 0.4);
+  }
+
+  /* Pulse animation for badges */
+  .seeds-pulse {
+    animation: seeds-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes seeds-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+}
+
 /* Toast content overflow fix */
 body .react-hot-toast {
   max-width: var(--toast-max-width);

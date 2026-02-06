@@ -41,18 +41,55 @@ export interface CreateDonationRequest {
   metadata?: Record<string, unknown>;
 }
 
-export interface OnrampRequest {
-  projectId: string;
+export enum OnrampProvider {
+  STRIPE = "stripe",
+}
+
+export interface OnrampSessionRequest {
+  provider: OnrampProvider;
+  projectUid: string;
   payoutAddress: string;
   fiatAmount: number;
   fiatCurrency: string;
-  targetToken: string;
-  network: number;
-  userEmail?: string;
-  redirectUrl?: string;
+  network: string;
+  targetAsset: string;
+  donorAddress?: string;
+  country?: string; // ISO 3166-1 alpha-2 code
+  redirectUrl?: string; // URL to redirect user after completing onramp
 }
 
-export interface OnrampResponse {
-  url: string;
+export interface OnrampSessionResponse {
+  sessionToken: string;
   sessionId: string;
+  donationUid: string;
+  expiresAt: string;
+  onrampUrl?: string;
+}
+
+/**
+ * Stripe onramp session status values.
+ * Matches the OnrampSessionStatus type from @stripe/crypto.
+ * @see https://docs.stripe.com/crypto/onramp
+ */
+export type StripeOnrampStatus =
+  | "initialized"
+  | "rejected"
+  | "requires_payment"
+  | "fulfillment_processing"
+  | "fulfillment_complete"
+  | "error";
+
+export interface StripeOnrampSessionData {
+  id: string;
+  status: StripeOnrampStatus;
+  transaction_details?: {
+    destination_currency?: string;
+    destination_amount?: string;
+    destination_network?: string;
+    source_currency?: string;
+    source_amount?: string;
+    transaction_id?: string;
+    wallet_address?: string;
+    wallet_addresses?: Record<string, string>;
+  };
 }

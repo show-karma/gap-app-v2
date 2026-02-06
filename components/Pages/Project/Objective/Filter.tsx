@@ -6,7 +6,7 @@ import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { Fragment } from "react";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { queryClient } from "@/utilities/query-client";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import type { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
