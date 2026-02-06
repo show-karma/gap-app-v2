@@ -27,6 +27,9 @@ export class TokenManager {
    * This should be called once when the app initializes
    */
   static setPrivyInstance(privy: PrivyTokenProvider | null): void {
+    if (privy !== TokenManager.privyInstance) {
+      TokenManager.clearCache();
+    }
     TokenManager.privyInstance = privy;
   }
 
