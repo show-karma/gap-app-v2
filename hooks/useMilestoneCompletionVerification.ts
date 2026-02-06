@@ -6,7 +6,7 @@ import { useState } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { queryClient } from "@/utilities/query-client";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";

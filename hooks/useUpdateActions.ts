@@ -9,7 +9,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { queryClient } from "@/utilities/query-client";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";

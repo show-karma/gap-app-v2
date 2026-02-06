@@ -2,21 +2,10 @@ import { Dialog, Transition } from "@headlessui/react";
 import { ShieldCheckIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { type FC, Fragment, useState } from "react";
-import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useGap } from "@/hooks/useGap";
-import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
+import { useMemberRoleChange } from "@/hooks/useMemberRoleChange";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
-import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
-import fetchData from "@/utilities/fetchData";
-import { getProjectMemberRoles } from "@/utilities/getProjectMemberRoles";
-import { INDEXER } from "@/utilities/indexer";
-import { queryClient } from "@/utilities/query-client";
-import { retryUntilConditionMet } from "@/utilities/retries";
-import { getProjectById } from "@/utilities/sdk";
 
 interface PromoteMemberDialogProps {
   memberAddress: string;
@@ -24,112 +13,14 @@ interface PromoteMemberDialogProps {
 
 export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({ memberAddress }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isPromoting, setIsPromoting] = useState(false);
-  const { gap: _gap } = useGap();
-  const { address, chain } = useAccount();
   const { project } = useProjectStore();
   const { teamProfiles } = useTeamProfiles(project);
-  const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
-    useAttestationToast();
-  const { switchChainAsync } = useWallet();
-  const { setupChainAndWallet } = useSetupChainAndWallet();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { execute, isLoading } = useMemberRoleChange("promote");
 
   const openModal = () => setIsOpen(true);
   const closeModal = () => setIsOpen(false);
 
-  const promoteMember = async () => {
-    if (!address || !project) return;
-    try {
-      setIsPromoting(true);
-      startAttestation("Promoting member to admin...");
-
-      const setup = await setupChainAndWallet({
-        targetChainId: project.chainID,
-        currentChainId: chain?.id,
-        switchChainAsync,
-      });
-
-      if (!setup) {
-        setIsPromoting(false);
-        return;
-      }
-
-      const { walletSigner, gapClient } = setup;
-      const fetchedProject = await getProjectById(project.uid);
-      if (!fetchedProject) throw new Error("Project not found");
-
-      const member = fetchedProject.members.find(
-        (item) => item.recipient.toLowerCase() === memberAddress.toLowerCase()
-      );
-      if (!member) throw new Error("Member not found");
-
-      const projectInstance = await gapClient.fetch.projectById(project.uid);
-
-      const checkIfAttestationExists = async (callbackFn?: () => void) => {
-        await retryUntilConditionMet(
-          async () => {
-            const memberRoles = await getProjectMemberRoles(project, projectInstance);
-            const isAdmin = memberRoles[memberAddress.toLowerCase()] === "Admin";
-
-            return isAdmin;
-          },
-          async () => {
-            callbackFn?.();
-          }
-        );
-      };
-
-      await projectInstance
-        .addAdmin(walletSigner as any, memberAddress.toLowerCase(), changeStepperStep)
-        .then(async (res) => {
-          changeStepperStep("indexing");
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, projectInstance.chainID),
-              "POST",
-              {}
-            );
-          }
-          // Invalidate cache immediately after indexer notification
-          // so UI can start refetching while polling continues
-          queryClient.invalidateQueries({
-            queryKey: ["memberRoles", project?.uid],
-          });
-          refreshProject();
-
-          await checkIfAttestationExists(() => {
-            changeStepperStep("indexed");
-          }).then(async () => {
-            showSuccess("Member promoted successfully");
-            closeModal();
-            // Final invalidation to ensure fresh data after confirmation
-            await refreshProject();
-            queryClient.invalidateQueries({
-              queryKey: ["memberRoles", project?.uid],
-            });
-          });
-        });
-    } catch (error) {
-      showError(`Failed to promote member ${memberAddress}.`);
-      errorManager(
-        "Error promoting member",
-        error,
-        {
-          address,
-          memberAddress,
-          projectUid: project?.uid,
-        },
-        {
-          error: `Failed to promote member ${memberAddress}.`,
-        }
-      );
-    } finally {
-      setIsPromoting(false);
-      setIsStepper(false);
-    }
-  };
+  const handlePromote = () => execute(memberAddress, closeModal);
 
   const profile = teamProfiles?.find(
     (profile) => profile.recipient.toLowerCase() === memberAddress.toLowerCase()
@@ -209,11 +100,11 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({ memberAddres
                       Cancel
                     </Button>
                     <Button
-                      onClick={promoteMember}
-                      disabled={isPromoting}
+                      onClick={handlePromote}
+                      disabled={isLoading}
                       className="text-zinc-100 text-base bg-brand-blue dark:text-zinc-100 dark:border-zinc-100 hover:bg-brand-blue/90 dark:hover:bg-brand-blue/90 dark:hover:text-white"
                     >
-                      {isPromoting ? "Promoting..." : "Confirm"}
+                      {isLoading ? "Promoting..." : "Confirm"}
                     </Button>
                   </div>
                 </Dialog.Panel>
