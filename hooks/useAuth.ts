@@ -40,6 +40,10 @@ const PRIVY_SESSION_COOKIE_NAME = "privy-session";
  * Check if privy-session cookie exists using proper cookie parsing.
  * If session exists, user might be in the middle of token refresh (HttpOnly cookies mode).
  */
+// Note: privy-session is a JS-readable indicator cookie, NOT HttpOnly.
+// Privy's HttpOnly cookies are separate and used for token refresh.
+// If this cookie is ever made HttpOnly, the check degrades gracefully —
+// the failure threshold alone still prevents false logouts.
 const hasPrivySession = () => {
   if (typeof document === "undefined") return false;
   return document.cookie
@@ -119,6 +123,14 @@ export const useAuth = () => {
   useEffect(() => {
     if (!ready || !authenticated) return;
 
+    const handleAuthFailure = () => {
+      authFailureCount.current += 1;
+      if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
+        authFailureCount.current = 0;
+        logout();
+      }
+    };
+
     const checkAuthStatus = async () => {
       try {
         const hasToken = await TokenManager.getToken();
@@ -135,22 +147,17 @@ export const useAuth = () => {
         // - Slow network during token refresh
         // - Temporary network hiccups
         // - Privy initialization timing
-        authFailureCount.current += 1;
-
-        if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
-          authFailureCount.current = 0;
-          logout();
-        }
+        handleAuthFailure();
       } catch {
         // Token check failed (network error, etc.) - treat as a failure
-        authFailureCount.current += 1;
-        if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
-          authFailureCount.current = 0;
-          logout();
-        }
+        handleAuthFailure();
       }
     };
 
+    // Note: handleStorageChange reuses checkAuthStatus, which shares the failure
+    // counter with the interval. If 2 failures are already accumulated and a
+    // storage event fires, it triggers logout. This is intentional: 3 independent
+    // signals of no auth = real logout.
     const handleStorageChange = (e: StorageEvent) => {
       // For localStorage mode: detect cross-tab logout
       if (e.key === "privy:token" && !e.newValue) {
