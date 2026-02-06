@@ -13,7 +13,7 @@ import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { queryClient } from "@/utilities/query-client";
 import { useMilestone } from "@/hooks/useMilestone";
 import { useMilestoneActions } from "@/hooks/useMilestoneActions";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";

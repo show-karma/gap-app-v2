@@ -5,7 +5,7 @@ import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import debounce from "lodash.debounce";
 import { useQueryState } from "nuqs";
 import { useEffect, useMemo, useState } from "react";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { queryClient } from "@/utilities/query-client";
 import {
   Select,
   SelectContent,

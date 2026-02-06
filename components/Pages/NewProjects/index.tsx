@@ -7,7 +7,7 @@ import { useQueryState } from "nuqs";
 import { Fragment } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { queryClient } from "@/utilities/query-client";
 import { PROJECT_NAME } from "@/constants/brand";
 import { layoutTheme } from "@/src/helper/theme";
 import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";

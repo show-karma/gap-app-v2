@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { queryClient } from "@/utilities/query-client";
 import { getProjectGrants } from "@/services/project-grants.service";
 import type { Grant } from "@/types/v2/grant";
 import { createProjectQueryPredicate, QUERY_KEYS } from "@/utilities/queryKeys";
