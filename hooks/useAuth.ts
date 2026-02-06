@@ -25,7 +25,7 @@ const AUTH_CHECK_INTERVAL_MS = 5000;
 /**
  * Number of consecutive failures (no token AND no session) required before logging out.
  * This prevents false logouts during temporary network issues or slow token refresh.
- * With a 500ms initial delay and checks every 5s, 3 failures = ~10.5s of no auth state.
+ * With a 500ms initial delay and checks every 5s, 3 failures = ~10s of no auth state.
  */
 const AUTH_FAILURE_THRESHOLD = 3;
 
