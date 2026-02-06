@@ -93,7 +93,7 @@ export default function QuestionBuilderPage() {
 
   if (schemaError || postApprovalSchemaError) {
     return (
-      <FundingPlatformGuard communityId={communityId}>
+      <FundingPlatformGuard>
         <div className="sm:px-3 md:px-4 px-6 py-2">
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-red-700 dark:text-red-300 mb-2">
@@ -125,7 +125,7 @@ export default function QuestionBuilderPage() {
   const readOnly = !isAdmin;
 
   return (
-    <FundingPlatformGuard communityId={communityId}>
+    <FundingPlatformGuard>
       <div className="min-h-screen flex flex-col bg-white dark:bg-gray-800">
         {/* Read-only banner for reviewers */}
         {readOnly && (

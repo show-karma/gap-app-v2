@@ -8,15 +8,9 @@ import { Role } from "../types/role";
 
 interface FundingPlatformGuardProps {
   children: ReactNode;
-  communityId: string;
-  programId?: string;
 }
 
-export function FundingPlatformGuard({
-  children,
-  communityId,
-  programId,
-}: FundingPlatformGuardProps) {
+export function FundingPlatformGuard({ children }: FundingPlatformGuardProps) {
   const { isLoading, hasRoleOrHigher, isReviewer } = usePermissionContext();
 
   if (isLoading) {

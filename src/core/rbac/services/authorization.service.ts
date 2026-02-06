@@ -79,11 +79,11 @@ export const authorizationService = {
       },
       permissions: validPermissions,
       resourceContext: response.resourceContext as ResourceContext,
-      isCommunityAdmin: response.isCommunityAdmin,
-      isProgramAdmin: response.isProgramAdmin,
-      isReviewer: response.isReviewer,
-      isRegistryAdmin: response.isRegistryAdmin,
-      isProgramCreator: response.isProgramCreator,
+      isCommunityAdmin: response.isCommunityAdmin === true,
+      isProgramAdmin: response.isProgramAdmin === true,
+      isReviewer: response.isReviewer === true,
+      isRegistryAdmin: response.isRegistryAdmin === true,
+      isProgramCreator: response.isProgramCreator === true,
     };
   },
 };

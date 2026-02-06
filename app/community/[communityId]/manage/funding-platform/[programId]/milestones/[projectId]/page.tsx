@@ -28,7 +28,7 @@ export default function Page() {
   }
 
   return (
-    <FundingPlatformGuard communityId={communityId}>
+    <FundingPlatformGuard>
       <MilestonesReviewPage
         communityId={communityId}
         projectId={projectId}

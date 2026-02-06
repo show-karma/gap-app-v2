@@ -739,7 +739,7 @@ export default function FundingPlatformPage() {
   const { communityId } = useParams() as { communityId: string };
 
   return (
-    <FundingPlatformGuard communityId={communityId}>
+    <FundingPlatformGuard>
       <FundingPlatformContent />
     </FundingPlatformGuard>
   );

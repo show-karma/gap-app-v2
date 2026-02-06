@@ -60,7 +60,7 @@ export default function ProgramSetupPage() {
 
   if (!program) {
     return (
-      <FundingPlatformGuard communityId={communityId} programId={programId}>
+      <FundingPlatformGuard>
         <div className={layoutTheme.padding}>
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <p className="text-red-700 dark:text-red-300">
@@ -73,7 +73,7 @@ export default function ProgramSetupPage() {
   }
 
   return (
-    <FundingPlatformGuard communityId={communityId} programId={programId}>
+    <FundingPlatformGuard>
       <div className="sm:px-3 md:px-4 px-6 py-6">
         <SetupWizard
           communityId={communityId}

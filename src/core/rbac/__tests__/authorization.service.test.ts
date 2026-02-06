@@ -35,6 +35,11 @@ describe("authorizationService", () => {
           resourceContext: {
             programId: "program-123",
           },
+          isCommunityAdmin: false,
+          isProgramAdmin: true,
+          isReviewer: false,
+          isRegistryAdmin: false,
+          isProgramCreator: false,
         },
         null,
         null,
@@ -65,6 +70,11 @@ describe("authorizationService", () => {
           resourceContext: {
             programId: "program-123",
           },
+          isCommunityAdmin: false,
+          isProgramAdmin: false,
+          isReviewer: true,
+          isRegistryAdmin: false,
+          isProgramCreator: false,
         },
         null,
         null,
@@ -84,6 +94,11 @@ describe("authorizationService", () => {
           roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
           permissions: [],
           resourceContext: {},
+          isCommunityAdmin: false,
+          isProgramAdmin: false,
+          isReviewer: false,
+          isRegistryAdmin: false,
+          isProgramCreator: false,
         },
         null,
         null,
@@ -115,6 +130,11 @@ describe("authorizationService", () => {
           roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
           permissions: ["community:view", "program:view"],
           resourceContext: {},
+          isCommunityAdmin: false,
+          isProgramAdmin: false,
+          isReviewer: false,
+          isRegistryAdmin: false,
+          isProgramCreator: false,
         },
         null,
         null,
@@ -181,6 +201,54 @@ describe("authorizationService", () => {
       expect(result.isProgramAdmin).toBe(false);
       expect(result.isReviewer).toBe(false);
       expect(result.roles.primaryRole).toBe("COMMUNITY_ADMIN");
+    });
+
+    it("should coerce missing boolean flags to false", async () => {
+      mockFetchData.mockResolvedValue([
+        {
+          roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
+          permissions: [],
+          resourceContext: {},
+          // Intentionally omit boolean flags to test strict coercion
+        },
+        null,
+        null,
+        200,
+      ]);
+
+      const result = await authorizationService.getPermissions();
+
+      expect(result.isCommunityAdmin).toBe(false);
+      expect(result.isProgramAdmin).toBe(false);
+      expect(result.isReviewer).toBe(false);
+      expect(result.isRegistryAdmin).toBe(false);
+      expect(result.isProgramCreator).toBe(false);
+    });
+
+    it("should coerce truthy non-boolean values to false", async () => {
+      mockFetchData.mockResolvedValue([
+        {
+          roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
+          permissions: [],
+          resourceContext: {},
+          isCommunityAdmin: "yes" as unknown as boolean,
+          isProgramAdmin: 1 as unknown as boolean,
+          isReviewer: {} as unknown as boolean,
+          isRegistryAdmin: null as unknown as boolean,
+          isProgramCreator: undefined as unknown as boolean,
+        },
+        null,
+        null,
+        200,
+      ]);
+
+      const result = await authorizationService.getPermissions();
+
+      expect(result.isCommunityAdmin).toBe(false);
+      expect(result.isProgramAdmin).toBe(false);
+      expect(result.isReviewer).toBe(false);
+      expect(result.isRegistryAdmin).toBe(false);
+      expect(result.isProgramCreator).toBe(false);
     });
   });
 });

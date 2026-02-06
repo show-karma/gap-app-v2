@@ -344,7 +344,7 @@ export default function ApplicationDetailPage() {
   // Check if application exists
   if (!application) {
     return (
-      <FundingPlatformGuard communityId={communityId}>
+      <FundingPlatformGuard>
         <div className="min-h-screen">
           <div className={layoutTheme.padding}>
             <Button
@@ -363,7 +363,7 @@ export default function ApplicationDetailPage() {
   }
 
   return (
-    <FundingPlatformGuard communityId={communityId}>
+    <FundingPlatformGuard>
       <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
         {/* Main Content */}
         <div className="px-4 sm:px-6 lg:px-8 py-6">

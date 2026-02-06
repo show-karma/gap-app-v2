@@ -92,7 +92,7 @@ export default function ApplicationsPage() {
   }
 
   return (
-    <FundingPlatformGuard communityId={communityId}>
+    <FundingPlatformGuard>
       <div className="min-h-screen">
         {/* Header */}
         <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
