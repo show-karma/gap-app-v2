@@ -2,7 +2,9 @@
 
 import { PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useStaff } from "@/hooks/useStaff";
+import { useAuth } from "@/hooks/useAuth";
+import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
+import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import type { Project } from "@/types/v2/project";
@@ -54,9 +56,15 @@ export function MobileProfileContent({
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { authenticated } = useAuth();
+  const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
+    {},
+    { enabled: authenticated }
+  );
+  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
 
-  const isAuthorized = isOwner || isProjectAdmin || isProjectOwner || (!isStaffLoading && isStaff);
+  const isAuthorized =
+    isOwner || isProjectAdmin || isProjectOwner || (!isPermissionsLoading && isSuperAdmin);
   const showDonateSection = useDonationVisibility(project);
 
   const handlePostUpdate = () => {

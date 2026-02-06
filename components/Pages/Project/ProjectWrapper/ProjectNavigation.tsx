@@ -6,13 +6,15 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ProminentDonateButton } from "@/components/Donation/SingleProject/ProminentDonateButton";
 import { Button } from "@/components/Utilities/Button";
-import { useStaff } from "@/hooks/useStaff";
+import { useAuth } from "@/hooks/useAuth";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
+import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
+import { Role } from "@/src/core/rbac/types";
 import {
   EnableDonationsButton,
   hasConfiguredPayoutAddresses,
 } from "@/src/features/chain-payout-address";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useProgressModalStore } from "@/store/modals/progress";
 import type { Project } from "@/types/v2/project";
 import formatCurrency from "@/utilities/formatCurrency";
@@ -82,14 +84,23 @@ export const ProjectNavigation = ({
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const isCommunityAdmin = useIsCommunityAdmin();
+  const { authenticated } = useAuth();
+  const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
+    {},
+    { enabled: authenticated }
+  );
+  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
 
   const isAuthorized = isOwner || isProjectAdmin;
-  // Can set payout address: project member/owner/admin/staff
-  // Wait for staff check to complete to avoid UI flicker
+  // Can set payout address: project member/owner/admin/super admin
+  // Wait for permissions check to complete to avoid UI flicker
   const canSetPayoutAddress =
-    isProjectOwner || isOwner || isProjectAdmin || isCommunityAdmin || (!isStaffLoading && isStaff);
+    isProjectOwner ||
+    isOwner ||
+    isProjectAdmin ||
+    isCommunityAdmin ||
+    (!isPermissionsLoading && isSuperAdmin);
 
   useEffect(() => {
     const mountTabs = () => {

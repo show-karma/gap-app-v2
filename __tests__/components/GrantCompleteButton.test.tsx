@@ -74,6 +74,11 @@ jest.mock("@/store/communityAdmin", () => ({
   }),
 }));
 
+// Mock the new RBAC hook
+jest.mock("@/src/core/rbac/context/permission-context", () => ({
+  useIsCommunityAdmin: jest.fn(() => mockIsCommunityAdmin()),
+}));
+
 describe("GrantCompleteButton", () => {
   const mockGrant = {
     uid: "grant-123",

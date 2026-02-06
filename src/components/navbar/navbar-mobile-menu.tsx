@@ -78,7 +78,7 @@ export function NavbarMobileMenu() {
   const { openModal: openProfileModal } = useContributorProfileModalStore();
 
   // Get permissions from centralized context (prevents duplicate hook calls)
-  const { isLoggedIn, address, hasReviewerRole, hasAdminAccess, isRegistryAllowed } =
+  const { isLoggedIn, address, isReviewer, hasAdminAccess, isRegistryAllowed } =
     useNavbarPermissions();
 
   const { profile } = useContributorProfile(address);
@@ -97,7 +97,7 @@ export function NavbarMobileMenu() {
     {
       label: "Review",
       href: PAGES.MY_REVIEWS,
-      visible: isLoggedIn && hasReviewerRole,
+      visible: isLoggedIn && isReviewer,
     },
     {
       label: "Admin",

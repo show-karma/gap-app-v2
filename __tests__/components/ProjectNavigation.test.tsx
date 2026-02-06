@@ -55,9 +55,13 @@ jest.mock("@/store/modals/progress", () => ({
   }),
 }));
 
-// Mock useStaff hook
-jest.mock("@/hooks/useStaff", () => ({
-  useStaff: () => ({ isStaff: false, isLoading: false }),
+// Mock RBAC permissions hook (replaces legacy useStaff)
+jest.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+  usePermissionsQuery: () => ({
+    data: null,
+    isLoading: false,
+    isError: false,
+  }),
 }));
 
 // Mock chain payout address feature

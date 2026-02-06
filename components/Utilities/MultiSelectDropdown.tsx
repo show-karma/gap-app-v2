@@ -128,16 +128,29 @@ export const MultiSelectDropdown = ({
         </div>
       )}
 
-      <button
-        type="button"
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard navigation handled via onKeyDown */}
+      <div
+        role="combobox"
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-disabled={isDisabled}
+        tabIndex={isDisabled ? -1 : 0}
         className={cn(
           "relative flex min-h-[40px] w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-left text-sm outline-none transition-all dark:border-zinc-700 dark:bg-zinc-800",
           isOpen && !isDisabled && "border-brand-blue dark:border-brand-blue",
           error && "border-red-500 dark:border-red-500",
-          isDisabled && "cursor-not-allowed opacity-50"
+          isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
         )}
         onClick={() => !isDisabled && setIsOpen(!isOpen)}
-        disabled={isDisabled}
+        onKeyDown={(e) => {
+          if (isDisabled) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setIsOpen(!isOpen);
+          } else if (e.key === "Escape") {
+            setIsOpen(false);
+          }
+        }}
       >
         <div className="flex flex-1 min-w-0 flex-wrap gap-1">
           {selectedItems.length > 0 ? (
@@ -168,7 +181,7 @@ export const MultiSelectDropdown = ({
             <button
               type="button"
               onClick={clearAll}
-              onMouseDown={(e) => e.stopPropagation()} // Prevent dropdown from opening when clicking Clear
+              onMouseDown={(e) => e.stopPropagation()}
               disabled={isDisabled}
               className={cn(
                 "text-xs px-2 py-1 rounded-md font-medium transition-all",
@@ -192,7 +205,7 @@ export const MultiSelectDropdown = ({
             )}
           />
         </div>
-      </button>
+      </div>
 
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
 

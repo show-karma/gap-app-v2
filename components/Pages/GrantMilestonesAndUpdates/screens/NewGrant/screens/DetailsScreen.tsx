@@ -12,8 +12,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
 import { useGrant } from "@/hooks/useGrant";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import type { Grant } from "@/types/v2/grant";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
@@ -88,7 +88,7 @@ export const DetailsScreen: React.FC = () => {
   const { authenticated: isAuth } = useAuth();
   const { gap } = useGap();
   const { updateGrant, isLoading: isUpdatingGrant } = useGrant();
-  const { isCommunityAdmin } = useCommunityAdminStore();
+  const isCommunityAdmin = useIsCommunityAdmin();
   const { isOwner } = useOwnerStore();
   const [_isLoading, _setIsLoading] = useState(false);
   const isAuthorized = isOwner || isCommunityAdmin;

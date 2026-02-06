@@ -8,7 +8,6 @@ import "react-day-picker/dist/style.css";
 import "@uiw/react-markdown-preview/markdown.css";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Analytics } from "@vercel/analytics/react";
-import { Agentation } from "agentation";
 import { ThemeProvider } from "next-themes";
 import { Suspense } from "react";
 import { Toaster } from "react-hot-toast";
@@ -34,7 +33,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <HotjarAnalytics />
       </Suspense>
       <body suppressHydrationWarning>
-        {envVars.VERCEL_ENV !== "production" && <Agentation />}
         <ThemeProvider
           defaultTheme="light"
           attribute="class"

@@ -92,6 +92,29 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Redirect all old /community/:communityId/admin routes to /community/:communityId/manage
+      {
+        source: "/community/:communityId/admin",
+        destination: "/community/:communityId/manage",
+        permanent: true,
+      },
+      {
+        source: "/community/:communityId/admin/:path*",
+        destination: "/community/:communityId/manage/:path*",
+        permanent: true,
+      },
+      // Redirect all old /community/:communityId/reviewer routes to /community/:communityId/manage
+      {
+        source: "/community/:communityId/reviewer",
+        destination: "/community/:communityId/manage",
+        permanent: true,
+      },
+      {
+        source: "/community/:communityId/reviewer/:path*",
+        destination: "/community/:communityId/manage/:path*",
+        permanent: true,
+      },
+      // Redirect old project update routes
       {
         source: "/project/:projectId/update",
         destination: "/project/:projectId",

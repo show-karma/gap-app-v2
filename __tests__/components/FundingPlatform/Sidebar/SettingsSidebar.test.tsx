@@ -58,7 +58,7 @@ describe("SettingsSidebar", () => {
       render(<SettingsSidebar {...defaultProps} />);
 
       const backLink = screen.getByRole("link", { name: /back to programs/i });
-      expect(backLink).toHaveAttribute("href", "/community/test-community/admin/funding-platform");
+      expect(backLink).toHaveAttribute("href", "/community/test-community/manage/funding-platform");
     });
 
     it("should render program title when provided", () => {

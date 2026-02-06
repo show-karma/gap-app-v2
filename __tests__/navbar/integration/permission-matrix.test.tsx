@@ -336,9 +336,9 @@ describe("Permission Matrix Integration Tests", () => {
       expect(within(drawer).getByText("Admin")).toBeInTheDocument();
     });
 
-    it("pool manager sees Manage Programs link", async () => {
+    it("program creator sees Manage Programs link", async () => {
       const user = userEvent.setup();
-      const fixture = getAuthFixture("pool-manager");
+      const fixture = getAuthFixture("program-creator");
 
       renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(fixture.authState),

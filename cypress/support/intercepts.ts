@@ -58,6 +58,19 @@ export const waitForPageLoad = (): void => {
 };
 
 /**
+ * Wait for navbar to be fully hydrated and interactive
+ * This is useful for tests that interact with navbar elements
+ * which may not be immediately available after initial render
+ */
+export const waitForNavbarHydration = (): void => {
+  // Wait for nav to be visible
+  cy.get("nav").should("be.visible");
+  // Wait for at least one interactive element in the navbar
+  // The "Explore" dropdown is always present regardless of auth state
+  cy.get("nav").find("button").should("have.length.at.least", 1);
+};
+
+/**
  * Wait for projects list to load
  */
 export const waitForProjectsLoad = (): void => {

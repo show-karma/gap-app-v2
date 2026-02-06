@@ -73,7 +73,7 @@ const { authState, permissions, expectedElements } = adminUser;
 6. `reviewer-multiple` - Reviewer for multiple programs
 7. `staff` - Staff member with admin access
 8. `owner` - Platform owner
-9. `pool-manager` - Registry pool manager
+9. `program-creator` - User who has created programs in the registry
 10. `registry-admin` - Registry administrator
 11. `admin-and-reviewer` - Community admin + reviewer
 12. `staff-and-reviewer` - Staff + reviewer

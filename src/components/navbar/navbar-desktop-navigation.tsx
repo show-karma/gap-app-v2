@@ -69,7 +69,7 @@ const socialMediaLinks = [
 ];
 
 export function NavbarDesktopNavigation() {
-  const { isLoggedIn, hasReviewerRole, hasAdminAccess, isRegistryAllowed } = useNavbarPermissions();
+  const { isLoggedIn, isReviewer, hasAdminAccess, isRegistryAllowed } = useNavbarPermissions();
 
   return (
     <div className="hidden lg:flex items-center flex-1 lg:justify-between gap-8">
@@ -102,7 +102,7 @@ export function NavbarDesktopNavigation() {
             <Button variant="outline" size="sm" asChild>
               <Link href={PAGES.MY_PROJECTS}>My projects</Link>
             </Button>
-            {hasReviewerRole && (
+            {isReviewer && (
               <Button variant="outline" size="sm" asChild>
                 <Link href={PAGES.MY_REVIEWS}>Review</Link>
               </Button>
