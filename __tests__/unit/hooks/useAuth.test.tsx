@@ -9,6 +9,10 @@ import React, { type ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
+// Undo the global mock of useAuth from __tests__/navbar/setup.ts
+// so we can test the real hook implementation
+jest.unmock("@/hooks/useAuth");
+
 // Controllable mock functions for hook tests
 const mockLogin = jest.fn();
 const mockLogout = jest.fn();
