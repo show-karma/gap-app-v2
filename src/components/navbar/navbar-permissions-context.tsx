@@ -6,7 +6,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore } from "@/store";
-import { useRegistryStore } from "@/store/registry";
 
 /**
  * Interface for the NavbarPermissionsContext value
@@ -32,8 +31,8 @@ export interface NavbarPermissionsContextValue {
   isCommunityAdmin: boolean;
   isReviewer: boolean;
 
-  // Registry permissions
-  isPoolManager: boolean;
+  // Registry permissions (from RBAC API)
+  isProgramCreator: boolean;
   isRegistryAdmin: boolean;
 
   // Derived permissions (computed from above values)
@@ -54,7 +53,7 @@ const defaultContextValue: NavbarPermissionsContextValue = {
   isOwner: false,
   isCommunityAdmin: false,
   isReviewer: false,
-  isPoolManager: false,
+  isProgramCreator: false,
   isRegistryAdmin: false,
   hasAdminAccess: false,
   isRegistryAllowed: false,
@@ -82,14 +81,17 @@ export function NavbarPermissionsProvider({ children }: NavbarPermissionsProvide
   );
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isPoolManager, isRegistryAdmin } = useRegistryStore();
 
   const value = useMemo<NavbarPermissionsContextValue>(() => {
     const isStaff = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
     const isCommunityAdmin = permissions?.isCommunityAdmin ?? false;
     const isReviewer = permissions?.isReviewer ?? false;
+    const isProgramCreator = permissions?.isProgramCreator ?? false;
+    const isRegistryAdmin = permissions?.isRegistryAdmin ?? false;
     const hasAdminAccess = !isPermissionsLoading && (isStaff || isOwner || isCommunityAdmin);
-    const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
+    // User can access Manage Programs if they are registry admin OR have created programs
+    const isRegistryAllowed =
+      !isPermissionsLoading && (isRegistryAdmin || isProgramCreator) && isLoggedIn;
 
     return {
       isLoggedIn,
@@ -100,21 +102,12 @@ export function NavbarPermissionsProvider({ children }: NavbarPermissionsProvide
       isOwner,
       isCommunityAdmin,
       isReviewer,
-      isPoolManager,
+      isProgramCreator,
       isRegistryAdmin,
       hasAdminAccess,
       isRegistryAllowed,
     };
-  }, [
-    isLoggedIn,
-    address,
-    ready,
-    permissions,
-    isPermissionsLoading,
-    isOwner,
-    isPoolManager,
-    isRegistryAdmin,
-  ]);
+  }, [isLoggedIn, address, ready, permissions, isPermissionsLoading, isOwner]);
 
   return (
     <NavbarPermissionsContext.Provider value={value}>{children}</NavbarPermissionsContext.Provider>
