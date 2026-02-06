@@ -6,8 +6,8 @@ import Link from "next/link";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useTracksForProgram } from "@/hooks/useTracks";
 import type { Track } from "@/services/tracks";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
 import type { Grant } from "@/types/v2/grant";
 import type { Project as ProjectResponse } from "@/types/v2/project";
@@ -20,7 +20,7 @@ import { ProjectGrantsMilestonesListLoading } from "../../Project/Loading/Grants
 const EmptyMilestone = ({ grant, project }: { grant?: Grant; project?: ProjectResponse }) => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isCommunityAdmin = useIsCommunityAdmin();
 
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
@@ -221,8 +221,8 @@ export default function MilestonesAndUpdates() {
   const hasMilestonesOrUpdates = grant?.milestones?.length || grant?.updates?.length;
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isCommunityAdminRole = useIsCommunityAdmin();
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdminRole;
 
   return (
     <div className="w-full">

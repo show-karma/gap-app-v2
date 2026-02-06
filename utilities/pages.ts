@@ -33,6 +33,22 @@ export const PAGES = {
     QUESTION_BUILDER: (community: string, programId: string) =>
       `/community/${community}/reviewer/funding-platform/${programId}/question-builder`,
   },
+  MANAGE: {
+    ROOT: (community: string) => `/community/${community}/manage`,
+    FUNDING_PLATFORM: {
+      ROOT: (community: string) => `/community/${community}/manage/funding-platform`,
+      APPLICATIONS: (community: string, programId: string) =>
+        `/community/${community}/manage/funding-platform/${programId}/applications`,
+      APPLICATION_DETAIL: (community: string, programId: string, applicationId: string) =>
+        `/community/${community}/manage/funding-platform/${programId}/applications/${applicationId}`,
+      QUESTION_BUILDER: (community: string, programId: string) =>
+        `/community/${community}/manage/funding-platform/${programId}/question-builder`,
+      SETUP: (community: string, programId: string) =>
+        `/community/${community}/manage/funding-platform/${programId}/setup`,
+      MILESTONES: (community: string, programId: string, projectId: string) =>
+        `/community/${community}/manage/funding-platform/${programId}/milestones/${projectId}`,
+    },
+  },
   ADMIN: {
     LIST: `/admin`,
     ROOT: (community: string) => `/community/${community}/admin`,

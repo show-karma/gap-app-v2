@@ -9,13 +9,12 @@ import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { GrantsAccordion } from "@/components/GrantsAccordion";
 import { Button } from "@/components/Utilities/Button";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useProject } from "@/hooks/useProject";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunitiesStore } from "@/store/communities";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
 import type { GrantScreen } from "@/types";
 import type { Project as ProjectResponse } from "@/types/v2/project";
@@ -76,20 +75,11 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
   const { isProjectAdmin, isProjectOwner } = useProjectPermissions();
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isCommunityAdmin = useIsCommunityAdmin();
   const { communities } = useCommunitiesStore();
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
   const { address } = useAccount();
-  const setIsCommunityAdmin = useCommunityAdminStore((state) => state.setIsCommunityAdmin);
-
-  // Get communityUID - prefer grant.data.communityUID, fallback to grant.community.uid
-  const communityUID = grant?.data?.communityUID || grant?.community?.uid;
-
-  // Use React Query hook to check admin status with Zustand sync
-  useIsCommunityAdmin(communityUID, address, {
-    zustandSync: { setIsCommunityAdmin },
-  });
 
   const zustandProject = useProjectStore((state) => state.project);
 

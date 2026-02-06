@@ -4,8 +4,8 @@ import { useAccount } from "wagmi";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { PAGES } from "@/utilities/pages";
 import { FilteredOutputsAndOutcomes, filterIndicators } from "../Impact/FilteredOutputsAndOutcomes";
 
@@ -16,7 +16,7 @@ export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate })
   const { grants } = useProjectGrants(project?.uid || "");
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isCommunityAdmin = useIsCommunityAdmin();
 
   const indicatorIds = activity.data?.indicators?.map((indicator) => indicator.indicatorId);
 

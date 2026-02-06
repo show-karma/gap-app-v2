@@ -13,8 +13,8 @@ import { useContractAddressSave } from "@/hooks/useContractAddressSave";
 import { useContractAddressValidation } from "@/hooks/useContractAddressValidation";
 import { useStaff } from "@/hooks/useStaff";
 import { validateNetworkAddressPair } from "@/schemas/contractAddress";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { ContractAddressDialog } from "./ContractAddressDialog";
 import { ContractAddressList } from "./ContractAddressList";
 import { ContractVerificationDialog } from "./ContractVerificationDialog";
@@ -31,7 +31,7 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isCommunityAdmin = useIsCommunityAdmin();
   const { isStaff } = useStaff();
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin || isStaff;
 

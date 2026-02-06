@@ -14,8 +14,9 @@ import {
   useFundingApplications,
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
-import { usePermissions } from "@/hooks/usePermissions";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
+import { useCan } from "@/src/core/rbac/context/permission-context";
+import { Permission } from "@/src/core/rbac/types";
 import { layoutTheme } from "@/src/helper/theme";
 import type { IFundingApplication } from "@/types/funding-platform";
 import { MESSAGES } from "@/utilities/messages";
@@ -72,16 +73,10 @@ export default function ApplicationsPage() {
   // Fetch program config for metadata
   const { data: programConfig } = useProgramConfig(programId);
 
-  // Check if user is a reviewer for this program
-  const { hasPermission: canView, isLoading: isLoadingPermission } = usePermissions({
-    programId,
-    action: "read",
-  });
-
-  const { hasPermission: _canComment } = usePermissions({
-    programId,
-    action: "comment",
-  });
+  // Use RBAC to check permissions
+  const canView = useCan(Permission.APPLICATION_READ);
+  const _canComment = useCan(Permission.APPLICATION_COMMENT);
+  const isLoadingPermission = false; // RBAC context handles loading internally
 
   // Use the funding applications hook to get applications data
   const { applications: _applications } = useFundingApplications(programId, initialFilters);

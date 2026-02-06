@@ -90,6 +90,38 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      // Redirect old admin/funding-platform routes to new manage/funding-platform routes
+      {
+        source: "/community/:communityId/admin/funding-platform",
+        destination: "/community/:communityId/manage/funding-platform",
+        permanent: true,
+      },
+      {
+        source: "/community/:communityId/admin/funding-platform/:programId/applications",
+        destination: "/community/:communityId/manage/funding-platform/:programId/applications",
+        permanent: true,
+      },
+      {
+        source:
+          "/community/:communityId/admin/funding-platform/:programId/applications/:applicationId",
+        destination:
+          "/community/:communityId/manage/funding-platform/:programId/applications/:applicationId",
+        permanent: true,
+      },
+      {
+        source: "/community/:communityId/admin/funding-platform/:programId/question-builder",
+        destination: "/community/:communityId/manage/funding-platform/:programId/question-builder",
+        permanent: true,
+      },
+      {
+        source: "/community/:communityId/admin/funding-platform/:programId/setup",
+        destination: "/community/:communityId/manage/funding-platform/:programId/setup",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 const bundleAnalyzer = withBundleAnalyzer(removeImports(nextConfig));

@@ -35,6 +35,9 @@ import {
   useDeleteApplication,
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
+import { Can } from "@/src/core/rbac/components/can";
+import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
+import { Permission } from "@/src/core/rbac/types";
 import { layoutTheme } from "@/src/helper/theme";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import type { IFundingApplication } from "@/types/funding-platform";
@@ -277,11 +280,18 @@ export default function ApplicationDetailPage() {
     return null;
   }, [application?.status, application?.projectUID, communityId, combinedProgramId]);
 
-  // Check if status actions should be shown (not finalized)
+  // Get can function from permission context for permission-based checks
+  const { can } = usePermissionContext();
+
+  // Check if status actions should be shown based on user permissions
+  // User needs at least one of the status-changing permissions and the application must not be finalized
   const showStatusActions =
-    hasAccess &&
     application &&
-    !["approved", "rejected"].includes(application.status.toLowerCase());
+    !["approved", "rejected"].includes(application.status.toLowerCase()) &&
+    (can(Permission.APPLICATION_CHANGE_STATUS) ||
+      can(Permission.APPLICATION_APPROVE) ||
+      can(Permission.APPLICATION_REJECT) ||
+      can(Permission.APPLICATION_REVIEW));
 
   // Check if post-approval edit should be enabled
   // Only for approved applications with existing post-approval data
@@ -350,16 +360,20 @@ export default function ApplicationDetailPage() {
             ) : undefined
           }
           moreActions={
-            <MoreActionsDropdown
-              referenceNumber={application.referenceNumber}
-              onDeleteClick={handleDeleteClick}
-              canDelete={hasAccess}
-              isDeleting={isDeleting}
-              onEditClick={handleEditClick}
-              canEdit={hasAccess && canEditApplication(application)}
-              onEditPostApprovalClick={handleEditPostApprovalClick}
-              canEditPostApproval={canEditPostApproval}
-            />
+            <Can permission={Permission.APPLICATION_CHANGE_STATUS}>
+              <MoreActionsDropdown
+                referenceNumber={application.referenceNumber}
+                onDeleteClick={handleDeleteClick}
+                canDelete={can(Permission.APPLICATION_CHANGE_STATUS)}
+                isDeleting={isDeleting}
+                onEditClick={handleEditClick}
+                canEdit={
+                  can(Permission.APPLICATION_CHANGE_STATUS) && canEditApplication(application)
+                }
+                onEditPostApprovalClick={handleEditPostApprovalClick}
+                canEditPostApproval={canEditPostApproval}
+              />
+            </Can>
           }
         />
 

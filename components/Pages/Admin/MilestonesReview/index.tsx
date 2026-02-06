@@ -9,9 +9,10 @@ import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAc
 import { useDeleteMilestone } from "@/hooks/useDeleteMilestone";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
-import { useIsReviewer, useReviewerPrograms } from "@/hooks/usePermissions";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
+import { useIsReviewer, useIsReviewerType } from "@/src/core/rbac/context/permission-context";
+import { ReviewerType } from "@/src/core/rbac/types";
 import { useOwnerStore } from "@/store";
 import { PAGES } from "@/utilities/pages";
 import { CommentsAndActivity } from "./CommentsAndActivity";
@@ -60,16 +61,12 @@ export function MilestonesReviewPage({
     };
   }, [programId]);
 
-  // Check if user is a reviewer for this program
-  const { isReviewer, isLoading: isLoadingReviewer } = useIsReviewer(parsedProgramId);
+  // Check if user is a reviewer for this program using RBAC
+  const isReviewer = useIsReviewer();
+  const isMilestoneReviewer = useIsReviewerType(ReviewerType.MILESTONE);
 
-  // Check if user is a milestone reviewer for this program
-  const { programs: reviewerPrograms } = useReviewerPrograms();
-  const isMilestoneReviewer = useMemo(() => {
-    return reviewerPrograms?.some(
-      (program) => program.programId === parsedProgramId && program.isMilestoneReviewer === true
-    );
-  }, [reviewerPrograms, parsedProgramId]);
+  // Combined loading state for reviewer checks is handled by the permission context
+  const isLoadingReviewer = false; // RBAC context handles loading state internally
 
   // Determine if user can verify milestones (must be before early returns)
   // Only milestone reviewers, admins, contract owners, and staff can verify/complete/sync
