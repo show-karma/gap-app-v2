@@ -7,7 +7,7 @@ import type {
   TExternalLink,
 } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { queryClient } from "@/utilities/query-client";
 import type { AttestationStep } from "@/hooks/useAttestationToast";
 import { checkSlugExists, getProject } from "@/services/project.service";
 import fetchData from "@/utilities/fetchData";

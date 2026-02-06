@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
 import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useStaff } from "@/hooks/useStaff";
@@ -66,8 +65,6 @@ export function TeamContent({ className }: TeamContentProps) {
 
   return (
     <div className={cn("flex flex-col gap-4", className)} data-testid="team-content">
-      <ContributorProfileDialog />
-
       {/* Header with invite button */}
       <div className="flex flex-row justify-between items-center w-full">
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { queryClient } from "@/utilities/query-client";
 import { getProjectUpdates } from "@/services/project-updates.service";
 import type {
   GrantMilestoneWithDetails,

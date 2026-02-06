@@ -274,7 +274,6 @@ export const INDEXER = {
     },
   },
   PROGRAMS: {
-    GET: (programId: string) => `/programs/${programId}`,
     COMMUNITY: (communityId: string) => `/communities/${communityId}/programs`,
     FINANCIALS: (programId: string, page?: number, limit?: number) => {
       const params = new URLSearchParams();

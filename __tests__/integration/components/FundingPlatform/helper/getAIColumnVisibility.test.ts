@@ -50,41 +50,6 @@ describe("getAIColumnVisibility", () => {
     });
   });
 
-  describe("When using fallback langfusePromptId", () => {
-    it("should show AI score column when fallback langfusePromptId is provided", () => {
-      const formSchema = undefined;
-      const langfusePromptId = "fallback-prompt-789";
-
-      const result = getAIColumnVisibility(formSchema, langfusePromptId);
-      expect(result.showAIScoreColumn).toBe(true);
-      expect(result.showInternalAIScoreColumn).toBe(false);
-    });
-
-    it("should prefer aiConfig langfusePromptId over fallback", () => {
-      const formSchema = {
-        aiConfig: {
-          langfusePromptId: "config-prompt",
-        },
-      };
-      const langfusePromptId = "fallback-prompt";
-
-      const result = getAIColumnVisibility(formSchema, langfusePromptId);
-      expect(result.showAIScoreColumn).toBe(true);
-      expect(result.showInternalAIScoreColumn).toBe(false);
-    });
-
-    it("should use fallback when aiConfig langfusePromptId is missing", () => {
-      const formSchema = {
-        aiConfig: {},
-      };
-      const langfusePromptId = "fallback-prompt";
-
-      const result = getAIColumnVisibility(formSchema, langfusePromptId);
-      expect(result.showAIScoreColumn).toBe(true);
-      expect(result.showInternalAIScoreColumn).toBe(false);
-    });
-  });
-
   describe("Edge cases", () => {
     it("should handle undefined formSchema", () => {
       const result = getAIColumnVisibility(undefined);
@@ -117,15 +82,6 @@ describe("getAIColumnVisibility", () => {
       };
 
       const result = getAIColumnVisibility(formSchema);
-      expect(result.showAIScoreColumn).toBe(false);
-      expect(result.showInternalAIScoreColumn).toBe(false);
-    });
-
-    it("should handle empty string fallback prompt ID as falsy", () => {
-      const formSchema = undefined;
-      const langfusePromptId = "";
-
-      const result = getAIColumnVisibility(formSchema, langfusePromptId);
       expect(result.showAIScoreColumn).toBe(false);
       expect(result.showInternalAIScoreColumn).toBe(false);
     });
@@ -171,15 +127,6 @@ describe("getAIColumnVisibility", () => {
       const result = getAIColumnVisibility(formSchema);
       expect(result.showAIScoreColumn).toBe(false);
       expect(result.showInternalAIScoreColumn).toBe(true);
-    });
-
-    it("should handle legacy program with fallback prompt ID", () => {
-      const formSchema = undefined;
-      const langfusePromptId = "legacy-prompt-id";
-
-      const result = getAIColumnVisibility(formSchema, langfusePromptId);
-      expect(result.showAIScoreColumn).toBe(true);
-      expect(result.showInternalAIScoreColumn).toBe(false);
     });
   });
 });

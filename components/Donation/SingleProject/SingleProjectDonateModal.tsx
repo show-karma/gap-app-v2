@@ -12,16 +12,20 @@ import {
 } from "@/components/ui/dialog";
 import { SUPPORTED_TOKENS } from "@/constants/supportedTokens";
 import { useSingleProjectDonation } from "@/hooks/donation/useSingleProjectDonation";
+import { useAuth } from "@/hooks/useAuth";
+import { STRIPE_SUPPORTED_CHAIN_IDS } from "@/lib/onramp";
 import { getPayoutAddressForChain } from "@/src/features/chain-payout-address/hooks/use-chain-payout-address";
 import { PaymentMethod } from "@/types/donations";
 import { appNetwork } from "@/utilities/network";
 import { shortAddress } from "@/utilities/shortAddress";
 import { TokenSelector } from "../TokenSelector";
+import { OnrampFlow } from "./OnrampFlow";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
 import type { SingleProjectDonateModalProps } from "./types";
 
 export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps>(
   ({ isOpen, onClose, project, initialAmount }) => {
+    const { authenticated, login, connectWallet } = useAuth();
     const {
       paymentMethod,
       selectedToken,
@@ -33,6 +37,7 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
       handleAmountChange,
       handleProceed,
       setSelectedToken,
+      address,
     } = useSingleProjectDonation(project, onClose, initialAmount);
 
     const handleOpenChange = useCallback(
@@ -84,11 +89,30 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
       });
     }, [balanceByTokenKey, configuredChainIds]);
 
-    // Get display address for the selected token's chain
+    // Get display address for the selected token's chain (crypto flow)
     const displayPayoutAddress = useMemo(() => {
       if (!selectedToken || !project.chainPayoutAddress) return "";
       return getPayoutAddressForChain(project.chainPayoutAddress, selectedToken.chainId) || "";
     }, [selectedToken, project.chainPayoutAddress]);
+
+    // Get payout address for fiat flow, validating against Stripe-supported chains
+    const fiatPayoutConfig = useMemo(() => {
+      if (!project.chainPayoutAddress) {
+        return { address: "", chainId: 8453, isSupported: false };
+      }
+
+      // Find first Stripe-supported chain with a payout address
+      // Order: Base (8453), Ethereum (1), Polygon (137), Avalanche (43114)
+      for (const chainId of STRIPE_SUPPORTED_CHAIN_IDS) {
+        const address = getPayoutAddressForChain(project.chainPayoutAddress, chainId);
+        if (address) {
+          return { address, chainId, isSupported: true };
+        }
+      }
+
+      // No supported chain has a payout address
+      return { address: "", chainId: 8453, isSupported: false };
+    }, [project.chainPayoutAddress]);
 
     return (
       <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -112,69 +136,124 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
             <PaymentMethodSelector selected={paymentMethod} onSelect={handlePaymentMethodChange} />
 
             {paymentMethod === PaymentMethod.CRYPTO && (
-              <div className="space-y-2">
-                <span className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Select Token
-                </span>
-                {tokensWithBalanceAndPayoutSet.length > 0 ? (
-                  <TokenSelector
-                    selectedToken={selectedToken ?? undefined}
-                    tokenOptions={tokensWithBalanceAndPayoutSet}
-                    balanceByTokenKey={balanceByTokenKey}
-                    onTokenSelect={setSelectedToken}
-                  />
+              <>
+                {/* No wallet connected */}
+                {!address ? (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Connect a wallet to view your token balances and make a donation.
+                    </p>
+                    <Button
+                      onClick={connectWallet}
+                      className="w-full bg-brand-blue hover:bg-blue-600"
+                    >
+                      Connect Wallet
+                    </Button>
+                  </div>
+                ) : tokensWithBalanceAndPayoutSet.length > 0 ? (
+                  <div className="space-y-2">
+                    <span className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Select Token
+                    </span>
+                    <TokenSelector
+                      selectedToken={selectedToken ?? undefined}
+                      tokenOptions={tokensWithBalanceAndPayoutSet}
+                      balanceByTokenKey={balanceByTokenKey}
+                      onTokenSelect={setSelectedToken}
+                    />
+                  </div>
                 ) : configuredChainIds.length > 0 ? (
-                  <div className="text-sm text-gray-500 dark:text-gray-400 py-2">
-                    <p>You don&apos;t have tokens on the chains this project accepts:</p>
-                    <ul className="list-disc list-inside mt-1 ml-2">
-                      {configuredChainNames.map((name) => (
-                        <li key={name}>{name}</li>
-                      ))}
-                    </ul>
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      This project accepts crypto donations only on{" "}
+                      {configuredChainNames.length === 1
+                        ? configuredChainNames[0]
+                        : configuredChainNames.slice(0, -1).join(", ") +
+                          " and " +
+                          configuredChainNames[configuredChainNames.length - 1]}{" "}
+                      {configuredChainNames.length === 1 ? "network" : "networks"}. We couldn&apos;t
+                      find any tokens in your wallet account {address ? shortAddress(address) : ""}.
+                    </p>
+                    <Button onClick={connectWallet} variant="outline" className="w-full">
+                      Connect Different Wallet
+                    </Button>
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
                     This project hasn't set up donation addresses yet.
                   </p>
                 )}
-              </div>
+
+                {tokensWithBalanceAndPayoutSet.length > 0 && (
+                  <>
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="donation-amount"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      >
+                        Amount {selectedToken ? `(${selectedToken.symbol})` : ""}
+                      </label>
+                      <input
+                        id="donation-amount"
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="0.00"
+                        value={amount}
+                        onChange={handleAmountChange}
+                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                      />
+                    </div>
+
+                    <Button
+                      onClick={handleProceed}
+                      disabled={!canProceed || isExecuting}
+                      className="w-full bg-brand-blue hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isExecuting ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="animate-spin h-4 w-4" />
+                          Processing...
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center gap-2">
+                          <Zap className="w-4 h-4" />
+                          Donate
+                        </span>
+                      )}
+                    </Button>
+                  </>
+                )}
+              </>
             )}
 
-            <div className="space-y-2">
-              <label
-                htmlFor="donation-amount"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Amount {selectedToken ? `(${selectedToken.symbol})` : ""}
-              </label>
-              <input
-                id="donation-amount"
-                type="text"
-                inputMode="decimal"
-                placeholder="0.00"
-                value={amount}
-                onChange={handleAmountChange}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-              />
-            </div>
-
-            <Button
-              onClick={handleProceed}
-              disabled={!canProceed || isExecuting || tokensWithBalanceAndPayoutSet.length === 0}
-              className="w-full bg-brand-blue hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isExecuting ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="animate-spin h-4 w-4" />
-                  Processing...
-                </span>
-              ) : (
-                <span className="flex items-center justify-center gap-2">
-                  <Zap className="w-4 h-4" />
-                  Send Donation
-                </span>
-              )}
-            </Button>
+            {paymentMethod === PaymentMethod.FIAT && (
+              <>
+                {!authenticated ? (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                      You need to login to proceed with card payment.
+                    </p>
+                    <Button onClick={login} className="w-full bg-brand-blue hover:bg-blue-600">
+                      Login to Continue
+                    </Button>
+                  </div>
+                ) : fiatPayoutConfig.address && fiatPayoutConfig.isSupported ? (
+                  <OnrampFlow
+                    projectUid={project.uid}
+                    payoutAddress={fiatPayoutConfig.address}
+                    chainId={fiatPayoutConfig.chainId}
+                  />
+                ) : configuredChainIds.length > 0 ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                    Card payments are not available for this project&apos;s configured networks.
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                    This project hasn&apos;t set up donation addresses yet.
+                  </p>
+                )}
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>
