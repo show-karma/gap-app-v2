@@ -3,14 +3,19 @@
  * This is a thin wrapper around Privy's token methods
  * Privy handles token storage in cookies or localStorage automatically
  */
+interface PrivyTokenProvider {
+  getAccessToken?: () => Promise<string | null>;
+  logout?: () => Promise<void>;
+}
+
 export class TokenManager {
-  private static privyInstance: any = null;
+  private static privyInstance: PrivyTokenProvider | null = null;
 
   /**
    * Set the Privy instance to use for token operations
    * This should be called once when the app initializes
    */
-  static setPrivyInstance(privy: any): void {
+  static setPrivyInstance(privy: PrivyTokenProvider | null): void {
     TokenManager.privyInstance = privy;
   }
 

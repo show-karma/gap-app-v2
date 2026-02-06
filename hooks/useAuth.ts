@@ -11,6 +11,47 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
 
 /**
+ * Initial delay (in ms) before first auth status check.
+ * Gives Privy a moment to initialize before we start checking.
+ */
+const AUTH_INIT_DELAY_MS = 500;
+
+/**
+ * Interval (in ms) for periodic auth status checks.
+ * Used for cross-tab logout synchronization.
+ */
+const AUTH_CHECK_INTERVAL_MS = 5000;
+
+/**
+ * Number of consecutive failures (no token AND no session) required before logging out.
+ * This prevents false logouts during temporary network issues or slow token refresh.
+ * With a 500ms initial delay and checks every 5s, 3 failures = ~10s of no auth state.
+ */
+const AUTH_FAILURE_THRESHOLD = 3;
+
+/**
+ * Cookie name used by Privy for session persistence in HttpOnly mode.
+ * This is an implementation detail of Privy - if Privy changes this, the check may need updating.
+ * @see https://docs.privy.io/guide/react/configuration/cookies
+ */
+const PRIVY_SESSION_COOKIE_NAME = "privy-session";
+
+/**
+ * Check if privy-session cookie exists using proper cookie parsing.
+ * If session exists, user might be in the middle of token refresh (HttpOnly cookies mode).
+ */
+// Note: privy-session is a JS-readable indicator cookie, NOT HttpOnly.
+// Privy's HttpOnly cookies are separate and used for token refresh.
+// If this cookie is ever made HttpOnly, the check degrades gracefully —
+// the failure threshold alone still prevents false logouts.
+const hasPrivySession = () => {
+  if (typeof document === "undefined") return false;
+  return document.cookie
+    .split(";")
+    .some((c) => c.trim().startsWith(`${PRIVY_SESSION_COOKIE_NAME}=`));
+};
+
+/**
  * Authentication hook that wraps Privy's built-in authentication
  *
  * Privy handles all the complexity:
@@ -31,6 +72,7 @@ export const useAuth = () => {
 
   const shouldLoginAfterLogout = useRef(false);
   const prevAuthRef = useRef(authenticated);
+  const authFailureCount = useRef(0);
 
   /**
    * AUTH CACHE INVALIDATION
@@ -55,6 +97,9 @@ export const useAuth = () => {
       queryClient.removeQueries({ queryKey: QUERY_KEYS.COMMUNITY.IS_ADMIN_BASE });
       queryClient.removeQueries({ queryKey: QUERY_KEYS.AUTH.STAFF_AUTHORIZATION_BASE });
       queryClient.removeQueries({ queryKey: QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE });
+
+      // Reset auth failure counter on logout to avoid carrying over state to next login
+      authFailureCount.current = 0;
     }
     prevAuthRef.current = authenticated;
   }, [authenticated]);
@@ -74,29 +119,64 @@ export const useAuth = () => {
   }, [authenticated, ready, login]);
 
   // Cross-tab logout synchronization
+  // Compatible with both localStorage (default) and HttpOnly cookies
   useEffect(() => {
     if (!ready || !authenticated) return;
 
-    const checkAuthStatus = async () => {
-      const hasToken = await TokenManager.getToken();
-      if (!hasToken && authenticated) {
-        logout?.();
+    const handleAuthFailure = () => {
+      authFailureCount.current += 1;
+      if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
+        authFailureCount.current = 0;
+        logout();
       }
     };
 
+    const checkAuthStatus = async () => {
+      try {
+        const hasToken = await TokenManager.getToken();
+        const hasSession = hasPrivySession();
+
+        // If we have either a token or session, auth is valid - reset failure counter
+        if (hasToken || hasSession) {
+          authFailureCount.current = 0;
+          return;
+        }
+
+        // No token AND no session - increment failure counter
+        // Only logout after multiple consecutive failures to handle:
+        // - Slow network during token refresh
+        // - Temporary network hiccups
+        // - Privy initialization timing
+        handleAuthFailure();
+      } catch {
+        // Token check failed (network error, etc.) - treat as a failure
+        handleAuthFailure();
+      }
+    };
+
+    // Note: handleStorageChange reuses checkAuthStatus, which shares the failure
+    // counter with the interval. If 2 failures are already accumulated and a
+    // storage event fires, it triggers logout. This is intentional: 3 independent
+    // signals of no auth = real logout.
     const handleStorageChange = (e: StorageEvent) => {
+      // For localStorage mode: detect cross-tab logout
       if (e.key === "privy:token" && !e.newValue) {
         checkAuthStatus();
       }
     };
 
-    checkAuthStatus();
+    // Don't check immediately on mount - give time for token refresh.
+    // This prevents false logouts when using HttpOnly cookies.
+    // Note: Privy's `ready` state doesn't guarantee token refresh is complete,
+    // so we use a grace period as a workaround.
+    const initialCheckTimeout = setTimeout(checkAuthStatus, AUTH_INIT_DELAY_MS);
 
-    const intervalId = setInterval(checkAuthStatus, 5000);
+    const intervalId = setInterval(checkAuthStatus, AUTH_CHECK_INTERVAL_MS);
 
     window.addEventListener("storage", handleStorageChange);
 
     return () => {
+      clearTimeout(initialCheckTimeout);
       clearInterval(intervalId);
       window.removeEventListener("storage", handleStorageChange);
     };
