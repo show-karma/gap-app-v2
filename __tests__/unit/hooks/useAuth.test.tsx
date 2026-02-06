@@ -40,8 +40,12 @@ jest.mock("@wagmi/core", () => ({
   watchAccount: jest.fn(() => jest.fn()),
 }));
 
+const mockQueryClientClear = jest.fn();
+const mockClearCache = jest.fn();
+
 jest.mock("@/utilities/query-client", () => ({
   queryClient: {
+    clear: (...args: unknown[]) => mockQueryClientClear(...args),
     removeQueries: jest.fn(),
   },
 }));
@@ -52,6 +56,7 @@ jest.mock("@/utilities/auth/token-manager", () => ({
     getToken: (...args: unknown[]) => mockGetToken(...args),
     setPrivyInstance: jest.fn(),
     clearTokens: jest.fn(),
+    clearCache: (...args: unknown[]) => mockClearCache(...args),
   },
 }));
 
@@ -110,42 +115,99 @@ describe("useAuth - Query Key Consistency", () => {
   });
 });
 
-describe("Cache invalidation pattern verification", () => {
-  it("should document that useAuth clears these caches on logout", () => {
-    // This test documents the cache keys that useAuth clears on logout
-    // When adding new permission hooks, they must be added to useAuth.ts
-    const cacheKeysToBeCleared = [
-      QUERY_KEYS.COMMUNITY.IS_ADMIN_BASE, // useCheckCommunityAdmin
-      QUERY_KEYS.AUTH.STAFF_AUTHORIZATION_BASE, // useStaff
-      QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE, // useContractOwner
-    ];
+describe("Cache invalidation on logout", () => {
+  const mockPrivyUser = {
+    id: "user-123",
+    wallet: { address: "0x1234567890123456789012345678901234567890" },
+  };
 
-    // Verify all keys are defined
-    cacheKeysToBeCleared.forEach((key) => {
-      expect(key).toBeDefined();
-      expect(Array.isArray(key)).toBe(true);
-      expect(key.length).toBeGreaterThan(0);
+  const mockWallet = {
+    address: "0x1234567890123456789012345678901234567890",
+    chainId: "eip155:10",
+  };
+
+  const wrapper = ({ children }: { children: ReactNode }) => <>{children}</>;
+
+  beforeEach(() => {
+    mockQueryClientClear.mockClear();
+    mockClearCache.mockClear();
+
+    mockUsePrivy.mockReturnValue({
+      ready: true,
+      authenticated: true,
+      user: mockPrivyUser,
+      login: mockLogin,
+      logout: mockLogout,
+      getAccessToken: mockGetAccessToken,
+    });
+
+    mockUseWallets.mockReturnValue({ wallets: [mockWallet] });
+
+    mockUseAccount.mockReturnValue({
+      address: mockWallet.address,
+      isConnected: true,
+      isConnecting: false,
+      isDisconnected: false,
     });
   });
 
-  it("should verify that base keys match the first element of full keys", () => {
-    // This ensures removeQueries({ queryKey: BASE_KEY }) will match full keys
-    // React Query uses prefix matching for removeQueries
+  it("should clear all query caches on logout", async () => {
+    const { rerender } = renderHook(() => useAuth(), { wrapper });
 
-    // isCommunityAdmin
-    const adminBase = QUERY_KEYS.COMMUNITY.IS_ADMIN_BASE;
-    const adminFull = QUERY_KEYS.COMMUNITY.IS_ADMIN("uid", 10, "0xaddr", {});
-    expect(adminFull[0]).toBe(adminBase[0]);
+    // Simulate logout: authenticated → false
+    mockUsePrivy.mockReturnValue({
+      ready: true,
+      authenticated: false,
+      user: null,
+      login: mockLogin,
+      logout: mockLogout,
+      getAccessToken: mockGetAccessToken,
+    });
 
-    // staffAuthorization
-    const staffBase = QUERY_KEYS.AUTH.STAFF_AUTHORIZATION_BASE;
-    const staffFull = QUERY_KEYS.AUTH.STAFF_AUTHORIZATION("0xaddr");
-    expect(staffFull[0]).toBe(staffBase[0]);
+    await act(async () => {
+      rerender();
+    });
 
-    // contract-owner
-    const ownerBase = QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE;
-    const ownerFull = QUERY_KEYS.AUTH.CONTRACT_OWNER("0xaddr", 10);
-    expect(ownerFull[0]).toBe(ownerBase[0]);
+    expect(mockQueryClientClear).toHaveBeenCalled();
+    expect(mockClearCache).toHaveBeenCalled();
+  });
+
+  it("should clear caches and force logout when user identity changes (shared auth user switch)", async () => {
+    const { rerender } = renderHook(() => useAuth(), { wrapper });
+
+    // Simulate user switch: different user.id, still authenticated
+    const newUser = { id: "user-456", wallet: { address: "0xABCD" } };
+    mockUsePrivy.mockReturnValue({
+      ready: true,
+      authenticated: true,
+      user: newUser,
+      login: mockLogin,
+      logout: mockLogout,
+      getAccessToken: mockGetAccessToken,
+    });
+
+    await act(async () => {
+      rerender();
+    });
+
+    expect(mockQueryClientClear).toHaveBeenCalled();
+    expect(mockClearCache).toHaveBeenCalled();
+    expect(mockLogout).toHaveBeenCalled();
+  });
+
+  it("should not trigger logout when user id stays the same", async () => {
+    const { rerender } = renderHook(() => useAuth(), { wrapper });
+
+    mockQueryClientClear.mockClear();
+    mockClearCache.mockClear();
+
+    // Re-render with same user — no identity change
+    await act(async () => {
+      rerender();
+    });
+
+    expect(mockQueryClientClear).not.toHaveBeenCalled();
+    expect(mockLogout).not.toHaveBeenCalled();
   });
 });
 
@@ -204,9 +266,9 @@ describe("useAuth - Cross-tab logout synchronization", () => {
     });
     expect(mockLogout).not.toHaveBeenCalled();
 
-    // 2nd failure: first interval tick at 5000ms
+    // 2nd failure: first interval tick at 10000ms
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(4500);
+      await jest.advanceTimersByTimeAsync(9500);
     });
     expect(mockLogout).not.toHaveBeenCalled();
   });
@@ -218,13 +280,13 @@ describe("useAuth - Cross-tab logout synchronization", () => {
     await act(async () => {
       await jest.advanceTimersByTimeAsync(500);
     });
-    // 2nd failure at 5000ms
+    // 2nd failure at 10000ms
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(4500);
+      await jest.advanceTimersByTimeAsync(9500);
     });
-    // 3rd failure at 10000ms → triggers logout
+    // 3rd failure at 20000ms → triggers logout
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(5000);
+      await jest.advanceTimersByTimeAsync(10000);
     });
 
     expect(mockLogout).toHaveBeenCalled();
@@ -244,11 +306,11 @@ describe("useAuth - Cross-tab logout synchronization", () => {
     });
     // 2nd failure
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(4500);
+      await jest.advanceTimersByTimeAsync(9500);
     });
     // 3rd call: token available → counter resets
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(5000);
+      await jest.advanceTimersByTimeAsync(10000);
     });
 
     expect(mockLogout).not.toHaveBeenCalled();
@@ -264,13 +326,13 @@ describe("useAuth - Cross-tab logout synchronization", () => {
       await jest.advanceTimersByTimeAsync(500);
     });
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(4500);
+      await jest.advanceTimersByTimeAsync(9500);
     });
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(5000);
+      await jest.advanceTimersByTimeAsync(10000);
     });
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(5000);
+      await jest.advanceTimersByTimeAsync(10000);
     });
 
     expect(mockLogout).not.toHaveBeenCalled();
@@ -346,7 +408,7 @@ describe("useAuth - Cross-tab logout synchronization", () => {
       await jest.advanceTimersByTimeAsync(500);
     });
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(4500);
+      await jest.advanceTimersByTimeAsync(9500);
     });
 
     // Simulate logout: authenticated → false
@@ -392,12 +454,12 @@ describe("useAuth - Cross-tab logout synchronization", () => {
       await jest.advanceTimersByTimeAsync(500);
     });
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(4500);
+      await jest.advanceTimersByTimeAsync(9500);
     });
     expect(mockLogout).not.toHaveBeenCalled();
 
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(5000);
+      await jest.advanceTimersByTimeAsync(10000);
     });
 
     expect(mockLogout).toHaveBeenCalled();
@@ -412,15 +474,67 @@ describe("useAuth - Cross-tab logout synchronization", () => {
     await act(async () => {
       await jest.advanceTimersByTimeAsync(500);
     });
-    // 2nd failure (error) at 5000ms
+    // 2nd failure (error) at 10000ms
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(4500);
+      await jest.advanceTimersByTimeAsync(9500);
     });
-    // 3rd failure (error) at 10000ms → triggers logout
+    // 3rd failure (error) at 20000ms → triggers logout
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(5000);
+      await jest.advanceTimersByTimeAsync(10000);
     });
 
     expect(mockLogout).toHaveBeenCalled();
+  });
+
+  it("should trigger checkAuthStatus on token replacement (user switch)", async () => {
+    renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "privy:token",
+          oldValue: "old-token",
+          newValue: "new-token",
+        })
+      );
+      await Promise.resolve();
+    });
+
+    expect(mockGetToken).toHaveBeenCalled();
+  });
+
+  it("should trigger checkAuthStatus on privy:user change", async () => {
+    renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "privy:user",
+          oldValue: JSON.stringify({ id: "user-123" }),
+          newValue: JSON.stringify({ id: "user-456" }),
+        })
+      );
+      await Promise.resolve();
+    });
+
+    expect(mockGetToken).toHaveBeenCalled();
+  });
+
+  it("should not trigger on privy:token set when no previous value", async () => {
+    renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "privy:token",
+          oldValue: null,
+          newValue: "new-token",
+        })
+      );
+      await Promise.resolve();
+    });
+
+    // No old value means initial login, not a switch — should not trigger
+    expect(mockGetToken).not.toHaveBeenCalled();
   });
 });

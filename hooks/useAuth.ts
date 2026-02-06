@@ -7,7 +7,6 @@ import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { queryClient } from "@/utilities/query-client";
-import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
 
 /**
@@ -19,13 +18,18 @@ const AUTH_INIT_DELAY_MS = 500;
 /**
  * Interval (in ms) for periodic auth status checks.
  * Used for cross-tab logout synchronization.
+ *
+ * The interval can be short because TokenManager caches tokens for 30s,
+ * so most checks are cache hits (no Privy API call). Only ~2 actual API
+ * calls/min regardless of interval. Storage events provide instant detection.
  */
-const AUTH_CHECK_INTERVAL_MS = 5000;
+const AUTH_CHECK_INTERVAL_MS = 10_000;
 
 /**
  * Number of consecutive failures (no token AND no session) required before logging out.
  * This prevents false logouts during temporary network issues or slow token refresh.
- * With a 500ms initial delay and checks every 5s, 3 failures = ~10s of no auth state.
+ * With a 500ms initial delay and checks every 10s, 3 failures = ~20s of no auth state.
+ * Storage events provide faster detection for cross-tab logouts.
  */
 const AUTH_FAILURE_THRESHOLD = 3;
 
@@ -72,37 +76,44 @@ export const useAuth = () => {
 
   const shouldLoginAfterLogout = useRef(false);
   const prevAuthRef = useRef(authenticated);
+  const prevUserIdRef = useRef<string | undefined>(user?.id);
   const authFailureCount = useRef(0);
 
   /**
-   * AUTH CACHE INVALIDATION
+   * AUTH STATE CHANGE DETECTION
    *
-   * When user logs out, we must invalidate all permission/authorization query caches.
-   * This prevents stale "isAdmin: true" data from being served on re-login.
+   * Detects two critical transitions:
+   * 1. Logout (authenticated → false): Clear all query caches + token cache
+   * 2. User switch (user.id changes while authenticated): Clear stale caches
    *
-   * IMPORTANT: When creating new auth/permission hooks, add their query key here
-   * using the centralized QUERY_KEYS from utilities/queryKeys.ts:
-   * - useCheckCommunityAdmin → QUERY_KEYS.COMMUNITY.IS_ADMIN_BASE
-   * - useStaff → QUERY_KEYS.AUTH.STAFF_AUTHORIZATION_BASE
-   * - useContractOwner → QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE
+   * Uses queryClient.clear() instead of selective removeQueries to ensure
+   * ALL user-specific data is purged, not just a hardcoded list of keys.
    */
   useEffect(() => {
     // Detect logout: was authenticated, now not authenticated
     if (prevAuthRef.current && !authenticated) {
-      // Remove all permission/authorization queries on logout
-      // Using removeQueries because:
-      // - invalidateQueries triggers refetches → 401 errors
-      // - resetQueries also triggers refetches for active queries
-      // - removeQueries cleanly removes from cache without any refetch
-      queryClient.removeQueries({ queryKey: QUERY_KEYS.COMMUNITY.IS_ADMIN_BASE });
-      queryClient.removeQueries({ queryKey: QUERY_KEYS.AUTH.STAFF_AUTHORIZATION_BASE });
-      queryClient.removeQueries({ queryKey: QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE });
-
-      // Reset auth failure counter on logout to avoid carrying over state to next login
+      // Clear ALL query caches on logout to prevent stale data on re-login.
+      // Using clear() instead of selective removeQueries because:
+      // - removeQueries only clears explicitly listed keys (easy to miss new ones)
+      // - clear() is safe on logout since unauthenticated state needs fresh data anyway
+      queryClient.clear();
+      TokenManager.clearCache();
       authFailureCount.current = 0;
     }
+
+    // Detect user switch: different user.id while still authenticated.
+    // This happens with Privy shared auth when a different user logs in
+    // on another subdomain — Privy seamlessly transitions without logout.
+    // Force logout to ensure full re-initialization with the new user's state.
+    if (authenticated && user?.id && prevUserIdRef.current && user.id !== prevUserIdRef.current) {
+      queryClient.clear();
+      TokenManager.clearCache();
+      logout();
+    }
+
     prevAuthRef.current = authenticated;
-  }, [authenticated]);
+    prevUserIdRef.current = user?.id;
+  }, [authenticated, user?.id, logout]);
 
   // Initialize TokenManager with Privy synchronously
   // This must happen before any API calls are made, so we do it outside useEffect
@@ -154,13 +165,16 @@ export const useAuth = () => {
       }
     };
 
-    // Note: handleStorageChange reuses checkAuthStatus, which shares the failure
-    // counter with the interval. If 2 failures are already accumulated and a
-    // storage event fires, it triggers logout. This is intentional: 3 independent
-    // signals of no auth = real logout.
     const handleStorageChange = (e: StorageEvent) => {
-      // For localStorage mode: detect cross-tab logout
-      if (e.key === "privy:token" && !e.newValue) {
+      if (e.key === "privy:token") {
+        // Token removed → cross-tab logout
+        // Token replaced → possible user switch (shared auth)
+        if (!e.newValue || (e.oldValue && e.newValue !== e.oldValue)) {
+          checkAuthStatus();
+        }
+      }
+      // User identity changed in another tab (e.g., shared auth login)
+      if (e.key === "privy:user" && e.oldValue !== e.newValue) {
         checkAuthStatus();
       }
     };
