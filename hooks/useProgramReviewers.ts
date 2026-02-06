@@ -28,9 +28,8 @@ export function useProgramReviewers(programId: string) {
   const addMutation = useMutation({
     mutationFn: async (data: Record<string, string>) => {
       const validation = programReviewersService.validateReviewerData({
-        loginEmail: data.loginEmail,
+        email: data.email,
         name: data.name,
-        notificationEmail: data.notificationEmail,
         telegram: data.telegram,
       });
 
@@ -39,9 +38,8 @@ export function useProgramReviewers(programId: string) {
       }
 
       return programReviewersService.addReviewer(programId, {
-        loginEmail: data.loginEmail,
+        email: data.email,
         name: data.name,
-        notificationEmail: data.notificationEmail || undefined,
         telegram: data.telegram || undefined,
       });
     },
@@ -59,7 +57,7 @@ export function useProgramReviewers(programId: string) {
     },
   });
 
-  // Mutation for removing a program reviewer by loginEmail
+  // Mutation for removing a program reviewer by email
   const removeMutation = useMutation({
     mutationFn: async (identifier: string) => {
       return programReviewersService.removeReviewer(programId, identifier);

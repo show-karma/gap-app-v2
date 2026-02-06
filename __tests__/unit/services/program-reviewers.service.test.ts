@@ -75,8 +75,7 @@ describe("programReviewersService", () => {
               id: "user-1",
               publicAddress: "0x1234567890123456789012345678901234567890",
               name: "Alice Admin",
-              loginEmail: "alice@example.com",
-              notificationEmail: "alice-notifications@example.com",
+              email: "alice@example.com",
               telegram: "@aliceadmin",
               createdAt: "2024-01-01T00:00:00Z",
               updatedAt: "2024-01-01T00:00:00Z",
@@ -95,9 +94,8 @@ describe("programReviewersService", () => {
       expect(result).toEqual([
         {
           publicAddress: "0x1234567890123456789012345678901234567890",
-          loginEmail: "alice@example.com",
+          email: "alice@example.com",
           name: "Alice Admin",
-          notificationEmail: "alice-notifications@example.com",
           telegram: "@aliceadmin",
           assignedAt: "2024-01-01T00:00:00Z",
           assignedBy: "0x9876543210987654321098765432109876543210",
@@ -133,7 +131,7 @@ describe("programReviewersService", () => {
   describe("addReviewer", () => {
     it("should add a program reviewer successfully", async () => {
       const reviewerData: AddReviewerRequest = {
-        loginEmail: "bob@example.com",
+        email: "bob@example.com",
         name: "Bob Reviewer",
         telegram: "@bobreviewer",
       };
@@ -147,7 +145,7 @@ describe("programReviewersService", () => {
             id: "user-2",
             publicAddress: "0x1234567890123456789012345678901234567890",
             name: "Bob Reviewer",
-            loginEmail: "bob@example.com",
+            email: "bob@example.com",
             telegram: "@bobreviewer",
             createdAt: "2024-01-01T00:00:00Z",
             updatedAt: "2024-01-01T00:00:00Z",
@@ -165,12 +163,12 @@ describe("programReviewersService", () => {
         reviewerData
       );
       expect(result.name).toBe("Bob Reviewer");
-      expect(result.loginEmail).toBe("bob@example.com");
+      expect(result.email).toBe("bob@example.com");
     });
 
     it("should handle response without reviewer data", async () => {
       const reviewerData: AddReviewerRequest = {
-        loginEmail: "carol@example.com",
+        email: "carol@example.com",
         name: "Carol Reviewer",
       };
 
@@ -178,7 +176,7 @@ describe("programReviewersService", () => {
 
       const result = await programReviewersService.addReviewer("program-1", reviewerData);
 
-      expect(result.loginEmail).toBe(reviewerData.loginEmail);
+      expect(result.email).toBe(reviewerData.email);
       expect(result.name).toBe(reviewerData.name);
       expect(result.assignedAt).toBeDefined();
     });
@@ -200,11 +198,11 @@ describe("programReviewersService", () => {
     it("should add multiple reviewers successfully", async () => {
       const reviewers: AddReviewerRequest[] = [
         {
-          loginEmail: "reviewer1@example.com",
+          email: "reviewer1@example.com",
           name: "Reviewer 1",
         },
         {
-          loginEmail: "reviewer2@example.com",
+          email: "reviewer2@example.com",
           name: "Reviewer 2",
         },
       ];
@@ -219,7 +217,7 @@ describe("programReviewersService", () => {
               id: "user-1",
               publicAddress: "0x1111111111111111111111111111111111111111",
               name: "Reviewer 1",
-              loginEmail: "reviewer1@example.com",
+              email: "reviewer1@example.com",
               createdAt: "2024-01-01T00:00:00Z",
               updatedAt: "2024-01-01T00:00:00Z",
             },
@@ -237,11 +235,11 @@ describe("programReviewersService", () => {
     it("should handle partial failures", async () => {
       const reviewers: AddReviewerRequest[] = [
         {
-          loginEmail: "reviewer1@example.com",
+          email: "reviewer1@example.com",
           name: "Reviewer 1",
         },
         {
-          loginEmail: "invalid-email",
+          email: "invalid-email",
           name: "Reviewer 2",
         },
       ];
@@ -262,7 +260,7 @@ describe("programReviewersService", () => {
                 id: "user-1",
                 publicAddress: "0x1111111111111111111111111111111111111111",
                 name: "Reviewer 1",
-                loginEmail: "reviewer1@example.com",
+                email: "reviewer1@example.com",
                 createdAt: "2024-01-01T00:00:00Z",
                 updatedAt: "2024-01-01T00:00:00Z",
               },
@@ -290,7 +288,7 @@ describe("programReviewersService", () => {
   describe("validateReviewerData", () => {
     it("should validate correct reviewer data", () => {
       const data: AddReviewerRequest = {
-        loginEmail: "valid@example.com",
+        email: "valid@example.com",
         name: "Valid User",
         telegram: "@validuser",
       };
@@ -303,7 +301,7 @@ describe("programReviewersService", () => {
 
     it("should reject invalid data", () => {
       const data: AddReviewerRequest = {
-        loginEmail: "invalid-email",
+        email: "invalid-email",
         name: "",
       };
 

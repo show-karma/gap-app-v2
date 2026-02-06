@@ -28,9 +28,8 @@ export function useMilestoneReviewers(programId: string) {
   const addMutation = useMutation({
     mutationFn: async (data: Record<string, string>) => {
       const validation = milestoneReviewersService.validateReviewerData({
-        loginEmail: data.loginEmail,
+        email: data.email,
         name: data.name,
-        notificationEmail: data.notificationEmail,
         telegram: data.telegram,
       });
 
@@ -39,9 +38,8 @@ export function useMilestoneReviewers(programId: string) {
       }
 
       return milestoneReviewersService.addReviewer(programId, {
-        loginEmail: data.loginEmail,
+        email: data.email,
         name: data.name,
-        notificationEmail: data.notificationEmail || undefined,
         telegram: data.telegram || undefined,
       });
     },
@@ -59,7 +57,7 @@ export function useMilestoneReviewers(programId: string) {
     },
   });
 
-  // Mutation for removing a milestone reviewer by loginEmail
+  // Mutation for removing a milestone reviewer by email
   const removeMutation = useMutation({
     mutationFn: async (identifier: string) => {
       return milestoneReviewersService.removeReviewer(programId, identifier);

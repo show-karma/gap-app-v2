@@ -35,10 +35,8 @@ export interface RoleMember {
   id: string;
   publicAddress?: string;
   walletAddress?: string;
-  loginEmail?: string;
-  notificationEmail?: string;
-  name?: string;
   email?: string;
+  name?: string;
   telegram?: string;
   assignedAt?: string;
   role?: ReviewerRole;

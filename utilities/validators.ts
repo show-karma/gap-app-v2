@@ -191,7 +191,7 @@ export function validateProgramIdentifiers(programIds: string[]): {
 /**
  * Parses a reviewer member ID in format: role-identifier
  * Supports both email-based (new) and wallet-based (legacy) formats:
- * - New format: role-loginEmail (e.g., "program-reviewer@example.com")
+ * - New format: role-email (e.g., "program-reviewer@example.com")
  * - Legacy format: role-publicAddress (e.g., "program-0x1234...5678")
  *
  * @param memberId - The member ID to parse
@@ -200,7 +200,7 @@ export function validateProgramIdentifiers(programIds: string[]): {
 export function parseReviewerMemberId(memberId: string): {
   valid: boolean;
   role?: "program" | "milestone";
-  loginEmail?: string;
+  email?: string;
   publicAddress?: string;
   error?: string;
 } {
@@ -235,7 +235,7 @@ export function parseReviewerMemberId(memberId: string): {
     return {
       valid: true,
       role: role as "program" | "milestone",
-      loginEmail: identifier,
+      email: identifier,
     };
   }
 
@@ -276,21 +276,16 @@ export function sanitizeString(input: string): string {
  * @param data - Reviewer data to validate
  * @returns Object with validation result and errors
  */
-export function validateReviewerData(data: {
-  loginEmail: string;
-  name: string;
-  notificationEmail?: string;
-  telegram?: string;
-}): {
+export function validateReviewerData(data: { email: string; name: string; telegram?: string }): {
   valid: boolean;
   errors: string[];
 } {
   const errors: string[] = [];
 
-  if (!data.loginEmail) {
-    errors.push("Login email is required");
-  } else if (!validateEmail(data.loginEmail)) {
-    errors.push("Invalid login email format");
+  if (!data.email) {
+    errors.push("Email is required");
+  } else if (!validateEmail(data.email)) {
+    errors.push("Invalid email format");
   }
 
   if (!data.name || !data.name.trim()) {
@@ -299,10 +294,6 @@ export function validateReviewerData(data: {
     errors.push("Name must be at least 2 characters");
   } else if (data.name.trim().length > 100) {
     errors.push("Name must be less than 100 characters");
-  }
-
-  if (data.notificationEmail && !validateEmail(data.notificationEmail)) {
-    errors.push("Invalid notification email format");
   }
 
   if (data.telegram && !validateTelegram(data.telegram)) {
@@ -317,7 +308,7 @@ export function validateReviewerData(data: {
 
 /**
  * Validates reviewer data before submission (legacy format)
- * @deprecated Use validateReviewerData with loginEmail instead
+ * @deprecated Use validateReviewerData with email instead
  * @param data - Reviewer data to validate
  * @returns Object with validation result and errors
  */

@@ -68,19 +68,19 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   } = useMilestoneReviewers(programId);
 
   // Common field configuration for both roles
-  // Now uses email-based identification - wallet is generated automatically via Privy
+  // Uses email-based identification - wallet is generated automatically via Privy
   const commonFields: RoleManagementConfig["fields"] = useMemo(
     () => [
       {
-        name: "loginEmail",
-        label: "Login Email",
+        name: "email",
+        label: "Email",
         type: "email" as const,
         placeholder: "reviewer@example.com",
         required: true,
         helperText: "The reviewer will use this email to log in",
         validation: (value: string) => {
           if (!value) {
-            return "Login email is required";
+            return "Email is required";
           }
           if (!validateEmail(value)) {
             return "Please enter a valid email address";
@@ -97,20 +97,6 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         validation: (value: string) => {
           if (!value || value.trim().length === 0) {
             return "Name is required";
-          }
-          return true;
-        },
-      },
-      {
-        name: "notificationEmail",
-        label: "Notification Email (optional)",
-        type: "email" as const,
-        placeholder: "alternate@example.com",
-        required: false,
-        helperText: "Optional alternate email for notifications",
-        validation: (value: string) => {
-          if (value && !validateEmail(value)) {
-            return "Please enter a valid email address";
           }
           return true;
         },
@@ -176,22 +162,20 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   // Merge reviewers from both types with role information
   const members: ReviewerMemberWithRole[] = useMemo(() => {
     const programMembers: ReviewerMemberWithRole[] = programReviewers.map((reviewer) => ({
-      id: `program-${reviewer.loginEmail}`,
+      id: `program-${reviewer.email}`,
       publicAddress: reviewer.publicAddress,
-      loginEmail: reviewer.loginEmail,
+      email: reviewer.email,
       name: reviewer.name,
-      notificationEmail: reviewer.notificationEmail,
       telegram: reviewer.telegram || "",
       assignedAt: reviewer.assignedAt,
       role: "program" as ReviewerRole,
     }));
 
     const milestoneMembers: ReviewerMemberWithRole[] = milestoneReviewers.map((reviewer) => ({
-      id: `milestone-${reviewer.loginEmail}`,
+      id: `milestone-${reviewer.email}`,
       publicAddress: reviewer.publicAddress,
-      loginEmail: reviewer.loginEmail,
+      email: reviewer.email,
       name: reviewer.name,
-      notificationEmail: reviewer.notificationEmail,
       telegram: reviewer.telegram || "",
       assignedAt: reviewer.assignedAt,
       role: "milestone" as ReviewerRole,
@@ -221,8 +205,8 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         return;
       }
 
-      // Get the identifier (loginEmail for new format, publicAddress for legacy)
-      const identifier = parsed.loginEmail || parsed.publicAddress;
+      // Get the identifier (email for new format, publicAddress for legacy)
+      const identifier = parsed.email || parsed.publicAddress;
 
       // Type guard ensures we have the required properties
       if (!parsed.role || !identifier) {

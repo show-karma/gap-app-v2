@@ -11,9 +11,8 @@ import { type ReviewerType, useReviewerAssignment } from "@/hooks/useReviewerAss
  */
 export interface ReviewerBase {
   publicAddress: string;
-  loginEmail: string;
+  email: string;
   name: string;
-  notificationEmail?: string;
   telegram?: string;
   assignedAt: string;
   assignedBy?: string;
@@ -47,7 +46,7 @@ export const ReviewerAssignmentDropdown: FC<ReviewerAssignmentDropdownProps> = (
     () =>
       availableReviewers.map((reviewer) => ({
         id: reviewer.publicAddress.toLowerCase(),
-        label: reviewer.name || reviewer.loginEmail || reviewer.publicAddress,
+        label: reviewer.name || reviewer.email || reviewer.publicAddress,
         value: reviewer,
       })),
     [availableReviewers]

@@ -324,7 +324,7 @@ describe("validators", () => {
   describe("validateReviewerData", () => {
     it("should validate correct reviewer data", () => {
       const result = validateReviewerData({
-        loginEmail: "john@example.com",
+        email: "john@example.com",
         name: "John Doe",
         telegram: "@johndoe",
       });
@@ -334,52 +334,33 @@ describe("validators", () => {
 
     it("should validate data without telegram", () => {
       const result = validateReviewerData({
-        loginEmail: "john@example.com",
+        email: "john@example.com",
         name: "John Doe",
-      });
-      expect(result.valid).toBe(true);
-    });
-
-    it("should validate data with notification email", () => {
-      const result = validateReviewerData({
-        loginEmail: "john@example.com",
-        name: "John Doe",
-        notificationEmail: "notifications@example.com",
       });
       expect(result.valid).toBe(true);
     });
 
     it("should reject missing required fields", () => {
       const result = validateReviewerData({
-        loginEmail: "",
+        email: "",
         name: "",
       });
       expect(result.valid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(1);
     });
 
-    it("should reject invalid login email", () => {
+    it("should reject invalid email", () => {
       const result = validateReviewerData({
-        loginEmail: "invalid-email",
+        email: "invalid-email",
         name: "John Doe",
       });
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain("Invalid login email format");
-    });
-
-    it("should reject invalid notification email", () => {
-      const result = validateReviewerData({
-        loginEmail: "john@example.com",
-        name: "John Doe",
-        notificationEmail: "invalid-email",
-      });
-      expect(result.valid).toBe(false);
-      expect(result.errors).toContain("Invalid notification email format");
+      expect(result.errors).toContain("Invalid email format");
     });
 
     it("should reject name that is too short", () => {
       const result = validateReviewerData({
-        loginEmail: "john@example.com",
+        email: "john@example.com",
         name: "J",
       });
       expect(result.valid).toBe(false);
@@ -388,7 +369,7 @@ describe("validators", () => {
 
     it("should reject name that is too long", () => {
       const result = validateReviewerData({
-        loginEmail: "john@example.com",
+        email: "john@example.com",
         name: "A".repeat(101),
       });
       expect(result.valid).toBe(false);
@@ -397,7 +378,7 @@ describe("validators", () => {
 
     it("should reject invalid telegram handle", () => {
       const result = validateReviewerData({
-        loginEmail: "john@example.com",
+        email: "john@example.com",
         name: "John Doe",
         telegram: "ab",
       });
@@ -407,7 +388,7 @@ describe("validators", () => {
 
     it("should accept name with whitespace trimmed to valid length", () => {
       const result = validateReviewerData({
-        loginEmail: "john@example.com",
+        email: "john@example.com",
         name: "  John Doe  ",
       });
       expect(result.valid).toBe(true);

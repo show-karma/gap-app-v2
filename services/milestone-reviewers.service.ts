@@ -22,8 +22,7 @@ export interface UserProfile {
   id: string;
   publicAddress: string;
   name: string;
-  loginEmail: string;
-  notificationEmail?: string;
+  email: string;
   privyUserId?: string;
   telegram?: string;
   createdAt: string;
@@ -47,22 +46,20 @@ export interface MilestoneReviewerResponse {
  */
 export interface MilestoneReviewer {
   publicAddress: string;
-  loginEmail: string;
+  email: string;
   name: string;
-  notificationEmail?: string;
   telegram?: string;
   assignedAt: string;
   assignedBy?: string;
 }
 
 /**
- * Add milestone reviewer request - now uses email-based identification
- * Wallet address is generated automatically from loginEmail via Privy
+ * Add milestone reviewer request - uses email-based identification
+ * Wallet address is generated automatically via Privy
  */
 export interface AddMilestoneReviewerRequest {
-  loginEmail: string;
+  email: string;
   name: string;
-  notificationEmail?: string;
   telegram?: string;
 }
 
@@ -90,9 +87,8 @@ export const milestoneReviewersService = {
     // Map the API response to the expected format
     return (data || []).map((reviewer) => ({
       publicAddress: reviewer.publicAddress,
-      loginEmail: reviewer.userProfile?.loginEmail || "",
+      email: reviewer.userProfile?.email || "",
       name: reviewer.userProfile?.name || "",
-      notificationEmail: reviewer.userProfile?.notificationEmail,
       telegram: reviewer.userProfile?.telegram || "",
       assignedAt: reviewer.assignedAt,
       assignedBy: reviewer.assignedBy,
@@ -101,7 +97,7 @@ export const milestoneReviewersService = {
 
   /**
    * Add a milestone reviewer to a program
-   * Wallet address is generated automatically from loginEmail via Privy
+   * Wallet address is generated automatically via Privy
    */
   async addReviewer(
     programId: string,
@@ -120,9 +116,8 @@ export const milestoneReviewersService = {
       // Note: publicAddress will be assigned by backend via Privy
       return {
         publicAddress: "",
-        loginEmail: reviewerData.loginEmail,
+        email: reviewerData.email,
         name: reviewerData.name,
-        notificationEmail: reviewerData.notificationEmail,
         telegram: reviewerData.telegram,
         assignedAt: new Date().toISOString(),
         assignedBy: undefined,
@@ -131,9 +126,8 @@ export const milestoneReviewersService = {
 
     return {
       publicAddress: reviewer.publicAddress,
-      loginEmail: reviewer.userProfile?.loginEmail || reviewerData.loginEmail,
+      email: reviewer.userProfile?.email || reviewerData.email,
       name: reviewer.userProfile?.name || reviewerData.name,
-      notificationEmail: reviewer.userProfile?.notificationEmail || reviewerData.notificationEmail,
       telegram: reviewer.userProfile?.telegram || reviewerData.telegram,
       assignedAt: reviewer.assignedAt,
       assignedBy: reviewer.assignedBy,
@@ -141,11 +135,11 @@ export const milestoneReviewersService = {
   },
 
   /**
-   * Remove a milestone reviewer from a program by their login email
+   * Remove a milestone reviewer from a program by their email
    */
-  async removeReviewer(programId: string, loginEmail: string): Promise<void> {
+  async removeReviewer(programId: string, email: string): Promise<void> {
     await apiClient.delete(
-      `/v2/programs/${programId}/milestone-reviewers/${encodeURIComponent(loginEmail)}`
+      `/v2/programs/${programId}/milestone-reviewers/${encodeURIComponent(email)}`
     );
   },
 
