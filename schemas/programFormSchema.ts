@@ -32,30 +32,35 @@ const baseProgramFields = {
 };
 
 /**
- * Schema for creating new programs
- * - adminEmails: REQUIRED for new programs
- * - financeEmails: OPTIONAL (used for milestone verification notifications)
+ * Email fields shared between create and update schemas.
+ * Both adminEmails and financeEmails are required for all programs.
+ * Old programs without emails must add them when updating.
  */
-export const createProgramSchema = z.object({
-  ...baseProgramFields,
+const emailFields = {
   adminEmails: z
     .array(z.string().email({ message: "Invalid email address" }))
     .min(1, { message: "At least one admin email is required" }),
   financeEmails: z
     .array(z.string().email({ message: "Invalid email address" }))
-    .optional()
-    .default([]),
+    .min(1, { message: "At least one finance email is required" }),
+};
+
+/**
+ * Schema for creating new programs
+ */
+export const createProgramSchema = z.object({
+  ...baseProgramFields,
+  ...emailFields,
 });
 
 /**
- * Schema for updating existing programs - emails are OPTIONAL
+ * Schema for updating existing programs
+ * Both email fields are required - old programs must add them on update.
  * Used in ProgramDetailsTab (question-builder)
- * Existing programs without emails can still be updated
  */
 export const updateProgramSchema = z.object({
   ...baseProgramFields,
-  adminEmails: z.array(z.string().email({ message: "Invalid email address" })).optional(),
-  financeEmails: z.array(z.string().email({ message: "Invalid email address" })).optional(),
+  ...emailFields,
 });
 
 export type CreateProgramFormSchema = z.infer<typeof createProgramSchema>;

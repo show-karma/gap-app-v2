@@ -29,25 +29,42 @@ export function MultiEmailInput({
   const [inputError, setInputError] = useState<string | null>(null);
 
   const handleAddEmail = () => {
-    const trimmedEmail = inputValue.trim().toLowerCase();
+    const trimmedInput = inputValue.trim();
+    if (!trimmedInput) return;
 
-    if (!trimmedEmail) {
-      return;
+    // Support comma-separated emails
+    const parts = trimmedInput
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const updated = [...emails];
+    let hasInvalid = false;
+
+    for (const part of parts) {
+      const lower = part.toLowerCase();
+      if (!emailRegex.test(lower)) {
+        hasInvalid = true;
+        continue;
+      }
+      if (!updated.includes(lower)) {
+        updated.push(lower);
+      }
     }
 
-    if (!emailRegex.test(trimmedEmail)) {
+    if (hasInvalid && parts.length === 1) {
       setInputError("Please enter a valid email address");
       return;
     }
 
-    if (emails.includes(trimmedEmail)) {
+    if (updated.length > emails.length) {
+      onChange(updated);
+      setInputValue("");
+      setInputError(null);
+    } else if (hasInvalid) {
+      setInputError("Some emails were invalid and skipped");
+    } else if (parts.length > 0) {
       setInputError("This email is already added");
-      return;
     }
-
-    onChange([...emails, trimmedEmail]);
-    setInputValue("");
-    setInputError(null);
   };
 
   const handleRemoveEmail = (emailToRemove: string) => {
@@ -72,6 +89,7 @@ export function MultiEmailInput({
             setInputError(null);
           }}
           onKeyDown={handleKeyDown}
+          onBlur={handleAddEmail}
           placeholder={placeholder}
           disabled={disabled}
           className="flex-1"

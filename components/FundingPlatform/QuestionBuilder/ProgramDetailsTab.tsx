@@ -552,7 +552,9 @@ export function ProgramDetailsTab({
             control={control}
             render={({ field, fieldState }) => (
               <div className="flex w-full flex-col gap-1">
-                <Label htmlFor="finance-emails">Finance Emails (optional)</Label>
+                <Label htmlFor="finance-emails">
+                  Finance Emails <span className="text-destructive">*</span>
+                </Label>
                 <p className="text-xs text-muted-foreground mb-1">
                   Finance team will be notified when milestones are verified
                 </p>
