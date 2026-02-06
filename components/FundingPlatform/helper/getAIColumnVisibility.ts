@@ -11,13 +11,9 @@ type FormSchemaWithAiConfig = {
 /**
  * Determines AI column visibility based on configured prompts
  * @param formSchema - The form schema from program config (may have aiConfig)
- * @param langfusePromptId - Fallback langfusePromptId from program registry
  * @returns Object with column visibility flags
  */
-export function getAIColumnVisibility(
-  formSchema: unknown,
-  langfusePromptId?: string
-): {
+export function getAIColumnVisibility(formSchema: unknown): {
   showAIScoreColumn: boolean;
   showInternalAIScoreColumn: boolean;
 } {
@@ -25,7 +21,7 @@ export function getAIColumnVisibility(
   const aiConfig = formSchemaWithAiConfig?.aiConfig;
 
   return {
-    showAIScoreColumn: !!(aiConfig?.langfusePromptId || langfusePromptId),
+    showAIScoreColumn: !!aiConfig?.langfusePromptId,
     showInternalAIScoreColumn: !!aiConfig?.internalLangfusePromptId,
   };
 }
