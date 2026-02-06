@@ -172,7 +172,7 @@ describe("Cache invalidation on logout", () => {
     expect(mockClearCache).toHaveBeenCalled();
   });
 
-  it("should clear caches when user identity changes (shared auth user switch)", async () => {
+  it("should clear caches and force logout when user identity changes (shared auth user switch)", async () => {
     const { rerender } = renderHook(() => useAuth(), { wrapper });
 
     // Simulate user switch: different user.id, still authenticated
@@ -192,6 +192,22 @@ describe("Cache invalidation on logout", () => {
 
     expect(mockQueryClientClear).toHaveBeenCalled();
     expect(mockClearCache).toHaveBeenCalled();
+    expect(mockLogout).toHaveBeenCalled();
+  });
+
+  it("should not trigger logout when user id stays the same", async () => {
+    const { rerender } = renderHook(() => useAuth(), { wrapper });
+
+    mockQueryClientClear.mockClear();
+    mockClearCache.mockClear();
+
+    // Re-render with same user — no identity change
+    await act(async () => {
+      rerender();
+    });
+
+    expect(mockQueryClientClear).not.toHaveBeenCalled();
+    expect(mockLogout).not.toHaveBeenCalled();
   });
 });
 

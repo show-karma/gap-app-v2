@@ -104,14 +104,16 @@ export const useAuth = () => {
     // Detect user switch: different user.id while still authenticated.
     // This happens with Privy shared auth when a different user logs in
     // on another subdomain — Privy seamlessly transitions without logout.
+    // Force logout to ensure full re-initialization with the new user's state.
     if (authenticated && user?.id && prevUserIdRef.current && user.id !== prevUserIdRef.current) {
       queryClient.clear();
       TokenManager.clearCache();
+      logout();
     }
 
     prevAuthRef.current = authenticated;
     prevUserIdRef.current = user?.id;
-  }, [authenticated, user?.id]);
+  }, [authenticated, user?.id, logout]);
 
   // Initialize TokenManager with Privy synchronously
   // This must happen before any API calls are made, so we do it outside useEffect
