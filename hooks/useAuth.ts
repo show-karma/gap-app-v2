@@ -19,16 +19,16 @@ const AUTH_INIT_DELAY_MS = 500;
  * Interval (in ms) for periodic auth status checks.
  * Used for cross-tab logout synchronization.
  *
- * Set to 30s to reduce Privy API load. Combined with storage events for
- * immediate cross-tab detection, this provides fast logout detection
- * without excessive polling. The failure threshold handles the delay.
+ * The interval can be short because TokenManager caches tokens for 30s,
+ * so most checks are cache hits (no Privy API call). Only ~2 actual API
+ * calls/min regardless of interval. Storage events provide instant detection.
  */
-const AUTH_CHECK_INTERVAL_MS = 30_000;
+const AUTH_CHECK_INTERVAL_MS = 10_000;
 
 /**
  * Number of consecutive failures (no token AND no session) required before logging out.
  * This prevents false logouts during temporary network issues or slow token refresh.
- * With a 500ms initial delay and checks every 30s, 3 failures = ~60s of no auth state.
+ * With a 500ms initial delay and checks every 10s, 3 failures = ~20s of no auth state.
  * Storage events provide faster detection for cross-tab logouts.
  */
 const AUTH_FAILURE_THRESHOLD = 3;

@@ -250,9 +250,9 @@ describe("useAuth - Cross-tab logout synchronization", () => {
     });
     expect(mockLogout).not.toHaveBeenCalled();
 
-    // 2nd failure: first interval tick at 30000ms
+    // 2nd failure: first interval tick at 10000ms
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(29500);
+      await jest.advanceTimersByTimeAsync(9500);
     });
     expect(mockLogout).not.toHaveBeenCalled();
   });
@@ -264,13 +264,13 @@ describe("useAuth - Cross-tab logout synchronization", () => {
     await act(async () => {
       await jest.advanceTimersByTimeAsync(500);
     });
-    // 2nd failure at 30000ms
+    // 2nd failure at 10000ms
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(29500);
+      await jest.advanceTimersByTimeAsync(9500);
     });
-    // 3rd failure at 60000ms → triggers logout
+    // 3rd failure at 20000ms → triggers logout
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(30000);
+      await jest.advanceTimersByTimeAsync(10000);
     });
 
     expect(mockLogout).toHaveBeenCalled();
@@ -290,11 +290,11 @@ describe("useAuth - Cross-tab logout synchronization", () => {
     });
     // 2nd failure
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(29500);
+      await jest.advanceTimersByTimeAsync(9500);
     });
     // 3rd call: token available → counter resets
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(30000);
+      await jest.advanceTimersByTimeAsync(10000);
     });
 
     expect(mockLogout).not.toHaveBeenCalled();
@@ -310,13 +310,13 @@ describe("useAuth - Cross-tab logout synchronization", () => {
       await jest.advanceTimersByTimeAsync(500);
     });
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(29500);
+      await jest.advanceTimersByTimeAsync(9500);
     });
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(30000);
+      await jest.advanceTimersByTimeAsync(10000);
     });
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(30000);
+      await jest.advanceTimersByTimeAsync(10000);
     });
 
     expect(mockLogout).not.toHaveBeenCalled();
@@ -392,7 +392,7 @@ describe("useAuth - Cross-tab logout synchronization", () => {
       await jest.advanceTimersByTimeAsync(500);
     });
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(29500);
+      await jest.advanceTimersByTimeAsync(9500);
     });
 
     // Simulate logout: authenticated → false
@@ -438,12 +438,12 @@ describe("useAuth - Cross-tab logout synchronization", () => {
       await jest.advanceTimersByTimeAsync(500);
     });
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(29500);
+      await jest.advanceTimersByTimeAsync(9500);
     });
     expect(mockLogout).not.toHaveBeenCalled();
 
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(30000);
+      await jest.advanceTimersByTimeAsync(10000);
     });
 
     expect(mockLogout).toHaveBeenCalled();
@@ -458,13 +458,13 @@ describe("useAuth - Cross-tab logout synchronization", () => {
     await act(async () => {
       await jest.advanceTimersByTimeAsync(500);
     });
-    // 2nd failure (error) at 30000ms
+    // 2nd failure (error) at 10000ms
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(29500);
+      await jest.advanceTimersByTimeAsync(9500);
     });
-    // 3rd failure (error) at 60000ms → triggers logout
+    // 3rd failure (error) at 20000ms → triggers logout
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(30000);
+      await jest.advanceTimersByTimeAsync(10000);
     });
 
     expect(mockLogout).toHaveBeenCalled();

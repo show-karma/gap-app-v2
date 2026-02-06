@@ -10,10 +10,11 @@ interface PrivyTokenProvider {
 
 /**
  * Cache TTL for access tokens (in ms).
- * Privy tokens are typically valid for 5-10 minutes, so 30s is safe.
- * This prevents excessive getAccessToken() calls from polling + API interceptors.
+ * With a 10s polling interval and 3-failure threshold, worst case stale
+ * data is ~50s (20s cache + 3×10s checks). Deduplicates burst API calls
+ * while keeping auth state reasonably fresh.
  */
-const TOKEN_CACHE_TTL_MS = 30_000;
+const TOKEN_CACHE_TTL_MS = 20_000;
 
 export class TokenManager {
   private static privyInstance: PrivyTokenProvider | null = null;
