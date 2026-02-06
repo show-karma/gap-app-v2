@@ -134,9 +134,9 @@ export const useAuth = () => {
       // - Privy initialization timing
       authFailureCount.current += 1;
 
-      if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD && authenticated) {
+      if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
         authFailureCount.current = 0;
-        logout?.();
+        logout();
       }
     };
 
