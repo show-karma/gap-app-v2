@@ -17,7 +17,7 @@ interface AuthPermissionsApiResponse {
     applicationId?: string;
     milestoneId?: string;
   };
-  isAdmin: boolean;
+  isCommunityAdmin: boolean;
   isProgramAdmin: boolean;
   isReviewer: boolean;
   isRegistryAdmin: boolean;
@@ -40,7 +40,7 @@ const DEFAULT_GUEST_PERMISSIONS: PermissionsResponse = {
   },
   permissions: [],
   resourceContext: {},
-  isAdmin: false,
+  isCommunityAdmin: false,
   isProgramAdmin: false,
   isReviewer: false,
   isRegistryAdmin: false,
@@ -76,7 +76,7 @@ export const authorizationService = {
       },
       permissions: response.permissions as Permission[],
       resourceContext: response.resourceContext as ResourceContext,
-      isAdmin: response.isAdmin,
+      isCommunityAdmin: response.isCommunityAdmin,
       isProgramAdmin: response.isProgramAdmin,
       isReviewer: response.isReviewer,
       isRegistryAdmin: response.isRegistryAdmin,

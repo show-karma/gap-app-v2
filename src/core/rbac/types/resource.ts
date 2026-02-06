@@ -15,12 +15,12 @@ export interface PermissionContextValue {
   isGuestDueToError: boolean;
   resourceContext: ResourceContext;
   /**
-   * Whether the user has admin access at the current context level.
+   * Whether the user has community admin access at the current context level.
    * - Global context: admin of any community
    * - Community context: admin of this community
-   * - Program context: admin of this program
+   * True for: SUPER_ADMIN, COMMUNITY_ADMIN
    */
-  isAdmin: boolean;
+  isCommunityAdmin: boolean;
   /**
    * Whether the user has program-level admin access.
    * Used for "Manage Program" button visibility.
@@ -56,9 +56,9 @@ export interface PermissionsResponse {
   permissions: Permission[];
   resourceContext: ResourceContext;
   /**
-   * Whether the user has admin access at the current context level.
+   * Whether the user has community admin access at the current context level.
    */
-  isAdmin: boolean;
+  isCommunityAdmin: boolean;
   /**
    * Whether the user has program-level admin access.
    */

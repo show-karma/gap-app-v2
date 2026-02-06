@@ -29,7 +29,7 @@ export interface NavbarPermissionsContextValue {
   isOwner: boolean;
 
   // Context-aware permissions from RBAC
-  isAdmin: boolean;
+  isCommunityAdmin: boolean;
   isReviewer: boolean;
 
   // Registry permissions
@@ -52,7 +52,7 @@ const defaultContextValue: NavbarPermissionsContextValue = {
   isStaff: false,
   isStaffLoading: true,
   isOwner: false,
-  isAdmin: false,
+  isCommunityAdmin: false,
   isReviewer: false,
   isPoolManager: false,
   isRegistryAdmin: false,
@@ -86,9 +86,9 @@ export function NavbarPermissionsProvider({ children }: NavbarPermissionsProvide
 
   const value = useMemo<NavbarPermissionsContextValue>(() => {
     const isStaff = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
-    const isAdmin = permissions?.isAdmin ?? false;
+    const isCommunityAdmin = permissions?.isCommunityAdmin ?? false;
     const isReviewer = permissions?.isReviewer ?? false;
-    const hasAdminAccess = !isPermissionsLoading && (isStaff || isOwner || isAdmin);
+    const hasAdminAccess = !isPermissionsLoading && (isStaff || isOwner || isCommunityAdmin);
     const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
 
     return {
@@ -98,7 +98,7 @@ export function NavbarPermissionsProvider({ children }: NavbarPermissionsProvide
       isStaff,
       isStaffLoading: isPermissionsLoading,
       isOwner,
-      isAdmin,
+      isCommunityAdmin,
       isReviewer,
       isPoolManager,
       isRegistryAdmin,

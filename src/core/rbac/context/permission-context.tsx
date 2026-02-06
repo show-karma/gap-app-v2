@@ -31,7 +31,7 @@ const defaultContextValue: PermissionContextValue = {
   isLoading: false,
   isGuestDueToError: true,
   resourceContext: defaultResourceContext,
-  isAdmin: false,
+  isCommunityAdmin: false,
   isProgramAdmin: false,
   isReviewer: false,
   isRegistryAdmin: false,
@@ -74,7 +74,7 @@ export function PermissionProvider({ children, resourceContext = {} }: Permissio
       isLoading: effectiveIsLoading,
       isGuestDueToError,
       resourceContext: context,
-      isAdmin: data?.isAdmin ?? false,
+      isCommunityAdmin: data?.isCommunityAdmin ?? false,
       isProgramAdmin: data?.isProgramAdmin ?? false,
       isReviewer: data?.isReviewer ?? false,
       isRegistryAdmin: data?.isRegistryAdmin ?? false,
@@ -131,14 +131,9 @@ export function useUserRoles(): UserRoles {
   return roles;
 }
 
-export function useIsAdmin(): boolean {
-  const { isAdmin, isLoading } = usePermissionContext();
-  return !isLoading && isAdmin;
-}
-
 export function useIsCommunityAdmin(): boolean {
-  const { hasRoleOrHigher, isLoading } = usePermissionContext();
-  return !isLoading && hasRoleOrHigher(Role.COMMUNITY_ADMIN);
+  const { isCommunityAdmin, isLoading } = usePermissionContext();
+  return !isLoading && isCommunityAdmin;
 }
 
 export function useIsReviewer(): boolean {

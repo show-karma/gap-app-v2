@@ -5,7 +5,6 @@ export {
   useCanAny,
   useHasRole,
   useHasRoleOrHigher,
-  useIsAdmin,
   useIsCommunityAdmin,
   useIsGuestDueToError,
   useIsReviewer,
