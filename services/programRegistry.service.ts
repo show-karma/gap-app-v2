@@ -21,7 +21,8 @@ export class ProgramRegistryService {
    */
   static buildProgramMetadata(
     formData: CreateProgramFormData,
-    community: Community
+    community: Community,
+    options?: { anyoneCanJoin?: boolean }
   ): ProgramMetadata {
     return {
       title: formData.name,
@@ -54,11 +55,11 @@ export class ProgramRegistryService {
       logoImgData: {},
       bannerImgData: {},
       credentials: {},
-      anyoneCanJoin: false,
       status: "Active",
       type: "program",
       tags: ["karma-gap", "grant-program-registry"],
       communityRef: [community.uid], // Use community UID (hex address), not slug
+      anyoneCanJoin: options?.anyoneCanJoin ?? false, // Default to restricted for admin-created programs
     };
   }
 
