@@ -14,7 +14,10 @@ import { INDEXER } from "@/utilities/indexer";
  */
 export class ProgramRegistryService {
   /**
-   * Build program metadata from form data and community
+   * Build program metadata from form data and community.
+   * Default: anyoneCanJoin = false (admin/funding-platform form creates restricted programs).
+   * The public AddProgram form uses inline metadata with anyoneCanJoin = true (open enrollment).
+   * See AddProgram.tsx for the divergent default.
    */
   static buildProgramMetadata(
     formData: CreateProgramFormData,
@@ -51,6 +54,7 @@ export class ProgramRegistryService {
       logoImgData: {},
       bannerImgData: {},
       credentials: {},
+      anyoneCanJoin: false,
       status: "Active",
       type: "program",
       tags: ["karma-gap", "grant-program-registry"],

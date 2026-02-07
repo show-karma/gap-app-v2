@@ -20,6 +20,7 @@ import { Button } from "@/components/Utilities/Button";
 import { DateTimePicker } from "@/components/Utilities/DateTimePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MultiEmailInput } from "@/components/Utilities/MultiEmailInput";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
@@ -147,6 +148,7 @@ const createProgramSchema = z.object({
   grantTypes: z.array(z.string()),
   platformsUsed: z.array(z.string()),
   communityRef: z.array(z.string()),
+  anyoneCanJoin: z.boolean(),
   status: z.string().optional().or(z.literal("Active")),
   adminEmails: z
     .array(z.string().email({ message: "Invalid email address" }))
@@ -240,6 +242,9 @@ export default function AddProgram({
       grantsSite: programToEdit?.metadata?.socialLinks?.grantsSite,
       platformsUsed: programToEdit?.metadata?.platformsUsed || [],
       communityRef: programToEdit?.metadata?.communityRef || [],
+      // Default: public form = open enrollment (anyoneCanJoin: true).
+      // This diverges from admin form (CreateProgramModal) which defaults to restricted (anyoneCanJoin: false).
+      anyoneCanJoin: programToEdit?.metadata?.anyoneCanJoin ?? true,
       status: programToEdit?.metadata?.status || "Active",
       adminEmails: programToEdit?.metadata?.adminEmails || [],
       financeEmails: programToEdit?.metadata?.financeEmails || [],
@@ -293,6 +298,10 @@ export default function AddProgram({
       }
       const chainSelected = data.networkToCreate;
 
+      // Metadata is constructed inline rather than via ProgramRegistryService.buildProgramMetadata()
+      // because this form has significantly more fields (social links, categories, ecosystems, etc.)
+      // than CreateProgramFormData supports. The service method is designed for the simpler
+      // CreateProgramModal form used in the funding-platform context.
       const metadata = {
         title: data.name,
         description: data.description,
@@ -327,6 +336,7 @@ export default function AddProgram({
         logoImgData: {},
         bannerImgData: {},
         credentials: {},
+        anyoneCanJoin: data.anyoneCanJoin,
         status: "Active",
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
@@ -406,6 +416,7 @@ export default function AddProgram({
 
       const { walletSigner } = setup;
 
+      // See createProgram comment for why metadata is constructed inline
       const metadata = sanitizeObject({
         title: data.name,
         description: data.description,
@@ -440,6 +451,7 @@ export default function AddProgram({
         logoImgData: {},
         bannerImgData: {},
         credentials: {},
+        anyoneCanJoin: data.anyoneCanJoin,
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
         status: data.status,
@@ -812,6 +824,23 @@ export default function AddProgram({
                     />
                   </div>
                 )}
+              </div>
+              <div className="flex items-center gap-3 mt-4">
+                <Checkbox
+                  id="open-enrollment"
+                  checked={watch("anyoneCanJoin")}
+                  onCheckedChange={(checked) => {
+                    setValue("anyoneCanJoin", checked === true, {
+                      shouldValidate: true,
+                    });
+                  }}
+                />
+                <label
+                  htmlFor="open-enrollment"
+                  className="text-sm font-medium text-gray-700 dark:text-zinc-200 cursor-pointer"
+                >
+                  Allow anyone to join this program (open enrollment)
+                </label>
               </div>
             </div>
 
