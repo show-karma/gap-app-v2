@@ -47,7 +47,7 @@ describe("GrantTitleDropdown", () => {
   });
 
   describe("restricted program handling", () => {
-    it("should show 'Contact manager' badge for programs with anyoneCanJoin: false", async () => {
+    it("should show '(invite only)' badge for programs with anyoneCanJoin: false", async () => {
       const restrictedProgram = createMockProgram({
         programId: "restricted-1",
         metadata: {
@@ -69,11 +69,11 @@ describe("GrantTitleDropdown", () => {
         expect(screen.getByText("Restricted Program")).toBeInTheDocument();
       });
 
-      // Should show "Contact manager" badge
-      expect(screen.getByText("Contact manager")).toBeInTheDocument();
+      // Should show "(invite only)" badge
+      expect(screen.getByText("(invite only)")).toBeInTheDocument();
     });
 
-    it("should NOT show 'Contact manager' badge for programs with anyoneCanJoin: true", async () => {
+    it("should NOT show '(invite only)' badge for programs with anyoneCanJoin: true", async () => {
       const openProgram = createMockProgram({
         programId: "open-1",
         metadata: {
@@ -95,11 +95,11 @@ describe("GrantTitleDropdown", () => {
         expect(screen.getByText("Open Program")).toBeInTheDocument();
       });
 
-      // Should NOT show "Contact manager" badge
-      expect(screen.queryByText("Contact manager")).not.toBeInTheDocument();
+      // Should NOT show "(invite only)" badge
+      expect(screen.queryByText("(invite only)")).not.toBeInTheDocument();
     });
 
-    it("should NOT show 'Contact manager' badge for programs with anyoneCanJoin: undefined (backwards compatibility)", async () => {
+    it("should NOT show '(invite only)' badge for programs with anyoneCanJoin: undefined (backwards compatibility)", async () => {
       const legacyProgram = createMockProgram({
         programId: "legacy-1",
         metadata: {
@@ -121,8 +121,8 @@ describe("GrantTitleDropdown", () => {
         expect(screen.getByText("Legacy Program")).toBeInTheDocument();
       });
 
-      // Should NOT show "Contact manager" badge (undefined treated as open)
-      expect(screen.queryByText("Contact manager")).not.toBeInTheDocument();
+      // Should NOT show "(invite only)" badge (undefined treated as open)
+      expect(screen.queryByText("(invite only)")).not.toBeInTheDocument();
     });
 
     it("should show toast and prevent selection when clicking restricted program", async () => {
@@ -254,9 +254,9 @@ describe("GrantTitleDropdown", () => {
         expect(screen.getByText("Legacy Program")).toBeInTheDocument();
       });
 
-      // Should show only ONE "Contact manager" badge (for restricted program only)
-      const contactManagerBadges = screen.getAllByText("Contact manager");
-      expect(contactManagerBadges).toHaveLength(1);
+      // Should show only ONE "(invite only)" badge (for restricted program only)
+      const inviteOnlyBadges = screen.getAllByText("(invite only)");
+      expect(inviteOnlyBadges).toHaveLength(1);
     });
   });
 
