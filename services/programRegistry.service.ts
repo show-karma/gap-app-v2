@@ -14,11 +14,10 @@ import { INDEXER } from "@/utilities/indexer";
  */
 export class ProgramRegistryService {
   /**
-   * Build program metadata from form data and community
-   * @param formData - Form data with program details
-   * @param community - Community to associate with the program
-   * @param options - Optional settings for the program
-   * @param options.anyoneCanJoin - Whether anyone can add this program to their project (defaults to false for admin-created programs)
+   * Build program metadata from form data and community.
+   * Default: anyoneCanJoin = false (admin/funding-platform form creates restricted programs).
+   * The public AddProgram form uses inline metadata with anyoneCanJoin = true (open enrollment).
+   * See AddProgram.tsx for the divergent default.
    */
   static buildProgramMetadata(
     formData: CreateProgramFormData,

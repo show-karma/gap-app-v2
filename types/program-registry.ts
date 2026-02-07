@@ -34,11 +34,13 @@ export interface ProgramMetadata {
   logoImgData: Record<string, unknown>;
   bannerImgData: Record<string, unknown>;
   credentials: Record<string, unknown>;
+  anyoneCanJoin?: boolean;
   status: string;
   type: string;
   tags: string[];
   communityRef: string[];
-  anyoneCanJoin?: boolean;
+  adminEmails?: string[];
+  financeEmails?: string[];
 }
 
 export interface ProgramCreationRequest {
@@ -68,4 +70,6 @@ export interface CreateProgramFormData {
     endsAt?: Date;
   };
   budget?: number;
+  adminEmails?: string[];
+  financeEmails?: string[];
 }

@@ -7,6 +7,7 @@ import { useAccount } from "wagmi";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { MultiEmailInput } from "@/components/Utilities/MultiEmailInput";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -67,6 +68,8 @@ export function CreateProgramModal({
         endsAt: undefined,
       },
       budget: undefined,
+      adminEmails: [],
+      financeEmails: [],
     },
   });
 
@@ -95,6 +98,10 @@ export function CreateProgramModal({
         community,
         { anyoneCanJoin: false }
       );
+
+      // Add contact emails to metadata
+      metadata.adminEmails = data.adminEmails;
+      metadata.financeEmails = data.financeEmails;
 
       // Create program using service
       await ProgramRegistryService.createProgram(address, community.chainID, metadata);
@@ -319,6 +326,52 @@ export function CreateProgramModal({
               />
               {errors.budget && <p className="text-sm text-destructive">{errors.budget.message}</p>}
             </div>
+
+            {/* Admin Emails */}
+            <Controller
+              name="adminEmails"
+              control={control}
+              render={({ field, fieldState }) => (
+                <div className="flex w-full flex-col gap-1">
+                  <Label htmlFor="admin-emails">
+                    Admin Emails <span className="text-destructive">*</span>
+                  </Label>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Applicants will reply to these email addresses when responding to notifications
+                  </p>
+                  <MultiEmailInput
+                    emails={field.value}
+                    onChange={field.onChange}
+                    placeholder="Enter admin email"
+                    disabled={isSubmitting}
+                    error={fieldState.error?.message}
+                  />
+                </div>
+              )}
+            />
+
+            {/* Finance Emails */}
+            <Controller
+              name="financeEmails"
+              control={control}
+              render={({ field, fieldState }) => (
+                <div className="flex w-full flex-col gap-1">
+                  <Label htmlFor="finance-emails">
+                    Finance Emails <span className="text-destructive">*</span>
+                  </Label>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Finance team will be notified when milestones are verified
+                  </p>
+                  <MultiEmailInput
+                    emails={field.value}
+                    onChange={field.onChange}
+                    placeholder="Enter finance email"
+                    disabled={isSubmitting}
+                    error={fieldState.error?.message}
+                  />
+                </div>
+              )}
+            />
 
             {/* Actions */}
             <DialogFooter>
