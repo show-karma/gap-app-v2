@@ -12,6 +12,7 @@ import { Agentation } from "agentation";
 import { ThemeProvider } from "next-themes";
 import { Suspense } from "react";
 import { Toaster } from "react-hot-toast";
+import { AgentChatBubble } from "@/components/AgentChat/AgentChatBubble";
 import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
 import { OnboardingDialog } from "@/components/Dialogs/OnboardingDialog";
 import { ProgressBarWrapper } from "@/components/ProgressBarWrapper";
@@ -34,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <HotjarAnalytics />
       </Suspense>
       <body suppressHydrationWarning>
-        {envVars.VERCEL_ENV !== "production" && <Agentation />}
+        {/* {envVars.VERCEL_ENV !== "production" && <Agentation />} */}
         <ThemeProvider
           defaultTheme="light"
           attribute="class"
@@ -74,6 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
               <Footer />
             </div>
+            <AgentChatBubble />
           </PrivyProviderWrapper>
           <SpeedInsights />
         </ThemeProvider>

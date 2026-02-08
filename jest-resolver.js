@@ -61,26 +61,20 @@ function resolveInterceptor(subpath) {
   }
 
   // Map subpaths to their actual locations
-  const subpathMap = {
-    "": path.join(interceptorsPath, "lib", "node", "index.js"),
-    "/ClientRequest": path.join(
-      interceptorsPath,
-      "lib",
-      "node",
-      "interceptors",
-      "ClientRequest",
-      "index.js"
-    ),
-    "/XMLHttpRequest": path.join(
-      interceptorsPath,
-      "lib",
-      "browser",
-      "interceptors",
-      "XMLHttpRequest",
-      "index.js"
-    ),
-    "/fetch": path.join(interceptorsPath, "lib", "node", "interceptors", "fetch", "index.js"),
-  };
+  // Try both .js and .cjs extensions (newer versions use .cjs)
+  const subpathMap = {};
+  const entries = [
+    { key: "", segments: ["lib", "node"] },
+    { key: "/ClientRequest", segments: ["lib", "node", "interceptors", "ClientRequest"] },
+    { key: "/XMLHttpRequest", segments: ["lib", "browser", "interceptors", "XMLHttpRequest"] },
+    { key: "/fetch", segments: ["lib", "node", "interceptors", "fetch"] },
+  ];
+  for (const { key, segments } of entries) {
+    const base = path.join(interceptorsPath, ...segments);
+    const jsPath = path.join(base, "index.js");
+    const cjsPath = path.join(base, "index.cjs");
+    subpathMap[key] = fs.existsSync(jsPath) ? jsPath : cjsPath;
+  }
 
   const resolvedPath = subpathMap[subpath];
   if (resolvedPath && fs.existsSync(resolvedPath)) {
