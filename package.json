@@ -206,7 +206,7 @@
     "@types/react-dom": "19.1.6"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,css,md}": [
+    "*.{js,jsx,ts,tsx,json,css}": [
       "biome check --write --diagnostic-level=error"
     ]
   }
