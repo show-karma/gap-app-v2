@@ -3,11 +3,12 @@
 import { Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { ApplicationListWithAPI } from "@/components/FundingPlatform";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import {
   useApplication,
   useApplicationStatus,
@@ -21,7 +22,6 @@ import type { IFundingApplication } from "@/types/funding-platform";
 import { PAGES } from "@/utilities/pages";
 
 export default function ApplicationsPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { communityId, programId: combinedProgramId } = useParams() as {
     communityId: string;
@@ -67,9 +67,9 @@ export default function ApplicationsPage() {
   const { prefetchApplication } = useApplication(null);
   const { updateStatusAsync } = useApplicationStatus(programId);
 
-  const handleBackClick = () => {
-    router.push(PAGES.MANAGE.FUNDING_PLATFORM.ROOT(communityId));
-  };
+  const handleBackClick = useBackNavigation({
+    fallbackRoute: PAGES.MANAGE.FUNDING_PLATFORM.ROOT(communityId),
+  });
 
   const handleApplicationSelect = (_application: IFundingApplication) => {
     // This function is now called by ApplicationList but we handle opening in new tab there

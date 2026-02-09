@@ -33,12 +33,11 @@ import { Button } from "@/components/Utilities/Button";
 import { LoadingOverlay } from "@/components/Utilities/LoadingOverlay";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { type FundingProgram, fundingPlatformService } from "@/services/fundingPlatformService";
 import { AdminOnly, FundingPlatformGuard, useIsFundingPlatformAdmin } from "@/src/core/rbac";
-import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
-import { Role } from "@/src/core/rbac/types/role";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { getProgramApplyUrl } from "@/utilities/fundingPlatformUrls";
@@ -51,7 +50,6 @@ function FundingPlatformContent() {
   const searchParams = useSearchParams();
 
   const isAdmin = useIsFundingPlatformAdmin();
-  const { roles } = usePermissionContext();
 
   const {
     programs: allPrograms,
@@ -89,13 +87,17 @@ function FundingPlatformContent() {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [togglingPrograms, setTogglingPrograms] = useState<Set<string>>(new Set());
-  const fallbackBackRoute = PAGES.MANAGE.ROOT(communityId);
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [enabledFilter, setEnabledFilter] = useState<"all" | "enabled" | "disabled">(
     (searchParams.get("status") as "all" | "enabled" | "disabled") || "all"
   );
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const handleBackClick = useBackNavigation({
+    fallbackRoute: PAGES.MANAGE.ROOT(communityId),
+    preferHistoryBack: true,
+  });
 
   const handleToggleProgram = async (programId: string, currentEnabled: boolean) => {
     setTogglingPrograms((prev) => new Set(prev).add(programId));
@@ -176,18 +178,6 @@ function FundingPlatformContent() {
       return matchesSearch && matchesEnabled;
     });
   }, [programs, searchTerm, enabledFilter]);
-
-  const handleBackClick = () => {
-    // Next.js app router stores a session history index in history.state.idx.
-    // If idx is 0/undefined (direct load or refresh with no in-app history), use fallback.
-    const historyIndex = window.history.state?.idx;
-    if (typeof historyIndex === "number" && historyIndex > 0) {
-      router.back();
-      return;
-    }
-
-    router.push(fallbackBackRoute);
-  };
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -750,8 +740,6 @@ function FundingPlatformContent() {
 }
 
 export default function FundingPlatformPage() {
-  const { communityId } = useParams() as { communityId: string };
-
   return (
     <FundingPlatformGuard>
       <FundingPlatformContent />

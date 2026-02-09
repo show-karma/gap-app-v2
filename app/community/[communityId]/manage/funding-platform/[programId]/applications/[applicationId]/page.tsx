@@ -26,6 +26,7 @@ import { StatusChangeInline } from "@/components/FundingPlatform/ApplicationView
 import { TabPanel } from "@/components/FundingPlatform/ApplicationView/TabPanel";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import {
   useApplication,
   useApplicationComments,
@@ -37,7 +38,6 @@ import {
 import { useKycConfig, useKycStatus } from "@/hooks/useKycStatus";
 import {
   AdminOnly,
-  Can,
   FundingPlatformGuard,
   Permission,
   useIsFundingPlatformAdmin,
@@ -127,6 +127,10 @@ export default function ApplicationDetailPage() {
 
   // Use the delete application hook
   const { deleteApplicationAsync, isDeleting } = useDeleteApplication();
+
+  const handleBackClick = useBackNavigation({
+    fallbackRoute: PAGES.MANAGE.FUNDING_PLATFORM.APPLICATIONS(communityId, combinedProgramId),
+  });
 
   // Get application identifier for fetching versions
   const applicationIdentifier = application?.referenceNumber || application?.id || applicationId;
@@ -299,10 +303,6 @@ export default function ApplicationDetailPage() {
     }, 100); // Small delay to ensure the view mode has changed
   };
 
-  const handleBackClick = () => {
-    router.push(PAGES.MANAGE.FUNDING_PLATFORM.APPLICATIONS(communityId, combinedProgramId));
-  };
-
   // Memoized milestone review URL - only returns URL if approved and has projectUID
   const milestoneReviewUrl = useMemo(() => {
     if (application?.status?.toLowerCase() === "approved" && application?.projectUID) {
@@ -392,7 +392,7 @@ export default function ApplicationDetailPage() {
             statusActions={
               showStatusActions ? (
                 <HeaderActions
-                  currentStatus={application.status as any}
+                  currentStatus={application.status as ApplicationStatus}
                   onStatusChange={handleStatusChangeClick}
                   isUpdating={isUpdatingStatus}
                 />
