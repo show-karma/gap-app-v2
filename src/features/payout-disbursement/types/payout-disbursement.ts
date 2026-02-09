@@ -241,7 +241,7 @@ export interface MilestoneAllocation {
   milestoneUID?: string;
   /** Human-readable label for this allocation */
   label: string;
-  /** Amount allocated in smallest token unit (wei-like) */
+  /** Amount allocated in human-readable format (e.g., "50000" for 50000 USDC) */
   amount: string;
 }
 
