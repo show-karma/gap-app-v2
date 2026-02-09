@@ -1,11 +1,11 @@
 "use client";
 import type { MarkdownPreviewProps } from "@uiw/react-markdown-preview";
 import type React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 interface Props {
-  words?: any;
+  words?: number;
   children: string;
   readMoreText?: string;
   readLessText?: string;
@@ -268,14 +268,20 @@ export const ReadMore = ({
     return text.slice(0, cutPosition);
   };
 
+  const minimumText = getMinimumText();
+
+  const truncatedContent = useMemo(
+    () => safelyTruncateMarkdown(text, minimumText),
+    [text, minimumText]
+  );
+
   useEffect(() => {
-    if (text && text.length - 1 < getMinimumText()) {
+    if (text && text.length - 1 < minimumText) {
       setIsReadMore(false);
     } else {
       setIsReadMore(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, getMinimumText]);
+  }, [text, minimumText]);
 
   return (
     <div className="w-full max-w-full">
@@ -283,17 +289,18 @@ export const ReadMore = ({
         <MarkdownPreview
           className={markdownClass}
           source={
-            safelyTruncateMarkdown(text, getMinimumText()) +
-            (text.length >= getMinimumText() ? "..." : "")
+            truncatedContent +
+            (text.length >= minimumText ? "..." : "")
           }
         />
       ) : (
         <MarkdownPreview className={markdownClass} source={text} />
       )}
-      {text.length - 1 > getMinimumText() ? (
+      {text.length - 1 > minimumText ? (
         <button
           type="button"
           onClick={toggleReadMore}
+          aria-expanded={!isReadMore}
           className="read-or-hide mt-2 bg-transparent border-none p-0 cursor-pointer w-full text-left block"
         >
           {isReadMore ? (
