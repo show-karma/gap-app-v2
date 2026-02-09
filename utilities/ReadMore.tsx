@@ -56,13 +56,14 @@ export const ReadMore = ({
     // Find all markdown link structures in the text
     const linkMatches: { start: number; end: number }[] = [];
     const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-    let match;
+    let match: RegExpExecArray | null = linkRegex.exec(text);
 
-    while ((match = linkRegex.exec(text)) !== null) {
+    while (match !== null) {
       linkMatches.push({
         start: match.index,
         end: match.index + match[0].length,
       });
+      match = linkRegex.exec(text);
     }
 
     // Check if we're cutting in the middle of a link
@@ -297,15 +298,12 @@ export const ReadMore = ({
       {isReadMore ? (
         <MarkdownPreview
           className={markdownClass}
-          source={
-            truncatedContent +
-            (text.length >= minimumText ? "..." : "")
-          }
+          source={truncatedContent + (text.length >= minimumText ? "..." : "")}
         />
       ) : (
         <MarkdownPreview className={markdownClass} source={text} />
       )}
-      {text.length - 1 > minimumText ? (
+      {text.length - 1 >= minimumText ? (
         <button
           type="button"
           onClick={toggleReadMore}
