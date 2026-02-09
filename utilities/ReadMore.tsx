@@ -268,6 +268,15 @@ export const ReadMore = ({
     return text.slice(0, cutPosition);
   };
 
+  // Preload all images so they appear instantly when "Show more" is clicked
+  useEffect(() => {
+    const imageRegex = /!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/g;
+    for (const match of text.matchAll(imageRegex)) {
+      const img = new Image();
+      img.src = match[1];
+    }
+  }, [text]);
+
   const minimumText = getMinimumText();
 
   const truncatedContent = useMemo(
