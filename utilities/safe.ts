@@ -3,7 +3,7 @@ import Safe from "@safe-global/protocol-kit";
 import { encodeFunctionData, erc20Abi, formatUnits, parseUnits } from "viem";
 import { NATIVE_TOKENS, NETWORKS, type SupportedChainId } from "../config/tokens";
 import type { DisbursementRecipient } from "../types/disbursement";
-import { getRPCClient } from "./rpcClient";
+import { getRPCClient, getRPCUrlByChainId } from "./rpcClient";
 
 /**
  * Transaction status returned from Safe Transaction Service
@@ -36,6 +36,13 @@ const SAFE_NETWORK_IDS: Partial<Record<SupportedChainId, string>> = {
 };
 
 /**
+ * Gets the RPC URL for a chain, preferring env-configured RPCs over hardcoded defaults.
+ */
+function getRpcUrl(chainId: SupportedChainId): string {
+  return getRPCUrlByChainId(chainId) || NETWORKS[chainId].rpcUrl;
+}
+
+/**
  * Gets the Safe Transaction Service URL for a chain
  * Uses the format: https://safe-transaction-{network}.safe.global
  */
@@ -54,7 +61,7 @@ export async function isSafeOwner(
   chainId: SupportedChainId
 ): Promise<boolean> {
   try {
-    const rpcUrl = NETWORKS[chainId].rpcUrl;
+    const rpcUrl = getRpcUrl(chainId);
 
     // Initialize Safe SDK with RPC URL
     const safe = await Safe.init({
@@ -271,7 +278,7 @@ export async function getSafeInfo(
   nonce: number;
 }> {
   try {
-    const rpcUrl = NETWORKS[chainId].rpcUrl;
+    const rpcUrl = getRpcUrl(chainId);
 
     const safe = await Safe.init({
       provider: rpcUrl,
@@ -311,7 +318,7 @@ export async function prepareDisbursementTransaction(
   decimals: number = 18
 ) {
   try {
-    const rpcUrl = NETWORKS[chainId].rpcUrl;
+    const rpcUrl = getRpcUrl(chainId);
 
     // Initialize Safe SDK
     const safe = await Safe.init({
@@ -387,7 +394,7 @@ export async function prepareDisbursementTransaction(
  * Creates an Ethereum provider compatible with Safe SDK from wagmi wallet client
  */
 function createEthereumProvider(walletClient: any, chainId: SupportedChainId) {
-  const rpcUrl = NETWORKS[chainId].rpcUrl;
+  const rpcUrl = getRpcUrl(chainId);
 
   // Create a provider object that Safe SDK can understand
   return {
@@ -812,7 +819,7 @@ export async function estimateGasFee(
 ): Promise<GasEstimation> {
   const publicClient = await getRPCClient(chainId);
   const nativeToken = NATIVE_TOKENS[chainId];
-  const rpcUrl = NETWORKS[chainId].rpcUrl;
+  const rpcUrl = getRpcUrl(chainId);
 
   // Get token decimals - try fetching from contract if token address provided
   let effectiveDecimals = decimals;
