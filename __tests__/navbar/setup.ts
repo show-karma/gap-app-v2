@@ -341,6 +341,7 @@ export const mockNavbarPermissionsState = {
     isStaffLoading: false,
     isOwner: false,
     isCommunityAdmin: false,
+    isReviewer: false,
     hasReviewerRole: false,
     reviewerPrograms: [],
     isProgramCreator: false,
