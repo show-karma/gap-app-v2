@@ -2,6 +2,8 @@
 
 **Purpose**: Route AI assistants to the correct code and patterns. Nothing else.
 
+**Project**: gap-app-v2 is the main frontend for the Grantee Accountability Protocol (GAP). It lets grant programs create projects, track milestones, and manage community reviews via EAS attestations on-chain. Part of a monorepo — see the parent repo's `CLAUDE.md` for cross-project guidance.
+
 ---
 
 ## Start Here
@@ -30,10 +32,10 @@
 
 ## Project Structure
 
-```
+```text
 app/                    # Next.js App Router routes
-components/             # 50+ shared React components
-hooks/                  # 100+ custom hooks (auth, query wrappers, domain-specific)
+components/             # Shared React components
+hooks/                  # Custom hooks (auth, query wrappers, domain-specific)
 store/                  # Zustand stores (project, community, donationCart, modals)
 utilities/              # Helpers (adapters, auth/TokenManager, chain handling, validation)
 styles/                 # TailwindCSS globals + SCSS modules
@@ -51,7 +53,7 @@ cypress/                # E2E + component tests
 - **Forms**: React Hook Form + Zod schemas
 - **Auth**: Privy OAuth + Wagmi account watching, TokenManager for persistent tokens
 - **Web3**: Wagmi hooks, Safe wallets, EAS attestations via karma-gap-sdk
-- **Styling**: TailwindCSS 3.3 + Tremor (charts/data viz) + Radix UI (accessible primitives)
+- **Styling**: TailwindCSS + Tremor (charts/data viz) + Radix UI (accessible primitives)
 - **Linting**: Biome (line width 100, 2-space indent, no console.log)
 
 ---
@@ -67,6 +69,16 @@ pnpm test:coverage      # Coverage report
 pnpm lint:fix           # Biome lint + format
 pnpm storybook          # Component docs
 ```
+
+---
+
+## Testing Requirements
+
+- **Coverage target**: 70% (TDD recommended)
+- **Unit/integration**: `__tests__/` using Jest + React Testing Library
+- **E2E**: `cypress/` for critical user flows
+- **A feature without tests is NOT complete** — bug fixes require regression tests
+- Run `pnpm test` before pushing; `pnpm test:coverage` to check coverage
 
 ---
 
