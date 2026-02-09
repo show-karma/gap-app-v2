@@ -89,6 +89,7 @@ function FundingPlatformContent() {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [togglingPrograms, setTogglingPrograms] = useState<Set<string>>(new Set());
+  const fallbackBackRoute = PAGES.MANAGE.ROOT(communityId);
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [enabledFilter, setEnabledFilter] = useState<"all" | "enabled" | "disabled">(
@@ -175,6 +176,18 @@ function FundingPlatformContent() {
       return matchesSearch && matchesEnabled;
     });
   }, [programs, searchTerm, enabledFilter]);
+
+  const handleBackClick = () => {
+    // Next.js app router stores a session history index in history.state.idx.
+    // If idx is 0/undefined (direct load or refresh with no in-app history), use fallback.
+    const historyIndex = window.history.state?.idx;
+    if (typeof historyIndex === "number" && historyIndex > 0) {
+      router.back();
+      return;
+    }
+
+    router.push(fallbackBackRoute);
+  };
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -338,13 +351,14 @@ function FundingPlatformContent() {
     <div className="sm:px-3 md:px-4 px-6 py-2 flex flex-col gap-4">
       {/* Header with Back button and Role indicator */}
       <div className="flex items-center justify-between">
-        <Link
-          href={`/community/${communityId}`}
+        <button
+          type="button"
+          onClick={handleBackClick}
           className="flex items-center border border-black dark:border-white text-black dark:text-white rounded-md py-2 px-4 w-max"
         >
           <ArrowLeftIcon className="w-4 h-4 mr-2" />
           Back
-        </Link>
+        </button>
 
         {/* Role Badge */}
         {!isAdmin && (

@@ -13,6 +13,16 @@ interface UsePermissionsQueryOptions {
   enabled?: boolean;
 }
 
+function isRateLimitError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+
+  const status = (error as { status?: number }).status;
+  if (status === 429) return true;
+
+  const responseStatus = (error as { response?: { status?: number } }).response?.status;
+  return responseStatus === 429;
+}
+
 export function usePermissionsQuery(
   params: GetPermissionsParams = {},
   options: UsePermissionsQueryOptions = {}
@@ -25,7 +35,8 @@ export function usePermissionsQuery(
     staleTime: 5 * 60 * 1000, // 5 minutes - permissions don't change frequently
     gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
     refetchOnWindowFocus: false, // Avoid excessive refetches on tab switch
-    retry: 2, // Retry failed requests twice
+    // Avoid retry storms on rate limiting; retry other transient failures up to 2 times.
+    retry: (failureCount, error) => !isRateLimitError(error) && failureCount < 2,
     enabled, // Only fetch when user is authenticated
   });
 }
