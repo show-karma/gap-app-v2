@@ -88,7 +88,21 @@ export function getExplorerUrl(chainId: number, transactionHash: string) {
   return `${chain.blockExplorers.default.url}/tx/${transactionHash}`;
 }
 
-export function getChainIdByName(name: string) {
+/**
+ * Mapping of network names (lowercase) to chain IDs.
+ * Used for onramp providers that return network names as strings.
+ */
+export const NETWORK_CHAIN_IDS: Record<string, number> = {
+  base: 8453,
+  ethereum: 1,
+  mainnet: 1,
+  polygon: 137,
+  optimism: 10,
+  arbitrum: 42161,
+  avalanche: 43114,
+};
+
+export function getChainIdByName(name: string): number {
   switch (name.toLowerCase()) {
     case "mainnet":
     case "ethereum":

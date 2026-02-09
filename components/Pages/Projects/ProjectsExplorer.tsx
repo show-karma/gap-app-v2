@@ -5,7 +5,6 @@ import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import debounce from "lodash.debounce";
 import { useQueryState } from "nuqs";
 import { useEffect, useMemo, useState } from "react";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import {
   Select,
   SelectContent,
@@ -16,6 +15,7 @@ import {
 import { PROJECTS_EXPLORER_CONSTANTS } from "@/constants/projects-explorer";
 import { useProjectsExplorerInfinite } from "@/hooks/useProjectsExplorerInfinite";
 import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
+import { queryClient } from "@/utilities/query-client";
 import { ProjectsLoading } from "./Loading";
 import { ProjectCard } from "./ProjectCard";
 

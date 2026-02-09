@@ -6,8 +6,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { type UnifiedSearchResponse, unifiedSearch } from "@/services/unified-search.service";
-import type { Community } from "@/types/v2/community";
-import { groupSimilarCommunities } from "@/utilities/communityHelpers";
 import { PAGES } from "@/utilities/pages";
 
 interface NavbarSearchProps {
@@ -85,8 +83,7 @@ export function NavbarSearch({ onSelectItem }: NavbarSearchProps = {}) {
     onSelectItem?.();
   };
 
-  const groupedCommunities = groupSimilarCommunities(results.communities as Community[]);
-  const totalResults = results.projects.length + groupedCommunities.length;
+  const totalResults = results.projects.length + results.communities.length;
 
   return (
     <div className="relative flex-1 min-w-20 md:max-w-[240px]" ref={searchRef}>
@@ -123,7 +120,7 @@ export function NavbarSearch({ onSelectItem }: NavbarSearchProps = {}) {
                 className="flex flex-col gap-1 py-3 px-3 min-w-0 w-full"
                 style={{ maxWidth: "100%", boxSizing: "border-box" }}
               >
-                {groupedCommunities.map((community) => {
+                {results.communities.map((community) => {
                   const name = community.details?.name || "Untitled Community";
                   const imageURL = community.details?.imageURL;
                   const slug = community.details?.slug || community.uid;

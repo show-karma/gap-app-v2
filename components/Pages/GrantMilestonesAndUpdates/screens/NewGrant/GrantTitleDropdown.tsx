@@ -4,7 +4,8 @@ import { CheckIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
 import pluralize from "pluralize";
-import { type FC, useEffect, useRef, useState } from "react";
+import { type FC, useCallback, useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import type { Grant } from "@/types/v2/grant";
 import { cn } from "@/utilities/tailwind";
@@ -56,6 +57,24 @@ export const GrantTitleDropdown: FC<{
     }
   }, []);
 
+  // NOTE: This is a UX-only enforcement. Backend enforcement via gap-indexer PR #868 is pending.
+  // Server-side validation is the real security gate - this prevents accidental submissions only.
+  const handleProgramSelect = useCallback(
+    (item: GrantProgram, isRestricted: boolean) => {
+      if (isRestricted) {
+        toast.error("Please contact the program manager to add this grant to your project", {
+          duration: 5000,
+        });
+        return;
+      }
+      setSelectedProgram(item);
+      // Use just programId (no chainId suffix) - service layer normalizes if needed
+      setValue("programId", item?.programId || undefined);
+      setValue("title", item?.metadata?.title, { shouldValidate: true });
+    },
+    [setSelectedProgram, setValue]
+  );
+
   const addCustom = async (custom: string) => {
     const trimmedCustom = custom.trim();
 
@@ -70,6 +89,14 @@ export const GrantTitleDropdown: FC<{
     let requestProgram: GrantProgram;
 
     if (programAlreadyExists) {
+      // Block selection of restricted programs via custom input
+      if (programAlreadyExists.metadata?.anyoneCanJoin === false) {
+        toast.error("Please contact the program manager to add this grant to your project", {
+          duration: 5000,
+        });
+        return;
+      }
+
       requestProgram = programAlreadyExists;
 
       // Use just programId (no chainId suffix) - service layer normalizes if needed
@@ -232,43 +259,62 @@ export const GrantTitleDropdown: FC<{
                 </button>
               </CommandItem>
             ) : null}
-            {list.map((item, index) => (
-              <CommandItem key={index}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedProgram(item);
-                    // Use just programId (no chainId suffix) - service layer normalizes if needed
-                    setValue("programId", item?.programId || undefined);
-                    setValue("title", item?.metadata?.title, {
-                      shouldValidate: true,
-                    });
-                  }}
-                  className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
-                >
-                  <div className="flex flex-row gap-2 items-center justify-start w-full">
-                    <div className="flex flex-row gap-1  items-center justify-start  flex-1">
-                      <p className="line-clamp-2 text-sm max-w-full break-normal">
-                        {item.metadata?.title}
-                      </p>
-                    </div>
-                  </div>
-                  <CheckIcon
-                    className={cn("mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white")}
-                    style={{
-                      display:
-                        grantToEdit && !selectedProgram
-                          ? grantToEdit?.details?.title === item?.metadata?.title
-                            ? "block"
-                            : "none"
-                          : selectedProgram?.metadata?.title === item?.metadata?.title
-                            ? "block"
-                            : "none",
+            {/* TODO: Consider grouping restricted programs into a separate section for clearer UX */}
+            {list.map((item) => {
+              const isRestricted = item.metadata?.anyoneCanJoin === false;
+              const itemKey =
+                item.programId ??
+                (typeof item._id === "string" ? item._id : item._id?.$oid) ??
+                item.metadata?.title;
+
+              return (
+                <CommandItem key={itemKey}>
+                  <button
+                    type="button"
+                    onClick={() => handleProgramSelect(item, isRestricted)}
+                    onKeyDown={(e) => {
+                      if (isRestricted && (e.key === "Enter" || e.key === " ")) {
+                        e.preventDefault();
+                      }
                     }}
-                  />
-                </button>
-              </CommandItem>
-            ))}
+                    aria-disabled={isRestricted}
+                    tabIndex={isRestricted ? -1 : 0}
+                    className={cn(
+                      "w-full my-1 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left",
+                      isRestricted
+                        ? "opacity-60 cursor-not-allowed"
+                        : "cursor-pointer hover:opacity-75"
+                    )}
+                  >
+                    <div className="flex flex-row gap-2 items-center justify-start w-full">
+                      <div className="flex flex-row gap-1  items-center justify-start  flex-1">
+                        <p className="line-clamp-2 text-sm max-w-full break-normal">
+                          {item.metadata?.title}
+                        </p>
+                        {isRestricted && (
+                          <span className="text-xs text-gray-400 dark:text-zinc-500 ml-1">
+                            (invite only)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <CheckIcon
+                      className={cn("mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white")}
+                      style={{
+                        display:
+                          grantToEdit && !selectedProgram
+                            ? grantToEdit?.details?.title === item?.metadata?.title
+                              ? "block"
+                              : "none"
+                            : selectedProgram?.metadata?.title === item?.metadata?.title
+                              ? "block"
+                              : "none",
+                      }}
+                    />
+                  </button>
+                </CommandItem>
+              );
+            })}
           </CommandGroup>
         </Command>
       </Popover.Content>

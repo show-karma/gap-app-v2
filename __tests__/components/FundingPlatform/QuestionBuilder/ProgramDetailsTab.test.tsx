@@ -55,6 +55,48 @@ jest.mock("@/components/Utilities/errorManager", () => ({
   errorManager: jest.fn(),
 }));
 
+// Mock MultiEmailInput to render a simple input + button for testing
+jest.mock("@/components/Utilities/MultiEmailInput", () => ({
+  MultiEmailInput: ({
+    emails,
+    onChange,
+    placeholder,
+    disabled,
+    error,
+  }: {
+    emails: string[];
+    onChange: (emails: string[]) => void;
+    placeholder?: string;
+    disabled?: boolean;
+    error?: string;
+  }) => {
+    const isAdmin = placeholder?.includes("admin");
+    const testId = isAdmin ? "admin" : "finance";
+    return (
+      <div>
+        <input
+          data-testid={`email-input-${testId}`}
+          placeholder={placeholder}
+          disabled={disabled}
+        />
+        <button
+          type="button"
+          data-testid={`add-email-${testId}`}
+          onClick={() => onChange([...emails, `test-${testId}@example.com`])}
+        >
+          Add
+        </button>
+        {emails.map((email: string) => (
+          <span key={email} data-testid={`email-tag-${testId}`}>
+            {email}
+          </span>
+        ))}
+        {error && <p className="text-sm text-destructive">{error}</p>}
+      </div>
+    );
+  },
+}));
+
 // Mock MarkdownEditor to render a simple textarea for testing
 jest.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({
@@ -216,6 +258,8 @@ const mockProgram: GrantProgram = {
     bannerImgData: {},
     credentials: {},
     communityRef: [],
+    adminEmails: ["admin@example.com"],
+    financeEmails: ["finance@example.com"],
   },
 };
 

@@ -19,6 +19,8 @@ import { Twitter2Icon } from "@/components/Icons/Twitter2";
 import { Button } from "@/components/Utilities/Button";
 import { DateTimePicker } from "@/components/Utilities/DateTimePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { MultiEmailInput } from "@/components/Utilities/MultiEmailInput";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
@@ -145,10 +147,17 @@ const createProgramSchema = z.object({
   grantTypes: z.array(z.string()),
   platformsUsed: z.array(z.string()),
   communityRef: z.array(z.string()),
+  anyoneCanJoin: z.boolean(),
   status: z.string().optional().or(z.literal("Active")),
+  adminEmails: z
+    .array(z.string().email({ message: "Invalid email address" }))
+    .min(1, { message: "At least one admin email is required" }),
+  financeEmails: z
+    .array(z.string().email({ message: "Invalid email address" }))
+    .min(1, { message: "At least one finance email is required" }),
 });
 
-type CreateProgramType = z.infer<typeof createProgramSchema>;
+type ProgramFormData = z.infer<typeof createProgramSchema>;
 
 export default function AddProgram({
   programToEdit,
@@ -191,7 +200,7 @@ export default function AddProgram({
     setValue,
     control,
     formState: { errors, isSubmitting, isValid },
-  } = useForm<CreateProgramType>({
+  } = useForm<ProgramFormData>({
     resolver: zodResolver(createProgramSchema),
     reValidateMode: "onChange",
     mode: "onChange",
@@ -232,7 +241,12 @@ export default function AddProgram({
       grantsSite: programToEdit?.metadata?.socialLinks?.grantsSite,
       platformsUsed: programToEdit?.metadata?.platformsUsed || [],
       communityRef: programToEdit?.metadata?.communityRef || [],
+      // Default: public form = open enrollment (anyoneCanJoin: true).
+      // This diverges from admin form (CreateProgramModal) which defaults to restricted (anyoneCanJoin: false).
+      anyoneCanJoin: programToEdit?.metadata?.anyoneCanJoin ?? true,
       status: programToEdit?.metadata?.status || "Active",
+      adminEmails: programToEdit?.metadata?.adminEmails || [],
+      financeEmails: programToEdit?.metadata?.financeEmails || [],
     },
   });
 
@@ -272,7 +286,7 @@ export default function AddProgram({
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const { changeStepperStep, setIsStepper } = useAttestationToast();
 
-  const createProgram = async (data: CreateProgramType) => {
+  const createProgram = async (data: ProgramFormData) => {
     setIsLoading(true);
     try {
       if (!isConnected || !isAuth) {
@@ -281,6 +295,10 @@ export default function AddProgram({
       }
       const chainSelected = data.networkToCreate;
 
+      // Metadata is constructed inline rather than via ProgramRegistryService.buildProgramMetadata()
+      // because this form has significantly more fields (social links, categories, ecosystems, etc.)
+      // than CreateProgramFormData supports. The service method is designed for the simpler
+      // CreateProgramModal form used in the funding-platform context.
       const metadata = {
         title: data.name,
         description: data.description,
@@ -315,10 +333,13 @@ export default function AddProgram({
         logoImgData: {},
         bannerImgData: {},
         credentials: {},
+        anyoneCanJoin: data.anyoneCanJoin,
         status: "Active",
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
         communityRef: data.communityRef,
+        adminEmails: data.adminEmails,
+        financeEmails: data.financeEmails,
       };
 
       // Use V2 endpoint - owner comes from JWT session
@@ -369,7 +390,7 @@ export default function AddProgram({
     }
   };
 
-  const editProgram = async (data: CreateProgramType) => {
+  const editProgram = async (data: ProgramFormData) => {
     setIsLoading(true);
     try {
       // V2 update uses JWT authentication, no wallet connection needed
@@ -392,6 +413,7 @@ export default function AddProgram({
 
       const { walletSigner } = setup;
 
+      // See createProgram comment for why metadata is constructed inline
       const metadata = sanitizeObject({
         title: data.name,
         description: data.description,
@@ -426,10 +448,13 @@ export default function AddProgram({
         logoImgData: {},
         bannerImgData: {},
         credentials: {},
+        anyoneCanJoin: data.anyoneCanJoin,
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
         status: data.status,
         communityRef: data.communityRef,
+        adminEmails: data.adminEmails,
+        financeEmails: data.financeEmails,
       });
 
       // Always use V2 update endpoint (off-chain)
@@ -461,7 +486,7 @@ export default function AddProgram({
     }
   };
 
-  const onSubmit: SubmitHandler<CreateProgramType> = async (data, event) => {
+  const onSubmit: SubmitHandler<ProgramFormData> = async (data, event) => {
     event?.preventDefault();
     event?.stopPropagation();
 
@@ -631,6 +656,50 @@ export default function AddProgram({
                 />
                 <p className="text-base text-red-400">{errors.description?.message}</p>
               </div>
+              <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
+                <Controller
+                  name="adminEmails"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <div className="flex w-full flex-col gap-1">
+                      <label htmlFor="admin-emails" className={labelStyle}>
+                        Admin Emails *
+                      </label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        Applicants will reply to these emails
+                      </p>
+                      <MultiEmailInput
+                        emails={field.value}
+                        onChange={field.onChange}
+                        placeholder="Enter admin email"
+                        disabled={isLoading}
+                        error={fieldState.error?.message}
+                      />
+                    </div>
+                  )}
+                />
+                <Controller
+                  name="financeEmails"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <div className="flex w-full flex-col gap-1">
+                      <label htmlFor="finance-emails" className={labelStyle}>
+                        Finance Emails *
+                      </label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        Notified when milestones are verified
+                      </p>
+                      <MultiEmailInput
+                        emails={field.value}
+                        onChange={field.onChange}
+                        placeholder="Enter finance email"
+                        disabled={isLoading}
+                        error={fieldState.error?.message}
+                      />
+                    </div>
+                  )}
+                />
+              </div>
               <div className="grid grid-cols-4  max-sm:grid-cols-1 max-md:grid-cols-2 gap-4 justify-between">
                 <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-categories" className={labelStyle}>
@@ -752,6 +821,23 @@ export default function AddProgram({
                     />
                   </div>
                 )}
+              </div>
+              <div className="flex items-center gap-3 mt-4">
+                <Checkbox
+                  id="open-enrollment"
+                  checked={watch("anyoneCanJoin")}
+                  onCheckedChange={(checked) => {
+                    setValue("anyoneCanJoin", checked === true, {
+                      shouldValidate: true,
+                    });
+                  }}
+                />
+                <label
+                  htmlFor="open-enrollment"
+                  className="text-sm font-medium text-gray-700 dark:text-zinc-200 cursor-pointer"
+                >
+                  Allow anyone to join this program (open enrollment)
+                </label>
               </div>
             </div>
 

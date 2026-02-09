@@ -6,7 +6,6 @@ import { type FC, Fragment, useState } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
@@ -15,6 +14,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { queryClient } from "@/utilities/query-client";
 import { getProjectById } from "@/utilities/sdk";
 
 const _DeleteDialog = dynamic(() =>

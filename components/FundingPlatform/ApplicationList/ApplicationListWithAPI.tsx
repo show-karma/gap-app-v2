@@ -15,7 +15,6 @@ import {
 } from "@/hooks/useFundingPlatform";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
-import { useProgram } from "@/hooks/usePrograms";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
 import type { IFundingApplication } from "@/types/funding-platform";
 import formatCurrency from "@/utilities/formatCurrency";
@@ -103,9 +102,8 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
 
   const { exportApplications, isExporting } = useApplicationExport(programId, isAdmin);
 
-  // Fetch program config and program data to determine AI column visibility
+  // Fetch program config to determine AI column visibility
   const { config } = useProgramConfig(programId);
-  const { data: program } = useProgram(programId);
 
   // Fetch reviewers for the program
   const {
@@ -121,8 +119,8 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
 
   // Determine column visibility based on configured prompts
   const { showAIScoreColumn, showInternalAIScoreColumn } = useMemo(
-    () => getAIColumnVisibility(config?.formSchema, program?.langfusePromptId),
-    [config?.formSchema, program?.langfusePromptId]
+    () => getAIColumnVisibility(config?.formSchema),
+    [config?.formSchema]
   );
 
   // Sync filters and sorting with URL

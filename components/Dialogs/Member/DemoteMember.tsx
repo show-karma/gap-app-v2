@@ -2,20 +2,10 @@ import { Dialog, Transition } from "@headlessui/react";
 import { ShieldExclamationIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { type FC, Fragment, useState } from "react";
-import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
-import { useAttestationToast } from "@/hooks/useAttestationToast";
-import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
+import { useMemberRoleChange } from "@/hooks/useMemberRoleChange";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
-import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
-import fetchData from "@/utilities/fetchData";
-import { getProjectMemberRoles } from "@/utilities/getProjectMemberRoles";
-import { INDEXER } from "@/utilities/indexer";
-import { retryUntilConditionMet } from "@/utilities/retries";
-import { getProjectById } from "@/utilities/sdk";
 
 interface DemoteMemberDialogProps {
   memberAddress: string;
@@ -23,103 +13,14 @@ interface DemoteMemberDialogProps {
 
 export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({ memberAddress }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDemoting, setIsDemoting] = useState(false);
-  const { address, chain } = useAccount();
   const { project } = useProjectStore();
   const { teamProfiles } = useTeamProfiles(project);
-  const { startAttestation, showSuccess, showError, changeStepperStep, setIsStepper } =
-    useAttestationToast();
-  const { switchChainAsync } = useWallet();
-  const { setupChainAndWallet } = useSetupChainAndWallet();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { execute, isLoading } = useMemberRoleChange("demote");
 
   const openModal = () => setIsOpen(true);
   const closeModal = () => setIsOpen(false);
 
-  const demoteMember = async () => {
-    if (!address || !project) return;
-    try {
-      setIsDemoting(true);
-      startAttestation("Removing admin role...");
-
-      const setup = await setupChainAndWallet({
-        targetChainId: project.chainID,
-        currentChainId: chain?.id,
-        switchChainAsync,
-      });
-
-      if (!setup) {
-        setIsDemoting(false);
-        return;
-      }
-
-      const { walletSigner, gapClient } = setup;
-      const fetchedProject = await getProjectById(project.uid);
-      if (!fetchedProject) throw new Error("Project not found");
-
-      const member = fetchedProject.members.find(
-        (item) => item.recipient.toLowerCase() === memberAddress.toLowerCase()
-      );
-      if (!member) throw new Error("Member not found");
-
-      const projectInstance = await gapClient.fetch.projectById(project.uid);
-
-      const checkIfAttestationExists = async (callbackFn?: () => void) => {
-        await retryUntilConditionMet(
-          async () => {
-            const memberRoles = await getProjectMemberRoles(project, projectInstance);
-            const isAdmin = memberRoles[memberAddress.toLowerCase()] !== "Admin";
-
-            return isAdmin;
-          },
-          async () => {
-            callbackFn?.();
-          }
-        );
-      };
-
-      await projectInstance
-        .removeAdmin(walletSigner as any, memberAddress.toLowerCase(), changeStepperStep)
-        .then(async (res) => {
-          changeStepperStep("indexing");
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, projectInstance.chainID),
-              "POST",
-              {}
-            );
-          }
-          await checkIfAttestationExists(() => {
-            changeStepperStep("indexed");
-          }).then(async () => {
-            showSuccess("Member removed as admin successfully");
-            closeModal();
-            await refreshProject();
-            queryClient.invalidateQueries({
-              queryKey: ["memberRoles", project?.uid],
-            });
-          });
-        });
-    } catch (error) {
-      showError(`Failed to remove member ${memberAddress} as admin.`);
-      errorManager(
-        "Error removing member as admin",
-        error,
-        {
-          address,
-          memberAddress,
-          projectUid: project?.uid,
-        },
-        {
-          error: `Failed to remove member ${memberAddress} as admin.`,
-        }
-      );
-    } finally {
-      setIsDemoting(false);
-      setIsStepper(false);
-    }
-  };
+  const handleDemote = () => execute(memberAddress, closeModal);
 
   const profile = teamProfiles?.find(
     (profile) => profile.recipient.toLowerCase() === memberAddress.toLowerCase()
@@ -199,11 +100,11 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({ memberAddress 
                       Cancel
                     </Button>
                     <Button
-                      onClick={demoteMember}
-                      disabled={isDemoting}
+                      onClick={handleDemote}
+                      disabled={isLoading}
                       className="text-zinc-100 text-base bg-brand-blue dark:text-zinc-100 dark:border-zinc-100 hover:bg-brand-blue/90 dark:hover:bg-brand-blue/90 dark:hover:text-white"
                     >
-                      {isDemoting ? "Removing..." : "Confirm"}
+                      {isLoading ? "Removing..." : "Confirm"}
                     </Button>
                   </div>
                 </Dialog.Panel>

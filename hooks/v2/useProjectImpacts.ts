@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { getProjectImpacts, type ProjectImpact } from "@/services/project-impacts.service";
+import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 /**

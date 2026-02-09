@@ -19,11 +19,6 @@ const ipfsClient = new IpfsStorage({
   token: envVars.IPFS_TOKEN,
 });
 
-const _gelatoOpts = {
-  sponsorUrl: envVars.NEXT_PUBLIC_SPONSOR_URL || "/api/sponsored-txn",
-  useGasless: false,
-};
-
 const gapClients: Record<number, GAP> = {};
 
 const isSupportedNetwork = (network: string): network is TNetwork =>
