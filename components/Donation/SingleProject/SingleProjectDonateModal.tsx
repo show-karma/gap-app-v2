@@ -242,6 +242,8 @@ export const SingleProjectDonateModal = React.memo<SingleProjectDonateModalProps
                     projectUid={project.uid}
                     payoutAddress={fiatPayoutConfig.address}
                     chainId={fiatPayoutConfig.chainId}
+                    initialAmount={amount}
+                    onDonationComplete={onClose}
                   />
                 ) : configuredChainIds.length > 0 ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
