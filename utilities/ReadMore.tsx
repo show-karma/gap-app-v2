@@ -1,7 +1,7 @@
 "use client";
 import type { MarkdownPreviewProps } from "@uiw/react-markdown-preview";
 import type React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 interface Props {
@@ -13,28 +13,6 @@ interface Props {
   markdownClass?: MarkdownPreviewProps["className"];
   markdownComponents?: MarkdownPreviewProps["components"];
   othersideButton?: React.ReactNode;
-  /** When true, preloads all images in the content for faster loading when expanded */
-  preloadImages?: boolean;
-}
-
-/**
- * Extract all image URLs from markdown content
- * Handles both ![alt](url) and [![alt](url)](link) patterns
- */
-function extractImageUrls(markdown: string): string[] {
-  const urls: string[] = [];
-  // Match image URLs: ![...](...) - capture the URL part
-  // This regex handles nested brackets for clickable images
-  const imageRegex = /!\[[^\]]*\]\(([^)\s]+)/g;
-  const matches = markdown.matchAll(imageRegex);
-  for (const match of matches) {
-    const url = match[1];
-    // Filter out invalid URLs (like nested markdown)
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      urls.push(url);
-    }
-  }
-  return [...new Set(urls)]; // Remove duplicates
 }
 
 export const ReadMore = ({
@@ -46,7 +24,6 @@ export const ReadMore = ({
   markdownClass,
   markdownComponents,
   othersideButton,
-  preloadImages = false,
 }: Props) => {
   const [isReadMore, setIsReadMore] = useState(true);
   const toggleReadMore = () => {
@@ -54,12 +31,6 @@ export const ReadMore = ({
   };
 
   const text = children ? children : "";
-
-  // Extract image URLs for preloading
-  const imageUrls = useMemo(() => {
-    if (!preloadImages) return [];
-    return extractImageUrls(text);
-  }, [text, preloadImages]);
 
   const getMinimumText = useCallback(() => {
     let wordsCounter = 400;
@@ -82,61 +53,16 @@ export const ReadMore = ({
     // Basic cut position
     let cutPosition = cutoffLength;
 
-    // Find all markdown link/image structures, handling nested parentheses in URLs
+    // Find all markdown link structures in the text
     const linkMatches: { start: number; end: number }[] = [];
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    let match;
 
-    // Find link/image starts and manually parse to handle nested parentheses
-    let i = 0;
-    while (i < text.length) {
-      // Look for ![ (image) or [ (link, but not preceded by !)
-      const isImage = text[i] === "!" && text[i + 1] === "[";
-      const isLink = text[i] === "[" && (i === 0 || text[i - 1] !== "!");
-
-      if (isImage || isLink) {
-        const startPos = isImage ? i : i;
-        const bracketStart = isImage ? i + 1 : i;
-
-        // Find the closing ]
-        let bracketEnd = -1;
-        let depth = 0;
-        for (let j = bracketStart; j < text.length; j++) {
-          if (text[j] === "[") depth++;
-          else if (text[j] === "]") {
-            depth--;
-            if (depth === 0) {
-              bracketEnd = j;
-              break;
-            }
-          }
-        }
-
-        // Check if followed by (
-        if (bracketEnd !== -1 && text[bracketEnd + 1] === "(") {
-          // Find the matching closing ) handling nested parentheses
-          let parenDepth = 0;
-          let parenEnd = -1;
-          for (let j = bracketEnd + 1; j < text.length; j++) {
-            if (text[j] === "(") parenDepth++;
-            else if (text[j] === ")") {
-              parenDepth--;
-              if (parenDepth === 0) {
-                parenEnd = j;
-                break;
-              }
-            }
-          }
-
-          if (parenEnd !== -1) {
-            linkMatches.push({
-              start: startPos,
-              end: parenEnd + 1,
-            });
-            i = parenEnd + 1;
-            continue;
-          }
-        }
-      }
-      i++;
+    while ((match = linkRegex.exec(text)) !== null) {
+      linkMatches.push({
+        start: match.index,
+        end: match.index + match[0].length,
+      });
     }
 
     // Check if we're cutting in the middle of a link
@@ -353,15 +279,6 @@ export const ReadMore = ({
 
   return (
     <div className="w-full max-w-full">
-      {/* Preload images in background for faster loading when expanded */}
-      {preloadImages && imageUrls.length > 0 && (
-        <div aria-hidden="true" className="hidden">
-          {imageUrls.map((url) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={url} src={url} alt="" loading="eager" />
-          ))}
-        </div>
-      )}
       {isReadMore ? (
         <MarkdownPreview
           className={markdownClass}
