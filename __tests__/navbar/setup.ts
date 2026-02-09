@@ -292,8 +292,13 @@ jest.mock("@/hooks/usePermissions", () => ({
   useReviewerPrograms: jest.fn(() => ({ isReviewerOfProgram: false, data: [] })),
 }));
 
-jest.mock("@/hooks/useStaff", () => ({
-  useStaff: jest.fn(() => ({ isStaff: false })),
+// Mock RBAC permissions hook (replaces legacy useStaff)
+jest.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+  usePermissionsQuery: jest.fn(() => ({
+    data: null,
+    isLoading: false,
+    isError: false,
+  })),
 }));
 
 jest.mock("@/store/owner", () => ({
@@ -314,7 +319,7 @@ jest.mock("@/store", () => ({
 }));
 
 jest.mock("@/store/registry", () => ({
-  useRegistryStore: jest.fn(() => ({ isPoolManager: false, isRegistryAdmin: false })),
+  useRegistryStore: jest.fn(() => ({ isProgramCreator: false, isRegistryAdmin: false })),
 }));
 
 jest.mock("@/store/modals/contributorProfile", () => ({
@@ -338,7 +343,7 @@ export const mockNavbarPermissionsState = {
     isCommunityAdmin: false,
     hasReviewerRole: false,
     reviewerPrograms: [],
-    isPoolManager: false,
+    isProgramCreator: false,
     isRegistryAdmin: false,
     hasAdminAccess: false,
     isRegistryAllowed: false,

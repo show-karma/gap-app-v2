@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
 import { type UpdateProgramFormSchema, updateProgramSchema } from "@/schemas/programFormSchema";
@@ -571,8 +572,23 @@ export function ProgramDetailsTab({
           />
 
           {/* Actions */}
-          {!readOnly && (
-            <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-end gap-3 pt-4">
+            {readOnly ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button type="button" disabled className="opacity-50 cursor-not-allowed">
+                        Save Changes
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>You don't have permission to edit this program</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
               <Button
                 type="submit"
                 disabled={!isDirty || isSubmitting || isLoading}
@@ -580,8 +596,8 @@ export function ProgramDetailsTab({
               >
                 Save Changes
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </form>
       </div>
     </div>

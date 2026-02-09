@@ -11,6 +11,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useAuth } from "@/hooks/useAuth";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import type { FundingProgram } from "@/services/fundingPlatformService";
+import { useIsReviewer, usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { layoutTheme } from "@/src/helper/theme";
 import { PAGES } from "@/utilities/pages";
 
@@ -24,8 +25,14 @@ export default function MyReviewPage() {
   const { address } = useAccount();
   const { authenticated: isAuth } = useAuth();
 
-  // Get all programs where user is a reviewer
-  const { programs: reviewerPrograms, isLoading } = useReviewerPrograms();
+  // Use RBAC to check reviewer status
+  const isReviewer = useIsReviewer();
+  const { isLoading: isLoadingRbac } = usePermissionContext();
+
+  // Get all programs where user is a reviewer (still needed for program list)
+  const { programs: reviewerPrograms, isLoading: isLoadingPrograms } = useReviewerPrograms();
+
+  const isLoading = isLoadingRbac || isLoadingPrograms;
 
   // Group programs by community
   const communitiesWithPrograms = useMemo(() => {

@@ -159,6 +159,24 @@ export const INDEXER = {
         `/v2/funding-applications/${referenceNumber}/versions/timeline`,
       REVIEWERS: (applicationId: string) => `/v2/funding-applications/${applicationId}/reviewers`,
     },
+    AUTH: {
+      PERMISSIONS: (params?: {
+        communityId?: string;
+        programId?: string;
+        applicationId?: string;
+        milestoneId?: string;
+        chainId?: number;
+      }) => {
+        const queryParams = new URLSearchParams();
+        if (params?.communityId) queryParams.set("communityId", params.communityId);
+        if (params?.programId) queryParams.set("programId", params.programId);
+        if (params?.applicationId) queryParams.set("applicationId", params.applicationId);
+        if (params?.milestoneId) queryParams.set("milestoneId", params.milestoneId);
+        if (params?.chainId !== undefined) queryParams.set("chainId", params.chainId.toString());
+        const query = queryParams.toString();
+        return `/v2/auth/permissions${query ? `?${query}` : ""}`;
+      },
+    },
     USER: {
       PERMISSIONS: (resource?: string) => {
         const params = new URLSearchParams();
@@ -379,7 +397,7 @@ export const INDEXER = {
         const queryParams = new URLSearchParams();
         if (params?.communityUID) queryParams.set("communityUID", params.communityUID);
         if (params?.programId) queryParams.set("programId", params.programId.toString());
-        if (params?.chainId) queryParams.set("chainId", params.chainId.toString());
+        if (params?.chainId !== undefined) queryParams.set("chainId", params.chainId.toString());
         if (params?.syncType) queryParams.set("syncType", params.syncType);
         if (params?.page) queryParams.set("page", params.page.toString());
         if (params?.limit) queryParams.set("limit", params.limit.toString());

@@ -16,8 +16,8 @@ import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import type { GrantMilestone } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
@@ -101,7 +101,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isCommunityAdmin = useIsCommunityAdmin();
   const _isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
   const { openShareDialog, closeShareDialog } = useShareDialogStore();
   const router = useRouter();

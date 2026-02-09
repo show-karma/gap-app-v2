@@ -3,6 +3,8 @@
 import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
 import { Button } from "@/components/Utilities/Button";
+import { Can } from "@/src/core/rbac/components/can";
+import { Permission } from "@/src/core/rbac/types";
 import type { FundingApplicationStatusV2 } from "@/types/funding-platform";
 
 // Define status transition configuration for table view
@@ -11,9 +13,10 @@ interface TableStatusTransition {
   label: string;
   icon?: React.ComponentType<{ className?: string }>;
   className?: string;
+  permission: Permission;
 }
 
-// Configuration for allowed status transitions in table view
+// Configuration for allowed status transitions in table view with required permissions
 const TABLE_STATUS_TRANSITIONS: Record<FundingApplicationStatusV2, TableStatusTransition[]> = {
   pending: [
     {
@@ -21,6 +24,7 @@ const TABLE_STATUS_TRANSITIONS: Record<FundingApplicationStatusV2, TableStatusTr
       label: "Review",
       className:
         "px-2 py-1 text-sm border bg-transparent text-purple-600 font-medium border-purple-200 dark:border-purple-700 dark:text-purple-400",
+      permission: Permission.APPLICATION_REVIEW,
     },
   ],
   under_review: [
@@ -29,6 +33,7 @@ const TABLE_STATUS_TRANSITIONS: Record<FundingApplicationStatusV2, TableStatusTr
       label: "Request Revision",
       className:
         "px-2 py-1 text-sm dark:text-white border bg-transparent border-gray-200 font-medium dark:border-gray-700",
+      permission: Permission.APPLICATION_CHANGE_STATUS,
     },
     {
       targetStatus: "approved",
@@ -36,6 +41,7 @@ const TABLE_STATUS_TRANSITIONS: Record<FundingApplicationStatusV2, TableStatusTr
       icon: CheckIcon,
       className:
         "px-2 py-1 text-sm border bg-transparent text-green-600 font-medium border-green-200 dark:border-green-700 dark:text-green-400 flex items-center gap-1",
+      permission: Permission.APPLICATION_APPROVE,
     },
     {
       targetStatus: "rejected",
@@ -43,6 +49,7 @@ const TABLE_STATUS_TRANSITIONS: Record<FundingApplicationStatusV2, TableStatusTr
       icon: XMarkIcon,
       className:
         "px-2 py-1 text-sm border bg-transparent text-red-600 font-medium border-red-200 dark:border-red-700 dark:text-red-400 flex items-center gap-1",
+      permission: Permission.APPLICATION_REJECT,
     },
   ],
   revision_requested: [
@@ -51,6 +58,7 @@ const TABLE_STATUS_TRANSITIONS: Record<FundingApplicationStatusV2, TableStatusTr
       label: "Review",
       className:
         "px-2 py-1 text-sm border bg-transparent text-purple-600 font-medium border-purple-200 dark:border-purple-700 dark:text-purple-400",
+      permission: Permission.APPLICATION_REVIEW,
     },
   ],
   resubmitted: [
@@ -59,6 +67,7 @@ const TABLE_STATUS_TRANSITIONS: Record<FundingApplicationStatusV2, TableStatusTr
       label: "Review",
       className:
         "px-2 py-1 text-sm border bg-transparent text-purple-600 font-medium border-purple-200 dark:border-purple-700 dark:text-purple-400",
+      permission: Permission.APPLICATION_REVIEW,
     },
   ],
   approved: [],
@@ -102,6 +111,7 @@ interface TableStatusActionButtonsProps {
 }
 
 // Main component that renders appropriate status action buttons for table rows
+// Wraps each button with permission checks using the RBAC system
 export const TableStatusActionButtons: FC<TableStatusActionButtonsProps> = ({
   applicationId,
   currentStatus,
@@ -122,13 +132,14 @@ export const TableStatusActionButtons: FC<TableStatusActionButtonsProps> = ({
   return (
     <div className="flex gap-1">
       {availableTransitions.map((transition) => (
-        <TableStatusActionButton
-          key={transition.targetStatus}
-          transition={transition}
-          applicationId={applicationId}
-          onStatusChange={onStatusChange}
-          disabled={isUpdating}
-        />
+        <Can key={transition.targetStatus} permission={transition.permission}>
+          <TableStatusActionButton
+            transition={transition}
+            applicationId={applicationId}
+            onStatusChange={onStatusChange}
+            disabled={isUpdating}
+          />
+        </Can>
       ))}
     </div>
   );

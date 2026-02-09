@@ -180,7 +180,11 @@ export const ContributorProfileDialog: FC = () => {
       if (txHash) {
         await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, targetChainId), "POST", {});
       } else {
-        await fetchData(INDEXER.ATTESTATION_LISTENER(contributorProfile.uid, targetChainId), "POST", {});
+        await fetchData(
+          INDEXER.ATTESTATION_LISTENER(contributorProfile.uid, targetChainId),
+          "POST",
+          {}
+        );
       }
 
       for (let attempt = 0; attempt < 20; attempt++) {

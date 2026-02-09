@@ -25,36 +25,57 @@ export const PAGES = {
   },
   MY_PROJECTS: `/my-projects`,
   MY_REVIEWS: `/my-reviews`,
+  // REVIEWER routes now point to MANAGE (unified RBAC-based routes)
   REVIEWER: {
-    DASHBOARD: (community: string) => `/community/${community}/reviewer/funding-platform`,
+    DASHBOARD: (community: string) => `/community/${community}/manage/funding-platform`,
     APPLICATIONS: (community: string, programId: string) =>
-      `/community/${community}/reviewer/funding-platform/${programId}/applications`,
+      `/community/${community}/manage/funding-platform/${programId}/applications`,
     APPLICATION_DETAIL: (community: string, programId: string, applicationId: string) =>
-      `/community/${community}/reviewer/funding-platform/${programId}/applications/${applicationId}`,
+      `/community/${community}/manage/funding-platform/${programId}/applications/${applicationId}`,
     QUESTION_BUILDER: (community: string, programId: string) =>
-      `/community/${community}/reviewer/funding-platform/${programId}/question-builder`,
+      `/community/${community}/manage/funding-platform/${programId}/question-builder`,
+    FUNDING_PLATFORM: {
+      MILESTONES: (community: string, programId: string, projectId: string) =>
+        `/community/${community}/manage/funding-platform/${programId}/milestones/${projectId}`,
+    },
+  },
+  MANAGE: {
+    ROOT: (community: string) => `/community/${community}/manage`,
+    FUNDING_PLATFORM: {
+      ROOT: (community: string) => `/community/${community}/manage/funding-platform`,
+      APPLICATIONS: (community: string, programId: string) =>
+        `/community/${community}/manage/funding-platform/${programId}/applications`,
+      APPLICATION_DETAIL: (community: string, programId: string, applicationId: string) =>
+        `/community/${community}/manage/funding-platform/${programId}/applications/${applicationId}`,
+      QUESTION_BUILDER: (community: string, programId: string) =>
+        `/community/${community}/manage/funding-platform/${programId}/question-builder`,
+      SETUP: (community: string, programId: string) =>
+        `/community/${community}/manage/funding-platform/${programId}/setup`,
+      MILESTONES: (community: string, programId: string, projectId: string) =>
+        `/community/${community}/manage/funding-platform/${programId}/milestones/${projectId}`,
+    },
   },
   ADMIN: {
     LIST: `/admin`,
-    ROOT: (community: string) => `/community/${community}/admin`,
-    EDIT_CATEGORIES: (community: string) => `/community/${community}/admin/edit-categories`,
-    EDIT_PROJECTS: (community: string) => `/community/${community}/admin/edit-projects`,
-    MILESTONES: (community: string) => `/community/${community}/admin/milestones-report`,
-    MANAGE_INDICATORS: (community: string) => `/community/${community}/admin/manage-indicators`,
-    TRACKS: (community: string) => `/community/${community}/admin/tracks`,
-    FUNDING_PLATFORM: (community: string) => `/community/${community}/admin/funding-platform`,
+    ROOT: (community: string) => `/community/${community}/manage`,
+    EDIT_CATEGORIES: (community: string) => `/community/${community}/manage/edit-categories`,
+    EDIT_PROJECTS: (community: string) => `/community/${community}/manage/edit-projects`,
+    MILESTONES: (community: string) => `/community/${community}/manage/milestones-report`,
+    MANAGE_INDICATORS: (community: string) => `/community/${community}/manage/manage-indicators`,
+    TRACKS: (community: string) => `/community/${community}/manage/tracks`,
+    FUNDING_PLATFORM: (community: string) => `/community/${community}/manage/funding-platform`,
     FUNDING_PLATFORM_QUESTION_BUILDER: (community: string, programId: string) =>
-      `/community/${community}/admin/funding-platform/${programId}/question-builder`,
+      `/community/${community}/manage/funding-platform/${programId}/question-builder`,
     FUNDING_PLATFORM_APPLICATIONS: (community: string, programId: string) =>
-      `/community/${community}/admin/funding-platform/${programId}/applications`,
+      `/community/${community}/manage/funding-platform/${programId}/applications`,
     COMMUNITIES: `/admin/communities`,
     COMMUNITY_STATS: `/admin/communities/stats`,
     PROJECTS: `/admin/projects`,
-    PAYOUTS: (community: string) => `/community/${community}/admin/payouts`,
-    KYC_SETTINGS: (community: string) => `/community/${community}/admin/kyc-settings`,
-    PROGRAM_SCORES: (community: string) => `/community/${community}/admin/program-scores`,
+    PAYOUTS: (community: string) => `/community/${community}/manage/payouts`,
+    KYC_SETTINGS: (community: string) => `/community/${community}/manage/kyc-settings`,
+    PROGRAM_SCORES: (community: string) => `/community/${community}/manage/program-scores`,
     PROJECT_MILESTONES: (community: string, projectId: string, programId: string) =>
-      `/community/${community}/admin/${projectId}/milestones?programIds=${programId}`,
+      `/community/${community}/manage/${projectId}/milestones?programIds=${programId}`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,

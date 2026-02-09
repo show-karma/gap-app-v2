@@ -645,6 +645,10 @@ describe("CreateProgramModal", () => {
         });
         expect(mockOnSuccess).toHaveBeenCalled();
         expect(mockOnClose).toHaveBeenCalled();
+        // Should redirect to setup wizard
+        expect(mockPush).toHaveBeenCalledWith(
+          "/community/test-community/manage/funding-platform/program-123/setup"
+        );
       });
     });
 
@@ -685,6 +689,9 @@ describe("CreateProgramModal", () => {
         });
         expect(mockOnSuccess).toHaveBeenCalled();
         expect(mockOnClose).toHaveBeenCalled();
+        expect(mockPush).toHaveBeenCalledWith(
+          "/community/test-community/manage/funding-platform/program-123/setup"
+        );
       });
     });
 

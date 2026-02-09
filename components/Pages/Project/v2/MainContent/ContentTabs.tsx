@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { useStaff } from "@/hooks/useStaff";
+import { useAuth } from "@/hooks/useAuth";
+import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
+import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -56,9 +58,14 @@ export function ContentTabs({
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { authenticated } = useAuth();
+  const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
+    {},
+    { enabled: authenticated }
+  );
+  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
   const canViewContactInfo =
-    isProjectOwner || isProjectAdmin || isContractOwner || (!isStaffLoading && isStaff);
+    isProjectOwner || isProjectAdmin || isContractOwner || (!isPermissionsLoading && isSuperAdmin);
 
   const baseTabs: TabConfig[] = [
     // Profile tab - mobile only, no href (uses onTabChange)

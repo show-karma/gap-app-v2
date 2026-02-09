@@ -9,9 +9,16 @@ import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAc
 import { useDeleteMilestone } from "@/hooks/useDeleteMilestone";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
-import { useIsReviewer, useReviewerPrograms } from "@/hooks/usePermissions";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
+import {
+  PermissionProvider,
+  useIsReviewer,
+  useIsReviewerType,
+  usePermissionContext,
+} from "@/src/core/rbac/context/permission-context";
+import { ReviewerType } from "@/src/core/rbac/types";
+import { useOwnerStore } from "@/store";
 import { PAGES } from "@/utilities/pages";
 import { CommentsAndActivity } from "./CommentsAndActivity";
 import { GrantCompleteButtonForReviewer } from "./GrantCompleteButtonForReviewer";
@@ -25,6 +32,39 @@ interface MilestonesReviewPageProps {
 }
 
 export function MilestonesReviewPage({
+  communityId,
+  projectId,
+  programId,
+  referrer,
+}: MilestonesReviewPageProps) {
+  // Extract programId from URL param (supports both "959" and legacy "959_42161" formats)
+  const { parsedProgramId } = useMemo(() => {
+    if (programId.includes("_")) {
+      const [id] = programId.split("_");
+      return { parsedProgramId: id };
+    }
+    return { parsedProgramId: programId };
+  }, [programId]);
+
+  // Wrap with PermissionProvider that includes programId for proper reviewer role detection
+  return (
+    <PermissionProvider
+      resourceContext={{
+        communityId,
+        programId: parsedProgramId,
+      }}
+    >
+      <MilestonesReviewPageContent
+        communityId={communityId}
+        projectId={projectId}
+        programId={programId}
+        referrer={referrer}
+      />
+    </PermissionProvider>
+  );
+}
+
+function MilestonesReviewPageContent({
   communityId,
   projectId,
   programId,
@@ -59,16 +99,10 @@ export function MilestonesReviewPage({
     };
   }, [programId]);
 
-  // Check if user is a reviewer for this program
-  const { isReviewer, isLoading: isLoadingReviewer } = useIsReviewer(parsedProgramId);
-
-  // Check if user is a milestone reviewer for this program
-  const { programs: reviewerPrograms } = useReviewerPrograms();
-  const isMilestoneReviewer = useMemo(() => {
-    return reviewerPrograms?.some(
-      (program) => program.programId === parsedProgramId && program.isMilestoneReviewer === true
-    );
-  }, [reviewerPrograms, parsedProgramId]);
+  // Check if user is a reviewer for this program using RBAC
+  const isReviewer = useIsReviewer();
+  const isMilestoneReviewer = useIsReviewerType(ReviewerType.MILESTONE);
+  const { isLoading: isLoadingReviewer } = usePermissionContext();
 
   // Determine if user can verify milestones (must be before early returns)
   // Only milestone reviewers, admins, contract owners, and staff can verify/complete/sync

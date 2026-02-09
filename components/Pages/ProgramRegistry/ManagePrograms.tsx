@@ -24,13 +24,11 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import Pagination from "@/components/Utilities/Pagination";
 import { useAuth } from "@/hooks/useAuth";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
-import { useRegistryStore } from "@/store/registry";
-import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
+import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
-import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
 import { LoadingProgramTable } from "./Loading/Programs";
 import { SearchDropdown } from "./SearchDropdown";
 
@@ -79,56 +77,15 @@ export const ManagePrograms = () => {
 
   const _signer = useSigner();
 
-  const {
-    setIsRegistryAdmin,
-    setIsPoolManager,
-    isPoolManager,
-    isRegistryAdmin,
-    setIsRegistryAdminLoading,
-    isRegistryAdminLoading,
-    isPoolManagerLoading,
-    setIsPoolManagerLoading,
-  } = useRegistryStore();
+  // Use permissions API for registry access - this is stable across navigation
+  const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
+    {},
+    { enabled: isAuth }
+  );
 
-  const isAllowed = address && (isRegistryAdmin || isPoolManager) && isAuth;
-
-  useEffect(() => {
-    if (!address || !isConnected) {
-      setIsRegistryAdmin(false);
-      setIsRegistryAdminLoading(false);
-      setIsPoolManagerLoading(false);
-      return;
-    }
-
-    const getMemberOf = async () => {
-      setIsRegistryAdminLoading(true);
-      setIsPoolManagerLoading(true);
-      try {
-        const call = await isMemberOfProfile(address);
-        setIsRegistryAdmin(call);
-        if (!call) {
-          const isManager = await checkIsPoolManager(address);
-          setIsPoolManager(isManager);
-        }
-      } catch (error: any) {
-        errorManager(
-          `Error while checking if ${address} is a registry admin or pool manager`,
-          error
-        );
-      } finally {
-        setIsRegistryAdminLoading(false);
-        setIsPoolManagerLoading(false);
-      }
-    };
-    getMemberOf();
-  }, [
-    address,
-    isConnected,
-    setIsPoolManager,
-    setIsPoolManagerLoading,
-    setIsRegistryAdmin,
-    setIsRegistryAdminLoading,
-  ]);
+  const isRegistryAdmin = permissions?.isRegistryAdmin ?? false;
+  const isProgramCreator = permissions?.isProgramCreator ?? false;
+  const isAllowed = Boolean(address) && (isRegistryAdmin || isProgramCreator) && isAuth;
 
   const [tab, setTab] = useQueryState("tab", {
     defaultValue: defaultTab || "pending",
@@ -235,8 +192,9 @@ export const ManagePrograms = () => {
       tab,
       page,
       searchInput,
-      isRegistryAdminLoading,
-      isPoolManagerLoading,
+      isPermissionsLoading,
+      isRegistryAdmin,
+      isProgramCreator,
       selectedEcosystems,
       selectedGrantTypes,
       selectedNetworks,
@@ -244,7 +202,7 @@ export const ManagePrograms = () => {
       sortOrder,
     ],
     queryFn: () => getGrantPrograms(),
-    enabled: !isRegistryAdminLoading || !isPoolManagerLoading,
+    enabled: !isPermissionsLoading && isAllowed,
   });
   const grantPrograms = data?.programs || [];
   const totalPrograms = data?.count || 0;

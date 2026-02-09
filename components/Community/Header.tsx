@@ -86,7 +86,7 @@ const NormalCommunityHeader = ({ community }: { community: Community }) => {
 };
 export default function CommunityHeader({ community }: { community: Community }) {
   const pathname = usePathname();
-  const isAdminPage = pathname.includes("/admin");
+  const isAdminPage = pathname.includes("/manage");
   const isReviewerPage = pathname.includes("/reviewer");
   const isDonatePage = pathname.includes("/donate");
   if (isAdminPage) {

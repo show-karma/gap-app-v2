@@ -316,7 +316,7 @@ describe("useProgramSetupProgress", () => {
     it("should generate correct URLs for each step", () => {
       const { result } = renderHook(() => useProgramSetupProgress(communityId, programId));
 
-      const baseUrl = `/community/${communityId}/admin/funding-platform/${programId}`;
+      const baseUrl = `/community/${communityId}/manage/funding-platform/${programId}`;
 
       expect(result.current.steps.find((s) => s.id === "program-created")?.href).toBe(
         `${baseUrl}/question-builder?tab=program-details`
