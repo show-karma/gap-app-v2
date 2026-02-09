@@ -152,12 +152,9 @@ describe("Navbar UI States", () => {
       cy.visit("/");
       waitForPageLoad();
 
-      // On mobile, the Sign in button is visible in the fixed header navbar
-      // Use the fixed positioning class to target the header nav specifically
-      // (the page may have multiple nav elements, e.g., footer nav)
-      cy.get("nav.fixed").within(() => {
-        cy.contains("button", "Sign in").should("be.visible");
-      });
+      // Desktop and mobile auth buttons are both rendered in DOM.
+      // Select only visible button to avoid matching hidden desktop element first.
+      cy.contains("button:visible", "Sign in").should("be.visible");
     });
   });
 });
