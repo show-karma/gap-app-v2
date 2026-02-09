@@ -19,7 +19,7 @@
 | Task | What to Read |
 |------|-------------|
 | New page/route | `app/` directory structure, existing pages for patterns |
-| New component | `components/` for shared, or `features/[name]/` for feature-specific |
+| New component | `components/` for shared, or `src/features/[name]/` for feature-specific |
 | Data fetching | `hooks/` for React Query patterns, `utilities/` for API helpers |
 | State management | `store/` for Zustand store patterns |
 | Forms | Existing forms use React Hook Form + Zod (`@hookform/resolvers`) |
@@ -35,6 +35,7 @@
 ```text
 app/                    # Next.js App Router routes
 components/             # Shared React components
+src/features/           # Feature-specific domain modules
 hooks/                  # Custom hooks (auth, query wrappers, domain-specific)
 store/                  # Zustand stores (project, community, donationCart, modals)
 utilities/              # Helpers (adapters, auth/TokenManager, chain handling, validation)
