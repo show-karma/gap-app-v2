@@ -9,11 +9,12 @@ import styles from "@/styles/markdown.module.css";
 import { cn } from "@/utilities/tailwind";
 
 // Custom schema that extends the default to allow images
+const baseSchema = defaultSchema || { tagNames: [], attributes: {} };
 const customSchema = {
-  ...defaultSchema,
-  tagNames: [...(defaultSchema.tagNames || []), "img"],
+  ...baseSchema,
+  tagNames: [...(baseSchema.tagNames || []), "img"],
   attributes: {
-    ...defaultSchema.attributes,
+    ...baseSchema.attributes,
     img: ["src", "alt", "title", "width", "height", "loading"],
   },
 };
