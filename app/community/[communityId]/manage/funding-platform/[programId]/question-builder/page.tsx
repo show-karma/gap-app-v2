@@ -1,11 +1,12 @@
 "use client";
 
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import FormBuilderErrorBoundary from "@/components/ErrorBoundary/FormBuilderErrorBoundary";
 import { QuestionBuilder } from "@/components/QuestionBuilder";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
@@ -15,7 +16,6 @@ import type { FormSchema } from "@/types/question-builder";
 import { PAGES } from "@/utilities/pages";
 
 export default function QuestionBuilderPage() {
-  const router = useRouter();
   const { communityId, programId: combinedProgramId } = useParams() as {
     communityId: string;
     programId: string;
@@ -73,9 +73,9 @@ export default function QuestionBuilderPage() {
     updatePostApprovalSchema({ schema, existingConfig: existingConfig || null });
   };
 
-  const handleBackClick = () => {
-    router.push(PAGES.MANAGE.FUNDING_PLATFORM.ROOT(communityId));
-  };
+  const handleBackClick = useBackNavigation({
+    fallbackRoute: PAGES.MANAGE.FUNDING_PLATFORM.ROOT(communityId),
+  });
 
   if (
     isLoadingPermissions ||

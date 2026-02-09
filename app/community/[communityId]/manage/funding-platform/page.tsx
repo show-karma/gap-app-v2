@@ -33,12 +33,11 @@ import { Button } from "@/components/Utilities/Button";
 import { LoadingOverlay } from "@/components/Utilities/LoadingOverlay";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { type FundingProgram, fundingPlatformService } from "@/services/fundingPlatformService";
 import { AdminOnly, FundingPlatformGuard, useIsFundingPlatformAdmin } from "@/src/core/rbac";
-import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
-import { Role } from "@/src/core/rbac/types/role";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { getProgramApplyUrl } from "@/utilities/fundingPlatformUrls";
@@ -51,7 +50,6 @@ function FundingPlatformContent() {
   const searchParams = useSearchParams();
 
   const isAdmin = useIsFundingPlatformAdmin();
-  const { roles } = usePermissionContext();
 
   const {
     programs: allPrograms,
@@ -95,6 +93,11 @@ function FundingPlatformContent() {
     (searchParams.get("status") as "all" | "enabled" | "disabled") || "all"
   );
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const handleBackClick = useBackNavigation({
+    fallbackRoute: PAGES.MANAGE.ROOT(communityId),
+    preferHistoryBack: true,
+  });
 
   const handleToggleProgram = async (programId: string, currentEnabled: boolean) => {
     setTogglingPrograms((prev) => new Set(prev).add(programId));
@@ -338,13 +341,14 @@ function FundingPlatformContent() {
     <div className="sm:px-3 md:px-4 px-6 py-2 flex flex-col gap-4">
       {/* Header with Back button and Role indicator */}
       <div className="flex items-center justify-between">
-        <Link
-          href={`/community/${communityId}`}
+        <button
+          type="button"
+          onClick={handleBackClick}
           className="flex items-center border border-black dark:border-white text-black dark:text-white rounded-md py-2 px-4 w-max"
         >
           <ArrowLeftIcon className="w-4 h-4 mr-2" />
           Back
-        </Link>
+        </button>
 
         {/* Role Badge */}
         {!isAdmin && (
@@ -736,8 +740,6 @@ function FundingPlatformContent() {
 }
 
 export default function FundingPlatformPage() {
-  const { communityId } = useParams() as { communityId: string };
-
   return (
     <FundingPlatformGuard>
       <FundingPlatformContent />

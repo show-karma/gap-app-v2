@@ -37,6 +37,7 @@ export const resetMockAuthState = () => {
     isStaffLoading: false,
     isOwner: false,
     isCommunityAdmin: false,
+    isReviewer: false,
     hasReviewerRole: false,
     reviewerPrograms: [],
     isProgramCreator: false,
@@ -317,7 +318,7 @@ const updateNavbarPermissionsState = (authMock?: any, permissionsMock?: any) => 
 
   // Compute derived values
   const isCommunityAdmin = communities.length > 0;
-  const hasReviewerRole = reviewerPrograms.length > 0;
+  const isReviewer = reviewerPrograms.length > 0;
   const hasAdminAccess = !isStaffLoading && (isStaff || isOwner || isCommunityAdmin);
   const isRegistryAllowed = (isRegistryAdmin || isProgramCreator) && isLoggedIn;
 
@@ -329,7 +330,8 @@ const updateNavbarPermissionsState = (authMock?: any, permissionsMock?: any) => 
     isStaffLoading,
     isOwner,
     isCommunityAdmin,
-    hasReviewerRole,
+    isReviewer,
+    hasReviewerRole: isReviewer,
     reviewerPrograms,
     isProgramCreator,
     isRegistryAdmin,

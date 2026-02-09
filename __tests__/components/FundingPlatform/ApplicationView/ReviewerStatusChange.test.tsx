@@ -23,8 +23,12 @@ jest.mock("next/navigation", () => ({
     programId: "prog-1_1",
     applicationId: "APP-001",
   })),
+  useSearchParams: jest.fn(() => ({
+    get: jest.fn(() => null),
+  })),
   useRouter: jest.fn(() => ({
     push: mockPush,
+    back: jest.fn(),
   })),
 }));
 
@@ -138,6 +142,26 @@ jest.mock("@/hooks/usePermissions", () => ({
     isLoading: false,
   })),
 }));
+
+jest.mock("@/hooks/useKycStatus", () => ({
+  useKycStatus: jest.fn(() => ({
+    status: null,
+  })),
+  useKycConfig: jest.fn(() => ({
+    isEnabled: false,
+  })),
+}));
+
+jest.mock("@/src/core/rbac", () => {
+  const actual = jest.requireActual("@/src/core/rbac");
+  return {
+    ...actual,
+    useIsFundingPlatformAdmin: jest.fn(() => false),
+    FundingPlatformGuard: ({ children }: any) => children,
+    AdminOnly: ({ children }: any) => children,
+    Can: ({ children }: any) => children,
+  };
+});
 
 // Mock RBAC permission context
 jest.mock("@/src/core/rbac/context/permission-context", () => ({
@@ -548,7 +572,7 @@ describe("Reviewer Status Change Functionality", () => {
   });
 
   describe("Permission Checks", () => {
-    it("should not render page content when reviewer has no permission", () => {
+    it("should hide status actions when reviewer has no permission", () => {
       // Mock RBAC context with no permissions
       const { usePermissionContext } = require("@/src/core/rbac/context/permission-context");
       usePermissionContext.mockReturnValue({
@@ -564,7 +588,8 @@ describe("Reviewer Status Change Functionality", () => {
 
       render(React.createElement(ReviewerApplicationDetailPage));
 
-      expect(screen.getByText(/don't have permission/i)).toBeInTheDocument();
+      expect(screen.getByTestId("application-header")).toBeInTheDocument();
+      expect(screen.queryByTestId("status-actions-container")).not.toBeInTheDocument();
     });
 
     it("should show loading spinner when permissions are loading", () => {
@@ -601,10 +626,26 @@ describe("Reviewer Status Change Functionality", () => {
   });
 
   describe("Reviewer Badge", () => {
-    it("should display Reviewer Access badge", () => {
+    it("should display reviewer mode badge", () => {
+      const {
+        usePermissionContext,
+        useCan,
+      } = require("@/src/core/rbac/context/permission-context");
+      usePermissionContext.mockReturnValue({
+        can: jest.fn(() => false),
+        canAny: jest.fn(() => false),
+        canAll: jest.fn(() => false),
+        hasRole: jest.fn(() => true),
+        hasRoleOrHigher: jest.fn(() => true),
+        isLoading: false,
+        roles: { primaryRole: "PROGRAM_REVIEWER", roles: ["PROGRAM_REVIEWER"] },
+        permissions: ["application:view_assigned", "application:review"],
+      });
+      useCan.mockReturnValue(false);
+
       render(React.createElement(ReviewerApplicationDetailPage));
 
-      expect(screen.getByText(/reviewer access/i)).toBeInTheDocument();
+      expect(screen.getByText(/reviewer mode/i)).toBeInTheDocument();
     });
   });
 
