@@ -8,23 +8,11 @@
  * 4. Open program settings again
  * 5. Click "Edit Form"
  * 6. Verify form is not empty
- *
- * IMPORTANT: Requires NEXT_PUBLIC_E2E_AUTH_BYPASS=true on the dev server.
- * The cy.login() command sets localStorage values but Privy uses React
- * context internally, so the frontend never recognizes the user as
- * authenticated without the bypass env var.
- *
- * TODO: Implement proper Privy test mode or authentication mocking
- * @see https://docs.privy.io/guide/testing
  */
 
 import { waitForPageLoad } from "../../support/intercepts";
 
-// Skip in CI - requires NEXT_PUBLIC_E2E_AUTH_BYPASS=true on the dev server
-const isCI = Cypress.env("CI") === "true" || Cypress.env("CI") === true;
-const describeOrSkip = isCI ? describe.skip : describe;
-
-describeOrSkip("Funding Platform - Question Builder Regression", () => {
+describe("Funding Platform - Question Builder Regression", () => {
   const communityId = "optimism";
   const programId = "1045";
 
@@ -160,11 +148,6 @@ describeOrSkip("Funding Platform - Question Builder Regression", () => {
       statusCode: 200,
       body: { reviewers: [] },
     }).as("getProgramReviewers");
-
-    cy.intercept("GET", `**/v2/communities/${communityId}/kyc-config**`, {
-      statusCode: 200,
-      body: { isEnabled: false, provider: null },
-    }).as("getKycConfig");
 
     cy.intercept("PUT", `**/v2/funding-program-configs/${programId}`, (req) => {
       const nextSchema = req.body?.formSchema;
