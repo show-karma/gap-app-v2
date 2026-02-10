@@ -30,6 +30,10 @@ import { SHARE_TEXTS } from "@/utilities/share/text";
 import { getCompletionData } from "./MilestoneDetails";
 import { UpdateMilestone } from "./UpdateMilestone";
 
+// Proof-of-work requirement was introduced on this date; milestones completed
+// before it won't have proofOfWork data and should not show the proof section.
+const PROOF_OF_WORK_LAUNCH_DATE = new Date("2024-08-30");
+
 interface UpdatesProps {
   milestone: GrantMilestone;
 }
@@ -222,7 +226,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
    */
   const checkProofLaunch = () => {
     if (!completionDateValue) return false;
-    return new Date("2024-08-30") <= new Date(completionDateValue);
+    return PROOF_OF_WORK_LAUNCH_DATE <= new Date(completionDateValue);
   };
 
   const isAfterProofLaunch = checkProofLaunch();

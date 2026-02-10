@@ -120,6 +120,14 @@ export type GrantMilestoneWithDetails = {
   completionDetails: GrantMilestoneCompletionDetails | null;
   verificationDetails: GrantMilestoneVerificationDetails | null;
   fundingApplicationCompletion?: FundingApplicationMilestoneCompletion | null;
+  // Raw attestation pass-through fields (may be present when API returns unprocessed data)
+  attester?: string;
+  endsAt?: number | string;
+  data?: {
+    attester?: string;
+    recipient?: string;
+    endsAt?: number | string;
+  };
 };
 
 export type GrantUpdateWithDetails = {
@@ -136,6 +144,15 @@ export type GrantUpdateWithDetails = {
   verified: boolean;
   createdAt: string | null;
   grant?: GrantInfo;
+  // Raw attestation pass-through fields (may be present when API returns unprocessed data)
+  attester?: string;
+  dueDate?: string | null;
+  endsAt?: number | string;
+  data?: {
+    attester?: string;
+    recipient?: string;
+    endsAt?: number | string;
+  };
 };
 
 export type UpdatesApiResponse = {
