@@ -906,11 +906,7 @@ export function QuestionBuilder({
           <div className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-4xl mx-auto">
               {programId && communityId ? (
-                <ReviewerManagementTab
-                  programId={programId}
-                  communityId={communityId}
-                  readOnly={readOnly}
-                />
+                <ReviewerManagementTab programId={programId} readOnly={readOnly} />
               ) : (
                 <div className="text-center py-8">
                   <p className="text-gray-500 dark:text-gray-400">
