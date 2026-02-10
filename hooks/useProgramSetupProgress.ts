@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { PAGES } from "@/utilities/pages";
 import { useProgramConfig } from "./useFundingPlatform";
 import { useProgramReviewers } from "./useProgramReviewers";
 
@@ -40,7 +41,10 @@ export function useProgramSetupProgress(communityId: string, programId: string):
   const error = configError || reviewersError || null;
 
   const progress = useMemo<SetupProgress>(() => {
-    const baseUrl = `/community/${communityId}/admin/funding-platform/${programId}`;
+    const questionBuilderUrl = PAGES.MANAGE.FUNDING_PLATFORM.QUESTION_BUILDER(
+      communityId,
+      programId
+    );
 
     // Check if form has fields configured
     const hasFormFields = config?.formSchema?.fields && config.formSchema.fields.length > 0;
@@ -66,7 +70,7 @@ export function useProgramSetupProgress(communityId: string, programId: string):
         description: "Program details have been saved",
         status: "completed", // Always completed if we're on this page
         required: true,
-        href: `${baseUrl}/question-builder?tab=program-details`,
+        href: `${questionBuilderUrl}?tab=program-details`,
         actionLabel: "Edit Details",
       },
       {
@@ -75,7 +79,7 @@ export function useProgramSetupProgress(communityId: string, programId: string):
         description: "Define the questions applicants will answer",
         status: hasFormFields ? "completed" : "pending",
         required: true,
-        href: `${baseUrl}/question-builder?tab=build`,
+        href: `${questionBuilderUrl}?tab=build`,
         actionLabel: hasFormFields ? "Edit Form" : "Start Building",
       },
       {
@@ -84,7 +88,7 @@ export function useProgramSetupProgress(communityId: string, programId: string):
         description: "Invite team members to review applications",
         status: hasReviewers ? "completed" : "pending",
         required: false,
-        href: `${baseUrl}/question-builder?tab=reviewers`,
+        href: `${questionBuilderUrl}?tab=reviewers`,
         actionLabel: hasReviewers ? "Manage Reviewers" : "Add Reviewers",
       },
       {
@@ -93,7 +97,7 @@ export function useProgramSetupProgress(communityId: string, programId: string):
         description: "Customize approval and rejection emails",
         status: hasCustomEmailTemplates ? "completed" : "pending",
         required: false,
-        href: `${baseUrl}/question-builder?tab=settings`,
+        href: `${questionBuilderUrl}?tab=settings`,
         actionLabel: hasCustomEmailTemplates ? "Edit Templates" : "Configure",
       },
       {
@@ -102,7 +106,7 @@ export function useProgramSetupProgress(communityId: string, programId: string):
         description: "Configure AI-powered application scoring",
         status: hasAIConfig ? "completed" : "pending",
         required: false,
-        href: `${baseUrl}/question-builder?tab=ai-config`,
+        href: `${questionBuilderUrl}?tab=ai-config`,
         actionLabel: hasAIConfig ? "Edit AI Config" : "Set Up",
       },
       {
@@ -111,7 +115,7 @@ export function useProgramSetupProgress(communityId: string, programId: string):
         description: "Make your program live and start accepting applications",
         status: isEnabled ? "completed" : hasFormFields ? "pending" : "disabled",
         required: true,
-        href: `${baseUrl}/question-builder?tab=program-details`,
+        href: `${questionBuilderUrl}?tab=program-details`,
         actionLabel: isEnabled ? "Enabled" : "Enable Program",
       },
     ];

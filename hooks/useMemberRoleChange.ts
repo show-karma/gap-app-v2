@@ -1,6 +1,6 @@
+import type { SignerOrProvider } from "@show-karma/karma-gap-sdk";
 import { useState } from "react";
 import { useAccount } from "wagmi";
-import type { SignerOrProvider } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
@@ -88,11 +88,7 @@ export function useMemberRoleChange(action: RoleAction) {
       changeStepperStep("indexing");
       const txHash = res?.tx[0]?.hash;
       if (txHash) {
-        await fetchData(
-          INDEXER.ATTESTATION_LISTENER(txHash, projectInstance.chainID),
-          "POST",
-          {}
-        );
+        await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, projectInstance.chainID), "POST", {});
       }
 
       // Invalidate member roles cache immediately so UI starts refetching while polling continues

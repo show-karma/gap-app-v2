@@ -35,7 +35,7 @@ export const NETWORKS = {
     name: "Ethereum",
     chainId: 1,
     shortName: "eth",
-    rpcUrl: "https://eth.llamarpc.com",
+    rpcUrl: "https://ethereum-rpc.publicnode.com",
     blockExplorer: "https://etherscan.io",
     isTestnet: false,
   },

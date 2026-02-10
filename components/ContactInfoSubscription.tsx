@@ -5,8 +5,10 @@ import { type FC, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { useAuth } from "@/hooks/useAuth";
 import { useContactInfo } from "@/hooks/useContactInfo";
-import { useStaff } from "@/hooks/useStaff";
+import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
+import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore, useProjectStore } from "@/store";
 import type { Contact } from "@/types/project";
 import fetchData from "@/utilities/fetchData";
@@ -116,8 +118,10 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const { isStaff } = useStaff();
-  const isAuthorized = isOwner || isProjectAdmin || isProjectOwner || isStaff;
+  const { authenticated } = useAuth();
+  const { data: permissions } = usePermissionsQuery({}, { enabled: authenticated });
+  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isAuthorized = isOwner || isProjectAdmin || isProjectOwner || isSuperAdmin;
   const { data: existingContacts, refetch: refreshContactInfo } = useContactInfo(
     projectId,
     isAuthorized

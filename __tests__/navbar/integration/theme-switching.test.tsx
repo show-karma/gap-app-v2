@@ -462,7 +462,7 @@ describe("Theme Switching Integration Tests", () => {
       "reviewer-single",
       "staff",
       "owner",
-      "pool-manager",
+      "program-creator",
       "registry-admin",
       "super-user",
     ];

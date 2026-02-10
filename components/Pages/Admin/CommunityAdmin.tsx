@@ -26,8 +26,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useStaff } from "@/hooks/useStaff";
+import { useAdminCommunities } from "@/hooks/useAdminCommunities";
+import { useAuth } from "@/hooks/useAuth";
 import { getCommunities } from "@/services/communities.service";
+import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
+import { Role } from "@/src/core/rbac/types";
 import { layoutTheme } from "@/src/helper/theme";
 import { useOwnerStore } from "@/store";
 import { useCommunitiesStore } from "@/store/communities";
@@ -73,13 +76,22 @@ export default function CommunitiesToAdminPage() {
   }, [searchQuery]);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { authenticated, address } = useAuth();
+
+  // Fetch admin communities when page loads (lazy-loaded, not on every page)
+  useAdminCommunities(address);
+
+  const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
+    {},
+    { enabled: authenticated }
+  );
+  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
   const { communities: userAdminCommunities, isLoading: isLoadingUserCommunities } =
     useCommunitiesStore();
 
-  const isStaffOrOwner = isOwner || isStaff;
+  const isSuperAdminOrOwner = isOwner || isSuperAdmin;
   const hasAdminCommunities = userAdminCommunities.length > 0;
-  const hasAccess = isStaffOrOwner || hasAdminCommunities;
+  const hasAccess = isSuperAdminOrOwner || hasAdminCommunities;
 
   const fetchCommunitiesData = useCallback(async (): Promise<CommunitiesData> => {
     const result = await getCommunities({ limit: 1000 });
@@ -123,14 +135,14 @@ export default function CommunitiesToAdminPage() {
 
   // Filter communities based on user role
   const baseCommunities = useMemo(() => {
-    if (isStaffOrOwner) {
+    if (isSuperAdminOrOwner) {
       return allCommunities;
     } else if (hasAdminCommunities) {
       const userAdminUids = new Set(userAdminCommunities.map((c) => c.uid));
       return allCommunities.filter((c) => userAdminUids.has(c.uid));
     }
     return [];
-  }, [allCommunities, isStaffOrOwner, hasAdminCommunities, userAdminCommunities]);
+  }, [allCommunities, isSuperAdminOrOwner, hasAdminCommunities, userAdminCommunities]);
 
   // Get unique networks from communities
   const availableNetworks = useMemo(() => {
@@ -184,7 +196,7 @@ export default function CommunitiesToAdminPage() {
   }, [displayedCommunities]);
 
   const isLoadingData =
-    isLoading || isStaffLoading || (!isStaffOrOwner && isLoadingUserCommunities);
+    isLoading || isPermissionsLoading || (!isSuperAdminOrOwner && isLoadingUserCommunities);
 
   const handleRefetch = useCallback(async () => {
     try {
@@ -292,7 +304,7 @@ export default function CommunitiesToAdminPage() {
           {/* Header */}
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
             <div className="text-2xl font-bold">
-              {isStaffOrOwner ? "All Communities" : "Your Communities"}{" "}
+              {isSuperAdminOrOwner ? "All Communities" : "Your Communities"}{" "}
               <span className="text-gray-500 dark:text-gray-400">
                 ({displayedCommunities.length}
                 {baseCommunities.length !== displayedCommunities.length &&
@@ -300,7 +312,7 @@ export default function CommunitiesToAdminPage() {
                 )
               </span>
             </div>
-            {isStaffOrOwner && <CommunityDialog refreshCommunities={handleRefetch} />}
+            {isSuperAdminOrOwner && <CommunityDialog refreshCommunities={handleRefetch} />}
           </div>
 
           {/* Search and Filter Bar */}
@@ -360,7 +372,7 @@ export default function CommunitiesToAdminPage() {
                     (userCommunity) => userCommunity.uid === community.uid
                   );
 
-                  const canManageAdmins = isStaffOrOwner || isAdminOfThisCommunity;
+                  const canManageAdmins = isSuperAdminOrOwner || isAdminOfThisCommunity;
 
                   return (
                     <div
@@ -531,7 +543,7 @@ export default function CommunitiesToAdminPage() {
                   </div>
                 ) : (
                   <p className="text-gray-500 dark:text-gray-400">
-                    {isStaffOrOwner ? "No communities found" : MESSAGES.ADMIN.NO_COMMUNITIES}
+                    {isSuperAdminOrOwner ? "No communities found" : MESSAGES.ADMIN.NO_COMMUNITIES}
                   </p>
                 )}
               </div>

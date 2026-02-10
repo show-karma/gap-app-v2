@@ -106,6 +106,7 @@ export function PromptEditor({
         isSaving={savePromptMutation.isPending}
         isBulkEvaluating={bulkEvaluationMutation.isPending}
         isJobRunning={isJobRunning}
+        readOnly={readOnly}
         onSave={handleSave}
         onOpenTestPanel={() => setIsTestPanelOpen(true)}
         onBulkEvaluate={handleBulkEvaluate}

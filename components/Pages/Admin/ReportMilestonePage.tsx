@@ -18,6 +18,11 @@ import TablePagination from "@/components/Utilities/TablePagination";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useAuth } from "@/hooks/useAuth";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
+import {
+  useIsReviewerType,
+  usePermissionContext,
+} from "@/src/core/rbac/context/permission-context";
+import { ReviewerType } from "@/src/core/rbac/types";
 import type { Community } from "@/types/v2/community";
 import { downloadCommunityReport } from "@/utilities/downloadReports";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
@@ -118,31 +123,23 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
   const communityId = params.communityId as string;
   const { address, isConnected } = useAccount();
   const { authenticated: isAuth } = useAuth();
-  const { hasAccess, checks } = useCommunityAdminAccess(community?.uid);
+  const {
+    hasAccess,
+    isLoading: isLoadingAdminAccess,
+    checks,
+  } = useCommunityAdminAccess(community?.uid);
 
-  // Get milestone reviewer programs for access control
-  const { programs: reviewerPrograms } = useReviewerPrograms();
+  // Use RBAC to check milestone reviewer status
+  const isMilestoneReviewer = useIsReviewerType(ReviewerType.MILESTONE);
+  // Get RBAC context for loading state and reviewer access (context-aware)
+  const { isLoading: isLoadingRbac, isReviewer } = usePermissionContext();
+  // Get programs where user is a reviewer (for filtering dropdown)
+  const { programs: reviewerPrograms, isLoading: isLoadingReviewerPrograms } =
+    useReviewerPrograms();
 
-  // Build set of allowed program IDs for milestone reviewers
-  const allowedProgramIds = useMemo(() => {
-    // Admins, staff and contract owners can see all programs
-    if (checks.isCommunityAdmin || checks.isOwner || checks.isStaff) {
-      return null; // null means no filtering
-    }
-
-    // Build set of programs where user is a milestone reviewer
-    const allowedSet = new Set<string>();
-    reviewerPrograms?.forEach((program) => {
-      // Filter to programs in this community that user is milestone reviewer for
-      const programCommunityId = program.communitySlug || program.communityUID;
-      if (programCommunityId === communityId && program.isMilestoneReviewer) {
-        // Use normalized programId (without chainId suffix)
-        allowedSet.add(program.programId);
-      }
-    });
-
-    return allowedSet.size > 0 ? allowedSet : null;
-  }, [checks.isCommunityAdmin, checks.isOwner, checks.isStaff, reviewerPrograms, communityId]);
+  // With the new RBAC system, program-level filtering is handled at the API level
+  // All authorized users (admins, staff, owners, milestone reviewers) see all programs
+  // The authorization check in isAuthorized ensures only valid users can access this page
 
   const isAuthorized = useMemo(() => {
     if (!isConnected || !isAuth) {
@@ -154,9 +151,9 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
       return true;
     }
 
-    // Milestone reviewers have access if they have programs assigned
-    return allowedProgramIds !== null && allowedProgramIds.size > 0;
-  }, [isConnected, isAuth, hasAccess, allowedProgramIds]);
+    // Milestone reviewers have access via RBAC (context-aware: checks community/program level)
+    return isMilestoneReviewer || isReviewer;
+  }, [isConnected, isAuth, hasAccess, isMilestoneReviewer, isReviewer]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("totalMilestones");
@@ -175,6 +172,18 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     },
   });
 
+  // Get the set of program IDs the user is a reviewer for (normalized)
+  const reviewerProgramIds = useMemo(() => {
+    if (!reviewerPrograms || reviewerPrograms.length === 0) return new Set<string>();
+    return new Set(
+      reviewerPrograms.map((p) => {
+        // Normalize programId (remove chainId suffix if present)
+        const id = p.programId;
+        return id.includes("_") ? id.split("_")[0] : id;
+      })
+    );
+  }, [reviewerPrograms]);
+
   const programOptions = useMemo(() => {
     const allPrograms = grantPrograms
       .filter(
@@ -190,13 +199,15 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
         return { value, label };
       });
 
-    // Filter programs based on milestone reviewer permissions
-    if (allowedProgramIds) {
-      return allPrograms.filter((option) => allowedProgramIds.has(option.value));
+    // Admins, staff, and contract owners see all programs
+    // Reviewers only see programs they are assigned to
+    if (hasAccess) {
+      return allPrograms;
     }
 
-    return allPrograms;
-  }, [grantPrograms, allowedProgramIds]);
+    // For reviewers, filter to only show their assigned programs
+    return allPrograms.filter((program) => reviewerProgramIds.has(program.value));
+  }, [grantPrograms, hasAccess, reviewerProgramIds]);
 
   const valueToLabelMap = useMemo(() => {
     return new Map(programOptions.map(({ value, label }) => [value, label]));
@@ -252,6 +263,27 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
 
   const programLabels = useMemo(() => programOptions.map(({ label }) => label), [programOptions]);
 
+  // For reviewers (non-admins), automatically filter by their programs if no explicit filter is set
+  // This ensures reviewers only see grants from programs they have access to
+  const effectiveProgramIds = useMemo(() => {
+    // If user has explicit filter selection, use that
+    if (normalizedProgramIds.length > 0) {
+      // For reviewers, ensure they can only filter by their assigned programs
+      if (!hasAccess && reviewerProgramIds.size > 0) {
+        return normalizedProgramIds.filter((id) => reviewerProgramIds.has(id));
+      }
+      return normalizedProgramIds;
+    }
+
+    // If no filter and user is a reviewer (not admin), auto-filter by their programs
+    if (!hasAccess && reviewerProgramIds.size > 0) {
+      return Array.from(reviewerProgramIds);
+    }
+
+    // Admins/staff/owners see all programs by default
+    return normalizedProgramIds;
+  }, [normalizedProgramIds, hasAccess, reviewerProgramIds]);
+
   const { data, isLoading } = useQuery<ReportAPIResponse>({
     queryKey: [
       "reportMilestones",
@@ -259,10 +291,10 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
       currentPage,
       sortBy,
       sortOrder,
-      normalizedProgramIds,
+      effectiveProgramIds,
     ],
     queryFn: async () =>
-      fetchReports(communityId, currentPage, itemsPerPage, sortBy, sortOrder, normalizedProgramIds),
+      fetchReports(communityId, currentPage, itemsPerPage, sortBy, sortOrder, effectiveProgramIds),
     enabled: Boolean(communityId) && isAuthorized,
   });
 
@@ -308,6 +340,20 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
       <div className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow">
         <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{title}</h3>
         <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400">{value}</p>
+      </div>
+    );
+  }
+
+  // Show loading while checking permissions (includes RBAC, admin access, and reviewer programs)
+  const isCheckingPermissions = isLoadingRbac || isLoadingAdminAccess || isLoadingReviewerPrograms;
+
+  if (isCheckingPermissions) {
+    return (
+      <div className="container mx-auto mt-4 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          <p className="text-gray-500 dark:text-gray-400">Checking permissions...</p>
+        </div>
       </div>
     );
   }
@@ -596,12 +642,12 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
                           <td className="px-4 py-2">
                             {report.programId && (
                               <Link
-                                href={PAGES.ADMIN.PROJECT_MILESTONES(
+                                href={PAGES.REVIEWER.FUNDING_PLATFORM.MILESTONES(
                                   communityId,
-                                  report.projectUid,
                                   report.programId.includes("_")
                                     ? report.programId.split("_")[0]
-                                    : report.programId
+                                    : report.programId,
+                                  report.projectUid
                                 )}
                                 target="_blank"
                                 rel="noopener noreferrer"

@@ -271,7 +271,7 @@ export const MESSAGES = {
   },
   ADMIN: {
     NOT_AUTHORIZED: (uid: string) =>
-      `You must be Admin of this Community${uid ? `(${uid})` : ""} to see this page.`,
+      `You don't have permission to access this page${uid ? ` for ${uid}` : ""}.`,
     NO_COMMUNITIES: "You are not an admin of any community.",
   },
   MY_PROJECTS: {

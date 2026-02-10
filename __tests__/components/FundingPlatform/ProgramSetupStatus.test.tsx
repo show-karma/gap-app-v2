@@ -106,7 +106,7 @@ describe("ProgramSetupStatus", () => {
       const link = screen.getByRole("link");
       expect(link).toHaveAttribute(
         "href",
-        `/community/${communityId}/admin/funding-platform/${programId}/setup`
+        `/community/${communityId}/manage/funding-platform/${programId}/setup`
       );
     });
   });
@@ -152,7 +152,7 @@ describe("ProgramSetupStatus", () => {
       const link = screen.getByRole("link");
       expect(link).toHaveAttribute(
         "href",
-        `/community/${communityId}/admin/funding-platform/${programId}/setup`
+        `/community/${communityId}/manage/funding-platform/${programId}/setup`
       );
     });
   });

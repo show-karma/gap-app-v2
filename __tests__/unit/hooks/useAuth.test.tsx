@@ -62,14 +62,14 @@ jest.mock("@/utilities/auth/token-manager", () => ({
 
 describe("useAuth - Query Key Consistency", () => {
   describe("QUERY_KEYS structure for cache invalidation", () => {
-    it("should have AUTH.STAFF_AUTHORIZATION_BASE key defined", () => {
-      expect(QUERY_KEYS.AUTH.STAFF_AUTHORIZATION_BASE).toBeDefined();
-      expect(QUERY_KEYS.AUTH.STAFF_AUTHORIZATION_BASE).toEqual(["staffAuthorization"]);
-    });
-
     it("should have AUTH.CONTRACT_OWNER_BASE key defined", () => {
       expect(QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE).toBeDefined();
       expect(QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE).toEqual(["contract-owner"]);
+    });
+
+    it("should have AUTH.PERMISSIONS_BASE key defined", () => {
+      expect(QUERY_KEYS.AUTH.PERMISSIONS_BASE).toBeDefined();
+      expect(QUERY_KEYS.AUTH.PERMISSIONS_BASE).toEqual(["permissions"]);
     });
 
     it("should have COMMUNITY.IS_ADMIN_BASE key defined", () => {
@@ -80,17 +80,14 @@ describe("useAuth - Query Key Consistency", () => {
     it("should have full key factories that start with base keys", () => {
       // Full keys should be prefixed with base keys for removeQueries to work
       const fullAdminKey = QUERY_KEYS.COMMUNITY.IS_ADMIN("uid", 1, "addr", {});
-      const fullStaffKey = QUERY_KEYS.AUTH.STAFF_AUTHORIZATION("addr");
       const fullOwnerKey = QUERY_KEYS.AUTH.CONTRACT_OWNER("addr", 1);
 
       expect(fullAdminKey[0]).toBe(QUERY_KEYS.COMMUNITY.IS_ADMIN_BASE[0]);
-      expect(fullStaffKey[0]).toBe(QUERY_KEYS.AUTH.STAFF_AUTHORIZATION_BASE[0]);
       expect(fullOwnerKey[0]).toBe(QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE[0]);
     });
 
     it("should have all necessary query key factories for auth hooks", () => {
       // Verify all auth-related keys exist
-      expect(typeof QUERY_KEYS.AUTH.STAFF_AUTHORIZATION).toBe("function");
       expect(typeof QUERY_KEYS.AUTH.CONTRACT_OWNER).toBe("function");
       expect(typeof QUERY_KEYS.COMMUNITY.IS_ADMIN).toBe("function");
     });
@@ -98,19 +95,12 @@ describe("useAuth - Query Key Consistency", () => {
 
   describe("Query key format validation", () => {
     it("should return arrays for all query keys", () => {
-      expect(Array.isArray(QUERY_KEYS.AUTH.STAFF_AUTHORIZATION_BASE)).toBe(true);
       expect(Array.isArray(QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE)).toBe(true);
+      expect(Array.isArray(QUERY_KEYS.AUTH.PERMISSIONS_BASE)).toBe(true);
       expect(Array.isArray(QUERY_KEYS.COMMUNITY.IS_ADMIN_BASE)).toBe(true);
 
-      expect(Array.isArray(QUERY_KEYS.AUTH.STAFF_AUTHORIZATION("test"))).toBe(true);
       expect(Array.isArray(QUERY_KEYS.AUTH.CONTRACT_OWNER("test", 1))).toBe(true);
       expect(Array.isArray(QUERY_KEYS.COMMUNITY.IS_ADMIN("uid", 1, "addr", {}))).toBe(true);
-    });
-
-    it("should properly lowercase addresses in STAFF_AUTHORIZATION key", () => {
-      const upperCaseAddr = "0xABCDEF1234567890";
-      const key = QUERY_KEYS.AUTH.STAFF_AUTHORIZATION(upperCaseAddr);
-      expect(key[1]).toBe(upperCaseAddr.toLowerCase());
     });
   });
 });

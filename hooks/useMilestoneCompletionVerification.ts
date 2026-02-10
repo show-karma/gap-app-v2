@@ -6,7 +6,6 @@ import { useState } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { queryClient } from "@/utilities/query-client";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
@@ -17,6 +16,7 @@ import {
 } from "@/services/milestones";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeObject } from "@/utilities/sanitize";

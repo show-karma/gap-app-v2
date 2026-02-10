@@ -6,8 +6,8 @@ import type { FC } from "react";
 import { Fragment, useEffect, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { PROJECT_NAME } from "@/constants/brand";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import type { Grant } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -21,7 +21,7 @@ export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonPr
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isCommunityAdmin = useIsCommunityAdmin();
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
   const isEnabledForCommunity = grant.community?.details?.slug === "octant";
   const [isOpen, setIsOpen] = useState(false);

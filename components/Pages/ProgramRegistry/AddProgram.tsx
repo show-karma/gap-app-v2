@@ -27,7 +27,6 @@ import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { getCommunities } from "@/services/communities.service";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
-import { useRegistryStore } from "@/store/registry";
 import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import fetchData from "@/utilities/fetchData";
@@ -287,8 +286,6 @@ export default function AddProgram({
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const { changeStepperStep, setIsStepper } = useAttestationToast();
 
-  const { isRegistryAdmin } = useRegistryStore();
-
   // Metadata is constructed inline rather than via ProgramRegistryService.buildProgramMetadata()
   // because this form has significantly more fields (social links, categories, ecosystems, etc.)
   // than CreateProgramFormData supports. The service method is designed for the simpler
@@ -334,7 +331,6 @@ export default function AddProgram({
     adminEmails: data.adminEmails,
     financeEmails: data.financeEmails,
   });
-
   const createProgram = async (data: ProgramFormData) => {
     setIsLoading(true);
     try {
