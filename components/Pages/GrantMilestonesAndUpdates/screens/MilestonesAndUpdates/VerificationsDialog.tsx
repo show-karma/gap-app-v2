@@ -17,16 +17,23 @@ import { useProjectStore } from "@/store/project";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
+import type { VerificationRecord } from "./VerifiedBadge";
+
+type VerificationEntry =
+  | VerificationRecord
+  | IMilestoneCompleted
+  | IGrantUpdateStatus
+  | IProjectImpactStatus;
 
 interface VerificationsDialogProps {
-  verifications: (IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus)[];
+  verifications: VerificationEntry[];
   isOpen: boolean;
   closeDialog: () => void;
   title: string;
 }
 
 interface VerificationsItemProps {
-  verification: IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus;
+  verification: VerificationEntry;
 }
 
 const VerificationItem = ({ verification }: VerificationsItemProps) => {

@@ -237,6 +237,8 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   // Get deliverables from milestone completion data
   const completionDeliverables = (completionData?.data as any)?.deliverables;
 
+  // Show completion view if we have completion data (isCompleted) OR if the
+  // status indicates completion/verification even without data (indexer lag)
   if (
     !isEditing &&
     (isCompleted ||
@@ -259,9 +261,11 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               onVerified={markAsVerified}
             />
           </div>
-          <p className="text-sm font-semibold text-gray-500 dark:text-zinc-100">
-            Completed on {formatDate(completionDateValue)}
-          </p>
+          {completionDateValue && (
+            <p className="text-sm font-semibold text-gray-500 dark:text-zinc-100">
+              Completed on {formatDate(completionDateValue)}
+            </p>
+          )}
         </div>
 
         {/* Completion reason */}

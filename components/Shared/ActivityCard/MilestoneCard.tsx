@@ -482,46 +482,52 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
             </div>
           )}
       </div>
-      {isCompleting || isEditing || completed ? (
+      {isCompleting ||
+      isEditing ||
+      completed ||
+      completionReason ||
+      completionProof ||
+      completionDeliverables ? (
         <div className="flex flex-col gap-2.5 mt-4 pl-10">
           {/* Timeline header: Only show when viewing existing completion data, not during form input */}
-          {!isCompleting && completed && (
-            <div className="relative flex flex-row items-center justify-between gap-2 flex-wrap">
-              {/* Timeline badge - vertically centered relative to header row, aligned with main timeline */}
-              <div className="absolute -left-[73px] max-lg:-left-[69px] top-1/2 -translate-y-1/2 w-6 h-6 max-lg:w-5 max-lg:h-5 flex items-center justify-center z-10 bg-orange-50 dark:bg-orange-900/30 rounded-full">
-                <div className="w-[3px] h-[3px] rounded-full bg-orange-400" />
-              </div>
-              {/* Left side: Activity type label and Due date */}
-              <div className="flex flex-row items-center gap-2.5 flex-wrap">
-                <span className="text-sm font-semibold text-foreground">
-                  {getActivityTypeLabel(type)}
-                </span>
-                {endsAt && endsAt > 0 && new Date(endsAt * 1000).getFullYear() >= 2000 && (
-                  <span className="text-sm font-semibold text-muted-foreground">
-                    Due on {formatDate(new Date(endsAt * 1000).toISOString())}
+          {!isCompleting &&
+            (completed || completionReason || completionProof || completionDeliverables) && (
+              <div className="relative flex flex-row items-center justify-between gap-2 flex-wrap">
+                {/* Timeline badge - vertically centered relative to header row, aligned with main timeline */}
+                <div className="absolute -left-[73px] max-lg:-left-[69px] top-1/2 -translate-y-1/2 w-6 h-6 max-lg:w-5 max-lg:h-5 flex items-center justify-center z-10 bg-orange-50 dark:bg-orange-900/30 rounded-full">
+                  <div className="w-[3px] h-[3px] rounded-full bg-orange-400" />
+                </div>
+                {/* Left side: Activity type label and Due date */}
+                <div className="flex flex-row items-center gap-2.5 flex-wrap">
+                  <span className="text-sm font-semibold text-foreground">
+                    {getActivityTypeLabel(type)}
                   </span>
-                )}
-              </div>
-
-              {/* Right side: Posted by */}
-              {completionDate && (
-                <div className="flex flex-row items-center gap-3 text-sm font-medium leading-5 text-muted-foreground">
-                  <span>Posted {formatDate(completionDate)} by</span>
-                  {completionAttester && (
-                    <div className="flex flex-row items-center gap-3">
-                      <EthereumAddressToENSAvatar
-                        address={completionAttester}
-                        className="h-8 w-8 min-h-8 min-w-8 rounded-full"
-                      />
-                      <span className="text-sm font-semibold leading-5 text-foreground">
-                        <EthereumAddressToENSName address={completionAttester} />
-                      </span>
-                    </div>
+                  {endsAt && endsAt > 0 && new Date(endsAt * 1000).getFullYear() >= 2000 && (
+                    <span className="text-sm font-semibold text-muted-foreground">
+                      Due on {formatDate(new Date(endsAt * 1000).toISOString())}
+                    </span>
                   )}
                 </div>
-              )}
-            </div>
-          )}
+
+                {/* Right side: Posted by */}
+                {completionDate && (
+                  <div className="flex flex-row items-center gap-3 text-sm font-medium leading-5 text-muted-foreground">
+                    <span>Posted {formatDate(completionDate)} by</span>
+                    {completionAttester && (
+                      <div className="flex flex-row items-center gap-3">
+                        <EthereumAddressToENSAvatar
+                          address={completionAttester}
+                          className="h-8 w-8 min-h-8 min-w-8 rounded-full"
+                        />
+                        <span className="text-sm font-semibold leading-5 text-foreground">
+                          <EthereumAddressToENSName address={completionAttester} />
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
           {/* Completion card - aligned with header */}
           <div>{renderMilestoneCompletion()}</div>

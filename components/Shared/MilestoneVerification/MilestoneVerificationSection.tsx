@@ -1,5 +1,8 @@
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
-import { VerifiedBadge } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
+import {
+  type VerificationRecord,
+  VerifiedBadge,
+} from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
 import { VerifyMilestoneUpdateDialog } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifyMilestoneUpdateDialog";
 import type { GrantMilestone, Verification } from "@/types/v2/grant";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
@@ -71,7 +74,7 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
   const milestoneForDialog = getMilestoneForDialog();
 
   // Extract V2 verifications and transform to the shape expected by VerifiedBadge/VerificationsDialog
-  const verifications = useMemo(() => {
+  const verifications = useMemo((): VerificationRecord[] | undefined => {
     let raw: Verification[] = [];
     if ("verified" in milestone && Array.isArray(milestone.verified)) {
       raw = milestone.verified;
@@ -93,7 +96,7 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
   return (
     <div className="flex flex-row gap-4 items-center flex-wrap w-max max-w-full">
       {isVerified && (
-        <VerifiedBadge isVerified={isVerified} verifications={verifications as any} title={title} />
+        <VerifiedBadge isVerified={isVerified} verifications={verifications} title={title} />
       )}
       {milestoneForDialog && (
         <VerifyMilestoneUpdateDialog

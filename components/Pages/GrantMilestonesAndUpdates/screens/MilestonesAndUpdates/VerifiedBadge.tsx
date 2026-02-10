@@ -1,72 +1,32 @@
 /* eslint-disable @next/next/no-img-element */
 
-import * as Tooltip from "@radix-ui/react-tooltip";
 import type {
   IGrantUpdateStatus,
   IMilestoneCompleted,
   IProjectImpactStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { type FC, useEffect, useMemo, useState } from "react";
+import { type FC, useMemo, useState } from "react";
 import type { Hex } from "viem";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import { useENS } from "@/store/ens";
-import { formatDate } from "@/utilities/formatDate";
 import { VerificationsDialog } from "./VerificationsDialog";
+
+export interface VerificationRecord {
+  attester: `0x${string}`;
+  createdAt: Date | string;
+  data?: { reason?: string };
+}
 
 interface VerifiedBadgeProps {
   // V2: Simple boolean verification
   isVerified?: boolean;
   // Legacy: Array of verification records
-  verifications?: IMilestoneCompleted[] | IGrantUpdateStatus[] | IProjectImpactStatus[];
+  verifications?:
+    | VerificationRecord[]
+    | IMilestoneCompleted[]
+    | IGrantUpdateStatus[]
+    | IProjectImpactStatus[];
   title: string;
 }
-
-const _BlockieTooltip = ({
-  address,
-  date,
-  reason,
-}: {
-  address: Hex;
-  date: Date;
-  reason?: string;
-}) => {
-  const { ensData, populateEns } = useENS();
-
-  useEffect(() => {
-    populateEns([address]);
-  }, [address, populateEns]);
-
-  return (
-    <Tooltip.Provider>
-      <Tooltip.Root delayDuration={0.5}>
-        <Tooltip.Trigger asChild>
-          <div>
-            <EthereumAddressToENSAvatar
-              address={address}
-              className="h-8 w-8 min-h-8 min-w-8 rounded-full ring-2 ring-white dark:ring-gray-800"
-            />
-          </div>
-        </Tooltip.Trigger>
-        <Tooltip.Portal>
-          <Tooltip.Content
-            className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 max-w-[360px]"
-            sideOffset={5}
-            side="bottom"
-          >
-            <div>
-              <div>
-                <p className="text-xs font-bold truncate">{ensData[address]?.name || address}</p>
-                <p className="text-xs font-normal">on {formatDate(date)}</p>
-              </div>
-              <p className="text-xs font-normal mt-1">{reason}</p>
-            </div>
-            <Tooltip.Arrow className="TooltipArrow" />
-          </Tooltip.Content>
-        </Tooltip.Portal>
-      </Tooltip.Root>
-    </Tooltip.Provider>
-  );
-};
 
 export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ isVerified, verifications, title }) => {
   // Prefer the rich badge with attester avatars when verifications data is available
@@ -87,16 +47,19 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ isVerified, verification
 };
 
 // Legacy component for array-based verifications
+type VerificationEntry =
+  | VerificationRecord
+  | IMilestoneCompleted
+  | IGrantUpdateStatus
+  | IProjectImpactStatus;
+
 const VerifiedBadgeLegacy: FC<{
-  verifications: IMilestoneCompleted[] | IGrantUpdateStatus[] | IProjectImpactStatus[];
+  verifications: VerificationEntry[];
   title: string;
 }> = ({ verifications, title }) => {
   const orderedSort = useMemo(() => {
     // get unique and by last date
-    const uniqueVerifications: Record<
-      Hex,
-      IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus
-    > = {};
+    const uniqueVerifications: Record<Hex, VerificationEntry> = {};
     verifications.forEach((verification) => {
       if (!verification.attester) return;
       if (!uniqueVerifications[verification.attester]) {
@@ -108,7 +71,7 @@ const VerifiedBadgeLegacy: FC<{
     const uniques = Object.values(uniqueVerifications);
 
     // order by date (newest first)
-    return [...uniques].sort((a, b) => {
+    return uniques.sort((a, b) => {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   }, [verifications]);
