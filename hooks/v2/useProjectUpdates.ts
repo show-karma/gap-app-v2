@@ -265,6 +265,8 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
           proofOfWork: update.proofOfWork,
           completionPercentage: update.completionPercentage,
         },
+        // Empty array signals "verified" to consumers that check `.verified?.length`;
+        // undefined signals "not verified". Detail records aren't available from this API.
         verified: update.verified ? [] : undefined,
       },
       source: {
