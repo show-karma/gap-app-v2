@@ -215,6 +215,10 @@ jest.mock("@sentry/nextjs", () => ({
 jest.mock("rehype-sanitize", () => ({
   __esModule: true,
   default: () => (tree) => tree, // Pass-through plugin for testing
+  defaultSchema: {
+    tagNames: [],
+    attributes: {},
+  },
 }));
 
 // Mock rehype-external-links

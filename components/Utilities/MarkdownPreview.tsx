@@ -2,11 +2,22 @@
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import rehypeExternalLinks from "rehype-external-links";
-import rehypeSanitize from "rehype-sanitize";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import styles from "@/styles/markdown.module.css";
 import { cn } from "@/utilities/tailwind";
+
+// Custom schema that extends the default to allow images
+const baseSchema = defaultSchema || { tagNames: [], attributes: {} };
+const customSchema = {
+  ...baseSchema,
+  tagNames: [...(baseSchema.tagNames || []), "img"],
+  attributes: {
+    ...baseSchema.attributes,
+    img: ["src", "alt", "title", "width", "height", "loading"],
+  },
+};
 
 // Lazy load the heavy markdown preview library with a loading state
 const Preview = dynamic(() => import("@uiw/react-markdown-preview"), {
@@ -21,7 +32,7 @@ export const MarkdownPreview: typeof Preview = (props) => {
       <Preview
         className={cn("wmdeMarkdown", styles.wmdeMarkdown, props.className)}
         rehypePlugins={[
-          rehypeSanitize,
+          [rehypeSanitize, customSchema],
           [rehypeExternalLinks, { target: "_blank", rel: ["nofollow", "noopener", "noreferrer"] }],
         ]}
         remarkPlugins={[remarkGfm, remarkBreaks]}
