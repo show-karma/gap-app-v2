@@ -132,6 +132,7 @@ export const MilestonesScreen: React.FC = () => {
         community: formData.community || "",
         recipient: formData.recipient || smartWalletAddress || address,
         startDate: formData.startDate ? formData.startDate.getTime() / 1000 : undefined,
+        receivedDate: formData.receivedDate ? formData.receivedDate.getTime() / 1000 : undefined,
         programId: formData.programId,
         questions: formData.questions || [],
         selectedTrackIds: formData.selectedTrackIds || [],
