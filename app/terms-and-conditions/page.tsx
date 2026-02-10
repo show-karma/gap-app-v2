@@ -1,5 +1,14 @@
+import type { Metadata } from "next";
 import { PROJECT_NAME } from "@/constants/brand";
+import { customMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
+
+export const metadata: Metadata = customMetadata({
+  title: "Terms and Conditions",
+  description:
+    "Review the terms and conditions for using the Karma platform, including user submissions, warranties, and liability.",
+  path: "/terms-and-conditions",
+});
 
 const styles = {
   h1: "text-2xl font-bold text-start text-black dark:text-white",

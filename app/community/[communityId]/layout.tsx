@@ -4,7 +4,7 @@ import { CommunityNotFound } from "@/components/Pages/Communities/CommunityNotFo
 import { PROJECT_NAME } from "@/constants/brand";
 import { layoutTheme } from "@/src/helper/theme";
 import { envVars } from "@/utilities/enviromentVars";
-import { defaultMetadata } from "@/utilities/meta";
+import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL, twitterMeta } from "@/utilities/meta";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
 import { cn } from "@/utilities/tailwind";
@@ -29,26 +29,29 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   }
 
   return {
-    title: dynamicMetadata.title || defaultMetadata.title,
-    description: dynamicMetadata.description || defaultMetadata.description,
+    title: dynamicMetadata.title || DEFAULT_TITLE,
+    description: dynamicMetadata.description || DEFAULT_DESCRIPTION,
+    alternates: {
+      canonical: `/community/${communityId}`,
+    },
     twitter: {
-      creator: defaultMetadata.twitter.creator,
-      site: defaultMetadata.twitter.site,
+      creator: twitterMeta.creator,
+      site: twitterMeta.site,
       images: [
         {
           url: `${envVars.VERCEL_URL}/api/metadata/communities/${communityId}`,
-          alt: dynamicMetadata.title || defaultMetadata.title,
+          alt: dynamicMetadata.title || DEFAULT_TITLE,
         },
       ],
     },
     openGraph: {
-      url: defaultMetadata.openGraph.url,
-      title: dynamicMetadata.title || defaultMetadata.title,
-      description: dynamicMetadata.description || defaultMetadata.description,
+      url: SITE_URL,
+      title: dynamicMetadata.title || DEFAULT_TITLE,
+      description: dynamicMetadata.description || DEFAULT_DESCRIPTION,
       images: [
         {
           url: `${envVars.VERCEL_URL}/api/metadata/communities/${communityId}`,
-          alt: dynamicMetadata.title || defaultMetadata.title,
+          alt: dynamicMetadata.title || DEFAULT_TITLE,
         },
       ],
     },

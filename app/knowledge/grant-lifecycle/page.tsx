@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "The Grant Lifecycle — From Proposal to Verified Impact",
+  description:
+    "A complete view of the grant process, from proposal to verified impact and long-term learning. Understand the full grant lifecycle.",
+  path: "/knowledge/grant-lifecycle",
+});
 
 export default function GrantLifecyclePage() {
   return (
@@ -266,7 +275,7 @@ export default function GrantLifecyclePage() {
             <p className="text-gray-700 dark:text-gray-300">
               Without this step, every funding round starts from zero.
             </p>
-            <p className="space-y-1">
+            <div className="space-y-1">
               <Link
                 href="/knowledge/onchain-reputation"
                 className="block text-blue-600 hover:underline dark:text-blue-400"
@@ -279,7 +288,7 @@ export default function GrantLifecyclePage() {
               >
                 → Related: Reputation compounding
               </Link>
-            </p>
+            </div>
           </div>
         </section>
 
@@ -288,6 +297,8 @@ export default function GrantLifecyclePage() {
           <p className="text-gray-700 dark:text-gray-300">
             <a
               href="https://www.karmahq.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Karma

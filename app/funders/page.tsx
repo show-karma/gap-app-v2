@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { CaseStudiesSection } from "@/src/features/funders/components/case-studies-section";
 import { FAQSection } from "@/src/features/funders/components/faq-section";
 import { HandleTheVisionSection } from "@/src/features/funders/components/handle-the-vision-section";
@@ -6,7 +7,15 @@ import { HowItWorksSection } from "@/src/features/funders/components/how-it-work
 import { NumbersSection } from "@/src/features/funders/components/numbers-section";
 import { OfferingSection } from "@/src/features/funders/components/offering-section";
 import { PlatformSection } from "@/src/features/funders/components/platform-section";
+import { customMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
+
+export const metadata: Metadata = customMetadata({
+  title: "For Funders - Allocate funding and grow your ecosystem",
+  description:
+    "Discover how Karma helps funders allocate grants, track milestones, measure impact, and grow their ecosystems with a full-stack funding platform.",
+  path: "/funders",
+});
 
 const HorizontalLine = ({ className }: { className?: string }) => {
   return <hr className={cn("w-full h-[1px] bg-border max-w-[75%]", className)} />;

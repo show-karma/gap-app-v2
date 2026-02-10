@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Impact Measurement for Funded Projects",
+  description:
+    "Learn how funded work is connected to verifiable outputs and outcomes, and how impact measurement improves capital allocation.",
+  path: "/knowledge/impact-measurement",
+});
 
 export default function ImpactMeasurementPage() {
   return (
@@ -52,7 +61,7 @@ export default function ImpactMeasurementPage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">Related</h2>
-          <p className="space-y-1">
+          <div className="space-y-1">
             <Link
               href="/knowledge/milestones-vs-impact"
               className="block text-blue-600 hover:underline dark:text-blue-400"
@@ -65,7 +74,7 @@ export default function ImpactMeasurementPage() {
             >
               → The grant lifecycle
             </Link>
-          </p>
+          </div>
         </section>
 
         <section className="space-y-4">
@@ -73,6 +82,8 @@ export default function ImpactMeasurementPage() {
           <p className="text-gray-700 dark:text-gray-300">
             <a
               href="https://www.karmahq.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Karma
