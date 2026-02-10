@@ -2,7 +2,7 @@
 
 import { ArrowLeftIcon, ChevronLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +30,9 @@ import {
   getMilestoneStatus,
   type MilestoneFilterKey,
   MilestoneReviewStatus,
-} from "./milestone-review-status";
+} from "./utils/milestone-review-status";
+
+const EMPTY_MILESTONES: GrantMilestoneWithCompletion[] = [];
 
 interface MilestonesReviewPageProps {
   communityId: string;
@@ -82,9 +84,9 @@ function MilestonesReviewPageContent({
   const [verifyingMilestoneId, setVerifyingMilestoneId] = useState<string | null>(null);
   const [verificationComment, setVerificationComment] = useState("");
   const [deletingMilestoneId, setDeletingMilestoneId] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<MilestoneFilterKey>(
-    MilestoneReviewStatus.PendingVerification
-  );
+  const [statusFilter, setStatusFilter] = useState<MilestoneFilterKey | null>(null);
+  // Tracks whether the user has explicitly chosen a filter tab.
+  // Prevents the auto-computed initial filter from overriding a deliberate selection.
   const userSelectedFilter = useRef(false);
 
   const { address } = useAccount();
@@ -259,37 +261,49 @@ function MilestonesReviewPageContent({
     [deleteMilestoneAsync]
   );
 
-  const allMilestones = data?.grantMilestones ?? [];
+  const milestones = data?.grantMilestones ?? EMPTY_MILESTONES;
 
+  // Compute the effective filter: default to PendingVerification if any exist, else "all".
+  // Once the user explicitly picks a tab, their choice is locked in.
+  const activeFilter = useMemo<MilestoneFilterKey>(() => {
+    if (statusFilter !== null) return statusFilter;
+    const hasPending = milestones.some(
+      (m) => getMilestoneStatus(m) === MilestoneReviewStatus.PendingVerification
+    );
+    return hasPending ? MilestoneReviewStatus.PendingVerification : "all";
+  }, [statusFilter, milestones]);
+
+  // Single-pass: group milestones by status, derive counts and filtered list
   const { filteredMilestones, counts } = useMemo(() => {
-    const counts: Record<MilestoneFilterKey, number> = {
-      all: allMilestones.length,
-      [MilestoneReviewStatus.Verified]: 0,
-      [MilestoneReviewStatus.PendingVerification]: 0,
-      [MilestoneReviewStatus.PendingCompletion]: 0,
-      [MilestoneReviewStatus.NotStarted]: 0,
-    };
-    for (const m of allMilestones) {
-      counts[getMilestoneStatus(m)]++;
+    const grouped = new Map<MilestoneReviewStatus, GrantMilestoneWithCompletion[]>();
+    for (const m of milestones) {
+      const s = getMilestoneStatus(m);
+      let group = grouped.get(s);
+      if (!group) {
+        group = [];
+        grouped.set(s, group);
+      }
+      group.push(m);
     }
-    const filtered =
-      statusFilter === "all"
-        ? allMilestones
-        : allMilestones.filter((m) => getMilestoneStatus(m) === statusFilter);
-    return { filteredMilestones: filtered, counts };
-  }, [allMilestones, statusFilter]);
 
-  // Fall back to "all" if no pending verification milestones on initial load
-  useEffect(() => {
-    if (
-      !userSelectedFilter.current &&
-      statusFilter === MilestoneReviewStatus.PendingVerification &&
-      counts[MilestoneReviewStatus.PendingVerification] === 0 &&
-      allMilestones.length > 0
-    ) {
-      setStatusFilter("all");
-    }
-  }, [counts[MilestoneReviewStatus.PendingVerification], statusFilter, allMilestones.length]);
+    const counts: Record<MilestoneFilterKey, number> = {
+      all: milestones.length,
+      [MilestoneReviewStatus.Verified]: grouped.get(MilestoneReviewStatus.Verified)?.length ?? 0,
+      [MilestoneReviewStatus.PendingVerification]:
+        grouped.get(MilestoneReviewStatus.PendingVerification)?.length ?? 0,
+      [MilestoneReviewStatus.PendingCompletion]:
+        grouped.get(MilestoneReviewStatus.PendingCompletion)?.length ?? 0,
+      [MilestoneReviewStatus.NotStarted]:
+        grouped.get(MilestoneReviewStatus.NotStarted)?.length ?? 0,
+    };
+
+    const filtered =
+      activeFilter === "all"
+        ? milestones
+        : (grouped.get(activeFilter as MilestoneReviewStatus) ?? []);
+
+    return { filteredMilestones: filtered, counts };
+  }, [milestones, activeFilter]);
 
   // Show loading while checking authorization
   if (isLoading || isLoadingReviewer || isLoadingAdminAccess) {
@@ -354,7 +368,7 @@ function MilestonesReviewPageContent({
     );
   }
 
-  const { project, grantMilestones, grant } = data;
+  const { project, grant } = data;
 
   // Project data for GrantCompleteButtonForReviewer (only needs uid)
   const projectForButton = {
@@ -430,10 +444,10 @@ function MilestonesReviewPageContent({
               </h2>
 
               {/* Status filter tabs */}
-              {grantMilestones.length > 0 && (
+              {milestones.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {FILTER_TABS.map((tab) => {
-                    const isActive = statusFilter === tab.key;
+                    const isActive = activeFilter === tab.key;
                     return (
                       <Badge
                         key={tab.key}
@@ -478,7 +492,7 @@ function MilestonesReviewPageContent({
                   <div className="text-center py-8 text-gray-400 dark:text-gray-500">
                     <p className="text-lg font-medium">No milestones found</p>
                     <p className="text-sm">
-                      {grantMilestones.length === 0
+                      {milestones.length === 0
                         ? "This project does not have any milestones yet"
                         : "No milestones match the selected filter"}
                     </p>
