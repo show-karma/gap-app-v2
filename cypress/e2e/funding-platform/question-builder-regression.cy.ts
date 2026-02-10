@@ -149,6 +149,11 @@ describe("Funding Platform - Question Builder Regression", () => {
       body: { reviewers: [] },
     }).as("getProgramReviewers");
 
+    cy.intercept("GET", `**/v2/communities/${communityId}/kyc-config**`, {
+      statusCode: 200,
+      body: { isEnabled: false },
+    }).as("getKycConfig");
+
     cy.intercept("PUT", `**/v2/funding-program-configs/${programId}`, (req) => {
       const nextSchema = req.body?.formSchema;
       if (nextSchema && Array.isArray(nextSchema.fields)) {
