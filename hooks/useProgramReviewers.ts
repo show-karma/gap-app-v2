@@ -1,10 +1,25 @@
-import axios from "axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import { useMemo } from "react";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { programReviewersService } from "@/services/program-reviewers.service";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
+
+function getAddProgramReviewerErrorMessage(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    if (error.response?.status === 409) {
+      return "A reviewer with this email already exists.";
+    }
+    return error.response?.data?.message || error.message;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Failed to add program reviewer";
+}
 
 /**
  * Comprehensive hook for managing program reviewers
@@ -46,11 +61,7 @@ export function useProgramReviewers(programId: string) {
     },
     onError: (error) => {
       console.error("Error adding program reviewer:", error);
-      const errorMessage = axios.isAxiosError(error)
-        ? error.response?.data?.message || error.message
-        : error instanceof Error
-          ? error.message
-          : "Failed to add program reviewer";
+      const errorMessage = getAddProgramReviewerErrorMessage(error);
       toast.error(errorMessage);
     },
   });
