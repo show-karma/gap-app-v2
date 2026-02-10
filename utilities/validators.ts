@@ -267,39 +267,39 @@ export function sanitizeString(input: string): string {
  * @param data - Reviewer data to validate
  * @returns Object with validation result and errors
  */
-export function validateReviewerData(data: {
-  name: string;
-  email: string;
-  telegram?: string;
-}): {
+export function validateReviewerData(data: { name: string; email: string; telegram?: string }): {
   valid: boolean;
   errors: string[];
   sanitized: { name: string; email: string; telegram?: string };
 } {
   const errors: string[] = [];
+  const sanitizedName = sanitizeString(data.name);
+  const sanitizedEmail = data.email?.trim().toLowerCase() || "";
+  const sanitizedTelegram = data.telegram ? sanitizeTelegram(data.telegram) : undefined;
+  const hasTelegramInput = Boolean(data.telegram?.trim());
 
-  if (!data.name || !data.name.trim()) {
+  if (!sanitizedName) {
     errors.push("Name is required");
-  } else if (data.name.trim().length < 2) {
+  } else if (sanitizedName.length < 2) {
     errors.push("Name must be at least 2 characters");
-  } else if (data.name.trim().length > 100) {
+  } else if (sanitizedName.length > 100) {
     errors.push("Name must be less than 100 characters");
   }
 
-  if (!data.email) {
+  if (!sanitizedEmail) {
     errors.push("Email is required");
-  } else if (!validateEmail(data.email)) {
+  } else if (!validateEmail(sanitizedEmail)) {
     errors.push("Invalid email format");
   }
 
-  if (data.telegram && !validateTelegram(data.telegram)) {
+  if (hasTelegramInput && (!sanitizedTelegram || !validateTelegram(sanitizedTelegram))) {
     errors.push("Invalid Telegram handle format (5-32 alphanumeric characters, optional @ prefix)");
   }
 
   const sanitized: { name: string; email: string; telegram?: string } = {
-    name: sanitizeString(data.name),
-    email: data.email?.trim().toLowerCase() || "",
-    telegram: data.telegram ? sanitizeTelegram(data.telegram) : undefined,
+    name: sanitizedName,
+    email: sanitizedEmail,
+    telegram: sanitizedTelegram || undefined,
   };
 
   return {
