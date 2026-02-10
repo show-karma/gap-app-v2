@@ -1,7 +1,7 @@
 "use client";
 
 import { CreditCard, Loader2 } from "lucide-react";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { OnrampProvider, type StripeOnrampSessionData } from "@/hooks/donation/types";
 import { useOnramp } from "@/hooks/donation/useOnramp";
@@ -36,12 +36,6 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
     const [successSessionData, setSuccessSessionData] = useState<StripeOnrampSessionData | null>(
       null
     );
-
-    useEffect(() => {
-      if (initialAmount) {
-        setAmount(initialAmount);
-      }
-    }, [initialAmount]);
 
     const { country, isLoading: isCountryLoading } = useCountryDetection();
     const isCountryAllowed = useMemo(() => isCountrySupported(country), [country]);

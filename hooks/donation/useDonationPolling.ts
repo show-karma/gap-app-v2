@@ -3,8 +3,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { type DonationApiResponse, DonationStatus } from "@/hooks/donation/types";
 import { donationsService } from "@/services/donations.service";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 const POLLING_INTERVAL_MS = 5000;
+
+const isTerminalStatus = (s?: DonationStatus | null) =>
+  s === DonationStatus.COMPLETED || s === DonationStatus.FAILED;
 
 interface UseDonationPollingParams {
   donationUid: string | null;
@@ -23,22 +27,19 @@ export const useDonationPolling = ({
   chainId,
 }: UseDonationPollingParams): UseDonationPollingReturn => {
   const { data, isFetching, error } = useQuery<DonationApiResponse>({
-    queryKey: ["donation", donationUid, chainId],
+    queryKey: QUERY_KEYS.DONATIONS.POLLING(donationUid!, chainId),
     queryFn: () => donationsService.getDonationByUid(donationUid!, chainId),
     enabled: !!donationUid,
-    refetchInterval: (query) => {
-      const s = query.state.data?.status;
-      if (s === DonationStatus.COMPLETED || s === DonationStatus.FAILED) {
-        return false;
-      }
-      return POLLING_INTERVAL_MS;
-    },
+    refetchInterval: (q) =>
+      isTerminalStatus(q.state.data?.status) ? false : POLLING_INTERVAL_MS,
+    refetchOnWindowFocus: (q) => !isTerminalStatus(q.state.data?.status),
+    refetchOnReconnect: (q) => !isTerminalStatus(q.state.data?.status),
+    refetchOnMount: (q) => !isTerminalStatus(q.state.data?.status),
     retry: false,
   });
 
   const status = data?.status ?? null;
-  const isTerminal = status === DonationStatus.COMPLETED || status === DonationStatus.FAILED;
-  const isPolling = !!donationUid && isFetching && !isTerminal;
+  const isPolling = !!donationUid && isFetching && !isTerminalStatus(status);
 
   return {
     donation: data ?? null,
