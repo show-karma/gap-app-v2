@@ -155,7 +155,7 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
       if (!Number.isFinite(amount) || amount <= 0) return null;
       const currency =
         donation?.tokenSymbol || txDetails?.destination_currency?.toUpperCase() || "USDC";
-      return `${amount.toFixed(amount % 1 === 0 ? 2 : 6)} ${currency}`;
+      return `${parseFloat(amount.toFixed(6))} ${currency}`;
     }, [
       donation?.amount,
       donation?.tokenSymbol,

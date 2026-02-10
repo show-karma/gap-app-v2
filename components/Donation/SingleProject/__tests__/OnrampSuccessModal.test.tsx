@@ -469,7 +469,7 @@ describe("OnrampSuccessModal", () => {
       render(<OnrampSuccessModal {...defaultProps} />);
 
       expect(screen.getByText("Crypto Amount")).toBeInTheDocument();
-      expect(screen.getByText("99.500000 USDC")).toBeInTheDocument();
+      expect(screen.getByText("99.5 USDC")).toBeInTheDocument();
     });
 
     it("shows network name", () => {
