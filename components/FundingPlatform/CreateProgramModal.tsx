@@ -91,12 +91,10 @@ export function CreateProgramModal({
 
     setIsSubmitting(true);
     try {
-      // Build metadata using service
-      // Admin-created programs default to restricted (anyoneCanJoin: false)
+      // Build metadata using service (defaults to anyoneCanJoin: false for admin-created programs)
       const metadata = ProgramRegistryService.buildProgramMetadata(
         data as CreateProgramFormData,
-        community,
-        { anyoneCanJoin: false }
+        community
       );
 
       // Add contact emails to metadata

@@ -23,13 +23,13 @@ describe("GrantTitleDropdown", () => {
     chainID: 10,
     createdAt: "2024-01-01",
     updatedAt: "2024-01-01",
+    ...overrides,
     metadata: {
       title: "Test Program",
       description: "Test description",
       status: "Active",
       ...overrides.metadata,
     },
-    ...overrides,
   });
 
   const defaultProps = {
@@ -257,6 +257,139 @@ describe("GrantTitleDropdown", () => {
       // Should show only ONE "(invite only)" badge (for restricted program only)
       const inviteOnlyBadges = screen.getAllByText("(invite only)");
       expect(inviteOnlyBadges).toHaveLength(1);
+    });
+  });
+
+  describe("addCustom restriction bypass prevention", () => {
+    it("should block addCustom when typed name matches a restricted program", async () => {
+      const user = userEvent.setup();
+      const restrictedProgram = createMockProgram({
+        programId: "restricted-1",
+        metadata: {
+          title: "Restricted Program",
+          description: "A restricted program",
+          status: "Active",
+          anyoneCanJoin: false,
+        },
+      });
+
+      render(
+        <GrantTitleDropdown {...defaultProps} list={[restrictedProgram]} canAdd />
+      );
+
+      // Open the dropdown
+      const trigger = screen.getByRole("button");
+      await user.click(trigger);
+
+      // Wait for dropdown content to appear
+      await waitFor(() => {
+        expect(screen.getByText("Restricted Program")).toBeInTheDocument();
+      });
+
+      // Click "Add new" button to enter adding mode
+      const addNewButton = screen.getByText("Add new");
+      await user.click(addNewButton);
+
+      // Type the name of the restricted program and submit
+      const input = screen.getByPlaceholderText("Program name...");
+      await user.type(input, "Restricted Program");
+      await user.keyboard("{Enter}");
+
+      // Should show error toast
+      expect(toast.error).toHaveBeenCalledWith(
+        "Please contact the program manager to add this grant to your project",
+        { duration: 5000 }
+      );
+
+      // Should NOT call setSelectedProgram
+      expect(mockSetSelectedProgram).not.toHaveBeenCalled();
+
+      // Should NOT call setValue
+      expect(mockSetValue).not.toHaveBeenCalled();
+    });
+
+    it("should allow addCustom when typed name matches an open program", async () => {
+      const user = userEvent.setup();
+      const openProgram = createMockProgram({
+        programId: "open-1",
+        metadata: {
+          title: "Open Program",
+          description: "An open program",
+          status: "Active",
+          anyoneCanJoin: true,
+        },
+      });
+
+      render(
+        <GrantTitleDropdown {...defaultProps} list={[openProgram]} canAdd />
+      );
+
+      // Open the dropdown
+      const trigger = screen.getByRole("button");
+      await user.click(trigger);
+
+      // Wait for dropdown content to appear
+      await waitFor(() => {
+        expect(screen.getByText("Open Program")).toBeInTheDocument();
+      });
+
+      // Click "Add new" button
+      const addNewButton = screen.getByText("Add new");
+      await user.click(addNewButton);
+
+      // Type the name of the open program and submit
+      const input = screen.getByPlaceholderText("Program name...");
+      await user.type(input, "Open Program");
+      await user.keyboard("{Enter}");
+
+      // Should NOT show error toast
+      expect(toast.error).not.toHaveBeenCalled();
+
+      // Should call setSelectedProgram with the existing open program
+      expect(mockSetSelectedProgram).toHaveBeenCalledWith(openProgram);
+
+      // Should call setValue with programId and title
+      expect(mockSetValue).toHaveBeenCalledWith("programId", "open-1");
+      expect(mockSetValue).toHaveBeenCalledWith("title", "Open Program", {
+        shouldValidate: true,
+      });
+    });
+
+    it("should allow addCustom for a completely new program name", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <GrantTitleDropdown {...defaultProps} list={[]} canAdd />
+      );
+
+      // Open the dropdown
+      const trigger = screen.getByRole("button");
+      await user.click(trigger);
+
+      // Click "Add new" button
+      const addNewButton = screen.getByText("Add new");
+      await user.click(addNewButton);
+
+      // Type a new program name and submit
+      const input = screen.getByPlaceholderText("Program name...");
+      await user.type(input, "Brand New Program");
+      await user.keyboard("{Enter}");
+
+      // Should NOT show error toast
+      expect(toast.error).not.toHaveBeenCalled();
+
+      // Should call setSelectedProgram with a new program object
+      expect(mockSetSelectedProgram).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({ title: "Brand New Program" }),
+        })
+      );
+
+      // Should call setValue with undefined programId (new program) and the title
+      expect(mockSetValue).toHaveBeenCalledWith("programId", undefined);
+      expect(mockSetValue).toHaveBeenCalledWith("title", "Brand New Program", {
+        shouldValidate: true,
+      });
     });
   });
 
