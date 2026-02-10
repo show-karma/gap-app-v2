@@ -1,3 +1,5 @@
+"use client";
+
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import {
   type VerificationRecord,

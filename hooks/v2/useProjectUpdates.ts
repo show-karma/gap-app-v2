@@ -216,7 +216,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
   });
 
   // Convert grant updates to unified format
-  data.grantUpdates?.forEach((update: GrantUpdateWithDetails, index: number) => {
+  data.grantUpdates.forEach((update: GrantUpdateWithDetails, index: number) => {
     const grantInfo = update.grant;
     const chainID = update.chainId || 0;
     const updateRecipient =
@@ -265,8 +265,10 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
           proofOfWork: update.proofOfWork,
           completionPercentage: update.completionPercentage,
         },
-        // Empty array signals "verified" to consumers that check `.verified?.length`;
-        // undefined signals "not verified". Detail records aren't available from this API.
+        // Boolean-to-presence bridge: `[]` = verified, `undefined` = not verified.
+        // V2 API only returns a boolean; individual verification records aren't available.
+        // No downstream component reads this field — UI verification status is driven by
+        // source.grantMilestone.milestone.verified instead.
         verified: update.verified ? [] : undefined,
       },
       source: {
