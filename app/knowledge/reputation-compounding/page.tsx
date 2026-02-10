@@ -63,6 +63,8 @@ export default function ReputationCompoundingPage() {
             Capital should follow credibility, and credibility should be earned through work.{" "}
             <a
               href="https://www.karmahq.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Learn more about Karma

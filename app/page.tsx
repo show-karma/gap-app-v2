@@ -11,12 +11,16 @@ import { WhereBuildersGrow } from "@/src/features/homepage/components/where-buil
 import { customMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 
-export const metadata: Metadata = customMetadata({
-  title: "Karma - Where builders get funded and ecosystems grow",
-  description:
-    "Karma is a platform for builders and ecosystems. Builders showcase their work and build reputation. Ecosystems use our full stack solution to allocate funding and grow their ecosystems.",
-  path: "/",
-});
+export const metadata: Metadata = {
+  ...customMetadata({
+    description:
+      "Karma is a platform for builders and ecosystems. Builders showcase their work and build reputation. Ecosystems use our full stack solution to allocate funding and grow their ecosystems.",
+    path: "/",
+  }),
+  title: {
+    absolute: "Karma - Where builders get funded and ecosystems grow",
+  },
+};
 
 const HorizontalLine = ({ className }: { className?: string }) => {
   return <hr className={cn("w-full h-[1px] bg-border max-w-[75%]", className)} />;

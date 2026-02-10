@@ -68,7 +68,7 @@ export default function FundingDistributionMechanismsPage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">Related</h2>
-          <p className="space-y-1">
+          <div className="space-y-1">
             <Link
               href="/knowledge/grant-fund-disbursement"
               className="block text-blue-600 hover:underline dark:text-blue-400"
@@ -81,7 +81,7 @@ export default function FundingDistributionMechanismsPage() {
             >
               → The grant lifecycle
             </Link>
-          </p>
+          </div>
         </section>
 
         <section className="space-y-4">
@@ -89,6 +89,8 @@ export default function FundingDistributionMechanismsPage() {
           <p className="text-gray-700 dark:text-gray-300">
             <a
               href="https://www.karmahq.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Karma

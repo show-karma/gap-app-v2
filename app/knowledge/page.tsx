@@ -296,6 +296,8 @@ export default function KnowledgePage() {
           <p className="text-gray-700 dark:text-gray-300">
             <a
               href="https://www.karmahq.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Karma
