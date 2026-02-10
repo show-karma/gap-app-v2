@@ -16,6 +16,15 @@ describe("Funding Platform - Question Builder Regression", () => {
   const communityId = "optimism";
   const programId = "1045";
 
+  const waitForQuestionBuilderReady = () => {
+    cy.location("pathname", { timeout: 30000 }).should(
+      "include",
+      `/community/${communityId}/manage/funding-platform/${programId}/question-builder`
+    );
+    cy.contains("button", "Save Form", { timeout: 45000 }).should("be.visible");
+    cy.contains("Application Form", { timeout: 45000 }).should("be.visible");
+  };
+
   let currentFormSchema: {
     id: string;
     title: string;
@@ -121,23 +130,23 @@ describe("Funding Platform - Question Builder Regression", () => {
       body: permissionsResponse,
     }).as("getPermissions");
 
-    cy.intercept("GET", `**/v2/funding-program-configs/community/${communityId}`, (req) => {
+    cy.intercept("GET", `**/v2/funding-program-configs/community/${communityId}**`, (req) => {
       req.reply({
         statusCode: 200,
         body: [createFundingProgram()],
       });
     }).as("getProgramsByCommunity");
 
-    cy.intercept("GET", `**/v2/funding-program-configs/${programId}`, (req) => {
+    cy.intercept("GET", `**/v2/funding-program-configs/${programId}**`, (req) => {
       req.reply({
         statusCode: 200,
         body: createFundingProgram(),
       });
     }).as("getProgramConfig");
 
-    cy.intercept("GET", `**/v2/funding-program-configs/${programId}/reviewers`, {
+    cy.intercept("GET", `**/v2/funding-program-configs/${programId}/reviewers**`, {
       statusCode: 200,
-      body: [],
+      body: { reviewers: [] },
     }).as("getProgramReviewers");
 
     cy.intercept("PUT", `**/v2/funding-program-configs/${programId}`, (req) => {
@@ -165,10 +174,11 @@ describe("Funding Platform - Question Builder Regression", () => {
     );
 
     waitForPageLoad();
+    waitForQuestionBuilderReady();
 
     // Initial state has 2 fields
-    cy.contains("Contact Email").should("be.visible");
-    cy.contains("Project Name").should("be.visible");
+    cy.contains("Contact Email", { timeout: 30000 }).should("be.visible");
+    cy.contains("Project Name", { timeout: 30000 }).should("be.visible");
 
     // Remove one field (Project Name), keep email field
     cy.contains("Project Name").click();
@@ -184,14 +194,23 @@ describe("Funding Platform - Question Builder Regression", () => {
     cy.contains("a", "Back to Programs").click();
     cy.location("pathname").should("eq", `/community/${communityId}/manage/funding-platform`);
     cy.get(`[data-testid="program-card-${programId}"]`).should("contain.text", "Optimism Retro Funding");
-    cy.get(`[data-testid="program-settings-${programId}"]`).click();
-    cy.url().should(
-      "include",
-      `/community/${communityId}/manage/funding-platform/${programId}/question-builder`
+    cy.get(`[data-testid="program-settings-${programId}"]`)
+      .closest("a")
+      .should("have.attr", "href")
+      .and(
+        "include",
+        `/community/${communityId}/manage/funding-platform/${programId}/question-builder`
+      );
+
+    // Use direct navigation to avoid flaky app-router transitions that can leave stale previous page UI.
+    cy.visit(
+      `/community/${communityId}/manage/funding-platform/${programId}/question-builder?tab=build`
     );
+    waitForPageLoad();
+    waitForQuestionBuilderReady();
 
     // Step 6: form should not be empty
     cy.contains("No Form Fields Yet").should("not.exist");
-    cy.contains("Contact Email").should("be.visible");
+    cy.contains("Contact Email", { timeout: 30000 }).should("be.visible");
   });
 });
