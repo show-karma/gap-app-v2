@@ -6,7 +6,7 @@ import {
 } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
-import { type FC, useState } from "react";
+import { type FC, useMemo, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
@@ -157,20 +157,23 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
   const completionAttester =
     projectMilestone?.completed?.attester || grantMilestone?.milestone.completed?.attester;
   // V2: verified is an array for both grant and project milestones
-  const isVerified =
-    Boolean(
-      projectMilestone?.verified &&
-        Array.isArray(projectMilestone.verified) &&
-        projectMilestone.verified.length > 0
-    ) ||
-    Boolean(
-      grantMilestone?.milestone.verified &&
-        Array.isArray(grantMilestone.milestone.verified) &&
-        grantMilestone.milestone.verified.length > 0
-    );
+  const isVerified = useMemo(
+    () =>
+      Boolean(
+        projectMilestone?.verified &&
+          Array.isArray(projectMilestone.verified) &&
+          projectMilestone.verified.length > 0
+      ) ||
+      Boolean(
+        grantMilestone?.milestone.verified &&
+          Array.isArray(grantMilestone.milestone.verified) &&
+          grantMilestone.milestone.verified.length > 0
+      ),
+    [projectMilestone?.verified, grantMilestone?.milestone.verified]
+  );
   const completionDeliverables =
-    (projectMilestone?.completed?.data as any)?.deliverables ||
-    (grantMilestone?.milestone.completed?.data as any)?.deliverables;
+    projectMilestone?.completed?.data?.deliverables ||
+    grantMilestone?.milestone.completed?.data?.deliverables;
 
   // Function to render project milestone completion form or details
   const renderMilestoneCompletion = () => {
@@ -288,12 +291,12 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
               </a>
             </div>
           ) : null}
-          {completionDeliverables && completionDeliverables.length > 0 ? (
+          {Array.isArray(completionDeliverables) && completionDeliverables.length > 0 ? (
             <div className="flex flex-col gap-2">
               <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
                 Deliverables:
               </p>
-              {completionDeliverables.map((deliverable: any, index: number) => (
+              {completionDeliverables.map((deliverable, index) => (
                 <div
                   key={index}
                   className="border border-gray-200 dark:border-zinc-700 rounded-lg p-3 bg-gray-50 dark:bg-zinc-800"

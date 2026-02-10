@@ -325,6 +325,43 @@ describe("convertToUnifiedMilestones", () => {
     });
   });
 
+  describe("edge cases", () => {
+    it("treats pending status as not completed even when completionDetails present", () => {
+      const milestone = makeGrantMilestone({
+        status: "pending",
+        completionDetails: {
+          description: "Stale data",
+          completedAt: "2025-03-01T00:00:00.000Z",
+          completedBy: "0xStale",
+          proofOfWork: "https://stale.link",
+        },
+      });
+      const result = convertToUnifiedMilestones({
+        ...emptyResponse,
+        grantMilestones: [milestone],
+      });
+
+      expect(result[0].completed).toBe(false);
+    });
+
+    it("treats pending project milestone as not completed even with completionDetails", () => {
+      const milestone = makeProjectMilestone({
+        status: "pending",
+        completionDetails: {
+          description: "Stale",
+          completedAt: "2025-03-01T00:00:00.000Z",
+          completedBy: "0xStale",
+        },
+      });
+      const result = convertToUnifiedMilestones({
+        ...emptyResponse,
+        projectMilestones: [milestone],
+      });
+
+      expect(result[0].completed).toBe(false);
+    });
+  });
+
   describe("mixed response", () => {
     it("combines all item types", () => {
       const response: UpdatesApiResponse = {

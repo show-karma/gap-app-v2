@@ -47,7 +47,7 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ isVerified, verification
 };
 
 // Legacy component for array-based verifications
-type VerificationEntry =
+export type VerificationEntry =
   | VerificationRecord
   | IMilestoneCompleted
   | IGrantUpdateStatus

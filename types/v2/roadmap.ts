@@ -202,6 +202,7 @@ export type UnifiedMilestoneSource = {
       data: {
         proofOfWork?: string;
         reason?: string;
+        deliverables?: ProjectUpdateDeliverable[];
       };
     };
     verified?: boolean;

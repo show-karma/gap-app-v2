@@ -17,13 +17,7 @@ import { useProjectStore } from "@/store/project";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
-import type { VerificationRecord } from "./VerifiedBadge";
-
-type VerificationEntry =
-  | VerificationRecord
-  | IMilestoneCompleted
-  | IGrantUpdateStatus
-  | IProjectImpactStatus;
+import type { VerificationEntry, VerificationRecord } from "./VerifiedBadge";
 
 interface VerificationsDialogProps {
   verifications: VerificationEntry[];

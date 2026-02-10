@@ -75,22 +75,29 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
 
   // Extract V2 verifications and transform to the shape expected by VerifiedBadge/VerificationsDialog
   const verifications = useMemo((): VerificationRecord[] | undefined => {
-    let raw: Verification[] = [];
-    if ("verified" in milestone && Array.isArray(milestone.verified)) {
-      raw = milestone.verified;
-    } else if ("source" in milestone) {
-      const grantMilestone = (milestone as UnifiedMilestone).source?.grantMilestone;
-      if (grantMilestone?.milestone.verified && Array.isArray(grantMilestone.milestone.verified)) {
-        raw = grantMilestone.milestone.verified;
+    try {
+      let raw: Verification[] = [];
+      if ("verified" in milestone && Array.isArray(milestone.verified)) {
+        raw = milestone.verified;
+      } else if ("source" in milestone) {
+        const grantMilestone = (milestone as UnifiedMilestone).source?.grantMilestone;
+        if (
+          grantMilestone?.milestone.verified &&
+          Array.isArray(grantMilestone.milestone.verified)
+        ) {
+          raw = grantMilestone.milestone.verified;
+        }
       }
+      if (raw.length === 0) return undefined;
+      // Transform to match legacy shape: { attester, createdAt, data: { reason } }
+      return raw.map((v) => ({
+        attester: v.attester as `0x${string}`,
+        createdAt: v.createdAt,
+        data: { reason: v.reason },
+      }));
+    } catch {
+      return undefined;
     }
-    if (raw.length === 0) return undefined;
-    // Transform to match legacy shape: { attester, createdAt, data: { reason } }
-    return raw.map((v) => ({
-      attester: v.attester as `0x${string}`,
-      createdAt: v.createdAt,
-      data: { reason: v.reason },
-    }));
   }, [milestone]);
 
   return (
