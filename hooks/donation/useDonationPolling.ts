@@ -42,6 +42,6 @@ export const useDonationPolling = ({
   return {
     donation: data ?? null,
     isPolling,
-    status: status as DonationStatus | null,
+    status,
   };
 };

@@ -117,9 +117,14 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
       chainId,
     });
 
+    // Polled backend status takes precedence when available.
+    // Stripe's fulfillment_complete is only used as fallback before first poll response.
     const resolvedStatus = useMemo(() => {
-      if (polledStatus === DonationStatus.COMPLETED) return "completed" as const;
-      if (polledStatus === DonationStatus.FAILED) return "failed" as const;
+      if (polledStatus) {
+        if (polledStatus === DonationStatus.COMPLETED) return "completed" as const;
+        if (polledStatus === DonationStatus.FAILED) return "failed" as const;
+        return "delivering" as const;
+      }
       if (sessionData.status === "fulfillment_complete") return "completed" as const;
       return "delivering" as const;
     }, [polledStatus, sessionData.status]);
@@ -139,6 +144,7 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
       const sourceAmount = txDetails?.source_amount;
       if (!sourceAmount) return null;
       const amount = parseFloat(sourceAmount);
+      if (Number.isNaN(amount)) return null;
       return new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: txDetails?.source_currency?.toUpperCase() || "USD",
@@ -149,6 +155,7 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
       const destAmount = donation?.amount || txDetails?.destination_amount;
       if (!destAmount) return null;
       const amount = parseFloat(destAmount);
+      if (Number.isNaN(amount)) return null;
       const currency =
         donation?.tokenSymbol || txDetails?.destination_currency?.toUpperCase() || "USDC";
       return `${amount.toFixed(amount % 1 === 0 ? 2 : 6)} ${currency}`;
@@ -226,14 +233,14 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
           <div className="p-6 pt-10 space-y-6">
             <div className="text-center">
               {formattedFiatAmount && (
-                <h2
-                  id="onramp-success-title"
-                  className="text-2xl font-bold text-gray-900 dark:text-white"
-                >
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formattedFiatAmount}
                 </h2>
               )}
-              <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">
+              <p
+                id="onramp-success-title"
+                className="text-sm text-gray-500 dark:text-zinc-400 mt-1"
+              >
                 {title} &mdash; {subtitle}
               </p>
             </div>
