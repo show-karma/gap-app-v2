@@ -117,12 +117,10 @@ export default function CommunitiesToAdminPage() {
       }
     });
     const communityAdmins = await Promise.all(fetchPromises);
-    setAllCommunities(result || []);
-    setCommunityAdmins(communityAdmins || []);
     return { communities: result, admins: communityAdmins };
   }, []);
 
-  const { isLoading, refetch } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["communities", "admins"],
     queryFn: fetchCommunitiesData,
     enabled: hasAccess,
@@ -132,6 +130,14 @@ export default function CommunitiesToAdminPage() {
     refetchOnReconnect: false,
     retry: 1,
   });
+
+  // Hydrate local state from query cache as well as fresh network responses.
+  // This fixes the back-navigation case where cached data exists but queryFn doesn't rerun.
+  useEffect(() => {
+    if (!data) return;
+    setAllCommunities(data.communities || []);
+    setCommunityAdmins(data.admins || []);
+  }, [data]);
 
   // Filter communities based on user role
   const baseCommunities = useMemo(() => {

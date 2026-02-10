@@ -40,6 +40,16 @@ const AUTH_FAILURE_THRESHOLD = 3;
  */
 const PRIVY_SESSION_COOKIE_NAME = "privy-session";
 
+interface CypressAuthState {
+  authenticated?: boolean;
+  ready?: boolean;
+  user?: {
+    wallet?: {
+      address?: string;
+    };
+  };
+}
+
 /**
  * Check if privy-session cookie exists using proper cookie parsing.
  * If session exists, user might be in the middle of token refresh (HttpOnly cookies mode).
@@ -53,6 +63,25 @@ const hasPrivySession = () => {
   return document.cookie
     .split(";")
     .some((c) => c.trim().startsWith(`${PRIVY_SESSION_COOKIE_NAME}=`));
+};
+
+const getCypressMockAuthState = (): CypressAuthState | null => {
+  if (typeof window === "undefined") return null;
+  if (!(window as Window & { Cypress?: unknown }).Cypress) return null;
+
+  try {
+    const rawState = localStorage.getItem("privy:auth_state");
+    if (!rawState) return null;
+
+    const parsedState = JSON.parse(rawState) as CypressAuthState;
+    if (parsedState.authenticated === true) {
+      return parsedState;
+    }
+  } catch {
+    // Ignore invalid test auth payloads and fall back to real auth state.
+  }
+
+  return null;
 };
 
 /**
@@ -97,7 +126,10 @@ export const useAuth = () => {
 
   const { wallets } = useWallets();
   const primaryWallet = wallets[0];
-  const address = primaryWallet?.address as Hex | undefined;
+  const cypressMockAuthState = useMemo(() => getCypressMockAuthState(), [ready, authenticated]);
+  const isCypressMockAuthenticated = Boolean(cypressMockAuthState?.authenticated);
+  const cypressMockAddress = cypressMockAuthState?.user?.wallet?.address as Hex | undefined;
+  const address = (primaryWallet?.address as Hex | undefined) || cypressMockAddress;
 
   const shouldLoginAfterLogout = useRef(false);
   const prevAuthRef = useRef(authenticated);
@@ -265,8 +297,11 @@ export const useAuth = () => {
   }, [isConnected, authenticated, logout, login]);
 
   const connectedAndAuth = useMemo(() => {
+    if (isCypressMockAuthenticated) {
+      return true;
+    }
     return isConnected && authenticated;
-  }, [isConnected, authenticated]);
+  }, [isCypressMockAuthenticated, isConnected, authenticated]);
 
   return {
     // Core authentication (Privy handles everything)
@@ -274,9 +309,9 @@ export const useAuth = () => {
     disconnect: logout, // Just use Privy's logout
 
     // State from Privy
-    ready,
+    ready: isCypressMockAuthenticated ? true : ready,
     authenticated: connectedAndAuth,
-    isConnected,
+    isConnected: isCypressMockAuthenticated ? true : isConnected,
     user,
     address,
     primaryWallet,

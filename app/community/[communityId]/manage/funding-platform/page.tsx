@@ -655,7 +655,7 @@ function FundingPlatformContent() {
                     {/* Settings (admins) / View Config (reviewers) */}
                     <Link
                       href={
-                        isAdmin
+                        isAdmin && !hasFormConfig
                           ? PAGES.MANAGE.FUNDING_PLATFORM.SETUP(communityId, program.programId)
                           : PAGES.MANAGE.FUNDING_PLATFORM.QUESTION_BUILDER(
                               communityId,

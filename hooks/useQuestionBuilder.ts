@@ -12,6 +12,27 @@ const QUERY_KEYS = {
   programConfig: (programId: string) => ["program-config", programId],
 };
 
+type SchemaMutationResponse = Partial<IFundingProgramConfig> & {
+  applicationConfig?: Partial<IFundingProgramConfig>;
+};
+
+const getSchemaFromMutationResponse = (
+  data: SchemaMutationResponse,
+  schemaField: "formSchema" | "postApprovalFormSchema"
+): FormSchema | null | undefined => {
+  const nestedSchema = data?.applicationConfig?.[schemaField];
+  if (nestedSchema !== undefined) {
+    return nestedSchema as FormSchema | null;
+  }
+
+  const directSchema = data?.[schemaField];
+  if (directSchema !== undefined) {
+    return directSchema as FormSchema | null;
+  }
+
+  return undefined;
+};
+
 /**
  * Generic hook factory for managing form schemas
  */
@@ -96,16 +117,14 @@ function createFormSchemaHook(
 
         return fundingPlatformService.programs.updateProgramConfiguration(programId, updatedConfig);
       },
-      onSuccess: (data) => {
+      onSuccess: (data: SchemaMutationResponse) => {
         // Use setQueryData to update cache without refetching
         // This prevents multiple redundant API calls
-        // Note: This only updates the schema-specific query cache. Other queries that depend
-        // on the full program config should refetch independently if they need fresh data.
-        const updatedSchema =
-          schemaField === "postApprovalFormSchema"
-            ? data?.postApprovalFormSchema
-            : data?.formSchema;
-        queryClient.setQueryData(queryKey, updatedSchema ?? null);
+        // Preserve existing cache if mutation response omits schema payload.
+        const updatedSchema = getSchemaFromMutationResponse(data, schemaField);
+        queryClient.setQueryData<FormSchema | null | undefined>(queryKey, (previousSchema) =>
+          updatedSchema === undefined ? (previousSchema ?? null) : (updatedSchema ?? null)
+        );
 
         toast.success(successMessage);
       },
