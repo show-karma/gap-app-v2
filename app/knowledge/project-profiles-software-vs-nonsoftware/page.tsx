@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Project Profiles for Software vs Non-Software Projects",
+  description:
+    "How project profiles work for both technical and non-technical work, with different approaches to documenting progress and impact.",
+  path: "/knowledge/project-profiles-software-vs-nonsoftware",
+});
 
 export default function ProjectProfilesSoftwareVsNonsoftwarePage() {
   return (

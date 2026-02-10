@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "How Projects Build Reputation Through Public Updates",
+  description:
+    "Why consistent public updates build trust more than perfect outcomes. Learn how projects build reputation through transparent progress sharing.",
+  path: "/knowledge/project-updates-and-reputation",
+});
 
 export default function ProjectUpdatesAndReputationPage() {
   return (

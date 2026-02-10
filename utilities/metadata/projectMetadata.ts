@@ -4,7 +4,7 @@ import type { Grant } from "@/types/v2/grant";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { envVars } from "../enviromentVars";
 import { cleanMarkdownForPlainText } from "../markdown";
-import { defaultMetadata } from "../meta";
+import { DEFAULT_DESCRIPTION, SITE_URL, twitterMeta } from "../meta";
 
 const getProjectTitle = (project: ProjectResponse): string => {
   return project?.details?.title || "";
@@ -34,14 +34,17 @@ export const generateProjectMetadata = (
   const description =
     options.description ||
     cleanMarkdownForPlainText(getProjectDescription(project) || "", 160) ||
-    defaultMetadata.description;
+    DEFAULT_DESCRIPTION;
 
   return {
     title,
     description,
+    alternates: {
+      canonical: `/project/${options.projectId}`,
+    },
     twitter: {
-      creator: defaultMetadata.twitter.creator,
-      site: defaultMetadata.twitter.site,
+      creator: twitterMeta.creator,
+      site: twitterMeta.site,
       card: "summary_large_image",
       images: [
         {
@@ -51,7 +54,7 @@ export const generateProjectMetadata = (
       ],
     },
     openGraph: {
-      url: defaultMetadata.openGraph.url,
+      url: SITE_URL,
       title,
       description,
       images: [
@@ -61,7 +64,6 @@ export const generateProjectMetadata = (
         },
       ],
     },
-    icons: defaultMetadata.icons,
   };
 };
 
@@ -205,7 +207,6 @@ export const createMetadataFromContext = (
     return {
       title: `Project Not Found | ${PROJECT_NAME}`,
       description: "The requested project could not be found.",
-      icons: defaultMetadata.icons,
     };
   }
 
@@ -244,7 +245,6 @@ export const createGrantMetadataFromContext = (
     return {
       title: `Project Not Found | ${PROJECT_NAME}`,
       description: "The requested project could not be found.",
-      icons: defaultMetadata.icons,
     };
   }
 

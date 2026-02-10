@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "How Reputation Compounds in Open Funding Systems",
+  description:
+    "Why reputation acts as cumulative memory in open funding systems, and how it improves decision-making over time.",
+  path: "/knowledge/reputation-compounding",
+});
 
 export default function ReputationCompoundingPage() {
   return (

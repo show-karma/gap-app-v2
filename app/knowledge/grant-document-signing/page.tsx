@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Document Signing in Grant Programs",
+  description:
+    "Why grant agreements must be tracked as part of the funding workflow. Learn about document signing in grant programs.",
+  path: "/knowledge/grant-document-signing",
+});
 
 export default function GrantDocumentSigningPage() {
   return (

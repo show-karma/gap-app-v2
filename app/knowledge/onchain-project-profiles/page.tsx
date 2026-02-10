@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Onchain Project Profiles (Without Blockchain Complexity)",
+  description:
+    "How onchain storage provides credibility for project profiles without requiring blockchain knowledge or complexity.",
+  path: "/knowledge/onchain-project-profiles",
+});
 
 export default function OnchainProjectProfilesPage() {
   return (

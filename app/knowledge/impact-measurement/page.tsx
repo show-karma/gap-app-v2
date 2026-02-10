@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Impact Measurement for Funded Projects",
+  description:
+    "Learn how funded work is connected to verifiable outputs and outcomes, and how impact measurement improves capital allocation.",
+  path: "/knowledge/impact-measurement",
+});
 
 export default function ImpactMeasurementPage() {
   return (

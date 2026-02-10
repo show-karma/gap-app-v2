@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Public Project Registries for Funded Work",
+  description:
+    "Why communities maintain public records of funded projects and their progress. Learn about project registries in open funding systems.",
+  path: "/knowledge/project-registry",
+});
 
 export default function ProjectRegistryPage() {
   return (

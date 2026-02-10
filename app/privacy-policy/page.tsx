@@ -1,5 +1,14 @@
+import type { Metadata } from "next";
 import { PROJECT_NAME } from "@/constants/brand";
+import { customMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
+
+export const metadata: Metadata = customMetadata({
+  title: "Privacy Policy",
+  description:
+    "Read the Karma privacy policy to understand how we collect, use, and protect your personal information.",
+  path: "/privacy-policy",
+});
 
 const styles = {
   h1: "text-2xl font-bold text-start text-black dark:text-white",

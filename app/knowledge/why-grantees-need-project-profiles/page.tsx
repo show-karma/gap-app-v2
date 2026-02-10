@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Why Grantees Need Project Profiles",
+  description:
+    "How project profiles help grantees show funders what happens after funding, build credibility, and avoid repetitive reporting.",
+  path: "/knowledge/why-grantees-need-project-profiles",
+});
 
 export default function WhyGranteesNeedProjectProfilesPage() {
   return (

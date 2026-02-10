@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Grant Fund Disbursement Coordination",
+  description:
+    "How payments are safely triggered once requirements are met in grant programs. Learn about fund disbursement coordination.",
+  path: "/knowledge/grant-fund-disbursement",
+});
 
 export default function GrantFundDisbursementPage() {
   return (

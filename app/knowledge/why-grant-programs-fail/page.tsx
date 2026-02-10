@@ -1,3 +1,13 @@
+import type { Metadata } from "next";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Why Most Grant Programs Fail After Funding",
+  description:
+    "A structural analysis of why many funding programs struggle to produce consistent outcomes despite strong applicant pools.",
+  path: "/knowledge/why-grant-programs-fail",
+});
+
 export default function WhyGrantProgramsFailPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">

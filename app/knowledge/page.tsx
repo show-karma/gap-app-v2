@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Knowledge Base - How Funding, Accountability and Reputation Work",
+  description:
+    "A reference guide to how modern funding systems work. Learn about grant accountability, impact verification, onchain reputation, and capital allocation.",
+  path: "/knowledge",
+});
 
 export default function KnowledgePage() {
   return (

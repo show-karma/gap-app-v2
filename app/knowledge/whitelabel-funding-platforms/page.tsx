@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Whitelabel Funding Platforms",
+  description:
+    "Why ecosystems run funding programs under their own brand using shared infrastructure. Learn about whitelabel funding platforms.",
+  path: "/knowledge/whitelabel-funding-platforms",
+});
 
 export default function WhitelabelFundingPlatformsPage() {
   return (

@@ -1,3 +1,13 @@
+import type { Metadata } from "next";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "What Is Onchain Reputation?",
+  description:
+    "What reputation actually means in open systems, how it differs from tokens or identity, and why execution history matters.",
+  path: "/knowledge/onchain-reputation",
+});
+
 export default function OnchainReputationPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">

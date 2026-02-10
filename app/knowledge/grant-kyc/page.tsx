@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "KYC in Grant and Funding Programs",
+  description:
+    "How identity verification is coordinated without slowing down funding. Learn about KYC and compliance in grant programs.",
+  path: "/knowledge/grant-kyc",
+});
 
 export default function GrantKycPage() {
   return (

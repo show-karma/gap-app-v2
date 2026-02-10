@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Multiple Funding Distribution Mechanisms",
+  description:
+    "How different funding goals require different payment structures. Learn about funding distribution mechanisms in open ecosystems.",
+  path: "/knowledge/funding-distribution-mechanisms",
+});
 
 export default function FundingDistributionMechanismsPage() {
   return (

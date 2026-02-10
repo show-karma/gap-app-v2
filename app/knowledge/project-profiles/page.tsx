@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "What Is a Project Profile?",
+  description:
+    "A public, shareable page where projects document funding, milestones, updates, and outcomes over time. Learn what project profiles are.",
+  path: "/knowledge/project-profiles",
+});
 
 export default function ProjectProfilesPage() {
   return (

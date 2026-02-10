@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "What Is Grant Accountability in Web3?",
+  description:
+    "Grant accountability turns funding promises into persistent execution history. Learn how funded projects are tracked after money is disbursed.",
+  path: "/knowledge/grant-accountability",
+});
 
 export default function GrantAccountabilityPage() {
   return (

@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "The Grant Lifecycle - From Proposal to Verified Impact",
+  description:
+    "A complete view of the grant process, from proposal to verified impact and long-term learning. Understand the full grant lifecycle.",
+  path: "/knowledge/grant-lifecycle",
+});
 
 export default function GrantLifecyclePage() {
   return (

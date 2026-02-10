@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import { CommunitiesPage } from "@/components/Pages/Communities/CommunitiesPage";
 import { layoutTheme } from "@/src/helper/theme";
-import { defaultMetadata } from "@/utilities/meta";
+import { customMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 
-export const metadata = defaultMetadata;
+export const metadata: Metadata = customMetadata({
+  title: "Explore Communities",
+  description:
+    "Browse grant-giving communities and ecosystems on Karma. Discover funding programs, track grantee progress, and find opportunities.",
+  path: "/communities",
+});
 
 export default function Communities() {
   return (
