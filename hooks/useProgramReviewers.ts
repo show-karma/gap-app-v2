@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { toast } from "react-hot-toast";
@@ -26,7 +27,6 @@ export function useProgramReviewers(programId: string) {
   const addMutation = useMutation({
     mutationFn: async (data: Record<string, string>) => {
       const validation = programReviewersService.validateReviewerData({
-        publicAddress: data.publicAddress,
         name: data.name,
         email: data.email,
         telegram: data.telegram,
@@ -36,12 +36,7 @@ export function useProgramReviewers(programId: string) {
         throw new Error(validation.errors.join(", "));
       }
 
-      return programReviewersService.addReviewer(programId, {
-        publicAddress: data.publicAddress,
-        name: data.name,
-        email: data.email,
-        telegram: data.telegram,
-      });
+      return programReviewersService.addReviewer(programId, validation.sanitized);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
@@ -51,8 +46,11 @@ export function useProgramReviewers(programId: string) {
     },
     onError: (error) => {
       console.error("Error adding program reviewer:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to add program reviewer";
+      const errorMessage = axios.isAxiosError(error)
+        ? error.response?.data?.message || error.message
+        : error instanceof Error
+          ? error.message
+          : "Failed to add program reviewer";
       toast.error(errorMessage);
     },
   });

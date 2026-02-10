@@ -7,6 +7,7 @@ export interface RoleFieldConfig {
   type: "text" | "email" | "wallet";
   placeholder?: string;
   required: boolean;
+  helperText?: string;
   validation?: (value: string) => boolean | string;
 }
 

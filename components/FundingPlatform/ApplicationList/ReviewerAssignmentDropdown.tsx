@@ -9,7 +9,7 @@ import { type ReviewerType, useReviewerAssignment } from "@/hooks/useReviewerAss
  * Both ProgramReviewer and MilestoneReviewer share these common properties
  */
 export interface ReviewerBase {
-  publicAddress: string;
+  publicAddress?: string;
   name: string;
   email: string;
   telegram?: string;
@@ -44,8 +44,8 @@ export const ReviewerAssignmentDropdown: FC<ReviewerAssignmentDropdownProps> = (
   const dropdownItems: DropdownItem[] = useMemo(
     () =>
       availableReviewers.map((reviewer) => ({
-        id: reviewer.publicAddress.toLowerCase(),
-        label: reviewer.name || reviewer.email || reviewer.publicAddress,
+        id: (reviewer.publicAddress || reviewer.email).toLowerCase(),
+        label: reviewer.name || reviewer.email || reviewer.publicAddress || "",
         value: reviewer,
       })),
     [availableReviewers]

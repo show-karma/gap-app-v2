@@ -19,7 +19,6 @@ import {
   parseReviewerMemberId,
   validateEmail,
   validateTelegram,
-  validateWalletAddress,
 } from "@/utilities/validators";
 import { PAGE_HEADER_CONTENT, PageHeader } from "../PageHeader";
 
@@ -76,14 +75,18 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   const commonFields: RoleManagementConfig["fields"] = useMemo(
     () => [
       {
-        name: "publicAddress",
-        label: "Wallet Address",
-        type: "wallet" as const,
-        placeholder: "0x...",
+        name: "email",
+        label: "Email",
+        type: "email" as const,
+        placeholder: "reviewer@example.com",
         required: true,
+        helperText: "This email will be used to log in as a reviewer",
         validation: (value: string) => {
-          if (!validateWalletAddress(value)) {
-            return "Please enter a valid Ethereum wallet address";
+          if (!value) {
+            return "Email is required";
+          }
+          if (!validateEmail(value)) {
+            return "Please enter a valid email address";
           }
           return true;
         },
@@ -97,22 +100,6 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         validation: (value: string) => {
           if (!value || value.trim().length === 0) {
             return "Name is required";
-          }
-          return true;
-        },
-      },
-      {
-        name: "email",
-        label: "Email",
-        type: "email" as const,
-        placeholder: "reviewer@example.com",
-        required: true,
-        validation: (value: string) => {
-          if (!value) {
-            return "Email is required";
-          }
-          if (!validateEmail(value)) {
-            return "Please enter a valid email address";
           }
           return true;
         },

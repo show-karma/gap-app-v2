@@ -47,6 +47,16 @@ export function validateTelegram(telegram: string): boolean {
 }
 
 /**
+ * Strips leading @ from a Telegram handle and trims whitespace
+ */
+export function sanitizeTelegram(telegram: string): string {
+  if (!telegram || typeof telegram !== "string") {
+    return "";
+  }
+  return telegram.trim().replace(/^@/, "");
+}
+
+/**
  * Validates a program ID format (alphanumeric with optional dashes/underscores)
  * @param programId - The program ID to validate
  * @returns true if valid, false otherwise
@@ -258,21 +268,15 @@ export function sanitizeString(input: string): string {
  * @returns Object with validation result and errors
  */
 export function validateReviewerData(data: {
-  publicAddress: string;
   name: string;
   email: string;
   telegram?: string;
 }): {
   valid: boolean;
   errors: string[];
+  sanitized: { name: string; email: string; telegram?: string };
 } {
   const errors: string[] = [];
-
-  if (!data.publicAddress) {
-    errors.push("Wallet address is required");
-  } else if (!validateWalletAddress(data.publicAddress)) {
-    errors.push("Invalid wallet address format");
-  }
 
   if (!data.name || !data.name.trim()) {
     errors.push("Name is required");
@@ -292,8 +296,15 @@ export function validateReviewerData(data: {
     errors.push("Invalid Telegram handle format (5-32 alphanumeric characters, optional @ prefix)");
   }
 
+  const sanitized: { name: string; email: string; telegram?: string } = {
+    name: sanitizeString(data.name),
+    email: data.email?.trim().toLowerCase() || "",
+    telegram: data.telegram ? sanitizeTelegram(data.telegram) : undefined,
+  };
+
   return {
     valid: errors.length === 0,
     errors,
+    sanitized,
   };
 }
