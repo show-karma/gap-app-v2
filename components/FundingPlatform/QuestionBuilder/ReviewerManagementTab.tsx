@@ -11,9 +11,10 @@ import type {
   RoleOption,
 } from "@/components/Generic/RoleManagement/types";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
+import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
+import { Permission } from "@/src/core/rbac/types/permission";
 import {
   parseReviewerMemberId,
   validateEmail,
@@ -27,7 +28,6 @@ import { PAGE_HEADER_CONTENT, PageHeader } from "../PageHeader";
  */
 interface ReviewerManagementTabProps {
   programId: string;
-  communityId: string;
   readOnly?: boolean;
 }
 
@@ -48,10 +48,10 @@ interface ReviewerMemberWithRole extends RoleMember {
  */
 export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   programId,
-  communityId,
   readOnly = false,
 }) => {
-  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
+  const { can, isLoading: isLoadingPermissions } = usePermissionContext();
+  const canManageReviewers = can(Permission.PROGRAM_MANAGE_REVIEWERS);
   const [selectedRole, setSelectedRole] = useState<ReviewerRole>("program");
 
   // Fetch program reviewers with mutations
@@ -253,7 +253,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     [isLoadingProgramReviewers, isLoadingMilestoneReviewers]
   );
 
-  if (isLoadingAdmin) {
+  if (isLoadingPermissions) {
     return (
       <div className="flex items-center justify-center py-12">
         <Spinner className="h-8 w-8" />
@@ -261,7 +261,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     );
   }
 
-  if (!isCommunityAdmin && !readOnly) {
+  if (!canManageReviewers && !readOnly) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500 dark:text-gray-400">
@@ -283,7 +283,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
           config={programReviewerConfig}
           members={members}
           isLoading={isLoadingReviewers}
-          canManage={!readOnly && isCommunityAdmin}
+          canManage={!readOnly && canManageReviewers}
           onAdd={!readOnly ? handleAdd : undefined}
           onRemove={!readOnly ? handleRemove : undefined}
           onRefresh={handleRefresh}
