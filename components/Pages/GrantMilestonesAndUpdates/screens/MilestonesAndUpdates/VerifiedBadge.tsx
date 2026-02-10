@@ -6,7 +6,7 @@ import type {
   IMilestoneCompleted,
   IProjectImpactStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { type FC, useEffect, useState } from "react";
+import { type FC, useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import { useENS } from "@/store/ens";
@@ -69,7 +69,12 @@ const _BlockieTooltip = ({
 };
 
 export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ isVerified, verifications, title }) => {
-  // V2: If isVerified is true, just show a simple verified badge
+  // Prefer the rich badge with attester avatars when verifications data is available
+  if (verifications && verifications.length > 0) {
+    return <VerifiedBadgeLegacy verifications={verifications} title={title} />;
+  }
+
+  // Fallback: simple verified badge when we know it's verified but lack details
   if (isVerified === true) {
     return (
       <div className="flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 dark:bg-green-900">
@@ -78,10 +83,7 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ isVerified, verification
     );
   }
 
-  // Legacy: Array-based verifications
-  if (!verifications || verifications.length === 0) return null;
-
-  return <VerifiedBadgeLegacy verifications={verifications} title={title} />;
+  return null;
 };
 
 // Legacy component for array-based verifications
@@ -89,13 +91,7 @@ const VerifiedBadgeLegacy: FC<{
   verifications: IMilestoneCompleted[] | IGrantUpdateStatus[] | IProjectImpactStatus[];
   title: string;
 }> = ({ verifications, title }) => {
-  const [orderedSort, setOrderedSort] = useState<
-    (IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus)[]
-  >([]);
-
-  const getUniqueVerifications = (
-    verifications: IMilestoneCompleted[] | IGrantUpdateStatus[] | IProjectImpactStatus[]
-  ) => {
+  const orderedSort = useMemo(() => {
     // get unique and by last date
     const uniqueVerifications: Record<
       Hex,
@@ -109,22 +105,15 @@ const VerifiedBadgeLegacy: FC<{
         uniqueVerifications[verification.attester] = verification;
       }
     });
-    return Object.values(uniqueVerifications);
-  };
+    const uniques = Object.values(uniqueVerifications);
+
+    // order by date (newest first)
+    return [...uniques].sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [verifications]);
 
   const [isOpenDialog, setIsOpenDialog] = useState(false);
-
-  useEffect(() => {
-    const uniques = getUniqueVerifications(verifications);
-
-    // order by date
-    const sorted = uniques.sort((a, b) => {
-      if (new Date(a.createdAt).getTime() < new Date(b.createdAt).getTime()) return 1;
-      if (new Date(a.createdAt).getTime() > new Date(b.createdAt).getTime()) return -1;
-      return 0;
-    });
-    setOrderedSort(sorted);
-  }, [verifications, getUniqueVerifications]);
 
   const openDialog = () => setIsOpenDialog(true);
 

@@ -157,7 +157,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
   const completionAttester =
     projectMilestone?.completed?.attester || grantMilestone?.milestone.completed?.attester;
   // V2: verified is an array for both grant and project milestones
-  const _isVerified =
+  const isVerified =
     Boolean(
       projectMilestone?.verified &&
         Array.isArray(projectMilestone.verified) &&
@@ -252,7 +252,14 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
       <div className={cn(containerClassName, "flex flex-col gap-1 w-full")}>
         <div className={"w-full flex-col flex gap-2 px-5 py-4"}>
           {/* UPDATE label - matches Figma design for nested milestone updates */}
-          <p className="text-xs font-medium text-muted-foreground tracking-wide">UPDATE</p>
+          <div className="flex flex-row items-center gap-2">
+            <p className="text-xs font-medium text-muted-foreground tracking-wide">UPDATE</p>
+            <MilestoneVerificationSection
+              milestone={milestone}
+              title={`${title} - Reviews`}
+              isVerified={isVerified}
+            />
+          </div>
           {/* Title - shown prominently after UPDATE label per Figma */}
           {title && (
             <h4 className="text-xl font-semibold text-foreground leading-tight tracking-tight">
@@ -367,7 +374,6 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
           actions={
             isAuthorized ? (
               <div className="flex flex-row gap-3 max-sm:gap-4 items-center">
-                <MilestoneVerificationSection milestone={milestone} title={`${title} - Reviews`} />
                 {/* Share Button */}
                 <ExternalLink
                   href={shareOnX(
@@ -476,14 +482,10 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
             </div>
           )}
       </div>
-      {isCompleting ||
-      isEditing ||
-      completionReason ||
-      completionProof ||
-      completionDeliverables ? (
+      {isCompleting || isEditing || completed ? (
         <div className="flex flex-col gap-2.5 mt-4 pl-10">
           {/* Timeline header: Only show when viewing existing completion data, not during form input */}
-          {!isCompleting && (completionReason || completionProof || completionDeliverables) && (
+          {!isCompleting && completed && (
             <div className="relative flex flex-row items-center justify-between gap-2 flex-wrap">
               {/* Timeline badge - vertically centered relative to header row, aligned with main timeline */}
               <div className="absolute -left-[73px] max-lg:-left-[69px] top-1/2 -translate-y-1/2 w-6 h-6 max-lg:w-5 max-lg:h-5 flex items-center justify-center z-10 bg-orange-50 dark:bg-orange-900/30 rounded-full">

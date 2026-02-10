@@ -1,7 +1,7 @@
-import { type FC, useCallback, useEffect, useState } from "react";
+import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { VerifiedBadge } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
 import { VerifyMilestoneUpdateDialog } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifyMilestoneUpdateDialog";
-import type { GrantMilestone } from "@/types/v2/grant";
+import type { GrantMilestone, Verification } from "@/types/v2/grant";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 
 interface MilestoneVerificationSectionProps {
@@ -70,9 +70,31 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
 
   const milestoneForDialog = getMilestoneForDialog();
 
+  // Extract V2 verifications and transform to the shape expected by VerifiedBadge/VerificationsDialog
+  const verifications = useMemo(() => {
+    let raw: Verification[] = [];
+    if ("verified" in milestone && Array.isArray(milestone.verified)) {
+      raw = milestone.verified;
+    } else if ("source" in milestone) {
+      const grantMilestone = (milestone as UnifiedMilestone).source?.grantMilestone;
+      if (grantMilestone?.milestone.verified && Array.isArray(grantMilestone.milestone.verified)) {
+        raw = grantMilestone.milestone.verified;
+      }
+    }
+    if (raw.length === 0) return undefined;
+    // Transform to match legacy shape: { attester, createdAt, data: { reason } }
+    return raw.map((v) => ({
+      attester: v.attester as `0x${string}`,
+      createdAt: v.createdAt,
+      data: { reason: v.reason },
+    }));
+  }, [milestone]);
+
   return (
     <div className="flex flex-row gap-4 items-center flex-wrap w-max max-w-full">
-      {isVerified && <VerifiedBadge isVerified={isVerified} title={title} />}
+      {isVerified && (
+        <VerifiedBadge isVerified={isVerified} verifications={verifications as any} title={title} />
+      )}
       {milestoneForDialog && (
         <VerifyMilestoneUpdateDialog
           milestone={milestoneForDialog}

@@ -237,103 +237,110 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   // Get deliverables from milestone completion data
   const completionDeliverables = (completionData?.data as any)?.deliverables;
 
-  if (!isEditing && (completionData?.data?.reason?.length || completionData?.data?.proofOfWork)) {
+  if (
+    !isEditing &&
+    (isCompleted ||
+      milestone.currentStatus === "completed" ||
+      milestone.currentStatus === "verified")
+  ) {
     return (
       <div className="flex flex-col gap-3 bg-[#F8F9FC] dark:bg-zinc-900 rounded-md px-4 py-2 max-lg:max-w-2xl max-sm:max-w-full w-full">
+        {/* Header: UPDATE pill + Verified badge + completion date */}
         <div className="flex w-full flex-row flex-wrap items-center justify-between gap-2">
           <div className="flex flex-row gap-4 items-center flex-wrap">
-            <div className="flex items-center h-max w-max flex-row gap-2 rounded-full bg-[#5720B7] dark:bg-purple-900 px-3 py-1  flex-wrap">
+            <div className="flex items-center h-max w-max flex-row gap-2 rounded-full bg-[#5720B7] dark:bg-purple-900 px-3 py-1 flex-wrap">
               <img className="h-4 w-4" alt="Update" src="/icons/alert-message-white.svg" />
               <p className="text-xs font-bold text-white">UPDATE</p>
             </div>
+            <MilestoneVerificationSection
+              milestone={milestone}
+              title={`${milestone.title} - Reviews`}
+              isVerified={isVerified}
+              onVerified={markAsVerified}
+            />
           </div>
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-100">
             Completed on {formatDate(completionDateValue)}
           </p>
         </div>
 
-        {completionData?.data?.reason || completionData?.data?.proofOfWork ? (
-          <div className="flex flex-col items-start " data-color-mode="light">
+        {/* Completion reason */}
+        {completionData?.data?.reason ? (
+          <div className="flex flex-col items-start" data-color-mode="light">
             <ReadMore readLessText="Read less" readMoreText="Read more" side="left">
-              {completionData.data?.reason || ""}
+              {completionData.data.reason}
             </ReadMore>
-
-            <div className="flex w-full flex-row items-center justify-between">
-              {isAfterProofLaunch && completionData?.data?.proofOfWork ? (
-                <div className="flex flex-row items-center gap-1 flex-1 max-w-full flex-wrap max-sm:mt-4">
-                  <p className="text-sm w-full min-w-max max-w-max font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
-                    Proof of work:
-                  </p>
-                  <ExternalLink
-                    href={
-                      completionData?.data?.proofOfWork.includes("http")
-                        ? completionData?.data?.proofOfWork
-                        : `https://${completionData?.data?.proofOfWork}`
-                    }
-                    className="flex flex-row w-max max-w-full break-all gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent line-clamp-3"
-                  >
-                    {completionData?.data?.proofOfWork.includes("http")
-                      ? `${completionData?.data?.proofOfWork.slice(0, 80)}${
-                          completionData?.data?.proofOfWork.slice(0, 80).length >= 80 ? "..." : ""
-                        }`
-                      : `https://${completionData?.data?.proofOfWork.slice(0, 80)}${
-                          completionData?.data?.proofOfWork.slice(0, 80).length >= 80 ? "..." : ""
-                        }`}
-                  </ExternalLink>
-                </div>
-              ) : null}
-
-              <div className="flex flex-1 flex-row items-center justify-end">
-                {isAuthorized ? (
-                  <div className="flex w-max flex-row items-center gap-2">
-                    <MilestoneVerificationSection
-                      milestone={milestone}
-                      title={`${milestone.title} - Reviews`}
-                      isVerified={isVerified}
-                      onVerified={markAsVerified}
-                    />
-                    <ExternalLink
-                      type="button"
-                      className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
-                      href={shareOnX(
-                        SHARE_TEXTS.MILESTONE_COMPLETED(
-                          grant?.details?.title as string,
-                          (project?.details?.slug || project?.uid) as string,
-                          grant?.uid as string
-                        )
-                      )}
-                    >
-                      <ShareIcon className="h-5 w-5" />
-                    </ExternalLink>
-                    <Button
-                      type="button"
-                      className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
-                      onClick={() => handleEditing(true)}
-                    >
-                      <PencilSquareIcon className="h-5 w-5" />
-                    </Button>
-                    <DeleteDialog
-                      deleteFunction={undoMilestoneCompletion}
-                      isLoading={isDeleting}
-                      title={
-                        <p className="font-normal">
-                          Are you sure you want to revoke the completion of <b>{milestone.title}</b>
-                          ?
-                        </p>
-                      }
-                      buttonElement={{
-                        text: "",
-                        icon: <TrashIcon className="h-5 w-5" />,
-                        styleClass:
-                          "bg-transparent p-0 w-max h-max text-gray-600 dark:text-zinc-100 hover:bg-transparent",
-                      }}
-                    />
-                  </div>
-                ) : null}
-              </div>
-            </div>
           </div>
         ) : null}
+
+        {/* Proof of work + admin actions */}
+        <div className="flex w-full flex-row items-center justify-between">
+          {isAfterProofLaunch && completionData?.data?.proofOfWork ? (
+            <div className="flex flex-row items-center gap-1 flex-1 max-w-full flex-wrap">
+              <p className="text-sm w-full min-w-max max-w-max font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
+                Proof of work:
+              </p>
+              <ExternalLink
+                href={
+                  completionData?.data?.proofOfWork.includes("http")
+                    ? completionData?.data?.proofOfWork
+                    : `https://${completionData?.data?.proofOfWork}`
+                }
+                className="flex flex-row w-max max-w-full break-all gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent line-clamp-3"
+              >
+                {completionData?.data?.proofOfWork.includes("http")
+                  ? `${completionData?.data?.proofOfWork.slice(0, 80)}${
+                      completionData?.data?.proofOfWork.slice(0, 80).length >= 80 ? "..." : ""
+                    }`
+                  : `https://${completionData?.data?.proofOfWork.slice(0, 80)}${
+                      completionData?.data?.proofOfWork.slice(0, 80).length >= 80 ? "..." : ""
+                    }`}
+              </ExternalLink>
+            </div>
+          ) : null}
+
+          {isAuthorized ? (
+            <div className="flex flex-1 flex-row items-center justify-end">
+              <div className="flex w-max flex-row items-center gap-2">
+                <ExternalLink
+                  type="button"
+                  className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                  href={shareOnX(
+                    SHARE_TEXTS.MILESTONE_COMPLETED(
+                      grant?.details?.title as string,
+                      (project?.details?.slug || project?.uid) as string,
+                      grant?.uid as string
+                    )
+                  )}
+                >
+                  <ShareIcon className="h-5 w-5" />
+                </ExternalLink>
+                <Button
+                  type="button"
+                  className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                  onClick={() => handleEditing(true)}
+                >
+                  <PencilSquareIcon className="h-5 w-5" />
+                </Button>
+                <DeleteDialog
+                  deleteFunction={undoMilestoneCompletion}
+                  isLoading={isDeleting}
+                  title={
+                    <p className="font-normal">
+                      Are you sure you want to revoke the completion of <b>{milestone.title}</b>?
+                    </p>
+                  }
+                  buttonElement={{
+                    text: "",
+                    icon: <TrashIcon className="h-5 w-5" />,
+                    styleClass:
+                      "bg-transparent p-0 w-max h-max text-gray-600 dark:text-zinc-100 hover:bg-transparent",
+                  }}
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
 
         {/* Deliverables Section */}
         {completionDeliverables && completionDeliverables.length > 0 ? (

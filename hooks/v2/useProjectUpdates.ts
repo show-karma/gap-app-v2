@@ -56,8 +56,8 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
 
   // Convert project milestones to unified format
   data.projectMilestones.forEach((milestone: ProjectMilestone) => {
-    // A milestone is completed if status is "completed" (completionDetails may or may not be present)
-    const isCompleted = milestone.status === "completed";
+    // A milestone is completed if status is "completed" or "verified" (completionDetails may or may not be present)
+    const isCompleted = milestone.status === "completed" || milestone.status === "verified";
     // Use recipient from API (the milestone owner)
     const attester = milestone.recipient || "";
 
@@ -102,8 +102,8 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
 
   // Convert grant milestones to unified format
   data.grantMilestones.forEach((milestone: GrantMilestoneWithDetails) => {
-    // A milestone is completed if status is "completed" (completionDetails may or may not be present)
-    const isCompleted = milestone.status === "completed";
+    // A milestone is completed if status is "completed" or "verified" (completionDetails may or may not be present)
+    const isCompleted = milestone.status === "completed" || milestone.status === "verified";
     // Use recipient from API (the milestone owner), with extensive fallbacks
     // The API may include additional fields not in the type definition
     const milestoneAny = milestone as any;
