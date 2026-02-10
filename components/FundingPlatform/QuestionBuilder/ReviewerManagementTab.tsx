@@ -50,7 +50,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   programId,
   readOnly = false,
 }) => {
-  const { can, isLoading: isLoadingPermissions } = usePermissionContext();
+  const { can, isLoading: isLoadingPermissions, isGuestDueToError } = usePermissionContext();
   const canManageReviewers = can(Permission.PROGRAM_MANAGE_REVIEWERS);
   const [selectedRole, setSelectedRole] = useState<ReviewerRole>("program");
 
@@ -257,6 +257,16 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     return (
       <div className="flex items-center justify-center py-12">
         <Spinner className="h-8 w-8" />
+      </div>
+    );
+  }
+
+  if (isGuestDueToError && !readOnly) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500 dark:text-gray-400">
+          Unable to verify your permissions right now. Please refresh and try again.
+        </p>
       </div>
     );
   }

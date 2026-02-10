@@ -71,6 +71,7 @@ describe("ReviewerManagementTab", () => {
     mockUsePermissionContext.mockReturnValue({
       can: mockCan,
       isLoading: false,
+      isGuestDueToError: false,
     });
 
     mockUseProgramReviewers.mockReturnValue(createReviewersHookResult());
@@ -85,6 +86,24 @@ describe("ReviewerManagementTab", () => {
     ).toBeInTheDocument();
     expect(screen.queryByTestId("role-management-tab")).not.toBeInTheDocument();
     expect(mockCan).toHaveBeenCalledWith(Permission.PROGRAM_MANAGE_REVIEWERS);
+  });
+
+  it("shows verification error when permission context fails", () => {
+    mockUsePermissionContext.mockReturnValue({
+      can: mockCan,
+      isLoading: false,
+      isGuestDueToError: true,
+    });
+
+    render(<ReviewerManagementTab programId="program-1" />);
+
+    expect(
+      screen.getByText("Unable to verify your permissions right now. Please refresh and try again.")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("You don't have permission to manage reviewers for this program.")
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("role-management-tab")).not.toBeInTheDocument();
   });
 
   it("allows reviewer management when program manage reviewers permission is granted", () => {
