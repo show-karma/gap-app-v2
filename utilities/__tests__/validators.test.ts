@@ -394,6 +394,15 @@ describe("validators", () => {
       expect(result.valid).toBe(true);
     });
 
+    it("should reject names that become too short after sanitization", () => {
+      const result = validateReviewerData({
+        name: "<b>A</b>",
+        email: "john@example.com",
+      });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain("Name must be at least 2 characters");
+    });
+
     it("should sanitize telegram handle by stripping @ prefix", () => {
       const result = validateReviewerData({
         name: "John Doe",
