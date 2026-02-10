@@ -54,6 +54,7 @@ const defaultProps = {
   projectUid: "project-123",
   payoutAddress: "0x1234567890123456789012345678901234567890",
   chainId: 8453, // Base
+  isAuthenticated: true,
 };
 
 describe("OnrampFlow", () => {
@@ -75,14 +76,14 @@ describe("OnrampFlow", () => {
   describe("Amount Input", () => {
     it("renders the amount input", () => {
       render(<OnrampFlow {...defaultProps} />, { wrapper: createWrapper() });
-      expect(screen.getByRole("textbox")).toBeInTheDocument();
+      expect(screen.getByPlaceholderText("0.00")).toBeInTheDocument();
       expect(screen.getByText(/Min:.*10/)).toBeInTheDocument();
     });
 
     it("shows minimum amount validation error", () => {
       render(<OnrampFlow {...defaultProps} />, { wrapper: createWrapper() });
 
-      const input = screen.getByRole("textbox");
+      const input = screen.getByPlaceholderText("0.00");
       fireEvent.change(input, { target: { value: "5" } });
 
       expect(screen.getByText(/Minimum amount is 10/)).toBeInTheDocument();
@@ -91,7 +92,7 @@ describe("OnrampFlow", () => {
     it("shows maximum amount validation error", () => {
       render(<OnrampFlow {...defaultProps} />, { wrapper: createWrapper() });
 
-      const input = screen.getByRole("textbox");
+      const input = screen.getByPlaceholderText("0.00");
       fireEvent.change(input, { target: { value: "20000" } });
 
       expect(screen.getByText(/Maximum amount is 10,000/)).toBeInTheDocument();
@@ -100,7 +101,7 @@ describe("OnrampFlow", () => {
     it("accepts valid amounts", () => {
       render(<OnrampFlow {...defaultProps} />, { wrapper: createWrapper() });
 
-      const input = screen.getByRole("textbox");
+      const input = screen.getByPlaceholderText("0.00");
       fireEvent.change(input, { target: { value: "100" } });
 
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -109,7 +110,7 @@ describe("OnrampFlow", () => {
     it("restricts decimal places to 2", () => {
       render(<OnrampFlow {...defaultProps} />, { wrapper: createWrapper() });
 
-      const input = screen.getByRole("textbox") as HTMLInputElement;
+      const input = screen.getByPlaceholderText("0.00") as HTMLInputElement;
       fireEvent.change(input, { target: { value: "100.99" } });
       expect(input.value).toBe("100.99");
 
@@ -123,7 +124,7 @@ describe("OnrampFlow", () => {
     it("shows button enabled for supported chains (Base)", () => {
       render(<OnrampFlow {...defaultProps} chainId={8453} />, { wrapper: createWrapper() });
 
-      const input = screen.getByRole("textbox");
+      const input = screen.getByPlaceholderText("0.00");
       fireEvent.change(input, { target: { value: "100" } });
 
       const button = screen.getByRole("button", { name: /Continue to Stripe/i });
@@ -141,7 +142,7 @@ describe("OnrampFlow", () => {
     it("disables button for unsupported chains", () => {
       render(<OnrampFlow {...defaultProps} chainId={42161} />, { wrapper: createWrapper() });
 
-      const input = screen.getByRole("textbox");
+      const input = screen.getByPlaceholderText("0.00");
       fireEvent.change(input, { target: { value: "100" } });
 
       const button = screen.getByRole("button", { name: /Continue to Stripe/i });
@@ -159,7 +160,7 @@ describe("OnrampFlow", () => {
 
       render(<OnrampFlow {...defaultProps} />, { wrapper: createWrapper() });
 
-      const input = screen.getByRole("textbox");
+      const input = screen.getByPlaceholderText("0.00");
       fireEvent.change(input, { target: { value: "100" } });
 
       const button = screen.getByRole("button", { name: /Continue to Stripe/i });
@@ -175,7 +176,7 @@ describe("OnrampFlow", () => {
 
       render(<OnrampFlow {...defaultProps} />, { wrapper: createWrapper() });
 
-      const input = screen.getByRole("textbox");
+      const input = screen.getByPlaceholderText("0.00");
       fireEvent.change(input, { target: { value: "100" } });
 
       const button = screen.getByRole("button", { name: /Continue to Stripe/i });
@@ -195,7 +196,7 @@ describe("OnrampFlow", () => {
 
       render(<OnrampFlow {...defaultProps} />, { wrapper: createWrapper() });
 
-      const input = screen.getByRole("textbox");
+      const input = screen.getByPlaceholderText("0.00");
       fireEvent.change(input, { target: { value: "100" } });
 
       const button = screen.getByRole("button", { name: /Continue to Stripe/i });
@@ -221,7 +222,11 @@ describe("OnrampFlow", () => {
       mockUseOnramp.mockReturnValue({
         initiateOnramp: jest.fn(),
         isLoading: false,
-        session: { clientSecret: "cs_test_123", donationUid: "donation-456" },
+        session: {
+          clientSecret: "cs_test_123",
+          donationUid: "donation-456",
+          pollingToken: "polling-789",
+        },
         clearSession: jest.fn(),
       });
 
@@ -235,7 +240,7 @@ describe("OnrampFlow", () => {
     it("disables button when payout address is empty", () => {
       render(<OnrampFlow {...defaultProps} payoutAddress="" />, { wrapper: createWrapper() });
 
-      const input = screen.getByRole("textbox");
+      const input = screen.getByPlaceholderText("0.00");
       fireEvent.change(input, { target: { value: "100" } });
 
       const button = screen.getByRole("button", { name: /Continue to Stripe/i });
@@ -265,7 +270,7 @@ describe("OnrampFlow", () => {
         wrapper: createWrapper(),
       });
 
-      const input = screen.getByRole("textbox") as HTMLInputElement;
+      const input = screen.getByPlaceholderText("0.00") as HTMLInputElement;
       expect(input.value).toBe("50");
     });
 
@@ -273,7 +278,7 @@ describe("OnrampFlow", () => {
       const wrapper = createWrapper();
       const { rerender } = render(<OnrampFlow {...defaultProps} initialAmount="50" />, { wrapper });
 
-      const input = screen.getByRole("textbox") as HTMLInputElement;
+      const input = screen.getByPlaceholderText("0.00") as HTMLInputElement;
       expect(input.value).toBe("50");
 
       rerender(<OnrampFlow {...defaultProps} initialAmount="200" />);
@@ -284,7 +289,7 @@ describe("OnrampFlow", () => {
     it("renders with empty amount when initialAmount is not provided", () => {
       render(<OnrampFlow {...defaultProps} />, { wrapper: createWrapper() });
 
-      const input = screen.getByRole("textbox") as HTMLInputElement;
+      const input = screen.getByPlaceholderText("0.00") as HTMLInputElement;
       expect(input.value).toBe("");
     });
   });
@@ -304,7 +309,11 @@ describe("OnrampFlow", () => {
       mockUseOnramp.mockReturnValue({
         initiateOnramp: jest.fn(),
         isLoading: false,
-        session: { clientSecret: "cs_test_123", donationUid: "donation-456" },
+        session: {
+          clientSecret: "cs_test_123",
+          donationUid: "donation-456",
+          pollingToken: "polling-789",
+        },
         clearSession: mockClearSession,
       });
 
@@ -346,7 +355,11 @@ describe("OnrampFlow", () => {
       mockUseOnramp.mockReturnValue({
         initiateOnramp: jest.fn(),
         isLoading: false,
-        session: { clientSecret: "cs_test_123", donationUid: "donation-456" },
+        session: {
+          clientSecret: "cs_test_123",
+          donationUid: "donation-456",
+          pollingToken: "polling-789",
+        },
         clearSession: mockClearSession,
       });
 
@@ -370,15 +383,77 @@ describe("OnrampFlow", () => {
         });
       });
 
-      // Check that OnrampSuccessModal was called with the correct donationUid
+      // Check that OnrampSuccessModal was called with the correct donationUid and pollingToken
       expect(mockOnrampSuccessModal).toHaveBeenCalledWith(
         expect.objectContaining({
           donationUid: "donation-456",
+          pollingToken: "polling-789",
           chainId: 8453,
         }),
         // React.memo wrapped components may receive undefined as second arg
         undefined
       );
+    });
+  });
+
+  describe("Unauthenticated flow", () => {
+    it("shows email input when not authenticated", () => {
+      render(<OnrampFlow {...defaultProps} isAuthenticated={false} />, {
+        wrapper: createWrapper(),
+      });
+
+      expect(screen.getByPlaceholderText("you@example.com")).toBeInTheDocument();
+      expect(screen.getByText(/Required for payment receipt/)).toBeInTheDocument();
+    });
+
+    it("hides email input when authenticated", () => {
+      render(<OnrampFlow {...defaultProps} isAuthenticated={true} />, {
+        wrapper: createWrapper(),
+      });
+
+      expect(screen.queryByPlaceholderText("you@example.com")).not.toBeInTheDocument();
+    });
+
+    it("disables button when email is empty and not authenticated", () => {
+      render(<OnrampFlow {...defaultProps} isAuthenticated={false} />, {
+        wrapper: createWrapper(),
+      });
+
+      const amountInput = screen.getByPlaceholderText("0.00");
+      fireEvent.change(amountInput, { target: { value: "100" } });
+
+      const button = screen.getByRole("button", { name: /Continue to Stripe/i });
+      expect(button).toBeDisabled();
+    });
+
+    it("keeps button disabled with invalid email format", () => {
+      render(<OnrampFlow {...defaultProps} isAuthenticated={false} />, {
+        wrapper: createWrapper(),
+      });
+
+      const amountInput = screen.getByPlaceholderText("0.00");
+      fireEvent.change(amountInput, { target: { value: "100" } });
+
+      const emailInput = screen.getByPlaceholderText("you@example.com");
+      fireEvent.change(emailInput, { target: { value: "not-an-email" } });
+
+      const button = screen.getByRole("button", { name: /Continue to Stripe/i });
+      expect(button).toBeDisabled();
+    });
+
+    it("enables button when valid email is provided", () => {
+      render(<OnrampFlow {...defaultProps} isAuthenticated={false} />, {
+        wrapper: createWrapper(),
+      });
+
+      const amountInput = screen.getByPlaceholderText("0.00");
+      fireEvent.change(amountInput, { target: { value: "100" } });
+
+      const emailInput = screen.getByPlaceholderText("you@example.com");
+      fireEvent.change(emailInput, { target: { value: "test@example.com" } });
+
+      const button = screen.getByRole("button", { name: /Continue to Stripe/i });
+      expect(button).not.toBeDisabled();
     });
   });
 });

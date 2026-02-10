@@ -9,7 +9,7 @@ export enum DonationStatus {
 export interface DonationApiResponse {
   uid: string;
   chainID: number;
-  donorAddress: string;
+  donorAddress?: string;
   projectUID: string;
   projectName?: string;
   projectSlug?: string;
@@ -54,6 +54,7 @@ export interface OnrampSessionRequest {
   network: string;
   targetAsset: string;
   donorAddress?: string;
+  donorEmail: string;
   country?: string; // ISO 3166-1 alpha-2 code
   redirectUrl?: string; // URL to redirect user after completing onramp
 }
@@ -62,8 +63,18 @@ export interface OnrampSessionResponse {
   sessionToken: string;
   sessionId: string;
   donationUid: string;
+  pollingToken: string;
   expiresAt: string;
   onrampUrl?: string;
+}
+
+export interface DonationStatusApiResponse {
+  status: "pending" | "completed" | "failed";
+  amount?: string;
+  tokenSymbol?: string;
+  transactionHash?: string;
+  fiatAmount?: number;
+  fiatCurrency?: string;
 }
 
 /**

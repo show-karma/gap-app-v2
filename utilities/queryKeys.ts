@@ -144,6 +144,8 @@ export const QUERY_KEYS = {
   DONATIONS: {
     BY_USER: (walletAddress: string) => ["donations", "user", walletAddress] as const,
     BY_PROJECT: (projectUID: string) => ["donations", "project", projectUID] as const,
+    STATUS: (uid: string, chainId: number, token: string) =>
+      ["donation-status", uid, chainId, token] as const,
   },
   SETTINGS: {
     AVAILABLE_AI_MODELS: ["available-ai-models"] as const,

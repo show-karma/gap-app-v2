@@ -25,13 +25,16 @@ interface OnrampFlowProps {
   payoutAddress: string;
   chainId: number;
   initialAmount?: string;
+  isAuthenticated?: boolean;
   onDonationComplete?: () => void;
 }
 
 export const OnrampFlow = React.memo<OnrampFlowProps>(
-  ({ projectUid, payoutAddress, chainId, initialAmount, onDonationComplete }) => {
+  ({ projectUid, payoutAddress, chainId, initialAmount, isAuthenticated, onDonationComplete }) => {
     const [amount, setAmount] = useState(initialAmount || "");
+    const [donorEmail, setDonorEmail] = useState("");
     const donationUidRef = useRef<string | null>(null);
+    const pollingTokenRef = useRef<string | null>(null);
     const selectedProvider = OnrampProvider.STRIPE;
     const [successSessionData, setSuccessSessionData] = useState<StripeOnrampSessionData | null>(
       null
@@ -60,6 +63,7 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
       payoutAddress,
       network,
       targetAsset: "USDC",
+      donorEmail,
       provider: selectedProvider,
       country,
     });
@@ -67,16 +71,18 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
     const handleStripeSuccess = useCallback(
       (sessionData: StripeOnrampSessionData) => {
         donationUidRef.current = session?.donationUid ?? null;
+        pollingTokenRef.current = session?.pollingToken ?? null;
         clearSession();
         setSuccessSessionData(sessionData);
       },
-      [clearSession, session?.donationUid]
+      [clearSession, session?.donationUid, session?.pollingToken]
     );
 
     const handleSuccessModalClose = useCallback(() => {
       setSuccessSessionData(null);
       setAmount("");
       donationUidRef.current = null;
+      pollingTokenRef.current = null;
       onDonationComplete?.();
     }, [onDonationComplete]);
 
@@ -108,10 +114,15 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
       return { validationError: null, isValidAmount: true };
     }, [amount]);
 
+    const isEmailValid = useMemo(() => {
+      if (isAuthenticated) return true;
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(donorEmail);
+    }, [isAuthenticated, donorEmail]);
+
     const handleProceed = useCallback(() => {
-      if (!isValidAmount) return;
+      if (!isValidAmount || !isEmailValid) return;
       initiateOnramp(parseFloat(amount), currency.code);
-    }, [isValidAmount, initiateOnramp, amount, currency.code]);
+    }, [isValidAmount, isEmailValid, initiateOnramp, amount, currency.code]);
 
     return (
       <div className="space-y-4">
@@ -129,6 +140,7 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
             network={network}
             donationUid={donationUidRef.current}
             chainId={chainId}
+            pollingToken={pollingTokenRef.current}
             onClose={handleSuccessModalClose}
           />
         )}
@@ -169,6 +181,29 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
           )}
         </div>
 
+        {!isAuthenticated && (
+          <div className="space-y-2">
+            <label
+              htmlFor="donor-email"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Email
+            </label>
+            <input
+              id="donor-email"
+              type="email"
+              placeholder="you@example.com"
+              value={donorEmail}
+              onChange={(e) => setDonorEmail(e.target.value)}
+              aria-describedby="donor-email-hint"
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            />
+            <p id="donor-email-hint" className="text-xs text-gray-500 dark:text-gray-400">
+              Required for payment receipt and donation tracking.
+            </p>
+          </div>
+        )}
+
         {!isChainSupported && (
           <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 dark:text-red-400">
             Card payments are not available for this network.
@@ -203,6 +238,7 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
           onClick={handleProceed}
           disabled={
             !isValidAmount ||
+            !isEmailValid ||
             isLoading ||
             !payoutAddress ||
             !isChainSupported ||

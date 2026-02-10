@@ -14,6 +14,7 @@ interface UseOnrampParams {
   payoutAddress: string;
   network: string;
   targetAsset: string;
+  donorEmail: string;
   provider?: OnrampProvider;
   country?: string | null;
   onError?: (error: Error) => void;
@@ -22,6 +23,7 @@ interface UseOnrampParams {
 interface OnrampSession {
   clientSecret: string;
   donationUid: string;
+  pollingToken: string;
 }
 
 interface InitiateOnrampParams {
@@ -42,6 +44,7 @@ export const useOnramp = ({
   payoutAddress,
   network,
   targetAsset,
+  donorEmail,
   provider = DEFAULT_ONRAMP_PROVIDER,
   country,
   onError,
@@ -63,6 +66,7 @@ export const useOnramp = ({
         network,
         targetAsset,
         donorAddress: address,
+        donorEmail,
         ...(country && { country }),
       };
 
@@ -71,6 +75,7 @@ export const useOnramp = ({
       return {
         clientSecret: sessionResponse.sessionToken,
         donationUid: sessionResponse.donationUid,
+        pollingToken: sessionResponse.pollingToken,
       };
     },
     onError: (err) => {

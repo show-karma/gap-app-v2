@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { donationsService } from "@/services/donations.service";
-import { type DonationApiResponse, DonationStatus } from "../types";
+import { type DonationApiResponse, DonationStatus, type DonationStatusApiResponse } from "../types";
 import { useDonationPolling } from "../useDonationPolling";
 
 jest.mock("@/services/donations.service");
@@ -200,6 +200,125 @@ describe("useDonationPolling", () => {
       await new Promise((r) => setTimeout(r, 100));
 
       expect(mockDonationsService.getDonationByUid.mock.calls.length).toBe(callCount);
+    });
+  });
+
+  describe("pollingToken path (anonymous polling)", () => {
+    const makeStatusResponse = (
+      overrides: Partial<DonationStatusApiResponse> = {}
+    ): DonationStatusApiResponse => ({
+      status: "pending",
+      amount: "50.00",
+      tokenSymbol: "USDC",
+      fiatAmount: 50,
+      fiatCurrency: "USD",
+      ...overrides,
+    });
+
+    it("calls getDonationStatus instead of getDonationByUid when pollingToken is provided", async () => {
+      const statusResponse = makeStatusResponse();
+      mockDonationsService.getDonationStatus.mockResolvedValueOnce(statusResponse);
+
+      renderHook(
+        () =>
+          useDonationPolling({
+            donationUid: "donation-123",
+            chainId: 8453,
+            pollingToken: "token-abc",
+          }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(mockDonationsService.getDonationStatus).toHaveBeenCalledWith(
+          "donation-123",
+          8453,
+          "token-abc"
+        );
+      });
+
+      expect(mockDonationsService.getDonationByUid).not.toHaveBeenCalled();
+    });
+
+    it("returns status data from getDonationStatus", async () => {
+      const statusResponse = makeStatusResponse({ status: "completed", transactionHash: "0xabc" });
+      mockDonationsService.getDonationStatus.mockResolvedValueOnce(statusResponse);
+
+      const { result } = renderHook(
+        () =>
+          useDonationPolling({
+            donationUid: "donation-123",
+            chainId: 8453,
+            pollingToken: "token-abc",
+          }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(result.current.donation).toEqual(statusResponse);
+      });
+
+      expect(result.current.status).toBe("completed");
+      expect(result.current.isPolling).toBe(false);
+    });
+
+    it("does not call getDonationStatus when donationUid is null even with pollingToken", () => {
+      renderHook(
+        () =>
+          useDonationPolling({
+            donationUid: null,
+            chainId: 8453,
+            pollingToken: "token-abc",
+          }),
+        { wrapper: createWrapper() }
+      );
+
+      expect(mockDonationsService.getDonationStatus).not.toHaveBeenCalled();
+      expect(mockDonationsService.getDonationByUid).not.toHaveBeenCalled();
+    });
+
+    it("exposes error when getDonationStatus fails", async () => {
+      mockDonationsService.getDonationStatus.mockRejectedValueOnce(new Error("Forbidden"));
+
+      const { result } = renderHook(
+        () =>
+          useDonationPolling({
+            donationUid: "donation-123",
+            chainId: 8453,
+            pollingToken: "bad-token",
+          }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(result.current.error).toBeTruthy();
+      });
+
+      expect(result.current.error?.message).toBe("Forbidden");
+      expect(result.current.donation).toBeNull();
+    });
+
+    it("stops polling when status is completed", async () => {
+      const statusResponse = makeStatusResponse({ status: "completed" });
+      mockDonationsService.getDonationStatus.mockResolvedValue(statusResponse);
+
+      const { result } = renderHook(
+        () =>
+          useDonationPolling({
+            donationUid: "donation-123",
+            chainId: 8453,
+            pollingToken: "token-abc",
+          }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(result.current.donation).not.toBeNull();
+      });
+
+      const callCount = mockDonationsService.getDonationStatus.mock.calls.length;
+      await new Promise((r) => setTimeout(r, 100));
+      expect(mockDonationsService.getDonationStatus.mock.calls.length).toBe(callCount);
     });
   });
 });
