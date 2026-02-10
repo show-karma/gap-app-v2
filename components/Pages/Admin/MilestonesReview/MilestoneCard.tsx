@@ -8,7 +8,7 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { formatDate } from "@/utilities/formatDate";
 import { shortAddress } from "@/utilities/shortAddress";
-import { getMilestoneStatusInfo } from "./milestoneStatus";
+import { getMilestoneStatus, MILESTONE_STATUS_CONFIG } from "./milestone-review-status";
 
 interface MilestoneCardProps {
   milestone: GrantMilestoneWithCompletion;
@@ -58,8 +58,9 @@ export function MilestoneCard({
   );
 
   const statusInfo = useMemo(() => {
-    const info = getMilestoneStatusInfo(milestone);
-    return { status: info.label, statusColor: info.color };
+    const status = getMilestoneStatus(milestone);
+    const config = MILESTONE_STATUS_CONFIG[status];
+    return { status: config.label, statusColor: config.badgeColor };
   }, [milestone]);
 
   return (

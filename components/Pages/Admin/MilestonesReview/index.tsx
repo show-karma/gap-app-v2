@@ -25,7 +25,12 @@ import { cn } from "@/utilities/tailwind";
 import { CommentsAndActivity } from "./CommentsAndActivity";
 import { GrantCompleteButtonForReviewer } from "./GrantCompleteButtonForReviewer";
 import { MilestoneCard } from "./MilestoneCard";
-import { FILTER_TABS, getMilestoneStatusKey, type MilestoneFilterStatus } from "./milestoneStatus";
+import {
+  FILTER_TABS,
+  getMilestoneStatus,
+  type MilestoneFilterKey,
+  MilestoneReviewStatus,
+} from "./milestone-review-status";
 
 interface MilestonesReviewPageProps {
   communityId: string;
@@ -77,7 +82,9 @@ function MilestonesReviewPageContent({
   const [verifyingMilestoneId, setVerifyingMilestoneId] = useState<string | null>(null);
   const [verificationComment, setVerificationComment] = useState("");
   const [deletingMilestoneId, setDeletingMilestoneId] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<MilestoneFilterStatus>("pending_verification");
+  const [statusFilter, setStatusFilter] = useState<MilestoneFilterKey>(
+    MilestoneReviewStatus.PendingVerification
+  );
   const userSelectedFilter = useRef(false);
 
   const { address } = useAccount();
@@ -255,20 +262,20 @@ function MilestonesReviewPageContent({
   const allMilestones = data?.grantMilestones ?? [];
 
   const { filteredMilestones, counts } = useMemo(() => {
-    const counts: Record<MilestoneFilterStatus, number> = {
+    const counts: Record<MilestoneFilterKey, number> = {
       all: allMilestones.length,
-      verified: 0,
-      pending_verification: 0,
-      pending_completion: 0,
-      not_started: 0,
+      [MilestoneReviewStatus.Verified]: 0,
+      [MilestoneReviewStatus.PendingVerification]: 0,
+      [MilestoneReviewStatus.PendingCompletion]: 0,
+      [MilestoneReviewStatus.NotStarted]: 0,
     };
     for (const m of allMilestones) {
-      counts[getMilestoneStatusKey(m)]++;
+      counts[getMilestoneStatus(m)]++;
     }
     const filtered =
       statusFilter === "all"
         ? allMilestones
-        : allMilestones.filter((m) => getMilestoneStatusKey(m) === statusFilter);
+        : allMilestones.filter((m) => getMilestoneStatus(m) === statusFilter);
     return { filteredMilestones: filtered, counts };
   }, [allMilestones, statusFilter]);
 
@@ -276,13 +283,13 @@ function MilestonesReviewPageContent({
   useEffect(() => {
     if (
       !userSelectedFilter.current &&
-      statusFilter === "pending_verification" &&
-      counts.pending_verification === 0 &&
+      statusFilter === MilestoneReviewStatus.PendingVerification &&
+      counts[MilestoneReviewStatus.PendingVerification] === 0 &&
       allMilestones.length > 0
     ) {
       setStatusFilter("all");
     }
-  }, [counts.pending_verification, statusFilter, allMilestones.length]);
+  }, [counts[MilestoneReviewStatus.PendingVerification], statusFilter, allMilestones.length]);
 
   // Show loading while checking authorization
   if (isLoading || isLoadingReviewer || isLoadingAdminAccess) {
