@@ -27,9 +27,11 @@ describe("PermissionProvider", () => {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <PermissionProvider>{children}</PermissionProvider>
   );
+  const previousE2EBypassFlag = process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "true";
     delete (window as Window & { Cypress?: unknown }).Cypress;
     localStorage.removeItem("privy:auth_state");
 
@@ -50,6 +52,11 @@ describe("PermissionProvider", () => {
   });
 
   afterEach(() => {
+    if (previousE2EBypassFlag === undefined) {
+      delete process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS;
+    } else {
+      process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = previousE2EBypassFlag;
+    }
     delete (window as Window & { Cypress?: unknown }).Cypress;
     localStorage.removeItem("privy:auth_state");
   });
@@ -88,6 +95,18 @@ describe("PermissionProvider", () => {
   it("does not enable permissions query for malformed cypress auth payloads", () => {
     (window as Window & { Cypress?: unknown }).Cypress = {};
     localStorage.setItem("privy:auth_state", "{bad-json");
+
+    const { result } = renderHook(() => usePermissionContext(), { wrapper });
+
+    expect(mockUsePermissionsQuery).toHaveBeenCalledWith({}, { enabled: false });
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.isGuestDueToError).toBe(false);
+  });
+
+  it("does not enable query when bypass flag is disabled", () => {
+    process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "false";
+    (window as Window & { Cypress?: unknown }).Cypress = {};
+    localStorage.setItem("privy:auth_state", JSON.stringify({ authenticated: true }));
 
     const { result } = renderHook(() => usePermissionContext(), { wrapper });
 

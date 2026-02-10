@@ -181,11 +181,10 @@ describe("Funding Platform - Question Builder Regression", () => {
     cy.wait("@updateProgramConfig");
 
     // Step 3-5: back to programs and reopen via the program "Settings" action.
-    // We intentionally avoid waiting on a specific network alias here because
-    // the page may hydrate from cache with no request in some runs.
-    cy.visit(`/community/${communityId}/manage/funding-platform`);
-    cy.contains("Optimism Retro Funding").should("be.visible");
-    cy.contains("button", "Settings").first().click();
+    cy.contains("a", "Back to Programs").click();
+    cy.location("pathname").should("eq", `/community/${communityId}/manage/funding-platform`);
+    cy.get(`[data-testid="program-card-${programId}"]`).should("contain.text", "Optimism Retro Funding");
+    cy.get(`[data-testid="program-settings-${programId}"]`).click();
     cy.url().should(
       "include",
       `/community/${communityId}/manage/funding-platform/${programId}/question-builder`

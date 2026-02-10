@@ -471,6 +471,7 @@ function FundingPlatformContent() {
               return (
                 <div
                   key={program.programId}
+                  data-testid={`program-card-${program.programId}`}
                   className="px-4 py-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1 rounded-lg border border-gray-200 bg-white dark:bg-zinc-800 dark:border-gray-700 relative"
                 >
                   {togglingPrograms.has(program.programId) && (
@@ -666,6 +667,7 @@ function FundingPlatformContent() {
                     >
                       <Button
                         variant="secondary"
+                        data-testid={`program-settings-${program.programId}`}
                         className="w-full hover:shadow flex items-center justify-center text-sm"
                       >
                         <Cog6ToothIcon className="w-4 h-4 mr-2" />

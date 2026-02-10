@@ -3,6 +3,7 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { createContext, type ReactNode, useContext, useMemo } from "react";
 import { useAccount } from "wagmi";
+import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
 import { usePermissionsQuery } from "../hooks/use-permissions";
 import { hasAllPermissions, hasAnyPermission, hasPermission } from "../policies";
 import type { GetPermissionsParams } from "../services/authorization.service";
@@ -54,19 +55,8 @@ interface PermissionProviderProps {
 export function PermissionProvider({ children, resourceContext = {} }: PermissionProviderProps) {
   const { authenticated, ready } = usePrivy();
   const { isConnected } = useAccount();
-  const isCypressMockAuthenticated = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    if (!(window as Window & { Cypress?: unknown }).Cypress) return false;
-
-    try {
-      const rawState = localStorage.getItem("privy:auth_state");
-      if (!rawState) return false;
-      const parsedState = JSON.parse(rawState) as { authenticated?: boolean };
-      return parsedState.authenticated === true;
-    } catch {
-      return false;
-    }
-  }, [ready, authenticated]);
+  const cypressMockAuthState = useMemo(() => getCypressMockAuthState(), [ready, authenticated]);
+  const isCypressMockAuthenticated = Boolean(cypressMockAuthState?.authenticated);
 
   const isAuthenticated = isCypressMockAuthenticated || (ready && authenticated && isConnected);
 

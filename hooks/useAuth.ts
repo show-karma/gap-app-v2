@@ -5,6 +5,7 @@ import { watchAccount } from "@wagmi/core";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
+import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { queryClient } from "@/utilities/query-client";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
@@ -40,16 +41,6 @@ const AUTH_FAILURE_THRESHOLD = 3;
  */
 const PRIVY_SESSION_COOKIE_NAME = "privy-session";
 
-interface CypressAuthState {
-  authenticated?: boolean;
-  ready?: boolean;
-  user?: {
-    wallet?: {
-      address?: string;
-    };
-  };
-}
-
 /**
  * Check if privy-session cookie exists using proper cookie parsing.
  * If session exists, user might be in the middle of token refresh (HttpOnly cookies mode).
@@ -63,25 +54,6 @@ const hasPrivySession = () => {
   return document.cookie
     .split(";")
     .some((c) => c.trim().startsWith(`${PRIVY_SESSION_COOKIE_NAME}=`));
-};
-
-const getCypressMockAuthState = (): CypressAuthState | null => {
-  if (typeof window === "undefined") return null;
-  if (!(window as Window & { Cypress?: unknown }).Cypress) return null;
-
-  try {
-    const rawState = localStorage.getItem("privy:auth_state");
-    if (!rawState) return null;
-
-    const parsedState = JSON.parse(rawState) as CypressAuthState;
-    if (parsedState.authenticated === true) {
-      return parsedState;
-    }
-  } catch {
-    // Ignore invalid test auth payloads and fall back to real auth state.
-  }
-
-  return null;
 };
 
 /**

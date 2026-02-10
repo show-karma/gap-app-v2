@@ -299,9 +299,11 @@ describe("Cache invalidation on logout", () => {
 
 describe("useAuth - Cypress mock auth compatibility", () => {
   const wrapper = ({ children }: { children: ReactNode }) => <>{children}</>;
+  const previousE2EBypassFlag = process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "true";
     delete (window as Window & { Cypress?: unknown }).Cypress;
     localStorage.removeItem("privy:auth_state");
 
@@ -325,6 +327,11 @@ describe("useAuth - Cypress mock auth compatibility", () => {
   });
 
   afterEach(() => {
+    if (previousE2EBypassFlag === undefined) {
+      delete process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS;
+    } else {
+      process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = previousE2EBypassFlag;
+    }
     delete (window as Window & { Cypress?: unknown }).Cypress;
     localStorage.removeItem("privy:auth_state");
   });
@@ -351,6 +358,25 @@ describe("useAuth - Cypress mock auth compatibility", () => {
   it("ignores malformed cypress auth payloads and falls back to real auth state", () => {
     (window as Window & { Cypress?: unknown }).Cypress = {};
     localStorage.setItem("privy:auth_state", "{bad-json");
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    expect(result.current.ready).toBe(false);
+    expect(result.current.authenticated).toBe(false);
+    expect(result.current.isConnected).toBe(false);
+    expect(result.current.address).toBeUndefined();
+  });
+
+  it("does not use cypress auth state when bypass flag is disabled", () => {
+    process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "false";
+    (window as Window & { Cypress?: unknown }).Cypress = {};
+    localStorage.setItem(
+      "privy:auth_state",
+      JSON.stringify({
+        authenticated: true,
+        user: { wallet: { address: "0x9999999999999999999999999999999999999999" } },
+      })
+    );
 
     const { result } = renderHook(() => useAuth(), { wrapper });
 
