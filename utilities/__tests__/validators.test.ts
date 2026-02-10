@@ -346,7 +346,7 @@ describe("validators", () => {
         email: "",
       });
       expect(result.valid).toBe(false);
-      expect(result.errors.length).toBeGreaterThanOrEqual(2);
+      expect(result.errors).toHaveLength(2);
     });
 
     it("should reject name that is too short", () => {

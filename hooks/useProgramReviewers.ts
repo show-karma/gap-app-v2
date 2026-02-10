@@ -1,25 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import { useMemo } from "react";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { programReviewersService } from "@/services/program-reviewers.service";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
-
-function getAddProgramReviewerErrorMessage(error: unknown): string {
-  if (axios.isAxiosError(error)) {
-    if (error.response?.status === 409) {
-      return "A reviewer with this email already exists.";
-    }
-    return error.response?.data?.message || error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Failed to add program reviewer";
-}
+import { getReviewerErrorMessage } from "@/utilities/reviewerErrors";
 
 /**
  * Comprehensive hook for managing program reviewers
@@ -60,9 +45,7 @@ export function useProgramReviewers(programId: string) {
       toast.success("Program reviewer added successfully");
     },
     onError: (error) => {
-      console.error("Error adding program reviewer:", error);
-      const errorMessage = getAddProgramReviewerErrorMessage(error);
-      toast.error(errorMessage);
+      toast.error(getReviewerErrorMessage(error, "Failed to add program reviewer"));
     },
   });
 
@@ -78,10 +61,7 @@ export function useProgramReviewers(programId: string) {
       toast.success("Program reviewer removed successfully");
     },
     onError: (error) => {
-      console.error("Error removing program reviewer:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to remove program reviewer";
-      toast.error(errorMessage);
+      toast.error(getReviewerErrorMessage(error, "Failed to remove program reviewer"));
     },
   });
 

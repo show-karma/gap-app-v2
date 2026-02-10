@@ -1,25 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import { useMemo } from "react";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { milestoneReviewersService } from "@/services/milestone-reviewers.service";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
-
-function getAddMilestoneReviewerErrorMessage(error: unknown): string {
-  if (axios.isAxiosError(error)) {
-    if (error.response?.status === 409) {
-      return "A reviewer with this email already exists.";
-    }
-    return error.response?.data?.message || error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Failed to add milestone reviewer";
-}
+import { getReviewerErrorMessage } from "@/utilities/reviewerErrors";
 
 /**
  * Comprehensive hook for managing milestone reviewers
@@ -60,9 +45,7 @@ export function useMilestoneReviewers(programId: string) {
       toast.success("Milestone reviewer added successfully");
     },
     onError: (error) => {
-      console.error("Error adding milestone reviewer:", error);
-      const errorMessage = getAddMilestoneReviewerErrorMessage(error);
-      toast.error(errorMessage);
+      toast.error(getReviewerErrorMessage(error, "Failed to add milestone reviewer"));
     },
   });
 
@@ -78,10 +61,7 @@ export function useMilestoneReviewers(programId: string) {
       toast.success("Milestone reviewer removed successfully");
     },
     onError: (error) => {
-      console.error("Error removing milestone reviewer:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to remove milestone reviewer";
-      toast.error(errorMessage);
+      toast.error(getReviewerErrorMessage(error, "Failed to remove milestone reviewer"));
     },
   });
 

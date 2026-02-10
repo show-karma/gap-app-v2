@@ -3,7 +3,7 @@
 import {
   CheckIcon,
   DocumentDuplicateIcon,
-  KeyIcon,
+  EnvelopeIcon,
   PlusIcon,
   UserIcon,
   XMarkIcon,
@@ -484,7 +484,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                             <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                               {member.email && (
                                 <span className="flex items-center space-x-1">
-                                  <KeyIcon className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
+                                  <EnvelopeIcon className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
                                   <span>{member.email}</span>
                                 </span>
                               )}
