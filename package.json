@@ -206,7 +206,7 @@
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,css}": [
-      "biome check --write --diagnostic-level=error"
+      "biome check --write --diagnostic-level=error --no-errors-on-unmatched"
     ]
   }
 }
