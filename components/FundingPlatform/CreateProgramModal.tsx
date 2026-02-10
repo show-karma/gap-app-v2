@@ -94,7 +94,7 @@ export function CreateProgramModal({
 
     setIsSubmitting(true);
     try {
-      // Build metadata using service
+      // Build metadata using service (defaults to anyoneCanJoin: false for admin-created programs)
       const metadata = ProgramRegistryService.buildProgramMetadata(
         data as CreateProgramFormData,
         community
