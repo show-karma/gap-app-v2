@@ -40,14 +40,19 @@ export const ReviewerAssignmentDropdown: FC<ReviewerAssignmentDropdownProps> = (
   });
 
   // Convert reviewers to dropdown items
-  // Normalize addresses to lowercase for consistent comparison (backend normalizes addresses)
+  // Normalize wallet addresses to lowercase for consistent comparison.
+  // Assignment APIs accept wallet-address identifiers only.
   const dropdownItems: DropdownItem[] = useMemo(
     () =>
-      availableReviewers.map((reviewer) => ({
-        id: (reviewer.publicAddress || reviewer.email).toLowerCase(),
-        label: reviewer.name || reviewer.email || reviewer.publicAddress || "",
-        value: reviewer,
-      })),
+      availableReviewers
+        .filter((reviewer): reviewer is ReviewerBase & { publicAddress: string } =>
+          Boolean(reviewer.publicAddress)
+        )
+        .map((reviewer) => ({
+          id: reviewer.publicAddress.toLowerCase(),
+          label: reviewer.name || reviewer.email || reviewer.publicAddress,
+          value: reviewer,
+        })),
     [availableReviewers]
   );
 
