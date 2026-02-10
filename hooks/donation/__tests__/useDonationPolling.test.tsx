@@ -64,6 +64,15 @@ describe("useDonationPolling", () => {
 
       expect(mockDonationsService.getDonationByUid).not.toHaveBeenCalled();
     });
+
+    it("returns error: null", () => {
+      const { result } = renderHook(
+        () => useDonationPolling({ donationUid: null, chainId: 8453 }),
+        { wrapper: createWrapper() }
+      );
+
+      expect(result.current.error).toBeNull();
+    });
   });
 
   describe("when donationUid is provided", () => {
@@ -128,6 +137,24 @@ describe("useDonationPolling", () => {
       });
 
       expect(result.current.isPolling).toBe(false);
+    });
+  });
+
+  describe("error state", () => {
+    it("exposes error when the query fails", async () => {
+      mockDonationsService.getDonationByUid.mockRejectedValueOnce(new Error("Network error"));
+
+      const { result } = renderHook(
+        () => useDonationPolling({ donationUid: "donation-123", chainId: 8453 }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(result.current.error).toBeTruthy();
+      });
+
+      expect(result.current.error?.message).toBe("Network error");
+      expect(result.current.donation).toBeNull();
     });
   });
 

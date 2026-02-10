@@ -15,13 +15,14 @@ interface UseDonationPollingReturn {
   donation: DonationApiResponse | null;
   isPolling: boolean;
   status: DonationStatus | null;
+  error: Error | null;
 }
 
 export const useDonationPolling = ({
   donationUid,
   chainId,
 }: UseDonationPollingParams): UseDonationPollingReturn => {
-  const { data, isFetching } = useQuery<DonationApiResponse>({
+  const { data, isFetching, error } = useQuery<DonationApiResponse>({
     queryKey: ["donation", donationUid, chainId],
     queryFn: () => donationsService.getDonationByUid(donationUid!, chainId),
     enabled: !!donationUid,
@@ -43,5 +44,6 @@ export const useDonationPolling = ({
     donation: data ?? null,
     isPolling,
     status,
+    error: error ?? null,
   };
 };

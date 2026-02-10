@@ -16,8 +16,6 @@ interface OnrampSuccessModalProps {
   onClose: () => void;
 }
 
-const DEFAULT_CHAIN_ID = 8453;
-
 type StepState = "completed" | "active" | "pending" | "failed";
 
 function StepIcon({ state }: { state: StepState }) {
@@ -112,6 +110,7 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
       donation,
       isPolling,
       status: polledStatus,
+      error: pollingError,
     } = useDonationPolling({
       donationUid,
       chainId,
@@ -131,7 +130,7 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
 
     const resolvedChainId = useMemo(() => {
       const networkKey = txDetails?.destination_network?.toLowerCase() || network.toLowerCase();
-      return NETWORK_CHAIN_IDS[networkKey] || DEFAULT_CHAIN_ID;
+      return NETWORK_CHAIN_IDS[networkKey] || NETWORK_CHAIN_IDS["base"];
     }, [txDetails?.destination_network, network]);
 
     const explorerUrl = useMemo(() => {
@@ -291,6 +290,12 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
             {isPolling && (
               <p className="text-center text-xs text-gray-400 dark:text-zinc-500">
                 Checking status...
+              </p>
+            )}
+
+            {pollingError && !isPolling && (
+              <p className="text-center text-xs text-red-500 dark:text-red-400">
+                Unable to check donation status. Please check back later.
               </p>
             )}
 
