@@ -2,7 +2,7 @@
 
 import { ArrowLeftIcon, ChevronLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { Badge } from "@/components/ui/badge";
@@ -85,9 +85,6 @@ function MilestonesReviewPageContent({
   const [verificationComment, setVerificationComment] = useState("");
   const [deletingMilestoneId, setDeletingMilestoneId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<MilestoneFilterKey | null>(null);
-  // Tracks whether the user has explicitly chosen a filter tab.
-  // Prevents the auto-computed initial filter from overriding a deliberate selection.
-  const userSelectedFilter = useRef(false);
 
   const { address } = useAccount();
   const {
@@ -297,10 +294,7 @@ function MilestonesReviewPageContent({
         grouped.get(MilestoneReviewStatus.NotStarted)?.length ?? 0,
     };
 
-    const filtered =
-      activeFilter === "all"
-        ? milestones
-        : (grouped.get(activeFilter as MilestoneReviewStatus) ?? []);
+    const filtered = activeFilter === "all" ? milestones : (grouped.get(activeFilter) ?? []);
 
     return { filteredMilestones: filtered, counts };
   }, [milestones, activeFilter]);
@@ -455,14 +449,10 @@ function MilestonesReviewPageContent({
                         role="button"
                         tabIndex={0}
                         aria-pressed={isActive}
-                        onClick={() => {
-                          userSelectedFilter.current = true;
-                          setStatusFilter(tab.key);
-                        }}
+                        onClick={() => setStatusFilter(tab.key)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
-                            userSelectedFilter.current = true;
                             setStatusFilter(tab.key);
                           }
                         }}
