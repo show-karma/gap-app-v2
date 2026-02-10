@@ -3,7 +3,6 @@
 import type { TNetwork } from "@show-karma/karma-gap-sdk";
 import { GAP } from "@show-karma/karma-gap-sdk/core/class/GAP";
 import { GapIndexerClient } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/GapIndexerClient";
-import { IpfsStorage } from "@show-karma/karma-gap-sdk/core/class/remote-storage/IpfsStorage";
 import { Networks } from "@show-karma/karma-gap-sdk/core/consts";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
@@ -14,10 +13,6 @@ import {
   getChainIdByName,
   getChainNameById,
 } from "@/utilities/network";
-
-const ipfsClient = new IpfsStorage({
-  token: envVars.IPFS_TOKEN,
-});
 
 const gapClients: Record<number, GAP> = {};
 
@@ -54,7 +49,6 @@ export const getGapClient = (chainID: number): GAP => {
             apiClient: new GapIndexerClient(apiUrl),
           }
         : {}),
-      remoteStorage: ipfsClient,
     });
     gapClients[networkChainId] = client;
     return client;
