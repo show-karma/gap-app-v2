@@ -5,7 +5,7 @@
  */
 
 import { act, renderHook } from "@testing-library/react";
-import React, { type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
@@ -294,6 +294,96 @@ describe("Cache invalidation on logout", () => {
     // Clean up non-wagmi keys
     localStorage.removeItem("app-preference");
     localStorage.removeItem("privy:token");
+  });
+});
+
+describe("useAuth - Cypress mock auth compatibility", () => {
+  const wrapper = ({ children }: { children: ReactNode }) => <>{children}</>;
+  const previousE2EBypassFlag = process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "true";
+    delete (window as Window & { Cypress?: unknown }).Cypress;
+    localStorage.removeItem("privy:auth_state");
+
+    mockUsePrivy.mockReturnValue({
+      ready: false,
+      authenticated: false,
+      user: null,
+      login: mockLogin,
+      logout: mockLogout,
+      getAccessToken: mockGetAccessToken,
+    });
+
+    mockUseWallets.mockReturnValue({ wallets: [] });
+
+    mockUseAccount.mockReturnValue({
+      address: undefined,
+      isConnected: false,
+      isConnecting: false,
+      isDisconnected: true,
+    });
+  });
+
+  afterEach(() => {
+    if (previousE2EBypassFlag === undefined) {
+      delete process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS;
+    } else {
+      process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = previousE2EBypassFlag;
+    }
+    delete (window as Window & { Cypress?: unknown }).Cypress;
+    localStorage.removeItem("privy:auth_state");
+  });
+
+  it("uses cypress auth state when Privy is not connected", () => {
+    (window as Window & { Cypress?: unknown }).Cypress = {};
+    localStorage.setItem(
+      "privy:auth_state",
+      JSON.stringify({
+        authenticated: true,
+        ready: true,
+        user: { wallet: { address: "0x9999999999999999999999999999999999999999" } },
+      })
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    expect(result.current.ready).toBe(true);
+    expect(result.current.authenticated).toBe(true);
+    expect(result.current.isConnected).toBe(true);
+    expect(result.current.address).toBe("0x9999999999999999999999999999999999999999");
+  });
+
+  it("ignores malformed cypress auth payloads and falls back to real auth state", () => {
+    (window as Window & { Cypress?: unknown }).Cypress = {};
+    localStorage.setItem("privy:auth_state", "{bad-json");
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    expect(result.current.ready).toBe(false);
+    expect(result.current.authenticated).toBe(false);
+    expect(result.current.isConnected).toBe(false);
+    expect(result.current.address).toBeUndefined();
+  });
+
+  it("does not use cypress auth state when bypass flag is disabled", () => {
+    process.env.NEXT_PUBLIC_E2E_AUTH_BYPASS = "false";
+    (window as Window & { Cypress?: unknown }).Cypress = {};
+    localStorage.setItem(
+      "privy:auth_state",
+      JSON.stringify({
+        authenticated: true,
+        user: { wallet: { address: "0x9999999999999999999999999999999999999999" } },
+      })
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    expect(result.current.ready).toBe(false);
+    expect(result.current.authenticated).toBe(false);
+    expect(result.current.isConnected).toBe(false);
+    expect(result.current.address).toBeUndefined();
   });
 });
 

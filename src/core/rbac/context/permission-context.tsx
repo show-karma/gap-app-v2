@@ -3,6 +3,7 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { createContext, type ReactNode, useContext, useMemo } from "react";
 import { useAccount } from "wagmi";
+import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
 import { usePermissionsQuery } from "../hooks/use-permissions";
 import { hasAllPermissions, hasAnyPermission, hasPermission } from "../policies";
 import type { GetPermissionsParams } from "../services/authorization.service";
@@ -54,7 +55,10 @@ interface PermissionProviderProps {
 export function PermissionProvider({ children, resourceContext = {} }: PermissionProviderProps) {
   const { authenticated, ready } = usePrivy();
   const { isConnected } = useAccount();
-  const isAuthenticated = ready && authenticated && isConnected;
+  const cypressMockAuthState = useMemo(() => getCypressMockAuthState(), [ready, authenticated]);
+  const isCypressMockAuthenticated = Boolean(cypressMockAuthState?.authenticated);
+
+  const isAuthenticated = isCypressMockAuthenticated || (ready && authenticated && isConnected);
 
   const { data, isLoading, isError } = usePermissionsQuery(resourceContext, {
     enabled: isAuthenticated,
@@ -65,7 +69,7 @@ export function PermissionProvider({ children, resourceContext = {} }: Permissio
     const permissions = data?.permissions ?? [];
     const context = data?.resourceContext ?? defaultResourceContext;
 
-    const effectiveIsLoading = !ready || isLoading;
+    const effectiveIsLoading = (isCypressMockAuthenticated ? false : !ready) || isLoading;
     const isGuestDueToError = isError || (!effectiveIsLoading && isAuthenticated && !data);
 
     return {
@@ -87,7 +91,7 @@ export function PermissionProvider({ children, resourceContext = {} }: Permissio
         isValidRole(role) && isRoleAtLeast(roles.primaryRole, role),
       isReviewerType: (type: ReviewerType) => roles.reviewerTypes?.includes(type) ?? false,
     };
-  }, [data, isLoading, isError, ready, isAuthenticated]);
+  }, [data, isLoading, isError, ready, isAuthenticated, isCypressMockAuthenticated]);
 
   return <PermissionContext.Provider value={contextValue}>{children}</PermissionContext.Provider>;
 }
