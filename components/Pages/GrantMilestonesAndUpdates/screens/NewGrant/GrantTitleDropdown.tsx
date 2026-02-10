@@ -259,7 +259,6 @@ export const GrantTitleDropdown: FC<{
                 </button>
               </CommandItem>
             ) : null}
-            {/* TODO: Consider grouping restricted programs into a separate section for clearer UX */}
             {list.map((item) => {
               const isRestricted = item.metadata?.anyoneCanJoin === false;
               const itemKey =

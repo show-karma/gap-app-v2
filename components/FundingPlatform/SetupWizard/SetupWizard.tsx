@@ -8,6 +8,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
 import type { SetupProgress } from "@/hooks/useProgramSetupProgress";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { SetupStep } from "./SetupStep";
 
@@ -16,9 +17,17 @@ interface SetupWizardProps {
   programId: string;
   programName: string;
   progress: SetupProgress;
+  /** When true, user can only view the setup status, not make changes */
+  readOnly?: boolean;
 }
 
-export function SetupWizard({ communityId, programId, programName, progress }: SetupWizardProps) {
+export function SetupWizard({
+  communityId,
+  programId,
+  programName,
+  progress,
+  readOnly = false,
+}: SetupWizardProps) {
   const router = useRouter();
   const {
     toggleStatusAsync,
@@ -26,7 +35,7 @@ export function SetupWizard({ communityId, programId, programName, progress }: S
     refetch: refetchConfig,
   } = useProgramConfig(programId);
 
-  const dashboardUrl = `/community/${communityId}/admin/funding-platform`;
+  const dashboardUrl = PAGES.MANAGE.FUNDING_PLATFORM.ROOT(communityId);
 
   const handleEnableProgram = async () => {
     if (!progress.isReadyToEnable) {
@@ -139,15 +148,23 @@ export function SetupWizard({ communityId, programId, programName, progress }: S
                   <Link href={dashboardUrl}>Go to Dashboard</Link>
                 </Button>
                 <Button asChild variant="secondary">
-                  <Link
-                    href={`/community/${communityId}/admin/funding-platform/${programId}/applications`}
-                  >
+                  <Link href={PAGES.MANAGE.FUNDING_PLATFORM.APPLICATIONS(communityId, programId)}>
                     View Applications
                   </Link>
                 </Button>
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Read-only notice for reviewers */}
+      {readOnly && (
+        <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            You are viewing this program configuration in read-only mode. Contact a program
+            administrator to make changes.
+          </p>
         </div>
       )}
 
@@ -159,12 +176,13 @@ export function SetupWizard({ communityId, programId, programName, progress }: S
             step={step}
             stepNumber={index + 1}
             isLast={index === progress.steps.length - 1}
+            readOnly={readOnly}
           />
         ))}
       </div>
 
-      {/* Quick Enable button for ready programs */}
-      {!isEnabled && progress.isReadyToEnable && (
+      {/* Quick Enable button for ready programs - hidden in read-only mode */}
+      {!readOnly && !isEnabled && progress.isReadyToEnable && (
         <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -190,8 +208,8 @@ export function SetupWizard({ communityId, programId, programName, progress }: S
         </div>
       )}
 
-      {/* Skip setup link */}
-      {!isEnabled && (
+      {/* Skip setup link - hidden in read-only mode */}
+      {!readOnly && !isEnabled && (
         <div className="mt-6 text-center">
           <Link
             href={dashboardUrl}

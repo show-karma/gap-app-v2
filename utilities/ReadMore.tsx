@@ -1,11 +1,11 @@
 "use client";
 import type { MarkdownPreviewProps } from "@uiw/react-markdown-preview";
 import type React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 interface Props {
-  words?: any;
+  words?: number;
   children: string;
   readMoreText?: string;
   readLessText?: string;
@@ -56,13 +56,14 @@ export const ReadMore = ({
     // Find all markdown link structures in the text
     const linkMatches: { start: number; end: number }[] = [];
     const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-    const matches = Array.from(text.matchAll(linkRegex));
+    let match: RegExpExecArray | null = linkRegex.exec(text);
 
-    for (const match of matches) {
+    while (match !== null) {
       linkMatches.push({
-        start: match.index ?? 0,
-        end: (match.index ?? 0) + match[0].length,
+        start: match.index,
+        end: match.index + match[0].length,
       });
+      match = linkRegex.exec(text);
     }
 
     // Check if we're cutting in the middle of a link
@@ -268,32 +269,45 @@ export const ReadMore = ({
     return text.slice(0, cutPosition);
   };
 
+  // Preload all images so they appear instantly when "Show more" is clicked
   useEffect(() => {
-    if (text && text.length - 1 < getMinimumText()) {
+    const imageRegex = /!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/g;
+    for (const match of text.matchAll(imageRegex)) {
+      const img = new Image();
+      img.src = match[1];
+    }
+  }, [text]);
+
+  const minimumText = getMinimumText();
+
+  const truncatedContent = useMemo(
+    () => safelyTruncateMarkdown(text, minimumText),
+    [text, minimumText]
+  );
+
+  useEffect(() => {
+    if (text && text.length - 1 < minimumText) {
       setIsReadMore(false);
     } else {
       setIsReadMore(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, getMinimumText]);
+  }, [text, minimumText]);
 
   return (
     <div className="w-full max-w-full">
       {isReadMore ? (
         <MarkdownPreview
           className={markdownClass}
-          source={
-            safelyTruncateMarkdown(text, getMinimumText()) +
-            (text.length >= getMinimumText() ? "..." : "")
-          }
+          source={truncatedContent + (text.length >= minimumText ? "..." : "")}
         />
       ) : (
         <MarkdownPreview className={markdownClass} source={text} />
       )}
-      {text.length - 1 > getMinimumText() ? (
+      {text.length - 1 >= minimumText ? (
         <button
           type="button"
           onClick={toggleReadMore}
+          aria-expanded={!isReadMore}
           className="read-or-hide mt-2 bg-transparent border-none p-0 cursor-pointer w-full text-left block"
         >
           {isReadMore ? (

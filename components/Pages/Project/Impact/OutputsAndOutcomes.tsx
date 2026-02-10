@@ -11,8 +11,8 @@ import { Button } from "@/components/Utilities/Button";
 import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
 import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import type { IndicatorDatapoint, OutputForm, SelectedPointData } from "@/types/impact";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
@@ -37,7 +37,7 @@ export const OutputsAndOutcomes = () => {
   const { project, isProjectOwner } = useProjectStore();
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isCommunityAdmin = useIsCommunityAdmin();
 
   const { isConnected } = useAccount();
 

@@ -274,16 +274,18 @@ describe("OnrampFlow", () => {
       expect(input.value).toBe("50");
     });
 
-    it("syncs amount when initialAmount prop changes", () => {
+    it("does not overwrite user-typed input when initialAmount prop changes", () => {
       const wrapper = createWrapper();
       const { rerender } = render(<OnrampFlow {...defaultProps} initialAmount="50" />, { wrapper });
 
       const input = screen.getByPlaceholderText("0.00") as HTMLInputElement;
       expect(input.value).toBe("50");
 
+      // Rerendering with a new initialAmount should NOT overwrite the current value.
+      // Parent should use a key prop to remount if a reset is needed.
       rerender(<OnrampFlow {...defaultProps} initialAmount="200" />);
 
-      expect(input.value).toBe("200");
+      expect(input.value).toBe("50");
     });
 
     it("renders with empty amount when initialAmount is not provided", () => {

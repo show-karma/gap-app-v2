@@ -1,6 +1,6 @@
-import { queryClient } from "@/utilities/query-client";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 interface NotifyIndexerParams {

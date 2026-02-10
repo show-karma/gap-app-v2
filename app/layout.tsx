@@ -1,4 +1,5 @@
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import type { Viewport } from "next";
 import { defaultMetadata } from "@/utilities/meta";
 import "@/styles/globals.css";
 import "@/styles/index.scss";
@@ -8,21 +9,30 @@ import "react-day-picker/dist/style.css";
 import "@uiw/react-markdown-preview/markdown.css";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Analytics } from "@vercel/analytics/react";
-import { Agentation } from "agentation";
 import { ThemeProvider } from "next-themes";
 import { Suspense } from "react";
 import { Toaster } from "react-hot-toast";
 import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
 import { OnboardingDialog } from "@/components/Dialogs/OnboardingDialog";
 import { ProgressBarWrapper } from "@/components/ProgressBarWrapper";
+import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
 import HotjarAnalytics from "@/components/Utilities/HotjarAnalytics";
 import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider";
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { Footer } from "@/src/components/footer/footer";
 import { Navbar } from "@/src/components/navbar/navbar";
-import { envVars } from "@/utilities/enviromentVars";
 
 export const metadata = defaultMetadata;
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -34,7 +44,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <HotjarAnalytics />
       </Suspense>
       <body suppressHydrationWarning>
-        {envVars.VERCEL_ENV !== "production" && <Agentation />}
         <ThemeProvider
           defaultTheme="light"
           attribute="class"
@@ -77,6 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </PrivyProviderWrapper>
           <SpeedInsights />
         </ThemeProvider>
+        <OrganizationJsonLd />
       </body>
     </html>
   );

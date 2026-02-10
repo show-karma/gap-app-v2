@@ -377,7 +377,7 @@ describe("ProgramDetailsTab", () => {
       });
     });
 
-    it("should not show submit button in read-only mode", async () => {
+    it("should show disabled submit button in read-only mode", async () => {
       renderWithProviders(
         <ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} readOnly={true} />
       );
@@ -386,7 +386,7 @@ describe("ProgramDetailsTab", () => {
         expect(screen.getByLabelText(/program name/i)).toBeInTheDocument();
       });
 
-      expect(screen.queryByRole("button", { name: /save changes/i })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save changes/i })).toBeDisabled();
     });
 
     it("should disable form fields in read-only mode", async () => {
@@ -821,7 +821,6 @@ describe("ProgramDetailsTab", () => {
     });
 
     it("should prevent submission in read-only mode", async () => {
-      const user = userEvent.setup();
       renderWithProviders(
         <ProgramDetailsTab programId={mockProgramId} chainId={mockChainId} readOnly={true} />
       );
@@ -830,8 +829,8 @@ describe("ProgramDetailsTab", () => {
         expect(screen.getByLabelText(/program name/i)).toBeInTheDocument();
       });
 
-      // Submit button should not exist in read-only mode
-      expect(screen.queryByRole("button", { name: /save changes/i })).not.toBeInTheDocument();
+      // Submit button is rendered as disabled in read-only mode
+      expect(screen.getByRole("button", { name: /save changes/i })).toBeDisabled();
     });
   });
 

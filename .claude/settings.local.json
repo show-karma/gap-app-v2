@@ -50,7 +50,11 @@
       "WebFetch(domain:www.karmahq.xyz)",
       "Skill(commit-commands:commit)",
       "Bash(git push)",
-      "Bash(head:*)"
+      "Bash(head:*)",
+      "Bash(git status:*)",
+      "Bash(git fetch:*)",
+      "Bash(git rebase:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

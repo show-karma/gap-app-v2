@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { queryClient } from "@/utilities/query-client";
 import { getProjectUpdates } from "@/services/project-updates.service";
 import type {
   GrantMilestoneWithDetails,
@@ -9,6 +8,7 @@ import type {
   UnifiedMilestone,
   UpdatesApiResponse,
 } from "@/types/v2/roadmap";
+import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 /**

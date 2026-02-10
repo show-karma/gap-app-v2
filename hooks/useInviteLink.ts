@@ -2,10 +2,10 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { keccak256, toHex } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { queryClient } from "@/utilities/query-client";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { queryClient } from "@/utilities/query-client";
 
 interface InviteCode {
   id: string;

@@ -50,7 +50,7 @@ describe("Test Infrastructure Verification", () => {
         expect(fixture.permissions).toHaveProperty("reviewerPrograms");
         expect(fixture.permissions).toHaveProperty("isStaff");
         expect(fixture.permissions).toHaveProperty("isOwner");
-        expect(fixture.permissions).toHaveProperty("isPoolManager");
+        expect(fixture.permissions).toHaveProperty("isProgramCreator");
         expect(fixture.permissions).toHaveProperty("isRegistryAdmin");
       });
     });
@@ -244,8 +244,8 @@ describe("Test Infrastructure Verification", () => {
     });
 
     it("should have pool manager scenario", () => {
-      const fixture = getAuthFixture("pool-manager");
-      expect(fixture.permissions.isPoolManager).toBe(true);
+      const fixture = getAuthFixture("program-creator");
+      expect(fixture.permissions.isProgramCreator).toBe(true);
       expect(fixture.expectedElements.managePrograms).toBe(true);
     });
 

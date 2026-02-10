@@ -10,11 +10,13 @@ import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
+import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
-import { useStaff } from "@/hooks/useStaff";
 import { useWallet } from "@/hooks/useWallet";
 import { searchProjects } from "@/services/project-search.service";
+import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
+import { Role } from "@/src/core/rbac/types";
 import { useProjectStore } from "@/store";
 import { useMergeModalStore } from "@/store/modals/merge";
 import type { Project as ProjectResponse } from "@/types/v2/project";
@@ -173,7 +175,12 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const { switchChainAsync } = useWallet();
   const { startAttestation, showLoading, showSuccess, showError, dismiss, changeStepperStep } =
     useAttestationToast();
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { authenticated } = useAuth();
+  const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
+    {},
+    { enabled: authenticated }
+  );
+  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
   const createProjectPointer = async ({ ogProjectUID }: PointerType) => {
@@ -265,7 +272,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
     <>
       {buttonElement ? (
         <Button
-          disabled={isStaffLoading || (!isProjectAdmin && !isStaff)}
+          disabled={isPermissionsLoading || (!isProjectAdmin && !isSuperAdmin)}
           onClick={openModal}
           className={buttonElement.styleClass}
         >

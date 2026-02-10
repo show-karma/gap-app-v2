@@ -7,8 +7,12 @@ import {
   type DonationStatusApiResponse,
 } from "@/hooks/donation/types";
 import { donationsService } from "@/services/donations.service";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 const POLLING_INTERVAL_MS = 5000;
+
+const isTerminalStatus = (s?: string | null) =>
+  s === DonationStatus.COMPLETED || s === DonationStatus.FAILED;
 
 interface UseDonationPollingParams {
   donationUid: string | null;
@@ -30,26 +34,22 @@ export const useDonationPolling = ({
 }: UseDonationPollingParams): UseDonationPollingReturn => {
   const { data, isFetching, error } = useQuery<DonationApiResponse | DonationStatusApiResponse>({
     queryKey: pollingToken
-      ? ["donation-status", donationUid, chainId, pollingToken]
-      : ["donation", donationUid, chainId],
+      ? QUERY_KEYS.DONATIONS.STATUS(donationUid!, chainId, pollingToken)
+      : QUERY_KEYS.DONATIONS.POLLING(donationUid!, chainId),
     queryFn: () =>
       pollingToken
         ? donationsService.getDonationStatus(donationUid!, chainId, pollingToken)
         : donationsService.getDonationByUid(donationUid!, chainId),
     enabled: !!donationUid,
-    refetchInterval: (query) => {
-      const s = query.state.data?.status;
-      if (s === DonationStatus.COMPLETED || s === DonationStatus.FAILED) {
-        return false;
-      }
-      return POLLING_INTERVAL_MS;
-    },
+    refetchInterval: (q) => (isTerminalStatus(q.state.data?.status) ? false : POLLING_INTERVAL_MS),
+    refetchOnWindowFocus: (q) => !isTerminalStatus(q.state.data?.status),
+    refetchOnReconnect: (q) => !isTerminalStatus(q.state.data?.status),
+    refetchOnMount: (q) => !isTerminalStatus(q.state.data?.status),
     retry: false,
   });
 
   const status = (data?.status as DonationStatus) ?? null;
-  const isTerminal = status === DonationStatus.COMPLETED || status === DonationStatus.FAILED;
-  const isPolling = !!donationUid && isFetching && !isTerminal;
+  const isPolling = !!donationUid && isFetching && !isTerminalStatus(status);
 
   return {
     donation: data ?? null,

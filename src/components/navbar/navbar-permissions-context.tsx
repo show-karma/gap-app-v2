@@ -3,12 +3,9 @@
 import { createContext, type ReactNode, useContext, useMemo } from "react";
 import type { Hex } from "viem";
 import { useAuth } from "@/hooks/useAuth";
-import { useReviewerPrograms } from "@/hooks/usePermissions";
-import { useStaff } from "@/hooks/useStaff";
-import type { FundingProgram } from "@/services/fundingPlatformService";
+import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
+import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore } from "@/store";
-import { useCommunitiesStore } from "@/store/communities";
-import { useRegistryStore } from "@/store/registry";
 
 /**
  * Interface for the NavbarPermissionsContext value
@@ -29,14 +26,13 @@ export interface NavbarPermissionsContextValue {
 
   // Project/Community ownership
   isOwner: boolean;
+
+  // Context-aware permissions from RBAC
   isCommunityAdmin: boolean;
+  isReviewer: boolean;
 
-  // Reviewer permissions
-  hasReviewerRole: boolean;
-  reviewerPrograms: FundingProgram[];
-
-  // Registry permissions
-  isPoolManager: boolean;
+  // Registry permissions (from RBAC API)
+  isProgramCreator: boolean;
   isRegistryAdmin: boolean;
 
   // Derived permissions (computed from above values)
@@ -56,9 +52,8 @@ const defaultContextValue: NavbarPermissionsContextValue = {
   isStaffLoading: true,
   isOwner: false,
   isCommunityAdmin: false,
-  hasReviewerRole: false,
-  reviewerPrograms: [],
-  isPoolManager: false,
+  isReviewer: false,
+  isProgramCreator: false,
   isRegistryAdmin: false,
   hasAdminAccess: false,
   isRegistryAllowed: false,
@@ -66,9 +61,6 @@ const defaultContextValue: NavbarPermissionsContextValue = {
 
 const NavbarPermissionsContext = createContext<NavbarPermissionsContextValue>(defaultContextValue);
 
-/**
- * Props for NavbarPermissionsProvider
- */
 interface NavbarPermissionsProviderProps {
   children: ReactNode;
 }
@@ -77,89 +69,45 @@ interface NavbarPermissionsProviderProps {
  * Provider component that centralizes all permission-related hook calls
  *
  * This provider calls each permission hook exactly once and provides the
- * values to all child components through context. This prevents:
- * - Multiple API calls when the same hooks are used in different navbar components
- * - Race conditions from parallel hook calls
- * - Inconsistent permission states across components
- *
- * @example
- * ```tsx
- * <NavbarPermissionsProvider>
- *   <NavbarDesktopNavigation />
- *   <NavbarMobileMenu />
- *   <NavbarUserMenu />
- * </NavbarPermissionsProvider>
- * ```
+ * values to all child components through context.
  */
 export function NavbarPermissionsProvider({ children }: NavbarPermissionsProviderProps) {
-  // Auth state - called once
   const { authenticated: isLoggedIn, address, ready } = useAuth();
 
-  // Staff permissions - called once
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  // RBAC permissions (global context - no specific community/program)
+  const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
+    {},
+    { enabled: isLoggedIn }
+  );
 
-  // Community admin state - called once
-  const { communities } = useCommunitiesStore();
-
-  // Owner state - called once
   const isOwner = useOwnerStore((state) => state.isOwner);
 
-  // Registry permissions - called once
-  const { isPoolManager, isRegistryAdmin } = useRegistryStore();
-
-  // Reviewer programs - called once
-  const { programs: reviewerPrograms } = useReviewerPrograms();
-
-  // Memoize the context value to prevent unnecessary re-renders
-  // Only include primitive values and stable references in dependencies
-  // Derived values (isCommunityAdmin, hasReviewerRole, hasAdminAccess, isRegistryAllowed)
-  // are computed inside useMemo and should NOT be in the dependency array
   const value = useMemo<NavbarPermissionsContextValue>(() => {
-    // Compute derived values inside useMemo
-    const isCommunityAdmin = communities.length !== 0;
-    const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
-    const hasAdminAccess = !isStaffLoading && (isStaff || isOwner || isCommunityAdmin);
-    const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
+    const isStaff = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+    const isCommunityAdmin = permissions?.isCommunityAdmin ?? false;
+    const isReviewer = permissions?.isReviewer ?? false;
+    const isProgramCreator = permissions?.isProgramCreator ?? false;
+    const isRegistryAdmin = permissions?.isRegistryAdmin ?? false;
+    const hasAdminAccess = !isPermissionsLoading && (isStaff || isOwner || isCommunityAdmin);
+    // User can access Manage Programs if they are registry admin OR have created programs
+    const isRegistryAllowed =
+      !isPermissionsLoading && (isRegistryAdmin || isProgramCreator) && isLoggedIn;
 
     return {
-      // Auth state
       isLoggedIn,
       address,
       ready,
-
-      // Staff permissions
       isStaff,
-      isStaffLoading,
-
-      // Project/Community ownership
+      isStaffLoading: isPermissionsLoading,
       isOwner,
       isCommunityAdmin,
-
-      // Reviewer permissions
-      hasReviewerRole,
-      reviewerPrograms,
-
-      // Registry permissions
-      isPoolManager,
+      isReviewer,
+      isProgramCreator,
       isRegistryAdmin,
-
-      // Derived permissions
       hasAdminAccess,
       isRegistryAllowed,
     };
-  }, [
-    // Only primitive dependencies - NOT derived values
-    isLoggedIn,
-    address,
-    ready,
-    isStaff,
-    isStaffLoading,
-    isOwner,
-    communities.length, // Use .length instead of communities array for stable comparison
-    reviewerPrograms,
-    isPoolManager,
-    isRegistryAdmin,
-  ]);
+  }, [isLoggedIn, address, ready, permissions, isPermissionsLoading, isOwner]);
 
   return (
     <NavbarPermissionsContext.Provider value={value}>{children}</NavbarPermissionsContext.Provider>
@@ -168,31 +116,10 @@ export function NavbarPermissionsProvider({ children }: NavbarPermissionsProvide
 
 /**
  * Hook to access navbar permissions from context
- *
- * Must be used within a NavbarPermissionsProvider. Throws an error
- * if used outside the provider to catch configuration issues early.
- *
- * @returns NavbarPermissionsContextValue containing all permission states
- *
- * @example
- * ```tsx
- * function NavbarComponent() {
- *   const { isLoggedIn, hasAdminAccess, hasReviewerRole } = useNavbarPermissions();
- *
- *   return (
- *     <nav>
- *       {isLoggedIn && hasAdminAccess && <AdminLink />}
- *       {isLoggedIn && hasReviewerRole && <ReviewLink />}
- *     </nav>
- *   );
- * }
- * ```
  */
 export function useNavbarPermissions(): NavbarPermissionsContextValue {
   const context = useContext(NavbarPermissionsContext);
 
-  // Check if we're using the default context (no provider)
-  // This helps catch misconfiguration during development
   if (context === defaultContextValue && typeof window !== "undefined") {
     console.warn(
       "useNavbarPermissions must be used within a NavbarPermissionsProvider. " +
@@ -203,7 +130,4 @@ export function useNavbarPermissions(): NavbarPermissionsContextValue {
   return context;
 }
 
-/**
- * Export the context for advanced use cases (e.g., testing)
- */
 export { NavbarPermissionsContext };

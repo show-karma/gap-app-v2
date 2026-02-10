@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { donationsService } from "@/services/donations.service";
 import { type DonationApiResponse, DonationStatus, type DonationStatusApiResponse } from "../types";
@@ -43,6 +43,11 @@ const makeDonationResponse = (
 describe("useDonationPolling", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   describe("when donationUid is null (query disabled)", () => {
@@ -172,13 +177,13 @@ describe("useDonationPolling", () => {
         expect(result.current.donation).not.toBeNull();
       });
 
-      // After the initial fetch, clear mocks and wait to verify no more calls
       const callCount = mockDonationsService.getDonationByUid.mock.calls.length;
 
-      // Wait enough time for a refetch to have happened if it were enabled
-      await new Promise((r) => setTimeout(r, 100));
+      // Advance past the 5s polling interval to verify no refetch occurs
+      await act(async () => {
+        jest.advanceTimersByTime(6000);
+      });
 
-      // Should not have made additional calls
       expect(mockDonationsService.getDonationByUid.mock.calls.length).toBe(callCount);
     });
 
@@ -197,7 +202,9 @@ describe("useDonationPolling", () => {
 
       const callCount = mockDonationsService.getDonationByUid.mock.calls.length;
 
-      await new Promise((r) => setTimeout(r, 100));
+      await act(async () => {
+        jest.advanceTimersByTime(6000);
+      });
 
       expect(mockDonationsService.getDonationByUid.mock.calls.length).toBe(callCount);
     });

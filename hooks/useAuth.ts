@@ -5,6 +5,7 @@ import { watchAccount } from "@wagmi/core";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
+import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { queryClient } from "@/utilities/query-client";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
@@ -97,7 +98,10 @@ export const useAuth = () => {
 
   const { wallets } = useWallets();
   const primaryWallet = wallets[0];
-  const address = primaryWallet?.address as Hex | undefined;
+  const cypressMockAuthState = useMemo(() => getCypressMockAuthState(), [ready, authenticated]);
+  const isCypressMockAuthenticated = Boolean(cypressMockAuthState?.authenticated);
+  const cypressMockAddress = cypressMockAuthState?.user?.wallet?.address as Hex | undefined;
+  const address = (primaryWallet?.address as Hex | undefined) || cypressMockAddress;
 
   const shouldLoginAfterLogout = useRef(false);
   const prevAuthRef = useRef(authenticated);
@@ -265,8 +269,11 @@ export const useAuth = () => {
   }, [isConnected, authenticated, logout, login]);
 
   const connectedAndAuth = useMemo(() => {
+    if (isCypressMockAuthenticated) {
+      return true;
+    }
     return isConnected && authenticated;
-  }, [isConnected, authenticated]);
+  }, [isCypressMockAuthenticated, isConnected, authenticated]);
 
   return {
     // Core authentication (Privy handles everything)
@@ -274,9 +281,9 @@ export const useAuth = () => {
     disconnect: logout, // Just use Privy's logout
 
     // State from Privy
-    ready,
+    ready: isCypressMockAuthenticated ? true : ready,
     authenticated: connectedAndAuth,
-    isConnected,
+    isConnected: isCypressMockAuthenticated ? true : isConnected,
     user,
     address,
     primaryWallet,

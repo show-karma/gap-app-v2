@@ -71,15 +71,13 @@ export const createProjectQueryPredicate = (projectIdOrSlug: string) => {
 export const QUERY_KEYS = {
   /**
    * Authentication and authorization query keys
-   * Used for permission checks and staff authorization
+   * Used for permission checks (RBAC) and contract ownership
    */
   AUTH: {
-    STAFF_AUTHORIZATION: (address?: string) =>
-      ["staffAuthorization", address?.toLowerCase()] as const,
-    STAFF_AUTHORIZATION_BASE: ["staffAuthorization"] as const,
     CONTRACT_OWNER: (address?: string, chainId?: number) =>
       ["contract-owner", address, chainId] as const,
     CONTRACT_OWNER_BASE: ["contract-owner"] as const,
+    PERMISSIONS_BASE: ["permissions"] as const,
   },
   MILESTONES: {
     PROJECT_GRANT_MILESTONES: (projectId: string, programId: string) =>
@@ -144,6 +142,8 @@ export const QUERY_KEYS = {
   DONATIONS: {
     BY_USER: (walletAddress: string) => ["donations", "user", walletAddress] as const,
     BY_PROJECT: (projectUID: string) => ["donations", "project", projectUID] as const,
+    POLLING: (donationUid: string, chainId: number) =>
+      ["donation", "polling", donationUid, chainId] as const,
     STATUS: (uid: string, chainId: number, token: string) =>
       ["donation-status", uid, chainId, token] as const,
   },

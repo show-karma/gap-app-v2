@@ -37,9 +37,10 @@ export const resetMockAuthState = () => {
     isStaffLoading: false,
     isOwner: false,
     isCommunityAdmin: false,
+    isReviewer: false,
     hasReviewerRole: false,
     reviewerPrograms: [],
-    isPoolManager: false,
+    isProgramCreator: false,
     isRegistryAdmin: false,
     hasAdminAccess: false,
     isRegistryAllowed: false,
@@ -134,10 +135,14 @@ export const cleanupAfterEach = () => {
 const _resetAllPermissionMocksExtended = () => {
   resetPermissionMocks();
 
-  // Reset staff
-  const staffModule = require("@/hooks/useStaff");
-  if (staffModule.useStaff && jest.isMockFunction(staffModule.useStaff)) {
-    staffModule.useStaff.mockReturnValue({ isStaff: false });
+  // Reset RBAC permissions (replaces legacy useStaff)
+  const rbacModule = require("@/src/core/rbac/hooks/use-permissions");
+  if (rbacModule.usePermissionsQuery && jest.isMockFunction(rbacModule.usePermissionsQuery)) {
+    rbacModule.usePermissionsQuery.mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+    });
   }
 
   // Reset owner store (with selector support)
@@ -162,7 +167,7 @@ const _resetAllPermissionMocksExtended = () => {
   const registryModule = require("@/store/registry");
   if (registryModule.useRegistryStore && jest.isMockFunction(registryModule.useRegistryStore)) {
     registryModule.useRegistryStore.mockReturnValue({
-      isPoolManager: false,
+      isProgramCreator: false,
       isRegistryAdmin: false,
     });
   }
@@ -197,7 +202,7 @@ interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
   // Individual store mocks
   mockUseCommunitiesStore?: any;
   mockUseReviewerPrograms?: any;
-  mockUseStaff?: any;
+  mockUsePermissionsQuery?: any;
   mockUseOwnerStore?: any;
   mockUseRegistryStore?: any;
   mockUseContributorProfileModalStore?: any;
@@ -238,10 +243,10 @@ export const createMockUsePrivy = createMockUseAuth;
 export const createMockPermissions = (permissions: AuthFixture["permissions"]) => ({
   mockUseCommunitiesStore: createMockUseCommunitiesStore(permissions.communities),
   mockUseReviewerPrograms: createMockUseReviewerPrograms(permissions.reviewerPrograms),
-  mockUseStaff: createMockUseStaff(permissions.isStaff),
+  mockUsePermissionsQuery: createMockUsePermissionsQuery(permissions.isStaff),
   mockUseOwnerStore: createMockUseOwnerStore(permissions.isOwner),
   mockUseRegistryStore: createMockUseRegistryStore(
-    permissions.isPoolManager,
+    permissions.isProgramCreator,
     permissions.isRegistryAdmin
   ),
 });
@@ -300,20 +305,22 @@ const updateNavbarPermissionsState = (authMock?: any, permissionsMock?: any) => 
   // Extract permissions from mockPermissions if provided
   const communities = permissionsMock?.mockUseCommunitiesStore?.communities ?? [];
   const reviewerPrograms = permissionsMock?.mockUseReviewerPrograms?.programs ?? [];
-  const isStaff = permissionsMock?.mockUseStaff?.isStaff ?? false;
-  const isStaffLoading = permissionsMock?.mockUseStaff?.isLoading ?? false;
+  // Extract isStaff from RBAC permissions (SUPER_ADMIN role)
+  const rbacData = permissionsMock?.mockUsePermissionsQuery?.data;
+  const isStaff = rbacData?.roles?.roles?.includes("SUPER_ADMIN") ?? false;
+  const isStaffLoading = permissionsMock?.mockUsePermissionsQuery?.isLoading ?? false;
   const isOwner =
     typeof permissionsMock?.mockUseOwnerStore === "function"
       ? permissionsMock.mockUseOwnerStore((s: any) => s.isOwner)
       : (permissionsMock?.mockUseOwnerStore?.isOwner ?? false);
-  const isPoolManager = permissionsMock?.mockUseRegistryStore?.isPoolManager ?? false;
+  const isProgramCreator = permissionsMock?.mockUseRegistryStore?.isProgramCreator ?? false;
   const isRegistryAdmin = permissionsMock?.mockUseRegistryStore?.isRegistryAdmin ?? false;
 
   // Compute derived values
   const isCommunityAdmin = communities.length > 0;
-  const hasReviewerRole = reviewerPrograms.length > 0;
+  const isReviewer = reviewerPrograms.length > 0;
   const hasAdminAccess = !isStaffLoading && (isStaff || isOwner || isCommunityAdmin);
-  const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
+  const isRegistryAllowed = (isRegistryAdmin || isProgramCreator) && isLoggedIn;
 
   mockNavbarPermissionsState.current = {
     isLoggedIn,
@@ -323,9 +330,10 @@ const updateNavbarPermissionsState = (authMock?: any, permissionsMock?: any) => 
     isStaffLoading,
     isOwner,
     isCommunityAdmin,
-    hasReviewerRole,
+    isReviewer,
+    hasReviewerRole: isReviewer,
     reviewerPrograms,
-    isPoolManager,
+    isProgramCreator,
     isRegistryAdmin,
     hasAdminAccess,
     isRegistryAllowed,
@@ -398,14 +406,18 @@ const updatePermissionMocks = (mockPermissions?: any) => {
   const {
     mockUseCommunitiesStore,
     mockUseReviewerPrograms,
-    mockUseStaff,
+    mockUsePermissionsQuery,
     mockUseOwnerStore,
     mockUseRegistryStore,
   } = mockPermissions;
 
   updateStoreMock("@/store/communities", "useCommunitiesStore", mockUseCommunitiesStore);
   updateStoreMock("@/hooks/usePermissions", "useReviewerPrograms", mockUseReviewerPrograms);
-  updateStoreMock("@/hooks/useStaff", "useStaff", mockUseStaff);
+  updateStoreMock(
+    "@/src/core/rbac/hooks/use-permissions",
+    "usePermissionsQuery",
+    mockUsePermissionsQuery
+  );
   updateOwnerStoreMock(mockUseOwnerStore);
   updateStoreMock("@/store/registry", "useRegistryStore", mockUseRegistryStore);
 };
@@ -452,10 +464,24 @@ export const createMockUseReviewerPrograms = (
   refetch: jest.fn(),
 });
 
-export const createMockUseStaff = (isStaff: boolean) => ({
-  isStaff,
+/**
+ * Create mock RBAC permissions query result (replaces legacy createMockUseStaff)
+ * When isSuperAdmin is true, returns RBAC data with SUPER_ADMIN role
+ */
+export const createMockUsePermissionsQuery = (isSuperAdmin: boolean) => ({
+  data: isSuperAdmin
+    ? {
+        roles: {
+          primaryRole: "SUPER_ADMIN",
+          roles: ["SUPER_ADMIN"],
+          reviewerTypes: [],
+        },
+        permissions: [],
+        hasAdminAccessInAnyCommunity: true,
+      }
+    : null,
   isLoading: false,
-  error: null,
+  isError: false,
 });
 
 export const createMockUseOwnerStore = (isOwner: boolean) => {
@@ -463,12 +489,15 @@ export const createMockUseOwnerStore = (isOwner: boolean) => {
   return jest.fn((selector?: Function) => (selector ? selector(state) : state));
 };
 
-export const createMockUseRegistryStore = (isPoolManager: boolean, isRegistryAdmin: boolean) => ({
-  isPoolManager,
+export const createMockUseRegistryStore = (
+  isProgramCreator: boolean,
+  isRegistryAdmin: boolean
+) => ({
+  isProgramCreator,
   isRegistryAdmin,
   setIsPoolManager: jest.fn(),
   setIsRegistryAdmin: jest.fn(),
-  isPoolManagerLoading: false,
+  isProgramCreatorLoading: false,
   isRegistryAdminLoading: false,
   setIsPoolManagerLoading: jest.fn(),
   setIsRegistryAdminLoading: jest.fn(),
@@ -525,9 +554,9 @@ export const setupAuthMocks = (
     useReviewerPrograms: jest.fn(() => createMockUseReviewerPrograms(permissions.reviewerPrograms)),
   }));
 
-  // Mock useStaff
-  jest.mock("@/hooks/useStaff", () => ({
-    useStaff: jest.fn(() => createMockUseStaff(permissions.isStaff)),
+  // Mock RBAC permissions (replaces legacy useStaff)
+  jest.mock("@/src/core/rbac/hooks/use-permissions", () => ({
+    usePermissionsQuery: jest.fn(() => createMockUsePermissionsQuery(permissions.isStaff)),
   }));
 
   // Mock useOwnerStore
@@ -538,7 +567,7 @@ export const setupAuthMocks = (
   // Mock useRegistryStore
   jest.mock("@/store/registry", () => ({
     useRegistryStore: jest.fn(() =>
-      createMockUseRegistryStore(permissions.isPoolManager, permissions.isRegistryAdmin)
+      createMockUseRegistryStore(permissions.isProgramCreator, permissions.isRegistryAdmin)
     ),
   }));
 

@@ -6,6 +6,7 @@ import {
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
 interface ProgramSetupStatusProps {
@@ -37,7 +38,7 @@ export function ProgramSetupStatus({
 }: ProgramSetupStatusProps) {
   const status = getSetupStatus(hasFormFields, isEnabled);
 
-  const setupUrl = `/community/${communityId}/admin/funding-platform/${programId}/setup`;
+  const setupUrl = PAGES.MANAGE.FUNDING_PLATFORM.SETUP(communityId, programId);
 
   if (status === "complete") {
     return (

@@ -1,0 +1,212 @@
+"use client";
+
+import type { ReactNode } from "react";
+import { usePermissionContext } from "../context/permission-context";
+import type { Permission, ReviewerType } from "../types";
+import { Role } from "../types";
+
+interface CanProps {
+  permission?: Permission;
+  permissions?: Permission[];
+  requireAll?: boolean;
+  role?: Role;
+  roleOrHigher?: Role;
+  reviewerType?: ReviewerType;
+  children: ReactNode;
+  fallback?: ReactNode;
+  showWhileLoading?: boolean;
+}
+
+export function Can({
+  permission,
+  permissions,
+  requireAll = false,
+  role,
+  roleOrHigher,
+  reviewerType,
+  children,
+  fallback = null,
+  showWhileLoading = false,
+}: CanProps) {
+  const { can, canAny, canAll, hasRole, hasRoleOrHigher, isReviewerType, isLoading } =
+    usePermissionContext();
+
+  if (isLoading) {
+    return showWhileLoading ? <>{children}</> : <>{fallback}</>;
+  }
+
+  let hasAccess = false;
+
+  if (permission) {
+    hasAccess = can(permission);
+  } else if (permissions && permissions.length > 0) {
+    hasAccess = requireAll ? canAll(permissions) : canAny(permissions);
+  } else if (role) {
+    hasAccess = hasRole(role);
+  } else if (roleOrHigher) {
+    hasAccess = hasRoleOrHigher(roleOrHigher);
+  } else if (reviewerType) {
+    hasAccess = isReviewerType(reviewerType);
+  }
+
+  return hasAccess ? <>{children}</> : <>{fallback}</>;
+}
+
+interface CannotProps {
+  permission?: Permission;
+  permissions?: Permission[];
+  requireAll?: boolean;
+  role?: Role;
+  children: ReactNode;
+}
+
+export function Cannot({
+  permission,
+  permissions,
+  requireAll = false,
+  role,
+  children,
+}: CannotProps) {
+  const { can, canAny, canAll, hasRole, isLoading } = usePermissionContext();
+
+  if (isLoading) {
+    return null;
+  }
+
+  let hasAccess = false;
+
+  if (permission) {
+    hasAccess = can(permission);
+  } else if (permissions && permissions.length > 0) {
+    hasAccess = requireAll ? canAll(permissions) : canAny(permissions);
+  } else if (role) {
+    hasAccess = hasRole(role);
+  }
+
+  return hasAccess ? null : <>{children}</>;
+}
+
+interface RequirePermissionProps {
+  permission: Permission;
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+export function RequirePermission({
+  permission,
+  children,
+  fallback = null,
+}: RequirePermissionProps) {
+  return (
+    <Can permission={permission} fallback={fallback}>
+      {children}
+    </Can>
+  );
+}
+
+interface RequireRoleProps {
+  role: Role;
+  orHigher?: boolean;
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+export function RequireRole({
+  role,
+  orHigher = false,
+  children,
+  fallback = null,
+}: RequireRoleProps) {
+  if (orHigher) {
+    return (
+      <Can roleOrHigher={role} fallback={fallback}>
+        {children}
+      </Can>
+    );
+  }
+  return (
+    <Can role={role} fallback={fallback}>
+      {children}
+    </Can>
+  );
+}
+
+interface RequireReviewerProps {
+  type?: ReviewerType;
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+/**
+ * Renders children only if user has reviewer access.
+ * Uses context-aware `isReviewer` which is computed by the backend based on:
+ * - Global context: true if reviewer in any program
+ * - Community context: true if reviewer in any program of that community
+ * - Program context: true if reviewer in that specific program
+ * If `type` is specified, also requires that specific reviewer type.
+ */
+export function RequireReviewer({ type, children, fallback = null }: RequireReviewerProps) {
+  const { roles, isLoading, isReviewer } = usePermissionContext();
+
+  if (isLoading) {
+    return <>{fallback}</>;
+  }
+
+  if (!isReviewer) {
+    return <>{fallback}</>;
+  }
+
+  // If a specific type is required, check it (only applies at program level)
+  if (type && !roles.reviewerTypes?.includes(type)) {
+    return <>{fallback}</>;
+  }
+
+  return <>{children}</>;
+}
+
+interface AdminOnlyProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+  level?: "program" | "community" | "super";
+}
+
+export function AdminOnly({ children, fallback = null, level = "program" }: AdminOnlyProps) {
+  const roleMap: Record<string, Role> = {
+    program: Role.PROGRAM_ADMIN,
+    community: Role.COMMUNITY_ADMIN,
+    super: Role.SUPER_ADMIN,
+  };
+
+  return (
+    <Can roleOrHigher={roleMap[level]} fallback={fallback}>
+      {children}
+    </Can>
+  );
+}
+
+/**
+ * Accessible permission denied message component.
+ * Use as a fallback in Can/RequirePermission when users need to understand
+ * why they can't see content.
+ *
+ * @example
+ * ```tsx
+ * <Can
+ *   permission={Permission.PROGRAM_EDIT}
+ *   fallback={<PermissionDeniedMessage message="You need editor access to modify this program." />}
+ * >
+ *   <EditForm />
+ * </Can>
+ * ```
+ */
+export function PermissionDeniedMessage({
+  message = "You do not have permission to view this content.",
+}: {
+  message?: string;
+}) {
+  return (
+    <output aria-live="polite">
+      <p>{message}</p>
+    </output>
+  );
+}

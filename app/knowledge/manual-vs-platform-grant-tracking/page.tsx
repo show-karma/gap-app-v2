@@ -1,3 +1,13 @@
+import type { Metadata } from "next";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Karma vs Manual Grant Tracking",
+  description:
+    "A comparison of spreadsheets, documents, and dedicated funding platforms for grant tracking, and when each approach breaks down.",
+  path: "/knowledge/manual-vs-platform-grant-tracking",
+});
+
 export default function ManualVsPlatformGrantTrackingPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
@@ -43,6 +53,8 @@ export default function ManualVsPlatformGrantTrackingPage() {
           <p className="text-gray-700 dark:text-gray-300">
             <a
               href="https://www.karmahq.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Karma

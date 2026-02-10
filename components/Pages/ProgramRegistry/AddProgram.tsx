@@ -27,7 +27,6 @@ import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { getCommunities } from "@/services/communities.service";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
-import { useRegistryStore } from "@/store/registry";
 import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import fetchData from "@/utilities/fetchData";
@@ -287,8 +286,51 @@ export default function AddProgram({
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const { changeStepperStep, setIsStepper } = useAttestationToast();
 
-  const { isRegistryAdmin } = useRegistryStore();
-
+  // Metadata is constructed inline rather than via ProgramRegistryService.buildProgramMetadata()
+  // because this form has significantly more fields (social links, categories, ecosystems, etc.)
+  // than CreateProgramFormData supports. The service method is designed for the simpler
+  // CreateProgramModal form used in the funding-platform context.
+  const buildMetadata = (data: ProgramFormData) => ({
+    title: data.name,
+    description: data.description,
+    programBudget: data.budget,
+    amountDistributedToDate: data.amountDistributed,
+    minGrantSize: data.minGrantSize,
+    maxGrantSize: data.maxGrantSize,
+    grantsToDate: data.grantsToDate,
+    startsAt: data.dates.startsAt,
+    endsAt: data.dates.endsAt,
+    website: data.website || "",
+    projectTwitter: data.twitter || "",
+    socialLinks: {
+      twitter: data.twitter || "",
+      website: data.website || "",
+      discord: data.discord || "",
+      orgWebsite: data.orgWebsite || "",
+      blog: data.blog || "",
+      forum: data.forum || "",
+      grantsSite: data.grantsSite || "",
+      telegram: data.telegram || "",
+    },
+    bugBounty: data.bugBounty,
+    categories: data.categories,
+    ecosystems: data.ecosystems,
+    organizations: data.organizations,
+    networks: data.networks,
+    grantTypes: data.grantTypes,
+    platformsUsed: data.platformsUsed,
+    logoImg: "",
+    bannerImg: "",
+    logoImgData: {},
+    bannerImgData: {},
+    credentials: {},
+    anyoneCanJoin: data.anyoneCanJoin,
+    type: "program",
+    tags: ["karma-gap", "grant-program-registry"],
+    communityRef: data.communityRef,
+    adminEmails: data.adminEmails,
+    financeEmails: data.financeEmails,
+  });
   const createProgram = async (data: ProgramFormData) => {
     setIsLoading(true);
     try {
@@ -298,52 +340,7 @@ export default function AddProgram({
       }
       const chainSelected = data.networkToCreate;
 
-      // Metadata is constructed inline rather than via ProgramRegistryService.buildProgramMetadata()
-      // because this form has significantly more fields (social links, categories, ecosystems, etc.)
-      // than CreateProgramFormData supports. The service method is designed for the simpler
-      // CreateProgramModal form used in the funding-platform context.
-      const metadata = {
-        title: data.name,
-        description: data.description,
-        programBudget: data.budget,
-        amountDistributedToDate: data.amountDistributed,
-        minGrantSize: data.minGrantSize,
-        maxGrantSize: data.maxGrantSize,
-        grantsToDate: data.grantsToDate,
-        startsAt: data.dates.startsAt,
-        endsAt: data.dates.endsAt,
-        website: data.website || "",
-        projectTwitter: data.twitter || "",
-        socialLinks: {
-          twitter: data.twitter || "",
-          website: data.website || "",
-          discord: data.discord || "",
-          orgWebsite: data.orgWebsite || "",
-          blog: data.blog || "",
-          forum: data.forum || "",
-          grantsSite: data.grantsSite || "",
-          telegram: data.telegram || "",
-        },
-        bugBounty: data.bugBounty,
-        categories: data.categories,
-        ecosystems: data.ecosystems,
-        organizations: data.organizations,
-        networks: data.networks,
-        grantTypes: data.grantTypes,
-        platformsUsed: data.platformsUsed,
-        logoImg: "",
-        bannerImg: "",
-        logoImgData: {},
-        bannerImgData: {},
-        credentials: {},
-        anyoneCanJoin: data.anyoneCanJoin,
-        status: "Active",
-        type: "program",
-        tags: ["karma-gap", "grant-program-registry"],
-        communityRef: data.communityRef,
-        adminEmails: data.adminEmails,
-        financeEmails: data.financeEmails,
-      };
+      const metadata = { ...buildMetadata(data), status: "Active" };
 
       // Use V2 endpoint - owner comes from JWT session
       const [_request, error] = await fetchData(
@@ -416,48 +413,9 @@ export default function AddProgram({
 
       const { walletSigner } = setup;
 
-      // See createProgram comment for why metadata is constructed inline
       const metadata = sanitizeObject({
-        title: data.name,
-        description: data.description,
-        programBudget: data.budget,
-        amountDistributedToDate: data.amountDistributed,
-        minGrantSize: data.minGrantSize,
-        maxGrantSize: data.maxGrantSize,
-        grantsToDate: data.grantsToDate,
-        startsAt: data.dates.startsAt,
-        endsAt: data.dates.endsAt,
-        website: data.website || "",
-        projectTwitter: data.twitter || "",
-        socialLinks: {
-          twitter: data.twitter || "",
-          website: data.website || "",
-          discord: data.discord || "",
-          orgWebsite: data.orgWebsite || "",
-          blog: data.blog || "",
-          forum: data.forum || "",
-          grantsSite: data.grantsSite || "",
-          telegram: data.telegram || "",
-        },
-        bugBounty: data.bugBounty,
-        categories: data.categories,
-        ecosystems: data.ecosystems,
-        organizations: data.organizations,
-        networks: data.networks,
-        grantTypes: data.grantTypes,
-        platformsUsed: data.platformsUsed,
-        logoImg: "",
-        bannerImg: "",
-        logoImgData: {},
-        bannerImgData: {},
-        credentials: {},
-        anyoneCanJoin: data.anyoneCanJoin,
-        type: "program",
-        tags: ["karma-gap", "grant-program-registry"],
+        ...buildMetadata(data),
         status: data.status,
-        communityRef: data.communityRef,
-        adminEmails: data.adminEmails,
-        financeEmails: data.financeEmails,
       });
 
       // Always use V2 update endpoint (off-chain)

@@ -130,10 +130,8 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
       return "delivering" as const;
     }, [polledStatus, sessionData.status]);
 
-    const resolvedChainId = useMemo(() => {
-      const networkKey = txDetails?.destination_network?.toLowerCase() || network.toLowerCase();
-      return NETWORK_CHAIN_IDS[networkKey] || NETWORK_CHAIN_IDS["base"];
-    }, [txDetails?.destination_network, network]);
+    const networkKey = txDetails?.destination_network?.toLowerCase();
+    const resolvedChainId = (networkKey && NETWORK_CHAIN_IDS[networkKey]) || chainId;
 
     const explorerUrl = useMemo(() => {
       const txHash = donation?.transactionHash || txDetails?.transaction_id;
@@ -144,8 +142,8 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
     const formattedFiatAmount = useMemo(() => {
       const sourceAmount = txDetails?.source_amount;
       if (!sourceAmount) return null;
-      const amount = parseFloat(sourceAmount);
-      if (Number.isNaN(amount)) return null;
+      const amount = Number(sourceAmount);
+      if (!Number.isFinite(amount) || amount <= 0) return null;
       return new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: txDetails?.source_currency?.toUpperCase() || "USD",
@@ -155,11 +153,11 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
     const cryptoAmount = useMemo(() => {
       const destAmount = donation?.amount || txDetails?.destination_amount;
       if (!destAmount) return null;
-      const amount = parseFloat(destAmount);
-      if (Number.isNaN(amount)) return null;
+      const amount = Number(destAmount);
+      if (!Number.isFinite(amount) || amount <= 0) return null;
       const currency =
         donation?.tokenSymbol || txDetails?.destination_currency?.toUpperCase() || "USDC";
-      return `${amount.toFixed(amount % 1 === 0 ? 2 : 6)} ${currency}`;
+      return `${parseFloat(amount.toFixed(6))} ${currency}`;
     }, [
       donation?.amount,
       donation?.tokenSymbol,
@@ -233,15 +231,15 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
 
           <div className="p-6 pt-10 space-y-6">
             <div className="text-center">
+              <h2 id="onramp-success-title" className="sr-only">
+                {title}
+              </h2>
               {formattedFiatAmount && (
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formattedFiatAmount}
-                </h2>
+                </p>
               )}
-              <p
-                id="onramp-success-title"
-                className="text-sm text-gray-500 dark:text-zinc-400 mt-1"
-              >
+              <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">
                 {title} &mdash; {subtitle}
               </p>
             </div>

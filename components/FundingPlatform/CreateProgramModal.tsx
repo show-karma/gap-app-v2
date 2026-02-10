@@ -1,5 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -26,6 +27,7 @@ import { ProgramRegistryService } from "@/services/programRegistry.service";
 import type { CreateProgramFormData } from "@/types/program-registry";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
 
 interface CreateProgramModalProps {
   isOpen: boolean;
@@ -40,6 +42,7 @@ export function CreateProgramModal({
   communityId,
   onSuccess,
 }: CreateProgramModalProps) {
+  const router = useRouter();
   const { address, isConnected } = useAccount();
   const { authenticated: isAuth, login } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -91,7 +94,7 @@ export function CreateProgramModal({
 
     setIsSubmitting(true);
     try {
-      // Build metadata using service
+      // Build metadata using service (defaults to anyoneCanJoin: false for admin-created programs)
       const metadata = ProgramRegistryService.buildProgramMetadata(
         data as CreateProgramFormData,
         community
@@ -102,12 +105,21 @@ export function CreateProgramModal({
       metadata.financeEmails = data.financeEmails;
 
       // Create program using service
-      await ProgramRegistryService.createProgram(address, community.chainID, metadata);
+      const result = await ProgramRegistryService.createProgram(
+        address,
+        community.chainID,
+        metadata
+      );
 
       toast.success("Program created successfully!", { duration: 3000 });
       reset();
       onSuccess();
       onClose();
+
+      // Navigate to setup wizard if we have a programId
+      if (result?.programId) {
+        router.push(PAGES.MANAGE.FUNDING_PLATFORM.SETUP(communityId, result.programId));
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage?.includes("already exists")) {
