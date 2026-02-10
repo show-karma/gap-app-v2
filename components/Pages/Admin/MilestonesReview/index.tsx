@@ -2,9 +2,10 @@
 
 import { ArrowLeftIcon, ChevronLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
+import { Badge } from "@/components/ui/badge";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useDeleteMilestone } from "@/hooks/useDeleteMilestone";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
@@ -20,9 +21,11 @@ import {
 import { ReviewerType } from "@/src/core/rbac/types";
 import { useOwnerStore } from "@/store";
 import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
 import { CommentsAndActivity } from "./CommentsAndActivity";
 import { GrantCompleteButtonForReviewer } from "./GrantCompleteButtonForReviewer";
 import { MilestoneCard } from "./MilestoneCard";
+import { FILTER_TABS, getMilestoneStatusKey, type MilestoneFilterStatus } from "./milestoneStatus";
 
 interface MilestonesReviewPageProps {
   communityId: string;
@@ -74,6 +77,8 @@ function MilestonesReviewPageContent({
   const [verifyingMilestoneId, setVerifyingMilestoneId] = useState<string | null>(null);
   const [verificationComment, setVerificationComment] = useState("");
   const [deletingMilestoneId, setDeletingMilestoneId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<MilestoneFilterStatus>("pending_verification");
+  const userSelectedFilter = useRef(false);
 
   const { address } = useAccount();
   const {
@@ -247,6 +252,38 @@ function MilestonesReviewPageContent({
     [deleteMilestoneAsync]
   );
 
+  const allMilestones = data?.grantMilestones ?? [];
+
+  const { filteredMilestones, counts } = useMemo(() => {
+    const counts: Record<MilestoneFilterStatus, number> = {
+      all: allMilestones.length,
+      verified: 0,
+      pending_verification: 0,
+      pending_completion: 0,
+      not_started: 0,
+    };
+    for (const m of allMilestones) {
+      counts[getMilestoneStatusKey(m)]++;
+    }
+    const filtered =
+      statusFilter === "all"
+        ? allMilestones
+        : allMilestones.filter((m) => getMilestoneStatusKey(m) === statusFilter);
+    return { filteredMilestones: filtered, counts };
+  }, [allMilestones, statusFilter]);
+
+  // Fall back to "all" if no pending verification milestones on initial load
+  useEffect(() => {
+    if (
+      !userSelectedFilter.current &&
+      statusFilter === "pending_verification" &&
+      counts.pending_verification === 0 &&
+      allMilestones.length > 0
+    ) {
+      setStatusFilter("all");
+    }
+  }, [counts.pending_verification, statusFilter, allMilestones.length]);
+
   // Show loading while checking authorization
   if (isLoading || isLoadingReviewer || isLoadingAdminAccess) {
     return (
@@ -384,14 +421,63 @@ function MilestonesReviewPageContent({
               <h2 className="text-xl font-semibold mb-4 text-black dark:text-white">
                 Project Milestones
               </h2>
+
+              {/* Status filter tabs */}
+              {grantMilestones.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {FILTER_TABS.map((tab) => {
+                    const isActive = statusFilter === tab.key;
+                    return (
+                      <Badge
+                        key={tab.key}
+                        variant="outline"
+                        role="button"
+                        tabIndex={0}
+                        aria-pressed={isActive}
+                        onClick={() => {
+                          userSelectedFilter.current = true;
+                          setStatusFilter(tab.key);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            userSelectedFilter.current = true;
+                            setStatusFilter(tab.key);
+                          }
+                        }}
+                        className={cn(
+                          "cursor-pointer rounded-full border-border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted transition-colors select-none gap-1.5",
+                          isActive &&
+                            "bg-brand-blue text-white border-brand-blue hover:bg-brand-blue/90"
+                        )}
+                      >
+                        {tab.label}
+                        <span
+                          className={cn(
+                            "inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-[0.65rem] font-semibold",
+                            isActive ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
+                          )}
+                        >
+                          {counts[tab.key]}
+                        </span>
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )}
+
               <div className="space-y-4">
-                {grantMilestones.length === 0 ? (
+                {filteredMilestones.length === 0 ? (
                   <div className="text-center py-8 text-gray-400 dark:text-gray-500">
                     <p className="text-lg font-medium">No milestones found</p>
-                    <p className="text-sm">This project does not have any milestones yet</p>
+                    <p className="text-sm">
+                      {grantMilestones.length === 0
+                        ? "This project does not have any milestones yet"
+                        : "No milestones match the selected filter"}
+                    </p>
                   </div>
                 ) : (
-                  grantMilestones.map((milestone, index) => (
+                  filteredMilestones.map((milestone, index) => (
                     <MilestoneCard
                       key={milestone.uid || index}
                       milestone={milestone}
