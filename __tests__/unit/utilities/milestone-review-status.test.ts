@@ -4,6 +4,7 @@ import {
   MILESTONE_STATUS_CONFIG,
   type MilestoneFilterKey,
   MilestoneReviewStatus,
+  sortMilestones,
 } from "@/components/Pages/Admin/MilestonesReview/utils/milestone-review-status";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 
@@ -189,5 +190,84 @@ describe("FILTER_TABS", () => {
     for (const tab of FILTER_TABS) {
       expect(validKeys.has(tab.key)).toBe(true);
     }
+  });
+});
+
+describe("sortMilestones", () => {
+  const verified = (dueDate: string) =>
+    makeMilestone({
+      uid: `v-${dueDate}`,
+      dueDate,
+      verificationDetails: {
+        description: "OK",
+        verifiedAt: "2025-01-16T00:00:00Z",
+        verifiedBy: "0xabc",
+      },
+      completionDetails: {
+        description: "Done",
+        completedAt: "2025-01-15T00:00:00Z",
+        completedBy: "0xdef",
+      },
+    });
+
+  const pending = (dueDate: string) =>
+    makeMilestone({
+      uid: `p-${dueDate}`,
+      dueDate,
+      completionDetails: {
+        description: "Done",
+        completedAt: "2025-01-15T00:00:00Z",
+        completedBy: "0xdef",
+      },
+    });
+
+  const notStarted = (dueDate: string) => makeMilestone({ uid: `ns-${dueDate}`, dueDate });
+
+  it("sorts non-verified milestones before verified ones", () => {
+    const milestones = [verified("2025-01-01"), pending("2025-06-01"), notStarted("2025-03-01")];
+    const sorted = sortMilestones(milestones);
+    const uids = sorted.map((m) => m.uid);
+    expect(uids).toEqual(["ns-2025-03-01", "p-2025-06-01", "v-2025-01-01"]);
+  });
+
+  it("sorts by due date ascending within non-verified group", () => {
+    const milestones = [pending("2025-06-01"), notStarted("2025-01-01"), pending("2025-03-01")];
+    const sorted = sortMilestones(milestones);
+    const uids = sorted.map((m) => m.uid);
+    expect(uids).toEqual(["ns-2025-01-01", "p-2025-03-01", "p-2025-06-01"]);
+  });
+
+  it("sorts by due date ascending within verified group", () => {
+    const milestones = [verified("2025-12-01"), verified("2025-02-01"), verified("2025-07-01")];
+    const sorted = sortMilestones(milestones);
+    const uids = sorted.map((m) => m.uid);
+    expect(uids).toEqual(["v-2025-02-01", "v-2025-07-01", "v-2025-12-01"]);
+  });
+
+  it("does not mutate the original array", () => {
+    const milestones = [verified("2025-06-01"), notStarted("2025-01-01")];
+    const original = [...milestones];
+    sortMilestones(milestones);
+    expect(milestones.map((m) => m.uid)).toEqual(original.map((m) => m.uid));
+  });
+
+  it("handles empty array", () => {
+    expect(sortMilestones([])).toEqual([]);
+  });
+
+  it("handles single milestone", () => {
+    const milestones = [notStarted("2025-01-01")];
+    const sorted = sortMilestones(milestones);
+    expect(sorted).toHaveLength(1);
+    expect(sorted[0].uid).toBe("ns-2025-01-01");
+  });
+
+  it("accepts a custom status function", () => {
+    const milestones = [notStarted("2025-06-01"), notStarted("2025-01-01")];
+    // Force first milestone to be treated as verified via custom statusFn
+    const sorted = sortMilestones(milestones, (m) =>
+      m.uid === "ns-2025-06-01" ? MilestoneReviewStatus.Verified : MilestoneReviewStatus.NotStarted
+    );
+    expect(sorted.map((m) => m.uid)).toEqual(["ns-2025-01-01", "ns-2025-06-01"]);
   });
 });

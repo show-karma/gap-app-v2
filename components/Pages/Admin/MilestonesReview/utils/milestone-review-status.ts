@@ -50,3 +50,19 @@ export function getMilestoneStatus(milestone: GrantMilestoneWithCompletion): Mil
     return MilestoneReviewStatus.PendingCompletion;
   return MilestoneReviewStatus.NotStarted;
 }
+
+/**
+ * Sort milestones: non-verified first by due date ascending,
+ * then verified milestones by due date ascending.
+ */
+export function sortMilestones(
+  milestones: GrantMilestoneWithCompletion[],
+  statusFn: (m: GrantMilestoneWithCompletion) => MilestoneReviewStatus = getMilestoneStatus
+): GrantMilestoneWithCompletion[] {
+  return [...milestones].sort((a, b) => {
+    const aVerified = statusFn(a) === MilestoneReviewStatus.Verified ? 1 : 0;
+    const bVerified = statusFn(b) === MilestoneReviewStatus.Verified ? 1 : 0;
+    if (aVerified !== bVerified) return aVerified - bVerified;
+    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+  });
+}

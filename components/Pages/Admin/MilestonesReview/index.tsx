@@ -30,6 +30,7 @@ import {
   getMilestoneStatus,
   type MilestoneFilterKey,
   MilestoneReviewStatus,
+  sortMilestones,
 } from "./utils/milestone-review-status";
 
 const EMPTY_MILESTONES: GrantMilestoneWithCompletion[] = [];
@@ -270,11 +271,14 @@ function MilestonesReviewPageContent({
     return hasPending ? MilestoneReviewStatus.PendingVerification : "all";
   }, [statusFilter, milestones]);
 
-  // Single-pass: group milestones by status, derive counts and filtered list
+  // Single-pass: group milestones by status, derive counts, filter, and sort.
+  // Sort: non-verified by due date asc first, verified by due date asc last.
   const { filteredMilestones, counts } = useMemo(() => {
+    const statusMap = new Map<GrantMilestoneWithCompletion, MilestoneReviewStatus>();
     const grouped = new Map<MilestoneReviewStatus, GrantMilestoneWithCompletion[]>();
     for (const m of milestones) {
       const s = getMilestoneStatus(m);
+      statusMap.set(m, s);
       let group = grouped.get(s);
       if (!group) {
         group = [];
@@ -295,8 +299,9 @@ function MilestonesReviewPageContent({
     };
 
     const filtered = activeFilter === "all" ? milestones : (grouped.get(activeFilter) ?? []);
+    const sorted = sortMilestones(filtered, (m) => statusMap.get(m) ?? getMilestoneStatus(m));
 
-    return { filteredMilestones: filtered, counts };
+    return { filteredMilestones: sorted, counts };
   }, [milestones, activeFilter]);
 
   // Show loading while checking authorization
