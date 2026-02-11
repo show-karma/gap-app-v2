@@ -89,8 +89,8 @@ export interface GrantMilestone {
   } | null;
   createdAt?: string;
   updatedAt?: string;
-  /** V2: Array of verification attestations */
-  verified: Verification[];
+  /** V2: Array of verification attestations. Undefined means not verified. */
+  verified?: Verification[];
   // Additional fields for compatibility
   id?: string;
   schemaUID?: string;
@@ -111,8 +111,8 @@ export interface GrantUpdate {
   completionPercentage?: string;
   currentStatus?: string;
   statusUpdatedAt?: string;
-  /** V2: Array of verification attestations */
-  verified: Verification[];
+  /** V2: Array of verification attestations. Undefined means not verified. */
+  verified?: Verification[];
   createdAt?: string;
   data?: {
     title?: string;

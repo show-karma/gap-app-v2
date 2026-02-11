@@ -8,6 +8,7 @@ import type {
   UnifiedMilestone,
   UpdatesApiResponse,
 } from "@/types/v2/roadmap";
+import { normalizeToUnixSeconds } from "@/utilities/formatDate";
 import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
@@ -119,20 +120,10 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
     let milestoneEndsAt: number | undefined;
     if (milestone.dueDate) {
       milestoneEndsAt = Math.floor(new Date(milestone.dueDate).getTime() / 1000);
-    } else if (milestone.data?.endsAt) {
-      // Raw attestation data may have endsAt as Unix timestamp
-      const endsAt = Number(milestone.data.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
-        // Check if seconds (10 digits) or milliseconds (13+ digits)
-        const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
-        milestoneEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
-      }
-    } else if (milestone.endsAt) {
-      // Direct endsAt field
-      const endsAt = Number(milestone.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
-        const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
-        milestoneEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
+    } else {
+      const raw = Number(milestone.data?.endsAt ?? milestone.endsAt);
+      if (!isNaN(raw) && raw > 0) {
+        milestoneEndsAt = normalizeToUnixSeconds(raw);
       }
     }
 
@@ -191,7 +182,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
                     createdAt: milestone.verificationDetails.verifiedAt || "",
                   },
                 ]
-              : [],
+              : undefined,
           },
           grant: {
             uid: grantInfo?.uid || "",
@@ -226,17 +217,10 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
     let updateEndsAt: number | undefined;
     if (update.dueDate) {
       updateEndsAt = Math.floor(new Date(update.dueDate).getTime() / 1000);
-    } else if (update.data?.endsAt) {
-      const endsAt = Number(update.data.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
-        const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
-        updateEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
-      }
-    } else if (update.endsAt) {
-      const endsAt = Number(update.endsAt);
-      if (!isNaN(endsAt) && endsAt > 0) {
-        const digitCount = Math.floor(Math.log10(Math.abs(endsAt))) + 1;
-        updateEndsAt = digitCount <= 10 ? endsAt : Math.floor(endsAt / 1000);
+    } else {
+      const raw = Number(update.data?.endsAt ?? update.endsAt);
+      if (!isNaN(raw) && raw > 0) {
+        updateEndsAt = normalizeToUnixSeconds(raw);
       }
     }
 
@@ -267,8 +251,8 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
         },
         // Boolean-to-presence bridge: `[]` = verified, `undefined` = not verified.
         // V2 API only returns a boolean; individual verification records aren't available.
-        // No downstream component reads this field — UI verification status is driven by
-        // source.grantMilestone.milestone.verified instead.
+        // Downstream components read source.grantMilestone.milestone.verified (below),
+        // not this top-level verified field.
         verified: update.verified ? [] : undefined,
       },
       source: {
@@ -279,7 +263,7 @@ export const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMil
             chainID,
             attester: updateRecipient, // Add attester for consistency with grant milestones
             title: update.title,
-            verified: [],
+            verified: update.verified ? [] : undefined,
           },
           grant: {
             uid: grantInfo?.uid || "",

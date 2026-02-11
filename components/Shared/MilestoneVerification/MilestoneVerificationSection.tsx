@@ -28,15 +28,18 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
       return isVerifiedProp;
     }
 
-    // For GrantMilestone: defined verified (including []) means verified
+    // For GrantMilestone: non-empty verified array means verified
     if ("verified" in milestone) {
-      return milestone.verified !== undefined;
+      return Array.isArray(milestone.verified) && milestone.verified.length > 0;
     }
 
     // For UnifiedMilestone
     if ("source" in milestone) {
       const grantMilestone = milestone.source.grantMilestone;
-      return grantMilestone?.milestone.verified !== undefined;
+      return (
+        Array.isArray(grantMilestone?.milestone.verified) &&
+        grantMilestone.milestone.verified.length > 0
+      );
     }
 
     return false;
@@ -95,7 +98,8 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
         createdAt: v.createdAt,
         data: { reason: v.reason },
       }));
-    } catch {
+    } catch (err) {
+      console.warn("Failed to parse verification data", err);
       return undefined;
     }
   }, [milestone]);

@@ -6,7 +6,7 @@ import {
 } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
-import { type FC, useMemo, useState } from "react";
+import { type FC, useState } from "react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
@@ -156,12 +156,10 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
     projectMilestone?.completed?.createdAt || grantMilestone?.milestone.completed?.createdAt;
   const completionAttester =
     projectMilestone?.completed?.attester || grantMilestone?.milestone.completed?.attester;
-  // V2: defined verified (including []) means verified; undefined means not verified.
-  const isVerified = useMemo(
-    () =>
-      projectMilestone?.verified !== undefined || grantMilestone?.milestone.verified !== undefined,
-    [projectMilestone?.verified, grantMilestone?.milestone.verified]
-  );
+  const isVerified =
+    (Array.isArray(projectMilestone?.verified) && projectMilestone.verified.length > 0) ||
+    (Array.isArray(grantMilestone?.milestone.verified) &&
+      grantMilestone.milestone.verified.length > 0);
   const completionDeliverables =
     projectMilestone?.completed?.data?.deliverables ||
     grantMilestone?.milestone.completed?.data?.deliverables;

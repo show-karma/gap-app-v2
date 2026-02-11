@@ -118,7 +118,7 @@ export const pollForMilestoneStatus = async ({
       }
 
       // When only checking verification, check if ANY verification exists (regardless of user)
-      return updatedMilestone.verified !== undefined;
+      return Array.isArray(updatedMilestone.verified) && updatedMilestone.verified.length > 0;
     },
     undefined,
     maxRetries,

@@ -178,15 +178,17 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const isCommunityAdmin = useIsCommunityAdmin();
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
-  // V2: verified is an array of verifications
-  const [isVerified, setIsVerified] = useState<boolean>(milestone?.verified !== undefined);
+  // V2: verified is an array of verifications — non-empty means verified
+  const [isVerified, setIsVerified] = useState<boolean>(
+    Array.isArray(milestone?.verified) && milestone.verified.length > 0
+  );
 
   const markAsVerified = () => {
     setIsVerified(true);
   };
 
   useEffect(() => {
-    setIsVerified(milestone?.verified !== undefined);
+    setIsVerified(Array.isArray(milestone?.verified) && milestone.verified.length > 0);
   }, [milestone]);
 
   // Extract actual date value from various formats (handles MongoDB { $date: ... } format)
@@ -286,22 +288,19 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               <p className="text-sm w-full min-w-max max-w-max font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
                 Proof of work:
               </p>
-              <ExternalLink
-                href={
-                  completionData?.data?.proofOfWork.includes("http")
-                    ? completionData?.data?.proofOfWork
-                    : `https://${completionData?.data?.proofOfWork}`
-                }
-                className="flex flex-row w-max max-w-full break-all gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent line-clamp-3"
-              >
-                {completionData?.data?.proofOfWork.includes("http")
-                  ? `${completionData?.data?.proofOfWork.slice(0, 80)}${
-                      completionData?.data?.proofOfWork.slice(0, 80).length >= 80 ? "..." : ""
-                    }`
-                  : `https://${completionData?.data?.proofOfWork.slice(0, 80)}${
-                      completionData?.data?.proofOfWork.slice(0, 80).length >= 80 ? "..." : ""
-                    }`}
-              </ExternalLink>
+              {(() => {
+                const rawProof = completionData.data.proofOfWork;
+                const proofUrl = rawProof.includes("http") ? rawProof : `https://${rawProof}`;
+                const proofLabel = proofUrl.length > 80 ? `${proofUrl.slice(0, 80)}...` : proofUrl;
+                return (
+                  <ExternalLink
+                    href={proofUrl}
+                    className="flex flex-row w-max max-w-full break-all gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent line-clamp-3"
+                  >
+                    {proofLabel}
+                  </ExternalLink>
+                );
+              })()}
             </div>
           ) : null}
 

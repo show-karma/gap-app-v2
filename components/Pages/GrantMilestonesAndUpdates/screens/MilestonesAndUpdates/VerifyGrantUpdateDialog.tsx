@@ -136,8 +136,11 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
                 (u) => u.uid === grantUpdate.uid
               );
 
-              // V2: defined verified (including []) means verified
-              const isNowVerified = fetchedGrantUpdate && fetchedGrantUpdate.verified !== undefined;
+              // V2: non-empty verified array means verified
+              const isNowVerified =
+                fetchedGrantUpdate &&
+                Array.isArray(fetchedGrantUpdate.verified) &&
+                fetchedGrantUpdate.verified.length > 0;
               if (isNowVerified) {
                 retries = 0;
                 await refetchGrants();

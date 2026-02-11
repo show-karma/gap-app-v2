@@ -213,14 +213,14 @@ describe("convertToUnifiedMilestones", () => {
       });
     });
 
-    it("produces empty verified array when no verification details", () => {
+    it("produces undefined verified when no verification details", () => {
       const milestone = makeGrantMilestone({ status: "completed", verificationDetails: null });
       const result = convertToUnifiedMilestones({
         ...emptyResponse,
         grantMilestones: [milestone],
       });
 
-      expect(result[0].source.grantMilestone?.milestone.verified).toEqual([]);
+      expect(result[0].source.grantMilestone?.milestone.verified).toBeUndefined();
     });
 
     it("uses recipient fallback chain for attester", () => {
