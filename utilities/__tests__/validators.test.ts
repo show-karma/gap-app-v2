@@ -324,7 +324,6 @@ describe("validators", () => {
   describe("validateReviewerData", () => {
     it("should validate correct reviewer data", () => {
       const result = validateReviewerData({
-        publicAddress: "0x1234567890123456789012345678901234567890",
         name: "John Doe",
         email: "john@example.com",
         telegram: "@johndoe",
@@ -335,7 +334,6 @@ describe("validators", () => {
 
     it("should validate data without telegram", () => {
       const result = validateReviewerData({
-        publicAddress: "0x1234567890123456789012345678901234567890",
         name: "John Doe",
         email: "john@example.com",
       });
@@ -344,27 +342,15 @@ describe("validators", () => {
 
     it("should reject missing required fields", () => {
       const result = validateReviewerData({
-        publicAddress: "",
         name: "",
         email: "",
       });
       expect(result.valid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(2);
-    });
-
-    it("should reject invalid wallet address", () => {
-      const result = validateReviewerData({
-        publicAddress: "invalid",
-        name: "John Doe",
-        email: "john@example.com",
-      });
-      expect(result.valid).toBe(false);
-      expect(result.errors).toContain("Invalid wallet address format");
+      expect(result.errors).toHaveLength(2);
     });
 
     it("should reject name that is too short", () => {
       const result = validateReviewerData({
-        publicAddress: "0x1234567890123456789012345678901234567890",
         name: "J",
         email: "john@example.com",
       });
@@ -374,7 +360,6 @@ describe("validators", () => {
 
     it("should reject name that is too long", () => {
       const result = validateReviewerData({
-        publicAddress: "0x1234567890123456789012345678901234567890",
         name: "A".repeat(101),
         email: "john@example.com",
       });
@@ -384,7 +369,6 @@ describe("validators", () => {
 
     it("should reject invalid email", () => {
       const result = validateReviewerData({
-        publicAddress: "0x1234567890123456789012345678901234567890",
         name: "John Doe",
         email: "invalid-email",
       });
@@ -394,7 +378,6 @@ describe("validators", () => {
 
     it("should reject invalid telegram handle", () => {
       const result = validateReviewerData({
-        publicAddress: "0x1234567890123456789012345678901234567890",
         name: "John Doe",
         email: "john@example.com",
         telegram: "ab",
@@ -405,11 +388,49 @@ describe("validators", () => {
 
     it("should accept name with whitespace trimmed to valid length", () => {
       const result = validateReviewerData({
-        publicAddress: "0x1234567890123456789012345678901234567890",
         name: "  John Doe  ",
         email: "john@example.com",
       });
       expect(result.valid).toBe(true);
+    });
+
+    it("should reject names that become too short after sanitization", () => {
+      const result = validateReviewerData({
+        name: "<b>A</b>",
+        email: "john@example.com",
+      });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain("Name must be at least 2 characters");
+    });
+
+    it("should sanitize telegram handle by stripping @ prefix", () => {
+      const result = validateReviewerData({
+        name: "John Doe",
+        email: "john@example.com",
+        telegram: "@johndoe",
+      });
+      expect(result.valid).toBe(true);
+      expect(result.sanitized.telegram).toBe("johndoe");
+    });
+
+    it("should sanitize name, email, and telegram", () => {
+      const result = validateReviewerData({
+        name: "  John Doe  ",
+        email: "  John@Example.com  ",
+        telegram: "  @johndoe  ",
+      });
+      expect(result.valid).toBe(true);
+      expect(result.sanitized.name).toBe("John Doe");
+      expect(result.sanitized.email).toBe("john@example.com");
+      expect(result.sanitized.telegram).toBe("johndoe");
+    });
+
+    it("should return undefined telegram in sanitized when not provided", () => {
+      const result = validateReviewerData({
+        name: "John Doe",
+        email: "john@example.com",
+      });
+      expect(result.sanitized.telegram).toBeUndefined();
     });
   });
 });
