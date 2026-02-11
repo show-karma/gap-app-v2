@@ -82,7 +82,7 @@ export function transformGrantsToMilestones(grants: Grant[]): UnifiedMilestone[]
       type: "grant_received" as const,
       title: grant.details?.title || "Grant Received",
       description: grant.details?.description,
-      createdAt: grant.createdAt || new Date().toISOString(),
+      createdAt: grant.details?.receivedDate || grant.createdAt || new Date().toISOString(),
       completed: false,
       chainID: grant.chainID || 0,
       refUID: grant.uid,
