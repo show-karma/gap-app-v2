@@ -381,7 +381,6 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
           actions={
             isAuthorized ? (
               <div className="flex flex-row gap-3 max-sm:gap-4 items-center">
-                <MilestoneVerificationSection milestone={milestone} title={`${title} - Reviews`} />
                 {/* Share Button */}
                 <ExternalLink
                   href={shareOnX(

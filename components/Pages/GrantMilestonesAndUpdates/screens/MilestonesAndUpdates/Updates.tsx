@@ -247,7 +247,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               <img className="h-4 w-4" alt="Update" src="/icons/alert-message-white.svg" />
               <p className="text-xs font-bold text-white">UPDATE</p>
             </div>
-            {isVerified && (
+            {isVerified && !isAuthorized && (
               <VerifiedBadge
                 verifications={milestone.verified as any}
                 title={`${milestone.title} - Reviews`}
