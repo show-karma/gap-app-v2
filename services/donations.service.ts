@@ -27,6 +27,14 @@ apiClient.interceptors.response.use(
   }
 );
 
+publicApiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error("Donation Status API Error:", error.response?.data || error.message);
+    throw error;
+  }
+);
+
 export const donationsService = {
   async getUserDonations(walletAddress: string): Promise<DonationApiResponse[]> {
     const response = await apiClient.get<DonationApiResponse[]>(

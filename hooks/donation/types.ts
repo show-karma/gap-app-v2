@@ -54,7 +54,7 @@ export interface OnrampSessionRequest {
   network: string;
   targetAsset: string;
   donorAddress?: string;
-  donorEmail: string;
+  donorEmail?: string;
   country?: string; // ISO 3166-1 alpha-2 code
   redirectUrl?: string; // URL to redirect user after completing onramp
 }
@@ -69,7 +69,7 @@ export interface OnrampSessionResponse {
 }
 
 export interface DonationStatusApiResponse {
-  status: "pending" | "completed" | "failed";
+  status: DonationStatus;
   amount?: string;
   tokenSymbol?: string;
   transactionHash?: string;

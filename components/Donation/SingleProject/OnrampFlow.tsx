@@ -30,7 +30,14 @@ interface OnrampFlowProps {
 }
 
 export const OnrampFlow = React.memo<OnrampFlowProps>(
-  ({ projectUid, payoutAddress, chainId, initialAmount, isAuthenticated, onDonationComplete }) => {
+  ({
+    projectUid,
+    payoutAddress,
+    chainId,
+    initialAmount,
+    isAuthenticated = true,
+    onDonationComplete,
+  }) => {
     const [amount, setAmount] = useState(initialAmount || "");
     const [donorEmail, setDonorEmail] = useState("");
     const donationUidRef = useRef<string | null>(null);
@@ -110,7 +117,7 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
 
     const isEmailValid = useMemo(() => {
       if (isAuthenticated) return true;
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(donorEmail);
+      return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(donorEmail);
     }, [isAuthenticated, donorEmail]);
 
     const handleProceed = useCallback(() => {

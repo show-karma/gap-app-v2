@@ -14,7 +14,7 @@ interface UseOnrampParams {
   payoutAddress: string;
   network: string;
   targetAsset: string;
-  donorEmail: string;
+  donorEmail?: string;
   provider?: OnrampProvider;
   country?: string | null;
   onError?: (error: Error) => void;
@@ -66,7 +66,7 @@ export const useOnramp = ({
         network,
         targetAsset,
         donorAddress: address,
-        donorEmail,
+        ...(donorEmail && { donorEmail }),
         ...(country && { country }),
       };
 

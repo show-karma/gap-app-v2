@@ -214,7 +214,7 @@ describe("useDonationPolling", () => {
     const makeStatusResponse = (
       overrides: Partial<DonationStatusApiResponse> = {}
     ): DonationStatusApiResponse => ({
-      status: "pending",
+      status: DonationStatus.PENDING,
       amount: "50.00",
       tokenSymbol: "USDC",
       fiatAmount: 50,
@@ -248,7 +248,10 @@ describe("useDonationPolling", () => {
     });
 
     it("returns status data from getDonationStatus", async () => {
-      const statusResponse = makeStatusResponse({ status: "completed", transactionHash: "0xabc" });
+      const statusResponse = makeStatusResponse({
+        status: DonationStatus.COMPLETED,
+        transactionHash: "0xabc",
+      });
       mockDonationsService.getDonationStatus.mockResolvedValueOnce(statusResponse);
 
       const { result } = renderHook(
@@ -265,7 +268,7 @@ describe("useDonationPolling", () => {
         expect(result.current.donation).toEqual(statusResponse);
       });
 
-      expect(result.current.status).toBe("completed");
+      expect(result.current.status).toBe(DonationStatus.COMPLETED);
       expect(result.current.isPolling).toBe(false);
     });
 
@@ -306,7 +309,7 @@ describe("useDonationPolling", () => {
     });
 
     it("stops polling when status is completed", async () => {
-      const statusResponse = makeStatusResponse({ status: "completed" });
+      const statusResponse = makeStatusResponse({ status: DonationStatus.COMPLETED });
       mockDonationsService.getDonationStatus.mockResolvedValue(statusResponse);
 
       const { result } = renderHook(
@@ -324,7 +327,9 @@ describe("useDonationPolling", () => {
       });
 
       const callCount = mockDonationsService.getDonationStatus.mock.calls.length;
-      await new Promise((r) => setTimeout(r, 100));
+      await act(async () => {
+        jest.advanceTimersByTime(6000);
+      });
       expect(mockDonationsService.getDonationStatus.mock.calls.length).toBe(callCount);
     });
   });
