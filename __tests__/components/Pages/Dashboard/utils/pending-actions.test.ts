@@ -54,4 +54,20 @@ describe("computeProjectPendingActions", () => {
     expect(result.milestonesNeedingSubmission).toBe(0);
     expect(result.grantsInProgress).toBe(1);
   });
+
+  it("does not count incomplete milestones from completed grants", () => {
+    const project = {
+      grants: [
+        {
+          completed: { uid: "grant" },
+          milestones: [{ completed: null, verified: [] }],
+        },
+      ],
+    } as ProjectWithGrantsResponse;
+
+    const result = computeProjectPendingActions(project);
+
+    expect(result.milestonesNeedingSubmission).toBe(0);
+    expect(result.grantsInProgress).toBe(0);
+  });
 });

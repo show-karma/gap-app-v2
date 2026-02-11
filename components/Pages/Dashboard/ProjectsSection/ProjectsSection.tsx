@@ -15,11 +15,13 @@ interface ProjectsSectionProps {
   isLoading: boolean;
 }
 
-export function ProjectsSection({ projects, isLoading }: ProjectsSectionProps) {
-  if (!isLoading && projects.length === 0) {
-    return null;
-  }
+const projectSkeletonKeys = [
+  "project-card-skeleton-1",
+  "project-card-skeleton-2",
+  "project-card-skeleton-3",
+];
 
+export function ProjectsSection({ projects, isLoading }: ProjectsSectionProps) {
   return (
     <section id="projects" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -34,9 +36,13 @@ export function ProjectsSection({ projects, isLoading }: ProjectsSectionProps) {
 
       {isLoading ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {Array.from({ length: 3 }, (_, index) => (
-            <ProjectCardSkeleton key={`project-card-skeleton-${index}`} />
+          {projectSkeletonKeys.map((key) => (
+            <ProjectCardSkeleton key={key} />
           ))}
+        </div>
+      ) : projects.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+          No projects yet. Create your first project to get started.
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

@@ -76,4 +76,14 @@ describe("ProjectsSection", () => {
 
     expect(screen.getByRole("button", { name: "Create Project" })).toBeInTheDocument();
   });
+
+  it("renders empty state and create button when there are no projects", () => {
+    render(<ProjectsSection projects={[]} isLoading={false} />);
+
+    expect(screen.getByText("My Projects")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create Project" })).toBeInTheDocument();
+    expect(
+      screen.getByText("No projects yet. Create your first project to get started.")
+    ).toBeInTheDocument();
+  });
 });

@@ -199,13 +199,9 @@ export const useAuth = () => {
   useEffect(() => {
     if (!ready || !authenticated) return;
 
-    const handleAuthFailure = (reason: string) => {
+    const handleAuthFailure = () => {
       authFailureCount.current += 1;
-      console.debug(
-        `[useAuth] Auth failure #${authFailureCount.current}/${AUTH_FAILURE_THRESHOLD}: ${reason}`
-      );
       if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
-        console.debug("[useAuth] Failure threshold reached, logging out");
         authFailureCount.current = 0;
         logout();
       }
@@ -227,10 +223,10 @@ export const useAuth = () => {
         // - Slow network during token refresh
         // - Temporary network hiccups
         // - Privy initialization timing
-        handleAuthFailure("no token and no session");
+        handleAuthFailure();
       } catch {
         // Token check failed (network error, etc.) - treat as a failure
-        handleAuthFailure("token check threw an error");
+        handleAuthFailure();
       }
     };
 

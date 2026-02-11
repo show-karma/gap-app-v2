@@ -14,12 +14,11 @@ export function computeProjectPendingActions(project: ProjectWithGrantsResponse)
   for (const grant of grants) {
     if (!grant.completed) {
       grantsInProgress += 1;
-    }
-
-    const milestones = grant.milestones ?? [];
-    for (const milestone of milestones) {
-      if (!milestone.completed) {
-        milestonesNeedingSubmission += 1;
+      const milestones = grant.milestones ?? [];
+      for (const milestone of milestones) {
+        if (!milestone.completed) {
+          milestonesNeedingSubmission += 1;
+        }
       }
     }
   }

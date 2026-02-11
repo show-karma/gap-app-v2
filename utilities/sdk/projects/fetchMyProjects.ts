@@ -25,27 +25,22 @@ export const fetchMyProjects = async (
 ): Promise<ProjectWithGrantsResponse[]> => {
   if (!_address) return [];
 
-  try {
-    const [data, error] = await fetchData<UserProjectsV2Response>(
-      INDEXER.V2.USER.PROJECTS(page, limit),
-      "GET",
-      {},
-      {},
-      {},
-      true, // Requires authentication
-      false
-    );
+  const [data, error] = await fetchData<UserProjectsV2Response>(
+    INDEXER.V2.USER.PROJECTS(page, limit),
+    "GET",
+    {},
+    {},
+    {},
+    true, // Requires authentication
+    false
+  );
 
-    if (error || !data) {
-      errorManager(`Error fetching user projects`, error);
-      return [];
-    }
-
-    return data.projects || [];
-  } catch (error: unknown) {
+  if (error || !data) {
     errorManager(`Error fetching user projects`, error);
-    return [];
+    throw new Error(error || "Failed to fetch user projects");
   }
+
+  return data.projects || [];
 };
 
 /**

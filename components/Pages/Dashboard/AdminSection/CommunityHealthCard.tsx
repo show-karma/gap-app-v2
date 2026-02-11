@@ -24,8 +24,14 @@ export function CommunityHealthCard({ community }: CommunityHealthCardProps) {
       </div>
 
       <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-        <span>{community.activeProgramsCount} active programs</span>
-        <span>{community.pendingApplicationsCount} pending applications</span>
+        <span>
+          {community.activeProgramsCount} active{" "}
+          {community.activeProgramsCount === 1 ? "program" : "programs"}
+        </span>
+        <span>
+          {community.pendingApplicationsCount} pending{" "}
+          {community.pendingApplicationsCount === 1 ? "application" : "applications"}
+        </span>
       </div>
 
       <Button asChild variant="outline" size="sm">

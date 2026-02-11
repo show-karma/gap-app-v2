@@ -53,7 +53,7 @@ const fetchAdminCommunities = async (): Promise<Community[]> => {
 
 const fetchCommunityMetrics = async (communityId: string): Promise<CommunityMetricsResponse> => {
   const [data, error] = await fetchData<CommunityMetricsResponse>(
-    `/v2/communities/${communityId}/metrics`,
+    INDEXER.COMMUNITY.V2.COMMUNITY_METRICS(communityId),
     "GET",
     {},
     {},
