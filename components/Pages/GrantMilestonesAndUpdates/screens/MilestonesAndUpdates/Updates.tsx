@@ -29,6 +29,7 @@ import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { getCompletionData } from "./MilestoneDetails";
 import { UpdateMilestone } from "./UpdateMilestone";
+import { VerifiedBadge } from "./VerifiedBadge";
 
 interface UpdatesProps {
   milestone: GrantMilestone;
@@ -246,6 +247,9 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               <img className="h-4 w-4" alt="Update" src="/icons/alert-message-white.svg" />
               <p className="text-xs font-bold text-white">UPDATE</p>
             </div>
+            {isVerified && (
+              <VerifiedBadge isVerified={isVerified} title={`${milestone.title} - Reviews`} />
+            )}
           </div>
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-100">
             Completed on {formatDate(completionDateValue)}

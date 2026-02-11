@@ -157,7 +157,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
   const completionAttester =
     projectMilestone?.completed?.attester || grantMilestone?.milestone.completed?.attester;
   // V2: verified is an array for both grant and project milestones
-  const _isVerified =
+  const isVerified =
     Boolean(
       projectMilestone?.verified &&
         Array.isArray(projectMilestone.verified) &&
@@ -252,7 +252,14 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
       <div className={cn(containerClassName, "flex flex-col gap-1 w-full")}>
         <div className={"w-full flex-col flex gap-2 px-5 py-4"}>
           {/* UPDATE label - matches Figma design for nested milestone updates */}
-          <p className="text-xs font-medium text-muted-foreground tracking-wide">UPDATE</p>
+          <div className="flex flex-row items-center gap-2">
+            <p className="text-xs font-medium text-muted-foreground tracking-wide">UPDATE</p>
+            <MilestoneVerificationSection
+              milestone={milestone}
+              title={`${title} - Reviews`}
+              isVerified={isVerified}
+            />
+          </div>
           {/* Title - shown prominently after UPDATE label per Figma */}
           {title && (
             <h4 className="text-xl font-semibold text-foreground leading-tight tracking-tight">
