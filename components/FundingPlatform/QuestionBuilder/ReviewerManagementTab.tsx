@@ -15,12 +15,7 @@ import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { Permission } from "@/src/core/rbac/types/permission";
-import {
-  parseReviewerMemberId,
-  validateEmail,
-  validateTelegram,
-  validateWalletAddress,
-} from "@/utilities/validators";
+import { validateEmail, validateTelegram } from "@/utilities/validators";
 import { PAGE_HEADER_CONTENT, PageHeader } from "../PageHeader";
 
 /**
@@ -41,6 +36,21 @@ type ReviewerRole = "program" | "milestone";
  */
 interface ReviewerMemberWithRole extends RoleMember {
   role: ReviewerRole;
+}
+
+function buildReviewerMemberId(
+  role: ReviewerRole,
+  reviewer: { publicAddress?: string; email: string; name: string; assignedAt: string }
+): string {
+  const normalizedIdentifier =
+    reviewer.publicAddress?.trim().toLowerCase() || reviewer.email.trim().toLowerCase();
+
+  if (normalizedIdentifier) {
+    return `${role}-${normalizedIdentifier}`;
+  }
+
+  const normalizedName = reviewer.name.trim().toLowerCase().replace(/\s+/g, "-");
+  return `${role}-${normalizedName || "unknown"}-${reviewer.assignedAt}`;
 }
 
 /**
@@ -76,14 +86,18 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   const commonFields: RoleManagementConfig["fields"] = useMemo(
     () => [
       {
-        name: "publicAddress",
-        label: "Wallet Address",
-        type: "wallet" as const,
-        placeholder: "0x...",
+        name: "email",
+        label: "Email",
+        type: "email" as const,
+        placeholder: "reviewer@example.com",
         required: true,
+        helperText: "This email will be used to log in as a reviewer",
         validation: (value: string) => {
-          if (!validateWalletAddress(value)) {
-            return "Please enter a valid Ethereum wallet address";
+          if (!value) {
+            return "Email is required";
+          }
+          if (!validateEmail(value)) {
+            return "Please enter a valid email address";
           }
           return true;
         },
@@ -97,22 +111,6 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         validation: (value: string) => {
           if (!value || value.trim().length === 0) {
             return "Name is required";
-          }
-          return true;
-        },
-      },
-      {
-        name: "email",
-        label: "Email",
-        type: "email" as const,
-        placeholder: "reviewer@example.com",
-        required: true,
-        validation: (value: string) => {
-          if (!value) {
-            return "Email is required";
-          }
-          if (!validateEmail(value)) {
-            return "Please enter a valid email address";
           }
           return true;
         },
@@ -178,7 +176,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   // Merge reviewers from both types with role information
   const members: ReviewerMemberWithRole[] = useMemo(() => {
     const programMembers: ReviewerMemberWithRole[] = programReviewers.map((reviewer) => ({
-      id: `program-${reviewer.publicAddress}`,
+      id: buildReviewerMemberId("program", reviewer),
       publicAddress: reviewer.publicAddress,
       name: reviewer.name,
       email: reviewer.email,
@@ -188,7 +186,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     }));
 
     const milestoneMembers: ReviewerMemberWithRole[] = milestoneReviewers.map((reviewer) => ({
-      id: `milestone-${reviewer.publicAddress}`,
+      id: buildReviewerMemberId("milestone", reviewer),
       publicAddress: reviewer.publicAddress,
       name: reviewer.name,
       email: reviewer.email,
@@ -213,34 +211,31 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
 
   const handleRemove = useCallback(
     async (memberId: string) => {
-      // Parse and validate member ID using robust parser
-      const parsed = parseReviewerMemberId(memberId);
-
-      if (!parsed.valid) {
-        toast.error(parsed.error || "Invalid reviewer ID format");
+      const memberToRemove = members.find((member) => member.id === memberId);
+      if (!memberToRemove) {
+        toast.error("Reviewer not found. Please refresh and try again.");
         return;
       }
 
-      // Type guard ensures we have the required properties
-      if (!parsed.role || !parsed.publicAddress) {
-        toast.error("Failed to remove reviewer: Invalid ID");
+      if (!memberToRemove.publicAddress) {
+        toast.error("This reviewer is still being provisioned. Refresh and try again.");
         return;
       }
 
       try {
-        if (parsed.role === "program") {
-          await removeProgramReviewer(parsed.publicAddress);
-        } else if (parsed.role === "milestone") {
-          await removeMilestoneReviewer(parsed.publicAddress);
+        if (memberToRemove.role === "program") {
+          await removeProgramReviewer(memberToRemove.publicAddress);
+        } else if (memberToRemove.role === "milestone") {
+          await removeMilestoneReviewer(memberToRemove.publicAddress);
         } else {
-          toast.error(`Unknown reviewer role: ${parsed.role}`);
+          toast.error(`Unknown reviewer role: ${memberToRemove.role}`);
         }
       } catch {
         // Error handling is already done in the mutations, but we catch here
         // to prevent unhandled promise rejections
       }
     },
-    [removeProgramReviewer, removeMilestoneReviewer]
+    [members, removeProgramReviewer, removeMilestoneReviewer]
   );
 
   const handleRefresh = useCallback(() => {

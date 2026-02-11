@@ -7,7 +7,6 @@ import {
   validateEmail,
   validateReviewerData as validateReviewerDataUtil,
   validateTelegram,
-  validateWalletAddress,
 } from "@/utilities/validators";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
@@ -44,7 +43,7 @@ export interface MilestoneReviewerResponse {
  * Milestone reviewer information for UI
  */
 export interface MilestoneReviewer {
-  publicAddress: string;
+  publicAddress?: string;
   name: string;
   email: string;
   telegram?: string;
@@ -56,7 +55,6 @@ export interface MilestoneReviewer {
  * Add milestone reviewer request
  */
 export interface AddMilestoneReviewerRequest {
-  publicAddress: string;
   name: string;
   email: string;
   telegram?: string;
@@ -109,10 +107,9 @@ export const milestoneReviewersService = {
     const reviewer = response.data?.reviewer;
 
     // Handle case where reviewer might be undefined or API returns success without data
+    // publicAddress is resolved server-side via Privy; unavailable in fallback
     if (!reviewer) {
-      // Return the input data as the reviewer was likely added successfully
       return {
-        publicAddress: reviewerData.publicAddress,
         name: reviewerData.name,
         email: reviewerData.email,
         telegram: reviewerData.telegram,
@@ -184,14 +181,6 @@ export const milestoneReviewersService = {
   },
 
   /**
-   * Validate wallet address format
-   * @deprecated Use validateWalletAddress from @/utilities/validators instead
-   */
-  validateWalletAddress(address: string): boolean {
-    return validateWalletAddress(address);
-  },
-
-  /**
    * Validate email format
    * @deprecated Use validateEmail from @/utilities/validators instead
    */
@@ -211,10 +200,7 @@ export const milestoneReviewersService = {
    * Validate milestone reviewer data before submission
    * Uses shared validation utilities for consistency
    */
-  validateReviewerData(data: AddMilestoneReviewerRequest): {
-    valid: boolean;
-    errors: string[];
-  } {
+  validateReviewerData(data: AddMilestoneReviewerRequest) {
     return validateReviewerDataUtil(data);
   },
 };
