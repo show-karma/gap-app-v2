@@ -254,39 +254,50 @@ jobs:
             **STRUCTURE**: For each issue found, use this format:
             - **File**: `path/to/file.ts:LINE`
             - **Rule**: [rule identifier]
-            - **Severity**: CRITICAL | HIGH | MEDIUM
+            - **Severity**: 🔴 CRITICAL | 🟠 HIGH | 🟡 MEDIUM
             - **Problem**: One sentence describing what is wrong.
             - **Why**: Root cause or why this matters (one sentence).
             - **Fix**: Concrete code snippet or one-sentence fix.
 
             Only report MEDIUM severity and above. Skip nitpicks.
 
-            **AI SLOP DETECTION**: Flag AI-generated code smells: nonsensical comments that describe the obvious, copy-pasted boilerplate that does not fit the context, dead code left behind, overly verbose abstractions for trivial operations, hallucinated API usage.
+            **AI SLOP DETECTION** 🤖: Flag AI-generated code smells: nonsensical comments that describe the obvious, copy-pasted boilerplate that does not fit the context, dead code left behind, overly verbose abstractions for trivial operations, hallucinated API usage.
 
-            **END WITH**: A single line: "Recommendation: APPROVE" or "Recommendation: BLOCK (reason)". BLOCK only for CRITICAL issues. Nothing else after this line.
+            **END WITH** a verdict section in exactly this format:
+
+            ---
+            ### 📊 Score: [X]/100
+            Scoring guide: 100 = flawless, 90+ = excellent (minor nits only), 70-89 = good (some issues), 50-69 = needs work (significant issues), below 50 = major problems. Deduct points proportionally: -15 per CRITICAL, -7 per HIGH, -3 per MEDIUM.
+
+            ### 🏷️ Status: [one of the following]
+            - ✅ **APPROVE** — No CRITICAL or HIGH issues. Ship it.
+            - ⚠️ **APPROVE WITH SUGGESTIONS** — No CRITICAL issues, but has HIGH/MEDIUM issues worth addressing.
+            - 🔄 **REQUEST CHANGES** — Has CRITICAL issues that must be fixed before merge.
+
+            One sentence summary of why this status was chosen. Nothing else after this section.
 
             ---
 
-            ### 1. Waterfall and Async (CRITICAL)
+            ### 🔴 1. Waterfall and Async (CRITICAL)
             - Sequential await calls that could run in parallel: use Promise.all()
             - Awaiting values only used in one branch: move await into that branch
             - Missing Suspense boundaries for streaming async content
             - API routes that await early instead of starting promises early and awaiting late
 
-            ### 2. Bundle Size (CRITICAL)
+            ### 🔴 2. Bundle Size (CRITICAL)
             - Barrel file imports (import from index files): import from source file directly
             - Heavy components not using next/dynamic for lazy loading
             - Third-party scripts (analytics, logging) not deferred until after hydration
             - Modules loaded unconditionally that are only used behind feature flags: use dynamic import
 
-            ### 3. Server vs Client Components (HIGH)
+            ### 🟠 3. Server vs Client Components (HIGH)
             - "use client" on components that do not use hooks, event handlers, or browser APIs: make them Server Components
             - Data fetching in Client Components that should happen server-side
             - Large objects passed from Server to Client components: minimize serialization
             - Missing React.cache() for per-request deduplication in Server Components
             - Sequential server fetches that should be parallelized by restructuring component tree
 
-            ### 4. Component Architecture (HIGH)
+            ### 🟠 4. Component Architecture (HIGH)
             - Boolean prop proliferation (isX, showY, hasZ): use composition with compound components or explicit variants
             - Monolithic components with render props: prefer children-based compound components
             - State trapped inside components that siblings need: lift state into provider
@@ -295,13 +306,13 @@ jobs:
             - React 19: still using forwardRef when ref is now a regular prop
             - React 19: still using useContext() when use() is available
 
-            ### 5. TypeScript (HIGH)
+            ### 🟠 5. TypeScript (HIGH)
             - any type without explicit justification comment
             - Missing or incomplete prop type definitions
             - Type assertions (as) that could be replaced with type guards
             - Unused type imports or exports
 
-            ### 6. Re-render and Performance (MEDIUM)
+            ### 🟡 6. Re-render and Performance (MEDIUM)
             - Components subscribing to store state only used in callbacks: use useStore.getState() instead
             - Missing React.memo on expensive components that receive stable props from parent
             - Object/array dependencies in useEffect/useMemo: use primitive values or stable references
@@ -310,24 +321,24 @@ jobs:
             - Missing next/image for images
             - Using && for conditional rendering (can render 0 or empty string): use ternary
 
-            ### 7. State Management (MEDIUM)
+            ### 🟡 7. State Management (MEDIUM)
             - Zustand store with too many concerns: split stores by domain
             - React Query missing proper staleTime / gcTime configuration
             - Missing loading/error/empty states in data-dependent UI
             - Optimistic updates without rollback on error
 
-            ### 8. Web3 (MEDIUM)
+            ### 🟡 8. Web3 (MEDIUM)
             - Wagmi hooks used without proper error handling for rejected transactions
             - Missing wallet disconnection handling
             - Hardcoded chain IDs or contract addresses: use constants
 
-            ### 9. Accessibility (MEDIUM)
+            ### 🟡 9. Accessibility (MEDIUM)
             - Interactive elements missing ARIA labels or roles
             - Missing keyboard navigation for custom interactive components
             - Non-semantic HTML (div with onClick instead of button)
             - Missing focus management on modals/dialogs
 
-            ### 10. Testing (MEDIUM)
+            ### 🟡 10. Testing (MEDIUM)
             - New functionality without corresponding tests (target: 70% coverage)
             - Bug fixes without regression tests
             - Tests that test implementation details instead of behavior
@@ -342,7 +353,7 @@ jobs:
 
           # Conditional prompts based on triggers - enables automatic PR reviews
           direct_prompt: |
-            ${{ github.event_name == 'pull_request' && 'Review this PR against the rules in custom_instructions. Triage: security/bugs first, then performance, then architecture. Only report MEDIUM+ issues. For each: file:line, rule, severity, problem, root cause, fix. Flag any AI-generated slop. End with "Recommendation: APPROVE" or "Recommendation: BLOCK (reason)". No strengths, no praise. If clean, say "No issues found." then "Recommendation: APPROVE".' || '' }}
+            ${{ github.event_name == 'pull_request' && 'Review this PR against the rules in custom_instructions. Triage: security/bugs first, then performance, then architecture. Only report MEDIUM+ issues with emoji severity indicators. For each: file:line, rule, severity, problem, root cause, fix. Flag any AI slop. End with the verdict section: Score X/100, then Status (APPROVE / APPROVE WITH SUGGESTIONS / REQUEST CHANGES). No strengths, no praise.' || '' }}
 
           max_turns: '30'
           timeout_minutes: '45'
