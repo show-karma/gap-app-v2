@@ -75,7 +75,7 @@
     "@safe-global/api-kit": "^3.0.2",
     "@safe-global/protocol-kit": "^6.0.5",
     "@sentry/nextjs": "^9.31.0",
-    "@show-karma/karma-gap-sdk": "file:../karma-gap-sdk/.dist",
+    "@show-karma/karma-gap-sdk": "0.4.20",
     "@stripe/crypto": "^0.0.4",
     "@stripe/stripe-js": "^7.4.0",
     "@tailwindcss/typography": "^0.5.10",
