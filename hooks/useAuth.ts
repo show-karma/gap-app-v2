@@ -2,11 +2,13 @@
 
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { watchAccount } from "@wagmi/core";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
 import { TokenManager } from "@/utilities/auth/token-manager";
+import { PAGES } from "@/utilities/pages";
 import { queryClient } from "@/utilities/query-client";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
 
@@ -40,6 +42,22 @@ const AUTH_FAILURE_THRESHOLD = 3;
  * @see https://docs.privy.io/guide/react/configuration/cookies
  */
 const PRIVY_SESSION_COOKIE_NAME = "privy-session";
+const POST_LOGIN_REDIRECT_KEY = "postLoginRedirect";
+
+export const setPostLoginRedirect = (url: string) => {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(POST_LOGIN_REDIRECT_KEY, url);
+};
+
+const getPostLoginRedirect = (): string | null => {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem(POST_LOGIN_REDIRECT_KEY);
+};
+
+const clearPostLoginRedirect = () => {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(POST_LOGIN_REDIRECT_KEY);
+};
 
 /**
  * Check if privy-session cookie exists using proper cookie parsing.
@@ -93,6 +111,8 @@ const clearWagmiState = () => {
  */
 export const useAuth = () => {
   const { ready, authenticated, user, login, logout, getAccessToken, connectWallet } = usePrivy();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const { isConnected } = useAccount();
 
@@ -119,6 +139,20 @@ export const useAuth = () => {
    * ALL user-specific data is purged, not just a hardcoded list of keys.
    */
   useEffect(() => {
+    // Detect login: was not authenticated, now authenticated
+    if (!prevAuthRef.current && authenticated) {
+      // Only redirect if we're on the default landing page
+      if (pathname === "/") {
+        const redirectUrl = getPostLoginRedirect();
+        if (redirectUrl) {
+          router.push(redirectUrl);
+          clearPostLoginRedirect();
+        } else {
+          router.push(PAGES.DASHBOARD);
+        }
+      }
+    }
+
     // Detect logout: was authenticated, now not authenticated
     if (prevAuthRef.current && !authenticated) {
       // Clear ALL query caches on logout to prevent stale data on re-login.
@@ -259,6 +293,13 @@ export const useAuth = () => {
   }, [ready, authenticated, wallets, logout]);
 
   const adaptedLogin = useCallback(async () => {
+    if (typeof window !== "undefined" && !authenticated) {
+      const existingRedirect = getPostLoginRedirect();
+      if (!existingRedirect) {
+        setPostLoginRedirect(`${window.location.pathname}${window.location.hash}`);
+      }
+    }
+
     // If authenticated but wallet not connected, force logout first
     if (!isConnected && authenticated) {
       shouldLoginAfterLogout.current = true;
