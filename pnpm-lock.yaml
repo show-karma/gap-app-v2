@@ -114,8 +114,8 @@ importers:
         specifier: ^9.31.0
         version: 9.46.0(@opentelemetry/context-async-hooks@1.30.1(@opentelemetry/api@1.9.0))(@opentelemetry/core@1.30.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.4.10(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(sass@1.92.1))(react@19.2.1)(webpack@5.101.3(esbuild@0.25.12))
       '@show-karma/karma-gap-sdk':
-        specifier: github:show-karma/karma-gap-sdk#dist-dev/combined-refactors
-        version: https://codeload.github.com/show-karma/karma-gap-sdk/tar.gz/7c89b306082d4ce13c261b9ae90205d3f220e2cf(@typechain/ethers-v6@0.5.1(ethers@6.11.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3))(bufferutil@4.0.9)(ts-node@10.9.2(@types/node@20.2.5)(typescript@5.9.3))(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+        specifier: github:show-karma/karma-gap-sdk#b3e8304
+        version: https://codeload.github.com/show-karma/karma-gap-sdk/tar.gz/b3e83047a86829f66ee5ccbe243881065f58a570(@typechain/ethers-v6@0.5.1(ethers@6.11.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3))(bufferutil@4.0.9)(ts-node@10.9.2(@types/node@20.2.5)(typescript@5.9.3))(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
       '@stripe/crypto':
         specifier: ^0.0.4
         version: 0.0.4(@stripe/stripe-js@7.9.0)
@@ -4005,8 +4005,8 @@ packages:
     peerDependencies:
       webpack: '>=4.40.0'
 
-  '@show-karma/karma-gap-sdk@https://codeload.github.com/show-karma/karma-gap-sdk/tar.gz/7c89b306082d4ce13c261b9ae90205d3f220e2cf':
-    resolution: {tarball: https://codeload.github.com/show-karma/karma-gap-sdk/tar.gz/7c89b306082d4ce13c261b9ae90205d3f220e2cf}
+  '@show-karma/karma-gap-sdk@https://codeload.github.com/show-karma/karma-gap-sdk/tar.gz/b3e83047a86829f66ee5ccbe243881065f58a570':
+    resolution: {tarball: https://codeload.github.com/show-karma/karma-gap-sdk/tar.gz/b3e83047a86829f66ee5ccbe243881065f58a570}
     version: 0.4.20
 
   '@shuding/opentype.js@1.4.0-beta.0':
@@ -18036,7 +18036,7 @@ snapshots:
       - encoding
       - supports-color
 
-  '@show-karma/karma-gap-sdk@https://codeload.github.com/show-karma/karma-gap-sdk/tar.gz/7c89b306082d4ce13c261b9ae90205d3f220e2cf(@typechain/ethers-v6@0.5.1(ethers@6.11.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3))(bufferutil@4.0.9)(ts-node@10.9.2(@types/node@20.2.5)(typescript@5.9.3))(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)':
+  '@show-karma/karma-gap-sdk@https://codeload.github.com/show-karma/karma-gap-sdk/tar.gz/b3e83047a86829f66ee5ccbe243881065f58a570(@typechain/ethers-v6@0.5.1(ethers@6.11.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3))(bufferutil@4.0.9)(ts-node@10.9.2(@types/node@20.2.5)(typescript@5.9.3))(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)':
     dependencies:
       '@allo-team/allo-v2-sdk': 1.1.3(@typechain/ethers-v6@0.5.1(ethers@6.11.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3))(bufferutil@4.0.9)(ethers@6.11.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(ts-node@10.9.2(@types/node@20.2.5)(typescript@5.9.3))(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
       '@ethereum-attestation-service/eas-sdk': 1.4.2(bufferutil@4.0.9)(ts-node@10.9.2(@types/node@20.2.5)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10)
