@@ -1,5 +1,8 @@
 import { type FC, useCallback, useEffect, useState } from "react";
-import { VerifiedBadge } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
+import {
+  type VerificationRecord,
+  VerifiedBadge,
+} from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
 import { VerifyMilestoneUpdateDialog } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifyMilestoneUpdateDialog";
 import type { GrantMilestone } from "@/types/v2/grant";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
@@ -8,7 +11,7 @@ interface MilestoneVerificationSectionProps {
   milestone: GrantMilestone | UnifiedMilestone;
   title: string;
   isVerified?: boolean;
-  verifications?: any[];
+  verifications?: VerificationRecord[];
   onVerified?: () => void;
 }
 

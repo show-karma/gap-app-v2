@@ -168,7 +168,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
         Array.isArray(grantMilestone.milestone.verified) &&
         grantMilestone.milestone.verified.length > 0
     );
-  const verifications: any[] =
+  const verifications =
     (Array.isArray(grantMilestone?.milestone.verified)
       ? grantMilestone.milestone.verified
       : null) ||

@@ -249,7 +249,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             </div>
             {isVerified && !isAuthorized && (
               <VerifiedBadge
-                verifications={milestone.verified as any}
+                verifications={milestone.verified}
                 title={`${milestone.title} - Reviews`}
               />
             )}
@@ -297,7 +297,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                       milestone={milestone}
                       title={`${milestone.title} - Reviews`}
                       isVerified={isVerified}
-                      verifications={milestone.verified as any}
+                      verifications={milestone.verified}
                       onVerified={markAsVerified}
                     />
                     <ExternalLink
