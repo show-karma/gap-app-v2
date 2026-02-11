@@ -1,14 +1,14 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { KycSettingsPage } from "@/components/Pages/Admin/KycSettingsPage";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { defaultMetadata } from "@/utilities/meta";
+import { customMetadata } from "@/utilities/meta";
 import { getCommunityDetails } from "@/utilities/queries/v2/community";
 
-export const metadata = {
-  ...defaultMetadata,
-  title: "KYC/KYB Settings | Karma GAP",
-};
+export const metadata: Metadata = customMetadata({
+  title: "KYC/KYB Settings",
+});
 
 interface Props {
   params: Promise<{ communityId: string }>;

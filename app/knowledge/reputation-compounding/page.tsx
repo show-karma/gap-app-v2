@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "How Reputation Compounds in Open Funding Systems",
+  description:
+    "Why reputation acts as cumulative memory in open funding systems, and how it improves decision-making over time.",
+  path: "/knowledge/reputation-compounding",
+});
 
 export default function ReputationCompoundingPage() {
   return (
@@ -54,6 +63,8 @@ export default function ReputationCompoundingPage() {
             Capital should follow credibility, and credibility should be earned through work.{" "}
             <a
               href="https://www.karmahq.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Learn more about Karma
