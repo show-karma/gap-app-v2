@@ -1,5 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import { toast } from "react-hot-toast";
 import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
 import { Permission } from "@/src/core/rbac/types/permission";
 
@@ -8,6 +9,13 @@ const mockUsePermissionContext = jest.fn();
 const mockRoleManagementTab = jest.fn();
 const mockUseProgramReviewers = jest.fn();
 const mockUseMilestoneReviewers = jest.fn();
+
+jest.mock("react-hot-toast", () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
+}));
 
 jest.mock("@/src/core/rbac/context/permission-context", () => ({
   usePermissionContext: () => mockUsePermissionContext(),
@@ -52,15 +60,24 @@ jest.mock("@/hooks/communities/useIsCommunityAdmin", () => ({
   })),
 }));
 
-function createReviewersHookResult(data: Array<Record<string, string>> = []) {
+function createReviewersHookResult(
+  data: Array<Record<string, string | undefined>> = [],
+  overrides: Partial<{
+    addReviewer: jest.Mock;
+    removeReviewer: jest.Mock;
+    refetch: jest.Mock;
+  }> = {}
+) {
   return {
     data,
     isLoading: false,
-    refetch: jest.fn(),
-    addReviewer: jest.fn(),
-    removeReviewer: jest.fn(),
+    refetch: overrides.refetch ?? jest.fn(),
+    addReviewer: overrides.addReviewer ?? jest.fn(),
+    removeReviewer: overrides.removeReviewer ?? jest.fn(),
   };
 }
+
+const mockToast = toast as jest.Mocked<typeof toast>;
 
 describe("ReviewerManagementTab", () => {
   beforeEach(() => {
@@ -127,5 +144,93 @@ describe("ReviewerManagementTab", () => {
       screen.queryByText("You don't have permission to manage reviewers for this program.")
     ).not.toBeInTheDocument();
     expect(screen.getByTestId("role-management-tab")).toHaveAttribute("data-can-manage", "false");
+  });
+
+  it("uses email fallback in member IDs when wallet address is missing", () => {
+    mockCan.mockReturnValue(true);
+    mockUseProgramReviewers.mockReturnValue(
+      createReviewersHookResult([
+        {
+          name: "Email Reviewer",
+          email: "Reviewer@Example.com",
+          telegram: "reviewer",
+          assignedAt: "2024-01-01T00:00:00Z",
+        },
+      ])
+    );
+
+    render(<ReviewerManagementTab programId="program-1" />);
+
+    const roleTabProps = mockRoleManagementTab.mock.calls.at(-1)?.[0] as {
+      members: Array<{ id: string }>;
+    };
+    expect(roleTabProps.members[0].id).toBe("program-reviewer@example.com");
+  });
+
+  it("blocks remove when wallet address is not available yet", async () => {
+    const removeProgramReviewer = jest.fn().mockResolvedValue(undefined);
+    mockCan.mockReturnValue(true);
+    mockUseProgramReviewers.mockReturnValue(
+      createReviewersHookResult(
+        [
+          {
+            name: "Email Reviewer",
+            email: "reviewer@example.com",
+            telegram: "reviewer",
+            assignedAt: "2024-01-01T00:00:00Z",
+          },
+        ],
+        { removeReviewer: removeProgramReviewer }
+      )
+    );
+
+    render(<ReviewerManagementTab programId="program-1" />);
+
+    const roleTabProps = mockRoleManagementTab.mock.calls.at(-1)?.[0] as {
+      onRemove: (memberId: string) => Promise<void>;
+    };
+
+    await act(async () => {
+      await roleTabProps.onRemove("program-reviewer@example.com");
+    });
+
+    expect(removeProgramReviewer).not.toHaveBeenCalled();
+    expect(mockToast.error).toHaveBeenCalledWith(
+      "This reviewer is still being provisioned. Refresh and try again."
+    );
+  });
+
+  it("removes reviewers using wallet address from member data", async () => {
+    const removeProgramReviewer = jest.fn().mockResolvedValue(undefined);
+    mockCan.mockReturnValue(true);
+    mockUseProgramReviewers.mockReturnValue(
+      createReviewersHookResult(
+        [
+          {
+            publicAddress: "0x1234567890123456789012345678901234567890",
+            name: "Wallet Reviewer",
+            email: "wallet@example.com",
+            telegram: "wallet",
+            assignedAt: "2024-01-01T00:00:00Z",
+          },
+        ],
+        { removeReviewer: removeProgramReviewer }
+      )
+    );
+
+    render(<ReviewerManagementTab programId="program-1" />);
+
+    const roleTabProps = mockRoleManagementTab.mock.calls.at(-1)?.[0] as {
+      members: Array<{ id: string }>;
+      onRemove: (memberId: string) => Promise<void>;
+    };
+
+    await act(async () => {
+      await roleTabProps.onRemove(roleTabProps.members[0].id);
+    });
+
+    expect(removeProgramReviewer).toHaveBeenCalledWith(
+      "0x1234567890123456789012345678901234567890"
+    );
   });
 });

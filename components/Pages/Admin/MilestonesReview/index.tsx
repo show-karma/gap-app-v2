@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
+import { Badge } from "@/components/ui/badge";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useDeleteMilestone } from "@/hooks/useDeleteMilestone";
 import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
@@ -20,9 +21,19 @@ import {
 import { ReviewerType } from "@/src/core/rbac/types";
 import { useOwnerStore } from "@/store";
 import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
 import { CommentsAndActivity } from "./CommentsAndActivity";
 import { GrantCompleteButtonForReviewer } from "./GrantCompleteButtonForReviewer";
 import { MilestoneCard } from "./MilestoneCard";
+import {
+  FILTER_TABS,
+  getMilestoneStatus,
+  type MilestoneFilterKey,
+  MilestoneReviewStatus,
+  sortMilestones,
+} from "./utils/milestone-review-status";
+
+const EMPTY_MILESTONES: GrantMilestoneWithCompletion[] = [];
 
 interface MilestonesReviewPageProps {
   communityId: string;
@@ -74,6 +85,7 @@ function MilestonesReviewPageContent({
   const [verifyingMilestoneId, setVerifyingMilestoneId] = useState<string | null>(null);
   const [verificationComment, setVerificationComment] = useState("");
   const [deletingMilestoneId, setDeletingMilestoneId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<MilestoneFilterKey | null>(null);
 
   const { address } = useAccount();
   const {
@@ -247,6 +259,51 @@ function MilestonesReviewPageContent({
     [deleteMilestoneAsync]
   );
 
+  const milestones = data?.grantMilestones ?? EMPTY_MILESTONES;
+
+  // Compute the effective filter: default to PendingVerification if any exist, else "all".
+  // Once the user explicitly picks a tab, their choice is locked in.
+  const activeFilter = useMemo<MilestoneFilterKey>(() => {
+    if (statusFilter !== null) return statusFilter;
+    const hasPending = milestones.some(
+      (m) => getMilestoneStatus(m) === MilestoneReviewStatus.PendingVerification
+    );
+    return hasPending ? MilestoneReviewStatus.PendingVerification : "all";
+  }, [statusFilter, milestones]);
+
+  // Single-pass: group milestones by status, derive counts, filter, and sort.
+  // Sort: non-verified by due date asc first, verified by due date asc last.
+  const { filteredMilestones, counts } = useMemo(() => {
+    const statusMap = new Map<GrantMilestoneWithCompletion, MilestoneReviewStatus>();
+    const grouped = new Map<MilestoneReviewStatus, GrantMilestoneWithCompletion[]>();
+    for (const m of milestones) {
+      const s = getMilestoneStatus(m);
+      statusMap.set(m, s);
+      let group = grouped.get(s);
+      if (!group) {
+        group = [];
+        grouped.set(s, group);
+      }
+      group.push(m);
+    }
+
+    const counts: Record<MilestoneFilterKey, number> = {
+      all: milestones.length,
+      [MilestoneReviewStatus.Verified]: grouped.get(MilestoneReviewStatus.Verified)?.length ?? 0,
+      [MilestoneReviewStatus.PendingVerification]:
+        grouped.get(MilestoneReviewStatus.PendingVerification)?.length ?? 0,
+      [MilestoneReviewStatus.PendingCompletion]:
+        grouped.get(MilestoneReviewStatus.PendingCompletion)?.length ?? 0,
+      [MilestoneReviewStatus.NotStarted]:
+        grouped.get(MilestoneReviewStatus.NotStarted)?.length ?? 0,
+    };
+
+    const filtered = activeFilter === "all" ? milestones : (grouped.get(activeFilter) ?? []);
+    const sorted = sortMilestones(filtered, (m) => statusMap.get(m) ?? getMilestoneStatus(m));
+
+    return { filteredMilestones: sorted, counts };
+  }, [milestones, activeFilter]);
+
   // Show loading while checking authorization
   if (isLoading || isLoadingReviewer || isLoadingAdminAccess) {
     return (
@@ -310,7 +367,7 @@ function MilestonesReviewPageContent({
     );
   }
 
-  const { project, grantMilestones, grant } = data;
+  const { project, grant } = data;
 
   // Project data for GrantCompleteButtonForReviewer (only needs uid)
   const projectForButton = {
@@ -384,14 +441,59 @@ function MilestonesReviewPageContent({
               <h2 className="text-xl font-semibold mb-4 text-black dark:text-white">
                 Project Milestones
               </h2>
+
+              {/* Status filter tabs */}
+              {milestones.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {FILTER_TABS.map((tab) => {
+                    const isActive = activeFilter === tab.key;
+                    return (
+                      <Badge
+                        key={tab.key}
+                        variant="outline"
+                        role="button"
+                        tabIndex={0}
+                        aria-pressed={isActive}
+                        onClick={() => setStatusFilter(tab.key)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setStatusFilter(tab.key);
+                          }
+                        }}
+                        className={cn(
+                          "cursor-pointer rounded-full border-border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted transition-colors select-none gap-1.5",
+                          isActive &&
+                            "bg-brand-blue text-white border-brand-blue hover:bg-brand-blue/90"
+                        )}
+                      >
+                        {tab.label}
+                        <span
+                          className={cn(
+                            "inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-[0.65rem] font-semibold",
+                            isActive ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
+                          )}
+                        >
+                          {counts[tab.key]}
+                        </span>
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )}
+
               <div className="space-y-4">
-                {grantMilestones.length === 0 ? (
+                {filteredMilestones.length === 0 ? (
                   <div className="text-center py-8 text-gray-400 dark:text-gray-500">
                     <p className="text-lg font-medium">No milestones found</p>
-                    <p className="text-sm">This project does not have any milestones yet</p>
+                    <p className="text-sm">
+                      {milestones.length === 0
+                        ? "This project does not have any milestones yet"
+                        : "No milestones match the selected filter"}
+                    </p>
                   </div>
                 ) : (
-                  grantMilestones.map((milestone, index) => (
+                  filteredMilestones.map((milestone, index) => (
                     <MilestoneCard
                       key={milestone.uid || index}
                       milestone={milestone}

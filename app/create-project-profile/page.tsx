@@ -1,3 +1,13 @@
+import type { Metadata } from "next";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Create Your Project Profile",
+  description:
+    "Create a free, public project profile to document your funding, milestones, updates, and impact. Build credibility and reputation over time.",
+  path: "/create-project-profile",
+});
+
 export default function CreateProjectProfilePage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">

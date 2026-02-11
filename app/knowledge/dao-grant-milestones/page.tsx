@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "How DAOs Track Grant Milestones",
+  description:
+    "A practical breakdown of how DAOs define, track, and evaluate grant milestones, and the tradeoffs of different approaches.",
+  path: "/knowledge/dao-grant-milestones",
+});
 
 export default function DaoGrantMilestonesPage() {
   return (
@@ -89,6 +98,8 @@ export default function DaoGrantMilestonesPage() {
           <p className="text-gray-700 dark:text-gray-300">
             <a
               href="https://www.karmahq.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Karma

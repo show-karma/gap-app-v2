@@ -47,6 +47,8 @@ export const setupDonationIntercepts = (): void => {
 export const setupFundingMapIntercepts = (): void => {
   cy.intercept("GET", "**/v2/funding-program-configs/**").as("getFundingPrograms");
   cy.intercept("GET", "**/funding-map**").as("getFundingMap");
+  // Stub external image requests that may 404 and block the page load event
+  cy.intercept("GET", "https://pbs.twimg.com/**", { statusCode: 200, body: "" });
 };
 
 /**
