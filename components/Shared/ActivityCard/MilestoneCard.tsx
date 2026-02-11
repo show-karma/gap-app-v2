@@ -168,6 +168,12 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
         Array.isArray(grantMilestone.milestone.verified) &&
         grantMilestone.milestone.verified.length > 0
     );
+  const verifications: any[] =
+    (Array.isArray(grantMilestone?.milestone.verified)
+      ? grantMilestone.milestone.verified
+      : null) ||
+    (Array.isArray(projectMilestone?.verified) ? projectMilestone.verified : null) ||
+    [];
   const completionDeliverables =
     (projectMilestone?.completed?.data as any)?.deliverables ||
     (grantMilestone?.milestone.completed?.data as any)?.deliverables;
@@ -258,6 +264,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
               milestone={milestone}
               title={`${title} - Reviews`}
               isVerified={isVerified}
+              verifications={verifications}
             />
           </div>
           {/* Title - shown prominently after UPDATE label per Figma */}

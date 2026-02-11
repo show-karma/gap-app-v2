@@ -8,6 +8,7 @@ interface MilestoneVerificationSectionProps {
   milestone: GrantMilestone | UnifiedMilestone;
   title: string;
   isVerified?: boolean;
+  verifications?: any[];
   onVerified?: () => void;
 }
 
@@ -15,6 +16,7 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
   milestone,
   title,
   isVerified: isVerifiedProp,
+  verifications,
   onVerified,
 }) => {
   // V2: verified is an array of verifications
@@ -72,7 +74,13 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
 
   return (
     <div className="flex flex-row gap-4 items-center flex-wrap w-max max-w-full">
-      {isVerified && <VerifiedBadge isVerified={isVerified} title={title} />}
+      {isVerified && (
+        <VerifiedBadge
+          verifications={verifications && verifications.length > 0 ? verifications : undefined}
+          isVerified={!(verifications && verifications.length > 0) ? isVerified : undefined}
+          title={title}
+        />
+      )}
       {milestoneForDialog && (
         <VerifyMilestoneUpdateDialog
           milestone={milestoneForDialog}

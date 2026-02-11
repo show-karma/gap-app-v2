@@ -248,7 +248,10 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               <p className="text-xs font-bold text-white">UPDATE</p>
             </div>
             {isVerified && (
-              <VerifiedBadge isVerified={isVerified} title={`${milestone.title} - Reviews`} />
+              <VerifiedBadge
+                verifications={milestone.verified as any}
+                title={`${milestone.title} - Reviews`}
+              />
             )}
           </div>
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-100">
@@ -294,6 +297,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                       milestone={milestone}
                       title={`${milestone.title} - Reviews`}
                       isVerified={isVerified}
+                      verifications={milestone.verified as any}
                       onVerified={markAsVerified}
                     />
                     <ExternalLink
