@@ -230,13 +230,6 @@ export const DetailsScreen: React.FC = () => {
               {errors.receivedDate && (
                 <p className="text-red-500 text-sm mt-1">{errors.receivedDate.message}</p>
               )}
-              {!errors.receivedDate &&
-                watch("receivedDate") &&
-                watch("receivedDate")! > new Date() && (
-                  <p className="text-amber-600 text-sm mt-1">
-                    This date is in the future. You can still continue.
-                  </p>
-                )}
             </div>
 
             {/* Recipient field - Only for grant flow */}
