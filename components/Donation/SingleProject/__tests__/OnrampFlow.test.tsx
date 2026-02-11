@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { OnrampFlow } from "../OnrampFlow";
 
@@ -32,9 +32,11 @@ jest.mock("../OnrampSuccessModal", () => ({
 
 import { useOnramp } from "@/hooks/donation/useOnramp";
 import { useCountryDetection } from "@/hooks/useCountryDetection";
+import { OnrampSuccessModal } from "../OnrampSuccessModal";
 
 const mockUseOnramp = useOnramp as jest.Mock;
 const mockUseCountryDetection = useCountryDetection as jest.Mock;
+const mockOnrampSuccessModal = OnrampSuccessModal as jest.Mock;
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
@@ -254,6 +256,131 @@ describe("OnrampFlow", () => {
       render(<OnrampFlow {...defaultProps} />, { wrapper: createWrapper() });
 
       expect(screen.getByText(/0x1234.*7890/)).toBeInTheDocument();
+    });
+  });
+
+  describe("initialAmount prop", () => {
+    it("renders with pre-filled amount when initialAmount is provided", () => {
+      render(<OnrampFlow {...defaultProps} initialAmount="50" />, {
+        wrapper: createWrapper(),
+      });
+
+      const input = screen.getByRole("textbox") as HTMLInputElement;
+      expect(input.value).toBe("50");
+    });
+
+    it("does not overwrite user-typed input when initialAmount prop changes", () => {
+      const wrapper = createWrapper();
+      const { rerender } = render(<OnrampFlow {...defaultProps} initialAmount="50" />, { wrapper });
+
+      const input = screen.getByRole("textbox") as HTMLInputElement;
+      expect(input.value).toBe("50");
+
+      // Rerendering with a new initialAmount should NOT overwrite the current value.
+      // Parent should use a key prop to remount if a reset is needed.
+      rerender(<OnrampFlow {...defaultProps} initialAmount="200" />);
+
+      expect(input.value).toBe("50");
+    });
+
+    it("renders with empty amount when initialAmount is not provided", () => {
+      render(<OnrampFlow {...defaultProps} />, { wrapper: createWrapper() });
+
+      const input = screen.getByRole("textbox") as HTMLInputElement;
+      expect(input.value).toBe("");
+    });
+  });
+
+  describe("onDonationComplete callback", () => {
+    it("is called when success modal closes", () => {
+      const onDonationComplete = jest.fn();
+
+      // Capture the OnrampSuccessModal onClose prop when it renders
+      let capturedOnClose: (() => void) | undefined;
+      mockOnrampSuccessModal.mockImplementation((props: any) => {
+        capturedOnClose = props.onClose;
+        return <div data-testid="success-modal">Success Modal</div>;
+      });
+
+      const mockClearSession = jest.fn();
+      mockUseOnramp.mockReturnValue({
+        initiateOnramp: jest.fn(),
+        isLoading: false,
+        session: { clientSecret: "cs_test_123", donationUid: "donation-456" },
+        clearSession: mockClearSession,
+      });
+
+      // Capture StripeOnrampEmbed onSuccess callback
+      const { StripeOnrampEmbed } = jest.requireMock("../StripeOnrampEmbed") as any;
+      let capturedStripeOnSuccess: ((data: any) => void) | undefined;
+      (StripeOnrampEmbed as jest.Mock).mockImplementation((props: any) => {
+        capturedStripeOnSuccess = props.onSuccess;
+        return <div data-testid="stripe-embed">Stripe Embed</div>;
+      });
+
+      render(<OnrampFlow {...defaultProps} onDonationComplete={onDonationComplete} />, {
+        wrapper: createWrapper(),
+      });
+
+      // Trigger Stripe success inside act() so React processes state updates
+      expect(capturedStripeOnSuccess).toBeDefined();
+      act(() => {
+        capturedStripeOnSuccess!({
+          id: "session-123",
+          status: "fulfillment_complete",
+          transaction_details: { source_amount: "100" },
+        });
+      });
+
+      // Now the success modal should be rendered, and we captured its onClose
+      expect(capturedOnClose).toBeDefined();
+      act(() => {
+        capturedOnClose!();
+      });
+
+      expect(onDonationComplete).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("donationUid passed to OnrampSuccessModal", () => {
+    it("passes donationUid from session to OnrampSuccessModal", () => {
+      const mockClearSession = jest.fn();
+      mockUseOnramp.mockReturnValue({
+        initiateOnramp: jest.fn(),
+        isLoading: false,
+        session: { clientSecret: "cs_test_123", donationUid: "donation-456" },
+        clearSession: mockClearSession,
+      });
+
+      // Capture StripeOnrampEmbed onSuccess callback
+      const { StripeOnrampEmbed } = jest.requireMock("../StripeOnrampEmbed") as any;
+      let capturedStripeOnSuccess: ((data: any) => void) | undefined;
+      (StripeOnrampEmbed as jest.Mock).mockImplementation((props: any) => {
+        capturedStripeOnSuccess = props.onSuccess;
+        return <div data-testid="stripe-embed">Stripe Embed</div>;
+      });
+
+      render(<OnrampFlow {...defaultProps} />, { wrapper: createWrapper() });
+
+      // Trigger success inside act() so React processes state updates
+      expect(capturedStripeOnSuccess).toBeDefined();
+      act(() => {
+        capturedStripeOnSuccess!({
+          id: "session-123",
+          status: "fulfillment_complete",
+          transaction_details: { source_amount: "100" },
+        });
+      });
+
+      // Check that OnrampSuccessModal was called with the correct donationUid
+      expect(mockOnrampSuccessModal).toHaveBeenCalledWith(
+        expect.objectContaining({
+          donationUid: "donation-456",
+          chainId: 8453,
+        }),
+        // React.memo wrapped components may receive undefined as second arg
+        undefined
+      );
     });
   });
 });

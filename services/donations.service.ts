@@ -39,6 +39,13 @@ export const donationsService = {
     return response.data;
   },
 
+  async getDonationByUid(uid: string, chainId: number): Promise<DonationApiResponse> {
+    const response = await apiClient.get<DonationApiResponse>(
+      `/v2/donations/${encodeURIComponent(uid)}/${chainId}`
+    );
+    return response.data;
+  },
+
   async createOnrampSession(request: OnrampSessionRequest): Promise<OnrampSessionResponse> {
     const response = await apiClient.post<OnrampSessionResponse>("/v2/onramp/session", request);
     return response.data;

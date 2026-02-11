@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Grant Milestones vs Impact",
+  description:
+    "Why execution milestones and real-world impact must be treated as separate but related concepts in funding systems.",
+  path: "/knowledge/milestones-vs-impact",
+});
 
 export default function MilestonesVsImpactPage() {
   return (
@@ -64,6 +73,8 @@ export default function MilestonesVsImpactPage() {
           <p className="text-gray-700 dark:text-gray-300">
             <a
               href="https://www.karmahq.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Karma

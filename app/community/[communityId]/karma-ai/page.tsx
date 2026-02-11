@@ -4,7 +4,7 @@ import { CommunityProjectEvaluatorPage } from "@/components/Pages/Communities/Co
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { defaultMetadata } from "@/utilities/meta";
+import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL, twitterMeta } from "@/utilities/meta";
 import { getCommunityDetails } from "@/utilities/queries/v2/community";
 
 type Params = Promise<{
@@ -51,35 +51,29 @@ export async function generateMetadata({
   }
 
   return {
-    title: dynamicMetadata.title || defaultMetadata.title,
-    description: dynamicMetadata.description || defaultMetadata.description,
+    title: dynamicMetadata.title || DEFAULT_TITLE,
+    description: dynamicMetadata.description || DEFAULT_DESCRIPTION,
     twitter: {
-      creator: defaultMetadata.twitter.creator,
-      site: defaultMetadata.twitter.site,
+      creator: twitterMeta.creator,
+      site: twitterMeta.site,
       images: [
         {
           url: `${envVars.VERCEL_URL}/api/metadata/communities/${communityId}`,
-          alt: dynamicMetadata.title || defaultMetadata.title,
+          alt: dynamicMetadata.title || DEFAULT_TITLE,
         },
       ],
     },
     openGraph: {
-      url: defaultMetadata.openGraph.url,
-      title: dynamicMetadata.title || defaultMetadata.title,
-      description: dynamicMetadata.description || defaultMetadata.description,
+      url: SITE_URL,
+      title: dynamicMetadata.title || DEFAULT_TITLE,
+      description: dynamicMetadata.description || DEFAULT_DESCRIPTION,
       images: [
         {
           url: `${envVars.VERCEL_URL}/api/metadata/communities/${communityId}`,
-          alt: dynamicMetadata.title || defaultMetadata.title,
+          alt: dynamicMetadata.title || DEFAULT_TITLE,
         },
       ],
     },
-    // link: [
-    //   {
-    //     rel: "icon",
-    //     href: "/favicon.ico",
-    //   },
-    // ],
   };
 }
 

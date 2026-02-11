@@ -1,10 +1,10 @@
 import { AddProgramWrapper } from "@/components/Pages/ProgramRegistry/AddProgramWrapper";
-import { PROJECT_NAME } from "@/constants/brand";
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata = customMetadata({
-  title: `${PROJECT_NAME} - Grant Program Registry`,
-  description: "Comprehensive list of all the grant programs in the web3 ecosystem.",
+  title: "Add a Grant Program",
+  description: "Add your grant program to the comprehensive registry of web3 funding programs.",
+  path: "/funding-map/add-program",
 });
 
 export default function AddProgramPage() {
