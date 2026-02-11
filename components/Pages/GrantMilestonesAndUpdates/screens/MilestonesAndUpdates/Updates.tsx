@@ -179,16 +179,14 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   // V2: verified is an array of verifications
-  const [isVerified, setIsVerified] = useState<boolean>(
-    Array.isArray(milestone?.verified) && milestone.verified.length > 0
-  );
+  const [isVerified, setIsVerified] = useState<boolean>(milestone?.verified !== undefined);
 
   const markAsVerified = () => {
     setIsVerified(true);
   };
 
   useEffect(() => {
-    setIsVerified(Array.isArray(milestone?.verified) && milestone.verified.length > 0);
+    setIsVerified(milestone?.verified !== undefined);
   }, [milestone]);
 
   // Extract actual date value from various formats (handles MongoDB { $date: ... } format)

@@ -28,17 +28,15 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
       return isVerifiedProp;
     }
 
-    // For GrantMilestone with array verified
-    if ("verified" in milestone && Array.isArray(milestone.verified)) {
-      return milestone.verified.length > 0;
+    // For GrantMilestone: defined verified (including []) means verified
+    if ("verified" in milestone) {
+      return milestone.verified !== undefined;
     }
 
     // For UnifiedMilestone
     if ("source" in milestone) {
       const grantMilestone = milestone.source.grantMilestone;
-      if (grantMilestone?.milestone.verified && Array.isArray(grantMilestone.milestone.verified)) {
-        return grantMilestone.milestone.verified.length > 0;
-      }
+      return grantMilestone?.milestone.verified !== undefined;
     }
 
     return false;

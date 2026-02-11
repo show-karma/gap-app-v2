@@ -123,11 +123,8 @@ export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> =
 
               const fetchedMilestone = foundGrant?.milestones?.find((u) => u.uid === milestone.uid);
 
-              // V2: verified is an array of verifications
-              const alreadyExists =
-                fetchedMilestone &&
-                Array.isArray(fetchedMilestone.verified) &&
-                fetchedMilestone.verified.length > 0;
+              // V2: defined verified (including []) means verified
+              const alreadyExists = fetchedMilestone && fetchedMilestone.verified !== undefined;
 
               if (alreadyExists) {
                 retries = 0;

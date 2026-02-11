@@ -156,19 +156,10 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
     projectMilestone?.completed?.createdAt || grantMilestone?.milestone.completed?.createdAt;
   const completionAttester =
     projectMilestone?.completed?.attester || grantMilestone?.milestone.completed?.attester;
-  // V2: verified is an array for both grant and project milestones
+  // V2: defined verified (including []) means verified; undefined means not verified.
   const isVerified = useMemo(
     () =>
-      Boolean(
-        projectMilestone?.verified &&
-          Array.isArray(projectMilestone.verified) &&
-          projectMilestone.verified.length > 0
-      ) ||
-      Boolean(
-        grantMilestone?.milestone.verified &&
-          Array.isArray(grantMilestone.milestone.verified) &&
-          grantMilestone.milestone.verified.length > 0
-      ),
+      projectMilestone?.verified !== undefined || grantMilestone?.milestone.verified !== undefined,
     [projectMilestone?.verified, grantMilestone?.milestone.verified]
   );
   const completionDeliverables =
