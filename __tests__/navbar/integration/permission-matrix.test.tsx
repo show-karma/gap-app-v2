@@ -30,9 +30,9 @@ const verifyDrawerMenuItems = (drawer: HTMLElement, expected: ExpectedElements) 
   // Sign in and Contact sales are outside drawer, skip checking them here
   // They're checked separately in the full screen context
 
-  // Note: userMenu refers to authenticated state - mobile drawer shows My projects, not "My profile"
+  // Note: userMenu refers to authenticated state - mobile drawer shows Dashboard, not "My profile"
   // "My profile" / "Edit profile" is in desktop user menu, mobile has avatar button outside drawer
-  if (expected.myProjects) checkItem("My projects", true);
+  if (expected.myProjects) checkItem("Dashboard", true);
   checkItem("Review", expected.review);
   checkItem("Admin", expected.admin);
   checkItem("Manage Programs", expected.managePrograms);
@@ -56,8 +56,8 @@ const verifyUserMenuItems = (expected: ExpectedElements) => {
   };
 
   if (expected.myProjects) {
-    const myProjectsElements = screen.queryAllByText("My projects");
-    expect(myProjectsElements.length).toBeGreaterThan(0);
+    const dashboardElements = screen.queryAllByText("Dashboard");
+    expect(dashboardElements.length).toBeGreaterThan(0);
   }
   checkMenuItem("Review", expected.review);
   checkMenuItem("Admin", expected.admin);
@@ -227,8 +227,8 @@ describe("Permission Matrix Integration Tests", () => {
 
       const drawer = screen.getByRole("dialog");
 
-      // Should see basic items - "My projects" is in drawer when authenticated
-      expect(within(drawer).getByText("My projects")).toBeInTheDocument();
+      // Should see basic items - "Dashboard" is in drawer when authenticated
+      expect(within(drawer).getByText("Dashboard")).toBeInTheDocument();
 
       // Should NOT see special permission links
       expect(within(drawer).queryByText("Review")).not.toBeInTheDocument();
@@ -236,7 +236,7 @@ describe("Permission Matrix Integration Tests", () => {
       expect(within(drawer).queryByText("Manage Programs")).not.toBeInTheDocument();
     });
 
-    it("community admin sees Admin link", async () => {
+    it("community admin does not see Admin link", async () => {
       const user = userEvent.setup();
       const fixture = getAuthFixture("community-admin-single");
 
@@ -255,15 +255,13 @@ describe("Permission Matrix Integration Tests", () => {
 
       const drawer = screen.getByRole("dialog");
 
-      // Should see Admin link
-      expect(within(drawer).getByText("Admin")).toBeInTheDocument();
-
-      // Should NOT see Review or Manage Programs
+      // Should NOT see Admin or Review
+      expect(within(drawer).queryByText("Admin")).not.toBeInTheDocument();
       expect(within(drawer).queryByText("Review")).not.toBeInTheDocument();
       expect(within(drawer).queryByText("Manage Programs")).not.toBeInTheDocument();
     });
 
-    it("reviewer sees Review link", async () => {
+    it("reviewer does not see Review link", async () => {
       const user = userEvent.setup();
       const fixture = getAuthFixture("reviewer-single");
 
@@ -282,15 +280,13 @@ describe("Permission Matrix Integration Tests", () => {
 
       const drawer = screen.getByRole("dialog");
 
-      // Should see Review link
-      expect(within(drawer).getByText("Review")).toBeInTheDocument();
-
-      // Should NOT see Admin or Manage Programs
+      // Should NOT see Admin, Review, or Manage Programs
+      expect(within(drawer).queryByText("Review")).not.toBeInTheDocument();
       expect(within(drawer).queryByText("Admin")).not.toBeInTheDocument();
       expect(within(drawer).queryByText("Manage Programs")).not.toBeInTheDocument();
     });
 
-    it("staff member sees Admin link", async () => {
+    it("staff member does not see Admin link", async () => {
       const user = userEvent.setup();
       const fixture = getAuthFixture("staff");
 
@@ -309,11 +305,11 @@ describe("Permission Matrix Integration Tests", () => {
 
       const drawer = screen.getByRole("dialog");
 
-      // Should see Admin link
-      expect(within(drawer).getByText("Admin")).toBeInTheDocument();
+      // Should NOT see Admin link
+      expect(within(drawer).queryByText("Admin")).not.toBeInTheDocument();
     });
 
-    it("owner sees Admin link", async () => {
+    it("owner does not see Admin link", async () => {
       const user = userEvent.setup();
       const fixture = getAuthFixture("owner");
 
@@ -332,8 +328,8 @@ describe("Permission Matrix Integration Tests", () => {
 
       const drawer = screen.getByRole("dialog");
 
-      // Should see Admin link
-      expect(within(drawer).getByText("Admin")).toBeInTheDocument();
+      // Should NOT see Admin link
+      expect(within(drawer).queryByText("Admin")).not.toBeInTheDocument();
     });
 
     it("program creator sees Manage Programs link", async () => {
@@ -386,7 +382,7 @@ describe("Permission Matrix Integration Tests", () => {
       expect(within(drawer).getByText("Manage Programs")).toBeInTheDocument();
     });
 
-    it("admin + reviewer sees both Admin and Review links", async () => {
+    it("admin + reviewer does not see Admin or Review links", async () => {
       const user = userEvent.setup();
       const fixture = getAuthFixture("admin-and-reviewer");
 
@@ -405,12 +401,12 @@ describe("Permission Matrix Integration Tests", () => {
 
       const drawer = screen.getByRole("dialog");
 
-      // Should see both Admin and Review
-      expect(within(drawer).getByText("Admin")).toBeInTheDocument();
-      expect(within(drawer).getByText("Review")).toBeInTheDocument();
+      // Should NOT see Admin or Review
+      expect(within(drawer).queryByText("Admin")).not.toBeInTheDocument();
+      expect(within(drawer).queryByText("Review")).not.toBeInTheDocument();
     });
 
-    it("staff + reviewer sees both Admin and Review links", async () => {
+    it("staff + reviewer does not see Admin or Review links", async () => {
       const user = userEvent.setup();
       const fixture = getAuthFixture("staff-and-reviewer");
 
@@ -429,12 +425,12 @@ describe("Permission Matrix Integration Tests", () => {
 
       const drawer = screen.getByRole("dialog");
 
-      // Should see both
-      expect(within(drawer).getByText("Admin")).toBeInTheDocument();
-      expect(within(drawer).getByText("Review")).toBeInTheDocument();
+      // Should NOT see Admin or Review
+      expect(within(drawer).queryByText("Admin")).not.toBeInTheDocument();
+      expect(within(drawer).queryByText("Review")).not.toBeInTheDocument();
     });
 
-    it("registry admin + community admin sees Admin and Manage Programs", async () => {
+    it("registry admin + community admin sees Manage Programs", async () => {
       const user = userEvent.setup();
       const fixture = getAuthFixture("registry-admin-and-community-admin");
 
@@ -453,12 +449,12 @@ describe("Permission Matrix Integration Tests", () => {
 
       const drawer = screen.getByRole("dialog");
 
-      // Should see both
-      expect(within(drawer).getByText("Admin")).toBeInTheDocument();
+      // Should see Manage Programs, not Admin
+      expect(within(drawer).queryByText("Admin")).not.toBeInTheDocument();
       expect(within(drawer).getByText("Manage Programs")).toBeInTheDocument();
     });
 
-    it("super user sees all permission links", async () => {
+    it("super user sees Manage Programs only", async () => {
       const user = userEvent.setup();
       const fixture = getAuthFixture("super-user");
 
@@ -477,9 +473,9 @@ describe("Permission Matrix Integration Tests", () => {
 
       const drawer = screen.getByRole("dialog");
 
-      // Should see all special permission links
-      expect(within(drawer).getByText("Admin")).toBeInTheDocument();
-      expect(within(drawer).getByText("Review")).toBeInTheDocument();
+      // Should see Manage Programs, not Admin or Review
+      expect(within(drawer).queryByText("Admin")).not.toBeInTheDocument();
+      expect(within(drawer).queryByText("Review")).not.toBeInTheDocument();
       expect(within(drawer).getByText("Manage Programs")).toBeInTheDocument();
     });
 
