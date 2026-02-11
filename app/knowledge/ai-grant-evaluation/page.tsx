@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "AI-Assisted Grant Evaluation at Scale",
+  description:
+    "How funding programs scale application review without sacrificing rigor using AI-assisted evaluation tools.",
+  path: "/knowledge/ai-grant-evaluation",
+});
 
 export default function AiGrantEvaluationPage() {
   return (
@@ -71,6 +80,8 @@ export default function AiGrantEvaluationPage() {
           <p className="text-gray-700 dark:text-gray-300">
             <a
               href="https://www.karmahq.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Karma

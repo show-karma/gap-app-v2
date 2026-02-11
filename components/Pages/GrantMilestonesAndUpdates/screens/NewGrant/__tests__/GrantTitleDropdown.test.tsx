@@ -273,9 +273,7 @@ describe("GrantTitleDropdown", () => {
         },
       });
 
-      render(
-        <GrantTitleDropdown {...defaultProps} list={[restrictedProgram]} canAdd />
-      );
+      render(<GrantTitleDropdown {...defaultProps} list={[restrictedProgram]} canAdd />);
 
       // Open the dropdown
       const trigger = screen.getByRole("button");
@@ -320,9 +318,7 @@ describe("GrantTitleDropdown", () => {
         },
       });
 
-      render(
-        <GrantTitleDropdown {...defaultProps} list={[openProgram]} canAdd />
-      );
+      render(<GrantTitleDropdown {...defaultProps} list={[openProgram]} canAdd />);
 
       // Open the dropdown
       const trigger = screen.getByRole("button");
@@ -358,9 +354,7 @@ describe("GrantTitleDropdown", () => {
     it("should allow addCustom for a completely new program name", async () => {
       const user = userEvent.setup();
 
-      render(
-        <GrantTitleDropdown {...defaultProps} list={[]} canAdd />
-      );
+      render(<GrantTitleDropdown {...defaultProps} list={[]} canAdd />);
 
       // Open the dropdown
       const trigger = screen.getByRole("button");

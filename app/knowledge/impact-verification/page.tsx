@@ -1,3 +1,13 @@
+import type { Metadata } from "next";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "How to Verify Impact Without Centralized Auditors",
+  description:
+    "How impact can be measured and verified without relying solely on centralized auditors or one-off reports in open funding systems.",
+  path: "/knowledge/impact-verification",
+});
+
 export default function ImpactVerificationPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-12">
@@ -44,6 +54,8 @@ export default function ImpactVerificationPage() {
           <p className="text-gray-700 dark:text-gray-300">
             <a
               href="https://www.karmahq.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Karma

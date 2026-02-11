@@ -4,6 +4,7 @@ import { toast } from "react-hot-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { programReviewersService } from "@/services/program-reviewers.service";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
+import { getReviewerErrorMessage } from "@/utilities/reviewerErrors";
 
 /**
  * Comprehensive hook for managing program reviewers
@@ -26,7 +27,6 @@ export function useProgramReviewers(programId: string) {
   const addMutation = useMutation({
     mutationFn: async (data: Record<string, string>) => {
       const validation = programReviewersService.validateReviewerData({
-        publicAddress: data.publicAddress,
         name: data.name,
         email: data.email,
         telegram: data.telegram,
@@ -36,12 +36,7 @@ export function useProgramReviewers(programId: string) {
         throw new Error(validation.errors.join(", "));
       }
 
-      return programReviewersService.addReviewer(programId, {
-        publicAddress: data.publicAddress,
-        name: data.name,
-        email: data.email,
-        telegram: data.telegram,
-      });
+      return programReviewersService.addReviewer(programId, validation.sanitized);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
@@ -50,10 +45,7 @@ export function useProgramReviewers(programId: string) {
       toast.success("Program reviewer added successfully");
     },
     onError: (error) => {
-      console.error("Error adding program reviewer:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to add program reviewer";
-      toast.error(errorMessage);
+      toast.error(getReviewerErrorMessage(error, "Failed to add program reviewer"));
     },
   });
 
@@ -69,10 +61,7 @@ export function useProgramReviewers(programId: string) {
       toast.success("Program reviewer removed successfully");
     },
     onError: (error) => {
-      console.error("Error removing program reviewer:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to remove program reviewer";
-      toast.error(errorMessage);
+      toast.error(getReviewerErrorMessage(error, "Failed to remove program reviewer"));
     },
   });
 

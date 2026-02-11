@@ -20,7 +20,7 @@ jobs:
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude'))) ||
       (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: write
       pull-requests: write
@@ -238,121 +238,124 @@ jobs:
 
           # Custom instructions for frontend code review
           custom_instructions: |
-            ## Project Information
-            This is **gap-app-v2**, a Next.js 15 frontend application for Karma GAP (Grantee Accountability Protocol).
+            ## Project: gap-app-v2
+            Next.js 15 (App Router, Turbopack) | React 19 | TypeScript | TailwindCSS + Tremor | Zustand | React Query | Wagmi/RainbowKit | Radix UI | Biome
 
-            ### Tech Stack
-            - Next.js 15 with App Router and Turbopack
-            - React 19
-            - TypeScript
-            - TailwindCSS with Tremor components
-            - Zustand for state management
-            - React Query for data fetching
-            - Wagmi/RainbowKit for Web3 integration
-            - Radix UI components
-            - Biome for linting/formatting
+            Preview URL: ${{ steps.deployment.outputs.deployment_url || 'Not available' }}
 
-            ## Deployment Information
-            - Preview URL: ${{ steps.deployment.outputs.deployment_url || 'Not yet deployed' }}
-            - Deployment status: ${{ steps.deployment.outputs.deployment_ready == 'true' && 'Ready ✅' || 'Pending ⏳' }}
+            Also read and enforce the CLAUDE.md in this repo for project-specific anti-patterns.
 
-            ## Code Review Guidelines
+            ## Review Rules
 
-            ### 1. React & Next.js Best Practices
-            - Verify proper use of Server Components vs Client Components
-            - Check for "use client" directive where needed
-            - Ensure proper data fetching patterns (Server Components, React Query)
-            - Validate proper use of Next.js App Router conventions
-            - Check for proper metadata and SEO implementation
+            **OUTPUT FORMAT**: Only report problems. Do NOT list strengths, compliments, or "what looks good". If a file has no issues, skip it entirely. If the entire PR has no issues, say "No issues found." and nothing else.
 
-            ### 2. TypeScript Standards
-            - Ensure proper typing (no `any` types without justification)
-            - Check for proper interface/type definitions
-            - Validate prop types for components
+            **TRIAGE ORDER**: Review in this priority: security/bugs first, then performance, then architecture, then everything else. Report issues grouped by file.
 
-            ### 3. Component Architecture
-            - Verify components follow single responsibility principle
-            - Check for proper component composition
-            - Ensure reusable components are properly abstracted
-            - Validate proper use of hooks
+            **STRUCTURE**: For each issue found, use this format:
+            - **File**: `path/to/file.ts:LINE`
+            - **Rule**: [rule identifier]
+            - **Severity**: 🔴 CRITICAL | 🟠 HIGH | 🟡 MEDIUM
+            - **Problem**: One sentence describing what is wrong.
+            - **Why**: Root cause or why this matters (one sentence).
+            - **Fix**: Concrete code snippet or one-sentence fix.
 
-            ### 4. Styling & Accessibility
-            - Check TailwindCSS usage follows project patterns
-            - Verify accessibility attributes (ARIA labels, roles)
-            - Ensure keyboard navigation support
-            - Check for proper semantic HTML
+            Only report MEDIUM severity and above. Skip nitpicks.
 
-            ### 5. State Management
-            - Verify proper use of Zustand stores
-            - Check React Query usage for server state
-            - Ensure proper loading/error states
+            **AI SLOP DETECTION** 🤖: Flag AI-generated code smells: nonsensical comments that describe the obvious, copy-pasted boilerplate that does not fit the context, dead code left behind, overly verbose abstractions for trivial operations, hallucinated API usage.
 
-            ### 6. Web3 Integration
-            - Validate Wagmi hook usage
-            - Check wallet connection handling
-            - Verify transaction error handling
+            **END WITH** a verdict section in exactly this format:
 
-            ### 7. Performance
-            - Check for unnecessary re-renders
-            - Verify proper use of React.memo where beneficial
-            - Ensure images use Next.js Image component
-            - Check for proper code splitting
+            ---
+            ### 📊 Score: [X]/100
+            Scoring guide: 100 = flawless, 90+ = excellent (minor nits only), 70-89 = good (some issues), 50-69 = needs work (significant issues), below 50 = major problems. Deduct points proportionally: -15 per CRITICAL, -7 per HIGH, -3 per MEDIUM.
 
-            ## PR Documentation Requirements
+            ### 🏷️ Status: [one of the following]
+            - ✅ **APPROVE** — No CRITICAL or HIGH issues. Ship it.
+            - ⚠️ **APPROVE WITH SUGGESTIONS** — No CRITICAL issues, but has HIGH/MEDIUM issues worth addressing.
+            - 🔄 **REQUEST CHANGES** — Has CRITICAL issues that must be fixed before merge.
 
-            ### Generate Mermaid.js Diagrams
-            Create visual diagrams for significant changes:
+            One sentence summary of why this status was chosen. Nothing else after this section.
 
-            **IMPORTANT MERMAID RULES:**
-            - Wrap ANY node labels containing special characters in double quotes
-            - Use proper syntax: node["label"] --> node2["label2"]
+            ---
 
-            ```mermaid
-            graph TB
-              subgraph "Component Changes"
-                A["New Components"] --> B["Modified Components"]
-              end
+            ### 🔴 1. Waterfall and Async (CRITICAL)
+            - Sequential await calls that could run in parallel: use Promise.all()
+            - Awaiting values only used in one branch: move await into that branch
+            - Missing Suspense boundaries for streaming async content
+            - API routes that await early instead of starting promises early and awaiting late
 
-              subgraph "Data Flow"
-                C["Props"] --> D["State"]
-                D --> E["Effects"]
-              end
-            ```
+            ### 🔴 2. Bundle Size (CRITICAL)
+            - Barrel file imports (import from index files): import from source file directly
+            - Heavy components not using next/dynamic for lazy loading
+            - Third-party scripts (analytics, logging) not deferred until after hydration
+            - Modules loaded unconditionally that are only used behind feature flags: use dynamic import
 
-            ### Code Review Checklist
-            For every PR, evaluate:
-            1. **Architecture**: Does the change follow established patterns?
-            2. **Types**: Are TypeScript types properly defined?
-            3. **Components**: Are React components well-structured?
-            4. **Styling**: Does it follow TailwindCSS conventions?
-            5. **Accessibility**: Are a11y requirements met?
-            6. **Performance**: Any potential performance issues?
-            7. **Testing**: Are tests included for new functionality?
+            ### 🟠 3. Server vs Client Components (HIGH)
+            - "use client" on components that do not use hooks, event handlers, or browser APIs: make them Server Components
+            - Data fetching in Client Components that should happen server-side
+            - Large objects passed from Server to Client components: minimize serialization
+            - Missing React.cache() for per-request deduplication in Server Components
+            - Sequential server fetches that should be parallelized by restructuring component tree
 
-            ## Automated Tasks Based on Event
+            ### 🟠 4. Component Architecture (HIGH)
+            - Boolean prop proliferation (isX, showY, hasZ): use composition with compound components or explicit variants
+            - Monolithic components with render props: prefer children-based compound components
+            - State trapped inside components that siblings need: lift state into provider
+            - Missing generic context interfaces (state/actions/meta pattern) for dependency injection
+            - Components doing too many things: split into explicit named variants (e.g., ThreadComposer, EditComposer)
+            - React 19: still using forwardRef when ref is now a regular prop
+            - React 19: still using useContext() when use() is available
 
-            ### For New PRs:
-            1. Perform comprehensive code review
-            2. Check for TypeScript errors
-            3. Validate component patterns
-            4. Generate architectural diagrams if significant changes
-            5. Provide actionable feedback
+            ### 🟠 5. TypeScript (HIGH)
+            - any type without explicit justification comment
+            - Missing or incomplete prop type definitions
+            - Type assertions (as) that could be replaced with type guards
+            - Unused type imports or exports
 
-            ### For Comments (@claude trigger):
-            1. Address specific questions or requests
-            2. Provide code suggestions when asked
-            3. Explain architectural decisions
+            ### 🟡 6. Re-render and Performance (MEDIUM)
+            - Components subscribing to store state only used in callbacks: use useStore.getState() instead
+            - Missing React.memo on expensive components that receive stable props from parent
+            - Object/array dependencies in useEffect/useMemo: use primitive values or stable references
+            - Subscribing to full objects when only a boolean derived value is needed
+            - Inline object/function creation in JSX causing child re-renders
+            - Missing next/image for images
+            - Using && for conditional rendering (can render 0 or empty string): use ternary
 
-            ### For Code Reviews:
-            1. Analyze changes in detail
-            2. Check against coding standards
-            3. Provide constructive feedback
-            4. Suggest improvements
+            ### 🟡 7. State Management (MEDIUM)
+            - Zustand store with too many concerns: split stores by domain
+            - React Query missing proper staleTime / gcTime configuration
+            - Missing loading/error/empty states in data-dependent UI
+            - Optimistic updates without rollback on error
+
+            ### 🟡 8. Web3 (MEDIUM)
+            - Wagmi hooks used without proper error handling for rejected transactions
+            - Missing wallet disconnection handling
+            - Hardcoded chain IDs or contract addresses: use constants
+
+            ### 🟡 9. Accessibility (MEDIUM)
+            - Interactive elements missing ARIA labels or roles
+            - Missing keyboard navigation for custom interactive components
+            - Non-semantic HTML (div with onClick instead of button)
+            - Missing focus management on modals/dialogs
+
+            ### 🟡 10. Testing (MEDIUM)
+            - New functionality without corresponding tests (target: 70% coverage)
+            - Bug fixes without regression tests
+            - Tests that test implementation details instead of behavior
+
+            ---
+
+            ## Event-Specific Behavior
+
+            **New PRs**: Review all changed files against the rules above. Only output issues.
+            **@claude comments**: Answer the specific question or request directly.
+            **Review comments**: Analyze the specific code referenced and respond.
 
           # Conditional prompts based on triggers - enables automatic PR reviews
           direct_prompt: |
-            ${{ github.event_name == 'pull_request' && 'Perform a comprehensive code review of this PR. Check TypeScript standards, React/Next.js best practices, component architecture, accessibility, state management, Web3 integration, and performance. Generate Mermaid diagrams to visualize the changes and provide actionable feedback.' || '' }}
+            ${{ github.event_name == 'pull_request' && 'Review this PR against the rules in custom_instructions. Triage: security/bugs first, then performance, then architecture. Only report MEDIUM+ issues with emoji severity indicators. For each: file:line, rule, severity, problem, root cause, fix. Flag any AI slop. End with the verdict section: Score X/100, then Status (APPROVE / APPROVE WITH SUGGESTIONS / REQUEST CHANGES). No strengths, no praise.' || '' }}
 
           max_turns: '30'
           timeout_minutes: '45'
-
+          # Allow the Blacksmith bot account to trigger Claude on automation PRs.
+          allowed_bots: blacksmith-sh,blacksmith-sh[bot]
