@@ -40,6 +40,7 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
   }) => {
     const [amount, setAmount] = useState(initialAmount || "");
     const [donorEmail, setDonorEmail] = useState("");
+    const [emailTouched, setEmailTouched] = useState(false);
     const donationUidRef = useRef<string | null>(null);
     const pollingTokenRef = useRef<string | null>(null);
     const selectedProvider = OnrampProvider.STRIPE;
@@ -115,9 +116,13 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
       return { validationError: null, isValidAmount: true };
     }, [amount]);
 
-    const isEmailValid = useMemo(() => {
-      if (isAuthenticated) return true;
-      return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(donorEmail);
+    const { emailError, isEmailValid } = useMemo(() => {
+      if (isAuthenticated) return { emailError: null, isEmailValid: true };
+      if (!donorEmail) return { emailError: "Email is required", isEmailValid: false };
+      if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(donorEmail)) {
+        return { emailError: "Please enter a valid email address", isEmailValid: false };
+      }
+      return { emailError: null, isEmailValid: true };
     }, [isAuthenticated, donorEmail]);
 
     const handleProceed = useCallback(() => {
@@ -196,12 +201,22 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
               placeholder="you@example.com"
               value={donorEmail}
               onChange={(e) => setDonorEmail(e.target.value)}
-              aria-describedby="donor-email-hint"
+              onBlur={() => setEmailTouched(true)}
+              aria-describedby={
+                emailTouched && emailError ? "donor-email-error" : "donor-email-hint"
+              }
+              aria-invalid={emailTouched && emailError ? "true" : undefined}
               className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             />
-            <p id="donor-email-hint" className="text-xs text-gray-500 dark:text-gray-400">
-              Required for payment receipt and donation tracking.
-            </p>
+            {emailTouched && emailError ? (
+              <p id="donor-email-error" role="alert" className="text-xs text-red-500">
+                {emailError}
+              </p>
+            ) : (
+              <p id="donor-email-hint" className="text-xs text-gray-500 dark:text-gray-400">
+                Required for payment receipt and donation tracking.
+              </p>
+            )}
           </div>
         )}
 
