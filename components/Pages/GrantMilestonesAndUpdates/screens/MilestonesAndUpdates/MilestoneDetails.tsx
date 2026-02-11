@@ -127,10 +127,11 @@ interface MilestoneDetailsProps {
 }
 
 export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }) => {
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useIsCommunityAdmin();
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   // Get normalized completion data (handles both object and array formats)
   const completionData = getCompletionData(milestone);

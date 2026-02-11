@@ -172,7 +172,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
 
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isCommunityAdmin = useIsCommunityAdmin();
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   // V2: verified is an array of verifications
   const [isVerified, setIsVerified] = useState<boolean>(
