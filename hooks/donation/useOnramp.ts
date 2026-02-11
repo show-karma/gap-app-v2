@@ -66,7 +66,7 @@ export const useOnramp = ({
         network,
         targetAsset,
         donorAddress: address,
-        ...(donorEmail && { donorEmail }),
+        ...(donorEmail?.trim() && { donorEmail: donorEmail.trim() }),
         ...(country && { country }),
       };
 

@@ -74,7 +74,7 @@ export const donationsService = {
   ): Promise<DonationStatusApiResponse> {
     const response = await publicApiClient.get<DonationStatusApiResponse>(
       `/v2/donations/${encodeURIComponent(uid)}/${chainId}/status`,
-      { params: { pollingToken } }
+      { headers: { "X-Polling-Token": pollingToken } }
     );
     return response.data;
   },

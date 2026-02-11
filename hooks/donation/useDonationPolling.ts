@@ -11,6 +11,11 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 const POLLING_INTERVAL_MS = 5000;
 
+const DONATION_STATUS_VALUES = new Set<string>(Object.values(DonationStatus));
+
+const toDonationStatus = (s?: string | null): DonationStatus | null =>
+  s && DONATION_STATUS_VALUES.has(s) ? (s as DonationStatus) : null;
+
 const isTerminalStatus = (s?: string | null) =>
   s === DonationStatus.COMPLETED || s === DonationStatus.FAILED;
 
@@ -48,7 +53,7 @@ export const useDonationPolling = ({
     retry: false,
   });
 
-  const status = (data?.status as DonationStatus) ?? null;
+  const status = toDonationStatus(data?.status);
   const isPolling = !!donationUid && isFetching && !isTerminalStatus(status);
 
   return {
