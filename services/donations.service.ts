@@ -36,22 +36,8 @@ publicApiClient.interceptors.response.use(
 );
 
 export const donationsService = {
-  async getUserDonations(walletAddress: string): Promise<DonationApiResponse[]> {
-    const response = await apiClient.get<DonationApiResponse[]>(
-      `/v2/donations/user/${walletAddress}`
-    );
-    return response.data;
-  },
-
   async getMyDonations(): Promise<DonationApiResponse[]> {
     const response = await apiClient.get<DonationApiResponse[]>("/v2/donations/me");
-    return response.data;
-  },
-
-  async getProjectDonations(projectUID: string): Promise<DonationApiResponse[]> {
-    const response = await apiClient.get<DonationApiResponse[]>(
-      `/v2/donations/project/${projectUID}`
-    );
     return response.data;
   },
 

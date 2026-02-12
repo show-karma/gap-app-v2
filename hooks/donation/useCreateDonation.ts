@@ -8,17 +8,9 @@ export const useCreateDonation = () => {
 
   return useMutation({
     mutationFn: (request: CreateDonationRequest) => donationsService.createDonation(request),
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.DONATIONS.MY(),
-      });
-      if (data.donorAddress) {
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.DONATIONS.BY_USER(data.donorAddress),
-        });
-      }
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.DONATIONS.BY_PROJECT(data.projectUID),
       });
     },
   });

@@ -141,8 +141,6 @@ export const QUERY_KEYS = {
   },
   DONATIONS: {
     MY: () => ["donations", "me"] as const,
-    BY_USER: (walletAddress: string) => ["donations", "user", walletAddress] as const,
-    BY_PROJECT: (projectUID: string) => ["donations", "project", projectUID] as const,
     POLLING: (donationUid: string, chainId: number) =>
       ["donation", "polling", donationUid, chainId] as const,
     STATUS: (uid: string, chainId: number, token: string) =>
