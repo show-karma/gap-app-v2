@@ -42,26 +42,26 @@ describe("Role Types", () => {
       expect(ROLE_HIERARCHY[Role.APPLICANT]).toBe(1);
     });
 
-    it("should assign reviewers level 2", () => {
+    it("should assign PROGRAM_REVIEWER level 2 and MILESTONE_REVIEWER level 3", () => {
       expect(ROLE_HIERARCHY[Role.PROGRAM_REVIEWER]).toBe(2);
-      expect(ROLE_HIERARCHY[Role.MILESTONE_REVIEWER]).toBe(2);
+      expect(ROLE_HIERARCHY[Role.MILESTONE_REVIEWER]).toBe(3);
     });
 
-    it("should assign PROGRAM_ADMIN and PROGRAM_CREATOR level 3", () => {
-      expect(ROLE_HIERARCHY[Role.PROGRAM_ADMIN]).toBe(3);
-      expect(ROLE_HIERARCHY[Role.PROGRAM_CREATOR]).toBe(3);
+    it("should assign PROGRAM_ADMIN level 4 and PROGRAM_CREATOR level 5", () => {
+      expect(ROLE_HIERARCHY[Role.PROGRAM_ADMIN]).toBe(4);
+      expect(ROLE_HIERARCHY[Role.PROGRAM_CREATOR]).toBe(5);
     });
 
-    it("should assign COMMUNITY_ADMIN level 4", () => {
-      expect(ROLE_HIERARCHY[Role.COMMUNITY_ADMIN]).toBe(4);
+    it("should assign COMMUNITY_ADMIN level 6", () => {
+      expect(ROLE_HIERARCHY[Role.COMMUNITY_ADMIN]).toBe(6);
     });
 
-    it("should assign REGISTRY_ADMIN level 5", () => {
-      expect(ROLE_HIERARCHY[Role.REGISTRY_ADMIN]).toBe(5);
+    it("should assign REGISTRY_ADMIN level 7", () => {
+      expect(ROLE_HIERARCHY[Role.REGISTRY_ADMIN]).toBe(7);
     });
 
-    it("should assign SUPER_ADMIN level 6", () => {
-      expect(ROLE_HIERARCHY[Role.SUPER_ADMIN]).toBe(6);
+    it("should assign SUPER_ADMIN level 8", () => {
+      expect(ROLE_HIERARCHY[Role.SUPER_ADMIN]).toBe(8);
     });
   });
 
@@ -78,12 +78,12 @@ describe("Role Types", () => {
       expect(getRoleLevel(Role.GUEST)).toBe(0);
       expect(getRoleLevel(Role.APPLICANT)).toBe(1);
       expect(getRoleLevel(Role.PROGRAM_REVIEWER)).toBe(2);
-      expect(getRoleLevel(Role.MILESTONE_REVIEWER)).toBe(2);
-      expect(getRoleLevel(Role.PROGRAM_ADMIN)).toBe(3);
-      expect(getRoleLevel(Role.PROGRAM_CREATOR)).toBe(3);
-      expect(getRoleLevel(Role.COMMUNITY_ADMIN)).toBe(4);
-      expect(getRoleLevel(Role.REGISTRY_ADMIN)).toBe(5);
-      expect(getRoleLevel(Role.SUPER_ADMIN)).toBe(6);
+      expect(getRoleLevel(Role.MILESTONE_REVIEWER)).toBe(3);
+      expect(getRoleLevel(Role.PROGRAM_ADMIN)).toBe(4);
+      expect(getRoleLevel(Role.PROGRAM_CREATOR)).toBe(5);
+      expect(getRoleLevel(Role.COMMUNITY_ADMIN)).toBe(6);
+      expect(getRoleLevel(Role.REGISTRY_ADMIN)).toBe(7);
+      expect(getRoleLevel(Role.SUPER_ADMIN)).toBe(8);
     });
 
     it("should return 0 for unknown role", () => {
@@ -106,9 +106,9 @@ describe("Role Types", () => {
       expect(isRoleAtLeast(Role.APPLICANT, Role.PROGRAM_REVIEWER)).toBe(false);
     });
 
-    it("should handle same-level reviewers", () => {
-      expect(isRoleAtLeast(Role.PROGRAM_REVIEWER, Role.MILESTONE_REVIEWER)).toBe(true);
+    it("should have MILESTONE_REVIEWER above PROGRAM_REVIEWER", () => {
       expect(isRoleAtLeast(Role.MILESTONE_REVIEWER, Role.PROGRAM_REVIEWER)).toBe(true);
+      expect(isRoleAtLeast(Role.PROGRAM_REVIEWER, Role.MILESTONE_REVIEWER)).toBe(false);
     });
   });
 

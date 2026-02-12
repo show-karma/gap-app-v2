@@ -97,24 +97,24 @@ describe("Permission Boundary Tests - Role Isolation", () => {
     });
   });
 
-  describe("MILESTONE_REVIEWER cannot review or approve applications", () => {
+  describe("MILESTONE_REVIEWER inherits PROGRAM_REVIEWER and adds milestone management", () => {
     const milestoneReviewerPerms = getPermissionsForRoles([Role.MILESTONE_REVIEWER]);
 
-    it("should NOT have APPLICATION_REVIEW", () => {
-      expect(milestoneReviewerPerms).not.toContain(Permission.APPLICATION_REVIEW);
+    it("should inherit APPLICATION_REVIEW from PROGRAM_REVIEWER layer", () => {
+      expect(milestoneReviewerPerms).toContain(Permission.APPLICATION_REVIEW);
     });
 
-    it("should NOT have APPLICATION_APPROVE", () => {
+    it("should NOT have APPLICATION_APPROVE (admin-only)", () => {
       expect(milestoneReviewerPerms).not.toContain(Permission.APPLICATION_APPROVE);
     });
 
-    it("should NOT have APPLICATION_REJECT", () => {
+    it("should NOT have APPLICATION_REJECT (admin-only)", () => {
       expect(milestoneReviewerPerms).not.toContain(Permission.APPLICATION_REJECT);
     });
 
-    it("should NOT see all applications (only milestones)", () => {
+    it("should inherit APPLICATION_VIEW_ASSIGNED from PROGRAM_REVIEWER layer", () => {
       expect(milestoneReviewerPerms).not.toContain(Permission.APPLICATION_VIEW_ALL);
-      expect(milestoneReviewerPerms).not.toContain(Permission.APPLICATION_VIEW_ASSIGNED);
+      expect(milestoneReviewerPerms).toContain(Permission.APPLICATION_VIEW_ASSIGNED);
     });
 
     it("should have milestone-specific permissions", () => {
@@ -122,6 +122,14 @@ describe("Permission Boundary Tests - Role Isolation", () => {
       expect(milestoneReviewerPerms).toContain(Permission.MILESTONE_REVIEW);
       expect(milestoneReviewerPerms).toContain(Permission.MILESTONE_APPROVE);
       expect(milestoneReviewerPerms).toContain(Permission.MILESTONE_REJECT);
+    });
+
+    it("should be a strict superset of PROGRAM_REVIEWER", () => {
+      const programReviewerPerms = getPermissionsForRoles([Role.PROGRAM_REVIEWER]);
+      for (const perm of programReviewerPerms) {
+        expect(milestoneReviewerPerms).toContain(perm);
+      }
+      expect(milestoneReviewerPerms.length).toBeGreaterThan(programReviewerPerms.length);
     });
   });
 
