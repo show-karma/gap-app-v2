@@ -36,20 +36,24 @@ describe("Cross-Project RBAC Alignment", () => {
       expect(ROLE_HIERARCHY[Role.GUEST]).toBe(0);
       expect(ROLE_HIERARCHY[Role.APPLICANT]).toBe(1);
       expect(ROLE_HIERARCHY[Role.PROGRAM_REVIEWER]).toBe(2);
-      expect(ROLE_HIERARCHY[Role.MILESTONE_REVIEWER]).toBe(2);
-      expect(ROLE_HIERARCHY[Role.PROGRAM_CREATOR]).toBe(3);
-      expect(ROLE_HIERARCHY[Role.PROGRAM_ADMIN]).toBe(3);
-      expect(ROLE_HIERARCHY[Role.COMMUNITY_ADMIN]).toBe(4);
-      expect(ROLE_HIERARCHY[Role.REGISTRY_ADMIN]).toBe(5);
-      expect(ROLE_HIERARCHY[Role.SUPER_ADMIN]).toBe(6);
+      expect(ROLE_HIERARCHY[Role.MILESTONE_REVIEWER]).toBe(3);
+      expect(ROLE_HIERARCHY[Role.PROGRAM_ADMIN]).toBe(4);
+      expect(ROLE_HIERARCHY[Role.PROGRAM_CREATOR]).toBe(5);
+      expect(ROLE_HIERARCHY[Role.COMMUNITY_ADMIN]).toBe(6);
+      expect(ROLE_HIERARCHY[Role.REGISTRY_ADMIN]).toBe(7);
+      expect(ROLE_HIERARCHY[Role.SUPER_ADMIN]).toBe(8);
     });
 
-    it("should have reviewers at the same hierarchy level", () => {
-      expect(ROLE_HIERARCHY[Role.PROGRAM_REVIEWER]).toBe(ROLE_HIERARCHY[Role.MILESTONE_REVIEWER]);
+    it("should have MILESTONE_REVIEWER above PROGRAM_REVIEWER", () => {
+      expect(ROLE_HIERARCHY[Role.MILESTONE_REVIEWER]).toBeGreaterThan(
+        ROLE_HIERARCHY[Role.PROGRAM_REVIEWER]
+      );
     });
 
-    it("should have program admin and program creator at the same hierarchy level", () => {
-      expect(ROLE_HIERARCHY[Role.PROGRAM_ADMIN]).toBe(ROLE_HIERARCHY[Role.PROGRAM_CREATOR]);
+    it("should have PROGRAM_CREATOR above PROGRAM_ADMIN", () => {
+      expect(ROLE_HIERARCHY[Role.PROGRAM_CREATOR]).toBeGreaterThan(
+        ROLE_HIERARCHY[Role.PROGRAM_ADMIN]
+      );
     });
   });
 

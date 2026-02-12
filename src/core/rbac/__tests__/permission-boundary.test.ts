@@ -50,7 +50,8 @@ describe("Permission Boundary Tests", () => {
       expect(perms).toContain(Permission.REVIEW_CREATE);
       expect(perms).toContain(Permission.COMMENT_EDIT_OWN);
       expect(perms).toContain(Permission.COMMENT_DELETE_OWN);
-      expect(perms).toHaveLength(18);
+      // Layered: GUEST(4) + APPLICANT(6) + PROGRAM_REVIEWER(5) + MILESTONE_REVIEWER(4) + PROGRAM_ADMIN(8) + PROGRAM_CREATOR(1) = 28
+      expect(perms).toHaveLength(28);
     });
 
     it("should match the expected PROGRAM_ADMIN permissions", () => {
@@ -72,7 +73,8 @@ describe("Permission Boundary Tests", () => {
       expect(perms).toContain(Permission.REVIEW_CREATE);
       expect(perms).toContain(Permission.COMMENT_EDIT_OWN);
       expect(perms).toContain(Permission.COMMENT_DELETE_OWN);
-      expect(perms).toHaveLength(17);
+      // Layered: GUEST(4) + APPLICANT(6) + PROGRAM_REVIEWER(5) + MILESTONE_REVIEWER(4) + PROGRAM_ADMIN(8) = 27
+      expect(perms).toHaveLength(27);
     });
 
     it("should match the expected PROGRAM_REVIEWER permissions", () => {
@@ -87,22 +89,30 @@ describe("Permission Boundary Tests", () => {
       expect(perms).toContain(Permission.REVIEW_EDIT_OWN);
       expect(perms).toContain(Permission.COMMENT_EDIT_OWN);
       expect(perms).toContain(Permission.COMMENT_DELETE_OWN);
-      expect(perms).toHaveLength(10);
+      // Layered: GUEST(4) + APPLICANT(6) + PROGRAM_REVIEWER(5) = 15
+      expect(perms).toHaveLength(15);
     });
 
     it("should match the expected MILESTONE_REVIEWER permissions", () => {
       const perms = PERMISSION_MATRIX[Role.MILESTONE_REVIEWER];
+      // Inherits all PROGRAM_REVIEWER permissions
       expect(perms).toContain(Permission.PROGRAM_VIEW);
+      expect(perms).toContain(Permission.APPLICATION_VIEW_ASSIGNED);
+      expect(perms).toContain(Permission.APPLICATION_READ);
+      expect(perms).toContain(Permission.APPLICATION_COMMENT);
+      expect(perms).toContain(Permission.APPLICATION_REVIEW);
+      expect(perms).toContain(Permission.APPLICATION_CHANGE_STATUS);
+      expect(perms).toContain(Permission.REVIEW_CREATE);
+      expect(perms).toContain(Permission.REVIEW_EDIT_OWN);
+      // Milestone-specific additions
       expect(perms).toContain(Permission.MILESTONE_VIEW_ASSIGNED);
       expect(perms).toContain(Permission.MILESTONE_REVIEW);
       expect(perms).toContain(Permission.MILESTONE_APPROVE);
       expect(perms).toContain(Permission.MILESTONE_REJECT);
-      expect(perms).toContain(Permission.APPLICATION_CHANGE_STATUS);
-      expect(perms).toContain(Permission.REVIEW_CREATE);
-      expect(perms).toContain(Permission.REVIEW_EDIT_OWN);
       expect(perms).toContain(Permission.COMMENT_EDIT_OWN);
       expect(perms).toContain(Permission.COMMENT_DELETE_OWN);
-      expect(perms).toHaveLength(10);
+      // Layered: GUEST(4) + APPLICANT(6) + PROGRAM_REVIEWER(5) + MILESTONE_REVIEWER(4) = 19
+      expect(perms).toHaveLength(19);
     });
 
     it("should match the expected APPLICANT permissions", () => {
@@ -253,10 +263,12 @@ describe("Permission Boundary Tests", () => {
       expect(permissions).not.toContain(Permission.APPLICATION_REJECT);
     });
 
-    it("MILESTONE_REVIEWER should NOT have program review permissions", () => {
+    it("MILESTONE_REVIEWER inherits review but NOT admin permissions", () => {
       const permissions = getPermissionsForRoles([Role.MILESTONE_REVIEWER]);
-      expect(permissions).not.toContain(Permission.APPLICATION_REVIEW);
-      expect(permissions).not.toContain(Permission.APPLICATION_VIEW_ASSIGNED);
+      // Inherits from PROGRAM_REVIEWER layer
+      expect(permissions).toContain(Permission.APPLICATION_REVIEW);
+      expect(permissions).toContain(Permission.APPLICATION_VIEW_ASSIGNED);
+      // Admin-only permissions remain restricted
       expect(permissions).not.toContain(Permission.APPLICATION_APPROVE);
       expect(permissions).not.toContain(Permission.APPLICATION_REJECT);
     });

@@ -22,12 +22,12 @@ export const ROLE_HIERARCHY: Record<Role, number> = {
   [Role.GUEST]: 0,
   [Role.APPLICANT]: 1,
   [Role.PROGRAM_REVIEWER]: 2,
-  [Role.MILESTONE_REVIEWER]: 2,
-  [Role.PROGRAM_CREATOR]: 3,
-  [Role.PROGRAM_ADMIN]: 3,
-  [Role.COMMUNITY_ADMIN]: 4,
-  [Role.REGISTRY_ADMIN]: 5,
-  [Role.SUPER_ADMIN]: 6,
+  [Role.MILESTONE_REVIEWER]: 3,
+  [Role.PROGRAM_ADMIN]: 4,
+  [Role.PROGRAM_CREATOR]: 5,
+  [Role.COMMUNITY_ADMIN]: 6,
+  [Role.REGISTRY_ADMIN]: 7,
+  [Role.SUPER_ADMIN]: 8,
 };
 
 export enum ReviewerType {
