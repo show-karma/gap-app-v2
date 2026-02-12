@@ -77,9 +77,10 @@ export const sendMilestoneImpactAnswers = async (
 /**
  * Transform V2 milestone indicators response to ImpactIndicatorWithData[]
  */
-function transformMilestoneIndicators(
-  response: { milestoneUID: string; indicators: ProjectIndicatorResponse[] }
-): ImpactIndicatorWithData[] {
+function transformMilestoneIndicators(response: {
+  milestoneUID: string;
+  indicators: ProjectIndicatorResponse[];
+}): ImpactIndicatorWithData[] {
   return response.indicators.map((indicator) => ({
     id: indicator.id,
     name: indicator.name,

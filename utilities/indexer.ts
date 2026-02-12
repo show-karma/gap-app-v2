@@ -378,7 +378,16 @@ export const INDEXER = {
   INDICATORS: {
     CREATE_OR_UPDATE: () => `/indicators`,
     DELETE: (indicatorId: string) => `/indicators/${indicatorId}`,
-    UNLINKED: () => `/indicators/unlinked`,
+    UNLINKED: (search?: string) => {
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      const query = params.toString();
+      return `/v2/indicators/unlinked${query ? `?${query}` : ""}`;
+    },
+    BY_TIMERANGE: (projectUID: string, params: Record<string, number>) =>
+      `/projects/${projectUID}/indicator-dashboard-metrics?${Object.entries(params)
+        .map(([key, value]) => `${key}=${value}`)
+        .join("&")}`,
     V2: {
       LIST: (params?: {
         communityUID?: string;
@@ -448,8 +457,7 @@ export const INDEXER = {
         const query = queryParams.toString();
         return `/v2/indicators/projects/${projectUID}/dashboard-metrics${query ? `?${query}` : ""}`;
       },
-      MILESTONE_INDICATORS: (milestoneUID: string) =>
-        `/v2/indicators/milestones/${milestoneUID}`,
+      MILESTONE_INDICATORS: (milestoneUID: string) => `/v2/indicators/milestones/${milestoneUID}`,
       COMMUNITY_AGGREGATE: (
         communityUID: string,
         params?: {
