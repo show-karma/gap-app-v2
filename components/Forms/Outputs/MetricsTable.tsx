@@ -1,14 +1,14 @@
 "use client";
 
 import { TrashIcon } from "@heroicons/react/24/solid";
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/Utilities/Button";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
-import { getUnlinkedIndicators } from "@/utilities/queries/getUnlinkedIndicators";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import { getUnlinkedIndicators } from "@/utilities/queries/getUnlinkedIndicators";
 import { cn } from "@/utilities/tailwind";
 import { OutputDialog } from "./OutputDialog";
 import type { CategorizedIndicator, CommunityData, OutputData } from "./types";
@@ -94,55 +94,54 @@ const CategorizedIndicatorDropdown = ({
     }
   }, [isOpen]);
 
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+    setSearchTerm("");
+  }, []);
+
   // Close dropdown on outside click (check both trigger and portal panel)
   useEffect(() => {
     if (!isOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
-      if (
-        triggerRef.current?.contains(target) ||
-        panelRef.current?.contains(target)
-      ) {
+      if (triggerRef.current?.contains(target) || panelRef.current?.contains(target)) {
         return;
       }
-      setIsOpen(false);
+      handleClose();
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen]);
+  }, [isOpen, handleClose]);
 
   // Close on resize; close on scroll only if outside the panel
   useEffect(() => {
     if (!isOpen) return;
-    const close = () => setIsOpen(false);
     const handleScroll = (e: Event) => {
       if (panelRef.current?.contains(e.target as Node)) return;
-      setIsOpen(false);
+      handleClose();
     };
-    window.addEventListener("resize", close);
+    window.addEventListener("resize", handleClose);
     document.addEventListener("scroll", handleScroll, true);
     return () => {
-      window.removeEventListener("resize", close);
+      window.removeEventListener("resize", handleClose);
       document.removeEventListener("scroll", handleScroll, true);
     };
-  }, [isOpen]);
+  }, [isOpen, handleClose]);
 
   // Focus input when dropdown opens
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 0);
+      requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [isOpen]);
 
   // Community indicators (client-side filtered)
-  const selectedCommunityIds = selectedCommunities.map((c) => c.uid);
   const communityItems = useMemo(() => {
+    const communityIds = selectedCommunities.map((c) => c.uid);
     const items = indicators
       .filter(
         (ind) =>
-          ind.source === "community" &&
-          ind.communityId &&
-          selectedCommunityIds.includes(ind.communityId)
+          ind.source === "community" && ind.communityId && communityIds.includes(ind.communityId)
       )
       .map((indicator) => ({
         value: indicator.id,
@@ -152,7 +151,7 @@ const CategorizedIndicatorDropdown = ({
     if (!searchTerm) return items;
     const lower = searchTerm.toLowerCase();
     return items.filter((item) => item.title.toLowerCase().includes(lower));
-  }, [indicators, selectedCommunityIds, searchTerm]);
+  }, [indicators, selectedCommunities, searchTerm]);
 
   // Unlinked indicators (from API search)
   const unlinkedItems = useMemo(
@@ -164,7 +163,10 @@ const CategorizedIndicatorDropdown = ({
     [searchedUnlinked]
   );
 
-  const allItems = useMemo(() => [...communityItems, ...unlinkedItems], [communityItems, unlinkedItems]);
+  const allItems = useMemo(
+    () => [...communityItems, ...unlinkedItems],
+    [communityItems, unlinkedItems]
+  );
 
   // For the selected label, look in both the passed-in indicators and the API results
   const selectedLabel = useMemo(() => {
@@ -192,6 +194,27 @@ const CategorizedIndicatorDropdown = ({
     [onSelect]
   );
 
+  const renderItem = useCallback(
+    (item: { value: string; title: string }) => (
+      <button
+        type="button"
+        key={item.value}
+        role="option"
+        aria-selected={item.value === selected}
+        onClick={() => handleSelect(item.value)}
+        className={cn(
+          "w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-zinc-700",
+          item.value === selected
+            ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+            : "text-gray-900 dark:text-white"
+        )}
+      >
+        {item.title}
+      </button>
+    ),
+    [selected, handleSelect]
+  );
+
   const dropdownPanel = isOpen
     ? createPortal(
         <div
@@ -212,12 +235,15 @@ const CategorizedIndicatorDropdown = ({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") handleClose();
+              }}
               placeholder="Search indicators..."
               className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none dark:bg-zinc-900 dark:border-zinc-600 dark:text-white dark:placeholder-zinc-500"
             />
           </div>
 
-          <div className="max-h-60 overflow-y-auto py-1">
+          <div className="max-h-60 overflow-y-auto py-1" role="listbox">
             <button
               type="button"
               onClick={() => {
@@ -231,9 +257,7 @@ const CategorizedIndicatorDropdown = ({
             </button>
 
             {isFetching && allItems.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">
-                Searching...
-              </div>
+              <div className="px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">Searching...</div>
             ) : allItems.length === 0 ? (
               <div className="px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">
                 No indicators found
@@ -245,21 +269,7 @@ const CategorizedIndicatorDropdown = ({
                     <div className="px-3 py-1 text-xs font-medium text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
                       Community
                     </div>
-                    {communityItems.map((item) => (
-                      <button
-                        type="button"
-                        key={item.value}
-                        onClick={() => handleSelect(item.value)}
-                        className={cn(
-                          "w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-zinc-700",
-                          item.value === selected
-                            ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
-                            : "text-gray-900 dark:text-white"
-                        )}
-                      >
-                        {item.title}
-                      </button>
-                    ))}
+                    {communityItems.map(renderItem)}
                   </>
                 )}
                 {unlinkedItems.length > 0 && (
@@ -267,21 +277,7 @@ const CategorizedIndicatorDropdown = ({
                     <div className="px-3 py-1 text-xs font-medium text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
                       Global
                     </div>
-                    {unlinkedItems.map((item) => (
-                      <button
-                        type="button"
-                        key={item.value}
-                        onClick={() => handleSelect(item.value)}
-                        className={cn(
-                          "w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-zinc-700",
-                          item.value === selected
-                            ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
-                            : "text-gray-900 dark:text-white"
-                        )}
-                      >
-                        {item.title}
-                      </button>
-                    ))}
+                    {unlinkedItems.map(renderItem)}
                   </>
                 )}
                 {isFetching && (
@@ -302,12 +298,12 @@ const CategorizedIndicatorDropdown = ({
       <button
         ref={triggerRef}
         type="button"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
           "w-full rounded-lg border bg-white px-3 py-1.5 text-left text-sm dark:bg-zinc-800 dark:text-white truncate",
-          isOpen
-            ? "border-blue-500 ring-1 ring-blue-500"
-            : "border-gray-200 dark:border-zinc-700",
+          isOpen ? "border-blue-500 ring-1 ring-blue-500" : "border-gray-200 dark:border-zinc-700",
           selected ? "text-gray-900" : "text-gray-400 dark:text-zinc-500"
         )}
       >
