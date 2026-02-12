@@ -140,6 +140,7 @@ export const QUERY_KEYS = {
     }) => ["duplicate-grant-check", params] as const,
   },
   DONATIONS: {
+    MY: () => ["donations", "me"] as const,
     BY_USER: (walletAddress: string) => ["donations", "user", walletAddress] as const,
     BY_PROJECT: (projectUID: string) => ["donations", "project", projectUID] as const,
     POLLING: (donationUid: string, chainId: number) =>

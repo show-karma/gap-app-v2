@@ -43,6 +43,11 @@ export const donationsService = {
     return response.data;
   },
 
+  async getMyDonations(): Promise<DonationApiResponse[]> {
+    const response = await apiClient.get<DonationApiResponse[]>("/v2/donations/me");
+    return response.data;
+  },
+
   async getProjectDonations(projectUID: string): Promise<DonationApiResponse[]> {
     const response = await apiClient.get<DonationApiResponse[]>(
       `/v2/donations/project/${projectUID}`
