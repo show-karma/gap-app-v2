@@ -1,8 +1,8 @@
 import { GAP, type SignerOrProvider } from "@show-karma/karma-gap-sdk";
 import type { Hex } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { getGapRpcConfig } from "@/hooks/useGap";
 import type { Community } from "@/types/v2/community";
+import { getGapRpcConfig } from "@/utilities/gapRpcConfig";
 
 /**
  * Check if a user is an admin of a community

@@ -1,28 +1,19 @@
 "use client";
 
-import type { GAPRpcConfig, TNetwork } from "@show-karma/karma-gap-sdk";
+import type { TNetwork } from "@show-karma/karma-gap-sdk";
 import { GAP } from "@show-karma/karma-gap-sdk/core/class/GAP";
 import { GapIndexerClient } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/GapIndexerClient";
-import { chainIdToNetwork, Networks } from "@show-karma/karma-gap-sdk/core/consts";
+import { Networks } from "@show-karma/karma-gap-sdk/core/consts";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { envVars } from "@/utilities/enviromentVars";
+import { getGapRpcConfig } from "@/utilities/gapRpcConfig";
 import {
   appNetwork,
   gapSupportedNetworks,
   getChainIdByName,
   getChainNameById,
 } from "@/utilities/network";
-import { getRPCUrlByChainId } from "@/utilities/rpcClient";
-
-const rpcConfig: GAPRpcConfig = Object.fromEntries(
-  Object.keys(chainIdToNetwork)
-    .map(Number)
-    .map((chainId) => [chainId, getRPCUrlByChainId(chainId)])
-    .filter(([, url]) => url)
-);
-
-export const getGapRpcConfig = (): GAPRpcConfig => rpcConfig;
 
 const gapClients: Record<number, GAP> = {};
 
@@ -53,7 +44,7 @@ export const getGapClient = (chainID: number): GAP => {
     const client = new GAP({
       globalSchemas: false,
       network,
-      rpcUrls: rpcConfig,
+      rpcUrls: getGapRpcConfig(),
       ...(apiUrl?.trim()
         ? {
             apiClient: new GapIndexerClient(apiUrl),
@@ -87,6 +78,7 @@ export const useGap = () => {
         );
 
         setGapClient(getGapClient(firstSupportedChain.id));
+        setIsUpdating(false);
         return;
       }
 

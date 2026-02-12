@@ -1,6 +1,6 @@
 import { GAP, type Project, type SignerOrProvider } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { getGapRpcConfig } from "@/hooks/useGap";
+import { getGapRpcConfig } from "@/utilities/gapRpcConfig";
 
 export async function isOwnershipTransfered(
   signer: SignerOrProvider,
