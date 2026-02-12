@@ -380,7 +380,12 @@ export const INDEXER = {
   INDICATORS: {
     CREATE_OR_UPDATE: () => `/indicators`,
     DELETE: (indicatorId: string) => `/indicators/${indicatorId}`,
-    UNLINKED: () => `/v2/indicators/unlinked`,
+    UNLINKED: (search?: string) => {
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      const query = params.toString();
+      return `/v2/indicators/unlinked${query ? `?${query}` : ""}`;
+    },
     BY_TIMERANGE: (projectUID: string, params: Record<string, number>) =>
       `/projects/${projectUID}/indicator-dashboard-metrics?${Object.entries(params)
         .map(([key, value]) => `${key}=${value}`)

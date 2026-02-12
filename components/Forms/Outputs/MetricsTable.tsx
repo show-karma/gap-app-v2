@@ -1,16 +1,27 @@
 "use client";
 
 import { TrashIcon } from "@heroicons/react/24/solid";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/Utilities/Button";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
+import { getUnlinkedIndicators } from "@/utilities/queries/getUnlinkedIndicators";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { cn } from "@/utilities/tailwind";
-// Temporarily comment out SearchWithValueDropdown to test
-// import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
 import { OutputDialog } from "./OutputDialog";
 import type { CategorizedIndicator, CommunityData, OutputData } from "./types";
+
+const useDebouncedValue = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+};
 
 interface MetricsTableProps {
   outputs: OutputData[];
@@ -35,7 +46,7 @@ const isInvalidValue = (value: number | string, unitOfMeasure: string) => {
   return Number.isNaN(numValue);
 };
 
-// CategorizedIndicatorDropdown component (extracted from ProjectUpdate.tsx)
+// CategorizedIndicatorDropdown component with debounced API search
 const CategorizedIndicatorDropdown = ({
   indicators,
   onSelect,
@@ -52,6 +63,17 @@ const CategorizedIndicatorDropdown = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const debouncedSearch = useDebouncedValue(searchTerm, 300);
+
+  // Fetch unlinked indicators from API with debounced search
+  const { data: searchedUnlinked = [], isFetching } = useQuery({
+    queryKey: ["unlinkedIndicators", "search", debouncedSearch],
+    queryFn: () => getUnlinkedIndicators(debouncedSearch || undefined),
+    enabled: isOpen,
+    staleTime: 0, // Always refetch so newly created indicators appear
+    gcTime: 60 * 1000,
+  });
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -64,37 +86,70 @@ const CategorizedIndicatorDropdown = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Group indicators by source
-  const _projectIndicators = indicators.filter((ind) => ind.source === "project");
+  // Focus input when dropdown opens
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => inputRef.current?.focus(), 0);
+    }
+  }, [isOpen]);
+
+  // Community indicators (client-side filtered)
   const selectedCommunityIds = selectedCommunities.map((c) => c.uid);
-  const communityIndicators = indicators.filter(
-    (ind) =>
-      ind.source === "community" &&
-      ind.communityId &&
-      selectedCommunityIds.includes(ind.communityId)
-  );
-  const unlinkedIndicators = indicators.filter((ind) => ind.source === "unlinked");
-
-  // Create flat list with community indicators first, then unlinked indicators
-  const dropdownList = [
-    ...communityIndicators.map((indicator) => {
-      const communityName = indicator.communityName || "Community";
-      return {
+  const communityItems = useMemo(() => {
+    const items = indicators
+      .filter(
+        (ind) =>
+          ind.source === "community" &&
+          ind.communityId &&
+          selectedCommunityIds.includes(ind.communityId)
+      )
+      .map((indicator) => ({
         value: indicator.id,
-        title: `${indicator.name} [${communityName}]`,
-      };
-    }),
-    ...unlinkedIndicators.map((indicator) => ({
-      value: indicator.id,
-      title: `${indicator.name} [Global]`,
-    })),
-  ];
+        title: `${indicator.name} [${indicator.communityName || "Community"}]`,
+      }));
 
-  const filteredList = searchTerm
-    ? dropdownList.filter((item) => item.title.toLowerCase().includes(searchTerm.toLowerCase()))
-    : dropdownList;
+    if (!searchTerm) return items;
+    const lower = searchTerm.toLowerCase();
+    return items.filter((item) => item.title.toLowerCase().includes(lower));
+  }, [indicators, selectedCommunityIds, searchTerm]);
 
-  const selectedLabel = dropdownList.find((item) => item.value === selected)?.title;
+  // Unlinked indicators (from API search)
+  const unlinkedItems = useMemo(
+    () =>
+      searchedUnlinked.map((indicator) => ({
+        value: indicator.id,
+        title: `${indicator.name} [Global]`,
+      })),
+    [searchedUnlinked]
+  );
+
+  const allItems = useMemo(() => [...communityItems, ...unlinkedItems], [communityItems, unlinkedItems]);
+
+  // For the selected label, look in both the passed-in indicators and the API results
+  const selectedLabel = useMemo(() => {
+    const fromProps = indicators.find((ind) => ind.id === selected);
+    if (fromProps) {
+      const suffix =
+        fromProps.source === "community"
+          ? ` [${fromProps.communityName || "Community"}]`
+          : fromProps.source === "unlinked"
+            ? " [Global]"
+            : "";
+      return `${fromProps.name}${suffix}`;
+    }
+    const fromSearch = searchedUnlinked.find((ind) => ind.id === selected);
+    if (fromSearch) return `${fromSearch.name} [Global]`;
+    return null;
+  }, [indicators, searchedUnlinked, selected]);
+
+  const handleSelect = useCallback(
+    (value: string) => {
+      onSelect(value);
+      setIsOpen(false);
+      setSearchTerm("");
+    },
+    [onSelect]
+  );
 
   return (
     <div ref={containerRef} className="relative min-w-[200px]">
@@ -116,11 +171,11 @@ const CategorizedIndicatorDropdown = ({
         <div className="absolute left-0 z-50 mt-1 min-w-[340px] w-max max-w-[480px] rounded-lg border border-gray-200 bg-white shadow-lg dark:bg-zinc-800 dark:border-zinc-700">
           <div className="p-2 border-b border-gray-100 dark:border-zinc-700">
             <input
+              ref={inputRef}
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search indicators..."
-              autoFocus
               className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none dark:bg-zinc-900 dark:border-zinc-600 dark:text-white dark:placeholder-zinc-500"
             />
           </div>
@@ -138,30 +193,66 @@ const CategorizedIndicatorDropdown = ({
               + Create New Metric
             </button>
 
-            {filteredList.length === 0 ? (
+            {isFetching && allItems.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">
+                Searching...
+              </div>
+            ) : allItems.length === 0 ? (
               <div className="px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">
                 No indicators found
               </div>
             ) : (
-              filteredList.map((item) => (
-                <button
-                  type="button"
-                  key={item.value}
-                  onClick={() => {
-                    onSelect(item.value);
-                    setIsOpen(false);
-                    setSearchTerm("");
-                  }}
-                  className={cn(
-                    "w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-zinc-700",
-                    item.value === selected
-                      ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
-                      : "text-gray-900 dark:text-white"
-                  )}
-                >
-                  {item.title}
-                </button>
-              ))
+              <>
+                {communityItems.length > 0 && (
+                  <>
+                    <div className="px-3 py-1 text-xs font-medium text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
+                      Community
+                    </div>
+                    {communityItems.map((item) => (
+                      <button
+                        type="button"
+                        key={item.value}
+                        onClick={() => handleSelect(item.value)}
+                        className={cn(
+                          "w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-zinc-700",
+                          item.value === selected
+                            ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                            : "text-gray-900 dark:text-white"
+                        )}
+                      >
+                        {item.title}
+                      </button>
+                    ))}
+                  </>
+                )}
+                {unlinkedItems.length > 0 && (
+                  <>
+                    <div className="px-3 py-1 text-xs font-medium text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
+                      Global
+                    </div>
+                    {unlinkedItems.map((item) => (
+                      <button
+                        type="button"
+                        key={item.value}
+                        onClick={() => handleSelect(item.value)}
+                        className={cn(
+                          "w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-zinc-700",
+                          item.value === selected
+                            ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                            : "text-gray-900 dark:text-white"
+                        )}
+                      >
+                        {item.title}
+                      </button>
+                    ))}
+                  </>
+                )}
+                {isFetching && (
+                  <div className="px-3 py-1.5 text-xs text-gray-400 dark:text-zinc-500 text-center">
+                    Loading...
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

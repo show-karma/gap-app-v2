@@ -11,9 +11,11 @@ export interface UnlinkedIndicator {
   updatedAt: string;
 }
 
-export const getUnlinkedIndicators = async (): Promise<UnlinkedIndicator[]> => {
+export const getUnlinkedIndicators = async (
+  search?: string
+): Promise<UnlinkedIndicator[]> => {
   try {
-    const [data, error] = await fetchData(INDEXER.INDICATORS.UNLINKED());
+    const [data, error] = await fetchData(INDEXER.INDICATORS.UNLINKED(search));
     if (error) {
       throw error;
     }
