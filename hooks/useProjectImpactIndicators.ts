@@ -44,7 +44,7 @@ export const useProjectImpactIndicators = (projectId: string, range: number = 30
   const period = mapRangeToPeriod(range);
 
   return useQuery({
-    queryKey: ["project-impact-indicators", projectId, range],
+    queryKey: ["project-impact-indicators", projectId, period],
     queryFn: async () => {
       const [data, error] = await fetchData(
         INDEXER.INDICATORS.V2.DASHBOARD_METRICS(projectId, { period })

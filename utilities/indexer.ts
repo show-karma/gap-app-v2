@@ -341,7 +341,6 @@ export const INDEXER = {
       GET: (projectUID: string) => `/projects/${projectUID}/regions`,
     },
     IMPACT_INDICATORS: {
-      GET: (projectUID: string) => `/projects/${projectUID}/indicators/data/all`,
       SEND: (projectUID: string) => `/projects/${projectUID}/indicators/data`,
     },
     PAYOUT_ADDRESS: {
@@ -358,7 +357,6 @@ export const INDEXER = {
   },
   MILESTONE: {
     IMPACT_INDICATORS: {
-      GET: (milestoneUID: string) => `/grants/milestones/${milestoneUID}/indicators/data`,
       SEND: (milestoneUID: string) => `/grants/milestones/${milestoneUID}/indicators/data`,
     },
   },
@@ -381,10 +379,6 @@ export const INDEXER = {
     CREATE_OR_UPDATE: () => `/indicators`,
     DELETE: (indicatorId: string) => `/indicators/${indicatorId}`,
     UNLINKED: () => `/indicators/unlinked`,
-    BY_TIMERANGE: (projectUID: string, params: Record<string, number>) =>
-      `/projects/${projectUID}/indicator-dashboard-metrics?${Object.entries(params)
-        .map(([key, value]) => `${key}=${value}`)
-        .join("&")}`,
     V2: {
       LIST: (params?: {
         communityUID?: string;
