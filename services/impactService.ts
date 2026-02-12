@@ -31,23 +31,23 @@ function transformProjectIndicators(
 }
 
 /**
- * Fetches impact indicator data for a project
+ * Fetches impact indicator data for a project using V2 PostgreSQL endpoint
  *
- * @param projectIdentifier - The project slug or UID
+ * @param projectIdentifier - The project UID
  * @returns Promise with the impact indicators data
  */
 export const getImpactAnswers = async (
   projectIdentifier: string
 ): Promise<ImpactIndicatorWithData[]> => {
-  // Use the original endpoint which has the full data
-  const [data, error] = await fetchData(INDEXER.PROJECT.IMPACT_INDICATORS.GET(projectIdentifier));
+  const [data, error] = await fetchData(
+    INDEXER.INDICATORS.V2.PROJECT_INDICATORS(projectIdentifier)
+  );
 
   if (error) {
     throw new Error(error);
   }
 
-  // The old endpoint returns data in the ImpactIndicatorWithData format directly
-  return data as ImpactIndicatorWithData[];
+  return transformProjectIndicators(data as ProjectIndicatorsResponse);
 };
 
 /**
