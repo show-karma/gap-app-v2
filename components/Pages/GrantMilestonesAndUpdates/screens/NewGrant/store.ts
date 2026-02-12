@@ -16,6 +16,7 @@ export interface GrantFormData {
   amount?: string;
   community: string;
   startDate?: Date;
+  receivedDate?: Date;
   linkToProposal?: string;
   recipient?: string;
   description: string;
@@ -62,6 +63,7 @@ const initialFormData: GrantFormData = {
   community: "",
   description: "",
   startDate: undefined,
+  receivedDate: undefined,
   amount: "",
   linkToProposal: "",
   recipient: "",

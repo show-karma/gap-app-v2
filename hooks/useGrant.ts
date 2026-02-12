@@ -82,6 +82,9 @@ export function useGrant() {
         startDate: data.startDate
           ? new Date(data.startDate).getTime() / 1000
           : oldGrantInstance.details?.startDate,
+        receivedDate: data.receivedDate
+          ? new Date(data.receivedDate).getTime() / 1000
+          : (oldGrantInstance.details as any)?.receivedDate,
         selectedTrackIds: data.selectedTrackIds || formData.selectedTrackIds || [],
       });
 

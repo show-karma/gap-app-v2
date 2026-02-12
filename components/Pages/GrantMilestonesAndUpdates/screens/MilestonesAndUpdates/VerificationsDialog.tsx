@@ -2,13 +2,7 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import type {
-  IGrantUpdateStatus,
-  IMilestoneCompleted,
-  IProjectImpactStatus,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, Fragment, useEffect, useMemo, useState } from "react";
-import type { Hex } from "viem";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import { useGrant } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
 import { TabContent, Tabs, TabTrigger } from "@/components/Utilities/Tabs";
@@ -17,16 +11,17 @@ import { useProjectStore } from "@/store/project";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
+import type { VerificationRecord } from "./VerifiedBadge";
 
 interface VerificationsDialogProps {
-  verifications: (IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus)[];
+  verifications: VerificationRecord[];
   isOpen: boolean;
   closeDialog: () => void;
   title: string;
 }
 
 interface VerificationsItemProps {
-  verification: IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus;
+  verification: VerificationRecord;
 }
 
 const VerificationItem = ({ verification }: VerificationsItemProps) => {
@@ -45,14 +40,14 @@ const VerificationItem = ({ verification }: VerificationsItemProps) => {
           className="h-8 w-8 min-h-8 min-w-8 rounded-full"
         />
         <p className="text-sm font-bold text-brand-darkblue font-body dark:text-zinc-200">
-          {ensData[verification.attester as Hex]?.name || verification.attester}
+          {ensData[verification.attester as `0x${string}`]?.name || verification.attester}
           <span className="ml-1 font-normal font-body text-brand-gray dark:text-zinc-300">
             reviewed on {formatDate(verification.createdAt)}
           </span>
         </p>
       </div>
       <p className="pl-11 text-base font-normal text-brand-gray dark:text-zinc-300">
-        {verification.data?.reason}
+        {verification.reason || verification.data?.reason}
       </p>
     </div>
   );
