@@ -102,7 +102,10 @@ function GrantCard({
       ? formatCurrency(amountValue)
       : numericPart;
   // Use currency from the amount string, or from grant.details.currency
-  const displayCurrency = currencyInAmount || grant.details?.currency || "";
+  // Filter out hex addresses (e.g. "0x0") stored by the indexer as currency
+  const rawCurrency = grant.details?.currency || "";
+  const isHexAddress = /^0x[0-9a-fA-F]*$/.test(rawCurrency);
+  const displayCurrency = currencyInAmount || (isHexAddress ? "" : rawCurrency);
 
   // Date range for display
   const dateRange = formatDateRange(grant.details?.startDate, grant.details?.completedAt);
