@@ -111,16 +111,19 @@ const CategorizedIndicatorDropdown = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
-  // Close on scroll/resize so panel doesn't float detached
+  // Close on resize; close on scroll only if outside the panel
   useEffect(() => {
     if (!isOpen) return;
     const close = () => setIsOpen(false);
+    const handleScroll = (e: Event) => {
+      if (panelRef.current?.contains(e.target as Node)) return;
+      setIsOpen(false);
+    };
     window.addEventListener("resize", close);
-    // Capture scroll on any ancestor
-    document.addEventListener("scroll", close, true);
+    document.addEventListener("scroll", handleScroll, true);
     return () => {
       window.removeEventListener("resize", close);
-      document.removeEventListener("scroll", close, true);
+      document.removeEventListener("scroll", handleScroll, true);
     };
   }, [isOpen]);
 
