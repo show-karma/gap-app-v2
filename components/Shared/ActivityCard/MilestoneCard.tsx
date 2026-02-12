@@ -157,7 +157,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
   const completionAttester =
     projectMilestone?.completed?.attester || grantMilestone?.milestone.completed?.attester;
   // V2: verified is an array for both grant and project milestones
-  const _isVerified =
+  const isVerified =
     Boolean(
       projectMilestone?.verified &&
         Array.isArray(projectMilestone.verified) &&
@@ -168,6 +168,12 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
         Array.isArray(grantMilestone.milestone.verified) &&
         grantMilestone.milestone.verified.length > 0
     );
+  const verifications =
+    (Array.isArray(grantMilestone?.milestone.verified)
+      ? grantMilestone.milestone.verified
+      : null) ||
+    (Array.isArray(projectMilestone?.verified) ? projectMilestone.verified : null) ||
+    [];
   const completionDeliverables =
     (projectMilestone?.completed?.data as any)?.deliverables ||
     (grantMilestone?.milestone.completed?.data as any)?.deliverables;
@@ -252,7 +258,15 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
       <div className={cn(containerClassName, "flex flex-col gap-1 w-full")}>
         <div className={"w-full flex-col flex gap-2 px-5 py-4"}>
           {/* UPDATE label - matches Figma design for nested milestone updates */}
-          <p className="text-xs font-medium text-muted-foreground tracking-wide">UPDATE</p>
+          <div className="flex flex-row items-center gap-2">
+            <p className="text-xs font-medium text-muted-foreground tracking-wide">UPDATE</p>
+            <MilestoneVerificationSection
+              milestone={milestone}
+              title={`${title} - Reviews`}
+              isVerified={isVerified}
+              verifications={verifications}
+            />
+          </div>
           {/* Title - shown prominently after UPDATE label per Figma */}
           {title && (
             <h4 className="text-xl font-semibold text-foreground leading-tight tracking-tight">
@@ -367,7 +381,6 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
           actions={
             isAuthorized ? (
               <div className="flex flex-row gap-3 max-sm:gap-4 items-center">
-                <MilestoneVerificationSection milestone={milestone} title={`${title} - Reviews`} />
                 {/* Share Button */}
                 <ExternalLink
                   href={shareOnX(

@@ -245,6 +245,20 @@ jobs:
 
             Also read and enforce the CLAUDE.md in this repo for project-specific anti-patterns.
 
+            ## DIFF-ONLY REVIEW SCOPE (MANDATORY)
+
+            **CRITICAL CONSTRAINT**: You are reviewing a PULL REQUEST, not the entire codebase. You MUST only flag issues on lines that were ADDED or MODIFIED in this PR's diff. This is non-negotiable.
+
+            - Run `git diff origin/main...HEAD` to get the actual diff
+            - Only report issues on lines prefixed with `+` in the diff (new/changed lines)
+            - NEVER flag pre-existing code that was not touched by this PR, even if it has issues
+            - NEVER flag architectural patterns, imports, or component structure in files that were only touched to add a single prop or line
+            - If a file was modified but a specific component/hook/function was NOT changed, do NOT review that component/hook/function
+            - Pre-existing tech debt is OUT OF SCOPE — it should be tracked separately, not in PR reviews
+            - Context lines (unchanged lines shown for context in the diff) are NOT reviewable — they are only there to help you understand the change
+
+            **Why**: Reviewing pre-existing code in PR reviews creates an infinite fix-review loop where each fix triggers new findings in surrounding code, making PRs unmergeable. The purpose of a PR review is to evaluate the CHANGE, not audit the repository.
+
             ## Review Rules
 
             **OUTPUT FORMAT**: Only report problems. Do NOT list strengths, compliments, or "what looks good". If a file has no issues, skip it entirely. If the entire PR has no issues, say "No issues found." and nothing else.
@@ -347,13 +361,13 @@ jobs:
 
             ## Event-Specific Behavior
 
-            **New PRs**: Review all changed files against the rules above. Only output issues.
+            **New PRs**: Review ONLY the diff (added/modified lines) against the rules above. Do NOT review pre-existing code in touched files. Only output issues introduced by this PR.
             **@claude comments**: Answer the specific question or request directly.
             **Review comments**: Analyze the specific code referenced and respond.
 
           # Conditional prompts based on triggers - enables automatic PR reviews
           direct_prompt: |
-            ${{ github.event_name == 'pull_request' && 'Review this PR against the rules in custom_instructions. Triage: security/bugs first, then performance, then architecture. Only report MEDIUM+ issues with emoji severity indicators. For each: file:line, rule, severity, problem, root cause, fix. Flag any AI slop. End with the verdict section: Score X/100, then Status (APPROVE / APPROVE WITH SUGGESTIONS / REQUEST CHANGES). No strengths, no praise.' || '' }}
+            ${{ github.event_name == 'pull_request' && 'Review this PR against the rules in custom_instructions. IMPORTANT: First run `git diff origin/main...HEAD` and ONLY review lines that were added or modified in the diff. Never flag pre-existing code. Triage: security/bugs first, then performance, then architecture. Only report MEDIUM+ issues with emoji severity indicators. For each: file:line, rule, severity, problem, root cause, fix. Flag any AI slop. End with the verdict section: Score X/100, then Status (APPROVE / APPROVE WITH SUGGESTIONS / REQUEST CHANGES). No strengths, no praise.' || '' }}
 
           max_turns: '30'
           timeout_minutes: '45'

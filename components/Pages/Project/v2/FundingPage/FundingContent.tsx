@@ -106,6 +106,12 @@ function GrantCard({
 
   // Date range for display
   const dateRange = formatDateRange(grant.details?.startDate, grant.details?.completedAt);
+  const receivedDate = grant.details?.receivedDate
+    ? new Date(grant.details.receivedDate).toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
+      })
+    : "";
   const progressPercent = totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0;
 
   return (
@@ -158,6 +164,12 @@ function GrantCard({
           {dateRange && (
             <span className="text-gray-500 dark:text-gray-400 text-right">{dateRange}</span>
           )}
+        </div>
+      )}
+
+      {receivedDate && (
+        <div className="text-sm text-gray-500 dark:text-gray-400">
+          Received: <span className="text-gray-700 dark:text-gray-200">{receivedDate}</span>
         </div>
       )}
 

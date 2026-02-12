@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PayoutConfigurationModal } from "../components/PayoutConfigurationModal";
 import type { PayoutGrantConfig } from "../types/payout-disbursement";
@@ -47,7 +47,6 @@ Object.defineProperty(global, "crypto", {
   value: { randomUUID: mockUUID },
 });
 
-import toast from "react-hot-toast";
 // Import mocks after jest.mock calls
 import { useGrantMilestones, usePayoutConfigByGrant } from "../hooks/use-payout-disbursement";
 
@@ -146,7 +145,7 @@ describe("PayoutConfigurationModal", () => {
       payoutAddress: "0x1234567890123456789012345678901234567890",
       totalGrantAmount: "100.50", // Human-readable format
       tokenAddress: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", // Optimism USDC
-      chainId: 10,
+      chainID: 10,
       milestoneAllocations: [
         { id: "alloc-1", label: "First payment", amount: "30" },
         { id: "alloc-2", label: "Final payment", amount: "70.50" },
@@ -275,6 +274,87 @@ describe("PayoutConfigurationModal", () => {
       await waitFor(() => {
         expect(screen.getByText("Total Allocated")).toBeInTheDocument();
       });
+    });
+  });
+
+  describe("custom line items", () => {
+    it("should add a custom line item and allow editing description and amount", async () => {
+      const user = userEvent.setup();
+
+      render(<PayoutConfigurationModal {...defaultProps} />, {
+        wrapper: createWrapper(),
+      });
+
+      await user.click(screen.getByRole("button", { name: "Add custom line item" }));
+
+      const descriptionInput = screen.getByLabelText("Custom line item description");
+      const amountInput = screen.getByLabelText("Custom line item amount");
+
+      await user.type(descriptionInput, "Test Payment");
+      await user.type(amountInput, "1");
+
+      expect((descriptionInput as HTMLInputElement).value).toBe("Test Payment");
+      expect((amountInput as HTMLInputElement).value).toBe("1");
+    });
+
+    it("should remove a custom line item", async () => {
+      const user = userEvent.setup();
+
+      render(<PayoutConfigurationModal {...defaultProps} />, {
+        wrapper: createWrapper(),
+      });
+
+      await user.click(screen.getByRole("button", { name: "Add custom line item" }));
+      await user.type(screen.getByLabelText("Custom line item description"), "One-off payment");
+
+      await user.click(screen.getByRole("button", { name: "Remove custom line item" }));
+
+      expect(screen.queryByLabelText("Custom line item description")).not.toBeInTheDocument();
+    });
+
+    it("should include custom line item in save payload", async () => {
+      const user = userEvent.setup();
+
+      render(<PayoutConfigurationModal {...defaultProps} />, {
+        wrapper: createWrapper(),
+      });
+
+      await user.click(screen.getByRole("button", { name: "Add custom line item" }));
+      await user.type(screen.getByLabelText("Custom line item description"), "Test Payment");
+      await user.type(screen.getByLabelText("Custom line item amount"), "1");
+
+      await user.click(screen.getByRole("button", { name: "Save Configuration" }));
+
+      await waitFor(() => {
+        expect(mockMutateAsync).toHaveBeenCalled();
+      });
+
+      const callArg = mockMutateAsync.mock.calls[0][0];
+      expect(callArg.configs[0].milestoneAllocations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            label: "Test Payment",
+            amount: "1",
+          }),
+        ])
+      );
+    });
+
+    it("should require description for custom line item before saving", async () => {
+      const user = userEvent.setup();
+
+      render(<PayoutConfigurationModal {...defaultProps} />, {
+        wrapper: createWrapper(),
+      });
+
+      await user.click(screen.getByRole("button", { name: "Add custom line item" }));
+      await user.type(screen.getByLabelText("Custom line item amount"), "1");
+      await user.click(screen.getByRole("button", { name: "Save Configuration" }));
+
+      await waitFor(() => {
+        expect(screen.getByText("Description is required")).toBeInTheDocument();
+      });
+      expect(mockMutateAsync).not.toHaveBeenCalled();
     });
   });
 
