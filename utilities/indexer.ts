@@ -380,7 +380,7 @@ export const INDEXER = {
   INDICATORS: {
     CREATE_OR_UPDATE: () => `/indicators`,
     DELETE: (indicatorId: string) => `/indicators/${indicatorId}`,
-    UNLINKED: () => `/indicators/unlinked`,
+    UNLINKED: () => `/v2/indicators/unlinked`,
     BY_TIMERANGE: (projectUID: string, params: Record<string, number>) =>
       `/projects/${projectUID}/indicator-dashboard-metrics?${Object.entries(params)
         .map(([key, value]) => `${key}=${value}`)

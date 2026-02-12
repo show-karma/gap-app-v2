@@ -1,7 +1,7 @@
 "use client";
 
 import { TrashIcon } from "@heroicons/react/24/solid";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
@@ -49,6 +49,21 @@ const CategorizedIndicatorDropdown = ({
   onCreateNew: () => void;
   selectedCommunities: CommunityData[];
 }) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // Group indicators by source
   const _projectIndicators = indicators.filter((ind) => ind.source === "project");
   const selectedCommunityIds = selectedCommunities.map((c) => c.uid);
@@ -62,7 +77,6 @@ const CategorizedIndicatorDropdown = ({
 
   // Create flat list with community indicators first, then unlinked indicators
   const dropdownList = [
-    // Community indicators from selected communities (shown first)
     ...communityIndicators.map((indicator) => {
       const communityName = indicator.communityName || "Community";
       return {
@@ -70,35 +84,83 @@ const CategorizedIndicatorDropdown = ({
         title: `${indicator.name} [${communityName}]`,
       };
     }),
-    // Unlinked indicators (shown after community indicators)
     ...unlinkedIndicators.map((indicator) => ({
       value: indicator.id,
       title: `${indicator.name} [Global]`,
     })),
   ];
 
+  const filteredList = searchTerm
+    ? dropdownList.filter((item) => item.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    : dropdownList;
+
+  const selectedLabel = dropdownList.find((item) => item.value === selected)?.title;
+
   return (
-    <select
-      value={selected}
-      onChange={(e) => {
-        if (e.target.value === "CREATE_NEW") {
-          onCreateNew();
-        } else {
-          onSelect(e.target.value);
-        }
-      }}
-      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
-    >
-      <option value="">Select</option>
-      <option value="CREATE_NEW" className="font-bold">
-        + Create New Metric
-      </option>
-      {dropdownList.map((item) => (
-        <option key={item.value} value={item.value}>
-          {item.title}
-        </option>
-      ))}
-    </select>
+    <div ref={containerRef} className="relative w-full">
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-left text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white truncate"
+      >
+        {selectedLabel || "Select"}
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg dark:bg-zinc-800 dark:border-zinc-700">
+          <div className="p-2">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search indicators..."
+              autoFocus
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none dark:bg-zinc-900 dark:border-zinc-600 dark:text-white dark:placeholder-zinc-500"
+            />
+          </div>
+
+          <div className="max-h-60 overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => {
+                onCreateNew();
+                setIsOpen(false);
+                setSearchTerm("");
+              }}
+              className="w-full px-3 py-2 text-left text-sm font-semibold text-brand-blue hover:bg-gray-100 dark:hover:bg-zinc-700"
+            >
+              + Create New Metric
+            </button>
+
+            {filteredList.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">
+                No indicators found
+              </div>
+            ) : (
+              filteredList.map((item) => (
+                <button
+                  type="button"
+                  key={item.value}
+                  onClick={() => {
+                    onSelect(item.value);
+                    setIsOpen(false);
+                    setSearchTerm("");
+                  }}
+                  className={cn(
+                    "w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-zinc-700",
+                    item.value === selected
+                      ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                      : "text-gray-900 dark:text-white"
+                  )}
+                >
+                  {item.title}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
