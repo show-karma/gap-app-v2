@@ -245,7 +245,7 @@ export default function MyReviewPage() {
                           className="w-full flex items-center justify-center group"
                         >
                           <EyeIcon className="w-4 h-4 mr-2" />
-                          <span>View Milestones</span>
+                          <span>Review Milestones</span>
                           <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                         </Button>
                       </Link>
