@@ -97,18 +97,24 @@ const CategorizedIndicatorDropdown = ({
   const selectedLabel = dropdownList.find((item) => item.value === selected)?.title;
 
   return (
-    <div ref={containerRef} className="relative w-full">
+    <div ref={containerRef} className="relative min-w-[200px]">
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-left text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white truncate"
+        className={cn(
+          "w-full rounded-lg border bg-white px-3 py-1.5 text-left text-sm dark:bg-zinc-800 dark:text-white truncate",
+          isOpen
+            ? "border-blue-500 ring-1 ring-blue-500"
+            : "border-gray-200 dark:border-zinc-700",
+          selected ? "text-gray-900" : "text-gray-400 dark:text-zinc-500"
+        )}
       >
-        {selectedLabel || "Select"}
+        {selectedLabel || "Select indicator..."}
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg dark:bg-zinc-800 dark:border-zinc-700">
-          <div className="p-2">
+        <div className="absolute left-0 z-50 mt-1 min-w-[340px] w-max max-w-[480px] rounded-lg border border-gray-200 bg-white shadow-lg dark:bg-zinc-800 dark:border-zinc-700">
+          <div className="p-2 border-b border-gray-100 dark:border-zinc-700">
             <input
               type="text"
               value={searchTerm}
@@ -119,7 +125,7 @@ const CategorizedIndicatorDropdown = ({
             />
           </div>
 
-          <div className="max-h-60 overflow-y-auto">
+          <div className="max-h-60 overflow-y-auto py-1">
             <button
               type="button"
               onClick={() => {
@@ -256,7 +262,7 @@ export const MetricsTable = ({
           <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
             <thead>
               <tr>
-                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
+                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300 min-w-[200px]">
                   Output
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
