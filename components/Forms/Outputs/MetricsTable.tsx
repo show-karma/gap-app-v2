@@ -2,7 +2,8 @@
 
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { createPortal } from "react-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/Utilities/Button";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
@@ -62,8 +63,14 @@ const CategorizedIndicatorDropdown = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [panelPos, setPanelPos] = useState<{ top: number; left: number; width: number }>({
+    top: 0,
+    left: 0,
+    width: 340,
+  });
   const debouncedSearch = useDebouncedValue(searchTerm, 300);
 
   // Fetch unlinked indicators from API with debounced search
@@ -75,16 +82,47 @@ const CategorizedIndicatorDropdown = ({
     gcTime: 60 * 1000,
   });
 
-  // Close dropdown on outside click
+  // Position the portal panel below the trigger button
   useEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPanelPos({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: Math.max(340, rect.width),
+      });
+    }
+  }, [isOpen]);
+
+  // Close dropdown on outside click (check both trigger and portal panel)
+  useEffect(() => {
+    if (!isOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
+      const target = e.target as Node;
+      if (
+        triggerRef.current?.contains(target) ||
+        panelRef.current?.contains(target)
+      ) {
+        return;
       }
+      setIsOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [isOpen]);
+
+  // Close on scroll/resize so panel doesn't float detached
+  useEffect(() => {
+    if (!isOpen) return;
+    const close = () => setIsOpen(false);
+    window.addEventListener("resize", close);
+    // Capture scroll on any ancestor
+    document.addEventListener("scroll", close, true);
+    return () => {
+      window.removeEventListener("resize", close);
+      document.removeEventListener("scroll", close, true);
+    };
+  }, [isOpen]);
 
   // Focus input when dropdown opens
   useEffect(() => {
@@ -151,24 +189,20 @@ const CategorizedIndicatorDropdown = ({
     [onSelect]
   );
 
-  return (
-    <div ref={containerRef} className="relative min-w-[200px]">
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        className={cn(
-          "w-full rounded-lg border bg-white px-3 py-1.5 text-left text-sm dark:bg-zinc-800 dark:text-white truncate",
-          isOpen
-            ? "border-blue-500 ring-1 ring-blue-500"
-            : "border-gray-200 dark:border-zinc-700",
-          selected ? "text-gray-900" : "text-gray-400 dark:text-zinc-500"
-        )}
-      >
-        {selectedLabel || "Select indicator..."}
-      </button>
-
-      {isOpen && (
-        <div className="absolute left-0 z-50 mt-1 min-w-[340px] w-max max-w-[480px] rounded-lg border border-gray-200 bg-white shadow-lg dark:bg-zinc-800 dark:border-zinc-700">
+  const dropdownPanel = isOpen
+    ? createPortal(
+        <div
+          ref={panelRef}
+          style={{
+            position: "fixed",
+            top: panelPos.top,
+            left: panelPos.left,
+            width: panelPos.width,
+            maxWidth: 480,
+            zIndex: 9999,
+          }}
+          className="rounded-lg border border-gray-200 bg-white shadow-lg dark:bg-zinc-800 dark:border-zinc-700"
+        >
           <div className="p-2 border-b border-gray-100 dark:border-zinc-700">
             <input
               ref={inputRef}
@@ -255,8 +289,28 @@ const CategorizedIndicatorDropdown = ({
               </>
             )}
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      )
+    : null;
+
+  return (
+    <div className="min-w-[200px]">
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className={cn(
+          "w-full rounded-lg border bg-white px-3 py-1.5 text-left text-sm dark:bg-zinc-800 dark:text-white truncate",
+          isOpen
+            ? "border-blue-500 ring-1 ring-blue-500"
+            : "border-gray-200 dark:border-zinc-700",
+          selected ? "text-gray-900" : "text-gray-400 dark:text-zinc-500"
+        )}
+      >
+        {selectedLabel || "Select indicator..."}
+      </button>
+      {dropdownPanel}
     </div>
   );
 };
