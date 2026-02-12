@@ -177,6 +177,10 @@ export const INDEXER = {
         return `/v2/auth/permissions${query ? `?${query}` : ""}`;
       },
     },
+    USERS: {
+      RESOLVE_WALLET: "/v2/users/resolve-wallet",
+      PROFILES_BATCH: "/v2/users/profiles/batch",
+    },
     USER: {
       PERMISSIONS: (resource?: string) => {
         const params = new URLSearchParams();
@@ -448,8 +452,7 @@ export const INDEXER = {
         const query = queryParams.toString();
         return `/v2/indicators/projects/${projectUID}/dashboard-metrics${query ? `?${query}` : ""}`;
       },
-      MILESTONE_INDICATORS: (milestoneUID: string) =>
-        `/v2/indicators/milestones/${milestoneUID}`,
+      MILESTONE_INDICATORS: (milestoneUID: string) => `/v2/indicators/milestones/${milestoneUID}`,
       COMMUNITY_AGGREGATE: (
         communityUID: string,
         params?: {

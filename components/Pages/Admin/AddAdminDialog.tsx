@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { GAP } from "@show-karma/karma-gap-sdk";
 import { type FC, Fragment, type ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
-import { isAddress } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -15,7 +14,6 @@ import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { sanitizeInput } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
 import { Button } from "../../ui/button";
 
@@ -23,12 +21,7 @@ const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zi
 const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 const schema = z.object({
-  address: z
-    .string()
-    .min(3, { message: "Address too short" })
-    .refine((data) => isAddress(data.toLowerCase()), {
-      message: "Invalid address",
-    }),
+  email: z.string().email({ message: "Please provide a valid email address" }),
 });
 
 type SchemaType = z.infer<typeof schema>;
@@ -62,7 +55,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
   fetchAdmins,
 }) => {
   const dataToUpdate = {
-    address: "",
+    email: "",
   };
 
   const [isOpen, setIsOpen] = useState(false);
@@ -93,6 +86,30 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
   const { changeStepperStep, setIsStepper, startAttestation, showSuccess } = useAttestationToast();
 
   const onSubmit = async (data: SchemaType) => {
+    setIsLoading(true);
+
+    let resolvedWallet: string;
+    try {
+      const [resolveResult, resolveError] = await fetchData(
+        INDEXER.V2.USERS.RESOLVE_WALLET,
+        "POST",
+        { email: data.email }
+      );
+      if (resolveError || !resolveResult?.walletAddress) {
+        const errorMsg = resolveError?.includes("IDENTITY_SERVICE_UNAVAILABLE")
+          ? "Unable to resolve email at this time. Please try again later."
+          : "Failed to resolve wallet for this email.";
+        errorManager(errorMsg, resolveError);
+        setIsLoading(false);
+        return;
+      }
+      resolvedWallet = resolveResult.walletAddress;
+    } catch (error: any) {
+      errorManager("Failed to resolve email to wallet address.", error);
+      setIsLoading(false);
+      return;
+    }
+
     const setup = await setupChainAndWallet({
       targetChainId: chainid,
       currentChainId: chain?.id,
@@ -101,6 +118,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
 
     if (!setup) {
       setIsOpen(false);
+      setIsLoading(false);
       return;
     }
 
@@ -108,8 +126,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
     try {
       startAttestation("Adding admin...");
       const communityResolver = await GAP.getCommunityResolver(walletSigner);
-      const address = sanitizeInput(data.address.toLowerCase());
-      const communityResponse = await communityResolver.enlist(UUID, address);
+      const communityResponse = await communityResolver.enlist(UUID, resolvedWallet);
       changeStepperStep("pending");
       const { hash } = communityResponse;
       await communityResponse.wait().then(async () => {
@@ -134,14 +151,14 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
             }
 
             addressAdded = response.admins.some(
-              (admin: any) => admin.user.id.toLowerCase() === data.address.toLowerCase()
+              (admin: any) => admin.user.id.toLowerCase() === resolvedWallet.toLowerCase()
             );
 
             if (addressAdded) {
               await fetchAdmins();
               changeStepperStep("indexed");
               showSuccess("Admin added successfully!");
-              closeModal(); // Close the dialog upon successful submission
+              closeModal();
               break;
             }
           } catch (_error: any) {}
@@ -152,9 +169,9 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
         }
       });
     } catch (error: any) {
-      errorManager(`Error adding admin ${data.address} to community ${UUID}`, error, {
+      errorManager(`Error adding admin ${data.email} to community ${UUID}`, error, {
         community: UUID,
-        address: data.address,
+        email: data.email,
       });
     } finally {
       setIsStepper(false);
@@ -225,17 +242,17 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
                   <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="w-full px-2 py-4 sm:px-0">
                       <div className="flex w-full flex-col gap-2">
-                        <label htmlFor="name-input" className={labelStyle}>
-                          Address *
+                        <label htmlFor="email-input" className={labelStyle}>
+                          Email *
                         </label>
                         <input
-                          id="address-input"
-                          type="text"
+                          id="email-input"
+                          type="email"
                           className={inputStyle}
-                          placeholder='e.g. "0x5cd3g343..."'
-                          {...register("address")}
+                          placeholder='e.g. "admin@example.com"'
+                          {...register("email")}
                         />
-                        <p className="text-red-500 text-sm">{errors.address?.message}</p>
+                        <p className="text-red-500 text-sm">{errors.email?.message}</p>
                       </div>
                     </div>
 

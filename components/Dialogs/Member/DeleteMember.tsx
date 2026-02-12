@@ -10,6 +10,7 @@ import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
+import { useUserProfiles } from "@/hooks/useUserProfiles";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import fetchData from "@/utilities/fetchData";
@@ -28,6 +29,8 @@ interface DeleteMemberDialogProps {
 export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const { data: profiles } = useUserProfiles([memberAddress]);
+  const displayName = profiles?.[memberAddress.toLowerCase()]?.email ?? memberAddress;
   const { gap } = useGap();
   const { address, chain } = useAccount();
   const { project } = useProjectStore();
@@ -202,7 +205,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
                       as="h3"
                       className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
                     >
-                      Are you sure you want to remove {memberAddress} from the project?
+                      Are you sure you want to remove {displayName} from the project?
                     </Dialog.Title>
                     <div className="flex flex-row gap-4 mt-10 justify-end">
                       <Button
