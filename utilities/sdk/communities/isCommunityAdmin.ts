@@ -2,6 +2,7 @@ import { GAP, type SignerOrProvider } from "@show-karma/karma-gap-sdk";
 import type { Hex } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { Community } from "@/types/v2/community";
+import { getGapRpcConfig } from "@/utilities/gapRpcConfig";
 
 /**
  * Check if a user is an admin of a community
@@ -18,7 +19,7 @@ export const isCommunityAdminOf = async (
 ): Promise<boolean> => {
   const { uid, chainID } = community;
   try {
-    const resolver = await GAP.getCommunityResolver(signer, chainID);
+    const resolver = await GAP.getCommunityResolver(signer, getGapRpcConfig(), chainID);
     if (!resolver) {
       errorManager(`Community resolver not available for chain ${chainID}`, null, {
         uid,
