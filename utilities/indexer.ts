@@ -445,6 +445,17 @@ export const INDEXER = {
         const query = queryParams.toString();
         return `/v2/indicators/projects/${projectUID}${query ? `?${query}` : ""}`;
       },
+      DASHBOARD_METRICS: (
+        projectUID: string,
+        params?: { period?: "30d" | "90d" | "180d" | "1y" }
+      ) => {
+        const queryParams = new URLSearchParams();
+        if (params?.period) queryParams.set("period", params.period);
+        const query = queryParams.toString();
+        return `/v2/indicators/projects/${projectUID}/dashboard-metrics${query ? `?${query}` : ""}`;
+      },
+      MILESTONE_INDICATORS: (milestoneUID: string) =>
+        `/v2/indicators/milestones/${milestoneUID}`,
       COMMUNITY_AGGREGATE: (
         communityUID: string,
         params?: {
