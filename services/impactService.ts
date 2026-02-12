@@ -1,3 +1,4 @@
+import { errorManager } from "@/components/Utilities/errorManager";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import type { ProjectIndicatorsResponse } from "@/types/indicator";
 import fetchData from "@/utilities/fetchData";
@@ -39,15 +40,20 @@ function transformProjectIndicators(
 export const getImpactAnswers = async (
   projectIdentifier: string
 ): Promise<ImpactIndicatorWithData[]> => {
-  const [data, error] = await fetchData(
-    INDEXER.INDICATORS.V2.PROJECT_INDICATORS(projectIdentifier)
-  );
+  try {
+    const [data, error] = await fetchData(
+      INDEXER.INDICATORS.V2.PROJECT_INDICATORS(projectIdentifier)
+    );
 
-  if (error) {
-    throw new Error(error);
+    if (error) {
+      throw new Error(error);
+    }
+
+    return transformProjectIndicators(data as ProjectIndicatorsResponse);
+  } catch (error: unknown) {
+    errorManager(`Error fetching impact answers for project ${projectIdentifier}`, error);
+    throw error;
   }
-
-  return transformProjectIndicators(data as ProjectIndicatorsResponse);
 };
 
 /**

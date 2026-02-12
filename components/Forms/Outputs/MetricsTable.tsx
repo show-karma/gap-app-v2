@@ -243,19 +243,19 @@ const CategorizedIndicatorDropdown = ({
             />
           </div>
 
-          <div className="max-h-60 overflow-y-auto py-1" role="listbox">
-            <button
-              type="button"
-              onClick={() => {
-                onCreateNew();
-                setIsOpen(false);
-                setSearchTerm("");
-              }}
-              className="w-full px-3 py-2 text-left text-sm font-semibold text-brand-blue hover:bg-gray-100 dark:hover:bg-zinc-700"
-            >
-              + Create New Metric
-            </button>
+          <button
+            type="button"
+            onClick={() => {
+              onCreateNew();
+              setIsOpen(false);
+              setSearchTerm("");
+            }}
+            className="w-full px-3 py-2 text-left text-sm font-semibold text-brand-blue hover:bg-gray-100 dark:hover:bg-zinc-700 border-b border-gray-100 dark:border-zinc-700"
+          >
+            + Create New Metric
+          </button>
 
+          <div className="max-h-60 overflow-y-auto py-1" role="listbox">
             {isFetching && allItems.length === 0 ? (
               <div className="px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">Searching...</div>
             ) : allItems.length === 0 ? (
