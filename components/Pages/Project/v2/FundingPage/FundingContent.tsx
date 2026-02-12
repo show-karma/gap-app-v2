@@ -252,13 +252,17 @@ export function FundingContent({ project, className }: FundingContentProps) {
   const params = useParams();
   const selectedGrantUid = params.grantUid as string | undefined;
 
-  const { isProjectAdmin } = useProjectPermissions();
+  const { isProjectAdmin, isProjectOwner } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const { communities } = useCommunitiesStore();
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized =
-    isProjectAdmin || isContractOwner || isCommunityAdmin || isCommunityAdminOfSome;
+    isProjectOwner ||
+    isProjectAdmin ||
+    isContractOwner ||
+    isCommunityAdmin ||
+    isCommunityAdminOfSome;
 
   // Fetch grants using dedicated hook
   const { grants, isLoading } = useProjectGrants(project.uid || "");
