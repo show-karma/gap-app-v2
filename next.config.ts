@@ -30,6 +30,12 @@ const nextConfig: NextConfig = {
       "date-fns",
       "lodash",
       "recharts",
+      "@tremor/react",
+      "@privy-io/react-auth",
+      "@sentry/browser",
+      "@sentry/core",
+      "viem",
+      "wagmi",
     ],
   },
   eslint: {

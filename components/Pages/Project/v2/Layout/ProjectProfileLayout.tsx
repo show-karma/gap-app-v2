@@ -1,16 +1,31 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
-import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
-import { IntroDialog } from "@/components/Pages/Project/IntroDialog";
-import {
-  ProjectOptionsDialogs,
-  ProjectOptionsMenu,
-} from "@/components/Pages/Project/ProjectOptionsMenu";
+import { ProjectOptionsMenu } from "@/components/Pages/Project/ProjectOptionsMenu";
+
+const ProgressDialog = dynamic(
+  () => import("@/components/Dialogs/ProgressDialog").then((m) => m.ProgressDialog),
+  { ssr: false }
+);
+const EndorsementDialog = dynamic(
+  () =>
+    import("@/components/Pages/Project/Impact/EndorsementDialog").then((m) => m.EndorsementDialog),
+  { ssr: false }
+);
+const IntroDialog = dynamic(
+  () => import("@/components/Pages/Project/IntroDialog").then((m) => m.IntroDialog),
+  { ssr: false }
+);
+const ProjectOptionsDialogs = dynamic(
+  () =>
+    import("@/components/Pages/Project/ProjectOptionsMenu").then((m) => m.ProjectOptionsDialogs),
+  { ssr: false }
+);
+
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
@@ -304,7 +319,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
 
         {/* Mobile: Minified header when NOT on Profile tab */}
         {activeTab !== "profile" && (
-          <div className="lg:hidden">
+          <div className="lg:hidden min-h-[60px]">
             <MobileHeaderMinified project={project} isVerified={isVerified} />
           </div>
         )}

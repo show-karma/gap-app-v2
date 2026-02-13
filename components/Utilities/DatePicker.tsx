@@ -3,6 +3,7 @@
 import { CalendarIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 

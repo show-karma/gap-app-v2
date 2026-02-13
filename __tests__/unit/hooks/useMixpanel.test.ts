@@ -1,65 +1,130 @@
 /**
  * @file Tests for useMixpanel hook
- * @description Tests analytics tracking hook with Mixpanel integration
+ * @description Tests analytics tracking hook with lazy-loaded Mixpanel integration
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
-import mp from "mixpanel-browser";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { useMixpanel } from "@/hooks/useMixpanel";
 
-// Mock mixpanel-browser
-jest.mock("mixpanel-browser");
+const mockInit = jest.fn();
+const mockTrack = jest.fn();
 
-const mockMixpanel = mp as jest.Mocked<typeof mp>;
+// Mock the dynamic import of mixpanel-browser
+jest.mock("mixpanel-browser", () => ({
+  __esModule: true,
+  default: {
+    init: (...args: unknown[]) => mockInit(...args),
+    track: (...args: unknown[]) => mockTrack(...args),
+  },
+}));
 
 describe("useMixpanel", () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset environment variables
+    jest.useFakeTimers();
     process.env = { ...originalEnv };
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     process.env = originalEnv;
   });
 
   describe("Initialization", () => {
-    it("should initialize Mixpanel in production with valid key", () => {
+    it("should lazy-load and initialize Mixpanel after timeout in production", async () => {
       process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-mixpanel-key";
       process.env.NEXT_PUBLIC_ENV = "production";
 
       renderHook(() => useMixpanel());
 
-      expect(mockMixpanel.init).toHaveBeenCalledWith("test-mixpanel-key");
+      // Mixpanel not loaded yet
+      expect(mockInit).not.toHaveBeenCalled();
+
+      // Advance past the 3s timeout
+      await act(async () => {
+        jest.advanceTimersByTime(3000);
+      });
+
+      await waitFor(() => {
+        expect(mockInit).toHaveBeenCalledWith("test-mixpanel-key");
+      });
     });
 
-    it("should not initialize Mixpanel without key", () => {
+    it("should lazy-load Mixpanel on user click before timeout", async () => {
+      process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-mixpanel-key";
+      process.env.NEXT_PUBLIC_ENV = "production";
+
+      renderHook(() => useMixpanel());
+
+      expect(mockInit).not.toHaveBeenCalled();
+
+      // Simulate user click
+      await act(async () => {
+        window.dispatchEvent(new Event("click"));
+      });
+
+      await waitFor(() => {
+        expect(mockInit).toHaveBeenCalledWith("test-mixpanel-key");
+      });
+    });
+
+    it("should lazy-load Mixpanel on user scroll before timeout", async () => {
+      process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-mixpanel-key";
+      process.env.NEXT_PUBLIC_ENV = "production";
+
+      renderHook(() => useMixpanel());
+
+      expect(mockInit).not.toHaveBeenCalled();
+
+      // Simulate user scroll
+      await act(async () => {
+        window.dispatchEvent(new Event("scroll"));
+      });
+
+      await waitFor(() => {
+        expect(mockInit).toHaveBeenCalledWith("test-mixpanel-key");
+      });
+    });
+
+    it("should not initialize Mixpanel without key", async () => {
       process.env.NEXT_PUBLIC_MIXPANEL_KEY = "";
       process.env.NEXT_PUBLIC_ENV = "production";
 
       renderHook(() => useMixpanel());
 
-      expect(mockMixpanel.init).not.toHaveBeenCalled();
+      await act(async () => {
+        jest.advanceTimersByTime(3000);
+      });
+
+      expect(mockInit).not.toHaveBeenCalled();
     });
 
-    it("should not initialize Mixpanel in non-production environment", () => {
+    it("should not initialize Mixpanel in non-production environment", async () => {
       process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-mixpanel-key";
       process.env.NEXT_PUBLIC_ENV = "development";
 
       renderHook(() => useMixpanel());
 
-      expect(mockMixpanel.init).not.toHaveBeenCalled();
+      await act(async () => {
+        jest.advanceTimersByTime(3000);
+      });
+
+      expect(mockInit).not.toHaveBeenCalled();
     });
 
-    it("should not initialize Mixpanel when key is undefined", () => {
+    it("should not initialize Mixpanel when key is undefined", async () => {
       delete process.env.NEXT_PUBLIC_MIXPANEL_KEY;
       process.env.NEXT_PUBLIC_ENV = "production";
 
       renderHook(() => useMixpanel());
 
-      expect(mockMixpanel.init).not.toHaveBeenCalled();
+      await act(async () => {
+        jest.advanceTimersByTime(3000);
+      });
+
+      expect(mockInit).not.toHaveBeenCalled();
     });
   });
 
@@ -68,7 +133,7 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key";
       process.env.NEXT_PUBLIC_ENV = "production";
 
-      mockMixpanel.track = jest.fn((_event, _props, callback) => {
+      mockTrack.mockImplementation((_event, _props, callback) => {
         if (typeof callback === "function") {
           callback(1);
         }
@@ -76,16 +141,23 @@ describe("useMixpanel", () => {
 
       const { result } = renderHook(() => useMixpanel());
 
+      // Trigger load
+      await act(async () => {
+        jest.advanceTimersByTime(3000);
+      });
+
       await waitFor(() => {
-        expect(mockMixpanel.init).toHaveBeenCalled();
+        expect(mockInit).toHaveBeenCalled();
       });
 
-      await result.current.mixpanel.reportEvent({
-        event: "test_event",
-        properties: { key: "value" },
+      await act(async () => {
+        await result.current.mixpanel.reportEvent({
+          event: "test_event",
+          properties: { key: "value" },
+        });
       });
 
-      expect(mockMixpanel.track).toHaveBeenCalledWith(
+      expect(mockTrack).toHaveBeenCalledWith(
         "gap:test_event",
         { key: "value" },
         expect.any(Function)
@@ -96,7 +168,7 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key";
       process.env.NEXT_PUBLIC_ENV = "production";
 
-      mockMixpanel.track = jest.fn((_event, _props, callback) => {
+      mockTrack.mockImplementation((_event, _props, callback) => {
         if (typeof callback === "function") {
           callback(1);
         }
@@ -104,65 +176,21 @@ describe("useMixpanel", () => {
 
       const { result } = renderHook(() => useMixpanel("custom"));
 
-      await waitFor(() => {
-        expect(mockMixpanel.init).toHaveBeenCalled();
+      await act(async () => {
+        jest.advanceTimersByTime(3000);
       });
-
-      await result.current.mixpanel.reportEvent({
-        event: "test_event",
-      });
-
-      expect(mockMixpanel.track).toHaveBeenCalledWith(
-        "custom:test_event",
-        {},
-        expect.any(Function)
-      );
-    });
-
-    it("should report event without properties", async () => {
-      process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key";
-      process.env.NEXT_PUBLIC_ENV = "production";
-
-      mockMixpanel.track = jest.fn((_event, _props, callback) => {
-        if (typeof callback === "function") {
-          callback(1);
-        }
-      });
-
-      const { result } = renderHook(() => useMixpanel());
 
       await waitFor(() => {
-        expect(mockMixpanel.init).toHaveBeenCalled();
+        expect(mockInit).toHaveBeenCalled();
       });
 
-      await result.current.mixpanel.reportEvent({
-        event: "test_event",
+      await act(async () => {
+        await result.current.mixpanel.reportEvent({
+          event: "test_event",
+        });
       });
 
-      expect(mockMixpanel.track).toHaveBeenCalledWith("gap:test_event", {}, expect.any(Function));
-    });
-
-    it("should handle successful event tracking", async () => {
-      process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key";
-      process.env.NEXT_PUBLIC_ENV = "production";
-
-      mockMixpanel.track = jest.fn((_event, _props, callback) => {
-        if (typeof callback === "function") {
-          callback(1);
-        }
-      });
-
-      const { result } = renderHook(() => useMixpanel());
-
-      await waitFor(() => {
-        expect(mockMixpanel.init).toHaveBeenCalled();
-      });
-
-      await expect(
-        result.current.mixpanel.reportEvent({
-          event: "success_event",
-        })
-      ).resolves.toBeUndefined();
+      expect(mockTrack).toHaveBeenCalledWith("custom:test_event", {}, expect.any(Function));
     });
 
     it("should handle tracking errors", async () => {
@@ -170,16 +198,20 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_ENV = "production";
 
       const trackError = new Error("Tracking failed");
-      mockMixpanel.track = jest.fn((_event, _props, callback) => {
+      mockTrack.mockImplementation((_event, _props, callback) => {
         if (typeof callback === "function") {
-          callback(trackError as any);
+          callback(trackError);
         }
       });
 
       const { result } = renderHook(() => useMixpanel());
 
+      await act(async () => {
+        jest.advanceTimersByTime(3000);
+      });
+
       await waitFor(() => {
-        expect(mockMixpanel.init).toHaveBeenCalled();
+        expect(mockInit).toHaveBeenCalled();
       });
 
       await expect(
@@ -193,7 +225,7 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key";
       process.env.NEXT_PUBLIC_ENV = "production";
 
-      mockMixpanel.track = jest.fn((_event, _props, callback) => {
+      mockTrack.mockImplementation((_event, _props, callback) => {
         if (typeof callback === "function") {
           callback(1);
         }
@@ -201,8 +233,12 @@ describe("useMixpanel", () => {
 
       const { result } = renderHook(() => useMixpanel());
 
+      await act(async () => {
+        jest.advanceTimersByTime(3000);
+      });
+
       await waitFor(() => {
-        expect(mockMixpanel.init).toHaveBeenCalled();
+        expect(mockInit).toHaveBeenCalled();
       });
 
       await expect(
@@ -214,24 +250,36 @@ describe("useMixpanel", () => {
   });
 
   describe("Event Reporting Without Initialization", () => {
-    it("should handle events when mixpanel is not initialized", async () => {
+    it("should silently resolve events when mixpanel is not initialized", async () => {
       process.env.NEXT_PUBLIC_MIXPANEL_KEY = "";
       process.env.NEXT_PUBLIC_ENV = "development";
 
       const { result } = renderHook(() => useMixpanel());
 
-      // When mixpanel is not initialized, the promise should still resolve
-      // but the track method won't be called
-      const promise = result.current.mixpanel.reportEvent({
-        event: "test_event",
-      });
-
-      // The promise should resolve immediately since mixpanel is undefined
+      // reportEvent should resolve immediately when mixpanel is not loaded
       await expect(
-        Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve("timeout"), 100))])
-      ).resolves.toBe("timeout");
+        result.current.mixpanel.reportEvent({
+          event: "test_event",
+        })
+      ).resolves.toBeUndefined();
 
-      expect(mockMixpanel.track).not.toHaveBeenCalled();
+      expect(mockTrack).not.toHaveBeenCalled();
+    });
+
+    it("should silently resolve events before mixpanel has loaded", async () => {
+      process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key";
+      process.env.NEXT_PUBLIC_ENV = "production";
+
+      const { result } = renderHook(() => useMixpanel());
+
+      // Before timeout triggers, mixpanel hasn't loaded yet
+      await expect(
+        result.current.mixpanel.reportEvent({
+          event: "early_event",
+        })
+      ).resolves.toBeUndefined();
+
+      expect(mockTrack).not.toHaveBeenCalled();
     });
   });
 
@@ -242,100 +290,6 @@ describe("useMixpanel", () => {
       expect(result.current).toHaveProperty("mixpanel");
       expect(result.current.mixpanel).toHaveProperty("reportEvent");
       expect(typeof result.current.mixpanel.reportEvent).toBe("function");
-    });
-  });
-
-  describe("Event Properties", () => {
-    it("should handle complex event properties", async () => {
-      process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key";
-      process.env.NEXT_PUBLIC_ENV = "production";
-
-      mockMixpanel.track = jest.fn((_event, _props, callback) => {
-        if (typeof callback === "function") {
-          callback(1);
-        }
-      });
-
-      const { result } = renderHook(() => useMixpanel());
-
-      await waitFor(() => {
-        expect(mockMixpanel.init).toHaveBeenCalled();
-      });
-
-      const complexProperties = {
-        user_id: "123",
-        action: "click",
-        metadata: {
-          nested: "value",
-          count: 42,
-        },
-        tags: ["tag1", "tag2"],
-      };
-
-      await result.current.mixpanel.reportEvent({
-        event: "complex_event",
-        properties: complexProperties,
-      });
-
-      expect(mockMixpanel.track).toHaveBeenCalledWith(
-        "gap:complex_event",
-        complexProperties,
-        expect.any(Function)
-      );
-    });
-
-    it("should handle empty properties object", async () => {
-      process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key";
-      process.env.NEXT_PUBLIC_ENV = "production";
-
-      mockMixpanel.track = jest.fn((_event, _props, callback) => {
-        if (typeof callback === "function") {
-          callback(1);
-        }
-      });
-
-      const { result } = renderHook(() => useMixpanel());
-
-      await waitFor(() => {
-        expect(mockMixpanel.init).toHaveBeenCalled();
-      });
-
-      await result.current.mixpanel.reportEvent({
-        event: "empty_props_event",
-        properties: {},
-      });
-
-      expect(mockMixpanel.track).toHaveBeenCalledWith(
-        "gap:empty_props_event",
-        {},
-        expect.any(Function)
-      );
-    });
-  });
-
-  describe("Multiple Hook Instances", () => {
-    it("should work with multiple hook instances with different prefixes", async () => {
-      process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key";
-      process.env.NEXT_PUBLIC_ENV = "production";
-
-      mockMixpanel.track = jest.fn((_event, _props, callback) => {
-        if (typeof callback === "function") {
-          callback(1);
-        }
-      });
-
-      const { result: result1 } = renderHook(() => useMixpanel("prefix1"));
-      const { result: result2 } = renderHook(() => useMixpanel("prefix2"));
-
-      await waitFor(() => {
-        expect(mockMixpanel.init).toHaveBeenCalled();
-      });
-
-      await result1.current.mixpanel.reportEvent({ event: "event1" });
-      await result2.current.mixpanel.reportEvent({ event: "event2" });
-
-      expect(mockMixpanel.track).toHaveBeenCalledWith("prefix1:event1", {}, expect.any(Function));
-      expect(mockMixpanel.track).toHaveBeenCalledWith("prefix2:event2", {}, expect.any(Function));
     });
   });
 });

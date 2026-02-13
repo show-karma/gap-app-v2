@@ -39,7 +39,9 @@
   },
   "overrides": {
     "pbkdf2": "^3.1.5",
-    "error-ex": "^1.3.4"
+    "error-ex": "^1.3.4",
+    "@adraffy/ens-normalize": "^1.11.0",
+    "axios": "^1.13.2"
   },
   "dependencies": {
     "@aa-sdk/core": "^4.82.0",
@@ -208,5 +210,11 @@
     "*.{js,jsx,ts,tsx,json,css}": [
       "biome check --write --diagnostic-level=error"
     ]
+  },
+  "pnpm": {
+    "overrides": {
+      "@adraffy/ens-normalize": "^1.11.0",
+      "axios": "^1.13.2"
+    }
   }
 }

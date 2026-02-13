@@ -5,6 +5,7 @@ import rehypeExternalLinks from "rehype-external-links";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
+import "@uiw/react-markdown-preview/markdown.css";
 import styles from "@/styles/markdown.module.css";
 import { cn } from "@/utilities/tailwind";
 
@@ -19,10 +20,10 @@ const customSchema = {
   },
 };
 
-// Lazy load the heavy markdown preview library with a loading state
-const Preview = dynamic(() => import("@uiw/react-markdown-preview"), {
+// Lazy load the heavy markdown preview library (CSS co-located in this chunk)
+const Preview = dynamic(() => import("@uiw/react-markdown-preview").then((mod) => mod.default), {
   ssr: false,
-  loading: () => <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded h-4 w-full" />,
+  loading: () => <div className="animate-pulse h-4 w-full bg-gray-200 dark:bg-zinc-700 rounded" />,
 });
 
 export const MarkdownPreview: typeof Preview = (props) => {

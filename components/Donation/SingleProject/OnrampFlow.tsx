@@ -1,6 +1,7 @@
 "use client";
 
 import { CreditCard, Loader2 } from "lucide-react";
+import dynamic from "next/dynamic";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { OnrampProvider, type StripeOnrampSessionData } from "@/hooks/donation/types";
@@ -9,7 +10,18 @@ import { useCountryDetection } from "@/hooks/useCountryDetection";
 import { getCurrencyForCountry, getProviderConfig, isCountrySupported } from "@/lib/onramp";
 import { getChainNameById } from "@/utilities/network";
 import { OnrampSuccessModal } from "./OnrampSuccessModal";
-import { StripeOnrampEmbed } from "./StripeOnrampEmbed";
+
+const StripeOnrampEmbed = dynamic(
+  () => import("./StripeOnrampEmbed").then((m) => m.StripeOnrampEmbed),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-blue" />
+      </div>
+    ),
+  }
+);
 
 const ONRAMP_LIMITS = {
   MIN_AMOUNT: 10,
