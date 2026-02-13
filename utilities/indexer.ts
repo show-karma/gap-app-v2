@@ -343,10 +343,6 @@ export const INDEXER = {
     IMPACT_INDICATORS: {
       SEND: (projectUID: string) => `/projects/${projectUID}/indicators/data`,
     },
-    PAYOUT_ADDRESS: {
-      UPDATE: (projectUID: string) => `/projects/${projectUID}/payout-address`,
-      GET: (projectUID: string) => `/projects/${projectUID}/payout-address`,
-    },
     CHAIN_PAYOUT_ADDRESS: {
       UPDATE: (projectId: string) => `/v2/projects/${projectId}/chain-payout-address`,
     },
@@ -376,19 +372,15 @@ export const INDEXER = {
     GET_BY_ID: (regionId: string) => `/v2/regions/${regionId}`,
   },
   INDICATORS: {
-    CREATE_OR_UPDATE: () => `/indicators`,
-    DELETE: (indicatorId: string) => `/indicators/${indicatorId}`,
     UNLINKED: (search?: string) => {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
       const query = params.toString();
       return `/v2/indicators/unlinked${query ? `?${query}` : ""}`;
     },
-    BY_TIMERANGE: (projectUID: string, params: Record<string, number>) =>
-      `/projects/${projectUID}/indicator-dashboard-metrics?${Object.entries(params)
-        .map(([key, value]) => `${key}=${value}`)
-        .join("&")}`,
     V2: {
+      CREATE_OR_UPDATE: () => `/v2/indicators`,
+      DELETE: (indicatorId: string) => `/v2/indicators/${indicatorId}`,
       LIST: (params?: {
         communityUID?: string;
         programId?: number;
@@ -611,14 +603,6 @@ export const INDEXER = {
     GLOBAL_STATS: () => `/v2/communities/stats`,
     ADMINS: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/admins`,
     BATCH_UPDATE: (idOrSlug: string) => `/communities/${idOrSlug}/batch-update`,
-    INDICATORS: {
-      COMMUNITY: {
-        LIST: (communityId: string) => `/communities/${communityId}/impact-indicators`,
-      },
-      CATEGORY: {
-        LIST: (categoryId: string) => `/category/${categoryId}/impact-indicators`,
-      },
-    },
     PROJECT_UPDATES: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/project-updates`,
     CONFIG: {

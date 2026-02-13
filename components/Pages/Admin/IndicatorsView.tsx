@@ -69,7 +69,7 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
   const handleDeleteIndicator = async (id: string) => {
     try {
       setIsDeletingId(id);
-      const [, error] = await fetchData(INDEXER.INDICATORS.DELETE(id), "DELETE");
+      const [, error] = await fetchData(INDEXER.INDICATORS.V2.DELETE(id), "DELETE");
       if (error) throw error;
 
       // Refresh indicators using the hook's refetch method

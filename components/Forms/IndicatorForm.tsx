@@ -125,7 +125,7 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
 
     setIsLoading(true);
     try {
-      const [response, error] = await fetchData(INDEXER.INDICATORS.CREATE_OR_UPDATE(), "POST", {
+      const [response, error] = await fetchData(INDEXER.INDICATORS.V2.CREATE_OR_UPDATE(), "POST", {
         indicatorId: indicatorId,
         name: data.name,
         description: data.description,

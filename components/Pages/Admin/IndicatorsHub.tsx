@@ -90,7 +90,7 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
   const handleDelete = async (id: string) => {
     try {
       setDeletingId(id);
-      const [, error] = await fetchData(INDEXER.INDICATORS.DELETE(id), "DELETE");
+      const [, error] = await fetchData(INDEXER.INDICATORS.V2.DELETE(id), "DELETE");
       if (error) throw error;
 
       refetch();
