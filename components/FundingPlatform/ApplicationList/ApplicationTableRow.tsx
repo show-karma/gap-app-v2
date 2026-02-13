@@ -2,10 +2,13 @@
 
 import { ClipboardDocumentCheckIcon } from "@heroicons/react/24/solid";
 import React, { type FC, useState } from "react";
+import { KycStatusBadge } from "@/components/KycStatusIcon";
+import { Spinner } from "@/components/Utilities/Spinner";
 import { ReviewerType } from "@/hooks/useReviewerAssignment";
 import type { MilestoneReviewer } from "@/services/milestone-reviewers.service";
 import type { ProgramReviewer } from "@/services/program-reviewers.service";
 import type { FundingApplicationStatusV2, IFundingApplication } from "@/types/funding-platform";
+import type { KycStatusResponse } from "@/types/kyc";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { formatAIScore } from "../helper/getAIScore";
@@ -45,6 +48,9 @@ interface ApplicationTableRowProps {
   onStatusChange?: (applicationId: string, status: string, e: React.MouseEvent) => void;
   onReviewerAssignmentChange?: () => void;
   isUpdatingStatus?: boolean;
+  isKycEnabled?: boolean;
+  kycStatus?: KycStatusResponse | null;
+  isLoadingKycStatus?: boolean;
 }
 
 const getStatusBadge = (status: string) => (
@@ -72,6 +78,9 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
   onStatusChange,
   onReviewerAssignmentChange,
   isUpdatingStatus = false,
+  isKycEnabled = false,
+  kycStatus = null,
+  isLoadingKycStatus = false,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [evaluationType, setEvaluationType] = useState<EvaluationType>("external");
@@ -130,6 +139,15 @@ const ApplicationTableRowComponent: FC<ApplicationTableRowProps> = ({
             )}
           </div>
         </td>
+        {isKycEnabled && (
+          <td className="px-4 py-4 whitespace-nowrap">
+            {isLoadingKycStatus ? (
+              <Spinner className="w-4 h-4" />
+            ) : (
+              <KycStatusBadge status={kycStatus ?? null} showValidityInLabel={false} />
+            )}
+          </td>
+        )}
         {showAIScoreColumn && (
           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 text-center">
             {application.aiEvaluation?.evaluation ? (

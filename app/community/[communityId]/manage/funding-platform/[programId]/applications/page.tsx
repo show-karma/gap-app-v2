@@ -145,6 +145,7 @@ export default function ApplicationsPage() {
         <div className="sm:px-3 md:px-4 px-6 py-2 flex-1">
           <ApplicationListWithAPI
             programId={programId}
+            communityId={communityId}
             showStatusActions={isAdmin}
             onApplicationSelect={handleApplicationSelect}
             onApplicationHover={handleApplicationHover}

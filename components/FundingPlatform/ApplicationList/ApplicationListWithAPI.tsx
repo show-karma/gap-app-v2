@@ -13,6 +13,7 @@ import {
   useFundingApplications,
   useProgramConfig,
 } from "@/hooks/useFundingPlatform";
+import { useKycBatchStatusesByAppRef, useKycConfig } from "@/hooks/useKycStatus";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
@@ -23,6 +24,7 @@ import { ApplicationList } from "./ApplicationList";
 
 interface IApplicationListWithAPIProps {
   programId: string; // May be in format "programId" or "programId_chainId"
+  communityId: string;
   onApplicationSelect?: (application: IFundingApplication) => void;
   onApplicationHover?: (applicationId: string) => void;
   showStatusActions?: boolean;
@@ -33,6 +35,7 @@ interface IApplicationListWithAPIProps {
 
 const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   programId,
+  communityId,
   onApplicationSelect,
   onApplicationHover,
   showStatusActions = false,
@@ -121,6 +124,26 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   const { showAIScoreColumn, showInternalAIScoreColumn } = useMemo(
     () => getAIColumnVisibility(config?.formSchema),
     [config?.formSchema]
+  );
+
+  // KYC: Collect unique reference numbers from loaded applications
+  const referenceNumbers = useMemo(
+    () => [...new Set(applications.map((app) => app.referenceNumber).filter(Boolean))].sort(),
+    [applications]
+  );
+
+  // KYC: Check if KYC is enabled for this community
+  const { isEnabled: isKycEnabled } = useKycConfig(communityId, {
+    enabled: !!communityId,
+  });
+
+  // KYC: Fetch batch statuses by application reference
+  const { statuses: kycStatuses, isLoading: isLoadingKycStatuses } = useKycBatchStatusesByAppRef(
+    communityId,
+    referenceNumbers,
+    {
+      enabled: !!communityId && referenceNumbers.length > 0 && isKycEnabled,
+    }
   );
 
   // Sync filters and sorting with URL
@@ -459,6 +482,9 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           isProgramReviewersError={isProgramReviewersError}
           isLoadingMilestoneReviewers={isLoadingMilestoneReviewers}
           isMilestoneReviewersError={isMilestoneReviewersError}
+          isKycEnabled={isKycEnabled}
+          kycStatuses={kycStatuses}
+          isLoadingKycStatuses={isLoadingKycStatuses}
         />
       </InfiniteScroll>
     </div>

@@ -36,6 +36,8 @@ export const KYC_QUERY_KEYS = {
     [...KYC_QUERY_KEYS.all, "config", communityIdOrSlug] as const,
   batchStatuses: (communityUID: string, projectUIDs: string[]) =>
     [...KYC_QUERY_KEYS.all, "batch", communityUID, projectUIDs.join(",")] as const,
+  batchStatusesByAppRef: (communityUID: string, appRefs: string[]) =>
+    [...KYC_QUERY_KEYS.all, "batch-by-app-ref", communityUID, appRefs.join(",")] as const,
 };
 
 /**
@@ -218,6 +220,58 @@ export const useKycBatchStatuses = (
     isError: query.isError,
     refetch: query.refetch,
     getStatus: (projectUID: string) => query.data?.get(projectUID) ?? null,
+  };
+};
+
+/**
+ * Hook to fetch batch KYC statuses for multiple funding applications in a community
+ */
+export const useKycBatchStatusesByAppRef = (
+  communityUID: string | undefined,
+  applicationReferences: string[],
+  options?: { enabled?: boolean }
+) => {
+  const query = useQuery<Map<string, KycStatusResponse | null>>({
+    queryKey: KYC_QUERY_KEYS.batchStatusesByAppRef(communityUID || "", applicationReferences),
+    queryFn: async () => {
+      if (!communityUID || applicationReferences.length === 0) {
+        return new Map();
+      }
+
+      const [data, error] = await fetchData<KycBatchStatusResponse>(
+        INDEXER.KYC.GET_BATCH_STATUSES_BY_APP_REF(communityUID),
+        "POST",
+        { applicationReferences },
+        {},
+        {},
+        true
+      );
+
+      if (error) {
+        throw new Error(error);
+      }
+
+      const statusMap = new Map<string, KycStatusResponse | null>();
+      if (data?.statuses) {
+        Object.entries(data.statuses).forEach(([appRef, status]) => {
+          statusMap.set(appRef, status);
+        });
+      }
+
+      return statusMap;
+    },
+    enabled: options?.enabled !== false && !!communityUID && applicationReferences.length > 0,
+    staleTime: KYC_STATUS_STALE_TIME,
+  });
+
+  return {
+    statuses: query.data || new Map<string, KycStatusResponse | null>(),
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    error: query.error,
+    isError: query.isError,
+    refetch: query.refetch,
+    getStatus: (appRef: string) => query.data?.get(appRef) ?? null,
   };
 };
 

@@ -6,6 +6,7 @@ import type { IApplicationFilters } from "@/services/fundingPlatformService";
 import type { MilestoneReviewer } from "@/services/milestone-reviewers.service";
 import type { ProgramReviewer } from "@/services/program-reviewers.service";
 import type { IApplicationListProps, IFundingApplication } from "@/types/funding-platform";
+import type { KycStatusResponse } from "@/types/kyc";
 import StatusChangeModal from "../ApplicationView/StatusChangeModal";
 import { ApplicationTable } from "./ApplicationTable";
 
@@ -33,6 +34,9 @@ interface IApplicationListComponentProps extends IApplicationListProps {
   isLoadingMilestoneReviewers?: boolean;
   isMilestoneReviewersError?: boolean;
   onReviewerAssignmentChange?: () => void;
+  isKycEnabled?: boolean;
+  kycStatuses?: Map<string, KycStatusResponse | null>;
+  isLoadingKycStatuses?: boolean;
 }
 
 const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
@@ -54,6 +58,9 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
   isLoadingMilestoneReviewers = false,
   isMilestoneReviewersError = false,
   onReviewerAssignmentChange,
+  isKycEnabled = false,
+  kycStatuses = new Map(),
+  isLoadingKycStatuses = false,
 }) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
@@ -166,6 +173,9 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
             onStatusChange={handleStatusChangeClick}
             onReviewerAssignmentChange={onReviewerAssignmentChange}
             isUpdatingStatus={isUpdatingStatus}
+            isKycEnabled={isKycEnabled}
+            kycStatuses={kycStatuses}
+            isLoadingKycStatuses={isLoadingKycStatuses}
           />
         )}
       </div>
