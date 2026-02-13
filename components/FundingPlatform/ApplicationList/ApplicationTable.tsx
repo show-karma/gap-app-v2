@@ -10,6 +10,8 @@ import type { IFundingApplication } from "@/types/funding-platform";
 import type { KycStatusResponse } from "@/types/kyc";
 import { ApplicationTableRow } from "./ApplicationTableRow";
 
+const EMPTY_KYC_MAP = new Map<string, KycStatusResponse | null>();
+
 interface ApplicationTableProps {
   applications: IFundingApplication[];
   sortBy?: IApplicationFilters["sortBy"];
@@ -58,7 +60,7 @@ const ApplicationTableComponent: FC<ApplicationTableProps> = ({
   onReviewerAssignmentChange,
   isUpdatingStatus = false,
   isKycEnabled = false,
-  kycStatuses = new Map(),
+  kycStatuses = EMPTY_KYC_MAP,
   isLoadingKycStatuses = false,
 }) => {
   return (

@@ -10,6 +10,8 @@ import type { KycStatusResponse } from "@/types/kyc";
 import StatusChangeModal from "../ApplicationView/StatusChangeModal";
 import { ApplicationTable } from "./ApplicationTable";
 
+const EMPTY_KYC_MAP = new Map<string, KycStatusResponse | null>();
+
 interface IApplicationListComponentProps extends IApplicationListProps {
   applications: IFundingApplication[];
   isLoading?: boolean;
@@ -59,7 +61,7 @@ const ApplicationListComponent: FC<IApplicationListComponentProps> = ({
   isMilestoneReviewersError = false,
   onReviewerAssignmentChange,
   isKycEnabled = false,
-  kycStatuses = new Map(),
+  kycStatuses = EMPTY_KYC_MAP,
   isLoadingKycStatuses = false,
 }) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
