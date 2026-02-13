@@ -26,7 +26,6 @@ import { MobileProfileContent } from "../Mobile/MobileProfileContent";
 import { ProjectSidePanel } from "../SidePanel/ProjectSidePanel";
 import {
   ContentTabsSkeleton,
-  MobileHeaderMinifiedSkeleton,
   MobileProfileContentSkeleton,
   ProjectHeaderSkeleton,
   ProjectSidePanelSkeleton,
@@ -115,10 +114,18 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   }, [inviteCode, hasOpenedInviteModal, openContributorProfileModal]);
 
   // Use unified hook for all project profile data
-  const { project, isLoading, isError, isVerified, stats } = useProjectProfile(projectId as string);
+  const { project, isLoading, isProjectLoading, isError, isVerified, stats } = useProjectProfile(
+    projectId as string
+  );
 
   // Initialize project permissions in store (for authorization checks in ContentTabs)
   useProjectPermissions();
+
+  // Remove SSR shell from DOM after hydration (CSS in server layout hides it visually)
+  useEffect(() => {
+    const shell = document.querySelector('[data-testid="ssr-project-hero"]');
+    if (shell) shell.remove();
+  }, []);
 
   // Get team count from project
   const teamCount = project
@@ -200,8 +207,8 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
     );
   }
 
-  // Loading state - show full skeleton layout
-  if (isLoading || !project) {
+  // Loading state - only wait for core project data, not all secondary queries
+  if (isProjectLoading || !project) {
     return (
       <div className="flex flex-col gap-6 w-full" data-testid="layout-loading">
         {/* Desktop: Header + Stats Bar Skeleton */}
@@ -267,12 +274,16 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
         {/* Desktop: Header + Stats Bar - Always visible */}
         <div className="hidden lg:flex flex-col bg-secondary border border-border rounded-xl">
           <ProjectHeader project={project} isVerified={isVerified} />
-          <ProjectStatsBar
-            grants={stats.grantsCount}
-            endorsements={stats.endorsementsCount}
-            lastUpdate={stats.lastUpdate}
-            onEndorsementsClick={() => setIsEndorsementsListOpen(true)}
-          />
+          {isLoading ? (
+            <ProjectStatsBarSkeleton />
+          ) : (
+            <ProjectStatsBar
+              grants={stats.grantsCount}
+              endorsements={stats.endorsementsCount}
+              lastUpdate={stats.lastUpdate}
+              onEndorsementsClick={() => setIsEndorsementsListOpen(true)}
+            />
+          )}
         </div>
 
         {/* Mobile: Project Settings above tabs - right aligned */}

@@ -23,6 +23,15 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   staticPageGenerationTimeout: 10000,
   turbopack: {},
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "@tanstack/react-query",
+      "date-fns",
+      "lodash",
+      "recharts",
+    ],
+  },
   eslint: {
     dirs: ["app", "components", "utilities", "hooks", "store", "types"],
     ignoreDuringBuilds: false,

@@ -11,9 +11,9 @@ interface LogoProps {
 
 export function Logo({ className, href = "/" }: LogoProps) {
   return (
-    <Link className={cn("flex-shrink-0 max-w-[96px] max-h-[40px]", className)} href={href}>
+    <Link className={cn("flex-shrink-0 w-[96px] h-[32px]", className)} href={href}>
       <Image
-        className="block w-full h-auto dark:hidden"
+        className="block w-[96px] h-[32px] dark:hidden"
         src="/logo/karma-logo-light.svg"
         alt="Karma"
         width={96}
@@ -22,7 +22,7 @@ export function Logo({ className, href = "/" }: LogoProps) {
         quality={100}
       />
       <Image
-        className="hidden w-full h-auto dark:block"
+        className="hidden w-[96px] h-[32px] dark:block"
         src="/logo/karma-logo-dark.svg"
         alt="Karma"
         width={96}

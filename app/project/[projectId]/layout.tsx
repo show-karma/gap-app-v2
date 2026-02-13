@@ -83,9 +83,52 @@ export default async function RootLayout(props: {
   // Failures are logged but don't break the page - client hooks will fetch as fallback
   await safePrefetchProjectData(queryClient, projectId);
 
+  // Use cached project data for SSR LCP shell (already fetched by generateMetadata / prefetch)
+  const projectData = queryClient.getQueryData<Awaited<ReturnType<typeof getProjectCachedData>>>(
+    QUERY_KEYS.PROJECT.DETAILS(projectId)
+  );
+
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className={layoutTheme.padding}>{children}</div>
+      <div className={`${layoutTheme.padding} flex flex-col`}>
+        {/* SSR LCP shell — renders project title in initial HTML before JS loads.
+            Uses CSS order:-1 so it appears above children visually, while being after
+            children in DOM order. The ~ sibling selector hides it once React renders
+            any client layout (loading skeleton, error, or full layout).
+            Also removed from DOM by ProjectProfileLayout's useEffect as cleanup. */}
+        {projectData?.details?.title && (
+          <style>{`[data-testid="project-profile-layout"] ~ [data-testid="ssr-project-hero"],
+[data-testid="layout-loading"] ~ [data-testid="ssr-project-hero"],
+[data-testid="project-not-found"] ~ [data-testid="ssr-project-hero"]
+{ display: none !important }`}</style>
+        )}
+        {children}
+        {projectData?.details?.title && (
+          <div
+            data-testid="ssr-project-hero"
+            className="hidden lg:flex flex-col bg-secondary border border-border rounded-xl order-[-1]"
+            suppressHydrationWarning
+          >
+            <div className="relative rounded-xl border-b border-border bg-card p-6 lg:p-8">
+              <div className="flex flex-row items-center gap-4">
+                {projectData.details.logoUrl && (
+                  // biome-ignore lint/performance/noImgElement: SSR shell uses native img for zero-JS LCP
+                  <img
+                    src={projectData.details.logoUrl}
+                    alt={projectData.details.title}
+                    className="h-16 w-16 lg:h-[82px] lg:w-[82px] rounded-full border-2 border-white shadow-lg object-cover"
+                    width={82}
+                    height={82}
+                  />
+                )}
+                <h1 className="text-xl font-bold leading-tight lg:text-2xl text-neutral-900 dark:text-white tracking-tight">
+                  {projectData.details.title}
+                </h1>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </HydrationBoundary>
   );
 }

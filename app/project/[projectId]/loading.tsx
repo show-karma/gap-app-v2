@@ -1,5 +1,5 @@
-import { LoadingSpinner } from "@/components/Utilities/LoadingSpinner";
+import { ProjectProfileLayoutSkeleton } from "@/components/Pages/Project/v2/Skeletons/ProjectProfileLayoutSkeleton";
 
 export default function Loading() {
-  return <LoadingSpinner />;
+  return <ProjectProfileLayoutSkeleton />;
 }
