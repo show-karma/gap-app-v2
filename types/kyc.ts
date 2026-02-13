@@ -14,6 +14,7 @@ export enum KycVerificationType {
 
 export enum KycProviderType {
   TREOVA = "TREOVA",
+  FILECOIN = "FILECOIN",
 }
 
 export interface KycStatusResponse {
