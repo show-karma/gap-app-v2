@@ -38,8 +38,8 @@ export function Dashboard() {
   const {
     data: projects = [],
     isLoading: isLoadingProjects,
-    isSuccess: isProjectsSuccess,
     isError: isProjectsError,
+    refetch: refetchProjects,
   } = useQuery({
     queryKey: ["myProjects", userAddress],
     queryFn: () => fetchMyProjects(userAddress),
@@ -55,7 +55,8 @@ export function Dashboard() {
   const showAdmin = hasAdminCommunities;
   const showSuperAdmin = isRegistryAdmin || isStaff;
   const showEmptyState =
-    isProjectsSuccess &&
+    !isLoadingProjects &&
+    !isProjectsError &&
     !hasProjects &&
     !showReviews &&
     !showAdmin &&
@@ -64,7 +65,6 @@ export function Dashboard() {
   const isLoading =
     !ready ||
     (authenticated && (isPermissionsLoading || isStaffLoading || isReviewerProgramsLoading));
-  const showProjectsSection = !isProjectsError;
 
   useEffect(() => {
     if (!ready || authenticated) return;
@@ -78,7 +78,7 @@ export function Dashboard() {
 
     const element = document.getElementById(window.location.hash.slice(1));
     element?.scrollIntoView({ behavior: "smooth" });
-  }, [isLoading, ready, showProjectsSection, showReviews, showAdmin, showSuperAdmin]);
+  }, [isLoading, ready, showReviews, showAdmin, showSuperAdmin]);
 
   if (!authenticated || !userAddress || isLoading) {
     return <DashboardLoading />;
@@ -97,9 +97,12 @@ export function Dashboard() {
             </p>
           </div>
         ) : null}
-        {showProjectsSection ? (
-          <ProjectsSection projects={projects} isLoading={isLoadingProjects} />
-        ) : null}
+        <ProjectsSection
+          projects={projects}
+          isLoading={isLoadingProjects}
+          isError={isProjectsError}
+          refetch={refetchProjects}
+        />
         {showReviews ? <ReviewsSection /> : null}
         {showAdmin ? <AdminSection /> : null}
         {showSuperAdmin ? <SuperAdminSection /> : null}

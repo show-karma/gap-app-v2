@@ -120,6 +120,7 @@ describe("Dashboard", () => {
       isLoading: false,
       isSuccess: true,
       isError: false,
+      refetch: jest.fn(),
     });
   });
 
@@ -151,6 +152,7 @@ describe("Dashboard", () => {
       isLoading: false,
       isSuccess: true,
       isError: false,
+      refetch: jest.fn(),
     });
 
     render(<Dashboard />);
@@ -164,6 +166,7 @@ describe("Dashboard", () => {
       isLoading: false,
       isSuccess: true,
       isError: false,
+      refetch: jest.fn(),
     });
 
     render(<Dashboard />);
@@ -178,6 +181,7 @@ describe("Dashboard", () => {
       isLoading: false,
       isSuccess: true,
       isError: false,
+      refetch: jest.fn(),
     });
 
     render(<Dashboard />);
@@ -217,5 +221,35 @@ describe("Dashboard", () => {
     render(<Dashboard />);
 
     expect(screen.getByText(/couldn.t verify your permissions/i)).toBeInTheDocument();
+  });
+
+  it("shows projects error banner with retry when projects query fails", () => {
+    mockUseQuery.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isSuccess: false,
+      isError: true,
+      refetch: jest.fn(),
+    });
+
+    render(<Dashboard />);
+
+    expect(screen.getByText("My Projects")).toBeInTheDocument();
+    expect(screen.getByText(/Unable to load your projects/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
+  });
+
+  it("does not show empty state when projects query fails", () => {
+    mockUseQuery.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isSuccess: false,
+      isError: true,
+      refetch: jest.fn(),
+    });
+
+    render(<Dashboard />);
+
+    expect(screen.queryByText("Create your first project")).not.toBeInTheDocument();
   });
 });
