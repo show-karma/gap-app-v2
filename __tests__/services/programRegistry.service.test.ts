@@ -53,7 +53,6 @@ describe("ProgramRegistryService", () => {
         title: "Test Program",
         description: "Test Description",
         shortDescription: "Short description",
-        anyoneCanJoin: false,
         programBudget: 100000,
         startsAt: new Date("2024-01-01"),
         endsAt: new Date("2024-12-31"),
