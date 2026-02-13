@@ -106,4 +106,68 @@ describe("useDashboardAdmin", () => {
       manageUrl: "/community/ethereum/manage",
     });
   });
+
+  it("deduplicates communities on multiple chains by slug and aggregates metrics", async () => {
+    const communities: Community[] = [
+      {
+        uid: "0xfilecoin-op" as `0x${string}`,
+        chainID: 10,
+        details: { name: "Filecoin", slug: "filecoin", imageURL: "fil.png" },
+      },
+      {
+        uid: "0xfilecoin-arb" as `0x${string}`,
+        chainID: 42161,
+        details: { name: "Filecoin", slug: "filecoin", imageURL: "fil.png" },
+      },
+    ];
+
+    mockFetchData
+      .mockResolvedValueOnce([{ communities }, null, null, 200])
+      .mockResolvedValueOnce([
+        {
+          communityUID: "0xfilecoin-op",
+          totalPrograms: 2,
+          enabledPrograms: 1,
+          totalApplications: 5,
+          approvedApplications: 1,
+          rejectedApplications: 0,
+          pendingApplications: 4,
+          revisionRequestedApplications: 0,
+          underReviewApplications: 0,
+        },
+        null,
+        null,
+        200,
+      ])
+      .mockResolvedValueOnce([
+        {
+          communityUID: "0xfilecoin-arb",
+          totalPrograms: 3,
+          enabledPrograms: 2,
+          totalApplications: 8,
+          approvedApplications: 2,
+          rejectedApplications: 1,
+          pendingApplications: 5,
+          revisionRequestedApplications: 0,
+          underReviewApplications: 0,
+        },
+        null,
+        null,
+        200,
+      ]);
+
+    const { result } = renderHook(() => useDashboardAdmin(), { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.communities.length).toBe(1);
+    });
+
+    expect(result.current.communities[0]).toMatchObject({
+      name: "Filecoin",
+      slug: "filecoin",
+      activeProgramsCount: 3,
+      pendingApplicationsCount: 9,
+      manageUrl: "/community/filecoin/manage",
+    });
+  });
 });

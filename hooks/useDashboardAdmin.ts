@@ -85,7 +85,7 @@ export function useDashboardAdmin() {
         })
       );
 
-      return results.map((result, index): DashboardAdminCommunity => {
+      const mapped = results.map((result, index): DashboardAdminCommunity => {
         const community = communities[index];
         const metrics = result.status === "fulfilled" ? result.value.metrics : null;
 
@@ -100,6 +100,19 @@ export function useDashboardAdmin() {
           manageUrl: PAGES.ADMIN.ROOT(community.details.slug),
         };
       });
+
+      // Deduplicate by slug — a community can exist on multiple chains
+      const bySlug = new Map<string, DashboardAdminCommunity>();
+      for (const c of mapped) {
+        const existing = bySlug.get(c.slug);
+        if (existing) {
+          existing.activeProgramsCount += c.activeProgramsCount;
+          existing.pendingApplicationsCount += c.pendingApplicationsCount;
+        } else {
+          bySlug.set(c.slug, { ...c });
+        }
+      }
+      return Array.from(bySlug.values());
     },
   });
 

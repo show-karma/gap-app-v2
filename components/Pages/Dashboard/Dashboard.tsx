@@ -25,7 +25,6 @@ export function Dashboard() {
   const router = useRouter();
   const { authenticated, address, ready } = useAuth();
   const {
-    isReviewer,
     isRegistryAdmin,
     isLoading: isPermissionsLoading,
     isGuestDueToError,
@@ -45,12 +44,13 @@ export function Dashboard() {
     queryKey: ["myProjects", userAddress],
     queryFn: () => fetchMyProjects(userAddress),
     enabled: Boolean(userAddress && authenticated),
+    staleTime: 5 * 60 * 1000,
   });
 
   const { communities: adminCommunities, isLoading: isAdminLoading } = useDashboardAdmin();
 
   const hasProjects = projects.length > 0;
-  const showReviews = isReviewer || hasReviewerPrograms;
+  const showReviews = hasReviewerPrograms;
   const hasAdminCommunities = adminCommunities.length > 0;
   const showAdmin = hasAdminCommunities;
   const showSuperAdmin = isRegistryAdmin || isStaff;
@@ -63,8 +63,7 @@ export function Dashboard() {
     !isAdminLoading;
   const isLoading =
     !ready ||
-    (authenticated &&
-      (isPermissionsLoading || isStaffLoading || isLoadingProjects || isReviewerProgramsLoading));
+    (authenticated && (isPermissionsLoading || isStaffLoading || isReviewerProgramsLoading));
   const showProjectsSection = !isProjectsError;
 
   useEffect(() => {

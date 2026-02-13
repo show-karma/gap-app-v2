@@ -39,7 +39,7 @@ export function AdminSection() {
       ) : (
         <div className={gridClassName}>
           {communities.map((community) => (
-            <CommunityHealthCard key={community.uid} community={community} />
+            <CommunityHealthCard key={community.slug} community={community} />
           ))}
         </div>
       )}

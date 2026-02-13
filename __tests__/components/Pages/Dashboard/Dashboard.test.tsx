@@ -86,15 +86,8 @@ const setupAuth = ({
   });
 };
 
-const setupPermissions = ({
-  isReviewer = false,
-  isGuestDueToError = false,
-}: {
-  isReviewer?: boolean;
-  isGuestDueToError?: boolean;
-} = {}) => {
+const setupPermissions = ({ isGuestDueToError = false }: { isGuestDueToError?: boolean } = {}) => {
   mockUsePermissionContext.mockReturnValue({
-    isReviewer,
     isCommunityAdmin: false,
     isRegistryAdmin: false,
     isLoading: false,
@@ -193,7 +186,12 @@ describe("Dashboard", () => {
   });
 
   it("does not render empty state when user is a reviewer", () => {
-    setupPermissions({ isReviewer: true });
+    mockUseReviewerPrograms.mockReturnValue({
+      programs: [{ programId: "p1" }],
+      isLoading: false,
+      hasPrograms: true,
+      error: null,
+    });
 
     render(<Dashboard />);
 
