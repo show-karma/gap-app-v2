@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import type { Community } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -71,11 +70,10 @@ const fetchCommunityMetrics = async (communityId: string): Promise<CommunityMetr
 
 export function useDashboardAdmin() {
   const { authenticated, address } = useAuth();
-  const { isCommunityAdmin, isLoading: isPermissionsLoading } = usePermissionContext();
 
   const query = useQuery({
     queryKey: ["dashboardAdmin", address],
-    enabled: Boolean(address && authenticated && isCommunityAdmin && !isPermissionsLoading),
+    enabled: Boolean(address && authenticated),
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const communities = await fetchAdminCommunities();

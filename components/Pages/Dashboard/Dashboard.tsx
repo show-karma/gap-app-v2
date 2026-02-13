@@ -2,13 +2,16 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import type { Hex } from "viem";
-import { useAuth } from "@/hooks/useAuth";
+import { setPostLoginRedirect, useAuth } from "@/hooks/useAuth";
+import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import { useStaff } from "@/src/core/rbac/hooks/use-staff-bridge";
 import { layoutTheme } from "@/src/helper/theme";
+import { PAGES } from "@/utilities/pages";
 import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects";
 import { AdminSection } from "./AdminSection/AdminSection";
 import { DashboardEmptyState } from "./DashboardEmptyState";
@@ -19,10 +22,10 @@ import { ReviewsSection } from "./ReviewsSection/ReviewsSection";
 import { SuperAdminSection } from "./SuperAdminSection/SuperAdminSection";
 
 export function Dashboard() {
-  const { authenticated, address } = useAuth();
+  const router = useRouter();
+  const { authenticated, address, ready } = useAuth();
   const {
     isReviewer,
-    isCommunityAdmin,
     isRegistryAdmin,
     isLoading: isPermissionsLoading,
     isGuestDueToError,
@@ -44,23 +47,39 @@ export function Dashboard() {
     enabled: Boolean(userAddress && authenticated),
   });
 
+  const { communities: adminCommunities, isLoading: isAdminLoading } = useDashboardAdmin();
+
   const hasProjects = projects.length > 0;
   const showReviews = isReviewer || hasReviewerPrograms;
-  const showAdmin = isCommunityAdmin;
+  const hasAdminCommunities = adminCommunities.length > 0;
+  const showAdmin = hasAdminCommunities;
   const showSuperAdmin = isRegistryAdmin || isStaff;
   const showEmptyState =
-    isProjectsSuccess && !hasProjects && !showReviews && !showAdmin && !showSuperAdmin;
+    isProjectsSuccess &&
+    !hasProjects &&
+    !showReviews &&
+    !showAdmin &&
+    !showSuperAdmin &&
+    !isAdminLoading;
   const isLoading =
-    authenticated &&
-    (isPermissionsLoading || isStaffLoading || isLoadingProjects || isReviewerProgramsLoading);
-  const showProjectsSection = !isProjectsError && (hasProjects || isLoadingProjects);
+    !ready ||
+    (authenticated &&
+      (isPermissionsLoading || isStaffLoading || isLoadingProjects || isReviewerProgramsLoading));
+  const showProjectsSection = !isProjectsError;
 
   useEffect(() => {
-    if (isLoading || !window.location.hash) return;
+    if (!ready || authenticated) return;
+
+    setPostLoginRedirect(`${PAGES.DASHBOARD}${window.location.hash}`);
+    router.replace(PAGES.HOME);
+  }, [authenticated, ready, router]);
+
+  useEffect(() => {
+    if (!ready || isLoading || !window.location.hash) return;
 
     const element = document.getElementById(window.location.hash.slice(1));
     element?.scrollIntoView({ behavior: "smooth" });
-  }, [isLoading, showProjectsSection, showReviews, showAdmin, showSuperAdmin]);
+  }, [isLoading, ready, showProjectsSection, showReviews, showAdmin, showSuperAdmin]);
 
   if (!authenticated || !userAddress || isLoading) {
     return <DashboardLoading />;

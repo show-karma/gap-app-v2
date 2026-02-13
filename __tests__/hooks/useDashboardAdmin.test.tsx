@@ -2,16 +2,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { useAuth } from "@/hooks/useAuth";
 import { useDashboardAdmin } from "@/hooks/useDashboardAdmin";
-import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import type { Community } from "@/types/v2/community";
 import fetchData from "@/utilities/fetchData";
 
 jest.mock("@/hooks/useAuth", () => ({
   useAuth: jest.fn(),
-}));
-
-jest.mock("@/src/core/rbac/context/permission-context", () => ({
-  usePermissionContext: jest.fn(),
 }));
 
 jest.mock("@/utilities/fetchData", () => ({
@@ -20,7 +15,6 @@ jest.mock("@/utilities/fetchData", () => ({
 }));
 
 const mockUseAuth = useAuth as unknown as jest.Mock;
-const mockUsePermissionContext = usePermissionContext as unknown as jest.Mock;
 const mockFetchData = fetchData as unknown as jest.Mock;
 
 const createWrapper = () => {
@@ -39,7 +33,6 @@ describe("useDashboardAdmin", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseAuth.mockReturnValue({ authenticated: true, address: "0x123" });
-    mockUsePermissionContext.mockReturnValue({ isCommunityAdmin: true, isLoading: false });
   });
 
   it("returns communities with metrics", async () => {
