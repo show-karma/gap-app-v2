@@ -7,7 +7,7 @@ import { DonationHistoryList, DonationHistorySkeleton } from "./components/Donat
 
 export default function DonationsPage() {
   const { authenticated, ready } = useAuth();
-  const { data: donations, isLoading, error } = useDonationHistory();
+  const { data: donations, isLoading, error } = useDonationHistory({ enabled: authenticated });
 
   const completedCount = useMemo(() => {
     if (!donations) return 0;
