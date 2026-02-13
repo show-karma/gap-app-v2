@@ -115,7 +115,7 @@ export const OnrampSuccessModal = React.memo<OnrampSuccessModalProps>(
     } = useDonationPolling({
       donationUid,
       chainId,
-      pollingToken: pollingToken ?? undefined,
+      pollingToken,
     });
 
     // Polled backend status takes precedence when available.

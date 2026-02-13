@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { donationsService } from "@/services/donations.service";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { type DonationApiResponse, DonationStatus, type DonationStatusApiResponse } from "../types";
 import { useDonationPolling } from "../useDonationPolling";
 
@@ -331,6 +332,18 @@ describe("useDonationPolling", () => {
         jest.advanceTimersByTime(6000);
       });
       expect(mockDonationsService.getDonationStatus.mock.calls.length).toBe(callCount);
+    });
+
+    it("does NOT include the pollingToken in the cache key (security)", () => {
+      const pollingToken = "secret-token-xyz";
+      const key = QUERY_KEYS.DONATIONS.STATUS("donation-123", 8453);
+
+      // The key should not contain the token string anywhere
+      const keyAsString = JSON.stringify(key);
+      expect(keyAsString).not.toContain(pollingToken);
+
+      // Verify the key only has the expected segments
+      expect(key).toEqual(["donation-status", "donation-123", 8453]);
     });
   });
 });

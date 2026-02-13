@@ -19,22 +19,6 @@ const publicApiClient = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error("Donation API Error:", error.response?.data || error.message);
-    throw error;
-  }
-);
-
-publicApiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error("Donation Status API Error:", error.response?.data || error.message);
-    throw error;
-  }
-);
-
 export const donationsService = {
   async getMyDonations(): Promise<DonationApiResponse[]> {
     const response = await apiClient.get<DonationApiResponse[]>("/v2/donations/me");

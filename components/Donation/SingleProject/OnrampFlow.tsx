@@ -20,6 +20,10 @@ const ONRAMP_LIMITS = {
 /** Regex for validating decimal amounts - moved to module scope to avoid recreation */
 const DECIMAL_REGEX = new RegExp(`^\\d*\\.?\\d{0,${ONRAMP_LIMITS.MAX_DECIMALS}}$`);
 
+/** Stricter email regex: no leading/trailing special chars in local part, no leading/trailing hyphens in domain labels, no consecutive dots */
+const EMAIL_REGEX =
+  /^(?!.*\.\.)[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
+
 interface OnrampFlowProps {
   projectUid: string;
   payoutAddress: string;
@@ -119,7 +123,7 @@ export const OnrampFlow = React.memo<OnrampFlowProps>(
     const { emailError, isEmailValid } = useMemo(() => {
       if (isAuthenticated) return { emailError: null, isEmailValid: true };
       if (!donorEmail) return { emailError: "Email is required", isEmailValid: false };
-      if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(donorEmail)) {
+      if (!EMAIL_REGEX.test(donorEmail)) {
         return { emailError: "Please enter a valid email address", isEmailValid: false };
       }
       return { emailError: null, isEmailValid: true };

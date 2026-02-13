@@ -457,5 +457,40 @@ describe("OnrampFlow", () => {
       const button = screen.getByRole("button", { name: /Continue to Stripe/i });
       expect(button).not.toBeDisabled();
     });
+
+    it("accepts email with plus tag and subdomain", () => {
+      render(<OnrampFlow {...defaultProps} isAuthenticated={false} />, {
+        wrapper: createWrapper(),
+      });
+
+      const amountInput = screen.getByPlaceholderText("0.00");
+      fireEvent.change(amountInput, { target: { value: "100" } });
+
+      const emailInput = screen.getByPlaceholderText("you@example.com");
+      fireEvent.change(emailInput, { target: { value: "user+tag@sub.domain.com" } });
+
+      const button = screen.getByRole("button", { name: /Continue to Stripe/i });
+      expect(button).not.toBeDisabled();
+    });
+
+    it.each([
+      ["user@.com", "domain starting with dot"],
+      ["user@-domain.com", "domain starting with hyphen"],
+      ["user@domain..com", "consecutive dots in domain"],
+      ["user..name@domain.com", "consecutive dots in local part"],
+    ])("rejects invalid email: %s (%s)", (email) => {
+      render(<OnrampFlow {...defaultProps} isAuthenticated={false} />, {
+        wrapper: createWrapper(),
+      });
+
+      const amountInput = screen.getByPlaceholderText("0.00");
+      fireEvent.change(amountInput, { target: { value: "100" } });
+
+      const emailInput = screen.getByPlaceholderText("you@example.com");
+      fireEvent.change(emailInput, { target: { value: email } });
+
+      const button = screen.getByRole("button", { name: /Continue to Stripe/i });
+      expect(button).toBeDisabled();
+    });
   });
 });

@@ -143,8 +143,7 @@ export const QUERY_KEYS = {
     MY: () => ["donations", "me"] as const,
     POLLING: (donationUid: string, chainId: number) =>
       ["donation", "polling", donationUid, chainId] as const,
-    STATUS: (uid: string, chainId: number, token: string) =>
-      ["donation-status", uid, chainId, token] as const,
+    STATUS: (uid: string, chainId: number) => ["donation-status", uid, chainId] as const,
   },
   SETTINGS: {
     AVAILABLE_AI_MODELS: ["available-ai-models"] as const,

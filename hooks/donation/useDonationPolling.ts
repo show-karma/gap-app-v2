@@ -22,7 +22,7 @@ const isTerminalStatus = (s?: string | null) =>
 interface UseDonationPollingParams {
   donationUid: string | null;
   chainId: number;
-  pollingToken?: string;
+  pollingToken?: string | null;
 }
 
 interface UseDonationPollingReturn {
@@ -39,7 +39,7 @@ export const useDonationPolling = ({
 }: UseDonationPollingParams): UseDonationPollingReturn => {
   const { data, isFetching, error } = useQuery<DonationApiResponse | DonationStatusApiResponse>({
     queryKey: pollingToken
-      ? QUERY_KEYS.DONATIONS.STATUS(donationUid!, chainId, pollingToken)
+      ? QUERY_KEYS.DONATIONS.STATUS(donationUid!, chainId)
       : QUERY_KEYS.DONATIONS.POLLING(donationUid!, chainId),
     queryFn: () =>
       pollingToken
