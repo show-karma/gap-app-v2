@@ -7,7 +7,10 @@ import type { IApplicationFilters } from "@/services/fundingPlatformService";
 import type { MilestoneReviewer } from "@/services/milestone-reviewers.service";
 import type { ProgramReviewer } from "@/services/program-reviewers.service";
 import type { IFundingApplication } from "@/types/funding-platform";
+import type { KycStatusResponse } from "@/types/kyc";
 import { ApplicationTableRow } from "./ApplicationTableRow";
+
+const EMPTY_KYC_MAP = new Map<string, KycStatusResponse | null>();
 
 interface ApplicationTableProps {
   applications: IFundingApplication[];
@@ -30,6 +33,9 @@ interface ApplicationTableProps {
   onStatusChange?: (applicationId: string, status: string, e: React.MouseEvent) => void;
   onReviewerAssignmentChange?: () => void;
   isUpdatingStatus?: boolean;
+  isKycEnabled?: boolean;
+  kycStatuses?: Map<string, KycStatusResponse | null>;
+  isLoadingKycStatuses?: boolean;
 }
 
 const ApplicationTableComponent: FC<ApplicationTableProps> = ({
@@ -53,6 +59,9 @@ const ApplicationTableComponent: FC<ApplicationTableProps> = ({
   onStatusChange,
   onReviewerAssignmentChange,
   isUpdatingStatus = false,
+  isKycEnabled = false,
+  kycStatuses = EMPTY_KYC_MAP,
+  isLoadingKycStatuses = false,
 }) => {
   return (
     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -86,6 +95,14 @@ const ApplicationTableComponent: FC<ApplicationTableProps> = ({
             currentSortDirection={sortOrder}
             onSort={onSortChange}
           />
+          {isKycEnabled && (
+            <th
+              scope="col"
+              className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider"
+            >
+              KYC/KYB
+            </th>
+          )}
           {showAIScoreColumn && (
             <SortableTableHeader
               label="AI Score"
@@ -188,6 +205,9 @@ const ApplicationTableComponent: FC<ApplicationTableProps> = ({
             onStatusChange={onStatusChange}
             onReviewerAssignmentChange={onReviewerAssignmentChange}
             isUpdatingStatus={isUpdatingStatus}
+            isKycEnabled={isKycEnabled}
+            kycStatus={kycStatuses.get(application.referenceNumber) ?? null}
+            isLoadingKycStatus={isLoadingKycStatuses}
           />
         ))}
       </tbody>

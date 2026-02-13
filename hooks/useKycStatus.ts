@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   KycBatchStatusResponse,
   KycConfigResponse,
@@ -16,6 +16,9 @@ import { INDEXER } from "@/utilities/indexer";
 // Cache duration constants
 const KYC_STATUS_STALE_TIME = 5 * 60 * 1000; // 5 minutes
 const KYC_CONFIG_STALE_TIME = 10 * 60 * 1000; // 10 minutes
+
+// Stable empty Map reference to avoid re-renders from new Map() on each render
+const EMPTY_KYC_STATUS_MAP = new Map<string, KycStatusResponse | null>();
 
 // Application reference prefix constant
 export const APPLICATION_REFERENCE_PREFIX = "APP-";
@@ -36,6 +39,8 @@ export const KYC_QUERY_KEYS = {
     [...KYC_QUERY_KEYS.all, "config", communityIdOrSlug] as const,
   batchStatuses: (communityUID: string, projectUIDs: string[]) =>
     [...KYC_QUERY_KEYS.all, "batch", communityUID, projectUIDs.join(",")] as const,
+  batchStatusesByAppRef: (communityUID: string, appRefs: string[]) =>
+    [...KYC_QUERY_KEYS.all, "batch-by-app-ref", communityUID, appRefs.join(",")] as const,
 };
 
 /**
@@ -211,13 +216,102 @@ export const useKycBatchStatuses = (
   });
 
   return {
-    statuses: query.data || new Map<string, KycStatusResponse | null>(),
+    statuses: query.data ?? EMPTY_KYC_STATUS_MAP,
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     error: query.error,
     isError: query.isError,
     refetch: query.refetch,
     getStatus: (projectUID: string) => query.data?.get(projectUID) ?? null,
+  };
+};
+
+/**
+ * Hook to fetch batch KYC statuses for multiple funding applications in a community.
+ *
+ * Optimized for infinite scroll: uses delta-fetching to only request new
+ * application references not already cached, and keepPreviousData to prevent
+ * isLoading from flashing for already-loaded rows when the list grows.
+ */
+export const useKycBatchStatusesByAppRef = (
+  communityUID: string | undefined,
+  applicationReferences: string[],
+  options?: { enabled?: boolean }
+) => {
+  const queryClient = useQueryClient();
+
+  const query = useQuery<Map<string, KycStatusResponse | null>>({
+    queryKey: KYC_QUERY_KEYS.batchStatusesByAppRef(communityUID || "", applicationReferences),
+    queryFn: async () => {
+      if (!communityUID || applicationReferences.length === 0) {
+        return new Map();
+      }
+
+      // Detect refetch (same key already has data) vs new query (infinite scroll grew the list)
+      const isRefetch = !!queryClient.getQueryData(
+        KYC_QUERY_KEYS.batchStatusesByAppRef(communityUID, applicationReferences)
+      );
+
+      const merged = new Map<string, KycStatusResponse | null>();
+      let refsToFetch = applicationReferences;
+
+      if (!isRefetch) {
+        // Gather statuses already cached from prior batch queries for this community
+        const priorQueries = queryClient.getQueriesData<Map<string, KycStatusResponse | null>>({
+          queryKey: [...KYC_QUERY_KEYS.all, "batch-by-app-ref", communityUID],
+        });
+        for (const [, data] of priorQueries) {
+          if (data) {
+            for (const [key, value] of data) {
+              merged.set(key, value);
+            }
+          }
+        }
+        // Only fetch the delta — refs not present in any prior query cache
+        refsToFetch = applicationReferences.filter((ref) => !merged.has(ref));
+      }
+
+      if (refsToFetch.length > 0) {
+        const [data, error] = await fetchData<KycBatchStatusResponse>(
+          INDEXER.KYC.GET_BATCH_STATUSES_BY_APP_REF(communityUID),
+          "POST",
+          { applicationReferences: refsToFetch },
+          {},
+          {},
+          true
+        );
+
+        if (error) {
+          throw new Error(error);
+        }
+
+        if (data?.statuses) {
+          Object.entries(data.statuses).forEach(([appRef, status]) => {
+            merged.set(appRef, status);
+          });
+        }
+      }
+
+      // Return map scoped to the requested applicationReferences
+      const result = new Map<string, KycStatusResponse | null>();
+      for (const ref of applicationReferences) {
+        result.set(ref, merged.get(ref) ?? null);
+      }
+      return result;
+    },
+    placeholderData: keepPreviousData,
+    enabled: options?.enabled !== false && !!communityUID && applicationReferences.length > 0,
+    staleTime: KYC_STATUS_STALE_TIME,
+  });
+
+  return {
+    statuses: query.data ?? EMPTY_KYC_STATUS_MAP,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    error: query.error,
+    isError: query.isError,
+    refetch: query.refetch,
+    getStatus: (appRef: string) => query.data?.get(appRef) ?? null,
   };
 };
 
