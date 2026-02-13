@@ -17,12 +17,13 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { ProjectGrantsMilestonesListLoading } from "../../Project/Loading/Grants/MilestonesAndUpdate";
 
 const EmptyMilestone = ({ grant }: { grant?: Grant; project?: ProjectResponse }) => {
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useIsCommunityAdmin();
   const { openProgressModalWithScreen } = useProgressModalStore();
 
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   const handleAddMilestone = () => {
     openProgressModalWithScreen("unified_milestone", grant?.uid);

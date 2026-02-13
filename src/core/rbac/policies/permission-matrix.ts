@@ -1,6 +1,88 @@
 import { Permission, type PermissionString } from "../types/permission";
 import { Role } from "../types/role";
 
+// ──────────────────────────────────────────────────────
+// Permission Layers (incremental — what each tier ADDS)
+// ──────────────────────────────────────────────────────
+
+const GUEST_BASE: Permission[] = [
+  Permission.PROGRAM_VIEW,
+  Permission.APPLICATION_READ,
+  Permission.COMMENT_EDIT_OWN,
+  Permission.COMMENT_DELETE_OWN,
+];
+
+const APPLICANT_LAYER: Permission[] = [
+  Permission.APPLICATION_VIEW_OWN,
+  Permission.APPLICATION_CREATE,
+  Permission.APPLICATION_EDIT_OWN,
+  Permission.APPLICATION_COMMENT,
+  Permission.MILESTONE_VIEW_OWN,
+  Permission.MILESTONE_SUBMIT,
+];
+
+const PROGRAM_REVIEWER_LAYER: Permission[] = [
+  Permission.APPLICATION_VIEW_ASSIGNED,
+  Permission.APPLICATION_REVIEW,
+  Permission.APPLICATION_CHANGE_STATUS,
+  Permission.REVIEW_CREATE,
+  Permission.REVIEW_EDIT_OWN,
+];
+
+const MILESTONE_REVIEWER_LAYER: Permission[] = [
+  Permission.MILESTONE_VIEW_ASSIGNED,
+  Permission.MILESTONE_REVIEW,
+  Permission.MILESTONE_APPROVE,
+  Permission.MILESTONE_REJECT,
+];
+
+const PROGRAM_ADMIN_LAYER: Permission[] = [
+  Permission.PROGRAM_EDIT,
+  Permission.PROGRAM_MANAGE_REVIEWERS,
+  Permission.PROGRAM_VIEW_ANALYTICS,
+  Permission.APPLICATION_VIEW_ALL,
+  Permission.APPLICATION_APPROVE,
+  Permission.APPLICATION_REJECT,
+  Permission.MILESTONE_VIEW_ALL,
+  Permission.REVIEW_VIEW_ALL,
+];
+
+const PROGRAM_CREATOR_LAYER: Permission[] = [Permission.PROGRAM_MANAGE_ADMINS];
+
+// ──────────────────────────────────────────────────────
+// Composed roles (each includes all layers below it)
+//
+// GUEST → APPLICANT → PROGRAM_REVIEWER → MILESTONE_REVIEWER → PROGRAM_ADMIN → PROGRAM_CREATOR
+// ──────────────────────────────────────────────────────
+
+const guestPermissions: Permission[] = [...GUEST_BASE];
+
+const applicantPermissions: Permission[] = [...guestPermissions, ...APPLICANT_LAYER];
+
+const programReviewerPermissions: Permission[] = [
+  ...applicantPermissions,
+  ...PROGRAM_REVIEWER_LAYER,
+];
+
+const milestoneReviewerPermissions: Permission[] = [
+  ...programReviewerPermissions,
+  ...MILESTONE_REVIEWER_LAYER,
+];
+
+const programAdminPermissions: Permission[] = [
+  ...milestoneReviewerPermissions,
+  ...PROGRAM_ADMIN_LAYER,
+];
+
+const programCreatorPermissions: Permission[] = [
+  ...programAdminPermissions,
+  ...PROGRAM_CREATOR_LAYER,
+];
+
+// ──────────────────────────────────────────────────────
+// Permission Matrix
+// ──────────────────────────────────────────────────────
+
 export const PERMISSION_MATRIX: Record<Role, PermissionString[]> = {
   [Role.SUPER_ADMIN]: ["*"],
 
@@ -19,95 +101,12 @@ export const PERMISSION_MATRIX: Record<Role, PermissionString[]> = {
     Permission.REVIEW_CREATE,
   ],
 
-  // Program Creator: Above Program Admin, can manage admins (program context required)
-  [Role.PROGRAM_CREATOR]: [
-    Permission.PROGRAM_VIEW,
-    Permission.PROGRAM_EDIT,
-    Permission.PROGRAM_MANAGE_ADMINS,
-    Permission.PROGRAM_MANAGE_REVIEWERS,
-    Permission.PROGRAM_VIEW_ANALYTICS,
-    Permission.APPLICATION_VIEW_ALL,
-    Permission.APPLICATION_READ,
-    Permission.APPLICATION_COMMENT,
-    Permission.APPLICATION_APPROVE,
-    Permission.APPLICATION_REJECT,
-    Permission.APPLICATION_CHANGE_STATUS,
-    Permission.MILESTONE_VIEW_ALL,
-    Permission.MILESTONE_APPROVE,
-    Permission.MILESTONE_REJECT,
-    Permission.REVIEW_VIEW_ALL,
-    Permission.REVIEW_CREATE,
-    Permission.COMMENT_EDIT_OWN,
-    Permission.COMMENT_DELETE_OWN,
-  ],
-
-  // Program Admin: Manages program operations (assigned by Program Creator)
-  [Role.PROGRAM_ADMIN]: [
-    Permission.PROGRAM_VIEW,
-    Permission.PROGRAM_EDIT,
-    Permission.PROGRAM_MANAGE_REVIEWERS,
-    Permission.PROGRAM_VIEW_ANALYTICS,
-    Permission.APPLICATION_VIEW_ALL,
-    Permission.APPLICATION_READ,
-    Permission.APPLICATION_COMMENT,
-    Permission.APPLICATION_APPROVE,
-    Permission.APPLICATION_REJECT,
-    Permission.APPLICATION_CHANGE_STATUS,
-    Permission.MILESTONE_VIEW_ALL,
-    Permission.MILESTONE_APPROVE,
-    Permission.MILESTONE_REJECT,
-    Permission.REVIEW_VIEW_ALL,
-    Permission.REVIEW_CREATE,
-    Permission.COMMENT_EDIT_OWN,
-    Permission.COMMENT_DELETE_OWN,
-  ],
-
-  [Role.PROGRAM_REVIEWER]: [
-    Permission.PROGRAM_VIEW,
-    Permission.APPLICATION_VIEW_ASSIGNED,
-    Permission.APPLICATION_READ,
-    Permission.APPLICATION_COMMENT,
-    Permission.APPLICATION_REVIEW,
-    Permission.APPLICATION_CHANGE_STATUS,
-    Permission.REVIEW_CREATE,
-    Permission.REVIEW_EDIT_OWN,
-    Permission.COMMENT_EDIT_OWN,
-    Permission.COMMENT_DELETE_OWN,
-  ],
-
-  [Role.MILESTONE_REVIEWER]: [
-    Permission.PROGRAM_VIEW,
-    Permission.MILESTONE_VIEW_ASSIGNED,
-    Permission.MILESTONE_REVIEW,
-    Permission.MILESTONE_APPROVE,
-    Permission.MILESTONE_REJECT,
-    Permission.APPLICATION_CHANGE_STATUS,
-    Permission.REVIEW_CREATE,
-    Permission.REVIEW_EDIT_OWN,
-    Permission.COMMENT_EDIT_OWN,
-    Permission.COMMENT_DELETE_OWN,
-  ],
-
-  [Role.APPLICANT]: [
-    Permission.PROGRAM_VIEW,
-    Permission.APPLICATION_VIEW_OWN,
-    Permission.APPLICATION_CREATE,
-    Permission.APPLICATION_EDIT_OWN,
-    Permission.APPLICATION_READ,
-    Permission.APPLICATION_COMMENT,
-    Permission.MILESTONE_VIEW_OWN,
-    Permission.MILESTONE_SUBMIT,
-    Permission.COMMENT_EDIT_OWN,
-    Permission.COMMENT_DELETE_OWN,
-  ],
-
-  [Role.GUEST]: [
-    Permission.PROGRAM_VIEW,
-    Permission.APPLICATION_READ,
-    Permission.COMMENT_EDIT_OWN,
-    Permission.COMMENT_DELETE_OWN,
-  ],
-
+  [Role.PROGRAM_CREATOR]: programCreatorPermissions,
+  [Role.PROGRAM_ADMIN]: programAdminPermissions,
+  [Role.MILESTONE_REVIEWER]: milestoneReviewerPermissions,
+  [Role.PROGRAM_REVIEWER]: programReviewerPermissions,
+  [Role.APPLICANT]: applicantPermissions,
+  [Role.GUEST]: guestPermissions,
   [Role.NONE]: [],
 };
 

@@ -391,6 +391,9 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
                       // Add the new indicator to local state
                       setNewIndicators((prev) => [...prev, indicator]);
 
+                      // Auto-select the newly created indicator
+                      handleIndicatorChange(indicator.id);
+
                       // Notify parent callback
                       onIndicatorCreated?.(indicator);
 

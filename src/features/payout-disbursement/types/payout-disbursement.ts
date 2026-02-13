@@ -256,7 +256,7 @@ export interface PayoutConfigItem {
   /** Token contract address for payouts */
   tokenAddress?: string | null;
   /** Chain ID where the payout token is deployed */
-  chainId?: number | null;
+  chainID?: number | null;
   /** Breakdown of how the total grant amount is allocated across milestones */
   milestoneAllocations?: MilestoneAllocation[] | null;
 }
@@ -282,7 +282,7 @@ export interface PayoutGrantConfig {
   /** Token contract address for payouts */
   tokenAddress: string | null;
   /** Chain ID where the payout token is deployed */
-  chainId: number | null;
+  chainID: number | null;
   /** Breakdown of how the total grant amount is allocated across milestones */
   milestoneAllocations: MilestoneAllocation[] | null;
   createdBy: string;
