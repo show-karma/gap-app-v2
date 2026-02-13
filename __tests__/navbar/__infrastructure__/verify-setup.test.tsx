@@ -222,25 +222,25 @@ describe("Test Infrastructure Verification", () => {
     it("should have community admin scenario", () => {
       const fixture = getAuthFixture("community-admin-single");
       expect(fixture.permissions.communities.length).toBeGreaterThan(0);
-      expect(fixture.expectedElements.admin).toBe(true);
+      expect(fixture.expectedElements.admin).toBe(false);
     });
 
     it("should have reviewer scenario", () => {
       const fixture = getAuthFixture("reviewer-single");
       expect(fixture.permissions.reviewerPrograms.length).toBeGreaterThan(0);
-      expect(fixture.expectedElements.review).toBe(true);
+      expect(fixture.expectedElements.review).toBe(false);
     });
 
     it("should have staff scenario", () => {
       const fixture = getAuthFixture("staff");
       expect(fixture.permissions.isStaff).toBe(true);
-      expect(fixture.expectedElements.admin).toBe(true);
+      expect(fixture.expectedElements.admin).toBe(false);
     });
 
     it("should have owner scenario", () => {
       const fixture = getAuthFixture("owner");
       expect(fixture.permissions.isOwner).toBe(true);
-      expect(fixture.expectedElements.admin).toBe(true);
+      expect(fixture.expectedElements.admin).toBe(false);
     });
 
     it("should have pool manager scenario", () => {
@@ -257,12 +257,12 @@ describe("Test Infrastructure Verification", () => {
 
     it("should have combined permission scenarios", () => {
       const adminAndReviewer = getAuthFixture("admin-and-reviewer");
-      expect(adminAndReviewer.expectedElements.admin).toBe(true);
-      expect(adminAndReviewer.expectedElements.review).toBe(true);
+      expect(adminAndReviewer.expectedElements.admin).toBe(false);
+      expect(adminAndReviewer.expectedElements.review).toBe(false);
 
       const superUser = getAuthFixture("super-user");
-      expect(superUser.expectedElements.admin).toBe(true);
-      expect(superUser.expectedElements.review).toBe(true);
+      expect(superUser.expectedElements.admin).toBe(false);
+      expect(superUser.expectedElements.review).toBe(false);
       expect(superUser.expectedElements.managePrograms).toBe(true);
     });
 

@@ -458,7 +458,7 @@ describe("Permission-Based Access", () => {
 
     it("should see basic menu items", () => {
       cy.get('[data-testid="user-avatar"]').click();
-      cy.contains("My projects").should("be.visible");
+      cy.contains("Dashboard").should("be.visible");
     });
 
     it("should not see admin link", () => {
@@ -678,4 +678,3 @@ Day 5: Phase 6 (Docs) + Testing & Validation
 - Mock auth simulates Privy state but doesn't test actual wallet connection
 - Test data assumes "gitcoin" community exists with projects
 - Run tests against staging environment for realistic data
-

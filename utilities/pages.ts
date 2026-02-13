@@ -25,6 +25,7 @@ export const PAGES = {
   },
   MY_PROJECTS: `/my-projects`,
   MY_REVIEWS: `/my-reviews`,
+  DASHBOARD: `/dashboard`,
   // REVIEWER routes now point to MANAGE (unified RBAC-based routes)
   REVIEWER: {
     DASHBOARD: (community: string) => `/community/${community}/manage/funding-platform`,
