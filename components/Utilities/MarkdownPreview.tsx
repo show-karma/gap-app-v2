@@ -1,11 +1,9 @@
-"use client";
-import dynamic from "next/dynamic";
-import { useTheme } from "next-themes";
+import Markdown from "react-markdown";
 import rehypeExternalLinks from "rehype-external-links";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
-import "@uiw/react-markdown-preview/markdown.css";
+import { visit } from "unist-util-visit";
 import styles from "@/styles/markdown.module.css";
 import { cn } from "@/utilities/tailwind";
 
@@ -20,49 +18,65 @@ const customSchema = {
   },
 };
 
-// Lazy load the heavy markdown preview library (CSS co-located in this chunk)
-const Preview = dynamic(() => import("@uiw/react-markdown-preview").then((mod) => mod.default), {
-  ssr: false,
-  loading: () => <div className="animate-pulse h-4 w-full bg-gray-200 dark:bg-zinc-700 rounded" />,
-});
+export interface MarkdownPreviewProps {
+  source?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  components?: Record<string, React.ComponentType<any>>;
+  allowElement?: (element: any, index: number, parent: any) => boolean;
+  rehypeRewrite?: (node: any, index?: number, parent?: any) => void;
+}
 
-export const MarkdownPreview: typeof Preview = (props) => {
-  const { theme: currentTheme } = useTheme();
+/**
+ * Converts an @uiw-style rehypeRewrite callback into a standard rehype plugin.
+ * Uses unist-util-visit to traverse the tree and call the consumer's rewrite
+ * callback on each node — matching the behavior of @uiw/react-markdown-preview.
+ */
+function createRehypeRewritePlugin(rewriteFn: NonNullable<MarkdownPreviewProps["rehypeRewrite"]>) {
+  return () => (tree: any) => {
+    visit(tree, (node: any, index, parent) => {
+      rewriteFn(node, index ?? undefined, parent ?? undefined);
+    });
+  };
+}
+
+export function MarkdownPreview({
+  source,
+  className,
+  style,
+  components,
+  allowElement,
+  rehypeRewrite,
+}: MarkdownPreviewProps) {
+  const rehypePlugins: any[] = [
+    [rehypeSanitize, customSchema],
+    [rehypeExternalLinks, { target: "_blank", rel: ["nofollow", "noopener", "noreferrer"] }],
+  ];
+  if (rehypeRewrite) {
+    rehypePlugins.push(createRehypeRewritePlugin(rehypeRewrite));
+  }
+
   return (
-    <div className="preview w-full max-w-full" data-color-mode={currentTheme}>
-      <Preview
-        className={cn("wmdeMarkdown", styles.wmdeMarkdown, props.className)}
-        rehypePlugins={[
-          [rehypeSanitize, customSchema],
-          [rehypeExternalLinks, { target: "_blank", rel: ["nofollow", "noopener", "noreferrer"] }],
-        ]}
+    <div
+      className={cn("prose prose-sm dark:prose-invert max-w-none", styles.wmdeMarkdown, className)}
+      style={style}
+    >
+      <Markdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
-        style={{
-          backgroundColor: "transparent",
-          color: currentTheme === "dark" ? "white" : "rgb(36, 41, 47)",
-          width: "100%",
-          maxWidth: "100%",
-        }}
+        rehypePlugins={rehypePlugins}
+        allowElement={allowElement}
         components={{
-          p: ({ children }) => <span className={props.className}>{children}</span>,
+          p: ({ children }) => <span className={className}>{children}</span>,
           code: ({ children }) => (
-            <code
-              className={cn("bg-zinc-600 dark:bg-gray-800 p-2 rounded-md", props.className)}
-              style={{
-                display: "block",
-                overflow: "auto",
-                maxWidth: "100%",
-                whiteSpace: "pre-wrap",
-                wordWrap: "break-word",
-                // backgroundColor: "black",
-              }}
-            >
+            <code className="bg-zinc-600 dark:bg-gray-800 p-2 rounded-md block overflow-auto max-w-full whitespace-pre-wrap break-words">
               {children}
             </code>
           ),
+          ...components,
         }}
-        {...props}
-      />
+      >
+        {source || ""}
+      </Markdown>
     </div>
   );
-};
+}
