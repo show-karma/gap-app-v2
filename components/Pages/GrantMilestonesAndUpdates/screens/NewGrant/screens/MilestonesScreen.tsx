@@ -160,7 +160,6 @@ export const MilestonesScreen: React.FC = () => {
         programId: normalizedProgramId, // Use normalized programId (no chainId)
         amount: newGrantData.amount || "",
         proposalURL: newGrantData.linkToProposal,
-        assetAndChainId: ["0x0", 1],
         payoutAddress: smartWalletAddress || address,
         questions: newGrantData.questions,
         description:

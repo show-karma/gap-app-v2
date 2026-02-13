@@ -99,10 +99,11 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useIsCommunityAdmin();
-  const _isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const _isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
   const { openShareDialog, closeShareDialog } = useShareDialogStore();
   const router = useRouter();
 
