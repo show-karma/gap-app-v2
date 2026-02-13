@@ -132,17 +132,16 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     [applications]
   );
 
-  // KYC: Check if KYC is enabled for this community
+  // KYC: Fetch config and batch statuses in parallel (no waterfall)
   const { isEnabled: isKycEnabled } = useKycConfig(communityId, {
     enabled: !!communityId,
   });
 
-  // KYC: Fetch batch statuses by application reference
   const { statuses: kycStatuses, isLoading: isLoadingKycStatuses } = useKycBatchStatusesByAppRef(
     communityId,
     referenceNumbers,
     {
-      enabled: !!communityId && referenceNumbers.length > 0 && isKycEnabled,
+      enabled: !!communityId && referenceNumbers.length > 0,
     }
   );
 
