@@ -20,7 +20,14 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   staticPageGenerationTimeout: 10000,
-  turbopack: {},
+  turbopack: {
+    resolveAlias: {
+      // Stub x402/client to eliminate ~1.3MB of unused @solana-program deps.
+      // Privy imports x402/client unconditionally, but this app never uses
+      // the x402 payment protocol (no useX402Fetch calls).
+      "x402/client": "./stubs/x402-client.ts",
+    },
+  },
   experimental: {
     optimizePackageImports: [
       "lucide-react",
@@ -50,6 +57,8 @@ const nextConfig: NextConfig = {
       "react-hook-form",
       "@headlessui/react",
       "@heroicons/react",
+      "@walletconnect/ethereum-provider",
+      "@walletconnect/universal-provider",
     ],
   },
   eslint: {
