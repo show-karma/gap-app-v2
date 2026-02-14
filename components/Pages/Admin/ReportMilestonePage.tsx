@@ -1,5 +1,4 @@
 "use client";
-import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon, ChevronUpDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 import { useQuery } from "@tanstack/react-query";
@@ -362,15 +361,6 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     <div className="container mx-auto mt-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
       {isAuthorized ? (
         <div className="w-full flex flex-col gap-6">
-          <div className="w-full flex flex-row items-center justify-between">
-            <Link href={PAGES.ADMIN.ROOT(communityId)}>
-              <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
-                <ChevronLeftIcon className="h-5 w-5" />
-                Return to admin page
-              </Button>
-            </Link>
-          </div>
-
           <section className="flex flex-col gap-4">
             <div className="flex flex-row justify-between items-center">
               <h1 className="text-2xl font-bold">Milestones Report</h1>

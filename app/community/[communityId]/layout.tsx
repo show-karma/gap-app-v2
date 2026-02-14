@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import CommunityHeader from "@/components/Community/Header";
+import { CommunityContentWrapper } from "@/components/Community/CommunityContentWrapper";
 import { CommunityNotFound } from "@/components/Pages/Communities/CommunityNotFound";
 import { PROJECT_NAME } from "@/constants/brand";
-import { layoutTheme } from "@/src/helper/theme";
 import { envVars } from "@/utilities/enviromentVars";
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_URL, twitterMeta } from "@/utilities/meta";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { getCommunityDetails } from "@/utilities/queries/v2/getCommunityData";
-import { cn } from "@/utilities/tailwind";
 
 type Params = Promise<{
   communityId: string;
@@ -76,7 +75,7 @@ export default async function Layout(props: { children: React.ReactNode; params:
   return (
     <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
       <CommunityHeader community={community} />
-      <div className={cn(layoutTheme.padding, "w-full max-w-full")}>{children}</div>
+      <CommunityContentWrapper>{children}</CommunityContentWrapper>
     </div>
   );
 }

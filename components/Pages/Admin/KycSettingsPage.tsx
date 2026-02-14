@@ -1,8 +1,6 @@
 "use client";
 
-import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
 import { useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -15,7 +13,6 @@ import { KycProviderType } from "@/types/kyc";
 import type { Community } from "@/types/v2/community";
 import { envVars } from "@/utilities/enviromentVars";
 import { MESSAGES } from "@/utilities/messages";
-import { PAGES } from "@/utilities/pages";
 
 // Use enum values for provider type validation
 const providerTypeValues = Object.values(KycProviderType) as [string, ...string[]];
@@ -153,14 +150,6 @@ export function KycSettingsPage({ community }: KycSettingsPageProps) {
 
   return (
     <div className="max-w-2xl space-y-8">
-      {/* Back to Admin */}
-      <Link href={PAGES.ADMIN.ROOT(community.details?.slug || community.uid)}>
-        <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
-          <ChevronLeftIcon className="h-5 w-5" />
-          Return to admin page
-        </Button>
-      </Link>
-
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">KYC/KYB Configuration</h1>
         <p className="mt-2 text-gray-600 dark:text-gray-400">

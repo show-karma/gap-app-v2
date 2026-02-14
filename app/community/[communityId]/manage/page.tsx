@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { CommunityAdminPage } from "@/components/Pages/Communities/CommunityAdminPage";
+import { DashboardOverview } from "@/components/Manage/DashboardOverview";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { defaultMetadata } from "@/utilities/meta";
 import { getCommunityDetails } from "@/utilities/queries/v2/community";
@@ -27,7 +27,7 @@ export default async function Page(props: Props) {
         </div>
       }
     >
-      <CommunityAdminPage communityId={communityId} community={community} />
+      <DashboardOverview community={community} />
     </Suspense>
   );
 }
