@@ -4,6 +4,7 @@ import { CalendarIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { useState } from "react";
 import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
 import { cn } from "@/utilities/tailwind";
 
 interface DateTimePickerProps {

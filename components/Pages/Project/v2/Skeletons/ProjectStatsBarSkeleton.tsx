@@ -13,7 +13,7 @@ export function ProjectStatsBarSkeleton({ className }: ProjectStatsBarSkeletonPr
   const statItems = Array.from({ length: 5 }, (_, i) => i);
 
   return (
-    <div className={cn("w-full", className)} data-testid="project-stats-bar-skeleton">
+    <div className={cn("w-full min-h-[88px]", className)} data-testid="project-stats-bar-skeleton">
       <div className="py-6 px-4">
         {/* Desktop: Horizontal row */}
         <div className="hidden lg:block">

@@ -33,12 +33,13 @@ jest.mock("@/components/Utilities/PrivyProviderWrapper", () => ({
   ),
 }));
 
-jest.mock("@/components/Dialogs/ContributorProfileDialog", () => ({
-  ContributorProfileDialog: () => <div data-testid="contributor-profile-dialog" />,
-}));
-
-jest.mock("@/components/Dialogs/OnboardingDialog", () => ({
-  OnboardingDialog: () => <div data-testid="onboarding-dialog" />,
+jest.mock("@/components/Dialogs/LazyDialogs", () => ({
+  LazyDialogs: () => (
+    <>
+      <div data-testid="contributor-profile-dialog" />
+      <div data-testid="onboarding-dialog" />
+    </>
+  ),
 }));
 
 jest.mock("@/components/Utilities/PermissionsProvider", () => ({

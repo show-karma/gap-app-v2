@@ -23,6 +23,21 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   staticPageGenerationTimeout: 10000,
   turbopack: {},
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "@tanstack/react-query",
+      "date-fns",
+      "lodash",
+      "recharts",
+      "@tremor/react",
+      "@privy-io/react-auth",
+      "@sentry/browser",
+      "@sentry/core",
+      "viem",
+      "wagmi",
+    ],
+  },
   eslint: {
     dirs: ["app", "components", "utilities", "hooks", "store", "types"],
     ignoreDuringBuilds: false,

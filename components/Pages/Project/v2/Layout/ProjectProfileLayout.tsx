@@ -1,16 +1,31 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
-import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
-import { IntroDialog } from "@/components/Pages/Project/IntroDialog";
-import {
-  ProjectOptionsDialogs,
-  ProjectOptionsMenu,
-} from "@/components/Pages/Project/ProjectOptionsMenu";
+import { ProjectOptionsMenu } from "@/components/Pages/Project/ProjectOptionsMenu";
+
+const ProgressDialog = dynamic(
+  () => import("@/components/Dialogs/ProgressDialog").then((m) => m.ProgressDialog),
+  { ssr: false }
+);
+const EndorsementDialog = dynamic(
+  () =>
+    import("@/components/Pages/Project/Impact/EndorsementDialog").then((m) => m.EndorsementDialog),
+  { ssr: false }
+);
+const IntroDialog = dynamic(
+  () => import("@/components/Pages/Project/IntroDialog").then((m) => m.IntroDialog),
+  { ssr: false }
+);
+const ProjectOptionsDialogs = dynamic(
+  () =>
+    import("@/components/Pages/Project/ProjectOptionsMenu").then((m) => m.ProjectOptionsDialogs),
+  { ssr: false }
+);
+
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
@@ -26,7 +41,6 @@ import { MobileProfileContent } from "../Mobile/MobileProfileContent";
 import { ProjectSidePanel } from "../SidePanel/ProjectSidePanel";
 import {
   ContentTabsSkeleton,
-  MobileHeaderMinifiedSkeleton,
   MobileProfileContentSkeleton,
   ProjectHeaderSkeleton,
   ProjectSidePanelSkeleton,
@@ -115,10 +129,18 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   }, [inviteCode, hasOpenedInviteModal, openContributorProfileModal]);
 
   // Use unified hook for all project profile data
-  const { project, isLoading, isError, isVerified, stats } = useProjectProfile(projectId as string);
+  const { project, isLoading, isProjectLoading, isError, isVerified, stats } = useProjectProfile(
+    projectId as string
+  );
 
   // Initialize project permissions in store (for authorization checks in ContentTabs)
   useProjectPermissions();
+
+  // Remove SSR shell from DOM after hydration (CSS in server layout hides it visually)
+  useEffect(() => {
+    const shell = document.querySelector('[data-testid="ssr-project-hero"]');
+    if (shell) shell.remove();
+  }, []);
 
   // Get team count from project
   const teamCount = project
@@ -200,8 +222,8 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
     );
   }
 
-  // Loading state - show full skeleton layout
-  if (isLoading || !project) {
+  // Loading state - only wait for core project data, not all secondary queries
+  if (isProjectLoading || !project) {
     return (
       <div className="flex flex-col gap-6 w-full" data-testid="layout-loading">
         {/* Desktop: Header + Stats Bar Skeleton */}
@@ -267,12 +289,16 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
         {/* Desktop: Header + Stats Bar - Always visible */}
         <div className="hidden lg:flex flex-col bg-secondary border border-border rounded-xl">
           <ProjectHeader project={project} isVerified={isVerified} />
-          <ProjectStatsBar
-            grants={stats.grantsCount}
-            endorsements={stats.endorsementsCount}
-            lastUpdate={stats.lastUpdate}
-            onEndorsementsClick={() => setIsEndorsementsListOpen(true)}
-          />
+          {isLoading ? (
+            <ProjectStatsBarSkeleton />
+          ) : (
+            <ProjectStatsBar
+              grants={stats.grantsCount}
+              endorsements={stats.endorsementsCount}
+              lastUpdate={stats.lastUpdate}
+              onEndorsementsClick={() => setIsEndorsementsListOpen(true)}
+            />
+          )}
         </div>
 
         {/* Mobile: Project Settings above tabs - right aligned */}
@@ -293,7 +319,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
 
         {/* Mobile: Minified header when NOT on Profile tab */}
         {activeTab !== "profile" && (
-          <div className="lg:hidden">
+          <div className="lg:hidden min-h-[60px]">
             <MobileHeaderMinified project={project} isVerified={isVerified} />
           </div>
         )}

@@ -21,6 +21,8 @@ import { useProjectUpdates } from "./useProjectUpdates";
 export interface UseProjectProfileResult extends ProjectProfileData, ProjectProfileState {
   /** The project data */
   project: Project | null;
+  /** Whether only the core project data is still loading (fast path for LCP) */
+  isProjectLoading: boolean;
   /** Whether the project fetch failed (e.g., not found) */
   isError: boolean;
   /** Refetch all project data */
@@ -88,6 +90,7 @@ export function useProjectProfile(projectId: string): UseProjectProfileResult {
   return {
     project: normalizedProject,
     isLoading,
+    isProjectLoading,
     isError,
     error: error ?? null,
     refetch,

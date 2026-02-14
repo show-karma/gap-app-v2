@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { OnrampFlow } from "../OnrampFlow";
 
@@ -218,7 +218,7 @@ describe("OnrampFlow", () => {
       expect(screen.getByText(/Creating session/)).toBeInTheDocument();
     });
 
-    it("renders StripeOnrampEmbed when session is active", () => {
+    it("renders StripeOnrampEmbed when session is active", async () => {
       mockUseOnramp.mockReturnValue({
         initiateOnramp: jest.fn(),
         isLoading: false,
@@ -232,7 +232,9 @@ describe("OnrampFlow", () => {
 
       render(<OnrampFlow {...defaultProps} />, { wrapper: createWrapper() });
 
-      expect(screen.getByTestId("stripe-embed")).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId("stripe-embed")).toBeInTheDocument();
+      });
     });
   });
 
@@ -297,7 +299,7 @@ describe("OnrampFlow", () => {
   });
 
   describe("onDonationComplete callback", () => {
-    it("is called when success modal closes", () => {
+    it("is called when success modal closes", async () => {
       const onDonationComplete = jest.fn();
 
       // Capture the OnrampSuccessModal onClose prop when it renders
@@ -331,8 +333,12 @@ describe("OnrampFlow", () => {
         wrapper: createWrapper(),
       });
 
+      // Wait for dynamic import to resolve
+      await waitFor(() => {
+        expect(capturedStripeOnSuccess).toBeDefined();
+      });
+
       // Trigger Stripe success inside act() so React processes state updates
-      expect(capturedStripeOnSuccess).toBeDefined();
       act(() => {
         capturedStripeOnSuccess!({
           id: "session-123",
@@ -352,7 +358,7 @@ describe("OnrampFlow", () => {
   });
 
   describe("donationUid passed to OnrampSuccessModal", () => {
-    it("passes donationUid from session to OnrampSuccessModal", () => {
+    it("passes donationUid from session to OnrampSuccessModal", async () => {
       const mockClearSession = jest.fn();
       mockUseOnramp.mockReturnValue({
         initiateOnramp: jest.fn(),
@@ -375,8 +381,12 @@ describe("OnrampFlow", () => {
 
       render(<OnrampFlow {...defaultProps} />, { wrapper: createWrapper() });
 
+      // Wait for dynamic import to resolve
+      await waitFor(() => {
+        expect(capturedStripeOnSuccess).toBeDefined();
+      });
+
       // Trigger success inside act() so React processes state updates
-      expect(capturedStripeOnSuccess).toBeDefined();
       act(() => {
         capturedStripeOnSuccess!({
           id: "session-123",

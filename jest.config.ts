@@ -52,6 +52,8 @@ const config: Config = {
     "^@/services/(.*)$": "<rootDir>/services/$1",
     "^@/src/(.*)$": "<rootDir>/src/$1",
     "^@/__tests__/(.*)$": "<rootDir>/__tests__/$1",
+    "^react-markdown$": "<rootDir>/__mocks__/react-markdown.tsx",
+    "^unist-util-visit$": "<rootDir>/__mocks__/unist-util-visit.ts",
     "^until-async$": "<rootDir>/__mocks__/until-async.js",
     "^multiformats/cid$": "<rootDir>/__mocks__/multiformats.ts",
     "^@aa-sdk/core$": "<rootDir>/__mocks__/@aa-sdk/core.ts",

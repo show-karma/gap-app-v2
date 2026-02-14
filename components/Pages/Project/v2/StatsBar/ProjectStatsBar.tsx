@@ -112,7 +112,7 @@ export function ProjectStatsBar({
   ];
 
   return (
-    <div className={cn("w-full", className)} data-testid="project-stats-bar">
+    <div className={cn("w-full min-h-[88px]", className)} data-testid="project-stats-bar">
       {/* Card wrapper matching Figma */}
       <div className="py-6 px-4">
         {/* Desktop: Horizontal row with equal spacing */}

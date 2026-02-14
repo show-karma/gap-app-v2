@@ -1,5 +1,6 @@
 import * as Popover from "@radix-ui/react-popover";
 import Slider from "rc-slider";
+import "rc-slider/assets/index.css";
 import type { FC } from "react";
 import formatCurrency from "@/utilities/formatCurrency";
 import { ChevronDown } from "./Icons/ChevronDown";
