@@ -23,32 +23,33 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 }
 
 /**
- * Prefetch all project data in parallel for SSR hydration.
+ * Prefetch project data for SSR hydration.
  *
- * Both the critical project details AND secondary data (grants, updates, impacts)
- * are awaited so they're all included in the dehydrated QueryClient state.
- * This eliminates the client-side fetch waterfall — hooks get instant cache hits.
+ * Only project details are awaited (needed for the SSR shell title + logo).
+ * Secondary data (grants, updates, impacts) is fired in parallel but NOT
+ * awaited — this unblocks TTFB so the server can start streaming HTML as
+ * soon as the critical project details resolve.
  *
- * A 3-second timeout prevents slow API responses from blocking SSR entirely.
+ * Client-side hooks will either get a cache hit (if the secondary prefetch
+ * finished before dehydrate) or fetch the data themselves with loading states.
  */
 async function prefetchCriticalProjectData(
   queryClient: QueryClient,
   projectId: string
 ): Promise<void> {
   try {
-    await Promise.race([
-      Promise.all([
-        // Critical: project details for SSR shell title + metadata
-        queryClient.prefetchQuery({
-          queryKey: QUERY_KEYS.PROJECT.DETAILS(projectId),
-          queryFn: () => getProjectCachedData(projectId),
-        }),
-        // Secondary: grants + updates + impacts for instant client-side hydration
-        prefetchProjectProfileData(queryClient, projectId),
-      ]),
-      // Safety timeout — don't block SSR for more than 3 seconds
-      new Promise((resolve) => setTimeout(resolve, 3000)),
-    ]);
+    // Start secondary prefetches immediately (non-blocking)
+    const secondaryPromise = prefetchProjectProfileData(queryClient, projectId);
+
+    // Only await project details — needed for SSR shell title + logo
+    await queryClient.prefetchQuery({
+      queryKey: QUERY_KEYS.PROJECT.DETAILS(projectId),
+      queryFn: () => getProjectCachedData(projectId),
+    });
+
+    // Brief grace period: secondary data started in parallel, so it may
+    // already be done. Wait up to 150ms to include it in dehydrated state.
+    await Promise.race([secondaryPromise, new Promise((resolve) => setTimeout(resolve, 150))]);
   } catch (error) {
     if (process.env.NODE_ENV === "development") {
       console.warn(`[ProjectLayout] Failed to prefetch data for ${projectId}:`, error);
