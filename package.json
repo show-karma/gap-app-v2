@@ -216,7 +216,8 @@
   "pnpm": {
     "overrides": {
       "@adraffy/ens-normalize": "^1.11.0",
-      "axios": "^1.13.2"
+      "axios": "^1.13.2",
+      "ethers": "^6.11.0"
     }
   }
 }
