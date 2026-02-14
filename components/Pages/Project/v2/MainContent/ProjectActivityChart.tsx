@@ -236,7 +236,7 @@ export function ProjectActivityChart({
 
   if (isLoading || !isVisible) {
     const loadingContent = (
-      <div className="animate-pulse" style={{ minHeight: embedded ? 186 : 300 }}>
+      <div style={{ minHeight: embedded ? 186 : 300 }}>
         <div className="h-6 w-48 bg-gray-200 dark:bg-zinc-700 rounded mb-4" />
         <div
           className="bg-gray-100 dark:bg-zinc-700 rounded"

@@ -12,6 +12,7 @@ export function Newsletter() {
           height="90"
           frameBorder="0"
           scrolling="no"
+          loading="lazy"
           title="Subscribe to KarmaHQ via Paragraph (mobile)"
         ></iframe>
       </div>
@@ -23,6 +24,7 @@ export function Newsletter() {
           height="45"
           frameBorder="0"
           scrolling="no"
+          loading="lazy"
           title="Subscribe to KarmaHQ via Paragraph (desktop)"
         ></iframe>
       </div>
