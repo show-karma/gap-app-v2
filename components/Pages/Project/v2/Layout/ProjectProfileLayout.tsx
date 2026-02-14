@@ -279,10 +279,12 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
       {isEndorsementOpen && <EndorsementDialog />}
       {isIntroModalOpen && <IntroDialog />}
       {isProgressModalOpen && <ProgressDialog />}
-      <EndorsementsListDialog
-        open={isEndorsementsListOpen}
-        onOpenChange={setIsEndorsementsListOpen}
-      />
+      {isEndorsementsListOpen && (
+        <EndorsementsListDialog
+          open={isEndorsementsListOpen}
+          onOpenChange={setIsEndorsementsListOpen}
+        />
+      )}
       {/* Project options dialogs - rendered once here to avoid duplicate modals */}
       <ProjectOptionsDialogs />
 
