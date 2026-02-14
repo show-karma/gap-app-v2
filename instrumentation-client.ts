@@ -25,12 +25,20 @@ Sentry.init({
   debug: false,
 });
 
-// Lazy-load Sentry Replay integration (~121KB) to avoid blocking initial page load.
-// Error tracking still works immediately; only session replay is deferred.
+// Lazy-load Sentry Replay integration (~121KB) during browser idle time.
+// Error tracking works immediately; only session replay is deferred to
+// avoid competing with initial render and hydration for main thread time.
 if (typeof window !== "undefined") {
-  import("@sentry/nextjs").then(({ replayIntegration }) => {
-    Sentry.addIntegration(replayIntegration());
-  });
+  const loadReplay = () => {
+    import("@sentry/nextjs").then(({ replayIntegration }) => {
+      Sentry.addIntegration(replayIntegration());
+    });
+  };
+  if (typeof requestIdleCallback !== "undefined") {
+    requestIdleCallback(loadReplay, { timeout: 10000 });
+  } else {
+    setTimeout(loadReplay, 5000);
+  }
 }
 
 export const onRequestError = Sentry.captureRequestError;
