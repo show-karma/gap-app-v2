@@ -1,14 +1,16 @@
-import { Analytics } from "@vercel/analytics/react";
-import { Toaster } from "react-hot-toast";
-import { ProgressBarWrapper } from "@/components/ProgressBarWrapper";
-import { Footer } from "@/src/components/footer/footer";
 import { Navbar } from "@/src/components/navbar/navbar";
+import {
+  DeferredAnalytics,
+  DeferredFooter,
+  DeferredProgressBar,
+  DeferredToaster,
+} from "./deferred-layout";
 import { AppProviders } from "./providers";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <AppProviders>
-      <Toaster
+      <DeferredToaster
         position="top-right"
         toastOptions={{
           className: "toast-content",
@@ -25,15 +27,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           right: 20,
         }}
       />
-      <ProgressBarWrapper />
+      <DeferredProgressBar />
       <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
         <div className="flex flex-col w-full h-full">
           <Navbar />
           <div className="h-[80px]" />
           {children}
-          <Analytics />
+          <DeferredAnalytics />
         </div>
-        <Footer />
+        <DeferredFooter />
       </div>
     </AppProviders>
   );

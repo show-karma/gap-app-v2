@@ -1,8 +1,15 @@
+"use client";
+
+import dynamic from "next/dynamic";
 import { cn } from "@/utilities/tailwind";
 import { layoutTheme } from "../../helper/theme";
 import { NavbarDesktopNavigation } from "./navbar-desktop-navigation";
-import { NavbarMobileMenu } from "./navbar-mobile-menu";
 import { NavbarPermissionsProvider } from "./navbar-permissions-context";
+
+const NavbarMobileMenu = dynamic(
+  () => import("./navbar-mobile-menu").then((m) => m.NavbarMobileMenu),
+  { ssr: false }
+);
 
 export function Navbar() {
   return (

@@ -48,8 +48,8 @@ async function prefetchCriticalProjectData(
     });
 
     // Brief grace period: secondary data started in parallel, so it may
-    // already be done. Wait up to 150ms to include it in dehydrated state.
-    await Promise.race([secondaryPromise, new Promise((resolve) => setTimeout(resolve, 150))]);
+    // already be done. Wait up to 50ms to include it in dehydrated state.
+    await Promise.race([secondaryPromise, new Promise((resolve) => setTimeout(resolve, 50))]);
   } catch (error) {
     if (process.env.NODE_ENV === "development") {
       console.warn(`[ProjectLayout] Failed to prefetch data for ${projectId}:`, error);
