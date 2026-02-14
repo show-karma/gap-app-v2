@@ -1,9 +1,9 @@
 "use client";
 
-import { Card, Title } from "@tremor/react";
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
+import { DataCard as Card, DataTitle as Title } from "@/src/components/ui/data-card";
 import type { AggregatedDatapoint } from "@/types/impactMeasurement";
 import type { RawDatapoint } from "@/types/indicator";
 import formatCurrency from "@/utilities/formatCurrency";

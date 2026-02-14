@@ -1,19 +1,29 @@
 "use client";
 
-import type { CardProps, LineChartProps, TitleProps } from "@tremor/react";
-import { Card, Title, LineChart as TremorLineChart } from "@tremor/react";
 import { endOfWeek, format, startOfMonth, startOfYear } from "date-fns";
 import _groupBy from "lodash.groupby";
+import dynamic from "next/dynamic";
 import { type FC, useMemo, useState } from "react";
+import {
+  DataCard as Card,
+  type DataCardProps,
+  type DataTitleProps,
+  DataTitle as Title,
+} from "@/src/components/ui/data-card";
 
 import type { StatChartData, StatPeriod } from "@/types";
 import { formatDate } from "@/utilities/formatDate";
 
+const TremorLineChart = dynamic(() => import("@tremor/react").then((mod) => mod.LineChart), {
+  ssr: false,
+  loading: () => <div className="h-72 animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded" />,
+});
+
 interface StatChartProps {
   title: string;
-  cardProps?: CardProps;
-  titleProps?: TitleProps;
-  chartProps: Omit<LineChartProps, "data">;
+  cardProps?: DataCardProps;
+  titleProps?: DataTitleProps;
+  chartProps: Record<string, any>;
   divStyle: string;
   statChartData: StatChartData;
   period: StatPeriod;
@@ -79,7 +89,7 @@ export const LineChart: FC<StatChartProps> = ({
     <div className={divStyle}>
       <Card {...cardProps}>
         <Title {...titleProps}>{title}</Title>
-        <TremorLineChart data={periodData} {...chartProps} />
+        <TremorLineChart {...({ data: periodData, ...chartProps } as any)} />
       </Card>
     </div>
   );

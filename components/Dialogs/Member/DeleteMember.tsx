@@ -11,7 +11,7 @@ import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { queryClient } from "@/utilities/query-client";

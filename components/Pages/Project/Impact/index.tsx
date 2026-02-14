@@ -2,7 +2,8 @@
 import { useSearchParams } from "next/navigation";
 import type { FC } from "react";
 import { OutputsAndOutcomes } from "@/components/Pages/Project/Impact/OutputsAndOutcomes";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import { AddImpactScreen } from "./AddImpactScreen";
 
 type ImpactComponentProps = {};

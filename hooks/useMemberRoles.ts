@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import { getProjectMemberRoles, type Member } from "@/utilities/getProjectMemberRoles";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { useProjectInstance } from "./useProjectInstance";

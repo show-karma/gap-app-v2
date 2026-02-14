@@ -33,13 +33,14 @@ jest.mock("@/hooks/useProjectPermissions", () => ({
   useProjectPermissions: () => ({}),
 }));
 
-jest.mock("@/hooks/v2/useProjectProfile", () => ({
-  useProjectProfile: () => ({
+jest.mock("@/hooks/v2/useProjectProfileLayout", () => ({
+  useProjectProfileLayout: () => ({
     project: null,
     isLoading: true,
+    isProjectLoading: true,
     isError: false,
     isVerified: false,
-    stats: { grantsCount: 0, endorsementsCount: 0, lastUpdate: null },
+    stats: { grantsCount: 0, endorsementsCount: 0 },
   }),
 }));
 

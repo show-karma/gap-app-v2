@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useUpdatesTabData } from "@/hooks/v2/useUpdatesTabData";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import { UpdatesContent } from "../UpdatesContent";
 
 // Mock dependencies
@@ -11,8 +12,8 @@ jest.mock("next/navigation", () => ({
   useSearchParams: jest.fn(),
 }));
 
-jest.mock("@/hooks/v2/useProjectProfile", () => ({
-  useProjectProfile: jest.fn(),
+jest.mock("@/hooks/v2/useUpdatesTabData", () => ({
+  useUpdatesTabData: jest.fn(),
 }));
 
 jest.mock("@/store", () => ({
@@ -41,7 +42,7 @@ describe("UpdatesContent", () => {
     (useParams as jest.Mock).mockReturnValue({ projectId: "test-project" });
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
     (useSearchParams as jest.Mock).mockReturnValue(mockSearchParams);
-    (useProjectProfile as jest.Mock).mockReturnValue({
+    (useUpdatesTabData as jest.Mock).mockReturnValue({
       allUpdates: [],
       milestonesCount: 0,
       completedCount: 0,

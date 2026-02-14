@@ -8,7 +8,8 @@ import type {
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC } from "react";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import type { ConversionGrantUpdate, ProjectUpdate, UnifiedMilestone } from "@/types/v2/roadmap";
 import { MilestoneCard } from "./ActivityCard/MilestoneCard";
 import { ProjectUpdateCard } from "./ActivityCard/ProjectUpdateCard";

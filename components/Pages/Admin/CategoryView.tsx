@@ -1,15 +1,20 @@
-import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { PencilSquareIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import pluralize from "pluralize";
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { pickColor } from "@/components/GrantCard";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { useGroupedIndicators } from "@/hooks/useGroupedIndicators";
 import type { Category, ImpactSegment } from "@/types/impactMeasurement";
@@ -248,56 +253,33 @@ export const CategoryView = ({
           {filteredSegments.map((segment, index) => (
             <div key={segment.id} className={cn("p-5 relative")}>
               <div className="absolute top-4 right-4">
-                <Menu as="div" className="relative inline-block text-left">
-                  <div>
-                    <Menu.Button className="p-1 rounded-md text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800">
-                      <EllipsisVerticalIcon className="h-6 w-6" aria-hidden="true" />
-                    </Menu.Button>
-                  </div>
-                  <Transition
-                    as={Fragment}
-                    enter="transition ease-out duration-100"
-                    enterFrom="transform opacity-0 scale-95"
-                    enterTo="transform opacity-100 scale-100"
-                    leave="transition ease-in duration-75"
-                    leaveFrom="transform opacity-100 scale-100"
-                    leaveTo="transform opacity-0 scale-95"
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="p-1 rounded-md text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800">
+                    <EllipsisVerticalIcon className="h-6 w-6" aria-hidden="true" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48 bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 z-20"
                   >
-                    <Menu.Items className="absolute right-0 mt-1 w-48 origin-top-right bg-white dark:bg-zinc-800 divide-y divide-gray-100 dark:divide-gray-700 rounded-md shadow-lg ring-1 ring-black/5 focus:outline-none z-20">
-                      <div className="px-1 py-1">
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              className={`${
-                                active ? "bg-gray-100 dark:bg-zinc-700" : ""
-                              } w-full px-4 py-2 text-left flex items-center text-sm`}
-                              onClick={() => {
-                                setEditingSegment(segment);
-                                setIsModalOpen(true);
-                              }}
-                            >
-                              <PencilSquareIcon className="h-4 w-4 mr-2" />
-                              Edit {segment.type === "output" ? "Activity" : "Outcome"}
-                            </button>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              className={`${
-                                active ? "bg-gray-100 dark:bg-zinc-700" : ""
-                              } w-full px-4 py-2 text-left flex items-center text-sm text-red-500`}
-                              onClick={() => setSegmentToDelete(segment)}
-                            >
-                              <TrashIcon className="h-4 w-4 mr-2" />
-                              Delete
-                            </button>
-                          )}
-                        </Menu.Item>
-                      </div>
-                    </Menu.Items>
-                  </Transition>
-                </Menu>
+                    <DropdownMenuItem
+                      className="px-4 py-2 text-left flex items-center text-sm cursor-pointer"
+                      onClick={() => {
+                        setEditingSegment(segment);
+                        setIsModalOpen(true);
+                      }}
+                    >
+                      <PencilSquareIcon className="h-4 w-4 mr-2" />
+                      Edit {segment.type === "output" ? "Activity" : "Outcome"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="px-4 py-2 text-left flex items-center text-sm text-red-500 cursor-pointer"
+                      onClick={() => setSegmentToDelete(segment)}
+                    >
+                      <TrashIcon className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               <h3

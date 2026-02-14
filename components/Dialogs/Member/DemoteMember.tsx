@@ -5,7 +5,7 @@ import { type FC, Fragment, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { useMemberRoleChange } from "@/hooks/useMemberRoleChange";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 
 interface DemoteMemberDialogProps {
   memberAddress: string;

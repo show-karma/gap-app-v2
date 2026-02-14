@@ -1,5 +1,4 @@
 "use client";
-import { Menu, Transition } from "@headlessui/react";
 import { CheckCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
@@ -7,15 +6,22 @@ import type { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/c
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import fetchData from "@/utilities/fetchData";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
@@ -200,56 +206,42 @@ export const ObjectiveOptionsMenu = ({
   };
 
   return (
-    <Menu as="div" className="relative inline-block text-left">
-      <div>
-        <Menu.Button className="w-max bg-transparent hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-0 rounded-lg">
-          <EllipsisVerticalIcon className="h-6 w-6 text-zinc-500" aria-hidden="true" />
-        </Menu.Button>
-      </div>
-      <Transition
-        as={Fragment}
-        enter="transition ease-out duration-100"
-        enterFrom="transform opacity-0 scale-95"
-        enterTo="transform opacity-100 scale-100"
-        leave="transition ease-in duration-75"
-        leaveFrom="transform opacity-100 scale-100"
-        leaveTo="transform opacity-0 scale-95"
+    <DropdownMenu>
+      <DropdownMenuTrigger className="w-max bg-transparent hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-0 rounded-lg">
+        <EllipsisVerticalIcon className="h-6 w-6 text-zinc-500" aria-hidden="true" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="w-48 bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5"
       >
-        <Menu.Items
-          modal
-          className="absolute right-0 mt-2 w-48 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none"
-        >
-          <div className="flex flex-col gap-1 px-1 py-1">
-            <Menu.Item>
-              <Button
-                className={buttonClassName}
-                onClick={() => completeFn(true)}
-                disabled={alreadyCompleted}
-              >
-                <CheckCircleIcon className="w-5 h-5" />
-                Mark as Complete
-              </Button>
-            </Menu.Item>
-            <Menu.Item>
-              <DeleteDialog
-                title="Are you sure you want to delete this milestone?"
-                deleteFunction={deleteFn}
-                isLoading={isDeleting}
-                buttonElement={{
-                  icon: (
-                    <TrashIcon
-                      className={"h-5 w-5 text-[#D92D20] dark:text-red-500"}
-                      aria-hidden="true"
-                    />
-                  ),
-                  text: "Delete",
-                  styleClass: cn(buttonClassName, "text-[#D92D20] dark:text-red-500"),
-                }}
-              />
-            </Menu.Item>
-          </div>
-        </Menu.Items>
-      </Transition>
-    </Menu>
+        <DropdownMenuItem asChild>
+          <Button
+            className={buttonClassName}
+            onClick={() => completeFn(true)}
+            disabled={alreadyCompleted}
+          >
+            <CheckCircleIcon className="w-5 h-5" />
+            Mark as Complete
+          </Button>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
+          <DeleteDialog
+            title="Are you sure you want to delete this milestone?"
+            deleteFunction={deleteFn}
+            isLoading={isDeleting}
+            buttonElement={{
+              icon: (
+                <TrashIcon
+                  className={"h-5 w-5 text-[#D92D20] dark:text-red-500"}
+                  aria-hidden="true"
+                />
+              ),
+              text: "Delete",
+              styleClass: cn(buttonClassName, "text-[#D92D20] dark:text-red-500"),
+            }}
+          />
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };

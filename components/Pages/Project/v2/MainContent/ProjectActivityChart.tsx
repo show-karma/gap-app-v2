@@ -1,6 +1,5 @@
 "use client";
 
-import { Card } from "@tremor/react";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
@@ -14,7 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
-import { useProjectStore } from "@/store";
+import { DataCard as Card } from "@/src/components/ui/data-card";
+import { useProjectStore } from "@/store/project";
 import { cn } from "@/utilities/tailwind";
 
 // Dynamically import heavy Tremor chart component for bundle optimization

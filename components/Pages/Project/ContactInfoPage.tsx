@@ -6,7 +6,8 @@ import { useContactInfo } from "@/hooks/useContactInfo";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 
 const ContactInfoPage = () => {
   const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);

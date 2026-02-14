@@ -9,7 +9,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useInviteLink, useInviteUrl } from "@/hooks/useInviteLink";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 
 interface InviteMemberDialogProps {
   shouldDisable?: boolean;

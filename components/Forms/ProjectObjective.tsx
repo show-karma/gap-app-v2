@@ -12,7 +12,7 @@ import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import fetchData from "@/utilities/fetchData";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";

@@ -4,7 +4,7 @@ import { useCallback, useMemo } from "react";
 import CommentsTimeline from "@/components/FundingPlatform/ApplicationView/CommentsTimeline";
 import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useApplicationComments, useApplicationVersions } from "@/hooks/useFundingPlatform";
-import { useOwnerStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
 import type { FundingApplicationStatusV2, IStatusHistoryEntry } from "@/types/funding-platform";
 
 interface CommentsAndActivityProps {

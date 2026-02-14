@@ -1,9 +1,21 @@
 import { Field, Label, Radio, RadioGroup } from "@headlessui/react";
-import { AreaChart, Card, Grid, Metric, Text, Title } from "@tremor/react";
 import axios from "axios";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import {
+  DataCard as Card,
+  DataGrid as Grid,
+  DataMetric as Metric,
+  DataText as Text,
+  DataTitle as Title,
+} from "@/src/components/ui/data-card";
 import { envVars } from "@/utilities/enviromentVars";
 import { cn } from "@/utilities/tailwind";
+
+const AreaChart = dynamic(() => import("@tremor/react").then((mod) => mod.AreaChart), {
+  ssr: false,
+  loading: () => <div className="h-72 animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded" />,
+});
 
 type MetricDataPoint = {
   _id: {

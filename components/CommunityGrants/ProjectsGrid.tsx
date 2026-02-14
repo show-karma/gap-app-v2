@@ -1,5 +1,5 @@
 "use client";
-import { AutoSizer, Grid } from "react-virtualized";
+import { useCallback, useEffect, useRef, useState } from "react";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import type { CommunityProject } from "@/types/v2/community";
 import { projectToGrant } from "@/utilities/adapters/v2/projectToGrant";
@@ -16,47 +16,65 @@ export function ProjectsGrid({ projects }: ProjectsGridProps) {
   const gutterSize = 20;
   const isLargeViewport = useMediaQuery("(min-width: 80rem)");
 
-  return (
-    <AutoSizer disableHeight>
-      {({ width }) => {
-        const calculatedColumns = Math.floor(width / MIN_CARD_WIDTH);
-        const columnCounter = calculatedColumns
-          ? isLargeViewport
-            ? MAX_COLUMNS_LARGE
-            : Math.min(calculatedColumns, MAX_COLUMNS_SMALL)
-          : 1;
-        const columnWidth = Math.floor(width / columnCounter);
-        const height = Math.ceil(projects.length / columnCounter) * 280;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
 
-        return (
-          <Grid
-            key={`grid-${width}-${columnCounter}-${isLargeViewport}`}
-            height={height + 60}
-            width={width}
-            rowCount={Math.ceil(projects.length / columnCounter)}
-            rowHeight={280}
-            columnWidth={columnWidth}
-            columnCount={columnCounter}
-            cellRenderer={({ columnIndex, key, rowIndex, style }) => {
+  const updateWidth = useCallback(() => {
+    if (containerRef.current) {
+      setWidth(containerRef.current.offsetWidth);
+    }
+  }, []);
+
+  useEffect(() => {
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+    return () => observer.disconnect();
+  }, [updateWidth]);
+
+  const calculatedColumns = Math.floor(width / MIN_CARD_WIDTH);
+  const columnCounter = calculatedColumns
+    ? isLargeViewport
+      ? MAX_COLUMNS_LARGE
+      : Math.min(calculatedColumns, MAX_COLUMNS_SMALL)
+    : 1;
+  const columnWidth = width > 0 ? Math.floor(width / columnCounter) : 0;
+  const rowCount = Math.ceil(projects.length / columnCounter);
+  const rowHeight = 280;
+
+  return (
+    <div ref={containerRef} style={{ width: "100%" }}>
+      {width > 0 && (
+        <div
+          style={{
+            height: rowCount * rowHeight + 60,
+            width,
+            position: "relative",
+          }}
+        >
+          {Array.from({ length: rowCount }, (_, rowIndex) =>
+            Array.from({ length: columnCounter }, (_, columnIndex) => {
               const project = projects[rowIndex * columnCounter + columnIndex];
+              const left = columnIndex * columnWidth + (columnIndex > 0 ? gutterSize : 0);
+              const top = rowIndex * rowHeight + (rowIndex > 0 ? gutterSize : 0);
+              const cellWidth = columnWidth - (columnIndex > 0 ? gutterSize : 0);
+              const cellHeight = rowHeight - (rowIndex > 0 ? gutterSize : 0);
+
               return (
                 <div
-                  key={key}
+                  key={`${rowIndex}-${columnIndex}`}
                   style={{
-                    ...style,
-                    left: +(style.left || 0) + (columnIndex > 0 ? gutterSize : 0),
-                    width: +(style.width || 0) - (columnIndex > 0 ? gutterSize : 0),
-                    top: +(style.top || 0) + (rowIndex > 0 ? gutterSize : 0),
-                    height: +(style.height || 0) - (rowIndex > 0 ? gutterSize : 0),
+                    position: "absolute",
+                    left,
+                    top,
+                    width: cellWidth,
+                    height: cellHeight,
                   }}
                 >
                   {project && (
-                    <div
-                      style={{
-                        height: "100%",
-                        width: "100%",
-                      }}
-                    >
+                    <div style={{ height: "100%", width: "100%" }}>
                       <GrantCard
                         index={rowIndex * columnCounter + columnIndex}
                         key={project.uid}
@@ -66,10 +84,10 @@ export function ProjectsGrid({ projects }: ProjectsGridProps) {
                   )}
                 </div>
               );
-            }}
-          />
-        );
-      }}
-    </AutoSizer>
+            })
+          )}
+        </div>
+      )}
+    </div>
   );
 }

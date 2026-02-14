@@ -4,7 +4,7 @@ import { useAccount } from "wagmi";
 import type { NetworkAddressPair } from "@/components/Pages/Project/types";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { validateNetworkAddressPair } from "@/schemas/contractAddress";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import { getContractKey } from "@/utilities/contractKey";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";

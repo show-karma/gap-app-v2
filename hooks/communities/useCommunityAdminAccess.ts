@@ -3,7 +3,7 @@ import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
-import { useOwnerStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
 
 interface UseCommunityAdminAccessResult {
   hasAccess: boolean;

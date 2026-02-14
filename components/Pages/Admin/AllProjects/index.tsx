@@ -6,7 +6,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import Pagination from "@/components/Utilities/Pagination";
 import { useAuth } from "@/hooks/useAuth";
 import { layoutTheme } from "@/src/helper/theme";
-import { useOwnerStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
 import type { PageInfo } from "@/types/pagination";
 import type { ProjectReport } from "@/types/project";
 import fetchData from "@/utilities/fetchData";

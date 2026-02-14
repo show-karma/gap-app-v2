@@ -9,7 +9,7 @@ import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useContactInfo } from "@/hooks/useContactInfo";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import type { Contact } from "@/types/project";
 import fetchData from "@/utilities/fetchData";
 import { generateRandomString } from "@/utilities/generateRandomString";

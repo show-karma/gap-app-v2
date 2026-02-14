@@ -1,2 +1,2 @@
-export * from "./communities";
-export * from "./karma";
+export { isDelegateOf } from "./communities/isDelegateOf";
+export { karmaAPI, karmaLinks } from "./karma";

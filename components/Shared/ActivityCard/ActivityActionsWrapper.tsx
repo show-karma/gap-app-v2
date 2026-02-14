@@ -2,7 +2,7 @@ import type { IProjectUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-
 import type { FC } from "react";
 import { EditUpdateDialog } from "@/components/Pages/Project/Updates/EditUpdateDialog";
 import { useUpdateActions } from "@/hooks/useUpdateActions";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import type { ConversionGrantUpdate, UnifiedMilestone } from "@/types/v2/roadmap";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";

@@ -1,5 +1,4 @@
 "use client";
-import { Disclosure } from "@headlessui/react";
 import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -33,6 +32,8 @@ export default function ManageIndicatorsPage() {
     "all"
   );
   const [_searchQuery, _setSearchQuery] = useState<string>("");
+  const [categoriesOpen, setCategoriesOpen] = useState(true);
+  const [indicatorsOpen, setIndicatorsOpen] = useState(true);
 
   const {
     data: community,
@@ -174,43 +175,45 @@ export default function ManageIndicatorsPage() {
 
                 {/* Mobile Accordion Categories */}
                 <div className="md:hidden w-full">
-                  <Disclosure defaultOpen={true}>
-                    {({ open }) => (
-                      <div>
-                        <Disclosure.Button className="w-full p-4 flex justify-between items-center bg-gray-50 dark:bg-zinc-800 rounded-lg">
-                          <span className="text-sm font-bold font-body uppercase text-black dark:text-white">
-                            Categories
-                          </span>
-                          {open ? (
-                            <ChevronUpIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                          ) : (
-                            <ChevronDownIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                          )}
-                        </Disclosure.Button>
-                        <Disclosure.Panel className="px-2 pt-2 pb-4">
-                          <div className="flex flex-col gap-1 rounded-md overflow-hidden bg-white dark:bg-zinc-900 shadow-sm">
-                            {categories.map((category) => (
-                              <button
-                                key={category.id}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedCategory(category);
-                                  setViewMode("category");
-                                }}
-                                className={`text-left p-3 transition-all ${
-                                  selectedCategory?.id === category.id && viewMode === "category"
-                                    ? "bg-blue-100 dark:bg-blue-900 font-medium"
-                                    : "hover:bg-gray-100 dark:hover:bg-zinc-800"
-                                }`}
-                              >
-                                {category.name}
-                              </button>
-                            ))}
-                          </div>
-                        </Disclosure.Panel>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setCategoriesOpen(!categoriesOpen)}
+                      className="w-full p-4 flex justify-between items-center bg-gray-50 dark:bg-zinc-800 rounded-lg"
+                    >
+                      <span className="text-sm font-bold font-body uppercase text-black dark:text-white">
+                        Categories
+                      </span>
+                      {categoriesOpen ? (
+                        <ChevronUpIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                      ) : (
+                        <ChevronDownIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                      )}
+                    </button>
+                    {categoriesOpen && (
+                      <div className="px-2 pt-2 pb-4">
+                        <div className="flex flex-col gap-1 rounded-md overflow-hidden bg-white dark:bg-zinc-900 shadow-sm">
+                          {categories.map((category) => (
+                            <button
+                              key={category.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedCategory(category);
+                                setViewMode("category");
+                              }}
+                              className={`text-left p-3 transition-all ${
+                                selectedCategory?.id === category.id && viewMode === "category"
+                                  ? "bg-blue-100 dark:bg-blue-900 font-medium"
+                                  : "hover:bg-gray-100 dark:hover:bg-zinc-800"
+                              }`}
+                            >
+                              {category.name}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
-                  </Disclosure>
+                  </div>
                 </div>
 
                 {/* Desktop Indicators */}
@@ -234,38 +237,40 @@ export default function ManageIndicatorsPage() {
 
                 {/* Mobile Accordion Indicators */}
                 <div className="md:hidden w-full mb-4">
-                  <Disclosure defaultOpen={true}>
-                    {({ open }) => (
-                      <div>
-                        <Disclosure.Button className="w-full p-4 flex justify-between items-center bg-gray-50 dark:bg-zinc-800 rounded-lg">
-                          <span className="text-sm font-bold font-body uppercase text-black dark:text-white">
-                            Indicators
-                          </span>
-                          {open ? (
-                            <ChevronUpIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                          ) : (
-                            <ChevronDownIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                          )}
-                        </Disclosure.Button>
-                        <Disclosure.Panel className="px-2 pt-2 pb-4">
-                          <div className="flex flex-col gap-1 rounded-md overflow-hidden bg-white dark:bg-zinc-900 shadow-sm">
-                            <button
-                              type="button"
-                              className={cn(
-                                `text-left p-3 transition-all`,
-                                viewMode === "indicators"
-                                  ? "bg-blue-100 dark:bg-blue-900 font-medium"
-                                  : "hover:bg-gray-100 dark:hover:bg-zinc-800"
-                              )}
-                              onClick={() => setViewMode("indicators")}
-                            >
-                              View all
-                            </button>
-                          </div>
-                        </Disclosure.Panel>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setIndicatorsOpen(!indicatorsOpen)}
+                      className="w-full p-4 flex justify-between items-center bg-gray-50 dark:bg-zinc-800 rounded-lg"
+                    >
+                      <span className="text-sm font-bold font-body uppercase text-black dark:text-white">
+                        Indicators
+                      </span>
+                      {indicatorsOpen ? (
+                        <ChevronUpIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                      ) : (
+                        <ChevronDownIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                      )}
+                    </button>
+                    {indicatorsOpen && (
+                      <div className="px-2 pt-2 pb-4">
+                        <div className="flex flex-col gap-1 rounded-md overflow-hidden bg-white dark:bg-zinc-900 shadow-sm">
+                          <button
+                            type="button"
+                            className={cn(
+                              `text-left p-3 transition-all`,
+                              viewMode === "indicators"
+                                ? "bg-blue-100 dark:bg-blue-900 font-medium"
+                                : "hover:bg-gray-100 dark:hover:bg-zinc-800"
+                            )}
+                            onClick={() => setViewMode("indicators")}
+                          >
+                            View all
+                          </button>
+                        </div>
                       </div>
                     )}
-                  </Disclosure>
+                  </div>
                 </div>
               </div>
 

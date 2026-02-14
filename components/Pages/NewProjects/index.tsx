@@ -4,9 +4,8 @@ import { CheckIcon } from "@heroicons/react/20/solid";
 import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
-import { Fragment } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { AutoSizer, Grid } from "react-virtualized";
 import { PROJECT_NAME } from "@/constants/brand";
 import { layoutTheme } from "@/src/helper/theme";
 import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
@@ -59,6 +58,24 @@ export const NewProjectsPage = () => {
   const projects = data?.pages.flatMap((page) => page.projects);
 
   const commonWidth = 359;
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  const updateWidth = useCallback(() => {
+    if (containerRef.current) {
+      setContainerWidth(containerRef.current.offsetWidth);
+    }
+  }, []);
+
+  useEffect(() => {
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+    return () => observer.disconnect();
+  }, [updateWidth]);
 
   const changeSort = async (newValue: ExplorerSortByOptions) => {
     if (newValue === selectedSort) {
@@ -184,60 +201,67 @@ export const NewProjectsPage = () => {
                 height: "100%",
               }}
             >
-              <AutoSizer disableHeight>
-                {({ width }) => {
-                  const columns = Math.floor(width / commonWidth);
-                  const columnCounter = columns ? (columns > 4 ? 4 : columns) : 1;
-                  const columnWidth = Math.floor(width / columnCounter);
-                  const gutterSize = 20;
-                  const height = Math.ceil(projects.length / columnCounter) * 260;
+              <div ref={containerRef} style={{ width: "100%" }}>
+                {containerWidth > 0 &&
+                  (() => {
+                    const columns = Math.floor(containerWidth / commonWidth);
+                    const columnCounter = columns ? (columns > 4 ? 4 : columns) : 1;
+                    const columnWidth = Math.floor(containerWidth / columnCounter);
+                    const gutterSize = 20;
+                    const rowHeight = 260;
+                    const rowCount = Math.ceil(projects.length / columnCounter);
 
-                  return (
-                    <Grid
-                      height={height + 60}
-                      width={width}
-                      rowCount={Math.ceil(projects.length / columnCounter)}
-                      rowHeight={260}
-                      columnWidth={columnWidth}
-                      columnCount={columnCounter}
-                      cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-                        const project = projects[rowIndex * columnCounter + columnIndex];
-                        return (
-                          <div
-                            key={key}
-                            style={{
-                              ...style,
-                              left:
-                                +(style.left || 0) +
-                                (columnIndex * gutterSize) / (columnCounter - 1),
-                              width: +(style.width || 0) - gutterSize,
-                              top:
-                                rowIndex === 0 ? +(style.top || 0) : +(style.top || 0) + gutterSize,
+                    return (
+                      <div
+                        style={{
+                          height: rowCount * rowHeight + 60,
+                          width: containerWidth,
+                          position: "relative",
+                        }}
+                      >
+                        {Array.from({ length: rowCount }, (_, rowIndex) =>
+                          Array.from({ length: columnCounter }, (_, columnIndex) => {
+                            const project = projects[rowIndex * columnCounter + columnIndex];
+                            const left =
+                              columnIndex * columnWidth +
+                              (columnCounter > 1
+                                ? (columnIndex * gutterSize) / (columnCounter - 1)
+                                : 0);
+                            const top =
+                              rowIndex === 0
+                                ? rowIndex * rowHeight
+                                : rowIndex * rowHeight + gutterSize;
+                            const cellWidth = columnWidth - gutterSize;
+                            const cellHeight = rowHeight - gutterSize;
 
-                              height: +(style.height || 0) - gutterSize,
-                            }}
-                          >
-                            {project && (
+                            return (
                               <div
+                                key={`${rowIndex}-${columnIndex}`}
                                 style={{
-                                  height: "100%",
-                                  width: "100%",
+                                  position: "absolute",
+                                  left,
+                                  top,
+                                  width: cellWidth,
+                                  height: cellHeight,
                                 }}
                               >
-                                <ProjectCard
-                                  key={project.title + project.createdAt}
-                                  index={rowIndex * 4 + columnIndex}
-                                  project={project}
-                                />
+                                {project && (
+                                  <div style={{ height: "100%", width: "100%" }}>
+                                    <ProjectCard
+                                      key={project.title + project.createdAt}
+                                      index={rowIndex * 4 + columnIndex}
+                                      project={project}
+                                    />
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        );
-                      }}
-                    />
-                  );
-                }}
-              </AutoSizer>
+                            );
+                          })
+                        )}
+                      </div>
+                    );
+                  })()}
+              </div>
             </InfiniteScroll>
           ) : null}
           {isLoading || isFetching ? (

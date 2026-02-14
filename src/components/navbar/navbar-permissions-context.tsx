@@ -5,7 +5,7 @@ import type { Hex } from "viem";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
-import { useOwnerStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
 
 /**
  * Interface for the NavbarPermissionsContext value

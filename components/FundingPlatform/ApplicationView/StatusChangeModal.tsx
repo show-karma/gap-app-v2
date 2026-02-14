@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, Disclosure, Transition } from "@headlessui/react";
+import { Dialog, Transition } from "@headlessui/react";
 import { ChevronDownIcon, ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useQuery } from "@tanstack/react-query";
 import debounce from "lodash.debounce";
@@ -66,6 +66,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   application,
   programConfig,
 }) => {
+  const [summaryOpen, setSummaryOpen] = useState(true);
   const [reason, setReason] = useState("");
   const [approvedAmount, setApprovedAmount] = useState("");
   const [approvedCurrency, setApprovedCurrency] = useState("");
@@ -424,40 +425,42 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                       <div className="mt-4 space-y-4">
                         {/* Application Summary - Only show when approving and has summary data */}
                         {isApprovalStatus && applicationSummary.length > 0 && (
-                          <Disclosure defaultOpen>
-                            {({ open }) => (
-                              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                                <Disclosure.Button className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-t-lg transition-colors">
-                                  <span>Application Summary</span>
-                                  <ChevronDownIcon
-                                    className={`h-4 w-4 text-gray-500 transition-transform ${
-                                      open ? "rotate-180" : ""
-                                    }`}
-                                  />
-                                </Disclosure.Button>
-                                <Disclosure.Panel className="px-3 pb-3">
-                                  <dl className="space-y-1.5">
-                                    {applicationSummary.map((field, index) => (
-                                      <div key={index} className="flex items-start gap-2 text-xs">
-                                        <dt className="font-medium text-gray-500 dark:text-gray-400 min-w-0 shrink-0">
-                                          {field.label}:
-                                        </dt>
-                                        <dd
-                                          className={`text-gray-900 dark:text-gray-100 break-words min-w-0 ${
-                                            field.isAmount
-                                              ? "font-semibold text-green-700 dark:text-green-400"
-                                              : ""
-                                          }`}
-                                        >
-                                          {field.value}
-                                        </dd>
-                                      </div>
-                                    ))}
-                                  </dl>
-                                </Disclosure.Panel>
+                          <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                            <button
+                              type="button"
+                              onClick={() => setSummaryOpen(!summaryOpen)}
+                              className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-t-lg transition-colors"
+                            >
+                              <span>Application Summary</span>
+                              <ChevronDownIcon
+                                className={`h-4 w-4 text-gray-500 transition-transform ${
+                                  summaryOpen ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+                            {summaryOpen && (
+                              <div className="px-3 pb-3">
+                                <dl className="space-y-1.5">
+                                  {applicationSummary.map((field, index) => (
+                                    <div key={index} className="flex items-start gap-2 text-xs">
+                                      <dt className="font-medium text-gray-500 dark:text-gray-400 min-w-0 shrink-0">
+                                        {field.label}:
+                                      </dt>
+                                      <dd
+                                        className={`text-gray-900 dark:text-gray-100 break-words min-w-0 ${
+                                          field.isAmount
+                                            ? "font-semibold text-green-700 dark:text-green-400"
+                                            : ""
+                                        }`}
+                                      >
+                                        {field.value}
+                                      </dd>
+                                    </div>
+                                  ))}
+                                </dl>
                               </div>
                             )}
-                          </Disclosure>
+                          </div>
                         )}
 
                         {/* Approved Amount and Currency Fields - Only show when approving */}

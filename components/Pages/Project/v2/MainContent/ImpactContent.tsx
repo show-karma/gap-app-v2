@@ -3,7 +3,8 @@
 import { useSearchParams } from "next/navigation";
 import { AddImpactScreen } from "@/components/Pages/Project/Impact/AddImpactScreen";
 import { OutputsAndOutcomes } from "@/components/Pages/Project/Impact/OutputsAndOutcomes";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import { ImpactStatsSummary } from "./ImpactStatsSummary";
 
 interface ImpactContentProps {

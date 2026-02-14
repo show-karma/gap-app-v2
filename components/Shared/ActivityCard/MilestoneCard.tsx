@@ -17,7 +17,7 @@ import { useMilestone } from "@/hooks/useMilestone";
 import { useMilestoneActions } from "@/hooks/useMilestoneActions";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { formatDate } from "@/utilities/formatDate";
 import { queryClient } from "@/utilities/query-client";

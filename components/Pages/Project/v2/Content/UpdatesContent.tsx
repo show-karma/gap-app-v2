@@ -2,8 +2,9 @@
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo } from "react";
-import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useUpdatesTabData } from "@/hooks/v2/useUpdatesTabData";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import { ActivityFeed } from "../MainContent/ActivityFeed";
 import {
   ActivityFilters,
@@ -28,7 +29,7 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const { allUpdates, milestonesCount, completedCount, isLoading } = useProjectProfile(
+  const { allUpdates, milestonesCount, completedCount, isLoading } = useUpdatesTabData(
     projectId as string
   );
 

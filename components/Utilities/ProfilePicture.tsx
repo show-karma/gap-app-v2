@@ -47,8 +47,7 @@ export const ProfilePicture = ({
         height={numericSize}
         className={cn("rounded-full object-cover", className)}
         priority={priority}
-        sizes={sizes}
-        unoptimized
+        sizes={sizes || `${numericSize}px`}
       />
     );
   }

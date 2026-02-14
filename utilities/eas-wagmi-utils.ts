@@ -1,10 +1,17 @@
 "use client";
-import { BrowserProvider, FallbackProvider, JsonRpcProvider, JsonRpcSigner } from "ethers";
 import { useEffect, useState } from "react";
 import type { Account, Chain, Client, Transport } from "viem";
 import { usePublicClient, useWalletClient } from "wagmi";
 
-export function publicClientToProvider(client: Client<Transport, Chain>) {
+// Lazy-load ethers to keep it out of the shared bundle (~50-100KB saving)
+let ethersPromise: Promise<typeof import("ethers")> | null = null;
+function getEthers() {
+  if (!ethersPromise) ethersPromise = import("ethers");
+  return ethersPromise;
+}
+
+export async function publicClientToProvider(client: Client<Transport, Chain>) {
+  const { FallbackProvider, JsonRpcProvider } = await getEthers();
   const { chain, transport } = client;
   if (!chain) return;
   const network = {
@@ -23,6 +30,7 @@ export function publicClientToProvider(client: Client<Transport, Chain>) {
 }
 
 export async function walletClientToSigner(client: Client<Transport, Chain, Account>) {
+  const { BrowserProvider, JsonRpcSigner } = await getEthers();
   const { account, chain, transport } = client;
   if (!chain) return;
   const network = {
@@ -38,7 +46,9 @@ export async function walletClientToSigner(client: Client<Transport, Chain, Acco
 export function useSigner() {
   const { data: walletClient } = useWalletClient();
 
-  const [signer, setSigner] = useState<JsonRpcSigner | undefined>(undefined);
+  const [signer, setSigner] = useState<
+    Awaited<ReturnType<typeof walletClientToSigner>> | undefined
+  >(undefined);
   useEffect(() => {
     async function getSigner() {
       if (!walletClient) return;
@@ -56,12 +66,14 @@ export function useSigner() {
 export function useProvider() {
   const publicClient = usePublicClient();
 
-  const [provider, setProvider] = useState<JsonRpcProvider | undefined>(undefined);
+  const [provider, setProvider] = useState<
+    Awaited<ReturnType<typeof publicClientToProvider>> | undefined
+  >(undefined);
   useEffect(() => {
     async function getSigner() {
       if (!publicClient) return;
 
-      const tmpProvider: any = publicClientToProvider(publicClient);
+      const tmpProvider: any = await publicClientToProvider(publicClient);
 
       setProvider(tmpProvider);
     }

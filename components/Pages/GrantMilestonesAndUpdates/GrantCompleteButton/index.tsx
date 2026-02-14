@@ -3,7 +3,8 @@
 import type { FC } from "react";
 import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import type { Grant } from "@/types/v2/grant";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { GrantCompletedButton } from "./GrantCompletedButton";

@@ -15,9 +15,10 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
-import { useOwnerStore, useProjectStore } from "@/store";
 import { useENS } from "@/store/ens";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import { formatFarcasterLink } from "@/utilities/farcaster";
 import { getProjectMemberRoles, type Member } from "@/utilities/getProjectMemberRoles";
 

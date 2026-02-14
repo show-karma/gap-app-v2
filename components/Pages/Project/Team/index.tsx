@@ -3,7 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import { getProjectMemberRoles, type Member } from "@/utilities/getProjectMemberRoles";
 import { MemberCard } from "./MemberCard";
 

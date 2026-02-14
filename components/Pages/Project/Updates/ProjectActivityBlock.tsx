@@ -4,7 +4,8 @@ import { useAccount } from "wagmi";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import { FilteredOutputsAndOutcomes, filterIndicators } from "../Impact/FilteredOutputsAndOutcomes";
 
 export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate }) => {

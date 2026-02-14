@@ -8,7 +8,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useGap } from "@/hooks/useGap";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import fetchData from "@/utilities/fetchData";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";

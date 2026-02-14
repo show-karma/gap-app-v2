@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import { ProjectActivityChart } from "../ProjectActivityChart";
 
 // Mock IntersectionObserver to trigger visibility on observe

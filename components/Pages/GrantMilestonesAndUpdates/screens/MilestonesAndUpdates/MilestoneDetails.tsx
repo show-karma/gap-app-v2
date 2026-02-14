@@ -2,7 +2,8 @@
 
 import type { FC } from "react";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import type { GrantMilestone } from "@/types/v2/grant";
 import { formatDate, normalizeTimestamp } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";

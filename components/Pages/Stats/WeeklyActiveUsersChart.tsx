@@ -1,9 +1,15 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Card, LineChart, Title } from "@tremor/react";
+import dynamic from "next/dynamic";
+import { DataCard as Card, DataTitle as Title } from "@/src/components/ui/data-card";
 import { formatDate } from "@/utilities/formatDate";
 import { getGAPWeeklyActiveUsers } from "@/utilities/indexer/stats";
+
+const LineChart = dynamic(() => import("@tremor/react").then((mod) => mod.LineChart), {
+  ssr: false,
+  loading: () => <div className="h-[240px] animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded" />,
+});
 
 interface WeeklyActiveUsersData {
   Date: string;

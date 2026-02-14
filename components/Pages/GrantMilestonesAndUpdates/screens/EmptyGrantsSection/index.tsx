@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { type FC, useEffect } from "react";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
-import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunitiesStore } from "@/store/communities";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 

@@ -4,8 +4,8 @@ import { Dialog, Transition } from "@headlessui/react";
 /* eslint-disable @next/next/no-img-element */
 import { type FC, Fragment, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useProjectStore } from "@/store";
 import { useGrantGenieModalStore } from "@/store/modals/genie";
+import { useProjectStore } from "@/store/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { Button } from "../Utilities/Button";

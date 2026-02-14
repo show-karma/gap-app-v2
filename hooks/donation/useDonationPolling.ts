@@ -30,8 +30,7 @@ export const useDonationPolling = ({
     queryKey: QUERY_KEYS.DONATIONS.POLLING(donationUid!, chainId),
     queryFn: () => donationsService.getDonationByUid(donationUid!, chainId),
     enabled: !!donationUid,
-    refetchInterval: (q) =>
-      isTerminalStatus(q.state.data?.status) ? false : POLLING_INTERVAL_MS,
+    refetchInterval: (q) => (isTerminalStatus(q.state.data?.status) ? false : POLLING_INTERVAL_MS),
     refetchOnWindowFocus: (q) => !isTerminalStatus(q.state.data?.status),
     refetchOnReconnect: (q) => !isTerminalStatus(q.state.data?.status),
     refetchOnMount: (q) => !isTerminalStatus(q.state.data?.status),

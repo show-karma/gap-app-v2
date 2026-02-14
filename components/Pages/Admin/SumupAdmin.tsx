@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
-import { useOwnerStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
 import fetchData from "@/utilities/fetchData";
 import { MESSAGES } from "@/utilities/messages";
 

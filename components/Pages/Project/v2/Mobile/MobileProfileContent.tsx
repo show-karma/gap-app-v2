@@ -1,12 +1,14 @@
 "use client";
 
 import { PenLine } from "lucide-react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
-import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import type { Project } from "@/types/v2/project";
 import type { ProjectProfileStats } from "@/types/v2/project-profile.types";
 import { cn } from "@/utilities/tailwind";
@@ -14,8 +16,12 @@ import { ProjectHeader } from "../Header/ProjectHeader";
 import { DonateSection, useDonationVisibility } from "../SidePanel/DonateSection";
 import { EndorseSection } from "../SidePanel/EndorseSection";
 import { QuickLinksCard } from "../SidePanel/QuickLinksCard";
-import { SubscribeSection } from "../SidePanel/SubscribeSection";
 import { ProjectStatsBar } from "../StatsBar/ProjectStatsBar";
+
+const SubscribeSection = dynamic(
+  () => import("../SidePanel/SubscribeSection").then((m) => m.SubscribeSection),
+  { ssr: false }
+);
 
 interface MobileProfileContentProps {
   project: Project;

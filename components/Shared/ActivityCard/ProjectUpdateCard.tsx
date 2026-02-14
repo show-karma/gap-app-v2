@@ -1,6 +1,6 @@
 import { type FC, useState } from "react";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import type { ProjectUpdate } from "@/types/v2/roadmap";
 import { PAGES } from "@/utilities/pages";
 import { ReadMore } from "@/utilities/ReadMore";

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { getProject } from "@/services/project.service";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { QUERY_KEYS } from "@/utilities/queryKeys";

@@ -1,3 +1,3 @@
-export * from "./TabContent";
-export * from "./Tabs";
-export * from "./TabTrigger";
+export { TabContent } from "./TabContent";
+export { Tabs, TabsContext, useTabsContext } from "./Tabs";
+export { TabTrigger } from "./TabTrigger";

@@ -1,6 +1,5 @@
 "use client";
 
-import { Tab } from "@headlessui/react";
 import {
   BanknotesIcon,
   ChartBarIcon,
@@ -10,7 +9,7 @@ import {
   ShieldCheckIcon,
   ShieldExclamationIcon,
 } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/utilities/tailwind";
 import { UsageAnalytics } from "./Analytics/UsageAnalytics";
 import { ChainBalances } from "./Balances/ChainBalances";
@@ -21,18 +20,16 @@ import { GlobalConfigForm } from "./GlobalConfig/GlobalConfigForm";
 import { WhitelistManager } from "./Whitelist/WhitelistManager";
 
 const tabs = [
-  { name: "Overview", icon: ChartBarIcon },
-  { name: "Chains", icon: LinkIcon },
-  { name: "Chain Settings", icon: CogIcon },
-  { name: "Global Config", icon: GlobeAltIcon },
-  { name: "Whitelist", icon: ShieldCheckIcon },
-  { name: "Blocklist", icon: ShieldExclamationIcon },
-  { name: "Balances", icon: BanknotesIcon },
+  { name: "Overview", value: "overview", icon: ChartBarIcon },
+  { name: "Chains", value: "chains", icon: LinkIcon },
+  { name: "Chain Settings", value: "chain-settings", icon: CogIcon },
+  { name: "Global Config", value: "global-config", icon: GlobeAltIcon },
+  { name: "Whitelist", value: "whitelist", icon: ShieldCheckIcon },
+  { name: "Blocklist", value: "blocklist", icon: ShieldExclamationIcon },
+  { name: "Balances", value: "balances", icon: BanknotesIcon },
 ];
 
 export function FaucetAdminDashboard() {
-  const [selectedIndex, setSelectedIndex] = useState(0);
-
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -47,67 +44,56 @@ export function FaucetAdminDashboard() {
         </div>
 
         {/* Tab Navigation */}
-        <Tab.Group selectedIndex={selectedIndex} onChange={setSelectedIndex}>
-          <Tab.List className="flex space-x-1 rounded-xl bg-white dark:bg-zinc-800 p-1 shadow-sm mb-8">
+        <Tabs defaultValue="overview">
+          <TabsList className="flex space-x-1 rounded-xl bg-white dark:bg-zinc-800 p-1 shadow-sm mb-8 h-auto">
             {tabs.map((tab) => (
-              <Tab
-                key={tab.name}
-                className={({ selected }) =>
-                  cn(
-                    "w-full rounded-lg py-2.5 px-3 text-sm font-medium leading-5",
-                    "ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2",
-                    "transition-all duration-200",
-                    selected
-                      ? "bg-blue-500 text-white shadow"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 hover:text-gray-900 dark:hover:text-white"
-                  )
-                }
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className={cn(
+                  "w-full rounded-lg py-2.5 px-3 text-sm font-medium leading-5",
+                  "ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2",
+                  "transition-all duration-200",
+                  "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 hover:text-gray-900 dark:hover:text-white",
+                  "data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow"
+                )}
               >
                 <div className="flex items-center justify-center space-x-2">
                   <tab.icon className="w-5 h-5" />
                   <span>{tab.name}</span>
                 </div>
-              </Tab>
+              </TabsTrigger>
             ))}
-          </Tab.List>
+          </TabsList>
 
-          <Tab.Panels>
-            {/* Overview Tab */}
-            <Tab.Panel className="space-y-6">
-              <UsageAnalytics />
-            </Tab.Panel>
+          <TabsContent value="overview" className="space-y-6">
+            <UsageAnalytics />
+          </TabsContent>
 
-            {/* Chains Tab */}
-            <Tab.Panel>
-              <ChainManager />
-            </Tab.Panel>
+          <TabsContent value="chains">
+            <ChainManager />
+          </TabsContent>
 
-            {/* Chain Settings Tab */}
-            <Tab.Panel>
-              <ChainSettingsManager />
-            </Tab.Panel>
+          <TabsContent value="chain-settings">
+            <ChainSettingsManager />
+          </TabsContent>
 
-            {/* Global Config Tab */}
-            <Tab.Panel>
-              <GlobalConfigForm />
-            </Tab.Panel>
+          <TabsContent value="global-config">
+            <GlobalConfigForm />
+          </TabsContent>
 
-            {/* Whitelist Tab */}
-            <Tab.Panel>
-              <WhitelistManager />
-            </Tab.Panel>
+          <TabsContent value="whitelist">
+            <WhitelistManager />
+          </TabsContent>
 
-            {/* Blocklist Tab */}
-            <Tab.Panel>
-              <BlocklistManager />
-            </Tab.Panel>
+          <TabsContent value="blocklist">
+            <BlocklistManager />
+          </TabsContent>
 
-            {/* Balances Tab */}
-            <Tab.Panel>
-              <ChainBalances />
-            </Tab.Panel>
-          </Tab.Panels>
-        </Tab.Group>
+          <TabsContent value="balances">
+            <ChainBalances />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

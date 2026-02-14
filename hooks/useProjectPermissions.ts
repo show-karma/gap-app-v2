@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { ethers } from "ethers";
 import { useEffect, useMemo } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { getRPCUrlByChainId } from "@/utilities/rpcClient";
@@ -35,7 +34,8 @@ export const useProjectPermissions = () => {
       if (!rpcUrl) {
         return { isProjectOwner: false, isProjectAdmin: false };
       }
-      const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
+      const { JsonRpcProvider } = await import("ethers");
+      const rpcProvider = new JsonRpcProvider(rpcUrl);
 
       const [isOwnerResult, isAdminResult] = await Promise.all([
         projectInstance?.isOwner(rpcProvider, address).catch((error) => {

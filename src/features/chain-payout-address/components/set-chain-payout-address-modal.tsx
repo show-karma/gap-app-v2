@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { PAYOUT_CHAINS } from "@/utilities/network";
 import {

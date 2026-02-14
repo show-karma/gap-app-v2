@@ -1,15 +1,19 @@
 "use client";
 
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { ArrowLeftToLine } from "lucide-react";
-import { useMemo } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { ActivityCard } from "@/components/Shared/ActivityCard";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { useENS } from "@/store/ens";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import formatCurrency from "@/utilities/formatCurrency";
 import { cn } from "@/utilities/tailwind";
 import type { ActivityFilterType, SortOption } from "./ActivityFilters";
+
+const ITEMS_PER_PAGE = 10;
 
 /**
  * Flag icon component matching Figma design.
@@ -95,18 +99,13 @@ interface ActivityFeedProps {
  * Checks multiple sources in order of preference.
  */
 function getMilestoneAttester(milestone: UnifiedMilestone): string | undefined {
-  // Try to get attester from various sources in order of preference
   return (
-    // Project milestone sources
     milestone.source.projectMilestone?.attester ||
     milestone.source.projectMilestone?.completed?.attester ||
-    // Grant milestone sources
     milestone.source.grantMilestone?.milestone?.attester ||
     milestone.source.grantMilestone?.milestone?.completed?.attester ||
     milestone.source.grantMilestone?.completionDetails?.completedBy ||
-    // Project update sources
     milestone.projectUpdate?.recipient ||
-    // Grant update sources
     milestone.grantUpdate?.attester ||
     milestone.grantUpdate?.recipient
   );
@@ -143,7 +142,6 @@ function getActivityTypeLabel(type: string): string {
 function formatGrantAmount(amount?: string): string | null {
   if (!amount) return null;
 
-  // Handle amounts with currency suffix (e.g., "10000 USDC")
   const parts = amount.split(" ");
   const numericPart = parts[0]?.replace(",", "");
   const currencySuffix = parts.length > 1 ? parts.slice(1).join(" ") : null;
@@ -151,7 +149,6 @@ function formatGrantAmount(amount?: string): string | null {
   const numAmount = Number(numericPart);
   if (isNaN(numAmount) || numAmount === 0) return null;
 
-  // Format the number using the same utility as Grant Overview
   if (numAmount < 1000) {
     const formatted = new Intl.NumberFormat("en-US", {
       minimumFractionDigits: 0,
@@ -164,12 +161,158 @@ function formatGrantAmount(amount?: string): string | null {
   return currencySuffix ? `${formattedNum} ${currencySuffix}` : formattedNum;
 }
 
+function formatDisplayDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function isValidTimestamp(timestamp: number | undefined): boolean {
+  if (!timestamp || timestamp === 0) return false;
+  const date = new Date(timestamp * 1000);
+  return date.getFullYear() >= 2000;
+}
+
+interface ActivityFeedItemProps {
+  milestone: UnifiedMilestone;
+  isAuthorized: boolean;
+}
+
+const ActivityFeedItem = memo(function ActivityFeedItem({
+  milestone,
+  isAuthorized,
+}: ActivityFeedItemProps) {
+  return (
+    <div className="relative pl-8 max-lg:pl-7" data-testid="activity-item">
+      {/* Timeline icon - positioned relative to item, not content row */}
+      <div
+        className={cn(
+          "absolute left-0 top-0 w-6 h-6 max-lg:w-5 max-lg:h-5 rounded-full border flex items-center justify-center",
+          milestone.type === "grant_received" &&
+            "border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-900/30 dark:bg-emerald-950/30 dark:text-emerald-400",
+          milestone.type === "grant_update" &&
+            "border-green-200 bg-green-100 text-green-600 dark:border-green-900/30 dark:bg-green-950/30 dark:text-green-400",
+          (milestone.type === "activity" ||
+            milestone.type === "update" ||
+            milestone.type === "project") &&
+            "border-blue-100 bg-blue-50 text-blue-600 dark:border-blue-900/30 dark:bg-blue-950/30 dark:text-blue-400",
+          milestone.type !== "grant_received" &&
+            milestone.type !== "grant_update" &&
+            milestone.type !== "activity" &&
+            milestone.type !== "update" &&
+            milestone.type !== "project" &&
+            "border-orange-100 bg-orange-50 text-orange-600 dark:border-orange-900/30 dark:bg-orange-950/30 dark:text-orange-400"
+        )}
+        data-testid="timeline-icon"
+      >
+        {milestone.type === "grant_received" ? (
+          <ArrowLeftToLine className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
+        ) : milestone.type === "grant_update" ? (
+          <MoneyBagIcon className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
+        ) : milestone.type === "activity" ||
+          milestone.type === "update" ||
+          milestone.type === "project" ? (
+          <ThunderIcon className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
+        ) : (
+          <FlagIcon className="max-lg:scale-90" />
+        )}
+      </div>
+
+      {/* Status Text, Due Date, and Posted By */}
+      <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:justify-between lg:gap-2 mb-3">
+        {milestone.type === "grant_received" && milestone.grantReceived ? (
+          <>
+            <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
+              {(() => {
+                const formattedAmount = formatGrantAmount(milestone.grantReceived.amount);
+                return formattedAmount ? (
+                  <span className="text-xs lg:text-sm font-semibold text-foreground">
+                    {formattedAmount}
+                  </span>
+                ) : null;
+              })()}
+              <span className="text-xs lg:text-sm font-semibold text-foreground">
+                Grant Received
+              </span>
+              <span className="text-xs lg:text-sm font-semibold text-muted-foreground">from</span>
+              <ProfilePicture
+                imageURL={milestone.grantReceived.communityImage}
+                name={milestone.grantReceived.communityName || "Community"}
+                size="20"
+                className="h-5 w-5 lg:h-6 lg:w-6 min-w-5 min-h-5 lg:min-w-6 lg:min-h-6 rounded-full"
+                alt={milestone.grantReceived.communityName || "Community"}
+              />
+              <span className="text-xs lg:text-sm font-semibold text-foreground">
+                {milestone.grantReceived.communityName || milestone.grantReceived.grantTitle}
+              </span>
+            </div>
+
+            <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
+              <span>{formatDisplayDate(milestone.createdAt)}</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
+              <span className="text-xs lg:text-sm font-semibold text-foreground">
+                {getActivityTypeLabel(milestone.type)}
+              </span>
+              {isValidTimestamp(milestone.endsAt) && (
+                <span className="text-xs lg:text-sm font-semibold text-muted-foreground">
+                  Due by {formatDisplayDate(new Date(milestone.endsAt! * 1000).toISOString())}
+                </span>
+              )}
+            </div>
+
+            {(() => {
+              const attester = getMilestoneAttester(milestone);
+              return (
+                <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
+                  <span>Posted {formatDisplayDate(milestone.createdAt)}</span>
+                  {attester && (
+                    <>
+                      <span>by</span>
+                      <EthereumAddressToENSAvatar
+                        address={attester}
+                        className="h-5 w-5 lg:h-6 lg:w-6 min-h-5 min-w-5 lg:min-h-6 lg:min-w-6 rounded-full"
+                      />
+                      <span className="text-xs lg:text-sm font-semibold leading-5 text-foreground">
+                        <EthereumAddressToENSName address={attester} />
+                      </span>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+          </>
+        )}
+      </div>
+
+      {milestone.type !== "grant_received" && (
+        <ActivityCard
+          activity={{
+            type: "milestone",
+            data: milestone,
+          }}
+          isAuthorized={isAuthorized}
+        />
+      )}
+    </div>
+  );
+});
+
+/**
+ * Gap between virtual items in pixels, matching the previous `gap-6` (24px).
+ */
+const VIRTUAL_ITEM_GAP = 24;
+
 /**
  * ActivityFeed displays a vertical timeline of project activities.
  * Features:
  * - Vertical timeline with colored type-specific icons
  * - Date headers for each item
  * - Activity cards for different types (milestone, update, etc.)
+ * - Progressive rendering: shows ITEMS_PER_PAGE at a time, loads more on scroll
+ * - Window-based virtualization: only visible items are rendered in the DOM
  */
 export function ActivityFeed({
   milestones,
@@ -178,42 +321,39 @@ export function ActivityFeed({
   activeFilters = [],
   className,
 }: ActivityFeedProps) {
-  // Map filter types to milestone types
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const populateEns = useENS((state) => state.populateEns);
+
   const getFilteredTypes = (filters: ActivityFilterType[]): string[] => {
     const typeMap: Record<ActivityFilterType, string[]> = {
       funding: ["grant", "grant_received"],
       updates: ["activity", "grant_update", "update"],
-      blog: ["project"], // Using project type for blog-like updates
-      socials: ["impact"], // Using impact type for social-like updates
+      blog: ["project"],
+      socials: ["impact"],
       other: ["milestone"],
     };
 
     return filters.flatMap((filter) => typeMap[filter]);
   };
 
-  // Pure utility function for sorting - uses seconds for consistency
-  // Matches production sorting logic: endsAt (dueDate) -> completed.createdAt -> createdAt
   const getSortTimestamp = (item: UnifiedMilestone): number => {
-    // endsAt is already in seconds (Unix timestamp)
     if (item.endsAt) return item.endsAt;
-    // Convert other dates to seconds for consistent comparison
     if (item.completed && typeof item.completed === "object" && "createdAt" in item.completed) {
       return Math.floor(new Date(item.completed.createdAt).getTime() / 1000);
     }
     return Math.floor(new Date(item.createdAt).getTime() / 1000);
   };
 
-  // Filter and sort milestones
   const sortedMilestones = useMemo(() => {
     let filtered = [...milestones];
 
-    // Apply filters if any are active
     if (activeFilters.length > 0) {
       const allowedTypes = getFilteredTypes(activeFilters);
       filtered = filtered.filter((milestone) => allowedTypes.includes(milestone.type));
     }
 
-    // Sort by date using same logic as production (ProjectRoadmap)
     filtered.sort((a, b) => {
       const timestampA = getSortTimestamp(a);
       const timestampB = getSortTimestamp(b);
@@ -223,20 +363,74 @@ export function ActivityFeed({
     return filtered;
   }, [milestones, sortBy, activeFilters]);
 
-  // Format date for display - always show the actual date
-  const formatDisplayDate = (dateStr: string): string => {
-    const date = new Date(dateStr);
-    // Always return the formatted date (e.g., "Jan 23, 2024")
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  };
+  // Reset visible count when filters or sort change
+  useEffect(() => {
+    setVisibleCount(ITEMS_PER_PAGE);
+  }, [sortBy, activeFilters]);
 
-  // Check if a timestamp is valid (not 0 or epoch)
-  const isValidTimestamp = (timestamp: number | undefined): boolean => {
-    if (!timestamp || timestamp === 0) return false;
-    // Check if date is before year 2000 (likely invalid)
-    const date = new Date(timestamp * 1000);
-    return date.getFullYear() >= 2000;
-  };
+  const visibleMilestones = useMemo(
+    () => sortedMilestones.slice(0, visibleCount),
+    [sortedMilestones, visibleCount]
+  );
+  const hasMore = visibleCount < sortedMilestones.length;
+
+  // Window virtualizer for rendering only visible items
+  const virtualizer = useWindowVirtualizer({
+    count: visibleMilestones.length,
+    estimateSize: () => 120,
+    overscan: 5,
+    scrollMargin: listRef.current?.offsetTop ?? 0,
+    gap: VIRTUAL_ITEM_GAP,
+  });
+
+  // IntersectionObserver to load more items on scroll
+  useEffect(() => {
+    if (!hasMore) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore]);
+
+  // Batch ENS resolution for visible virtual items
+  useEffect(() => {
+    const virtualItems = virtualizer.getVirtualItems();
+    if (virtualItems.length === 0) return;
+
+    const addresses: string[] = [];
+    for (const vItem of virtualItems) {
+      const milestone = visibleMilestones[vItem.index];
+      if (milestone) {
+        const attester = getMilestoneAttester(milestone);
+        if (attester) {
+          addresses.push(attester);
+        }
+      }
+    }
+    const unique = [...new Set(addresses)];
+    if (unique.length > 0) {
+      populateEns(unique);
+    }
+  }, [virtualizer.getVirtualItems(), visibleMilestones, populateEns]);
+
+  const measureElement = useCallback(
+    (node: HTMLElement | null) => {
+      if (node) {
+        virtualizer.measureElement(node);
+      }
+    },
+    [virtualizer]
+  );
 
   if (sortedMilestones.length === 0) {
     return (
@@ -249,150 +443,43 @@ export function ActivityFeed({
     );
   }
 
+  const virtualItems = virtualizer.getVirtualItems();
+
   return (
     <div className={cn("relative", className)} data-testid="activity-feed">
       {/* Timeline line - centered under icons (w-6=24px, so center at 12px on desktop, w-5=20px so 10px on mobile) */}
       <div className="absolute left-[11px] max-lg:left-[9px] top-2 bottom-0 w-0.5 bg-neutral-200 dark:bg-zinc-700" />
 
-      {/* Timeline items */}
-      <div className="flex flex-col gap-6">
-        {sortedMilestones.map((milestone, index) => {
-          // Create unique key combining type, uid, and index to handle duplicate uids
-          const uniqueKey = `${milestone.type}-${milestone.uid}-${index}`;
-
+      {/* Virtualized timeline items */}
+      <div
+        ref={listRef}
+        style={{ height: `${virtualizer.getTotalSize()}px`, position: "relative" }}
+      >
+        {virtualItems.map((virtualRow) => {
+          const milestone = visibleMilestones[virtualRow.index];
+          if (!milestone) return null;
+          const uniqueKey = `${milestone.type}-${milestone.uid}-${virtualRow.index}`;
           return (
-            <div key={uniqueKey} className="relative pl-8 max-lg:pl-7" data-testid="activity-item">
-              {/* Timeline icon - positioned relative to item, not content row */}
-              <div
-                className={cn(
-                  "absolute left-0 top-0 w-6 h-6 max-lg:w-5 max-lg:h-5 rounded-full border flex items-center justify-center",
-                  // Grant Received - emerald/green
-                  milestone.type === "grant_received" &&
-                    "border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-900/30 dark:bg-emerald-950/30 dark:text-emerald-400",
-                  // Grant Update - green (#DCFAE6 ~ green-100)
-                  milestone.type === "grant_update" &&
-                    "border-green-200 bg-green-100 text-green-600 dark:border-green-900/30 dark:bg-green-950/30 dark:text-green-400",
-                  // Project Activity (activity, update, project) - blue (#EFF4FF ~ blue-50)
-                  (milestone.type === "activity" ||
-                    milestone.type === "update" ||
-                    milestone.type === "project") &&
-                    "border-blue-100 bg-blue-50 text-blue-600 dark:border-blue-900/30 dark:bg-blue-950/30 dark:text-blue-400",
-                  // Default (Milestone, Impact, Grant) - orange
-                  milestone.type !== "grant_received" &&
-                    milestone.type !== "grant_update" &&
-                    milestone.type !== "activity" &&
-                    milestone.type !== "update" &&
-                    milestone.type !== "project" &&
-                    "border-orange-100 bg-orange-50 text-orange-600 dark:border-orange-900/30 dark:bg-orange-950/30 dark:text-orange-400"
-                )}
-                data-testid="timeline-icon"
-              >
-                {milestone.type === "grant_received" ? (
-                  <ArrowLeftToLine className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
-                ) : milestone.type === "grant_update" ? (
-                  <MoneyBagIcon className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
-                ) : milestone.type === "activity" ||
-                  milestone.type === "update" ||
-                  milestone.type === "project" ? (
-                  <ThunderIcon className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
-                ) : (
-                  <FlagIcon className="max-lg:scale-90" />
-                )}
-              </div>
-
-              {/* Status Text, Due Date, and Posted By */}
-              <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:justify-between lg:gap-2 mb-3">
-                {/* Grant Received - special format */}
-                {milestone.type === "grant_received" && milestone.grantReceived ? (
-                  <>
-                    {/* Left side: Amount + Grant Received from + Community */}
-                    <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
-                      {(() => {
-                        const formattedAmount = formatGrantAmount(milestone.grantReceived.amount);
-                        return formattedAmount ? (
-                          <span className="text-xs lg:text-sm font-semibold text-foreground">
-                            {formattedAmount}
-                          </span>
-                        ) : null;
-                      })()}
-                      <span className="text-xs lg:text-sm font-semibold text-foreground">
-                        Grant Received
-                      </span>
-                      <span className="text-xs lg:text-sm font-semibold text-muted-foreground">
-                        from
-                      </span>
-                      <ProfilePicture
-                        imageURL={milestone.grantReceived.communityImage}
-                        name={milestone.grantReceived.communityName || "Community"}
-                        size="20"
-                        className="h-5 w-5 lg:h-6 lg:w-6 min-w-5 min-h-5 lg:min-w-6 lg:min-h-6 rounded-full"
-                        alt={milestone.grantReceived.communityName || "Community"}
-                      />
-                      <span className="text-xs lg:text-sm font-semibold text-foreground">
-                        {milestone.grantReceived.communityName ||
-                          milestone.grantReceived.grantTitle}
-                      </span>
-                    </div>
-
-                    {/* Right side: Date only */}
-                    <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
-                      <span>{formatDisplayDate(milestone.createdAt)}</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {/* Left side: Status and Due Date */}
-                    <div className="flex flex-row items-center gap-1.5 lg:gap-2 flex-wrap">
-                      <span className="text-xs lg:text-sm font-semibold text-foreground">
-                        {getActivityTypeLabel(milestone.type)}
-                      </span>
-                      {isValidTimestamp(milestone.endsAt) && (
-                        <span className="text-xs lg:text-sm font-semibold text-muted-foreground">
-                          Due by{" "}
-                          {formatDisplayDate(new Date(milestone.endsAt! * 1000).toISOString())}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Posted by - stacks on mobile */}
-                    {(() => {
-                      const attester = getMilestoneAttester(milestone);
-                      return (
-                        <div className="flex flex-row items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium leading-5 text-muted-foreground">
-                          <span>Posted {formatDisplayDate(milestone.createdAt)}</span>
-                          {attester && (
-                            <>
-                              <span>by</span>
-                              <EthereumAddressToENSAvatar
-                                address={attester}
-                                className="h-5 w-5 lg:h-6 lg:w-6 min-h-5 min-w-5 lg:min-h-6 lg:min-w-6 rounded-full"
-                              />
-                              <span className="text-xs lg:text-sm font-semibold leading-5 text-foreground">
-                                <EthereumAddressToENSName address={attester} />
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </>
-                )}
-              </div>
-
-              {/* Activity Card - skip for grant_received as the header contains all info */}
-              {milestone.type !== "grant_received" && (
-                <ActivityCard
-                  activity={{
-                    type: "milestone",
-                    data: milestone,
-                  }}
-                  isAuthorized={isAuthorized}
-                />
-              )}
+            <div
+              key={uniqueKey}
+              data-index={virtualRow.index}
+              ref={measureElement}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transform: `translateY(${virtualRow.start - virtualizer.options.scrollMargin}px)`,
+              }}
+            >
+              <ActivityFeedItem milestone={milestone} isAuthorized={isAuthorized} />
             </div>
           );
         })}
       </div>
+
+      {/* Sentinel for infinite scroll */}
+      {hasMore && <div ref={sentinelRef} className="h-1" aria-hidden="true" />}
 
       {/* Timeline end dot - aligned with line */}
       <div className="absolute left-[10px] max-lg:left-[8px] bottom-0 w-1.5 h-1.5 rounded-full bg-neutral-300 dark:bg-zinc-600" />

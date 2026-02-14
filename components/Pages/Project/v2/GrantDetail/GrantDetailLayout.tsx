@@ -13,9 +13,10 @@ import { useIsCommunityAdmin } from "@/hooks/communities/useIsCommunityAdmin";
 import { useProject } from "@/hooks/useProject";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
-import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 

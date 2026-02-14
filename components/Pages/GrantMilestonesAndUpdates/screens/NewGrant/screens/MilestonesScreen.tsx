@@ -14,7 +14,7 @@ import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";

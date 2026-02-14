@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
+import { useProjectStore } from "@/store/project";
 import { PAGES } from "@/utilities/pages";
 
 export const NoGrant = () => {

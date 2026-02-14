@@ -1,9 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { AutoSizer, Grid } from "react-virtualized";
 import { Button } from "@/components/ui/button";
 import { PROJECT_NAME } from "@/constants/brand";
 import { useCommunities } from "@/hooks/useCommunities";
@@ -41,6 +40,35 @@ export const CommunitiesPage = () => {
     }
   };
 
+  const statsRef = useRef<HTMLDivElement>(null);
+  const [statsWidth, setStatsWidth] = useState(0);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [gridWidth, setGridWidth] = useState(0);
+
+  const updateStatsWidth = useCallback(() => {
+    if (statsRef.current) {
+      setStatsWidth(statsRef.current.offsetWidth);
+    }
+  }, []);
+
+  const updateGridWidth = useCallback(() => {
+    if (gridRef.current) {
+      setGridWidth(gridRef.current.offsetWidth);
+    }
+  }, []);
+
+  useEffect(() => {
+    updateStatsWidth();
+    updateGridWidth();
+    const observer = new ResizeObserver(() => {
+      updateStatsWidth();
+      updateGridWidth();
+    });
+    if (statsRef.current) observer.observe(statsRef.current);
+    if (gridRef.current) observer.observe(gridRef.current);
+    return () => observer.disconnect();
+  }, [updateStatsWidth, updateGridWidth]);
+
   // Show skeleton if both communities and stats are loading
   if (communitiesLoading && statsLoading) {
     return <CommunitiesSkeleton />;
@@ -59,6 +87,20 @@ export const CommunitiesPage = () => {
   if (communitiesLoading) {
     return <CommunitiesSkeleton />;
   }
+
+  const statsGap = 24;
+  const statsColumns = getResponsiveColumns(statsWidth);
+  const statsCardWidth =
+    statsWidth > 0 ? Math.floor((statsWidth - (statsColumns - 1) * statsGap) / statsColumns) : 0;
+  const statsRowHeight = 113 + statsGap;
+  const statsRowCount = summaryStats ? Math.ceil(summaryStats.length / statsColumns) : 0;
+
+  const gridGap = 24;
+  const gridColumns = getResponsiveColumns(gridWidth);
+  const gridCardWidth =
+    gridWidth > 0 ? Math.floor((gridWidth - (gridColumns - 1) * gridGap) / gridColumns) : 0;
+  const gridRowHeight = 318 + gridGap;
+  const gridRowCount = Math.ceil(communities.length / gridColumns);
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-full overflow-hidden">
@@ -87,39 +129,33 @@ export const CommunitiesPage = () => {
       {/* Summary Stats Row - Only show if stats loaded successfully */}
       {summaryStats && !statsError && (
         <div className="w-full overflow-hidden">
-          <AutoSizer disableHeight>
-            {({ width }) => {
-              const columns = getResponsiveColumns(width);
-              const gap = 24;
-              const actualCardWidth = Math.floor((width - (columns - 1) * gap) / columns);
-              const rowHeight = 113 + gap;
-              const rowCount = Math.ceil(summaryStats.length / columns);
-              const height = rowHeight * rowCount;
-
-              return (
-                <Grid
-                  key={`stats-grid-${width}-${columns}`}
-                  height={height}
-                  width={width}
-                  rowCount={rowCount}
-                  rowHeight={rowHeight}
-                  columnWidth={actualCardWidth + gap}
-                  columnCount={columns}
-                  style={{ overflow: "visible" }}
-                  cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-                    const itemIndex = rowIndex * columns + columnIndex;
+          <div ref={statsRef} style={{ width: "100%", overflow: "visible" }}>
+            {statsWidth > 0 && (
+              <div
+                style={{
+                  height: statsRowCount * statsRowHeight,
+                  width: statsWidth,
+                  position: "relative",
+                  overflow: "visible",
+                }}
+              >
+                {Array.from({ length: statsRowCount }, (_, rowIndex) =>
+                  Array.from({ length: statsColumns }, (_, columnIndex) => {
+                    const itemIndex = rowIndex * statsColumns + columnIndex;
                     const stat = summaryStats[itemIndex];
 
                     if (!stat) return null;
 
                     return (
                       <div
-                        key={key}
+                        key={`stats-${rowIndex}-${columnIndex}`}
                         style={{
-                          ...style,
-                          width: actualCardWidth,
-                          paddingRight: columnIndex < columns - 1 ? gap : 0,
-                          paddingBottom: gap,
+                          position: "absolute",
+                          left: columnIndex * (statsCardWidth + statsGap),
+                          top: rowIndex * statsRowHeight,
+                          width: statsCardWidth,
+                          paddingRight: columnIndex < statsColumns - 1 ? statsGap : 0,
+                          paddingBottom: statsGap,
                           overflow: "visible",
                         }}
                       >
@@ -130,11 +166,11 @@ export const CommunitiesPage = () => {
                         />
                       </div>
                     );
-                  }}
-                />
-              );
-            }}
-          </AutoSizer>
+                  })
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -155,50 +191,44 @@ export const CommunitiesPage = () => {
               overflow: "visible",
             }}
           >
-            <AutoSizer disableHeight>
-              {({ width }) => {
-                const columns = getResponsiveColumns(width);
-                const gap = 24;
-                const actualCardWidth = Math.floor((width - (columns - 1) * gap) / columns);
-                const rowHeight = 318 + gap; // Card height + gap
-                const rowCount = Math.ceil(communities.length / columns);
-                const height = rowCount * rowHeight;
-
-                return (
-                  <Grid
-                    key={`grid-${width}-${columns}`}
-                    height={height + 60}
-                    width={width}
-                    rowCount={rowCount}
-                    rowHeight={rowHeight}
-                    columnWidth={actualCardWidth + gap}
-                    columnCount={columns}
-                    style={{ overflow: "visible" }}
-                    cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-                      const itemIndex = rowIndex * columns + columnIndex;
+            <div ref={gridRef} style={{ width: "100%", overflow: "visible" }}>
+              {gridWidth > 0 && (
+                <div
+                  style={{
+                    height: gridRowCount * gridRowHeight + 60,
+                    width: gridWidth,
+                    position: "relative",
+                    overflow: "visible",
+                  }}
+                >
+                  {Array.from({ length: gridRowCount }, (_, rowIndex) =>
+                    Array.from({ length: gridColumns }, (_, columnIndex) => {
+                      const itemIndex = rowIndex * gridColumns + columnIndex;
                       const community = communities[itemIndex];
 
                       if (!community) return null;
 
                       return (
                         <div
-                          key={key}
+                          key={`community-${rowIndex}-${columnIndex}`}
                           style={{
-                            ...style,
-                            width: actualCardWidth,
-                            paddingRight: columnIndex < columns - 1 ? gap : 0,
-                            paddingBottom: gap,
+                            position: "absolute",
+                            left: columnIndex * (gridCardWidth + gridGap),
+                            top: rowIndex * gridRowHeight,
+                            width: gridCardWidth,
+                            paddingRight: columnIndex < gridColumns - 1 ? gridGap : 0,
+                            paddingBottom: gridGap,
                             overflow: "visible",
                           }}
                         >
                           <CommunityCard community={community} />
                         </div>
                       );
-                    }}
-                  />
-                );
-              }}
-            </AutoSizer>
+                    })
+                  )}
+                </div>
+              )}
+            </div>
           </InfiniteScroll>
         ) : (
           <div className="flex items-center justify-center py-20">

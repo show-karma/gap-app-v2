@@ -2,7 +2,7 @@
 
 import { ArrowTrendingUpIcon, CodeBracketIcon, UsersIcon } from "@heroicons/react/24/outline";
 import { useProjectImpactIndicators } from "@/hooks/useProjectImpactIndicators";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import formatCurrency from "@/utilities/formatCurrency";
 import { cn } from "@/utilities/tailwind";
 

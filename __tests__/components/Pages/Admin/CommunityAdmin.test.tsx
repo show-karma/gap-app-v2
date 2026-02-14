@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getCommunities } from "@/services/communities.service";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { useCommunitiesStore } from "@/store/communities";
-import { useOwnerStore } from "@/store/index";
+import { useOwnerStore } from "@/store/owner";
 
 jest.mock("@tanstack/react-query", () => {
   const actual = jest.requireActual("@tanstack/react-query");

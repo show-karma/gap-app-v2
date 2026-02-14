@@ -1,6 +1,18 @@
-import { BarChart, Card, Select, SelectItem, Title } from "@tremor/react";
+import dynamic from "next/dynamic";
 import { useState } from "react";
+import { DataCard as Card, DataTitle as Title } from "@/src/components/ui/data-card";
 import type { ProgramImpactDataResponse } from "@/types/programs";
+
+const BarChart = dynamic(() => import("@tremor/react").then((mod) => mod.BarChart), {
+  ssr: false,
+  loading: () => <div className="h-72 animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded" />,
+});
+
+const Select = dynamic(() => import("@tremor/react").then((mod) => mod.Select), { ssr: false });
+
+const SelectItem = dynamic(() => import("@tremor/react").then((mod) => mod.SelectItem), {
+  ssr: false,
+});
 
 const aggregateDataByCategory = (data: ProgramImpactDataResponse[]) => {
   // Group data by categories first

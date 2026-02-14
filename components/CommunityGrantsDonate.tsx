@@ -1,14 +1,13 @@
 "use client";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { AutoSizer, Grid } from "react-virtualized";
 import { ProjectCartButton } from "@/components/Donation/ProjectCartButton";
 import { ShoppingCartIcon as ShoppingCartIconCustom } from "@/components/Icons/ShoppingCartIcon";
 import { useCommunityProjectsPaginated } from "@/hooks/useCommunityProjectsPaginated";
 import useMediaQuery from "@/hooks/useMediaQuery";
-import { useDonationCart } from "@/store";
+import { useDonationCart } from "@/store/donationCart";
 import type { CommunityProjects } from "@/types/v2/community";
 import { projectToGrant } from "@/utilities/adapters/v2/projectToGrant";
 import { GrantCard } from "./GrantCard";
@@ -25,6 +24,24 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
   const { items, toggle } = useDonationCart();
   const isLargeViewport = useMediaQuery("(min-width: 80rem)");
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+
+  const updateWidth = useCallback(() => {
+    if (containerRef.current) {
+      setWidth(containerRef.current.offsetWidth);
+    }
+  }, []);
+
+  useEffect(() => {
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+    return () => observer.disconnect();
+  }, [updateWidth]);
+
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     useCommunityProjectsPaginated({
       communityId,
@@ -38,6 +55,20 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
     return data.pages.flatMap((page) => page.payload);
   }, [data, initialProjects.payload]);
 
+  const MIN_CARD_WIDTH = 360;
+  const MAX_COLUMNS_SMALL = 6;
+  const MAX_COLUMNS_LARGE = 3;
+  const gutterSize = 20;
+  const calculatedColumns = Math.floor(width / MIN_CARD_WIDTH);
+  const columnCounter = calculatedColumns
+    ? isLargeViewport
+      ? MAX_COLUMNS_LARGE
+      : Math.min(calculatedColumns, MAX_COLUMNS_SMALL)
+    : 1;
+  const columnWidth = width > 0 ? Math.floor(width / columnCounter) : 0;
+  const rowHeight = 240;
+  const rowCount = Math.ceil(projects.length / columnCounter);
+
   return (
     <div className="flex flex-col gap-4 w-full relative">
       <section className="flex flex-col gap-4 md:flex-row">
@@ -50,40 +81,32 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
               loader={null}
               style={{ width: "100%", height: "100%" }}
             >
-              <AutoSizer disableHeight>
-                {({ width }) => {
-                  const MIN_CARD_WIDTH = 360;
-                  const MAX_COLUMNS_SMALL = 6;
-                  const MAX_COLUMNS_LARGE = 3;
-                  const calculatedColumns = Math.floor(width / MIN_CARD_WIDTH);
-                  const columnCounter = calculatedColumns
-                    ? isLargeViewport
-                      ? MAX_COLUMNS_LARGE
-                      : Math.min(calculatedColumns, MAX_COLUMNS_SMALL)
-                    : 1;
-                  const columnWidth = Math.floor(width / columnCounter);
-                  const gutterSize = 20;
-                  const height = Math.ceil(projects.length / columnCounter) * 360;
-                  return (
-                    <Grid
-                      key={`grid-${width}-${columnCounter}-${isLargeViewport}`}
-                      height={height + 60}
-                      width={width}
-                      rowCount={Math.ceil(projects.length / columnCounter)}
-                      rowHeight={240}
-                      columnWidth={columnWidth}
-                      columnCount={columnCounter}
-                      cellRenderer={({ columnIndex, key, rowIndex, style }) => {
+              <div ref={containerRef} style={{ width: "100%" }}>
+                {width > 0 && (
+                  <div
+                    style={{
+                      height: rowCount * rowHeight + 60,
+                      width,
+                      position: "relative",
+                    }}
+                  >
+                    {Array.from({ length: rowCount }, (_, rowIndex) =>
+                      Array.from({ length: columnCounter }, (_, columnIndex) => {
                         const project = projects[rowIndex * columnCounter + columnIndex];
+                        const left = columnIndex * columnWidth + (columnIndex > 0 ? gutterSize : 0);
+                        const top = rowIndex * rowHeight + (rowIndex > 0 ? gutterSize : 0);
+                        const cellWidth = columnWidth - (columnIndex > 0 ? gutterSize : 0);
+                        const cellHeight = rowHeight - (rowIndex > 0 ? gutterSize : 0);
+
                         return (
                           <div
-                            key={key}
+                            key={`${rowIndex}-${columnIndex}`}
                             style={{
-                              ...style,
-                              left: +(style.left || 0) + (columnIndex > 0 ? gutterSize : 0),
-                              width: +(style.width || 0) - (columnIndex > 0 ? gutterSize : 0),
-                              top: +(style.top || 0) + (rowIndex > 0 ? gutterSize : 0),
-                              height: +(style.height || 0) - (rowIndex > 0 ? gutterSize : 0),
+                              position: "absolute",
+                              left,
+                              top,
+                              width: cellWidth,
+                              height: cellHeight,
                             }}
                           >
                             {project && (
@@ -111,11 +134,11 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
                             )}
                           </div>
                         );
-                      }}
-                    />
-                  );
-                }}
-              </AutoSizer>
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
             </InfiniteScroll>
           ) : null}
           {isLoading || isFetchingNextPage ? (

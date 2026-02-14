@@ -2,7 +2,8 @@ import { PlusIcon } from "@heroicons/react/20/solid";
 import Image from "next/image";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import { MESSAGES } from "@/utilities/messages";
 
 export const EmptyImpactScreen: FC = () => {

@@ -1,3 +1,10 @@
-export * from "./impactAnswers";
-export * from "./indicatorUtils";
-export * from "./milestoneImpactAnswers";
+export { sendImpactAnswers } from "./impactAnswers";
+export {
+  getIndicatorSortPriority,
+  parseProofUrls,
+  sortIndicatorsByPriority,
+} from "./indicatorUtils";
+export {
+  getMilestoneImpactAnswers,
+  sendMilestoneImpactAnswers,
+} from "./milestoneImpactAnswers";

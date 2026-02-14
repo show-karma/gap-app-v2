@@ -15,7 +15,7 @@ import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances";
 import { useDonationCheckout } from "@/hooks/donation/useDonationCheckout";
 import { useAuth } from "@/hooks/useAuth";
 import { useNetworkSwitching } from "@/hooks/useNetworkSwitching";
-import { useDonationCart } from "@/store";
+import { useDonationCart } from "@/store/donationCart";
 import { CartItemList } from "./CartItemList";
 import { CheckoutHeader } from "./CheckoutHeader";
 import { CompletedDonations } from "./CompletedDonations";

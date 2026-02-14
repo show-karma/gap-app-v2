@@ -1,5 +1,9 @@
-export * from "./filter";
-export * from "./filterByCategory";
-export * from "./filterByStatus";
-export * from "./orderBySortBy";
-export * from "./sort";
+export { filterGrantsByCompleted } from "./filter/filterGrantsByCompleted";
+export { filterGrantsByStarting } from "./filter/filterGrantsByStarting";
+export { filterGrantsByToBeCompleted } from "./filter/filterGrantsByToBeCompleted";
+export { filterByCategory } from "./filterByCategory";
+export { filterByStatus } from "./filterByStatus";
+export { orderBySortBy } from "./orderBySortBy";
+export { sortGrantByCompletePercentage } from "./sort/sortGrantByCompletePercentage";
+export { sortGrantByMilestones } from "./sort/sortGrantByMilestones";
+export { sortGrantByMostRecent } from "./sort/sortGrantByMostRecent";

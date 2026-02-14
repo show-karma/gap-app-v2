@@ -7,8 +7,9 @@ import { Button } from "@/components/Utilities/Button";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { transformImpactsToMilestones } from "@/services/project-profile.service";
-import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import { MESSAGES } from "@/utilities/messages";
 
 export const UpdatesPage: FC = () => {

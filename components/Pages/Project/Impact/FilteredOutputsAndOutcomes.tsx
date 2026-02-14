@@ -1,7 +1,6 @@
 "use client";
 
 import { TrashIcon } from "@heroicons/react/24/outline";
-import { Card, Title } from "@tremor/react";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -10,8 +9,10 @@ import { Button } from "@/components/Utilities/Button";
 import { ChartSkeleton } from "@/components/Utilities/ChartSkeleton";
 import { useAutosyncedIndicators } from "@/hooks/useAutosyncedIndicators";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
+import { DataCard as Card, DataTitle as Title } from "@/src/components/ui/data-card";
 import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";

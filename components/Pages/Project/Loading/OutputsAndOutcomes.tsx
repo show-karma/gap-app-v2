@@ -1,4 +1,4 @@
-import { Card } from "@tremor/react";
+import { DataCard as Card } from "@/src/components/ui/data-card";
 
 export const OutputsAndOutcomesLoading = () => {
   return (

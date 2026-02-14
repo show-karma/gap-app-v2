@@ -19,4 +19,15 @@ export {
 } from "./hooks/use-program-prompts";
 // Services
 export { programPromptService } from "./services/program-prompt.service";
-export * from "./types/program-prompt";
+export type {
+  BulkEvaluationJob,
+  BulkEvaluationStatus,
+  ProgramPrompt,
+  ProgramPromptsResponse,
+  PromptType,
+  SaveProgramPromptRequest,
+  TestProgramPromptRequest,
+  TestProgramPromptResult,
+  TriggerBulkEvaluationRequest,
+  TriggerBulkEvaluationResult,
+} from "./types/program-prompt";

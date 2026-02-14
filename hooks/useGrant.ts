@@ -6,7 +6,7 @@ import { useGrantFormStore } from "@/components/Pages/GrantMilestonesAndUpdates/
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getProjectGrants } from "@/services/project-grants.service";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import type { Grant } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";

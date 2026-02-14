@@ -3,8 +3,8 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { useMemo } from "react";
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
-import { useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
+import { useProjectStore } from "@/store/project";
 import { EndorsementList } from "../ProgramRegistry/EndorsementList";
 
 export const ProjectSubTabs = () => {

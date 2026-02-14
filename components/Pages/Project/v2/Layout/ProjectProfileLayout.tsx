@@ -5,7 +5,11 @@ import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { ProjectOptionsMenu } from "@/components/Pages/Project/ProjectOptionsMenu";
+
+const ProjectOptionsMenu = dynamic(
+  () => import("@/components/Pages/Project/ProjectOptionsMenu").then((m) => m.ProjectOptionsMenu),
+  { ssr: false }
+);
 
 const ProgressDialog = dynamic(
   () => import("@/components/Dialogs/ProgressDialog").then((m) => m.ProgressDialog),
@@ -27,7 +31,7 @@ const ProjectOptionsDialogs = dynamic(
 );
 
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
-import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
+import { useProjectProfileLayout } from "@/hooks/v2/useProjectProfileLayout";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
@@ -128,10 +132,10 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
     }
   }, [inviteCode, hasOpenedInviteModal, openContributorProfileModal]);
 
-  // Use unified hook for all project profile data
-  const { project, isLoading, isProjectLoading, isError, isVerified, stats } = useProjectProfile(
-    projectId as string
-  );
+  // Use lightweight layout hook — only fetches project core + grants (for stats).
+  // Updates and impacts are deferred to per-tab hooks (e.g., UpdatesContent).
+  const { project, isLoading, isProjectLoading, isError, isVerified, stats } =
+    useProjectProfileLayout(projectId as string);
 
   // Initialize project permissions in store (for authorization checks in ContentTabs)
   useProjectPermissions();

@@ -1,3 +1,11 @@
-export * from "./getGrants";
-export * from "./grants";
-export * from "./isCommunityAdmin";
+export { type GrantsFilter, type GrantsResponse, getGrants } from "./getGrants";
+export { filterGrantsByCompleted } from "./grants/filter/filterGrantsByCompleted";
+export { filterGrantsByStarting } from "./grants/filter/filterGrantsByStarting";
+export { filterGrantsByToBeCompleted } from "./grants/filter/filterGrantsByToBeCompleted";
+export { filterByCategory } from "./grants/filterByCategory";
+export { filterByStatus } from "./grants/filterByStatus";
+export { orderBySortBy } from "./grants/orderBySortBy";
+export { sortGrantByCompletePercentage } from "./grants/sort/sortGrantByCompletePercentage";
+export { sortGrantByMilestones } from "./grants/sort/sortGrantByMilestones";
+export { sortGrantByMostRecent } from "./grants/sort/sortGrantByMostRecent";
+export { isCommunityAdminOf } from "./isCommunityAdmin";

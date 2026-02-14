@@ -1,10 +1,10 @@
 "use client";
-import { Popover } from "@headlessui/react";
 import { ChevronDownIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
+import * as PopoverPrimitive from "@radix-ui/react-popover";
 import type { IMilestone } from "@show-karma/karma-gap-sdk";
-import { type FC, useEffect } from "react";
+import { type FC, useEffect, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -134,6 +134,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
     watch,
   ]);
 
+  const [priorityPopoverOpen, setPriorityPopoverOpen] = useState(false);
   const priorities = Array.from({ length: 5 }, (_, index) => index + 1);
 
   return milestonesForms[index].isEditing ? (
@@ -239,72 +240,76 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
                   <div className="flex w-full flex-col gap-2">
                     <div className={labelStyle}>Priority (optional)</div>
                     <div>
-                      <Popover className="relative">
-                        <Popover.Button className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center text-black dark:text-white border border-gray-200 bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
+                      <PopoverPrimitive.Root
+                        open={priorityPopoverOpen}
+                        onOpenChange={setPriorityPopoverOpen}
+                      >
+                        <PopoverPrimitive.Trigger className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center text-black dark:text-white border border-gray-200 bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
                           {field.value ? `Priority ${field.value}` : `Select priority`}
                           <ChevronDownIcon className="ml-auto h-4 w-4 opacity-50 text-black dark:text-white" />
-                        </Popover.Button>
-                        <Popover.Panel className="absolute z-10 bg-white border border-gray-200 dark:bg-zinc-800 mt-4 rounded-md w-[160px] scroll-smooth overflow-y-auto overflow-x-hidden py-2">
-                          {({ close }) => (
-                            <>
+                        </PopoverPrimitive.Trigger>
+                        <PopoverPrimitive.Portal>
+                          <PopoverPrimitive.Content
+                            align="start"
+                            sideOffset={8}
+                            className="z-10 bg-white border border-gray-200 dark:bg-zinc-800 dark:border-zinc-700 rounded-md w-[160px] scroll-smooth overflow-y-auto overflow-x-hidden py-2 shadow-md"
+                          >
+                            <button
+                              key={"none"}
+                              className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
+                              onClick={(event) => {
+                                event?.preventDefault();
+                                event?.stopPropagation();
+                                field.onChange(undefined);
+                                setValue("priority", undefined, {
+                                  shouldValidate: true,
+                                });
+                                setPriorityPopoverOpen(false);
+                              }}
+                            >
+                              None
+                            </button>
+                            {priorities.map((priority) => (
                               <button
-                                key={"none"}
+                                key={priority}
                                 className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
+                                disabled={
+                                  watch("priority") === priority
+                                    ? false
+                                    : formPriorities.includes(priority)
+                                }
                                 onClick={(event) => {
                                   event?.preventDefault();
                                   event?.stopPropagation();
-                                  field.onChange(undefined);
-                                  setValue("priority", undefined, {
-                                    shouldValidate: true,
-                                  });
-
-                                  close();
+                                  if (watch("priority") === priority) {
+                                    field.onChange(undefined);
+                                    setValue("priority", undefined, {
+                                      shouldValidate: true,
+                                    });
+                                  } else {
+                                    field.onChange(priority);
+                                    setValue("priority", priority, {
+                                      shouldValidate: true,
+                                    });
+                                  }
+                                  const watchPriority = watch("priority");
+                                  if (formPriorities.includes(priority)) {
+                                    const newPriorities = formPriorities.filter(
+                                      (p) => p !== priority && p !== watchPriority
+                                    );
+                                    setFormPriorities(newPriorities);
+                                  } else {
+                                    setFormPriorities([...formPriorities, priority]);
+                                  }
+                                  setPriorityPopoverOpen(false);
                                 }}
                               >
-                                None
+                                Priority {priority}
                               </button>
-                              {priorities.map((priority) => (
-                                <button
-                                  key={priority}
-                                  className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
-                                  disabled={
-                                    watch("priority") === priority
-                                      ? false
-                                      : formPriorities.includes(priority)
-                                  }
-                                  onClick={(event) => {
-                                    event?.preventDefault();
-                                    event?.stopPropagation();
-                                    if (watch("priority") === priority) {
-                                      field.onChange(undefined);
-                                      setValue("priority", undefined, {
-                                        shouldValidate: true,
-                                      });
-                                    } else {
-                                      field.onChange(priority);
-                                      setValue("priority", priority, {
-                                        shouldValidate: true,
-                                      });
-                                    }
-                                    const watchPriority = watch("priority");
-                                    if (formPriorities.includes(priority)) {
-                                      const newPriorities = formPriorities.filter(
-                                        (p) => p !== priority && p !== watchPriority
-                                      );
-                                      setFormPriorities(newPriorities);
-                                    } else {
-                                      setFormPriorities([...formPriorities, priority]);
-                                    }
-                                    close();
-                                  }}
-                                >
-                                  Priority {priority}
-                                </button>
-                              ))}
-                            </>
-                          )}
-                        </Popover.Panel>
-                      </Popover>
+                            ))}
+                          </PopoverPrimitive.Content>
+                        </PopoverPrimitive.Portal>
+                      </PopoverPrimitive.Root>
                     </div>
                     <p className="text-base text-red-400">
                       {formState.errors.dates?.endsAt?.message}

@@ -1,5 +1,5 @@
 import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
-import { ethers } from "ethers";
+import { JsonRpcProvider } from "ethers";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { getRPCUrlByChainId } from "./rpcClient";
 
@@ -16,7 +16,7 @@ export const getProjectMemberRoles = async (project: ProjectResponse, projectIns
   if (project?.members) {
     const rpcUrl = getRPCUrlByChainId(project.chainID);
     if (!rpcUrl) return roles;
-    const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
+    const rpcProvider = new JsonRpcProvider(rpcUrl);
 
     await Promise.all(
       project.members

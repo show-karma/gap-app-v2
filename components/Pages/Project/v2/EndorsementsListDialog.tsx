@@ -14,8 +14,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useProjectStore } from "@/store";
 import { useENS } from "@/store/ens";
+import { useProjectStore } from "@/store/project";
 import { formatDate } from "@/utilities/formatDate";
 import { shortAddress } from "@/utilities/shortAddress";
 

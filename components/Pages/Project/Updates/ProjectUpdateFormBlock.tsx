@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 interface ProjectUpdateFormBlockProps {

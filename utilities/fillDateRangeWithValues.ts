@@ -1,5 +1,3 @@
-import moment from "moment";
-
 interface DataType {
   value: string | number;
   date: string;
@@ -11,36 +9,42 @@ interface ReturnType {
   date: string;
 }
 
+/**
+ * Normalize a timestamp to the start of the UTC day (midnight UTC).
+ */
+function startOfUTCDay(ts: number): Date {
+  const d = new Date(ts);
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
+}
+
 export const fillDateRangeWithValues = (dataArray: DataType[]) => {
   const filledArray: ReturnType[] = [];
   const localDataArray = dataArray.map((data) => ({
     ...data,
-    timestamp: moment(data.timestamp).utc().startOf("date").valueOf(),
+    timestamp: startOfUTCDay(data.timestamp).getTime(),
   }));
-  const firstDayOfRange = moment
-    .min(localDataArray.map((data) => moment(data.timestamp)))
-    .startOf("day");
 
-  const currentDate = moment(firstDayOfRange).utc().startOf("date");
-  const lastDayOfRange = moment().utc().startOf("date");
+  const minTimestamp = Math.min(...localDataArray.map((d) => d.timestamp));
+  let currentDate = startOfUTCDay(minTimestamp);
+  const lastDayOfRange = startOfUTCDay(Date.now());
 
   while (currentDate <= lastDayOfRange) {
     const matchingData = localDataArray.find((data) => {
-      return moment(data.timestamp).isSame(currentDate, "day");
+      return startOfUTCDay(data.timestamp).getTime() === currentDate.getTime();
     });
     if (matchingData) {
       filledArray.push({
-        date: moment(matchingData.timestamp).utc().startOf("date").toISOString(),
+        date: startOfUTCDay(matchingData.timestamp).toISOString(),
         value: matchingData.value,
       });
     } else {
-      const currentDateManipulated = currentDate.utc().startOf("date"); // Set time to 00:00:00
       filledArray.push({
-        date: currentDateManipulated.toISOString(),
+        date: currentDate.toISOString(),
         value: 0,
       });
     }
-    currentDate.add(1, "day");
+    currentDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
   }
 
   return filledArray;

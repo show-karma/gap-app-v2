@@ -1,0 +1,15 @@
+/* Prevent scrollbar from overlapping textarea in MarkdownEditor */
+.wrapper :global(.w-md-editor-text) {
+  padding-right: 1rem;
+}
+
+.wrapper :global(.w-md-editor-text) textarea {
+  padding-right: 0.5rem;
+}
+
+/* Remove default Tailwind forms plugin focus ring from MarkdownEditor textarea */
+.wrapper :global(.w-md-editor-text-input):focus {
+  --tw-ring-color: transparent;
+  border-color: inherit;
+  box-shadow: none;
+}

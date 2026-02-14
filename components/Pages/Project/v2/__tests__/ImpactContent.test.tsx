@@ -31,7 +31,8 @@ jest.mock("next/navigation", () => ({
 }));
 
 import { useSearchParams } from "next/navigation";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 
 const mockUseOwnerStore = useOwnerStore as jest.MockedFunction<typeof useOwnerStore>;
 const mockUseProjectStore = useProjectStore as jest.MockedFunction<typeof useProjectStore>;

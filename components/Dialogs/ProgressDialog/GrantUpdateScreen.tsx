@@ -2,8 +2,8 @@
 import { useState } from "react";
 import { GrantUpdateForm } from "@/components/Forms/GrantUpdate";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
-import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
+import { useProjectStore } from "@/store/project";
 import type { Grant } from "@/types/v2/grant";
 import { Dropdown } from "./Dropdown";
 import { NoGrant } from "./NoGrant";

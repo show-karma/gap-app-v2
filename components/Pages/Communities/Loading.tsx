@@ -1,4 +1,5 @@
-import { AutoSizer, Grid } from "react-virtualized";
+"use client";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 
 const pickColor = (index: number) => {
@@ -138,6 +139,80 @@ export const FilterByProgramsSkeleton = () => {
   );
 };
 
+const ResponsiveGrid = ({
+  items,
+  rowHeight: baseRowHeight,
+  gap,
+  renderItem,
+}: {
+  items: unknown[];
+  rowHeight: number;
+  gap: number;
+  renderItem: (index: number) => React.ReactNode;
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+
+  const updateWidth = useCallback(() => {
+    if (containerRef.current) {
+      setWidth(containerRef.current.offsetWidth);
+    }
+  }, []);
+
+  useEffect(() => {
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+    return () => observer.disconnect();
+  }, [updateWidth]);
+
+  const columns = getResponsiveColumns(width);
+  const actualCardWidth = width > 0 ? Math.floor((width - (columns - 1) * gap) / columns) : 0;
+  const rowHeightWithGap = baseRowHeight + gap;
+  const rowCount = Math.ceil(items.length / columns);
+
+  return (
+    <div ref={containerRef} style={{ width: "100%", overflow: "visible" }}>
+      {width > 0 && (
+        <div
+          style={{
+            height: rowCount * rowHeightWithGap + 60,
+            width,
+            position: "relative",
+            overflow: "visible",
+          }}
+        >
+          {Array.from({ length: rowCount }, (_, rowIndex) =>
+            Array.from({ length: columns }, (_, columnIndex) => {
+              const itemIndex = rowIndex * columns + columnIndex;
+              if (itemIndex >= items.length) return null;
+
+              return (
+                <div
+                  key={`${rowIndex}-${columnIndex}`}
+                  style={{
+                    position: "absolute",
+                    left: columnIndex * (actualCardWidth + gap),
+                    top: rowIndex * rowHeightWithGap,
+                    width: actualCardWidth,
+                    paddingRight: columnIndex < columns - 1 ? gap : 0,
+                    paddingBottom: gap,
+                    overflow: "visible",
+                  }}
+                >
+                  {renderItem(itemIndex)}
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const CommunitiesSkeleton = () => {
   // Mock 4 summary stats (same as real component)
   const summaryStats = Array(4).fill(null);
@@ -154,100 +229,24 @@ export const CommunitiesSkeleton = () => {
         <div className="h-5 w-80 bg-gray-300 dark:bg-gray-600 rounded"></div>
       </div>
 
-      {/* Summary Stats Row Skeleton - Using same Grid system */}
+      {/* Summary Stats Row Skeleton */}
       <div className="w-full overflow-hidden">
-        <AutoSizer disableHeight>
-          {({ width }) => {
-            const columns = getResponsiveColumns(width);
-            const gap = 24;
-            const actualCardWidth = Math.floor((width - (columns - 1) * gap) / columns);
-            const rowHeight = 113 + gap;
-            const rowCount = Math.ceil(summaryStats.length / columns);
-            const height = rowHeight * rowCount;
-
-            return (
-              <Grid
-                key={`stats-skeleton-grid-${width}-${columns}`}
-                height={height}
-                width={width}
-                rowCount={rowCount}
-                rowHeight={rowHeight}
-                columnWidth={actualCardWidth + gap}
-                columnCount={columns}
-                style={{ overflow: "visible" }}
-                cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-                  const itemIndex = rowIndex * columns + columnIndex;
-                  const stat = summaryStats[itemIndex];
-
-                  if (stat === undefined) return null;
-
-                  return (
-                    <div
-                      key={key}
-                      style={{
-                        ...style,
-                        width: actualCardWidth,
-                        paddingRight: columnIndex < columns - 1 ? gap : 0,
-                        paddingBottom: gap,
-                        overflow: "visible",
-                      }}
-                    >
-                      <StatsSkeleton />
-                    </div>
-                  );
-                }}
-              />
-            );
-          }}
-        </AutoSizer>
+        <ResponsiveGrid
+          items={summaryStats}
+          rowHeight={113}
+          gap={24}
+          renderItem={() => <StatsSkeleton />}
+        />
       </div>
 
       {/* Communities Grid Skeleton */}
       <div className="w-full overflow-hidden">
-        <AutoSizer disableHeight>
-          {({ width }) => {
-            const columns = getResponsiveColumns(width);
-            const gap = 24;
-            const actualCardWidth = Math.floor((width - (columns - 1) * gap) / columns);
-            const rowHeight = 318 + gap; // Card height + gap
-            const rowCount = Math.ceil(communities.length / columns);
-            const height = rowCount * rowHeight;
-
-            return (
-              <Grid
-                key={`communities-skeleton-grid-${width}-${columns}`}
-                height={height + 60}
-                width={width}
-                rowCount={rowCount}
-                rowHeight={rowHeight}
-                columnWidth={actualCardWidth + gap}
-                columnCount={columns}
-                style={{ overflow: "visible" }}
-                cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-                  const itemIndex = rowIndex * columns + columnIndex;
-                  const community = communities[itemIndex];
-
-                  if (community === undefined) return null;
-
-                  return (
-                    <div
-                      key={key}
-                      style={{
-                        ...style,
-                        width: actualCardWidth,
-                        paddingRight: columnIndex < columns - 1 ? gap : 0,
-                        paddingBottom: gap,
-                        overflow: "visible",
-                      }}
-                    >
-                      <CommunityCardSkeleton />
-                    </div>
-                  );
-                }}
-              />
-            );
-          }}
-        </AutoSizer>
+        <ResponsiveGrid
+          items={communities}
+          rowHeight={318}
+          gap={24}
+          renderItem={() => <CommunityCardSkeleton />}
+        />
       </div>
     </div>
   );

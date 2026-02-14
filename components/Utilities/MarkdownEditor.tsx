@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import rehypeSanitize from "rehype-sanitize";
+import editorStyles from "@/styles/markdown-editor.module.css";
 import { cn } from "@/utilities/tailwind";
 
 // Constants for content validation and performance
@@ -207,7 +208,8 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
       <div
         data-color-mode={currentTheme === "dark" ? "dark" : "light"}
         className={cn(
-          "w-full rounded-lg border overflow-hidden markdown-editor-wrapper",
+          "w-full rounded-lg border overflow-hidden",
+          editorStyles.wrapper,
           error ? "border-red-500 dark:border-red-500" : "border-gray-200 dark:border-gray-700"
         )}
       >

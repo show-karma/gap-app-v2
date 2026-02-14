@@ -1,7 +1,7 @@
 import type { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { getContributorProfiles } from "@/utilities/indexer/getContributorProfiles";
 

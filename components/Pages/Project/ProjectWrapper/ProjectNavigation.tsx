@@ -14,8 +14,9 @@ import {
   EnableDonationsButton,
   hasConfiguredPayoutAddresses,
 } from "@/src/features/chain-payout-address";
-import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import type { Project } from "@/types/v2/project";
 import formatCurrency from "@/utilities/formatCurrency";
 import { PAGES } from "@/utilities/pages";

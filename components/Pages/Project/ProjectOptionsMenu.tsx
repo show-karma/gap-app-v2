@@ -35,12 +35,13 @@ import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context"
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
 import { SetChainPayoutAddressModal } from "@/src/features/chain-payout-address";
-import { useOwnerStore, useProjectStore } from "@/store";
 import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
 import { useGrantGenieModalStore } from "@/store/modals/genie";
 import { useMergeModalStore } from "@/store/modals/merge";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import { MESSAGES } from "@/utilities/messages";
 import { deleteProject, getProjectById } from "@/utilities/sdk";
 import { LinkContractAddressButton } from "./LinkContractAddressButton";

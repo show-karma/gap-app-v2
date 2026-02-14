@@ -18,6 +18,12 @@ const colorClasses = {
   gray: "border-gray-600",
 };
 
+const textColorClasses = {
+  blue: "text-blue-600",
+  white: "text-white",
+  gray: "text-gray-600",
+};
+
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = "md",
   color = "blue",
@@ -29,9 +35,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     return (
       <div className="flex items-center justify-center py-8">
         <div className={`${spinnerClasses} mr-3`}></div>
-        <span className={`font-medium ${color === "white" ? "text-white" : `text-${color}-600`}`}>
-          {message}
-        </span>
+        <span className={`font-medium ${textColorClasses[color]}`}>{message}</span>
       </div>
     );
   }

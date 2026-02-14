@@ -1,20 +1,35 @@
 "use client";
 
 import { DollarSign, HandCoinsIcon } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { useAccount } from "wagmi";
-import { SingleProjectDonateModal } from "@/components/Donation/SingleProject/SingleProjectDonateModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
-import {
-  hasConfiguredPayoutAddresses,
-  SetChainPayoutAddressModal,
-} from "@/src/features/chain-payout-address";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { hasConfiguredPayoutAddresses } from "@/src/features/chain-payout-address";
+
+const SingleProjectDonateModal = dynamic(
+  () =>
+    import("@/components/Donation/SingleProject/SingleProjectDonateModal").then(
+      (m) => m.SingleProjectDonateModal
+    ),
+  { ssr: false }
+);
+
+const SetChainPayoutAddressModal = dynamic(
+  () =>
+    import("@/src/features/chain-payout-address/components/set-chain-payout-address-modal").then(
+      (m) => m.SetChainPayoutAddressModal
+    ),
+  { ssr: false }
+);
+
 import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/store/project";
 import type { Project } from "@/types/v2/project";
 import { cn } from "@/utilities/tailwind";
 

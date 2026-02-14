@@ -1,6 +1,6 @@
 "use client";
-import { Card } from "@tremor/react";
 import Image from "next/image";
+import { DataCard as Card } from "@/src/components/ui/data-card";
 import { cn } from "@/utilities/tailwind";
 
 export const SegmentSkeleton = ({

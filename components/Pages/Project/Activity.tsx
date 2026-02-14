@@ -1,13 +1,15 @@
-import { Tab } from "@headlessui/react";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { ActivityList } from "@/components/Shared/ActivityList";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProjectImpacts } from "@/hooks/v2/useProjectImpacts";
 import { useProjectUpdates } from "@/hooks/v2/useProjectUpdates";
 import { transformImpactsToMilestones } from "@/services/project-profile.service";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import type { UnifiedMilestone } from "@/types/v2/roadmap";
 import { cn } from "@/utilities/tailwind";
+
+type TabValue = "all" | "updates" | "milestones";
 
 export const ProjectActivity = () => {
   const { isProjectAdmin } = useProjectStore();
@@ -17,7 +19,7 @@ export const ProjectActivity = () => {
   const { milestones = [] } = useProjectUpdates(projectId as string);
   const { impacts = [] } = useProjectImpacts(projectId as string);
 
-  const [selectedTab, setSelectedTab] = useState(0);
+  const [selectedTab, setSelectedTab] = useState<TabValue>("all");
 
   // Convert impacts to match expected format and combine with milestones
   const allUpdates = useMemo(() => {
@@ -45,23 +47,22 @@ export const ProjectActivity = () => {
 
   // Tabs for filtering different activity types
   const tabs = [
-    { name: "All", count: allUpdates.length },
-    { name: "Updates", count: updatesCount },
-    { name: "Milestones", count: milestonesCount },
+    { name: "All", value: "all" as TabValue, count: allUpdates.length },
+    { name: "Updates", value: "updates" as TabValue, count: updatesCount },
+    { name: "Milestones", value: "milestones" as TabValue, count: milestonesCount },
   ];
 
-  // Filter activities based on selected tab - pass everything through milestones prop
-  // since allUpdates is actually UnifiedMilestone[]
+  // Filter activities based on selected tab
   const filteredMilestones = useMemo((): UnifiedMilestone[] => {
     switch (selectedTab) {
-      case 0: // All
+      case "all":
         return allUpdates as UnifiedMilestone[];
-      case 1: // Updates only
+      case "updates":
         return allUpdates.filter(
           (item) =>
             item.type === "activity" || item.type === "grant_update" || item.type === "impact"
         ) as UnifiedMilestone[];
-      case 2: // Milestones only
+      case "milestones":
         return allUpdates.filter(
           (item) => item.type === "milestone" || item.type === "grant" || item.type === "project"
         ) as UnifiedMilestone[];
@@ -79,39 +80,36 @@ export const ProjectActivity = () => {
         </p>
       </div>
 
-      <Tab.Group onChange={setSelectedTab}>
-        <Tab.List className="flex space-x-2 rounded-xl bg-blue-50 dark:bg-zinc-800 p-1">
+      <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as TabValue)}>
+        <TabsList className="flex space-x-2 rounded-xl bg-blue-50 dark:bg-zinc-800 p-1 h-auto">
           {tabs.map((tab) => (
-            <Tab
-              key={tab.name}
-              className={({ selected }) =>
-                cn(
-                  "w-full rounded-lg py-2.5 text-sm font-medium leading-5",
-                  "ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2",
-                  selected
-                    ? "bg-white dark:bg-zinc-700 shadow text-blue-700 dark:text-blue-300"
-                    : "text-gray-700 dark:text-gray-400 hover:bg-white/[0.12] hover:text-gray-800 dark:hover:text-white"
-                )
-              }
-            >
-              {tab.name} {tab.count > 0 && `(${tab.count})`}
-            </Tab>
-          ))}
-        </Tab.List>
-        <Tab.Panels className="mt-2">
-          {tabs.map((_tab, idx) => (
-            <Tab.Panel
-              key={idx}
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
               className={cn(
-                "rounded-xl p-3",
-                "ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none"
+                "w-full rounded-lg py-2.5 text-sm font-medium leading-5",
+                "ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2",
+                "text-gray-700 dark:text-gray-400 hover:bg-white/[0.12] hover:text-gray-800 dark:hover:text-white",
+                "data-[state=active]:bg-white data-[state=active]:dark:bg-zinc-700 data-[state=active]:shadow data-[state=active]:text-blue-700 data-[state=active]:dark:text-blue-300"
               )}
             >
-              <ActivityList milestones={filteredMilestones} isAuthorized={isAuthorized} />
-            </Tab.Panel>
+              {tab.name} {tab.count > 0 && `(${tab.count})`}
+            </TabsTrigger>
           ))}
-        </Tab.Panels>
-      </Tab.Group>
+        </TabsList>
+        {tabs.map((tab) => (
+          <TabsContent
+            key={tab.value}
+            value={tab.value}
+            className={cn(
+              "rounded-xl p-3",
+              "ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none"
+            )}
+          >
+            <ActivityList milestones={filteredMilestones} isAuthorized={isAuthorized} />
+          </TabsContent>
+        ))}
+      </Tabs>
     </div>
   );
 };

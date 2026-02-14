@@ -1,13 +1,18 @@
 "use client";
 
 import { ArrowTopRightOnSquareIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
-import { Card, Metric, Text, Title } from "@tremor/react";
 import Link from "next/link";
 import { useState } from "react";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Badge } from "@/components/ui/badge";
 import { NETWORKS, type SupportedChainId } from "@/config/tokens";
+import {
+  DataCard as Card,
+  DataMetric as Metric,
+  DataText as Text,
+  DataTitle as Title,
+} from "@/src/components/ui/data-card";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import {

@@ -19,7 +19,7 @@ import {
   usePermissionContext,
 } from "@/src/core/rbac/context/permission-context";
 import { ReviewerType } from "@/src/core/rbac/types";
-import { useOwnerStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { CommentsAndActivity } from "./CommentsAndActivity";

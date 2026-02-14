@@ -16,8 +16,6 @@ const securityHeaders = [
   },
 ];
 
-const removeImports = require("next-remove-imports")();
-
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -36,6 +34,20 @@ const nextConfig: NextConfig = {
       "@sentry/core",
       "viem",
       "wagmi",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-popover",
+      "@radix-ui/react-select",
+      "@radix-ui/react-tabs",
+      "@radix-ui/react-tooltip",
+      "@radix-ui/react-checkbox",
+      "class-variance-authority",
+      "clsx",
+      "zod",
+      "@hookform/resolvers",
+      "react-hook-form",
+      "@headlessui/react",
+      "@heroicons/react",
     ],
   },
   eslint: {
@@ -144,7 +156,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-const bundleAnalyzer = withBundleAnalyzer(removeImports(nextConfig));
+const bundleAnalyzer = withBundleAnalyzer(nextConfig);
 
 // Injected content via Sentry wizard below
 
@@ -163,8 +175,8 @@ const withSentry = withSentryConfig(
     org: "karma-crypto-inc",
     project: "gap-frontend",
     tunnelRoute: "/monitoring",
-    reactComponentAnnotation: true,
-    debug: true,
+    reactComponentAnnotation: false,
+    debug: false,
   },
   {
     // Upload a larger set of source maps for prettier stack traces (increases build time)

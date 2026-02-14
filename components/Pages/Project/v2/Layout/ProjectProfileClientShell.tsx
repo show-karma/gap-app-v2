@@ -7,7 +7,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { IntroDialog } from "@/components/Pages/Project/IntroDialog";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
-import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
+import { useProjectProfileLayout } from "@/hooks/v2/useProjectProfileLayout";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
@@ -60,8 +60,8 @@ export function ProjectProfileClientShell({
   const { isIntroModalOpen } = useIntroModalStore();
   const { isProgressModalOpen } = useProgressModalStore();
 
-  // Use unified hook for project profile data (hydrated from server prefetch)
-  const { project, isLoading, isVerified, stats } = useProjectProfile(projectId);
+  // Use lightweight layout hook — only fetches project core + grants (for stats).
+  const { project, isLoading, isVerified, stats } = useProjectProfileLayout(projectId);
 
   // Initialize project permissions in store (for authorization checks in ContentTabs)
   useProjectPermissions();

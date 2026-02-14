@@ -1,18 +1,18 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
+import { useProjectStore } from "@/store/project";
 import { AboutContent } from "../MainContent/AboutContent";
+import { AboutContentSkeleton } from "../Skeletons";
 
 /**
- * Wrapper component for AboutContent that fetches project data.
+ * Wrapper component for AboutContent that reads project from the Zustand store.
+ * The layout already fetches the project, so no additional query is needed here.
  */
 export function AboutContentWrapper() {
-  const { projectId } = useParams();
-  const { project, isLoading } = useProjectProfile(projectId as string);
+  const project = useProjectStore((state) => state.project);
 
-  if (isLoading || !project) {
-    return <div className="animate-pulse text-gray-500">Loading about...</div>;
+  if (!project) {
+    return <AboutContentSkeleton />;
   }
 
   return <AboutContent project={project} />;

@@ -1,3 +1,3 @@
-export * from "./filterGrantsByCompleted";
-export * from "./filterGrantsByStarting";
-export * from "./filterGrantsByToBeCompleted";
+export { filterGrantsByCompleted } from "./filterGrantsByCompleted";
+export { filterGrantsByStarting } from "./filterGrantsByStarting";
+export { filterGrantsByToBeCompleted } from "./filterGrantsByToBeCompleted";

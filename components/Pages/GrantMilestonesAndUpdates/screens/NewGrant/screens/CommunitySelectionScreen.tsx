@@ -7,7 +7,7 @@ import { useDuplicateGrantCheck } from "@/hooks/useDuplicateGrantCheck";
 import { useGrant } from "@/hooks/useGrant";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
 import { getCommunities } from "@/services/communities.service";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/store/project";
 import type { Community } from "@/types/v2/community";
 import {
   FUNDING_PROGRAM_GRANT_NAMES,
