@@ -42,7 +42,6 @@ import { ProjectHeader } from "../Header/ProjectHeader";
 import { type ContentTab, ContentTabs } from "../MainContent/ContentTabs";
 import { MobileHeaderMinified } from "../Mobile/MobileHeaderMinified";
 import { MobileProfileContent } from "../Mobile/MobileProfileContent";
-import { ProjectSidePanel } from "../SidePanel/ProjectSidePanel";
 import {
   ContentTabsSkeleton,
   MobileProfileContentSkeleton,
@@ -51,6 +50,11 @@ import {
   ProjectStatsBarSkeleton,
 } from "../Skeletons";
 import { ProjectStatsBar } from "../StatsBar/ProjectStatsBar";
+
+const ProjectSidePanel = dynamic(
+  () => import("../SidePanel/ProjectSidePanel").then((m) => m.ProjectSidePanel),
+  { loading: () => <ProjectSidePanelSkeleton />, ssr: false }
+);
 
 interface ProjectProfileLayoutProps {
   children: ReactNode;
