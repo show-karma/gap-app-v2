@@ -122,6 +122,8 @@ export const INDEXER = {
       `/v2/search?q=${encodeURIComponent(query)}&limit=${limit}`,
     FUNDING_DETAILS: (programId: string, chainId: number) =>
       `/v2/program/funding-details?programId=${programId}&chainId=${chainId}`,
+    COMMUNITY_PROGRAM_METRICS: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/metrics`,
     FUNDING_PROGRAMS: {
       BY_COMMUNITY: (communityId: string) => `/v2/funding-program-configs/community/${communityId}`,
       GET: (programId: string) => `/v2/funding-program-configs/${programId}`,
