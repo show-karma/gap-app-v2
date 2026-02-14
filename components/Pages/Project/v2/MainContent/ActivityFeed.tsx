@@ -377,7 +377,7 @@ export function ActivityFeed({
   // Window virtualizer for rendering only visible items
   const virtualizer = useWindowVirtualizer({
     count: visibleMilestones.length,
-    estimateSize: () => 120,
+    estimateSize: () => 400,
     overscan: 5,
     scrollMargin: listRef.current?.offsetTop ?? 0,
     gap: VIRTUAL_ITEM_GAP,
@@ -426,7 +426,11 @@ export function ActivityFeed({
   const measureElement = useCallback(
     (node: HTMLElement | null) => {
       if (node) {
-        virtualizer.measureElement(node);
+        // Defer measurement to next frame to batch all reflows into one
+        // instead of triggering a synchronous forced reflow per item
+        requestAnimationFrame(() => {
+          virtualizer.measureElement(node);
+        });
       }
     },
     [virtualizer]
