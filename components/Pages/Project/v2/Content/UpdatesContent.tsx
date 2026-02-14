@@ -28,7 +28,9 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const { allUpdates, milestonesCount, completedCount } = useProjectProfile(projectId as string);
+  const { allUpdates, milestonesCount, completedCount, isLoading } = useProjectProfile(
+    projectId as string
+  );
 
   // Read filter and sort state from URL
   const activeFilters = useMemo(() => {
@@ -83,9 +85,6 @@ export function UpdatesContent({ className }: UpdatesContentProps) {
     },
     [activeFilters, updateURL]
   );
-
-  // Show loading state while data is being fetched
-  const isLoading = !allUpdates;
 
   return (
     <div className={className} data-testid="updates-content">
