@@ -1,11 +1,8 @@
 "use client";
-import { ChevronLeftIcon } from "@heroicons/react/20/solid";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
@@ -163,13 +160,7 @@ export default function EditCategoriesPage() {
   return (
     <div className="mt-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
       <div className="w-full flex flex-col gap-8">
-        <div className="w-full flex flex-row items-center justify-between">
-          <Link href={PAGES.ADMIN.ROOT(community?.details?.slug || (community?.uid as string))}>
-            <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
-              <ChevronLeftIcon className="h-5 w-5" />
-              Return to admin page
-            </Button>
-          </Link>
+        <div className="w-full flex flex-row items-center justify-end">
           <div className="flex items-center gap-4">
             <ProgramFilter
               programs={communityGrants.map((g) => ({

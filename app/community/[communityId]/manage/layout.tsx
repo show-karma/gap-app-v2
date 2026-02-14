@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { ManageLayoutShell } from "@/components/Manage/ManageLayoutShell";
 import { PermissionProvider } from "@/src/core/rbac/context/permission-context";
 
 export default function ManageLayout({ children }: { children: React.ReactNode }) {
@@ -13,7 +14,7 @@ export default function ManageLayout({ children }: { children: React.ReactNode }
         communityId,
       }}
     >
-      {children}
+      <ManageLayoutShell>{children}</ManageLayoutShell>
     </PermissionProvider>
   );
 }

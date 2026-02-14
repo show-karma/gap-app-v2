@@ -1,8 +1,6 @@
 "use client";
 
 import { ArchiveBoxIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { ChevronLeftIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -26,7 +24,6 @@ import type { Track } from "@/services/tracks";
 import type { Community } from "@/types/v2/community";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
-import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { EditTrackModal } from "./Tracks/EditTrackModal";
 
@@ -200,14 +197,6 @@ export const TracksAdminPage = ({
 
   return (
     <div className="max-w-full w-full">
-      <div className="w-full flex flex-row items-center justify-between max-w-4xl mb-4">
-        <Link href={PAGES.ADMIN.ROOT(community?.details?.slug || (community?.uid as string))}>
-          <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
-            <ChevronLeftIcon className="h-5 w-5" />
-            Return to admin page
-          </Button>
-        </Link>
-      </div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tracks Management</h1>
         <Button onClick={() => setShowCreateModal(true)}>
