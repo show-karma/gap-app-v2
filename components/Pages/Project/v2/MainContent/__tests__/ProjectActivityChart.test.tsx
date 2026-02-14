@@ -1,6 +1,5 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
-import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
-import { useProjectStore } from "@/store/project";
+import { useUpdatesTabData } from "@/hooks/v2/useUpdatesTabData";
 import { ProjectActivityChart } from "../ProjectActivityChart";
 
 // Mock IntersectionObserver to trigger visibility on observe
@@ -24,12 +23,8 @@ beforeAll(() => {
   window.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
 });
 
-jest.mock("@/hooks/v2/useProjectProfile", () => ({
-  useProjectProfile: jest.fn(),
-}));
-
-jest.mock("@/store", () => ({
-  useProjectStore: jest.fn(),
+jest.mock("@/hooks/v2/useUpdatesTabData", () => ({
+  useUpdatesTabData: jest.fn(),
 }));
 
 jest.mock("@tremor/react", () => ({
@@ -38,24 +33,24 @@ jest.mock("@tremor/react", () => ({
       {JSON.stringify(data)}
     </div>
   )),
-  Card: jest.fn(({ children }) => <div data-testid="chart-card">{children}</div>),
+}));
+
+jest.mock("@/src/components/ui/data-card", () => ({
+  DataCard: jest.fn(({ children }) => <div data-testid="chart-card">{children}</div>),
 }));
 
 describe("ProjectActivityChart", () => {
-  const mockProject = { uid: "test-project-uid" };
-
   beforeEach(() => {
     jest.clearAllMocks();
-    (useProjectStore as unknown as jest.Mock).mockReturnValue({ project: mockProject });
   });
 
   it("should render loading state with skeleton", () => {
-    (useProjectProfile as jest.Mock).mockReturnValue({
+    (useUpdatesTabData as jest.Mock).mockReturnValue({
       allUpdates: [],
       isLoading: true,
     });
 
-    render(<ProjectActivityChart />);
+    render(<ProjectActivityChart projectId="test-project" />);
 
     expect(screen.getByTestId("chart-card")).toBeInTheDocument();
     expect(document.querySelector(".animate-pulse")).toBeInTheDocument();
@@ -77,13 +72,13 @@ describe("ProjectActivityChart", () => {
       },
     ];
 
-    (useProjectProfile as jest.Mock).mockReturnValue({
+    (useUpdatesTabData as jest.Mock).mockReturnValue({
       allUpdates: mockUpdates,
       isLoading: false,
     });
 
     await act(async () => {
-      render(<ProjectActivityChart />);
+      render(<ProjectActivityChart projectId="test-project" />);
     });
 
     const chart = await waitFor(() => screen.getByTestId("area-chart"));
@@ -111,13 +106,13 @@ describe("ProjectActivityChart", () => {
       },
     ];
 
-    (useProjectProfile as jest.Mock).mockReturnValue({
+    (useUpdatesTabData as jest.Mock).mockReturnValue({
       allUpdates: mockUpdates,
       isLoading: false,
     });
 
     await act(async () => {
-      render(<ProjectActivityChart />);
+      render(<ProjectActivityChart projectId="test-project" />);
     });
 
     const chart = await waitFor(() => screen.getByTestId("area-chart"));
@@ -145,13 +140,13 @@ describe("ProjectActivityChart", () => {
       },
     ];
 
-    (useProjectProfile as jest.Mock).mockReturnValue({
+    (useUpdatesTabData as jest.Mock).mockReturnValue({
       allUpdates: mockUpdates,
       isLoading: false,
     });
 
     await act(async () => {
-      render(<ProjectActivityChart />);
+      render(<ProjectActivityChart projectId="test-project" />);
     });
 
     const chart = await waitFor(() => screen.getByTestId("area-chart"));
@@ -162,7 +157,7 @@ describe("ProjectActivityChart", () => {
     expect(chartData[0]["Product updates"]).toBe(2);
   });
 
-  it("should use allUpdates from useProjectProfile which includes grant_received", async () => {
+  it("should use allUpdates from useUpdatesTabData which includes grant_received", async () => {
     // Use dates within the same week (Apr 14-20, 2024 is Sun-Sat)
     const mockUpdates = [
       {
@@ -185,13 +180,13 @@ describe("ProjectActivityChart", () => {
       },
     ];
 
-    (useProjectProfile as jest.Mock).mockReturnValue({
+    (useUpdatesTabData as jest.Mock).mockReturnValue({
       allUpdates: mockUpdates,
       isLoading: false,
     });
 
     await act(async () => {
-      render(<ProjectActivityChart />);
+      render(<ProjectActivityChart projectId="test-project" />);
     });
 
     const chart = await waitFor(() => screen.getByTestId("area-chart"));
@@ -203,7 +198,7 @@ describe("ProjectActivityChart", () => {
   });
 
   it("should render without card wrapper when embedded", async () => {
-    (useProjectProfile as jest.Mock).mockReturnValue({
+    (useUpdatesTabData as jest.Mock).mockReturnValue({
       allUpdates: [
         {
           uid: "update-1",
@@ -216,7 +211,7 @@ describe("ProjectActivityChart", () => {
     });
 
     await act(async () => {
-      render(<ProjectActivityChart embedded />);
+      render(<ProjectActivityChart embedded projectId="test-project" />);
     });
 
     expect(screen.queryByTestId("chart-card")).not.toBeInTheDocument();
@@ -224,13 +219,13 @@ describe("ProjectActivityChart", () => {
   });
 
   it("should render empty state when no data", async () => {
-    (useProjectProfile as jest.Mock).mockReturnValue({
+    (useUpdatesTabData as jest.Mock).mockReturnValue({
       allUpdates: [],
       isLoading: false,
     });
 
     await act(async () => {
-      render(<ProjectActivityChart embedded />);
+      render(<ProjectActivityChart embedded projectId="test-project" />);
     });
 
     expect(screen.getByText("No activity data for this period")).toBeInTheDocument();

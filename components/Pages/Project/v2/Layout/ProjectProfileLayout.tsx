@@ -292,7 +292,11 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
       >
         {/* Desktop: Header + Stats Bar - Always visible */}
         <div className="hidden lg:flex flex-col bg-secondary border border-border rounded-xl">
-          <ProjectHeader project={project} isVerified={isVerified} />
+          <ProjectHeader
+            project={project}
+            projectId={projectId as string}
+            isVerified={isVerified}
+          />
           {isLoading ? (
             <ProjectStatsBarSkeleton />
           ) : (

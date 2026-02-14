@@ -12,9 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useProjectProfile } from "@/hooks/v2/useProjectProfile";
+import { useUpdatesTabData } from "@/hooks/v2/useUpdatesTabData";
 import { DataCard as Card } from "@/src/components/ui/data-card";
-import { useProjectStore } from "@/store/project";
 import { cn } from "@/utilities/tailwind";
 
 // Dynamically import heavy Tremor chart component for bundle optimization
@@ -25,6 +24,12 @@ const AreaChart = dynamic(() => import("@tremor/react").then((mod) => mod.AreaCh
 
 interface ProjectActivityChartProps {
   className?: string;
+  /**
+   * The project identifier (slug or UID) used for data fetching.
+   * Passed from the parent to ensure React Query cache sharing with
+   * the server prefetch and other hooks using the same projectId.
+   */
+  projectId: string;
   /**
    * When true, renders without the Card wrapper for embedding in other components
    * like ProjectHeader. The parent component provides the card styling.
@@ -60,9 +65,12 @@ const TIME_RANGE_OPTIONS: { value: TimeRange; label: string }[] = [
  * Props:
  * - embedded: When true, removes Card wrapper for use inside other components
  */
-export function ProjectActivityChart({ className, embedded = false }: ProjectActivityChartProps) {
-  const { project } = useProjectStore();
-  const { allUpdates: milestones, isLoading } = useProjectProfile(project?.uid || "");
+export function ProjectActivityChart({
+  className,
+  projectId,
+  embedded = false,
+}: ProjectActivityChartProps) {
+  const { allUpdates: milestones, isLoading } = useUpdatesTabData(projectId);
 
   // Track visibility to prevent chart rendering when container is hidden (e.g., lg:hidden on mobile header)
   // This prevents Recharts warnings about width(0) and height(0) when chart is in a hidden container

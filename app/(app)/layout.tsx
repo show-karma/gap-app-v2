@@ -1,13 +1,13 @@
 import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "react-hot-toast";
 import { ProgressBarWrapper } from "@/components/ProgressBarWrapper";
-import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { Footer } from "@/src/components/footer/footer";
 import { Navbar } from "@/src/components/navbar/navbar";
+import { AppProviders } from "./providers";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <PrivyProviderWrapper>
+    <AppProviders>
       <Toaster
         position="top-right"
         toastOptions={{
@@ -35,6 +35,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
         <Footer />
       </div>
-    </PrivyProviderWrapper>
+    </AppProviders>
   );
 }

@@ -24,5 +24,5 @@ export async function ProjectHeaderAsync({ projectId }: ProjectHeaderAsyncProps)
   // The client will hydrate with the correct value when it has the full profile data.
   const isVerified = false;
 
-  return <ProjectHeader project={project} isVerified={isVerified} />;
+  return <ProjectHeader project={project} projectId={projectId} isVerified={isVerified} />;
 }

@@ -23,33 +23,37 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 }
 
 /**
- * Await only the critical project details query (needed for SSR shell title).
- * Secondary data (grants, updates, impacts) fires as a background prefetch:
- * if it resolves before dehydrate() it'll be in the cache; otherwise
- * client-side hooks fetch it after hydration.
+ * Prefetch all project data in parallel for SSR hydration.
+ *
+ * Both the critical project details AND secondary data (grants, updates, impacts)
+ * are awaited so they're all included in the dehydrated QueryClient state.
+ * This eliminates the client-side fetch waterfall — hooks get instant cache hits.
+ *
+ * A 3-second timeout prevents slow API responses from blocking SSR entirely.
  */
 async function prefetchCriticalProjectData(
   queryClient: QueryClient,
   projectId: string
 ): Promise<void> {
   try {
-    // Critical path — must complete before render so the SSR shell has project title
-    await queryClient.prefetchQuery({
-      queryKey: QUERY_KEYS.PROJECT.DETAILS(projectId),
-      queryFn: () => getProjectCachedData(projectId),
-    });
+    await Promise.race([
+      Promise.all([
+        // Critical: project details for SSR shell title + metadata
+        queryClient.prefetchQuery({
+          queryKey: QUERY_KEYS.PROJECT.DETAILS(projectId),
+          queryFn: () => getProjectCachedData(projectId),
+        }),
+        // Secondary: grants + updates + impacts for instant client-side hydration
+        prefetchProjectProfileData(queryClient, projectId),
+      ]),
+      // Safety timeout — don't block SSR for more than 3 seconds
+      new Promise((resolve) => setTimeout(resolve, 3000)),
+    ]);
   } catch (error) {
     if (process.env.NODE_ENV === "development") {
-      console.warn(`[ProjectLayout] Failed to prefetch project details for ${projectId}:`, error);
+      console.warn(`[ProjectLayout] Failed to prefetch data for ${projectId}:`, error);
     }
   }
-
-  // Non-critical — fire and forget; client hooks will pick up or re-fetch
-  prefetchProjectProfileData(queryClient, projectId).catch((error) => {
-    if (process.env.NODE_ENV === "development") {
-      console.warn(`[ProjectLayout] Failed to prefetch related data for ${projectId}:`, error);
-    }
-  });
 }
 
 export default async function RootLayout(props: {

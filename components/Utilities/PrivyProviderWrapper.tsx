@@ -2,23 +2,22 @@
 
 import { PrivyProvider } from "@privy-io/react-auth";
 import { WagmiProvider } from "@privy-io/wagmi";
-import { QueryClientProvider } from "@tanstack/react-query";
 import { PROJECT_NAME } from "@/constants/brand";
 import { envVars } from "@/utilities/enviromentVars";
 import { appNetwork } from "@/utilities/network";
-import { queryClient } from "@/utilities/query-client";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
-
-/**
- * @deprecated Import from `@/utilities/query-client` instead.
- * This re-export exists only for backwards compatibility and will be removed in a future version.
- */
-export { queryClient };
 
 interface PrivyProviderWrapperProps {
   children: React.ReactNode;
 }
 
+/**
+ * Provides Privy authentication and Wagmi wallet context.
+ *
+ * NOTE: QueryClientProvider is intentionally NOT included here.
+ * It lives in app/(app)/providers.tsx so React Query hydration works
+ * independently of Privy initialization, improving LCP.
+ */
 export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperProps) {
   const privyAppId = envVars.PRIVY_APP_ID;
 
@@ -28,7 +27,6 @@ export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperP
     );
   }
 
-  // Determine the default chain based on environment
   const defaultChain = appNetwork[0];
 
   return (
@@ -59,9 +57,7 @@ export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperP
         walletConnectCloudProjectId: envVars.PROJECT_ID || undefined,
       }}
     >
-      <QueryClientProvider client={queryClient}>
-        <WagmiProvider config={privyConfig}>{children}</WagmiProvider>
-      </QueryClientProvider>
+      <WagmiProvider config={privyConfig}>{children}</WagmiProvider>
     </PrivyProvider>
   );
 }

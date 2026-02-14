@@ -19,6 +19,7 @@ interface CustomLink {
 
 interface ProjectHeaderProps {
   project: Project;
+  projectId?: string;
   isVerified?: boolean;
   className?: string;
 }
@@ -39,7 +40,13 @@ interface ProjectHeaderProps {
  * - Desktop: 82px profile pic
  * - Mobile: 64px profile pic
  */
-export function ProjectHeader({ project, isVerified = false, className }: ProjectHeaderProps) {
+export function ProjectHeader({
+  project,
+  projectId: projectIdProp,
+  isVerified = false,
+  className,
+}: ProjectHeaderProps) {
+  const projectId = projectIdProp || project?.details?.slug || project?.uid || "";
   const [isExpanded, setIsExpanded] = useState(false);
   const socials = useProjectSocials(project?.details?.links);
 
@@ -223,7 +230,7 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
 
           {/* Right side: Project Activity Chart - 50% width on desktop */}
           <div className="mt-6 lg:mt-0 lg:flex-1 lg:basis-1/2">
-            <ProjectActivityChart embedded />
+            <ProjectActivityChart embedded projectId={projectId} />
           </div>
         </div>
       </div>
