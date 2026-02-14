@@ -1,5 +1,3 @@
-"use client";
-
 import type { ReactNode } from "react";
 import { LazyDialogs } from "@/components/Dialogs/LazyDialogs";
 import { ProjectProfileLayout } from "@/components/Pages/Project/v2/Layout/ProjectProfileLayout";
