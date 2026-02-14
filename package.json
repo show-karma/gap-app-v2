@@ -143,6 +143,7 @@
     "sass": "^1.71.0",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
+    "unist-util-visit": "^5.1.0",
     "vaul": "^1.1.2",
     "viem": "^2.31.4",
     "wagmi": "^2.19.4",
