@@ -1,16 +1,34 @@
 "use client";
 
 import { GlobeIcon, RocketIcon } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+
+const MarkdownPreview = dynamic(
+  () => import("@/components/Utilities/MarkdownPreview").then((m) => m.MarkdownPreview),
+  { ssr: false }
+);
+
 import { useProjectSocials } from "@/hooks/useProjectSocials";
 import type { Project } from "@/types/v2/project";
 import { isCustomLink } from "@/utilities/customLink";
 import { ensureProtocol } from "@/utilities/ensureProtocol";
 import { cn } from "@/utilities/tailwind";
 import { VerificationBadge } from "../icons/VerificationBadge";
-import { ProjectActivityChart } from "../MainContent/ProjectActivityChart";
+
+const ProjectActivityChart = dynamic(
+  () => import("../MainContent/ProjectActivityChart").then((m) => m.ProjectActivityChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex flex-col gap-3 animate-pulse">
+        <div className="h-5 w-32 bg-gray-100 dark:bg-zinc-800 rounded" />
+        <div className="h-[120px] bg-gray-100 dark:bg-zinc-800 rounded" />
+      </div>
+    ),
+  }
+);
 
 interface CustomLink {
   url: string;
@@ -193,10 +211,16 @@ export function ProjectHeader({
             {description && (
               <div className="flex flex-col gap-1 flex-1 w-full">
                 <div data-testid="project-description">
-                  <MarkdownPreview
-                    source={displayDescription}
-                    className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed"
-                  />
+                  {isExpanded ? (
+                    <MarkdownPreview
+                      source={description}
+                      className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed"
+                    />
+                  ) : (
+                    <div className="prose prose-sm dark:prose-invert max-w-none text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
+                      {displayDescription}
+                    </div>
+                  )}
                   {shouldTruncate && (
                     <button
                       type="button"

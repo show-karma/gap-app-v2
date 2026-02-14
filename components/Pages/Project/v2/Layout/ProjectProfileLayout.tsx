@@ -37,11 +37,8 @@ import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { cn } from "@/utilities/tailwind";
-import { EndorsementsListDialog } from "../EndorsementsListDialog";
 import { ProjectHeader } from "../Header/ProjectHeader";
 import { type ContentTab, ContentTabs } from "../MainContent/ContentTabs";
-import { MobileHeaderMinified } from "../Mobile/MobileHeaderMinified";
-import { MobileProfileContent } from "../Mobile/MobileProfileContent";
 import {
   ContentTabsSkeleton,
   MobileProfileContentSkeleton,
@@ -50,6 +47,21 @@ import {
   ProjectStatsBarSkeleton,
 } from "../Skeletons";
 import { ProjectStatsBar } from "../StatsBar/ProjectStatsBar";
+
+const EndorsementsListDialog = dynamic(
+  () => import("../EndorsementsListDialog").then((m) => m.EndorsementsListDialog),
+  { ssr: false }
+);
+
+const MobileHeaderMinified = dynamic(
+  () => import("../Mobile/MobileHeaderMinified").then((m) => m.MobileHeaderMinified),
+  { ssr: false }
+);
+
+const MobileProfileContent = dynamic(
+  () => import("../Mobile/MobileProfileContent").then((m) => m.MobileProfileContent),
+  { ssr: false, loading: () => <MobileProfileContentSkeleton /> }
+);
 
 const ProjectSidePanel = dynamic(
   () => import("../SidePanel/ProjectSidePanel").then((m) => m.ProjectSidePanel),
