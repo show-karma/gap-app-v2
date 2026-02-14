@@ -85,12 +85,11 @@ export default async function RootLayout(props: {
       <div className={`${layoutTheme.padding} flex flex-col`}>
         {/* SSR LCP shell — renders project title in initial HTML before JS loads.
             Uses CSS order:-1 so it appears above children visually, while being after
-            children in DOM order. The ~ sibling selector hides it once React renders
-            any client layout (loading skeleton, error, or full layout).
-            Also removed from DOM by ProjectProfileLayout's useEffect as cleanup. */}
+            children in DOM order. The ~ sibling selector hides it once the full client
+            layout renders (NOT the loading skeleton — the shell stays visible during
+            loading to preserve LCP). Also removed from DOM by useEffect as cleanup. */}
         {projectData?.details?.title && (
           <style>{`[data-testid="project-profile-layout"] ~ [data-testid="ssr-project-hero"],
-[data-testid="layout-loading"] ~ [data-testid="ssr-project-hero"],
 [data-testid="project-not-found"] ~ [data-testid="ssr-project-hero"]
 { display: none !important }`}</style>
         )}
@@ -102,20 +101,31 @@ export default async function RootLayout(props: {
             suppressHydrationWarning
           >
             <div className="relative rounded-xl border-b border-border bg-card p-6 lg:p-8">
-              <div className="flex flex-row items-center gap-4">
-                {projectData.details.logoUrl && (
-                  // biome-ignore lint/performance/noImgElement: SSR shell uses native img for zero-JS LCP
-                  <img
-                    src={projectData.details.logoUrl}
-                    alt={projectData.details.title}
-                    className="h-16 w-16 lg:h-[82px] lg:w-[82px] rounded-full border-2 border-white shadow-lg object-cover"
-                    width={82}
-                    height={82}
-                  />
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-row items-center gap-4">
+                  {projectData.details.logoUrl && (
+                    // biome-ignore lint/performance/noImgElement: SSR shell uses native img for zero-JS LCP
+                    <img
+                      src={projectData.details.logoUrl}
+                      alt={projectData.details.title}
+                      className="h-16 w-16 lg:h-[82px] lg:w-[82px] rounded-full border-2 border-white shadow-lg object-cover"
+                      width={82}
+                      height={82}
+                    />
+                  )}
+                  <h1 className="text-xl font-bold leading-tight lg:text-2xl text-neutral-900 dark:text-white tracking-tight">
+                    {projectData.details.title}
+                  </h1>
+                </div>
+                {projectData.details.description && (
+                  <div className="flex flex-col gap-1 flex-1 w-full">
+                    <div className="prose prose-sm dark:prose-invert max-w-none text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
+                      {projectData.details.description.length > 200
+                        ? `${projectData.details.description.slice(0, 200)}...`
+                        : projectData.details.description}
+                    </div>
+                  </div>
                 )}
-                <h1 className="text-xl font-bold leading-tight lg:text-2xl text-neutral-900 dark:text-white tracking-tight">
-                  {projectData.details.title}
-                </h1>
               </div>
             </div>
           </div>
