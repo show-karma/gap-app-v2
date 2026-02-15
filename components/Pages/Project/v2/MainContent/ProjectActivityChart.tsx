@@ -73,7 +73,7 @@ export function ProjectActivityChart({
   // Track visibility to prevent chart rendering when container is hidden (e.g., lg:hidden on mobile header)
   // This prevents Recharts warnings about width(0) and height(0) when chart is in a hidden container
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(embedded);
+  const [isVisible, setIsVisible] = useState(false);
 
   // Defer Updates/Impacts/Grants queries until the chart is actually visible.
   const { allUpdates: milestones, isLoading } = useUpdatesTabData(projectId, {
@@ -81,11 +81,6 @@ export function ProjectActivityChart({
   });
 
   useEffect(() => {
-    if (embedded) {
-      setIsVisible(true);
-      return;
-    }
-
     const container = containerRef.current;
     if (!container) return;
 
@@ -104,7 +99,7 @@ export function ProjectActivityChart({
 
     observer.observe(container);
     return () => observer.disconnect();
-  }, [embedded]);
+  }, []);
 
   // Filter states
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
