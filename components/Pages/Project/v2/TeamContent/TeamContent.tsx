@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
+import { useUserProfiles } from "@/hooks/useUserProfiles";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore, useProjectStore } from "@/store";
@@ -65,6 +66,8 @@ export function TeamContent({ className }: TeamContentProps) {
     return roleOrder[roleA] - roleOrder[roleB];
   });
 
+  const { data: userProfiles } = useUserProfiles(members as string[]);
+
   const shouldDisableInvite = !isAuthorized;
 
   return (
@@ -80,7 +83,13 @@ export function TeamContent({ className }: TeamContentProps) {
       {/* Team members list */}
       <div className="flex flex-col gap-3" data-testid="team-members-list">
         {sortedMembers.length > 0 ? (
-          sortedMembers.map((member) => <TeamMemberCard key={member} member={member as string} />)
+          sortedMembers.map((member) => (
+            <TeamMemberCard
+              key={member}
+              member={member as string}
+              userProfile={userProfiles?.[((member as string) || "").toLowerCase()]}
+            />
+          ))
         ) : (
           <div className="text-center py-8 text-zinc-500 dark:text-zinc-400">
             No team members found

@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfiles } from "@/hooks/useUserProfiles";
 import { getCommunities } from "@/services/communities.service";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
@@ -200,6 +201,13 @@ export default function CommunitiesToAdminPage() {
       return filtered.size !== prev.size ? filtered : prev;
     });
   }, [displayedCommunities]);
+
+  // Collect all admin addresses for batch profile lookup
+  const allAdminAddresses = useMemo(() => {
+    return communityAdmins.flatMap((ca) => ca.admins.map((a) => a.user.id));
+  }, [communityAdmins]);
+
+  const { data: adminProfiles } = useUserProfiles(allAdminAddresses);
 
   const isLoadingData =
     isLoading || isPermissionsLoading || (!isSuperAdminOrOwner && isLoadingUserCommunities);
@@ -480,9 +488,22 @@ export default function CommunitiesToAdminPage() {
                                   className="flex items-center justify-between gap-2 p-2 bg-gray-50 dark:bg-zinc-800 rounded"
                                   key={index}
                                 >
-                                  <span className="text-xs font-mono text-gray-700 dark:text-gray-300 break-all">
-                                    {admin.user.id}
-                                  </span>
+                                  <div className="flex flex-col gap-0.5 min-w-0">
+                                    {adminProfiles?.[admin.user.id.toLowerCase()]?.email ? (
+                                      <>
+                                        <span className="text-xs text-gray-700 dark:text-gray-300 truncate">
+                                          {adminProfiles[admin.user.id.toLowerCase()].email}
+                                        </span>
+                                        <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500 truncate">
+                                          {admin.user.id}
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <span className="text-xs font-mono text-gray-700 dark:text-gray-300 break-all">
+                                        {admin.user.id}
+                                      </span>
+                                    )}
+                                  </div>
                                   {canManageAdmins && (
                                     <RemoveAdmin
                                       UUID={communityId}

@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import type { UserProfile } from "@/hooks/useUserProfiles";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useENS } from "@/store/ens";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
@@ -28,6 +29,7 @@ const iconsClassnames = {
 interface TeamMemberCardProps {
   member: string;
   className?: string;
+  userProfile?: UserProfile;
 }
 
 /**
@@ -36,7 +38,7 @@ interface TeamMemberCardProps {
  *
  * This is an updated version of the original MemberCard for the v2 design.
  */
-export function TeamMemberCard({ member, className }: TeamMemberCardProps) {
+export function TeamMemberCard({ member, className, userProfile }: TeamMemberCardProps) {
   const project = useProjectStore((state) => state.project);
   const { teamProfiles } = useTeamProfiles(project);
   const profile = teamProfiles?.find(
@@ -139,6 +141,14 @@ export function TeamMemberCard({ member, className }: TeamMemberCardProps) {
             ) : null}
           </div>
         </div>
+        {userProfile?.email && (
+          <p
+            className="text-sm text-zinc-500 dark:text-zinc-400 truncate"
+            data-testid="member-email"
+          >
+            {userProfile.email}
+          </p>
+        )}
         <div className="flex flex-row gap-2 mt-1">
           <p
             className="text-sm text-zinc-500 dark:text-zinc-400 w-full truncate"

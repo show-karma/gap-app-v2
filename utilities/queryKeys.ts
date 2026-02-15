@@ -218,4 +218,7 @@ export const QUERY_KEYS = {
   FINANCIALS: {
     PROGRAM: (programId: string) => ["program-financials", programId] as const,
   },
+  USERS: {
+    PROFILES_BATCH: (addresses: string[]) => ["user-profiles-batch", ...addresses.sort()] as const,
+  },
 };
