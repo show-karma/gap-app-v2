@@ -4,14 +4,19 @@ import type { Grant } from "@/types/v2/grant";
 import { queryClient } from "@/utilities/query-client";
 import { createProjectQueryPredicate, QUERY_KEYS } from "@/utilities/queryKeys";
 
+interface UseProjectGrantsOptions {
+  enabled?: boolean;
+}
+
 /**
  * Hook to fetch project grants using the dedicated API endpoint.
  *
  * @param projectIdOrSlug - The project UID or slug
  * @returns Object containing grants array, loading state, error, and refetch function
  */
-export function useProjectGrants(projectIdOrSlug: string) {
+export function useProjectGrants(projectIdOrSlug: string, options: UseProjectGrantsOptions = {}) {
   const queryKey = QUERY_KEYS.PROJECT.GRANTS(projectIdOrSlug);
+  const isEnabled = options.enabled ?? true;
 
   const {
     data,
@@ -21,7 +26,7 @@ export function useProjectGrants(projectIdOrSlug: string) {
   } = useQuery<Grant[]>({
     queryKey,
     queryFn: () => getProjectGrants(projectIdOrSlug),
-    enabled: !!projectIdOrSlug,
+    enabled: !!projectIdOrSlug && isEnabled,
     staleTime: 5 * 60 * 1000,
   });
 

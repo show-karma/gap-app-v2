@@ -32,10 +32,15 @@ const ProjectOptionsDialogs = dynamic(
 
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectProfileLayout } from "@/hooks/v2/useProjectProfileLayout";
+import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useEndorsementStore } from "@/store/modals/endorsement";
+import { useGrantGenieModalStore } from "@/store/modals/genie";
 import { useIntroModalStore } from "@/store/modals/intro";
+import { useMergeModalStore } from "@/store/modals/merge";
 import { useProgressModalStore } from "@/store/modals/progress";
+import { useProjectEditModalStore } from "@/store/modals/projectEdit";
+import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
 import { cn } from "@/utilities/tailwind";
 import { ProjectHeader } from "../Header/ProjectHeader";
 import { type ContentTab, ContentTabs } from "../MainContent/ContentTabs";
@@ -73,6 +78,11 @@ interface ProjectProfileLayoutProps {
   className?: string;
 }
 
+function ProjectPermissionsBootstrap() {
+  useProjectPermissions();
+  return null;
+}
+
 /**
  * ProjectProfileLayout is the shared layout for all project profile pages.
  * It renders the header, stats bar, sidebar, and tabs - with children as the content area.
@@ -97,6 +107,30 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isDesktopViewport, setIsDesktopViewport] = useState<boolean | null>(null);
+  const [enableDeferredUI, setEnableDeferredUI] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+    const updateViewport = () => setIsDesktopViewport(mediaQuery.matches);
+
+    updateViewport();
+    mediaQuery.addEventListener("change", updateViewport);
+
+    return () => mediaQuery.removeEventListener("change", updateViewport);
+  }, []);
+
+  useEffect(() => {
+    const enableUI = () => setEnableDeferredUI(true);
+
+    if (typeof window.requestIdleCallback === "function") {
+      const idleCallbackId = window.requestIdleCallback(enableUI, { timeout: 2000 });
+      return () => window.cancelIdleCallback(idleCallbackId);
+    }
+
+    const timeoutId = window.setTimeout(enableUI, 1200);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   // Mobile view state: track if user is viewing Profile or other tabs on mobile
   // Read initial state from URL param: ?view=profile shows profile, otherwise show content
@@ -135,8 +169,27 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   const { isEndorsementOpen } = useEndorsementStore();
   const { isIntroModalOpen } = useIntroModalStore();
   const { isProgressModalOpen } = useProgressModalStore();
+  const isProjectEditModalOpen = useProjectEditModalStore((s) => s.isProjectEditModalOpen);
+  const isMergeModalOpen = useMergeModalStore((s) => s.isMergeModalOpen);
+  const isGrantGenieModalOpen = useGrantGenieModalStore((s) => s.isGrantGenieModalOpen);
+  const isTransferOwnershipModalOpen = useTransferOwnershipModalStore(
+    (s) => s.isTransferOwnershipModalOpen
+  );
+  const isAdminTransferOwnershipModalOpen = useAdminTransferOwnershipModalStore(
+    (s) => s.isAdminTransferOwnershipModalOpen
+  );
   const { openModal: openContributorProfileModal } = useContributorProfileModalStore();
   const [isEndorsementsListOpen, setIsEndorsementsListOpen] = useState(false);
+  const shouldRenderProjectOptionsDialogs =
+    enableDeferredUI &&
+    (isProjectEditModalOpen ||
+      isMergeModalOpen ||
+      isGrantGenieModalOpen ||
+      isTransferOwnershipModalOpen ||
+      isAdminTransferOwnershipModalOpen);
+  const shouldRenderDesktopOnlyWidgets = isDesktopViewport === true;
+  const shouldRenderMobileOnlyWidgets = isDesktopViewport === false;
+  const shouldRenderProjectOptionsMenu = enableDeferredUI && isDesktopViewport !== null;
 
   // Auto-open contributor profile modal when invite code is present in URL (only once)
   const inviteCode = searchParams.get("invite-code");
@@ -152,9 +205,6 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   // Updates and impacts are deferred to per-tab hooks (e.g., UpdatesContent).
   const { project, isLoading, isProjectLoading, isError, isVerified, stats } =
     useProjectProfileLayout(projectId as string);
-
-  // Initialize project permissions in store (for authorization checks in ContentTabs)
-  useProjectPermissions();
 
   // Remove SSR shell from DOM after hydration (CSS in server layout hides it visually)
   useEffect(() => {
@@ -301,8 +351,10 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
           onOpenChange={setIsEndorsementsListOpen}
         />
       )}
-      {/* Project options dialogs - rendered once here to avoid duplicate modals */}
-      <ProjectOptionsDialogs />
+      {/* Start project permission checks after the initial render window. */}
+      {enableDeferredUI && <ProjectPermissionsBootstrap />}
+      {/* Mount project option dialogs only when one is explicitly opened. */}
+      {shouldRenderProjectOptionsDialogs && <ProjectOptionsDialogs />}
 
       <div
         className={cn("flex flex-col gap-6 w-full", className)}
@@ -328,30 +380,34 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
         </div>
 
         {/* Mobile: Project Settings above tabs - right aligned */}
-        <div className="lg:hidden flex justify-end">
-          <ProjectOptionsMenu />
-        </div>
+        {shouldRenderMobileOnlyWidgets && shouldRenderProjectOptionsMenu && (
+          <div className="lg:hidden flex justify-end">
+            <ProjectOptionsMenu />
+          </div>
+        )}
 
         {/* Mobile: Navigation tabs at the top - always first on mobile */}
         {/* Use negative margins to extend tabs full width beyond container padding */}
-        <div className="lg:hidden -mx-4 px-4">
-          <ContentTabs
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            fundingCount={stats.grantsCount}
-            teamCount={teamCount}
-          />
-        </div>
+        {shouldRenderMobileOnlyWidgets && (
+          <div className="lg:hidden -mx-4 px-4">
+            <ContentTabs
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              fundingCount={stats.grantsCount}
+              teamCount={teamCount}
+            />
+          </div>
+        )}
 
         {/* Mobile: Minified header when NOT on Profile tab */}
-        {activeTab !== "profile" && (
+        {shouldRenderMobileOnlyWidgets && activeTab !== "profile" && (
           <div className="lg:hidden min-h-[60px]">
             <MobileHeaderMinified project={project} isVerified={isVerified} />
           </div>
         )}
 
         {/* Mobile: Profile tab content (header, stats, actions, quick links) */}
-        {activeTab === "profile" && (
+        {shouldRenderMobileOnlyWidgets && activeTab === "profile" && (
           <div className="lg:hidden">
             <MobileProfileContent
               project={project}
@@ -365,7 +421,12 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
         {/* Main Layout: Side Panel + Content */}
         <div className="flex flex-row gap-6" data-testid="main-layout">
           {/* Side Panel - Desktop Only */}
-          <ProjectSidePanel project={project} />
+          {shouldRenderDesktopOnlyWidgets &&
+            (enableDeferredUI ? (
+              <ProjectSidePanel project={project} />
+            ) : (
+              <ProjectSidePanelSkeleton />
+            ))}
 
           {/* Main Content Area */}
           <div
@@ -373,19 +434,23 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
             data-testid="project-main-content-area"
           >
             {/* Desktop: Project Settings above tabs */}
-            <div className="hidden lg:flex lg:justify-end">
-              <ProjectOptionsMenu />
-            </div>
+            {shouldRenderDesktopOnlyWidgets && shouldRenderProjectOptionsMenu && (
+              <div className="hidden lg:flex lg:justify-end">
+                <ProjectOptionsMenu />
+              </div>
+            )}
 
             {/* Desktop: Content Tabs */}
-            <div className="hidden lg:block">
-              <ContentTabs
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-                fundingCount={stats.grantsCount}
-                teamCount={teamCount}
-              />
-            </div>
+            {shouldRenderDesktopOnlyWidgets && (
+              <div className="hidden lg:block">
+                <ContentTabs
+                  activeTab={activeTab}
+                  onTabChange={handleTabChange}
+                  fundingCount={stats.grantsCount}
+                  teamCount={teamCount}
+                />
+              </div>
+            )}
 
             {/* Page-specific content - hidden on mobile when Profile tab is active */}
             <div

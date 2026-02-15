@@ -70,12 +70,15 @@ export function ProjectActivityChart({
   projectId,
   embedded = false,
 }: ProjectActivityChartProps) {
-  const { allUpdates: milestones, isLoading } = useUpdatesTabData(projectId);
-
   // Track visibility to prevent chart rendering when container is hidden (e.g., lg:hidden on mobile header)
   // This prevents Recharts warnings about width(0) and height(0) when chart is in a hidden container
   const containerRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+
+  // Defer Updates/Impacts/Grants queries until the chart is actually visible.
+  const { allUpdates: milestones, isLoading } = useUpdatesTabData(projectId, {
+    enabled: isVisible,
+  });
 
   useEffect(() => {
     const container = containerRef.current;
@@ -236,7 +239,7 @@ export function ProjectActivityChart({
 
   if (isLoading || !isVisible) {
     const loadingContent = (
-      <div style={{ minHeight: embedded ? 186 : 300 }}>
+      <div className="animate-pulse" style={{ minHeight: embedded ? 186 : 300 }}>
         <div className="h-6 w-48 bg-gray-200 dark:bg-zinc-700 rounded mb-4" />
         <div
           className="bg-gray-100 dark:bg-zinc-700 rounded"

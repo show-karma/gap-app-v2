@@ -26,18 +26,32 @@ export interface UseUpdatesTabDataResult {
   isLoading: boolean;
 }
 
+interface UseUpdatesTabDataOptions {
+  enabled?: boolean;
+}
+
 /**
  * Hook for the Updates tab. Fetches updates, impacts, and grants,
  * then combines them into a unified activity feed.
  *
  * @param projectId - The project UID or slug
  */
-export function useUpdatesTabData(projectId: string): UseUpdatesTabDataResult {
-  const { milestones = [], isLoading: isUpdatesLoading } = useProjectUpdates(projectId);
+export function useUpdatesTabData(
+  projectId: string,
+  options: UseUpdatesTabDataOptions = {}
+): UseUpdatesTabDataResult {
+  const isEnabled = options.enabled ?? true;
+  const { milestones = [], isLoading: isUpdatesLoading } = useProjectUpdates(projectId, {
+    enabled: isEnabled,
+  });
 
-  const { impacts = [], isLoading: isImpactsLoading } = useProjectImpacts(projectId);
+  const { impacts = [], isLoading: isImpactsLoading } = useProjectImpacts(projectId, {
+    enabled: isEnabled,
+  });
 
-  const { grants, isLoading: isGrantsLoading } = useProjectGrants(projectId);
+  const { grants, isLoading: isGrantsLoading } = useProjectGrants(projectId, {
+    enabled: isEnabled,
+  });
 
   const isLoading = isUpdatesLoading || isImpactsLoading || isGrantsLoading;
 

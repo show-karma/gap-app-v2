@@ -328,6 +328,10 @@ const sortByDateDescending = (milestones: UnifiedMilestone[]): UnifiedMilestone[
   });
 };
 
+interface UseProjectUpdatesOptions {
+  enabled?: boolean;
+}
+
 /**
  * Hook to fetch project updates using the API endpoint.
  *
@@ -337,8 +341,9 @@ const sortByDateDescending = (milestones: UnifiedMilestone[]): UnifiedMilestone[
  * @param projectIdOrSlug - The project UID or slug
  * @returns Object containing unified milestones, loading state, error, and refetch function
  */
-export function useProjectUpdates(projectIdOrSlug: string) {
+export function useProjectUpdates(projectIdOrSlug: string, options: UseProjectUpdatesOptions = {}) {
   const queryKey = QUERY_KEYS.PROJECT.UPDATES(projectIdOrSlug);
+  const isEnabled = options.enabled ?? true;
 
   const {
     data,
@@ -348,7 +353,7 @@ export function useProjectUpdates(projectIdOrSlug: string) {
   } = useQuery<UpdatesApiResponse>({
     queryKey,
     queryFn: () => getProjectUpdates(projectIdOrSlug),
-    enabled: !!projectIdOrSlug,
+    enabled: !!projectIdOrSlug && isEnabled,
     staleTime: 5 * 60 * 1000,
   });
 
