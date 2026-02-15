@@ -22,9 +22,16 @@ const ProjectActivityChart = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex flex-col gap-3 animate-pulse">
-        <div className="h-5 w-32 bg-gray-100 dark:bg-zinc-800 rounded" />
+      <div className="flex flex-col min-h-[244px] animate-pulse">
+        <div className="h-6 w-32 bg-gray-100 dark:bg-zinc-800 rounded mb-4" />
         <div className="h-[120px] bg-gray-100 dark:bg-zinc-800 rounded" />
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
+          <div className="flex items-center gap-4">
+            <div className="h-5 w-20 bg-gray-100 dark:bg-zinc-800 rounded" />
+            <div className="h-5 w-28 bg-gray-100 dark:bg-zinc-800 rounded" />
+          </div>
+          <div className="h-8 w-24 bg-gray-100 dark:bg-zinc-800 rounded" />
+        </div>
       </div>
     ),
   }
@@ -253,7 +260,7 @@ export function ProjectHeader({
           <div className="hidden lg:block w-px bg-border self-stretch -my-8" />
 
           {/* Right side: Project Activity Chart - 50% width on desktop */}
-          <div className="mt-6 lg:mt-0 lg:flex-1 lg:basis-1/2">
+          <div className="mt-6 lg:mt-0 lg:flex-1 lg:basis-1/2 lg:min-h-[244px]">
             <ProjectActivityChart embedded projectId={projectId} />
           </div>
         </div>

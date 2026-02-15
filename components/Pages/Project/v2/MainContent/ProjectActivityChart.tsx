@@ -73,7 +73,7 @@ export function ProjectActivityChart({
   // Track visibility to prevent chart rendering when container is hidden (e.g., lg:hidden on mobile header)
   // This prevents Recharts warnings about width(0) and height(0) when chart is in a hidden container
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(embedded);
 
   // Defer Updates/Impacts/Grants queries until the chart is actually visible.
   const { allUpdates: milestones, isLoading } = useUpdatesTabData(projectId, {
@@ -81,6 +81,11 @@ export function ProjectActivityChart({
   });
 
   useEffect(() => {
+    if (embedded) {
+      setIsVisible(true);
+      return;
+    }
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -99,7 +104,7 @@ export function ProjectActivityChart({
 
     observer.observe(container);
     return () => observer.disconnect();
-  }, []);
+  }, [embedded]);
 
   // Filter states
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
@@ -239,12 +244,19 @@ export function ProjectActivityChart({
 
   if (isLoading || !isVisible) {
     const loadingContent = (
-      <div className="animate-pulse" style={{ minHeight: embedded ? 186 : 300 }}>
+      <div className="animate-pulse flex flex-col" style={{ minHeight: embedded ? 244 : 300 }}>
         <div className="h-6 w-48 bg-gray-200 dark:bg-zinc-700 rounded mb-4" />
         <div
           className="bg-gray-100 dark:bg-zinc-700 rounded"
           style={{ height: embedded ? 120 : 200 }}
         />
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
+          <div className="flex items-center gap-4">
+            <div className="h-5 w-20 bg-gray-200 dark:bg-zinc-700 rounded" />
+            <div className="h-5 w-28 bg-gray-200 dark:bg-zinc-700 rounded" />
+          </div>
+          <div className="h-8 w-24 bg-gray-200 dark:bg-zinc-700 rounded" />
+        </div>
       </div>
     );
 
@@ -264,7 +276,7 @@ export function ProjectActivityChart({
   }
 
   const chartContent = (
-    <div className="flex flex-col h-full">
+    <div className={cn("flex flex-col h-full", embedded && "min-h-[244px]")}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">Project Activity</h3>
