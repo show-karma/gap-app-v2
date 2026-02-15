@@ -107,18 +107,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isDesktopViewport, setIsDesktopViewport] = useState<boolean | null>(null);
   const [enableDeferredUI, setEnableDeferredUI] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(min-width: 1024px)");
-    const updateViewport = () => setIsDesktopViewport(mediaQuery.matches);
-
-    updateViewport();
-    mediaQuery.addEventListener("change", updateViewport);
-
-    return () => mediaQuery.removeEventListener("change", updateViewport);
-  }, []);
 
   useEffect(() => {
     const enableUI = () => setEnableDeferredUI(true);
@@ -187,9 +176,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
       isGrantGenieModalOpen ||
       isTransferOwnershipModalOpen ||
       isAdminTransferOwnershipModalOpen);
-  const shouldRenderDesktopOnlyWidgets = isDesktopViewport === true;
-  const shouldRenderMobileOnlyWidgets = isDesktopViewport === false;
-  const shouldRenderProjectOptionsMenu = enableDeferredUI && isDesktopViewport !== null;
+  const shouldRenderProjectOptionsMenu = enableDeferredUI;
 
   // Auto-open contributor profile modal when invite code is present in URL (only once)
   const inviteCode = searchParams.get("invite-code");
@@ -205,12 +192,6 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   // Updates and impacts are deferred to per-tab hooks (e.g., UpdatesContent).
   const { project, isLoading, isProjectLoading, isError, isVerified, stats } =
     useProjectProfileLayout(projectId as string);
-
-  // Remove SSR shell from DOM after hydration (CSS in server layout hides it visually)
-  useEffect(() => {
-    const shell = document.querySelector('[data-testid="ssr-project-hero"]');
-    if (shell) shell.remove();
-  }, []);
 
   // Get team count from project
   const teamCount = project
@@ -380,7 +361,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
         </div>
 
         {/* Mobile: Project Settings above tabs - right aligned */}
-        {shouldRenderMobileOnlyWidgets && shouldRenderProjectOptionsMenu && (
+        {shouldRenderProjectOptionsMenu && (
           <div className="lg:hidden flex justify-end">
             <ProjectOptionsMenu />
           </div>
@@ -388,26 +369,24 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
 
         {/* Mobile: Navigation tabs at the top - always first on mobile */}
         {/* Use negative margins to extend tabs full width beyond container padding */}
-        {shouldRenderMobileOnlyWidgets && (
-          <div className="lg:hidden -mx-4 px-4">
-            <ContentTabs
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              fundingCount={stats.grantsCount}
-              teamCount={teamCount}
-            />
-          </div>
-        )}
+        <div className="lg:hidden -mx-4 px-4">
+          <ContentTabs
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            fundingCount={stats.grantsCount}
+            teamCount={teamCount}
+          />
+        </div>
 
         {/* Mobile: Minified header when NOT on Profile tab */}
-        {shouldRenderMobileOnlyWidgets && activeTab !== "profile" && (
+        {activeTab !== "profile" && (
           <div className="lg:hidden min-h-[60px]">
             <MobileHeaderMinified project={project} isVerified={isVerified} />
           </div>
         )}
 
         {/* Mobile: Profile tab content (header, stats, actions, quick links) */}
-        {shouldRenderMobileOnlyWidgets && activeTab === "profile" && (
+        {activeTab === "profile" && (
           <div className="lg:hidden">
             <MobileProfileContent
               project={project}
@@ -421,12 +400,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
         {/* Main Layout: Side Panel + Content */}
         <div className="flex flex-row gap-6" data-testid="main-layout">
           {/* Side Panel - Desktop Only */}
-          {shouldRenderDesktopOnlyWidgets &&
-            (enableDeferredUI ? (
-              <ProjectSidePanel project={project} />
-            ) : (
-              <ProjectSidePanelSkeleton />
-            ))}
+          {enableDeferredUI ? <ProjectSidePanel project={project} /> : <ProjectSidePanelSkeleton />}
 
           {/* Main Content Area */}
           <div
@@ -434,23 +408,21 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
             data-testid="project-main-content-area"
           >
             {/* Desktop: Project Settings above tabs */}
-            {shouldRenderDesktopOnlyWidgets && shouldRenderProjectOptionsMenu && (
+            {shouldRenderProjectOptionsMenu && (
               <div className="hidden lg:flex lg:justify-end">
                 <ProjectOptionsMenu />
               </div>
             )}
 
             {/* Desktop: Content Tabs */}
-            {shouldRenderDesktopOnlyWidgets && (
-              <div className="hidden lg:block">
-                <ContentTabs
-                  activeTab={activeTab}
-                  onTabChange={handleTabChange}
-                  fundingCount={stats.grantsCount}
-                  teamCount={teamCount}
-                />
-              </div>
-            )}
+            <div className="hidden lg:block">
+              <ContentTabs
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                fundingCount={stats.grantsCount}
+                teamCount={teamCount}
+              />
+            </div>
 
             {/* Page-specific content - hidden on mobile when Profile tab is active */}
             <div

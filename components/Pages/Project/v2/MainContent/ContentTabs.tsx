@@ -3,9 +3,6 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/hooks/useAuth";
-import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
-import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore } from "@/store/owner";
 import { useProjectStore } from "@/store/project";
 import { PAGES } from "@/utilities/pages";
@@ -59,14 +56,7 @@ export function ContentTabs({
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const { authenticated } = useAuth();
-  const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
-    {},
-    { enabled: authenticated }
-  );
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
-  const canViewContactInfo =
-    isProjectOwner || isProjectAdmin || isContractOwner || (!isPermissionsLoading && isSuperAdmin);
+  const canViewContactInfo = isProjectOwner || isProjectAdmin || isContractOwner;
 
   const baseTabs: TabConfig[] = [
     // Profile tab - mobile only, no href (uses onTabChange)

@@ -82,12 +82,11 @@ export default async function RootLayout(props: {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className={`${layoutTheme.padding} flex flex-col`}>
+      <div className={`${layoutTheme.padding} relative flex flex-col`}>
         {/* SSR LCP shell — renders project title in initial HTML before JS loads.
-            Uses CSS order:-1 so it appears above children visually, while being after
-            children in DOM order. The ~ sibling selector hides it once the full client
-            layout renders (NOT the loading skeleton — the shell stays visible during
-            loading to preserve LCP). Also removed from DOM by useEffect as cleanup. */}
+            Rendered as an absolute overlay so hiding/removing it does not reflow the page.
+            The ~ sibling selector hides it once the full client layout renders
+            (NOT the loading skeleton — the shell stays visible during loading to preserve LCP). */}
         {projectData?.details?.title && (
           <style>{`[data-testid="project-profile-layout"] ~ [data-testid="ssr-project-hero"],
 [data-testid="project-not-found"] ~ [data-testid="ssr-project-hero"]
@@ -97,7 +96,7 @@ export default async function RootLayout(props: {
         {projectData?.details?.title && (
           <div
             data-testid="ssr-project-hero"
-            className="hidden lg:flex flex-col bg-secondary border border-border rounded-xl order-[-1]"
+            className="pointer-events-none absolute left-0 right-0 top-0 z-10 hidden lg:flex flex-col bg-secondary border border-border rounded-xl"
             suppressHydrationWarning
           >
             <div className="relative rounded-xl border-b border-border bg-card p-6 lg:p-8">
