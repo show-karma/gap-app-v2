@@ -1,10 +1,11 @@
 "use client";
 
-import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { usePrivy } from "@privy-io/react-auth";
 import { watchAccount } from "@wagmi/core";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
+import { useWalletConnectDefer } from "@/components/Utilities/WalletConnectDeferContext";
 import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { queryClient } from "@/utilities/query-client";
@@ -33,6 +34,10 @@ const AUTH_CHECK_INTERVAL_MS = 10_000;
  * Storage events provide faster detection for cross-tab logouts.
  */
 const AUTH_FAILURE_THRESHOLD = 3;
+const ENABLE_WALLET_CONNECT_FLUSH_MS = 0;
+const NOOP = () => {};
+const NOOP_ASYNC = async () => {};
+const NOOP_GET_ACCESS_TOKEN = async () => null;
 
 /**
  * Cookie name used by Privy for session persistence in HttpOnly mode.
@@ -92,11 +97,46 @@ const clearWagmiState = () => {
  * - Wallet connections
  */
 export const useAuth = () => {
-  const { ready, authenticated, user, login, logout, getAccessToken, connectWallet } = usePrivy();
+  let privyAuth:
+    | ReturnType<typeof usePrivy>
+    | {
+        ready: false;
+        authenticated: false;
+        user: null;
+        login: () => void;
+        logout: () => Promise<void>;
+        getAccessToken: () => Promise<string | null>;
+        connectWallet: () => Promise<void>;
+      };
+  try {
+    // biome-ignore lint/correctness/useHookAtTopLevel: PrivyProvider can be intentionally deferred on project routes.
+    privyAuth = usePrivy();
+  } catch {
+    // On routes where PrivyProvider is intentionally deferred, consumers may render
+    // before the provider mounts. Keep auth hooks stable and return a safe fallback.
+    privyAuth = {
+      ready: false,
+      authenticated: false,
+      user: null,
+      login: NOOP,
+      logout: NOOP_ASYNC,
+      getAccessToken: NOOP_GET_ACCESS_TOKEN,
+      connectWallet: NOOP_ASYNC,
+    };
+  }
+  const { ready, authenticated, user, login, logout, getAccessToken, connectWallet } = privyAuth;
+  const { enableWalletConnect } = useWalletConnectDefer();
 
   const { isConnected } = useAccount();
 
-  const { wallets } = useWallets();
+  const wallets = useMemo(() => {
+    if (!Array.isArray(user?.linkedAccounts)) {
+      return [] as Array<{ address: string }>;
+    }
+    return user.linkedAccounts.filter(
+      (account) => account?.type === "wallet" && typeof account.address === "string"
+    ) as Array<{ address: string }>;
+  }, [user?.linkedAccounts]);
   const primaryWallet = wallets[0];
   const cypressMockAuthState = useMemo(() => getCypressMockAuthState(), [ready, authenticated]);
   const isCypressMockAuthenticated = Boolean(cypressMockAuthState?.authenticated);
@@ -104,6 +144,7 @@ export const useAuth = () => {
   const address = (primaryWallet?.address as Hex | undefined) || cypressMockAddress;
 
   const shouldLoginAfterLogout = useRef(false);
+  const shouldLoginAfterProviderReady = useRef(false);
   const prevAuthRef = useRef(authenticated);
   const prevUserIdRef = useRef<string | undefined>(user?.id);
   const authFailureCount = useRef(0);
@@ -152,13 +193,31 @@ export const useAuth = () => {
     TokenManager.setPrivyInstance({ getAccessToken });
   }
 
+  const prepareWalletConnect = useCallback(async () => {
+    enableWalletConnect();
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, ENABLE_WALLET_CONNECT_FLUSH_MS);
+    });
+  }, [enableWalletConnect]);
+
+  const triggerLogin = useCallback(async () => {
+    await prepareWalletConnect();
+    login();
+  }, [prepareWalletConnect, login]);
+
   // Auto-login after logout completes
   useEffect(() => {
+    if (shouldLoginAfterProviderReady.current && ready) {
+      shouldLoginAfterProviderReady.current = false;
+      void triggerLogin();
+      return;
+    }
+
     if (shouldLoginAfterLogout.current && !authenticated && ready) {
       shouldLoginAfterLogout.current = false;
-      login();
+      void triggerLogin();
     }
-  }, [authenticated, ready, login]);
+  }, [authenticated, ready, triggerLogin]);
 
   // Cross-tab logout synchronization
   // Compatible with both localStorage (default) and HttpOnly cookies
@@ -259,14 +318,27 @@ export const useAuth = () => {
   }, [ready, authenticated, wallets, logout]);
 
   const adaptedLogin = useCallback(async () => {
+    if (!ready) {
+      shouldLoginAfterProviderReady.current = true;
+      return;
+    }
+
     // If authenticated but wallet not connected, force logout first
     if (!isConnected && authenticated) {
       shouldLoginAfterLogout.current = true;
       await logout();
       return;
     }
-    login();
-  }, [isConnected, authenticated, logout, login]);
+    await triggerLogin();
+  }, [isConnected, authenticated, logout, triggerLogin]);
+
+  const adaptedConnectWallet = useCallback(async () => {
+    if (!ready) {
+      return;
+    }
+    await prepareWalletConnect();
+    return connectWallet();
+  }, [ready, prepareWalletConnect, connectWallet]);
 
   const connectedAndAuth = useMemo(() => {
     if (isCypressMockAuthenticated) {
@@ -293,6 +365,6 @@ export const useAuth = () => {
     login: adaptedLogin,
     logout,
     getAccessToken,
-    connectWallet, // Connect wallet without full login
+    connectWallet: adaptedConnectWallet, // Connect wallet without full login
   };
 };

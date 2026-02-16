@@ -1,21 +1,20 @@
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Viewport } from "next";
-import localFont from "next/font/local";
+import { Inter } from "next/font/google";
+import { Suspense } from "react";
+import { DeferredGoogleAnalytics } from "@/components/Utilities/DeferredGoogleAnalytics";
 import { defaultMetadata } from "@/utilities/meta";
 import "@/styles/globals.css";
 import "@/styles/index.scss";
 import "@/components/Utilities/DynamicStars/styles.css";
-import Script from "next/script";
 import { ThemeProvider } from "next-themes";
-import { Suspense } from "react";
 import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
 import HotjarAnalytics from "@/components/Utilities/HotjarAnalytics";
 
-const inter = localFont({
-  src: "../public/fonts/Inter/Inter.var.woff2",
+const inter = Inter({
+  subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
-  weight: "100 900",
 });
 
 export const metadata = defaultMetadata;
@@ -39,20 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href="https://static.cloudflareinsights.com" />
       </head>
       {process.env.NEXT_PUBLIC_GA_TRACKING_ID && process.env.NEXT_PUBLIC_ENV === "production" && (
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_TRACKING_ID}`}
-          strategy="lazyOnload"
-        />
-      )}
-      {process.env.NEXT_PUBLIC_GA_TRACKING_ID && process.env.NEXT_PUBLIC_ENV === "production" && (
-        <Script id="google-analytics" strategy="lazyOnload">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${process.env.NEXT_PUBLIC_GA_TRACKING_ID}');
-          `}
-        </Script>
+        <DeferredGoogleAnalytics trackingId={process.env.NEXT_PUBLIC_GA_TRACKING_ID} />
       )}
       <Suspense>
         <HotjarAnalytics />

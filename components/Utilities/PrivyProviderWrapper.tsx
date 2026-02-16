@@ -1,7 +1,9 @@
 "use client";
 
-import { PrivyProvider } from "@privy-io/react-auth";
+import { PrivyProvider, type WalletListEntry } from "@privy-io/react-auth";
 import { WagmiProvider } from "@privy-io/wagmi";
+import { useCallback, useMemo, useState } from "react";
+import { WalletConnectDeferContext } from "@/components/Utilities/WalletConnectDeferContext";
 import { PROJECT_NAME } from "@/constants/brand";
 import { envVars } from "@/utilities/enviromentVars";
 import { appNetwork } from "@/utilities/network-chains";
@@ -20,6 +22,12 @@ interface PrivyProviderWrapperProps {
  */
 export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperProps) {
   const privyAppId = envVars.PRIVY_APP_ID;
+  const [enableWalletConnect, setEnableWalletConnect] = useState(
+    () => process.env.NODE_ENV === "test"
+  );
+  const enableWalletConnectForAuth = useCallback(() => {
+    setEnableWalletConnect(true);
+  }, []);
 
   if (!privyAppId) {
     throw new Error(
@@ -28,36 +36,53 @@ export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperP
   }
 
   const defaultChain = appNetwork[0];
+  const walletList: WalletListEntry[] = enableWalletConnect
+    ? ["detected_wallets", "metamask", "rainbow", "rabby_wallet", "wallet_connect"]
+    : [];
+  const loginMethods: Array<"email" | "google" | "wallet"> = enableWalletConnect
+    ? ["email", "google", "wallet"]
+    : ["email", "google"];
+  const walletConnectContextValue = useMemo(
+    () => ({
+      enableWalletConnect: enableWalletConnectForAuth,
+      walletConnectEnabled: enableWalletConnect,
+    }),
+    [enableWalletConnect, enableWalletConnectForAuth]
+  );
 
   return (
-    <PrivyProvider
-      appId={privyAppId}
-      config={{
-        appearance: {
-          theme: "light",
-          accentColor: "#1de9b6",
-          logo: "https://karmahq.xyz/logo/karma-logo-light.svg",
-          landingHeader: `Connect to ${PROJECT_NAME}`,
-          showWalletLoginFirst: false,
-          walletList: ["detected_wallets", "metamask", "rainbow", "rabby_wallet", "wallet_connect"],
-        },
-        embeddedWallets: {
-          ethereum: {
-            createOnLogin: "users-without-wallets",
+    <WalletConnectDeferContext.Provider value={walletConnectContextValue}>
+      <PrivyProvider
+        appId={privyAppId}
+        config={{
+          appearance: {
+            theme: "light",
+            accentColor: "#1de9b6",
+            logo: "https://karmahq.xyz/logo/karma-logo-light.svg",
+            landingHeader: `Connect to ${PROJECT_NAME}`,
+            showWalletLoginFirst: false,
+            walletList,
           },
-        },
-        loginMethods: ["email", "google", "wallet"],
-        defaultChain: defaultChain,
-        supportedChains: appNetwork,
-        externalWallets: {
-          walletConnect: {
-            enabled: true,
+          embeddedWallets: {
+            ethereum: {
+              createOnLogin: "users-without-wallets",
+            },
           },
-        },
-        walletConnectCloudProjectId: envVars.PROJECT_ID || undefined,
-      }}
-    >
-      <WagmiProvider config={privyConfig}>{children}</WagmiProvider>
-    </PrivyProvider>
+          loginMethods,
+          defaultChain: defaultChain,
+          supportedChains: appNetwork,
+          externalWallets: {
+            walletConnect: {
+              enabled: enableWalletConnect,
+            },
+          },
+          walletConnectCloudProjectId: enableWalletConnect
+            ? envVars.PROJECT_ID || undefined
+            : undefined,
+        }}
+      >
+        <WagmiProvider config={privyConfig}>{children}</WagmiProvider>
+      </PrivyProvider>
+    </WalletConnectDeferContext.Provider>
   );
 }
