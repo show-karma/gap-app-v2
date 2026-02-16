@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { waitFor } from "@testing-library/react";
 import { errorManager } from "@/components/Utilities/errorManager";
 
 // Unmock errorManager from global setup to test the actual implementation
@@ -26,23 +27,25 @@ describe("errorManager", () => {
     expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 
-  it("should capture exception for non-rejected errors", () => {
+  it("should capture exception for non-rejected errors", async () => {
     const errorMessage = "Test error";
     const error = new Error("Some error occurred");
     const extra = { additionalInfo: "Some extra info" };
 
     errorManager(errorMessage, error, extra);
 
-    expect(Sentry.captureException).toHaveBeenCalledWith(error, {
-      extra: {
-        errorMessage,
-        errorInstance: "Some error occurred",
-        additionalInfo: "Some extra info",
-      },
+    await waitFor(() => {
+      expect(Sentry.captureException).toHaveBeenCalledWith(error, {
+        extra: {
+          errorMessage,
+          errorInstance: "Some error occurred",
+          additionalInfo: "Some extra info",
+        },
+      });
     });
   });
 
-  it("should handle errors with originalError property", () => {
+  it("should handle errors with originalError property", async () => {
     const errorMessage = "Test error";
     const error = {
       originalError: { code: "ERROR_CODE", message: "Original error message" },
@@ -50,11 +53,13 @@ describe("errorManager", () => {
 
     errorManager(errorMessage, error);
 
-    expect(Sentry.captureException).toHaveBeenCalledWith(error, {
-      extra: {
-        errorMessage,
-        errorInstance: { code: "ERROR_CODE", message: "Original error message" },
-      },
+    await waitFor(() => {
+      expect(Sentry.captureException).toHaveBeenCalledWith(error, {
+        extra: {
+          errorMessage,
+          errorInstance: { code: "ERROR_CODE", message: "Original error message" },
+        },
+      });
     });
   });
 });

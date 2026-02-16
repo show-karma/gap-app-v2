@@ -62,7 +62,8 @@ describe("project-grants.service", () => {
       const result = await getProjectGrants("test-project");
 
       expect(result).toEqual(mockGrants);
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("test-project"));
+      expect(mockFetchData).toHaveBeenCalledTimes(1);
+      expect(mockFetchData.mock.calls[0][0]).toEqual(expect.stringContaining("test-project"));
     });
 
     it("should return array with single grant when API returns single object", async () => {
@@ -103,8 +104,9 @@ describe("project-grants.service", () => {
 
       await getProjectGrants("my-project-slug");
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("my-project-slug"));
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("/grants"));
+      expect(mockFetchData).toHaveBeenCalledTimes(1);
+      expect(mockFetchData.mock.calls[0][0]).toEqual(expect.stringContaining("my-project-slug"));
+      expect(mockFetchData.mock.calls[0][0]).toEqual(expect.stringContaining("/grants"));
     });
 
     it("should call correct endpoint for project UID", async () => {
@@ -112,7 +114,8 @@ describe("project-grants.service", () => {
 
       await getProjectGrants("0x1234567890");
 
-      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("0x1234567890"));
+      expect(mockFetchData).toHaveBeenCalledTimes(1);
+      expect(mockFetchData.mock.calls[0][0]).toEqual(expect.stringContaining("0x1234567890"));
     });
   });
 });

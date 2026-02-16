@@ -7,9 +7,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import React from "react";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
-import { getProjectById } from "@/utilities/sdk";
+import { getProjectById } from "@/utilities/sdk/projects/getProjectById";
 
-jest.mock("@/utilities/sdk", () => ({
+jest.mock("@/utilities/sdk/projects/getProjectById", () => ({
   getProjectById: jest.fn(),
 }));
 
