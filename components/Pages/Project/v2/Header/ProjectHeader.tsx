@@ -2,7 +2,7 @@
 
 import { GlobeIcon, RocketIcon } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 
 const MarkdownPreview = dynamic(
@@ -17,23 +17,30 @@ import { ensureProtocol } from "@/utilities/ensureProtocol";
 import { cn } from "@/utilities/tailwind";
 import { VerificationBadge } from "../icons/VerificationBadge";
 
+function ProjectActivityChartSkeleton() {
+  return (
+    <div
+      className="flex flex-col min-h-[244px] animate-pulse"
+      data-testid="project-activity-chart-skeleton"
+    >
+      <div className="h-6 w-32 bg-gray-100 dark:bg-zinc-800 rounded mb-4" />
+      <div className="h-[120px] bg-gray-100 dark:bg-zinc-800 rounded" />
+      <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
+        <div className="flex items-center gap-4">
+          <div className="h-5 w-20 bg-gray-100 dark:bg-zinc-800 rounded" />
+          <div className="h-5 w-28 bg-gray-100 dark:bg-zinc-800 rounded" />
+        </div>
+        <div className="h-8 w-24 bg-gray-100 dark:bg-zinc-800 rounded" />
+      </div>
+    </div>
+  );
+}
+
 const ProjectActivityChart = dynamic(
   () => import("../MainContent/ProjectActivityChart").then((m) => m.ProjectActivityChart),
   {
     ssr: false,
-    loading: () => (
-      <div className="flex flex-col min-h-[244px] animate-pulse">
-        <div className="h-6 w-32 bg-gray-100 dark:bg-zinc-800 rounded mb-4" />
-        <div className="h-[120px] bg-gray-100 dark:bg-zinc-800 rounded" />
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
-          <div className="flex items-center gap-4">
-            <div className="h-5 w-20 bg-gray-100 dark:bg-zinc-800 rounded" />
-            <div className="h-5 w-28 bg-gray-100 dark:bg-zinc-800 rounded" />
-          </div>
-          <div className="h-8 w-24 bg-gray-100 dark:bg-zinc-800 rounded" />
-        </div>
-      </div>
-    ),
+    loading: () => <ProjectActivityChartSkeleton />,
   }
 );
 
@@ -73,6 +80,9 @@ export function ProjectHeader({
 }: ProjectHeaderProps) {
   const projectId = projectIdProp || project?.details?.slug || project?.uid || "";
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isChartNearViewport, setIsChartNearViewport] = useState(false);
+  const [isIdle, setIsIdle] = useState(() => process.env.NODE_ENV === "test");
+  const chartContainerRef = useRef<HTMLDivElement>(null);
   const socials = useProjectSocials(project?.details?.links);
 
   // Get custom links (links with name property that aren't standard socials)
@@ -86,6 +96,69 @@ export function ProjectHeader({
     shouldTruncate && !isExpanded ? `${description.slice(0, 200)}...` : description;
 
   const stageLabel = project?.details?.stageIn || "";
+  const shouldRenderChart = isChartNearViewport && isIdle;
+
+  useEffect(() => {
+    if (isIdle || typeof window === "undefined") {
+      return;
+    }
+
+    const isMobileViewport = window.matchMedia("(max-width: 1023px)").matches;
+    const idleTimeout = isMobileViewport ? 2200 : 1200;
+    const markIdle = () => setIsIdle(true);
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    let idleCallbackId: number | undefined;
+
+    timeoutId = setTimeout(markIdle, idleTimeout);
+
+    if (typeof window.requestIdleCallback === "function") {
+      idleCallbackId = window.requestIdleCallback(markIdle, { timeout: idleTimeout });
+    }
+
+    return () => {
+      if (typeof idleCallbackId === "number" && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleCallbackId);
+      }
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [isIdle]);
+
+  useEffect(() => {
+    if (isChartNearViewport) {
+      return;
+    }
+
+    const container = chartContainerRef.current;
+    if (!container) {
+      return;
+    }
+
+    if (typeof window === "undefined" || !("IntersectionObserver" in window)) {
+      setIsChartNearViewport(true);
+      return;
+    }
+
+    const isMobileViewport = window.matchMedia("(max-width: 1023px)").matches;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting) {
+          setIsChartNearViewport(true);
+          observer.disconnect();
+        }
+      },
+      {
+        rootMargin: isMobileViewport ? "0px 0px" : "200px 0px",
+        threshold: isMobileViewport ? 0.1 : 0.01,
+      }
+    );
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [isChartNearViewport]);
 
   return (
     <div className={cn("w-full", className)} data-testid="project-header">
@@ -260,8 +333,16 @@ export function ProjectHeader({
           <div className="hidden lg:block w-px bg-border self-stretch -my-8" />
 
           {/* Right side: Project Activity Chart - 50% width on desktop */}
-          <div className="mt-6 lg:mt-0 lg:flex-1 lg:basis-1/2 lg:min-h-[244px]">
-            <ProjectActivityChart embedded projectId={projectId} />
+          <div
+            ref={chartContainerRef}
+            className="mt-6 lg:mt-0 lg:flex-1 lg:basis-1/2 lg:min-h-[244px]"
+            data-testid="project-activity-chart-container"
+          >
+            {shouldRenderChart ? (
+              <ProjectActivityChart embedded projectId={projectId} />
+            ) : (
+              <ProjectActivityChartSkeleton />
+            )}
           </div>
         </div>
       </div>
