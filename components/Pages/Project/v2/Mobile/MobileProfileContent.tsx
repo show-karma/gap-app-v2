@@ -2,10 +2,12 @@
 
 import { PenLine } from "lucide-react";
 import dynamic from "next/dynamic";
+import { ViewportDeferred } from "@/components/Utilities/ViewportDeferred";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
+import { hasConfiguredPayoutAddresses } from "@/src/features/chain-payout-address";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { useOwnerStore } from "@/store/owner";
 import { useProjectStore } from "@/store/project";
@@ -13,20 +15,42 @@ import type { Project } from "@/types/v2/project";
 import type { ProjectProfileStats } from "@/types/v2/project-profile.types";
 import { cn } from "@/utilities/tailwind";
 import { ProjectHeader } from "../Header/ProjectHeader";
-import { DonateSection, useDonationVisibility } from "../SidePanel/DonateSection";
-import { EndorseSection } from "../SidePanel/EndorseSection";
-import { QuickLinksCard } from "../SidePanel/QuickLinksCard";
 import { ProjectStatsBar } from "../StatsBar/ProjectStatsBar";
+
+function ActionSectionSkeleton({ minHeight = 120 }: { minHeight?: number }) {
+  return (
+    <div
+      className="animate-pulse rounded-lg bg-neutral-200/70 dark:bg-zinc-700/50"
+      style={{ minHeight }}
+    />
+  );
+}
+
+const DonateSection = dynamic(
+  () => import("../SidePanel/DonateSection").then((m) => m.DonateSection),
+  { ssr: false, loading: () => <ActionSectionSkeleton /> }
+);
+
+const EndorseSection = dynamic(
+  () => import("../SidePanel/EndorseSection").then((m) => m.EndorseSection),
+  { ssr: false, loading: () => <ActionSectionSkeleton /> }
+);
 
 const SubscribeSection = dynamic(
   () => import("../SidePanel/SubscribeSection").then((m) => m.SubscribeSection),
-  { ssr: false }
+  { ssr: false, loading: () => <ActionSectionSkeleton /> }
+);
+const QuickLinksCard = dynamic(
+  () => import("../SidePanel/QuickLinksCard").then((m) => m.QuickLinksCard),
+  { ssr: false, loading: () => <ActionSectionSkeleton minHeight={216} /> }
 );
 
 interface MobileProfileContentProps {
   project: Project;
   isVerified?: boolean;
   stats: ProjectProfileStats;
+  authenticated: boolean;
+  onLogin: () => void;
   className?: string;
   onEndorsementsClick?: () => void;
 }
@@ -53,6 +77,8 @@ export function MobileProfileContent({
   project,
   isVerified,
   stats,
+  authenticated,
+  onLogin,
   className,
   onEndorsementsClick,
 }: MobileProfileContentProps) {
@@ -62,16 +88,23 @@ export function MobileProfileContent({
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const { authenticated } = useAuth();
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
     {},
     { enabled: authenticated }
   );
   const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
 
+  const canSetPayoutAddress =
+    isProjectOwner ||
+    isOwner ||
+    isProjectAdmin ||
+    isCommunityAdmin ||
+    (!isPermissionsLoading && isSuperAdmin);
   const isAuthorized =
     isOwner || isProjectAdmin || isProjectOwner || (!isPermissionsLoading && isSuperAdmin);
-  const showDonateSection = useDonationVisibility(project);
+  const showDonateSection =
+    hasConfiguredPayoutAddresses(project.chainPayoutAddress) || canSetPayoutAddress;
 
   const handlePostUpdate = () => {
     setIsProgressModalOpen(true);
@@ -106,17 +139,25 @@ export function MobileProfileContent({
       <div className="flex flex-col gap-8 p-6 rounded-xl border border-neutral-200 dark:border-zinc-700 bg-neutral-100 dark:bg-zinc-800/50">
         {showDonateSection && (
           <>
-            <DonateSection project={project} />
+            <ViewportDeferred fallback={<ActionSectionSkeleton minHeight={132} />}>
+              <DonateSection project={project} canSetPayoutAddress={canSetPayoutAddress} />
+            </ViewportDeferred>
             <Separator />
           </>
         )}
-        <EndorseSection project={project} />
+        <ViewportDeferred fallback={<ActionSectionSkeleton minHeight={120} />}>
+          <EndorseSection project={project} authenticated={authenticated} onLogin={onLogin} />
+        </ViewportDeferred>
         <Separator />
-        <SubscribeSection project={project} />
+        <ViewportDeferred fallback={<ActionSectionSkeleton minHeight={224} />}>
+          <SubscribeSection project={project} />
+        </ViewportDeferred>
       </div>
 
       {/* Quick Links */}
-      <QuickLinksCard project={project} />
+      <ViewportDeferred fallback={<ActionSectionSkeleton minHeight={216} />}>
+        <QuickLinksCard project={project} />
+      </ViewportDeferred>
     </div>
   );
 }

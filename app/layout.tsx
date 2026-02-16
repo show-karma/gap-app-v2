@@ -1,15 +1,14 @@
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Viewport } from "next";
 import { Inter } from "next/font/google";
-import { Suspense } from "react";
 import { DeferredGoogleAnalytics } from "@/components/Utilities/DeferredGoogleAnalytics";
+import { DeferredHotjarAnalytics } from "@/components/Utilities/DeferredHotjarAnalytics";
 import { defaultMetadata } from "@/utilities/meta";
 import "@/styles/globals.css";
 import "@/styles/index.scss";
 import "@/components/Utilities/DynamicStars/styles.css";
 import { ThemeProvider } from "next-themes";
 import { OrganizationJsonLd } from "@/components/Seo/OrganizationJsonLd";
-import HotjarAnalytics from "@/components/Utilities/HotjarAnalytics";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -40,9 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       {process.env.NEXT_PUBLIC_GA_TRACKING_ID && process.env.NEXT_PUBLIC_ENV === "production" && (
         <DeferredGoogleAnalytics trackingId={process.env.NEXT_PUBLIC_GA_TRACKING_ID} />
       )}
-      <Suspense>
-        <HotjarAnalytics />
-      </Suspense>
+      <DeferredHotjarAnalytics />
       <body suppressHydrationWarning>
         <ThemeProvider
           defaultTheme="light"
