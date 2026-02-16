@@ -8,12 +8,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { envVars } from "@/utilities/enviromentVars";
 import { getGapRpcConfig } from "@/utilities/gapRpcConfig";
-import {
-  appNetwork,
-  gapSupportedNetworks,
-  getChainIdByName,
-  getChainNameById,
-} from "@/utilities/network";
+import { getChainIdByName, getChainNameById } from "@/utilities/network";
+import { appNetwork, gapSupportedNetworks } from "@/utilities/network-chains";
 
 const gapClients: Record<number, GAP> = {};
 

@@ -12,7 +12,7 @@ import {
   sepolia,
 } from "@wagmi/core/chains";
 import { envVars } from "../enviromentVars";
-import { appNetwork } from "../network";
+import { appNetwork } from "../network-chains";
 
 /**
  * HTTP Transport Configuration

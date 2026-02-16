@@ -23,7 +23,8 @@ import { useContributorProfileModalStore } from "@/store/modals/contributorProfi
 import { useProjectStore } from "@/store/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { gapSupportedNetworks, getChainIdByName } from "@/utilities/network";
+import { getChainIdByName } from "@/utilities/network";
+import { gapSupportedNetworks } from "@/utilities/network-chains";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
 

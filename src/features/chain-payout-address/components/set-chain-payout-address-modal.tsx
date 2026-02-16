@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { useProjectStore } from "@/store/project";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { PAYOUT_CHAINS } from "@/utilities/network";
+import { PAYOUT_CHAINS } from "@/utilities/network-chains";
 import {
   hasConfiguredPayoutAddresses,
   useUpdateChainPayoutAddress,

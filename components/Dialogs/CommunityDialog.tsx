@@ -15,7 +15,7 @@ import { useWallet } from "@/hooks/useWallet";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { appNetwork } from "@/utilities/network";
+import { appNetwork } from "@/utilities/network-chains";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
 import { errorManager } from "../Utilities/errorManager";

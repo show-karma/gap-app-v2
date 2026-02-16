@@ -1,11 +1,5 @@
-import {
-  appNetwork,
-  gapSupportedNetworks,
-  getChainIdByName,
-  getChainNameById,
-  getExplorerUrl,
-  PAYOUT_CHAINS,
-} from "../network";
+import { getChainIdByName, getChainNameById, getExplorerUrl } from "../network";
+import { appNetwork, gapSupportedNetworks, PAYOUT_CHAINS } from "../network-chains";
 
 describe("network utilities", () => {
   describe("getExplorerUrl", () => {

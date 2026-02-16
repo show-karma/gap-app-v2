@@ -1,91 +1,57 @@
-import type { TNetwork } from "@show-karma/karma-gap-sdk";
-import type { Chain } from "viem/chains";
-import {
-  arbitrum,
-  base,
-  baseSepolia,
-  celo,
-  lisk,
-  mainnet,
-  optimism,
-  optimismSepolia,
-  polygon,
-  scroll,
-  sei,
-  sepolia,
-} from "viem/chains";
+export type GapNetworkName =
+  | "mainnet"
+  | "optimism"
+  | "arbitrum"
+  | "base"
+  | "celo"
+  | "polygon"
+  | "optimism-sepolia"
+  | "sepolia"
+  | "base-sepolia"
+  | "lisk"
+  | "scroll"
+  | "sei";
 
-const includeTestNetworks = process.env.NEXT_PUBLIC_ENV !== "production";
+const DEFAULT_CHAIN_ID = 1;
+const DEFAULT_CHAIN_NAME: GapNetworkName = "mainnet";
 
-const productionNetworks: Chain[] = [
-  mainnet,
-  optimism,
-  arbitrum,
-  base,
-  celo,
-  polygon,
-  lisk,
-  scroll,
-  sei,
-];
+const CHAIN_EXPLORER_BASE_URLS: Record<number, string> = {
+  1: "https://etherscan.io",
+  10: "https://optimistic.etherscan.io",
+  137: "https://polygonscan.com",
+  1135: "https://blockscout.lisk.com",
+  1329: "https://seitrace.com",
+  8453: "https://basescan.org",
+  84532: "https://sepolia.basescan.org",
+  42220: "https://celoscan.io",
+  42161: "https://arbiscan.io",
+  534352: "https://scrollscan.com",
+  11155111: "https://sepolia.etherscan.io",
+  11155420: "https://optimism-sepolia.blockscout.com",
+};
 
-const nonProductionNetworks: Chain[] = [
-  mainnet,
-  optimism,
-  arbitrum,
-  base,
-  celo,
-  polygon,
-  lisk,
-  scroll,
-  sei,
-  optimismSepolia,
-  baseSepolia,
-  sepolia,
-];
-
-const configuredNetworks = includeTestNetworks ? nonProductionNetworks : productionNetworks;
-
-export const appNetwork = configuredNetworks as [Chain, ...Chain[]];
-
-/**
- * Networks supported by GAP SDK for project creation.
- * Filters out chains that are available for other features (e.g., donations)
- * but cannot be used for creating projects/attestations.
- */
-const gapUnsupportedChainIds: number[] = [mainnet.id];
-
-export const gapSupportedNetworks = appNetwork.filter(
-  (chain) => !gapUnsupportedChainIds.includes(chain.id)
-) as [Chain, ...Chain[]];
-
-/**
- * Networks where projects can configure payout addresses for donations.
- * Includes all app networks (including mainnet) since donations don't require
- * GAP SDK/attestation support - only the batch donations contract deployment.
- */
-export const PAYOUT_CHAINS = appNetwork;
+const CHAIN_NAME_BY_ID: Record<number, GapNetworkName> = {
+  1: "mainnet",
+  10: "optimism",
+  137: "polygon",
+  1135: "lisk",
+  1329: "sei",
+  8453: "base",
+  84532: "base-sepolia",
+  42220: "celo",
+  42161: "arbitrum",
+  534352: "scroll",
+  11155111: "sepolia",
+  11155420: "optimism-sepolia",
+};
 
 export function getExplorerUrl(chainId: number, transactionHash: string) {
-  const chain = [
-    mainnet,
-    optimism,
-    arbitrum,
-    base,
-    celo,
-    polygon,
-    optimismSepolia,
-    baseSepolia,
-    sepolia,
-    lisk,
-    scroll,
-    sei,
-  ].find((c) => c.id === chainId);
-  if (!chain || !chain.blockExplorers?.default?.url) {
+  const explorerBaseUrl = CHAIN_EXPLORER_BASE_URLS[chainId];
+  if (!explorerBaseUrl) {
     // Return a fallback block explorer URL if the chain or its explorer is not found
     return `https://www.oklink.com/multi-search#key=${transactionHash}`;
   }
-  return `${chain.blockExplorers.default.url}/tx/${transactionHash}`;
+  return `${explorerBaseUrl}/tx/${transactionHash}`;
 }
 
 /**
@@ -142,39 +108,10 @@ export function getChainIdByName(name: string): number {
     case "sei":
       return 1329;
     default:
-      return appNetwork[0].id;
+      return DEFAULT_CHAIN_ID;
   }
 }
 
-export function getChainNameById(id: number): TNetwork {
-  switch (id) {
-    case 1:
-      return "mainnet" as TNetwork;
-    case 10:
-      return "optimism";
-    case 42161:
-      return "arbitrum";
-    case 8453:
-      return "base" as TNetwork;
-    case 42220:
-      return "celo";
-    case 137:
-      return "polygon" as TNetwork;
-    case 11155420:
-      return "optimism-sepolia";
-    case 11155111:
-      return "sepolia";
-    case 84532:
-      return "base-sepolia";
-    case 1135:
-      return "lisk";
-    case 534352:
-      return "scroll";
-    case 1329:
-      return "sei" as TNetwork;
-    default: {
-      const network = appNetwork[0].name;
-      return getChainNameById(getChainIdByName(network));
-    }
-  }
+export function getChainNameById(id: number): GapNetworkName {
+  return CHAIN_NAME_BY_ID[id] ?? DEFAULT_CHAIN_NAME;
 }

@@ -4,7 +4,7 @@ import { PrivyProvider } from "@privy-io/react-auth";
 import { WagmiProvider } from "@privy-io/wagmi";
 import { PROJECT_NAME } from "@/constants/brand";
 import { envVars } from "@/utilities/enviromentVars";
-import { appNetwork } from "@/utilities/network";
+import { appNetwork } from "@/utilities/network-chains";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
 
 interface PrivyProviderWrapperProps {

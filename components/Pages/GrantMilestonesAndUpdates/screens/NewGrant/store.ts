@@ -1,6 +1,6 @@
 import type { IMilestone } from "@show-karma/karma-gap-sdk";
 import { create } from "zustand";
-import { appNetwork } from "@/utilities/network";
+import { appNetwork } from "@/utilities/network-chains";
 
 export interface MilestonesForms {
   isValid: boolean;

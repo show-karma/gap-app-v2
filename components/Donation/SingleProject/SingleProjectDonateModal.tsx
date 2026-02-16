@@ -16,7 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { STRIPE_SUPPORTED_CHAIN_IDS } from "@/lib/onramp";
 import { getPayoutAddressForChain } from "@/src/features/chain-payout-address/hooks/use-chain-payout-address";
 import { PaymentMethod } from "@/types/donations";
-import { appNetwork } from "@/utilities/network";
+import { appNetwork } from "@/utilities/network-chains";
 import { shortAddress } from "@/utilities/shortAddress";
 import { TokenSelector } from "../TokenSelector";
 import { OnrampFlow } from "./OnrampFlow";

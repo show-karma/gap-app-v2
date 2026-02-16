@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { JsonRpcProvider } from "ethers";
 import { useEffect } from "react";
 import type { Chain } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -7,10 +6,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useOwnerStore } from "@/store/owner";
 import { CONTRACT_OWNER_CACHE_CONFIG } from "@/utilities/cache-config";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { gapSupportedNetworks } from "@/utilities/network";
+import { gapSupportedNetworks } from "@/utilities/network-chains";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { getRPCUrlByChainId } from "@/utilities/rpcClient";
-import { getContractOwner } from "@/utilities/sdk/getContractOwner";
 
 const fetchContractOwner = async (address: string): Promise<boolean> => {
   if (!address) return false;
@@ -20,6 +18,11 @@ const fetchContractOwner = async (address: string): Promise<boolean> => {
   if (!rpcUrl) {
     throw new Error(`RPC URL not configured for chain ${chain.id}`);
   }
+
+  const [{ JsonRpcProvider }, { getContractOwner }] = await Promise.all([
+    import("ethers"),
+    import("@/utilities/sdk/getContractOwner"),
+  ]);
 
   const provider = new JsonRpcProvider(rpcUrl, {
     chainId: chain.id,

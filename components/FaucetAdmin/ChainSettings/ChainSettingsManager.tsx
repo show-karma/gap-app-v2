@@ -5,7 +5,7 @@ import { formatEther } from "viem";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useFaucetConfig, useFaucetEmergency } from "@/hooks/useFaucetAdmin";
 import type { FaucetChainSettings } from "@/utilities/faucet/faucetService";
-import { appNetwork } from "@/utilities/network";
+import { appNetwork } from "@/utilities/network-chains";
 import { ChainSettingsForm } from "./ChainSettingsForm";
 import { EmergencyControls } from "./EmergencyControls";
 

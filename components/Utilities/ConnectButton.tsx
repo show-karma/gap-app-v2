@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
-import { appNetwork } from "@/utilities/network";
+import { appNetwork } from "@/utilities/network-chains";
 
 interface ConnectButtonCustomProps {
   children: (props: {
