@@ -31,14 +31,27 @@ export interface UseProjectProfileLayoutResult {
   stats: ProjectProfileStats;
 }
 
+interface UseProjectProfileLayoutOptions {
+  initialProject?: Project | null;
+}
+
 /**
  * Hook for layout-level project data. Fetches only project core + grants.
  * Updates and impacts are deferred to per-tab hooks.
  *
  * @param projectId - The project UID or slug
  */
-export function useProjectProfileLayout(projectId: string): UseProjectProfileLayoutResult {
-  const { project, isLoading: isProjectLoading, isError } = useProject(projectId);
+export function useProjectProfileLayout(
+  projectId: string,
+  options: UseProjectProfileLayoutOptions = {}
+): UseProjectProfileLayoutResult {
+  const {
+    project,
+    isLoading: isProjectLoading,
+    isError,
+  } = useProject(projectId, {
+    initialData: options.initialProject ?? undefined,
+  });
 
   const { grants, isLoading: isGrantsLoading } = useProjectGrants(project?.uid || projectId);
 

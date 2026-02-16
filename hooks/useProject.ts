@@ -6,7 +6,11 @@ import type { Project as ProjectResponse } from "@/types/v2/project";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
-export const useProject = (projectId: string) => {
+interface UseProjectOptions {
+  initialData?: ProjectResponse;
+}
+
+export const useProject = (projectId: string, options: UseProjectOptions = {}) => {
   const setProject = useProjectStore((state) => state.setProject);
 
   const query = useQuery({
@@ -19,6 +23,7 @@ export const useProject = (projectId: string) => {
       return data;
     },
     enabled: !!projectId,
+    initialData: options.initialData,
     ...defaultQueryOptions,
   });
 

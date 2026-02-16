@@ -127,7 +127,14 @@ export const useAuth = () => {
   const { ready, authenticated, user, login, logout, getAccessToken, connectWallet } = privyAuth;
   const { enableWalletConnect } = useWalletConnectDefer();
 
-  const { isConnected } = useAccount();
+  let accountState: ReturnType<typeof useAccount> | { isConnected: false };
+  try {
+    // biome-ignore lint/correctness/useHookAtTopLevel: Wagmi provider can be intentionally deferred on project routes.
+    accountState = useAccount();
+  } catch {
+    accountState = { isConnected: false };
+  }
+  const { isConnected } = accountState;
 
   const wallets = useMemo(() => {
     if (!Array.isArray(user?.linkedAccounts)) {

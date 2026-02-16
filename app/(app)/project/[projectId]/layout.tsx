@@ -108,7 +108,7 @@ export default async function RootLayout(props: {
                 </div>
                 {projectData.details.description && (
                   <div className="flex flex-col gap-1 flex-1 w-full">
-                    <div className="prose prose-sm dark:prose-invert max-w-none text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
+                    <div className="whitespace-pre-wrap break-words text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
                       {projectData.details.description.length > 200
                         ? `${projectData.details.description.slice(0, 200)}...`
                         : projectData.details.description}

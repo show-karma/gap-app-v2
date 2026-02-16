@@ -3,13 +3,8 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ComponentType, type ReactNode, useCallback, useEffect, useState } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-
-const ProjectOptionsMenu = dynamic(
-  () => import("@/components/Pages/Project/ProjectOptionsMenu").then((m) => m.ProjectOptionsMenu),
-  { ssr: false }
-);
 
 const ProgressDialog = dynamic(
   () => import("@/components/Dialogs/ProgressDialog").then((m) => m.ProgressDialog),
@@ -24,13 +19,7 @@ const IntroDialog = dynamic(
   () => import("@/components/Pages/Project/IntroDialog").then((m) => m.IntroDialog),
   { ssr: false }
 );
-const ProjectOptionsDialogs = dynamic(
-  () =>
-    import("@/components/Pages/Project/ProjectOptionsMenu").then((m) => m.ProjectOptionsDialogs),
-  { ssr: false }
-);
 
-import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectProfileLayout } from "@/hooks/v2/useProjectProfileLayout";
 import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
@@ -41,6 +30,7 @@ import { useMergeModalStore } from "@/store/modals/merge";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
+import type { Project } from "@/types/v2/project";
 import { cn } from "@/utilities/tailwind";
 import { ProjectHeader } from "../Header/ProjectHeader";
 import { type ContentTab, ContentTabs } from "../MainContent/ContentTabs";
@@ -72,15 +62,18 @@ const ProjectSidePanel = dynamic(
   () => import("../SidePanel/ProjectSidePanel").then((m) => m.ProjectSidePanel),
   { loading: () => <ProjectSidePanelSkeleton />, ssr: false }
 );
+const ProjectAuthStateBridge = dynamic(
+  () => import("./ProjectAuthStateBridge").then((m) => m.ProjectAuthStateBridge),
+  { ssr: false }
+);
+
+const NOOP_LOGIN = () => {};
+const AUTH_DEFER_TIMEOUT_MS = 30_000;
 
 interface ProjectProfileLayoutProps {
   children: ReactNode;
   className?: string;
-}
-
-function ProjectPermissionsBootstrap() {
-  useProjectPermissions();
-  return null;
+  initialProject?: Project | null;
 }
 
 /**
@@ -102,12 +95,42 @@ function ProjectPermissionsBootstrap() {
  * - ProjectSidePanel: Donate, Endorse, Subscribe, QuickLinks (desktop only)
  * - ContentTabs: Navigation tabs for Profile (mobile), Updates, About, Funding, Impact, Team
  */
-export function ProjectProfileLayout({ children, className }: ProjectProfileLayoutProps) {
+export function ProjectProfileLayout({
+  children,
+  className,
+  initialProject = null,
+}: ProjectProfileLayoutProps) {
   const { projectId } = useParams();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [enableDeferredUI, setEnableDeferredUI] = useState(false);
+  const [enableDeferredAuth, setEnableDeferredAuth] = useState(false);
+  const [pendingLoginRequest, setPendingLoginRequest] = useState(false);
+  const [authState, setAuthState] = useState({
+    authenticated: false,
+    login: NOOP_LOGIN,
+  });
+  const [ProjectOptionsMenuComponent, setProjectOptionsMenuComponent] =
+    useState<ComponentType | null>(null);
+  const [ProjectOptionsDialogsComponent, setProjectOptionsDialogsComponent] =
+    useState<ComponentType | null>(null);
+  const [ProjectPermissionsBootstrapComponent, setProjectPermissionsBootstrapComponent] =
+    useState<ComponentType | null>(null);
+  const handleAuthStateChange = useCallback(
+    (nextAuthState: { authenticated: boolean; login: () => void }) => {
+      setAuthState((prevState) => {
+        if (
+          prevState.authenticated === nextAuthState.authenticated &&
+          prevState.login === nextAuthState.login
+        ) {
+          return prevState;
+        }
+        return nextAuthState;
+      });
+    },
+    []
+  );
 
   useEffect(() => {
     const enableUI = () => setEnableDeferredUI(true);
@@ -120,6 +143,59 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
     const timeoutId = window.setTimeout(enableUI, 1200);
     return () => window.clearTimeout(timeoutId);
   }, []);
+
+  useEffect(() => {
+    const interactionEvents: Array<keyof WindowEventMap> = ["pointerdown", "keydown", "touchstart"];
+    const removeInteractionListeners = () => {
+      for (const eventName of interactionEvents) {
+        window.removeEventListener(eventName, handleTrustedInteraction);
+      }
+    };
+    const enableAuth = () => {
+      setEnableDeferredAuth(true);
+      removeInteractionListeners();
+    };
+    const handleTrustedInteraction = (event: Event) => {
+      if (!event.isTrusted) return;
+      enableAuth();
+    };
+    for (const eventName of interactionEvents) {
+      window.addEventListener(eventName, handleTrustedInteraction);
+    }
+
+    if (typeof window.requestIdleCallback === "function") {
+      const idleCallbackId = window.requestIdleCallback(enableAuth, {
+        timeout: AUTH_DEFER_TIMEOUT_MS,
+      });
+      return () => {
+        window.cancelIdleCallback(idleCallbackId);
+        removeInteractionListeners();
+      };
+    }
+
+    const timeoutId = window.setTimeout(enableAuth, AUTH_DEFER_TIMEOUT_MS);
+    return () => {
+      window.clearTimeout(timeoutId);
+      removeInteractionListeners();
+    };
+  }, []);
+
+  const requestAuthAndLogin = useCallback(() => {
+    setEnableDeferredAuth(true);
+    if (authState.login === NOOP_LOGIN) {
+      setPendingLoginRequest(true);
+      return;
+    }
+    authState.login();
+  }, [authState.login]);
+
+  useEffect(() => {
+    if (!pendingLoginRequest || authState.login === NOOP_LOGIN) {
+      return;
+    }
+    setPendingLoginRequest(false);
+    authState.login();
+  }, [pendingLoginRequest, authState.login]);
 
   // Mobile view state: track if user is viewing Profile or other tabs on mobile
   // Read initial state from URL param: ?view=profile shows profile, otherwise show content
@@ -170,13 +246,65 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   const { openModal: openContributorProfileModal } = useContributorProfileModalStore();
   const [isEndorsementsListOpen, setIsEndorsementsListOpen] = useState(false);
   const shouldRenderProjectOptionsDialogs =
-    enableDeferredUI &&
+    enableDeferredAuth &&
+    authState.authenticated &&
     (isProjectEditModalOpen ||
       isMergeModalOpen ||
       isGrantGenieModalOpen ||
       isTransferOwnershipModalOpen ||
       isAdminTransferOwnershipModalOpen);
-  const shouldRenderProjectOptionsMenu = enableDeferredUI;
+  const shouldRenderProjectOptionsMenu = enableDeferredAuth && authState.authenticated;
+
+  useEffect(() => {
+    if (!(enableDeferredAuth && authState.authenticated) || ProjectPermissionsBootstrapComponent) {
+      return;
+    }
+
+    let isMounted = true;
+    import("./ProjectPermissionsBootstrap").then((module) => {
+      if (isMounted) {
+        setProjectPermissionsBootstrapComponent(() => module.ProjectPermissionsBootstrap);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authState.authenticated, enableDeferredAuth, ProjectPermissionsBootstrapComponent]);
+
+  useEffect(() => {
+    if (!shouldRenderProjectOptionsMenu || ProjectOptionsMenuComponent) {
+      return;
+    }
+
+    let isMounted = true;
+    import("@/components/Pages/Project/ProjectOptionsMenu").then((module) => {
+      if (isMounted) {
+        setProjectOptionsMenuComponent(() => module.ProjectOptionsMenu);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [shouldRenderProjectOptionsMenu, ProjectOptionsMenuComponent]);
+
+  useEffect(() => {
+    if (!shouldRenderProjectOptionsDialogs || ProjectOptionsDialogsComponent) {
+      return;
+    }
+
+    let isMounted = true;
+    import("@/components/Pages/Project/ProjectOptionsMenu").then((module) => {
+      if (isMounted) {
+        setProjectOptionsDialogsComponent(() => module.ProjectOptionsDialogs);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [shouldRenderProjectOptionsDialogs, ProjectOptionsDialogsComponent]);
 
   // Auto-open contributor profile modal when invite code is present in URL (only once)
   const inviteCode = searchParams.get("invite-code");
@@ -191,7 +319,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   // Use lightweight layout hook — only fetches project core + grants (for stats).
   // Updates and impacts are deferred to per-tab hooks (e.g., UpdatesContent).
   const { project, isLoading, isProjectLoading, isError, isVerified, stats } =
-    useProjectProfileLayout(projectId as string);
+    useProjectProfileLayout(projectId as string, { initialProject });
 
   // Get team count from project
   const teamCount = project
@@ -332,10 +460,15 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
           onOpenChange={setIsEndorsementsListOpen}
         />
       )}
+      {enableDeferredAuth && <ProjectAuthStateBridge onAuthStateChange={handleAuthStateChange} />}
       {/* Start project permission checks after the initial render window. */}
-      {enableDeferredUI && <ProjectPermissionsBootstrap />}
+      {enableDeferredAuth && authState.authenticated && ProjectPermissionsBootstrapComponent && (
+        <ProjectPermissionsBootstrapComponent />
+      )}
       {/* Mount project option dialogs only when one is explicitly opened. */}
-      {shouldRenderProjectOptionsDialogs && <ProjectOptionsDialogs />}
+      {shouldRenderProjectOptionsDialogs && ProjectOptionsDialogsComponent && (
+        <ProjectOptionsDialogsComponent />
+      )}
 
       <div
         className={cn("flex flex-col gap-6 w-full", className)}
@@ -361,9 +494,9 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
         </div>
 
         {/* Mobile: Project Settings above tabs - right aligned */}
-        {shouldRenderProjectOptionsMenu && (
+        {shouldRenderProjectOptionsMenu && ProjectOptionsMenuComponent && (
           <div className="lg:hidden flex justify-end">
-            <ProjectOptionsMenu />
+            <ProjectOptionsMenuComponent />
           </div>
         )}
 
@@ -392,6 +525,8 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
               project={project}
               isVerified={isVerified}
               stats={stats}
+              authenticated={authState.authenticated}
+              onLogin={requestAuthAndLogin}
               onEndorsementsClick={() => setIsEndorsementsListOpen(true)}
             />
           </div>
@@ -400,7 +535,15 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
         {/* Main Layout: Side Panel + Content */}
         <div className="flex flex-row gap-6" data-testid="main-layout">
           {/* Side Panel - Desktop Only */}
-          {enableDeferredUI ? <ProjectSidePanel project={project} /> : <ProjectSidePanelSkeleton />}
+          {enableDeferredUI ? (
+            <ProjectSidePanel
+              project={project}
+              authenticated={authState.authenticated}
+              onLogin={requestAuthAndLogin}
+            />
+          ) : (
+            <ProjectSidePanelSkeleton />
+          )}
 
           {/* Main Content Area */}
           <div
@@ -408,9 +551,9 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
             data-testid="project-main-content-area"
           >
             {/* Desktop: Project Settings above tabs */}
-            {shouldRenderProjectOptionsMenu && (
+            {shouldRenderProjectOptionsMenu && ProjectOptionsMenuComponent && (
               <div className="hidden lg:flex lg:justify-end">
-                <ProjectOptionsMenu />
+                <ProjectOptionsMenuComponent />
               </div>
             )}
 

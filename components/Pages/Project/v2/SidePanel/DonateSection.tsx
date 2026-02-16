@@ -6,9 +6,6 @@ import { useState } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/hooks/useAuth";
-import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
-import { Role } from "@/src/core/rbac/types";
 import { hasConfiguredPayoutAddresses } from "@/src/features/chain-payout-address";
 
 const SingleProjectDonateModal = dynamic(
@@ -27,45 +24,14 @@ const SetChainPayoutAddressModal = dynamic(
   { ssr: false }
 );
 
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { useOwnerStore } from "@/store/owner";
 import { useProjectStore } from "@/store/project";
 import type { Project } from "@/types/v2/project";
 import { cn } from "@/utilities/tailwind";
 
 interface DonateSectionProps {
   project: Project;
+  canSetPayoutAddress?: boolean;
   className?: string;
-}
-
-/**
- * Hook to determine if the donate section should be visible.
- * Returns true if:
- * - Payout addresses are configured, OR
- * - User is authorized to set up payout addresses (owner/admin/staff)
- */
-export function useDonationVisibility(project: Project): boolean {
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const { authenticated } = useAuth();
-  const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
-    {},
-    { enabled: authenticated }
-  );
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
-
-  const canSetPayoutAddress =
-    isProjectOwner ||
-    isOwner ||
-    isProjectAdmin ||
-    isCommunityAdmin ||
-    (!isPermissionsLoading && isSuperAdmin);
-
-  const hasPayoutAddresses = hasConfiguredPayoutAddresses(project.chainPayoutAddress);
-
-  return hasPayoutAddresses || canSetPayoutAddress;
 }
 
 /**
@@ -80,34 +46,26 @@ export function useDonationVisibility(project: Project): boolean {
  * - If no payout addresses: section is hidden (returns null)
  * - If payout addresses configured: shows regular donation form
  */
-export function DonateSection({ project, className }: DonateSectionProps) {
+export function DonateSection({
+  project,
+  canSetPayoutAddress = false,
+  className,
+}: DonateSectionProps) {
   const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
   const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
   const [amount, setAmount] = useState("");
 
-  // Wallet connection state
-  const { isConnected } = useAccount();
-
-  // Authorization checks
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  // This section can mount before deferred auth providers are ready on project routes.
+  // Fall back to a disconnected state until Wagmi is available.
+  let accountState: { isConnected: boolean };
+  try {
+    // biome-ignore lint/correctness/useHookAtTopLevel: useAccount can throw before deferred Wagmi provider mounts.
+    accountState = useAccount();
+  } catch {
+    accountState = { isConnected: false };
+  }
+  const { isConnected } = accountState;
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const { authenticated } = useAuth();
-  const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
-    {},
-    { enabled: authenticated }
-  );
-  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
-
-  // Can set payout address: project member/owner/admin/staff
-  const canSetPayoutAddress =
-    isProjectOwner ||
-    isOwner ||
-    isProjectAdmin ||
-    isCommunityAdmin ||
-    (!isPermissionsLoading && isSuperAdmin);
 
   // Create project data for donation modal
   const donationProject = {
@@ -212,22 +170,25 @@ export function DonateSection({ project, className }: DonateSectionProps) {
         )}
       </section>
 
-      {/* Donation Modal */}
-      <SingleProjectDonateModal
-        isOpen={isDonateModalOpen}
-        onClose={() => setIsDonateModalOpen(false)}
-        project={donationProject}
-        initialAmount={amount}
-      />
+      {/* Mount donation flows only when opened to avoid loading heavy wallet/modal code on initial render */}
+      {isDonateModalOpen && (
+        <SingleProjectDonateModal
+          isOpen={isDonateModalOpen}
+          onClose={() => setIsDonateModalOpen(false)}
+          project={donationProject}
+          initialAmount={amount}
+        />
+      )}
 
-      {/* Set Payout Address Modal */}
-      <SetChainPayoutAddressModal
-        isOpen={isPayoutModalOpen}
-        onClose={() => setIsPayoutModalOpen(false)}
-        projectId={project.uid}
-        currentAddresses={project.chainPayoutAddress}
-        onSuccess={() => refreshProject()}
-      />
+      {isPayoutModalOpen && (
+        <SetChainPayoutAddressModal
+          isOpen={isPayoutModalOpen}
+          onClose={() => setIsPayoutModalOpen(false)}
+          projectId={project.uid}
+          currentAddresses={project.chainPayoutAddress}
+          onSuccess={() => refreshProject()}
+        />
+      )}
     </>
   );
 }

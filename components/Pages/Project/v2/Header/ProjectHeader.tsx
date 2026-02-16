@@ -297,7 +297,7 @@ export function ProjectHeader({
                       className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed"
                     />
                   ) : (
-                    <div className="prose prose-sm dark:prose-invert max-w-none text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
+                    <div className="whitespace-pre-wrap break-words text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
                       {displayDescription}
                     </div>
                   )}
