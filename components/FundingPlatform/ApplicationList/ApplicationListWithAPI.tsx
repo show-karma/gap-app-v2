@@ -17,6 +17,7 @@ import { useKycBatchStatusesByAppRef, useKycConfig } from "@/hooks/useKycStatus"
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import type { IApplicationFilters } from "@/services/fundingPlatformService";
+import { useProgramPrompts } from "@/src/features/prompt-management";
 import type { IFundingApplication } from "@/types/funding-platform";
 import formatCurrency from "@/utilities/formatCurrency";
 import { getAIColumnVisibility } from "../helper/getAIColumnVisibility";
@@ -105,8 +106,9 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
 
   const { exportApplications, isExporting } = useApplicationExport(programId, isAdmin);
 
-  // Fetch program config to determine AI column visibility
+  // Fetch program config and prompts to determine AI column visibility
   const { config } = useProgramConfig(programId);
+  const { data: promptsData } = useProgramPrompts(programId);
 
   // Fetch reviewers for the program
   const {
@@ -120,10 +122,10 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     isError: isMilestoneReviewersError,
   } = useMilestoneReviewers(programId);
 
-  // Determine column visibility based on configured prompts
+  // Determine column visibility based on config, prompts, or application data
   const { showAIScoreColumn, showInternalAIScoreColumn } = useMemo(
-    () => getAIColumnVisibility(config?.formSchema),
-    [config?.formSchema]
+    () => getAIColumnVisibility(config?.formSchema, promptsData, applications),
+    [config?.formSchema, promptsData, applications]
   );
 
   // KYC: Collect unique reference numbers from loaded applications
