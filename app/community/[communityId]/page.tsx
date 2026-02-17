@@ -6,7 +6,6 @@ import {
   getCommunityCategories,
   getCommunityDetails,
   getCommunityProjects,
-  getCommunityStats,
 } from "@/utilities/queries/v2/getCommunityData";
 
 type Props = {
@@ -22,9 +21,8 @@ export default async function Page(props: Props) {
     return undefined;
   }
 
-  const [communityDetails, communityStats, categories, initialProjects] = await Promise.all([
+  const [communityDetails, categories, initialProjects] = await Promise.all([
     getCommunityDetails(communityId),
-    getCommunityStats(communityId),
     getCommunityCategories(communityId),
     getCommunityProjects(communityId, { page: 1, limit: 12 }),
   ]);
@@ -51,7 +49,6 @@ export default async function Page(props: Props) {
         defaultSortBy={defaultSortBy}
         defaultSelectedMaturityStage={defaultSelectedMaturityStage}
         communityUid={communityDetails.uid}
-        communityStats={communityStats}
         initialProjects={initialProjects}
       />
     </div>
