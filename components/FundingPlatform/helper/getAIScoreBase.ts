@@ -6,14 +6,16 @@ import type { IFundingApplication } from "@/types/funding-platform";
 export type EvaluationSource = "aiEvaluation" | "internalAIEvaluation";
 
 /**
- * Supported score field names in evaluation objects
+ * Supported score field names in evaluation objects (lowercase for case-insensitive matching)
  * Different AI prompts may use different field names for the score
+ * e.g. "final_score", "Score", "total_score", "SCORE"
  */
-const SCORE_FIELDS = ["final_score", "total_score"] as const;
+const SCORE_FIELDS = ["final_score", "total_score", "score"] as const;
 
 /**
- * Extracts score from evaluation object, checking multiple possible field names
- * @returns The score value and field name, or null if no valid score found
+ * Extracts score from evaluation object, checking multiple possible field names.
+ * Matching is case-insensitive to handle varied AI prompt output formats.
+ * @returns The score value and matched field name, or null if no valid score found
  */
 function extractScore(evaluation: unknown): { score: number; field: string } | null {
   if (evaluation === null || typeof evaluation !== "object") {
@@ -21,10 +23,12 @@ function extractScore(evaluation: unknown): { score: number; field: string } | n
   }
 
   const evalObj = evaluation as Record<string, unknown>;
+  const keys = Object.keys(evalObj);
 
-  for (const field of SCORE_FIELDS) {
-    if (field in evalObj && typeof evalObj[field] === "number" && !Number.isNaN(evalObj[field])) {
-      return { score: evalObj[field] as number, field };
+  for (const targetField of SCORE_FIELDS) {
+    const matchedKey = keys.find((k) => k.toLowerCase() === targetField);
+    if (matchedKey && typeof evalObj[matchedKey] === "number" && !Number.isNaN(evalObj[matchedKey])) {
+      return { score: evalObj[matchedKey] as number, field: matchedKey };
     }
   }
 
