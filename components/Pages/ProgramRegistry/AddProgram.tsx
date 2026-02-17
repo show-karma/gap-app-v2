@@ -127,6 +127,25 @@ const createProgramSchema = z.object({
     })
     .optional()
     .or(z.literal("")),
+  facebook: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
+  instagram: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
+  shortDescription: z
+    .string()
+    .max(100, { message: "Short description must be at most 100 characters" })
+    .optional()
+    .or(z.literal("")),
   amountDistributed: z.coerce.number().optional(),
   description: z
     .string({
@@ -151,10 +170,12 @@ const createProgramSchema = z.object({
   status: z.string().optional().or(z.literal("Active")),
   adminEmails: z
     .array(z.string().email({ message: "Invalid email address" }))
-    .min(1, { message: "At least one admin email is required" }),
+    .optional()
+    .default([]),
   financeEmails: z
     .array(z.string().email({ message: "Invalid email address" }))
-    .min(1, { message: "At least one finance email is required" }),
+    .optional()
+    .default([]),
 });
 
 type ProgramFormData = z.infer<typeof createProgramSchema>;
@@ -163,10 +184,12 @@ export default function AddProgram({
   programToEdit,
   backTo,
   refreshPrograms,
+  isAdmin = false,
 }: {
   programToEdit?: GrantProgram | null;
   backTo?: () => void;
   refreshPrograms?: () => Promise<void>;
+  isAdmin?: boolean;
 }) {
   const router = useRouter();
   const _supportedChains = appNetwork
@@ -207,6 +230,7 @@ export default function AddProgram({
     defaultValues: {
       name: programToEdit?.metadata?.title,
       description: programToEdit?.metadata?.description,
+      shortDescription: programToEdit?.metadata?.shortDescription || "",
       dates: {
         startsAt: programToEdit?.metadata?.startsAt
           ? new Date(programToEdit?.metadata?.startsAt)
@@ -228,6 +252,8 @@ export default function AddProgram({
       orgWebsite: programToEdit?.metadata?.socialLinks?.orgWebsite,
       blog: programToEdit?.metadata?.socialLinks?.blog,
       forum: programToEdit?.metadata?.socialLinks?.forum,
+      facebook: programToEdit?.metadata?.socialLinks?.facebook,
+      instagram: programToEdit?.metadata?.socialLinks?.instagram,
       categories: programToEdit?.metadata?.categories || [],
       ecosystems: programToEdit?.metadata?.ecosystems || [],
       organizations: programToEdit?.metadata?.organizations || [],
@@ -293,6 +319,7 @@ export default function AddProgram({
   const buildMetadata = (data: ProgramFormData) => ({
     title: data.name,
     description: data.description,
+    shortDescription: data.shortDescription || "",
     programBudget: data.budget,
     amountDistributedToDate: data.amountDistributed,
     minGrantSize: data.minGrantSize,
@@ -311,6 +338,8 @@ export default function AddProgram({
       forum: data.forum || "",
       grantsSite: data.grantsSite || "",
       telegram: data.telegram || "",
+      facebook: data.facebook || "",
+      instagram: data.instagram || "",
     },
     bugBounty: data.bugBounty,
     categories: data.categories,
@@ -513,7 +542,7 @@ export default function AddProgram({
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-grants-site" className={labelStyle}>
-                    Grants Site *
+                    Program website *
                   </label>
                   <input
                     id="program-grants-site"
@@ -532,7 +561,7 @@ export default function AddProgram({
                     render={({ field, formState }) => (
                       <div className="flex w-full flex-col gap-2">
                         <div className={labelStyle}>
-                          Start date (UTC)
+                          Start date{" "}
                           <span className="font-normal text-gray-500 dark:text-gray-400 ml-1">
                             (optional)
                           </span>
@@ -546,7 +575,7 @@ export default function AddProgram({
                             field.onChange(date);
                           }}
                           timeMode="start"
-                          placeholder="Pick a date (UTC)"
+                          placeholder="Pick a date"
                           buttonClassName="w-full text-base bg-white dark:bg-zinc-800"
                           clearButtonFn={() => {
                             setValue("dates.startsAt", undefined, {
@@ -569,7 +598,7 @@ export default function AddProgram({
                     render={({ field, formState }) => (
                       <div className="flex w-full flex-col gap-2">
                         <div className={labelStyle}>
-                          End date (UTC)
+                          End date{" "}
                           <span className="font-normal text-gray-500 dark:text-gray-400 ml-1">
                             (optional)
                           </span>
@@ -584,7 +613,7 @@ export default function AddProgram({
                           }}
                           timeMode="end"
                           minDate={watch("dates.startsAt")}
-                          placeholder="Pick a date (UTC)"
+                          placeholder="Pick a date"
                           buttonClassName="w-full text-base bg-white dark:bg-zinc-800"
                           clearButtonFn={() => {
                             setValue("dates.endsAt", undefined, {
@@ -599,6 +628,24 @@ export default function AddProgram({
                       </div>
                     )}
                   />
+                </div>
+              </div>
+              <div className="flex w-full flex-col max-w-full gap-1">
+                <label htmlFor="program-short-description" className={labelStyle}>
+                  One-line Description
+                </label>
+                <input
+                  id="program-short-description"
+                  className={inputStyle}
+                  placeholder="Brief description (max 100 characters)"
+                  maxLength={100}
+                  {...register("shortDescription")}
+                />
+                <div className="flex justify-between">
+                  <p className="text-base text-red-400">{errors.shortDescription?.message}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {watch("shortDescription")?.length || 0}/100
+                  </p>
                 </div>
               </div>
               <div className="flex w-full flex-col max-w-full gap-1">
@@ -617,50 +664,52 @@ export default function AddProgram({
                 />
                 <p className="text-base text-red-400">{errors.description?.message}</p>
               </div>
-              <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
-                <Controller
-                  name="adminEmails"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <div className="flex w-full flex-col gap-1">
-                      <label htmlFor="admin-emails" className={labelStyle}>
-                        Admin Emails *
-                      </label>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                        Applicants will reply to these emails
-                      </p>
-                      <MultiEmailInput
-                        emails={field.value}
-                        onChange={field.onChange}
-                        placeholder="Enter admin email"
-                        disabled={isLoading}
-                        error={fieldState.error?.message}
-                      />
-                    </div>
-                  )}
-                />
-                <Controller
-                  name="financeEmails"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <div className="flex w-full flex-col gap-1">
-                      <label htmlFor="finance-emails" className={labelStyle}>
-                        Finance Emails *
-                      </label>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                        Notified when milestones are verified
-                      </p>
-                      <MultiEmailInput
-                        emails={field.value}
-                        onChange={field.onChange}
-                        placeholder="Enter finance email"
-                        disabled={isLoading}
-                        error={fieldState.error?.message}
-                      />
-                    </div>
-                  )}
-                />
-              </div>
+              {isAdmin && (
+                <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
+                  <Controller
+                    name="adminEmails"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <div className="flex w-full flex-col gap-1">
+                        <label htmlFor="admin-emails" className={labelStyle}>
+                          Admin Emails *
+                        </label>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                          Applicants will reply to these emails
+                        </p>
+                        <MultiEmailInput
+                          emails={field.value || []}
+                          onChange={field.onChange}
+                          placeholder="Enter admin email"
+                          disabled={isLoading}
+                          error={fieldState.error?.message}
+                        />
+                      </div>
+                    )}
+                  />
+                  <Controller
+                    name="financeEmails"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <div className="flex w-full flex-col gap-1">
+                        <label htmlFor="finance-emails" className={labelStyle}>
+                          Finance Emails *
+                        </label>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                          Notified when milestones are verified
+                        </p>
+                        <MultiEmailInput
+                          emails={field.value || []}
+                          onChange={field.onChange}
+                          placeholder="Enter finance email"
+                          disabled={isLoading}
+                          error={fieldState.error?.message}
+                        />
+                      </div>
+                    )}
+                  />
+                </div>
+              )}
               <div className="grid grid-cols-4  max-sm:grid-cols-1 max-md:grid-cols-2 gap-4 justify-between">
                 <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-categories" className={labelStyle}>
@@ -705,23 +754,6 @@ export default function AddProgram({
                     canAdd
                   />
                   <p className="text-base text-red-400">{errors.ecosystems?.message}</p>
-                </div>
-                <div className="flex w-full flex-col  gap-1">
-                  <label htmlFor="program-networks" className={labelStyle}>
-                    Networks
-                  </label>
-
-                  <SearchDropdown
-                    list={registryHelper.networks}
-                    imageDictionary={registryHelper.networkImages}
-                    onSelectFunction={(value: string) => onChangeGeneric(value, "networks")}
-                    type={"Networks"}
-                    selected={watch("networks")}
-                    prefixUnselected="Select"
-                    buttonClassname="w-full max-w-full"
-                    canAdd
-                  />
-                  <p className="text-base text-red-400">{errors.networks?.message}</p>
                 </div>
                 <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-types" className={labelStyle}>
@@ -797,7 +829,7 @@ export default function AddProgram({
                   htmlFor="open-enrollment"
                   className="text-sm font-medium text-gray-700 dark:text-zinc-200 cursor-pointer"
                 >
-                  Allow anyone to join this program (open enrollment)
+                  Any project can self attest their participation in this program
                 </label>
               </div>
             </div>
@@ -989,6 +1021,40 @@ export default function AddProgram({
                   />
                 </div>
                 <p className="text-base text-red-400">{errors.telegram?.message}</p>
+              </div>
+              <div className="flex w-full flex-col gap-2 justify-between">
+                <label htmlFor="program-facebook" className={labelStyle}>
+                  Facebook
+                </label>
+                <div className="w-full relative">
+                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
+                    <WebsiteIcon className="text-zinc-500 w-4 h-4" />
+                  </div>
+                  <input
+                    className={cn(inputStyle, "pl-10 mt-0")}
+                    placeholder="Ex: https://facebook.com/program"
+                    id="program-facebook"
+                    {...register("facebook")}
+                  />
+                </div>
+                <p className="text-base text-red-400">{errors.facebook?.message}</p>
+              </div>
+              <div className="flex w-full flex-col gap-2 justify-between">
+                <label htmlFor="program-instagram" className={labelStyle}>
+                  Instagram
+                </label>
+                <div className="w-full relative">
+                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
+                    <WebsiteIcon className="text-zinc-500 w-4 h-4" />
+                  </div>
+                  <input
+                    className={cn(inputStyle, "pl-10 mt-0")}
+                    placeholder="Ex: https://instagram.com/program"
+                    id="program-instagram"
+                    {...register("instagram")}
+                  />
+                </div>
+                <p className="text-base text-red-400">{errors.instagram?.message}</p>
               </div>
             </div>
           </div>

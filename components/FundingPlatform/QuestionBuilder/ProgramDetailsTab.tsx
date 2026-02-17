@@ -405,39 +405,24 @@ export function ProgramDetailsTab({
           />
 
           {/* Short Description */}
-          <Controller
-            name="shortDescription"
-            control={control}
-            render={({ field: { onChange, onBlur, value }, fieldState }) => (
-              <div className="flex w-full flex-col gap-1">
-                <MarkdownEditor
-                  label="Program Short Description"
-                  description="100 characters max"
-                  placeholder="Brief description (max 100 characters)"
-                  value={value || ""}
-                  onChange={(val) => {
-                    if (val.length <= SHORT_DESCRIPTION_MAX_LENGTH) {
-                      onChange(val);
-                    }
-                  }}
-                  onBlur={onBlur}
-                  error={fieldState.error?.message}
-                  isRequired
-                  isDisabled={isDisabled}
-                  id="short-description"
-                  height={120}
-                  minHeight={100}
-                />
-                <p
-                  id="short-description-count"
-                  className="text-xs text-muted-foreground text-right"
-                >
-                  {shortDescription?.length || 0}/{SHORT_DESCRIPTION_MAX_LENGTH}
-                </p>
-                <AriaLiveError error={fieldState.error} />
-              </div>
-            )}
-          />
+          <div className="flex w-full flex-col gap-1">
+            <Label htmlFor="short-description">
+              Program Short Description <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="short-description"
+              placeholder="Brief description (max 100 characters)"
+              maxLength={SHORT_DESCRIPTION_MAX_LENGTH}
+              disabled={isDisabled}
+              {...register("shortDescription")}
+            />
+            <div className="flex justify-between">
+              <AriaLiveError error={errors.shortDescription} />
+              <p id="short-description-count" className="text-xs text-muted-foreground text-right">
+                {shortDescription?.length || 0}/{SHORT_DESCRIPTION_MAX_LENGTH}
+              </p>
+            </div>
+          </div>
 
           {/* Dates */}
           <div className="grid grid-cols-2 gap-4">

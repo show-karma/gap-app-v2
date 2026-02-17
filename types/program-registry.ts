@@ -21,6 +21,8 @@ export interface ProgramMetadata {
     forum: string;
     grantsSite: string;
     telegram: string;
+    facebook?: string;
+    instagram?: string;
   };
   bugBounty: string;
   categories: string[];
