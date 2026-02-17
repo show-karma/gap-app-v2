@@ -15,6 +15,8 @@ export interface FundingProgramMetadata {
     orgWebsite?: string;
     grantsSite?: string;
     telegram?: string;
+    facebook?: string;
+    instagram?: string;
   };
   bugBounty?: string;
   bounties?: string[];
