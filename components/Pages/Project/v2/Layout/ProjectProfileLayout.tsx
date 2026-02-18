@@ -147,10 +147,13 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
   // Handle tab changes - Profile toggles mobile view, other tabs navigate via Link
   const handleTabChange = (tab: ContentTab) => {
     if (tab === "profile") {
+      // Profile tab (mobile only, no href) - update URL with ?view=profile
       updateMobileView("profile");
     } else {
-      // Any other tab should switch to content view on mobile
-      updateMobileView("content");
+      // Other tabs use Link for navigation - only update local state.
+      // Do NOT call updateMobileView() here because its router.replace()
+      // races with the Link's navigation and cancels it.
+      setMobileView("content");
     }
   };
 
