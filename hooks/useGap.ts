@@ -7,7 +7,6 @@ import { Networks } from "@show-karma/karma-gap-sdk/core/consts";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { envVars } from "@/utilities/enviromentVars";
-import { getGapRpcConfig } from "@/utilities/gapRpcConfig";
 import {
   appNetwork,
   gapSupportedNetworks,
@@ -44,7 +43,6 @@ export const getGapClient = (chainID: number): GAP => {
     const client = new GAP({
       globalSchemas: false,
       network,
-      rpcUrls: getGapRpcConfig(),
       ...(apiUrl?.trim()
         ? {
             apiClient: new GapIndexerClient(apiUrl),

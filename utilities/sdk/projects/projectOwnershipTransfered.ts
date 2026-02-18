@@ -1,6 +1,5 @@
 import { GAP, type Project, type SignerOrProvider } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { getGapRpcConfig } from "@/utilities/gapRpcConfig";
 
 export async function isOwnershipTransfered(
   signer: SignerOrProvider,
@@ -10,7 +9,7 @@ export async function isOwnershipTransfered(
   try {
     const { uid, chainID } = project;
 
-    const resolver = await GAP.getProjectResolver(signer, getGapRpcConfig(), chainID);
+    const resolver = await GAP.getProjectResolver(signer, chainID);
 
     const response = await resolver.isOwner(uid, newOwner);
     const isowner = response;
