@@ -11,7 +11,7 @@ import { cn } from "@/utilities/tailwind";
  */
 export function CommunityContentWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isManagePage = pathname.includes("/manage");
+  const isManagePage = pathname.includes("/manage/") || pathname.endsWith("/manage");
 
   if (isManagePage) {
     return <div className="w-full max-w-full">{children}</div>;

@@ -109,13 +109,13 @@ const NAV_GROUPS: NavGroup[] = [
 ];
 
 function isActiveRoute(pathname: string, matchSegment: string, slug: string): boolean {
-  const managePath = `/community/${slug}/manage`;
+  const managePath = PAGES.ADMIN.ROOT(slug);
   const itemPath = `${managePath}/${matchSegment}`;
   return pathname.startsWith(itemPath);
 }
 
 function isDashboardRoute(pathname: string, slug: string): boolean {
-  const managePath = `/community/${slug}/manage`;
+  const managePath = PAGES.ADMIN.ROOT(slug);
   return pathname === managePath || pathname === `${managePath}/`;
 }
 
@@ -226,7 +226,7 @@ export function ManageSidebar({ communityId, community }: ManageSidebarProps) {
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
                     <span className="truncate flex-1">{item.label}</span>
-                    {badgeCounts[item.matchSegment] && (
+                    {badgeCounts[item.matchSegment] > 0 && (
                       <span className="ml-auto px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 tabular-nums">
                         {badgeCounts[item.matchSegment]}
                       </span>
@@ -242,11 +242,21 @@ export function ManageSidebar({ communityId, community }: ManageSidebarProps) {
       {/* Back to community link */}
       <div className="px-3 py-4 border-t border-gray-200 dark:border-zinc-700">
         <Link
-          href={`/community/${slug}`}
+          href={PAGES.COMMUNITY.ALL_GRANTS(slug)}
           className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
+            />
           </svg>
           <span>Back to Community</span>
         </Link>
@@ -268,9 +278,11 @@ export function ManageSidebar({ communityId, community }: ManageSidebarProps) {
 
       {/* Mobile overlay */}
       {isMobileOpen && (
-        <div
+        <button
+          type="button"
           className="lg:hidden fixed inset-0 z-40 bg-black/50"
           onClick={() => setIsMobileOpen(false)}
+          aria-label="Close navigation"
         />
       )}
 

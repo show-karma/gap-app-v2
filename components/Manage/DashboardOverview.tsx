@@ -35,9 +35,7 @@ function MetricCard({ label, value, icon, href, accentColor }: MetricCardProps) 
         href && "hover:border-gray-300 dark:hover:border-zinc-600 hover:shadow-sm cursor-pointer"
       )}
     >
-      <div className={cn("p-2.5 rounded-lg", accentColor)}>
-        {icon}
-      </div>
+      <div className={cn("p-2.5 rounded-lg", accentColor)}>{icon}</div>
       <div>
         <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
         <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
@@ -69,7 +67,8 @@ function AttentionItem({ title, description, href, icon, urgency }: AttentionIte
         className={cn(
           "p-2 rounded-lg flex-shrink-0",
           urgency === "high" && "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400",
-          urgency === "medium" && "bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400",
+          urgency === "medium" &&
+            "bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400",
           urgency === "low" && "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
         )}
       >
@@ -91,7 +90,6 @@ interface ProgramRowProps {
   approvedApplications: number;
   isEnabled: boolean;
   applicationsHref: string;
-  settingsHref: string;
 }
 
 function ProgramRow({
@@ -145,7 +143,12 @@ function ProgramRow({
 
 export function DashboardOverview({ community }: { community: Community }) {
   const { communityId } = useParams() as { communityId: string };
-  const { permissions, isCommunityAdmin, isProgramAdmin, isLoading: permissionsLoading } = usePermissionContext();
+  const {
+    permissions,
+    isCommunityAdmin,
+    isProgramAdmin,
+    isLoading: permissionsLoading,
+  } = usePermissionContext();
   const slug = community?.details?.slug || communityId;
 
   const hasAdminAccess = isCommunityAdmin || isProgramAdmin || permissions.length > 0;
@@ -153,6 +156,8 @@ export function DashboardOverview({ community }: { community: Community }) {
   const {
     programs,
     isLoading: programsLoading,
+    error: programsError,
+    refetch: refetchPrograms,
   } = useFundingPrograms(communityId);
 
   const stats = useMemo(() => {
@@ -237,7 +242,28 @@ export function DashboardOverview({ community }: { community: Community }) {
   }
 
   if (!hasAdminAccess) {
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-[300px]">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          You don&apos;t have permission to view this dashboard.
+        </p>
+      </div>
+    );
+  }
+
+  if (programsError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
+        <p className="text-sm text-gray-500 dark:text-gray-400">Failed to load program data.</p>
+        <button
+          type="button"
+          onClick={() => refetchPrograms()}
+          className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+        >
+          Try again
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -269,7 +295,9 @@ export function DashboardOverview({ community }: { community: Community }) {
         <MetricCard
           label="Total Applications"
           value={stats.totalApplications}
-          icon={<ClipboardDocumentListIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />}
+          icon={
+            <ClipboardDocumentListIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          }
           accentColor="bg-purple-50 dark:bg-purple-900/20"
         />
         <MetricCard
@@ -318,8 +346,10 @@ export function DashboardOverview({ community }: { community: Community }) {
                 pendingApplications={program.metrics?.pendingApplications || 0}
                 approvedApplications={program.metrics?.approvedApplications || 0}
                 isEnabled={program.applicationConfig?.isEnabled || false}
-                applicationsHref={PAGES.MANAGE.FUNDING_PLATFORM.APPLICATIONS(slug, program.programId)}
-                settingsHref={PAGES.MANAGE.FUNDING_PLATFORM.SETUP(slug, program.programId)}
+                applicationsHref={PAGES.MANAGE.FUNDING_PLATFORM.APPLICATIONS(
+                  slug,
+                  program.programId
+                )}
               />
             ))}
           </div>

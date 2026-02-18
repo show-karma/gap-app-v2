@@ -4,6 +4,7 @@ import { ChevronRightIcon, HomeIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
 /** Human-readable labels for URL path segments */
@@ -35,10 +36,14 @@ export function ManageBreadcrumbs({ communitySlug }: { communitySlug: string }) 
   const pathname = usePathname();
 
   const crumbs = useMemo((): Crumb[] => {
-    const managePrefix = `/community/${communitySlug}/manage`;
+    const managePrefix = PAGES.ADMIN.ROOT(communitySlug);
 
     // Only show breadcrumbs for sub-pages, not the manage root itself
-    if (!pathname.startsWith(managePrefix) || pathname === managePrefix || pathname === `${managePrefix}/`) {
+    if (
+      !pathname.startsWith(managePrefix) ||
+      pathname === managePrefix ||
+      pathname === `${managePrefix}/`
+    ) {
       return [];
     }
 
@@ -47,9 +52,7 @@ export function ManageBreadcrumbs({ communitySlug }: { communitySlug: string }) 
 
     if (segments.length === 0) return [];
 
-    const result: Crumb[] = [
-      { label: "Dashboard", href: managePrefix, isLast: false },
-    ];
+    const result: Crumb[] = [{ label: "Dashboard", href: managePrefix, isLast: false }];
 
     let builtPath = managePrefix;
     for (let i = 0; i < segments.length; i++) {

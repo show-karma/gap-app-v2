@@ -1,15 +1,15 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { Skeleton } from "@/components/Utilities/Skeleton";
+import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { ManageBreadcrumbs } from "./ManageBreadcrumbs";
 import { ManageSidebar } from "./ManageSidebar";
 
 export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const communityId = params.communityId as string;
-  const { data: community, isLoading } = useCommunityDetails(communityId);
+  const { data: community, isLoading, isError } = useCommunityDetails(communityId);
 
   if (isLoading) {
     return (
@@ -30,6 +30,23 @@ export function ManageLayoutShell({ children }: { children: React.ReactNode }) {
               <Skeleton key={i} className="h-24 w-full rounded-xl" />
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex w-full min-h-[60vh] items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500 dark:text-gray-400 mb-2">Failed to load community data</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
