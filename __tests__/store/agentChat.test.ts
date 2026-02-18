@@ -229,6 +229,75 @@ describe("useAgentChatStore", () => {
     });
   });
 
+  describe("finalizeLastAssistantMessage", () => {
+    it("should set isStreaming to false on last assistant message", () => {
+      act(() => {
+        useAgentChatStore.getState().addMessage({
+          id: "assistant-1",
+          role: "assistant",
+          content: "Streaming content",
+          timestamp: 1000,
+          isStreaming: true,
+        });
+      });
+
+      act(() => {
+        useAgentChatStore.getState().finalizeLastAssistantMessage();
+      });
+
+      const msg = useAgentChatStore.getState().messages[0];
+      expect(msg.isStreaming).toBe(false);
+    });
+
+    it("should preserve other message fields when finalizing", () => {
+      act(() => {
+        useAgentChatStore.getState().addMessage({
+          id: "assistant-1",
+          role: "assistant",
+          content: "Final content",
+          timestamp: 1000,
+          isStreaming: true,
+        });
+      });
+
+      act(() => {
+        useAgentChatStore.getState().finalizeLastAssistantMessage();
+      });
+
+      const msg = useAgentChatStore.getState().messages[0];
+      expect(msg.id).toBe("assistant-1");
+      expect(msg.content).toBe("Final content");
+      expect(msg.timestamp).toBe(1000);
+      expect(msg.isStreaming).toBe(false);
+    });
+
+    it("should not affect non-assistant messages", () => {
+      act(() => {
+        useAgentChatStore.getState().addMessage({
+          id: "user-1",
+          role: "user",
+          content: "Hello",
+          timestamp: 1000,
+        });
+      });
+
+      act(() => {
+        useAgentChatStore.getState().finalizeLastAssistantMessage();
+      });
+
+      const msg = useAgentChatStore.getState().messages[0];
+      expect(msg.isStreaming).toBeUndefined();
+    });
+
+    it("should handle empty messages array", () => {
+      act(() => {
+        useAgentChatStore.getState().finalizeLastAssistantMessage();
+      });
+
+      expect(useAgentChatStore.getState().messages).toHaveLength(0);
+    });
+  });
+
   describe("updateLastAssistantToolResult", () => {
     it("should set toolResult on last assistant message", () => {
       act(() => {

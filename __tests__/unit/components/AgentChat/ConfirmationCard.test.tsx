@@ -55,6 +55,19 @@ describe("flattenPreviewData", () => {
     });
     expect(result).toEqual([{ label: "a.b.c", value: "deep" }]);
   });
+
+  it("should stop recursing beyond maxDepth and stringify the remaining object", () => {
+    // Build an object nested 12 levels deep (exceeds MAX_DEPTH of 10)
+    let nested: Record<string, unknown> = { leaf: "value" };
+    for (let i = 11; i >= 0; i--) {
+      nested = { [`level${i}`]: nested };
+    }
+    const result = flattenPreviewData(nested);
+    // Should not throw and should have exactly 1 row (stringified at depth 10)
+    expect(result).toHaveLength(1);
+    expect(result[0].label).toContain("level0");
+    expect(result[0].value).toBe("[object Object]");
+  });
 });
 
 describe("ConfirmationCard", () => {

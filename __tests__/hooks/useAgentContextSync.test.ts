@@ -151,7 +151,7 @@ describe("useAgentContextSync", () => {
       mockPathname.mockReturnValue(
         "/community/comm-1/reviewer/funding-platform/prog-abc/applications/app-789"
       );
-      mockParams.mockReturnValue({ applicationId: "app-789" });
+      mockParams.mockReturnValue({ programId: "prog-abc", applicationId: "app-789" });
 
       renderHook(() => useAgentContextSync());
 

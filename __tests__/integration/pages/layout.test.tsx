@@ -83,6 +83,7 @@ describe("RootLayout", () => {
     expect(screen.getByTestId("footer")).toBeInTheDocument();
     expect(screen.getByTestId("privy-provider")).toBeInTheDocument();
     expect(screen.getByTestId("theme-provider")).toBeInTheDocument();
+    expect(screen.getByTestId("agent-chat-bubble")).toBeInTheDocument();
   });
 
   it("renders children content", () => {

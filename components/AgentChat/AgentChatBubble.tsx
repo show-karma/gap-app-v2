@@ -2,6 +2,7 @@
 
 import { CopyIcon, MessageSquare } from "lucide-react";
 import { useCallback, useState } from "react";
+import { ConfirmationCard } from "@/components/AgentChat/ConfirmationCard";
 import { useAgentContextSync } from "@/hooks/useAgentContextSync";
 import { useAgentStream } from "@/hooks/useAgentStream";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,9 +27,8 @@ import {
   PromptInputTextarea,
 } from "@/src/components/ai-elements/prompt-input";
 import { useAgentChatStore } from "@/store/agentChat";
-import { ConfirmationCard } from "./ConfirmationCard";
 
-function contextLabel(ctx: Record<string, string> | null): string | null {
+function contextLabel(ctx: Record<string, string | undefined> | null): string | null {
   if (!ctx) return null;
   if (ctx.projectId) return "Project";
   if (ctx.programId) return "Program";
@@ -108,11 +108,14 @@ export function AgentChatBubble() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800">
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">GAP Assistant</h3>
-              {contextLabel(agentContext) && (
-                <span className="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
-                  {contextLabel(agentContext)}
-                </span>
-              )}
+              {(() => {
+                const badge = contextLabel(agentContext);
+                return badge ? (
+                  <span className="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
+                    {badge}
+                  </span>
+                ) : null;
+              })()}
             </div>
             <div className="flex gap-2">
               <button
@@ -146,7 +149,11 @@ export function AgentChatBubble() {
                         {msg.role === "assistant" && msg.content && !msg.isStreaming && (
                           <MessageActions>
                             <MessageAction
-                              onClick={() => navigator.clipboard.writeText(msg.content)}
+                              onClick={() => {
+                                navigator.clipboard.writeText(msg.content).catch(() => {
+                                  // Clipboard API can fail in insecure contexts or iframes
+                                });
+                              }}
                               tooltip="Copy"
                             >
                               <CopyIcon className="size-3" />

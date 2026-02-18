@@ -10,18 +10,20 @@ export function formatToolLabel(toolName: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-/** Flatten a nested data object into "key: value" display rows */
+/** Flatten a nested data object into "key: value" display rows (max 10 levels deep) */
 export function flattenPreviewData(
   data: Record<string, unknown>,
-  prefix = ""
+  prefix = "",
+  depth = 0
 ): Array<{ label: string; value: string }> {
+  const MAX_DEPTH = 10;
   const rows: Array<{ label: string; value: string }> = [];
 
   for (const [key, val] of Object.entries(data)) {
     const label = prefix ? `${prefix}.${key}` : key;
 
-    if (val !== null && typeof val === "object" && !Array.isArray(val)) {
-      rows.push(...flattenPreviewData(val as Record<string, unknown>, label));
+    if (val !== null && typeof val === "object" && !Array.isArray(val) && depth < MAX_DEPTH) {
+      rows.push(...flattenPreviewData(val as Record<string, unknown>, label, depth + 1));
     } else {
       rows.push({ label, value: String(val ?? "") });
     }

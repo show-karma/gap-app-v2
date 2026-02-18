@@ -66,8 +66,12 @@ export function useAgentContextSync() {
           setAgentContext(null);
           return;
         }
+        setAgentContext({ applicationId });
+      } else {
+        // Reviewer routes with applicationId always include programId in practice.
+        // Without programId, permissions cannot be verified — clear context.
+        setAgentContext(null);
       }
-      setAgentContext({ applicationId });
       return;
     }
 

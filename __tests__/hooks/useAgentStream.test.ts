@@ -285,6 +285,25 @@ describe("useAgentStream", () => {
       expect(useAgentChatStore.getState().error).toBeTruthy();
     });
 
+    it("should handle multi-line SSE data fields per spec", async () => {
+      // Per SSE spec, multiple data: lines in one event block are joined with \n.
+      // Split at a token boundary so the \n acts as valid JSON whitespace.
+      const sseText =
+        'data: {"type":"assistant",\n' +
+        'data: "message":{"content":[{"type":"text","text":"Multi-line"}]}}\n\n';
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream());
+
+      await act(async () => {
+        await result.current.sendMessage("Test");
+      });
+
+      const messages = useAgentChatStore.getState().messages;
+      const assistantMsg = messages.find((m) => m.role === "assistant");
+      expect(assistantMsg?.content).toBe("Multi-line");
+    });
+
     it("should skip malformed JSON in SSE data", async () => {
       const sseText =
         "data: not-valid-json\n\n" +

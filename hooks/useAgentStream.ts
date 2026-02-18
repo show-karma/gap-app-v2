@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef } from "react";
-import { type ChatMessage, type ToolResultData, useAgentChatStore } from "@/store/agentChat";
+import { type ChatMessage, useAgentChatStore } from "@/store/agentChat";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { envVars } from "@/utilities/enviromentVars";
 
@@ -20,7 +20,8 @@ function parseSSEChunk(chunk: string): SSEEvent[] {
 
     for (const line of lines) {
       if (line.startsWith("data: ")) {
-        data += line.slice(6);
+        // Per SSE spec, multiple data: lines are joined with newline separators
+        data += (data ? "\n" : "") + line.slice(6);
       }
     }
 
@@ -70,165 +71,149 @@ function buildConversationHistory(
 }
 
 export function useAgentStream() {
-  const {
-    addMessage,
-    updateLastAssistantMessage,
-    finalizeLastAssistantMessage,
-    updateLastAssistantToolResult,
-    updateMessageToolResultStatus,
-    setStreaming,
-    setError,
-    agentContext,
-  } = useAgentChatStore();
-
   const abortRef = useRef<AbortController | null>(null);
   const streamingContentRef = useRef("");
 
-  const sendMessage = useCallback(
-    async (userMessage: string) => {
-      const conversationHistory = buildConversationHistory(useAgentChatStore.getState().messages);
+  // Read state fresh via getState() inside callbacks instead of subscribing
+  // to all store changes. Actions are stable refs; state values (messages,
+  // agentContext) are read at call-time to avoid stale closures.
+  const sendMessage = useCallback(async (userMessage: string) => {
+    const store = useAgentChatStore.getState();
+    const conversationHistory = buildConversationHistory(store.messages);
 
-      // Add user message to chat
-      const userMsg: ChatMessage = {
-        id: `user-${Date.now()}`,
-        role: "user",
-        content: userMessage,
-        timestamp: Date.now(),
-      };
-      addMessage(userMsg);
+    // Add user message to chat
+    const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: userMessage,
+      timestamp: Date.now(),
+    };
+    store.addMessage(userMsg);
 
-      // Create placeholder for assistant response
-      const assistantMsg: ChatMessage = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: "",
-        timestamp: Date.now(),
-        isStreaming: true,
-      };
-      addMessage(assistantMsg);
+    // Create placeholder for assistant response
+    const assistantMsg: ChatMessage = {
+      id: `assistant-${Date.now()}`,
+      role: "assistant",
+      content: "",
+      timestamp: Date.now(),
+      isStreaming: true,
+    };
+    store.addMessage(assistantMsg);
 
-      setStreaming(true);
-      setError(null);
-      streamingContentRef.current = "";
+    store.setStreaming(true);
+    store.setError(null);
+    streamingContentRef.current = "";
 
-      // Abort any previous stream
-      abortRef.current?.abort();
-      const controller = new AbortController();
-      abortRef.current = controller;
+    // Abort any previous stream
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
-      try {
-        const token = await TokenManager.getToken();
-        const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/v2/agent/stream`;
+    try {
+      const token = await TokenManager.getToken();
+      const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/v2/agent/stream`;
 
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({
-            message: userMessage,
-            ...(conversationHistory.length > 0 ? { conversationHistory } : {}),
-            ...(agentContext ?? {}),
-          }),
-          signal: controller.signal,
-        });
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          ...(conversationHistory.length > 0 ? { conversationHistory } : {}),
+          ...(store.agentContext ?? {}),
+        }),
+        signal: controller.signal,
+      });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(errorText || `HTTP ${response.status}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `HTTP ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No response body");
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const events = parseSSEChunk(buffer);
+
+        // Keep unprocessed remainder in buffer
+        const lastNewlines = buffer.lastIndexOf("\n\n");
+        if (lastNewlines >= 0) {
+          buffer = buffer.slice(lastNewlines + 2);
         }
 
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error("No response body");
-
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const events = parseSSEChunk(buffer);
-
-          // Keep unprocessed remainder in buffer
-          const lastNewlines = buffer.lastIndexOf("\n\n");
-          if (lastNewlines >= 0) {
-            buffer = buffer.slice(lastNewlines + 2);
-          }
-
-          for (const event of events) {
-            switch (event.type) {
-              case "stream_event": {
-                const delta = extractDeltaText(event);
-                if (delta) {
-                  streamingContentRef.current += delta;
-                  updateLastAssistantMessage(streamingContentRef.current);
-                }
-                break;
+        for (const event of events) {
+          switch (event.type) {
+            case "stream_event": {
+              const delta = extractDeltaText(event);
+              if (delta) {
+                streamingContentRef.current += delta;
+                store.updateLastAssistantMessage(streamingContentRef.current);
               }
-              case "assistant": {
-                const text = extractTextFromAssistantMessage(event);
-                if (text) {
-                  streamingContentRef.current = text;
-                  updateLastAssistantMessage(text);
-                }
-                break;
+              break;
+            }
+            case "assistant": {
+              const text = extractTextFromAssistantMessage(event);
+              if (text) {
+                streamingContentRef.current = text;
+                store.updateLastAssistantMessage(text);
               }
-              case "tool_result": {
-                const toolName = event.tool_name as string;
-                const resultData = event.result as Record<string, unknown> | undefined;
-                if (toolName?.startsWith("preview_")) {
-                  updateLastAssistantToolResult({
-                    type: "preview",
-                    toolName,
-                    data: resultData ?? {},
-                    status: "pending",
-                  });
-                }
-                break;
+              break;
+            }
+            case "tool_result": {
+              const toolName = event.tool_name as string;
+              const resultData = event.result as Record<string, unknown> | undefined;
+              if (toolName?.startsWith("preview_")) {
+                store.updateLastAssistantToolResult({
+                  type: "preview",
+                  toolName,
+                  data: resultData ?? {},
+                  status: "pending",
+                });
               }
-              case "result": {
-                // Query finished — handle errors or success
-                if (event.is_error) {
-                  const errors = event.errors as string[] | undefined;
-                  setError(errors?.join(", ") ?? "Agent query failed");
-                }
-                break;
+              break;
+            }
+            case "result": {
+              // Query finished — handle errors or success
+              if (event.is_error) {
+                const errors = event.errors as string[] | undefined;
+                store.setError(errors?.join(", ") ?? "Agent query failed");
               }
+              break;
             }
           }
         }
-
-        // Streaming ended — mark last assistant message as finalized
-        finalizeLastAssistantMessage();
-      } catch (err: unknown) {
-        finalizeLastAssistantMessage();
-        if (err instanceof DOMException && err.name === "AbortError") {
-          // User cancelled — not an error
-          return;
-        }
-        const msg = err instanceof Error ? err.message : "Failed to connect to agent";
-        setError(msg);
-      } finally {
-        setStreaming(false);
       }
-    },
-    [
-      addMessage,
-      updateLastAssistantMessage,
-      finalizeLastAssistantMessage,
-      updateLastAssistantToolResult,
-      setStreaming,
-      setError,
-      agentContext,
-    ]
-  );
+
+      // Streaming ended — mark last assistant message as finalized
+      store.finalizeLastAssistantMessage();
+    } catch (err: unknown) {
+      useAgentChatStore.getState().finalizeLastAssistantMessage();
+      if (err instanceof DOMException && err.name === "AbortError") {
+        // User cancelled — not an error
+        return;
+      }
+      const msg = err instanceof Error ? err.message : "Failed to connect to agent";
+      useAgentChatStore.getState().setError(msg);
+    } finally {
+      useAgentChatStore.getState().setStreaming(false);
+    }
+  }, []);
 
   const sendConfirmation = useCallback(
     async (messageId: string, toolName: string, approved: boolean) => {
-      updateMessageToolResultStatus(messageId, approved ? "approved" : "denied");
+      useAgentChatStore
+        .getState()
+        .updateMessageToolResultStatus(messageId, approved ? "approved" : "denied");
 
       const message = approved
         ? `I approve the proposed changes from ${toolName}. Please proceed with the commit.`
@@ -236,7 +221,7 @@ export function useAgentStream() {
 
       await sendMessage(message);
     },
-    [updateMessageToolResultStatus, sendMessage]
+    [sendMessage]
   );
 
   const abort = useCallback(() => {
