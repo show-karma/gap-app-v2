@@ -1,7 +1,6 @@
 "use client";
 import { Disclosure } from "@headlessui/react";
-import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
@@ -102,19 +101,6 @@ export default function ManageIndicatorsPage() {
         </div>
       ) : hasAccess ? (
         <div className="flex w-full flex-1 flex-col items-center gap-8">
-          <div className="w-full flex flex-row items-center justify-between max-w-full">
-            {(community?.details?.slug || community?.uid) && (
-              <Link
-                href={PAGES.ADMIN.ROOT(community.details?.slug ?? community.uid ?? communityId)}
-              >
-                <Button className="flex flex-row items-center gap-2 px-4 py-2 font-semibold text-base  bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
-                  <ChevronLeftIcon className="h-5 w-5" />
-                  Return to admin page
-                </Button>
-              </Link>
-            )}
-          </div>
-
           {categories.length === 0 ? (
             <div className="flex w-full items-center justify-center py-12">
               <div className="text-center max-w-md">

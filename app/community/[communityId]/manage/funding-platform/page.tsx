@@ -13,7 +13,6 @@ import {
   XCircleIcon,
 } from "@heroicons/react/24/outline";
 import {
-  ArrowLeftIcon,
   ArrowTrendingUpIcon,
   ChevronDownIcon,
   ClipboardDocumentListIcon,
@@ -33,7 +32,6 @@ import { Button } from "@/components/Utilities/Button";
 import { LoadingOverlay } from "@/components/Utilities/LoadingOverlay";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useBackNavigation } from "@/hooks/useBackNavigation";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { type FundingProgram, fundingPlatformService } from "@/services/fundingPlatformService";
@@ -93,11 +91,6 @@ function FundingPlatformContent() {
     (searchParams.get("status") as "all" | "enabled" | "disabled") || "all"
   );
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  const handleBackClick = useBackNavigation({
-    fallbackRoute: PAGES.MANAGE.ROOT(communityId),
-    preferHistoryBack: true,
-  });
 
   const handleToggleProgram = async (programId: string, currentEnabled: boolean) => {
     setTogglingPrograms((prev) => new Set(prev).add(programId));
@@ -339,27 +332,17 @@ function FundingPlatformContent() {
 
   return (
     <div className="sm:px-3 md:px-4 px-6 py-2 flex flex-col gap-4">
-      {/* Header with Back button and Role indicator */}
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={handleBackClick}
-          className="flex items-center border border-black dark:border-white text-black dark:text-white rounded-md py-2 px-4 w-max"
-        >
-          <ArrowLeftIcon className="w-4 h-4 mr-2" />
-          Back
-        </button>
-
-        {/* Role Badge */}
-        {!isAdmin && (
+      {/* Role Badge */}
+      {!isAdmin && (
+        <div className="flex items-center justify-end">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
             <EyeIconOutline className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
               Reviewer Access
             </span>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Statistics Bar */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -635,25 +618,23 @@ function FundingPlatformContent() {
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex items-center gap-2">
+                  {/* Quick Navigation Tabs */}
+                  <div className="flex items-center gap-1 border-t border-gray-100 dark:border-zinc-700 pt-3 -mx-4 px-4">
                     <Link
                       href={PAGES.MANAGE.FUNDING_PLATFORM.APPLICATIONS(
                         communityId,
                         program.programId
                       )}
-                      className="flex-1"
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
                     >
-                      <Button
-                        variant="primary"
-                        className="w-full hover:shadow flex items-center justify-center text-sm bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:text-white dark:hover:bg-blue-600"
-                      >
-                        <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
-                        Applications
-                      </Button>
+                      <ClipboardDocumentListIcon className="w-3.5 h-3.5" />
+                      Applications
+                      {(program.metrics?.pendingApplications || 0) > 0 && (
+                        <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">
+                          {program.metrics?.pendingApplications}
+                        </span>
+                      )}
                     </Link>
-
-                    {/* Settings (admins) / View Config (reviewers) */}
                     <Link
                       href={
                         isAdmin && !hasFormConfig
@@ -663,28 +644,21 @@ function FundingPlatformContent() {
                               program.programId
                             )
                       }
-                      className="flex-1"
+                      data-testid={`program-settings-${program.programId}`}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
                     >
-                      <Button
-                        variant="secondary"
-                        data-testid={`program-settings-${program.programId}`}
-                        className="w-full hover:shadow flex items-center justify-center text-sm"
-                      >
-                        <Cog6ToothIcon className="w-4 h-4 mr-2" />
-                        {isAdmin ? "Settings" : "View Config"}
-                      </Button>
+                      <Cog6ToothIcon className="w-3.5 h-3.5" />
+                      {isAdmin ? "Settings" : "Config"}
                     </Link>
-
-                    {/* View Form Link */}
                     <Link
                       href={getProgramApplyUrl(communityId, program.programId)}
                       target="_blank"
                       rel="noopener noreferrer"
                       title="View public application form"
-                      className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600"
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors ml-auto"
                     >
-                      <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                      <span>View Form</span>
+                      <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+                      Form
                     </Link>
                   </div>
                 </div>
