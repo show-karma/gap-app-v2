@@ -45,17 +45,13 @@ export function Hero() {
             <div className="relative flex flex-col mt-4 md:flex-row gap-3 md:gap-3">
               {/* Blurred gradient background */}
               <div
-                className="pointer-events-none absolute -left-2 -right-1 -bottom-1 h-[30%] md:h-[60%] bg-gradient-to-r from-purple-300 to-emerald-300 opacity-40 md:opacity-80 blur-md"
+                className="pointer-events-none absolute -left-2 -right-1 -bottom-1 h-[30%] md:h-[60%] bg-gradient-to-r from-emerald-300 to-purple-300 opacity-40 md:opacity-80 blur-md"
                 aria-hidden="true"
               />
               <div className="relative z-0">
-                <CreateProjectButton styleClass="h-auto px-5 py-3 text-sm font-medium w-max bg-primary text-primary-foreground hover:bg-primary/90 border-0 shadow" />
+                <CreateProjectButton styleClass="w-max px-5 h-11" />
               </div>
-              <Button
-                variant="outline"
-                className="h-auto px-5 py-3 text-sm font-medium border border-black/15 bg-white/10 hover:bg-white/20 relative z-0 backdrop-blur-sm"
-                asChild
-              >
+              <Button variant="outline" size="xl" className="relative z-0" asChild>
                 <Link href={PAGES.FUNDERS}>Run a funding program</Link>
               </Button>
             </div>
