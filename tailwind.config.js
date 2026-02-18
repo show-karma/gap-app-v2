@@ -112,6 +112,19 @@ module.exports = {
       },
       colors: {
         brand: {
+          // Main brand teal palette
+          50: "#eafaf6", // Lightest - subtle backgrounds
+          100: "#d5f6ee", // Very light
+          200: "#abeddc", // Light
+          300: "#82e3cb", // Light accent
+          400: "#58daba", // Medium
+          500: "#2ed1a8", // Main brand color
+          600: "#25a787", // Medium dark
+          700: "#1c7d65", // Dark
+          800: "#125443", // Very dark - good for text
+          900: "#092a22", // Almost black - borders/text
+          950: "#061d18", // Darkest - deep text/borders
+          // Legacy named colors (keep for backward compatibility)
           blue: "#4C6FFF",
           darkblue: "#101828",
           gray: "#344054",
@@ -128,11 +141,11 @@ module.exports = {
         },
         tremor: {
           brand: {
-            faint: "#eff6ff",
-            muted: "#bfdbfe",
-            subtle: "#60a5fa",
-            DEFAULT: "#3b82f6",
-            emphasis: "#1d4ed8",
+            faint: "#eafaf6", // brand-50
+            muted: "#abeddc", // brand-200
+            subtle: "#58daba", // brand-400
+            DEFAULT: "#2ed1a8", // brand-500
+            emphasis: "#1c7d65", // brand-700
             inverted: "#ffffff",
           },
           background: {
@@ -249,21 +262,19 @@ module.exports = {
           4: "hsl(var(--chart-4))",
           5: "hsl(var(--chart-5))",
         },
-        // Karma Seeds teal color palette
-        seeds: {
-          50: "#E0F7F4", // Lightest - subtle backgrounds
-          100: "#A7FFEB", // Very light - dark mode gradient end
-          200: "#64FFDA", // Light - hover states
-          300: "#1DE9B6", // Primary - main brand color
-          400: "#00BFA5", // Medium - text/icons light mode
-          500: "#00897B", // Darker - hover text light mode
-          600: "#004D40", // Darkest - button text on light bg
-        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      boxShadow: {
+        "primary-button":
+          "0 1px 2px 0 rgba(0, 0, 0, 0.08), 0 2px 8px 0 rgba(46, 209, 168, 0.15), inset 0 2px 0 0 rgba(255, 255, 255, 0.15), inset 0 -2px 2px 0 rgba(0, 0, 0, 0.08)",
+        "outline-button":
+          "0 1px 2px 0 rgba(0, 0, 0, 0.08), inset 0 2px 0 0 rgba(255, 255, 255, 0.15), inset 0 -2px 2px 0 rgba(0, 0, 0, 0.04)",
+        "secondary-button":
+          "0 1px 2px 0 rgba(0, 0, 0, 0.08), inset 0 2px 0 0 rgba(255, 255, 255, 0.15), inset 0 -2px 2px 0 rgba(0, 0, 0, 0.05)",
       },
     },
   },
