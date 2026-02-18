@@ -1,10 +1,16 @@
-import { createPublicClient, type Hex, http } from "viem";
+import { createPublicClient, type Hex, http, isAddress } from "viem";
 import { mainnet } from "viem/chains";
 import { normalize } from "viem/ens";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { envVars } from "./enviromentVars";
+import { envVars } from "@/utilities/enviromentVars";
 
 const ENS_BATCH_SIZE = 10;
+
+if (!envVars.RPC.MAINNET) {
+  console.warn(
+    "NEXT_PUBLIC_RPC_MAINNET is not set; ENS resolution will use the default public RPC"
+  );
+}
 
 const ensClient = createPublicClient({
   chain: mainnet,
@@ -44,7 +50,10 @@ async function resolveEnsAvatar(name: string): Promise<string | null> {
 
   const promise = ensClient
     .getEnsAvatar({ name: normalize(name) })
-    .catch(() => null)
+    .catch((error) => {
+      errorManager("ENS avatar resolution failed", error, { name });
+      return null;
+    })
     .finally(() => {
       pendingAvatarRequests.delete(name);
     });
@@ -65,12 +74,25 @@ async function processBatch(addresses: Hex[]) {
   return Promise.all(addresses.map(resolveSingle));
 }
 
+function toHex(address: string): Hex | null {
+  const normalized = address.startsWith("0x") ? address : `0x${address}`;
+  return isAddress(normalized) ? (normalized as Hex) : null;
+}
+
 export const fetchENS = async (addresses: (Hex | string)[]) => {
   try {
-    const results: { name?: string; address: Hex | string; avatar?: string | null }[] = [];
+    const validAddresses = addresses
+      .map((addr) => toHex(addr as string))
+      .filter((addr): addr is Hex => addr !== null);
 
-    for (let i = 0; i < addresses.length; i += ENS_BATCH_SIZE) {
-      const batch = addresses.slice(i, i + ENS_BATCH_SIZE) as Hex[];
+    const results: {
+      name?: string;
+      address: Hex | string;
+      avatar?: string | null;
+    }[] = [];
+
+    for (let i = 0; i < validAddresses.length; i += ENS_BATCH_SIZE) {
+      const batch = validAddresses.slice(i, i + ENS_BATCH_SIZE);
       const batchResults = await processBatch(batch);
       results.push(...batchResults);
     }
@@ -88,19 +110,27 @@ export const fetchENS = async (addresses: (Hex | string)[]) => {
 
 export const fetchAddressFromENS = async (ensNames: string[]) => {
   try {
-    const calls = ensNames.map(async (name) => {
-      try {
-        const address = await ensClient.getEnsAddress({
-          name: normalize(name),
-        });
-        return { name, address: address || undefined };
-      } catch (error) {
-        errorManager("ENS address resolution failed", error, { name });
-        return { name, address: undefined };
-      }
-    });
+    const results: { name: string; address?: string }[] = [];
 
-    return await Promise.all(calls);
+    for (let i = 0; i < ensNames.length; i += ENS_BATCH_SIZE) {
+      const batch = ensNames.slice(i, i + ENS_BATCH_SIZE);
+      const batchResults = await Promise.all(
+        batch.map(async (name) => {
+          try {
+            const address = await ensClient.getEnsAddress({
+              name: normalize(name),
+            });
+            return { name, address: address || undefined };
+          } catch (error) {
+            errorManager("ENS address resolution failed", error, { name });
+            return { name, address: undefined };
+          }
+        })
+      );
+      results.push(...batchResults);
+    }
+
+    return results;
   } catch (error: any) {
     errorManager("Error in fetch addresses from ENS names", error, {
       ensNames,

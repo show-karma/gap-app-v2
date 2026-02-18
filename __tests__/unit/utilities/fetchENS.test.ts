@@ -5,12 +5,6 @@ import type { Hex } from "viem";
 // above variable declarations. We retrieve the mock functions after import
 // by accessing the mocked createPublicClient's return value.
 
-const mockClient = {
-  getEnsName: jest.fn(),
-  getEnsAvatar: jest.fn(),
-  getEnsAddress: jest.fn(),
-};
-
 jest.mock("viem", () => {
   // We cannot reference outer variables from a hoisted jest.mock factory,
   // so we store the mock client on a global that persists across the hoist.
@@ -25,6 +19,7 @@ jest.mock("viem", () => {
   return {
     createPublicClient: jest.fn(() => client),
     http: jest.fn(() => "mock-transport"),
+    isAddress: jest.fn((addr: string) => /^0x[0-9a-fA-F]{40}$/i.test(addr)),
   };
 });
 
@@ -134,6 +129,21 @@ describe("fetchENS", () => {
       });
     });
 
+    it("reports ENS avatar resolution errors to errorManager", async () => {
+      const addr = "0x0000000000000000000000000000000000000003" as Hex;
+      const avatarError = new Error("429 Too Many Requests");
+
+      ensClient.getEnsName.mockResolvedValueOnce("test.eth");
+      ensClient.getEnsAvatar.mockRejectedValueOnce(avatarError);
+
+      const results = await fetchENS([addr]);
+
+      expect(results).toEqual([{ name: "test.eth", address: addr, avatar: null }]);
+      expect(errorManager).toHaveBeenCalledWith("ENS avatar resolution failed", avatarError, {
+        name: "test.eth",
+      });
+    });
+
     it("handles all addresses failing gracefully", async () => {
       const addr1 = "0x0000000000000000000000000000000000000004" as Hex;
       const addr2 = "0x0000000000000000000000000000000000000005" as Hex;
@@ -176,6 +186,19 @@ describe("fetchENS", () => {
       expect(results).toEqual([]);
       expect(ensClient.getEnsName).not.toHaveBeenCalled();
       expect(ensClient.getEnsAvatar).not.toHaveBeenCalled();
+    });
+
+    it("filters out invalid addresses", async () => {
+      const validAddr = "0x0000000000000000000000000000000000000001" as Hex;
+
+      ensClient.getEnsName.mockResolvedValueOnce("valid.eth");
+      ensClient.getEnsAvatar.mockResolvedValueOnce(null);
+
+      const results = await fetchENS([validAddr, "not-an-address", "0xshort"]);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].address).toBe(validAddr);
+      expect(ensClient.getEnsName).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -255,6 +278,7 @@ describe("fetchENS", () => {
       });
 
       ensClient.getEnsName.mockReturnValueOnce(ensPromise);
+      ensClient.getEnsAvatar.mockResolvedValue(null);
 
       // Launch two concurrent fetchENS calls for the same address
       const promise1 = fetchENS([addr]);
@@ -324,11 +348,6 @@ describe("fetchENS", () => {
 
   describe("module initialization", () => {
     it("uses createPublicClient and http from viem", () => {
-      // createPublicClient is called at module load time (before tests run),
-      // so call records are cleared by jest's clearMocks. We verify the mocks
-      // are wired up correctly by confirming they are jest.fn() instances
-      // and that the ensClient returned by createPublicClient has the
-      // expected methods attached.
       expect(jest.isMockFunction(createPublicClient)).toBe(true);
       expect(jest.isMockFunction(http)).toBe(true);
 
@@ -439,6 +458,22 @@ describe("fetchAddressFromENS", () => {
 
       expect(results).toEqual([]);
       expect(ensClient.getEnsAddress).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("batching", () => {
+    it("processes ENS names in batches of 10", async () => {
+      const names: string[] = [];
+      for (let i = 1; i <= 15; i++) {
+        names.push(`name${i}.eth`);
+      }
+
+      ensClient.getEnsAddress.mockResolvedValue("0x0000000000000000000000000000000000000001");
+
+      const results = await fetchAddressFromENS(names);
+
+      expect(results).toHaveLength(15);
+      expect(ensClient.getEnsAddress).toHaveBeenCalledTimes(15);
     });
   });
 });
