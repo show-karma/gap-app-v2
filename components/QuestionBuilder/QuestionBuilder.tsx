@@ -40,6 +40,8 @@ import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuil
 import { SettingsSidebar, type SidebarTabKey } from "@/components/FundingPlatform/Sidebar";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { ProgramRegistryService } from "@/services/programRegistry.service";
+import type { ProgramMetadata } from "@/types/program-registry";
 import type { FormField, FormSchema } from "@/types/question-builder";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { MarkdownPreview } from "../Utilities/MarkdownPreview";
@@ -135,6 +137,18 @@ export function QuestionBuilder({
       },
     }
   );
+
+  // Track anyoneCanJoin from program metadata
+  const [anyoneCanJoin, setAnyoneCanJoin] = useState<boolean>(
+    program?.metadata?.anyoneCanJoin ?? true
+  );
+
+  // Sync anyoneCanJoin when program data loads/changes
+  useEffect(() => {
+    if (program?.metadata?.anyoneCanJoin !== undefined) {
+      setAnyoneCanJoin(program.metadata.anyoneCanJoin);
+    }
+  }, [program?.metadata?.anyoneCanJoin]);
 
   const [activeTab, setActiveTab] = useState<SidebarTabKey>(() =>
     getValidTab(searchParams.get("tab"))
@@ -402,6 +416,37 @@ export function QuestionBuilder({
       onSave?.(updatedSchema);
     },
     [readOnly, schema, onSave]
+  );
+
+  // Handle anyoneCanJoin toggle - updates program metadata directly
+  const handleAnyoneCanJoinChange = useCallback(
+    async (value: boolean) => {
+      if (readOnly || !programId) return;
+
+      if (!program?.metadata) {
+        toast.error("Program data is not loaded. Please refresh and try again.");
+        return;
+      }
+
+      try {
+        setAnyoneCanJoin(value);
+        const updatedMetadata = {
+          ...program.metadata,
+          anyoneCanJoin: value,
+        } as ProgramMetadata;
+        await ProgramRegistryService.updateProgram(programId, updatedMetadata);
+        toast.success(`Open enrollment ${value ? "enabled" : "disabled"}`);
+      } catch (error) {
+        // Revert on failure
+        setAnyoneCanJoin(!value);
+        errorManager("Failed to update open enrollment setting", error, {
+          programId,
+          anyoneCanJoin: value,
+        });
+        toast.error("Failed to update enrollment setting. Please try again.");
+      }
+    },
+    [readOnly, programId, program?.metadata]
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -883,6 +928,8 @@ export function QuestionBuilder({
                 schema={currentSchema}
                 programId={programId}
                 readOnly={readOnly}
+                anyoneCanJoin={anyoneCanJoin}
+                onAnyoneCanJoinChange={readOnly ? undefined : handleAnyoneCanJoinChange}
               />
               {/* Save Button at bottom of Settings tab */}
               {renderSaveButton()}
