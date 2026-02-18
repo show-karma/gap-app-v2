@@ -115,36 +115,30 @@ describe("fetchENS", () => {
   });
 
   describe("error handling", () => {
-    it("reports ENS name resolution errors to errorManager and returns fallback", async () => {
+    it("silently returns fallback when ENS name resolution fails", async () => {
       const addr = "0x0000000000000000000000000000000000000003" as Hex;
-      const rpcError = new Error("429 Too Many Requests");
 
-      ensClient.getEnsName.mockRejectedValueOnce(rpcError);
+      ensClient.getEnsName.mockRejectedValueOnce(new Error("429 Too Many Requests"));
 
       const results = await fetchENS([addr]);
 
       expect(results).toEqual([{ name: undefined, address: addr, avatar: undefined }]);
-      expect(errorManager).toHaveBeenCalledWith("ENS name resolution failed", rpcError, {
-        address: addr,
-      });
+      expect(errorManager).not.toHaveBeenCalled();
     });
 
-    it("reports ENS avatar resolution errors to errorManager", async () => {
+    it("silently returns null avatar when ENS avatar resolution fails", async () => {
       const addr = "0x0000000000000000000000000000000000000003" as Hex;
-      const avatarError = new Error("429 Too Many Requests");
 
       ensClient.getEnsName.mockResolvedValueOnce("test.eth");
-      ensClient.getEnsAvatar.mockRejectedValueOnce(avatarError);
+      ensClient.getEnsAvatar.mockRejectedValueOnce(new Error("TypeError from viem internals"));
 
       const results = await fetchENS([addr]);
 
       expect(results).toEqual([{ name: "test.eth", address: addr, avatar: null }]);
-      expect(errorManager).toHaveBeenCalledWith("ENS avatar resolution failed", avatarError, {
-        name: "test.eth",
-      });
+      expect(errorManager).not.toHaveBeenCalled();
     });
 
-    it("handles all addresses failing gracefully", async () => {
+    it("handles all addresses failing gracefully without reporting to Sentry", async () => {
       const addr1 = "0x0000000000000000000000000000000000000004" as Hex;
       const addr2 = "0x0000000000000000000000000000000000000005" as Hex;
 
@@ -158,7 +152,7 @@ describe("fetchENS", () => {
         { name: undefined, address: addr1, avatar: undefined },
         { name: undefined, address: addr2, avatar: undefined },
       ]);
-      expect(errorManager).toHaveBeenCalledTimes(2);
+      expect(errorManager).not.toHaveBeenCalled();
     });
 
     it("handles a mix of successful and failed resolutions", async () => {
