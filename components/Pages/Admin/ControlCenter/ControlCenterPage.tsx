@@ -1,6 +1,11 @@
 "use client";
 
-import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
+import {
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronUpIcon,
+  XMarkIcon,
+} from "@heroicons/react/20/solid";
 import { BanknotesIcon, Cog6ToothIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -158,6 +163,120 @@ function ProgressCell({ invoices }: { invoices: CommunityPayoutInvoiceInfo[] }) 
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
+  );
+}
+
+// ─── Active filter chips ─────────────────────────────────────────────────────
+
+const FILTER_LABELS: Record<string, Record<string, string>> = {
+  agreementStatus: { signed: "Signed", not_signed: "Not Signed" },
+  invoiceStatus: {
+    all_received: "All Received",
+    needs_invoices: "Needs Invoices",
+    has_invoices: "In Progress",
+  },
+  status: { NOT_STARTED: "Not Started", IN_PROGRESS: "In Progress", COMPLETED: "Completed" },
+  kycStatus: {
+    NOT_STARTED: "Not Started",
+    PENDING: "Pending",
+    VERIFIED: "Verified",
+    REJECTED: "Rejected",
+    EXPIRED: "Expired",
+  },
+};
+
+const FILTER_DISPLAY_NAMES: Record<string, string> = {
+  agreementStatus: "Agreement",
+  invoiceStatus: "Invoice",
+  status: "Status",
+  kycStatus: "KYB",
+};
+
+function ActiveFilterChips({
+  agreementFilter,
+  invoiceFilter,
+  disbursementFilter,
+  kycFilter,
+  searchQuery,
+  onRemoveFilter,
+  onClearSearch,
+  onClearAll,
+}: {
+  agreementFilter?: string;
+  invoiceFilter?: string;
+  disbursementFilter?: string;
+  kycFilter?: string;
+  searchQuery: string;
+  onRemoveFilter: (key: string, value: string | null) => void;
+  onClearSearch: () => void;
+  onClearAll: () => void;
+}) {
+  const chips: { key: string; label: string; onRemove: () => void }[] = [];
+
+  if (agreementFilter) {
+    chips.push({
+      key: "agreementStatus",
+      label: `${FILTER_DISPLAY_NAMES.agreementStatus}: ${FILTER_LABELS.agreementStatus[agreementFilter] || agreementFilter}`,
+      onRemove: () => onRemoveFilter("agreementStatus", null),
+    });
+  }
+  if (invoiceFilter) {
+    chips.push({
+      key: "invoiceStatus",
+      label: `${FILTER_DISPLAY_NAMES.invoiceStatus}: ${FILTER_LABELS.invoiceStatus[invoiceFilter] || invoiceFilter}`,
+      onRemove: () => onRemoveFilter("invoiceStatus", null),
+    });
+  }
+  if (disbursementFilter) {
+    chips.push({
+      key: "status",
+      label: `${FILTER_DISPLAY_NAMES.status}: ${FILTER_LABELS.status[disbursementFilter] || disbursementFilter}`,
+      onRemove: () => onRemoveFilter("status", null),
+    });
+  }
+  if (kycFilter) {
+    chips.push({
+      key: "kycStatus",
+      label: `${FILTER_DISPLAY_NAMES.kycStatus}: ${FILTER_LABELS.kycStatus[kycFilter] || kycFilter}`,
+      onRemove: () => onRemoveFilter("kycStatus", null),
+    });
+  }
+  if (searchQuery) {
+    chips.push({
+      key: "search",
+      label: `Search: ${searchQuery}`,
+      onRemove: onClearSearch,
+    });
+  }
+
+  if (chips.length === 0) return null;
+
+  return (
+    <>
+      {chips.map((chip) => (
+        <span
+          key={chip.key}
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs font-medium"
+        >
+          {chip.label}
+          <button
+            onClick={chip.onRemove}
+            className="ml-0.5 hover:text-blue-900 dark:hover:text-blue-100 transition-colors"
+            aria-label={`Remove ${chip.label} filter`}
+          >
+            <XMarkIcon className="h-3 w-3" />
+          </button>
+        </span>
+      ))}
+      {chips.length >= 2 && (
+        <button
+          onClick={onClearAll}
+          className="text-xs text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200 underline ml-1"
+        >
+          Clear all
+        </button>
+      )}
+    </>
   );
 }
 
@@ -762,17 +881,31 @@ export default function ControlCenterPage() {
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <ProgramFilter onChange={handleProgramChange} />
+      {/* Toolbar — Row 1: Primary controls */}
+      <div className="flex items-center justify-between gap-4 px-4 pb-3 border-b border-gray-100 dark:border-zinc-800/50">
+        <ProgramFilter onChange={handleProgramChange} />
 
+        <div className="relative flex-shrink-0">
+          <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            placeholder="Search projects..."
+            className="pl-8 h-9 w-[220px] text-sm bg-white dark:bg-zinc-900"
+          />
+        </div>
+      </div>
+
+      {/* Toolbar — Row 2: Secondary filters + entries */}
+      <div className="flex items-center justify-between gap-3 px-4 -mt-3">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Agreement filter */}
           <Select
             value={agreementFilter || "all"}
             onValueChange={(v) => handleFilterChange("agreementStatus", v === "all" ? null : v)}
           >
-            <SelectTrigger className="w-[150px] bg-white dark:bg-zinc-900 h-9 text-sm">
+            <SelectTrigger className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400">
               <SelectValue placeholder="Agreement" />
             </SelectTrigger>
             <SelectContent>
@@ -787,7 +920,7 @@ export default function ControlCenterPage() {
             value={invoiceFilter || "all"}
             onValueChange={(v) => handleFilterChange("invoiceStatus", v === "all" ? null : v)}
           >
-            <SelectTrigger className="w-[150px] bg-white dark:bg-zinc-900 h-9 text-sm">
+            <SelectTrigger className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400">
               <SelectValue placeholder="Invoices" />
             </SelectTrigger>
             <SelectContent>
@@ -803,8 +936,8 @@ export default function ControlCenterPage() {
             value={disbursementFilter || "all"}
             onValueChange={(v) => handleFilterChange("status", v === "all" ? null : v)}
           >
-            <SelectTrigger className="w-[150px] bg-white dark:bg-zinc-900 h-9 text-sm">
-              <SelectValue placeholder="Disbursement" />
+            <SelectTrigger className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400">
+              <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
@@ -820,7 +953,7 @@ export default function ControlCenterPage() {
               value={kycFilter || "all"}
               onValueChange={(v) => handleFilterChange("kycStatus", v === "all" ? null : v)}
             >
-              <SelectTrigger className="w-[150px] bg-white dark:bg-zinc-900 h-9 text-sm">
+              <SelectTrigger className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400">
                 <SelectValue placeholder="KYB" />
               </SelectTrigger>
               <SelectContent>
@@ -834,33 +967,26 @@ export default function ControlCenterPage() {
             </Select>
           )}
 
-          {/* Search */}
-          <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              placeholder="Search projects..."
-              className="pl-8 h-9 w-[200px] text-sm bg-white dark:bg-zinc-900"
-            />
-          </div>
-
-          {/* Clear filters */}
-          {hasActiveFilters && (
-            <button
-              onClick={handleClearFilters}
-              className="text-xs text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200 underline"
-            >
-              Clear filters
-            </button>
-          )}
+          {/* Active filter chips */}
+          <ActiveFilterChips
+            agreementFilter={agreementFilter}
+            invoiceFilter={invoiceFilter}
+            disbursementFilter={disbursementFilter}
+            kycFilter={kycFilter}
+            searchQuery={searchQuery}
+            onRemoveFilter={handleFilterChange}
+            onClearSearch={() => {
+              setLocalSearch("");
+              handleFilterChange("search", null);
+            }}
+            onClearAll={handleClearFilters}
+          />
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500 dark:text-zinc-400">Show</span>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-xs text-gray-500 dark:text-zinc-400">Show</span>
           <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
-            <SelectTrigger className="w-[70px] bg-white dark:bg-zinc-900 h-9 text-sm">
+            <SelectTrigger className="w-[60px] bg-white dark:bg-zinc-900 h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -870,7 +996,7 @@ export default function ControlCenterPage() {
               <SelectItem value="200">200</SelectItem>
             </SelectContent>
           </Select>
-          <span className="text-sm text-gray-500 dark:text-zinc-400">entries</span>
+          <span className="text-xs text-gray-500 dark:text-zinc-400">entries</span>
         </div>
       </div>
 
