@@ -273,6 +273,89 @@ describe("useAgentStream", () => {
       expect(useAgentChatStore.getState().error).toBe("Internal Server Error");
     });
 
+    it("should parse JSON error responses and extract message field", async () => {
+      mockFetch.mockResolvedValue(
+        createErrorResponse(
+          401,
+          JSON.stringify({
+            statusCode: 401,
+            error: "Unauthorized",
+            message: "Authorization header with JWT is required",
+          })
+        )
+      );
+
+      const { result } = renderHook(() => useAgentStream());
+
+      await act(async () => {
+        await result.current.sendMessage("Test");
+      });
+
+      expect(useAgentChatStore.getState().error).toBe("Authorization header with JWT is required");
+    });
+
+    it("should parse JSON error responses and fall back to error field", async () => {
+      mockFetch.mockResolvedValue(
+        createErrorResponse(
+          403,
+          JSON.stringify({ error: "Daily agent usage budget exceeded. Please try again tomorrow." })
+        )
+      );
+
+      const { result } = renderHook(() => useAgentStream());
+
+      await act(async () => {
+        await result.current.sendMessage("Test");
+      });
+
+      expect(useAgentChatStore.getState().error).toBe(
+        "Daily agent usage budget exceeded. Please try again tomorrow."
+      );
+    });
+
+    it("should show user-friendly message for 409 session conflict", async () => {
+      mockFetch.mockResolvedValue(
+        createErrorResponse(
+          409,
+          JSON.stringify({ error: "An agent session is already active for user 0x123" })
+        )
+      );
+
+      const { result } = renderHook(() => useAgentStream());
+
+      await act(async () => {
+        await result.current.sendMessage("Test");
+      });
+
+      expect(useAgentChatStore.getState().error).toBe(
+        "Please wait for your current request to complete before sending another."
+      );
+    });
+
+    it("should fall back to plain text for non-JSON error responses", async () => {
+      mockFetch.mockResolvedValue(createErrorResponse(502, "Bad Gateway"));
+
+      const { result } = renderHook(() => useAgentStream());
+
+      await act(async () => {
+        await result.current.sendMessage("Test");
+      });
+
+      expect(useAgentChatStore.getState().error).toBe("Bad Gateway");
+    });
+
+    it("should fall back to HTTP status for empty error responses", async () => {
+      mockFetch.mockResolvedValue(createErrorResponse(500, ""));
+
+      const { result } = renderHook(() => useAgentStream());
+
+      await act(async () => {
+        await result.current.sendMessage("Test");
+      });
+
+      expect(useAgentChatStore.getState().error).toBe("HTTP 500");
+    });
+
     it("should handle network failure", async () => {
       mockFetch.mockRejectedValue(new TypeError("Failed to fetch"));
 
@@ -585,6 +668,32 @@ describe("useAgentStream", () => {
       });
 
       expect(useAgentChatStore.getState().error).toBe("Agent query failed");
+    });
+
+    it("should handle standalone error SSE events", async () => {
+      const sseText = formatSSE([{ type: "error", message: "Model overloaded" }]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream());
+
+      await act(async () => {
+        await result.current.sendMessage("Test");
+      });
+
+      expect(useAgentChatStore.getState().error).toBe("Model overloaded");
+    });
+
+    it("should handle standalone error SSE event with error field", async () => {
+      const sseText = formatSSE([{ type: "error", error: "Connection lost" }]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream());
+
+      await act(async () => {
+        await result.current.sendMessage("Test");
+      });
+
+      expect(useAgentChatStore.getState().error).toBe("Connection lost");
     });
 
     it("should not set error for successful result", async () => {

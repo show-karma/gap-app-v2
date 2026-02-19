@@ -129,7 +129,19 @@ export function useAgentStream() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || `HTTP ${response.status}`);
+        let errorMsg = `HTTP ${response.status}`;
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMsg = errorJson.message || errorJson.error || errorMsg;
+        } catch {
+          if (errorText) errorMsg = errorText;
+        }
+        if (response.status === 409) {
+          throw new Error(
+            "Please wait for your current request to complete before sending another."
+          );
+        }
+        throw new Error(errorMsg);
       }
 
       const reader = response.body?.getReader();
@@ -180,6 +192,12 @@ export function useAgentStream() {
                   status: "pending",
                 });
               }
+              break;
+            }
+            case "error": {
+              const errorMsg =
+                (event.message as string) || (event.error as string) || "Agent error";
+              store.setError(errorMsg);
               break;
             }
             case "result": {
