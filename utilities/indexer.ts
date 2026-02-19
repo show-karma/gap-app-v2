@@ -292,6 +292,14 @@ export const INDEXER = {
       BY_GRANT: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
       DELETE: (grantUID: string) => `/v2/payout-config/grant/${grantUID}`,
     },
+    GRANT_AGREEMENTS: {
+      TOGGLE: (grantUID: string) => `/v2/grant-agreements/${grantUID}`,
+      BY_GRANT: (grantUID: string) => `/v2/grant-agreements/${grantUID}`,
+    },
+    MILESTONE_INVOICES: {
+      BATCH_SAVE: (grantUID: string) => `/v2/milestone-invoices/${grantUID}`,
+      BY_GRANT: (grantUID: string) => `/v2/milestone-invoices/grant/${grantUID}`,
+    },
   },
   PROGRAMS: {
     COMMUNITY: (communityId: string) => `/communities/${communityId}/programs`,

@@ -188,12 +188,38 @@ export interface CommunityPayoutDisbursementInfo {
 }
 
 /**
- * Community payout item combining project, grant, and disbursement info
+ * Agreement status for a grant
+ */
+export type AgreementStatus = "signed" | "not_signed";
+
+export interface CommunityPayoutAgreementInfo {
+  signed: boolean;
+  signedAt: string | null;
+  signedBy: string | null;
+}
+
+/**
+ * Invoice status for a milestone
+ */
+export type InvoiceStatus = "not_submitted" | "submitted" | "received" | "paid";
+
+export interface CommunityPayoutInvoiceInfo {
+  milestoneLabel: string;
+  milestoneUID: string | null;
+  invoiceStatus: InvoiceStatus;
+  invoiceSentAt: string | null;
+  invoiceReceivedAt: string | null;
+}
+
+/**
+ * Community payout item combining project, grant, disbursement, agreement, and invoice info
  */
 export interface CommunityPayoutItem {
   project: CommunityPayoutProjectInfo;
   grant: CommunityPayoutGrantInfo;
   disbursements: CommunityPayoutDisbursementInfo;
+  agreement: CommunityPayoutAgreementInfo | null;
+  milestoneInvoices: CommunityPayoutInvoiceInfo[];
 }
 
 /**

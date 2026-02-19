@@ -26,11 +26,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useKycBatchStatuses, useKycConfig } from "@/hooks/useKycStatus";
 import {
   AggregatedDisbursementStatus,
+  type CommunityPayoutAgreementInfo,
+  type CommunityPayoutInvoiceInfo,
   type CommunityPayoutsOptions,
   type CommunityPayoutsSorting,
   CreateDisbursementModal,
   type GrantDisbursementInfo,
   getPaidAllocationIds,
+  type InvoiceStatus,
   PayoutConfigurationModal,
   PayoutDisbursementStatus,
   type PayoutGrantConfig,
@@ -43,14 +46,6 @@ import {
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import {
-  type ControlCenterMilestone,
-  getInvoiceSummary,
-  getMilestoneSummary,
-  getMockOverlay,
-  type InvoiceStatus,
-  type MilestoneStatus,
-} from "./mock-data";
 import { ProjectDetailsModal } from "./ProjectDetailsModal";
 
 // ─── Internal table row type ─────────────────────────────────────────────────
@@ -68,16 +63,10 @@ interface TableRow {
   currentAmount?: string;
 }
 
-// ─── Status badge helpers (mock columns) ─────────────────────────────────────
+// ─── Status badge helpers ────────────────────────────────────────────────────
 
-function AgreementBadge({
-  status,
-  signedDate,
-}: {
-  status: "signed" | "not_signed";
-  signedDate: string | null;
-}) {
-  const isSigned = status === "signed";
+function AgreementBadge({ agreement }: { agreement: CommunityPayoutAgreementInfo | null }) {
+  const isSigned = agreement?.signed === true;
   return (
     <TooltipProvider>
       <Tooltip>
@@ -93,11 +82,11 @@ function AgreementBadge({
             {isSigned ? "Signed" : "Not signed"}
           </span>
         </TooltipTrigger>
-        {isSigned && signedDate && (
+        {isSigned && agreement?.signedAt && (
           <TooltipContent side="top">
             <p className="text-xs">
               Signed on{" "}
-              {new Date(signedDate).toLocaleDateString("en-US", {
+              {new Date(agreement.signedAt).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
                 year: "numeric",
@@ -110,18 +99,29 @@ function AgreementBadge({
   );
 }
 
-function InvoiceSummaryBadge({ milestones }: { milestones: ControlCenterMilestone[] }) {
-  const summary = getInvoiceSummary(milestones);
-  const allReceived = summary.received === summary.total && summary.total > 0;
-  const noneReceived = summary.received === 0;
+function InvoiceSummaryBadge({ invoices }: { invoices: CommunityPayoutInvoiceInfo[] }) {
+  const total = invoices.length;
+  const received = invoices.filter(
+    (inv) => inv.invoiceStatus === "received" || inv.invoiceStatus === "paid"
+  ).length;
+  const allReceived = received === total && total > 0;
+  const noneReceived = received === 0;
 
-  const countsByStatus = milestones.reduce(
-    (acc, m) => {
-      acc[m.invoiceStatus] = (acc[m.invoiceStatus] || 0) + 1;
+  const countsByStatus = invoices.reduce(
+    (acc, inv) => {
+      acc[inv.invoiceStatus] = (acc[inv.invoiceStatus] || 0) + 1;
       return acc;
     },
     {} as Record<InvoiceStatus, number>
   );
+
+  if (total === 0) {
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-default bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400">
+        No invoices
+      </span>
+    );
+  }
 
   return (
     <TooltipProvider>
@@ -137,7 +137,7 @@ function InvoiceSummaryBadge({ milestones }: { milestones: ControlCenterMileston
                   : "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
             )}
           >
-            {noneReceived ? "Needs invoices" : `${summary.received}/${summary.total} received`}
+            {noneReceived ? "Needs invoices" : `${received}/${total} received`}
           </span>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs">
@@ -155,18 +155,18 @@ function InvoiceSummaryBadge({ milestones }: { milestones: ControlCenterMileston
   );
 }
 
-function MilestoneSummaryBadge({ milestones }: { milestones: ControlCenterMilestone[] }) {
-  const summary = getMilestoneSummary(milestones);
-  const allVerified = summary.verified === summary.total && summary.total > 0;
-  const hasIssues = summary.needsRevision > 0;
+function MilestoneSummaryBadge({ invoices }: { invoices: CommunityPayoutInvoiceInfo[] }) {
+  const total = invoices.length;
+  const paid = invoices.filter((inv) => inv.invoiceStatus === "paid").length;
+  const allPaid = paid === total && total > 0;
 
-  const countsByStatus = milestones.reduce(
-    (acc, m) => {
-      acc[m.milestoneStatus] = (acc[m.milestoneStatus] || 0) + 1;
-      return acc;
-    },
-    {} as Record<MilestoneStatus, number>
-  );
+  if (total === 0) {
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-default bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400">
+        No milestones
+      </span>
+    );
+  }
 
   return (
     <TooltipProvider>
@@ -175,33 +175,20 @@ function MilestoneSummaryBadge({ milestones }: { milestones: ControlCenterMilest
           <span
             className={cn(
               "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-default tabular-nums",
-              allVerified
+              allPaid
                 ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                : hasIssues
-                  ? "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                  : summary.inReview > 0
-                    ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                    : "bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400"
+                : paid > 0
+                  ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                  : "bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400"
             )}
           >
-            {allVerified
-              ? `${summary.total}/${summary.total} verified`
-              : summary.inReview > 0
-                ? `${summary.verified}/${summary.total} verified`
-                : hasIssues
-                  ? "Needs revision"
-                  : `${summary.verified}/${summary.total} verified`}
+            {allPaid ? `${total}/${total} paid` : `${paid}/${total} paid`}
           </span>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs">
-          <div className="space-y-0.5 text-xs">
-            {countsByStatus.verified ? <p>Verified: {countsByStatus.verified}</p> : null}
-            {countsByStatus.in_review ? <p>In review: {countsByStatus.in_review}</p> : null}
-            {countsByStatus.needs_revision ? (
-              <p>Needs revision: {countsByStatus.needs_revision}</p>
-            ) : null}
-            {countsByStatus.submitted ? <p>Submitted: {countsByStatus.submitted}</p> : null}
-          </div>
+          <p className="text-xs">
+            {total} {total === 1 ? "milestone" : "milestones"}, {paid} paid
+          </p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -342,6 +329,24 @@ export default function ControlCenterPage() {
         history: payout.disbursements.history,
       };
     });
+    return map;
+  }, [payouts]);
+
+  // Agreement map from payouts response
+  const agreementMap = useMemo(() => {
+    const map: Record<string, CommunityPayoutAgreementInfo | null> = {};
+    for (const payout of payouts) {
+      map[payout.grant.uid] = payout.agreement;
+    }
+    return map;
+  }, [payouts]);
+
+  // Invoice map from payouts response
+  const invoiceMap = useMemo(() => {
+    const map: Record<string, CommunityPayoutInvoiceInfo[]> = {};
+    for (const payout of payouts) {
+      map[payout.grant.uid] = payout.milestoneInvoices || [];
+    }
     return map;
   }, [payouts]);
 
@@ -762,7 +767,7 @@ export default function ControlCenterPage() {
                     KYB
                   </th>
                 )}
-                {/* Agreement (mock) */}
+                {/* Agreement */}
                 <th className="h-11 px-4 text-center text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-28">
                   Agreement
                 </th>
@@ -770,11 +775,11 @@ export default function ControlCenterPage() {
                 <th className="h-11 px-4 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider">
                   Payout Address
                 </th>
-                {/* Invoices (mock) */}
+                {/* Invoices */}
                 <th className="h-11 px-4 text-center text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-36">
                   Invoices
                 </th>
-                {/* Milestones (mock) */}
+                {/* Milestones */}
                 <th className="h-11 px-4 text-center text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-36">
                   Milestones
                 </th>
@@ -822,8 +827,8 @@ export default function ControlCenterPage() {
                 const checkboxState = getCheckboxDisabledState(item);
                 const isFullyDisbursed = checkboxState.reason === "Fully disbursed";
 
-                // Mock overlay for columns without backend
-                const overlay = getMockOverlay(item.projectUid);
+                const agreement = agreementMap[item.grantUid] ?? null;
+                const invoices = invoiceMap[item.grantUid] ?? [];
 
                 return (
                   <tr
@@ -877,12 +882,9 @@ export default function ControlCenterPage() {
                       </td>
                     )}
 
-                    {/* Agreement (mock) */}
+                    {/* Agreement */}
                     <td className="px-4 py-3 text-center">
-                      <AgreementBadge
-                        status={overlay.agreementStatus}
-                        signedDate={overlay.agreementSignedDate}
-                      />
+                      <AgreementBadge agreement={agreement} />
                     </td>
 
                     {/* Payout Address */}
@@ -899,14 +901,14 @@ export default function ControlCenterPage() {
                       </span>
                     </td>
 
-                    {/* Invoices (mock) */}
+                    {/* Invoices */}
                     <td className="px-4 py-3 text-center">
-                      <InvoiceSummaryBadge milestones={overlay.milestones} />
+                      <InvoiceSummaryBadge invoices={invoices} />
                     </td>
 
-                    {/* Milestones (mock) */}
+                    {/* Milestones */}
                     <td className="px-4 py-3 text-center">
-                      <MilestoneSummaryBadge milestones={overlay.milestones} />
+                      <MilestoneSummaryBadge invoices={invoices} />
                     </td>
 
                     {/* Total Grant */}
@@ -1022,6 +1024,7 @@ export default function ControlCenterPage() {
         grant={detailsModalGrant}
         open={detailsModalOpen}
         onOpenChange={setDetailsModalOpen}
+        communityUID={community?.uid || ""}
         kycStatus={
           detailsModalGrant ? (kycStatuses.get(detailsModalGrant.projectUid) ?? null) : null
         }
@@ -1031,6 +1034,8 @@ export default function ControlCenterPage() {
         disbursementInfo={
           detailsModalGrant ? (disbursementMap[detailsModalGrant.grantUid] ?? null) : null
         }
+        agreement={detailsModalGrant ? (agreementMap[detailsModalGrant.grantUid] ?? null) : null}
+        milestoneInvoices={detailsModalGrant ? (invoiceMap[detailsModalGrant.grantUid] ?? []) : []}
         onOpenConfigModal={() => {
           if (!detailsModalGrant) return;
           setDetailsModalOpen(false);

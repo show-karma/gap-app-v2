@@ -2,6 +2,8 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import type {
+  CommunityPayoutAgreementInfo,
+  CommunityPayoutInvoiceInfo,
   CommunityPayoutsOptions,
   CommunityPayoutsResponse,
   CreateDisbursementsRequest,
@@ -396,5 +398,69 @@ export const deletePayoutConfig = async (grantUID: string): Promise<void> => {
   } catch (error: unknown) {
     errorManager(`Error deleting payout config for grant ${grantUID}`, error);
     throw new Error(`Failed to delete payout config: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Toggle grant agreement signed status
+ */
+export const toggleGrantAgreement = async (
+  grantUID: string,
+  signed: boolean,
+  communityUID: string
+): Promise<CommunityPayoutAgreementInfo> => {
+  try {
+    const [data, error] = await fetchData<CommunityPayoutAgreementInfo>(
+      INDEXER.V2.GRANT_AGREEMENTS.TOGGLE(grantUID),
+      "POST",
+      { signed, communityUID },
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to toggle agreement");
+    }
+
+    return data;
+  } catch (error: unknown) {
+    errorManager(`Error toggling agreement for grant ${grantUID}`, error);
+    throw new Error(`Failed to toggle agreement: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Batch save milestone invoices for a grant
+ */
+export const saveMilestoneInvoices = async (
+  grantUID: string,
+  communityUID: string,
+  invoices: Array<{
+    milestoneLabel: string;
+    invoiceSentAt?: string | null;
+    invoiceReceived?: boolean;
+  }>
+): Promise<{ invoices: CommunityPayoutInvoiceInfo[] }> => {
+  try {
+    const [data, error] = await fetchData<{ invoices: CommunityPayoutInvoiceInfo[] }>(
+      INDEXER.V2.MILESTONE_INVOICES.BATCH_SAVE(grantUID),
+      "PUT",
+      { communityUID, invoices },
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to save invoices");
+    }
+
+    return data;
+  } catch (error: unknown) {
+    errorManager(`Error saving invoices for grant ${grantUID}`, error);
+    throw new Error(`Failed to save invoices: ${getErrorMessage(error)}`);
   }
 };
