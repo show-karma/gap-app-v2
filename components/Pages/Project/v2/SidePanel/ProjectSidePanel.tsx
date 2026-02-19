@@ -23,7 +23,7 @@ interface ProjectSidePanelProps {
  * Separator component for dividing sections
  */
 function Separator() {
-  return <div className="h-px w-full bg-neutral-200 dark:bg-zinc-700" />;
+  return <div className="h-px w-full bg-neutral-200 dark:bg-neutral-700" />;
 }
 
 /**
@@ -76,7 +76,7 @@ export function ProjectSidePanel({ project, className }: ProjectSidePanelProps) 
       )}
 
       {/* Main Card with Donate, Endorse, Subscribe */}
-      <div className="flex flex-col gap-8 p-8 rounded-xl border border-neutral-200 dark:border-zinc-700 bg-neutral-100 dark:bg-zinc-800/50 shadow-sm">
+      <div className="flex flex-col gap-8 p-8 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-secondary shadow-sm">
         {/* Donate Section - only visible if payout addresses configured or user can set them */}
         {showDonateSection && (
           <>

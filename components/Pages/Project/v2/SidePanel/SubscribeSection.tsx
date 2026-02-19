@@ -120,7 +120,7 @@ export function SubscribeSection({ project, className }: SubscribeSectionProps) 
             {...register("name")}
             aria-invalid={!!errors.name}
             aria-describedby={errors.name ? "subscribe-name-error" : undefined}
-            className="w-full bg-white dark:bg-zinc-900 border-neutral-200 dark:border-zinc-700 rounded-lg shadow-sm"
+            className="w-full bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 rounded-lg shadow-sm"
             data-testid="subscribe-name-input"
           />
           {errors.name && (
@@ -148,7 +148,7 @@ export function SubscribeSection({ project, className }: SubscribeSectionProps) 
             aria-required="true"
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "subscribe-email-error" : undefined}
-            className="w-full bg-white dark:bg-zinc-900 border-neutral-200 dark:border-zinc-700 rounded-lg shadow-sm"
+            className="w-full bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 rounded-lg shadow-sm"
             data-testid="subscribe-email-input"
           />
           {errors.email && (

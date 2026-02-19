@@ -171,7 +171,7 @@ export function ProjectProfileClientShell({
       )}
 
       {/* Main Layout: Side Panel + Content */}
-      <div className={cn("flex flex-row gap-6", className)} data-testid="main-layout">
+      <div className={cn("flex flex-row gap-16", className)} data-testid="main-layout">
         {/* Side Panel - Desktop Only */}
         <ProjectSidePanel project={project} />
 

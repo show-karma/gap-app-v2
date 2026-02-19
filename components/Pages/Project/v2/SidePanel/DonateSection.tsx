@@ -167,7 +167,7 @@ export function DonateSection({ project, className }: DonateSectionProps) {
                 min="0"
                 step="0.01"
                 aria-describedby="donate-help"
-                className="pl-7 bg-white dark:bg-zinc-900 border-neutral-200 dark:border-zinc-700 rounded-lg shadow-sm"
+                className="pl-7 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 rounded-lg shadow-sm"
                 data-testid="donate-amount-input"
               />
               <span id="donate-help" className="sr-only">

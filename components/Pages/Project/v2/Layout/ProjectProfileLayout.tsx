@@ -221,7 +221,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
         </div>
 
         {/* Main Layout Skeleton */}
-        <div className="flex flex-row gap-6">
+        <div className="flex flex-row gap-16">
           <ProjectSidePanelSkeleton />
           <div className="flex flex-col gap-6 flex-1 min-w-0">
             <div className="hidden lg:block">
@@ -311,7 +311,7 @@ export function ProjectProfileLayout({ children, className }: ProjectProfileLayo
         )}
 
         {/* Main Layout: Side Panel + Content */}
-        <div className="flex flex-row gap-6" data-testid="main-layout">
+        <div className="flex flex-row gap-16" data-testid="main-layout">
           {/* Side Panel - Desktop Only */}
           <ProjectSidePanel project={project} />
 
