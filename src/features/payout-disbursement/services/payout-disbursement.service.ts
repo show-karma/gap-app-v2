@@ -271,6 +271,9 @@ export const getCommunityPayouts = async (
         limit: options?.limit,
         programId: options?.filters?.programId,
         status: options?.filters?.status,
+        agreementStatus: options?.filters?.agreementStatus,
+        invoiceStatus: options?.filters?.invoiceStatus,
+        search: options?.filters?.search,
         sortBy: options?.sorting?.sortBy,
         sortOrder: options?.sorting?.sortOrder,
       }),
@@ -439,8 +442,8 @@ export const saveMilestoneInvoices = async (
   communityUID: string,
   invoices: Array<{
     milestoneLabel: string;
-    invoiceSentAt?: string | null;
-    invoiceReceived?: boolean;
+    milestoneUID?: string | null;
+    invoiceReceivedAt?: string | null;
   }>
 ): Promise<{ invoices: CommunityPayoutInvoiceInfo[] }> => {
   try {

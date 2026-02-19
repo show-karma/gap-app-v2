@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { formatUnits, isAddress } from "viem";
 import { KycStatusBadge } from "@/components/KycStatusIcon";
 import { ProgramFilter } from "@/components/Pages/Communities/Impact/ProgramFilter";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Spinner } from "@/components/Utilities/Spinner";
 import TablePagination from "@/components/Utilities/TablePagination";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,7 @@ interface TableRow {
   projectChainId: number;
   currentPayoutAddress?: string;
   currentAmount?: string;
+  currency?: string;
 }
 
 // ─── Status badge helpers ────────────────────────────────────────────────────
@@ -75,8 +77,8 @@ function AgreementBadge({ agreement }: { agreement: CommunityPayoutAgreementInfo
             className={cn(
               "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-default",
               isSigned
-                ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                : "bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400"
+                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                : "bg-gray-100 text-gray-700 dark:bg-zinc-800 dark:text-zinc-400"
             )}
           >
             {isSigned ? "Signed" : "Not signed"}
@@ -99,13 +101,19 @@ function AgreementBadge({ agreement }: { agreement: CommunityPayoutAgreementInfo
   );
 }
 
-function InvoiceSummaryBadge({ invoices }: { invoices: CommunityPayoutInvoiceInfo[] }) {
+function ProgressCell({ invoices }: { invoices: CommunityPayoutInvoiceInfo[] }) {
   const total = invoices.length;
+  const paid = invoices.filter((inv) => inv.invoiceStatus === "paid").length;
   const received = invoices.filter(
     (inv) => inv.invoiceStatus === "received" || inv.invoiceStatus === "paid"
   ).length;
-  const allReceived = received === total && total > 0;
-  const noneReceived = received === 0;
+
+  if (total === 0) {
+    return <span className="text-xs text-gray-500 dark:text-zinc-500">No milestones</span>;
+  }
+
+  const allDone = paid === total && received === total;
+  const hasProgress = paid > 0 || received > 0;
 
   const countsByStatus = invoices.reduce(
     (acc, inv) => {
@@ -115,80 +123,39 @@ function InvoiceSummaryBadge({ invoices }: { invoices: CommunityPayoutInvoiceInf
     {} as Record<InvoiceStatus, number>
   );
 
-  if (total === 0) {
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-default bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400">
-        No invoices
-      </span>
-    );
-  }
-
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span
+          <div
             className={cn(
-              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-default tabular-nums",
-              allReceived
-                ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                : noneReceived
-                  ? "bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400"
-                  : "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+              "text-xs tabular-nums cursor-default",
+              allDone
+                ? "text-green-700 dark:text-green-400"
+                : hasProgress
+                  ? "text-blue-700 dark:text-blue-400"
+                  : "text-gray-600 dark:text-zinc-400"
             )}
           >
-            {noneReceived ? "Needs invoices" : `${received}/${total} received`}
-          </span>
+            <div>
+              {paid}/{total} milestones paid
+            </div>
+            <div>
+              {received}/{total} invoices received
+            </div>
+          </div>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs">
           <div className="space-y-0.5 text-xs">
-            {countsByStatus.paid ? <p>Paid: {countsByStatus.paid}</p> : null}
-            {countsByStatus.received ? <p>Received: {countsByStatus.received}</p> : null}
-            {countsByStatus.submitted ? <p>Submitted: {countsByStatus.submitted}</p> : null}
+            <p>
+              {total} {total === 1 ? "milestone" : "milestones"}, {paid} paid
+            </p>
+            {countsByStatus.paid ? <p>Invoices paid: {countsByStatus.paid}</p> : null}
+            {countsByStatus.received ? <p>Invoices received: {countsByStatus.received}</p> : null}
             {countsByStatus.not_submitted ? (
-              <p>Not submitted: {countsByStatus.not_submitted}</p>
+              <p>Invoices not submitted: {countsByStatus.not_submitted}</p>
             ) : null}
           </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
-
-function MilestoneSummaryBadge({ invoices }: { invoices: CommunityPayoutInvoiceInfo[] }) {
-  const total = invoices.length;
-  const paid = invoices.filter((inv) => inv.invoiceStatus === "paid").length;
-  const allPaid = paid === total && total > 0;
-
-  if (total === 0) {
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-default bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400">
-        No milestones
-      </span>
-    );
-  }
-
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span
-            className={cn(
-              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-default tabular-nums",
-              allPaid
-                ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                : paid > 0
-                  ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                  : "bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400"
-            )}
-          >
-            {allPaid ? `${total}/${total} paid` : `${paid}/${total} paid`}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-xs">
-          <p className="text-xs">
-            {total} {total === 1 ? "milestone" : "milestones"}, {paid} paid
-          </p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -209,9 +176,24 @@ export default function ControlCenterPage() {
   const selectedProgramId = searchParams.get("programId");
   const itemsPerPage = Number(searchParams.get("limit")) || 200;
   const currentPage = Number(searchParams.get("page")) || 1;
-  const searchQuery = searchParams.get("q") || "";
+  const searchQuery = searchParams.get("search") || "";
   const sortBy = (searchParams.get("sortBy") as CommunityPayoutsSorting["sortBy"]) || undefined;
   const sortOrder = (searchParams.get("sortOrder") as "asc" | "desc") || undefined;
+  const agreementFilter = searchParams.get("agreementStatus") as
+    | "signed"
+    | "not_signed"
+    | undefined;
+  const invoiceFilter = searchParams.get("invoiceStatus") as
+    | "all_received"
+    | "needs_invoices"
+    | "has_invoices"
+    | undefined;
+  const disbursementFilter = searchParams.get("status") as
+    | "NOT_STARTED"
+    | "IN_PROGRESS"
+    | "COMPLETED"
+    | undefined;
+  const kycFilter = searchParams.get("kycStatus") || undefined;
 
   // Local state
   const [localSearch, setLocalSearch] = useState(searchQuery);
@@ -270,10 +252,20 @@ export default function ControlCenterPage() {
   // Extract actual programId from composite value (programId_chainId)
   const actualProgramId = selectedProgramId?.split("_")[0] || null;
 
+  const filters = useMemo(() => {
+    const f: CommunityPayoutsOptions["filters"] = {};
+    if (actualProgramId) f.programId = actualProgramId;
+    if (agreementFilter) f.agreementStatus = agreementFilter;
+    if (invoiceFilter) f.invoiceStatus = invoiceFilter;
+    if (disbursementFilter) f.status = disbursementFilter as AggregatedDisbursementStatus;
+    if (searchQuery) f.search = searchQuery;
+    return Object.keys(f).length > 0 ? f : undefined;
+  }, [actualProgramId, agreementFilter, invoiceFilter, disbursementFilter, searchQuery]);
+
   const payoutsOptions: CommunityPayoutsOptions = {
     page: currentPage,
     limit: itemsPerPage,
-    filters: actualProgramId ? { programId: actualProgramId } : undefined,
+    filters,
     sorting: sortBy ? { sortBy, sortOrder: sortOrder || "asc" } : undefined,
   };
 
@@ -315,7 +307,8 @@ export default function ControlCenterPage() {
       grantChainId: payout.grant.chainID,
       projectChainId: payout.project.chainID,
       currentPayoutAddress: payout.project.adminPayoutAddress || "",
-      currentAmount: payout.grant.adminPayoutAmount || "",
+      currentAmount: payout.grant.adminPayoutAmount || payout.grant.payoutAmount || "",
+      currency: payout.grant.currency || "",
     }));
   }, [payouts]);
 
@@ -409,7 +402,7 @@ export default function ControlCenterPage() {
       if (latestDisbursement?.status === PayoutDisbursementStatus.AWAITING_SIGNATURES) {
         return {
           label: "Awaiting Signatures",
-          color: "text-yellow-700 bg-yellow-100 dark:bg-yellow-900/30",
+          color: "text-yellow-800 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-300",
         };
       }
       if (aggregatedStatus === AggregatedDisbursementStatus.COMPLETED) {
@@ -463,8 +456,15 @@ export default function ControlCenterPage() {
     [disbursementMap, getTotalDisbursed]
   );
 
-  // Backend pagination — use tableData directly
-  const paginatedData = tableData;
+  // Backend pagination — use tableData directly, with optional KYC frontend filter
+  const paginatedData = useMemo(() => {
+    if (!kycFilter) return tableData;
+    return tableData.filter((item) => {
+      const status = kycStatuses.get(item.projectUid);
+      const kycStatus = status?.status || "NOT_STARTED";
+      return kycStatus === kycFilter;
+    });
+  }, [tableData, kycFilter, kycStatuses]);
 
   const selectableGrants = useMemo(
     () => paginatedData.filter((item) => !getCheckboxDisabledState(item).disabled),
@@ -502,7 +502,12 @@ export default function ControlCenterPage() {
   };
 
   const handleSearch = () => {
-    const query = createQueryString({ q: localSearch || null, page: "1" });
+    const query = createQueryString({ search: localSearch || null, page: "1" });
+    router.push(`${pathname}?${query}`);
+  };
+
+  const handleFilterChange = (key: string, value: string | null) => {
+    const query = createQueryString({ [key]: value, page: "1" });
     router.push(`${pathname}?${query}`);
   };
 
@@ -628,7 +633,25 @@ export default function ControlCenterPage() {
         <ChevronDownIcon className="h-4 w-4" />
       );
     }
-    return <ChevronUpIcon className="h-4 w-4 opacity-30" />;
+    return <ChevronUpIcon className="h-4 w-4 opacity-50" />;
+  };
+
+  // ─── Computed layout values ─────────────────────────────────────────────
+
+  const columnCount = 9 + (isKycEnabled ? 1 : 0);
+
+  const hasActiveFilters = !!(
+    agreementFilter ||
+    invoiceFilter ||
+    disbursementFilter ||
+    kycFilter ||
+    searchQuery ||
+    selectedProgramId
+  );
+
+  const handleClearFilters = () => {
+    setLocalSearch("");
+    router.push(pathname);
   };
 
   // ─── Error / redirect handling ───────────────────────────────────────────
@@ -645,9 +668,59 @@ export default function ControlCenterPage() {
   // ─── Loading state ───────────────────────────────────────────────────────
 
   if (!authReady || loadingAdmin || isLoadingPayouts || isLoadingCommunity) {
+    const skeletonCols = 9;
     return (
-      <div className="flex w-full items-center justify-center h-96">
-        <Spinner />
+      <div className="my-4 flex flex-col gap-6 w-full">
+        {/* Page Header (same as real) */}
+        <div className="flex flex-col gap-1 px-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Skeleton className="h-4 w-40" />
+          </div>
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="h-4 w-80 mt-1" />
+        </div>
+
+        {/* Skeleton toolbar */}
+        <div className="flex flex-wrap items-center gap-3 px-4">
+          <Skeleton className="h-9 w-[150px] rounded-md" />
+          <Skeleton className="h-9 w-[150px] rounded-md" />
+          <Skeleton className="h-9 w-[150px] rounded-md" />
+          <Skeleton className="h-9 w-[150px] rounded-md" />
+          <Skeleton className="h-9 w-[200px] rounded-md" />
+        </div>
+
+        {/* Skeleton table */}
+        <div className="px-4">
+          <div className="w-full overflow-hidden rounded-lg border border-gray-200 dark:border-zinc-800">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-800">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-zinc-900">
+                  {Array.from({ length: skeletonCols }).map((_, i) => (
+                    <th key={i} className="h-11 px-4">
+                      <Skeleton className="h-3 w-16" />
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800 bg-white dark:bg-zinc-950">
+                {Array.from({ length: 6 }).map((_, rowIdx) => (
+                  <tr key={rowIdx}>
+                    {Array.from({ length: skeletonCols }).map((_, colIdx) => (
+                      <td key={colIdx} className="px-4 py-3">
+                        <Skeleton
+                          className={cn(
+                            "h-4",
+                            colIdx === 0 ? "w-4" : colIdx === 1 ? "w-32" : "w-20"
+                          )}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     );
   }
@@ -691,8 +764,75 @@ export default function ControlCenterPage() {
 
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-4">
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           <ProgramFilter onChange={handleProgramChange} />
+
+          {/* Agreement filter */}
+          <Select
+            value={agreementFilter || "all"}
+            onValueChange={(v) => handleFilterChange("agreementStatus", v === "all" ? null : v)}
+          >
+            <SelectTrigger className="w-[150px] bg-white dark:bg-zinc-900 h-9 text-sm">
+              <SelectValue placeholder="Agreement" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Agreements</SelectItem>
+              <SelectItem value="signed">Signed</SelectItem>
+              <SelectItem value="not_signed">Not Signed</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Invoice filter */}
+          <Select
+            value={invoiceFilter || "all"}
+            onValueChange={(v) => handleFilterChange("invoiceStatus", v === "all" ? null : v)}
+          >
+            <SelectTrigger className="w-[150px] bg-white dark:bg-zinc-900 h-9 text-sm">
+              <SelectValue placeholder="Invoices" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Invoices</SelectItem>
+              <SelectItem value="all_received">All Received</SelectItem>
+              <SelectItem value="needs_invoices">Needs Invoices</SelectItem>
+              <SelectItem value="has_invoices">In Progress</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Disbursement status filter */}
+          <Select
+            value={disbursementFilter || "all"}
+            onValueChange={(v) => handleFilterChange("status", v === "all" ? null : v)}
+          >
+            <SelectTrigger className="w-[150px] bg-white dark:bg-zinc-900 h-9 text-sm">
+              <SelectValue placeholder="Disbursement" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="NOT_STARTED">Not Started</SelectItem>
+              <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+              <SelectItem value="COMPLETED">Completed</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* KYB filter (frontend-only, only if KYC enabled) */}
+          {isKycEnabled && (
+            <Select
+              value={kycFilter || "all"}
+              onValueChange={(v) => handleFilterChange("kycStatus", v === "all" ? null : v)}
+            >
+              <SelectTrigger className="w-[150px] bg-white dark:bg-zinc-900 h-9 text-sm">
+                <SelectValue placeholder="KYB" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All KYB</SelectItem>
+                <SelectItem value="NOT_STARTED">Not Started</SelectItem>
+                <SelectItem value="PENDING">Pending</SelectItem>
+                <SelectItem value="VERIFIED">Verified</SelectItem>
+                <SelectItem value="REJECTED">Rejected</SelectItem>
+                <SelectItem value="EXPIRED">Expired</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
 
           {/* Search */}
           <div className="relative">
@@ -705,6 +845,16 @@ export default function ControlCenterPage() {
               className="pl-8 h-9 w-[200px] text-sm bg-white dark:bg-zinc-900"
             />
           </div>
+
+          {/* Clear filters */}
+          {hasActiveFilters && (
+            <button
+              onClick={handleClearFilters}
+              className="text-xs text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200 underline"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -763,25 +913,21 @@ export default function ControlCenterPage() {
                 </th>
                 {/* KYB */}
                 {isKycEnabled && (
-                  <th className="h-11 px-4 text-center text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-24">
+                  <th className="h-11 px-4 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-24">
                     KYB
                   </th>
                 )}
                 {/* Agreement */}
-                <th className="h-11 px-4 text-center text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-28">
+                <th className="h-11 px-4 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-28">
                   Agreement
                 </th>
                 {/* Payout Address */}
                 <th className="h-11 px-4 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider">
                   Payout Address
                 </th>
-                {/* Invoices */}
-                <th className="h-11 px-4 text-center text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-36">
-                  Invoices
-                </th>
-                {/* Milestones */}
-                <th className="h-11 px-4 text-center text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-36">
-                  Milestones
+                {/* Progress (milestones + invoices) */}
+                <th className="h-11 px-4 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-44">
+                  Progress
                 </th>
                 {/* Total Grant - sortable */}
                 <th
@@ -838,7 +984,9 @@ export default function ControlCenterPage() {
                       "cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-zinc-900/70 group",
                       selectedGrants.has(item.grantUid) && "bg-blue-50 dark:bg-blue-900/20",
                       isFullyDisbursed && "bg-green-50/50 dark:bg-green-900/10",
-                      checkboxState.disabled && !isFullyDisbursed && "opacity-60"
+                      checkboxState.disabled &&
+                        !isFullyDisbursed &&
+                        "bg-gray-50/50 dark:bg-zinc-900/50"
                     )}
                   >
                     {/* Checkbox */}
@@ -859,10 +1007,16 @@ export default function ControlCenterPage() {
                     {/* Project */}
                     <td className="px-4 py-3">
                       <div>
-                        <span className="font-medium text-gray-900 dark:text-zinc-100 text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        <span
+                          className="font-medium text-gray-900 dark:text-zinc-100 text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate max-w-[250px] block"
+                          title={item.projectName}
+                        >
                           {item.projectName}
                         </span>
-                        <p className="text-xs text-gray-500 dark:text-zinc-500 mt-0.5">
+                        <p
+                          className="text-xs text-gray-500 dark:text-zinc-500 mt-0.5 truncate max-w-[250px]"
+                          title={item.grantName}
+                        >
                           {item.grantName}
                         </p>
                       </div>
@@ -870,20 +1024,21 @@ export default function ControlCenterPage() {
 
                     {/* KYB */}
                     {isKycEnabled && (
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 py-3 text-left">
                         {isLoadingKycStatuses ? (
                           <Spinner className="w-4 h-4" />
                         ) : (
                           <KycStatusBadge
                             status={kycStatuses.get(item.projectUid) ?? null}
                             showValidityInLabel={false}
+                            className="px-2.5"
                           />
                         )}
                       </td>
                     )}
 
                     {/* Agreement */}
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-3 text-left">
                       <AgreementBadge agreement={agreement} />
                     </td>
 
@@ -901,20 +1056,24 @@ export default function ControlCenterPage() {
                       </span>
                     </td>
 
-                    {/* Invoices */}
-                    <td className="px-4 py-3 text-center">
-                      <InvoiceSummaryBadge invoices={invoices} />
-                    </td>
-
-                    {/* Milestones */}
-                    <td className="px-4 py-3 text-center">
-                      <MilestoneSummaryBadge invoices={invoices} />
+                    {/* Progress (milestones + invoices) */}
+                    <td className="px-4 py-3 text-left">
+                      <ProgressCell invoices={invoices} />
                     </td>
 
                     {/* Total Grant */}
                     <td className="px-4 py-3 text-right tabular-nums text-sm font-medium text-gray-900 dark:text-zinc-100">
                       {item.currentAmount && parseFloat(item.currentAmount) > 0 ? (
-                        parseFloat(item.currentAmount).toLocaleString()
+                        <>
+                          {parseFloat(item.currentAmount).toLocaleString(undefined, {
+                            maximumFractionDigits: 6,
+                          })}
+                          {item.currency && (
+                            <span className="text-gray-500 dark:text-zinc-400 ml-1 font-normal">
+                              {item.currency}
+                            </span>
+                          )}
+                        </>
                       ) : (
                         <span className="text-gray-400 dark:text-zinc-600">&mdash;</span>
                       )}
@@ -929,7 +1088,7 @@ export default function ControlCenterPage() {
                     <td className="px-4 py-3 text-center">
                       <span
                         className={cn(
-                          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+                          "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium",
                           displayStatus.color
                         )}
                       >
@@ -957,10 +1116,18 @@ export default function ControlCenterPage() {
 
               {paginatedData.length === 0 && (
                 <tr>
-                  <td colSpan={11} className="px-4 py-12 text-center">
+                  <td colSpan={columnCount} className="px-4 py-12 text-center">
                     <p className="text-sm text-gray-500 dark:text-zinc-400">
                       No projects found matching your filters.
                     </p>
+                    {hasActiveFilters && (
+                      <button
+                        onClick={handleClearFilters}
+                        className="mt-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                      >
+                        Clear all filters
+                      </button>
+                    )}
                   </td>
                 </tr>
               )}

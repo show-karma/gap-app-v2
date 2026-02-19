@@ -32,6 +32,7 @@ import {
   useSaveMilestoneInvoices,
   useToggleAgreement,
 } from "@/src/features/payout-disbursement";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
 // ─── Props ──────────────────────────────────────────────────────────────────
@@ -47,6 +48,7 @@ export interface ProjectDetailsModalGrant {
   projectChainId: number;
   currentPayoutAddress?: string;
   currentAmount?: string;
+  currency?: string;
 }
 
 interface ProjectDetailsModalProps {
@@ -102,9 +104,10 @@ export function ProjectDetailsModal({
   onCreateDisbursement,
 }: ProjectDetailsModalProps) {
   const [milestoneEdits, setMilestoneEdits] = useState<
-    Record<string, { invoiceSentDate?: string; invoiceReceived?: boolean }>
+    Record<string, { invoiceReceivedAt?: string | null; milestoneUID?: string | null }>
   >({});
   const [localAgreementSigned, setLocalAgreementSigned] = useState(false);
+  const [confirmingUnsign, setConfirmingUnsign] = useState(false);
 
   const toggleAgreementMutation = useToggleAgreement(communityUID);
   const saveMilestoneInvoicesMutation = useSaveMilestoneInvoices(communityUID);
@@ -114,6 +117,7 @@ export function ProjectDetailsModal({
     if (grant) {
       setLocalAgreementSigned(agreement?.signed === true);
       setMilestoneEdits({});
+      setConfirmingUnsign(false);
     }
   }, [grant?.grantUid, agreement?.signed]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -127,59 +131,76 @@ export function ProjectDetailsModal({
     return !!addr && addr.trim() !== "" && amount > 0;
   }, [grant]);
 
-  const getInvoiceValue = useCallback(
+  const getInvoiceReceivedDate = useCallback(
     (invoice: CommunityPayoutInvoiceInfo) => {
       const edits = milestoneEdits[invoice.milestoneLabel];
-      return {
-        invoiceSentDate: edits?.invoiceSentDate ?? invoice.invoiceSentAt?.split("T")[0] ?? "",
-        invoiceReceived:
-          edits?.invoiceReceived ??
-          (invoice.invoiceStatus === "received" || invoice.invoiceStatus === "paid"),
-      };
+      if (edits?.invoiceReceivedAt !== undefined) return edits.invoiceReceivedAt;
+      return invoice.invoiceReceivedAt?.split("T")[0] ?? null;
     },
     [milestoneEdits]
   );
 
-  const handleInvoiceSentDateChange = useCallback((milestoneLabel: string, value: string) => {
-    setMilestoneEdits((prev) => ({
-      ...prev,
-      [milestoneLabel]: { ...prev[milestoneLabel], invoiceSentDate: value },
-    }));
-  }, []);
+  const handleInvoiceReceivedDateChange = useCallback(
+    (milestoneLabel: string, milestoneUID: string | null, dateValue: string) => {
+      setMilestoneEdits((prev) => ({
+        ...prev,
+        [milestoneLabel]: {
+          invoiceReceivedAt: dateValue || null,
+          milestoneUID,
+        },
+      }));
+    },
+    []
+  );
 
-  const handleInvoiceReceivedToggle = useCallback((milestoneLabel: string, checked: boolean) => {
-    setMilestoneEdits((prev) => ({
-      ...prev,
-      [milestoneLabel]: { ...prev[milestoneLabel], invoiceReceived: checked },
-    }));
-  }, []);
+  // Auto-clear unsign confirmation after 5 seconds
+  useEffect(() => {
+    if (!confirmingUnsign) return;
+    const timer = setTimeout(() => setConfirmingUnsign(false), 5000);
+    return () => clearTimeout(timer);
+  }, [confirmingUnsign]);
 
-  const handleToggleAgreement = useCallback(() => {
+  const handleSignAgreement = useCallback(() => {
     if (!grant) return;
-    const newSigned = !localAgreementSigned;
-    setLocalAgreementSigned(newSigned);
+    setLocalAgreementSigned(true);
     toggleAgreementMutation.mutate(
-      { grantUID: grant.grantUid, signed: newSigned },
+      { grantUID: grant.grantUid, signed: true },
       {
         onSuccess: () => {
-          toast.success(
-            newSigned ? "Agreement marked as signed" : "Agreement marked as not signed"
-          );
+          toast.success("Agreement marked as signed");
         },
         onError: () => {
-          setLocalAgreementSigned(!newSigned);
-          toast.error("Failed to toggle agreement");
+          setLocalAgreementSigned(false);
+          toast.error("Failed to sign agreement");
         },
       }
     );
-  }, [grant, localAgreementSigned, toggleAgreementMutation]);
+  }, [grant, toggleAgreementMutation]);
+
+  const handleUnsignAgreement = useCallback(() => {
+    if (!grant) return;
+    setLocalAgreementSigned(false);
+    setConfirmingUnsign(false);
+    toggleAgreementMutation.mutate(
+      { grantUID: grant.grantUid, signed: false },
+      {
+        onSuccess: () => {
+          toast.success("Agreement marked as not signed");
+        },
+        onError: () => {
+          setLocalAgreementSigned(true);
+          toast.error("Failed to unsign agreement");
+        },
+      }
+    );
+  }, [grant, toggleAgreementMutation]);
 
   const handleSaveChanges = useCallback(() => {
     if (!grant) return;
     const invoices = Object.entries(milestoneEdits).map(([milestoneLabel, edits]) => ({
       milestoneLabel,
-      invoiceSentAt: edits.invoiceSentDate || null,
-      invoiceReceived: edits.invoiceReceived,
+      milestoneUID: edits.milestoneUID ?? null,
+      invoiceReceivedAt: edits.invoiceReceivedAt ?? null,
     }));
 
     saveMilestoneInvoicesMutation.mutate(
@@ -215,21 +236,56 @@ export function ProjectDetailsModal({
 
           {/* Badges row: KYB + Agreement toggle */}
           <div className="flex items-center gap-3 flex-wrap">
-            <KycStatusBadge status={kycStatus} showValidityInLabel={false} />
-            <button
-              onClick={handleToggleAgreement}
-              disabled={toggleAgreementMutation.isPending}
-              className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors",
-                localAgreementSigned
-                  ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/50"
-                  : "bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-gray-200 dark:hover:bg-zinc-700",
-                toggleAgreementMutation.isPending && "opacity-50 cursor-wait"
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-medium text-gray-500 dark:text-zinc-400">KYC/KYB:</span>
+              <KycStatusBadge status={kycStatus} showValidityInLabel={false} />
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="agreement-signed"
+                checked={localAgreementSigned}
+                onCheckedChange={(checked) => {
+                  if (checked === true) {
+                    handleSignAgreement();
+                  } else {
+                    setConfirmingUnsign(true);
+                  }
+                }}
+                disabled={toggleAgreementMutation.isPending || confirmingUnsign}
+              />
+              <label
+                htmlFor="agreement-signed"
+                className={cn(
+                  "text-xs font-medium select-none",
+                  toggleAgreementMutation.isPending
+                    ? "text-gray-400 dark:text-zinc-500"
+                    : "text-gray-700 dark:text-zinc-300"
+                )}
+              >
+                {toggleAgreementMutation.isPending ? "Saving..." : "Agreement signed"}
+              </label>
+              {confirmingUnsign && (
+                <div className="flex items-center gap-1.5 ml-2">
+                  <span className="text-xs text-amber-600 dark:text-amber-400">Unsign?</span>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="h-6 px-2 text-xs"
+                    onClick={handleUnsignAgreement}
+                  >
+                    Confirm
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 px-2 text-xs"
+                    onClick={() => setConfirmingUnsign(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
               )}
-            >
-              {localAgreementSigned ? "Agreement signed" : "Agreement not signed"}
-              <span className="text-[10px] opacity-60">(click to toggle)</span>
-            </button>
+            </div>
           </div>
 
           {/* Payout summary */}
@@ -243,10 +299,10 @@ export function ProjectDetailsModal({
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="font-medium">Grant:</span>
+              <span className="font-medium">Approved:</span>
               <span className="tabular-nums">
                 {grant.currentAmount && parseFloat(grant.currentAmount) > 0
-                  ? parseFloat(grant.currentAmount).toLocaleString()
+                  ? `${parseFloat(grant.currentAmount).toLocaleString(undefined, { maximumFractionDigits: 6 })}${grant.currency ? ` ${grant.currency}` : ""}`
                   : "\u2014"}
               </span>
             </div>
@@ -278,19 +334,16 @@ export function ProjectDetailsModal({
                         Milestone
                       </th>
                       <th className="text-center py-2.5 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[110px]">
-                        Invoice Status
+                        Status
                       </th>
                       <th className="text-center py-2.5 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[130px]">
-                        Invoice Sent
-                      </th>
-                      <th className="text-center py-2.5 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[70px]">
-                        Received
+                        Invoice Received
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
                     {milestoneInvoices.map((invoice, idx) => {
-                      const values = getInvoiceValue(invoice);
+                      const receivedDateValue = getInvoiceReceivedDate(invoice);
                       const invoiceCfg =
                         invoiceStatusConfig[invoice.invoiceStatus as InvoiceStatus] ||
                         invoiceStatusConfig.not_submitted;
@@ -323,25 +376,16 @@ export function ProjectDetailsModal({
                           <td className="py-2.5 px-3 text-center">
                             <Input
                               type="date"
-                              value={values.invoiceSentDate}
+                              value={receivedDateValue ?? ""}
                               onChange={(e) =>
-                                handleInvoiceSentDateChange(invoice.milestoneLabel, e.target.value)
+                                handleInvoiceReceivedDateChange(
+                                  invoice.milestoneLabel,
+                                  invoice.milestoneUID,
+                                  e.target.value
+                                )
                               }
-                              className="h-7 text-xs w-[130px] mx-auto bg-white dark:bg-zinc-900"
+                              className="h-7 text-xs w-[140px] mx-auto bg-white dark:bg-zinc-900"
                             />
-                          </td>
-                          <td className="py-2.5 px-3">
-                            <div className="flex justify-center">
-                              <Checkbox
-                                checked={values.invoiceReceived}
-                                onCheckedChange={(checked) =>
-                                  handleInvoiceReceivedToggle(
-                                    invoice.milestoneLabel,
-                                    checked === true
-                                  )
-                                }
-                              />
-                            </div>
                           </td>
                         </tr>
                       );
@@ -397,7 +441,7 @@ export function ProjectDetailsModal({
               )}
               <Button variant="ghost" size="sm" asChild>
                 <a
-                  href={`/project/${grant.projectSlug}`}
+                  href={PAGES.PROJECT.GRANT(grant.projectSlug, grant.grantUid)}
                   target="_blank"
                   rel="noreferrer"
                   className="text-blue-600 dark:text-blue-400"

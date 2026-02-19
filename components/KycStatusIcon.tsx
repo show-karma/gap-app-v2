@@ -216,10 +216,10 @@ export function KycStatusBadge({
             )}
           >
             <KycStatusIcon status={status} size="sm" showTooltip={false} />
-            <span className="hidden sm:inline">{badgeLabel}</span>
+            <span>{badgeLabel}</span>
           </span>
         </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-xs">
+        <TooltipContent side="top" className="max-w-sm">
           <KycTooltipContent status={status} showDates={!showValidityInLabel} />
         </TooltipContent>
       </Tooltip>

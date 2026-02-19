@@ -511,8 +511,8 @@ export function useSaveMilestoneInvoices(
       grantUID: string;
       invoices: Array<{
         milestoneLabel: string;
-        invoiceSentAt?: string | null;
-        invoiceReceived?: boolean;
+        milestoneUID?: string | null;
+        invoiceReceivedAt?: string | null;
       }>;
     }
   >({

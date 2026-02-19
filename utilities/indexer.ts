@@ -266,6 +266,9 @@ export const INDEXER = {
           limit?: number;
           programId?: string;
           status?: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+          agreementStatus?: "signed" | "not_signed";
+          invoiceStatus?: "all_received" | "needs_invoices" | "has_invoices";
+          search?: string;
           sortBy?:
             | "project_title"
             | "grant_title"
@@ -280,6 +283,9 @@ export const INDEXER = {
         if (options?.limit) params.set("limit", options.limit.toString());
         if (options?.programId) params.set("programId", options.programId);
         if (options?.status) params.set("status", options.status);
+        if (options?.agreementStatus) params.set("agreementStatus", options.agreementStatus);
+        if (options?.invoiceStatus) params.set("invoiceStatus", options.invoiceStatus);
+        if (options?.search) params.set("search", options.search);
         if (options?.sortBy) params.set("sortBy", options.sortBy);
         if (options?.sortOrder) params.set("sortOrder", options.sortOrder);
         const query = params.toString();

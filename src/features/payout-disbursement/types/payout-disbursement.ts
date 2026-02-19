@@ -207,7 +207,6 @@ export interface CommunityPayoutInvoiceInfo {
   milestoneLabel: string;
   milestoneUID: string | null;
   invoiceStatus: InvoiceStatus;
-  invoiceSentAt: string | null;
   invoiceReceivedAt: string | null;
 }
 
@@ -236,6 +235,9 @@ export interface CommunityPayoutsResponse {
 export interface CommunityPayoutsFilters {
   programId?: string;
   status?: AggregatedDisbursementStatus;
+  agreementStatus?: "signed" | "not_signed";
+  invoiceStatus?: "all_received" | "needs_invoices" | "has_invoices";
+  search?: string;
 }
 
 /**
