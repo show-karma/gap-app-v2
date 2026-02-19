@@ -2,8 +2,8 @@
 
 import type { FC } from "react";
 import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import type { Grant } from "@/types/v2/grant";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { GrantCompletedButton } from "./GrantCompletedButton";
@@ -22,7 +22,7 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isCommunityAdmin = useIsCommunityAdmin();
   const isAuthorized = isOwner || isProjectAdmin || isCommunityAdmin;
 
   const { revokeCompletion, isRevoking } = useGrantCompletionRevoke({

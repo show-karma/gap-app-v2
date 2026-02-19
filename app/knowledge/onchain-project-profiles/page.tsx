@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Onchain Project Profiles (Without Blockchain Complexity)",
+  description:
+    "How onchain storage provides credibility for project profiles without requiring blockchain knowledge or complexity.",
+  path: "/knowledge/onchain-project-profiles",
+});
 
 export default function OnchainProjectProfilesPage() {
   return (
@@ -54,6 +63,8 @@ export default function OnchainProjectProfilesPage() {
           <p className="text-gray-700 dark:text-gray-300">
             <a
               href="https://www.karmahq.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Karma

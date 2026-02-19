@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "How Projects Build Reputation Through Funding",
+  description:
+    "How projects build credibility over time by documenting work, completing milestones, and creating verifiable records.",
+  path: "/knowledge/project-reputation",
+});
 
 export default function ProjectReputationPage() {
   return (
@@ -59,6 +68,8 @@ export default function ProjectReputationPage() {
           <p className="text-gray-700 dark:text-gray-300">
             <a
               href="https://www.karmahq.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Karma

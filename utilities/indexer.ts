@@ -122,6 +122,8 @@ export const INDEXER = {
       `/v2/search?q=${encodeURIComponent(query)}&limit=${limit}`,
     FUNDING_DETAILS: (programId: string, chainId: number) =>
       `/v2/program/funding-details?programId=${programId}&chainId=${chainId}`,
+    COMMUNITY_PROGRAM_METRICS: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/metrics`,
     FUNDING_PROGRAMS: {
       BY_COMMUNITY: (communityId: string) => `/v2/funding-program-configs/community/${communityId}`,
       GET: (programId: string) => `/v2/funding-program-configs/${programId}`,
@@ -158,6 +160,24 @@ export const INDEXER = {
       VERSIONS_TIMELINE: (referenceNumber: string) =>
         `/v2/funding-applications/${referenceNumber}/versions/timeline`,
       REVIEWERS: (applicationId: string) => `/v2/funding-applications/${applicationId}/reviewers`,
+    },
+    AUTH: {
+      PERMISSIONS: (params?: {
+        communityId?: string;
+        programId?: string;
+        applicationId?: string;
+        milestoneId?: string;
+        chainId?: number;
+      }) => {
+        const queryParams = new URLSearchParams();
+        if (params?.communityId) queryParams.set("communityId", params.communityId);
+        if (params?.programId) queryParams.set("programId", params.programId);
+        if (params?.applicationId) queryParams.set("applicationId", params.applicationId);
+        if (params?.milestoneId) queryParams.set("milestoneId", params.milestoneId);
+        if (params?.chainId !== undefined) queryParams.set("chainId", params.chainId.toString());
+        const query = queryParams.toString();
+        return `/v2/auth/permissions${query ? `?${query}` : ""}`;
+      },
     },
     USER: {
       PERMISSIONS: (resource?: string) => {
@@ -274,8 +294,14 @@ export const INDEXER = {
     },
   },
   PROGRAMS: {
-    GET: (programId: string) => `/programs/${programId}`,
     COMMUNITY: (communityId: string) => `/communities/${communityId}/programs`,
+    FINANCIALS: (programId: string, page?: number, limit?: number) => {
+      const params = new URLSearchParams();
+      if (page) params.set("page", page.toString());
+      if (limit) params.set("limit", limit.toString());
+      const query = params.toString();
+      return `/v2/programs/${programId}/financials${query ? `?${query}` : ""}`;
+    },
   },
   PROJECT: {
     EXTERNAL: {
@@ -317,12 +343,7 @@ export const INDEXER = {
       GET: (projectUID: string) => `/projects/${projectUID}/regions`,
     },
     IMPACT_INDICATORS: {
-      GET: (projectUID: string) => `/projects/${projectUID}/indicators/data/all`,
       SEND: (projectUID: string) => `/projects/${projectUID}/indicators/data`,
-    },
-    PAYOUT_ADDRESS: {
-      UPDATE: (projectUID: string) => `/projects/${projectUID}/payout-address`,
-      GET: (projectUID: string) => `/projects/${projectUID}/payout-address`,
     },
     CHAIN_PAYOUT_ADDRESS: {
       UPDATE: (projectId: string) => `/v2/projects/${projectId}/chain-payout-address`,
@@ -334,7 +355,6 @@ export const INDEXER = {
   },
   MILESTONE: {
     IMPACT_INDICATORS: {
-      GET: (milestoneUID: string) => `/grants/milestones/${milestoneUID}/indicators/data`,
       SEND: (milestoneUID: string) => `/grants/milestones/${milestoneUID}/indicators/data`,
     },
   },
@@ -354,14 +374,15 @@ export const INDEXER = {
     GET_BY_ID: (regionId: string) => `/v2/regions/${regionId}`,
   },
   INDICATORS: {
-    CREATE_OR_UPDATE: () => `/indicators`,
-    DELETE: (indicatorId: string) => `/indicators/${indicatorId}`,
-    UNLINKED: () => `/indicators/unlinked`,
-    BY_TIMERANGE: (projectUID: string, params: Record<string, number>) =>
-      `/projects/${projectUID}/indicator-dashboard-metrics?${Object.entries(params)
-        .map(([key, value]) => `${key}=${value}`)
-        .join("&")}`,
+    UNLINKED: (search?: string) => {
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      const query = params.toString();
+      return `/v2/indicators/unlinked${query ? `?${query}` : ""}`;
+    },
     V2: {
+      CREATE_OR_UPDATE: () => `/v2/indicators`,
+      DELETE: (indicatorId: string) => `/v2/indicators/${indicatorId}`,
       LIST: (params?: {
         communityUID?: string;
         programId?: number;
@@ -373,7 +394,7 @@ export const INDEXER = {
         const queryParams = new URLSearchParams();
         if (params?.communityUID) queryParams.set("communityUID", params.communityUID);
         if (params?.programId) queryParams.set("programId", params.programId.toString());
-        if (params?.chainId) queryParams.set("chainId", params.chainId.toString());
+        if (params?.chainId !== undefined) queryParams.set("chainId", params.chainId.toString());
         if (params?.syncType) queryParams.set("syncType", params.syncType);
         if (params?.page) queryParams.set("page", params.page.toString());
         if (params?.limit) queryParams.set("limit", params.limit.toString());
@@ -421,6 +442,16 @@ export const INDEXER = {
         const query = queryParams.toString();
         return `/v2/indicators/projects/${projectUID}${query ? `?${query}` : ""}`;
       },
+      DASHBOARD_METRICS: (
+        projectUID: string,
+        params?: { period?: "30d" | "90d" | "180d" | "1y" }
+      ) => {
+        const queryParams = new URLSearchParams();
+        if (params?.period) queryParams.set("period", params.period);
+        const query = queryParams.toString();
+        return `/v2/indicators/projects/${projectUID}/dashboard-metrics${query ? `?${query}` : ""}`;
+      },
+      MILESTONE_INDICATORS: (milestoneUID: string) => `/v2/indicators/milestones/${milestoneUID}`,
       COMMUNITY_AGGREGATE: (
         communityUID: string,
         params?: {
@@ -574,14 +605,6 @@ export const INDEXER = {
     GLOBAL_STATS: () => `/v2/communities/stats`,
     ADMINS: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/admins`,
     BATCH_UPDATE: (idOrSlug: string) => `/communities/${idOrSlug}/batch-update`,
-    INDICATORS: {
-      COMMUNITY: {
-        LIST: (communityId: string) => `/communities/${communityId}/impact-indicators`,
-      },
-      CATEGORY: {
-        LIST: (categoryId: string) => `/category/${categoryId}/impact-indicators`,
-      },
-    },
     PROJECT_UPDATES: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/project-updates`,
     CONFIG: {
@@ -612,8 +635,10 @@ export const INDEXER = {
     GET_STATUS_BY_APP_REF: (referenceNumber: string) =>
       `/v2/funding-applications/${referenceNumber}/kyc-status`,
     GET_CONFIG: (communityIdOrSlug: string) => `/v2/communities/${communityIdOrSlug}/kyc-config`,
-    GET_BATCH_STATUSES: (communityUID: string) =>
-      `/v2/communities/${communityUID}/kyc-batch-status`,
+    GET_BATCH_STATUSES: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/kyc/batch-status/by-project-uid`,
+    GET_BATCH_STATUSES_BY_APP_REF: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/kyc/batch-status/by-application-reference`,
     GET_FORM_URL: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/kyc-form-url`,
   },

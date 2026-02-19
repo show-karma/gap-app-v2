@@ -43,6 +43,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import type { FormField, FormSchema } from "@/types/question-builder";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { MarkdownPreview } from "../Utilities/MarkdownPreview";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { AIPromptConfiguration } from "./AIPromptConfiguration";
 import { FieldEditor } from "./FieldEditor";
 import { FieldTypeSelector, fieldTypes } from "./FieldTypeSelector";
@@ -548,21 +549,46 @@ export function QuestionBuilder({
   };
 
   const renderSaveButton = () => {
-    if (readOnly) return null;
-    return (
-      <div className="flex justify-end pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
-        <Button
-          onClick={handleSave}
-          className={`py-2 ${
-            needsEmailValidation()
+    const buttonContent = (
+      <Button
+        onClick={readOnly ? undefined : handleSave}
+        disabled={readOnly}
+        className={`py-2 ${
+          readOnly
+            ? "opacity-50 cursor-not-allowed bg-gray-400 hover:bg-gray-400"
+            : needsEmailValidation()
               ? "bg-yellow-600 hover:bg-yellow-700"
               : "bg-blue-600 hover:bg-blue-700"
-          }`}
-          title={needsEmailValidation() ? "Add an email field before saving" : undefined}
-        >
-          {needsEmailValidation() && <ExclamationTriangleIcon className="w-4 h-4 mr-2" />}
-          {isPostApprovalMode ? "Save Post Approval Form" : "Save Form"}
-        </Button>
+        }`}
+        title={!readOnly && needsEmailValidation() ? "Add an email field before saving" : undefined}
+      >
+        {!readOnly && needsEmailValidation() && (
+          <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
+        )}
+        {isPostApprovalMode ? "Save Post Approval Form" : "Save Form"}
+      </Button>
+    );
+
+    if (readOnly) {
+      return (
+        <div className="flex justify-end pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>{buttonContent}</span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>You don't have permission to edit this program</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex justify-end pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+        {buttonContent}
       </div>
     );
   };
@@ -880,11 +906,7 @@ export function QuestionBuilder({
           <div className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-4xl mx-auto">
               {programId && communityId ? (
-                <ReviewerManagementTab
-                  programId={programId}
-                  communityId={communityId}
-                  readOnly={readOnly}
-                />
+                <ReviewerManagementTab programId={programId} readOnly={readOnly} />
               ) : (
                 <div className="text-center py-8">
                   <p className="text-gray-500 dark:text-gray-400">

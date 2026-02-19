@@ -24,6 +24,62 @@ const API_BASE = envVars.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
 // Keep apiClient for mutations and special cases (blob downloads)
 const apiClient = createAuthenticatedApiClient(API_BASE, 30000);
 
+/**
+ * Remove lone UTF-16 surrogate code units that can trigger UTF-8 serialization failures downstream.
+ */
+const sanitizeUnicodeString = (value: string): string => {
+  let sanitized = "";
+
+  for (let i = 0; i < value.length; i++) {
+    const codeUnit = value.charCodeAt(i);
+    const nextCodeUnit = value.charCodeAt(i + 1);
+
+    if (codeUnit >= 0xd800 && codeUnit <= 0xdbff) {
+      if (nextCodeUnit >= 0xdc00 && nextCodeUnit <= 0xdfff) {
+        sanitized += value[i] + value[i + 1];
+        i++;
+      }
+      continue;
+    }
+
+    if (codeUnit >= 0xdc00 && codeUnit <= 0xdfff) {
+      continue;
+    }
+
+    sanitized += value[i];
+  }
+
+  return sanitized;
+};
+
+const sanitizeUnicodePayload = <T>(value: T): T => {
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return sanitizeUnicodeString(value) as T;
+  }
+
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeUnicodePayload(item)) as T;
+  }
+
+  if (typeof value === "object") {
+    const sanitizedObject: Record<string, unknown> = {};
+    for (const [key, nestedValue] of Object.entries(value as Record<string, unknown>)) {
+      sanitizedObject[key] = sanitizeUnicodePayload(nestedValue);
+    }
+    return sanitizedObject as T;
+  }
+
+  return value;
+};
+
 export interface IApplicationFilters {
   status?: FundingApplicationStatusV2 | string; // Allow string for backward compatibility
   search?: string;
@@ -197,7 +253,11 @@ export const fundingProgramsAPI = {
     config: Partial<IFundingProgramConfig | null>
   ): Promise<IFundingProgramConfig> {
     // If config exists, use POST to update
-    const response = await apiClient.post(`/v2/funding-program-configs/${programId}`, config);
+    const sanitizedConfig = sanitizeUnicodePayload(config);
+    const response = await apiClient.post(
+      `/v2/funding-program-configs/${programId}`,
+      sanitizedConfig
+    );
     return response.data;
   },
 
@@ -209,7 +269,11 @@ export const fundingProgramsAPI = {
     config: Partial<IFundingProgramConfig | null>
   ): Promise<IFundingProgramConfig> {
     // If config exists, use PUT to update
-    const response = await apiClient.put(`/v2/funding-program-configs/${programId}`, config);
+    const sanitizedConfig = sanitizeUnicodePayload(config);
+    const response = await apiClient.put(
+      `/v2/funding-program-configs/${programId}`,
+      sanitizedConfig
+    );
     return response.data;
   },
 

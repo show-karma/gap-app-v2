@@ -509,6 +509,144 @@ describe("TokenManager", () => {
     });
   });
 
+  describe("Token caching and deduplication", () => {
+    beforeEach(() => {
+      global.window = {} as any;
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it("should return cached token within TTL window", async () => {
+      mockPrivyInstance.getAccessToken.mockResolvedValue("cached-token");
+      TokenManager.setPrivyInstance(mockPrivyInstance);
+
+      // First call — populates cache
+      const token1 = await TokenManager.getToken();
+      expect(token1).toBe("cached-token");
+      expect(mockPrivyInstance.getAccessToken).toHaveBeenCalledTimes(1);
+
+      // Second call within TTL — should return cache without calling getAccessToken again
+      const token2 = await TokenManager.getToken();
+      expect(token2).toBe("cached-token");
+      expect(mockPrivyInstance.getAccessToken).toHaveBeenCalledTimes(1);
+    });
+
+    it("should fetch fresh token after TTL expires", async () => {
+      mockPrivyInstance.getAccessToken
+        .mockResolvedValueOnce("old-token")
+        .mockResolvedValueOnce("new-token");
+      TokenManager.setPrivyInstance(mockPrivyInstance);
+
+      const token1 = await TokenManager.getToken();
+      expect(token1).toBe("old-token");
+
+      // Advance past TTL (20s)
+      jest.advanceTimersByTime(21_000);
+
+      const token2 = await TokenManager.getToken();
+      expect(token2).toBe("new-token");
+      expect(mockPrivyInstance.getAccessToken).toHaveBeenCalledTimes(2);
+    });
+
+    it("should invalidate cache when setPrivyInstance changes instance", async () => {
+      mockPrivyInstance.getAccessToken.mockResolvedValue("token-from-instance-1");
+      TokenManager.setPrivyInstance(mockPrivyInstance);
+
+      const token1 = await TokenManager.getToken();
+      expect(token1).toBe("token-from-instance-1");
+
+      // Create a new instance and set it — cache should be cleared
+      const newInstance = {
+        getAccessToken: jest.fn().mockResolvedValue("token-from-instance-2"),
+        logout: jest.fn(),
+      };
+      TokenManager.setPrivyInstance(newInstance);
+
+      const token2 = await TokenManager.getToken();
+      expect(token2).toBe("token-from-instance-2");
+      expect(newInstance.getAccessToken).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not clear cache when setPrivyInstance is called with same instance", async () => {
+      mockPrivyInstance.getAccessToken.mockResolvedValue("same-instance-token");
+      TokenManager.setPrivyInstance(mockPrivyInstance);
+
+      await TokenManager.getToken();
+      expect(mockPrivyInstance.getAccessToken).toHaveBeenCalledTimes(1);
+
+      // Set the same instance again — cache should NOT be cleared
+      TokenManager.setPrivyInstance(mockPrivyInstance);
+
+      const token2 = await TokenManager.getToken();
+      expect(token2).toBe("same-instance-token");
+      // Still only 1 call — served from cache
+      expect(mockPrivyInstance.getAccessToken).toHaveBeenCalledTimes(1);
+    });
+
+    it("should deduplicate concurrent getToken calls into a single request", async () => {
+      let resolveToken: (value: string | null) => void;
+      mockPrivyInstance.getAccessToken.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveToken = resolve;
+          })
+      );
+      TokenManager.setPrivyInstance(mockPrivyInstance);
+
+      // Fire 3 concurrent calls
+      const p1 = TokenManager.getToken();
+      const p2 = TokenManager.getToken();
+      const p3 = TokenManager.getToken();
+
+      // Only one getAccessToken call should have been made
+      expect(mockPrivyInstance.getAccessToken).toHaveBeenCalledTimes(1);
+
+      // Resolve the single underlying request
+      resolveToken!("deduped-token");
+
+      const [t1, t2, t3] = await Promise.all([p1, p2, p3]);
+      expect(t1).toBe("deduped-token");
+      expect(t2).toBe("deduped-token");
+      expect(t3).toBe("deduped-token");
+    });
+
+    it("should make a fresh request after deduplication completes", async () => {
+      mockPrivyInstance.getAccessToken
+        .mockResolvedValueOnce("first-token")
+        .mockResolvedValueOnce("second-token");
+      TokenManager.setPrivyInstance(mockPrivyInstance);
+
+      const token1 = await TokenManager.getToken();
+      expect(token1).toBe("first-token");
+
+      // Clear cache to force a new request
+      TokenManager.clearCache();
+
+      const token2 = await TokenManager.getToken();
+      expect(token2).toBe("second-token");
+      expect(mockPrivyInstance.getAccessToken).toHaveBeenCalledTimes(2);
+    });
+
+    it("clearCache should reset cached token and allow fresh fetch", async () => {
+      mockPrivyInstance.getAccessToken
+        .mockResolvedValueOnce("before-clear")
+        .mockResolvedValueOnce("after-clear");
+      TokenManager.setPrivyInstance(mockPrivyInstance);
+
+      const token1 = await TokenManager.getToken();
+      expect(token1).toBe("before-clear");
+
+      TokenManager.clearCache();
+
+      const token2 = await TokenManager.getToken();
+      expect(token2).toBe("after-clear");
+      expect(mockPrivyInstance.getAccessToken).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe("Edge Cases", () => {
     it("should handle undefined Privy instance gracefully", async () => {
       global.window = {} as any;

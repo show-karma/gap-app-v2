@@ -239,6 +239,38 @@ describe("fundingPlatformService", () => {
           updatedProgram
         );
       });
+
+      it("should sanitize malformed unicode strings before update", async () => {
+        const malformedProgram = {
+          ...mockProgram,
+          formSchema: {
+            id: "form-123",
+            title: "Bad\ud800Title",
+            description: "Desc\udc00ription",
+            fields: [
+              {
+                id: "field-1",
+                type: "text",
+                label: "Proj\ud800ect",
+                required: true,
+              },
+            ],
+          },
+        };
+
+        mockPut.mockResolvedValue({ data: malformedProgram });
+
+        await fundingProgramsAPI.updateProgramConfiguration("program-123", malformedProgram as any);
+
+        const [, payload] = mockPut.mock.calls[0];
+        expect(payload).toMatchObject({
+          formSchema: expect.objectContaining({
+            title: "BadTitle",
+            description: "Description",
+            fields: [expect.objectContaining({ label: "Project" })],
+          }),
+        });
+      });
     });
 
     describe("updateFormSchema", () => {

@@ -396,10 +396,10 @@ describe("DonationCheckout", () => {
       expect(screen.getByTestId("donation-executor")).toHaveTextContent("Switch Chain");
     });
 
-    it("should show 'Review & Send Donations' when ready", () => {
+    it("should show 'Review & Donate' when ready", () => {
       render(<DonationCheckout />);
 
-      expect(screen.getByTestId("donation-executor")).toHaveTextContent("Review & Send Donations");
+      expect(screen.getByTestId("donation-executor")).toHaveTextContent("Review & Donate");
     });
   });
 

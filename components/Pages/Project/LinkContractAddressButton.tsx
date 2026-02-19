@@ -8,13 +8,15 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/Utilities/Button";
 import { SUPPORTED_CONTRACT_NETWORKS } from "@/constants/contract-networks";
+import { useAuth } from "@/hooks/useAuth";
 import { useContractAddressPairs } from "@/hooks/useContractAddressPairs";
 import { useContractAddressSave } from "@/hooks/useContractAddressSave";
 import { useContractAddressValidation } from "@/hooks/useContractAddressValidation";
-import { useStaff } from "@/hooks/useStaff";
 import { validateNetworkAddressPair } from "@/schemas/contractAddress";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
+import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
+import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { ContractAddressDialog } from "./ContractAddressDialog";
 import { ContractAddressList } from "./ContractAddressList";
 import { ContractVerificationDialog } from "./ContractVerificationDialog";
@@ -31,9 +33,11 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const { isStaff } = useStaff();
-  const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin || isStaff;
+  const isCommunityAdmin = useIsCommunityAdmin();
+  const { authenticated } = useAuth();
+  const { data: permissions } = usePermissionsQuery({}, { enabled: authenticated });
+  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin || isSuperAdmin;
 
   // Compute effective read-only mode: external prop OR lack of authorization
   const isReadOnly = readOnlyProp ?? !isAuthorized;

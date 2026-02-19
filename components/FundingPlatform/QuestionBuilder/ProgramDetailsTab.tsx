@@ -9,13 +9,15 @@ import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramLis
 import { DateTimePicker } from "@/components/Utilities/DateTimePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { MultiEmailInput } from "@/components/Utilities/MultiEmailInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
-import { type CreateProgramFormSchema, createProgramSchema } from "@/schemas/programFormSchema";
+import { type UpdateProgramFormSchema, updateProgramSchema } from "@/schemas/programFormSchema";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -64,6 +66,8 @@ function buildFormValuesFromMetadata(metadata: GrantProgram["metadata"]) {
       endsAt: metadata.endsAt ? new Date(metadata.endsAt) : undefined,
     },
     budget: metadata.programBudget ? parseFloat(metadata.programBudget.toString()) : undefined,
+    adminEmails: metadata.adminEmails || [],
+    financeEmails: metadata.financeEmails || [],
   };
 }
 
@@ -71,7 +75,7 @@ function buildFormValuesFromMetadata(metadata: GrantProgram["metadata"]) {
  * Helper function to build metadata object for API update
  */
 function buildUpdateMetadata(
-  formData: CreateProgramFormSchema,
+  formData: UpdateProgramFormSchema,
   existingMetadata: GrantProgram["metadata"]
 ) {
   const updatedFields = {
@@ -81,6 +85,8 @@ function buildUpdateMetadata(
     programBudget: formData.budget,
     startsAt: formData.dates.startsAt,
     endsAt: formData.dates.endsAt,
+    adminEmails: formData.adminEmails,
+    financeEmails: formData.financeEmails,
   };
 
   return sanitizeObject({
@@ -115,8 +121,8 @@ export function ProgramDetailsTab({
     control,
     formState: { errors, isSubmitting, isDirty },
     reset,
-  } = useForm<CreateProgramFormSchema>({
-    resolver: zodResolver(createProgramSchema),
+  } = useForm<UpdateProgramFormSchema>({
+    resolver: zodResolver(updateProgramSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -126,6 +132,8 @@ export function ProgramDetailsTab({
         endsAt: undefined,
       },
       budget: undefined,
+      adminEmails: [],
+      financeEmails: [],
     },
   });
 
@@ -269,7 +277,7 @@ export function ProgramDetailsTab({
     [isDisabled, watch, setValue]
   );
 
-  const onSubmit = async (data: CreateProgramFormSchema) => {
+  const onSubmit = async (data: UpdateProgramFormSchema) => {
     const validationError = validateSubmissionPrerequisites();
     if (validationError) {
       toast.error(validationError);
@@ -397,39 +405,24 @@ export function ProgramDetailsTab({
           />
 
           {/* Short Description */}
-          <Controller
-            name="shortDescription"
-            control={control}
-            render={({ field: { onChange, onBlur, value }, fieldState }) => (
-              <div className="flex w-full flex-col gap-1">
-                <MarkdownEditor
-                  label="Program Short Description"
-                  description="100 characters max"
-                  placeholder="Brief description (max 100 characters)"
-                  value={value || ""}
-                  onChange={(val) => {
-                    if (val.length <= SHORT_DESCRIPTION_MAX_LENGTH) {
-                      onChange(val);
-                    }
-                  }}
-                  onBlur={onBlur}
-                  error={fieldState.error?.message}
-                  isRequired
-                  isDisabled={isDisabled}
-                  id="short-description"
-                  height={120}
-                  minHeight={100}
-                />
-                <p
-                  id="short-description-count"
-                  className="text-xs text-muted-foreground text-right"
-                >
-                  {shortDescription?.length || 0}/{SHORT_DESCRIPTION_MAX_LENGTH}
-                </p>
-                <AriaLiveError error={fieldState.error} />
-              </div>
-            )}
-          />
+          <div className="flex w-full flex-col gap-1">
+            <Label htmlFor="short-description">
+              Program Short Description <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="short-description"
+              placeholder="Brief description (max 100 characters)"
+              maxLength={SHORT_DESCRIPTION_MAX_LENGTH}
+              disabled={isDisabled}
+              {...register("shortDescription")}
+            />
+            <div className="flex justify-between">
+              <AriaLiveError error={errors.shortDescription} />
+              <p id="short-description-count" className="text-xs text-muted-foreground text-right">
+                {shortDescription?.length || 0}/{SHORT_DESCRIPTION_MAX_LENGTH}
+              </p>
+            </div>
+          </div>
 
           {/* Dates */}
           <div className="grid grid-cols-2 gap-4">
@@ -517,9 +510,70 @@ export function ProgramDetailsTab({
             <AriaLiveError error={errors.budget} />
           </div>
 
+          {/* Admin Emails */}
+          <Controller
+            name="adminEmails"
+            control={control}
+            render={({ field, fieldState }) => (
+              <div className="flex w-full flex-col gap-1">
+                <Label htmlFor="admin-emails">Admin Emails (optional)</Label>
+                <p className="text-xs text-muted-foreground mb-1">
+                  Applicants will reply to these email addresses when responding to notifications
+                </p>
+                <MultiEmailInput
+                  emails={field.value || []}
+                  onChange={field.onChange}
+                  placeholder="Enter admin email"
+                  disabled={isDisabled}
+                  error={fieldState.error?.message}
+                />
+                <AriaLiveError error={fieldState.error} />
+              </div>
+            )}
+          />
+
+          {/* Finance Emails */}
+          <Controller
+            name="financeEmails"
+            control={control}
+            render={({ field, fieldState }) => (
+              <div className="flex w-full flex-col gap-1">
+                <Label htmlFor="finance-emails">
+                  Finance Emails <span className="text-destructive">*</span>
+                </Label>
+                <p className="text-xs text-muted-foreground mb-1">
+                  Finance team will be notified when milestones are verified
+                </p>
+                <MultiEmailInput
+                  emails={field.value || []}
+                  onChange={field.onChange}
+                  placeholder="Enter finance email"
+                  disabled={isDisabled}
+                  error={fieldState.error?.message}
+                />
+                <AriaLiveError error={fieldState.error} />
+              </div>
+            )}
+          />
+
           {/* Actions */}
-          {!readOnly && (
-            <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-end gap-3 pt-4">
+            {readOnly ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button type="button" disabled className="opacity-50 cursor-not-allowed">
+                        Save Changes
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>You don't have permission to edit this program</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
               <Button
                 type="submit"
                 disabled={!isDirty || isSubmitting || isLoading}
@@ -527,8 +581,8 @@ export function ProgramDetailsTab({
               >
                 Save Changes
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </form>
       </div>
     </div>

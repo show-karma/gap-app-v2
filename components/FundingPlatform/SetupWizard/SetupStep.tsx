@@ -10,9 +10,11 @@ interface SetupStepProps {
   step: SetupStepType;
   stepNumber: number;
   isLast?: boolean;
+  /** When true, hide action buttons that would allow editing */
+  readOnly?: boolean;
 }
 
-export function SetupStep({ step, stepNumber, isLast = false }: SetupStepProps) {
+export function SetupStep({ step, stepNumber, isLast = false, readOnly = false }: SetupStepProps) {
   const isCompleted = step.status === "completed";
   const isPending = step.status === "pending";
   const isDisabled = step.status === "disabled";
@@ -85,7 +87,19 @@ export function SetupStep({ step, stepNumber, isLast = false }: SetupStepProps) 
 
       {/* Action Button */}
       <div className="flex-shrink-0">
-        {isDisabled ? (
+        {readOnly ? (
+          // In read-only mode, show status indicator instead of action buttons
+          isCompleted ? (
+            <span className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30 rounded-md">
+              <CheckCircleIcon className="w-4 h-4 mr-1" />
+              Done
+            </span>
+          ) : isPending ? (
+            <span className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md">
+              Pending
+            </span>
+          ) : null
+        ) : isDisabled ? (
           <Button variant="secondary" disabled className="opacity-50 cursor-not-allowed">
             {step.actionLabel}
           </Button>

@@ -1,9 +1,11 @@
 "use client";
 import { ContactInfoSubscription } from "@/components/ContactInfoSubscription";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useAuth } from "@/hooks/useAuth";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
-import { useStaff } from "@/hooks/useStaff";
+import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
+import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore, useProjectStore } from "@/store";
 
 const ContactInfoPage = () => {
@@ -13,12 +15,17 @@ const ContactInfoPage = () => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
-  const isAuthorized = isProjectAdmin || isProjectOwner || isContractOwner || isStaff;
+  const { authenticated } = useAuth();
+  const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
+    {},
+    { enabled: authenticated }
+  );
+  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isAuthorized = isProjectAdmin || isProjectOwner || isContractOwner || isSuperAdmin;
 
   const projectId = project?.uid;
   const { data: contactsInfo, isLoading } = useContactInfo(projectId, isAuthorized);
-  const isAuthorizationLoading = isOwnerLoading || isPermissionLoading || isStaffLoading;
+  const isAuthorizationLoading = isOwnerLoading || isPermissionLoading || isPermissionsLoading;
 
   return (
     <div className="pt-5 pb-20">

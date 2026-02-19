@@ -98,8 +98,7 @@ describe("Application Comments Integration", () => {
 
       const createdComment = await applicationCommentsService.createComment(
         applicationId,
-        "This is a test comment",
-        "Test User"
+        "This is a test comment"
       );
 
       expect(createdComment).toEqual(mockComment);
@@ -107,7 +106,6 @@ describe("Application Comments Integration", () => {
         expect.stringContaining(applicationId),
         expect.objectContaining({
           content: "This is a test comment",
-          authorName: "Test User",
         })
       );
 
@@ -178,8 +176,7 @@ describe("Application Comments Integration", () => {
 
       const created = await applicationCommentsService.createComment(
         applicationId,
-        "Admin review comment",
-        "Admin User"
+        "Admin review comment"
       );
 
       expect(created).toEqual(adminComment);
@@ -187,7 +184,6 @@ describe("Application Comments Integration", () => {
         expect.stringContaining(applicationId),
         expect.objectContaining({
           content: "Admin review comment",
-          authorName: "Admin User",
         })
       );
     });
@@ -216,7 +212,6 @@ describe("Application Comments Integration", () => {
         expect.stringContaining(applicationId),
         expect.objectContaining({
           content: "Test comment",
-          authorName: undefined,
         })
       );
     });

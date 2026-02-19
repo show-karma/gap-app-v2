@@ -67,6 +67,12 @@ export const GrantOverview = () => {
         : undefined,
       title: "Start Date",
     },
+    {
+      stat: grant?.details?.receivedDate
+        ? formatDate(new Date(grant?.details?.receivedDate).getTime())
+        : undefined,
+      title: "Grant Received Date",
+    },
   ];
 
   const selectedTrackIds = grant?.details?.selectedTrackIds as string[] | undefined;

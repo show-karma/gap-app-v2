@@ -806,8 +806,8 @@ export const useApplicationComments = (applicationId: string | null, _isAdmin: b
 
   // Mutation for creating comments
   const createCommentMutation = useMutation({
-    mutationFn: ({ content, authorName }: { content: string; authorName?: string }) =>
-      applicationCommentsService.createComment(applicationId!, content, authorName),
+    mutationFn: ({ content }: { content: string }) =>
+      applicationCommentsService.createComment(applicationId!, content),
     onSuccess: () => {
       // Invalidate and refetch comments after successful creation
       queryClient.invalidateQueries({

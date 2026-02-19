@@ -7,11 +7,11 @@ import type {
   TExternalLink,
 } from "@show-karma/karma-gap-sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import type { AttestationStep } from "@/hooks/useAttestationToast";
 import { checkSlugExists, getProject } from "@/services/project.service";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 function _getErrorMessage(error: unknown): string {

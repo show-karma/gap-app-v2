@@ -60,25 +60,35 @@ function resolveInterceptor(subpath) {
     return null;
   }
 
-  // Map subpaths to their actual locations
-  // Try both .js and .cjs extensions (newer versions use .cjs)
-  const subpathMap = {};
-  const entries = [
-    { key: "", segments: ["lib", "node"] },
-    { key: "/ClientRequest", segments: ["lib", "node", "interceptors", "ClientRequest"] },
-    { key: "/XMLHttpRequest", segments: ["lib", "browser", "interceptors", "XMLHttpRequest"] },
-    { key: "/fetch", segments: ["lib", "node", "interceptors", "fetch"] },
-  ];
-  for (const { key, segments } of entries) {
-    const base = path.join(interceptorsPath, ...segments);
-    const jsPath = path.join(base, "index.js");
-    const cjsPath = path.join(base, "index.cjs");
-    subpathMap[key] = fs.existsSync(jsPath) ? jsPath : cjsPath;
-  }
+  // Helper to find either .js or .cjs file
+  const findEntry = (basePath) => {
+    const jsPath = path.join(basePath, "index.js");
+    if (fs.existsSync(jsPath)) return jsPath;
+    const cjsPath = path.join(basePath, "index.cjs");
+    if (fs.existsSync(cjsPath)) return cjsPath;
+    return null;
+  };
 
-  const resolvedPath = subpathMap[subpath];
-  if (resolvedPath && fs.existsSync(resolvedPath)) {
-    return resolvedPath;
+  // Map subpaths to their base locations
+  const subpathBaseMap = {
+    "": path.join(interceptorsPath, "lib", "node"),
+    "/ClientRequest": path.join(interceptorsPath, "lib", "node", "interceptors", "ClientRequest"),
+    "/XMLHttpRequest": path.join(
+      interceptorsPath,
+      "lib",
+      "browser",
+      "interceptors",
+      "XMLHttpRequest"
+    ),
+    "/fetch": path.join(interceptorsPath, "lib", "node", "interceptors", "fetch"),
+  };
+
+  const basePath = subpathBaseMap[subpath];
+  if (basePath) {
+    const resolved = findEntry(basePath);
+    if (resolved) {
+      return resolved;
+    }
   }
 
   return null;

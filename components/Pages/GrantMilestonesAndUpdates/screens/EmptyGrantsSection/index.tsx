@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FC, useEffect } from "react";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunitiesStore } from "@/store/communities";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 
@@ -15,7 +15,7 @@ export const EmptyGrantsSection: FC = () => {
   const _isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const project = useProjectStore((state) => state.project);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isCommunityAdmin = useIsCommunityAdmin();
   const { communities } = useCommunitiesStore();
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized = isProjectAdmin || isOwner || isCommunityAdmin || isCommunityAdminOfSome;

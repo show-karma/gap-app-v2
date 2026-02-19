@@ -297,31 +297,6 @@ export const getResultsByQuery = (query: string): SearchResponse => {
 };
 
 /**
- * Helper: Simulate grouped communities by finding similar names
- */
-export const groupSimilarCommunitiesMock = (communities: any[]) => {
-  const grouped: { [key: string]: any[] } = {};
-
-  communities.forEach((community) => {
-    const key = community.name.toLowerCase();
-    if (!grouped[key]) {
-      grouped[key] = [];
-    }
-    grouped[key].push(community);
-  });
-
-  return Object.values(grouped).map((group) => {
-    if (group.length === 1) {
-      return group[0];
-    }
-    return {
-      ...group[0],
-      grouped: group,
-    };
-  });
-};
-
-/**
  * Debounce timing constants
  */
 export const searchTiming = {
@@ -344,7 +319,6 @@ export const searchFixtures = {
   searchResponseScenarios,
   searchTiming,
   getResultsByQuery,
-  groupSimilarCommunitiesMock,
   createMockProject,
   createMockCommunity,
 };

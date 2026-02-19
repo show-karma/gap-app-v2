@@ -111,7 +111,7 @@ describe("Responsive Behavior Integration Tests", () => {
 
       // Verify user content - when authenticated, drawer has quick actions and Explore
       const drawer = screen.getByRole("dialog");
-      expect(within(drawer).getByText("My projects")).toBeInTheDocument();
+      expect(within(drawer).getByText("Dashboard")).toBeInTheDocument();
       expect(within(drawer).getByText("Log out")).toBeInTheDocument();
       // Profile is accessed via avatar button outside drawer, not inside
     });
@@ -138,8 +138,8 @@ describe("Responsive Behavior Integration Tests", () => {
       expect(drawer).toBeInTheDocument();
 
       // All content should be accessible
-      expect(within(drawer).getByText("Admin")).toBeInTheDocument();
-      expect(within(drawer).getByText("Review")).toBeInTheDocument();
+      expect(within(drawer).queryByText("Admin")).not.toBeInTheDocument();
+      expect(within(drawer).queryByText("Review")).not.toBeInTheDocument();
       expect(within(drawer).getByText("Manage Programs")).toBeInTheDocument();
     });
   });
@@ -210,7 +210,7 @@ describe("Responsive Behavior Integration Tests", () => {
       });
 
       // Menu items should be visible (may have duplicates in mobile)
-      const myProjectsElements = screen.getAllByText("My projects");
+      const myProjectsElements = screen.getAllByText("Dashboard");
       expect(myProjectsElements.length).toBeGreaterThan(0);
       const logoutElements = screen.getAllByText("Log out");
       expect(logoutElements.length).toBeGreaterThan(0);
@@ -301,9 +301,9 @@ describe("Responsive Behavior Integration Tests", () => {
         expect(screen.getByText("Menu")).toBeInTheDocument();
       });
 
-      // User content should be accessible - My projects is in the drawer
+      // User content should be accessible - Dashboard is in the drawer
       const drawer = screen.getByRole("dialog");
-      expect(within(drawer).getByText("My projects")).toBeInTheDocument();
+      expect(within(drawer).getByText("Dashboard")).toBeInTheDocument();
     });
   });
 

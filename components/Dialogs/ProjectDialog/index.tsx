@@ -53,6 +53,7 @@ import type { Project as ProjectResponse } from "@/types/v2/project";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
+import { validateGithubInput } from "@/utilities/github";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { gapSupportedNetworks } from "@/utilities/network";
@@ -465,6 +466,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       return (
         !!errors?.twitter ||
         !!errors?.github ||
+        isValidatingGithub ||
         !!errors?.discord ||
         !!errors?.website ||
         !!errors?.linkedin ||
@@ -718,44 +720,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }
 
         if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
-          if (data.github) {
-            const githubFromField = data.github.includes("http")
-              ? data.github
-              : `https://${data.github}`;
-            const repoUrl = new URL(githubFromField);
-            const pathParts = repoUrl.pathname.split("/").filter(Boolean);
-            if (repoUrl.hostname.includes("github.com") && pathParts.length >= 2) {
-              const owner = pathParts[0];
-              const repoName = pathParts[1];
-
-              const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}`);
-
-              if (!response.ok) {
-                showError("Failed to fetch GitHub repository");
-                throw new Error("Failed to fetch GitHub repository");
-              }
-
-              const repoData = await response.json();
-              if (repoData.private) {
-                showError("GitHub repository is private");
-                throw new Error("GitHub repository is private");
-              }
-
-              const [_githubUpdateData, error] = await fetchData(
-                INDEXER.PROJECT.EXTERNAL.UPDATE(fetchedProject.uid),
-                "PUT",
-                {
-                  target: "github",
-                  ids: [repoUrl.href],
-                }
-              );
-              if (error) {
-                showError("Failed to update GitHub repository");
-                throw new Error("Failed to update GitHub repository");
-              }
-            }
-          }
-
           const [, subscriptionError] = await fetchData(
             INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
             "POST",
@@ -891,44 +855,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         customLinks,
       };
 
-      // Handle GitHub repository update if changed
-      if (data.github && !(projectToUpdate as any).external?.github?.includes(data.github)) {
-        const githubFromField = data.github.includes("http")
-          ? data.github
-          : `https://${data.github}`;
-        const repoUrl = new URL(githubFromField);
-        const pathParts = repoUrl.pathname.split("/").filter(Boolean);
-        if (repoUrl.hostname.includes("github.com") && pathParts.length >= 2) {
-          const owner = pathParts[0];
-          const repoName = pathParts[1];
-
-          const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}`);
-
-          if (!response.ok) {
-            throw new Error("Failed to fetch GitHub repository");
-          }
-
-          const repoData = await response.json();
-          if (repoData.private) {
-            throw new Error("GitHub repository is private");
-          }
-
-          const ids = (fetchedProject as any).external?.github || [];
-
-          const [_githubUpdateData, error] = await fetchData(
-            INDEXER.PROJECT.EXTERNAL.UPDATE(fetchedProject.uid),
-            "PUT",
-            {
-              target: "github",
-              ids: [...ids, repoUrl.href],
-            }
-          );
-          if (error) {
-            throw new Error("Failed to update GitHub repository");
-          }
-        }
-      }
-
       await updateProject(
         fetchedProject,
         newProjectInfo,
@@ -1002,6 +928,31 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
     return <p>Please fill all the required fields</p>;
   };
+
+  const [isValidatingGithub, setIsValidatingGithub] = useState(false);
+  const [githubValidatedAs, setGithubValidatedAs] = useState<"org" | null>(null);
+
+  const validateGithubUrl = debounce(async (value: string) => {
+    setGithubValidatedAs(null);
+    if (!value || value.trim().length === 0) {
+      return;
+    }
+    setIsValidatingGithub(true);
+    try {
+      const result = await validateGithubInput(value);
+      if (!result.valid) {
+        setError("github", { message: result.error });
+      } else {
+        setGithubValidatedAs("org");
+      }
+    } catch {
+      setError("github", {
+        message: "Please use the format https://github.com/your-organization",
+      });
+    } finally {
+      setIsValidatingGithub(false);
+    }
+  }, 500);
 
   const [isSearchingProject, setIsSearchingProject] = useState(false);
   const [existingProjects, setExistingProjects] = useState<ProjectResponse[]>([]);
@@ -1221,11 +1172,18 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 id="github-input"
                 type="text"
                 className={socialMediaInputStyle}
-                placeholder="Your username or organization name"
+                placeholder="https://github.com/your-organization"
                 {...register("github")}
+                onBlur={() => {
+                  validateGithubUrl(watch("github") || "");
+                }}
               />
             </div>
-            <p className="text-red-500">{errors.github?.message}</p>
+            {isValidatingGithub ? (
+              <Skeleton className="w-full h-6" />
+            ) : (
+              <p className="text-red-500">{errors.github?.message}</p>
+            )}
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="discord-input" className={labelStyle}>

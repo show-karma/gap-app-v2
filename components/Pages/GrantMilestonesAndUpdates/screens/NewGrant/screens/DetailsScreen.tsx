@@ -12,8 +12,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
 import { useGrant } from "@/hooks/useGrant";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import type { Grant } from "@/types/v2/grant";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
@@ -40,6 +40,7 @@ const baseSchema = z.object({
       required_error: MESSAGES.GRANT.FORM.DATE,
     })
     .optional(),
+  receivedDate: z.date().optional(),
   description: z.string().optional(),
 });
 
@@ -88,7 +89,7 @@ export const DetailsScreen: React.FC = () => {
   const { authenticated: isAuth } = useAuth();
   const { gap } = useGap();
   const { updateGrant, isLoading: isUpdatingGrant } = useGrant();
-  const { isCommunityAdmin } = useCommunityAdminStore();
+  const isCommunityAdmin = useIsCommunityAdmin();
   const { isOwner } = useOwnerStore();
   const [_isLoading, _setIsLoading] = useState(false);
   const isAuthorized = isOwner || isCommunityAdmin;
@@ -110,6 +111,7 @@ export const DetailsScreen: React.FC = () => {
     resolver: zodResolver(flowType === "grant" ? grantSchema : baseSchema),
     defaultValues: {
       startDate: formData.startDate,
+      receivedDate: formData.receivedDate,
       description: formData.description || "",
       amount: formData.amount || "",
       linkToProposal: formData.linkToProposal || "",
@@ -137,6 +139,7 @@ export const DetailsScreen: React.FC = () => {
     const updateObj: Partial<typeof formData> = {
       description: watch("description"),
       startDate: watch("startDate"),
+      receivedDate: watch("receivedDate"),
     };
 
     // Add grant-specific fields if in grant flow
@@ -198,6 +201,34 @@ export const DetailsScreen: React.FC = () => {
               </div>
               {errors.startDate && (
                 <p className="text-red-500 text-sm mt-1">{errors.startDate.message}</p>
+              )}
+            </div>
+
+            <div className="flex flex-col flex-1">
+              <div className={labelStyle}>Grant Received Date (optional)</div>
+              <div className="mt-2">
+                <DatePicker
+                  selected={watch("receivedDate")}
+                  onSelect={(date) => {
+                    if (formatDate(date) === formatDate(watch("receivedDate") || "")) {
+                      setValue("receivedDate", undefined, {
+                        shouldValidate: true,
+                      });
+                    } else {
+                      setValue("receivedDate", date, { shouldValidate: true });
+                    }
+                    trigger();
+                  }}
+                  placeholder="When did you receive this grant?"
+                  buttonClassName="w-full text-base bg-gray-100 dark:bg-zinc-800"
+                  clearButtonFn={() => {
+                    setValue("receivedDate", undefined, { shouldValidate: true });
+                    trigger();
+                  }}
+                />
+              </div>
+              {errors.receivedDate && (
+                <p className="text-red-500 text-sm mt-1">{errors.receivedDate.message}</p>
               )}
             </div>
 

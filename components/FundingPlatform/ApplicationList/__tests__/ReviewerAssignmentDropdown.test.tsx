@@ -204,6 +204,30 @@ describe("ReviewerAssignmentDropdown", () => {
       ).toHaveTextContent("0x1111111111111111111111111111111111111111");
     });
 
+    it("should exclude reviewers without wallet addresses from options", () => {
+      const mixedReviewers: ProgramReviewer[] = [
+        {
+          publicAddress: undefined,
+          name: "No Address",
+          email: "missing-address@example.com",
+          assignedAt: "2024-01-01T00:00:00Z",
+        },
+        {
+          publicAddress: "0x1111111111111111111111111111111111111111",
+          name: "John Doe",
+          email: "john@example.com",
+          assignedAt: "2024-01-01T00:00:00Z",
+        },
+      ];
+
+      renderComponent({ availableReviewers: mixedReviewers });
+
+      expect(screen.queryByTestId("option-missing-address@example.com")).not.toBeInTheDocument();
+      expect(
+        screen.getByTestId("option-0x1111111111111111111111111111111111111111")
+      ).toBeInTheDocument();
+    });
+
     it("should display assigned reviewers", () => {
       const assignedAddresses = ["0x1111111111111111111111111111111111111111"];
       renderComponent({ assignedReviewerAddresses: assignedAddresses });

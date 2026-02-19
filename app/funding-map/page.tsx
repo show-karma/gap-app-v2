@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { PROJECT_NAME } from "@/constants/brand";
 import { FundingMapList } from "@/src/features/funding-map/components/funding-map-list";
 import { FundingMapLoading } from "@/src/features/funding-map/components/funding-map-loading";
 import { FundingMapSearch } from "@/src/features/funding-map/components/funding-map-search";
@@ -8,8 +7,9 @@ import { FundingMapSidebar } from "@/src/features/funding-map/components/funding
 import { customMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = customMetadata({
-  title: `${PROJECT_NAME} - Directory of web3 funding programs`,
-  description: `Find all the funding opportunities across web3 ecosystem.`,
+  title: "Directory of Web3 Funding Programs",
+  description: "Find all the funding opportunities across the web3 ecosystem.",
+  path: "/funding-map",
 });
 
 const FundingMapPage = () => {

@@ -1,7 +1,7 @@
 import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
-import type { SignerOrProvider } from "@show-karma/karma-gap-sdk/core/types";
+import { ethers } from "ethers";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import { getRPCClient } from "./rpcClient";
+import { getRPCUrlByChainId } from "./rpcClient";
 
 export interface Member {
   uid: string;
@@ -14,9 +14,9 @@ export interface Member {
 export const getProjectMemberRoles = async (project: ProjectResponse, projectInstance: Project) => {
   const roles: Record<string, Member["role"]> = {};
   if (project?.members) {
-    const client = await getRPCClient(project.chainID);
-    // Cast to SignerOrProvider - SDK accepts viem PublicClient
-    const signer = client as unknown as SignerOrProvider;
+    const rpcUrl = getRPCUrlByChainId(project.chainID);
+    if (!rpcUrl) return roles;
+    const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
 
     await Promise.all(
       project.members
@@ -24,12 +24,12 @@ export const getProjectMemberRoles = async (project: ProjectResponse, projectIns
         .map(async (member) => {
           const memberAddress = member.address;
           const isProjectOwner = await projectInstance
-            .isOwner(signer, memberAddress)
+            .isOwner(rpcProvider, memberAddress)
             .catch((_error) => {
               return false;
             });
           const isProjectAdmin = await projectInstance
-            .isAdmin(signer, memberAddress)
+            .isAdmin(rpcProvider, memberAddress)
             .catch((_error) => {
               return false;
             });

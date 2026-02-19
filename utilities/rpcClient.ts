@@ -6,6 +6,7 @@ import {
   baseSepolia,
   celo,
   lisk,
+  mainnet,
   optimism,
   optimismSepolia,
   polygon,
@@ -15,6 +16,11 @@ import {
 } from "viem/chains";
 import { envVars } from "./enviromentVars";
 import { getChainNameById } from "./network";
+
+const mainnetClient = createPublicClient({
+  chain: mainnet,
+  transport: http(envVars.RPC.MAINNET),
+});
 
 const optimismClient = createPublicClient({
   chain: optimism,
@@ -71,9 +77,10 @@ const polygonClient = createPublicClient({
   transport: http(envVars.RPC.POLYGON),
 });
 
-type RpcClientNetwork = TNetwork | "base" | "polygon";
+type RpcClientNetwork = TNetwork | "mainnet" | "base" | "polygon";
 
 type RpcClientValue =
+  | typeof mainnetClient
   | typeof optimismClient
   | typeof seiClient
   | typeof arbitrumClient
@@ -88,6 +95,7 @@ type RpcClientValue =
 
 export const rpcClient: Partial<Record<RpcClientNetwork, RpcClientValue>> = {
   //   prod networks
+  mainnet: mainnetClient,
   optimism: optimismClient,
   sei: seiClient,
   arbitrum: arbitrumClient,

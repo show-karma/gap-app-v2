@@ -20,11 +20,6 @@ jest.mock("@/services/unified-search.service", () => ({
   unifiedSearch: jest.fn(),
 }));
 
-// Mock groupSimilarCommunities
-jest.mock("@/utilities/communityHelpers", () => ({
-  groupSimilarCommunities: jest.fn((communities) => communities),
-}));
-
 // Helper to flush timers and promises
 const _flushTimersAndPromises = async () => {
   await act(async () => {

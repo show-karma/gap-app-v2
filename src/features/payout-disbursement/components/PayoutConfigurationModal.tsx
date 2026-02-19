@@ -5,17 +5,17 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
+  TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { formatUnits, isAddress, parseUnits } from "viem";
+import { isAddress } from "viem";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import {
   getAvailableNetworks,
   getNativeTokenSymbol,
-  NETWORKS,
   type SupportedChainId,
   TOKEN_ADDRESSES,
 } from "@/config/tokens";
@@ -47,17 +47,13 @@ export interface PayoutConfigurationModalProps {
 }
 
 /** Token type selection */
-type TokenType = "usdc" | "native" | "custom";
+type TokenType = "usdc" | "native";
 
 /** Get available networks based on environment */
 const getSupportedNetworks = () => getAvailableNetworks(envVars.isDev);
 
-/** Token decimals by type - USDC uses 6 decimals, native tokens use 18 */
-const TOKEN_DECIMALS: Record<TokenType, number> = {
-  usdc: 6,
-  native: 18,
-  custom: 18, // Default to 18 for custom tokens
-};
+const FIRST_PAYMENT_LABEL = "First payment";
+const FINAL_PAYMENT_LABEL = "Final payment";
 
 export function PayoutConfigurationModal({
   isOpen,
@@ -99,40 +95,25 @@ export function PayoutConfigurationModal({
   const [totalGrantAmount, setTotalGrantAmount] = useState("");
   const [selectedNetwork, setSelectedNetwork] = useState<SupportedChainId>(10);
   const [tokenType, setTokenType] = useState<TokenType>("usdc");
-  const [customTokenAddress, setCustomTokenAddress] = useState("");
   const [milestoneAllocations, setMilestoneAllocations] = useState<MilestoneAllocation[]>([]);
 
   // Validation state
   const [addressError, setAddressError] = useState<string | null>(null);
   const [amountError, setAmountError] = useState<string | null>(null);
-  const [tokenAddressError, setTokenAddressError] = useState<string | null>(null);
   const [allocationErrors, setAllocationErrors] = useState<Record<string, string>>({});
 
   // Computed token values
   const selectedTokenSymbol = useMemo(() => {
     if (tokenType === "usdc") return "USDC";
-    if (tokenType === "native") return getNativeTokenSymbol(selectedNetwork);
-    return "Custom";
+    return getNativeTokenSymbol(selectedNetwork);
   }, [tokenType, selectedNetwork]);
 
   const selectedTokenAddress = useMemo(() => {
     if (tokenType === "usdc") {
       return TOKEN_ADDRESSES.usdc[selectedNetwork as keyof typeof TOKEN_ADDRESSES.usdc] || "";
     }
-    if (tokenType === "custom") {
-      return customTokenAddress;
-    }
     return ""; // Native token has no address
-  }, [tokenType, selectedNetwork, customTokenAddress]);
-
-  const selectedNetworkName = useMemo(() => {
-    return NETWORKS[selectedNetwork]?.name || `Chain ${selectedNetwork}`;
-  }, [selectedNetwork]);
-
-  // Get token decimals based on selected token type
-  const selectedTokenDecimals = useMemo(() => {
-    return TOKEN_DECIMALS[tokenType];
-  }, [tokenType]);
+  }, [tokenType, selectedNetwork]);
 
   /**
    * Generate milestone allocations from grant milestones.
@@ -143,10 +124,10 @@ export function PayoutConfigurationModal({
       const allocations: MilestoneAllocation[] = [];
 
       // First payment allocation - find existing by label since we can't use fixed IDs
-      const existingFirst = existingAllocations?.find((a) => a.label === "First payment");
+      const existingFirst = existingAllocations?.find((a) => a.label === FIRST_PAYMENT_LABEL);
       allocations.push({
         id: existingFirst?.id || crypto.randomUUID(),
-        label: "First payment",
+        label: FIRST_PAYMENT_LABEL,
         amount: existingFirst?.amount || "",
       });
 
@@ -164,10 +145,10 @@ export function PayoutConfigurationModal({
       });
 
       // Final payment allocation - find existing by label
-      const existingFinal = existingAllocations?.find((a) => a.label === "Final payment");
+      const existingFinal = existingAllocations?.find((a) => a.label === FINAL_PAYMENT_LABEL);
       allocations.push({
         id: existingFinal?.id || crypto.randomUUID(),
-        label: "Final payment",
+        label: FINAL_PAYMENT_LABEL,
         amount: existingFinal?.amount || "",
       });
 
@@ -175,6 +156,11 @@ export function PayoutConfigurationModal({
     },
     [milestones]
   );
+
+  const isCustomAllocation = useCallback((allocation: MilestoneAllocation): boolean => {
+    if (allocation.milestoneUID) return false;
+    return allocation.label !== FIRST_PAYMENT_LABEL && allocation.label !== FINAL_PAYMENT_LABEL;
+  }, []);
 
   // Save mutation
   const saveConfigMutation = useSavePayoutConfig({
@@ -193,50 +179,37 @@ export function PayoutConfigurationModal({
     if (isOpen && currentConfig) {
       setPayoutAddress(currentConfig.payoutAddress || "");
 
-      // Determine token type from token address first (needed for decimals)
+      // Determine token type from token address (case-insensitive comparison)
       let detectedTokenType: TokenType = "usdc";
       if (currentConfig.tokenAddress) {
-        const usdcAddresses = Object.values(TOKEN_ADDRESSES.usdc) as string[];
-        if (usdcAddresses.includes(currentConfig.tokenAddress)) {
+        const normalizedAddress = currentConfig.tokenAddress.toLowerCase();
+        const usdcAddresses = Object.values(TOKEN_ADDRESSES.usdc).map((a) => a.toLowerCase());
+        if (usdcAddresses.includes(normalizedAddress)) {
           detectedTokenType = "usdc";
         } else {
-          detectedTokenType = "custom";
-          setCustomTokenAddress(currentConfig.tokenAddress);
+          // Unknown token address, default to native
+          detectedTokenType = "native";
         }
+      } else {
+        // No token address means native token
+        detectedTokenType = "native";
       }
       setTokenType(detectedTokenType);
 
-      if (currentConfig.chainId) {
-        setSelectedNetwork(currentConfig.chainId as SupportedChainId);
+      if (currentConfig.chainID) {
+        setSelectedNetwork(currentConfig.chainID as SupportedChainId);
       }
 
-      // Convert totalGrantAmount from smallest units to human-readable
-      const decimals = TOKEN_DECIMALS[detectedTokenType];
+      // Set totalGrantAmount directly (stored in human-readable format)
       if (currentConfig.totalGrantAmount) {
-        try {
-          const humanReadable = formatUnits(BigInt(currentConfig.totalGrantAmount), decimals);
-          setTotalGrantAmount(humanReadable);
-        } catch {
-          // If conversion fails, use the raw value (might already be human-readable from old data)
-          setTotalGrantAmount(currentConfig.totalGrantAmount);
-        }
+        setTotalGrantAmount(currentConfig.totalGrantAmount);
       } else {
         setTotalGrantAmount("");
       }
 
-      // Convert allocation amounts from smallest units to human-readable
+      // Set allocation amounts directly (stored in human-readable format)
       if (currentConfig.milestoneAllocations && currentConfig.milestoneAllocations.length > 0) {
-        const convertedAllocations = currentConfig.milestoneAllocations.map((alloc) => {
-          if (!alloc.amount) return alloc;
-          try {
-            const humanReadable = formatUnits(BigInt(alloc.amount), decimals);
-            return { ...alloc, amount: humanReadable };
-          } catch {
-            // If conversion fails, use the raw value
-            return alloc;
-          }
-        });
-        setMilestoneAllocations(convertedAllocations);
+        setMilestoneAllocations(currentConfig.milestoneAllocations);
       } else {
         setMilestoneAllocations(generateAllocationsFromMilestones(null));
       }
@@ -259,11 +232,9 @@ export function PayoutConfigurationModal({
       setTotalGrantAmount("");
       setSelectedNetwork(10);
       setTokenType("usdc");
-      setCustomTokenAddress("");
       setMilestoneAllocations([]);
       setAddressError(null);
       setAmountError(null);
-      setTokenAddressError(null);
       setAllocationErrors({});
     }
   }, [isOpen]);
@@ -298,33 +269,13 @@ export function PayoutConfigurationModal({
       return true; // Optional field
     }
     const num = parseFloat(amount);
-    if (isNaN(num) || num < 0) {
+    if (Number.isNaN(num) || num < 0) {
       setAmountError("Amount must be a non-negative number");
       return false;
     }
     setAmountError(null);
     return true;
   }, []);
-
-  const validateTokenAddress = useCallback(
-    (address: string): boolean => {
-      if (tokenType !== "custom") {
-        setTokenAddressError(null);
-        return true;
-      }
-      if (!address) {
-        setTokenAddressError("Token address is required for custom token");
-        return false;
-      }
-      if (!isAddress(address)) {
-        setTokenAddressError("Invalid token address");
-        return false;
-      }
-      setTokenAddressError(null);
-      return true;
-    },
-    [tokenType]
-  );
 
   const validateAllocations = useCallback((): boolean => {
     if (milestoneAllocations.length === 0) {
@@ -337,6 +288,10 @@ export function PayoutConfigurationModal({
 
     for (const alloc of milestoneAllocations) {
       const amount = parseFloat(alloc.amount) || 0;
+      if (isCustomAllocation(alloc) && !alloc.label.trim()) {
+        errors[alloc.id] = "Description is required";
+        hasErrors = true;
+      }
       // Allow 0 amounts (user wants to skip this payment), but not negative
       if (amount < 0) {
         errors[alloc.id] = "Amount cannot be negative";
@@ -346,14 +301,13 @@ export function PayoutConfigurationModal({
 
     // Check sum matches total if total is set
     if (totalAmount > 0 && Math.abs(allocationSum - totalAmount) > 0.01) {
-      errors["_sum"] =
-        `Allocations must sum to ${totalAmount.toLocaleString()} (current: ${allocationSum.toLocaleString()})`;
+      errors._sum = `Allocations must sum to ${totalAmount.toLocaleString()} (current: ${allocationSum.toLocaleString()})`;
       hasErrors = true;
     }
 
     setAllocationErrors(errors);
     return !hasErrors;
-  }, [milestoneAllocations, totalAmount, allocationSum]);
+  }, [milestoneAllocations, totalAmount, allocationSum, isCustomAllocation]);
 
   // Handle updating allocation amount
   const handleUpdateAllocationAmount = (id: string, amount: string) => {
@@ -364,7 +318,39 @@ export function PayoutConfigurationModal({
     setAllocationErrors((prev) => {
       const newErrors = { ...prev };
       delete newErrors[id];
-      delete newErrors["_sum"];
+      delete newErrors._sum;
+      return newErrors;
+    });
+  };
+
+  const handleUpdateAllocationLabel = (id: string, label: string) => {
+    setMilestoneAllocations((prev) =>
+      prev.map((alloc) => (alloc.id === id ? { ...alloc, label } : alloc))
+    );
+    setAllocationErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[id];
+      return newErrors;
+    });
+  };
+
+  const handleAddCustomLineItem = () => {
+    setMilestoneAllocations((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        label: "",
+        amount: "",
+      },
+    ]);
+  };
+
+  const handleRemoveCustomLineItem = (id: string) => {
+    setMilestoneAllocations((prev) => prev.filter((alloc) => alloc.id !== id));
+    setAllocationErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[id];
+      delete newErrors._sum;
       return newErrors;
     });
   };
@@ -374,52 +360,29 @@ export function PayoutConfigurationModal({
     // Validate all fields
     const isAddressValid = validateAddress(payoutAddress);
     const isAmountValid = validateAmount(totalGrantAmount);
-    const isTokenAddressValid = validateTokenAddress(customTokenAddress);
     const areAllocationsValid = validateAllocations();
 
-    if (!isAddressValid || !isAmountValid || !isTokenAddressValid || !areAllocationsValid) {
+    if (!isAddressValid || !isAmountValid || !areAllocationsValid) {
       return;
     }
 
-    // Convert totalGrantAmount from human-readable to smallest units
-    let totalGrantAmountInSmallestUnit: string | null = null;
-    if (totalGrantAmount) {
-      try {
-        totalGrantAmountInSmallestUnit = parseUnits(
-          totalGrantAmount,
-          selectedTokenDecimals
-        ).toString();
-      } catch {
-        toast.error("Invalid total grant amount format");
-        return;
-      }
-    }
-
-    // Convert milestone allocation amounts from human-readable to smallest units
-    let convertedAllocations: MilestoneAllocation[] | null = null;
-    if (milestoneAllocations.length > 0) {
-      try {
-        convertedAllocations = milestoneAllocations.map((alloc) => {
-          if (!alloc.amount || alloc.amount === "0" || alloc.amount === "") {
-            return { ...alloc, amount: "0" };
-          }
-          const amountInSmallestUnit = parseUnits(alloc.amount, selectedTokenDecimals).toString();
-          return { ...alloc, amount: amountInSmallestUnit };
-        });
-      } catch {
-        toast.error("Invalid allocation amount format");
-        return;
-      }
-    }
+    // Prepare allocations (ensure empty amounts are "0")
+    const preparedAllocations: MilestoneAllocation[] | null =
+      milestoneAllocations.length > 0
+        ? milestoneAllocations.map((alloc) => ({
+            ...alloc,
+            amount: alloc.amount || "0",
+          }))
+        : null;
 
     const configItem: PayoutConfigItem = {
       grantUID,
       projectUID,
       payoutAddress: payoutAddress || null,
-      totalGrantAmount: totalGrantAmountInSmallestUnit,
+      totalGrantAmount: totalGrantAmount || null,
       tokenAddress: selectedTokenAddress || null,
-      chainId: selectedNetwork,
-      milestoneAllocations: convertedAllocations,
+      chainID: selectedNetwork,
+      milestoneAllocations: preparedAllocations,
     };
 
     await saveConfigMutation.mutateAsync({
@@ -473,6 +436,7 @@ export function PayoutConfigurationModal({
                     </p>
                   </div>
                   <button
+                    type="button"
                     onClick={onClose}
                     aria-label="Close payout configuration"
                     className="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"
@@ -565,43 +529,9 @@ export function PayoutConfigurationModal({
                           <option value="native">
                             {getNativeTokenSymbol(selectedNetwork)} (Native)
                           </option>
-                          <option value="custom">Custom Token</option>
                         </select>
                       </div>
                     </div>
-
-                    {/* Custom Token Address */}
-                    {tokenType === "custom" && (
-                      <div>
-                        <label
-                          htmlFor="custom-token-address"
-                          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                        >
-                          Custom Token Address
-                        </label>
-                        <input
-                          id="custom-token-address"
-                          type="text"
-                          value={customTokenAddress}
-                          onChange={(e) => {
-                            setCustomTokenAddress(e.target.value);
-                            setTokenAddressError(null);
-                          }}
-                          onBlur={() => validateTokenAddress(customTokenAddress)}
-                          placeholder="0x..."
-                          className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-zinc-700 text-gray-900 dark:text-white font-mono text-sm ${
-                            tokenAddressError
-                              ? "border-red-500 dark:border-red-500"
-                              : "border-gray-300 dark:border-zinc-600"
-                          }`}
-                        />
-                        {tokenAddressError && (
-                          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                            {tokenAddressError}
-                          </p>
-                        )}
-                      </div>
-                    )}
 
                     {/* Total Grant Amount */}
                     <div>
@@ -659,51 +589,93 @@ export function PayoutConfigurationModal({
 
                       <div className="space-y-2">
                         {milestoneAllocations.map((alloc) => {
-                          const isFirstPayment = alloc.label === "First payment";
-                          const isFinalPayment = alloc.label === "Final payment";
-                          const isMilestone = !isFirstPayment && !isFinalPayment;
+                          const isFirstPayment = alloc.label === FIRST_PAYMENT_LABEL;
+                          const isFinalPayment = alloc.label === FINAL_PAYMENT_LABEL;
+                          const isCustom = isCustomAllocation(alloc);
+                          const isMilestone = !!alloc.milestoneUID;
 
                           return (
-                            <div
-                              key={alloc.id}
-                              className={`flex items-center gap-3 p-3 rounded-lg ${
-                                allocationErrors[alloc.id]
-                                  ? "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
-                                  : isFirstPayment || isFinalPayment
-                                    ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
-                                    : "bg-gray-50 dark:bg-zinc-700/50"
-                              }`}
-                            >
-                              <div className="flex-1">
-                                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                  {alloc.label}
-                                </span>
-                                {isMilestone && alloc.milestoneUID && (
-                                  <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                                    (linked to milestone)
+                            <div key={alloc.id} className="space-y-1">
+                              <div
+                                className={`flex items-center gap-3 p-3 rounded-lg ${
+                                  allocationErrors[alloc.id]
+                                    ? "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+                                    : isFirstPayment || isFinalPayment
+                                      ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+                                      : "bg-gray-50 dark:bg-zinc-700/50"
+                                }`}
+                              >
+                                <div className="flex-1">
+                                  {isCustom ? (
+                                    <input
+                                      type="text"
+                                      aria-label="Custom line item description"
+                                      value={alloc.label}
+                                      onChange={(e) =>
+                                        handleUpdateAllocationLabel(alloc.id, e.target.value)
+                                      }
+                                      placeholder="Description"
+                                      className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-gray-900 dark:text-white text-sm"
+                                    />
+                                  ) : (
+                                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                      {alloc.label}
+                                    </span>
+                                  )}
+                                  {isMilestone && (
+                                    <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                                      (linked to milestone)
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="w-36 flex items-center gap-2">
+                                  <input
+                                    type="text"
+                                    aria-label={isCustom ? "Custom line item amount" : undefined}
+                                    value={alloc.amount}
+                                    onChange={(e) =>
+                                      handleUpdateAllocationAmount(
+                                        alloc.id,
+                                        sanitizeNumericInput(e.target.value)
+                                      )
+                                    }
+                                    placeholder="0"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-gray-900 dark:text-white text-sm text-right"
+                                  />
+                                  <span className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                    {selectedTokenSymbol}
                                   </span>
+                                </div>
+                                {isCustom && (
+                                  <button
+                                    type="button"
+                                    aria-label="Remove custom line item"
+                                    onClick={() => handleRemoveCustomLineItem(alloc.id)}
+                                    className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors"
+                                  >
+                                    <TrashIcon className="h-4 w-4" />
+                                  </button>
                                 )}
                               </div>
-                              <div className="w-36 flex items-center gap-2">
-                                <input
-                                  type="text"
-                                  value={alloc.amount}
-                                  onChange={(e) =>
-                                    handleUpdateAllocationAmount(
-                                      alloc.id,
-                                      sanitizeNumericInput(e.target.value)
-                                    )
-                                  }
-                                  placeholder="0"
-                                  className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-gray-900 dark:text-white text-sm text-right"
-                                />
-                                <span className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                                  {selectedTokenSymbol}
-                                </span>
-                              </div>
+                              {allocationErrors[alloc.id] && (
+                                <p className="text-xs text-red-600 dark:text-red-400 px-1">
+                                  {allocationErrors[alloc.id]}
+                                </p>
+                              )}
                             </div>
                           );
                         })}
+
+                        <div className="flex justify-start">
+                          <button
+                            type="button"
+                            aria-label="Add custom line item"
+                            onClick={handleAddCustomLineItem}
+                            className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                          >
+                            Add custom line item
+                          </button>
+                        </div>
 
                         {/* Allocation sum indicator */}
                         {milestoneAllocations.length > 0 && (
@@ -737,18 +709,18 @@ export function PayoutConfigurationModal({
                         )}
 
                         {/* Validation errors */}
-                        {allocationErrors["_sum"] && (
+                        {allocationErrors._sum && (
                           <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
                             <ExclamationTriangleIcon className="h-4 w-4" />
-                            {allocationErrors["_sum"]}
+                            {allocationErrors._sum}
                           </div>
                         )}
                       </div>
 
                       {milestones.length === 0 && (
                         <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                          This grant has no milestones defined. Only First and Final payment
-                          allocations are available.
+                          This grant has no milestones defined. Use First payment, Final payment,
+                          and optional custom line items.
                         </p>
                       )}
                     </div>

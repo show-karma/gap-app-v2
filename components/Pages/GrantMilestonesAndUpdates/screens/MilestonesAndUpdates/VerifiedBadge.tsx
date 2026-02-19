@@ -1,11 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 
 import * as Tooltip from "@radix-ui/react-tooltip";
-import type {
-  IGrantUpdateStatus,
-  IMilestoneCompleted,
-  IProjectImpactStatus,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, useEffect, useState } from "react";
 import type { Hex } from "viem";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
@@ -13,11 +8,19 @@ import { useENS } from "@/store/ens";
 import { formatDate } from "@/utilities/formatDate";
 import { VerificationsDialog } from "./VerificationsDialog";
 
+/** Minimal verification record compatible with both V2 Verification and legacy SDK types */
+export interface VerificationRecord {
+  attester: string;
+  createdAt: string | Date;
+  reason?: string;
+  data?: { reason?: string };
+}
+
 interface VerifiedBadgeProps {
   // V2: Simple boolean verification
   isVerified?: boolean;
-  // Legacy: Array of verification records
-  verifications?: IMilestoneCompleted[] | IGrantUpdateStatus[] | IProjectImpactStatus[];
+  // Array of verification records (V2 or legacy)
+  verifications?: VerificationRecord[];
   title: string;
 }
 
@@ -86,21 +89,14 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ isVerified, verification
 
 // Legacy component for array-based verifications
 const VerifiedBadgeLegacy: FC<{
-  verifications: IMilestoneCompleted[] | IGrantUpdateStatus[] | IProjectImpactStatus[];
+  verifications: VerificationRecord[];
   title: string;
 }> = ({ verifications, title }) => {
-  const [orderedSort, setOrderedSort] = useState<
-    (IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus)[]
-  >([]);
+  const [orderedSort, setOrderedSort] = useState<VerificationRecord[]>([]);
 
-  const getUniqueVerifications = (
-    verifications: IMilestoneCompleted[] | IGrantUpdateStatus[] | IProjectImpactStatus[]
-  ) => {
+  const getUniqueVerifications = (verifications: VerificationRecord[]) => {
     // get unique and by last date
-    const uniqueVerifications: Record<
-      Hex,
-      IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus
-    > = {};
+    const uniqueVerifications: Record<string, VerificationRecord> = {};
     verifications.forEach((verification) => {
       if (!verification.attester) return;
       if (!uniqueVerifications[verification.attester]) {

@@ -1,10 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
 import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
+import { useAuth } from "@/hooks/useAuth";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
-import { useStaff } from "@/hooks/useStaff";
+import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
+import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { getProjectMemberRoles, type Member } from "@/utilities/getProjectMemberRoles";
 import { cn } from "@/utilities/tailwind";
@@ -34,8 +35,10 @@ export function TeamContent({ className }: TeamContentProps) {
 
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff } = useStaff();
-  const isAuthorized = isProjectOwner || isContractOwner || isStaff;
+  const { authenticated } = useAuth();
+  const { data: permissions } = usePermissionsQuery({}, { enabled: authenticated });
+  const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isAuthorized = isProjectOwner || isContractOwner || isSuperAdmin;
   const { project: projectInstance } = useProjectInstance(
     project?.details?.slug || project?.uid || ""
   );
@@ -66,8 +69,6 @@ export function TeamContent({ className }: TeamContentProps) {
 
   return (
     <div className={cn("flex flex-col gap-4", className)} data-testid="team-content">
-      <ContributorProfileDialog />
-
       {/* Header with invite button */}
       <div className="flex flex-row justify-between items-center w-full">
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">

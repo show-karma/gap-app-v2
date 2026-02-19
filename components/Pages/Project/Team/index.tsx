@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
 import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useOwnerStore, useProjectStore } from "@/store";
@@ -52,7 +51,6 @@ export const Team = () => {
 
   return (
     <div className="pt-5 pb-20 flex flex-col items-start gap-4">
-      <ContributorProfileDialog />
       <div className="flex flex-row gap-2 w-full max-w-3xl justify-end">
         {isAuthorized ? <InviteMemberDialog /> : null}
       </div>

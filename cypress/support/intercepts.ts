@@ -47,6 +47,8 @@ export const setupDonationIntercepts = (): void => {
 export const setupFundingMapIntercepts = (): void => {
   cy.intercept("GET", "**/v2/funding-program-configs/**").as("getFundingPrograms");
   cy.intercept("GET", "**/funding-map**").as("getFundingMap");
+  // Stub external image requests that may 404 and block the page load event
+  cy.intercept("GET", "https://pbs.twimg.com/**", { statusCode: 200, body: "" });
 };
 
 /**
@@ -55,6 +57,19 @@ export const setupFundingMapIntercepts = (): void => {
 export const waitForPageLoad = (): void => {
   cy.get("body").should("be.visible");
   cy.get("nav").should("exist");
+};
+
+/**
+ * Wait for navbar to be fully hydrated and interactive
+ * This is useful for tests that interact with navbar elements
+ * which may not be immediately available after initial render
+ */
+export const waitForNavbarHydration = (): void => {
+  // Wait for nav to be visible
+  cy.get("nav").should("be.visible");
+  // Wait for at least one interactive element in the navbar
+  // The "Explore" dropdown is always present regardless of auth state
+  cy.get("nav").find("button").should("have.length.at.least", 1);
 };
 
 /**

@@ -128,27 +128,11 @@ describe("ProjectStatsBar", () => {
       expect(screen.getAllByText("Token Price")).toHaveLength(2);
     });
 
-    it("should render completeRate when provided", () => {
-      render(<ProjectStatsBar {...defaultProps} completeRate={100} />);
-
-      expect(screen.getAllByText("100%")).toHaveLength(2);
-      expect(screen.getAllByText("Complete Rate")).toHaveLength(2);
-    });
-
-    it("should render tooltip for completeRate", () => {
-      render(<ProjectStatsBar {...defaultProps} completeRate={75} />);
-
-      // There should be 2 tooltip icons (desktop and mobile layouts)
-      const tooltipIcons = screen.getAllByLabelText("More information");
-      expect(tooltipIcons).toHaveLength(2);
-    });
-
     it("should not render optional stats when not provided", () => {
       render(<ProjectStatsBar {...defaultProps} />);
 
       expect(screen.queryByText("Received")).not.toBeInTheDocument();
       expect(screen.queryByText("Token Price")).not.toBeInTheDocument();
-      expect(screen.queryByText("Complete Rate")).not.toBeInTheDocument();
     });
   });
 

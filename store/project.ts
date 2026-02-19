@@ -1,10 +1,9 @@
 import type { ContributorProfile } from "@show-karma/karma-gap-sdk";
-import { QueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
 import { getProject } from "@/services/project.service";
 import { getProjectGrants } from "@/services/project-grants.service";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { queryClient } from "@/utilities/query-client";
 import { useGrantStore } from "./grant";
 
 interface ProjectStore {
@@ -43,11 +42,6 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       }
     }
 
-    const queryClient = new QueryClient({
-      defaultOptions: {
-        queries: defaultQueryOptions,
-      },
-    });
     await queryClient.invalidateQueries({ queryKey: ["project"] });
 
     set({ project: refreshedProject });

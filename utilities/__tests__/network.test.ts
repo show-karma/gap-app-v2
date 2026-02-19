@@ -4,6 +4,7 @@ import {
   getChainIdByName,
   getChainNameById,
   getExplorerUrl,
+  PAYOUT_CHAINS,
 } from "../network";
 
 describe("network utilities", () => {
@@ -261,6 +262,42 @@ describe("network utilities", () => {
         const inAppNetwork = appNetwork.some((appChain) => appChain.id === gapChain.id);
         expect(inAppNetwork).toBe(true);
       });
+    });
+  });
+
+  describe("PAYOUT_CHAINS", () => {
+    it("should be a non-empty array", () => {
+      expect(Array.isArray(PAYOUT_CHAINS)).toBe(true);
+      expect(PAYOUT_CHAINS.length).toBeGreaterThan(0);
+    });
+
+    it("should include mainnet (ID 1) for donations", () => {
+      const hasMainnet = PAYOUT_CHAINS.some((chain) => chain.id === 1);
+      expect(hasMainnet).toBe(true);
+    });
+
+    it("should include all appNetwork chains", () => {
+      expect(PAYOUT_CHAINS.length).toBe(appNetwork.length);
+
+      appNetwork.forEach((appChain) => {
+        const inPayoutChains = PAYOUT_CHAINS.some((chain) => chain.id === appChain.id);
+        expect(inPayoutChains).toBe(true);
+      });
+    });
+
+    it("should include Optimism", () => {
+      const hasOptimism = PAYOUT_CHAINS.some((chain) => chain.id === 10);
+      expect(hasOptimism).toBe(true);
+    });
+
+    it("should include Arbitrum", () => {
+      const hasArbitrum = PAYOUT_CHAINS.some((chain) => chain.id === 42161);
+      expect(hasArbitrum).toBe(true);
+    });
+
+    it("should include Base", () => {
+      const hasBase = PAYOUT_CHAINS.some((chain) => chain.id === 8453);
+      expect(hasBase).toBe(true);
     });
   });
 

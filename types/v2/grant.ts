@@ -22,6 +22,7 @@ export interface GrantDetails {
   description?: string;
   proposalURL?: string;
   startDate?: string | null;
+  receivedDate?: string | null;
   payoutAddress?: string;
   questions?: any[];
   selectedTrackIds?: string[];

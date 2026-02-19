@@ -52,9 +52,9 @@ import {
 import type {
   GrantDisbursementInfo,
   GrantDisbursementRequest,
-  MilestoneAllocation,
   MilestoneBreakdown,
 } from "../types/payout-disbursement";
+import { getAllocationSelectionError } from "../utils/allocation-selection";
 import { calculateSelectedTotal, MilestoneSelectionStep } from "./MilestoneSelectionStep";
 
 export interface CreateDisbursementModalProps {
@@ -91,6 +91,9 @@ type DisbursementAmountsState = Record<string, string>;
 /** Validation errors for disbursement amounts per grant */
 type DisbursementValidationErrors = Record<string, string>;
 
+/** Validation errors for allocation selection per grant */
+type AllocationSelectionErrors = Record<string, string>;
+
 /** Token type selection */
 type TokenType = "usdc" | "native";
 
@@ -108,7 +111,7 @@ export function CreateDisbursementModal({
   const { address: userAddress, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
   const walletChainId = useChainId();
-  const { switchChainAsync, isPending: isSwitchingNetwork } = useWallet();
+  const { switchChainAsync } = useWallet();
 
   // LocalStorage key for persisting setup preferences (per community)
   const storageKey = `disbursement-setup-${communityUID}`;
@@ -218,6 +221,8 @@ export function CreateDisbursementModal({
   const [disbursementAmounts, setDisbursementAmounts] = useState<DisbursementAmountsState>({});
   const [disbursementValidationErrors, setDisbursementValidationErrors] =
     useState<DisbursementValidationErrors>({});
+  const [allocationSelectionErrors, setAllocationSelectionErrors] =
+    useState<AllocationSelectionErrors>({});
 
   // Selected allocation IDs per grant (for milestone allocation-based disbursements)
   const [selectedAllocationIds, setSelectedAllocationIds] = useState<Record<string, string[]>>({});
@@ -340,29 +345,6 @@ export function CreateDisbursementModal({
     return grants.filter((g) => g.milestones && g.milestones.length > 0);
   }, [grants]);
 
-  // Check if grant uses allocation-based payments (has milestone allocations configured)
-  const grantsWithAllocations = useMemo(() => {
-    return grants.filter((g) => g.milestoneAllocations && g.milestoneAllocations.length > 0);
-  }, [grants]);
-
-  // Helper to check if a grant uses allocation-based payments
-  const usesAllocationBasedPayment = useCallback(
-    (grantUID: string): boolean => {
-      return grantsWithAllocations.some((g) => g.grantUID === grantUID);
-    },
-    [grantsWithAllocations]
-  );
-
-  // Helper to get unpaid allocations for a grant
-  const getUnpaidAllocations = useCallback(
-    (grant: GrantDisbursementInfo): MilestoneAllocation[] => {
-      if (!grant.milestoneAllocations) return [];
-      const paidIds = new Set(grant.paidAllocationIds || []);
-      return grant.milestoneAllocations.filter((a) => !paidIds.has(a.id));
-    },
-    []
-  );
-
   // Handle allocation selection change
   const handleAllocationSelectionChange = useCallback(
     (grantUID: string, selectedIds: string[]) => {
@@ -370,6 +352,11 @@ export function CreateDisbursementModal({
         ...prev,
         [grantUID]: selectedIds,
       }));
+      setAllocationSelectionErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[grantUID];
+        return newErrors;
+      });
 
       // Auto-update disbursement amount based on selected allocations
       // Note: Allocation amounts are stored as human-readable values (e.g., "10" for 10 USDC)
@@ -508,6 +495,42 @@ export function CreateDisbursementModal({
     return allValid;
   }, [grantsWithMilestones, validateMilestoneBreakdown]);
 
+  const validateAllocationSelection = useCallback(
+    (grant: GrantDisbursementInfo): boolean => {
+      const error = getAllocationSelectionError({
+        milestoneAllocations: grant.milestoneAllocations || [],
+        selectedAllocationIds: selectedAllocationIds[grant.grantUID],
+      });
+
+      if (error) {
+        setAllocationSelectionErrors((prev) => ({
+          ...prev,
+          [grant.grantUID]: error,
+        }));
+        return false;
+      }
+
+      setAllocationSelectionErrors((prev) => {
+        if (!prev[grant.grantUID]) return prev;
+        const newErrors = { ...prev };
+        delete newErrors[grant.grantUID];
+        return newErrors;
+      });
+      return true;
+    },
+    [selectedAllocationIds]
+  );
+
+  const validateAllAllocationSelections = useCallback((): boolean => {
+    let allValid = true;
+    for (const grant of validGrants) {
+      if (!validateAllocationSelection(grant)) {
+        allValid = false;
+      }
+    }
+    return allValid;
+  }, [validGrants, validateAllocationSelection]);
+
   // Handle milestone amount change
   const handleMilestoneAmountChange = (grantUID: string, milestoneUID: string, amount: string) => {
     setMilestoneBreakdowns((prev) => ({
@@ -573,6 +596,7 @@ export function CreateDisbursementModal({
       setDisbursementAmounts({});
       setDisbursementValidationErrors({});
       setSelectedAllocationIds({});
+      setAllocationSelectionErrors({});
     }
   }, [isOpen, initialSafeAddress]);
 
@@ -683,6 +707,10 @@ export function CreateDisbursementModal({
   const validateCurrentProject = (): boolean => {
     if (!currentProject) return false;
 
+    if (!validateAllocationSelection(currentProject)) {
+      return false;
+    }
+
     // Validate disbursement amount
     if (!validateDisbursementAmount(currentProject.grantUID, currentProject.approvedAmount)) {
       return false;
@@ -731,6 +759,10 @@ export function CreateDisbursementModal({
       toast.error("Please fix milestone amount errors");
       return;
     }
+    if (!validateAllAllocationSelections()) {
+      toast.error("Please select at least one allocation for each configured grant");
+      return;
+    }
 
     setStep("preflight");
     runPreflightChecks();
@@ -739,6 +771,10 @@ export function CreateDisbursementModal({
   // Handle disbursement execution
   const handleExecuteDisbursement = async () => {
     if (!walletClient || !safeAddress || !userAddress || validGrants.length === 0) {
+      return;
+    }
+    if (!validateAllAllocationSelections()) {
+      toast.error("Please select at least one allocation for each configured grant");
       return;
     }
 
@@ -926,6 +962,7 @@ export function CreateDisbursementModal({
                           : "Create Disbursement"}
                   </Dialog.Title>
                   <button
+                    type="button"
                     onClick={onClose}
                     className="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"
                   >
@@ -1112,6 +1149,7 @@ export function CreateDisbursementModal({
                     }
                     milestoneSum={getMilestoneSum(currentProject.grantUID)}
                     milestoneError={milestoneValidationErrors[currentProject.grantUID]}
+                    allocationError={allocationSelectionErrors[currentProject.grantUID]}
                     isExpanded={expandedGrants.has(currentProject.grantUID)}
                     onToggleExpand={() => toggleGrantExpanded(currentProject.grantUID)}
                     onBack={handlePreviousProject}
@@ -1548,6 +1586,7 @@ function ProjectReviewStep({
   onMilestoneAmountChange,
   milestoneSum,
   milestoneError,
+  allocationError,
   isExpanded,
   onToggleExpand,
   onBack,
@@ -1573,6 +1612,7 @@ function ProjectReviewStep({
   onMilestoneAmountChange: (milestoneUID: string, amount: string) => void;
   milestoneSum: number;
   milestoneError?: string;
+  allocationError?: string;
   isExpanded: boolean;
   onToggleExpand: () => void;
   onBack: () => void;
@@ -1753,6 +1793,12 @@ function ProjectReviewStep({
             projectName={project.projectName}
             compact
           />
+          {allocationError && (
+            <div className="mt-2 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+              <ExclamationTriangleIcon className="h-4 w-4" />
+              {allocationError}
+            </div>
+          )}
         </div>
       )}
 

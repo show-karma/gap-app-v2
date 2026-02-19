@@ -20,7 +20,6 @@ import {
 } from "../constants/filter-options";
 import { useFundingFilters } from "../hooks/use-funding-filters";
 import { OnKarmaBadge } from "./on-karma-badge";
-import { OrganizationFilter } from "./organization-filter";
 
 interface FundingMapFiltersProps {
   totalCount?: number;
@@ -31,7 +30,6 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
     filters,
     setStatus,
     setOnlyOnKarma,
-    setOrganizationFilter,
     setCategories,
     setGrantTypes,
     toggleCategory,
@@ -46,8 +44,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
     filters.status !== "Active" ||
     filters.categories.length > 0 ||
     filters.grantTypes.length > 0 ||
-    !filters.onlyOnKarma ||
-    filters.organizationFilter !== null;
+    !filters.onlyOnKarma;
 
   return (
     <div className="flex w-full flex-wrap items-center justify-between gap-2 rounded-xl border border-border p-3">
@@ -80,7 +77,7 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
           >
             {filters.onlyOnKarma && <Check className="h-3 w-3 text-primary-foreground" />}
           </div>
-          <span className="text-xs font-medium text-foreground">On Karma</span>
+          <span className="text-xs font-medium text-foreground">Hosted on Karma</span>
           <OnKarmaBadge />
         </Badge>
 
@@ -105,8 +102,6 @@ export function FundingMapFilters({ totalCount = 0 }: FundingMapFiltersProps) {
             ))}
           </SelectContent>
         </Select>
-
-        <OrganizationFilter value={filters.organizationFilter} onChange={setOrganizationFilter} />
 
         <Popover.Root open={categoryOpen} onOpenChange={setCategoryOpen}>
           <div className="flex items-center">

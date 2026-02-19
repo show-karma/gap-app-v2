@@ -14,8 +14,9 @@ import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { getProjectGrants } from "@/services/project-grants.service";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
 import type { GrantMilestone } from "@/types/v2/grant";
 import fetchData from "@/utilities/fetchData";
@@ -28,6 +29,7 @@ import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { getCompletionData } from "./MilestoneDetails";
 import { UpdateMilestone } from "./UpdateMilestone";
+import { VerifiedBadge } from "./VerifiedBadge";
 
 interface UpdatesProps {
   milestone: GrantMilestone;
@@ -170,8 +172,8 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   };
 
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isCommunityAdmin = useIsCommunityAdmin();
+  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   // V2: verified is an array of verifications
   const [isVerified, setIsVerified] = useState<boolean>(
@@ -245,6 +247,12 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               <img className="h-4 w-4" alt="Update" src="/icons/alert-message-white.svg" />
               <p className="text-xs font-bold text-white">UPDATE</p>
             </div>
+            {isVerified && !isAuthorized && (
+              <VerifiedBadge
+                verifications={milestone.verified}
+                title={`${milestone.title} - Reviews`}
+              />
+            )}
           </div>
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-100">
             Completed on {formatDate(completionDateValue)}
@@ -289,6 +297,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                       milestone={milestone}
                       title={`${milestone.title} - Reviews`}
                       isVerified={isVerified}
+                      verifications={milestone.verified}
                       onVerified={markAsVerified}
                     />
                     <ExternalLink

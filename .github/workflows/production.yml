@@ -19,7 +19,7 @@ env:
 jobs:
   deploy:
     name: Deploy to Production
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Checkout (tag push)
         if: github.event_name == 'push'

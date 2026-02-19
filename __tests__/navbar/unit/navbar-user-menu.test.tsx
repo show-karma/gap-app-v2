@@ -13,9 +13,9 @@ import {
   createMockUseCommunitiesStore,
   createMockUseContributorProfileModalStore,
   createMockUseOwnerStore,
+  createMockUsePermissionsQuery,
   createMockUseRegistryStore,
   createMockUseReviewerPrograms,
-  createMockUseStaff,
   createMockUseTheme,
   renderWithProviders,
   resetMockAuthState,
@@ -88,10 +88,10 @@ describe("NavbarUserMenu", () => {
         mockUseReviewerPrograms: createMockUseReviewerPrograms(
           authFixture.permissions.reviewerPrograms
         ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
+        mockUsePermissionsQuery: createMockUsePermissionsQuery(authFixture.permissions.isStaff),
         mockUseOwnerStore: createMockUseOwnerStore(authFixture.permissions.isOwner),
         mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
+          authFixture.permissions.isProgramCreator,
           authFixture.permissions.isRegistryAdmin
         ),
         mockUseTheme: createMockUseTheme(),
@@ -142,9 +142,9 @@ describe("NavbarUserMenu", () => {
       expect(screen.getByText("Dark mode")).toBeInTheDocument();
     });
 
-    it('should display "My projects" link', async () => {
+    it('should display "Dashboard" link', async () => {
       await setupAuthAndOpenMenu("authenticated-basic");
-      expect(screen.getByText("My projects")).toBeInTheDocument();
+      expect(screen.getByText("Dashboard")).toBeInTheDocument();
     });
 
     it('should display "Log out" button', async () => {
@@ -263,9 +263,9 @@ describe("NavbarUserMenu", () => {
       expect(screen.queryByText("Review")).not.toBeInTheDocument();
     });
 
-    it('should show "Review" link when has reviewer programs', async () => {
+    it('should hide "Review" link when has reviewer programs', async () => {
       await setupAuthAndOpenMenu("reviewer-single");
-      expect(screen.getByText("Review")).toBeInTheDocument();
+      expect(screen.queryByText("Review")).not.toBeInTheDocument();
     });
   });
 
@@ -275,19 +275,19 @@ describe("NavbarUserMenu", () => {
       expect(screen.queryByText("Admin")).not.toBeInTheDocument();
     });
 
-    it('should show "Admin" link for staff', async () => {
+    it('should hide "Admin" link for staff', async () => {
       await setupAuthAndOpenMenu("staff");
-      expect(screen.getByText("Admin")).toBeInTheDocument();
+      expect(screen.queryByText("Admin")).not.toBeInTheDocument();
     });
 
-    it('should show "Admin" link for owner', async () => {
+    it('should hide "Admin" link for owner', async () => {
       await setupAuthAndOpenMenu("owner");
-      expect(screen.getByText("Admin")).toBeInTheDocument();
+      expect(screen.queryByText("Admin")).not.toBeInTheDocument();
     });
 
-    it('should show "Admin" link for community admin', async () => {
+    it('should hide "Admin" link for community admin', async () => {
       await setupAuthAndOpenMenu("community-admin-single");
-      expect(screen.getByText("Admin")).toBeInTheDocument();
+      expect(screen.queryByText("Admin")).not.toBeInTheDocument();
     });
   });
 
@@ -302,8 +302,8 @@ describe("NavbarUserMenu", () => {
       expect(screen.getByText("Manage Programs")).toBeInTheDocument();
     });
 
-    it('should show "Manage Programs" when isPoolManager', async () => {
-      await setupAuthAndOpenMenu("pool-manager");
+    it('should show "Manage Programs" when isProgramCreator', async () => {
+      await setupAuthAndOpenMenu("program-creator");
       expect(screen.getByText("Manage Programs")).toBeInTheDocument();
     });
   });

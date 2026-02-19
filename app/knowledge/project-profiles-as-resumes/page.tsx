@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Project Profiles as a Global Resume for Funded Work",
+  description:
+    "Why project profiles serve as global resumes for funded work, enabling teams to build portable, verifiable track records.",
+  path: "/knowledge/project-profiles-as-resumes",
+});
 
 export default function ProjectProfilesAsResumesPage() {
   return (
@@ -51,6 +60,8 @@ export default function ProjectProfilesAsResumesPage() {
           <p className="text-gray-700 dark:text-gray-300">
             <a
               href="https://www.karmahq.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Karma

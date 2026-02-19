@@ -23,8 +23,12 @@ jest.mock("next/navigation", () => ({
     programId: "prog-1_1",
     applicationId: "APP-001",
   })),
+  useSearchParams: jest.fn(() => ({
+    get: jest.fn(() => null),
+  })),
   useRouter: jest.fn(() => ({
     push: mockPush,
+    back: jest.fn(),
   })),
 }));
 
@@ -73,11 +77,15 @@ jest.mock("@/utilities/pages", () => ({
   PAGES: {
     REVIEWER: {
       APPLICATIONS: (communityId: string, programId: string) =>
-        `/community/${communityId}/reviewer/funding-platform/${programId}/applications`,
+        `/community/${communityId}/manage/funding-platform/${programId}/applications`,
     },
-    ADMIN: {
-      PROJECT_MILESTONES: (communityId: string, projectUID: string, programId: string) =>
-        `/community/${communityId}/admin/project/${projectUID}/milestones?programId=${programId}`,
+    MANAGE: {
+      FUNDING_PLATFORM: {
+        APPLICATIONS: (communityId: string, programId: string) =>
+          `/community/${communityId}/manage/funding-platform/${programId}/applications`,
+        MILESTONES: (communityId: string, programId: string, projectId: string) =>
+          `/community/${communityId}/manage/funding-platform/${programId}/milestones/${projectId}`,
+      },
     },
   },
 }));
@@ -118,6 +126,14 @@ jest.mock("@/hooks/useFundingPlatform", () => ({
   useApplicationVersions: jest.fn(() => ({
     versions: [],
   })),
+  useDeleteApplication: jest.fn(() => ({
+    deleteApplicationAsync: jest.fn(),
+    isDeleting: false,
+  })),
+  useApplicationUpdateV2: jest.fn(() => ({
+    updateApplicationAsync: jest.fn(),
+    isUpdating: false,
+  })),
 }));
 
 jest.mock("@/hooks/usePermissions", () => ({
@@ -125,6 +141,42 @@ jest.mock("@/hooks/usePermissions", () => ({
     hasPermission: true,
     isLoading: false,
   })),
+}));
+
+jest.mock("@/hooks/useKycStatus", () => ({
+  useKycStatus: jest.fn(() => ({
+    status: null,
+  })),
+  useKycConfig: jest.fn(() => ({
+    isEnabled: false,
+  })),
+}));
+
+jest.mock("@/src/core/rbac", () => {
+  const actual = jest.requireActual("@/src/core/rbac");
+  return {
+    ...actual,
+    useIsFundingPlatformAdmin: jest.fn(() => false),
+    FundingPlatformGuard: ({ children }: any) => children,
+    AdminOnly: ({ children }: any) => children,
+    Can: ({ children }: any) => children,
+  };
+});
+
+// Mock RBAC permission context
+jest.mock("@/src/core/rbac/context/permission-context", () => ({
+  usePermissionContext: jest.fn(() => ({
+    can: jest.fn(() => true),
+    canAny: jest.fn(() => true),
+    canAll: jest.fn(() => true),
+    hasRole: jest.fn(() => true),
+    hasRoleOrHigher: jest.fn(() => true),
+    isLoading: false,
+    roles: { primaryRole: "PROGRAM_REVIEWER", roles: ["PROGRAM_REVIEWER"] },
+    permissions: ["application:view_assigned", "application:review"],
+  })),
+  useIsReviewer: jest.fn(() => true),
+  useCan: jest.fn(() => true),
 }));
 
 // Mock UI components
@@ -300,8 +352,8 @@ jest.mock("@/components/FundingPlatform/ApplicationView/TabPanel", () => ({
     React.createElement("div", { "data-testid": "tab-panel" }, children),
 }));
 
-// Import the page component after mocks
-import ReviewerApplicationDetailPage from "@/app/community/[communityId]/reviewer/funding-platform/[programId]/applications/[applicationId]/page";
+// Import the page component after mocks (now uses unified manage route)
+import ReviewerApplicationDetailPage from "@/app/community/[communityId]/manage/funding-platform/[programId]/applications/[applicationId]/page";
 
 describe("Reviewer Status Change Functionality", () => {
   beforeEach(() => {
@@ -327,6 +379,25 @@ describe("Reviewer Status Change Functionality", () => {
       hasPermission: true,
       isLoading: false,
     });
+
+    // Reset RBAC context to default values
+    const {
+      usePermissionContext,
+      useIsReviewer,
+      useCan,
+    } = require("@/src/core/rbac/context/permission-context");
+    usePermissionContext.mockReturnValue({
+      can: jest.fn(() => true),
+      canAny: jest.fn(() => true),
+      canAll: jest.fn(() => true),
+      hasRole: jest.fn(() => true),
+      hasRoleOrHigher: jest.fn(() => true),
+      isLoading: false,
+      roles: { primaryRole: "PROGRAM_REVIEWER", roles: ["PROGRAM_REVIEWER"] },
+      permissions: ["application:view_assigned", "application:review"],
+    });
+    useIsReviewer.mockReturnValue(true);
+    useCan.mockReturnValue(true);
   });
 
   describe("Status Actions Rendering", () => {
@@ -501,23 +572,38 @@ describe("Reviewer Status Change Functionality", () => {
   });
 
   describe("Permission Checks", () => {
-    it("should not render page content when reviewer has no permission", () => {
-      const { usePermissions } = require("@/hooks/usePermissions");
-      usePermissions.mockReturnValue({
-        hasPermission: false,
+    it("should hide status actions when reviewer has no permission", () => {
+      // Mock RBAC context with no permissions
+      const { usePermissionContext } = require("@/src/core/rbac/context/permission-context");
+      usePermissionContext.mockReturnValue({
+        can: jest.fn(() => false),
+        canAny: jest.fn(() => false),
+        canAll: jest.fn(() => false),
+        hasRole: jest.fn(() => false),
+        hasRoleOrHigher: jest.fn(() => false),
         isLoading: false,
+        roles: { primaryRole: "GUEST", roles: ["GUEST"] },
+        permissions: [],
       });
 
       render(React.createElement(ReviewerApplicationDetailPage));
 
-      expect(screen.getByText(/don't have permission/i)).toBeInTheDocument();
+      expect(screen.getByTestId("application-header")).toBeInTheDocument();
+      expect(screen.queryByTestId("status-actions-container")).not.toBeInTheDocument();
     });
 
     it("should show loading spinner when permissions are loading", () => {
-      const { usePermissions } = require("@/hooks/usePermissions");
-      usePermissions.mockReturnValue({
-        hasPermission: false,
+      // Mock RBAC context with loading state
+      const { usePermissionContext } = require("@/src/core/rbac/context/permission-context");
+      usePermissionContext.mockReturnValue({
+        can: jest.fn(() => false),
+        canAny: jest.fn(() => false),
+        canAll: jest.fn(() => false),
+        hasRole: jest.fn(() => false),
+        hasRoleOrHigher: jest.fn(() => false),
         isLoading: true,
+        roles: { primaryRole: null, roles: [] },
+        permissions: [],
       });
 
       render(React.createElement(ReviewerApplicationDetailPage));
@@ -540,10 +626,26 @@ describe("Reviewer Status Change Functionality", () => {
   });
 
   describe("Reviewer Badge", () => {
-    it("should display Reviewer Access badge", () => {
+    it("should display reviewer mode badge", () => {
+      const {
+        usePermissionContext,
+        useCan,
+      } = require("@/src/core/rbac/context/permission-context");
+      usePermissionContext.mockReturnValue({
+        can: jest.fn(() => false),
+        canAny: jest.fn(() => false),
+        canAll: jest.fn(() => false),
+        hasRole: jest.fn(() => true),
+        hasRoleOrHigher: jest.fn(() => true),
+        isLoading: false,
+        roles: { primaryRole: "PROGRAM_REVIEWER", roles: ["PROGRAM_REVIEWER"] },
+        permissions: ["application:view_assigned", "application:review"],
+      });
+      useCan.mockReturnValue(false);
+
       render(React.createElement(ReviewerApplicationDetailPage));
 
-      expect(screen.getByText(/reviewer access/i)).toBeInTheDocument();
+      expect(screen.getByText(/reviewer mode/i)).toBeInTheDocument();
     });
   });
 

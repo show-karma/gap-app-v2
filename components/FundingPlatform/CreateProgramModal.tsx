@@ -8,6 +8,7 @@ import { useAccount } from "wagmi";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { MultiEmailInput } from "@/components/Utilities/MultiEmailInput";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,6 +27,7 @@ import { ProgramRegistryService } from "@/services/programRegistry.service";
 import type { CreateProgramFormData } from "@/types/program-registry";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
 
 interface CreateProgramModalProps {
   isOpen: boolean;
@@ -69,6 +71,8 @@ export function CreateProgramModal({
         endsAt: undefined,
       },
       budget: undefined,
+      adminEmails: [],
+      financeEmails: [],
     },
   });
 
@@ -90,11 +94,15 @@ export function CreateProgramModal({
 
     setIsSubmitting(true);
     try {
-      // Build metadata using service
+      // Build metadata using service (defaults to anyoneCanJoin: false for admin-created programs)
       const metadata = ProgramRegistryService.buildProgramMetadata(
         data as CreateProgramFormData,
         community
       );
+
+      // Add contact emails to metadata
+      metadata.adminEmails = data.adminEmails;
+      metadata.financeEmails = data.financeEmails;
 
       // Create program using service
       const result = await ProgramRegistryService.createProgram(
@@ -103,24 +111,15 @@ export function CreateProgramModal({
         metadata
       );
 
-      // Verify we got a valid programId - without it we can't proceed to setup
-      if (!result.programId) {
-        errorManager("Program creation returned empty programId", new Error("Missing programId"), {
-          address,
-          data,
-          result,
-        });
-        toast.error("Failed to create program. Please try again.");
-        return;
-      }
-
-      // For funding-platform flow, community admins always go to setup
-      // On-chain creation status doesn't affect the ability to configure the program
-      toast.success("Program created! Let's set it up.", { duration: 3000 });
+      toast.success("Program created successfully!", { duration: 3000 });
       reset();
       onSuccess();
       onClose();
-      router.push(`/community/${communityId}/admin/funding-platform/${result.programId}/setup`);
+
+      // Navigate to setup wizard if we have a programId
+      if (result?.programId) {
+        router.push(PAGES.MANAGE.FUNDING_PLATFORM.SETUP(communityId, result.programId));
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage?.includes("already exists")) {
@@ -337,6 +336,52 @@ export function CreateProgramModal({
               />
               {errors.budget && <p className="text-sm text-destructive">{errors.budget.message}</p>}
             </div>
+
+            {/* Admin Emails */}
+            <Controller
+              name="adminEmails"
+              control={control}
+              render={({ field, fieldState }) => (
+                <div className="flex w-full flex-col gap-1">
+                  <Label htmlFor="admin-emails">
+                    Admin Emails <span className="text-destructive">*</span>
+                  </Label>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Applicants will reply to these email addresses when responding to notifications
+                  </p>
+                  <MultiEmailInput
+                    emails={field.value}
+                    onChange={field.onChange}
+                    placeholder="Enter admin email"
+                    disabled={isSubmitting}
+                    error={fieldState.error?.message}
+                  />
+                </div>
+              )}
+            />
+
+            {/* Finance Emails */}
+            <Controller
+              name="financeEmails"
+              control={control}
+              render={({ field, fieldState }) => (
+                <div className="flex w-full flex-col gap-1">
+                  <Label htmlFor="finance-emails">
+                    Finance Emails <span className="text-destructive">*</span>
+                  </Label>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Finance team will be notified when milestones are verified
+                  </p>
+                  <MultiEmailInput
+                    emails={field.value}
+                    onChange={field.onChange}
+                    placeholder="Enter finance email"
+                    disabled={isSubmitting}
+                    error={fieldState.error?.message}
+                  />
+                </div>
+              )}
+            />
 
             {/* Actions */}
             <DialogFooter>

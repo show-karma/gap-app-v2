@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "Whitelabel Funding Platforms",
+  description:
+    "Why ecosystems run funding programs under their own brand using shared infrastructure. Learn about whitelabel funding platforms.",
+  path: "/knowledge/whitelabel-funding-platforms",
+});
 
 export default function WhitelabelFundingPlatformsPage() {
   return (
@@ -60,6 +69,8 @@ export default function WhitelabelFundingPlatformsPage() {
           <p className="text-gray-700 dark:text-gray-300">
             <a
               href="https://www.karmahq.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Karma

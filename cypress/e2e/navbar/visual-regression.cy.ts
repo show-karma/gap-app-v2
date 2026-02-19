@@ -8,6 +8,11 @@ import {
   waitForPageLoad,
 } from "../../support/intercepts";
 
+const visitHome = () => {
+  cy.visit("/", { timeout: 120000 });
+  waitForPageLoad();
+};
+
 describe("Navbar UI States", () => {
   beforeEach(() => {
     setupCommonIntercepts();
@@ -16,8 +21,7 @@ describe("Navbar UI States", () => {
   describe("Desktop Navbar Appearance", () => {
     beforeEach(() => {
       cy.viewport(1440, 900);
-      cy.visit("/");
-      waitForPageLoad();
+      visitHome();
     });
 
     it("should display navbar in default state", () => {
@@ -54,8 +58,7 @@ describe("Navbar UI States", () => {
   describe("Search UI States", () => {
     beforeEach(() => {
       cy.viewport(1440, 900);
-      cy.visit("/");
-      waitForPageLoad();
+      visitHome();
     });
 
     it("should display search input", () => {
@@ -71,8 +74,7 @@ describe("Navbar UI States", () => {
   describe("Button Interactions", () => {
     beforeEach(() => {
       cy.viewport(1440, 900);
-      cy.visit("/");
-      waitForPageLoad();
+      visitHome();
     });
 
     it("should show hover state on buttons", () => {
@@ -93,8 +95,7 @@ describe("Navbar UI States", () => {
   describe("Focus States", () => {
     beforeEach(() => {
       cy.viewport(1440, 900);
-      cy.visit("/");
-      waitForPageLoad();
+      visitHome();
     });
 
     it("should focus button with keyboard", () => {
@@ -111,8 +112,7 @@ describe("Navbar UI States", () => {
   describe("Tablet Appearance", () => {
     it("should display navbar on tablet", () => {
       cy.viewport(768, 1024);
-      cy.visit("/");
-      waitForPageLoad();
+      visitHome();
 
       cy.get("nav").should("be.visible");
     });
@@ -121,8 +121,7 @@ describe("Navbar UI States", () => {
   describe("Mobile Appearance", () => {
     beforeEach(() => {
       cy.viewport(375, 667);
-      cy.visit("/");
-      waitForPageLoad();
+      visitHome();
     });
 
     it("should display mobile navbar", () => {
@@ -140,8 +139,7 @@ describe("Navbar UI States", () => {
   describe("Auth Buttons Display", () => {
     it("should display Sign in button on desktop", () => {
       cy.viewport(1440, 900);
-      cy.visit("/");
-      waitForPageLoad();
+      visitHome();
 
       cy.contains("Sign in").should("be.visible");
       cy.contains("Contact sales").should("be.visible");
@@ -149,15 +147,11 @@ describe("Navbar UI States", () => {
 
     it("should display Sign in button on mobile", () => {
       cy.viewport(375, 667);
-      cy.visit("/");
-      waitForPageLoad();
+      visitHome();
 
-      // On mobile, the Sign in button is visible in the fixed header navbar
-      // Use the fixed positioning class to target the header nav specifically
-      // (the page may have multiple nav elements, e.g., footer nav)
-      cy.get("nav.fixed").within(() => {
-        cy.contains("button", "Sign in").should("be.visible");
-      });
+      // Desktop and mobile auth buttons are both rendered in DOM.
+      // Select only visible button to avoid matching hidden desktop element first.
+      cy.contains("button:visible", "Sign in").should("be.visible");
     });
   });
 });

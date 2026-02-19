@@ -86,12 +86,10 @@ describe("User Projects Service (V2)", () => {
       expect(result).toEqual([]);
     });
 
-    it("should return empty array when fetch fails", async () => {
+    it("should throw when fetch fails", async () => {
       (fetchData as jest.Mock).mockResolvedValue([null, "Unauthorized"]);
 
-      const result = await fetchMyProjects(mockAddress);
-
-      expect(result).toEqual([]);
+      await expect(fetchMyProjects(mockAddress)).rejects.toThrow("Unauthorized");
     });
 
     it("should handle custom page and limit", async () => {

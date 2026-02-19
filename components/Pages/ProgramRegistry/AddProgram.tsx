@@ -19,13 +19,14 @@ import { Twitter2Icon } from "@/components/Icons/Twitter2";
 import { Button } from "@/components/Utilities/Button";
 import { DateTimePicker } from "@/components/Utilities/DateTimePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { MultiEmailInput } from "@/components/Utilities/MultiEmailInput";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAttestationToast } from "@/hooks/useAttestationToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSetupChainAndWallet } from "@/hooks/useSetupChainAndWallet";
 import { useWallet } from "@/hooks/useWallet";
 import { getCommunities } from "@/services/communities.service";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
-import { useRegistryStore } from "@/store/registry";
 import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import fetchData from "@/utilities/fetchData";
@@ -126,6 +127,25 @@ const createProgramSchema = z.object({
     })
     .optional()
     .or(z.literal("")),
+  facebook: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
+  instagram: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
+  shortDescription: z
+    .string()
+    .max(100, { message: "Short description must be at most 100 characters" })
+    .optional()
+    .or(z.literal("")),
   amountDistributed: z.coerce.number().optional(),
   description: z
     .string({
@@ -146,19 +166,30 @@ const createProgramSchema = z.object({
   grantTypes: z.array(z.string()),
   platformsUsed: z.array(z.string()),
   communityRef: z.array(z.string()),
+  anyoneCanJoin: z.boolean(),
   status: z.string().optional().or(z.literal("Active")),
+  adminEmails: z
+    .array(z.string().email({ message: "Invalid email address" }))
+    .optional()
+    .default([]),
+  financeEmails: z
+    .array(z.string().email({ message: "Invalid email address" }))
+    .optional()
+    .default([]),
 });
 
-type CreateProgramType = z.infer<typeof createProgramSchema>;
+type ProgramFormData = z.infer<typeof createProgramSchema>;
 
 export default function AddProgram({
   programToEdit,
   backTo,
   refreshPrograms,
+  isAdmin = false,
 }: {
   programToEdit?: GrantProgram | null;
   backTo?: () => void;
   refreshPrograms?: () => Promise<void>;
+  isAdmin?: boolean;
 }) {
   const router = useRouter();
   const _supportedChains = appNetwork
@@ -192,13 +223,14 @@ export default function AddProgram({
     setValue,
     control,
     formState: { errors, isSubmitting, isValid },
-  } = useForm<CreateProgramType>({
+  } = useForm<ProgramFormData>({
     resolver: zodResolver(createProgramSchema),
     reValidateMode: "onChange",
     mode: "onChange",
     defaultValues: {
       name: programToEdit?.metadata?.title,
       description: programToEdit?.metadata?.description,
+      shortDescription: programToEdit?.metadata?.shortDescription || "",
       dates: {
         startsAt: programToEdit?.metadata?.startsAt
           ? new Date(programToEdit?.metadata?.startsAt)
@@ -220,6 +252,8 @@ export default function AddProgram({
       orgWebsite: programToEdit?.metadata?.socialLinks?.orgWebsite,
       blog: programToEdit?.metadata?.socialLinks?.blog,
       forum: programToEdit?.metadata?.socialLinks?.forum,
+      facebook: programToEdit?.metadata?.socialLinks?.facebook,
+      instagram: programToEdit?.metadata?.socialLinks?.instagram,
       categories: programToEdit?.metadata?.categories || [],
       ecosystems: programToEdit?.metadata?.ecosystems || [],
       organizations: programToEdit?.metadata?.organizations || [],
@@ -233,7 +267,12 @@ export default function AddProgram({
       grantsSite: programToEdit?.metadata?.socialLinks?.grantsSite,
       platformsUsed: programToEdit?.metadata?.platformsUsed || [],
       communityRef: programToEdit?.metadata?.communityRef || [],
+      // Default: public form = open enrollment (anyoneCanJoin: true).
+      // This diverges from admin form (CreateProgramModal) which defaults to restricted (anyoneCanJoin: false).
+      anyoneCanJoin: programToEdit?.metadata?.anyoneCanJoin ?? true,
       status: programToEdit?.metadata?.status || "Active",
+      adminEmails: programToEdit?.metadata?.adminEmails || [],
+      financeEmails: programToEdit?.metadata?.financeEmails || [],
     },
   });
 
@@ -273,9 +312,55 @@ export default function AddProgram({
   const { setupChainAndWallet } = useSetupChainAndWallet();
   const { changeStepperStep, setIsStepper } = useAttestationToast();
 
-  const { isRegistryAdmin } = useRegistryStore();
-
-  const createProgram = async (data: CreateProgramType) => {
+  // Metadata is constructed inline rather than via ProgramRegistryService.buildProgramMetadata()
+  // because this form has significantly more fields (social links, categories, ecosystems, etc.)
+  // than CreateProgramFormData supports. The service method is designed for the simpler
+  // CreateProgramModal form used in the funding-platform context.
+  const buildMetadata = (data: ProgramFormData) => ({
+    title: data.name,
+    description: data.description,
+    shortDescription: data.shortDescription || "",
+    programBudget: data.budget,
+    amountDistributedToDate: data.amountDistributed,
+    minGrantSize: data.minGrantSize,
+    maxGrantSize: data.maxGrantSize,
+    grantsToDate: data.grantsToDate,
+    startsAt: data.dates.startsAt,
+    endsAt: data.dates.endsAt,
+    website: data.website || "",
+    projectTwitter: data.twitter || "",
+    socialLinks: {
+      twitter: data.twitter || "",
+      website: data.website || "",
+      discord: data.discord || "",
+      orgWebsite: data.orgWebsite || "",
+      blog: data.blog || "",
+      forum: data.forum || "",
+      grantsSite: data.grantsSite || "",
+      telegram: data.telegram || "",
+      facebook: data.facebook || "",
+      instagram: data.instagram || "",
+    },
+    bugBounty: data.bugBounty,
+    categories: data.categories,
+    ecosystems: data.ecosystems,
+    organizations: data.organizations,
+    networks: data.networks,
+    grantTypes: data.grantTypes,
+    platformsUsed: data.platformsUsed,
+    logoImg: "",
+    bannerImg: "",
+    logoImgData: {},
+    bannerImgData: {},
+    credentials: {},
+    anyoneCanJoin: data.anyoneCanJoin,
+    type: "program",
+    tags: ["karma-gap", "grant-program-registry"],
+    communityRef: data.communityRef,
+    adminEmails: data.adminEmails,
+    financeEmails: data.financeEmails,
+  });
+  const createProgram = async (data: ProgramFormData) => {
     setIsLoading(true);
     try {
       if (!isConnected || !isAuth) {
@@ -284,45 +369,7 @@ export default function AddProgram({
       }
       const chainSelected = data.networkToCreate;
 
-      const metadata = {
-        title: data.name,
-        description: data.description,
-        programBudget: data.budget,
-        amountDistributedToDate: data.amountDistributed,
-        minGrantSize: data.minGrantSize,
-        maxGrantSize: data.maxGrantSize,
-        grantsToDate: data.grantsToDate,
-        startsAt: data.dates.startsAt,
-        endsAt: data.dates.endsAt,
-        website: data.website || "",
-        projectTwitter: data.twitter || "",
-        socialLinks: {
-          twitter: data.twitter || "",
-          website: data.website || "",
-          discord: data.discord || "",
-          orgWebsite: data.orgWebsite || "",
-          blog: data.blog || "",
-          forum: data.forum || "",
-          grantsSite: data.grantsSite || "",
-          telegram: data.telegram || "",
-        },
-        bugBounty: data.bugBounty,
-        categories: data.categories,
-        ecosystems: data.ecosystems,
-        organizations: data.organizations,
-        networks: data.networks,
-        grantTypes: data.grantTypes,
-        platformsUsed: data.platformsUsed,
-        logoImg: "",
-        bannerImg: "",
-        logoImgData: {},
-        bannerImgData: {},
-        credentials: {},
-        status: "Active",
-        type: "program",
-        tags: ["karma-gap", "grant-program-registry"],
-        communityRef: data.communityRef,
-      };
+      const metadata = { ...buildMetadata(data), status: "Active" };
 
       // Use V2 endpoint - owner comes from JWT session
       const [_request, error] = await fetchData(
@@ -372,7 +419,7 @@ export default function AddProgram({
     }
   };
 
-  const editProgram = async (data: CreateProgramType) => {
+  const editProgram = async (data: ProgramFormData) => {
     setIsLoading(true);
     try {
       // V2 update uses JWT authentication, no wallet connection needed
@@ -396,43 +443,8 @@ export default function AddProgram({
       const { walletSigner } = setup;
 
       const metadata = sanitizeObject({
-        title: data.name,
-        description: data.description,
-        programBudget: data.budget,
-        amountDistributedToDate: data.amountDistributed,
-        minGrantSize: data.minGrantSize,
-        maxGrantSize: data.maxGrantSize,
-        grantsToDate: data.grantsToDate,
-        startsAt: data.dates.startsAt,
-        endsAt: data.dates.endsAt,
-        website: data.website || "",
-        projectTwitter: data.twitter || "",
-        socialLinks: {
-          twitter: data.twitter || "",
-          website: data.website || "",
-          discord: data.discord || "",
-          orgWebsite: data.orgWebsite || "",
-          blog: data.blog || "",
-          forum: data.forum || "",
-          grantsSite: data.grantsSite || "",
-          telegram: data.telegram || "",
-        },
-        bugBounty: data.bugBounty,
-        categories: data.categories,
-        ecosystems: data.ecosystems,
-        organizations: data.organizations,
-        networks: data.networks,
-        grantTypes: data.grantTypes,
-        platformsUsed: data.platformsUsed,
-        logoImg: "",
-        bannerImg: "",
-        logoImgData: {},
-        bannerImgData: {},
-        credentials: {},
-        type: "program",
-        tags: ["karma-gap", "grant-program-registry"],
+        ...buildMetadata(data),
         status: data.status,
-        communityRef: data.communityRef,
       });
 
       // Always use V2 update endpoint (off-chain)
@@ -464,7 +476,7 @@ export default function AddProgram({
     }
   };
 
-  const onSubmit: SubmitHandler<CreateProgramType> = async (data, event) => {
+  const onSubmit: SubmitHandler<ProgramFormData> = async (data, event) => {
     event?.preventDefault();
     event?.stopPropagation();
 
@@ -530,7 +542,7 @@ export default function AddProgram({
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-grants-site" className={labelStyle}>
-                    Grants Site *
+                    Program website *
                   </label>
                   <input
                     id="program-grants-site"
@@ -549,7 +561,7 @@ export default function AddProgram({
                     render={({ field, formState }) => (
                       <div className="flex w-full flex-col gap-2">
                         <div className={labelStyle}>
-                          Start date (UTC)
+                          Start date{" "}
                           <span className="font-normal text-gray-500 dark:text-gray-400 ml-1">
                             (optional)
                           </span>
@@ -563,7 +575,7 @@ export default function AddProgram({
                             field.onChange(date);
                           }}
                           timeMode="start"
-                          placeholder="Pick a date (UTC)"
+                          placeholder="Pick a date"
                           buttonClassName="w-full text-base bg-white dark:bg-zinc-800"
                           clearButtonFn={() => {
                             setValue("dates.startsAt", undefined, {
@@ -586,7 +598,7 @@ export default function AddProgram({
                     render={({ field, formState }) => (
                       <div className="flex w-full flex-col gap-2">
                         <div className={labelStyle}>
-                          End date (UTC)
+                          End date{" "}
                           <span className="font-normal text-gray-500 dark:text-gray-400 ml-1">
                             (optional)
                           </span>
@@ -601,7 +613,7 @@ export default function AddProgram({
                           }}
                           timeMode="end"
                           minDate={watch("dates.startsAt")}
-                          placeholder="Pick a date (UTC)"
+                          placeholder="Pick a date"
                           buttonClassName="w-full text-base bg-white dark:bg-zinc-800"
                           clearButtonFn={() => {
                             setValue("dates.endsAt", undefined, {
@@ -616,6 +628,24 @@ export default function AddProgram({
                       </div>
                     )}
                   />
+                </div>
+              </div>
+              <div className="flex w-full flex-col max-w-full gap-1">
+                <label htmlFor="program-short-description" className={labelStyle}>
+                  One-line Description
+                </label>
+                <input
+                  id="program-short-description"
+                  className={inputStyle}
+                  placeholder="Brief description (max 100 characters)"
+                  maxLength={100}
+                  {...register("shortDescription")}
+                />
+                <div className="flex justify-between">
+                  <p className="text-base text-red-400">{errors.shortDescription?.message}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {watch("shortDescription")?.length || 0}/100
+                  </p>
                 </div>
               </div>
               <div className="flex w-full flex-col max-w-full gap-1">
@@ -634,6 +664,52 @@ export default function AddProgram({
                 />
                 <p className="text-base text-red-400">{errors.description?.message}</p>
               </div>
+              {isAdmin && (
+                <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
+                  <Controller
+                    name="adminEmails"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <div className="flex w-full flex-col gap-1">
+                        <label htmlFor="admin-emails" className={labelStyle}>
+                          Admin Emails *
+                        </label>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                          Applicants will reply to these emails
+                        </p>
+                        <MultiEmailInput
+                          emails={field.value || []}
+                          onChange={field.onChange}
+                          placeholder="Enter admin email"
+                          disabled={isLoading}
+                          error={fieldState.error?.message}
+                        />
+                      </div>
+                    )}
+                  />
+                  <Controller
+                    name="financeEmails"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <div className="flex w-full flex-col gap-1">
+                        <label htmlFor="finance-emails" className={labelStyle}>
+                          Finance Emails *
+                        </label>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                          Notified when milestones are verified
+                        </p>
+                        <MultiEmailInput
+                          emails={field.value || []}
+                          onChange={field.onChange}
+                          placeholder="Enter finance email"
+                          disabled={isLoading}
+                          error={fieldState.error?.message}
+                        />
+                      </div>
+                    )}
+                  />
+                </div>
+              )}
               <div className="grid grid-cols-4  max-sm:grid-cols-1 max-md:grid-cols-2 gap-4 justify-between">
                 <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-categories" className={labelStyle}>
@@ -678,23 +754,6 @@ export default function AddProgram({
                     canAdd
                   />
                   <p className="text-base text-red-400">{errors.ecosystems?.message}</p>
-                </div>
-                <div className="flex w-full flex-col  gap-1">
-                  <label htmlFor="program-networks" className={labelStyle}>
-                    Networks
-                  </label>
-
-                  <SearchDropdown
-                    list={registryHelper.networks}
-                    imageDictionary={registryHelper.networkImages}
-                    onSelectFunction={(value: string) => onChangeGeneric(value, "networks")}
-                    type={"Networks"}
-                    selected={watch("networks")}
-                    prefixUnselected="Select"
-                    buttonClassname="w-full max-w-full"
-                    canAdd
-                  />
-                  <p className="text-base text-red-400">{errors.networks?.message}</p>
                 </div>
                 <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-types" className={labelStyle}>
@@ -755,6 +814,23 @@ export default function AddProgram({
                     />
                   </div>
                 )}
+              </div>
+              <div className="flex items-center gap-3 mt-4">
+                <Checkbox
+                  id="open-enrollment"
+                  checked={watch("anyoneCanJoin")}
+                  onCheckedChange={(checked) => {
+                    setValue("anyoneCanJoin", checked === true, {
+                      shouldValidate: true,
+                    });
+                  }}
+                />
+                <label
+                  htmlFor="open-enrollment"
+                  className="text-sm font-medium text-gray-700 dark:text-zinc-200 cursor-pointer"
+                >
+                  Any project can self attest their participation in this program
+                </label>
               </div>
             </div>
 
@@ -945,6 +1021,40 @@ export default function AddProgram({
                   />
                 </div>
                 <p className="text-base text-red-400">{errors.telegram?.message}</p>
+              </div>
+              <div className="flex w-full flex-col gap-2 justify-between">
+                <label htmlFor="program-facebook" className={labelStyle}>
+                  Facebook
+                </label>
+                <div className="w-full relative">
+                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
+                    <WebsiteIcon className="text-zinc-500 w-4 h-4" />
+                  </div>
+                  <input
+                    className={cn(inputStyle, "pl-10 mt-0")}
+                    placeholder="Ex: https://facebook.com/program"
+                    id="program-facebook"
+                    {...register("facebook")}
+                  />
+                </div>
+                <p className="text-base text-red-400">{errors.facebook?.message}</p>
+              </div>
+              <div className="flex w-full flex-col gap-2 justify-between">
+                <label htmlFor="program-instagram" className={labelStyle}>
+                  Instagram
+                </label>
+                <div className="w-full relative">
+                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
+                    <WebsiteIcon className="text-zinc-500 w-4 h-4" />
+                  </div>
+                  <input
+                    className={cn(inputStyle, "pl-10 mt-0")}
+                    placeholder="Ex: https://instagram.com/program"
+                    id="program-instagram"
+                    {...register("instagram")}
+                  />
+                </div>
+                <p className="text-base text-red-400">{errors.instagram?.message}</p>
               </div>
             </div>
           </div>

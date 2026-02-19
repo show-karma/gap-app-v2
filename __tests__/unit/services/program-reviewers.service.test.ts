@@ -131,7 +131,6 @@ describe("programReviewersService", () => {
   describe("addReviewer", () => {
     it("should add a program reviewer successfully", async () => {
       const reviewerData: AddReviewerRequest = {
-        publicAddress: "0x1234567890123456789012345678901234567890",
         name: "Bob Reviewer",
         email: "bob@example.com",
         telegram: "@bobreviewer",
@@ -169,7 +168,6 @@ describe("programReviewersService", () => {
 
     it("should handle response without reviewer data", async () => {
       const reviewerData: AddReviewerRequest = {
-        publicAddress: "0x1234567890123456789012345678901234567890",
         name: "Carol Reviewer",
         email: "carol@example.com",
       };
@@ -178,8 +176,8 @@ describe("programReviewersService", () => {
 
       const result = await programReviewersService.addReviewer("program-1", reviewerData);
 
-      expect(result.publicAddress).toBe(reviewerData.publicAddress);
       expect(result.name).toBe(reviewerData.name);
+      expect(result.email).toBe(reviewerData.email);
       expect(result.assignedAt).toBeDefined();
     });
   });
@@ -203,12 +201,10 @@ describe("programReviewersService", () => {
     it("should add multiple reviewers successfully", async () => {
       const reviewers: AddReviewerRequest[] = [
         {
-          publicAddress: "0x1111111111111111111111111111111111111111",
           name: "Reviewer 1",
           email: "reviewer1@example.com",
         },
         {
-          publicAddress: "0x2222222222222222222222222222222222222222",
           name: "Reviewer 2",
           email: "reviewer2@example.com",
         },
@@ -242,12 +238,10 @@ describe("programReviewersService", () => {
     it("should handle partial failures", async () => {
       const reviewers: AddReviewerRequest[] = [
         {
-          publicAddress: "0x1111111111111111111111111111111111111111",
           name: "Reviewer 1",
           email: "reviewer1@example.com",
         },
         {
-          publicAddress: "invalid",
           name: "Reviewer 2",
           email: "reviewer2@example.com",
         },
@@ -297,7 +291,6 @@ describe("programReviewersService", () => {
   describe("validateReviewerData", () => {
     it("should validate correct reviewer data", () => {
       const data: AddReviewerRequest = {
-        publicAddress: "0x1234567890123456789012345678901234567890",
         name: "Valid User",
         email: "valid@example.com",
         telegram: "@validuser",
@@ -311,7 +304,6 @@ describe("programReviewersService", () => {
 
     it("should reject invalid data", () => {
       const data: AddReviewerRequest = {
-        publicAddress: "invalid",
         name: "",
         email: "invalid-email",
       };

@@ -177,6 +177,16 @@
       "linter": {
         "enabled": false
       }
+    },
+    {
+      "includes": ["**/components/Seo/**"],
+      "linter": {
+        "rules": {
+          "security": {
+            "noDangerouslySetInnerHtml": "off"
+          }
+        }
+      }
     }
   ],
   "assist": {

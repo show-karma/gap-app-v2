@@ -66,7 +66,7 @@ export function MilestoneSelectionStep({
   }, [allocations, paidIds]);
 
   // Calculate totals
-  // Note: Allocation amounts are passed as human-readable values (converted from smallest units by parent)
+  // Note: Allocation amounts are stored in human-readable format (e.g., "50000" for 50000 USDC)
   const { totalUnpaid, selectedTotal } = useMemo(() => {
     let unpaidSum = 0;
     let selectedSum = 0;
@@ -86,7 +86,7 @@ export function MilestoneSelectionStep({
   }, [unpaidAllocations, selectedAllocationIds]);
 
   // Format amount for display
-  // Note: Allocation amounts are passed as human-readable values (converted from smallest units by parent),
+  // Note: Allocation amounts are stored in human-readable format,
   // so we just format them nicely without additional conversion.
   const formatAmount = (amount: string): string => {
     const num = parseFloat(amount);
@@ -354,7 +354,7 @@ export function getPaidAllocationIds(disbursements: PayoutDisbursement[]): strin
 
 /**
  * Helper function to calculate the total amount from selected allocations.
- * Note: Allocation amounts should be passed as human-readable values (converted from smallest units).
+ * Note: Allocation amounts are stored in human-readable format (e.g., "50000" for 50000 USDC).
  * Returns the sum as a number (not bigint) since amounts can have decimals.
  */
 export function calculateSelectedTotal(

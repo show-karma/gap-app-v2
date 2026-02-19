@@ -1,5 +1,6 @@
 import toast from "react-hot-toast";
 import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import type { ProjectIndicatorResponse } from "@/types/indicator";
 import fetchData from "../fetchData";
 import { INDEXER } from "../indexer";
 import { MESSAGES } from "../messages";
@@ -74,6 +75,34 @@ export const sendMilestoneImpactAnswers = async (
 };
 
 /**
+ * Transform V2 milestone indicators response to ImpactIndicatorWithData[]
+ */
+function transformMilestoneIndicators(response: {
+  milestoneUID: string;
+  indicators: ProjectIndicatorResponse[];
+}): ImpactIndicatorWithData[] {
+  return response.indicators.map((indicator) => ({
+    id: indicator.id,
+    name: indicator.name,
+    description: indicator.description,
+    unitOfMeasure: indicator.unitOfMeasure,
+    programs: [],
+    datapoints: indicator.datapoints.map((dp) => ({
+      value: dp.value,
+      proof: dp.proof || "",
+      startDate: dp.startDate,
+      endDate: dp.endDate,
+      outputTimestamp: dp.startDate,
+      breakdown: dp.breakdown || undefined,
+      period: dp.period || undefined,
+    })),
+    hasData: indicator.hasData,
+    isAssociatedWithPrograms: false,
+    aggregatedData: indicator.aggregatedData,
+  }));
+}
+
+/**
  * Retrieves impact indicator data for a milestone
  *
  * @param milestoneUID - The milestone UID
@@ -84,7 +113,7 @@ export const getMilestoneImpactAnswers = async (
 ): Promise<ImpactIndicatorWithData[]> => {
   try {
     const [data, error] = await fetchData(
-      INDEXER.MILESTONE.IMPACT_INDICATORS.GET(milestoneUID),
+      INDEXER.INDICATORS.V2.MILESTONE_INDICATORS(milestoneUID),
       "GET"
     );
 
@@ -93,7 +122,7 @@ export const getMilestoneImpactAnswers = async (
       return [];
     }
 
-    return data || [];
+    return transformMilestoneIndicators(data);
   } catch (error) {
     console.error("Error fetching milestone impact data:", error);
     return [];

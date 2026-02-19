@@ -168,7 +168,7 @@ export function DonationCheckout() {
       return "Switch Chain";
     }
 
-    return "Review & Send Donations";
+    return "Review & Donate";
   }, [
     isSwitching,
     isFetchingPayouts,

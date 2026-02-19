@@ -2,13 +2,102 @@
 
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { watchAccount } from "@wagmi/core";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
+import { getCypressMockAuthState } from "@/utilities/auth/cypress-auth";
 import { TokenManager } from "@/utilities/auth/token-manager";
+import { PAGES } from "@/utilities/pages";
 import { queryClient } from "@/utilities/query-client";
-import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
+
+/**
+ * Initial delay (in ms) before first auth status check.
+ * Gives Privy a moment to initialize before we start checking.
+ */
+const AUTH_INIT_DELAY_MS = 500;
+
+/**
+ * Interval (in ms) for periodic auth status checks.
+ * Used for cross-tab logout synchronization.
+ *
+ * The interval can be short because TokenManager caches tokens for 30s,
+ * so most checks are cache hits (no Privy API call). Only ~2 actual API
+ * calls/min regardless of interval. Storage events provide instant detection.
+ */
+const AUTH_CHECK_INTERVAL_MS = 10_000;
+
+/**
+ * Number of consecutive failures (no token AND no session) required before logging out.
+ * This prevents false logouts during temporary network issues or slow token refresh.
+ * With a 500ms initial delay and checks every 10s, 3 failures = ~20s of no auth state.
+ * Storage events provide faster detection for cross-tab logouts.
+ */
+const AUTH_FAILURE_THRESHOLD = 3;
+
+/**
+ * Cookie name used by Privy for session persistence in HttpOnly mode.
+ * This is an implementation detail of Privy - if Privy changes this, the check may need updating.
+ * @see https://docs.privy.io/guide/react/configuration/cookies
+ */
+const PRIVY_SESSION_COOKIE_NAME = "privy-session";
+const POST_LOGIN_REDIRECT_KEY = "postLoginRedirect";
+
+export const setPostLoginRedirect = (url: string) => {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(POST_LOGIN_REDIRECT_KEY, url);
+};
+
+const getPostLoginRedirect = (): string | null => {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem(POST_LOGIN_REDIRECT_KEY);
+};
+
+const clearPostLoginRedirect = () => {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(POST_LOGIN_REDIRECT_KEY);
+};
+
+/**
+ * Check if privy-session cookie exists using proper cookie parsing.
+ * If session exists, user might be in the middle of token refresh (HttpOnly cookies mode).
+ */
+// Note: privy-session is a JS-readable indicator cookie, NOT HttpOnly.
+// Privy's HttpOnly cookies are separate and used for token refresh.
+// If this cookie is ever made HttpOnly, the check degrades gracefully —
+// the failure threshold alone still prevents false logouts.
+const hasPrivySession = () => {
+  if (typeof document === "undefined") return false;
+  return document.cookie
+    .split(";")
+    .some((c) => c.trim().startsWith(`${PRIVY_SESSION_COOKIE_NAME}=`));
+};
+
+/**
+ * Clear wagmi's persisted localStorage state.
+ * Wagmi persists wallet connection state (address, connector) to localStorage
+ * with the "wagmi" prefix. Without clearing this on logout, the next login
+ * will read stale wallet data from the previous user's session, causing
+ * address mismatches between Privy (correct) and wagmi (stale).
+ */
+const clearWagmiState = () => {
+  if (typeof window === "undefined") return;
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith("wagmi")) {
+        keysToRemove.push(key);
+      }
+    }
+    for (const key of keysToRemove) {
+      localStorage.removeItem(key);
+    }
+  } catch {
+    // Ignore localStorage errors (e.g., private browsing, storage full)
+  }
+};
 
 /**
  * Authentication hook that wraps Privy's built-in authentication
@@ -21,43 +110,75 @@ import { privyConfig } from "@/utilities/wagmi/privy-config";
  * - Wallet connections
  */
 export const useAuth = () => {
-  const { ready, authenticated, user, login, logout, getAccessToken } = usePrivy();
+  const { ready, authenticated, user, login, logout, getAccessToken, connectWallet } = usePrivy();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const { isConnected } = useAccount();
 
   const { wallets } = useWallets();
   const primaryWallet = wallets[0];
-  const address = primaryWallet?.address as Hex | undefined;
+  const cypressMockAuthState = useMemo(() => getCypressMockAuthState(), [ready, authenticated]);
+  const isCypressMockAuthenticated = Boolean(cypressMockAuthState?.authenticated);
+  const cypressMockAddress = cypressMockAuthState?.user?.wallet?.address as Hex | undefined;
+  const address = (primaryWallet?.address as Hex | undefined) || cypressMockAddress;
 
   const shouldLoginAfterLogout = useRef(false);
   const prevAuthRef = useRef(authenticated);
+  const prevUserIdRef = useRef<string | undefined>(user?.id);
+  const authFailureCount = useRef(0);
 
   /**
-   * AUTH CACHE INVALIDATION
+   * AUTH STATE CHANGE DETECTION
    *
-   * When user logs out, we must invalidate all permission/authorization query caches.
-   * This prevents stale "isAdmin: true" data from being served on re-login.
+   * Detects two critical transitions:
+   * 1. Logout (authenticated → false): Clear all query caches + token cache
+   * 2. User switch (user.id changes while authenticated): Clear stale caches
    *
-   * IMPORTANT: When creating new auth/permission hooks, add their query key here
-   * using the centralized QUERY_KEYS from utilities/queryKeys.ts:
-   * - useCheckCommunityAdmin → QUERY_KEYS.COMMUNITY.IS_ADMIN_BASE
-   * - useStaff → QUERY_KEYS.AUTH.STAFF_AUTHORIZATION_BASE
-   * - useContractOwner → QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE
+   * Uses queryClient.clear() instead of selective removeQueries to ensure
+   * ALL user-specific data is purged, not just a hardcoded list of keys.
    */
   useEffect(() => {
+    // Detect login: was not authenticated, now authenticated
+    if (!prevAuthRef.current && authenticated) {
+      // Only redirect if we're on the default landing page
+      if (pathname === "/") {
+        const redirectUrl = getPostLoginRedirect();
+        if (redirectUrl) {
+          router.push(redirectUrl);
+          clearPostLoginRedirect();
+        } else {
+          router.push(PAGES.DASHBOARD);
+        }
+      }
+    }
+
     // Detect logout: was authenticated, now not authenticated
     if (prevAuthRef.current && !authenticated) {
-      // Remove all permission/authorization queries on logout
-      // Using removeQueries because:
-      // - invalidateQueries triggers refetches → 401 errors
-      // - resetQueries also triggers refetches for active queries
-      // - removeQueries cleanly removes from cache without any refetch
-      queryClient.removeQueries({ queryKey: QUERY_KEYS.COMMUNITY.IS_ADMIN_BASE });
-      queryClient.removeQueries({ queryKey: QUERY_KEYS.AUTH.STAFF_AUTHORIZATION_BASE });
-      queryClient.removeQueries({ queryKey: QUERY_KEYS.AUTH.CONTRACT_OWNER_BASE });
+      // Clear ALL query caches on logout to prevent stale data on re-login.
+      // Using clear() instead of selective removeQueries because:
+      // - removeQueries only clears explicitly listed keys (easy to miss new ones)
+      // - clear() is safe on logout since unauthenticated state needs fresh data anyway
+      queryClient.clear();
+      TokenManager.clearCache();
+      clearWagmiState();
+      authFailureCount.current = 0;
     }
+
+    // Detect user switch: different user.id while still authenticated.
+    // This happens with Privy shared auth when a different user logs in
+    // on another subdomain — Privy seamlessly transitions without logout.
+    // Force logout to ensure full re-initialization with the new user's state.
+    if (authenticated && user?.id && prevUserIdRef.current && user.id !== prevUserIdRef.current) {
+      queryClient.clear();
+      TokenManager.clearCache();
+      clearWagmiState();
+      logout();
+    }
+
     prevAuthRef.current = authenticated;
-  }, [authenticated]);
+    prevUserIdRef.current = user?.id;
+  }, [authenticated, user?.id, logout]);
 
   // Initialize TokenManager with Privy synchronously
   // This must happen before any API calls are made, so we do it outside useEffect
@@ -74,29 +195,67 @@ export const useAuth = () => {
   }, [authenticated, ready, login]);
 
   // Cross-tab logout synchronization
+  // Compatible with both localStorage (default) and HttpOnly cookies
   useEffect(() => {
     if (!ready || !authenticated) return;
 
+    const handleAuthFailure = () => {
+      authFailureCount.current += 1;
+      if (authFailureCount.current >= AUTH_FAILURE_THRESHOLD) {
+        authFailureCount.current = 0;
+        logout();
+      }
+    };
+
     const checkAuthStatus = async () => {
-      const hasToken = await TokenManager.getToken();
-      if (!hasToken && authenticated) {
-        logout?.();
+      try {
+        const hasToken = await TokenManager.getToken();
+        const hasSession = hasPrivySession();
+
+        // If we have either a token or session, auth is valid - reset failure counter
+        if (hasToken || hasSession) {
+          authFailureCount.current = 0;
+          return;
+        }
+
+        // No token AND no session - increment failure counter
+        // Only logout after multiple consecutive failures to handle:
+        // - Slow network during token refresh
+        // - Temporary network hiccups
+        // - Privy initialization timing
+        handleAuthFailure();
+      } catch {
+        // Token check failed (network error, etc.) - treat as a failure
+        handleAuthFailure();
       }
     };
 
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "privy:token" && !e.newValue) {
+      if (e.key === "privy:token") {
+        // Token removed → cross-tab logout
+        // Token replaced → possible user switch (shared auth)
+        if (!e.newValue || (e.oldValue && e.newValue !== e.oldValue)) {
+          checkAuthStatus();
+        }
+      }
+      // User identity changed in another tab (e.g., shared auth login)
+      if (e.key === "privy:user" && e.oldValue !== e.newValue) {
         checkAuthStatus();
       }
     };
 
-    checkAuthStatus();
+    // Don't check immediately on mount - give time for token refresh.
+    // This prevents false logouts when using HttpOnly cookies.
+    // Note: Privy's `ready` state doesn't guarantee token refresh is complete,
+    // so we use a grace period as a workaround.
+    const initialCheckTimeout = setTimeout(checkAuthStatus, AUTH_INIT_DELAY_MS);
 
-    const intervalId = setInterval(checkAuthStatus, 5000);
+    const intervalId = setInterval(checkAuthStatus, AUTH_CHECK_INTERVAL_MS);
 
     window.addEventListener("storage", handleStorageChange);
 
     return () => {
+      clearTimeout(initialCheckTimeout);
       clearInterval(intervalId);
       window.removeEventListener("storage", handleStorageChange);
     };
@@ -130,6 +289,13 @@ export const useAuth = () => {
   }, [ready, authenticated, wallets, logout]);
 
   const adaptedLogin = useCallback(async () => {
+    if (typeof window !== "undefined" && !authenticated) {
+      const existingRedirect = getPostLoginRedirect();
+      if (!existingRedirect) {
+        setPostLoginRedirect(`${window.location.pathname}${window.location.hash}`);
+      }
+    }
+
     // If authenticated but wallet not connected, force logout first
     if (!isConnected && authenticated) {
       shouldLoginAfterLogout.current = true;
@@ -140,8 +306,11 @@ export const useAuth = () => {
   }, [isConnected, authenticated, logout, login]);
 
   const connectedAndAuth = useMemo(() => {
+    if (isCypressMockAuthenticated) {
+      return true;
+    }
     return isConnected && authenticated;
-  }, [isConnected, authenticated]);
+  }, [isCypressMockAuthenticated, isConnected, authenticated]);
 
   return {
     // Core authentication (Privy handles everything)
@@ -149,9 +318,9 @@ export const useAuth = () => {
     disconnect: logout, // Just use Privy's logout
 
     // State from Privy
-    ready,
+    ready: isCypressMockAuthenticated ? true : ready,
     authenticated: connectedAndAuth,
-    isConnected,
+    isConnected: isCypressMockAuthenticated ? true : isConnected,
     user,
     address,
     primaryWallet,
@@ -161,5 +330,6 @@ export const useAuth = () => {
     login: adaptedLogin,
     logout,
     getAccessToken,
+    connectWallet, // Connect wallet without full login
   };
 };

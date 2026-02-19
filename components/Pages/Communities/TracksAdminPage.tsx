@@ -307,14 +307,16 @@ export const TracksAdminPage = ({
               {isLoadingPrograms ? (
                 <option disabled>Loading programs...</option>
               ) : (
-                programs.map((program) => (
-                  <option
-                    key={`${program.programId}_${program.chainID}`}
-                    value={`${program.programId}_${program.chainID}`}
-                  >
-                    {program.metadata?.title}
-                  </option>
-                ))
+                programs
+                  .filter((program) => program.programId)
+                  .map((program) => (
+                    <option
+                      key={`${program.programId}_${program.chainID}`}
+                      value={`${program.programId}_${program.chainID}`}
+                    >
+                      {program.metadata?.title}
+                    </option>
+                  ))
               )}
             </select>
           </div>
@@ -352,7 +354,7 @@ export const TracksAdminPage = ({
                           className={cn(
                             "w-4 h-4 rounded-sm mr-3 flex items-center justify-center border",
                             selectedTrackIds.includes(track.id)
-                              ? ""
+                              ? "bg-brand-blue border-brand-blue"
                               : "border-gray-300 dark:border-zinc-600"
                           )}
                         >

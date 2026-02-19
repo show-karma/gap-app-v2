@@ -3,15 +3,44 @@
  * This is a thin wrapper around Privy's token methods
  * Privy handles token storage in cookies or localStorage automatically
  */
+interface PrivyTokenProvider {
+  getAccessToken?: () => Promise<string | null>;
+  logout?: () => Promise<void>;
+}
+
+/**
+ * Cache TTL for access tokens (in ms).
+ * With a 10s polling interval and 3-failure threshold, worst case stale
+ * data is ~50s (20s cache + 3×10s checks). Deduplicates burst API calls
+ * while keeping auth state reasonably fresh.
+ */
+const TOKEN_CACHE_TTL_MS = 20_000;
+
 export class TokenManager {
-  private static privyInstance: any = null;
+  private static privyInstance: PrivyTokenProvider | null = null;
+  private static cachedToken: string | null = null;
+  private static cacheExpiry = 0;
+  private static pendingRequest: Promise<string | null> | null = null;
 
   /**
    * Set the Privy instance to use for token operations
    * This should be called once when the app initializes
    */
-  static setPrivyInstance(privy: any): void {
+  static setPrivyInstance(privy: PrivyTokenProvider | null): void {
+    if (privy !== TokenManager.privyInstance) {
+      TokenManager.clearCache();
+    }
     TokenManager.privyInstance = privy;
+  }
+
+  /**
+   * Clear the token cache. Call this on logout or user switch
+   * to force fresh token retrieval on next request.
+   */
+  static clearCache(): void {
+    TokenManager.cachedToken = null;
+    TokenManager.cacheExpiry = 0;
+    TokenManager.pendingRequest = null;
   }
 
   /**
@@ -60,23 +89,44 @@ export class TokenManager {
 
   /**
    * Get the current access token from Privy
-   * This method now works on both client and server side
+   * This method now works on both client and server side.
+   *
+   * Client-side: Uses a 30s TTL cache + request deduplication to prevent
+   * excessive getAccessToken() calls from polling intervals + API interceptors.
    */
   static async getToken(): Promise<string | null> {
-    // Server-side: Use getServerToken
+    // Server-side: Use getServerToken (no caching needed)
     if (typeof window === "undefined") {
       return TokenManager.getServerToken();
     }
 
+    // Return cached token if still valid
+    if (TokenManager.cachedToken && Date.now() < TokenManager.cacheExpiry) {
+      return TokenManager.cachedToken;
+    }
+
+    // Deduplicate concurrent requests — if a request is already in-flight,
+    // return the same promise instead of making parallel getAccessToken() calls
+    if (TokenManager.pendingRequest) {
+      return TokenManager.pendingRequest;
+    }
+
     // Client-side: Use Privy instance
     if (TokenManager.privyInstance?.getAccessToken) {
-      try {
-        const token = await TokenManager.privyInstance.getAccessToken();
-        return token;
-      } catch (error) {
-        console.error("Failed to get Privy access token:", error);
-        return null;
-      }
+      TokenManager.pendingRequest = (async () => {
+        try {
+          const token = await TokenManager.privyInstance!.getAccessToken!();
+          TokenManager.cachedToken = token;
+          TokenManager.cacheExpiry = Date.now() + TOKEN_CACHE_TTL_MS;
+          return token;
+        } catch (error) {
+          console.error("Failed to get Privy access token:", error);
+          return null;
+        } finally {
+          TokenManager.pendingRequest = null;
+        }
+      })();
+      return TokenManager.pendingRequest;
     }
 
     // Fallback: Try to get from cookies if Privy stores there
@@ -107,6 +157,8 @@ export class TokenManager {
    * This is just a utility for edge cases
    */
   static async clearTokens(): Promise<void> {
+    TokenManager.clearCache();
+
     if (typeof window === "undefined") {
       // Server-side: can't clear cookies directly
       console.warn("clearTokens should be called client-side using Privy's logout method");

@@ -55,6 +55,48 @@ jest.mock("react-hot-toast", () => ({
   },
 }));
 
+// Mock MultiEmailInput to render a simple input + button for testing
+jest.mock("@/components/Utilities/MultiEmailInput", () => ({
+  MultiEmailInput: ({
+    emails,
+    onChange,
+    placeholder,
+    disabled,
+    error,
+  }: {
+    emails: string[];
+    onChange: (emails: string[]) => void;
+    placeholder?: string;
+    disabled?: boolean;
+    error?: string;
+  }) => {
+    const isAdmin = placeholder?.includes("admin");
+    const testId = isAdmin ? "admin" : "finance";
+    return (
+      <div>
+        <input
+          data-testid={`email-input-${testId}`}
+          placeholder={placeholder}
+          disabled={disabled}
+        />
+        <button
+          type="button"
+          data-testid={`add-email-${testId}`}
+          onClick={() => onChange([...emails, `test-${testId}@example.com`])}
+        >
+          Add
+        </button>
+        {emails.map((email: string) => (
+          <span key={email} data-testid={`email-tag-${testId}`}>
+            {email}
+          </span>
+        ))}
+        {error && <p className="text-sm text-destructive">{error}</p>}
+      </div>
+    );
+  },
+}));
+
 // Mock MarkdownEditor to render a simple textarea for testing
 jest.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({
@@ -512,6 +554,8 @@ describe("CreateProgramModal", () => {
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
       await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
+      await user.click(screen.getByTestId("add-email-admin"));
+      await user.click(screen.getByTestId("add-email-finance"));
 
       // Submit
       const submitButton = screen.getByRole("button", { name: /create program/i });
@@ -553,6 +597,8 @@ describe("CreateProgramModal", () => {
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
       await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
+      await user.click(screen.getByTestId("add-email-admin"));
+      await user.click(screen.getByTestId("add-email-finance"));
 
       // Submit
       const submitButton = screen.getByRole("button", { name: /create program/i });
@@ -586,30 +632,30 @@ describe("CreateProgramModal", () => {
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
       await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
+      await user.click(screen.getByTestId("add-email-admin"));
+      await user.click(screen.getByTestId("add-email-finance"));
 
       // Submit
       const submitButton = screen.getByRole("button", { name: /create program/i });
       await user.click(submitButton);
 
       await waitFor(() => {
-        // V2 API auto-approves if user is admin and redirects to setup wizard
-        expect(toast.success).toHaveBeenCalledWith("Program created! Let's set it up.", {
+        expect(toast.success).toHaveBeenCalledWith("Program created successfully!", {
           duration: 3000,
         });
         expect(mockOnSuccess).toHaveBeenCalled();
         expect(mockOnClose).toHaveBeenCalled();
         // Should redirect to setup wizard
         expect(mockPush).toHaveBeenCalledWith(
-          "/community/test-community/admin/funding-platform/program-123/setup"
+          "/community/test-community/manage/funding-platform/program-123/setup"
         );
       });
     });
 
-    it("should redirect to setup even when on-chain creation status is pending", async () => {
+    it("should succeed even when on-chain creation status is pending", async () => {
       const user = userEvent.setup();
-      mockPush.mockClear();
       // Even when requiresManualApproval is true (on-chain pending),
-      // funding-platform flow should redirect to setup
+      // funding-platform flow should show success and close
       (ProgramRegistryService.createProgram as jest.Mock).mockResolvedValue({
         programId: "program-123",
         success: true,
@@ -629,20 +675,22 @@ describe("CreateProgramModal", () => {
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
       await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
+      await user.click(screen.getByTestId("add-email-admin"));
+      await user.click(screen.getByTestId("add-email-finance"));
 
       // Submit
       const submitButton = screen.getByRole("button", { name: /create program/i });
       await user.click(submitButton);
 
       await waitFor(() => {
-        // Should show success message and redirect to setup regardless of approval status
-        expect(toast.success).toHaveBeenCalledWith("Program created! Let's set it up.", {
+        // Should show success message regardless of approval status
+        expect(toast.success).toHaveBeenCalledWith("Program created successfully!", {
           duration: 3000,
         });
         expect(mockOnSuccess).toHaveBeenCalled();
         expect(mockOnClose).toHaveBeenCalled();
         expect(mockPush).toHaveBeenCalledWith(
-          "/community/test-community/admin/funding-platform/program-123/setup"
+          "/community/test-community/manage/funding-platform/program-123/setup"
         );
       });
     });
@@ -666,6 +714,8 @@ describe("CreateProgramModal", () => {
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
       await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
+      await user.click(screen.getByTestId("add-email-admin"));
+      await user.click(screen.getByTestId("add-email-finance"));
 
       // Submit
       const submitButton = screen.getByRole("button", { name: /create program/i });
@@ -695,6 +745,8 @@ describe("CreateProgramModal", () => {
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
       await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
+      await user.click(screen.getByTestId("add-email-admin"));
+      await user.click(screen.getByTestId("add-email-finance"));
 
       // Submit
       const submitButton = screen.getByRole("button", { name: /create program/i });
@@ -720,6 +772,8 @@ describe("CreateProgramModal", () => {
       await user.type(nameInput, "Test Program");
       await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
+      await user.click(screen.getByTestId("add-email-admin"));
+      await user.click(screen.getByTestId("add-email-finance"));
 
       // Submit
       const submitButton = screen.getByRole("button", { name: /create program/i });
@@ -752,6 +806,8 @@ describe("CreateProgramModal", () => {
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
       await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
+      await user.click(screen.getByTestId("add-email-admin"));
+      await user.click(screen.getByTestId("add-email-finance"));
 
       // Submit
       const submitButton = screen.getByRole("button", { name: /create program/i });
@@ -781,6 +837,8 @@ describe("CreateProgramModal", () => {
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
       await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
+      await user.click(screen.getByTestId("add-email-admin"));
+      await user.click(screen.getByTestId("add-email-finance"));
 
       // Submit
       const submitButton = screen.getByRole("button", { name: /create program/i });
@@ -792,9 +850,10 @@ describe("CreateProgramModal", () => {
   });
 
   describe("Program Creation Flow", () => {
-    it("should show error if programId is missing from response", async () => {
+    it("should succeed even when programId is empty in response", async () => {
       const user = userEvent.setup();
-      mockPush.mockClear();
+      // BE may return empty response body due to Fastify serialization,
+      // resulting in empty programId - this should still be treated as success
       (ProgramRegistryService.createProgram as jest.Mock).mockResolvedValue({
         programId: "",
         success: true,
@@ -814,19 +873,20 @@ describe("CreateProgramModal", () => {
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
       await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
+      await user.click(screen.getByTestId("add-email-admin"));
+      await user.click(screen.getByTestId("add-email-finance"));
 
       // Submit
       const submitButton = screen.getByRole("button", { name: /create program/i });
       await user.click(submitButton);
 
       await waitFor(() => {
-        // Should show error when programId is missing
-        expect(toast.error).toHaveBeenCalledWith("Failed to create program. Please try again.");
-        // Should NOT show success or redirect
-        expect(toast.success).not.toHaveBeenCalled();
-        expect(mockOnSuccess).not.toHaveBeenCalled();
-        expect(mockOnClose).not.toHaveBeenCalled();
-        expect(mockPush).not.toHaveBeenCalled();
+        // Should succeed even with empty programId
+        expect(toast.success).toHaveBeenCalledWith("Program created successfully!", {
+          duration: 3000,
+        });
+        expect(mockOnSuccess).toHaveBeenCalled();
+        expect(mockOnClose).toHaveBeenCalled();
       });
     });
   });

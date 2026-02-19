@@ -10,7 +10,7 @@ on:
 
 jobs:
   e2e-tests:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
 
     steps:
@@ -45,6 +45,7 @@ jobs:
         run: pnpm run build
         env:
           NODE_ENV: production
+          NEXT_PUBLIC_E2E_AUTH_BYPASS: true
           NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.NEXT_PUBLIC_PRIVY_APP_ID }}
           NEXT_PUBLIC_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_PROJECT_ID }}
           NEXT_PUBLIC_GAP_INDEXER_URL: https://gapstagapi.karmahq.xyz
@@ -64,6 +65,7 @@ jobs:
         run: pnpm run e2e:ci
         env:
           NODE_ENV: production
+          NEXT_PUBLIC_E2E_AUTH_BYPASS: true
           CYPRESS_BASE_URL: http://localhost:3000
           CYPRESS_VIDEO: false
           CYPRESS_CI: true

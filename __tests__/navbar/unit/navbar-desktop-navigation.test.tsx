@@ -13,9 +13,9 @@ import {
   createMockUseCommunitiesStore,
   createMockUseContributorProfileModalStore,
   createMockUseOwnerStore,
+  createMockUsePermissionsQuery,
   createMockUseRegistryStore,
   createMockUseReviewerPrograms,
-  createMockUseStaff,
   createMockUseTheme,
   renderWithProviders,
   resetMockAuthState,
@@ -344,10 +344,10 @@ describe("NavbarDesktopNavigation", () => {
         mockUseReviewerPrograms: createMockUseReviewerPrograms(
           authFixture.permissions.reviewerPrograms
         ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
+        mockUsePermissionsQuery: createMockUsePermissionsQuery(authFixture.permissions.isStaff),
         mockUseOwnerStore: createMockUseOwnerStore(authFixture.permissions.isOwner),
         mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
+          authFixture.permissions.isProgramCreator,
           authFixture.permissions.isRegistryAdmin
         ),
         mockUseTheme: createMockUseTheme(),
@@ -356,7 +356,7 @@ describe("NavbarDesktopNavigation", () => {
 
       // When logged in, For Builders/Funders dropdowns are replaced with direct action buttons
       // and only Explore dropdown remains
-      expect(screen.getByRole("link", { name: /my projects/i })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /dashboard/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /explore/i })).toBeInTheDocument();
     });
   });

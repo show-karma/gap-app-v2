@@ -79,21 +79,19 @@ export function ProjectHeader({ project, isVerified = false, className }: Projec
 
                 {/* Name with verification badge and social links - spread apart */}
                 <div className="flex flex-row items-center justify-between flex-1 min-w-0 flex-wrap">
-                  <div className="flex flex-row items-center gap-2 flex-wrap">
-                    <h1
-                      className="text-xl font-bold leading-tight lg:text-2xl text-neutral-900 dark:text-white tracking-tight min-w-max"
-                      data-testid="project-title"
-                    >
-                      {project?.details?.title}
-                    </h1>
+                  <h1
+                    className="text-xl font-bold leading-tight lg:text-2xl text-neutral-900 dark:text-white tracking-tight"
+                    data-testid="project-title"
+                  >
+                    {project?.details?.title}
                     {isVerified && (
                       <VerificationBadge
-                        className="h-6 w-6"
+                        className="h-5 w-5 lg:h-6 lg:w-6 inline-block align-middle ml-2"
                         data-testid="verification-badge"
                         aria-label="Verified project"
                       />
                     )}
-                  </div>
+                  </h1>
                   {/* Social links - Desktop only, positioned at far right */}
                   <div
                     className="hidden lg:flex flex-row items-center gap-3"

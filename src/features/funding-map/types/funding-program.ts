@@ -15,6 +15,8 @@ export interface FundingProgramMetadata {
     orgWebsite?: string;
     grantsSite?: string;
     telegram?: string;
+    facebook?: string;
+    instagram?: string;
   };
   bugBounty?: string;
   bounties?: string[];
@@ -38,8 +40,11 @@ export interface FundingProgramMetadata {
   applicantsNumber?: number;
   amountDistributedToDate?: string;
   platformsUsed?: string[];
+  anyoneCanJoin?: boolean;
   status: string;
   communityRef?: string[];
+  adminEmails?: string[];
+  financeEmails?: string[];
 }
 
 /**

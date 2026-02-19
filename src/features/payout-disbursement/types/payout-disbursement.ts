@@ -241,7 +241,7 @@ export interface MilestoneAllocation {
   milestoneUID?: string;
   /** Human-readable label for this allocation */
   label: string;
-  /** Amount allocated in smallest token unit (wei-like) */
+  /** Amount allocated in human-readable format (e.g., "50000" for 50000 USDC) */
   amount: string;
 }
 
@@ -256,7 +256,7 @@ export interface PayoutConfigItem {
   /** Token contract address for payouts */
   tokenAddress?: string | null;
   /** Chain ID where the payout token is deployed */
-  chainId?: number | null;
+  chainID?: number | null;
   /** Breakdown of how the total grant amount is allocated across milestones */
   milestoneAllocations?: MilestoneAllocation[] | null;
 }
@@ -282,7 +282,7 @@ export interface PayoutGrantConfig {
   /** Token contract address for payouts */
   tokenAddress: string | null;
   /** Chain ID where the payout token is deployed */
-  chainId: number | null;
+  chainID: number | null;
   /** Breakdown of how the total grant amount is allocated across milestones */
   milestoneAllocations: MilestoneAllocation[] | null;
   createdBy: string;

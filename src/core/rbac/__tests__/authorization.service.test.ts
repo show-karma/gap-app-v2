@@ -1,0 +1,254 @@
+import fetchData from "@/utilities/fetchData";
+import { authorizationService } from "../services/authorization.service";
+import { ReviewerType, Role } from "../types/role";
+
+jest.mock("@/utilities/fetchData");
+
+const mockFetchData = fetchData as jest.MockedFunction<typeof fetchData>;
+
+describe("authorizationService", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe("getPermissions", () => {
+    it("should return default GUEST permissions on error", async () => {
+      mockFetchData.mockResolvedValue([null, "Error", null, 500]);
+
+      const result = await authorizationService.getPermissions();
+
+      expect(result.roles.primaryRole).toBe("GUEST");
+      expect(result.roles.roles).toContain("GUEST");
+      expect(result.permissions).toEqual([]);
+      expect(result.resourceContext).toEqual({});
+    });
+
+    it("should return parsed permissions from API response", async () => {
+      mockFetchData.mockResolvedValue([
+        {
+          roles: {
+            primaryRole: "PROGRAM_ADMIN",
+            roles: ["PROGRAM_ADMIN", "APPLICANT"],
+            reviewerTypes: [],
+          },
+          permissions: ["program:view", "program:edit", "application:view_all"],
+          resourceContext: {
+            programId: "program-123",
+          },
+          isCommunityAdmin: false,
+          isProgramAdmin: true,
+          isReviewer: false,
+          isRegistryAdmin: false,
+          isProgramCreator: false,
+        },
+        null,
+        null,
+        200,
+      ]);
+
+      const result = await authorizationService.getPermissions({
+        programId: "program-123",
+      });
+
+      expect(result.roles.primaryRole).toBe("PROGRAM_ADMIN");
+      expect(result.roles.roles).toContain("PROGRAM_ADMIN");
+      expect(result.roles.roles).toContain("APPLICANT");
+      expect(result.permissions).toContain("program:view");
+      expect(result.permissions).toContain("program:edit");
+      expect(result.resourceContext.programId).toBe("program-123");
+    });
+
+    it("should include reviewer types when present", async () => {
+      mockFetchData.mockResolvedValue([
+        {
+          roles: {
+            primaryRole: "PROGRAM_REVIEWER",
+            roles: ["PROGRAM_REVIEWER"],
+            reviewerTypes: ["PROGRAM"],
+          },
+          permissions: ["application:review", "application:view_assigned"],
+          resourceContext: {
+            programId: "program-123",
+          },
+          isCommunityAdmin: false,
+          isProgramAdmin: false,
+          isReviewer: true,
+          isRegistryAdmin: false,
+          isProgramCreator: false,
+        },
+        null,
+        null,
+        200,
+      ]);
+
+      const result = await authorizationService.getPermissions({
+        programId: "program-123",
+      });
+
+      expect(result.roles.reviewerTypes).toContain("PROGRAM");
+    });
+
+    it("should pass query parameters to API", async () => {
+      mockFetchData.mockResolvedValue([
+        {
+          roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
+          permissions: [],
+          resourceContext: {},
+          isCommunityAdmin: false,
+          isProgramAdmin: false,
+          isReviewer: false,
+          isRegistryAdmin: false,
+          isProgramCreator: false,
+        },
+        null,
+        null,
+        200,
+      ]);
+
+      await authorizationService.getPermissions({
+        communityId: "community-123",
+        programId: "program-456",
+        applicationId: "app-789",
+        milestoneId: "milestone-012",
+        chainId: 10,
+      });
+
+      expect(mockFetchData).toHaveBeenCalledWith(
+        expect.stringContaining("communityId=community-123")
+      );
+      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("programId=program-456"));
+      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("applicationId=app-789"));
+      expect(mockFetchData).toHaveBeenCalledWith(
+        expect.stringContaining("milestoneId=milestone-012")
+      );
+      expect(mockFetchData).toHaveBeenCalledWith(expect.stringContaining("chainId=10"));
+    });
+
+    it("should handle empty params", async () => {
+      mockFetchData.mockResolvedValue([
+        {
+          roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
+          permissions: ["community:view", "program:view"],
+          resourceContext: {},
+          isCommunityAdmin: false,
+          isProgramAdmin: false,
+          isReviewer: false,
+          isRegistryAdmin: false,
+          isProgramCreator: false,
+        },
+        null,
+        null,
+        200,
+      ]);
+
+      const result = await authorizationService.getPermissions();
+
+      expect(result.roles.primaryRole).toBe("GUEST");
+      expect(mockFetchData).toHaveBeenCalledWith("/v2/auth/permissions");
+    });
+
+    it("should return isReviewer flag from API response", async () => {
+      mockFetchData.mockResolvedValue([
+        {
+          roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
+          permissions: ["community:view", "program:view"],
+          resourceContext: { communityId: "optimism" },
+          isCommunityAdmin: false,
+          isProgramAdmin: false,
+          isReviewer: true,
+          isRegistryAdmin: false,
+          isProgramCreator: false,
+        },
+        null,
+        null,
+        200,
+      ]);
+
+      const result = await authorizationService.getPermissions({
+        communityId: "optimism",
+      });
+
+      expect(result.isReviewer).toBe(true);
+      expect(result.roles.primaryRole).toBe("GUEST");
+    });
+
+    it("should return boolean flags from API response", async () => {
+      mockFetchData.mockResolvedValue([
+        {
+          roles: {
+            primaryRole: "COMMUNITY_ADMIN",
+            roles: ["COMMUNITY_ADMIN"],
+            reviewerTypes: [],
+          },
+          permissions: ["community:view", "community:edit"],
+          resourceContext: { communityId: "optimism" },
+          isCommunityAdmin: true,
+          isProgramAdmin: false,
+          isReviewer: false,
+          isRegistryAdmin: false,
+          isProgramCreator: false,
+        },
+        null,
+        null,
+        200,
+      ]);
+
+      const result = await authorizationService.getPermissions({
+        communityId: "optimism",
+      });
+
+      expect(result.isCommunityAdmin).toBe(true);
+      expect(result.isProgramAdmin).toBe(false);
+      expect(result.isReviewer).toBe(false);
+      expect(result.roles.primaryRole).toBe("COMMUNITY_ADMIN");
+    });
+
+    it("should coerce missing boolean flags to false", async () => {
+      mockFetchData.mockResolvedValue([
+        {
+          roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
+          permissions: [],
+          resourceContext: {},
+          // Intentionally omit boolean flags to test strict coercion
+        },
+        null,
+        null,
+        200,
+      ]);
+
+      const result = await authorizationService.getPermissions();
+
+      expect(result.isCommunityAdmin).toBe(false);
+      expect(result.isProgramAdmin).toBe(false);
+      expect(result.isReviewer).toBe(false);
+      expect(result.isRegistryAdmin).toBe(false);
+      expect(result.isProgramCreator).toBe(false);
+    });
+
+    it("should coerce truthy non-boolean values to false", async () => {
+      mockFetchData.mockResolvedValue([
+        {
+          roles: { primaryRole: "GUEST", roles: ["GUEST"], reviewerTypes: [] },
+          permissions: [],
+          resourceContext: {},
+          isCommunityAdmin: "yes" as unknown as boolean,
+          isProgramAdmin: 1 as unknown as boolean,
+          isReviewer: {} as unknown as boolean,
+          isRegistryAdmin: null as unknown as boolean,
+          isProgramCreator: undefined as unknown as boolean,
+        },
+        null,
+        null,
+        200,
+      ]);
+
+      const result = await authorizationService.getPermissions();
+
+      expect(result.isCommunityAdmin).toBe(false);
+      expect(result.isProgramAdmin).toBe(false);
+      expect(result.isReviewer).toBe(false);
+      expect(result.isRegistryAdmin).toBe(false);
+      expect(result.isProgramCreator).toBe(false);
+    });
+  });
+});

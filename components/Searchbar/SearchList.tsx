@@ -3,11 +3,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
-import type { UnifiedSearchResponse } from "@/services/unified-search.service";
+import type {
+  SearchCommunityResult,
+  SearchProjectResult,
+  UnifiedSearchResponse,
+} from "@/services/unified-search.service";
 import { useMobileStore } from "@/store/mobile";
-import type { Community } from "@/types/v2/community";
-import type { Project as ProjectResponse } from "@/types/v2/project";
-import { groupSimilarCommunities } from "@/utilities/communityHelpers";
 import { PAGES } from "@/utilities/pages";
 import { ProfilePicture } from "../Utilities/ProfilePicture";
 /* eslint-disable @next/next/no-img-element */
@@ -77,15 +78,15 @@ export const SearchList: React.FC<Props> = ({
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
   const renderItem = (
-    item: ProjectResponse | Community,
+    item: SearchProjectResult | SearchCommunityResult,
     title: string,
     href: string,
     type: "project" | "community"
   ) => {
     const imageURL =
       type === "project"
-        ? (item as ProjectResponse).details?.logoUrl
-        : (item as Community).details?.imageURL;
+        ? (item as SearchProjectResult).details?.logoUrl
+        : (item as SearchCommunityResult).details?.imageURL;
 
     return (
       <button
@@ -121,8 +122,6 @@ export const SearchList: React.FC<Props> = ({
     );
   };
 
-  const groupedCommunities = groupSimilarCommunities(data.communities as Community[]);
-
   return (
     isOpen && (
       <div
@@ -133,8 +132,8 @@ export const SearchList: React.FC<Props> = ({
         onTouchStart={() => onInteractionStart?.()}
         onTouchEnd={() => onInteractionEnd?.()}
       >
-        {groupedCommunities.length > 0 &&
-          groupedCommunities.map((community) =>
+        {data.communities.length > 0 &&
+          data.communities.map((community) =>
             renderItem(
               community,
               community.details?.name || "Untitled Community",
@@ -146,7 +145,7 @@ export const SearchList: React.FC<Props> = ({
         {data.projects.length > 0 &&
           data.projects.map((project) =>
             renderItem(
-              project as ProjectResponse,
+              project,
               project.details?.title || "Untitled Project",
               PAGES.PROJECT.GRANTS(project.details?.slug || project.uid),
               "project"

@@ -166,6 +166,26 @@ describe("transformGrantsToMilestones", () => {
     });
   });
 
+  it("should use receivedDate when available", () => {
+    const grantWithReceivedDate: Grant = {
+      ...mockGrant,
+      details: {
+        ...mockGrant.details,
+        receivedDate: "2024-01-25T10:00:00Z",
+      },
+      createdAt: "2024-01-20T10:00:00Z",
+    };
+
+    const result = transformGrantsToMilestones([grantWithReceivedDate]);
+
+    expect(result[0].createdAt).toBe("2024-01-25T10:00:00Z");
+  });
+
+  it("should fallback to createdAt when receivedDate is missing", () => {
+    const result = transformGrantsToMilestones([mockGrant]);
+    expect(result[0].createdAt).toBe("2024-01-20T10:00:00Z");
+  });
+
   it("should use default title when grant title is missing", () => {
     const grantNoTitle: Grant = {
       ...mockGrant,

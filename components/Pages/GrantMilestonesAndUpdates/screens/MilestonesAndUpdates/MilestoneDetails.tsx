@@ -1,8 +1,8 @@
 "use client";
 
 import type { FC } from "react";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import type { GrantMilestone } from "@/types/v2/grant";
 import { formatDate, normalizeTimestamp } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
@@ -127,10 +127,11 @@ interface MilestoneDetailsProps {
 }
 
 export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }) => {
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isCommunityAdmin = useIsCommunityAdmin();
+  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   // Get normalized completion data (handles both object and array formats)
   const completionData = getCompletionData(milestone);

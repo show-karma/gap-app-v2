@@ -19,19 +19,4 @@ export const programService = {
       throw error;
     }
   },
-
-  // Get a specific program by ID
-  getProgram: async (programId: string): Promise<GrantProgram> => {
-    try {
-      const [data, error] = await fetchData(INDEXER.PROGRAMS.GET(programId));
-      if (error) {
-        throw new Error(error);
-      }
-
-      return data as GrantProgram;
-    } catch (error: any) {
-      errorManager(`Error fetching program ${programId}`, error);
-      throw error;
-    }
-  },
 };

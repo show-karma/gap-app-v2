@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PayoutConfigurationModal } from "../components/PayoutConfigurationModal";
 import type { PayoutGrantConfig } from "../types/payout-disbursement";
@@ -29,13 +29,6 @@ jest.mock("../hooks/use-payout-disbursement", () => ({
 // Mock viem
 jest.mock("viem", () => ({
   isAddress: jest.fn((addr: string) => addr.startsWith("0x") && addr.length === 42),
-  parseUnits: jest.fn((value: string, decimals: number) => {
-    const num = parseFloat(value);
-    return BigInt(Math.round(num * 10 ** decimals));
-  }),
-  formatUnits: jest.fn((value: bigint, decimals: number) => {
-    return (Number(value) / 10 ** decimals).toString();
-  }),
 }));
 
 // Mock toast
@@ -54,8 +47,6 @@ Object.defineProperty(global, "crypto", {
   value: { randomUUID: mockUUID },
 });
 
-import toast from "react-hot-toast";
-import { formatUnits, parseUnits } from "viem";
 // Import mocks after jest.mock calls
 import { useGrantMilestones, usePayoutConfigByGrant } from "../hooks/use-payout-disbursement";
 
@@ -152,12 +143,12 @@ describe("PayoutConfigurationModal", () => {
       projectUID: "project-456",
       communityUID: "community-789",
       payoutAddress: "0x1234567890123456789012345678901234567890",
-      totalGrantAmount: "100000000", // 100 USDC in smallest units (6 decimals)
+      totalGrantAmount: "100.50", // Human-readable format
       tokenAddress: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", // Optimism USDC
-      chainId: 10,
+      chainID: 10,
       milestoneAllocations: [
-        { id: "alloc-1", label: "First payment", amount: "30000000" }, // 30 USDC
-        { id: "alloc-2", label: "Final payment", amount: "70000000" }, // 70 USDC
+        { id: "alloc-1", label: "First payment", amount: "30" },
+        { id: "alloc-2", label: "Final payment", amount: "70.50" },
       ],
       createdBy: "0xadmin",
       updatedBy: null,
@@ -179,12 +170,9 @@ describe("PayoutConfigurationModal", () => {
         const addressInput = screen.getByLabelText("Payout Address") as HTMLInputElement;
         expect(addressInput.value).toBe("0x1234567890123456789012345678901234567890");
       });
-
-      // Check that formatUnits was called to convert amounts
-      expect(formatUnits).toHaveBeenCalled();
     });
 
-    it("should convert smallest unit amounts to human-readable on load", async () => {
+    it("should load total grant amount directly without conversion", async () => {
       mockedUsePayoutConfigByGrant.mockReturnValue({
         data: existingConfig,
         isLoading: false,
@@ -194,9 +182,9 @@ describe("PayoutConfigurationModal", () => {
         wrapper: createWrapper(),
       });
 
-      // formatUnits should be called for totalGrantAmount conversion
       await waitFor(() => {
-        expect(formatUnits).toHaveBeenCalledWith(BigInt("100000000"), 6);
+        const amountInput = screen.getByLabelText("Total Grant Amount") as HTMLInputElement;
+        expect(amountInput.value).toBe("100.50");
       });
     });
   });
@@ -289,6 +277,87 @@ describe("PayoutConfigurationModal", () => {
     });
   });
 
+  describe("custom line items", () => {
+    it("should add a custom line item and allow editing description and amount", async () => {
+      const user = userEvent.setup();
+
+      render(<PayoutConfigurationModal {...defaultProps} />, {
+        wrapper: createWrapper(),
+      });
+
+      await user.click(screen.getByRole("button", { name: "Add custom line item" }));
+
+      const descriptionInput = screen.getByLabelText("Custom line item description");
+      const amountInput = screen.getByLabelText("Custom line item amount");
+
+      await user.type(descriptionInput, "Test Payment");
+      await user.type(amountInput, "1");
+
+      expect((descriptionInput as HTMLInputElement).value).toBe("Test Payment");
+      expect((amountInput as HTMLInputElement).value).toBe("1");
+    });
+
+    it("should remove a custom line item", async () => {
+      const user = userEvent.setup();
+
+      render(<PayoutConfigurationModal {...defaultProps} />, {
+        wrapper: createWrapper(),
+      });
+
+      await user.click(screen.getByRole("button", { name: "Add custom line item" }));
+      await user.type(screen.getByLabelText("Custom line item description"), "One-off payment");
+
+      await user.click(screen.getByRole("button", { name: "Remove custom line item" }));
+
+      expect(screen.queryByLabelText("Custom line item description")).not.toBeInTheDocument();
+    });
+
+    it("should include custom line item in save payload", async () => {
+      const user = userEvent.setup();
+
+      render(<PayoutConfigurationModal {...defaultProps} />, {
+        wrapper: createWrapper(),
+      });
+
+      await user.click(screen.getByRole("button", { name: "Add custom line item" }));
+      await user.type(screen.getByLabelText("Custom line item description"), "Test Payment");
+      await user.type(screen.getByLabelText("Custom line item amount"), "1");
+
+      await user.click(screen.getByRole("button", { name: "Save Configuration" }));
+
+      await waitFor(() => {
+        expect(mockMutateAsync).toHaveBeenCalled();
+      });
+
+      const callArg = mockMutateAsync.mock.calls[0][0];
+      expect(callArg.configs[0].milestoneAllocations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            label: "Test Payment",
+            amount: "1",
+          }),
+        ])
+      );
+    });
+
+    it("should require description for custom line item before saving", async () => {
+      const user = userEvent.setup();
+
+      render(<PayoutConfigurationModal {...defaultProps} />, {
+        wrapper: createWrapper(),
+      });
+
+      await user.click(screen.getByRole("button", { name: "Add custom line item" }));
+      await user.type(screen.getByLabelText("Custom line item amount"), "1");
+      await user.click(screen.getByRole("button", { name: "Save Configuration" }));
+
+      await waitFor(() => {
+        expect(screen.getByText("Description is required")).toBeInTheDocument();
+      });
+      expect(mockMutateAsync).not.toHaveBeenCalled();
+    });
+  });
+
   describe("form submission", () => {
     it("should call save mutation when save button is clicked", async () => {
       const user = userEvent.setup();
@@ -356,7 +425,7 @@ describe("PayoutConfigurationModal", () => {
       expect(tokenSelect.value).toBe("usdc");
     });
 
-    it("should show custom token address input when custom is selected", async () => {
+    it("should allow selecting native token", async () => {
       const user = userEvent.setup();
 
       render(<PayoutConfigurationModal {...defaultProps} />, {
@@ -364,30 +433,23 @@ describe("PayoutConfigurationModal", () => {
       });
 
       const tokenSelect = screen.getByLabelText("Token");
-      await user.selectOptions(tokenSelect, "custom");
+      await user.selectOptions(tokenSelect, "native");
 
       await waitFor(() => {
-        expect(screen.getByLabelText("Custom Token Address")).toBeInTheDocument();
+        expect((tokenSelect as HTMLSelectElement).value).toBe("native");
       });
     });
 
-    it("should validate custom token address", async () => {
-      const user = userEvent.setup();
-
+    it("should not have custom token option", () => {
       render(<PayoutConfigurationModal {...defaultProps} />, {
         wrapper: createWrapper(),
       });
 
-      const tokenSelect = screen.getByLabelText("Token");
-      await user.selectOptions(tokenSelect, "custom");
-
-      const customTokenInput = screen.getByLabelText("Custom Token Address");
-      await user.type(customTokenInput, "invalid");
-      await user.tab();
-
-      await waitFor(() => {
-        expect(screen.getByText("Invalid token address")).toBeInTheDocument();
-      });
+      const tokenSelect = screen.getByLabelText("Token") as HTMLSelectElement;
+      const options = Array.from(tokenSelect.options).map((opt) => opt.value);
+      expect(options).toContain("usdc");
+      expect(options).toContain("native");
+      expect(options).not.toContain("custom");
     });
   });
 

@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { getProjectUpdates } from "@/services/project-updates.service";
 import type {
   GrantMilestoneWithDetails,
@@ -9,6 +8,7 @@ import type {
   UnifiedMilestone,
   UpdatesApiResponse,
 } from "@/types/v2/roadmap";
+import { queryClient } from "@/utilities/query-client";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 /**
@@ -57,7 +57,7 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
   // Convert project milestones to unified format
   data.projectMilestones.forEach((milestone: ProjectMilestone) => {
     // A milestone is completed if status is "completed" (completionDetails may or may not be present)
-    const isCompleted = milestone.status === "completed";
+    const isCompleted = milestone.status === "completed" || milestone.status === "verified";
     // Use recipient from API (the milestone owner)
     const attester = milestone.recipient || "";
 
@@ -103,7 +103,7 @@ const convertToUnifiedMilestones = (data: UpdatesApiResponse): UnifiedMilestone[
   // Convert grant milestones to unified format
   data.grantMilestones.forEach((milestone: GrantMilestoneWithDetails) => {
     // A milestone is completed if status is "completed" (completionDetails may or may not be present)
-    const isCompleted = milestone.status === "completed";
+    const isCompleted = milestone.status === "completed" || milestone.status === "verified";
     // Use recipient from API (the milestone owner), with extensive fallbacks
     // The API may include additional fields not in the type definition
     const milestoneAny = milestone as any;

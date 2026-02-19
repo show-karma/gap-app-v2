@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { customMetadata } from "@/utilities/meta";
+
+export const metadata: Metadata = customMetadata({
+  title: "How Funders Use Project Profiles to Evaluate Work",
+  description:
+    "How funders evaluate projects based on execution history, not just proposals. Learn how project profiles support funding decisions.",
+  path: "/knowledge/how-funders-use-project-profiles",
+});
 
 export default function HowFundersUseProjectProfilesPage() {
   return (
@@ -50,6 +59,8 @@ export default function HowFundersUseProjectProfilesPage() {
           <p className="text-gray-700 dark:text-gray-300">
             <a
               href="https://www.karmahq.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 hover:underline dark:text-blue-400"
             >
               Karma

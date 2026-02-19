@@ -23,17 +23,15 @@ interface GrantDetailLayoutProps {
   children: React.ReactNode;
 }
 
-type GrantTab = "overview" | "milestones-and-updates" | "impact-criteria";
+type GrantTab = "overview" | "milestones-and-updates";
 
 const tabs: { name: string; tabName: GrantTab }[] = [
   { name: "Overview", tabName: "overview" },
   { name: "Milestones and Updates", tabName: "milestones-and-updates" },
-  { name: "Impact Criteria", tabName: "impact-criteria" },
 ];
 
 function getActiveTab(pathname: string): GrantTab {
   if (pathname.endsWith("/milestones-and-updates")) return "milestones-and-updates";
-  if (pathname.endsWith("/impact-criteria")) return "impact-criteria";
   return "overview";
 }
 
@@ -48,11 +46,11 @@ export function GrantDetailLayout({ children }: GrantDetailLayoutProps) {
 
   const { grant, setGrant, loading, setLoading } = useGrantStore();
   const { project: storedProject } = useProjectStore();
-  const { isProjectAdmin } = useProjectPermissions();
+  const { isProjectAdmin, isProjectOwner } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const setIsCommunityAdmin = useCommunityAdminStore((state) => state.setIsCommunityAdmin);
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   // Check admin status
   useIsCommunityAdmin(grant?.data?.communityUID, address, {

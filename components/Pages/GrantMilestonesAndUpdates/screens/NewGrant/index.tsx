@@ -46,6 +46,25 @@ interface NewGrantProps {
   grantToEdit?: Grant;
 }
 
+const parseGrantDate = (value: string | number | null | undefined): Date | undefined => {
+  if (!value) return undefined;
+  if (typeof value === "number") {
+    return new Date(value * 1000);
+  }
+
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed;
+  }
+
+  const asNumber = Number(value);
+  if (!Number.isNaN(asNumber)) {
+    return new Date(asNumber * 1000);
+  }
+
+  return undefined;
+};
+
 export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const pathname = usePathname();
   const grantScreen: "edit" | "new" = pathname.includes("/funding/new") ? "new" : "edit";
@@ -91,9 +110,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         linkToProposal: grantToEdit?.details?.proposalURL || "",
         description: grantToEdit?.details?.description || "",
         programId: grantToEdit?.details?.programId,
-        startDate: grantToEdit?.details?.startDate
-          ? new Date((grantToEdit?.details?.startDate as unknown as number) * 1000)
-          : undefined,
+        startDate: parseGrantDate(grantToEdit?.details?.startDate as string | number | undefined),
+        receivedDate: parseGrantDate(
+          grantToEdit?.details?.receivedDate as string | number | undefined
+        ),
         questions: grantToEdit?.details?.questions || [],
         selectedTrackIds: grantToEdit?.details?.selectedTrackIds || [],
       });

@@ -78,31 +78,20 @@ export function NavbarMobileMenu() {
   const { openModal: openProfileModal } = useContributorProfileModalStore();
 
   // Get permissions from centralized context (prevents duplicate hook calls)
-  const { isLoggedIn, address, hasReviewerRole, hasAdminAccess, isRegistryAllowed } =
-    useNavbarPermissions();
+  const { isLoggedIn, address, isRegistryAllowed } = useNavbarPermissions();
 
   const { profile } = useContributorProfile(address);
 
   const quickActions = [
     {
-      label: "My projects",
-      href: PAGES.MY_PROJECTS,
+      label: "Dashboard",
+      href: PAGES.DASHBOARD,
       visible: isLoggedIn,
     },
     {
       label: "My donations",
       href: "/donations",
       visible: isLoggedIn,
-    },
-    {
-      label: "Review",
-      href: PAGES.MY_REVIEWS,
-      visible: isLoggedIn && hasReviewerRole,
-    },
-    {
-      label: "Admin",
-      href: PAGES.ADMIN.LIST,
-      visible: isLoggedIn && hasAdminAccess,
     },
     {
       label: "Manage Programs",

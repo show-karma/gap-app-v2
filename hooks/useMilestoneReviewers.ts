@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { toast } from "react-hot-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { milestoneReviewersService } from "@/services/milestone-reviewers.service";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
+import { getReviewerErrorMessage } from "@/utilities/reviewerErrors";
 
 /**
  * Comprehensive hook for managing milestone reviewers
@@ -10,6 +12,7 @@ import { QUERY_KEYS } from "@/utilities/queryKeys";
  */
 export function useMilestoneReviewers(programId: string) {
   const queryClient = useQueryClient();
+  const { authenticated } = useAuth();
 
   // Query for fetching milestone reviewers
   const query = useQuery({
@@ -17,14 +20,13 @@ export function useMilestoneReviewers(programId: string) {
     queryFn: async () => {
       return milestoneReviewersService.getReviewers(programId);
     },
-    enabled: !!programId,
+    enabled: !!programId && authenticated,
   });
 
   // Mutation for adding a milestone reviewer
   const addMutation = useMutation({
     mutationFn: async (data: Record<string, string>) => {
       const validation = milestoneReviewersService.validateReviewerData({
-        publicAddress: data.publicAddress,
         name: data.name,
         email: data.email,
         telegram: data.telegram,
@@ -34,12 +36,7 @@ export function useMilestoneReviewers(programId: string) {
         throw new Error(validation.errors.join(", "));
       }
 
-      return milestoneReviewersService.addReviewer(programId, {
-        publicAddress: data.publicAddress,
-        name: data.name,
-        email: data.email,
-        telegram: data.telegram,
-      });
+      return milestoneReviewersService.addReviewer(programId, validation.sanitized);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
@@ -48,10 +45,7 @@ export function useMilestoneReviewers(programId: string) {
       toast.success("Milestone reviewer added successfully");
     },
     onError: (error) => {
-      console.error("Error adding milestone reviewer:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to add milestone reviewer";
-      toast.error(errorMessage);
+      toast.error(getReviewerErrorMessage(error, "Failed to add milestone reviewer"));
     },
   });
 
@@ -67,10 +61,7 @@ export function useMilestoneReviewers(programId: string) {
       toast.success("Milestone reviewer removed successfully");
     },
     onError: (error) => {
-      console.error("Error removing milestone reviewer:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to remove milestone reviewer";
-      toast.error(errorMessage);
+      toast.error(getReviewerErrorMessage(error, "Failed to remove milestone reviewer"));
     },
   });
 

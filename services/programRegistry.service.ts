@@ -14,11 +14,15 @@ import { INDEXER } from "@/utilities/indexer";
  */
 export class ProgramRegistryService {
   /**
-   * Build program metadata from form data and community
+   * Build program metadata from form data and community.
+   * Default: anyoneCanJoin = false (admin/funding-platform form creates restricted programs).
+   * The public AddProgram form uses inline metadata with anyoneCanJoin = true (open enrollment).
+   * See AddProgram.tsx for the divergent default.
    */
   static buildProgramMetadata(
     formData: CreateProgramFormData,
-    community: Community
+    community: Community,
+    options?: { anyoneCanJoin?: boolean }
   ): ProgramMetadata {
     return {
       title: formData.name,
@@ -55,6 +59,7 @@ export class ProgramRegistryService {
       type: "program",
       tags: ["karma-gap", "grant-program-registry"],
       communityRef: [community.uid], // Use community UID (hex address), not slug
+      anyoneCanJoin: options?.anyoneCanJoin ?? false, // Default to restricted for admin-created programs
     };
   }
 
@@ -174,27 +179,19 @@ export class ProgramRegistryService {
       throw new Error(createError);
     }
 
-    // V2 response: { programId: "...", isValid: true | null, ... }
+    // Extract programId from response if available (may be empty due to
+    // BE response serialization stripping properties)
     const programId = ProgramRegistryService.extractProgramId(createResponse);
     const isValid =
       typeof createResponse === "object" && createResponse !== null && "isValid" in createResponse
         ? (createResponse as { isValid?: unknown }).isValid
         : null;
 
-    if (!programId) {
-      // If we can't get the ID immediately, return success but indicate manual approval needed
-      return {
-        programId: "",
-        success: true,
-        requiresManualApproval: true,
-      };
-    }
-
     // If program is auto-approved (isValid: true), no manual approval needed
     const requiresManualApproval = isValid !== true;
 
     return {
-      programId,
+      programId: programId || "",
       success: true,
       requiresManualApproval,
     };

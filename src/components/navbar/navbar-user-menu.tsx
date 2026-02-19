@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  CheckCircle2,
   CircleHelp,
   CircleUser,
   Copy,
@@ -9,7 +8,6 @@ import {
   Heart,
   LogOutIcon,
   Settings,
-  ShieldCheck,
   ToggleLeft,
   ToggleRight,
 } from "lucide-react";
@@ -30,10 +28,6 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useReviewerPrograms } from "@/hooks/usePermissions";
-import { useStaff } from "@/hooks/useStaff";
-import { useOwnerStore } from "@/store";
-import { useCommunitiesStore } from "@/store/communities";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
@@ -80,8 +74,7 @@ const _formatAddressLong = (addr: string) => {
 
 export function NavbarUserMenu() {
   // Get permission state from context (prevents duplicate hook calls across navbar)
-  const { isLoggedIn, address, ready, hasReviewerRole, hasAdminAccess, isRegistryAllowed } =
-    useNavbarPermissions();
+  const { isLoggedIn, address, ready, isRegistryAllowed } = useNavbarPermissions();
 
   // useAuth only needed for logout function
   const { logout } = useAuth();
@@ -191,9 +184,9 @@ export function NavbarUserMenu() {
               <hr className="h-[1px] w-full border-border" />
               <div className="flex flex-col w-full">
                 <MenubarItem asChild className="w-full cursor-pointer">
-                  <Link href={PAGES.MY_PROJECTS} className="flex items-center gap-2 w-full">
+                  <Link href={PAGES.DASHBOARD} className="flex items-center gap-2 w-full">
                     <FolderKanban className={menuStyles.itemIcon} />
-                    <span className={menuStyles.itemText}>My projects</span>
+                    <span className={menuStyles.itemText}>Dashboard</span>
                   </Link>
                 </MenubarItem>
                 <MenubarItem asChild className="w-full cursor-pointer">
@@ -202,22 +195,6 @@ export function NavbarUserMenu() {
                     <span className={menuStyles.itemText}>My donations</span>
                   </Link>
                 </MenubarItem>
-                {hasReviewerRole && (
-                  <MenubarItem asChild className="w-full cursor-pointer">
-                    <Link href={PAGES.MY_REVIEWS} className="flex items-center gap-2 w-full">
-                      <CheckCircle2 className={menuStyles.itemIcon} />
-                      <span className={menuStyles.itemText}>Review</span>
-                    </Link>
-                  </MenubarItem>
-                )}
-                {hasAdminAccess && (
-                  <MenubarItem asChild className="w-full cursor-pointer">
-                    <Link href={PAGES.ADMIN.LIST} className="flex items-center gap-2 w-full">
-                      <ShieldCheck className={menuStyles.itemIcon} />
-                      <span className={menuStyles.itemText}>Admin</span>
-                    </Link>
-                  </MenubarItem>
-                )}
                 {isRegistryAllowed && (
                   <MenubarItem asChild className="w-full cursor-pointer">
                     <Link

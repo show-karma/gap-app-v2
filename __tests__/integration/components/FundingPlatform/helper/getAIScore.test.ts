@@ -151,7 +151,7 @@ describe("getAIScore", () => {
 
     it("should handle JSON with wrong field name", () => {
       const application = createMockApplication({
-        evaluation: JSON.stringify({ score: 4.5 }), // Wrong field name
+        evaluation: JSON.stringify({ rating: 4.5 }), // Wrong field name
         promptId: "test-prompt",
       });
 
@@ -159,7 +159,7 @@ describe("getAIScore", () => {
       expect(score).toBeNull();
       expect(mockConsoleWarn).toHaveBeenCalledWith(
         expect.stringContaining("aiEvaluation evaluation missing valid score field"),
-        { score: 4.5 }
+        { rating: 4.5 }
       );
     });
   });

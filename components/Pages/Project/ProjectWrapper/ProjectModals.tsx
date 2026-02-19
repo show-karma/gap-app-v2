@@ -1,8 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
 import { ProjectOptionsDialogs } from "@/components/Pages/Project/ProjectOptionsMenu";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useEndorsementStore } from "@/store/modals/endorsement";
@@ -68,18 +66,10 @@ export const ProjectModals = () => {
   const { isEndorsementOpen } = useEndorsementStore();
   const { isProgressModalOpen } = useProgressModalStore();
   const { isOpen: isShareDialogOpen } = useShareDialogStore();
-  const { isModalOpen: isContributorProfileOpen, openModal: openContributorProfileModal } =
-    useContributorProfileModalStore();
+  const { isModalOpen: isContributorProfileOpen } = useContributorProfileModalStore();
 
-  const searchParams = useSearchParams();
-  const inviteCode = searchParams?.get("invite-code");
-
-  // Auto-open contributor profile modal when invite code is present
-  useEffect(() => {
-    if (inviteCode && !isContributorProfileOpen) {
-      openContributorProfileModal();
-    }
-  }, [inviteCode, isContributorProfileOpen, openContributorProfileModal]);
+  // Note: Invite-code detection is handled by ProjectProfileLayout (v2 layout).
+  // This v1 component no longer handles invite-code auto-open.
 
   return (
     <>

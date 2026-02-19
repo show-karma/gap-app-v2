@@ -8,8 +8,8 @@ import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Button } from "@/components/ui/button";
 import { useProjectGrants } from "@/hooks/v2/useProjectGrants";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import type { GrantMilestone } from "@/types/v2/grant";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
@@ -75,10 +75,11 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
   cancelEditing,
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isCommunityAdmin = useIsCommunityAdmin();
+  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
   return isUpdating || isEditing ? (
     <MilestoneUpdateForm
       milestone={milestone}

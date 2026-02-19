@@ -9,7 +9,10 @@ import { appNetwork } from "@/utilities/network";
 import { queryClient } from "@/utilities/query-client";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
 
-// Re-export for backwards compatibility
+/**
+ * @deprecated Import from `@/utilities/query-client` instead.
+ * This re-export exists only for backwards compatibility and will be removed in a future version.
+ */
 export { queryClient };
 
 interface PrivyProviderWrapperProps {

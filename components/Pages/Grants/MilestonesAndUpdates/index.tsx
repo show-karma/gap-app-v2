@@ -5,8 +5,8 @@ import Image from "next/image";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useTracksForProgram } from "@/hooks/useTracks";
 import type { Track } from "@/services/tracks";
+import { useIsCommunityAdmin } from "@/src/core/rbac/context/permission-context";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
 import { useProgressModalStore } from "@/store/modals/progress";
 import type { Grant } from "@/types/v2/grant";
@@ -17,12 +17,13 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { ProjectGrantsMilestonesListLoading } from "../../Project/Loading/Grants/MilestonesAndUpdate";
 
 const EmptyMilestone = ({ grant }: { grant?: Grant; project?: ProjectResponse }) => {
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isCommunityAdmin = useIsCommunityAdmin();
   const { openProgressModalWithScreen } = useProgressModalStore();
 
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   const handleAddMilestone = () => {
     openProgressModalWithScreen("unified_milestone", grant?.uid);
@@ -224,7 +225,7 @@ export default function MilestonesAndUpdates() {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isCommunityAdmin = useIsCommunityAdmin();
   const isAuthorized = isProjectOwner || isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   const handleAddMilestone = () => {

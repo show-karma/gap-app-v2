@@ -3,6 +3,7 @@
 import {
   CheckIcon,
   DocumentDuplicateIcon,
+  EnvelopeIcon,
   PlusIcon,
   UserIcon,
   XMarkIcon,
@@ -374,7 +375,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                       "border-red-500 focus:border-red-500 focus:ring-red-500"
                   )}
                 />
-                {formErrors[field.name] && (
+                {formErrors[field.name] ? (
                   <p
                     id={`${field.name}-error`}
                     className="mt-1 text-xs text-red-600 dark:text-red-400"
@@ -383,6 +384,12 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                   >
                     {formErrors[field.name]}
                   </p>
+                ) : (
+                  field.helperText && (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      {field.helperText}
+                    </p>
+                  )
                 )}
               </div>
             ))}
@@ -472,10 +479,15 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                             </div>
                           )}
 
-                          {/* Email and Telegram on same line */}
+                          {/* Email (login identifier) and Telegram on same line */}
                           {(member.email || member.telegram) && (
                             <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                              {member.email && <span>{member.email}</span>}
+                              {member.email && (
+                                <span className="flex items-center space-x-1">
+                                  <EnvelopeIcon className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
+                                  <span>{member.email}</span>
+                                </span>
+                              )}
                               {member.email && member.telegram && (
                                 <span className="mx-2 text-gray-400 dark:text-gray-500">|</span>
                               )}
@@ -491,17 +503,18 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                             </div>
                           )}
 
-                          {/* Copiable address */}
+                          {/* Wallet address (secondary, auto-generated) */}
                           {(member.publicAddress || member.walletAddress) && (
-                            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <div className="flex items-center text-xs text-gray-400 dark:text-gray-500">
+                              <span className="mr-1">Wallet:</span>
                               <button
                                 onClick={() =>
                                   handleCopyAddress(
                                     member.publicAddress || member.walletAddress || ""
                                   )
                                 }
-                                className="flex items-center space-x-1 hover:text-gray-700 dark:hover:text-gray-300 transition-colors group"
-                                title="Click to copy address"
+                                className="flex items-center space-x-1 hover:text-gray-600 dark:hover:text-gray-300 transition-colors group"
+                                title="Click to copy wallet address"
                               >
                                 <span>
                                   {getMemberDisplayValue(

@@ -8,6 +8,7 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { formatDate } from "@/utilities/formatDate";
 import { shortAddress } from "@/utilities/shortAddress";
+import { getMilestoneStatus, MILESTONE_STATUS_CONFIG } from "./utils/milestone-review-status";
 
 interface MilestoneCardProps {
   milestone: GrantMilestoneWithCompletion;
@@ -40,7 +41,6 @@ export function MilestoneCard({
   onDeleteMilestone,
   isDeleting = false,
 }: MilestoneCardProps) {
-  // Memoized boolean checks
   const useOnChainData = useMemo(
     () => !!milestone.completionDetails?.description,
     [milestone.completionDetails?.description]
@@ -56,38 +56,16 @@ export function MilestoneCard({
     () => milestone.verificationDetails !== null,
     [milestone.verificationDetails]
   );
-  const hasOnChainCompletion = useMemo(
-    () => milestone.completionDetails !== null,
-    [milestone.completionDetails]
-  );
-  const hasFundingAppCompletion = useMemo(
-    () => milestone.fundingApplicationCompletion !== null,
-    [milestone.fundingApplicationCompletion]
-  );
 
-  // Memoized status tree-decision
   const statusInfo = useMemo(() => {
-    if (isVerified) {
-      return {
-        status: "Verified",
-        statusColor: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-      };
-    } else if (hasOnChainCompletion) {
-      return {
-        status: "Pending Verification",
-        statusColor: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-      };
-    } else if (hasFundingAppCompletion) {
-      return {
-        status: "Pending Completion and Verification",
-        statusColor: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-      };
-    }
-    return {
-      status: "Not Started",
-      statusColor: "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300",
-    };
-  }, [isVerified, hasOnChainCompletion, hasFundingAppCompletion]);
+    const status = getMilestoneStatus(milestone);
+    const config = MILESTONE_STATUS_CONFIG[status];
+    return { status: config.label, statusColor: config.badgeColor };
+  }, [
+    milestone.verificationDetails,
+    milestone.completionDetails,
+    milestone.fundingApplicationCompletion,
+  ]);
 
   return (
     <div
