@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 export interface ToolResultData {
   type: "preview" | "commit" | "extraction";
@@ -44,59 +45,73 @@ interface AgentChatStore {
   clearMessages: () => void;
 }
 
-export const useAgentChatStore = create<AgentChatStore>((set) => ({
-  messages: [],
-  isOpen: false,
-  isStreaming: false,
-  error: null,
-  agentContext: null,
+export const useAgentChatStore = create(
+  persist<AgentChatStore>(
+    (set) => ({
+      messages: [],
+      isOpen: false,
+      isStreaming: false,
+      error: null,
+      agentContext: null,
 
-  setOpen: (open) => set({ isOpen: open }),
-  toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
+      setOpen: (open) => set({ isOpen: open }),
+      toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
 
-  addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
+      addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
 
-  updateLastAssistantMessage: (content) =>
-    set((state) => {
-      const messages = [...state.messages];
-      const lastIdx = messages.length - 1;
-      if (lastIdx >= 0 && messages[lastIdx].role === "assistant") {
-        messages[lastIdx] = { ...messages[lastIdx], content };
-      }
-      return { messages };
+      updateLastAssistantMessage: (content) =>
+        set((state) => {
+          const messages = [...state.messages];
+          const lastIdx = messages.length - 1;
+          if (lastIdx >= 0 && messages[lastIdx].role === "assistant") {
+            messages[lastIdx] = { ...messages[lastIdx], content };
+          }
+          return { messages };
+        }),
+
+      finalizeLastAssistantMessage: () =>
+        set((state) => {
+          const messages = [...state.messages];
+          const lastIdx = messages.length - 1;
+          if (lastIdx >= 0 && messages[lastIdx].role === "assistant") {
+            messages[lastIdx] = { ...messages[lastIdx], isStreaming: false };
+          }
+          return { messages };
+        }),
+
+      updateLastAssistantToolResult: (toolResult) =>
+        set((state) => {
+          const messages = [...state.messages];
+          const lastIdx = messages.length - 1;
+          if (lastIdx >= 0 && messages[lastIdx].role === "assistant") {
+            messages[lastIdx] = { ...messages[lastIdx], toolResult };
+          }
+          return { messages };
+        }),
+
+      updateMessageToolResultStatus: (messageId, status) =>
+        set((state) => ({
+          messages: state.messages.map((msg) =>
+            msg.id === messageId && msg.toolResult
+              ? { ...msg, toolResult: { ...msg.toolResult, status } }
+              : msg
+          ),
+        })),
+
+      setStreaming: (streaming) => set({ isStreaming: streaming }),
+      setError: (error) => set({ error }),
+      setAgentContext: (agentContext) => set({ agentContext }),
+      clearMessages: () => set({ messages: [], error: null }),
     }),
-
-  finalizeLastAssistantMessage: () =>
-    set((state) => {
-      const messages = [...state.messages];
-      const lastIdx = messages.length - 1;
-      if (lastIdx >= 0 && messages[lastIdx].role === "assistant") {
-        messages[lastIdx] = { ...messages[lastIdx], isStreaming: false };
-      }
-      return { messages };
-    }),
-
-  updateLastAssistantToolResult: (toolResult) =>
-    set((state) => {
-      const messages = [...state.messages];
-      const lastIdx = messages.length - 1;
-      if (lastIdx >= 0 && messages[lastIdx].role === "assistant") {
-        messages[lastIdx] = { ...messages[lastIdx], toolResult };
-      }
-      return { messages };
-    }),
-
-  updateMessageToolResultStatus: (messageId, status) =>
-    set((state) => ({
-      messages: state.messages.map((msg) =>
-        msg.id === messageId && msg.toolResult
-          ? { ...msg, toolResult: { ...msg.toolResult, status } }
-          : msg
-      ),
-    })),
-
-  setStreaming: (streaming) => set({ isStreaming: streaming }),
-  setError: (error) => set({ error }),
-  setAgentContext: (agentContext) => set({ agentContext }),
-  clearMessages: () => set({ messages: [], error: null }),
-}));
+    {
+      name: "agent-chat",
+      storage: createJSONStorage(() => sessionStorage),
+      partialize: (state) =>
+        ({
+          messages: state.messages,
+          isOpen: state.isOpen,
+          agentContext: state.agentContext,
+        }) as AgentChatStore,
+    }
+  )
+);

@@ -132,10 +132,75 @@ jest.mock("@/src/components/ai-elements/prompt-input", () => ({
   ),
 }));
 
+// Mock use-stick-to-bottom
+jest.mock("use-stick-to-bottom", () => ({
+  useStickToBottomContext: () => ({
+    scrollToBottom: jest.fn(),
+    isAtBottom: true,
+  }),
+}));
+
 // Mock lucide-react icons
 jest.mock("lucide-react", () => ({
-  MessageSquare: () => <span data-testid="icon-message-square" />,
+  AlertCircleIcon: () => <span data-testid="icon-alert-circle" />,
+  BotIcon: () => <span data-testid="icon-bot" />,
   CopyIcon: () => <span data-testid="icon-copy" />,
+  MessageSquareIcon: () => <span data-testid="icon-message-square" />,
+  SparklesIcon: () => <span data-testid="icon-sparkles" />,
+  Trash2Icon: () => <span data-testid="icon-trash" />,
+  UserIcon: () => <span data-testid="icon-user" />,
+  XIcon: () => <span data-testid="icon-x" />,
+}));
+
+// Mock UI components
+jest.mock("@/components/ui/badge", () => ({
+  Badge: ({
+    children,
+    variant,
+    ...props
+  }: {
+    children: React.ReactNode;
+    variant?: string;
+    [key: string]: unknown;
+  }) => (
+    <span data-testid="badge" data-variant={variant} {...props}>
+      {children}
+    </span>
+  ),
+}));
+
+jest.mock("@/components/ui/button", () => ({
+  Button: ({
+    children,
+    ...props
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string; size?: string }) => {
+    const { variant, size, asChild, isLoading, ...rest } = props as Record<string, unknown>;
+    return <button {...(rest as React.ButtonHTMLAttributes<HTMLButtonElement>)}>{children}</button>;
+  },
+}));
+
+jest.mock("@/components/ui/avatar", () => ({
+  Avatar: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="avatar" className={className}>
+      {children}
+    </div>
+  ),
+  AvatarFallback: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="avatar-fallback" className={className}>
+      {children}
+    </div>
+  ),
+}));
+
+jest.mock("@/components/ui/tooltip", () => ({
+  TooltipProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) => (
+    <>{children}</>
+  ),
+  TooltipContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="tooltip-content">{children}</div>
+  ),
 }));
 
 describe("AgentChatBubble", () => {
@@ -163,16 +228,21 @@ describe("AgentChatBubble", () => {
     expect(screen.getByLabelText("Open chat")).toBeInTheDocument();
   });
 
-  it("should not render chat panel when closed", () => {
+  it("should have panel hidden (aria-hidden) when closed", () => {
     render(<AgentChatBubble />);
+    const panel = screen.getByRole("dialog", { hidden: true });
+    expect(panel).toHaveAttribute("aria-hidden", "true");
+    // Conversation should not be mounted when closed
     expect(screen.queryByTestId("conversation")).not.toBeInTheDocument();
   });
 
-  it("should render chat panel when open", () => {
+  it("should have panel visible (aria-hidden=false) when open", () => {
     useAgentChatStore.setState({ isOpen: true });
     render(<AgentChatBubble />);
+    const panel = screen.getByRole("dialog");
+    expect(panel).toHaveAttribute("aria-hidden", "false");
+    expect(screen.getByText("Karma Assistant")).toBeInTheDocument();
     expect(screen.getByTestId("conversation")).toBeInTheDocument();
-    expect(screen.getByText("GAP Assistant")).toBeInTheDocument();
   });
 
   it("should toggle chat on button click", () => {
@@ -186,7 +256,7 @@ describe("AgentChatBubble", () => {
     useAgentChatStore.setState({ isOpen: true, messages: [] });
     render(<AgentChatBubble />);
     expect(screen.getByTestId("conversation-empty-state")).toBeInTheDocument();
-    expect(screen.getByText("Start a conversation")).toBeInTheDocument();
+    expect(screen.getByText("How can I help?")).toBeInTheDocument();
   });
 
   it("should render messages using AI Elements Message components", () => {
@@ -208,6 +278,20 @@ describe("AgentChatBubble", () => {
     expect(screen.getByTestId("message-assistant")).toBeInTheDocument();
     expect(screen.getByText("Hello")).toBeInTheDocument();
     expect(screen.getByText("Hi there!")).toBeInTheDocument();
+  });
+
+  it("should render avatars next to messages", () => {
+    useAgentChatStore.setState({
+      isOpen: true,
+      messages: [
+        { id: "1", role: "user", content: "Hello", timestamp: Date.now() },
+        { id: "2", role: "assistant", content: "Hi!", timestamp: Date.now() },
+      ],
+    });
+    render(<AgentChatBubble />);
+
+    const avatars = screen.getAllByTestId("avatar");
+    expect(avatars.length).toBeGreaterThanOrEqual(2);
   });
 
   it("should render copy action for non-streaming assistant messages", () => {
@@ -244,14 +328,14 @@ describe("AgentChatBubble", () => {
     expect(screen.queryByTestId("message-actions")).not.toBeInTheDocument();
   });
 
-  it("should show thinking indicator while streaming with empty content", () => {
+  it("should show thinking dots while streaming with empty content", () => {
     useAgentChatStore.setState({
       isOpen: true,
       isStreaming: true,
       messages: [{ id: "1", role: "assistant", content: "", timestamp: Date.now() }],
     });
     render(<AgentChatBubble />);
-    expect(screen.getByText("Thinking...")).toBeInTheDocument();
+    expect(screen.getByTestId("thinking-dots")).toBeInTheDocument();
   });
 
   it("should display error message", () => {

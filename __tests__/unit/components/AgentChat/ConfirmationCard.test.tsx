@@ -95,7 +95,8 @@ describe("ConfirmationCard", () => {
 
   it("should display formatted tool label", () => {
     render(<ConfirmationCard {...defaultProps} />);
-    expect(screen.getByText("Proposed: Update Project")).toBeInTheDocument();
+    expect(screen.getByText("Action")).toBeInTheDocument();
+    expect(screen.getByText("Update Project")).toBeInTheDocument();
   });
 
   it("should display preview data rows", () => {

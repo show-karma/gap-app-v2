@@ -144,6 +144,7 @@
     "remark-gfm": "^4.0.1",
     "require-in-the-middle": "^7.5.2",
     "sass": "^1.71.0",
+    "shiki": "^3.22.0",
     "streamdown": "^2.1.0",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",

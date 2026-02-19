@@ -1,8 +1,22 @@
 "use client";
 
-import { CopyIcon, MessageSquare } from "lucide-react";
-import { useCallback, useState } from "react";
+import {
+  AlertCircleIcon,
+  BotIcon,
+  CopyIcon,
+  MessageSquareIcon,
+  SparklesIcon,
+  Trash2Icon,
+  UserIcon,
+  XIcon,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useStickToBottomContext } from "use-stick-to-bottom";
 import { ConfirmationCard } from "@/components/AgentChat/ConfirmationCard";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAgentContextSync } from "@/hooks/useAgentContextSync";
 import { useAgentStream } from "@/hooks/useAgentStream";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,6 +41,21 @@ import {
   PromptInputTextarea,
 } from "@/src/components/ai-elements/prompt-input";
 import { useAgentChatStore } from "@/store/agentChat";
+
+/** Scrolls to bottom whenever the message count changes (must be inside StickToBottom). */
+function ScrollOnNewMessage({ messageCount }: { messageCount: number }) {
+  const { scrollToBottom } = useStickToBottomContext();
+  const prevCount = useRef(messageCount);
+
+  useEffect(() => {
+    if (messageCount !== prevCount.current) {
+      prevCount.current = messageCount;
+      scrollToBottom();
+    }
+  }, [messageCount, scrollToBottom]);
+
+  return null;
+}
 
 function contextLabel(ctx: Record<string, string | undefined> | null): string | null {
   if (!ctx) return null;
@@ -60,157 +89,194 @@ export function AgentChatBubble() {
   // Don't render for unauthenticated users
   if (!authenticated) return null;
 
+  const badge = contextLabel(agentContext);
+
   return (
-    <>
+    <TooltipProvider delayDuration={300}>
       {/* Floating toggle button */}
       <button
         type="button"
         onClick={toggleOpen}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+        className="fixed bottom-6 right-6 z-50 h-12 w-12 rounded-full bg-brand-blue text-white shadow-lg hover:bg-brand-blue/90 hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 animate-in fade-in zoom-in-75 duration-300"
         aria-label={isOpen ? "Close chat" : "Open chat"}
       >
-        {isOpen ? (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        ) : (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-          </svg>
-        )}
+        <div className="relative h-6 w-6">
+          <MessageSquareIcon
+            className={`absolute inset-0 h-6 w-6 transition-all duration-200 ${
+              isOpen ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
+            }`}
+          />
+          <XIcon
+            className={`absolute inset-0 h-6 w-6 transition-all duration-200 ${
+              isOpen ? "rotate-0 scale-100 opacity-100" : "-rotate-90 scale-0 opacity-0"
+            }`}
+          />
+        </div>
       </button>
 
-      {/* Chat panel */}
-      {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-96 h-[600px] flex flex-col rounded-xl shadow-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">GAP Assistant</h3>
-              {(() => {
-                const badge = contextLabel(agentContext);
-                return badge ? (
-                  <span className="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
-                    {badge}
-                  </span>
-                ) : null;
-              })()}
+      {/* Chat panel — always in DOM, animated via CSS */}
+      <div
+        role="dialog"
+        aria-label="Chat assistant"
+        aria-hidden={!isOpen}
+        className={`fixed bottom-20 right-6 z-50 w-[380px] h-[min(600px,calc(100vh-120px))] flex flex-col rounded-xl border border-border bg-card text-card-foreground shadow-lg transition-all duration-300 ease-out overflow-hidden ${
+          isOpen
+            ? "translate-y-0 opacity-100 scale-100"
+            : "pointer-events-none translate-y-4 opacity-0 scale-[0.97]"
+        }`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <div className="flex items-center gap-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-blue/10">
+              <SparklesIcon className="h-3.5 w-3.5 text-brand-blue" />
             </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={clearMessages}
-                className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                title="Clear chat"
-              >
-                Clear
-              </button>
-            </div>
+            <h3 className="text-sm font-semibold text-foreground">Karma Assistant</h3>
+            {badge && <Badge variant="secondary">{badge}</Badge>}
           </div>
+          <div className="flex gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon-xs" onClick={clearMessages} title="Clear chat">
+                  <Trash2Icon className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Clear chat</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon-xs" onClick={toggleOpen} title="Close chat">
+                  <XIcon className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Close</TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
 
-          {/* Messages — AI Elements Conversation handles scroll-to-bottom */}
+        {/* Messages — only mount Conversation when open so StickToBottom measures correctly */}
+        {isOpen && (
           <Conversation className="flex-1 min-h-0">
-            <ConversationContent className="gap-4 p-4">
+            <ScrollOnNewMessage messageCount={messages.length} />
+            <ConversationContent className="gap-4 px-4 py-4">
               {messages.length === 0 ? (
                 <ConversationEmptyState
-                  icon={<MessageSquare className="size-12" />}
-                  title="Start a conversation"
-                  description="Ask me anything about your projects, programs, or applications."
+                  icon={
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-blue/10">
+                      <SparklesIcon className="h-6 w-6 text-brand-blue" />
+                    </div>
+                  }
+                  title="How can I help?"
+                  description="Ask me about your projects, programs, or applications."
                 />
               ) : (
                 messages.map((msg) => (
                   <div key={msg.id}>
                     {msg.content && (
-                      <Message from={msg.role}>
-                        <MessageContent>
-                          <MessageResponse>{msg.content}</MessageResponse>
-                        </MessageContent>
-                        {msg.role === "assistant" && msg.content && !msg.isStreaming && (
-                          <MessageActions>
-                            <MessageAction
-                              onClick={() => {
-                                navigator.clipboard.writeText(msg.content).catch(() => {
-                                  // Clipboard API can fail in insecure contexts or iframes
-                                });
-                              }}
-                              tooltip="Copy"
-                            >
-                              <CopyIcon className="size-3" />
-                            </MessageAction>
-                          </MessageActions>
-                        )}
-                      </Message>
+                      <div
+                        className={`flex items-start gap-2.5 ${
+                          msg.role === "user" ? "flex-row-reverse" : "flex-row"
+                        }`}
+                      >
+                        <Avatar className="h-6 w-6 shrink-0">
+                          <AvatarFallback
+                            className={
+                              msg.role === "user"
+                                ? "bg-brand-blue/10 text-brand-blue"
+                                : "bg-muted text-muted-foreground"
+                            }
+                          >
+                            {msg.role === "user" ? (
+                              <UserIcon className="h-3.5 w-3.5" />
+                            ) : (
+                              <BotIcon className="h-3.5 w-3.5" />
+                            )}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="max-w-[calc(100%-2.5rem)] group">
+                          <Message from={msg.role}>
+                            <MessageContent>
+                              <MessageResponse>{msg.content}</MessageResponse>
+                            </MessageContent>
+                            {msg.role === "assistant" && msg.content && !msg.isStreaming && (
+                              <MessageActions className="opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                                <MessageAction
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(msg.content).catch(() => {
+                                      // Clipboard API can fail in insecure contexts or iframes
+                                    });
+                                  }}
+                                  tooltip="Copy"
+                                >
+                                  <CopyIcon className="size-3" />
+                                </MessageAction>
+                              </MessageActions>
+                            )}
+                          </Message>
+                        </div>
+                      </div>
                     )}
                     {msg.toolResult?.type === "preview" && (
-                      <ConfirmationCard
-                        toolResult={msg.toolResult}
-                        onApprove={() => sendConfirmation(msg.id, msg.toolResult!.toolName, true)}
-                        onDeny={() => sendConfirmation(msg.id, msg.toolResult!.toolName, false)}
-                        disabled={isStreaming}
-                      />
+                      <div className="pl-9">
+                        <ConfirmationCard
+                          toolResult={msg.toolResult}
+                          onApprove={() => sendConfirmation(msg.id, msg.toolResult!.toolName, true)}
+                          onDeny={() => sendConfirmation(msg.id, msg.toolResult!.toolName, false)}
+                          disabled={isStreaming}
+                        />
+                      </div>
                     )}
                   </div>
                 ))
               )}
               {isStreaming && messages[messages.length - 1]?.content === "" && (
-                <div className="flex justify-start mb-2">
-                  <div className="bg-gray-100 dark:bg-zinc-800 rounded-lg px-3 py-2 text-sm text-gray-500">
-                    <span className="animate-pulse">Thinking...</span>
+                <div className="flex items-start gap-2.5">
+                  <Avatar className="h-6 w-6 shrink-0">
+                    <AvatarFallback className="bg-muted text-muted-foreground">
+                      <BotIcon className="h-3.5 w-3.5" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex items-center gap-1 px-1 py-2" data-testid="thinking-dots">
+                    <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40 animate-pulse [animation-delay:0ms]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40 animate-pulse [animation-delay:150ms]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40 animate-pulse [animation-delay:300ms]" />
                   </div>
                 </div>
               )}
               {error && (
-                <div className="text-sm text-red-500 dark:text-red-400 text-center py-2">
-                  {error}
+                <div className="rounded-lg border border-destructive/20 bg-destructive-subtle p-3 flex items-start gap-2">
+                  <AlertCircleIcon className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                  <p className="text-xs text-destructive" data-testid="chat-error">
+                    {error}
+                  </p>
                 </div>
               )}
             </ConversationContent>
             <ConversationScrollButton />
           </Conversation>
+        )}
 
-          {/* Input — AI Elements PromptInput */}
-          <div className="border-t border-gray-200 dark:border-zinc-700 p-3">
-            <PromptInput onSubmit={handleSubmit}>
-              <PromptInputTextarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Type a message..."
-                disabled={isStreaming}
-                className="min-h-10 max-h-24"
+        {/* Input */}
+        <div className="border-t border-border p-3">
+          <PromptInput onSubmit={handleSubmit}>
+            <PromptInputTextarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask about your project..."
+              disabled={isStreaming}
+              className="min-h-10 max-h-24 text-sm"
+            />
+            <PromptInputFooter>
+              <div />
+              <PromptInputSubmit
+                status={isStreaming ? "streaming" : "ready"}
+                onStop={abort}
+                disabled={!input.trim() && !isStreaming}
               />
-              <PromptInputFooter>
-                <div />
-                <PromptInputSubmit
-                  status={isStreaming ? "streaming" : "ready"}
-                  onStop={abort}
-                  disabled={!input.trim() && !isStreaming}
-                />
-              </PromptInputFooter>
-            </PromptInput>
-          </div>
+            </PromptInputFooter>
+          </PromptInput>
         </div>
-      )}
-    </>
+      </div>
+    </TooltipProvider>
   );
 }

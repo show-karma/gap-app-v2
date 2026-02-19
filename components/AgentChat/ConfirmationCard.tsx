@@ -1,5 +1,7 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { ToolResultData } from "@/store/agentChat";
 
 /** Human-readable label from a preview tool name, e.g. "preview_update_project" → "Update Project" */
@@ -52,57 +54,52 @@ export function ConfirmationCard({
 
   return (
     <div
-      className="my-2 rounded-lg border border-yellow-300 dark:border-yellow-600 bg-yellow-50 dark:bg-yellow-950 p-3"
+      className="my-2 rounded-lg border border-border bg-muted/50 p-3 space-y-2.5"
       data-testid="confirmation-card"
     >
-      <p className="text-xs font-semibold text-yellow-800 dark:text-yellow-300 mb-2">
-        Proposed: {label}
-      </p>
+      <div className="flex items-center gap-2">
+        <Badge variant="outline">Action</Badge>
+        <span className="text-xs font-medium text-foreground">{label}</span>
+      </div>
 
       {rows.length > 0 && (
-        <dl className="text-xs space-y-1 mb-3">
+        <dl className="text-xs space-y-1">
           {rows.map((row) => (
             <div key={row.label} className="flex gap-2">
-              <dt className="font-medium text-gray-600 dark:text-gray-400 min-w-[80px]">
-                {row.label}:
-              </dt>
-              <dd className="text-gray-900 dark:text-gray-100 break-all">{row.value}</dd>
+              <dt className="font-medium text-muted-foreground min-w-[80px]">{row.label}:</dt>
+              <dd className="text-foreground break-all">{row.value}</dd>
             </div>
           ))}
         </dl>
       )}
 
       {isResolved ? (
-        <p
-          className={`text-xs font-medium ${
-            status === "approved"
-              ? "text-green-600 dark:text-green-400"
-              : "text-red-600 dark:text-red-400"
-          }`}
+        <Badge
+          variant={status === "approved" ? "default" : "destructive"}
           data-testid="confirmation-status"
         >
           {status === "approved" ? "Approved" : "Denied"}
-        </p>
+        </Badge>
       ) : (
         <div className="flex gap-2">
-          <button
-            type="button"
+          <Button
+            variant="default"
+            size="sm"
             onClick={onApprove}
             disabled={disabled}
-            className="rounded bg-green-600 px-3 py-1 text-xs text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             data-testid="confirm-approve"
           >
             Approve
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onDeny}
             disabled={disabled}
-            className="rounded bg-red-500 px-3 py-1 text-xs text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             data-testid="confirm-deny"
           >
             Deny
-          </button>
+          </Button>
         </div>
       )}
     </div>
