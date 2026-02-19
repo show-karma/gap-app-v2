@@ -79,7 +79,6 @@ export function ContentTabs({
       count: fundingCount,
     },
     { value: "impact", label: "Impact", href: PAGES.PROJECT.IMPACT.ROOT(projectId) },
-    { value: "team", label: "Team", href: PAGES.PROJECT.TEAM(projectId), count: teamCount },
   ];
 
   // Add Contact Info tab only for authorized users
@@ -96,7 +95,7 @@ export function ContentTabs({
 
   const tabClassName = (isActive: boolean) =>
     cn(
-      "relative px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap",
+      "relative px-6 py-3 text-base font-medium transition-colors whitespace-nowrap",
       "text-muted-foreground hover:text-foreground",
       isActive && "text-foreground",
       "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5",

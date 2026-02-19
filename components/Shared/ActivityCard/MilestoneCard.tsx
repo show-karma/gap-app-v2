@@ -434,7 +434,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
   };
 
   return (
-    <div className="flex flex-col w-full  gap-2.5 md:gap-5">
+    <div className="flex flex-col w-full gap-4">
       {/* Main Milestone Card */}
       <div className={cn(containerClassName, "flex flex-col w-full")}>
         {/* Grants Related Section */}

@@ -37,7 +37,7 @@ export function ProjectProfileLayoutSkeleton({ className }: ProjectProfileLayout
       </div>
 
       {/* Main Layout Skeleton */}
-      <div className="flex flex-row gap-6">
+      <div className="flex flex-row gap-16">
         <ProjectSidePanelSkeleton />
         <div className="flex flex-col gap-6 flex-1 min-w-0">
           <div className="hidden lg:block">

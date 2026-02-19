@@ -14,6 +14,7 @@ import type { ReactNode } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import type { Project } from "@/types/v2/project";
 import { cn } from "@/utilities/tailwind";
+import { TeamContent } from "../TeamContent/TeamContent";
 
 interface AboutContentProps {
   project: Project;
@@ -31,9 +32,13 @@ interface AboutSectionProps {
  * AboutSection displays a single section with an icon, title, and markdown content.
  */
 function AboutSection({ icon, title, content, testId }: AboutSectionProps) {
+  // Generate an id from the testId for anchor links (e.g., "about-section-description" -> "description")
+  const sectionId = testId.replace("about-section-", "");
+
   return (
     <div
-      className="flex flex-col gap-3 p-6 rounded-xl border border-border bg-card"
+      id={sectionId}
+      className="flex flex-col gap-3 p-6 rounded-xl border border-border bg-card scroll-mt-64"
       data-testid={testId}
     >
       <div className="flex items-center gap-3">
@@ -62,6 +67,7 @@ function AboutSection({ icon, title, content, testId }: AboutSectionProps) {
  * - Path to Success
  * - Location of Impact
  * - Total Funds Raised
+ * - Team Members (at the bottom)
  *
  * This component renders the content for the "About" tab on the project profile page.
  */
@@ -163,6 +169,11 @@ export function AboutContent({ project, className }: AboutContentProps) {
           testId={section.testId}
         />
       ))}
+
+      {/* Team Content at the bottom */}
+      <div className="mt-4">
+        <TeamContent />
+      </div>
     </div>
   );
 }

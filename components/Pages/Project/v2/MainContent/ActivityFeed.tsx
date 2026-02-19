@@ -255,7 +255,7 @@ export function ActivityFeed({
       <div className="absolute left-[11px] max-lg:left-[9px] top-2 bottom-0 w-0.5 bg-neutral-200 dark:bg-zinc-700" />
 
       {/* Timeline items */}
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-12">
         {sortedMilestones.map((milestone, index) => {
           // Create unique key combining type, uid, and index to handle duplicate uids
           const uniqueKey = `${milestone.type}-${milestone.uid}-${index}`;
@@ -296,7 +296,7 @@ export function ActivityFeed({
                   milestone.type === "project" ? (
                   <ThunderIcon className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
                 ) : (
-                  <FlagIcon className="max-lg:scale-90" />
+                  <FlagIcon className="w-3.5 h-3.5 max-lg:w-3 max-lg:h-3" />
                 )}
               </div>
 

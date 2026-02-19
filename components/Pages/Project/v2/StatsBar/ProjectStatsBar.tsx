@@ -114,7 +114,7 @@ export function ProjectStatsBar({
   return (
     <div className={cn("w-full", className)} data-testid="project-stats-bar">
       {/* Card wrapper matching Figma */}
-      <div className="py-6 px-4">
+      <div className="p-5">
         {/* Desktop: Horizontal row with equal spacing */}
         <div className="hidden lg:block">
           <ScrollArea className="w-full whitespace-nowrap">

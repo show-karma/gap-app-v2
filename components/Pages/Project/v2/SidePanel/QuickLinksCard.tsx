@@ -75,7 +75,7 @@ export function QuickLinksCard({ project, className }: QuickLinksCardProps) {
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 p-8 rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-sm",
+        "flex flex-col gap-4 p-8 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-secondary shadow-sm",
         className
       )}
       data-testid="quick-links-card"
@@ -95,7 +95,7 @@ export function QuickLinksCard({ project, className }: QuickLinksCardProps) {
                 {link.icon}
                 <span className="text-sm font-medium">{link.label}</span>
               </div>
-              {!isLast && <div className="h-px w-full bg-neutral-200 dark:bg-zinc-700" />}
+              {!isLast && <div className="h-px w-full bg-neutral-200 dark:bg-neutral-700" />}
             </>
           );
 
