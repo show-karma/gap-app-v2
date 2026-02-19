@@ -561,7 +561,7 @@ function FundingPlatformContent() {
                   )}
 
                   {/* Description */}
-                  <div className="mb-3">
+                  <div className="mb-3 min-h-[3rem]">
                     <MarkdownPreview
                       source={
                         program.metadata?.shortDescription ||
@@ -625,7 +625,7 @@ function FundingPlatformContent() {
                         communityId,
                         program.programId
                       )}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-900/30 border border-primary-300 dark:border-primary-700 transition-colors"
                     >
                       <ClipboardDocumentListIcon className="w-3.5 h-3.5" />
                       Applications
@@ -658,7 +658,7 @@ function FundingPlatformContent() {
                       className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors ml-auto"
                     >
                       <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
-                      Form
+                      Intake Form
                     </Link>
                   </div>
                 </div>
