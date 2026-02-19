@@ -62,7 +62,6 @@ interface TableRow {
   projectChainId: number;
   currentPayoutAddress?: string;
   currentAmount?: string;
-  currency?: string;
 }
 
 // ─── Status badge helpers ────────────────────────────────────────────────────
@@ -308,7 +307,6 @@ export default function ControlCenterPage() {
       projectChainId: payout.project.chainID,
       currentPayoutAddress: payout.project.adminPayoutAddress || "",
       currentAmount: payout.grant.adminPayoutAmount || payout.grant.payoutAmount || "",
-      currency: payout.grant.currency || "",
     }));
   }, [payouts]);
 
@@ -667,7 +665,7 @@ export default function ControlCenterPage() {
 
   // ─── Loading state ───────────────────────────────────────────────────────
 
-  if (!authReady || loadingAdmin || isLoadingPayouts || isLoadingCommunity) {
+  if (!authReady || isLoadingCommunity || !community || loadingAdmin || isLoadingPayouts) {
     const skeletonCols = 9;
     return (
       <div className="my-4 flex flex-col gap-6 w-full">
@@ -730,7 +728,9 @@ export default function ControlCenterPage() {
   if (!hasAccess) {
     return (
       <div className="flex w-full items-center justify-center h-96">
-        <p className="text-lg">{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}</p>
+        <p className="text-lg">
+          {MESSAGES.ADMIN.NOT_AUTHORIZED(community?.details?.name || "Control Center")}
+        </p>
       </div>
     );
   }
@@ -1064,16 +1064,9 @@ export default function ControlCenterPage() {
                     {/* Total Grant */}
                     <td className="px-4 py-3 text-right tabular-nums text-sm font-medium text-gray-900 dark:text-zinc-100">
                       {item.currentAmount && parseFloat(item.currentAmount) > 0 ? (
-                        <>
-                          {parseFloat(item.currentAmount).toLocaleString(undefined, {
-                            maximumFractionDigits: 6,
-                          })}
-                          {item.currency && (
-                            <span className="text-gray-500 dark:text-zinc-400 ml-1 font-normal">
-                              {item.currency}
-                            </span>
-                          )}
-                        </>
+                        parseFloat(item.currentAmount).toLocaleString(undefined, {
+                          maximumFractionDigits: 6,
+                        })
                       ) : (
                         <span className="text-gray-400 dark:text-zinc-600">&mdash;</span>
                       )}
