@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import PayoutsAdminPage from "@/components/Pages/Admin/PayoutsAdminPage";
-
-export default function CommunityPayoutsPage() {
-  return <PayoutsAdminPage />;
+export default function CommunityPayoutsPage({ params }: { params: { communityId: string } }) {
+  redirect(`/community/${params.communityId}/manage/control-center`);
 }

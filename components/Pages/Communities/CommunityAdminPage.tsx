@@ -159,9 +159,9 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
     iconColor: "text-teal-600 dark:text-teal-400",
   },
   {
-    href: PAGES.ADMIN.PAYOUTS,
-    label: "Payouts",
-    description: "Manage payout addresses and amounts",
+    href: PAGES.ADMIN.CONTROL_CENTER,
+    label: "Control Center",
+    description: "Manage KYB, agreements, milestones, invoices, and payments",
     icon: <BanknotesIcon className="w-5 h-5" />,
     requiredPermissions: [Permission.COMMUNITY_EDIT],
     iconBg: "bg-lime-50 dark:bg-lime-950/50",

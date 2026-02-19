@@ -122,7 +122,7 @@ export function PendingActionsWidget({ communityUID, communitySlug }: PendingAct
   });
 
   const pendingCount = data?.pagination?.totalCount ?? 0;
-  const payoutsPageUrl = PAGES.ADMIN.PAYOUTS(communitySlug || communityUID);
+  const payoutsPageUrl = PAGES.ADMIN.CONTROL_CENTER(communitySlug || communityUID);
 
   return (
     <Card className="p-6">
