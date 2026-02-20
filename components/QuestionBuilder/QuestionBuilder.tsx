@@ -40,6 +40,7 @@ import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuil
 import { SettingsSidebar, type SidebarTabKey } from "@/components/FundingPlatform/Sidebar";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useUpdateProgramEnrollment } from "@/hooks/useFundingPlatform";
 import type { FormField, FormSchema } from "@/types/question-builder";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { MarkdownPreview } from "../Utilities/MarkdownPreview";
@@ -135,6 +136,15 @@ export function QuestionBuilder({
       },
     }
   );
+
+  // Mutation for toggling open enrollment (anyoneCanJoin)
+  const { updateEnrollment, isPending: isEnrollmentPending } = useUpdateProgramEnrollment(
+    programId,
+    communityId,
+    program
+  );
+
+  const anyoneCanJoin = program?.metadata?.anyoneCanJoin ?? true;
 
   const [activeTab, setActiveTab] = useState<SidebarTabKey>(() =>
     getValidTab(searchParams.get("tab"))
@@ -883,6 +893,9 @@ export function QuestionBuilder({
                 schema={currentSchema}
                 programId={programId}
                 readOnly={readOnly}
+                anyoneCanJoin={anyoneCanJoin}
+                onAnyoneCanJoinChange={!readOnly && program ? updateEnrollment : undefined}
+                isEnrollmentPending={isEnrollmentPending}
               />
               {/* Save Button at bottom of Settings tab */}
               {renderSaveButton()}
