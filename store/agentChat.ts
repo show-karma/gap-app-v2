@@ -98,5 +98,5 @@ export const useAgentChatStore = create<AgentChatStore>((set) => ({
   setStreaming: (streaming) => set({ isStreaming: streaming }),
   setError: (error) => set({ error }),
   setAgentContext: (agentContext) => set({ agentContext }),
-  clearMessages: () => set({ messages: [], error: null }),
+  clearMessages: () => set({ messages: [], error: null, isStreaming: false }),
 }));

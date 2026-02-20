@@ -137,7 +137,15 @@ export function AgentChatBubble() {
           <div className="flex gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon-xs" onClick={clearMessages} title="Clear chat">
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => {
+                    abort();
+                    clearMessages();
+                  }}
+                  title="Clear chat"
+                >
                   <Trash2Icon className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>

@@ -17,16 +17,15 @@ export function useAgentContextSync() {
   const params = useParams();
   const setAgentContext = useAgentChatStore((s) => s.setAgentContext);
 
+  const projectId = params?.projectId as string | undefined;
+  const applicationId = params?.applicationId as string | undefined;
+  const communityId = params?.communityId as string | undefined;
   const programIdParam = params?.programId as string | undefined;
   const cleanProgramId = programIdParam?.includes("_")
     ? programIdParam.split("_")[0]
     : programIdParam;
 
   useEffect(() => {
-    const projectId = params?.projectId as string | undefined;
-    const applicationId = params?.applicationId as string | undefined;
-    const communityId = params?.communityId as string | undefined;
-
     // Project pages
     if (pathname?.startsWith("/project/") && projectId) {
       setAgentContext({ projectId });
@@ -47,5 +46,5 @@ export function useAgentContextSync() {
 
     // No recognized context page — clear context
     setAgentContext(null);
-  }, [pathname, params, setAgentContext, cleanProgramId]);
+  }, [pathname, projectId, applicationId, communityId, cleanProgramId, setAgentContext]);
 }
