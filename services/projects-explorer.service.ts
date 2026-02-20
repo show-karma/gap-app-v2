@@ -18,6 +18,8 @@ export interface ExplorerProjectsPaginatedParams {
   sortOrder?: ExplorerSortOrder;
   /** When true, includes stats for each project (grantsCount, grantMilestonesCount, roadmapItemsCount) */
   includeStats?: boolean;
+  /** When true, only returns projects that have at least one payout address configured */
+  hasPayoutAddress?: boolean;
 }
 
 /**
@@ -78,6 +80,7 @@ export const getExplorerProjectsPaginated = async (
     sortBy = "updatedAt",
     sortOrder = "desc",
     includeStats = false,
+    hasPayoutAddress,
   } = params;
 
   // Validate search length if provided
@@ -92,6 +95,7 @@ export const getExplorerProjectsPaginated = async (
     sortOrder,
     includeStats,
     excludeTestProjects: true, // Filter test projects on backend for accurate pagination
+    hasPayoutAddress,
   });
 
   const [data, error] = await fetchData<PaginatedProjectsResponse>(endpoint);

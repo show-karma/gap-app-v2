@@ -4,7 +4,7 @@ import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import debounce from "lodash.debounce";
 import { useQueryState } from "nuqs";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -29,6 +29,9 @@ const sortOptions: Record<ExplorerSortByOptions, string> = {
 };
 
 export const ProjectsExplorer = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const hasScrolledRef = useRef(false);
+
   // URL state for search
   const [searchQuery, setSearchQuery] = useQueryState("q", {
     defaultValue: "",
@@ -48,6 +51,15 @@ export const ProjectsExplorer = () => {
     serialize: (value) => value,
     parse: (value) => (value as ExplorerSortOrder) || "desc",
   });
+
+  // URL state for "Raising funds" filter
+  const [hasPayoutAddress, setHasPayoutAddress] = useQueryState("hasPayoutAddress", {
+    defaultValue: "",
+    serialize: (value) => value || "",
+    parse: (value) => value || "",
+  });
+
+  const isRaisingFunds = hasPayoutAddress === "true";
 
   // Internal search state for debouncing
   const [inputValue, setInputValue] = useState(searchQuery || "");
@@ -73,11 +85,37 @@ export const ProjectsExplorer = () => {
     setInputValue(searchQuery || "");
   }, [searchQuery]);
 
+  // Auto-scroll to this section when navigating with filter params from the navbar
+  useEffect(() => {
+    if (hasScrolledRef.current) return;
+
+    const hasFilterParams =
+      selectedSort !== "updatedAt" || selectedSortOrder !== "desc" || isRaisingFunds;
+
+    if (hasFilterParams) {
+      hasScrolledRef.current = true;
+      // Small delay to let the section render
+      requestAnimationFrame(() => {
+        sectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    }
+  }, [selectedSort, selectedSortOrder, isRaisingFunds]);
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
     debouncedSetSearch(value);
   };
+
+  const toggleRaisingFunds = useCallback(() => {
+    setHasPayoutAddress(isRaisingFunds ? null : "true");
+    queryClient.removeQueries({
+      predicate: (query) => query.queryKey[0] === "projects-explorer-infinite",
+    });
+  }, [isRaisingFunds, setHasPayoutAddress]);
 
   // Infinite query
   const {
@@ -93,6 +131,7 @@ export const ProjectsExplorer = () => {
     search: searchQuery,
     sortBy: selectedSort as ExplorerSortByOptions,
     sortOrder: selectedSortOrder as ExplorerSortOrder,
+    hasPayoutAddress: isRaisingFunds || undefined,
   });
 
   // Handle sort change
@@ -109,7 +148,11 @@ export const ProjectsExplorer = () => {
   };
 
   return (
-    <section id="browse-projects" className="w-full max-w-7xl mx-auto px-4 py-8 mt-8">
+    <section
+      ref={sectionRef}
+      id="browse-projects"
+      className="w-full max-w-7xl mx-auto px-4 py-8 mt-8"
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
@@ -135,6 +178,20 @@ export const ProjectsExplorer = () => {
               className="w-full sm:w-64 pl-10 pr-4 py-2 rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             />
           </div>
+
+          {/* Raising Funds Filter */}
+          <button
+            type="button"
+            onClick={toggleRaisingFunds}
+            aria-pressed={isRaisingFunds}
+            className={`px-4 py-2 rounded-md border text-sm font-medium transition-colors ${
+              isRaisingFunds
+                ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
+                : "bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 border-gray-300 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700"
+            }`}
+          >
+            Raising funds
+          </button>
 
           {/* Sort Dropdown */}
           <div className="flex items-center gap-x-2">
@@ -196,7 +253,11 @@ export const ProjectsExplorer = () => {
         </div>
       ) : projects.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
-          {searchQuery ? `No projects found for "${searchQuery}"` : "No projects available"}
+          {searchQuery
+            ? `No projects found for "${searchQuery}"`
+            : isRaisingFunds
+              ? "No projects raising funds at this time"
+              : "No projects available"}
         </div>
       ) : (
         <>
