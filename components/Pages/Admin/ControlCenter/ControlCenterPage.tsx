@@ -17,6 +17,7 @@ import { ProgramFilter } from "@/components/Pages/Communities/Impact/ProgramFilt
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Spinner } from "@/components/Utilities/Spinner";
 import TablePagination from "@/components/Utilities/TablePagination";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -30,6 +31,7 @@ import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAc
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
 import { useKycBatchStatuses, useKycConfig } from "@/hooks/useKycStatus";
+import type { PayoutDisbursement } from "@/src/features/payout-disbursement";
 import {
   AggregatedDisbursementStatus,
   type CommunityPayoutAgreementInfo,
@@ -54,7 +56,13 @@ import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { ProjectDetailsModal } from "./ProjectDetailsModal";
 
-// ─── Internal table row type ─────────────────────────────────────────────────
+// ─── Internal types ──────────────────────────────────────────────────────────
+
+interface DisbursementMapEntry {
+  totalsByToken: TokenTotal[];
+  status: string;
+  history: PayoutDisbursement[];
+}
 
 interface TableRow {
   grantUid: string;
@@ -286,6 +294,27 @@ function ActiveFilterChips({
   );
 }
 
+// ─── Sort icon ───────────────────────────────────────────────────────────────
+
+function SortIcon({
+  column,
+  sortBy,
+  sortOrder,
+}: {
+  column: CommunityPayoutsSorting["sortBy"];
+  sortBy?: CommunityPayoutsSorting["sortBy"];
+  sortOrder?: "asc" | "desc";
+}) {
+  if (sortBy === column) {
+    return sortOrder === "asc" ? (
+      <ChevronUpIcon className="h-4 w-4" />
+    ) : (
+      <ChevronDownIcon className="h-4 w-4" />
+    );
+  }
+  return <ChevronUpIcon className="h-4 w-4 opacity-50" />;
+}
+
 // ─── Main component ──────────────────────────────────────────────────────────
 
 export default function ControlCenterPage() {
@@ -298,7 +327,7 @@ export default function ControlCenterPage() {
 
   // URL-driven state
   const selectedProgramId = searchParams.get("programId");
-  const itemsPerPage = Number(searchParams.get("limit")) || 200;
+  const itemsPerPage = Number(searchParams.get("limit")) || 50;
   const currentPage = Number(searchParams.get("page")) || 1;
   const searchQuery = searchParams.get("search") || "";
   const sortBy = (searchParams.get("sortBy") as CommunityPayoutsSorting["sortBy"]) || undefined;
@@ -322,6 +351,24 @@ export default function ControlCenterPage() {
   // Local state
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const [selectedGrants, setSelectedGrants] = useState<Set<string>>(new Set());
+
+  // Sync localSearch when URL changes (browser back/forward)
+  useEffect(() => {
+    setLocalSearch(searchQuery);
+  }, [searchQuery]);
+
+  // Clear selections when filters, page, or program change
+  useEffect(() => {
+    setSelectedGrants(new Set());
+  }, [
+    currentPage,
+    selectedProgramId,
+    agreementFilter,
+    invoiceFilter,
+    disbursementFilter,
+    kycFilter,
+    searchQuery,
+  ]);
 
   // Modal states
   const [isDisbursementModalOpen, setIsDisbursementModalOpen] = useState(false);
@@ -435,58 +482,35 @@ export default function ControlCenterPage() {
     }));
   }, [payouts]);
 
-  // Disbursement map from payouts response
-  const disbursementMap = useMemo(() => {
-    const map: Record<string, { totalsByToken: TokenTotal[]; status: string; history: any[] }> = {};
-    payouts.forEach((payout) => {
-      map[payout.grant.uid] = {
+  // Consolidated maps from payouts response (single pass)
+  const { disbursementMap, agreementMap, invoiceMap, paidMilestoneCountMap } = useMemo(() => {
+    const dMap: Record<string, DisbursementMapEntry> = {};
+    const aMap: Record<string, CommunityPayoutAgreementInfo | null> = {};
+    const iMap: Record<string, CommunityPayoutInvoiceInfo[]> = {};
+    const pMap: Record<string, number> = {};
+    for (const payout of payouts) {
+      dMap[payout.grant.uid] = {
         totalsByToken: payout.disbursements.totalsByToken || [],
         status: payout.disbursements.status,
         history: payout.disbursements.history,
       };
-    });
-    return map;
-  }, [payouts]);
-
-  // Agreement map from payouts response
-  const agreementMap = useMemo(() => {
-    const map: Record<string, CommunityPayoutAgreementInfo | null> = {};
-    for (const payout of payouts) {
-      map[payout.grant.uid] = payout.agreement;
+      aMap[payout.grant.uid] = payout.agreement;
+      iMap[payout.grant.uid] = payout.milestoneInvoices || [];
+      pMap[payout.grant.uid] = payout.paidMilestoneCount ?? 0;
     }
-    return map;
-  }, [payouts]);
-
-  // Invoice map from payouts response
-  const invoiceMap = useMemo(() => {
-    const map: Record<string, CommunityPayoutInvoiceInfo[]> = {};
-    for (const payout of payouts) {
-      map[payout.grant.uid] = payout.milestoneInvoices || [];
-    }
-    return map;
-  }, [payouts]);
-
-  // Paid milestone count map from payouts response (backend-computed)
-  const paidMilestoneCountMap = useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const payout of payouts) {
-      map[payout.grant.uid] = payout.paidMilestoneCount ?? 0;
-    }
-    return map;
+    return {
+      disbursementMap: dMap,
+      agreementMap: aMap,
+      invoiceMap: iMap,
+      paidMilestoneCountMap: pMap,
+    };
   }, [payouts]);
 
   // ─── KYC ───────────────────────────────────────────────────────────────
 
-  const projectUIDsKey = useMemo(
-    () =>
-      Array.from(new Set(tableData.map((t) => t.projectUid)))
-        .sort()
-        .join(","),
-    [tableData]
-  );
   const projectUIDs = useMemo(
-    () => (projectUIDsKey ? projectUIDsKey.split(",") : []),
-    [projectUIDsKey]
+    () => Array.from(new Set(tableData.map((t) => t.projectUid))).sort(),
+    [tableData]
   );
 
   const { config: kycConfig, isEnabled: isKycEnabled } = useKycConfig(community?.uid, {
@@ -514,10 +538,7 @@ export default function ControlCenterPage() {
   }, []);
 
   const computeDisplayStatus = useCallback(
-    (
-      _item: TableRow,
-      disbursementInfo?: { totalsByToken: TokenTotal[]; status: string; history: any[] }
-    ): { label: string; color: string } => {
+    (disbursementInfo?: DisbursementMapEntry): { label: string; color: string } => {
       const aggregatedStatus = disbursementInfo?.status;
       const history = disbursementInfo?.history || [];
       const latestDisbursement = history[0];
@@ -576,9 +597,10 @@ export default function ControlCenterPage() {
 
       const disbursementInfo = disbursementMap[item.grantUid];
       if (disbursementInfo) {
+        const FULLY_DISBURSED_EPSILON = 1e-6;
         const totalDisbursed = getTotalDisbursed(disbursementInfo.totalsByToken);
         const remainingAmount = parsedAmount - totalDisbursed;
-        if (remainingAmount <= 0) {
+        if (remainingAmount <= FULLY_DISBURSED_EPSILON) {
           return { disabled: true, reason: "Fully disbursed" };
         }
       }
@@ -755,19 +777,6 @@ export default function ControlCenterPage() {
     setDetailsModalOpen(true);
   };
 
-  // ─── Sort icon helper ────────────────────────────────────────────────────
-
-  const SortIcon = ({ column }: { column: CommunityPayoutsSorting["sortBy"] }) => {
-    if (sortBy === column) {
-      return sortOrder === "asc" ? (
-        <ChevronUpIcon className="h-4 w-4" />
-      ) : (
-        <ChevronDownIcon className="h-4 w-4" />
-      );
-    }
-    return <ChevronUpIcon className="h-4 w-4 opacity-50" />;
-  };
-
   // ─── Computed layout values ─────────────────────────────────────────────
 
   const columnCount = 9 + (isKycEnabled ? 1 : 0);
@@ -795,7 +804,7 @@ export default function ControlCenterPage() {
     ) {
       router.push(PAGES.NOT_FOUND);
     }
-  }, [communityError, router]);
+  }, [communityError]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Loading state ───────────────────────────────────────────────────────
 
@@ -853,6 +862,21 @@ export default function ControlCenterPage() {
             </table>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // ─── Error state ────────────────────────────────────────────────────────
+
+  if (
+    communityError &&
+    !communityError.message?.includes("422") &&
+    communityError.message !== "Community not found"
+  ) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 gap-4">
+        <p className="text-lg text-red-600">Failed to load data</p>
+        <Button onClick={() => window.location.reload()}>Retry</Button>
       </div>
     );
   }
@@ -1049,7 +1073,7 @@ export default function ControlCenterPage() {
                 >
                   <div className="flex items-center gap-1">
                     Project
-                    <SortIcon column="project_title" />
+                    <SortIcon column="project_title" sortBy={sortBy} sortOrder={sortOrder} />
                   </div>
                 </th>
                 {/* KYB */}
@@ -1077,7 +1101,7 @@ export default function ControlCenterPage() {
                 >
                   <div className="flex items-center justify-end gap-1">
                     Total Grant
-                    <SortIcon column="payout_amount" />
+                    <SortIcon column="payout_amount" sortBy={sortBy} sortOrder={sortOrder} />
                   </div>
                 </th>
                 {/* Disbursed - sortable */}
@@ -1087,7 +1111,7 @@ export default function ControlCenterPage() {
                 >
                   <div className="flex items-center justify-end gap-1">
                     Disbursed
-                    <SortIcon column="disbursed_amount" />
+                    <SortIcon column="disbursed_amount" sortBy={sortBy} sortOrder={sortOrder} />
                   </div>
                 </th>
                 {/* Status - sortable */}
@@ -1097,7 +1121,7 @@ export default function ControlCenterPage() {
                 >
                   <div className="flex items-center justify-center gap-1">
                     Status
-                    <SortIcon column="status" />
+                    <SortIcon column="status" sortBy={sortBy} sortOrder={sortOrder} />
                   </div>
                 </th>
                 {/* Actions */}
@@ -1110,7 +1134,7 @@ export default function ControlCenterPage() {
               {paginatedData.map((item) => {
                 const disbursementInfo = disbursementMap[item.grantUid];
                 const totalsByToken = disbursementInfo?.totalsByToken || [];
-                const displayStatus = computeDisplayStatus(item, disbursementInfo);
+                const displayStatus = computeDisplayStatus(disbursementInfo);
                 const checkboxState = getCheckboxDisabledState(item);
                 const isFullyDisbursed = checkboxState.reason === "Fully disbursed";
 
@@ -1278,7 +1302,7 @@ export default function ControlCenterPage() {
                 currentPage={currentPage}
                 setCurrentPage={handlePageChange}
                 postsPerPage={itemsPerPage}
-                totalPosts={totalItems}
+                totalPosts={kycFilter ? paginatedData.length : totalItems}
               />
             </div>
           )}
@@ -1331,9 +1355,6 @@ export default function ControlCenterPage() {
         communityUID={community?.uid || ""}
         kycStatus={
           detailsModalGrant ? (kycStatuses.get(detailsModalGrant.projectUid) ?? null) : null
-        }
-        payoutConfig={
-          detailsModalGrant ? (payoutConfigMap[detailsModalGrant.grantUid] ?? null) : null
         }
         disbursementInfo={
           detailsModalGrant ? (disbursementMap[detailsModalGrant.grantUid] ?? null) : null

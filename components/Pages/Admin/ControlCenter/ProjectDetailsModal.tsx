@@ -25,7 +25,6 @@ import type {
   CommunityPayoutInvoiceInfo,
   InvoiceStatus,
   MilestonePaymentStatus,
-  PayoutGrantConfig,
   TokenTotal,
 } from "@/src/features/payout-disbursement";
 import {
@@ -33,6 +32,7 @@ import {
   useSaveMilestoneInvoices,
   useToggleAgreement,
 } from "@/src/features/payout-disbursement";
+import type { KycStatusResponse } from "@/types/kyc";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
@@ -57,9 +57,8 @@ interface ProjectDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   communityUID: string;
-  kycStatus: any;
-  payoutConfig: PayoutGrantConfig | null;
-  disbursementInfo: { totalsByToken: TokenTotal[]; status: string; history: any[] } | null;
+  kycStatus: KycStatusResponse | null;
+  disbursementInfo: { totalsByToken: TokenTotal[]; status: string; history: unknown[] } | null;
   agreement: CommunityPayoutAgreementInfo | null;
   milestoneInvoices: CommunityPayoutInvoiceInfo[];
   onOpenConfigModal?: () => void;
@@ -133,7 +132,6 @@ export function ProjectDetailsModal({
   onOpenChange,
   communityUID,
   kycStatus,
-  payoutConfig,
   disbursementInfo,
   agreement,
   milestoneInvoices,
@@ -145,6 +143,7 @@ export function ProjectDetailsModal({
     Record<string, { invoiceReceivedAt?: string | null; milestoneUID?: string | null }>
   >({});
   const [localAgreementSigned, setLocalAgreementSigned] = useState(false);
+  const [agreementDate, setAgreementDate] = useState<string>("");
   const [confirmingUnsign, setConfirmingUnsign] = useState(false);
 
   const toggleAgreementMutation = useToggleAgreement(communityUID);
@@ -154,6 +153,7 @@ export function ProjectDetailsModal({
   useEffect(() => {
     if (grant) {
       setLocalAgreementSigned(agreement?.signed === true);
+      setAgreementDate(agreement?.signedAt ? agreement.signedAt.split("T")[0] : "");
       setMilestoneEdits({});
       setConfirmingUnsign(false);
     }
@@ -161,6 +161,11 @@ export function ProjectDetailsModal({
 
   const editCount = Object.keys(milestoneEdits).length;
   const hasEdits = editCount > 0;
+
+  const todayLocal = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }, []);
 
   const canCreateDisbursement = useMemo(() => {
     if (!grant) return false;
@@ -202,7 +207,11 @@ export function ProjectDetailsModal({
     if (!grant) return;
     setLocalAgreementSigned(true);
     toggleAgreementMutation.mutate(
-      { grantUID: grant.grantUid, signed: true },
+      {
+        grantUID: grant.grantUid,
+        signed: true,
+        signedAt: agreementDate ? new Date(`${agreementDate}T00:00:00Z`).toISOString() : undefined,
+      },
       {
         onSuccess: () => {
           toast.success("Agreement marked as signed");
@@ -213,7 +222,7 @@ export function ProjectDetailsModal({
         },
       }
     );
-  }, [grant, toggleAgreementMutation]);
+  }, [grant?.grantUid]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUnsignAgreement = useCallback(() => {
     if (!grant) return;
@@ -231,7 +240,7 @@ export function ProjectDetailsModal({
         },
       }
     );
-  }, [grant, toggleAgreementMutation]);
+  }, [grant?.grantUid]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSaveChanges = useCallback(() => {
     if (!grant) return;
@@ -253,14 +262,22 @@ export function ProjectDetailsModal({
         },
       }
     );
-  }, [grant, milestoneEdits, editCount, saveMilestoneInvoicesMutation]);
+  }, [grant?.grantUid, milestoneEdits, editCount]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!grant) return null;
 
   const totalsByToken = disbursementInfo?.totalsByToken || [];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen && hasEdits) {
+          if (!window.confirm("You have unsaved changes. Discard?")) return;
+        }
+        onOpenChange(nextOpen);
+      }}
+    >
       <DialogContent className="max-w-5xl max-h-[85vh] overflow-hidden flex flex-col bg-white dark:bg-zinc-950">
         <DialogHeader className="space-y-3 pb-4 border-b border-gray-100 dark:border-zinc-800">
           <div>
@@ -310,6 +327,7 @@ export function ProjectDetailsModal({
                     variant="destructive"
                     className="h-6 px-2 text-xs"
                     onClick={handleUnsignAgreement}
+                    aria-label="Confirm unsign agreement"
                   >
                     Confirm
                   </Button>
@@ -318,9 +336,23 @@ export function ProjectDetailsModal({
                     variant="ghost"
                     className="h-6 px-2 text-xs"
                     onClick={() => setConfirmingUnsign(false)}
+                    aria-label="Cancel unsign agreement"
                   >
                     Cancel
                   </Button>
+                </div>
+              )}
+              {localAgreementSigned && !confirmingUnsign && (
+                <div className="flex items-center gap-1.5 ml-2">
+                  <span className="text-xs text-gray-500 dark:text-zinc-400">on</span>
+                  <Input
+                    type="date"
+                    max={todayLocal}
+                    value={agreementDate}
+                    onChange={(e) => setAgreementDate(e.target.value)}
+                    className="h-6 text-xs w-[130px]"
+                    aria-label="Agreement signed date"
+                  />
                 </div>
               )}
             </div>
@@ -392,7 +424,7 @@ export function ProjectDetailsModal({
 
                       return (
                         <tr
-                          key={invoice.milestoneLabel}
+                          key={invoice.milestoneUID || `${invoice.milestoneLabel}-${idx}`}
                           className={cn(
                             "transition-colors",
                             idx % 2 === 0
@@ -418,7 +450,7 @@ export function ProjectDetailsModal({
                           <td className="py-2.5 px-3 text-center">
                             <Input
                               type="date"
-                              max={new Date().toISOString().split("T")[0]}
+                              max={todayLocal}
                               value={receivedDateValue ?? ""}
                               onChange={(e) =>
                                 handleInvoiceReceivedDateChange(
@@ -428,6 +460,7 @@ export function ProjectDetailsModal({
                                 )
                               }
                               className="h-7 text-xs w-[140px] mx-auto bg-white dark:bg-zinc-900"
+                              aria-label={`Invoice received date for ${invoice.milestoneLabel}`}
                             />
                           </td>
                           <td className="py-2.5 px-3 text-center">
@@ -467,11 +500,21 @@ export function ProjectDetailsModal({
           <div className="flex items-center justify-between w-full flex-wrap gap-2">
             {/* Left: Action buttons */}
             <div className="flex items-center gap-2 flex-wrap">
-              <Button variant="outline" size="sm" onClick={onOpenConfigModal}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onOpenConfigModal}
+                disabled={saveMilestoneInvoicesMutation.isPending}
+              >
                 <Cog6ToothIcon className="h-4 w-4 mr-1.5" />
                 Configure Payout
               </Button>
-              <Button variant="outline" size="sm" onClick={onOpenHistoryDrawer}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onOpenHistoryDrawer}
+                disabled={saveMilestoneInvoicesMutation.isPending}
+              >
                 <ClockIcon className="h-4 w-4 mr-1.5" />
                 View History
               </Button>
@@ -479,7 +522,7 @@ export function ProjectDetailsModal({
                 variant="outline"
                 size="sm"
                 onClick={onCreateDisbursement}
-                disabled={!canCreateDisbursement}
+                disabled={!canCreateDisbursement || saveMilestoneInvoicesMutation.isPending}
                 title={
                   !canCreateDisbursement
                     ? "Missing payout address or amount"
@@ -509,7 +552,7 @@ export function ProjectDetailsModal({
                 <a
                   href={PAGES.PROJECT.GRANT(grant.projectSlug, grant.grantUid)}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="text-blue-600 dark:text-blue-400"
                 >
                   View grant

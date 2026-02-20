@@ -477,9 +477,13 @@ export function useToggleAgreement(
 ) {
   const queryClient = useQueryClient();
 
-  return useMutation<CommunityPayoutAgreementInfo, Error, { grantUID: string; signed: boolean }>({
-    mutationFn: ({ grantUID, signed }) =>
-      payoutService.toggleGrantAgreement(grantUID, signed, communityUID),
+  return useMutation<
+    CommunityPayoutAgreementInfo,
+    Error,
+    { grantUID: string; signed: boolean; signedAt?: string }
+  >({
+    mutationFn: ({ grantUID, signed, signedAt }) =>
+      payoutService.toggleGrantAgreement(grantUID, signed, communityUID, signedAt),
     onSuccess: (data) => {
       queryClient.invalidateQueries({
         queryKey: [...payoutDisbursementKeys.all, "communityPayouts", communityUID],

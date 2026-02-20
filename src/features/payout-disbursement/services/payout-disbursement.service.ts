@@ -410,13 +410,17 @@ export const deletePayoutConfig = async (grantUID: string): Promise<void> => {
 export const toggleGrantAgreement = async (
   grantUID: string,
   signed: boolean,
-  communityUID: string
+  communityUID: string,
+  signedAt?: string
 ): Promise<CommunityPayoutAgreementInfo> => {
   try {
+    const body: Record<string, unknown> = { signed, communityUID };
+    if (signedAt) body.signedAt = signedAt;
+
     const [data, error] = await fetchData<CommunityPayoutAgreementInfo>(
       INDEXER.V2.GRANT_AGREEMENTS.TOGGLE(grantUID),
       "POST",
-      { signed, communityUID },
+      body,
       {},
       {},
       true,
