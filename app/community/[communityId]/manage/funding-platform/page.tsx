@@ -86,6 +86,14 @@ function FundingPlatformContent() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [togglingPrograms, setTogglingPrograms] = useState<Set<string>>(new Set());
 
+  // Auto-open create modal when navigated with ?create=true
+  const createParam = searchParams.get("create");
+  useEffect(() => {
+    if (createParam === "true" && isAdmin) {
+      setShowCreateModal(true);
+    }
+  }, [createParam, isAdmin]);
+
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [enabledFilter, setEnabledFilter] = useState<"all" | "enabled" | "disabled">(
     (searchParams.get("status") as "all" | "enabled" | "disabled") || "all"
@@ -682,18 +690,13 @@ function FundingPlatformContent() {
         <div className="text-center py-12">
           <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-8">
             <PlusIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No Funding Programs Yet
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              {isAdmin ? "Create your first program" : "No programs yet"}
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              {isAdmin
-                ? "Create your first funding program to start accepting applications from your community."
-                : "There are no funding programs available in this community yet."}
-            </p>
             <AdminOnly>
               <Button onClick={() => setShowCreateModal(true)} className="inline-flex items-center">
                 <PlusIcon className="w-4 h-4 mr-2" />
-                Create Your First Program
+                Create your first program
               </Button>
             </AdminOnly>
           </div>
@@ -704,7 +707,19 @@ function FundingPlatformContent() {
       <AdminOnly>
         <CreateProgramModal
           isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
+          onClose={() => {
+            setShowCreateModal(false);
+            if (searchParams.get("create")) {
+              const params = new URLSearchParams(searchParams.toString());
+              params.delete("create");
+              const queryString = params.toString();
+              router.replace(
+                queryString
+                  ? `${PAGES.MANAGE.FUNDING_PLATFORM.ROOT(communityId)}?${queryString}`
+                  : PAGES.MANAGE.FUNDING_PLATFORM.ROOT(communityId)
+              );
+            }
+          }}
           communityId={communityId}
           onSuccess={async () => {
             await refetch();
