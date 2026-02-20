@@ -1,8 +1,6 @@
 "use client";
 
-import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import { BanknotesIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -585,15 +583,6 @@ export function ControlCenterPage() {
       <div className="flex flex-col gap-1 px-4">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Link
-                href={PAGES.ADMIN.ROOT(community?.details?.slug || (community?.uid as string))}
-                className="flex items-center gap-1 text-sm text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
-              >
-                <ChevronLeftIcon className="h-4 w-4" />
-                Return to admin page
-              </Link>
-            </div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 tracking-tight">
               Control Center
             </h1>
