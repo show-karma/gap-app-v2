@@ -130,6 +130,8 @@ export function createMockInvoice(
     milestoneUID: "milestone-uid-1",
     invoiceStatus: "received" as const,
     invoiceReceivedAt: "2024-06-10T00:00:00Z",
+    invoiceReceivedBy: null,
+    allocatedAmount: null,
     paymentStatus: "unpaid" as const,
     paymentStatusDate: null,
     ...overrides,

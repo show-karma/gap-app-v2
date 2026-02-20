@@ -1,7 +1,7 @@
 /**
  * Unit tests for ProjectDetailsModal.
  *
- * Tests agreement toggle, date input, unsaved changes guard,
+ * Tests agreement toggle (date-picker-driven signing), unsign flow,
  * milestone key uniqueness, and button disabled states.
  */
 
@@ -158,7 +158,8 @@ describe("ProjectDetailsModal", () => {
 
   it("shows the approved amount with currency", () => {
     renderModal();
-    expect(screen.getByText(/10,000/)).toBeInTheDocument();
+    expect(screen.getByText("Approved:")).toBeInTheDocument();
+    expect(screen.getByText("10,000 USDC")).toBeInTheDocument();
   });
 
   it("shows the payout address truncated", () => {
@@ -166,8 +167,22 @@ describe("ProjectDetailsModal", () => {
     expect(screen.getByText("0x1234...5678")).toBeInTheDocument();
   });
 
-  describe("Agreement toggle", () => {
-    it("calls toggleAgreement mutate with signed=true when checkbox is checked", async () => {
+  describe("Agreement signing (date-picker flow)", () => {
+    it("shows date input when agreement is not signed", () => {
+      renderModal({
+        agreement: createMockAgreement({
+          signed: false,
+          signedAt: null,
+          signedBy: null,
+        }),
+      });
+
+      const dateInput = screen.getByLabelText(/set agreement signed date/i);
+      expect(dateInput).toBeInTheDocument();
+      expect(screen.getByText("Not signed")).toBeInTheDocument();
+    });
+
+    it("calls toggleAgreement with signed=true when a date is picked", async () => {
       const user = userEvent.setup();
       renderModal({
         agreement: createMockAgreement({
@@ -177,47 +192,73 @@ describe("ProjectDetailsModal", () => {
         }),
       });
 
-      const checkbox = screen.getByRole("checkbox", {
-        name: /agreement signed/i,
-      });
-      await user.click(checkbox);
+      const dateInput = screen.getByLabelText(/set agreement signed date/i);
+      // fireEvent.change is more reliable for date inputs than userEvent.type
+      await user.clear(dateInput);
+      // Simulate picking a date by typing into the input
+      const { fireEvent } = require("@testing-library/react");
+      fireEvent.change(dateInput, { target: { value: "2024-06-15" } });
 
       expect(mockToggleMutate).toHaveBeenCalledTimes(1);
       expect(mockToggleMutate).toHaveBeenCalledWith(
         expect.objectContaining({
           grantUID: "grant-uid-1",
           signed: true,
+          signedAt: expect.stringContaining("2024-06-15"),
         }),
         expect.any(Object)
       );
     });
 
-    it("shows confirm dialog when unchecking agreement", async () => {
+    it("shows signed state with date when agreement is signed", () => {
+      renderModal({
+        agreement: createMockAgreement({
+          signed: true,
+          signedAt: "2024-06-15T00:00:00Z",
+        }),
+      });
+
+      expect(screen.getByText(/signed/i)).toBeInTheDocument();
+      expect(screen.getByText(/Jun 15, 2024/)).toBeInTheDocument();
+      // Date input should NOT be visible when signed
+      expect(screen.queryByLabelText(/set agreement signed date/i)).not.toBeInTheDocument();
+    });
+
+    it("does not show date input when agreement is signed", () => {
+      renderModal({
+        agreement: createMockAgreement({
+          signed: true,
+          signedAt: "2024-06-01T00:00:00Z",
+        }),
+      });
+
+      expect(screen.queryByLabelText(/set agreement signed date/i)).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Agreement unsigning", () => {
+    it("shows confirm dialog when X button is clicked on signed agreement", async () => {
       const user = userEvent.setup();
       renderModal({
         agreement: createMockAgreement({ signed: true }),
       });
 
-      const checkbox = screen.getByRole("checkbox", {
-        name: /agreement signed/i,
-      });
-      await user.click(checkbox);
+      const unsignButton = screen.getByLabelText(/remove agreement signed date/i);
+      await user.click(unsignButton);
 
-      expect(screen.getByText("Unsign?")).toBeInTheDocument();
+      expect(screen.getByText("Mark as unsigned?")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /confirm unsign/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /cancel unsign/i })).toBeInTheDocument();
     });
 
-    it("calls toggleAgreement with signed=false when confirm unsign is clicked", async () => {
+    it("calls toggleAgreement with signed=false when confirm is clicked", async () => {
       const user = userEvent.setup();
       renderModal({
         agreement: createMockAgreement({ signed: true }),
       });
 
-      const checkbox = screen.getByRole("checkbox", {
-        name: /agreement signed/i,
-      });
-      await user.click(checkbox);
+      const unsignButton = screen.getByLabelText(/remove agreement signed date/i);
+      await user.click(unsignButton);
 
       const confirmButton = screen.getByRole("button", {
         name: /confirm unsign/i,
@@ -239,70 +280,15 @@ describe("ProjectDetailsModal", () => {
         agreement: createMockAgreement({ signed: true }),
       });
 
-      const checkbox = screen.getByRole("checkbox", {
-        name: /agreement signed/i,
-      });
-      await user.click(checkbox);
+      const unsignButton = screen.getByLabelText(/remove agreement signed date/i);
+      await user.click(unsignButton);
 
       const cancelButton = screen.getByRole("button", {
         name: /cancel unsign/i,
       });
       await user.click(cancelButton);
 
-      expect(screen.queryByText("Unsign?")).not.toBeInTheDocument();
-    });
-  });
-
-  describe("Agreement date input", () => {
-    it("shows date input when agreement is signed", () => {
-      renderModal({
-        agreement: createMockAgreement({
-          signed: true,
-          signedAt: "2024-06-15T00:00:00Z",
-        }),
-      });
-
-      const dateInput = screen.getByLabelText(/agreement signed date/i);
-      expect(dateInput).toBeInTheDocument();
-      expect(dateInput).toHaveValue("2024-06-15");
-    });
-
-    it("does not show date input when agreement is not signed", () => {
-      renderModal({
-        agreement: createMockAgreement({
-          signed: false,
-          signedAt: null,
-          signedBy: null,
-        }),
-      });
-
-      expect(screen.queryByLabelText(/agreement signed date/i)).not.toBeInTheDocument();
-    });
-
-    it("passes signedAt in mutation when date is set", async () => {
-      const user = userEvent.setup();
-      renderModal({
-        agreement: createMockAgreement({
-          signed: false,
-          signedAt: null,
-          signedBy: null,
-        }),
-      });
-
-      const checkbox = screen.getByRole("checkbox", {
-        name: /agreement signed/i,
-      });
-      await user.click(checkbox);
-
-      // signedAt should be undefined since no date was set before checking
-      expect(mockToggleMutate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          grantUID: "grant-uid-1",
-          signed: true,
-          signedAt: undefined,
-        }),
-        expect.any(Object)
-      );
+      expect(screen.queryByText("Mark as unsigned?")).not.toBeInTheDocument();
     });
   });
 
@@ -442,7 +428,7 @@ describe("ProjectDetailsModal", () => {
       const dateInput = screen.getByLabelText(/invoice received date for Milestone A/i);
       await user.type(dateInput, "2024-06-15");
 
-      const saveButton = screen.getByText(/save changes/i);
+      const saveButton = screen.getByRole("button", { name: /save changes/i });
       await user.click(saveButton);
 
       expect(mockSaveMutate).toHaveBeenCalledWith(
@@ -472,7 +458,7 @@ describe("ProjectDetailsModal", () => {
       renderModal();
 
       const configButton = screen.getByRole("button", {
-        name: /configure payout/i,
+        name: /payout settings/i,
       });
       const historyButton = screen.getByRole("button", {
         name: /view history/i,
@@ -514,13 +500,13 @@ describe("ProjectDetailsModal", () => {
   });
 
   describe("Footer action callbacks", () => {
-    it("calls onOpenConfigModal when Configure Payout is clicked", async () => {
+    it("calls onOpenConfigModal when Payout Settings is clicked", async () => {
       const user = userEvent.setup();
       const onOpenConfigModal = jest.fn();
       renderModal({ onOpenConfigModal });
 
       const button = screen.getByRole("button", {
-        name: /configure payout/i,
+        name: /payout settings/i,
       });
       await user.click(button);
 
