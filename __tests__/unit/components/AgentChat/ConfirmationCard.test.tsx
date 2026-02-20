@@ -3,6 +3,7 @@ import {
   ConfirmationCard,
   flattenPreviewData,
   formatToolLabel,
+  humanizeLabel,
 } from "@/components/AgentChat/ConfirmationCard";
 import type { ToolResultData } from "@/store/agentChat";
 
@@ -70,6 +71,28 @@ describe("flattenPreviewData", () => {
   });
 });
 
+describe("humanizeLabel", () => {
+  it("should strip 'changes' prefix and title-case camelCase fields", () => {
+    expect(humanizeLabel("changes.missionSummary.proposed")).toBe("Mission Summary (proposed)");
+  });
+
+  it("should handle current qualifier", () => {
+    expect(humanizeLabel("changes.name.current")).toBe("Name (current)");
+  });
+
+  it("should handle labels without qualifiers", () => {
+    expect(humanizeLabel("changes.description")).toBe("Description");
+  });
+
+  it("should handle non-changes prefixed labels", () => {
+    expect(humanizeLabel("settings.visibility")).toBe("Settings > Visibility");
+  });
+
+  it("should handle snake_case fields", () => {
+    expect(humanizeLabel("changes.team_members.proposed")).toBe("Team Members (proposed)");
+  });
+});
+
 describe("ConfirmationCard", () => {
   const baseToolResult: ToolResultData = {
     type: "preview",
@@ -99,11 +122,11 @@ describe("ConfirmationCard", () => {
     expect(screen.getByText("Update Project")).toBeInTheDocument();
   });
 
-  it("should display preview data rows", () => {
+  it("should display preview data rows with humanized labels", () => {
     render(<ConfirmationCard {...defaultProps} />);
-    expect(screen.getByText("name:")).toBeInTheDocument();
+    expect(screen.getByText("Name")).toBeInTheDocument();
     expect(screen.getByText("New Project Name")).toBeInTheDocument();
-    expect(screen.getByText("description:")).toBeInTheDocument();
+    expect(screen.getByText("Description")).toBeInTheDocument();
     expect(screen.getByText("Updated description")).toBeInTheDocument();
   });
 
@@ -161,7 +184,7 @@ describe("ConfirmationCard", () => {
       data: { settings: { visibility: "public" } },
     };
     render(<ConfirmationCard {...defaultProps} toolResult={toolResult} />);
-    expect(screen.getByText("settings.visibility:")).toBeInTheDocument();
+    expect(screen.getByText("Settings > Visibility")).toBeInTheDocument();
     expect(screen.getByText("public")).toBeInTheDocument();
   });
 

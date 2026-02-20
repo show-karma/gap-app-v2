@@ -64,10 +64,6 @@ jest.mock("@/components/AgentChat/AgentChatBubble", () => ({
   AgentChatBubble: () => <div data-testid="agent-chat-bubble" />,
 }));
 
-jest.mock("agentation", () => ({
-  Agentation: () => null,
-}));
-
 describe("RootLayout", () => {
   it("renders all components correctly", () => {
     render(<RootLayout>Test Content</RootLayout>);
