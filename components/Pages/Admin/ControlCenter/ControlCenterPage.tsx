@@ -172,6 +172,7 @@ export function ControlCenterPage() {
   const {
     data: payoutsData,
     isLoading: isLoadingPayouts,
+    error: payoutsError,
     invalidate: refreshPayouts,
   } = useCommunityPayouts(community?.uid || "", payoutsOptions, {
     enabled: !!community?.uid && authReady,
@@ -491,6 +492,21 @@ export function ControlCenterPage() {
     }
   }, [communityError]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ─── Error state (checked before loading to avoid infinite skeleton) ────
+
+  if (
+    communityError &&
+    !communityError.message?.includes("422") &&
+    communityError.message !== "Community not found"
+  ) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 gap-4">
+        <p className="text-lg text-red-600 dark:text-red-400">Failed to load community data</p>
+        <Button onClick={() => window.location.reload()}>Retry</Button>
+      </div>
+    );
+  }
+
   // ─── Loading state ───────────────────────────────────────────────────────
 
   if (!authReady || isLoadingCommunity || !community || loadingAdmin || isLoadingPayouts) {
@@ -548,17 +564,27 @@ export function ControlCenterPage() {
     );
   }
 
-  // ─── Error state ────────────────────────────────────────────────────────
+  // ─── Payouts error state ───────────────────────────────────────────────
 
-  if (
-    communityError &&
-    !communityError.message?.includes("422") &&
-    communityError.message !== "Community not found"
-  ) {
+  if (payoutsError && !payoutsData) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 gap-4">
-        <p className="text-lg text-red-600">Failed to load data</p>
-        <Button onClick={() => window.location.reload()}>Retry</Button>
+      <div className="my-4 flex flex-col gap-6 w-full">
+        <div className="flex flex-col gap-1 px-4">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 tracking-tight">
+            Control Center
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-zinc-400 mt-0.5">
+            Overview of project KYB, agreements, milestones, invoices, and payments
+          </p>
+        </div>
+        <div className="flex flex-col items-center justify-center h-64 gap-3">
+          <p className="text-sm text-red-600 dark:text-red-400">
+            Failed to load payouts data. Please try again.
+          </p>
+          <Button variant="outline" size="sm" onClick={refreshPayouts}>
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }
