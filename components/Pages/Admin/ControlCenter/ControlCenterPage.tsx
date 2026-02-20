@@ -105,9 +105,15 @@ function AgreementBadge({ agreement }: { agreement: CommunityPayoutAgreementInfo
   );
 }
 
-function ProgressCell({ invoices }: { invoices: CommunityPayoutInvoiceInfo[] }) {
+function ProgressCell({
+  invoices,
+  paidMilestoneCount,
+}: {
+  invoices: CommunityPayoutInvoiceInfo[];
+  paidMilestoneCount: number;
+}) {
   const total = invoices.length;
-  const paid = invoices.filter((inv) => inv.invoiceStatus === "paid").length;
+  const paid = paidMilestoneCount;
   const received = invoices.filter(
     (inv) => inv.invoiceStatus === "received" || inv.invoiceStatus === "paid"
   ).length;
@@ -456,6 +462,15 @@ export default function ControlCenterPage() {
     const map: Record<string, CommunityPayoutInvoiceInfo[]> = {};
     for (const payout of payouts) {
       map[payout.grant.uid] = payout.milestoneInvoices || [];
+    }
+    return map;
+  }, [payouts]);
+
+  // Paid milestone count map from payouts response (backend-computed)
+  const paidMilestoneCountMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const payout of payouts) {
+      map[payout.grant.uid] = payout.paidMilestoneCount ?? 0;
     }
     return map;
   }, [payouts]);
@@ -1184,7 +1199,10 @@ export default function ControlCenterPage() {
 
                     {/* Progress (milestones + invoices) */}
                     <td className="px-4 py-3 text-left">
-                      <ProgressCell invoices={invoices} />
+                      <ProgressCell
+                        invoices={invoices}
+                        paidMilestoneCount={paidMilestoneCountMap[item.grantUid] ?? 0}
+                      />
                     </td>
 
                     {/* Total Grant */}

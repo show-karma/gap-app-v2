@@ -24,6 +24,7 @@ import type {
   CommunityPayoutAgreementInfo,
   CommunityPayoutInvoiceInfo,
   InvoiceStatus,
+  MilestonePaymentStatus,
   PayoutGrantConfig,
   TokenTotal,
 } from "@/src/features/payout-disbursement";
@@ -86,6 +87,43 @@ const invoiceStatusConfig: Record<InvoiceStatus, { label: string; className: str
     className: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400",
   },
 };
+
+// ─── Payment status display config ──────────────────────────────────────────
+
+const paymentStatusConfig: Record<
+  MilestonePaymentStatus,
+  { label: string; dotColor: string; textColor: string }
+> = {
+  unpaid: {
+    label: "Unpaid",
+    dotColor: "bg-gray-300 dark:bg-zinc-600",
+    textColor: "text-gray-500 dark:text-zinc-500",
+  },
+  pending: {
+    label: "Pending",
+    dotColor: "bg-amber-400",
+    textColor: "text-amber-600 dark:text-amber-400",
+  },
+  awaiting_signatures: {
+    label: "Awaiting sigs",
+    dotColor: "bg-blue-400",
+    textColor: "text-blue-600 dark:text-blue-400",
+  },
+  disbursed: {
+    label: "Disbursed",
+    dotColor: "bg-green-500",
+    textColor: "text-green-600 dark:text-green-400",
+  },
+};
+
+function formatShortDate(iso: string | null): string | null {
+  if (!iso) return null;
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -339,6 +377,9 @@ export function ProjectDetailsModal({
                       <th className="text-center py-2.5 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[130px]">
                         Invoice Received
                       </th>
+                      <th className="text-center py-2.5 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[120px]">
+                        Payment
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
@@ -347,6 +388,7 @@ export function ProjectDetailsModal({
                       const invoiceCfg =
                         invoiceStatusConfig[invoice.invoiceStatus as InvoiceStatus] ||
                         invoiceStatusConfig.not_submitted;
+                      const paymentCfg = paymentStatusConfig[invoice.paymentStatus ?? "unpaid"];
 
                       return (
                         <tr
@@ -376,6 +418,7 @@ export function ProjectDetailsModal({
                           <td className="py-2.5 px-3 text-center">
                             <Input
                               type="date"
+                              max={new Date().toISOString().split("T")[0]}
                               value={receivedDateValue ?? ""}
                               onChange={(e) =>
                                 handleInvoiceReceivedDateChange(
@@ -386,6 +429,29 @@ export function ProjectDetailsModal({
                               }
                               className="h-7 text-xs w-[140px] mx-auto bg-white dark:bg-zinc-900"
                             />
+                          </td>
+                          <td className="py-2.5 px-3 text-center">
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-1.5 text-xs font-medium",
+                                  paymentCfg.textColor
+                                )}
+                              >
+                                <span
+                                  className={cn(
+                                    "h-1.5 w-1.5 rounded-full shrink-0",
+                                    paymentCfg.dotColor
+                                  )}
+                                />
+                                {paymentCfg.label}
+                              </span>
+                              {invoice.paymentStatusDate && (
+                                <span className="text-[10px] text-gray-400 dark:text-zinc-500 tabular-nums">
+                                  {formatShortDate(invoice.paymentStatusDate)}
+                                </span>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );

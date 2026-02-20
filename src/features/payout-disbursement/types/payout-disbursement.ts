@@ -203,11 +203,15 @@ export interface CommunityPayoutAgreementInfo {
  */
 export type InvoiceStatus = "not_submitted" | "submitted" | "received" | "paid";
 
+export type MilestonePaymentStatus = "unpaid" | "pending" | "awaiting_signatures" | "disbursed";
+
 export interface CommunityPayoutInvoiceInfo {
   milestoneLabel: string;
   milestoneUID: string | null;
   invoiceStatus: InvoiceStatus;
   invoiceReceivedAt: string | null;
+  paymentStatus: MilestonePaymentStatus;
+  paymentStatusDate: string | null;
 }
 
 /**
@@ -219,6 +223,8 @@ export interface CommunityPayoutItem {
   disbursements: CommunityPayoutDisbursementInfo;
   agreement: CommunityPayoutAgreementInfo | null;
   milestoneInvoices: CommunityPayoutInvoiceInfo[];
+  /** Number of milestone allocations paid (from backend, based on disbursement history) */
+  paidMilestoneCount: number;
 }
 
 /**
