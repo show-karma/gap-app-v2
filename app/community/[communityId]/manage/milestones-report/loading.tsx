@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 
 export default function Loading() {
   return (
-    <div className="space-y-6">
+    <output aria-label="Loading" className="block space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-2">
@@ -73,6 +73,6 @@ export default function Loading() {
           </div>
         </div>
       </div>
-    </div>
+    </output>
   );
 }

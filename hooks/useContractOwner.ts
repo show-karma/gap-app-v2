@@ -67,6 +67,7 @@ export const useContractOwner = (chainOverride?: Chain) => {
   useEffect(() => {
     if (!isAuth) {
       setIsOwner(false);
+      setIsOwnerLoading(false);
       return;
     }
     if (typeof data === "boolean") {
