@@ -32,10 +32,7 @@ async function resolveEnsName(address: Hex): Promise<string | null> {
 
   const promise = ensClient
     .getEnsName({ address })
-    .catch((error) => {
-      errorManager("ENS name resolution failed", error, { address });
-      return null;
-    })
+    .catch(() => null)
     .finally(() => {
       pendingNameRequests.delete(key);
     });
@@ -50,10 +47,7 @@ async function resolveEnsAvatar(name: string): Promise<string | null> {
 
   const promise = ensClient
     .getEnsAvatar({ name: normalize(name) })
-    .catch((error) => {
-      errorManager("ENS avatar resolution failed", error, { name });
-      return null;
-    })
+    .catch(() => null)
     .finally(() => {
       pendingAvatarRequests.delete(name);
     });

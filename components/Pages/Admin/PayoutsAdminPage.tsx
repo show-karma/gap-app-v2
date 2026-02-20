@@ -1,8 +1,7 @@
 "use client";
 
-import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { BanknotesIcon, CheckIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -921,13 +920,7 @@ export default function PayoutsAdminPage() {
   return (
     <div className="my-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
       <div className="w-full flex flex-col gap-8">
-        <div className="w-full flex flex-wrap flex-row items-center justify-between px-4">
-          <Link href={PAGES.ADMIN.ROOT(community?.details?.slug || (community?.uid as string))}>
-            <Button className="flex flex-row items-center gap-2 px-0 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
-              <ChevronLeftIcon className="h-5 w-5" />
-              Return to admin page
-            </Button>
-          </Link>
+        <div className="w-full flex flex-wrap flex-row items-center justify-end px-4">
           <div className="flex flex-row flex-wrap justify-between items-center gap-4">
             <ProgramFilter onChange={handleProgramChange} />
             <div className="flex items-center gap-2">
