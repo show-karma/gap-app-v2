@@ -24,6 +24,7 @@ export function humanizeLabel(raw: string): string {
   const fieldParts = isQualifier ? parts.slice(0, -1) : parts;
 
   const fieldName = fieldParts
+    .filter((p) => !/^\d+$/.test(p))
     .map((p) =>
       p
         .replace(/([a-z])([A-Z])/g, "$1 $2")
@@ -32,10 +33,14 @@ export function humanizeLabel(raw: string): string {
     )
     .join(" > ");
 
+  // Compute a 1-based index label if there's a numeric segment
+  const numericPart = fieldParts.find((p) => /^\d+$/.test(p));
+  const indexLabel = numericPart !== undefined ? ` #${Number(numericPart) + 1}` : "";
+
   if (isQualifier) {
-    return `${fieldName} (${qualifier})`;
+    return `${fieldName}${indexLabel} (${qualifier})`;
   }
-  return fieldName;
+  return `${fieldName}${indexLabel}`;
 }
 
 /** Flatten a nested data object into "key: value" display rows (max 10 levels deep) */
@@ -52,6 +57,22 @@ export function flattenPreviewData(
 
     if (val !== null && typeof val === "object" && !Array.isArray(val) && depth < MAX_DEPTH) {
       rows.push(...flattenPreviewData(val as Record<string, unknown>, label, depth + 1));
+    } else if (Array.isArray(val)) {
+      const hasObjects = val.some((item) => item !== null && typeof item === "object");
+      if (hasObjects && depth < MAX_DEPTH) {
+        for (let i = 0; i < val.length; i++) {
+          const item = val[i];
+          if (item !== null && typeof item === "object" && !Array.isArray(item)) {
+            rows.push(
+              ...flattenPreviewData(item as Record<string, unknown>, `${label}.${i}`, depth + 1)
+            );
+          } else {
+            rows.push({ label: `${label}.${i}`, value: String(item ?? "") });
+          }
+        }
+      } else {
+        rows.push({ label, value: val.join(", ") });
+      }
     } else {
       rows.push({ label, value: String(val ?? "") });
     }

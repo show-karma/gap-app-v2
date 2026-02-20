@@ -45,9 +45,24 @@ describe("flattenPreviewData", () => {
     expect(result).toEqual([{ label: "field", value: "" }]);
   });
 
-  it("should handle arrays as string values", () => {
+  it("should handle primitive arrays as comma-separated values", () => {
     const result = flattenPreviewData({ tags: ["a", "b"] });
-    expect(result).toEqual([{ label: "tags", value: "a,b" }]);
+    expect(result).toEqual([{ label: "tags", value: "a, b" }]);
+  });
+
+  it("should flatten arrays of objects with indexed keys", () => {
+    const result = flattenPreviewData({
+      prompts: [
+        { question: "Describe your impact", type: "text" },
+        { question: "What is your budget?", type: "number" },
+      ],
+    });
+    expect(result).toEqual([
+      { label: "prompts.0.question", value: "Describe your impact" },
+      { label: "prompts.0.type", value: "text" },
+      { label: "prompts.1.question", value: "What is your budget?" },
+      { label: "prompts.1.type", value: "number" },
+    ]);
   });
 
   it("should handle deeply nested objects", () => {
@@ -90,6 +105,16 @@ describe("humanizeLabel", () => {
 
   it("should handle snake_case fields", () => {
     expect(humanizeLabel("changes.team_members.proposed")).toBe("Team Members (proposed)");
+  });
+
+  it("should handle numeric indices as #N labels", () => {
+    expect(humanizeLabel("prompts.0.question")).toBe("Prompts > Question #1");
+  });
+
+  it("should handle numeric indices with qualifiers", () => {
+    expect(humanizeLabel("changes.prompts.1.question.proposed")).toBe(
+      "Prompts > Question #2 (proposed)"
+    );
   });
 });
 
