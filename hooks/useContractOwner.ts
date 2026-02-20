@@ -55,10 +55,14 @@ export const useContractOwner = (chainOverride?: Chain) => {
 
   const { data, isLoading, error, refetch } = queryResult;
 
-  // Sync with Zustand store
+  // Sync with Zustand store — only when auth is ready and the query is active.
+  // When auth isn't ready, the query is disabled and RQ v5 reports isLoading=false,
+  // which would overwrite the safe default of isOwnerLoading=true in the store.
   useEffect(() => {
-    setIsOwnerLoading(isLoading);
-  }, [isLoading, setIsOwnerLoading]);
+    if (isAuth) {
+      setIsOwnerLoading(isLoading);
+    }
+  }, [isLoading, isAuth, setIsOwnerLoading]);
 
   useEffect(() => {
     if (!isAuth) {

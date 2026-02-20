@@ -29,8 +29,8 @@ const defaultResourceContext: ResourceContext = {};
 const defaultContextValue: PermissionContextValue = {
   roles: defaultUserRoles,
   permissions: [],
-  isLoading: false,
-  isGuestDueToError: true,
+  isLoading: true,
+  isGuestDueToError: false,
   resourceContext: defaultResourceContext,
   isCommunityAdmin: false,
   isProgramAdmin: false,
@@ -69,7 +69,14 @@ export function PermissionProvider({ children, resourceContext = {} }: Permissio
     const permissions = data?.permissions ?? [];
     const context = data?.resourceContext ?? defaultResourceContext;
 
-    const effectiveIsLoading = (isCypressMockAuthenticated ? false : !ready) || isLoading;
+    // Keep loading while Privy initializes
+    const privyNotReady = isCypressMockAuthenticated ? false : !ready;
+    // If we believe the user is authenticated (Privy says so) but we don't
+    // have permission data yet, stay in loading state. This covers ALL race
+    // conditions: Wagmi not connected yet, query disabled, query in-flight, etc.
+    const believedAuthenticated = isCypressMockAuthenticated || (ready && authenticated);
+    const awaitingPermissions = believedAuthenticated && !data && !isError;
+    const effectiveIsLoading = privyNotReady || awaitingPermissions || isLoading;
     const isGuestDueToError = isError || (!effectiveIsLoading && isAuthenticated && !data);
 
     return {
@@ -91,7 +98,7 @@ export function PermissionProvider({ children, resourceContext = {} }: Permissio
         isValidRole(role) && isRoleAtLeast(roles.primaryRole, role),
       isReviewerType: (type: ReviewerType) => roles.reviewerTypes?.includes(type) ?? false,
     };
-  }, [data, isLoading, isError, ready, isAuthenticated, isCypressMockAuthenticated]);
+  }, [data, isLoading, isError, ready, authenticated, isAuthenticated, isCypressMockAuthenticated]);
 
   return <PermissionContext.Provider value={contextValue}>{children}</PermissionContext.Provider>;
 }

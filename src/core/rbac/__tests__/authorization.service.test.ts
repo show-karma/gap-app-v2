@@ -12,15 +12,18 @@ describe("authorizationService", () => {
   });
 
   describe("getPermissions", () => {
-    it("should return default GUEST permissions on error", async () => {
+    it("should throw on API error so React Query can retry", async () => {
       mockFetchData.mockResolvedValue([null, "Error", null, 500]);
 
-      const result = await authorizationService.getPermissions();
+      await expect(authorizationService.getPermissions()).rejects.toBe("Error");
+    });
 
-      expect(result.roles.primaryRole).toBe("GUEST");
-      expect(result.roles.roles).toContain("GUEST");
-      expect(result.permissions).toEqual([]);
-      expect(result.resourceContext).toEqual({});
+    it("should throw on empty response", async () => {
+      mockFetchData.mockResolvedValue([null, null, null, 200]);
+
+      await expect(authorizationService.getPermissions()).rejects.toThrow(
+        "Failed to fetch permissions: empty response"
+      );
     });
 
     it("should return parsed permissions from API response", async () => {

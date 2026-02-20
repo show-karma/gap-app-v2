@@ -37,7 +37,7 @@ interface UseCommunityAdminAccessResult {
 export const useCommunityAdminAccess = (communityId?: string): UseCommunityAdminAccessResult => {
   const { isCommunityAdmin, isLoading: isCheckingAdmin } = useIsCommunityAdmin(communityId);
   const { isOwner, isOwnerLoading } = useOwnerStore();
-  const { authenticated } = useAuth();
+  const { authenticated, ready } = useAuth();
   const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
     {},
     { enabled: authenticated }
@@ -50,9 +50,13 @@ export const useCommunityAdminAccess = (communityId?: string): UseCommunityAdmin
     [isCommunityAdmin, isOwner, isSuperAdmin]
   );
 
+  // Auth-state-aware loading: when Privy hasn't initialized or the user is authenticated
+  // but queries haven't started yet (RQ v5 disabled queries return isLoading=false),
+  // we must report loading=true to prevent a flash of "Access Denied".
+  const isAuthSettling = !ready || (ready && authenticated && !permissions);
   const isLoading = useMemo(
-    () => isCheckingAdmin || isPermissionsLoading || isOwnerLoading,
-    [isCheckingAdmin, isPermissionsLoading, isOwnerLoading]
+    () => isAuthSettling || isCheckingAdmin || isPermissionsLoading || isOwnerLoading,
+    [isAuthSettling, isCheckingAdmin, isPermissionsLoading, isOwnerLoading]
   );
 
   const checks = useMemo(
