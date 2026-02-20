@@ -210,6 +210,8 @@ export interface CommunityPayoutInvoiceInfo {
   milestoneUID: string | null;
   invoiceStatus: InvoiceStatus;
   invoiceReceivedAt: string | null;
+  invoiceReceivedBy: string | null;
+  allocatedAmount: string | null;
   paymentStatus: MilestonePaymentStatus;
   paymentStatusDate: string | null;
 }

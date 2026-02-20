@@ -33,7 +33,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useKycBatchStatuses, useKycConfig } from "@/hooks/useKycStatus";
 import type { PayoutDisbursement } from "@/src/features/payout-disbursement";
 import {
-  AggregatedDisbursementStatus,
+  type AggregatedDisbursementStatus,
   type CommunityPayoutAgreementInfo,
   type CommunityPayoutInvoiceInfo,
   type CommunityPayoutsOptions,
@@ -43,7 +43,6 @@ import {
   getPaidAllocationIds,
   type InvoiceStatus,
   PayoutConfigurationModal,
-  PayoutDisbursementStatus,
   type PayoutGrantConfig,
   PayoutHistoryDrawer,
   TokenBreakdown,
@@ -537,48 +536,6 @@ export default function ControlCenterPage() {
     }, 0);
   }, []);
 
-  const computeDisplayStatus = useCallback(
-    (disbursementInfo?: DisbursementMapEntry): { label: string; color: string } => {
-      const aggregatedStatus = disbursementInfo?.status;
-      const history = disbursementInfo?.history || [];
-      const latestDisbursement = history[0];
-
-      if (history.length === 0) {
-        return { label: "Pending", color: "text-gray-500 bg-gray-100 dark:bg-gray-700" };
-      }
-
-      const hasDisbursedTransaction = history.some(
-        (d) => d.status === PayoutDisbursementStatus.DISBURSED
-      );
-      const allCancelled = history.every((d) => d.status === PayoutDisbursementStatus.CANCELLED);
-
-      if (latestDisbursement?.status === PayoutDisbursementStatus.AWAITING_SIGNATURES) {
-        return {
-          label: "Awaiting Signatures",
-          color: "text-yellow-800 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-300",
-        };
-      }
-      if (aggregatedStatus === AggregatedDisbursementStatus.COMPLETED) {
-        return { label: "Disbursed", color: "text-green-700 bg-green-100 dark:bg-green-900/30" };
-      }
-      if (hasDisbursedTransaction) {
-        return {
-          label: "Partially Disbursed",
-          color: "text-blue-700 bg-blue-100 dark:bg-blue-900/30",
-        };
-      }
-      if (allCancelled) {
-        return { label: "Cancelled", color: "text-gray-700 bg-gray-200 dark:bg-gray-600" };
-      }
-      if (latestDisbursement?.status === PayoutDisbursementStatus.FAILED) {
-        return { label: "Failed", color: "text-red-700 bg-red-100 dark:bg-red-900/30" };
-      }
-
-      return { label: "Pending", color: "text-gray-500 bg-gray-100 dark:bg-gray-700" };
-    },
-    []
-  );
-
   const getCheckboxDisabledState = useCallback(
     (item: TableRow): { disabled: boolean; reason: string | null } => {
       const payoutAddress = item.currentPayoutAddress;
@@ -779,7 +736,7 @@ export default function ControlCenterPage() {
 
   // ─── Computed layout values ─────────────────────────────────────────────
 
-  const columnCount = 9 + (isKycEnabled ? 1 : 0);
+  const columnCount = 8 + (isKycEnabled ? 1 : 0);
 
   const hasActiveFilters = !!(
     agreementFilter ||
@@ -924,14 +881,14 @@ export default function ControlCenterPage() {
       <div className="flex items-center justify-between gap-4 px-4 pb-3 border-b border-gray-100 dark:border-zinc-800/50">
         <ProgramFilter onChange={handleProgramChange} />
 
-        <div className="relative flex-shrink-0">
+        <div className="relative flex-shrink-0 w-[280px]">
           <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             placeholder="Search projects..."
-            className="pl-8 h-9 w-[220px] text-sm bg-white dark:bg-zinc-900"
+            className="pl-8 h-9 w-full text-sm bg-white dark:bg-zinc-900"
           />
         </div>
       </div>
@@ -1114,16 +1071,6 @@ export default function ControlCenterPage() {
                     <SortIcon column="disbursed_amount" sortBy={sortBy} sortOrder={sortOrder} />
                   </div>
                 </th>
-                {/* Status - sortable */}
-                <th
-                  className="h-11 px-4 text-center text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-36 cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800 select-none"
-                  onClick={() => handleSort("status")}
-                >
-                  <div className="flex items-center justify-center gap-1">
-                    Status
-                    <SortIcon column="status" sortBy={sortBy} sortOrder={sortOrder} />
-                  </div>
-                </th>
                 {/* Actions */}
                 <th className="h-11 px-4 text-center text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-20">
                   Actions
@@ -1134,7 +1081,6 @@ export default function ControlCenterPage() {
               {paginatedData.map((item) => {
                 const disbursementInfo = disbursementMap[item.grantUid];
                 const totalsByToken = disbursementInfo?.totalsByToken || [];
-                const displayStatus = computeDisplayStatus(disbursementInfo);
                 const checkboxState = getCheckboxDisabledState(item);
                 const isFullyDisbursed = checkboxState.reason === "Fully disbursed";
 
@@ -1245,18 +1191,6 @@ export default function ControlCenterPage() {
                       <TokenBreakdown totalsByToken={totalsByToken} size="sm" />
                     </td>
 
-                    {/* Status (non-clickable) */}
-                    <td className="px-4 py-3 text-center">
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium",
-                          displayStatus.color
-                        )}
-                      >
-                        {displayStatus.label}
-                      </span>
-                    </td>
-
                     {/* Actions */}
                     <td className="px-4 py-3 text-center">
                       <button
@@ -1361,6 +1295,11 @@ export default function ControlCenterPage() {
         }
         agreement={detailsModalGrant ? (agreementMap[detailsModalGrant.grantUid] ?? null) : null}
         milestoneInvoices={detailsModalGrant ? (invoiceMap[detailsModalGrant.grantUid] ?? []) : []}
+        milestoneAllocations={
+          detailsModalGrant
+            ? (payoutConfigMap[detailsModalGrant.grantUid]?.milestoneAllocations ?? null)
+            : null
+        }
         onOpenConfigModal={() => {
           if (!detailsModalGrant) return;
           setDetailsModalOpen(false);
