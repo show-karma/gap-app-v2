@@ -2,8 +2,6 @@
 
 import { cjk } from "@streamdown/cjk";
 import { code } from "@streamdown/code";
-import { math } from "@streamdown/math";
-import { mermaid } from "@streamdown/mermaid";
 import type { UIMessage } from "ai";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
@@ -270,16 +268,38 @@ export const MessageBranchPage = ({ className, ...props }: MessageBranchPageProp
 
 export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
-const streamdownPlugins = { cjk, code, math, mermaid };
+const lazyMath = () => import("@streamdown/math").then((m) => m.math);
+const lazyMermaid = () => import("@streamdown/mermaid").then((m) => m.mermaid);
+
+function useStreamdownPlugins() {
+  const [plugins, setPlugins] = useState<Record<string, unknown>>({ cjk, code });
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([lazyMath(), lazyMermaid()]).then(([mathPlugin, mermaidPlugin]) => {
+      if (!cancelled) {
+        setPlugins({ cjk, code, math: mathPlugin, mermaid: mermaidPlugin });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return plugins;
+}
 
 export const MessageResponse = memo(
-  ({ className, ...props }: MessageResponseProps) => (
-    <Streamdown
-      className={cn("size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}
-      plugins={streamdownPlugins}
-      {...props}
-    />
-  ),
+  ({ className, ...props }: MessageResponseProps) => {
+    const plugins = useStreamdownPlugins();
+    return (
+      <Streamdown
+        className={cn("size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}
+        plugins={plugins}
+        {...props}
+      />
+    );
+  },
   (prevProps, nextProps) => prevProps.children === nextProps.children
 );
 
