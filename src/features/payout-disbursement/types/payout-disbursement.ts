@@ -226,7 +226,7 @@ export interface CommunityPayoutItem {
   agreement: CommunityPayoutAgreementInfo | null;
   milestoneInvoices: CommunityPayoutInvoiceInfo[];
   /** Number of milestone allocations paid (from backend, based on disbursement history) */
-  paidMilestoneCount: number;
+  paidMilestoneCount: number | null;
 }
 
 /**

@@ -12,6 +12,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { formatUnits } from "viem";
 import { KycStatusBadge } from "@/components/KycStatusIcon";
 import { Button } from "@/components/ui/button";
 import {
@@ -222,7 +223,9 @@ export function ProjectDetailsModal({
 
     let totalDisbursed = 0;
     for (const t of totalsByToken) {
-      totalDisbursed += parseFloat(t.totalAmount) || 0;
+      const rawAmount = BigInt(t.totalAmount || "0");
+      const decimals = t.tokenDecimals ?? 6;
+      totalDisbursed += parseFloat(formatUnits(rawAmount, decimals));
     }
     const remaining = approved - totalDisbursed;
     const pct = Math.min(100, Math.round((totalDisbursed / approved) * 100));
@@ -357,14 +360,22 @@ export function ProjectDetailsModal({
     toast.success("Address copied");
   }, [grant?.currentPayoutAddress]);
 
+  const handleRequestClose = useCallback(() => {
+    if (hasEdits) {
+      if (!window.confirm("You have unsaved changes. Discard?")) return;
+    }
+    onOpenChange(false);
+  }, [hasEdits, onOpenChange]);
+
   if (!grant) return null;
 
   return (
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
-        if (!nextOpen && hasEdits) {
-          if (!window.confirm("You have unsaved changes. Discard?")) return;
+        if (!nextOpen) {
+          handleRequestClose();
+          return;
         }
         onOpenChange(nextOpen);
       }}
@@ -826,7 +837,7 @@ export function ProjectDetailsModal({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onOpenChange(false)}
+                onClick={handleRequestClose}
                 className="text-gray-500"
               >
                 Close

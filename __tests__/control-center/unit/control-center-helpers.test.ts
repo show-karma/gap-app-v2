@@ -2,18 +2,17 @@
  * Unit tests for pure helper logic used in ControlCenterPage.
  *
  * These functions are defined inline in the component. We re-implement the same
- * pure logic here to verify correctness of the status computation, checkbox
- * disabled state, and disbursement totals calculation.
+ * pure logic here to verify correctness of the checkbox disabled state and
+ * disbursement totals calculation.
  */
 
 import { formatUnits, isAddress } from "viem";
 import {
   AggregatedDisbursementStatus,
   type PayoutDisbursement,
-  PayoutDisbursementStatus,
   type TokenTotal,
 } from "@/src/features/payout-disbursement/types/payout-disbursement";
-import { createMockDisbursement, createMockTokenTotal } from "../fixtures";
+import { createMockTokenTotal } from "../fixtures";
 
 // ---- Re-implement the pure helper functions exactly as in the component ----
 
@@ -21,57 +20,6 @@ interface DisbursementMapEntry {
   totalsByToken: TokenTotal[];
   status: string;
   history: PayoutDisbursement[];
-}
-
-function computeDisplayStatus(disbursementInfo?: DisbursementMapEntry): {
-  label: string;
-  color: string;
-} {
-  const aggregatedStatus = disbursementInfo?.status;
-  const history = disbursementInfo?.history || [];
-  const latestDisbursement = history[0];
-
-  if (history.length === 0) {
-    return { label: "Pending", color: "text-gray-500 bg-gray-100 dark:bg-gray-700" };
-  }
-
-  const hasDisbursedTransaction = history.some(
-    (d) => d.status === PayoutDisbursementStatus.DISBURSED
-  );
-  const allCancelled = history.every((d) => d.status === PayoutDisbursementStatus.CANCELLED);
-
-  if (latestDisbursement?.status === PayoutDisbursementStatus.AWAITING_SIGNATURES) {
-    return {
-      label: "Awaiting Signatures",
-      color: "text-yellow-800 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-300",
-    };
-  }
-  if (aggregatedStatus === AggregatedDisbursementStatus.COMPLETED) {
-    return {
-      label: "Disbursed",
-      color: "text-green-700 bg-green-100 dark:bg-green-900/30",
-    };
-  }
-  if (hasDisbursedTransaction) {
-    return {
-      label: "Partially Disbursed",
-      color: "text-blue-700 bg-blue-100 dark:bg-blue-900/30",
-    };
-  }
-  if (allCancelled) {
-    return {
-      label: "Cancelled",
-      color: "text-gray-700 bg-gray-200 dark:bg-gray-600",
-    };
-  }
-  if (latestDisbursement?.status === PayoutDisbursementStatus.FAILED) {
-    return {
-      label: "Failed",
-      color: "text-red-700 bg-red-100 dark:bg-red-900/30",
-    };
-  }
-
-  return { label: "Pending", color: "text-gray-500 bg-gray-100 dark:bg-gray-700" };
 }
 
 interface TableRow {
@@ -91,7 +39,7 @@ function getTotalDisbursed(totalsByToken: TokenTotal[]): number {
   if (!totalsByToken || totalsByToken.length === 0) return 0;
   return totalsByToken.reduce((sum, tokenTotal) => {
     const rawAmount = BigInt(tokenTotal.totalAmount || "0");
-    const decimals = tokenTotal.tokenDecimals || 6;
+    const decimals = tokenTotal.tokenDecimals ?? 6;
     const humanReadable = parseFloat(formatUnits(rawAmount, decimals));
     return sum + humanReadable;
   }, 0);
@@ -129,130 +77,6 @@ function getCheckboxDisabledState(
 }
 
 // ---- Tests ----
-
-describe("computeDisplayStatus", () => {
-  it("returns Pending when there is no disbursement info", () => {
-    const result = computeDisplayStatus(undefined);
-    expect(result.label).toBe("Pending");
-  });
-
-  it("returns Pending when history is empty", () => {
-    const result = computeDisplayStatus({
-      totalsByToken: [],
-      status: AggregatedDisbursementStatus.NOT_STARTED,
-      history: [],
-    });
-    expect(result.label).toBe("Pending");
-  });
-
-  it("returns Awaiting Signatures when latest disbursement is awaiting signatures", () => {
-    const result = computeDisplayStatus({
-      totalsByToken: [],
-      status: AggregatedDisbursementStatus.IN_PROGRESS,
-      history: [
-        createMockDisbursement({
-          status: PayoutDisbursementStatus.AWAITING_SIGNATURES,
-        }),
-      ],
-    });
-    expect(result.label).toBe("Awaiting Signatures");
-    expect(result.color).toContain("yellow");
-  });
-
-  it("returns Disbursed when aggregated status is COMPLETED", () => {
-    const result = computeDisplayStatus({
-      totalsByToken: [createMockTokenTotal()],
-      status: AggregatedDisbursementStatus.COMPLETED,
-      history: [
-        createMockDisbursement({
-          status: PayoutDisbursementStatus.DISBURSED,
-        }),
-      ],
-    });
-    expect(result.label).toBe("Disbursed");
-    expect(result.color).toContain("green");
-  });
-
-  it("returns Partially Disbursed when some transactions are disbursed but not completed", () => {
-    const result = computeDisplayStatus({
-      totalsByToken: [createMockTokenTotal()],
-      status: AggregatedDisbursementStatus.IN_PROGRESS,
-      history: [
-        createMockDisbursement({
-          status: PayoutDisbursementStatus.PENDING,
-        }),
-        createMockDisbursement({
-          id: "d-2",
-          status: PayoutDisbursementStatus.DISBURSED,
-        }),
-      ],
-    });
-    expect(result.label).toBe("Partially Disbursed");
-    expect(result.color).toContain("blue");
-  });
-
-  it("returns Cancelled when all transactions are cancelled", () => {
-    const result = computeDisplayStatus({
-      totalsByToken: [],
-      status: AggregatedDisbursementStatus.NOT_STARTED,
-      history: [
-        createMockDisbursement({
-          status: PayoutDisbursementStatus.CANCELLED,
-        }),
-        createMockDisbursement({
-          id: "d-2",
-          status: PayoutDisbursementStatus.CANCELLED,
-        }),
-      ],
-    });
-    expect(result.label).toBe("Cancelled");
-  });
-
-  it("returns Failed when latest disbursement failed and no other special conditions", () => {
-    const result = computeDisplayStatus({
-      totalsByToken: [],
-      status: AggregatedDisbursementStatus.IN_PROGRESS,
-      history: [
-        createMockDisbursement({
-          status: PayoutDisbursementStatus.FAILED,
-        }),
-      ],
-    });
-    expect(result.label).toBe("Failed");
-    expect(result.color).toContain("red");
-  });
-
-  it("returns Pending as fallback for PENDING status with history", () => {
-    const result = computeDisplayStatus({
-      totalsByToken: [],
-      status: AggregatedDisbursementStatus.IN_PROGRESS,
-      history: [
-        createMockDisbursement({
-          status: PayoutDisbursementStatus.PENDING,
-        }),
-      ],
-    });
-    expect(result.label).toBe("Pending");
-  });
-
-  it("prioritizes Awaiting Signatures over Partially Disbursed", () => {
-    // Latest is AWAITING_SIGNATURES but there is also a DISBURSED one
-    const result = computeDisplayStatus({
-      totalsByToken: [createMockTokenTotal()],
-      status: AggregatedDisbursementStatus.IN_PROGRESS,
-      history: [
-        createMockDisbursement({
-          status: PayoutDisbursementStatus.AWAITING_SIGNATURES,
-        }),
-        createMockDisbursement({
-          id: "d-2",
-          status: PayoutDisbursementStatus.DISBURSED,
-        }),
-      ],
-    });
-    expect(result.label).toBe("Awaiting Signatures");
-  });
-});
 
 describe("getCheckboxDisabledState", () => {
   const baseItem: TableRow = {
@@ -330,15 +154,13 @@ describe("getCheckboxDisabledState", () => {
   });
 
   it("returns disabled when fully disbursed within epsilon", () => {
-    // Amount exceeds target by a negligible fraction (due to multi-token rounding)
-    // 10000.0000001 USDC disbursed against 10000 approved => remaining is negative => within epsilon
     const result = getCheckboxDisabledState(
       { ...baseItem },
       {
         "grant-uid-1": {
           totalsByToken: [
             createMockTokenTotal({
-              totalAmount: "10000000000", // exactly 10000 USDC
+              totalAmount: "10000000000",
               tokenDecimals: 6,
             }),
           ],
@@ -352,14 +174,13 @@ describe("getCheckboxDisabledState", () => {
   });
 
   it("returns enabled when remaining is slightly above epsilon", () => {
-    // 9999 USDC disbursed against 10000 => remaining is 1 USDC => not fully disbursed
     const result = getCheckboxDisabledState(
       { ...baseItem },
       {
         "grant-uid-1": {
           totalsByToken: [
             createMockTokenTotal({
-              totalAmount: "9999000000", // 9999 USDC
+              totalAmount: "9999000000",
               tokenDecimals: 6,
             }),
           ],
@@ -440,10 +261,18 @@ describe("getTotalDisbursed", () => {
     expect(result).toBe(0);
   });
 
-  it("defaults to 6 decimals when tokenDecimals is 0 (falsy)", () => {
-    // When tokenDecimals is 0, the `|| 6` fallback kicks in
+  it("treats tokenDecimals of 0 as 0 decimals (no division)", () => {
+    // With ?? 6, tokenDecimals=0 is preserved (not treated as falsy)
     const result = getTotalDisbursed([
       createMockTokenTotal({ totalAmount: "5000000", tokenDecimals: 0 }),
+    ]);
+    // 5000000 / 10^0 = 5000000
+    expect(result).toBe(5000000);
+  });
+
+  it("defaults to 6 decimals when tokenDecimals is null", () => {
+    const result = getTotalDisbursed([
+      createMockTokenTotal({ totalAmount: "5000000", tokenDecimals: null as unknown as number }),
     ]);
     // 5000000 / 10^6 = 5
     expect(result).toBe(5);

@@ -252,7 +252,7 @@ export default function PayoutsAdminPage() {
     if (!totalsByToken || totalsByToken.length === 0) return 0;
     return totalsByToken.reduce((sum, tokenTotal) => {
       const rawAmount = BigInt(tokenTotal.totalAmount || "0");
-      const decimals = tokenTotal.tokenDecimals || 6;
+      const decimals = tokenTotal.tokenDecimals ?? 6;
       const humanReadable = parseFloat(formatUnits(rawAmount, decimals));
       return sum + humanReadable;
     }, 0);
