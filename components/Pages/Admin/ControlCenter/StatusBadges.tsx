@@ -33,6 +33,7 @@ export function AgreementBadge({ agreement }: { agreement: CommunityPayoutAgreem
                 month: "short",
                 day: "numeric",
                 year: "numeric",
+                timeZone: "UTC",
               })}
             </p>
           </TooltipContent>

@@ -162,9 +162,11 @@ export function ControlCenterPage() {
     return Object.keys(f).length > 0 ? f : undefined;
   }, [actualProgramId, agreementFilter, invoiceFilter, disbursementFilter, searchQuery]);
 
+  // When KYC filter is active, fetch all data so client-side filtering
+  // works across all results (KYC data is not available in the backend).
   const payoutsOptions: CommunityPayoutsOptions = {
-    page: currentPage,
-    limit: itemsPerPage,
+    page: kycFilter ? 1 : currentPage,
+    limit: kycFilter ? 10000 : itemsPerPage,
     filters,
     sorting: sortBy ? { sortBy, sortOrder: sortOrder || "asc" } : undefined,
   };
@@ -666,8 +668,7 @@ export function ControlCenterPage() {
         currentPage={currentPage}
         onPageChange={handlePageChange}
         itemsPerPage={itemsPerPage}
-        totalItems={totalItems}
-        kycFilter={kycFilter}
+        totalItems={kycFilter ? paginatedData.length : totalItems}
       />
 
       {/* Create Disbursement Modal */}

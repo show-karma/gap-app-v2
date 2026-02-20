@@ -134,6 +134,7 @@ function formatShortDate(iso: string | null): string | null {
     month: "short",
     day: "numeric",
     year: "numeric",
+    timeZone: "UTC",
   });
 }
 
@@ -260,13 +261,14 @@ export function ProjectDetailsModal({
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
   const getMilestoneKey = useCallback(
-    (invoice: CommunityPayoutInvoiceInfo) => invoice.milestoneUID || invoice.milestoneLabel,
+    (invoice: CommunityPayoutInvoiceInfo, idx: number) =>
+      invoice.milestoneUID || `${invoice.milestoneLabel}::${idx}`,
     []
   );
 
   const getInvoiceReceivedDate = useCallback(
-    (invoice: CommunityPayoutInvoiceInfo) => {
-      const edits = milestoneEdits[getMilestoneKey(invoice)];
+    (invoice: CommunityPayoutInvoiceInfo, idx: number) => {
+      const edits = milestoneEdits[getMilestoneKey(invoice, idx)];
       if (edits?.invoiceReceivedAt !== undefined) return edits.invoiceReceivedAt;
       return invoice.invoiceReceivedAt?.split("T")[0] ?? null;
     },
@@ -321,29 +323,31 @@ export function ProjectDetailsModal({
 
   const handleUnsignAgreement = useCallback(() => {
     if (!grant) return;
+    const previousDate = agreementDate;
     setLocalAgreementSigned(false);
     setConfirmingUnsign(false);
     toggleAgreementMutation.mutate(
       { grantUID: grant.grantUid, signed: false },
       {
         onSuccess: () => {
+          setAgreementDate("");
           toast.success("Agreement marked as not signed");
         },
         onError: () => {
           setLocalAgreementSigned(true);
+          setAgreementDate(previousDate);
           toast.error("Failed to unsign agreement");
         },
       }
     );
-  }, [grant?.grantUid]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [grant?.grantUid, agreementDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSaveChanges = useCallback(() => {
     if (!grant) return;
     const invoices = Object.entries(milestoneEdits).map(([key, edits]) => {
-      // Key is milestoneUID when available, otherwise milestoneLabel.
-      // Look up the label from the invoice data for the API payload.
+      // Key is milestoneUID or `label::idx`. Look up the label from invoice data.
       const matchedInvoice = milestoneInvoices.find(
-        (inv) => (inv.milestoneUID || inv.milestoneLabel) === key
+        (inv, idx) => getMilestoneKey(inv, idx) === key
       );
       return {
         milestoneLabel: matchedInvoice?.milestoneLabel ?? key,
@@ -364,7 +368,7 @@ export function ProjectDetailsModal({
         },
       }
     );
-  }, [grant?.grantUid, milestoneEdits, milestoneInvoices, editCount]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [grant?.grantUid, milestoneEdits, milestoneInvoices, getMilestoneKey, editCount]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCopyAddress = useCallback(() => {
     if (!grant?.currentPayoutAddress) return;
@@ -456,10 +460,7 @@ export function ProjectDetailsModal({
                       size="sm"
                       variant="destructive"
                       className="h-5 px-2 text-[11px]"
-                      onClick={() => {
-                        handleUnsignAgreement();
-                        setAgreementDate("");
-                      }}
+                      onClick={handleUnsignAgreement}
                       aria-label="Confirm unsign agreement"
                     >
                       Confirm
@@ -678,12 +679,12 @@ export function ProjectDetailsModal({
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
                       {milestoneInvoices.map((invoice, idx) => {
-                        const receivedDateValue = getInvoiceReceivedDate(invoice);
+                        const mKey = getMilestoneKey(invoice, idx);
+                        const receivedDateValue = getInvoiceReceivedDate(invoice, idx);
                         const invoiceCfg =
                           invoiceStatusConfig[invoice.invoiceStatus as InvoiceStatus] ||
                           invoiceStatusConfig.not_submitted;
                         const paymentCfg = paymentStatusConfig[invoice.paymentStatus ?? "unpaid"];
-                        const mKey = getMilestoneKey(invoice);
                         const isEdited = milestoneEdits[mKey] !== undefined;
                         const isCleared =
                           isEdited &&

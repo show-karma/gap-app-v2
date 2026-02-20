@@ -213,7 +213,6 @@ export interface ControlCenterTableProps {
   onPageChange: (page: number) => void;
   itemsPerPage: number;
   totalItems: number;
-  kycFilter?: string;
 }
 
 export function ControlCenterTable({
@@ -241,7 +240,6 @@ export function ControlCenterTable({
   onPageChange,
   itemsPerPage,
   totalItems,
-  kycFilter,
 }: ControlCenterTableProps) {
   const columnCount = 8 + (isKycEnabled ? 1 : 0);
 
@@ -380,7 +378,7 @@ export function ControlCenterTable({
               currentPage={currentPage}
               setCurrentPage={onPageChange}
               postsPerPage={itemsPerPage}
-              totalPosts={kycFilter ? paginatedData.length : totalItems}
+              totalPosts={totalItems}
             />
           </div>
         )}
