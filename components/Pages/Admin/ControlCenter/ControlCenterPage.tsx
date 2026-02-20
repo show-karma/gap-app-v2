@@ -1,32 +1,14 @@
 "use client";
 
-import {
-  ChevronDownIcon,
-  ChevronLeftIcon,
-  ChevronUpIcon,
-  XMarkIcon,
-} from "@heroicons/react/20/solid";
-import { BanknotesIcon, Cog6ToothIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon } from "@heroicons/react/20/solid";
+import { BanknotesIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { formatUnits, isAddress } from "viem";
-import { KycStatusBadge } from "@/components/KycStatusIcon";
-import { ProgramFilter } from "@/components/Pages/Communities/Impact/ProgramFilter";
 import { Skeleton } from "@/components/Utilities/Skeleton";
-import { Spinner } from "@/components/Utilities/Spinner";
-import TablePagination from "@/components/Utilities/TablePagination";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
@@ -41,11 +23,9 @@ import {
   CreateDisbursementModal,
   type GrantDisbursementInfo,
   getPaidAllocationIds,
-  type InvoiceStatus,
   PayoutConfigurationModal,
   type PayoutGrantConfig,
   PayoutHistoryDrawer,
-  TokenBreakdown,
   type TokenTotal,
   useCommunityPayouts,
   usePayoutConfigsByCommunity,
@@ -53,6 +33,9 @@ import {
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import type { TableRow } from "./ControlCenterTable";
+import { ControlCenterTable } from "./ControlCenterTable";
+import { FilterToolbar } from "./FilterToolbar";
 import { ProjectDetailsModal } from "./ProjectDetailsModal";
 
 // ─── Internal types ──────────────────────────────────────────────────────────
@@ -61,257 +44,6 @@ interface DisbursementMapEntry {
   totalsByToken: TokenTotal[];
   status: string;
   history: PayoutDisbursement[];
-}
-
-interface TableRow {
-  grantUid: string;
-  projectUid: string;
-  projectName: string;
-  projectSlug: string;
-  grantName: string;
-  grantProgramId: string;
-  grantChainId: number;
-  projectChainId: number;
-  currentPayoutAddress?: string;
-  currentAmount?: string;
-}
-
-// ─── Status badge helpers ────────────────────────────────────────────────────
-
-function AgreementBadge({ agreement }: { agreement: CommunityPayoutAgreementInfo | null }) {
-  const isSigned = agreement?.signed === true;
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span
-            className={cn(
-              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-default",
-              isSigned
-                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                : "bg-gray-100 text-gray-700 dark:bg-zinc-800 dark:text-zinc-400"
-            )}
-          >
-            {isSigned ? "Signed" : "Not signed"}
-          </span>
-        </TooltipTrigger>
-        {isSigned && agreement?.signedAt && (
-          <TooltipContent side="top">
-            <p className="text-xs">
-              Signed on{" "}
-              {new Date(agreement.signedAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </p>
-          </TooltipContent>
-        )}
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
-
-function ProgressCell({
-  invoices,
-  paidMilestoneCount,
-}: {
-  invoices: CommunityPayoutInvoiceInfo[];
-  paidMilestoneCount: number;
-}) {
-  const total = invoices.length;
-  const paid = paidMilestoneCount;
-  const received = invoices.filter(
-    (inv) => inv.invoiceStatus === "received" || inv.invoiceStatus === "paid"
-  ).length;
-
-  if (total === 0) {
-    return <span className="text-xs text-gray-500 dark:text-zinc-500">No milestones</span>;
-  }
-
-  const allDone = paid === total && received === total;
-  const hasProgress = paid > 0 || received > 0;
-
-  const countsByStatus = invoices.reduce(
-    (acc, inv) => {
-      acc[inv.invoiceStatus] = (acc[inv.invoiceStatus] || 0) + 1;
-      return acc;
-    },
-    {} as Record<InvoiceStatus, number>
-  );
-
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div
-            className={cn(
-              "text-xs tabular-nums cursor-default",
-              allDone
-                ? "text-green-700 dark:text-green-400"
-                : hasProgress
-                  ? "text-blue-700 dark:text-blue-400"
-                  : "text-gray-600 dark:text-zinc-400"
-            )}
-          >
-            <div>
-              {paid}/{total} milestones paid
-            </div>
-            <div>
-              {received}/{total} invoices received
-            </div>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-xs">
-          <div className="space-y-0.5 text-xs">
-            <p>
-              {total} {total === 1 ? "milestone" : "milestones"}, {paid} paid
-            </p>
-            {countsByStatus.paid ? <p>Invoices paid: {countsByStatus.paid}</p> : null}
-            {countsByStatus.received ? <p>Invoices received: {countsByStatus.received}</p> : null}
-            {countsByStatus.not_submitted ? (
-              <p>Invoices not submitted: {countsByStatus.not_submitted}</p>
-            ) : null}
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
-
-// ─── Active filter chips ─────────────────────────────────────────────────────
-
-const FILTER_LABELS: Record<string, Record<string, string>> = {
-  agreementStatus: { signed: "Signed", not_signed: "Not Signed" },
-  invoiceStatus: {
-    all_received: "All Received",
-    needs_invoices: "Needs Invoices",
-    has_invoices: "In Progress",
-  },
-  status: { NOT_STARTED: "Not Started", IN_PROGRESS: "In Progress", COMPLETED: "Completed" },
-  kycStatus: {
-    NOT_STARTED: "Not Started",
-    PENDING: "Pending",
-    VERIFIED: "Verified",
-    REJECTED: "Rejected",
-    EXPIRED: "Expired",
-  },
-};
-
-const FILTER_DISPLAY_NAMES: Record<string, string> = {
-  agreementStatus: "Agreement",
-  invoiceStatus: "Invoice",
-  status: "Status",
-  kycStatus: "KYB",
-};
-
-function ActiveFilterChips({
-  agreementFilter,
-  invoiceFilter,
-  disbursementFilter,
-  kycFilter,
-  searchQuery,
-  onRemoveFilter,
-  onClearSearch,
-  onClearAll,
-}: {
-  agreementFilter?: string;
-  invoiceFilter?: string;
-  disbursementFilter?: string;
-  kycFilter?: string;
-  searchQuery: string;
-  onRemoveFilter: (key: string, value: string | null) => void;
-  onClearSearch: () => void;
-  onClearAll: () => void;
-}) {
-  const chips: { key: string; label: string; onRemove: () => void }[] = [];
-
-  if (agreementFilter) {
-    chips.push({
-      key: "agreementStatus",
-      label: `${FILTER_DISPLAY_NAMES.agreementStatus}: ${FILTER_LABELS.agreementStatus[agreementFilter] || agreementFilter}`,
-      onRemove: () => onRemoveFilter("agreementStatus", null),
-    });
-  }
-  if (invoiceFilter) {
-    chips.push({
-      key: "invoiceStatus",
-      label: `${FILTER_DISPLAY_NAMES.invoiceStatus}: ${FILTER_LABELS.invoiceStatus[invoiceFilter] || invoiceFilter}`,
-      onRemove: () => onRemoveFilter("invoiceStatus", null),
-    });
-  }
-  if (disbursementFilter) {
-    chips.push({
-      key: "status",
-      label: `${FILTER_DISPLAY_NAMES.status}: ${FILTER_LABELS.status[disbursementFilter] || disbursementFilter}`,
-      onRemove: () => onRemoveFilter("status", null),
-    });
-  }
-  if (kycFilter) {
-    chips.push({
-      key: "kycStatus",
-      label: `${FILTER_DISPLAY_NAMES.kycStatus}: ${FILTER_LABELS.kycStatus[kycFilter] || kycFilter}`,
-      onRemove: () => onRemoveFilter("kycStatus", null),
-    });
-  }
-  if (searchQuery) {
-    chips.push({
-      key: "search",
-      label: `Search: ${searchQuery}`,
-      onRemove: onClearSearch,
-    });
-  }
-
-  if (chips.length === 0) return null;
-
-  return (
-    <>
-      {chips.map((chip) => (
-        <span
-          key={chip.key}
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs font-medium"
-        >
-          {chip.label}
-          <button
-            onClick={chip.onRemove}
-            className="ml-0.5 hover:text-blue-900 dark:hover:text-blue-100 transition-colors"
-            aria-label={`Remove ${chip.label} filter`}
-          >
-            <XMarkIcon className="h-3 w-3" />
-          </button>
-        </span>
-      ))}
-      {chips.length >= 2 && (
-        <button
-          onClick={onClearAll}
-          className="text-xs text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200 underline ml-1"
-        >
-          Clear all
-        </button>
-      )}
-    </>
-  );
-}
-
-// ─── Sort icon ───────────────────────────────────────────────────────────────
-
-function SortIcon({
-  column,
-  sortBy,
-  sortOrder,
-}: {
-  column: CommunityPayoutsSorting["sortBy"];
-  sortBy?: CommunityPayoutsSorting["sortBy"];
-  sortOrder?: "asc" | "desc";
-}) {
-  if (sortBy === column) {
-    return sortOrder === "asc" ? (
-      <ChevronUpIcon className="h-4 w-4" />
-    ) : (
-      <ChevronDownIcon className="h-4 w-4" />
-    );
-  }
-  return <ChevronUpIcon className="h-4 w-4 opacity-50" />;
 }
 
 // ─── Main component ──────────────────────────────────────────────────────────
@@ -409,7 +141,7 @@ export default function ControlCenterPage() {
     [searchParams]
   );
 
-  // ─── Real data fetching ──────────────────────────────────────────────────
+  // ─── Data fetching ──────────────────────────────────────────────────────
 
   const {
     data: community,
@@ -512,7 +244,7 @@ export default function ControlCenterPage() {
     [tableData]
   );
 
-  const { config: kycConfig, isEnabled: isKycEnabled } = useKycConfig(community?.uid, {
+  const { isEnabled: isKycEnabled } = useKycConfig(community?.uid, {
     enabled: !!community?.uid,
   });
 
@@ -736,8 +468,6 @@ export default function ControlCenterPage() {
 
   // ─── Computed layout values ─────────────────────────────────────────────
 
-  const columnCount = 8 + (isKycEnabled ? 1 : 0);
-
   const hasActiveFilters = !!(
     agreementFilter ||
     invoiceFilter ||
@@ -769,7 +499,6 @@ export default function ControlCenterPage() {
     const skeletonCols = 9;
     return (
       <div className="my-4 flex flex-col gap-6 w-full">
-        {/* Page Header (same as real) */}
         <div className="flex flex-col gap-1 px-4">
           <div className="flex items-center gap-2 mb-1">
             <Skeleton className="h-4 w-40" />
@@ -778,7 +507,6 @@ export default function ControlCenterPage() {
           <Skeleton className="h-4 w-80 mt-1" />
         </div>
 
-        {/* Skeleton toolbar */}
         <div className="flex flex-wrap items-center gap-3 px-4">
           <Skeleton className="h-9 w-[150px] rounded-md" />
           <Skeleton className="h-9 w-[150px] rounded-md" />
@@ -787,7 +515,6 @@ export default function ControlCenterPage() {
           <Skeleton className="h-9 w-[200px] rounded-md" />
         </div>
 
-        {/* Skeleton table */}
         <div className="px-4">
           <div className="w-full overflow-hidden rounded-lg border border-gray-200 dark:border-zinc-800">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-800">
@@ -877,371 +604,56 @@ export default function ControlCenterPage() {
         </div>
       </div>
 
-      {/* Toolbar — Row 1: Primary controls */}
-      <div className="flex items-center justify-between gap-4 px-4 pb-3 border-b border-gray-100 dark:border-zinc-800/50">
-        <ProgramFilter onChange={handleProgramChange} />
-
-        <div className="relative flex-shrink-0 w-[280px]">
-          <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            placeholder="Search projects..."
-            className="pl-8 h-9 w-full text-sm bg-white dark:bg-zinc-900"
-          />
-        </div>
-      </div>
-
-      {/* Toolbar — Row 2: Secondary filters + entries */}
-      <div className="flex items-center justify-between gap-3 px-4 -mt-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Agreement filter */}
-          <Select
-            value={agreementFilter || "all"}
-            onValueChange={(v) => handleFilterChange("agreementStatus", v === "all" ? null : v)}
-          >
-            <SelectTrigger className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400">
-              <SelectValue placeholder="Agreement" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Agreements</SelectItem>
-              <SelectItem value="signed">Signed</SelectItem>
-              <SelectItem value="not_signed">Not Signed</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Invoice filter */}
-          <Select
-            value={invoiceFilter || "all"}
-            onValueChange={(v) => handleFilterChange("invoiceStatus", v === "all" ? null : v)}
-          >
-            <SelectTrigger className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400">
-              <SelectValue placeholder="Invoices" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Invoices</SelectItem>
-              <SelectItem value="all_received">All Received</SelectItem>
-              <SelectItem value="needs_invoices">Needs Invoices</SelectItem>
-              <SelectItem value="has_invoices">In Progress</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Disbursement status filter */}
-          <Select
-            value={disbursementFilter || "all"}
-            onValueChange={(v) => handleFilterChange("status", v === "all" ? null : v)}
-          >
-            <SelectTrigger className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="NOT_STARTED">Not Started</SelectItem>
-              <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-              <SelectItem value="COMPLETED">Completed</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* KYB filter (frontend-only, only if KYC enabled) */}
-          {isKycEnabled && (
-            <Select
-              value={kycFilter || "all"}
-              onValueChange={(v) => handleFilterChange("kycStatus", v === "all" ? null : v)}
-            >
-              <SelectTrigger className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400">
-                <SelectValue placeholder="KYB" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All KYB</SelectItem>
-                <SelectItem value="NOT_STARTED">Not Started</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="VERIFIED">Verified</SelectItem>
-                <SelectItem value="REJECTED">Rejected</SelectItem>
-                <SelectItem value="EXPIRED">Expired</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-
-          {/* Active filter chips */}
-          <ActiveFilterChips
-            agreementFilter={agreementFilter}
-            invoiceFilter={invoiceFilter}
-            disbursementFilter={disbursementFilter}
-            kycFilter={kycFilter}
-            searchQuery={searchQuery}
-            onRemoveFilter={handleFilterChange}
-            onClearSearch={() => {
-              setLocalSearch("");
-              handleFilterChange("search", null);
-            }}
-            onClearAll={handleClearFilters}
-          />
-        </div>
-
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="text-xs text-gray-500 dark:text-zinc-400">Show</span>
-          <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
-            <SelectTrigger className="w-[60px] bg-white dark:bg-zinc-900 h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-              <SelectItem value="100">100</SelectItem>
-              <SelectItem value="200">200</SelectItem>
-            </SelectContent>
-          </Select>
-          <span className="text-xs text-gray-500 dark:text-zinc-400">entries</span>
-        </div>
-      </div>
+      {/* Toolbar */}
+      <FilterToolbar
+        localSearch={localSearch}
+        onLocalSearchChange={setLocalSearch}
+        onSearch={handleSearch}
+        onProgramChange={handleProgramChange}
+        agreementFilter={agreementFilter}
+        invoiceFilter={invoiceFilter}
+        disbursementFilter={disbursementFilter}
+        kycFilter={kycFilter}
+        isKycEnabled={isKycEnabled}
+        searchQuery={searchQuery}
+        onFilterChange={handleFilterChange}
+        onClearSearch={() => {
+          setLocalSearch("");
+          handleFilterChange("search", null);
+        }}
+        onClearAll={handleClearFilters}
+        itemsPerPage={itemsPerPage}
+        onItemsPerPageChange={handleItemsPerPageChange}
+      />
 
       {/* Table */}
-      <div className="px-4">
-        <div className="w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-zinc-800">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-800">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-zinc-900">
-                {/* Checkbox */}
-                <th className="h-11 px-2 text-center align-middle w-12">
-                  <input
-                    type="checkbox"
-                    className={cn(
-                      "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500",
-                      selectableGrants.length === 0 && "opacity-50 cursor-not-allowed"
-                    )}
-                    checked={
-                      selectableGrants.length > 0 &&
-                      selectableGrants.every((p) => selectedGrants.has(p.grantUid))
-                    }
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                    disabled={selectableGrants.length === 0}
-                    title={
-                      selectableGrants.length === 0
-                        ? "No grants have valid payout address and amount"
-                        : `Select all ${selectableGrants.length} eligible grants`
-                    }
-                  />
-                </th>
-                {/* Project - sortable */}
-                <th
-                  className="h-11 px-4 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800 select-none"
-                  onClick={() => handleSort("project_title")}
-                >
-                  <div className="flex items-center gap-1">
-                    Project
-                    <SortIcon column="project_title" sortBy={sortBy} sortOrder={sortOrder} />
-                  </div>
-                </th>
-                {/* KYB */}
-                {isKycEnabled && (
-                  <th className="h-11 px-4 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-24">
-                    KYB
-                  </th>
-                )}
-                {/* Agreement */}
-                <th className="h-11 px-4 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-28">
-                  Agreement
-                </th>
-                {/* Payout Address */}
-                <th className="h-11 px-4 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider">
-                  Payout Address
-                </th>
-                {/* Progress (milestones + invoices) */}
-                <th className="h-11 px-4 text-left text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-44">
-                  Progress
-                </th>
-                {/* Total Grant - sortable */}
-                <th
-                  className="h-11 px-4 text-right text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-28 cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800 select-none"
-                  onClick={() => handleSort("payout_amount")}
-                >
-                  <div className="flex items-center justify-end gap-1">
-                    Total Grant
-                    <SortIcon column="payout_amount" sortBy={sortBy} sortOrder={sortOrder} />
-                  </div>
-                </th>
-                {/* Disbursed - sortable */}
-                <th
-                  className="h-11 px-4 text-right text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-32 cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800 select-none"
-                  onClick={() => handleSort("disbursed_amount")}
-                >
-                  <div className="flex items-center justify-end gap-1">
-                    Disbursed
-                    <SortIcon column="disbursed_amount" sortBy={sortBy} sortOrder={sortOrder} />
-                  </div>
-                </th>
-                {/* Actions */}
-                <th className="h-11 px-4 text-center text-xs font-semibold text-gray-600 dark:text-zinc-400 uppercase tracking-wider w-20">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-zinc-800 bg-white dark:bg-zinc-950">
-              {paginatedData.map((item) => {
-                const disbursementInfo = disbursementMap[item.grantUid];
-                const totalsByToken = disbursementInfo?.totalsByToken || [];
-                const checkboxState = getCheckboxDisabledState(item);
-                const isFullyDisbursed = checkboxState.reason === "Fully disbursed";
-
-                const agreement = agreementMap[item.grantUid] ?? null;
-                const invoices = invoiceMap[item.grantUid] ?? [];
-
-                return (
-                  <tr
-                    key={`${item.grantUid}-${item.projectUid}`}
-                    onClick={(e) => handleRowClick(item, e)}
-                    className={cn(
-                      "cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-zinc-900/70 group",
-                      selectedGrants.has(item.grantUid) && "bg-blue-50 dark:bg-blue-900/20",
-                      isFullyDisbursed && "bg-green-50/50 dark:bg-green-900/10",
-                      checkboxState.disabled &&
-                        !isFullyDisbursed &&
-                        "bg-gray-50/50 dark:bg-zinc-900/50"
-                    )}
-                  >
-                    {/* Checkbox */}
-                    <td className="px-2 py-3 text-center">
-                      <input
-                        type="checkbox"
-                        className={cn(
-                          "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500",
-                          checkboxState.disabled && "opacity-50 cursor-not-allowed"
-                        )}
-                        checked={selectedGrants.has(item.grantUid)}
-                        onChange={(e) => handleSelectGrant(item.grantUid, e.target.checked)}
-                        disabled={checkboxState.disabled}
-                        title={checkboxState.reason || "Select for disbursement"}
-                      />
-                    </td>
-
-                    {/* Project */}
-                    <td className="px-4 py-3">
-                      <div>
-                        <span
-                          className="font-medium text-gray-900 dark:text-zinc-100 text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate max-w-[250px] block"
-                          title={item.projectName}
-                        >
-                          {item.projectName}
-                        </span>
-                        <p
-                          className="text-xs text-gray-500 dark:text-zinc-500 mt-0.5 truncate max-w-[250px]"
-                          title={item.grantName}
-                        >
-                          {item.grantName}
-                        </p>
-                      </div>
-                    </td>
-
-                    {/* KYB */}
-                    {isKycEnabled && (
-                      <td className="px-4 py-3 text-left">
-                        {isLoadingKycStatuses ? (
-                          <Spinner className="w-4 h-4" />
-                        ) : (
-                          <KycStatusBadge
-                            status={kycStatuses.get(item.projectUid) ?? null}
-                            showValidityInLabel={false}
-                            className="px-2.5"
-                          />
-                        )}
-                      </td>
-                    )}
-
-                    {/* Agreement */}
-                    <td className="px-4 py-3 text-left">
-                      <AgreementBadge agreement={agreement} />
-                    </td>
-
-                    {/* Payout Address */}
-                    <td className="px-4 py-3">
-                      <span
-                        className="font-mono text-sm text-gray-700 dark:text-gray-300"
-                        title={item.currentPayoutAddress || "Not configured"}
-                      >
-                        {item.currentPayoutAddress ? (
-                          `${item.currentPayoutAddress.slice(0, 6)}...${item.currentPayoutAddress.slice(-4)}`
-                        ) : (
-                          <span className="text-gray-400 dark:text-zinc-600">&mdash;</span>
-                        )}
-                      </span>
-                    </td>
-
-                    {/* Progress (milestones + invoices) */}
-                    <td className="px-4 py-3 text-left">
-                      <ProgressCell
-                        invoices={invoices}
-                        paidMilestoneCount={paidMilestoneCountMap[item.grantUid] ?? 0}
-                      />
-                    </td>
-
-                    {/* Total Grant */}
-                    <td className="px-4 py-3 text-right tabular-nums text-sm font-medium text-gray-900 dark:text-zinc-100">
-                      {item.currentAmount && parseFloat(item.currentAmount) > 0 ? (
-                        parseFloat(item.currentAmount).toLocaleString(undefined, {
-                          maximumFractionDigits: 6,
-                        })
-                      ) : (
-                        <span className="text-gray-400 dark:text-zinc-600">&mdash;</span>
-                      )}
-                    </td>
-
-                    {/* Disbursed */}
-                    <td className="px-4 py-3 text-right">
-                      <TokenBreakdown totalsByToken={totalsByToken} size="sm" />
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-4 py-3 text-center">
-                      <button
-                        onClick={() => handleOpenConfigModal(item)}
-                        className={cn(
-                          "p-2 rounded-md transition-colors",
-                          "text-gray-500 hover:text-gray-700 hover:bg-gray-100",
-                          "dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-zinc-800"
-                        )}
-                        title="Configure payout settings"
-                      >
-                        <Cog6ToothIcon className="h-5 w-5" />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-
-              {paginatedData.length === 0 && (
-                <tr>
-                  <td colSpan={columnCount} className="px-4 py-12 text-center">
-                    <p className="text-sm text-gray-500 dark:text-zinc-400">
-                      No projects found matching your filters.
-                    </p>
-                    {hasActiveFilters && (
-                      <button
-                        onClick={handleClearFilters}
-                        className="mt-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
-                      >
-                        Clear all filters
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-
-          {/* Pagination */}
-          {totalItems > 0 && (
-            <div className="dark:bg-zinc-900 border-t border-gray-200 dark:border-zinc-800">
-              <TablePagination
-                currentPage={currentPage}
-                setCurrentPage={handlePageChange}
-                postsPerPage={itemsPerPage}
-                totalPosts={kycFilter ? paginatedData.length : totalItems}
-              />
-            </div>
-          )}
-        </div>
-      </div>
+      <ControlCenterTable
+        paginatedData={paginatedData}
+        selectedGrants={selectedGrants}
+        selectableGrants={selectableGrants}
+        onSelectGrant={handleSelectGrant}
+        onSelectAll={handleSelectAll}
+        onRowClick={handleRowClick}
+        onSort={handleSort}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        isKycEnabled={isKycEnabled}
+        isLoadingKycStatuses={isLoadingKycStatuses}
+        kycStatuses={kycStatuses}
+        disbursementMap={disbursementMap}
+        agreementMap={agreementMap}
+        invoiceMap={invoiceMap}
+        paidMilestoneCountMap={paidMilestoneCountMap}
+        getCheckboxDisabledState={getCheckboxDisabledState}
+        onOpenConfigModal={handleOpenConfigModal}
+        hasActiveFilters={hasActiveFilters}
+        onClearFilters={handleClearFilters}
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
+        itemsPerPage={itemsPerPage}
+        totalItems={totalItems}
+        kycFilter={kycFilter}
+      />
 
       {/* Create Disbursement Modal */}
       <CreateDisbursementModal
