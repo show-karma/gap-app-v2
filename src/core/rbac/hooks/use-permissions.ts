@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { authorizationService, type GetPermissionsParams } from "../services/authorization.service";
 
 export const permissionsKeys = {
@@ -35,6 +35,9 @@ export function usePermissionsQuery(
     staleTime: 5 * 60 * 1000, // 5 minutes - permissions don't change frequently
     gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
     refetchOnWindowFocus: false, // Avoid excessive refetches on tab switch
+    // Keep previous permissions visible while fetching new context (e.g., navigating
+    // between programs). Prevents flash of "Access Denied" during query key transitions.
+    placeholderData: keepPreviousData,
     // Avoid retry storms on rate limiting; retry other transient failures up to 2 times.
     retry: (failureCount, error) => !isRateLimitError(error) && failureCount < 2,
     enabled, // Only fetch when user is authenticated

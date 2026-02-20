@@ -10,6 +10,8 @@ interface OwnerStore {
 export const useOwnerStore = create<OwnerStore>((set, _get) => ({
   isOwner: false,
   setIsOwner: (isOwner: boolean) => set({ isOwner }),
-  isOwnerLoading: false,
+  // Default to true: prevents flash of "not authorized" before useContractOwner
+  // completes its first check. The hook sets this to false once loading finishes.
+  isOwnerLoading: true,
   setIsOwnerLoading: (isOwnerLoading: boolean) => set({ isOwnerLoading }),
 }));

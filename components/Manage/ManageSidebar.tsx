@@ -19,9 +19,20 @@ import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
 import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
+import { Role } from "@/src/core/rbac/types";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+
+const ROLE_LABELS: Partial<Record<Role, string>> = {
+  [Role.SUPER_ADMIN]: "Super Admin",
+  [Role.REGISTRY_ADMIN]: "Registry Admin",
+  [Role.COMMUNITY_ADMIN]: "Community Admin",
+  [Role.PROGRAM_ADMIN]: "Program Admin",
+  [Role.PROGRAM_CREATOR]: "Program Creator",
+  [Role.PROGRAM_REVIEWER]: "Reviewer",
+  [Role.MILESTONE_REVIEWER]: "Reviewer",
+};
 
 interface NavItem {
   href: (slug: string) => string;
@@ -108,6 +119,9 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+/** Sidebar items visible to reviewers (program + milestone reviewers). */
+const REVIEWER_SEGMENTS = new Set(["funding-platform", "milestones-report"]);
+
 function isActiveRoute(pathname: string, matchSegment: string, slug: string): boolean {
   const managePath = PAGES.ADMIN.ROOT(slug);
   const itemPath = `${managePath}/${matchSegment}`;
@@ -147,16 +161,25 @@ function useSidebarCounts(communityId: string) {
 
 export function ManageSidebar({ communityId, community }: ManageSidebarProps) {
   const pathname = usePathname();
-  const { permissions, isCommunityAdmin, isProgramAdmin, isLoading } = usePermissionContext();
+  const { roles, isCommunityAdmin, isProgramAdmin, isReviewer, isLoading } = usePermissionContext();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const badgeCounts = useSidebarCounts(communityId);
 
   const slug = community?.details?.slug || communityId;
 
-  // Gate: user must have any admin-level access to see nav items.
-  // Once gated, show ALL items (no per-item filtering) — matches original behavior.
-  const hasAdminAccess = isCommunityAdmin || isProgramAdmin || permissions.length > 0;
-  const visibleGroups = isLoading || !hasAdminAccess ? [] : NAV_GROUPS;
+  const hasAdminAccess = isCommunityAdmin || isProgramAdmin;
+  const hasReviewerAccess = isReviewer;
+  const roleLabel = ROLE_LABELS[roles.primaryRole] ?? "";
+
+  const visibleGroups = useMemo(() => {
+    if (isLoading || (!hasAdminAccess && !hasReviewerAccess)) return [];
+    if (hasAdminAccess) return NAV_GROUPS;
+    // Reviewer-only: filter to allowed items
+    return NAV_GROUPS.map((group) => ({
+      ...group,
+      items: group.items.filter((item) => REVIEWER_SEGMENTS.has(item.matchSegment)),
+    })).filter((group) => group.items.length > 0);
+  }, [isLoading, hasAdminAccess, hasReviewerAccess]);
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
@@ -180,7 +203,7 @@ export function ManageSidebar({ communityId, community }: ManageSidebarProps) {
             <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
               {community?.details?.name || communityId}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Admin</p>
+            {roleLabel && <p className="text-xs text-gray-500 dark:text-gray-400">{roleLabel}</p>}
           </div>
         </div>
       </div>

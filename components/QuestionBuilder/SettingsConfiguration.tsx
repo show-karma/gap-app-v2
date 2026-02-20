@@ -29,6 +29,12 @@ interface SettingsConfigurationProps {
   className?: string;
   programId?: string;
   readOnly?: boolean;
+  /** Current value of anyoneCanJoin from program metadata */
+  anyoneCanJoin?: boolean;
+  /** Callback to update anyoneCanJoin in program metadata */
+  onAnyoneCanJoinChange?: (value: boolean) => void;
+  /** Whether an enrollment update is in flight */
+  isEnrollmentPending?: boolean;
 }
 
 // Convert local datetime-local value to UTC ISO string
@@ -57,6 +63,9 @@ export function SettingsConfiguration({
   className = "",
   programId,
   readOnly = false,
+  anyoneCanJoin,
+  onAnyoneCanJoinChange,
+  isEnrollmentPending = false,
 }: SettingsConfigurationProps) {
   const { communityId } = useParams() as { communityId: string };
   const [copied, setCopied] = useState(false);
@@ -205,6 +214,30 @@ export function SettingsConfiguration({
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       Enable this if this program is a donation round where users can contribute
                       funds.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Open Enrollment */}
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="anyoneCanJoin"
+                    checked={anyoneCanJoin ?? true}
+                    onChange={(e) => onAnyoneCanJoinChange?.(e.target.checked)}
+                    disabled={readOnly || !onAnyoneCanJoinChange || isEnrollmentPending}
+                    className={`mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${readOnly || !onAnyoneCanJoinChange || isEnrollmentPending ? "opacity-50 cursor-not-allowed" : ""}`}
+                  />
+                  <div className="flex-1">
+                    <label
+                      htmlFor="anyoneCanJoin"
+                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      Open Enrollment
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Any project can self attest their participation in this program. When
+                      disabled, projects must contact the program manager to join.
                     </p>
                   </div>
                 </div>

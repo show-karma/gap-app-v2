@@ -14,7 +14,6 @@ import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useFundingPrograms } from "@/hooks/useFundingPlatform";
-import { usePermissionContext } from "@/src/core/rbac/context/permission-context";
 import type { Community } from "@/types/v2/community";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -143,15 +142,7 @@ function ProgramRow({
 
 export function DashboardOverview({ community }: { community: Community }) {
   const { communityId } = useParams() as { communityId: string };
-  const {
-    permissions,
-    isCommunityAdmin,
-    isProgramAdmin,
-    isLoading: permissionsLoading,
-  } = usePermissionContext();
   const slug = community?.details?.slug || communityId;
-
-  const hasAdminAccess = isCommunityAdmin || isProgramAdmin || permissions.length > 0;
 
   const {
     programs,
@@ -233,20 +224,10 @@ export function DashboardOverview({ community }: { community: Community }) {
     return items;
   }, [stats, programs, slug]);
 
-  if (permissionsLoading || programsLoading) {
+  if (programsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
         <Spinner />
-      </div>
-    );
-  }
-
-  if (!hasAdminAccess) {
-    return (
-      <div className="flex items-center justify-center min-h-[300px]">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          You don&apos;t have permission to view this dashboard.
-        </p>
       </div>
     );
   }
