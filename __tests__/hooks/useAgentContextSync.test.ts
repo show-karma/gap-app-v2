@@ -1,7 +1,7 @@
 /**
  * @file Tests for useAgentContextSync hook
  * @description Tests route-based agent context synchronization for
- * project, program, and application pages.
+ * project, program, and application pages using unified /manage/ routes.
  */
 
 import { renderHook } from "@testing-library/react";
@@ -17,15 +17,6 @@ jest.mock("next/navigation", () => ({
   useParams: () => mockParams(),
 }));
 
-const mockUsePermissions = jest.fn(() => ({
-  hasPermission: true,
-  isLoading: false,
-}));
-
-jest.mock("@/hooks/usePermissions", () => ({
-  usePermissions: (...args: any[]) => mockUsePermissions(...args),
-}));
-
 describe("useAgentContextSync", () => {
   beforeEach(() => {
     useAgentChatStore.setState({
@@ -33,11 +24,6 @@ describe("useAgentContextSync", () => {
     });
     mockPathname.mockReturnValue(null);
     mockParams.mockReturnValue({});
-    mockUsePermissions.mockReset();
-    mockUsePermissions.mockReturnValue({
-      hasPermission: true,
-      isLoading: false,
-    });
   });
 
   describe("project pages", () => {
@@ -73,10 +59,10 @@ describe("useAgentContextSync", () => {
     });
   });
 
-  describe("program admin pages", () => {
-    it("should set programId context on admin funding platform page", () => {
+  describe("manage pages (unified admin + reviewer)", () => {
+    it("should set programId context on manage funding platform page", () => {
       mockPathname.mockReturnValue(
-        "/community/comm-1/admin/funding-platform/prog-abc/applications"
+        "/community/comm-1/manage/funding-platform/prog-abc/applications"
       );
       mockParams.mockReturnValue({
         communityId: "comm-1",
@@ -93,7 +79,7 @@ describe("useAgentContextSync", () => {
 
     it("should strip chainId suffix from programId", () => {
       mockPathname.mockReturnValue(
-        "/community/comm-1/admin/funding-platform/prog-abc_42161/applications"
+        "/community/comm-1/manage/funding-platform/prog-abc_42161/applications"
       );
       mockParams.mockReturnValue({
         communityId: "comm-1",
@@ -109,7 +95,7 @@ describe("useAgentContextSync", () => {
     });
 
     it("should not set context without communityId", () => {
-      mockPathname.mockReturnValue("/community//admin/funding-platform/prog-abc/applications");
+      mockPathname.mockReturnValue("/community//manage/funding-platform/prog-abc/applications");
       mockParams.mockReturnValue({ programId: "prog-abc" });
 
       renderHook(() => useAgentContextSync());
@@ -118,7 +104,7 @@ describe("useAgentContextSync", () => {
     });
 
     it("should set community context without programId", () => {
-      mockPathname.mockReturnValue("/community/comm-1/admin/funding-platform/");
+      mockPathname.mockReturnValue("/community/comm-1/manage/");
       mockParams.mockReturnValue({ communityId: "comm-1" });
 
       renderHook(() => useAgentContextSync());
@@ -128,30 +114,15 @@ describe("useAgentContextSync", () => {
       });
     });
 
-    it("should clear context when permission is denied", () => {
+    it("should set applicationId context on application page", () => {
       mockPathname.mockReturnValue(
-        "/community/comm-1/admin/funding-platform/prog-abc/applications"
+        "/community/comm-1/manage/funding-platform/prog-abc/applications/app-789"
       );
       mockParams.mockReturnValue({
         communityId: "comm-1",
         programId: "prog-abc",
+        applicationId: "app-789",
       });
-      mockUsePermissions
-        .mockReturnValueOnce({ hasPermission: false, isLoading: false })
-        .mockReturnValueOnce({ hasPermission: true, isLoading: false });
-
-      renderHook(() => useAgentContextSync());
-
-      expect(useAgentChatStore.getState().agentContext).toBeNull();
-    });
-  });
-
-  describe("reviewer pages", () => {
-    it("should set applicationId context on reviewer page", () => {
-      mockPathname.mockReturnValue(
-        "/community/comm-1/reviewer/funding-platform/prog-abc/applications/app-789"
-      );
-      mockParams.mockReturnValue({ programId: "prog-abc", applicationId: "app-789" });
 
       renderHook(() => useAgentContextSync());
 
@@ -160,38 +131,26 @@ describe("useAgentContextSync", () => {
       });
     });
 
-    it("should not set context without applicationId on reviewer page", () => {
+    it("should set programId when no applicationId on applications list", () => {
       mockPathname.mockReturnValue(
-        "/community/comm-1/reviewer/funding-platform/prog-abc/applications"
-      );
-      mockParams.mockReturnValue({});
-
-      renderHook(() => useAgentContextSync());
-
-      expect(useAgentChatStore.getState().agentContext).toBeNull();
-    });
-
-    it("should clear context when reviewer permission is denied", () => {
-      mockPathname.mockReturnValue(
-        "/community/comm-1/reviewer/funding-platform/prog-abc/applications/app-789"
+        "/community/comm-1/manage/funding-platform/prog-abc/applications"
       );
       mockParams.mockReturnValue({
+        communityId: "comm-1",
         programId: "prog-abc",
-        applicationId: "app-789",
       });
-      mockUsePermissions
-        .mockReturnValueOnce({ hasPermission: true, isLoading: false })
-        .mockReturnValueOnce({ hasPermission: false, isLoading: false });
 
       renderHook(() => useAgentContextSync());
 
-      expect(useAgentChatStore.getState().agentContext).toBeNull();
+      expect(useAgentChatStore.getState().agentContext).toEqual({
+        programId: "prog-abc",
+        communityId: "comm-1",
+      });
     });
   });
 
   describe("non-context pages", () => {
     it("should clear context on homepage", () => {
-      // Pre-set context
       useAgentChatStore.setState({
         agentContext: { projectId: "proj-old" },
       });
@@ -217,7 +176,7 @@ describe("useAgentContextSync", () => {
       expect(useAgentChatStore.getState().agentContext).toBeNull();
     });
 
-    it("should clear context on community page without admin path", () => {
+    it("should clear context on community page without manage path", () => {
       useAgentChatStore.setState({
         agentContext: { programId: "prog-old" },
       });
