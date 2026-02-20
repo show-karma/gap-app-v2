@@ -4,7 +4,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { ChevronRightIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Community, nullRef } from "@show-karma/karma-gap-sdk";
-import { type FC, Fragment, type ReactNode, useState } from "react";
+import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccount } from "wagmi";
 import { z } from "zod";
@@ -65,9 +65,12 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   };
 
   const [isOpen, setIsOpen] = useState(false);
+  // Flag to prevent form reset when reopening after an error
+  const [shouldResetOnOpen, setShouldResetOnOpen] = useState(true);
 
   function closeModal() {
     setIsOpen(false);
+    setShouldResetOnOpen(true);
   }
 
   function openModal() {
@@ -77,12 +80,20 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<SchemaType>({
     resolver: zodResolver(schema),
     mode: "onChange",
     defaultValues: dataToUpdate,
   });
+
+  useEffect(() => {
+    if (isOpen && shouldResetOnOpen) {
+      reset(dataToUpdate);
+      setDescription(dataToUpdate?.description || "");
+    }
+  }, [isOpen]);
 
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
@@ -191,6 +202,9 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
           error: "Failed to create community. Please try again.",
         }
       );
+      // Reopen modal with user's data preserved on error
+      setShouldResetOnOpen(false);
+      openModal();
     } finally {
       setIsLoading(false);
     }
