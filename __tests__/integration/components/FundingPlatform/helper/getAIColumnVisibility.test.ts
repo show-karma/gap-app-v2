@@ -1,13 +1,11 @@
 import { getAIColumnVisibility } from "@/components/FundingPlatform/helper/getAIColumnVisibility";
-import type { IFundingApplication } from "@/types/funding-platform";
 import type { ProgramPromptsResponse } from "@/src/features/prompt-management/types/program-prompt";
+import type { IFundingApplication } from "@/types/funding-platform";
 
 /**
  * Helper to create a minimal mock application with AI evaluation data
  */
-function mockApplication(
-  overrides: Partial<IFundingApplication> = {}
-): IFundingApplication {
+function mockApplication(overrides: Partial<IFundingApplication> = {}): IFundingApplication {
   return {
     referenceNumber: "APP-TEST-001",
     ...overrides,

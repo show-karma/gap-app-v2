@@ -27,7 +27,11 @@ function extractScore(evaluation: unknown): { score: number; field: string } | n
 
   for (const targetField of SCORE_FIELDS) {
     const matchedKey = keys.find((k) => k.toLowerCase() === targetField);
-    if (matchedKey && typeof evalObj[matchedKey] === "number" && !Number.isNaN(evalObj[matchedKey])) {
+    if (
+      matchedKey &&
+      typeof evalObj[matchedKey] === "number" &&
+      !Number.isNaN(evalObj[matchedKey])
+    ) {
       return { score: evalObj[matchedKey] as number, field: matchedKey };
     }
   }

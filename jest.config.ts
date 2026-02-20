@@ -65,7 +65,7 @@ const config: Config = {
   // Transform ESM modules that need to be compiled for Jest
   // Include MSW and all its dependencies (including nested pnpm packages)
   transformIgnorePatterns: [
-    "/node_modules/(?!(@show-karma|@ethereum-attestation-service|multiformats|wagmi|@wagmi|@wagmi/core|@wagmi/connectors|viem|@privy-io|@coinbase|rehype-sanitize|hast-util-sanitize|msw|@mswjs|until-async|rehype-external-links|@noble|@aa-sdk)/)",
+    "/node_modules/(?!(@show-karma|@ethereum-attestation-service|multiformats|wagmi|@wagmi|@wagmi/core|@wagmi/connectors|viem|@privy-io|@coinbase|rehype-sanitize|hast-util-sanitize|msw|@mswjs|until-async|rehype-external-links|@noble|@aa-sdk|streamdown|@streamdown|use-stick-to-bottom|nanoid)/)",
   ],
 
   globalSetup: "./tests/global.js",
@@ -99,7 +99,7 @@ export default async () => {
     ...jestConfig,
     // Override transformIgnorePatterns to ensure ESM modules are transformed
     transformIgnorePatterns: [
-      "/node_modules/(?!(@show-karma|@ethereum-attestation-service|multiformats|wagmi|@wagmi|@wagmi/core|@wagmi/connectors|viem|@privy-io|@coinbase|rehype-sanitize|hast-util-sanitize|msw|@mswjs|until-async|rehype-external-links|@noble|@aa-sdk)/)",
+      "/node_modules/(?!(@show-karma|@ethereum-attestation-service|multiformats|wagmi|@wagmi|@wagmi/core|@wagmi/connectors|viem|@privy-io|@coinbase|rehype-sanitize|hast-util-sanitize|msw|@mswjs|until-async|rehype-external-links|@noble|@aa-sdk|streamdown|@streamdown|use-stick-to-bottom|nanoid)/)",
     ],
   };
 };

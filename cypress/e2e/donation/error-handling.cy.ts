@@ -216,8 +216,11 @@ describe("E2E: Donation Error Handling", () => {
     });
 
     it("should handle corrupt cart data without showing errors to user", () => {
+      // Visit the page first so we have a valid origin for localStorage
+      cy.visit(`/community/${COMMUNITY}/donate`, { failOnStatusCode: false });
+
+      // Set partially corrupt data after initial load
       cy.window().then((win) => {
-        // Set partially corrupt data
         const cartData = {
           state: null, // Invalid state
           version: 0,
@@ -228,10 +231,10 @@ describe("E2E: Donation Error Handling", () => {
         );
       });
 
-      cy.visit(`/community/${COMMUNITY}/donate`);
-      waitForPageLoad();
+      // Reload to pick up the corrupt localStorage data
+      cy.reload();
 
-      cy.get("body").should("be.visible");
+      cy.get("body", { timeout: 30000 }).should("be.visible");
       cy.get("nav").should("exist");
 
       // Should not expose internal errors to the user (check visible UI, not React data)

@@ -60,6 +60,10 @@ jest.mock("next-themes", () => ({
   ),
 }));
 
+jest.mock("@/components/AgentChat/AgentChatBubble", () => ({
+  AgentChatBubble: () => <div data-testid="agent-chat-bubble" />,
+}));
+
 describe("RootLayout", () => {
   it("renders all components correctly", () => {
     render(<RootLayout>Test Content</RootLayout>);
@@ -75,6 +79,7 @@ describe("RootLayout", () => {
     expect(screen.getByTestId("footer")).toBeInTheDocument();
     expect(screen.getByTestId("privy-provider")).toBeInTheDocument();
     expect(screen.getByTestId("theme-provider")).toBeInTheDocument();
+    expect(screen.getByTestId("agent-chat-bubble")).toBeInTheDocument();
   });
 
   it("renders children content", () => {
