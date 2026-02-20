@@ -42,6 +42,8 @@ describe("PermissionProvider", () => {
 
     mockUseAccount.mockReturnValue({
       isConnected: false,
+      isConnecting: false,
+      isReconnecting: false,
     });
 
     mockUsePermissionsQuery.mockReturnValue({
@@ -113,5 +115,116 @@ describe("PermissionProvider", () => {
     expect(mockUsePermissionsQuery).toHaveBeenCalledWith({}, { enabled: false });
     expect(result.current.isLoading).toBe(true);
     expect(result.current.isGuestDueToError).toBe(false);
+  });
+
+  describe("Wagmi initialization race condition", () => {
+    it("reports isLoading=true when Privy is ready+authenticated but Wagmi is still connecting", () => {
+      mockUsePrivy.mockReturnValue({
+        ready: true,
+        authenticated: true,
+      });
+
+      mockUseAccount.mockReturnValue({
+        isConnected: false,
+        isConnecting: true,
+        isReconnecting: false,
+      });
+
+      const { result } = renderHook(() => usePermissionContext(), { wrapper });
+
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.isGuestDueToError).toBe(false);
+    });
+
+    it("reports isLoading=true when Privy is ready+authenticated but Wagmi is reconnecting", () => {
+      mockUsePrivy.mockReturnValue({
+        ready: true,
+        authenticated: true,
+      });
+
+      mockUseAccount.mockReturnValue({
+        isConnected: false,
+        isConnecting: false,
+        isReconnecting: true,
+      });
+
+      const { result } = renderHook(() => usePermissionContext(), { wrapper });
+
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.isGuestDueToError).toBe(false);
+    });
+
+    it("reports isLoading=false once Wagmi connects and permissions load", () => {
+      mockUsePrivy.mockReturnValue({
+        ready: true,
+        authenticated: true,
+      });
+
+      mockUseAccount.mockReturnValue({
+        isConnected: true,
+        isConnecting: false,
+        isReconnecting: false,
+      });
+
+      mockUsePermissionsQuery.mockReturnValue({
+        data: {
+          roles: {
+            primaryRole: Role.COMMUNITY_ADMIN,
+            roles: [Role.COMMUNITY_ADMIN],
+            reviewerTypes: [],
+          },
+          permissions: [Permission.PROGRAM_VIEW],
+          resourceContext: {},
+          isCommunityAdmin: true,
+          isProgramAdmin: false,
+          isReviewer: false,
+          isRegistryAdmin: false,
+          isProgramCreator: false,
+        },
+        isLoading: false,
+        isError: false,
+      });
+
+      const { result } = renderHook(() => usePermissionContext(), { wrapper });
+
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isCommunityAdmin).toBe(true);
+    });
+
+    it("reports isLoading=true when Privy is authenticated but Wagmi hasn't started yet", () => {
+      mockUsePrivy.mockReturnValue({
+        ready: true,
+        authenticated: true,
+      });
+
+      mockUseAccount.mockReturnValue({
+        isConnected: false,
+        isConnecting: false,
+        isReconnecting: false,
+      });
+
+      const { result } = renderHook(() => usePermissionContext(), { wrapper });
+
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.isGuestDueToError).toBe(false);
+    });
+
+    it("does not report loading for genuinely unauthenticated users", () => {
+      mockUsePrivy.mockReturnValue({
+        ready: true,
+        authenticated: false,
+      });
+
+      mockUseAccount.mockReturnValue({
+        isConnected: false,
+        isConnecting: false,
+        isReconnecting: false,
+      });
+
+      const { result } = renderHook(() => usePermissionContext(), { wrapper });
+
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.roles.primaryRole).toBe(Role.GUEST);
+    });
   });
 });
