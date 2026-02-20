@@ -259,20 +259,25 @@ export function ProjectDetailsModal({
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
+  const getMilestoneKey = useCallback(
+    (invoice: CommunityPayoutInvoiceInfo) => invoice.milestoneUID || invoice.milestoneLabel,
+    []
+  );
+
   const getInvoiceReceivedDate = useCallback(
     (invoice: CommunityPayoutInvoiceInfo) => {
-      const edits = milestoneEdits[invoice.milestoneLabel];
+      const edits = milestoneEdits[getMilestoneKey(invoice)];
       if (edits?.invoiceReceivedAt !== undefined) return edits.invoiceReceivedAt;
       return invoice.invoiceReceivedAt?.split("T")[0] ?? null;
     },
-    [milestoneEdits]
+    [milestoneEdits, getMilestoneKey]
   );
 
   const handleInvoiceReceivedDateChange = useCallback(
-    (milestoneLabel: string, milestoneUID: string | null, dateValue: string) => {
+    (milestoneKey: string, milestoneUID: string | null, dateValue: string) => {
       setMilestoneEdits((prev) => ({
         ...prev,
-        [milestoneLabel]: {
+        [milestoneKey]: {
           invoiceReceivedAt: dateValue || null,
           milestoneUID,
         },
@@ -334,11 +339,18 @@ export function ProjectDetailsModal({
 
   const handleSaveChanges = useCallback(() => {
     if (!grant) return;
-    const invoices = Object.entries(milestoneEdits).map(([milestoneLabel, edits]) => ({
-      milestoneLabel,
-      milestoneUID: edits.milestoneUID ?? null,
-      invoiceReceivedAt: edits.invoiceReceivedAt ?? null,
-    }));
+    const invoices = Object.entries(milestoneEdits).map(([key, edits]) => {
+      // Key is milestoneUID when available, otherwise milestoneLabel.
+      // Look up the label from the invoice data for the API payload.
+      const matchedInvoice = milestoneInvoices.find(
+        (inv) => (inv.milestoneUID || inv.milestoneLabel) === key
+      );
+      return {
+        milestoneLabel: matchedInvoice?.milestoneLabel ?? key,
+        milestoneUID: edits.milestoneUID ?? null,
+        invoiceReceivedAt: edits.invoiceReceivedAt ?? null,
+      };
+    });
 
     saveMilestoneInvoicesMutation.mutate(
       { grantUID: grant.grantUid, invoices },
@@ -352,7 +364,7 @@ export function ProjectDetailsModal({
         },
       }
     );
-  }, [grant?.grantUid, milestoneEdits, editCount]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [grant?.grantUid, milestoneEdits, milestoneInvoices, editCount]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCopyAddress = useCallback(() => {
     if (!grant?.currentPayoutAddress) return;
@@ -360,12 +372,26 @@ export function ProjectDetailsModal({
     toast.success("Address copied");
   }, [grant?.currentPayoutAddress]);
 
-  const handleRequestClose = useCallback(() => {
+  const confirmDiscardEdits = useCallback(() => {
     if (hasEdits) {
-      if (!window.confirm("You have unsaved changes. Discard?")) return;
+      return window.confirm("You have unsaved changes. Discard?");
     }
+    return true;
+  }, [hasEdits]);
+
+  const handleRequestClose = useCallback(() => {
+    if (!confirmDiscardEdits()) return;
     onOpenChange(false);
-  }, [hasEdits, onOpenChange]);
+  }, [confirmDiscardEdits, onOpenChange]);
+
+  const handleGuardedAction = useCallback(
+    (action?: () => void) => {
+      if (!action) return;
+      if (!confirmDiscardEdits()) return;
+      action();
+    },
+    [confirmDiscardEdits]
+  );
 
   if (!grant) return null;
 
@@ -580,7 +606,12 @@ export function ProjectDetailsModal({
                     ? "Awaiting Safe signatures"
                     : "Pending disbursement"}
                   {" — "}
-                  {formatTokenAmount(pendingTx.disbursedAmount, pendingTx.tokenDecimals)}{" "}
+                  {formatTokenAmount(
+                    formatUnits(
+                      BigInt(pendingTx.disbursedAmount || "0"),
+                      pendingTx.tokenDecimals ?? 6
+                    )
+                  )}{" "}
                   {pendingTx.token}
                   {pendingTx.createdAt && (
                     <span className="text-amber-500 dark:text-amber-400/70">
@@ -652,10 +683,11 @@ export function ProjectDetailsModal({
                           invoiceStatusConfig[invoice.invoiceStatus as InvoiceStatus] ||
                           invoiceStatusConfig.not_submitted;
                         const paymentCfg = paymentStatusConfig[invoice.paymentStatus ?? "unpaid"];
-                        const isEdited = milestoneEdits[invoice.milestoneLabel] !== undefined;
+                        const mKey = getMilestoneKey(invoice);
+                        const isEdited = milestoneEdits[mKey] !== undefined;
                         const isCleared =
                           isEdited &&
-                          milestoneEdits[invoice.milestoneLabel]?.invoiceReceivedAt === null &&
+                          milestoneEdits[mKey]?.invoiceReceivedAt === null &&
                           invoice.invoiceReceivedAt !== null;
 
                         return (
@@ -730,7 +762,7 @@ export function ProjectDetailsModal({
                                   value={receivedDateValue ?? ""}
                                   onChange={(e) =>
                                     handleInvoiceReceivedDateChange(
-                                      invoice.milestoneLabel,
+                                      mKey,
                                       invoice.milestoneUID,
                                       e.target.value
                                     )
@@ -790,7 +822,7 @@ export function ProjectDetailsModal({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={onOpenConfigModal}
+                onClick={() => handleGuardedAction(onOpenConfigModal)}
                 disabled={saveMilestoneInvoicesMutation.isPending}
               >
                 <Cog6ToothIcon className="h-4 w-4 mr-1.5" />
@@ -799,7 +831,7 @@ export function ProjectDetailsModal({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={onOpenHistoryDrawer}
+                onClick={() => handleGuardedAction(onOpenHistoryDrawer)}
                 disabled={saveMilestoneInvoicesMutation.isPending}
               >
                 <ClockIcon className="h-4 w-4 mr-1.5" />
@@ -807,7 +839,7 @@ export function ProjectDetailsModal({
               </Button>
               <Button
                 size="sm"
-                onClick={onCreateDisbursement}
+                onClick={() => handleGuardedAction(onCreateDisbursement)}
                 disabled={!canCreateDisbursement || saveMilestoneInvoicesMutation.isPending}
                 title={
                   !canCreateDisbursement
