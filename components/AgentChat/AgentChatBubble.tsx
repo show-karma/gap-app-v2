@@ -119,7 +119,7 @@ export function AgentChatBubble() {
         role="dialog"
         aria-label="Chat assistant"
         aria-hidden={!isOpen}
-        className={`fixed bottom-20 right-6 z-50 w-[380px] h-[min(600px,calc(100vh-120px))] flex flex-col rounded-xl border border-border bg-card text-card-foreground shadow-lg transition-all duration-300 ease-out overflow-hidden ${
+        className={`fixed bottom-20 right-6 z-50 w-[min(380px,calc(100vw-2rem))] h-[min(600px,calc(100vh-120px))] flex flex-col rounded-xl border border-border bg-card text-card-foreground shadow-lg transition-all duration-300 ease-out overflow-hidden ${
           isOpen
             ? "translate-y-0 opacity-100 scale-100"
             : "pointer-events-none translate-y-4 opacity-0 scale-[0.97]"
@@ -141,7 +141,7 @@ export function AgentChatBubble() {
                   <Trash2Icon className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Clear chat</TooltipContent>
+              <TooltipContent side="bottom">Clear chat</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -149,7 +149,7 @@ export function AgentChatBubble() {
                   <XIcon className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Close</TooltipContent>
+              <TooltipContent side="bottom">Close</TooltipContent>
             </Tooltip>
           </div>
         </div>

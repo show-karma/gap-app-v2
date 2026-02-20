@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { type FC, useEffect, useState } from "react";
+import { type FC, useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import { useENS } from "@/store/ens";
@@ -92,10 +92,8 @@ const VerifiedBadgeLegacy: FC<{
   verifications: VerificationRecord[];
   title: string;
 }> = ({ verifications, title }) => {
-  const [orderedSort, setOrderedSort] = useState<VerificationRecord[]>([]);
-
-  const getUniqueVerifications = (verifications: VerificationRecord[]) => {
-    // get unique and by last date
+  const orderedSort = useMemo(() => {
+    // get unique verifications by attester, keeping the latest date
     const uniqueVerifications: Record<string, VerificationRecord> = {};
     verifications.forEach((verification) => {
       if (!verification.attester) return;
@@ -105,22 +103,14 @@ const VerifiedBadgeLegacy: FC<{
         uniqueVerifications[verification.attester] = verification;
       }
     });
-    return Object.values(uniqueVerifications);
-  };
+
+    // order by date descending
+    return Object.values(uniqueVerifications).sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [verifications]);
 
   const [isOpenDialog, setIsOpenDialog] = useState(false);
-
-  useEffect(() => {
-    const uniques = getUniqueVerifications(verifications);
-
-    // order by date
-    const sorted = uniques.sort((a, b) => {
-      if (new Date(a.createdAt).getTime() < new Date(b.createdAt).getTime()) return 1;
-      if (new Date(a.createdAt).getTime() > new Date(b.createdAt).getTime()) return -1;
-      return 0;
-    });
-    setOrderedSort(sorted);
-  }, [verifications, getUniqueVerifications]);
 
   const openDialog = () => setIsOpenDialog(true);
 

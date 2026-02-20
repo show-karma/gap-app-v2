@@ -12,6 +12,32 @@ export function formatToolLabel(toolName: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/**
+ * Turn a dotted key path like "changes.missionSummary.proposed" into
+ * a human-readable label like "Mission Summary (proposed)".
+ */
+export function humanizeLabel(raw: string): string {
+  const parts = raw.split(".").filter((p) => p !== "changes");
+
+  const qualifier = parts.at(-1);
+  const isQualifier = qualifier === "current" || qualifier === "proposed";
+  const fieldParts = isQualifier ? parts.slice(0, -1) : parts;
+
+  const fieldName = fieldParts
+    .map((p) =>
+      p
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+    )
+    .join(" > ");
+
+  if (isQualifier) {
+    return `${fieldName} (${qualifier})`;
+  }
+  return fieldName;
+}
+
 /** Flatten a nested data object into "key: value" display rows (max 10 levels deep) */
 export function flattenPreviewData(
   data: Record<string, unknown>,
@@ -65,9 +91,9 @@ export function ConfirmationCard({
       {rows.length > 0 && (
         <dl className="text-xs space-y-1">
           {rows.map((row) => (
-            <div key={row.label} className="flex gap-2">
-              <dt className="font-medium text-muted-foreground min-w-[80px]">{row.label}:</dt>
-              <dd className="text-foreground break-all">{row.value}</dd>
+            <div key={row.label} className="flex flex-col gap-0.5">
+              <dt className="font-medium text-muted-foreground">{humanizeLabel(row.label)}</dt>
+              <dd className="text-foreground break-words">{row.value}</dd>
             </div>
           ))}
         </dl>

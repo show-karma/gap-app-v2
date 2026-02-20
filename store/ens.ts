@@ -30,7 +30,7 @@ export const useENS = create<EnsStore>((set, get) => ({
       .filter((address): address is string => !!address && isValidEthAddress(address))
       .map((address) => address.toLowerCase() as Hex);
     const notTriedAddresses = lowercasedAddresses.filter((address) => {
-      return !ensData[address] || !ensData[address]?.isFetching;
+      return !ensData[address];
     });
 
     if (notTriedAddresses.length === 0) {

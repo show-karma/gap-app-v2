@@ -5,7 +5,9 @@
  * does not support ReadableStream bodies needed for SSE stream parsing.
  */
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
+import React from "react";
 import { server } from "@/__tests__/utils/msw/setup";
 import { useAgentStream } from "@/hooks/useAgentStream";
 import { useAgentChatStore } from "@/store/agentChat";
@@ -118,6 +120,17 @@ function createErrorResponse(status: number, body: string): Response {
 const mockFetch = jest.fn<Promise<Response>, [RequestInfo | URL, RequestInit?]>();
 let savedFetch: typeof globalThis.fetch;
 
+// QueryClient wrapper for useQueryClient inside useAgentStream
+let testQueryClient: QueryClient;
+function createWrapper() {
+  testQueryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  const Wrapper = ({ children }: { children: React.ReactNode }) =>
+    React.createElement(QueryClientProvider, { client: testQueryClient }, children);
+  return Wrapper;
+}
+
 describe("useAgentStream", () => {
   beforeAll(() => {
     // Close MSW to prevent it from intercepting our direct fetch mocks.
@@ -132,10 +145,13 @@ describe("useAgentStream", () => {
     server.listen({ onUnhandledRequest: "warn" });
   });
 
+  let wrapper: ReturnType<typeof createWrapper>;
+
   beforeEach(() => {
     globalThis.fetch = mockFetch as unknown as typeof fetch;
     mockFetch.mockReset();
     mockGetToken.mockResolvedValue("mock-token-123");
+    wrapper = createWrapper();
 
     // Reset store state
     useAgentChatStore.setState({
@@ -151,7 +167,7 @@ describe("useAgentStream", () => {
     it("should add user and assistant messages to the store", async () => {
       mockFetch.mockResolvedValue(createStreamResponse(""));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Hello agent");
@@ -167,7 +183,7 @@ describe("useAgentStream", () => {
     it("should set user message content correctly", async () => {
       mockFetch.mockResolvedValue(createStreamResponse(""));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("What is my project status?");
@@ -197,7 +213,7 @@ describe("useAgentStream", () => {
       ]);
       mockFetch.mockResolvedValue(createStreamResponse(sseText));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Say hi");
@@ -219,7 +235,7 @@ describe("useAgentStream", () => {
       ]);
       mockFetch.mockResolvedValue(createStreamResponse(sseText));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Question");
@@ -240,7 +256,7 @@ describe("useAgentStream", () => {
       ]);
       mockFetch.mockResolvedValue(createStreamResponse(sseText));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Question");
@@ -252,7 +268,7 @@ describe("useAgentStream", () => {
     it("should set streaming to false after request completes", async () => {
       mockFetch.mockResolvedValue(createStreamResponse(""));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -264,7 +280,7 @@ describe("useAgentStream", () => {
     it("should handle HTTP error response", async () => {
       mockFetch.mockResolvedValue(createErrorResponse(500, "Internal Server Error"));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -285,7 +301,7 @@ describe("useAgentStream", () => {
         )
       );
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -302,7 +318,7 @@ describe("useAgentStream", () => {
         )
       );
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -321,7 +337,7 @@ describe("useAgentStream", () => {
         )
       );
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -335,7 +351,7 @@ describe("useAgentStream", () => {
     it("should fall back to plain text for non-JSON error responses", async () => {
       mockFetch.mockResolvedValue(createErrorResponse(502, "Bad Gateway"));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -347,7 +363,7 @@ describe("useAgentStream", () => {
     it("should fall back to HTTP status for empty error responses", async () => {
       mockFetch.mockResolvedValue(createErrorResponse(500, ""));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -359,7 +375,7 @@ describe("useAgentStream", () => {
     it("should handle network failure", async () => {
       mockFetch.mockRejectedValue(new TypeError("Failed to fetch"));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -376,7 +392,7 @@ describe("useAgentStream", () => {
         'data: "message":{"content":[{"type":"text","text":"Multi-line"}]}}\n\n';
       mockFetch.mockResolvedValue(createStreamResponse(sseText));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -396,7 +412,7 @@ describe("useAgentStream", () => {
         })}\n\n`;
       mockFetch.mockResolvedValue(createStreamResponse(sseText));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -433,7 +449,7 @@ describe("useAgentStream", () => {
       ]);
       mockFetch.mockResolvedValue(createStreamResponse(sseText));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -451,7 +467,7 @@ describe("useAgentStream", () => {
         agentContext: { projectId: "proj-123" },
       });
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("About this project");
@@ -467,7 +483,7 @@ describe("useAgentStream", () => {
     it("should send Authorization header with token", async () => {
       mockFetch.mockResolvedValue(createStreamResponse(""));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -484,7 +500,7 @@ describe("useAgentStream", () => {
       mockGetToken.mockResolvedValue(null);
       mockFetch.mockResolvedValue(createStreamResponse(""));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -499,7 +515,7 @@ describe("useAgentStream", () => {
 
   describe("abort", () => {
     it("should not throw when called without active stream", () => {
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       expect(() => {
         act(() => {
@@ -520,7 +536,7 @@ describe("useAgentStream", () => {
       ]);
       mockFetch.mockResolvedValue(createStreamResponse(sseText));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Update my project");
@@ -546,7 +562,7 @@ describe("useAgentStream", () => {
       ]);
       mockFetch.mockResolvedValue(createStreamResponse(sseText));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Get project");
@@ -566,7 +582,7 @@ describe("useAgentStream", () => {
       ]);
       mockFetch.mockResolvedValue(createStreamResponse(sseText));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Create milestone");
@@ -600,7 +616,7 @@ describe("useAgentStream", () => {
 
       mockFetch.mockResolvedValue(createStreamResponse(""));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendConfirmation("assistant-1", "preview_update_project", true);
@@ -638,7 +654,7 @@ describe("useAgentStream", () => {
 
       mockFetch.mockResolvedValue(createStreamResponse(""));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendConfirmation("assistant-1", "preview_update_project", false);
@@ -661,7 +677,7 @@ describe("useAgentStream", () => {
       const sseText = formatSSE([{ type: "result", is_error: true }]);
       mockFetch.mockResolvedValue(createStreamResponse(sseText));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -674,7 +690,7 @@ describe("useAgentStream", () => {
       const sseText = formatSSE([{ type: "error", message: "Model overloaded" }]);
       mockFetch.mockResolvedValue(createStreamResponse(sseText));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -687,7 +703,7 @@ describe("useAgentStream", () => {
       const sseText = formatSSE([{ type: "error", error: "Connection lost" }]);
       mockFetch.mockResolvedValue(createStreamResponse(sseText));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -700,7 +716,7 @@ describe("useAgentStream", () => {
       const sseText = formatSSE([{ type: "result", is_error: false }]);
       mockFetch.mockResolvedValue(createStreamResponse(sseText));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -723,7 +739,7 @@ describe("useAgentStream", () => {
       ]);
       mockFetch.mockResolvedValue(createStreamResponse(sseText));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -754,7 +770,7 @@ describe("useAgentStream", () => {
       ]);
       mockFetch.mockResolvedValue(createStreamResponse(sseText));
 
-      const { result } = renderHook(() => useAgentStream());
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
 
       await act(async () => {
         await result.current.sendMessage("Test");
@@ -763,6 +779,174 @@ describe("useAgentStream", () => {
       const messages = useAgentChatStore.getState().messages;
       const assistantMsg = messages.find((m) => m.role === "assistant");
       expect(assistantMsg?.content).toBe("Hello");
+    });
+  });
+
+  describe("tool_result content block parsing", () => {
+    it("should extract data from content block format [{type,text}]", async () => {
+      const innerJson = JSON.stringify({
+        type: "preview",
+        projectUid: "proj-1",
+        changes: { title: { current: "Old", proposed: "New" } },
+      });
+      const sseText = formatSSE([
+        {
+          type: "tool_result",
+          tool_name: "preview_update_project",
+          result: { content: [{ type: "text", text: innerJson }] },
+        },
+      ]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Update project");
+      });
+
+      const messages = useAgentChatStore.getState().messages;
+      const assistantMsg = messages.find((m) => m.role === "assistant");
+      expect(assistantMsg?.toolResult?.data).toEqual({
+        type: "preview",
+        projectUid: "proj-1",
+        changes: { title: { current: "Old", proposed: "New" } },
+      });
+    });
+
+    it("should extract data from raw array content blocks", async () => {
+      const innerJson = JSON.stringify({ type: "preview", projectUid: "proj-2" });
+      const sseText = formatSSE([
+        {
+          type: "tool_result",
+          tool_name: "preview_create_milestone",
+          result: [{ type: "text", text: innerJson }],
+        },
+      ]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Create milestone");
+      });
+
+      const messages = useAgentChatStore.getState().messages;
+      const assistantMsg = messages.find((m) => m.role === "assistant");
+      expect(assistantMsg?.toolResult?.data).toEqual({
+        type: "preview",
+        projectUid: "proj-2",
+      });
+    });
+
+    it("should pass through plain object results unchanged", async () => {
+      const sseText = formatSSE([
+        {
+          type: "tool_result",
+          tool_name: "preview_update_project",
+          result: { title: "Direct", description: "Plain object" },
+        },
+      ]);
+      mockFetch.mockResolvedValue(createStreamResponse(sseText));
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Update");
+      });
+
+      const messages = useAgentChatStore.getState().messages;
+      const assistantMsg = messages.find((m) => m.role === "assistant");
+      expect(assistantMsg?.toolResult?.data).toEqual({
+        title: "Direct",
+        description: "Plain object",
+      });
+    });
+  });
+
+  describe("cache invalidation after approved commit", () => {
+    it("should invalidate project queries after approved write", async () => {
+      // Set up: a message with an approved tool result already exists
+      useAgentChatStore.setState({
+        messages: [
+          {
+            id: "assistant-1",
+            role: "assistant",
+            content: "Changes applied",
+            timestamp: 1000,
+            toolResult: {
+              type: "preview",
+              toolName: "preview_update_project",
+              data: { title: "New" },
+              status: "approved",
+            },
+          },
+        ],
+        agentContext: { projectId: "proj-123" },
+      });
+
+      mockFetch.mockResolvedValue(createStreamResponse(""));
+      const invalidateSpy = jest.spyOn(testQueryClient, "invalidateQueries");
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Confirm changes");
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ predicate: expect.any(Function) })
+      );
+    });
+
+    it("should not invalidate queries when no approved writes exist", async () => {
+      useAgentChatStore.setState({
+        messages: [],
+        agentContext: { projectId: "proj-123" },
+      });
+
+      mockFetch.mockResolvedValue(createStreamResponse(""));
+      const invalidateSpy = jest.spyOn(testQueryClient, "invalidateQueries");
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Just chatting");
+      });
+
+      expect(invalidateSpy).not.toHaveBeenCalled();
+    });
+
+    it("should invalidate program queries when programId is in context", async () => {
+      useAgentChatStore.setState({
+        messages: [
+          {
+            id: "assistant-1",
+            role: "assistant",
+            content: "Done",
+            timestamp: 1000,
+            toolResult: {
+              type: "preview",
+              toolName: "preview_update_project",
+              data: {},
+              status: "approved",
+            },
+          },
+        ],
+        agentContext: { programId: "prog-456" },
+      });
+
+      mockFetch.mockResolvedValue(createStreamResponse(""));
+      const invalidateSpy = jest.spyOn(testQueryClient, "invalidateQueries");
+
+      const { result } = renderHook(() => useAgentStream(), { wrapper });
+
+      await act(async () => {
+        await result.current.sendMessage("Apply");
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ queryKey: ["program", "prog-456"] })
+      );
     });
   });
 });
