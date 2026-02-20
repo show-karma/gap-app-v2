@@ -21,6 +21,7 @@ import type {
   IFundingApplication,
   IFundingProgramConfig,
 } from "@/types/funding-platform";
+import type { ProgramMetadata } from "@/types/program-registry";
 import { useAuth } from "./useAuth";
 
 // Query keys for caching
@@ -118,7 +119,7 @@ export const useUpdateProgramEnrollment = (
         ...program.metadata,
         anyoneCanJoin,
       };
-      await ProgramRegistryService.updateProgram(programId, updatedMetadata as any);
+      await ProgramRegistryService.updateProgram(programId, updatedMetadata as ProgramMetadata);
       return anyoneCanJoin;
     },
     onMutate: async (anyoneCanJoin: boolean) => {

@@ -894,7 +894,7 @@ export function QuestionBuilder({
                 programId={programId}
                 readOnly={readOnly}
                 anyoneCanJoin={anyoneCanJoin}
-                onAnyoneCanJoinChange={readOnly ? undefined : updateEnrollment}
+                onAnyoneCanJoinChange={!readOnly && program ? updateEnrollment : undefined}
                 isEnrollmentPending={isEnrollmentPending}
               />
               {/* Save Button at bottom of Settings tab */}
