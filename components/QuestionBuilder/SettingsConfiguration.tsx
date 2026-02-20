@@ -33,6 +33,8 @@ interface SettingsConfigurationProps {
   anyoneCanJoin?: boolean;
   /** Callback to update anyoneCanJoin in program metadata */
   onAnyoneCanJoinChange?: (value: boolean) => void;
+  /** Whether an enrollment update is in flight */
+  isEnrollmentPending?: boolean;
 }
 
 // Convert local datetime-local value to UTC ISO string
@@ -63,6 +65,7 @@ export function SettingsConfiguration({
   readOnly = false,
   anyoneCanJoin,
   onAnyoneCanJoinChange,
+  isEnrollmentPending = false,
 }: SettingsConfigurationProps) {
   const { communityId } = useParams() as { communityId: string };
   const [copied, setCopied] = useState(false);
@@ -222,8 +225,8 @@ export function SettingsConfiguration({
                     id="anyoneCanJoin"
                     checked={anyoneCanJoin ?? true}
                     onChange={(e) => onAnyoneCanJoinChange?.(e.target.checked)}
-                    disabled={readOnly || !onAnyoneCanJoinChange}
-                    className={`mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
+                    disabled={readOnly || !onAnyoneCanJoinChange || isEnrollmentPending}
+                    className={`mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${readOnly || !onAnyoneCanJoinChange || isEnrollmentPending ? "opacity-50 cursor-not-allowed" : ""}`}
                   />
                   <div className="flex-1">
                     <label

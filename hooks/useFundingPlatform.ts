@@ -5,10 +5,12 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { applicationCommentsService } from "@/services/application-comments.service";
 import { deleteApplication } from "@/services/funding-applications";
 import {
+  type FundingProgram,
   fundingApplicationsAPI,
   fundingPlatformService,
   type IApplicationFilters,
 } from "@/services/fundingPlatformService";
+import { ProgramRegistryService } from "@/services/programRegistry.service";
 import type {
   ExportFormat,
   FundingApplicationStatusV2,
@@ -92,6 +94,69 @@ export const useFundingPrograms = (communityId: string) => {
     refetch: () => {
       programsQuery.refetch();
     },
+  };
+};
+
+/**
+ * Hook for toggling anyoneCanJoin (open enrollment) on a program.
+ * Uses optimistic updates with rollback on failure and invalidates
+ * the programs cache on settle.
+ */
+export const useUpdateProgramEnrollment = (
+  programId: string,
+  communityId: string,
+  program: { metadata: Record<string, any> } | null | undefined
+) => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async (anyoneCanJoin: boolean) => {
+      if (!program?.metadata) {
+        throw new Error("Program data is not loaded");
+      }
+      const updatedMetadata = {
+        ...program.metadata,
+        anyoneCanJoin,
+      };
+      await ProgramRegistryService.updateProgram(programId, updatedMetadata as any);
+      return anyoneCanJoin;
+    },
+    onMutate: async (anyoneCanJoin: boolean) => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.programs(communityId) });
+
+      const previous = queryClient.getQueryData<FundingProgram[]>(QUERY_KEYS.programs(communityId));
+
+      if (previous) {
+        queryClient.setQueryData<FundingProgram[]>(
+          QUERY_KEYS.programs(communityId),
+          previous.map((p) =>
+            p.programId === programId ? { ...p, metadata: { ...p.metadata, anyoneCanJoin } } : p
+          )
+        );
+      }
+
+      return { previous };
+    },
+    onError: (error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(QUERY_KEYS.programs(communityId), context.previous);
+      }
+      errorManager("Failed to update open enrollment setting", error, {
+        programId,
+      });
+      toast.error("Failed to update enrollment setting. Please try again.");
+    },
+    onSuccess: (_data, anyoneCanJoin) => {
+      toast.success(`Open enrollment ${anyoneCanJoin ? "enabled" : "disabled"}`);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programs(communityId) });
+    },
+  });
+
+  return {
+    updateEnrollment: mutation.mutate,
+    isPending: mutation.isPending,
   };
 };
 
