@@ -48,7 +48,7 @@ interface DisbursementMapEntry {
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
-export default function ControlCenterPage() {
+export function ControlCenterPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -58,7 +58,7 @@ export default function ControlCenterPage() {
 
   // URL-driven state
   const selectedProgramId = searchParams.get("programId");
-  const itemsPerPage = Number(searchParams.get("limit")) || 50;
+  const itemsPerPage = Number(searchParams.get("limit")) || 25;
   const currentPage = Number(searchParams.get("page")) || 1;
   const searchQuery = searchParams.get("search") || "";
   const sortBy = (searchParams.get("sortBy") as CommunityPayoutsSorting["sortBy"]) || undefined;

@@ -243,7 +243,7 @@ export interface CommunityPayoutsResponse {
 export interface CommunityPayoutsFilters {
   programId?: string;
   status?: AggregatedDisbursementStatus;
-  agreementStatus?: "signed" | "not_signed";
+  agreementStatus?: AgreementStatus;
   invoiceStatus?: "all_received" | "needs_invoices" | "has_invoices";
   search?: string;
 }
