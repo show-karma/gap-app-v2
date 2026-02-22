@@ -563,7 +563,7 @@ describe("Responsive Behavior Integration Tests", () => {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
       });
 
-      // Logo should be present (Karma GAP or similar)
+      // Logo should be present (Karma or similar)
       // Logo is part of navbar structure
       const navElements = screen.getAllByRole("navigation");
       expect(navElements.length).toBeGreaterThan(0);
