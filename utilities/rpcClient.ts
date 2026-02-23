@@ -17,6 +17,26 @@ import {
 import { envVars } from "./enviromentVars";
 import { getChainNameById } from "./network";
 
+const DEFAULT_RPC_URLS_BY_CHAIN_ID: Partial<Record<number, string>> = {
+  [mainnet.id]: mainnet.rpcUrls.default.http[0],
+  [optimism.id]: optimism.rpcUrls.default.http[0],
+  [arbitrum.id]: arbitrum.rpcUrls.default.http[0],
+  [base.id]: base.rpcUrls.default.http[0],
+  [celo.id]: celo.rpcUrls.default.http[0],
+  [polygon.id]: polygon.rpcUrls.default.http[0],
+  [optimismSepolia.id]: optimismSepolia.rpcUrls.default.http[0],
+  [sepolia.id]: sepolia.rpcUrls.default.http[0],
+  [baseSepolia.id]: baseSepolia.rpcUrls.default.http[0],
+  [sei.id]: sei.rpcUrls.default.http[0],
+  [lisk.id]: lisk.rpcUrls.default.http[0],
+  [scroll.id]: scroll.rpcUrls.default.http[0],
+};
+
+const normalizeRPCUrl = (rpcUrl?: string): string | undefined => {
+  const normalizedRpcUrl = rpcUrl?.trim();
+  return normalizedRpcUrl ? normalizedRpcUrl : undefined;
+};
+
 const mainnetClient = createPublicClient({
   chain: mainnet,
   transport: http(envVars.RPC.MAINNET),
@@ -110,7 +130,7 @@ export const rpcClient: Partial<Record<RpcClientNetwork, RpcClientValue>> = {
   "base-sepolia": baseSepoliaClient,
 };
 
-export const getRPCUrlByChainId = (chainId: number): string | undefined => {
+const getConfiguredRPCUrlByChainId = (chainId: number): string | undefined => {
   switch (chainId) {
     case 1:
       return envVars.RPC.MAINNET;
@@ -139,6 +159,12 @@ export const getRPCUrlByChainId = (chainId: number): string | undefined => {
     default:
       return undefined;
   }
+};
+
+export const getRPCUrlByChainId = (chainId: number): string | undefined => {
+  return (
+    normalizeRPCUrl(getConfiguredRPCUrlByChainId(chainId)) || DEFAULT_RPC_URLS_BY_CHAIN_ID[chainId]
+  );
 };
 
 export const getRPCClient = async (chainId: number): Promise<PublicClient> => {
