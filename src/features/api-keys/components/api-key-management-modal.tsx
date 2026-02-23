@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Check, Copy, KeyRound, Loader2 } from "lucide-react";
+import { AlertTriangle, Check, Copy, KeyRound, Loader2, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -12,15 +12,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useNavbarPermissions } from "@/src/components/navbar/navbar-permissions-context";
 import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
+import { envVars } from "@/utilities/enviromentVars";
 import { useApiKey, useCreateApiKey, useRevokeApiKey } from "../hooks/use-api-key";
 
 export function ApiKeyManagementModal() {
   const { address } = useNavbarPermissions();
   const { isModalOpen, closeModal } = useApiKeyManagementModalStore();
-  const { data, isLoading: isLoadingKey } = useApiKey(address);
+  const { data, isLoading: isLoadingKey, isError: isKeyError, refetch } = useApiKey(address);
   const [justCreatedKey, setJustCreatedKey] = useState<string | null>(null);
   const [keyName, setKeyName] = useState("");
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
@@ -74,10 +76,12 @@ export function ApiKeyManagementModal() {
           />
         ) : isLoadingKey ? (
           <LoadingState />
+        ) : isKeyError ? (
+          <ErrorState onRetry={() => refetch()} />
         ) : existingKey ? (
           <ActiveKeyState
             keyInfo={existingKey}
-            onRegenerate={() => createKey(keyName || undefined)}
+            onRegenerate={() => createKey(existingKey.name || undefined)}
             onRevoke={() => setShowRevokeConfirm(true)}
             isRegenerating={isCreating}
           />
@@ -103,6 +107,26 @@ function LoadingState() {
       <div className="flex justify-center py-8">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
+    </>
+  );
+}
+
+function ErrorState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5 text-destructive" />
+          API Key
+        </DialogTitle>
+        <DialogDescription>Failed to load API key data. Please try again.</DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <Button onClick={onRetry}>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Retry
+        </Button>
+      </DialogFooter>
     </>
   );
 }
@@ -135,13 +159,12 @@ function NoKeyState({
           <label htmlFor="key-name" className="text-sm font-medium text-foreground">
             Key name
           </label>
-          <input
+          <Input
             id="key-name"
-            type="text"
             value={keyName}
             onChange={(e) => onKeyNameChange(e.target.value)}
             placeholder="My AI Agent"
-            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="mt-1"
             maxLength={100}
           />
         </div>
@@ -192,8 +215,8 @@ function KeyCreatedState({
         <div className="text-xs text-muted-foreground">
           Use this key in the <code className="text-foreground">x-api-key</code> header:
           <pre className="mt-1 rounded bg-muted p-2 text-xs overflow-x-auto">
-            {`curl -H "x-api-key: ${apiKey.slice(0, 20)}..." \\
-  https://api.gap.karmahq.xyz/v2/user/me`}
+            {`curl -H "x-api-key: YOUR_API_KEY" \\
+  ${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/v2/user/me`}
           </pre>
         </div>
       </div>

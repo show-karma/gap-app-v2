@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 import { ApiKeyManagementModal } from "@/src/features/api-keys/components/api-key-management-modal";
+import type { GetApiKeyResponse } from "@/src/features/api-keys/types/api-key";
 
 // Mock stores
 const mockCloseModal = jest.fn();
@@ -27,7 +28,7 @@ jest.mock("@/src/components/navbar/navbar-permissions-context", () => ({
 // Mock hooks
 const mockCreateKey = jest.fn();
 const mockRevokeKey = jest.fn();
-let mockApiKeyData: any = { apiKey: null };
+let mockApiKeyData: GetApiKeyResponse = { apiKey: null };
 let mockIsLoadingKey = false;
 let mockIsCreating = false;
 let mockIsRevoking = false;
@@ -36,6 +37,8 @@ jest.mock("@/src/features/api-keys/hooks/use-api-key", () => ({
   useApiKey: jest.fn(() => ({
     data: mockApiKeyData,
     isLoading: mockIsLoadingKey,
+    isError: false,
+    refetch: jest.fn(),
   })),
   useCreateApiKey: jest.fn((options?: any) => ({
     mutate: (name?: string) => {
@@ -65,6 +68,12 @@ jest.mock("@/src/features/api-keys/hooks/use-api-key", () => ({
 
 jest.mock("@/hooks/useCopyToClipboard", () => ({
   useCopyToClipboard: jest.fn(() => [null, jest.fn()]),
+}));
+
+jest.mock("@/utilities/enviromentVars", () => ({
+  envVars: {
+    NEXT_PUBLIC_GAP_INDEXER_URL: "https://api.gap.karmahq.xyz",
+  },
 }));
 
 jest.mock("react-hot-toast", () => ({

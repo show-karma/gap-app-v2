@@ -64,6 +64,10 @@ jest.mock("@/components/AgentChat/AgentChatBubble", () => ({
   AgentChatBubble: () => <div data-testid="agent-chat-bubble" />,
 }));
 
+jest.mock("@/src/features/api-keys/components/api-key-management-modal", () => ({
+  ApiKeyManagementModal: () => <div data-testid="api-key-management-modal" />,
+}));
+
 describe("RootLayout", () => {
   it("renders all components correctly", () => {
     render(<RootLayout>Test Content</RootLayout>);
