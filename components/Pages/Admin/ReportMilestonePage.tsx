@@ -26,6 +26,7 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import TablePagination from "@/components/Utilities/TablePagination";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useAuth } from "@/hooks/useAuth";
+import { usePendingVerificationMilestones } from "@/hooks/usePendingVerificationMilestones";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import {
   useIsReviewerType,
@@ -42,6 +43,8 @@ import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { validateProgramIdentifiers } from "@/utilities/validators";
+
+type TabId = "pending-verification" | "stats";
 
 interface Report {
   _id: {
@@ -296,7 +299,13 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     return isMilestoneReviewer || isReviewer;
   }, [isConnected, isAuth, hasAccess, isMilestoneReviewer, isReviewer]);
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useQueryState<TabId>("tab", {
+    defaultValue: "pending-verification" as TabId,
+    parse: (v) => (v === "stats" ? "stats" : "pending-verification") as TabId,
+    serialize: (v) => v,
+  });
+  const [statsPage, setStatsPage] = useState(1);
+  const [pendingPage, setPendingPage] = useState(1);
   const [sortBy, setSortBy] = useState("totalMilestones");
   const [sortOrder, setSortOrder] = useState("desc");
   const [selectedProgramIds, setSelectedProgramIds] = useQueryState("programIds", {
@@ -406,27 +415,37 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
   }, [normalizedProgramIds, hasAccess, reviewerProgramIds]);
 
   const { data, isLoading } = useQuery<ReportAPIResponse>({
-    queryKey: [
-      "reportMilestones",
-      communityId,
-      currentPage,
-      sortBy,
-      sortOrder,
-      effectiveProgramIds,
-    ],
+    queryKey: ["reportMilestones", communityId, statsPage, sortBy, sortOrder, effectiveProgramIds],
     queryFn: async () =>
-      fetchReports(communityId, currentPage, itemsPerPage, sortBy, sortOrder, effectiveProgramIds),
+      fetchReports(communityId, statsPage, itemsPerPage, sortBy, sortOrder, effectiveProgramIds),
     enabled: Boolean(communityId) && isAuthorized,
+  });
+
+  const {
+    data: pendingMilestones,
+    pageInfo: pendingPageInfo,
+    isLoading: isPendingLoading,
+  } = usePendingVerificationMilestones({
+    communityId,
+    page: pendingPage,
+    pageLimit: itemsPerPage,
+    programIds: effectiveProgramIds,
+    enabled: isAuthorized && activeTab === "pending-verification",
   });
 
   const pageInfo = data?.pageInfo;
   const reports = data?.data;
   const totalItems: any = pageInfo?.totalItems || 0;
+  const pendingTotalItems = pendingPageInfo?.totalItems ?? 0;
 
   const _signer = useSigner();
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  const handleStatsPageChange = (page: number) => {
+    setStatsPage(page);
+  };
+
+  const handlePendingPageChange = (page: number) => {
+    setPendingPage(page);
   };
 
   const handleSort = (newSort: string) => {
@@ -436,7 +455,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
       setSortBy(newSort);
       setSortOrder("desc");
     }
-    setCurrentPage(1);
+    setStatsPage(1);
   };
 
   const isFullyCompleted = useCallback((report: MilestoneCompletion) => {
@@ -496,7 +515,8 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
             list={programLabels}
             onSelectFunction={(label: string) =>
               setSelectedProgramIds((previous) => {
-                setCurrentPage(1);
+                setStatsPage(1);
+                setPendingPage(1);
                 const programId = labelToValueMap.get(label) ?? label;
                 const current = Array.isArray(previous) ? [...previous] : [];
                 if (current.includes(programId)) {
@@ -592,58 +612,83 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
         )}
       </div>
 
-      {/* Table */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-            <thead className="bg-gray-50 dark:bg-zinc-800/50">
-              <tr>
-                <SortableHeader
-                  label="Grant Title"
-                  field="grantTitle"
-                  sortBy={sortBy}
-                  sortOrder={sortOrder}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  label="Project"
-                  field="projectTitle"
-                  sortBy={sortBy}
-                  sortOrder={sortOrder}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  label="Total"
-                  field="totalMilestones"
-                  sortBy={sortBy}
-                  sortOrder={sortOrder}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  label="Pending"
-                  field="pendingMilestones"
-                  sortBy={sortBy}
-                  sortOrder={sortOrder}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  label="Completed"
-                  field="completedMilestones"
-                  sortBy={sortBy}
-                  sortOrder={sortOrder}
-                  onSort={handleSort}
-                />
-                <th
-                  scope="col"
-                  className="h-11 px-4 text-left align-middle font-medium text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400"
-                >
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-              {isLoading
-                ? skeletonArray.map((index) => (
+      {/* Tab Bar */}
+      <div className="flex items-center gap-1 border-b border-gray-200 dark:border-zinc-700">
+        <button
+          type="button"
+          className={cn(
+            "relative px-4 py-2.5 text-sm font-medium transition-colors",
+            activeTab === "pending-verification"
+              ? "text-gray-900 dark:text-white"
+              : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+          )}
+          onClick={() => setActiveTab("pending-verification")}
+        >
+          <span className="flex items-center gap-2">
+            Pending Verification
+            {pendingTotalItems > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-medium rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 tabular-nums">
+                {pendingTotalItems}
+              </span>
+            )}
+          </span>
+          {activeTab === "pending-verification" && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 dark:bg-primary-400" />
+          )}
+        </button>
+        <button
+          type="button"
+          className={cn(
+            "relative px-4 py-2.5 text-sm font-medium transition-colors",
+            activeTab === "stats"
+              ? "text-gray-900 dark:text-white"
+              : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+          )}
+          onClick={() => setActiveTab("stats")}
+        >
+          Stats
+          {activeTab === "stats" && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 dark:bg-primary-400" />
+          )}
+        </button>
+      </div>
+
+      {/* Pending Verification Table */}
+      {activeTab === "pending-verification" && (
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-700 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
+              <thead className="bg-gray-50 dark:bg-zinc-800/50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="h-11 px-4 text-left align-middle font-medium text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                  >
+                    Project
+                  </th>
+                  <th
+                    scope="col"
+                    className="h-11 px-4 text-left align-middle font-medium text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                  >
+                    Grant
+                  </th>
+                  <th
+                    scope="col"
+                    className="h-11 px-4 text-left align-middle font-medium text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                  >
+                    Milestone Title
+                  </th>
+                  <th
+                    scope="col"
+                    className="h-11 px-4 text-left align-middle font-medium text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                {isPendingLoading ? (
+                  skeletonArray.map((index) => (
                     <tr key={index}>
                       <td className="px-4 py-3">
                         <Skeleton className="h-4 w-36 rounded" />
@@ -652,133 +697,279 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
                         <Skeleton className="h-4 w-28 rounded" />
                       </td>
                       <td className="px-4 py-3">
-                        <Skeleton className="h-4 w-10 rounded" />
-                      </td>
-                      <td className="px-4 py-3">
-                        <Skeleton className="h-4 w-10 rounded" />
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <Skeleton className="h-4 w-8 rounded" />
-                          <Skeleton className="h-1.5 w-16 rounded-full" />
-                        </div>
+                        <Skeleton className="h-4 w-40 rounded" />
                       </td>
                       <td className="px-4 py-3">
                         <Skeleton className="h-8 w-16 rounded-md" />
                       </td>
                     </tr>
                   ))
-                : reports?.map((report, index) => {
-                    const completed = isFullyCompleted(report);
-                    return (
-                      <tr
-                        key={report._id?.$oid || index}
-                        className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
-                      >
-                        <td className="px-4 py-3 max-w-[240px]">
-                          <div className="flex items-center gap-2">
-                            <ExternalLink
-                              href={PAGES.PROJECT.GRANT(report.projectSlug, report.grantUid)}
-                              className="text-sm font-medium text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 line-clamp-2 transition-colors"
-                            >
-                              {report.grantTitle}
-                            </ExternalLink>
-                            {completed && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 whitespace-nowrap flex-shrink-0">
-                                Done
-                              </span>
+                ) : pendingMilestones.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-12 text-center">
+                      <CheckCircleIcon className="mx-auto h-10 w-10 text-green-400 dark:text-green-500 mb-3" />
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        All milestones are verified
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        No milestones pending verification.{" "}
+                        <button
+                          type="button"
+                          className="text-primary-600 dark:text-primary-400 hover:underline"
+                          onClick={() => setActiveTab("stats")}
+                        >
+                          View Stats
+                        </button>
+                      </p>
+                    </td>
+                  </tr>
+                ) : (
+                  pendingMilestones.map((milestone, index) => (
+                    <tr
+                      key={`${milestone.grantUid}-${milestone.milestoneIndex}`}
+                      className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                    >
+                      <td className="px-4 py-3 max-w-[200px]">
+                        <ExternalLink
+                          href={PAGES.PROJECT.OVERVIEW(milestone.projectSlug)}
+                          className="text-sm text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 line-clamp-2 transition-colors"
+                        >
+                          {milestone.projectTitle}
+                        </ExternalLink>
+                      </td>
+                      <td className="px-4 py-3 max-w-[240px]">
+                        <ExternalLink
+                          href={PAGES.PROJECT.GRANT(milestone.projectSlug, milestone.grantUid)}
+                          className="text-sm font-medium text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 line-clamp-2 transition-colors"
+                        >
+                          {milestone.grantTitle}
+                        </ExternalLink>
+                      </td>
+                      <td className="px-4 py-3 max-w-[300px]">
+                        <span className="text-sm text-gray-900 dark:text-white line-clamp-2">
+                          {milestone.milestoneTitle}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {milestone.programId && (
+                          <Link
+                            href={PAGES.REVIEWER.FUNDING_PLATFORM.MILESTONES(
+                              communityId,
+                              milestone.programId.includes("_")
+                                ? milestone.programId.split("_")[0]
+                                : milestone.programId,
+                              milestone.projectUid
                             )}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button className="py-1.5 px-3 text-xs">Review</Button>
+                          </Link>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          <TablePagination
+            currentPage={pendingPage}
+            setCurrentPage={handlePendingPageChange}
+            postsPerPage={itemsPerPage}
+            totalPosts={pendingTotalItems}
+          />
+        </div>
+      )}
+
+      {/* Stats Table */}
+      {activeTab === "stats" && (
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-700 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
+              <thead className="bg-gray-50 dark:bg-zinc-800/50">
+                <tr>
+                  <SortableHeader
+                    label="Grant Title"
+                    field="grantTitle"
+                    sortBy={sortBy}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                  />
+                  <SortableHeader
+                    label="Project"
+                    field="projectTitle"
+                    sortBy={sortBy}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                  />
+                  <SortableHeader
+                    label="Total"
+                    field="totalMilestones"
+                    sortBy={sortBy}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                  />
+                  <SortableHeader
+                    label="Pending"
+                    field="pendingMilestones"
+                    sortBy={sortBy}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                  />
+                  <SortableHeader
+                    label="Completed"
+                    field="completedMilestones"
+                    sortBy={sortBy}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                  />
+                  <th
+                    scope="col"
+                    className="h-11 px-4 text-left align-middle font-medium text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                {isLoading
+                  ? skeletonArray.map((index) => (
+                      <tr key={index}>
+                        <td className="px-4 py-3">
+                          <Skeleton className="h-4 w-36 rounded" />
+                        </td>
+                        <td className="px-4 py-3">
+                          <Skeleton className="h-4 w-28 rounded" />
+                        </td>
+                        <td className="px-4 py-3">
+                          <Skeleton className="h-4 w-10 rounded" />
+                        </td>
+                        <td className="px-4 py-3">
+                          <Skeleton className="h-4 w-10 rounded" />
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-4 w-8 rounded" />
+                            <Skeleton className="h-1.5 w-16 rounded-full" />
                           </div>
                         </td>
-                        <td className="px-4 py-3 max-w-[200px]">
-                          <ExternalLink
-                            href={PAGES.PROJECT.OVERVIEW(report.projectSlug)}
-                            className="text-sm text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 line-clamp-2 transition-colors"
-                          >
-                            {report.projectTitle}
-                          </ExternalLink>
-                        </td>
                         <td className="px-4 py-3">
-                          <Link
-                            href={`${PAGES.PROJECT.GRANT(
-                              report.projectUid,
-                              report.grantUid
-                            )}/milestones-and-updates#all`}
-                            className="text-sm text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 tabular-nums transition-colors"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {report.totalMilestones}
-                          </Link>
+                          <Skeleton className="h-8 w-16 rounded-md" />
                         </td>
-                        <td className="px-4 py-3">
-                          <Link
-                            href={`${PAGES.PROJECT.GRANT(
-                              report.projectUid,
-                              report.grantUid
-                            )}/milestones-and-updates#pending`}
-                            className={cn(
-                              "text-sm tabular-nums transition-colors",
-                              report.pendingMilestones > 0
-                                ? "text-orange-600 dark:text-orange-400 font-medium"
-                                : "text-gray-500 dark:text-gray-400"
-                            )}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {report.pendingMilestones}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
+                      </tr>
+                    ))
+                  : reports?.map((report, index) => {
+                      const completed = isFullyCompleted(report);
+                      return (
+                        <tr
+                          key={report._id?.$oid || index}
+                          className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                        >
+                          <td className="px-4 py-3 max-w-[240px]">
+                            <div className="flex items-center gap-2">
+                              <ExternalLink
+                                href={PAGES.PROJECT.GRANT(report.projectSlug, report.grantUid)}
+                                className="text-sm font-medium text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 line-clamp-2 transition-colors"
+                              >
+                                {report.grantTitle}
+                              </ExternalLink>
+                              {completed && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 whitespace-nowrap flex-shrink-0">
+                                  Done
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 max-w-[200px]">
+                            <ExternalLink
+                              href={PAGES.PROJECT.OVERVIEW(report.projectSlug)}
+                              className="text-sm text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 line-clamp-2 transition-colors"
+                            >
+                              {report.projectTitle}
+                            </ExternalLink>
+                          </td>
+                          <td className="px-4 py-3">
                             <Link
                               href={`${PAGES.PROJECT.GRANT(
-                                report.projectSlug,
+                                report.projectUid,
                                 report.grantUid
-                              )}/milestones-and-updates#completed`}
-                              className="text-sm text-gray-900 dark:text-white tabular-nums hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                              )}/milestones-and-updates#all`}
+                              className="text-sm text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 tabular-nums transition-colors"
                               target="_blank"
                               rel="noopener noreferrer"
                             >
-                              {report.completedMilestones}
+                              {report.totalMilestones}
                             </Link>
-                            <ProgressBar
-                              completed={report.completedMilestones}
-                              total={report.totalMilestones}
-                            />
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          {report.programId && (
+                          </td>
+                          <td className="px-4 py-3">
                             <Link
-                              href={PAGES.REVIEWER.FUNDING_PLATFORM.MILESTONES(
-                                communityId,
-                                report.programId.includes("_")
-                                  ? report.programId.split("_")[0]
-                                  : report.programId,
-                                report.projectUid
+                              href={`${PAGES.PROJECT.GRANT(
+                                report.projectUid,
+                                report.grantUid
+                              )}/milestones-and-updates#pending`}
+                              className={cn(
+                                "text-sm tabular-nums transition-colors",
+                                report.pendingMilestones > 0
+                                  ? "text-orange-600 dark:text-orange-400 font-medium"
+                                  : "text-gray-500 dark:text-gray-400"
                               )}
                               target="_blank"
                               rel="noopener noreferrer"
                             >
-                              <Button className="py-1.5 px-3 text-xs">Review</Button>
+                              {report.pendingMilestones}
                             </Link>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-            </tbody>
-          </table>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <Link
+                                href={`${PAGES.PROJECT.GRANT(
+                                  report.projectSlug,
+                                  report.grantUid
+                                )}/milestones-and-updates#completed`}
+                                className="text-sm text-gray-900 dark:text-white tabular-nums hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {report.completedMilestones}
+                              </Link>
+                              <ProgressBar
+                                completed={report.completedMilestones}
+                                total={report.totalMilestones}
+                              />
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {report.programId && (
+                              <Link
+                                href={PAGES.REVIEWER.FUNDING_PLATFORM.MILESTONES(
+                                  communityId,
+                                  report.programId.includes("_")
+                                    ? report.programId.split("_")[0]
+                                    : report.programId,
+                                  report.projectUid
+                                )}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <Button className="py-1.5 px-3 text-xs">Review</Button>
+                              </Link>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+              </tbody>
+            </table>
+          </div>
+          <TablePagination
+            currentPage={statsPage}
+            setCurrentPage={handleStatsPageChange}
+            postsPerPage={itemsPerPage}
+            totalPosts={totalItems}
+          />
         </div>
-        {/* Pagination */}
-        <TablePagination
-          currentPage={currentPage}
-          setCurrentPage={handlePageChange}
-          postsPerPage={itemsPerPage}
-          totalPosts={totalItems}
-        />
-      </div>
+      )}
     </div>
   );
 };

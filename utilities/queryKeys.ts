@@ -112,6 +112,8 @@ export const QUERY_KEYS = {
     IS_ADMIN: (communityUid?: string, chainId?: number, address?: string, signer?: unknown) =>
       ["isCommunityAdmin", communityUid, chainId, address, signer] as const,
     IS_ADMIN_BASE: ["isCommunityAdmin"] as const,
+    PENDING_VERIFICATION: (communityId: string, page: number, programIds: string[]) =>
+      ["pending-verification-milestones", communityId, page, programIds] as const,
     PROJECT_UPDATES: (
       communityId: string,
       filter: string,
