@@ -1,5 +1,5 @@
-import type { IFundingApplication } from "@/types/funding-platform";
 import type { ProgramPromptsResponse } from "@/src/features/prompt-management/types/program-prompt";
+import type { IFundingApplication } from "@/types/funding-platform";
 import { getAIScore } from "./getAIScore";
 import { getInternalAIScore } from "./getInternalAIScore";
 
@@ -56,8 +56,7 @@ export function getAIColumnVisibility(
     !!applications?.some((app) => getInternalAIScore(app) !== null);
 
   return {
-    showAIScoreColumn:
-      hasLegacyExternalPrompt || hasNewExternalPrompt || hasApplicationWithAIScore,
+    showAIScoreColumn: hasLegacyExternalPrompt || hasNewExternalPrompt || hasApplicationWithAIScore,
     showInternalAIScoreColumn:
       hasLegacyInternalPrompt || hasNewInternalPrompt || hasApplicationWithInternalAIScore,
   };

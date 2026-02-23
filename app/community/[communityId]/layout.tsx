@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import CommunityHeader from "@/components/Community/Header";
 import { CommunityContentWrapper } from "@/components/Community/CommunityContentWrapper";
+import CommunityHeader from "@/components/Community/Header";
 import { CommunityNotFound } from "@/components/Pages/Communities/CommunityNotFound";
 import { PROJECT_NAME } from "@/constants/brand";
 import { envVars } from "@/utilities/enviromentVars";

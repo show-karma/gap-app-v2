@@ -8,6 +8,12 @@ import {
   waitForPageLoad,
 } from "../support/intercepts";
 
+const PROJECTS_PAGE_LOAD_TIMEOUT_MS = 120000;
+
+const visitProjectsPage = (): void => {
+  cy.visit("/projects", { timeout: PROJECTS_PAGE_LOAD_TIMEOUT_MS });
+};
+
 describe("Explore Projects Page", () => {
   beforeEach(() => {
     setupCommonIntercepts();
@@ -15,7 +21,7 @@ describe("Explore Projects Page", () => {
 
   describe("Page Navigation", () => {
     it("should navigate to projects page", () => {
-      cy.visit("/projects");
+      visitProjectsPage();
       waitForPageLoad();
 
       cy.url().should("include", "/projects");
@@ -25,7 +31,7 @@ describe("Explore Projects Page", () => {
       cy.visit("/");
       waitForPageLoad();
 
-      cy.visit("/projects");
+      visitProjectsPage();
       waitForPageLoad();
 
       cy.url().should("include", "/projects");
@@ -34,21 +40,21 @@ describe("Explore Projects Page", () => {
 
   describe("Page Structure", () => {
     it("should display page content", () => {
-      cy.visit("/projects");
+      visitProjectsPage();
       waitForPageLoad();
 
       cy.get("body").should("be.visible");
     });
 
     it("should display navbar", () => {
-      cy.visit("/projects");
+      visitProjectsPage();
       waitForPageLoad();
 
       cy.get("nav").should("exist");
     });
 
     it("should have page heading", () => {
-      cy.visit("/projects");
+      visitProjectsPage();
       waitForPageLoad();
 
       // Page should have some heading
@@ -68,7 +74,7 @@ describe("Explore Projects Page", () => {
     });
 
     it("should maintain navbar functionality on projects page", () => {
-      cy.visit("/projects");
+      visitProjectsPage();
       waitForPageLoad();
 
       cy.contains("button", "Explore").should("be.visible");

@@ -15,9 +15,8 @@ import { INDEXER } from "@/utilities/indexer";
 export class ProgramRegistryService {
   /**
    * Build program metadata from form data and community.
-   * Default: anyoneCanJoin = false (admin/funding-platform form creates restricted programs).
-   * The public AddProgram form uses inline metadata with anyoneCanJoin = true (open enrollment).
-   * See AddProgram.tsx for the divergent default.
+   * Default: anyoneCanJoin = true (open enrollment).
+   * Both admin (CreateProgramModal) and public (AddProgram) forms now explicitly pass the value.
    */
   static buildProgramMetadata(
     formData: CreateProgramFormData,
@@ -59,7 +58,7 @@ export class ProgramRegistryService {
       type: "program",
       tags: ["karma-gap", "grant-program-registry"],
       communityRef: [community.uid], // Use community UID (hex address), not slug
-      anyoneCanJoin: options?.anyoneCanJoin ?? false, // Default to restricted for admin-created programs
+      anyoneCanJoin: options?.anyoneCanJoin ?? true, // Default to open enrollment
       invoiceRequired: formData.invoiceRequired ?? false,
     };
   }

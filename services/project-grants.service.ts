@@ -16,11 +16,16 @@ import { INDEXER } from "@/utilities/indexer";
  * - Supports both UID and slug identifiers
  */
 export const getProjectGrants = async (projectIdOrSlug: string): Promise<Grant[]> => {
-  const [data, error] = await fetchData<Grant | Grant[]>(
+  const [data, error, , status] = await fetchData<Grant | Grant[]>(
     INDEXER.V2.PROJECTS.GRANTS(projectIdOrSlug)
   );
 
   if (error || !data) {
+    // Missing project routes are expected for unknown slugs and should not be sent to Sentry.
+    if (status === 404) {
+      return [];
+    }
+
     errorManager(`Project Grants API Error: ${error}`, error, {
       context: "project-grants.service",
     });
