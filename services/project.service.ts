@@ -39,6 +39,11 @@ export const getProject = async (projectIdOrSlug: string): Promise<ProjectRespon
   );
 
   if (error) {
+    // Unknown slugs are expected on public routes and should not create Sentry noise.
+    if (status === 404) {
+      return null;
+    }
+
     errorManager(`Project API Error: ${error}`, error, {
       context: "project.service",
     });
