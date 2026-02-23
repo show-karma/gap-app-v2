@@ -73,6 +73,7 @@ export function CreateProgramModal({
       budget: undefined,
       adminEmails: [],
       financeEmails: [],
+      invoiceRequired: false,
     },
   });
 
@@ -384,18 +385,44 @@ export function CreateProgramModal({
             />
 
             {/* Invoice Required */}
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="invoice-required"
-                {...register("invoiceRequired")}
-                disabled={isSubmitting}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <Label htmlFor="invoice-required" className="text-sm font-normal cursor-pointer">
-                Require invoices for milestones
-              </Label>
-            </div>
+            <Controller
+              name="invoiceRequired"
+              control={control}
+              render={({ field, fieldState }) => (
+                <fieldset>
+                  <legend className="text-sm font-semibold text-gray-700 mb-2">
+                    Require invoices for milestones <span className="text-red-500">*</span>
+                  </legend>
+                  <div className="flex items-center gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="invoiceRequired"
+                        checked={field.value === true}
+                        onChange={() => field.onChange(true)}
+                        disabled={isSubmitting}
+                        className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm">Yes</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="invoiceRequired"
+                        checked={field.value === false}
+                        onChange={() => field.onChange(false)}
+                        disabled={isSubmitting}
+                        className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm">No</span>
+                    </label>
+                  </div>
+                  {fieldState.error?.message && (
+                    <p className="text-red-500 text-sm mt-1">{fieldState.error.message}</p>
+                  )}
+                </fieldset>
+              )}
+            />
 
             {/* Actions */}
             <DialogFooter>
