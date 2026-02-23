@@ -68,6 +68,7 @@ function buildFormValuesFromMetadata(metadata: GrantProgram["metadata"]) {
     budget: metadata.programBudget ? parseFloat(metadata.programBudget.toString()) : undefined,
     adminEmails: metadata.adminEmails || [],
     financeEmails: metadata.financeEmails || [],
+    invoiceRequired: metadata.invoiceRequired ?? false,
   };
 }
 
@@ -87,6 +88,7 @@ function buildUpdateMetadata(
     endsAt: formData.dates.endsAt,
     adminEmails: formData.adminEmails,
     financeEmails: formData.financeEmails,
+    invoiceRequired: formData.invoiceRequired ?? false,
   };
 
   return sanitizeObject({
@@ -555,6 +557,20 @@ export function ProgramDetailsTab({
               </div>
             )}
           />
+
+          {/* Invoice Required */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="invoice-required"
+              {...register("invoiceRequired")}
+              disabled={isDisabled}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <Label htmlFor="invoice-required" className="text-sm font-normal cursor-pointer">
+              Require invoices for milestones
+            </Label>
+          </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">

@@ -46,9 +46,11 @@ export function AgreementBadge({ agreement }: { agreement: CommunityPayoutAgreem
 export function ProgressCell({
   invoices,
   paidMilestoneCount,
+  invoiceRequired = true,
 }: {
   invoices: CommunityPayoutInvoiceInfo[];
   paidMilestoneCount: number;
+  invoiceRequired?: boolean;
 }) {
   const total = invoices.length;
   const paid = paidMilestoneCount;
@@ -60,16 +62,18 @@ export function ProgressCell({
     return <span className="text-xs text-gray-500 dark:text-zinc-500">No milestones</span>;
   }
 
-  const allDone = paid === total && received === total;
-  const hasProgress = paid > 0 || received > 0;
+  const allDone = invoiceRequired ? paid === total && received === total : paid === total;
+  const hasProgress = invoiceRequired ? paid > 0 || received > 0 : paid > 0;
 
-  const countsByStatus = invoices.reduce(
-    (acc, inv) => {
-      acc[inv.invoiceStatus] = (acc[inv.invoiceStatus] || 0) + 1;
-      return acc;
-    },
-    {} as Record<InvoiceStatus, number>
-  );
+  const countsByStatus = invoiceRequired
+    ? invoices.reduce(
+        (acc, inv) => {
+          acc[inv.invoiceStatus] = (acc[inv.invoiceStatus] || 0) + 1;
+          return acc;
+        },
+        {} as Record<InvoiceStatus, number>
+      )
+    : ({} as Record<InvoiceStatus, number>);
 
   return (
     <TooltipProvider>
@@ -88,9 +92,11 @@ export function ProgressCell({
             <div>
               {paid}/{total} milestones paid
             </div>
-            <div>
-              {received}/{total} invoices received
-            </div>
+            {invoiceRequired && (
+              <div>
+                {received}/{total} invoices received
+              </div>
+            )}
           </div>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs">

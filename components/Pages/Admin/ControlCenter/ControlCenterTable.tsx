@@ -47,6 +47,7 @@ interface ControlCenterTableRowProps {
   invoices: CommunityPayoutInvoiceInfo[];
   totalsByToken: TokenTotal[];
   paidMilestoneCount: number;
+  invoiceRequired: boolean;
   isKycEnabled: boolean;
   isLoadingKycStatuses: boolean;
   kycStatus: KycStatusResponse | null;
@@ -65,6 +66,7 @@ const ControlCenterTableRow = memo(function ControlCenterTableRow({
   invoices,
   totalsByToken,
   paidMilestoneCount,
+  invoiceRequired,
   isKycEnabled,
   isLoadingKycStatuses,
   kycStatus,
@@ -148,7 +150,11 @@ const ControlCenterTableRow = memo(function ControlCenterTableRow({
 
       {/* Progress */}
       <td className="px-4 py-3 text-left">
-        <ProgressCell invoices={invoices} paidMilestoneCount={paidMilestoneCount} />
+        <ProgressCell
+          invoices={invoices}
+          paidMilestoneCount={paidMilestoneCount}
+          invoiceRequired={invoiceRequired}
+        />
       </td>
 
       {/* Total Grant */}
@@ -204,6 +210,7 @@ export interface ControlCenterTableProps {
   agreementMap: Record<string, CommunityPayoutAgreementInfo | null>;
   invoiceMap: Record<string, CommunityPayoutInvoiceInfo[]>;
   paidMilestoneCountMap: Record<string, number>;
+  invoiceRequiredMap: Record<string, boolean>;
   getCheckboxDisabledState: (item: TableRow) => { disabled: boolean; reason: string | null };
   onOpenConfigModal: (item: TableRow) => void;
   hasActiveFilters: boolean;
@@ -232,6 +239,7 @@ export function ControlCenterTable({
   agreementMap,
   invoiceMap,
   paidMilestoneCountMap,
+  invoiceRequiredMap,
   getCheckboxDisabledState,
   onOpenConfigModal,
   hasActiveFilters,
@@ -341,6 +349,7 @@ export function ControlCenterTable({
                   invoices={invoiceMap[item.grantUid] ?? []}
                   totalsByToken={disbursementInfo?.totalsByToken || []}
                   paidMilestoneCount={paidMilestoneCountMap[item.grantUid] ?? 0}
+                  invoiceRequired={invoiceRequiredMap[item.grantUid] ?? false}
                   isKycEnabled={isKycEnabled}
                   isLoadingKycStatuses={isLoadingKycStatuses}
                   kycStatus={kycStatuses.get(item.projectUid) ?? null}

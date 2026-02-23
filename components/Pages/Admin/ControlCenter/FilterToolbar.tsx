@@ -140,6 +140,7 @@ export interface FilterToolbarProps {
   disbursementFilter?: string;
   kycFilter?: string;
   isKycEnabled: boolean;
+  hasInvoicePrograms?: boolean;
   searchQuery: string;
   onFilterChange: (key: string, value: string | null) => void;
   onClearSearch: () => void;
@@ -158,6 +159,7 @@ export function FilterToolbar({
   disbursementFilter,
   kycFilter,
   isKycEnabled,
+  hasInvoicePrograms = true,
   searchQuery,
   onFilterChange,
   onClearSearch,
@@ -201,21 +203,23 @@ export function FilterToolbar({
             </SelectContent>
           </Select>
 
-          {/* Invoice filter */}
-          <Select
-            value={invoiceFilter || "all"}
-            onValueChange={(v) => onFilterChange("invoiceStatus", v === "all" ? null : v)}
-          >
-            <SelectTrigger className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400">
-              <SelectValue placeholder="Invoices" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Invoices</SelectItem>
-              <SelectItem value="all_received">All Received</SelectItem>
-              <SelectItem value="needs_invoices">Needs Invoices</SelectItem>
-              <SelectItem value="has_invoices">In Progress</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Invoice filter — only shown when at least one program has invoiceRequired */}
+          {hasInvoicePrograms && (
+            <Select
+              value={invoiceFilter || "all"}
+              onValueChange={(v) => onFilterChange("invoiceStatus", v === "all" ? null : v)}
+            >
+              <SelectTrigger className="w-[140px] bg-white dark:bg-zinc-900 h-8 text-xs text-gray-600 dark:text-zinc-400">
+                <SelectValue placeholder="Invoices" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Invoices</SelectItem>
+                <SelectItem value="all_received">All Received</SelectItem>
+                <SelectItem value="needs_invoices">Needs Invoices</SelectItem>
+                <SelectItem value="has_invoices">In Progress</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
 
           {/* Disbursement status filter */}
           <Select

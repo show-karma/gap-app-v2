@@ -383,6 +383,20 @@ export function CreateProgramModal({
               )}
             />
 
+            {/* Invoice Required */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="invoice-required"
+                {...register("invoiceRequired")}
+                disabled={isSubmitting}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <Label htmlFor="invoice-required" className="text-sm font-normal cursor-pointer">
+                Require invoices for milestones
+              </Label>
+            </div>
+
             {/* Actions */}
             <DialogFooter>
               <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>

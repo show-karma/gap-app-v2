@@ -215,28 +215,38 @@ export function ControlCenterPage() {
   }, [payouts]);
 
   // Consolidated maps from payouts response (single pass)
-  const { disbursementMap, agreementMap, invoiceMap, paidMilestoneCountMap } = useMemo(() => {
-    const dMap: Record<string, DisbursementMapEntry> = {};
-    const aMap: Record<string, CommunityPayoutAgreementInfo | null> = {};
-    const iMap: Record<string, CommunityPayoutInvoiceInfo[]> = {};
-    const pMap: Record<string, number> = {};
-    for (const payout of payouts) {
-      dMap[payout.grant.uid] = {
-        totalsByToken: payout.disbursements.totalsByToken || [],
-        status: payout.disbursements.status,
-        history: payout.disbursements.history,
+  const { disbursementMap, agreementMap, invoiceMap, paidMilestoneCountMap, invoiceRequiredMap } =
+    useMemo(() => {
+      const dMap: Record<string, DisbursementMapEntry> = {};
+      const aMap: Record<string, CommunityPayoutAgreementInfo | null> = {};
+      const iMap: Record<string, CommunityPayoutInvoiceInfo[]> = {};
+      const pMap: Record<string, number> = {};
+      const irMap: Record<string, boolean> = {};
+      for (const payout of payouts) {
+        dMap[payout.grant.uid] = {
+          totalsByToken: payout.disbursements.totalsByToken || [],
+          status: payout.disbursements.status,
+          history: payout.disbursements.history,
+        };
+        aMap[payout.grant.uid] = payout.agreement;
+        iMap[payout.grant.uid] = payout.milestoneInvoices || [];
+        pMap[payout.grant.uid] = payout.paidMilestoneCount ?? 0;
+        irMap[payout.grant.uid] = payout.grant.invoiceRequired === true;
+      }
+      return {
+        disbursementMap: dMap,
+        agreementMap: aMap,
+        invoiceMap: iMap,
+        paidMilestoneCountMap: pMap,
+        invoiceRequiredMap: irMap,
       };
-      aMap[payout.grant.uid] = payout.agreement;
-      iMap[payout.grant.uid] = payout.milestoneInvoices || [];
-      pMap[payout.grant.uid] = payout.paidMilestoneCount ?? 0;
-    }
-    return {
-      disbursementMap: dMap,
-      agreementMap: aMap,
-      invoiceMap: iMap,
-      paidMilestoneCountMap: pMap,
-    };
-  }, [payouts]);
+    }, [payouts]);
+
+  // Check if any visible grant has invoiceRequired: true (for filter visibility)
+  const hasInvoicePrograms = useMemo(
+    () => Object.values(invoiceRequiredMap).some(Boolean),
+    [invoiceRequiredMap]
+  );
 
   // ─── KYC ───────────────────────────────────────────────────────────────
 
@@ -632,6 +642,7 @@ export function ControlCenterPage() {
         disbursementFilter={disbursementFilter}
         kycFilter={kycFilter}
         isKycEnabled={isKycEnabled}
+        hasInvoicePrograms={hasInvoicePrograms}
         searchQuery={searchQuery}
         onFilterChange={handleFilterChange}
         onClearSearch={() => {
@@ -661,6 +672,7 @@ export function ControlCenterPage() {
         agreementMap={agreementMap}
         invoiceMap={invoiceMap}
         paidMilestoneCountMap={paidMilestoneCountMap}
+        invoiceRequiredMap={invoiceRequiredMap}
         getCheckboxDisabledState={getCheckboxDisabledState}
         onOpenConfigModal={handleOpenConfigModal}
         hasActiveFilters={hasActiveFilters}
@@ -715,6 +727,9 @@ export function ControlCenterPage() {
         open={detailsModalOpen}
         onOpenChange={setDetailsModalOpen}
         communityUID={community?.uid || ""}
+        invoiceRequired={
+          detailsModalGrant ? (invoiceRequiredMap[detailsModalGrant.grantUid] ?? false) : false
+        }
         kycStatus={
           detailsModalGrant ? (kycStatuses.get(detailsModalGrant.projectUid) ?? null) : null
         }

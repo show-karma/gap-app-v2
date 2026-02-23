@@ -37,6 +37,7 @@ export interface ProgramMetadata {
   bannerImgData: Record<string, unknown>;
   credentials: Record<string, unknown>;
   anyoneCanJoin?: boolean;
+  invoiceRequired?: boolean;
   status: string;
   type: string;
   tags: string[];
@@ -74,4 +75,5 @@ export interface CreateProgramFormData {
   budget?: number;
   adminEmails?: string[];
   financeEmails?: string[];
+  invoiceRequired?: boolean;
 }

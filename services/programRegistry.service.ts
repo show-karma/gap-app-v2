@@ -60,6 +60,7 @@ export class ProgramRegistryService {
       tags: ["karma-gap", "grant-program-registry"],
       communityRef: [community.uid], // Use community UID (hex address), not slug
       anyoneCanJoin: options?.anyoneCanJoin ?? false, // Default to restricted for admin-created programs
+      invoiceRequired: formData.invoiceRequired ?? false,
     };
   }
 

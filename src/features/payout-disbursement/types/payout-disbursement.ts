@@ -163,6 +163,8 @@ export interface CommunityPayoutGrantInfo {
   programId: string | null;
   /** Admin-set payout amount (from attestation.amount) - separate from grant's original amount */
   adminPayoutAmount: string | null;
+  /** Whether the program requires invoices (opt-in, default false) */
+  invoiceRequired?: boolean;
 }
 
 /**

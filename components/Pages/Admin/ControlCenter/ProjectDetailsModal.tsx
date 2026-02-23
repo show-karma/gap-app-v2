@@ -65,6 +65,7 @@ interface ProjectDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   communityUID: string;
+  invoiceRequired?: boolean;
   kycStatus: KycStatusResponse | null;
   disbursementInfo: {
     totalsByToken: TokenTotal[];
@@ -149,6 +150,7 @@ export function ProjectDetailsModal({
   open,
   onOpenChange,
   communityUID,
+  invoiceRequired = false,
   kycStatus,
   disbursementInfo,
   agreement,
@@ -627,12 +629,14 @@ export function ProjectDetailsModal({
             {/* Milestone completion summary */}
             {milestoneSummary && (
               <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-zinc-400">
-                <span>
-                  <span className="font-medium text-gray-700 dark:text-zinc-300">
-                    {milestoneSummary.received}/{milestoneSummary.total}
-                  </span>{" "}
-                  {milestoneSummary.total === 1 ? "invoice" : "invoices"} received
-                </span>
+                {invoiceRequired && (
+                  <span>
+                    <span className="font-medium text-gray-700 dark:text-zinc-300">
+                      {milestoneSummary.received}/{milestoneSummary.total}
+                    </span>{" "}
+                    {milestoneSummary.total === 1 ? "invoice" : "invoices"} received
+                  </span>
+                )}
                 <span>
                   <span className="font-medium text-gray-700 dark:text-zinc-300">
                     {milestoneSummary.paid}/{milestoneSummary.total}
@@ -642,14 +646,16 @@ export function ProjectDetailsModal({
               </div>
             )}
 
-            {/* Milestone invoices table */}
+            {/* Milestones table — invoice columns only shown when program requires invoices */}
             <div>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1">
-                Milestone Invoices ({milestoneInvoices.length})
+                {invoiceRequired ? "Milestone Invoices" : "Milestones"} ({milestoneInvoices.length})
               </h3>
-              <p className="text-xs text-gray-400 dark:text-zinc-500 mb-3">
-                Set the received date to update invoice status. Save changes when done.
-              </p>
+              {invoiceRequired && (
+                <p className="text-xs text-gray-400 dark:text-zinc-500 mb-3">
+                  Set the received date to update invoice status. Save changes when done.
+                </p>
+              )}
 
               {milestoneInvoices.length === 0 ? (
                 <p className="text-sm text-gray-500 dark:text-zinc-400 py-4 text-center">
@@ -666,12 +672,16 @@ export function ProjectDetailsModal({
                         <th className="text-right py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[80px]">
                           Allocation
                         </th>
-                        <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[100px]">
-                          Status
-                        </th>
-                        <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[130px]">
-                          Invoice Received
-                        </th>
+                        {invoiceRequired && (
+                          <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[100px]">
+                            Status
+                          </th>
+                        )}
+                        {invoiceRequired && (
+                          <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[130px]">
+                            Invoice Received
+                          </th>
+                        )}
                         <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[110px]">
                           Payment
                         </th>
@@ -745,43 +755,47 @@ export function ProjectDetailsModal({
                                 );
                               })()}
                             </td>
-                            <td className="py-3 px-3 text-center">
-                              <span
-                                className={cn(
-                                  "inline-flex px-2 py-0.5 rounded-full text-xs font-medium",
-                                  invoiceCfg.className
-                                )}
-                              >
-                                {invoiceCfg.label}
-                              </span>
-                            </td>
-                            <td className="py-3 px-3 text-center">
-                              <div className="flex flex-col items-center gap-0.5">
-                                <Input
-                                  type="date"
-                                  max={todayLocal}
-                                  value={receivedDateValue ?? ""}
-                                  onChange={(e) =>
-                                    handleInvoiceReceivedDateChange(
-                                      mKey,
-                                      invoice.milestoneUID,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="h-7 text-xs w-[140px] mx-auto bg-white dark:bg-zinc-900"
-                                  aria-label={`Invoice received date for ${invoice.milestoneLabel}`}
-                                />
-                                {invoice.invoiceReceivedBy && (
-                                  <span
-                                    className="text-[10px] text-gray-400 dark:text-zinc-500 font-mono"
-                                    title={invoice.invoiceReceivedBy}
-                                  >
-                                    by {invoice.invoiceReceivedBy.slice(0, 6)}...
-                                    {invoice.invoiceReceivedBy.slice(-4)}
-                                  </span>
-                                )}
-                              </div>
-                            </td>
+                            {invoiceRequired && (
+                              <td className="py-3 px-3 text-center">
+                                <span
+                                  className={cn(
+                                    "inline-flex px-2 py-0.5 rounded-full text-xs font-medium",
+                                    invoiceCfg.className
+                                  )}
+                                >
+                                  {invoiceCfg.label}
+                                </span>
+                              </td>
+                            )}
+                            {invoiceRequired && (
+                              <td className="py-3 px-3 text-center">
+                                <div className="flex flex-col items-center gap-0.5">
+                                  <Input
+                                    type="date"
+                                    max={todayLocal}
+                                    value={receivedDateValue ?? ""}
+                                    onChange={(e) =>
+                                      handleInvoiceReceivedDateChange(
+                                        mKey,
+                                        invoice.milestoneUID,
+                                        e.target.value
+                                      )
+                                    }
+                                    className="h-7 text-xs w-[140px] mx-auto bg-white dark:bg-zinc-900"
+                                    aria-label={`Invoice received date for ${invoice.milestoneLabel}`}
+                                  />
+                                  {invoice.invoiceReceivedBy && (
+                                    <span
+                                      className="text-[10px] text-gray-400 dark:text-zinc-500 font-mono"
+                                      title={invoice.invoiceReceivedBy}
+                                    >
+                                      by {invoice.invoiceReceivedBy.slice(0, 6)}...
+                                      {invoice.invoiceReceivedBy.slice(-4)}
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                            )}
                             <td className="py-3 px-3 text-center">
                               <div className="flex flex-col items-center gap-0.5">
                                 <span
