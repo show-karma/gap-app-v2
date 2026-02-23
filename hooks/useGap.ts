@@ -32,29 +32,63 @@ const findDefaultSupportedChainId = (): number | undefined => {
 
 export const getDefaultGapChainId = (): number | undefined => findDefaultSupportedChainId();
 
+const createGapInstance = (network: TNetwork): GAP => {
+  const apiUrl = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
+  return new GAP({
+    globalSchemas: false,
+    network,
+    rpcUrls: getGapRpcConfig(),
+    ...(apiUrl?.trim()
+      ? {
+          apiClient: new GapIndexerClient(apiUrl),
+        }
+      : {}),
+  });
+};
+
+let allNetworksInitialized = false;
+
+/**
+ * Eagerly initialize GAP instances for every supported network so that the
+ * SDK's AllGapSchemas.findSchema() always finds an existing instance with
+ * rpcConfig populated instead of creating a bare one without it.
+ */
+const ensureAllNetworksInitialized = () => {
+  if (allNetworksInitialized) return;
+  allNetworksInitialized = true;
+
+  for (const network of Object.keys(Networks) as TNetwork[]) {
+    const expectedChainId = Networks[network]?.chainId;
+    const resolvedChainId = getChainIdByName(network);
+    if (expectedChainId && resolvedChainId === expectedChainId && !gapClients[resolvedChainId]) {
+      try {
+        gapClients[resolvedChainId] = createGapInstance(network);
+      } catch (error) {
+        console.error(
+          `GAP::Failed to pre-initialize client for ${network} (chain ${resolvedChainId})`,
+          error
+        );
+      }
+    }
+  }
+};
+
 export const getGapClient = (chainID: number): GAP => {
+  ensureAllNetworksInitialized();
+
   const network = getSupportedNetworkForChain(chainID);
   if (!network) {
     throw new Error(`GAP::Unsupported chain ${chainID}`);
   }
   const networkChainId = getChainIdByName(network);
-  const gapClient = gapClients[networkChainId];
-  if (!gapClient) {
-    const apiUrl = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
-    const client = new GAP({
-      globalSchemas: false,
-      network,
-      rpcUrls: getGapRpcConfig(),
-      ...(apiUrl?.trim()
-        ? {
-            apiClient: new GapIndexerClient(apiUrl),
-          }
-        : {}),
-    });
-    gapClients[networkChainId] = client;
-    return client;
-  }
-  return gapClient;
+  return (
+    gapClients[networkChainId] ??
+    (() => {
+      const client = createGapInstance(network);
+      gapClients[networkChainId] = client;
+      return client;
+    })()
+  );
 };
 
 export const useGap = () => {
