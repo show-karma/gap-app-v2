@@ -9,7 +9,7 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
-    "postbuild": "next-sitemap",
+    "postbuild": "next-sitemap && ts-node --skip-project --compiler-options '{\"module\":\"commonjs\",\"target\":\"es2020\"}' scripts/generate-llms-txt.ts",
     "build-stats": "cross-env ANALYZE=true yarn build",
     "test": "cross-env NODE_OPTIONS=--max-old-space-size=4096 jest --maxWorkers=50%",
     "test:watch": "cross-env NODE_OPTIONS=--max-old-space-size=4096 jest --watch",
