@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
 import { useAuth } from "@/hooks/useAuth";
-import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
 import { useOwnerStore, useProjectStore } from "@/store";
@@ -39,15 +38,11 @@ export function TeamContent({ className }: TeamContentProps) {
   const { data: permissions } = usePermissionsQuery({}, { enabled: authenticated });
   const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
   const isAuthorized = isProjectOwner || isContractOwner || isSuperAdmin;
-  const { project: projectInstance } = useProjectInstance(
-    project?.details?.slug || project?.uid || ""
-  );
 
   const { data: memberRoles } = useQuery<Record<string, Member["role"]>>({
     queryKey: ["memberRoles", project?.uid],
-    queryFn: () =>
-      project && projectInstance ? getProjectMemberRoles(project, projectInstance) : {},
-    enabled: !!project && !!projectInstance,
+    queryFn: () => (project ? getProjectMemberRoles(project) : {}),
+    enabled: !!project,
     staleTime: 1000 * 60 * 5,
   });
 

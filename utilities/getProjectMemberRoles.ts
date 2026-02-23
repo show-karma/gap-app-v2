@@ -1,5 +1,4 @@
 import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
-import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 import { ethers } from "ethers";
 import type { Project as ProjectResponse } from "@/types/v2/project";
 import { getGapRpcConfig } from "./gapRpcConfig";
@@ -13,10 +12,7 @@ export interface Member {
   };
   role?: "Owner" | "Admin" | "Member";
 }
-export const getProjectMemberRoles = async (
-  project: ProjectResponse,
-  _projectInstance: Project
-) => {
+export const getProjectMemberRoles = async (project: ProjectResponse) => {
   const roles: Record<string, Member["role"]> = {};
   if (project?.members) {
     const rpcUrl = getRPCUrlByChainId(project.chainID);

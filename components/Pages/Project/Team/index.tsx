@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
-import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { getProjectMemberRoles, type Member } from "@/utilities/getProjectMemberRoles";
 import { MemberCard } from "./MemberCard";
@@ -20,19 +19,11 @@ export const Team = () => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
-  const { project: projectInstance } = useProjectInstance(
-    project?.details?.slug || project?.uid || ""
-  );
 
-  const {
-    data: memberRoles,
-    isLoading: isLoadingRoles,
-    isFetching: isFetchingRoles,
-  } = useQuery<Record<string, Member["role"]>>({
+  const { data: memberRoles } = useQuery<Record<string, Member["role"]>>({
     queryKey: ["memberRoles", project?.uid],
-    queryFn: () =>
-      project && projectInstance ? getProjectMemberRoles(project, projectInstance) : {},
-    enabled: !!project && !!projectInstance,
+    queryFn: () => (project ? getProjectMemberRoles(project) : {}),
+    enabled: !!project,
     staleTime: 1000 * 60 * 5,
   });
 
