@@ -28,7 +28,11 @@ import {
 } from "@/components/ui/select";
 import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useAuth } from "@/hooks/useAuth";
-import { getCommunities } from "@/services/communities.service";
+import {
+  type CommunityAdmin,
+  getCommunities,
+  getCommunityAdminsBatch,
+} from "@/services/communities.service";
 import { usePermissionsQuery } from "@/src/core/rbac/hooks/use-permissions";
 import { Role } from "@/src/core/rbac/types";
 import { layoutTheme } from "@/src/helper/theme";
@@ -37,41 +41,15 @@ import { useCommunitiesStore } from "@/store/communities";
 import type { Community } from "@/types/v2/community";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
-import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 
 const ADMINS_COLLAPSED_COUNT = 3;
 
-interface CommunityAdmin {
-  id: string;
-  admins: Array<{
-    user: {
-      id: string;
-    };
-  }>;
-}
-
 interface CommunitiesData {
   communities: Community[];
   admins: CommunityAdmin[];
-}
-
-interface CommunityAdminsBatchResponse {
-  data: Array<{
-    communityUID: string;
-    admins: CommunityAdmin["admins"];
-    status: "ok" | "community_not_found" | "subgraph_unavailable";
-  }>;
-  meta: {
-    requestedCount: number;
-    uniqueRequestedCount: number;
-    foundCommunityCount: number;
-    notFoundCount: number;
-    unavailableCount: number;
-  };
 }
 
 export default function CommunitiesToAdminPage() {
@@ -119,35 +97,7 @@ export default function CommunitiesToAdminPage() {
       return { communities: [], admins: [] };
     }
 
-    const [adminsResponse, adminsError] = await fetchData<CommunityAdminsBatchResponse>(
-      INDEXER.COMMUNITY.ADMINS_BATCH(),
-      "POST",
-      { communityUIDs: communityUids },
-      {},
-      {},
-      false
-    );
-
-    if (!adminsResponse?.data) {
-      errorManager(
-        "Error fetching batch community admins",
-        adminsError || "Empty batch admins response",
-        {
-          context: "admin.community.batch-admins",
-        }
-      );
-      throw new Error(adminsError || "Failed to fetch batch community admins");
-    }
-
-    const adminsById = new Map(
-      adminsResponse.data.map((item) => [
-        item.communityUID,
-        { id: item.communityUID, admins: item.admins },
-      ])
-    );
-    const communityAdmins = communityUids.map(
-      (uid) => adminsById.get(uid) || { id: uid, admins: [] }
-    );
+    const communityAdmins = await getCommunityAdminsBatch(communityUids);
 
     setAllCommunities(result || []);
     setCommunityAdmins(communityAdmins || []);

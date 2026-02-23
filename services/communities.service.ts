@@ -13,6 +13,30 @@ interface CommunitiesListResponse {
   };
 }
 
+export interface CommunityAdmin {
+  id: string;
+  admins: Array<{
+    user: {
+      id: string;
+    };
+  }>;
+}
+
+interface CommunityAdminsBatchResponse {
+  data: Array<{
+    communityUID: string;
+    admins: CommunityAdmin["admins"];
+    status: "ok" | "community_not_found" | "subgraph_unavailable";
+  }>;
+  meta: {
+    requestedCount: number;
+    uniqueRequestedCount: number;
+    foundCommunityCount: number;
+    notFoundCount: number;
+    unavailableCount: number;
+  };
+}
+
 /**
  * Fetches all communities using V2 API endpoint
  *
@@ -38,4 +62,45 @@ export const getCommunities = async (options?: {
   }
 
   return data.payload ?? [];
+};
+
+/**
+ * Fetches admins for a list of communities via batch endpoint.
+ *
+ * @param communityUIDs - Community UIDs to fetch admins for
+ * @returns Promise<CommunityAdmin[]> - Admin list keyed by community id
+ */
+export const getCommunityAdminsBatch = async (
+  communityUIDs: string[]
+): Promise<CommunityAdmin[]> => {
+  if (!communityUIDs.length) return [];
+
+  const [adminsResponse, adminsError] = await fetchData<CommunityAdminsBatchResponse>(
+    INDEXER.COMMUNITY.ADMINS_BATCH(),
+    "POST",
+    { communityUIDs },
+    {},
+    {},
+    false
+  );
+
+  if (!adminsResponse?.data) {
+    errorManager(
+      "Error fetching batch community admins",
+      adminsError || "Empty batch admins response",
+      {
+        context: "admin.community.batch-admins",
+      }
+    );
+    throw new Error(adminsError || "Failed to fetch batch community admins");
+  }
+
+  const adminsById = new Map(
+    adminsResponse.data.map((item) => [
+      item.communityUID,
+      { id: item.communityUID, admins: item.admins },
+    ])
+  );
+
+  return communityUIDs.map((uid) => adminsById.get(uid) || { id: uid, admins: [] });
 };
