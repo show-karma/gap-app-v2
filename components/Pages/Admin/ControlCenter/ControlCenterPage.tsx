@@ -2,31 +2,18 @@
 
 import { BanknotesIcon } from "@heroicons/react/24/outline";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { formatUnits, isAddress } from "viem";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { Button } from "@/components/ui/button";
-import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
-import { useCommunityDetails } from "@/hooks/communities/useCommunityDetails";
 import { useAuth } from "@/hooks/useAuth";
-import { useKycBatchStatuses, useKycConfig } from "@/hooks/useKycStatus";
-import type { PayoutDisbursement } from "@/src/features/payout-disbursement";
 import {
-  type AggregatedDisbursementStatus,
-  type CommunityPayoutAgreementInfo,
-  type CommunityPayoutInvoiceInfo,
-  type CommunityPayoutsOptions,
   type CommunityPayoutsSorting,
   CreateDisbursementModal,
   type GrantDisbursementInfo,
   getPaidAllocationIds,
   PayoutConfigurationModal,
-  type PayoutGrantConfig,
   PayoutHistoryDrawer,
-  type TokenTotal,
-  useCommunityPayouts,
-  usePayoutConfigsByCommunity,
 } from "@/src/features/payout-disbursement";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -35,14 +22,7 @@ import type { TableRow } from "./ControlCenterTable";
 import { ControlCenterTable } from "./ControlCenterTable";
 import { FilterToolbar } from "./FilterToolbar";
 import { ProjectDetailsModal } from "./ProjectDetailsModal";
-
-// ─── Internal types ──────────────────────────────────────────────────────────
-
-interface DisbursementMapEntry {
-  totalsByToken: TokenTotal[];
-  status: string;
-  history: PayoutDisbursement[];
-}
+import { useControlCenterData } from "./useControlCenterData";
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
@@ -139,191 +119,44 @@ export function ControlCenterPage() {
     [searchParams]
   );
 
-  // ─── Data fetching ──────────────────────────────────────────────────────
+  // ─── Data fetching (extracted hook) ───────────────────────────────────────
 
   const {
-    data: community,
-    isLoading: isLoadingCommunity,
-    error: communityError,
-  } = useCommunityDetails(communityId);
-
-  const { hasAccess, isLoading: loadingAdmin } = useCommunityAdminAccess(community?.uid);
-
-  // Extract actual programId from composite value (programId_chainId)
-  const actualProgramId = selectedProgramId?.split("_")[0] || null;
-
-  const filters = useMemo(() => {
-    const f: CommunityPayoutsOptions["filters"] = {};
-    if (actualProgramId) f.programId = actualProgramId;
-    if (agreementFilter) f.agreementStatus = agreementFilter;
-    if (invoiceFilter) f.invoiceStatus = invoiceFilter;
-    if (disbursementFilter) f.status = disbursementFilter as AggregatedDisbursementStatus;
-    if (searchQuery) f.search = searchQuery;
-    return Object.keys(f).length > 0 ? f : undefined;
-  }, [actualProgramId, agreementFilter, invoiceFilter, disbursementFilter, searchQuery]);
-
-  // When KYC filter is active, fetch all data so client-side filtering
-  // works across all results (KYC data is not available in the backend).
-  const payoutsOptions: CommunityPayoutsOptions = {
-    page: kycFilter ? 1 : currentPage,
-    limit: kycFilter ? 10000 : itemsPerPage,
-    filters,
-    sorting: sortBy ? { sortBy, sortOrder: sortOrder || "asc" } : undefined,
-  };
-
-  const {
-    data: payoutsData,
-    isLoading: isLoadingPayouts,
-    error: payoutsError,
-    invalidate: refreshPayouts,
-  } = useCommunityPayouts(community?.uid || "", payoutsOptions, {
-    enabled: !!community?.uid && authReady,
+    community,
+    isLoadingCommunity,
+    communityError,
+    hasAccess,
+    loadingAdmin,
+    isLoadingPayouts,
+    payoutsError,
+    payoutsData,
+    refreshPayouts,
+    totalItems,
+    paginatedData,
+    selectableGrants,
+    disbursementMap,
+    agreementMap,
+    invoiceMap,
+    paidMilestoneCountMap,
+    invoiceRequiredMap,
+    payoutConfigMap,
+    hasInvoicePrograms,
+    isKycEnabled,
+    isLoadingKycStatuses,
+    kycStatuses,
+    getCheckboxDisabledState,
+  } = useControlCenterData(communityId, authReady, {
+    programId: selectedProgramId,
+    agreementFilter,
+    invoiceFilter,
+    disbursementFilter,
+    kycFilter,
+    searchQuery,
+    sortBy,
+    sortOrder,
+    currentPage,
+    itemsPerPage,
   });
-
-  const payouts = payoutsData?.payload || [];
-  const totalItems = payoutsData?.pagination?.totalCount || 0;
-
-  // Payout configs for milestone allocations
-  const { data: payoutConfigs } = usePayoutConfigsByCommunity(community?.uid || "", {
-    enabled: !!community?.uid && authReady,
-  });
-
-  const payoutConfigMap = useMemo(() => {
-    const map: Record<string, PayoutGrantConfig> = {};
-    if (payoutConfigs) {
-      for (const config of payoutConfigs) {
-        map[config.grantUID] = config;
-      }
-    }
-    return map;
-  }, [payoutConfigs]);
-
-  // Process payouts into table data
-  const tableData: TableRow[] = useMemo(() => {
-    return payouts.map((payout) => ({
-      grantUid: payout.grant.uid,
-      projectUid: payout.project.uid,
-      projectName: payout.project.title,
-      projectSlug: payout.project.slug,
-      grantName: payout.grant.title,
-      grantProgramId: payout.grant.programId || "",
-      grantChainId: payout.grant.chainID,
-      projectChainId: payout.project.chainID,
-      currentPayoutAddress: payout.project.adminPayoutAddress || "",
-      currentAmount: payout.grant.adminPayoutAmount || payout.grant.payoutAmount || "",
-    }));
-  }, [payouts]);
-
-  // Consolidated maps from payouts response (single pass)
-  const { disbursementMap, agreementMap, invoiceMap, paidMilestoneCountMap, invoiceRequiredMap } =
-    useMemo(() => {
-      const dMap: Record<string, DisbursementMapEntry> = {};
-      const aMap: Record<string, CommunityPayoutAgreementInfo | null> = {};
-      const iMap: Record<string, CommunityPayoutInvoiceInfo[]> = {};
-      const pMap: Record<string, number> = {};
-      const irMap: Record<string, boolean> = {};
-      for (const payout of payouts) {
-        dMap[payout.grant.uid] = {
-          totalsByToken: payout.disbursements.totalsByToken || [],
-          status: payout.disbursements.status,
-          history: payout.disbursements.history,
-        };
-        aMap[payout.grant.uid] = payout.agreement;
-        iMap[payout.grant.uid] = payout.milestoneInvoices || [];
-        pMap[payout.grant.uid] = payout.paidMilestoneCount ?? 0;
-        irMap[payout.grant.uid] = payout.grant.invoiceRequired === true;
-      }
-      return {
-        disbursementMap: dMap,
-        agreementMap: aMap,
-        invoiceMap: iMap,
-        paidMilestoneCountMap: pMap,
-        invoiceRequiredMap: irMap,
-      };
-    }, [payouts]);
-
-  // Check if any visible grant has invoiceRequired: true (for filter visibility)
-  const hasInvoicePrograms = useMemo(
-    () => Object.values(invoiceRequiredMap).some(Boolean),
-    [invoiceRequiredMap]
-  );
-
-  // ─── KYC ───────────────────────────────────────────────────────────────
-
-  const projectUIDs = useMemo(
-    () => Array.from(new Set(tableData.map((t) => t.projectUid))).sort(),
-    [tableData]
-  );
-
-  const { isEnabled: isKycEnabled } = useKycConfig(community?.uid, {
-    enabled: !!community?.uid,
-  });
-
-  const { statuses: kycStatuses, isLoading: isLoadingKycStatuses } = useKycBatchStatuses(
-    community?.uid,
-    projectUIDs,
-    {
-      enabled: !!community?.uid && projectUIDs.length > 0 && isKycEnabled,
-    }
-  );
-
-  // ─── Helpers ─────────────────────────────────────────────────────────────
-
-  const getTotalDisbursed = useCallback((totalsByToken: TokenTotal[]): number => {
-    if (!totalsByToken || totalsByToken.length === 0) return 0;
-    return totalsByToken.reduce((sum, tokenTotal) => {
-      const rawAmount = BigInt(tokenTotal.totalAmount || "0");
-      const decimals = tokenTotal.tokenDecimals ?? 6;
-      const humanReadable = parseFloat(formatUnits(rawAmount, decimals));
-      return sum + humanReadable;
-    }, 0);
-  }, []);
-
-  const getCheckboxDisabledState = useCallback(
-    (item: TableRow): { disabled: boolean; reason: string | null } => {
-      const payoutAddress = item.currentPayoutAddress;
-      const amount = item.currentAmount;
-      const parsedAmount = amount ? parseFloat(amount) : 0;
-
-      if (!payoutAddress || payoutAddress.trim() === "") {
-        return { disabled: true, reason: "Missing payout address" };
-      }
-      if (!isAddress(payoutAddress)) {
-        return { disabled: true, reason: "Invalid payout address" };
-      }
-      if (parsedAmount === 0 || Number.isNaN(parsedAmount)) {
-        return { disabled: true, reason: "Payout amount is 0 or missing" };
-      }
-
-      const disbursementInfo = disbursementMap[item.grantUid];
-      if (disbursementInfo) {
-        const FULLY_DISBURSED_EPSILON = 1e-6;
-        const totalDisbursed = getTotalDisbursed(disbursementInfo.totalsByToken);
-        const remainingAmount = parsedAmount - totalDisbursed;
-        if (remainingAmount <= FULLY_DISBURSED_EPSILON) {
-          return { disabled: true, reason: "Fully disbursed" };
-        }
-      }
-
-      return { disabled: false, reason: null };
-    },
-    [disbursementMap, getTotalDisbursed]
-  );
-
-  // Backend pagination — use tableData directly, with optional KYC frontend filter
-  const paginatedData = useMemo(() => {
-    if (!kycFilter) return tableData;
-    return tableData.filter((item) => {
-      const status = kycStatuses.get(item.projectUid);
-      const kycStatus = status?.status || "NOT_STARTED";
-      return kycStatus === kycFilter;
-    });
-  }, [tableData, kycFilter, kycStatuses]);
-
-  const selectableGrants = useMemo(
-    () => paginatedData.filter((item) => !getCheckboxDisabledState(item).disabled),
-    [paginatedData, getCheckboxDisabledState]
-  );
 
   // ─── URL param handlers ──────────────────────────────────────────────────
 

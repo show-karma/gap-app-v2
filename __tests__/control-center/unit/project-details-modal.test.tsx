@@ -101,6 +101,7 @@ interface RenderModalOptions {
   open?: boolean;
   agreement?: CommunityPayoutAgreementInfo | null;
   milestoneInvoices?: CommunityPayoutInvoiceInfo[];
+  invoiceRequired?: boolean;
   disbursementInfo?: {
     totalsByToken: TokenTotal[];
     status: string;
@@ -118,6 +119,7 @@ function renderModal(options: RenderModalOptions = {}) {
     open = true,
     agreement = null,
     milestoneInvoices = [],
+    invoiceRequired = false,
     disbursementInfo = null,
     onOpenChange = jest.fn(),
     onOpenConfigModal = jest.fn(),
@@ -135,6 +137,7 @@ function renderModal(options: RenderModalOptions = {}) {
       disbursementInfo={disbursementInfo}
       agreement={agreement}
       milestoneInvoices={milestoneInvoices}
+      invoiceRequired={invoiceRequired}
       onOpenConfigModal={onOpenConfigModal}
       onOpenHistoryDrawer={onOpenHistoryDrawer}
       onCreateDisbursement={onCreateDisbursement}
@@ -331,6 +334,7 @@ describe("ProjectDetailsModal", () => {
 
     it("shows invoice status badges", () => {
       renderModal({
+        invoiceRequired: true,
         milestoneInvoices: [
           createMockInvoice({ invoiceStatus: "received" }),
           createMockInvoice({
@@ -354,6 +358,7 @@ describe("ProjectDetailsModal", () => {
 
       renderModal({
         onOpenChange,
+        invoiceRequired: true,
         milestoneInvoices: [
           createMockInvoice({
             milestoneLabel: "M1",
@@ -398,6 +403,7 @@ describe("ProjectDetailsModal", () => {
     it("shows save button with edit count when there are unsaved changes", async () => {
       const user = userEvent.setup();
       renderModal({
+        invoiceRequired: true,
         milestoneInvoices: [
           createMockInvoice({
             milestoneLabel: "Milestone A",
@@ -416,6 +422,7 @@ describe("ProjectDetailsModal", () => {
     it("calls saveMilestoneInvoices mutation with correct data", async () => {
       const user = userEvent.setup();
       renderModal({
+        invoiceRequired: true,
         milestoneInvoices: [
           createMockInvoice({
             milestoneLabel: "Milestone A",
