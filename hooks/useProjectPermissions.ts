@@ -1,4 +1,3 @@
-import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
 import { useQuery } from "@tanstack/react-query";
 import { ethers } from "ethers";
 import { useEffect, useMemo } from "react";
@@ -37,6 +36,9 @@ export const useProjectPermissions = () => {
       }
       const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
       const rpcConfig = getGapRpcConfig();
+      const { GapContract } = await import(
+        "@show-karma/karma-gap-sdk/core/class/contract/GapContract"
+      );
 
       const [isOwnerResult, isAdminResult] = await Promise.all([
         GapContract.isProjectOwner(
