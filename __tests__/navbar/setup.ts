@@ -330,6 +330,14 @@ jest.mock("@/store/modals/contributorProfile", () => ({
   })),
 }));
 
+jest.mock("@/store/modals/apiKeyManagement", () => ({
+  useApiKeyManagementModalStore: jest.fn(() => ({
+    isModalOpen: false,
+    openModal: jest.fn(),
+    closeModal: jest.fn(),
+  })),
+}));
+
 // Mock the NavbarPermissionsContext - this is needed because NavbarDesktopNavigation
 // uses useNavbarPermissions() which reads from context, not from individual hooks directly
 export const mockNavbarPermissionsState = {

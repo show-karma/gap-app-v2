@@ -22,6 +22,7 @@ import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider"
 import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
 import { Footer } from "@/src/components/footer/footer";
 import { Navbar } from "@/src/components/navbar/navbar";
+import { ApiKeyManagementModal } from "@/src/features/api-keys/components/api-key-management-modal";
 
 export const metadata = defaultMetadata;
 
@@ -72,6 +73,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             />
             <Suspense fallback={null}>
               <ContributorProfileDialog />
+            </Suspense>
+            <Suspense fallback={null}>
+              <ApiKeyManagementModal />
             </Suspense>
             <OnboardingDialog />
             <ProgressBarWrapper />

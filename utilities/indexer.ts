@@ -629,6 +629,11 @@ export const INDEXER = {
       `/projects/${idOrSlug}/update/contact/${contactId}`,
     DELETE: (idOrSlug: string) => `/projects/${idOrSlug}/delete/contact`,
   },
+  API_KEYS: {
+    GET: "/v2/user/api-keys",
+    CREATE: "/v2/user/api-keys",
+    REVOKE: "/v2/user/api-keys",
+  },
   KYC: {
     GET_STATUS: (projectUID: string, communityUID: string) =>
       `/v2/projects/${projectUID}/communities/${communityUID}/kyc-status`,
