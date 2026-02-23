@@ -59,6 +59,21 @@ interface CommunitiesData {
   admins: CommunityAdmin[];
 }
 
+interface CommunityAdminsBatchResponse {
+  data: Array<{
+    communityUID: string;
+    admins: CommunityAdmin["admins"];
+    status: "ok" | "community_not_found" | "subgraph_unavailable";
+  }>;
+  meta: {
+    requestedCount: number;
+    uniqueRequestedCount: number;
+    foundCommunityCount: number;
+    notFoundCount: number;
+    unavailableCount: number;
+  };
+}
+
 export default function CommunitiesToAdminPage() {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
   const [communityAdmins, setCommunityAdmins] = useState<CommunityAdmin[]>([]);
@@ -97,26 +112,45 @@ export default function CommunitiesToAdminPage() {
     const result = await getCommunities({ limit: 1000 });
     result.sort((a, b) => (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid));
 
-    const fetchPromises = result.map(async (community) => {
-      try {
-        const [data, error] = await fetchData(
-          INDEXER.COMMUNITY.ADMINS(community.uid),
-          "GET",
-          {},
-          {},
-          {},
-          false
-        );
+    const communityUids = result.map((community) => community.uid);
+    if (communityUids.length === 0) {
+      setAllCommunities([]);
+      setCommunityAdmins([]);
+      return { communities: [], admins: [] };
+    }
 
-        if (!data) return { id: community.uid, admins: [] };
-        if (error) throw Error(error);
+    const [adminsResponse, adminsError] = await fetchData<CommunityAdminsBatchResponse>(
+      INDEXER.COMMUNITY.ADMINS_BATCH(),
+      "POST",
+      { communityUIDs: communityUids },
+      {},
+      {},
+      false
+    );
 
-        return data;
-      } catch {
-        return { id: community.uid, admins: [] };
-      }
-    });
-    const communityAdmins = await Promise.all(fetchPromises);
+    if (!adminsResponse?.data) {
+      errorManager(
+        "Error fetching batch community admins",
+        adminsError || "Empty batch admins response",
+        {
+          context: "admin.community.batch-admins",
+        }
+      );
+      throw new Error(adminsError || "Failed to fetch batch community admins");
+    }
+
+    const adminsById = new Map(
+      adminsResponse.data.map((item) => [
+        item.communityUID,
+        { id: item.communityUID, admins: item.admins },
+      ])
+    );
+    const communityAdmins = communityUids.map(
+      (uid) => adminsById.get(uid) || { id: uid, admins: [] }
+    );
+
+    setAllCommunities(result || []);
+    setCommunityAdmins(communityAdmins || []);
     return { communities: result, admins: communityAdmins };
   }, []);
 
@@ -144,11 +178,21 @@ export default function CommunitiesToAdminPage() {
     if (isSuperAdminOrOwner) {
       return allCommunities;
     } else if (hasAdminCommunities) {
-      const userAdminUids = new Set(userAdminCommunities.map((c) => c.uid));
-      return allCommunities.filter((c) => userAdminUids.has(c.uid));
+      const userAdminUids = new Set(userAdminCommunities.map((community) => community.uid));
+      return allCommunities.filter((community) => userAdminUids.has(community.uid));
     }
     return [];
   }, [allCommunities, isSuperAdminOrOwner, hasAdminCommunities, userAdminCommunities]);
+
+  const communityAdminsById = useMemo(
+    () => new Map(communityAdmins.map((communityAdmin) => [communityAdmin.id, communityAdmin])),
+    [communityAdmins]
+  );
+
+  const userAdminCommunitiesSet = useMemo(
+    () => new Set(userAdminCommunities.map((community) => community.uid)),
+    [userAdminCommunities]
+  );
 
   // Get unique networks from communities
   const availableNetworks = useMemo(() => {
@@ -367,16 +411,12 @@ export default function CommunitiesToAdminPage() {
             {displayedCommunities.length ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {displayedCommunities.map((community) => {
-                  const matchingCommunityAdmin = communityAdmins.find(
-                    (admin) => admin.id === community.uid
-                  );
+                  const matchingCommunityAdmin = communityAdminsById.get(community.uid);
                   // Safely format community UID as hex address
                   const communityId = formatAdminAddress(community.uid);
 
                   // Check if user is admin of this specific community
-                  const isAdminOfThisCommunity = userAdminCommunities.some(
-                    (userCommunity) => userCommunity.uid === community.uid
-                  );
+                  const isAdminOfThisCommunity = userAdminCommunitiesSet.has(community.uid);
 
                   const canManageAdmins = isSuperAdminOrOwner || isAdminOfThisCommunity;
 
@@ -498,7 +538,9 @@ export default function CommunitiesToAdminPage() {
                                   type="button"
                                   onClick={() => toggleAdminExpansion(community.uid)}
                                   aria-expanded={expandedAdmins.has(community.uid)}
-                                  aria-label={`${expandedAdmins.has(community.uid) ? "Collapse" : "Expand"} admin list for ${community.details?.name || community.uid}`}
+                                  aria-label={`${
+                                    expandedAdmins.has(community.uid) ? "Collapse" : "Expand"
+                                  } admin list for ${community.details?.name || community.uid}`}
                                   className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 mt-1"
                                 >
                                   {expandedAdmins.has(community.uid) ? (

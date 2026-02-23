@@ -603,6 +603,7 @@ export const INDEXER = {
     PAGE_HEADER_STATS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/page-header-stats`,
     GLOBAL_STATS: () => `/v2/communities/stats`,
+    ADMINS_BATCH: () => `/communities/admins/batch`,
     ADMINS: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/admins`,
     BATCH_UPDATE: (idOrSlug: string) => `/communities/${idOrSlug}/batch-update`,
     PROJECT_UPDATES: (communityIdOrSlug: string) =>
