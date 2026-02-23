@@ -3,6 +3,7 @@ import { addMatchImageSnapshotPlugin } from "cypress-image-snapshot/plugin";
 
 // Check if running in CI environment
 const isCI = process.env.CI === "true";
+const pageLoadTimeout = isCI ? 120000 : 60000;
 
 export default defineConfig({
   component: {
@@ -19,7 +20,7 @@ export default defineConfig({
     openMode: 0, // No retries in interactive mode
   },
   defaultCommandTimeout: 10000,
-  pageLoadTimeout: 60000,
+  pageLoadTimeout,
   requestTimeout: 10000,
   e2e: {
     env: {
