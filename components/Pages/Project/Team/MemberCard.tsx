@@ -13,6 +13,7 @@ import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useENS } from "@/store/ens";
@@ -37,6 +38,9 @@ export const MemberCard = ({ member }: { member: string }) => {
   const { address } = useAccount();
   const isAuthorized = isProjectOwner || isContractOwner;
   const _isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;
+  const { project: projectInstance } = useProjectInstance(
+    project?.details?.slug || project?.uid || ""
+  );
   const { openModal } = useContributorProfileModalStore();
 
   const {
@@ -45,8 +49,9 @@ export const MemberCard = ({ member }: { member: string }) => {
     isFetching: isFetchingRoles,
   } = useQuery<Record<string, Member["role"]>>({
     queryKey: ["memberRoles", project?.uid],
-    queryFn: () => (project ? getProjectMemberRoles(project) : {}),
-    enabled: !!project,
+    queryFn: () =>
+      project && projectInstance ? getProjectMemberRoles(project, projectInstance) : {},
+    enabled: !!project && !!projectInstance,
     staleTime: 1000 * 60 * 5,
   });
 

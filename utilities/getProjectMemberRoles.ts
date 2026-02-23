@@ -1,6 +1,6 @@
+import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 import { ethers } from "ethers";
 import type { Project as ProjectResponse } from "@/types/v2/project";
-import { getGapRpcConfig } from "./gapRpcConfig";
 import { getRPCUrlByChainId } from "./rpcClient";
 
 export interface Member {
@@ -11,40 +11,28 @@ export interface Member {
   };
   role?: "Owner" | "Admin" | "Member";
 }
-export const getProjectMemberRoles = async (project: ProjectResponse) => {
+export const getProjectMemberRoles = async (project: ProjectResponse, projectInstance: Project) => {
   const roles: Record<string, Member["role"]> = {};
   if (project?.members) {
     const rpcUrl = getRPCUrlByChainId(project.chainID);
     if (!rpcUrl) return roles;
     const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
-    const rpcConfig = getGapRpcConfig();
-    const { GapContract } = await import(
-      "@show-karma/karma-gap-sdk/core/class/contract/GapContract"
-    );
 
     await Promise.all(
       project.members
         .filter((member) => member.address)
         .map(async (member) => {
           const memberAddress = member.address;
-          const isProjectOwner = await GapContract.isProjectOwner(
-            rpcProvider,
-            project.uid,
-            project.chainID,
-            memberAddress,
-            rpcConfig
-          ).catch((_error) => {
-            return false;
-          });
-          const isProjectAdmin = await GapContract.isProjectAdmin(
-            rpcProvider,
-            project.uid,
-            project.chainID,
-            memberAddress,
-            rpcConfig
-          ).catch((_error) => {
-            return false;
-          });
+          const isProjectOwner = await projectInstance
+            .isOwner(rpcProvider, memberAddress)
+            .catch((_error) => {
+              return false;
+            });
+          const isProjectAdmin = await projectInstance
+            .isAdmin(rpcProvider, memberAddress)
+            .catch((_error) => {
+              return false;
+            });
           if (!roles[memberAddress.toLowerCase()]) {
             roles[memberAddress.toLowerCase()] = isProjectOwner
               ? "Owner"

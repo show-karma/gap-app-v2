@@ -4,10 +4,10 @@ import { useEffect, useMemo } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectStore } from "@/store";
-import { getGapRpcConfig } from "@/utilities/gapRpcConfig";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { getRPCUrlByChainId } from "@/utilities/rpcClient";
+import { useProjectInstance } from "./useProjectInstance";
 
 interface ProjectPermissionsResult {
   isProjectOwner: boolean;
@@ -20,47 +20,32 @@ export const useProjectPermissions = () => {
   const { address, isConnected, authenticated: isAuth } = useAuth();
   const { project } = useProjectStore();
   const projectId = project?.details?.slug || project?.uid;
+  const { project: projectInstance } = useProjectInstance(projectId);
 
   const { setIsProjectAdmin, setIsProjectOwner } = useProjectStore();
 
   const checkPermissions = async (): Promise<ProjectPermissionsResult> => {
     // Early returns for invalid states
-    if (!project?.uid || !project?.chainID || !isAuth || !isConnected || !address) {
+    if (!projectInstance || !isAuth || !isConnected || !address) {
       return { isProjectOwner: false, isProjectAdmin: false };
     }
 
     try {
-      const rpcUrl = getRPCUrlByChainId(project.chainID);
+      const rpcUrl = getRPCUrlByChainId(projectInstance.chainID);
       if (!rpcUrl) {
         return { isProjectOwner: false, isProjectAdmin: false };
       }
       const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
-      const rpcConfig = getGapRpcConfig();
-      const { GapContract } = await import(
-        "@show-karma/karma-gap-sdk/core/class/contract/GapContract"
-      );
 
       const [isOwnerResult, isAdminResult] = await Promise.all([
-        GapContract.isProjectOwner(
-          rpcProvider,
-          project.uid,
-          project.chainID,
-          address,
-          rpcConfig
-        ).catch((error) => {
+        projectInstance?.isOwner(rpcProvider, address).catch((error) => {
           errorManager(
             `Error checking owner permissions for user ${address} on project ${projectId}`,
             error
           );
           return false;
         }),
-        GapContract.isProjectAdmin(
-          rpcProvider,
-          project.uid,
-          project.chainID,
-          address,
-          rpcConfig
-        ).catch((error) => {
+        projectInstance?.isAdmin(rpcProvider, address).catch((error) => {
           errorManager(
             `Error checking admin permissions for user ${address} on project ${projectId}`,
             error
@@ -73,7 +58,7 @@ export const useProjectPermissions = () => {
         isProjectOwner: isOwnerResult,
         isProjectAdmin: isAdminResult,
       };
-    } catch (error: unknown) {
+    } catch (error: any) {
       errorManager(`Error checking permissions for user ${address} on project ${projectId}`, error);
       return { isProjectOwner: false, isProjectAdmin: false };
     }
@@ -97,7 +82,7 @@ export const useProjectPermissions = () => {
   const query = useQuery({
     queryKey,
     queryFn: checkPermissions,
-    enabled: !!project?.uid && chainID !== null && !!isAuth && !!address,
+    enabled: !!projectInstance && chainID !== null && !!isAuth && !!address,
     ...defaultQueryOptions,
     gcTime: 1 * 60 * 1000, // 1 minutes
   });

@@ -102,7 +102,7 @@ export function useMemberRoleChange(action: RoleAction) {
 
       await retryUntilConditionMet(
         async () => {
-          const memberRoles = await getProjectMemberRoles(project);
+          const memberRoles = await getProjectMemberRoles(project, projectInstance);
           return config.checkCondition(memberRoles[memberAddress.toLowerCase()]);
         },
         () => {
