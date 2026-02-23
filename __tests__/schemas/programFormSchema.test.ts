@@ -10,6 +10,11 @@ const validEmails = {
   financeEmails: ["finance@example.com"],
 };
 
+const validBase = {
+  ...validEmails,
+  invoiceRequired: false,
+};
+
 describe("createProgramSchema", () => {
   describe("name validation", () => {
     it("should accept valid program name", () => {
@@ -18,7 +23,7 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "Short desc",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -58,7 +63,7 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "Short desc",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -70,7 +75,7 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "Short desc",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -84,7 +89,7 @@ describe("createProgramSchema", () => {
         description: "This is a valid description",
         shortDescription: "Short desc",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -110,7 +115,7 @@ describe("createProgramSchema", () => {
         description: "abc",
         shortDescription: "Short desc",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -124,7 +129,7 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "Short description",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -166,7 +171,7 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "a".repeat(100),
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -178,7 +183,7 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "a",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -195,7 +200,7 @@ describe("createProgramSchema", () => {
           startsAt: new Date("2024-06-01"),
           endsAt: new Date("2024-12-31"),
         },
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -207,7 +212,7 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "Short desc",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -221,7 +226,7 @@ describe("createProgramSchema", () => {
         dates: {
           startsAt: new Date("2024-06-01"),
         },
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -235,7 +240,7 @@ describe("createProgramSchema", () => {
         dates: {
           endsAt: new Date("2024-12-31"),
         },
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -270,7 +275,7 @@ describe("createProgramSchema", () => {
           startsAt: sameDate,
           endsAt: sameDate,
         },
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -285,7 +290,7 @@ describe("createProgramSchema", () => {
         shortDescription: "Short desc",
         dates: {},
         budget: 100000,
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -297,7 +302,7 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "Short desc",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -310,7 +315,7 @@ describe("createProgramSchema", () => {
         shortDescription: "Short desc",
         dates: {},
         budget: 0,
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -343,7 +348,7 @@ describe("createProgramSchema", () => {
         shortDescription: "Short desc",
         dates: {},
         budget: "100000",
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -379,6 +384,7 @@ describe("createProgramSchema", () => {
         budget: 100000,
         adminEmails: ["admin@example.com"],
         financeEmails: ["finance@example.com"],
+        invoiceRequired: false,
       });
 
       expect(result.success).toBe(true);
@@ -398,7 +404,7 @@ describe("createProgramSchema", () => {
         description: "abc",
         shortDescription: "a",
         dates: {},
-        ...validEmails,
+        ...validBase,
       });
 
       expect(result.success).toBe(true);
@@ -444,6 +450,7 @@ describe("createProgramSchema", () => {
         dates: {},
         adminEmails: ["admin1@example.com", "admin2@example.com"],
         financeEmails: ["finance@example.com"],
+        invoiceRequired: false,
       });
 
       expect(result.success).toBe(true);
@@ -487,7 +494,7 @@ describe("createProgramSchema", () => {
         description: "Test description",
         shortDescription: "Short desc",
         dates: {},
-        ...validEmails,
+        ...validBase,
         financeEmails: ["finance@example.com"],
       });
 

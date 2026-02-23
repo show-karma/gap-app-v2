@@ -64,9 +64,9 @@ const NAV_GROUPS: NavGroup[] = [
         icon: FlagIcon,
       },
       {
-        href: PAGES.ADMIN.PAYOUTS,
-        matchSegment: "payouts",
-        label: "Payouts",
+        href: PAGES.ADMIN.CONTROL_CENTER,
+        matchSegment: "control-center",
+        label: "Control Center",
         icon: BanknotesIcon,
       },
       {

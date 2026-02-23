@@ -21,6 +21,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   "manage-indicators": "Impact Measurement",
   tracks: "Tracks",
   payouts: "Payouts",
+  "control-center": "Control Center",
   "program-scores": "Program Scores",
   "kyc-settings": "KYC/KYB Settings",
   impact: "Impact",

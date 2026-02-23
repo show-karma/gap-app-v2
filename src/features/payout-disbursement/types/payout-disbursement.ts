@@ -163,6 +163,8 @@ export interface CommunityPayoutGrantInfo {
   programId: string | null;
   /** Admin-set payout amount (from attestation.amount) - separate from grant's original amount */
   adminPayoutAmount: string | null;
+  /** Whether the program requires invoices (opt-in, default false) */
+  invoiceRequired?: boolean;
 }
 
 /**
@@ -188,12 +190,45 @@ export interface CommunityPayoutDisbursementInfo {
 }
 
 /**
- * Community payout item combining project, grant, and disbursement info
+ * Agreement status for a grant
+ */
+export type AgreementStatus = "signed" | "not_signed";
+
+export interface CommunityPayoutAgreementInfo {
+  signed: boolean;
+  signedAt: string | null;
+  signedBy: string | null;
+}
+
+/**
+ * Invoice status for a milestone
+ */
+export type InvoiceStatus = "not_submitted" | "submitted" | "received" | "paid";
+
+export type MilestonePaymentStatus = "unpaid" | "pending" | "awaiting_signatures" | "disbursed";
+
+export interface CommunityPayoutInvoiceInfo {
+  milestoneLabel: string;
+  milestoneUID: string | null;
+  invoiceStatus: InvoiceStatus;
+  invoiceReceivedAt: string | null;
+  invoiceReceivedBy: string | null;
+  allocatedAmount: string | null;
+  paymentStatus: MilestonePaymentStatus;
+  paymentStatusDate: string | null;
+}
+
+/**
+ * Community payout item combining project, grant, disbursement, agreement, and invoice info
  */
 export interface CommunityPayoutItem {
   project: CommunityPayoutProjectInfo;
   grant: CommunityPayoutGrantInfo;
   disbursements: CommunityPayoutDisbursementInfo;
+  agreement: CommunityPayoutAgreementInfo | null;
+  milestoneInvoices: CommunityPayoutInvoiceInfo[];
+  /** Number of milestone allocations paid (from backend, based on disbursement history) */
+  paidMilestoneCount: number | null;
 }
 
 /**
@@ -210,6 +245,9 @@ export interface CommunityPayoutsResponse {
 export interface CommunityPayoutsFilters {
   programId?: string;
   status?: AggregatedDisbursementStatus;
+  agreementStatus?: AgreementStatus;
+  invoiceStatus?: "all_received" | "needs_invoices" | "has_invoices";
+  search?: string;
 }
 
 /**

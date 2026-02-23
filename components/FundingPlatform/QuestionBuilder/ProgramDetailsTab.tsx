@@ -68,6 +68,7 @@ function buildFormValuesFromMetadata(metadata: GrantProgram["metadata"]) {
     budget: metadata.programBudget ? parseFloat(metadata.programBudget.toString()) : undefined,
     adminEmails: metadata.adminEmails || [],
     financeEmails: metadata.financeEmails || [],
+    invoiceRequired: metadata.invoiceRequired ?? false,
   };
 }
 
@@ -87,6 +88,7 @@ function buildUpdateMetadata(
     endsAt: formData.dates.endsAt,
     adminEmails: formData.adminEmails,
     financeEmails: formData.financeEmails,
+    invoiceRequired: formData.invoiceRequired ?? false,
   };
 
   return sanitizeObject({
@@ -553,6 +555,46 @@ export function ProgramDetailsTab({
                 />
                 <AriaLiveError error={fieldState.error} />
               </div>
+            )}
+          />
+
+          {/* Invoice Required */}
+          <Controller
+            name="invoiceRequired"
+            control={control}
+            render={({ field, fieldState }) => (
+              <fieldset>
+                <legend className="text-sm font-semibold text-gray-700 mb-2">
+                  Require invoices for milestones <span className="text-red-500">*</span>
+                </legend>
+                <div className="flex items-center gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="invoiceRequired"
+                      checked={field.value === true}
+                      onChange={() => field.onChange(true)}
+                      disabled={isDisabled}
+                      className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm">Yes</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="invoiceRequired"
+                      checked={field.value === false}
+                      onChange={() => field.onChange(false)}
+                      disabled={isDisabled}
+                      className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm">No</span>
+                  </label>
+                </div>
+                {fieldState.error?.message && (
+                  <p className="text-red-500 text-sm mt-1">{fieldState.error.message}</p>
+                )}
+              </fieldset>
             )}
           />
 

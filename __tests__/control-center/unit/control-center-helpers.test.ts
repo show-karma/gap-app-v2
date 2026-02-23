@@ -1,0 +1,280 @@
+/**
+ * Unit tests for pure helper logic used in ControlCenterPage.
+ *
+ * These functions are defined inline in the component. We re-implement the same
+ * pure logic here to verify correctness of the checkbox disabled state and
+ * disbursement totals calculation.
+ */
+
+import { formatUnits, isAddress } from "viem";
+import {
+  AggregatedDisbursementStatus,
+  type PayoutDisbursement,
+  type TokenTotal,
+} from "@/src/features/payout-disbursement/types/payout-disbursement";
+import { createMockTokenTotal } from "../fixtures";
+
+// ---- Re-implement the pure helper functions exactly as in the component ----
+
+interface DisbursementMapEntry {
+  totalsByToken: TokenTotal[];
+  status: string;
+  history: PayoutDisbursement[];
+}
+
+interface TableRow {
+  grantUid: string;
+  projectUid: string;
+  projectName: string;
+  projectSlug: string;
+  grantName: string;
+  grantProgramId: string;
+  grantChainId: number;
+  projectChainId: number;
+  currentPayoutAddress?: string;
+  currentAmount?: string;
+}
+
+function getTotalDisbursed(totalsByToken: TokenTotal[]): number {
+  if (!totalsByToken || totalsByToken.length === 0) return 0;
+  return totalsByToken.reduce((sum, tokenTotal) => {
+    const rawAmount = BigInt(tokenTotal.totalAmount || "0");
+    const decimals = tokenTotal.tokenDecimals ?? 6;
+    const humanReadable = parseFloat(formatUnits(rawAmount, decimals));
+    return sum + humanReadable;
+  }, 0);
+}
+
+function getCheckboxDisabledState(
+  item: TableRow,
+  disbursementMap: Record<string, DisbursementMapEntry>
+): { disabled: boolean; reason: string | null } {
+  const payoutAddress = item.currentPayoutAddress;
+  const amount = item.currentAmount;
+  const parsedAmount = amount ? parseFloat(amount) : 0;
+
+  if (!payoutAddress || payoutAddress.trim() === "") {
+    return { disabled: true, reason: "Missing payout address" };
+  }
+  if (!isAddress(payoutAddress)) {
+    return { disabled: true, reason: "Invalid payout address" };
+  }
+  if (parsedAmount === 0 || Number.isNaN(parsedAmount)) {
+    return { disabled: true, reason: "Payout amount is 0 or missing" };
+  }
+
+  const disbursementInfo = disbursementMap[item.grantUid];
+  if (disbursementInfo) {
+    const FULLY_DISBURSED_EPSILON = 1e-6;
+    const totalDisbursed = getTotalDisbursed(disbursementInfo.totalsByToken);
+    const remainingAmount = parsedAmount - totalDisbursed;
+    if (remainingAmount <= FULLY_DISBURSED_EPSILON) {
+      return { disabled: true, reason: "Fully disbursed" };
+    }
+  }
+
+  return { disabled: false, reason: null };
+}
+
+// ---- Tests ----
+
+describe("getCheckboxDisabledState", () => {
+  const baseItem: TableRow = {
+    grantUid: "grant-uid-1",
+    projectUid: "project-uid-1",
+    projectName: "Test Project",
+    projectSlug: "test-project",
+    grantName: "Test Grant",
+    grantProgramId: "program-1",
+    grantChainId: 10,
+    projectChainId: 10,
+    currentPayoutAddress: "0x1234567890abcdef1234567890abcdef12345678",
+    currentAmount: "10000",
+  };
+
+  it("returns disabled when payout address is missing", () => {
+    const result = getCheckboxDisabledState({ ...baseItem, currentPayoutAddress: undefined }, {});
+    expect(result.disabled).toBe(true);
+    expect(result.reason).toBe("Missing payout address");
+  });
+
+  it("returns disabled when payout address is empty string", () => {
+    const result = getCheckboxDisabledState({ ...baseItem, currentPayoutAddress: "" }, {});
+    expect(result.disabled).toBe(true);
+    expect(result.reason).toBe("Missing payout address");
+  });
+
+  it("returns disabled when payout address is whitespace only", () => {
+    const result = getCheckboxDisabledState({ ...baseItem, currentPayoutAddress: "   " }, {});
+    expect(result.disabled).toBe(true);
+    expect(result.reason).toBe("Missing payout address");
+  });
+
+  it("returns disabled when payout address is invalid", () => {
+    const result = getCheckboxDisabledState(
+      { ...baseItem, currentPayoutAddress: "not-an-address" },
+      {}
+    );
+    expect(result.disabled).toBe(true);
+    expect(result.reason).toBe("Invalid payout address");
+  });
+
+  it("returns disabled when amount is 0", () => {
+    const result = getCheckboxDisabledState({ ...baseItem, currentAmount: "0" }, {});
+    expect(result.disabled).toBe(true);
+    expect(result.reason).toBe("Payout amount is 0 or missing");
+  });
+
+  it("returns disabled when amount is missing", () => {
+    const result = getCheckboxDisabledState({ ...baseItem, currentAmount: undefined }, {});
+    expect(result.disabled).toBe(true);
+    expect(result.reason).toBe("Payout amount is 0 or missing");
+  });
+
+  it("returns disabled when amount is NaN", () => {
+    const result = getCheckboxDisabledState({ ...baseItem, currentAmount: "abc" }, {});
+    expect(result.disabled).toBe(true);
+    expect(result.reason).toBe("Payout amount is 0 or missing");
+  });
+
+  it("returns disabled when fully disbursed (exact match)", () => {
+    // 10000 USDC = 10000000000 raw with 6 decimals
+    const result = getCheckboxDisabledState(
+      { ...baseItem },
+      {
+        "grant-uid-1": {
+          totalsByToken: [createMockTokenTotal({ totalAmount: "10000000000", tokenDecimals: 6 })],
+          status: AggregatedDisbursementStatus.COMPLETED,
+          history: [],
+        },
+      }
+    );
+    expect(result.disabled).toBe(true);
+    expect(result.reason).toBe("Fully disbursed");
+  });
+
+  it("returns disabled when fully disbursed within epsilon", () => {
+    const result = getCheckboxDisabledState(
+      { ...baseItem },
+      {
+        "grant-uid-1": {
+          totalsByToken: [
+            createMockTokenTotal({
+              totalAmount: "10000000000",
+              tokenDecimals: 6,
+            }),
+          ],
+          status: AggregatedDisbursementStatus.IN_PROGRESS,
+          history: [],
+        },
+      }
+    );
+    expect(result.disabled).toBe(true);
+    expect(result.reason).toBe("Fully disbursed");
+  });
+
+  it("returns enabled when remaining is slightly above epsilon", () => {
+    const result = getCheckboxDisabledState(
+      { ...baseItem },
+      {
+        "grant-uid-1": {
+          totalsByToken: [
+            createMockTokenTotal({
+              totalAmount: "9999000000",
+              tokenDecimals: 6,
+            }),
+          ],
+          status: AggregatedDisbursementStatus.IN_PROGRESS,
+          history: [],
+        },
+      }
+    );
+    expect(result.disabled).toBe(false);
+    expect(result.reason).toBeNull();
+  });
+
+  it("returns enabled when partially disbursed with significant remainder", () => {
+    const result = getCheckboxDisabledState(
+      { ...baseItem },
+      {
+        "grant-uid-1": {
+          totalsByToken: [createMockTokenTotal({ totalAmount: "5000000000", tokenDecimals: 6 })],
+          status: AggregatedDisbursementStatus.IN_PROGRESS,
+          history: [],
+        },
+      }
+    );
+    expect(result.disabled).toBe(false);
+    expect(result.reason).toBeNull();
+  });
+
+  it("returns enabled when no disbursement info exists", () => {
+    const result = getCheckboxDisabledState(baseItem, {});
+    expect(result.disabled).toBe(false);
+    expect(result.reason).toBeNull();
+  });
+});
+
+describe("getTotalDisbursed", () => {
+  it("returns 0 for empty array", () => {
+    expect(getTotalDisbursed([])).toBe(0);
+  });
+
+  it("returns 0 for null-like input", () => {
+    expect(getTotalDisbursed(null as unknown as TokenTotal[])).toBe(0);
+    expect(getTotalDisbursed(undefined as unknown as TokenTotal[])).toBe(0);
+  });
+
+  it("calculates total for a single token", () => {
+    const result = getTotalDisbursed([
+      createMockTokenTotal({ totalAmount: "5000000000", tokenDecimals: 6 }),
+    ]);
+    expect(result).toBe(5000);
+  });
+
+  it("calculates total across multiple tokens with different decimals", () => {
+    const result = getTotalDisbursed([
+      createMockTokenTotal({
+        token: "USDC",
+        totalAmount: "5000000000",
+        tokenDecimals: 6,
+      }),
+      createMockTokenTotal({
+        token: "ETH",
+        totalAmount: "1000000000000000000",
+        tokenDecimals: 18,
+      }),
+    ]);
+    // 5000 USDC + 1 ETH = 5001
+    expect(result).toBe(5001);
+  });
+
+  it("handles zero amount", () => {
+    const result = getTotalDisbursed([
+      createMockTokenTotal({ totalAmount: "0", tokenDecimals: 6 }),
+    ]);
+    expect(result).toBe(0);
+  });
+
+  it("handles missing totalAmount gracefully", () => {
+    const result = getTotalDisbursed([createMockTokenTotal({ totalAmount: "", tokenDecimals: 6 })]);
+    expect(result).toBe(0);
+  });
+
+  it("treats tokenDecimals of 0 as 0 decimals (no division)", () => {
+    // With ?? 6, tokenDecimals=0 is preserved (not treated as falsy)
+    const result = getTotalDisbursed([
+      createMockTokenTotal({ totalAmount: "5000000", tokenDecimals: 0 }),
+    ]);
+    // 5000000 / 10^0 = 5000000
+    expect(result).toBe(5000000);
+  });
+
+  it("defaults to 6 decimals when tokenDecimals is null", () => {
+    const result = getTotalDisbursed([
+      createMockTokenTotal({ totalAmount: "5000000", tokenDecimals: null as unknown as number }),
+    ]);
+    // 5000000 / 10^6 = 5
+    expect(result).toBe(5);
+  });
+});

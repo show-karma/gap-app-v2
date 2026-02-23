@@ -12,6 +12,7 @@ interface UseCommunityAdminAccessResult {
     isCommunityAdmin: boolean;
     isOwner: boolean;
     isSuperAdmin: boolean;
+    isRbacCommunityAdmin: boolean;
   };
 }
 
@@ -39,15 +40,16 @@ export const useCommunityAdminAccess = (communityId?: string): UseCommunityAdmin
   const { isOwner, isOwnerLoading } = useOwnerStore();
   const { authenticated, ready } = useAuth();
   const { data: permissions, isLoading: isPermissionsLoading } = usePermissionsQuery(
-    {},
+    communityId ? { communityId } : {},
     { enabled: authenticated }
   );
   const isSuperAdmin = permissions?.roles.roles.includes(Role.SUPER_ADMIN) ?? false;
+  const isRbacCommunityAdmin = permissions?.isCommunityAdmin ?? false;
 
   // Memoize computed values
   const hasAccess = useMemo(
-    () => isCommunityAdmin || isOwner || isSuperAdmin,
-    [isCommunityAdmin, isOwner, isSuperAdmin]
+    () => isCommunityAdmin || isOwner || isSuperAdmin || isRbacCommunityAdmin,
+    [isCommunityAdmin, isOwner, isSuperAdmin, isRbacCommunityAdmin]
   );
 
   // Auth-state-aware loading: when Privy hasn't initialized or the user is authenticated
@@ -60,8 +62,8 @@ export const useCommunityAdminAccess = (communityId?: string): UseCommunityAdmin
   );
 
   const checks = useMemo(
-    () => ({ isCommunityAdmin, isOwner, isSuperAdmin }),
-    [isCommunityAdmin, isOwner, isSuperAdmin]
+    () => ({ isCommunityAdmin, isOwner, isSuperAdmin, isRbacCommunityAdmin }),
+    [isCommunityAdmin, isOwner, isSuperAdmin, isRbacCommunityAdmin]
   );
 
   return {

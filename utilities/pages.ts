@@ -73,6 +73,7 @@ export const PAGES = {
     COMMUNITY_STATS: `/admin/communities/stats`,
     PROJECTS: `/admin/projects`,
     PAYOUTS: (community: string) => `/community/${community}/manage/payouts`,
+    CONTROL_CENTER: (community: string) => `/community/${community}/manage/control-center`,
     KYC_SETTINGS: (community: string) => `/community/${community}/manage/kyc-settings`,
     PROGRAM_SCORES: (community: string) => `/community/${community}/manage/program-scores`,
     PROJECT_MILESTONES: (community: string, projectId: string, programId: string) =>

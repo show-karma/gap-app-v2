@@ -2,6 +2,8 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import type {
+  CommunityPayoutAgreementInfo,
+  CommunityPayoutInvoiceInfo,
   CommunityPayoutsOptions,
   CommunityPayoutsResponse,
   CreateDisbursementsRequest,
@@ -269,6 +271,9 @@ export const getCommunityPayouts = async (
         limit: options?.limit,
         programId: options?.filters?.programId,
         status: options?.filters?.status,
+        agreementStatus: options?.filters?.agreementStatus,
+        invoiceStatus: options?.filters?.invoiceStatus,
+        search: options?.filters?.search,
         sortBy: options?.sorting?.sortBy,
         sortOrder: options?.sorting?.sortOrder,
       }),
@@ -396,5 +401,73 @@ export const deletePayoutConfig = async (grantUID: string): Promise<void> => {
   } catch (error: unknown) {
     errorManager(`Error deleting payout config for grant ${grantUID}`, error);
     throw new Error(`Failed to delete payout config: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Toggle grant agreement signed status
+ */
+export const toggleGrantAgreement = async (
+  grantUID: string,
+  signed: boolean,
+  communityUID: string,
+  signedAt?: string
+): Promise<CommunityPayoutAgreementInfo> => {
+  try {
+    const body: Record<string, unknown> = { signed, communityUID };
+    if (signedAt) body.signedAt = signedAt;
+
+    const [data, error] = await fetchData<CommunityPayoutAgreementInfo>(
+      INDEXER.V2.GRANT_AGREEMENTS.TOGGLE(grantUID),
+      "POST",
+      body,
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to toggle agreement");
+    }
+
+    return data;
+  } catch (error: unknown) {
+    errorManager(`Error toggling agreement for grant ${grantUID}`, error);
+    throw new Error(`Failed to toggle agreement: ${getErrorMessage(error)}`);
+  }
+};
+
+/**
+ * Batch save milestone invoices for a grant
+ */
+export const saveMilestoneInvoices = async (
+  grantUID: string,
+  communityUID: string,
+  invoices: Array<{
+    milestoneLabel: string;
+    milestoneUID?: string | null;
+    invoiceReceivedAt?: string | null;
+  }>
+): Promise<{ invoices: CommunityPayoutInvoiceInfo[] }> => {
+  try {
+    const [data, error] = await fetchData<{ invoices: CommunityPayoutInvoiceInfo[] }>(
+      INDEXER.V2.MILESTONE_INVOICES.BATCH_SAVE(grantUID),
+      "PUT",
+      { communityUID, invoices },
+      {},
+      {},
+      true,
+      false
+    );
+
+    if (error || !data) {
+      throw new Error(error || "Failed to save invoices");
+    }
+
+    return data;
+  } catch (error: unknown) {
+    errorManager(`Error saving invoices for grant ${grantUID}`, error);
+    throw new Error(`Failed to save invoices: ${getErrorMessage(error)}`);
   }
 };
