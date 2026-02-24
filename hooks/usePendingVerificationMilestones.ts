@@ -4,14 +4,16 @@ import { INDEXER } from "@/utilities/indexer";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 export interface PendingVerificationMilestone {
+  milestoneUid: string;
+  milestoneTitle: string;
+  completedAt: string | null;
+  grantUid: string;
+  grantTitle: string;
+  programId: string | null;
+  projectUid: string;
   projectTitle: string;
   projectSlug: string;
-  projectUid: string;
-  grantTitle: string;
-  grantUid: string;
-  milestoneTitle: string;
-  milestoneIndex: number;
-  programId?: string;
+  status: "pending_verification" | "pending_completion";
 }
 
 export interface PendingVerificationAPIResponse {
@@ -38,15 +40,13 @@ export const usePendingVerificationMilestones = ({
   programIds = [],
   enabled = true,
 }: UsePendingVerificationMilestonesOptions) => {
-  const normalizedProgramIds = programIds.map((id) => (id.includes("_") ? id.split("_")[0] : id));
-
   const query = useQuery<PendingVerificationAPIResponse>({
-    queryKey: QUERY_KEYS.COMMUNITY.PENDING_VERIFICATION(communityId, page, normalizedProgramIds),
+    queryKey: QUERY_KEYS.COMMUNITY.PENDING_VERIFICATION(communityId, page, programIds),
     queryFn: async () => {
-      const queryProgramIds = normalizedProgramIds.join(",");
+      const queryProgramIds = programIds.join(",");
       const encodedProgramIds = encodeURIComponent(queryProgramIds);
       const url = `${INDEXER.COMMUNITY.REPORT.PENDING_VERIFICATION(communityId)}?limit=${pageLimit}&page=${page}${queryProgramIds ? `&programIds=${encodedProgramIds}` : ""}`;
-      const [data]: any = await fetchData(url);
+      const [data] = await fetchData<PendingVerificationAPIResponse>(url);
       return data || { data: [], pageInfo: { totalItems: 0, page: 1, pageLimit } };
     },
     enabled: Boolean(communityId) && enabled,
