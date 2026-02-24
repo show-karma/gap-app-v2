@@ -7,6 +7,7 @@ import { usePendingVerificationMilestones } from "@/hooks/usePendingVerification
 import { milestoneReportService } from "@/services/milestone-report.service";
 import { downloadCommunityReport } from "@/utilities/downloadReports";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { validateProgramIdentifiers } from "@/utilities/validators";
 
 type TabId = "pending-verification" | "stats";
@@ -182,7 +183,13 @@ export function useReportPageData({
     isLoading,
     error: statsError,
   } = useQuery<ReportAPIResponse>({
-    queryKey: ["reportMilestones", communityId, statsPage, sortBy, sortOrder, effectiveProgramIds],
+    queryKey: QUERY_KEYS.COMMUNITY.REPORT_MILESTONES(
+      communityId,
+      statsPage,
+      sortBy,
+      sortOrder,
+      effectiveProgramIds
+    ),
     queryFn: () =>
       milestoneReportService.getReport(
         communityId,
@@ -271,9 +278,9 @@ export function useReportPageData({
     activeTab,
     setActiveTab,
     statsPage,
-    setStatsPage: (page: number) => setStatsPage(page),
+    setStatsPage,
     pendingPage,
-    setPendingPage: (page: number) => setPendingPage(page),
+    setPendingPage,
     sortBy,
     sortOrder,
     handleSort,

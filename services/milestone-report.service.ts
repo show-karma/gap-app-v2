@@ -38,7 +38,7 @@ export const milestoneReportService = {
     }`;
 
     const [data, error] = await fetchData<ReportAPIResponse>(url);
-    if (error) throw new Error(error);
+    if (error) throw new Error(String(error));
     return data || { ...EMPTY_REPORT_RESPONSE, pageInfo: { totalItems: 0, page: 1, pageLimit } };
   },
 
@@ -55,7 +55,7 @@ export const milestoneReportService = {
     }`;
 
     const [data, error] = await fetchData<PendingVerificationAPIResponse>(url);
-    if (error) throw new Error(error);
+    if (error) throw new Error(String(error));
     return data || { data: [], pageInfo: { totalItems: 0, page: 1, pageLimit } };
   },
 };
