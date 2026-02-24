@@ -4,16 +4,16 @@ import { SITE_URL } from "@/utilities/meta";
 describe("robots", () => {
   const result = robots();
 
-  it("should return a single rule set", () => {
-    expect(result.rules).toHaveLength(1);
+  it("should return 5 rule sets", () => {
+    expect(result.rules).toHaveLength(5);
   });
 
-  it("should apply to all user agents", () => {
+  it("should apply wildcard rule to all user agents", () => {
     const rule = Array.isArray(result.rules) ? result.rules[0] : result.rules;
     expect(rule.userAgent).toBe("*");
   });
 
-  it("should allow the root path", () => {
+  it("should allow the root path for wildcard rule", () => {
     const rule = Array.isArray(result.rules) ? result.rules[0] : result.rules;
     expect(rule.allow).toBe("/");
   });
@@ -41,6 +41,21 @@ describe("robots", () => {
     it("should have exactly 4 disallow entries", () => {
       expect(disallowed).toHaveLength(4);
     });
+  });
+
+  describe("AI crawler rules", () => {
+    const rules = result.rules as Array<Record<string, unknown>>;
+    const aiCrawlers = ["GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended"];
+
+    for (const crawler of aiCrawlers) {
+      it(`should have a rule for ${crawler}`, () => {
+        const rule = rules.find((r) => r.userAgent === crawler);
+        expect(rule).toBeDefined();
+        expect(rule?.allow).toContain("/llms.txt");
+        expect(rule?.allow).toContain("/llms-full.txt");
+        expect(rule?.disallow).toContain("/api/");
+      });
+    }
   });
 
   describe("sitemaps", () => {
