@@ -175,18 +175,82 @@ The dev server uses Turbopack (`pnpm run dev`). It can occasionally crash during
 
 ---
 
+## Mutation Pattern (MANDATORY)
+
+All API write operations MUST use React Query `useMutation` hooks — never direct service calls with local `useState`. This ensures optimistic updates with rollback, cache invalidation, loading states, and consistent error handling.
+
+**Wrong:**
+```tsx
+const [value, setValue] = useState(initialValue);
+const handleChange = async (v) => {
+  setValue(v);
+  try { await Service.update(v); }
+  catch { setValue(!v); toast.error("Failed"); }
+};
+```
+
+**Right:**
+```tsx
+const mutation = useMutation({
+  mutationFn: (v) => Service.update(v),
+  onMutate: async (v) => {
+    await queryClient.cancelQueries({ queryKey });
+    const previous = queryClient.getQueryData(queryKey);
+    queryClient.setQueryData(queryKey, /* optimistic value */);
+    return { previous };
+  },
+  onError: (err, v, ctx) => {
+    queryClient.setQueryData(queryKey, ctx?.previous);
+    toast.error("Failed");
+  },
+  onSettled: () => queryClient.invalidateQueries({ queryKey }),
+});
+```
+
+---
+
+## Three States Rule (ENFORCED)
+
+Every component that fetches data MUST render all three states. This is the #1 repeated mistake — check this BEFORE creating a PR:
+
+1. **Loading** — skeleton placeholder matching the shape of real content (not a spinner)
+2. **Empty** — helpful message + action CTA (e.g., "No projects yet. Create your first project.")
+3. **Error** — error message + Retry button using `refetch()`
+
+**NEVER return `null`** for empty or error states — always render a visible UI. Components that violate this will be rejected in review.
+
+---
+
 ## Anti-Patterns
 
 - Barrel exports (`index.ts` re-exports) - import directly from source files
 - Business logic in components - extract to hooks or utilities
 - Hardcoded chain IDs or addresses - use constants from `utilities/`
+- Hardcoded API URLs - always use `envVars` or `INDEXER` constants
+- Hardcoded color values - use Tailwind theme classes or CSS variables
+- `any` or `as any` type casts - use proper types (e.g., `as ProgramMetadata`)
 - `console.log` in committed code - Biome will flag it
 - Skipping TypeScript strict mode - errors fail the build
 - `document.querySelector` to click elements in other components - renders dialog/component directly instead
 - `router` from `useRouter()` in useEffect dependency arrays - it's a new object every render, causes infinite loops
+- `params` from `useParams()` in useEffect dependency arrays - same issue, destructure to primitive values (`const { projectId } = params`) and depend on those instead
+- Calling `contextLabel(ctx)` or similar functions twice in JSX (once for condition, once for content) - store result in a variable or use IIFE
 - `usePermissionContext()` outside community-scoped layouts - use data-driven role detection (see RBAC section)
 - Returning `null` on data fetch error - always show an error state with retry
 - Unhandled singular/plural: always use `count === 1 ? "item" : "items"` for dynamic counts
+- Generating array keys inline in render (`Array.from({length: N})`) - use static key arrays at module level
+- List item components in `.map()` without `React.memo()` - wrap in memo for performance
+- Destructive actions (delete, regenerate, revoke) without a confirmation dialog
+- Loose path matching (`pathname.includes("/manage")`) - use exact match or `endsWith`
+- Using `useNavbarPermissions()` for wallet address - use `useAuth()` instead
+- Using raw `<input>` elements - use the project's `<Input>` component from `@/components/ui/input`
+- Swallowing API errors silently (returning `[]` on failure) - throw errors so React Query can show error states
+- Missing `"use client"` on components using Radix primitives (Dialog, HoverCard, Separator, etc.) - these require client-side rendering
+- Unhandled Promise rejections on browser APIs (`navigator.clipboard.writeText()`, etc.) - always add `.catch()`
+- Eagerly importing heavy libraries (`@streamdown/math`, `@streamdown/mermaid`, etc.) - use `dynamic()` or lazy `import()` to reduce bundle size
+- `clearMessages()` / reset actions in Zustand stores that don't reset ALL related state flags (e.g., forgetting `isStreaming`)
+- Starting to code features before finalizing URL structure / information architecture - plan routes and data model first, then build
+- Hardcoding CSS colors inline instead of using CSS custom properties in `styles/globals.css` - define design tokens first
 
 ---
 
