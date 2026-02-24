@@ -9,10 +9,10 @@ import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useFaucetClaim, useFaucetEligibility } from "@/hooks/useFaucet";
-import { getGapClient } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
 import type { FaucetTransaction } from "@/utilities/faucet/faucetService";
 import { buildProjectAttestationTransaction } from "@/utilities/gap/buildAttestationTransaction";
+import { getGapClient } from "@/utilities/gapClient";
 import { cn } from "@/utilities/tailwind";
 
 interface FaucetSectionProps {
