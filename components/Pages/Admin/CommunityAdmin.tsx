@@ -30,6 +30,7 @@ import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useAuth } from "@/hooks/useAuth";
 import {
   type CommunityAdmin,
+  type CommunityAdminsBatchStatus,
   getCommunities,
   getCommunityAdminsBatch,
 } from "@/services/communities.service";
@@ -51,6 +52,16 @@ interface CommunitiesData {
   communities: Community[];
   admins: CommunityAdmin[];
 }
+
+const getAdminsBatchStatusMessage = (status: CommunityAdminsBatchStatus): string => {
+  if (status === "community_not_found") {
+    return "Admin data unavailable: community not found in the indexer.";
+  }
+  if (status === "subgraph_unavailable") {
+    return "Admin data unavailable: subgraph is temporarily unavailable.";
+  }
+  return "";
+};
 
 export default function CommunitiesToAdminPage() {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
@@ -135,7 +146,16 @@ export default function CommunitiesToAdminPage() {
   }, [allCommunities, isSuperAdminOrOwner, hasAdminCommunities, userAdminCommunities]);
 
   const communityAdminsById = useMemo(
-    () => new Map(communityAdmins.map((communityAdmin) => [communityAdmin.id, communityAdmin])),
+    () =>
+      new Map(
+        communityAdmins.map((communityAdmin) => [
+          communityAdmin.id,
+          {
+            ...communityAdmin,
+            admins: communityAdmin.status === "ok" ? communityAdmin.admins : [],
+          },
+        ])
+      ),
     [communityAdmins]
   );
 
@@ -362,6 +382,7 @@ export default function CommunitiesToAdminPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {displayedCommunities.map((community) => {
                   const matchingCommunityAdmin = communityAdminsById.get(community.uid);
+                  const adminBatchStatus = matchingCommunityAdmin?.status;
                   // Safely format community UID as hex address
                   const communityId = formatAdminAddress(community.uid);
 
@@ -445,11 +466,13 @@ export default function CommunitiesToAdminPage() {
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             Admins{" "}
-                            {matchingCommunityAdmin && matchingCommunityAdmin.admins.length > 0 && (
-                              <span className="text-gray-400">
-                                ({matchingCommunityAdmin.admins.length})
-                              </span>
-                            )}
+                            {adminBatchStatus === "ok" &&
+                              matchingCommunityAdmin &&
+                              matchingCommunityAdmin.admins.length > 0 && (
+                                <span className="text-gray-400">
+                                  ({matchingCommunityAdmin.admins.length})
+                                </span>
+                              )}
                           </p>
                           {canManageAdmins && (
                             <AddAdmin
@@ -460,7 +483,11 @@ export default function CommunitiesToAdminPage() {
                           )}
                         </div>
                         <div className="space-y-2">
-                          {matchingCommunityAdmin && matchingCommunityAdmin.admins.length > 0 ? (
+                          {adminBatchStatus && adminBatchStatus !== "ok" ? (
+                            <p className="text-xs text-amber-700 dark:text-amber-300 italic">
+                              {getAdminsBatchStatusMessage(adminBatchStatus)}
+                            </p>
+                          ) : matchingCommunityAdmin && matchingCommunityAdmin.admins.length > 0 ? (
                             <>
                               {(expandedAdmins.has(community.uid)
                                 ? matchingCommunityAdmin.admins

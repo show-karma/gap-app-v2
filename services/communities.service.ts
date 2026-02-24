@@ -20,13 +20,16 @@ export interface CommunityAdmin {
       id: string;
     };
   }>;
+  status: CommunityAdminsBatchStatus;
 }
+
+export type CommunityAdminsBatchStatus = "ok" | "community_not_found" | "subgraph_unavailable";
 
 interface CommunityAdminsBatchResponse {
   data: Array<{
     communityUID: string;
     admins: CommunityAdmin["admins"];
-    status: "ok" | "community_not_found" | "subgraph_unavailable";
+    status: CommunityAdminsBatchStatus;
   }>;
   meta: {
     requestedCount: number;
@@ -68,7 +71,7 @@ export const getCommunities = async (options?: {
  * Fetches admins for a list of communities via batch endpoint.
  *
  * @param communityUIDs - Community UIDs to fetch admins for
- * @returns Promise<CommunityAdmin[]> - Admin list keyed by community id
+ * @returns Promise<CommunityAdmin[]> - Admin list keyed by community id, including batch status
  */
 export const getCommunityAdminsBatch = async (
   communityUIDs: string[]
@@ -98,9 +101,16 @@ export const getCommunityAdminsBatch = async (
   const adminsById = new Map(
     adminsResponse.data.map((item) => [
       item.communityUID,
-      { id: item.communityUID, admins: item.admins },
+      { id: item.communityUID, admins: item.admins, status: item.status },
     ])
   );
 
-  return communityUIDs.map((uid) => adminsById.get(uid) || { id: uid, admins: [] });
+  return communityUIDs.map(
+    (uid) =>
+      adminsById.get(uid) || {
+        id: uid,
+        admins: [],
+        status: "community_not_found",
+      }
+  );
 };
