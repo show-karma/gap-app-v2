@@ -229,9 +229,14 @@ export function useReportPageData({
     downloadCommunityReport({
       communityId,
       sortBy,
-      selectedProgramIds: normalizedProgramIds.length > 0 ? normalizedProgramIds : undefined,
+      selectedProgramIds:
+        normalizedProgramIds.length > 0
+          ? normalizedProgramIds
+          : effectiveProgramIds.length > 0
+            ? effectiveProgramIds
+            : undefined,
     });
-  }, [communityId, sortBy, normalizedProgramIds]);
+  }, [communityId, sortBy, normalizedProgramIds, effectiveProgramIds]);
 
   const handleProgramSelect = useCallback(
     (label: string) => {
