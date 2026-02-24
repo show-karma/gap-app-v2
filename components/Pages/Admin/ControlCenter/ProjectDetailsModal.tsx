@@ -351,10 +351,13 @@ export function ProjectDetailsModal({
       const matchedInvoice = milestoneInvoices.find(
         (inv, idx) => getMilestoneKey(inv, idx) === key
       );
+      const rawDate = edits.invoiceReceivedAt;
+      const isoDate =
+        rawDate && !rawDate.includes("T") ? `${rawDate}T00:00:00.000Z` : (rawDate ?? null);
       return {
         milestoneLabel: matchedInvoice?.milestoneLabel ?? key,
         milestoneUID: edits.milestoneUID ?? null,
-        invoiceReceivedAt: edits.invoiceReceivedAt ?? null,
+        invoiceReceivedAt: isoDate,
       };
     });
 
