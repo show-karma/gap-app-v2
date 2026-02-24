@@ -46,7 +46,10 @@ export const usePendingVerificationMilestones = ({
       const queryProgramIds = programIds.join(",");
       const encodedProgramIds = encodeURIComponent(queryProgramIds);
       const url = `${INDEXER.COMMUNITY.REPORT.PENDING_VERIFICATION(communityId)}?limit=${pageLimit}&page=${page}${queryProgramIds ? `&programIds=${encodedProgramIds}` : ""}`;
-      const [data] = await fetchData<PendingVerificationAPIResponse>(url);
+      const [data, error] = await fetchData<PendingVerificationAPIResponse>(url);
+      if (error) {
+        throw new Error(error);
+      }
       return data || { data: [], pageInfo: { totalItems: 0, page: 1, pageLimit } };
     },
     enabled: Boolean(communityId) && enabled,

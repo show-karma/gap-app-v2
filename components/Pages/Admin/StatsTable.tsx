@@ -203,7 +203,7 @@ export function StatsTable({
                       <td className="px-4 py-3">
                         <Link
                           href={`${PAGES.PROJECT.GRANT(
-                            report.projectUid,
+                            report.projectSlug,
                             report.grantUid
                           )}/milestones-and-updates#all`}
                           className="text-sm text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 tabular-nums transition-colors"
@@ -216,7 +216,7 @@ export function StatsTable({
                       <td className="px-4 py-3">
                         <Link
                           href={`${PAGES.PROJECT.GRANT(
-                            report.projectUid,
+                            report.projectSlug,
                             report.grantUid
                           )}/milestones-and-updates#pending`}
                           className={cn(

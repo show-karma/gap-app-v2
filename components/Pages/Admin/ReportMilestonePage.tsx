@@ -108,11 +108,9 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
 
   const reportData = useReportPageData({
     communityId,
-    community,
     grantPrograms,
     hasAccess,
     isAuthorized,
-    isCheckingPermissions,
     reviewerPrograms: reviewerPrograms ?? [],
   });
 

@@ -70,7 +70,7 @@ export function StatsGrid({ stats, isLoading }: StatsGridProps) {
           />
           <StatCard
             title="% with Milestones"
-            value={`${stats?.percentageProjectsWithMilestones?.toFixed(1) ?? 0}%`}
+            value={`${stats?.percentageProjectsWithMilestones?.toFixed(1) ?? "0.0"}%`}
             icon={<ChartBarIcon className="w-5 h-5 text-sky-600 dark:text-sky-400" />}
             accentColor="bg-sky-50 dark:bg-sky-900/20"
           />
@@ -94,7 +94,7 @@ export function StatsGrid({ stats, isLoading }: StatsGridProps) {
           />
           <StatCard
             title="Completion Rate"
-            value={`${stats?.percentageCompletedMilestones?.toFixed(1) ?? 0}%`}
+            value={`${stats?.percentageCompletedMilestones?.toFixed(1) ?? "0.0"}%`}
             icon={
               <ArrowTrendingUpIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             }
@@ -102,7 +102,7 @@ export function StatsGrid({ stats, isLoading }: StatsGridProps) {
           />
           <StatCard
             title="Pending Rate"
-            value={`${stats?.percentagePendingMilestones?.toFixed(1) ?? 0}%`}
+            value={`${stats?.percentagePendingMilestones?.toFixed(1) ?? "0.0"}%`}
             icon={<ExclamationCircleIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
             accentColor="bg-amber-50 dark:bg-amber-900/20"
           />

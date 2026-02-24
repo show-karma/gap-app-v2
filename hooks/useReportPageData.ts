@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { usePendingVerificationMilestones } from "@/hooks/usePendingVerificationMilestones";
-import type { Community } from "@/types/v2/community";
 import { downloadCommunityReport } from "@/utilities/downloadReports";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -105,11 +104,9 @@ export const itemsPerPage = 50;
 
 interface UseReportPageDataOptions {
   communityId: string;
-  community: Community;
   grantPrograms: GrantProgram[];
   hasAccess: boolean;
   isAuthorized: boolean;
-  isCheckingPermissions: boolean;
   reviewerPrograms: Array<{ programId: string }>;
 }
 
