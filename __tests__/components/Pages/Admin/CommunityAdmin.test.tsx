@@ -114,7 +114,7 @@ describe("CommunityAdmin", () => {
     mockUseQuery.mockReturnValue({
       data: {
         communities: [cachedCommunity],
-        admins: [{ id: cachedCommunity.uid, admins: [] }],
+        admins: [{ id: cachedCommunity.uid, admins: [], status: "ok" }],
       },
       isLoading: false,
       refetch: jest.fn(),
