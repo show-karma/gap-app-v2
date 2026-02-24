@@ -83,8 +83,7 @@ export const getCommunityAdminsBatch = async (
     "POST",
     { communityUIDs },
     {},
-    {},
-    false
+    {}
   );
 
   if (!adminsResponse?.data) {
