@@ -118,7 +118,7 @@ export default function CommunitiesToAdminPage() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["communities", "admins"],
     queryFn: fetchCommunitiesData,
-    enabled: hasAccess,
+    enabled: hasAccess && authenticated,
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
