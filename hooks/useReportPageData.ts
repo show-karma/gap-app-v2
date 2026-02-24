@@ -4,9 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { usePendingVerificationMilestones } from "@/hooks/usePendingVerificationMilestones";
+import { milestoneReportService } from "@/services/milestone-report.service";
 import { downloadCommunityReport } from "@/utilities/downloadReports";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 import { normalizeProgramId } from "@/utilities/normalizeProgramId";
 import { validateProgramIdentifiers } from "@/utilities/validators";
 
@@ -63,42 +62,6 @@ interface ReportAPIResponse {
 }
 
 export type { Report, ReportAPIResponse, TabId };
-
-const fetchReports = async (
-  communityId: string,
-  page: number,
-  pageLimit: number,
-  sortBy = "totalMilestones",
-  sortOrder = "desc",
-  selectedProgramIds: string[] = []
-) => {
-  const normalizedProgramIds = selectedProgramIds.map(normalizeProgramId);
-  const queryProgramIds = normalizedProgramIds.join(",");
-  const encodedProgramIds = encodeURIComponent(queryProgramIds);
-  const [data] = await fetchData<ReportAPIResponse>(
-    `${INDEXER.COMMUNITY.REPORT.GET(communityId)}?limit=${pageLimit}&page=${page}&sort=${sortBy}&sortOrder=${sortOrder}${
-      queryProgramIds ? `&programIds=${encodedProgramIds}` : ""
-    }`
-  );
-  return (
-    data || {
-      data: [],
-      pageInfo: { totalItems: 0, page: 1, pageLimit },
-      uniqueProjectCount: 0,
-      stats: {
-        totalGrants: 0,
-        totalProjectsWithMilestones: 0,
-        totalMilestones: 0,
-        totalCompletedMilestones: 0,
-        totalPendingMilestones: 0,
-        percentageProjectsWithMilestones: 0,
-        percentageCompletedMilestones: 0,
-        percentagePendingMilestones: 0,
-        proofOfWorkLinks: [],
-      },
-    }
-  );
-};
 
 export const itemsPerPage = 50;
 
@@ -211,8 +174,15 @@ export function useReportPageData({
 
   const { data, isLoading } = useQuery<ReportAPIResponse>({
     queryKey: ["reportMilestones", communityId, statsPage, sortBy, sortOrder, effectiveProgramIds],
-    queryFn: async () =>
-      fetchReports(communityId, statsPage, itemsPerPage, sortBy, sortOrder, effectiveProgramIds),
+    queryFn: () =>
+      milestoneReportService.getReport(
+        communityId,
+        statsPage,
+        itemsPerPage,
+        sortBy,
+        sortOrder,
+        effectiveProgramIds
+      ),
     enabled: Boolean(communityId) && isAuthorized,
   });
 

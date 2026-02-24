@@ -4,13 +4,13 @@ import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import { useAccount } from "wagmi";
 import { PendingVerificationTable } from "@/components/Pages/Admin/PendingVerificationTable";
-import { ReportTabBar } from "@/components/Pages/Admin/ReportTabBar";
 import { StatsGrid } from "@/components/Pages/Admin/StatsGrid";
 import { StatsTable } from "@/components/Pages/Admin/StatsTable";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { Button } from "@/components/Utilities/Button";
 import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCommunityAdminAccess } from "@/hooks/communities/useCommunityAdminAccess";
 import { useAuth } from "@/hooks/useAuth";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
@@ -156,41 +156,54 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
 
       <StatsGrid stats={reportData.stats} isLoading={reportData.isStatsLoading} />
 
-      <ReportTabBar
-        activeTab={reportData.activeTab}
-        onTabChange={reportData.setActiveTab}
-        pendingCount={reportData.pendingTotalItems}
-      />
+      <Tabs
+        value={reportData.activeTab}
+        onValueChange={(value) =>
+          reportData.setActiveTab(value as "pending-verification" | "stats")
+        }
+      >
+        <TabsList>
+          <TabsTrigger value="pending-verification">
+            Pending Verification
+            {reportData.pendingTotalItems > 0 && (
+              <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-medium rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 tabular-nums">
+                {reportData.pendingTotalItems}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="stats">Stats</TabsTrigger>
+        </TabsList>
 
-      {reportData.activeTab === "pending-verification" && (
-        <PendingVerificationTable
-          milestones={reportData.pendingMilestones}
-          isLoading={reportData.isPendingLoading}
-          error={reportData.pendingError}
-          communityId={communityId}
-          page={reportData.pendingPage}
-          onPageChange={reportData.setPendingPage}
-          totalItems={reportData.pendingTotalItems}
-          onSwitchToStats={() => reportData.setActiveTab("stats")}
-          itemsPerPage={itemsPerPage}
-        />
-      )}
+        <TabsContent value="pending-verification">
+          <PendingVerificationTable
+            milestones={reportData.pendingMilestones}
+            isLoading={reportData.isPendingLoading}
+            error={reportData.pendingError}
+            communityId={communityId}
+            page={reportData.pendingPage}
+            onPageChange={reportData.setPendingPage}
+            totalItems={reportData.pendingTotalItems}
+            onSwitchToStats={() => reportData.setActiveTab("stats")}
+            itemsPerPage={itemsPerPage}
+          />
+        </TabsContent>
 
-      {reportData.activeTab === "stats" && (
-        <StatsTable
-          reports={reportData.reports}
-          isLoading={reportData.isStatsLoading}
-          communityId={communityId}
-          sortBy={reportData.sortBy}
-          sortOrder={reportData.sortOrder}
-          onSort={reportData.handleSort}
-          page={reportData.statsPage}
-          onPageChange={reportData.setStatsPage}
-          totalItems={reportData.totalItems}
-          itemsPerPage={itemsPerPage}
-          isFullyCompleted={reportData.isFullyCompleted}
-        />
-      )}
+        <TabsContent value="stats">
+          <StatsTable
+            reports={reportData.reports}
+            isLoading={reportData.isStatsLoading}
+            communityId={communityId}
+            sortBy={reportData.sortBy}
+            sortOrder={reportData.sortOrder}
+            onSort={reportData.handleSort}
+            page={reportData.statsPage}
+            onPageChange={reportData.setStatsPage}
+            totalItems={reportData.totalItems}
+            itemsPerPage={itemsPerPage}
+            isFullyCompleted={reportData.isFullyCompleted}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

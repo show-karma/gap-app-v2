@@ -174,7 +174,7 @@ export function StatsTable({
                   const completed = isFullyCompleted(report);
                   return (
                     <tr
-                      key={report._id?.$oid}
+                      key={`${report.grantUid}-${report.programId ?? ""}`}
                       className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
                     >
                       <td className="px-4 py-3 max-w-[240px]">
