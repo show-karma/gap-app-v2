@@ -84,6 +84,7 @@ describe("RootLayout", () => {
     expect(screen.getByTestId("privy-provider")).toBeInTheDocument();
     expect(screen.getByTestId("theme-provider")).toBeInTheDocument();
     expect(screen.getByTestId("agent-chat-bubble")).toBeInTheDocument();
+    expect(screen.getByTestId("api-key-management-modal")).toBeInTheDocument();
   });
 
   it("renders children content", () => {

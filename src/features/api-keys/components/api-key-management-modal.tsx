@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle, Check, Copy, KeyRound, Loader2, RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,25 +13,28 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/useAuth";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useNavbarPermissions } from "@/src/components/navbar/navbar-permissions-context";
 import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
 import { envVars } from "@/utilities/enviromentVars";
 import { useApiKey, useCreateApiKey, useRevokeApiKey } from "../hooks/use-api-key";
+import type { ApiKeyInfo } from "../types/api-key";
 
 export function ApiKeyManagementModal() {
-  const { address } = useNavbarPermissions();
+  const { address } = useAuth();
   const { isModalOpen, closeModal } = useApiKeyManagementModalStore();
   const { data, isLoading: isLoadingKey, isError: isKeyError, refetch } = useApiKey(address);
   const [justCreatedKey, setJustCreatedKey] = useState<string | null>(null);
   const [keyName, setKeyName] = useState("");
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
+  const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const [, copyToClipboard] = useCopyToClipboard();
 
   const { mutate: createKey, isPending: isCreating } = useCreateApiKey({
     onSuccess: (result) => {
       setJustCreatedKey(result.key);
       setKeyName("");
+      setShowRegenerateConfirm(false);
     },
     onError: () => {
       toast.error("Failed to generate API key");
@@ -54,19 +57,46 @@ export function ApiKeyManagementModal() {
       setJustCreatedKey(null);
       setKeyName("");
       setShowRevokeConfirm(false);
+      setShowRegenerateConfirm(false);
     }
   }, [isModalOpen]);
 
   const existingKey = data?.apiKey;
 
   return (
-    <Dialog open={isModalOpen} onOpenChange={(open) => !open && closeModal()}>
-      <DialogContent className="w-full max-w-lg rounded-2xl dark:bg-zinc-800 bg-white p-6">
-        {showRevokeConfirm ? (
-          <RevokeConfirmation
+    <Dialog
+      open={isModalOpen}
+      onOpenChange={(open) => {
+        if (!open && justCreatedKey) return;
+        if (!open) closeModal();
+      }}
+    >
+      <DialogContent
+        className="w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-2xl dark:bg-zinc-800 bg-white p-6"
+        onEscapeKeyDown={(e) => {
+          if (justCreatedKey) e.preventDefault();
+        }}
+        onPointerDownOutside={(e) => {
+          if (justCreatedKey) e.preventDefault();
+        }}
+      >
+        {showRegenerateConfirm ? (
+          <DestructiveConfirmation
+            title="Regenerate API Key?"
+            description="This will immediately invalidate your current API key and generate a new one. Any agents or scripts using the current key will lose access."
+            confirmLabel="Regenerate"
+            onCancel={() => setShowRegenerateConfirm(false)}
+            onConfirm={() => createKey(existingKey?.name || undefined)}
+            isPending={isCreating}
+          />
+        ) : showRevokeConfirm ? (
+          <DestructiveConfirmation
+            title="Revoke API Key?"
+            description="This will immediately invalidate your API key. Any agents or scripts using this key will lose access. This action cannot be undone."
+            confirmLabel="Revoke"
             onCancel={() => setShowRevokeConfirm(false)}
             onConfirm={() => revokeKey()}
-            isRevoking={isRevoking}
+            isPending={isRevoking}
           />
         ) : justCreatedKey ? (
           <KeyCreatedState
@@ -81,7 +111,7 @@ export function ApiKeyManagementModal() {
         ) : existingKey ? (
           <ActiveKeyState
             keyInfo={existingKey}
-            onRegenerate={() => createKey(existingKey.name || undefined)}
+            onRegenerate={() => setShowRegenerateConfirm(true)}
             onRevoke={() => setShowRevokeConfirm(true)}
             isRegenerating={isCreating}
           />
@@ -102,11 +132,24 @@ function LoadingState() {
   return (
     <>
       <DialogHeader>
-        <DialogTitle>API Key</DialogTitle>
+        <DialogTitle className="flex items-center gap-2">
+          <div className="h-5 w-5 rounded bg-muted animate-pulse" />
+          API Key
+        </DialogTitle>
+        <DialogDescription>Loading your API key information...</DialogDescription>
       </DialogHeader>
-      <div className="flex justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="space-y-3 py-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="flex justify-between items-center">
+            <div className="h-4 w-16 rounded bg-muted animate-pulse" />
+            <div className="h-4 w-24 rounded bg-muted animate-pulse" />
+          </div>
+        ))}
       </div>
+      <DialogFooter>
+        <div className="h-9 w-32 rounded-md bg-muted animate-pulse" />
+        <div className="h-9 w-24 rounded-md bg-muted animate-pulse" />
+      </DialogFooter>
     </>
   );
 }
@@ -122,7 +165,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
         <DialogDescription>Failed to load API key data. Please try again.</DialogDescription>
       </DialogHeader>
       <DialogFooter>
-        <Button onClick={onRetry}>
+        <Button onClick={onRetry} autoFocus>
           <RefreshCw className="mr-2 h-4 w-4" />
           Retry
         </Button>
@@ -157,7 +200,7 @@ function NoKeyState({
       <div className="space-y-4 py-2">
         <div>
           <label htmlFor="key-name" className="text-sm font-medium text-foreground">
-            Key name
+            Key name <span className="font-normal text-muted-foreground">(optional)</span>
           </label>
           <Input
             id="key-name"
@@ -170,7 +213,7 @@ function NoKeyState({
         </div>
       </div>
       <DialogFooter>
-        <Button onClick={onGenerate} disabled={isGenerating}>
+        <Button onClick={onGenerate} disabled={isGenerating} autoFocus>
           {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Generate API Key
         </Button>
@@ -189,6 +232,11 @@ function KeyCreatedState({
   onDone: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const copyRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    copyRef.current?.focus();
+  }, []);
 
   const handleCopy = () => {
     onCopy();
@@ -200,28 +248,28 @@ function KeyCreatedState({
     <>
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
-          <Check className="h-5 w-5 text-green-500" />
+          <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
           API Key Created
         </DialogTitle>
         <DialogDescription className="flex items-start gap-2 pt-2">
-          <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
+          <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <span>Copy your API key now. You won&apos;t be able to see it again.</span>
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-4 py-2">
         <div className="rounded-md border border-border bg-muted p-3">
-          <code className="text-sm break-all text-foreground">{apiKey}</code>
+          <code className="font-mono text-sm break-all text-foreground">{apiKey}</code>
         </div>
         <div className="text-xs text-muted-foreground">
-          Use this key in the <code className="text-foreground">x-api-key</code> header:
-          <pre className="mt-1 rounded bg-muted p-2 text-xs overflow-x-auto">
+          Use this key in the <code className="font-mono text-foreground">x-api-key</code> header:
+          <pre className="font-mono mt-1 rounded bg-muted p-2 text-xs overflow-x-auto">
             {`curl -H "x-api-key: YOUR_API_KEY" \\
   ${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/v2/user/me`}
           </pre>
         </div>
       </div>
-      <DialogFooter className="flex gap-2 sm:gap-2">
-        <Button variant="outline" onClick={handleCopy}>
+      <DialogFooter>
+        <Button ref={copyRef} variant="outline" onClick={handleCopy}>
           {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
           {copied ? "Copied" : "Copy to Clipboard"}
         </Button>
@@ -237,12 +285,7 @@ function ActiveKeyState({
   onRevoke,
   isRegenerating,
 }: {
-  keyInfo: {
-    keyHint: string;
-    name: string;
-    createdAt: string;
-    lastUsedAt: string | null;
-  };
+  keyInfo: Pick<ApiKeyInfo, "keyHint" | "name" | "createdAt" | "lastUsedAt">;
   onRegenerate: () => void;
   onRevoke: () => void;
   isRegenerating: boolean;
@@ -254,10 +297,13 @@ function ActiveKeyState({
           <KeyRound className="h-5 w-5" />
           API Key
         </DialogTitle>
+        <DialogDescription>
+          Manage your API key for programmatic access to your account.
+        </DialogDescription>
       </DialogHeader>
       <div className="space-y-3 py-2">
         <InfoRow label="Name" value={keyInfo.name} />
-        <InfoRow label="Key" value={`karma_${keyInfo.keyHint}`} />
+        <InfoRow label="Key" value={`karma_${keyInfo.keyHint}`} mono />
         <InfoRow
           label="Created"
           value={new Date(keyInfo.createdAt).toLocaleDateString("en-US", {
@@ -278,8 +324,15 @@ function ActiveKeyState({
               : "Never"
           }
         />
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-muted-foreground">Status</span>
+          <span className="flex items-center gap-1.5 text-sm font-medium text-green-600 dark:text-green-400">
+            <span className="h-2 w-2 rounded-full bg-green-500" />
+            Active
+          </span>
+        </div>
       </div>
-      <DialogFooter className="flex gap-2 sm:gap-2">
+      <DialogFooter>
         <Button variant="outline" onClick={onRegenerate} disabled={isRegenerating}>
           {isRegenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Regenerate Key
@@ -292,42 +345,47 @@ function ActiveKeyState({
   );
 }
 
-function RevokeConfirmation({
+function DestructiveConfirmation({
+  title,
+  description,
+  confirmLabel,
   onCancel,
   onConfirm,
-  isRevoking,
+  isPending,
 }: {
+  title: string;
+  description: string;
+  confirmLabel: string;
   onCancel: () => void;
   onConfirm: () => void;
-  isRevoking: boolean;
+  isPending: boolean;
 }) {
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Revoke API Key?</DialogTitle>
-        <DialogDescription className="pt-2">
-          This will immediately invalidate your API key. Any agents or scripts using this key will
-          lose access. This action cannot be undone.
-        </DialogDescription>
+        <DialogTitle>{title}</DialogTitle>
+        <DialogDescription className="pt-2">{description}</DialogDescription>
       </DialogHeader>
-      <DialogFooter className="flex gap-2 sm:gap-2">
-        <Button variant="outline" onClick={onCancel} disabled={isRevoking}>
+      <DialogFooter>
+        <Button variant="outline" onClick={onCancel} disabled={isPending}>
           Cancel
         </Button>
-        <Button variant="destructive" onClick={onConfirm} disabled={isRevoking}>
-          {isRevoking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Revoke
+        <Button variant="destructive" onClick={onConfirm} disabled={isPending} autoFocus>
+          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {confirmLabel}
         </Button>
       </DialogFooter>
     </>
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex justify-between items-center">
       <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium text-foreground">{value}</span>
+      <span className={`text-sm font-medium text-foreground${mono ? " font-mono" : ""}`}>
+        {value}
+      </span>
     </div>
   );
 }

@@ -5,8 +5,8 @@ import type { CreateApiKeyResponse, GetApiKeyResponse } from "../types/api-key";
 export const apiKeyService = {
   async get(): Promise<GetApiKeyResponse> {
     const [response, error] = await fetchData<GetApiKeyResponse>(INDEXER.API_KEYS.GET, "GET");
-    if (error) throw new Error(error);
-    return response!;
+    if (error || !response) throw new Error(error ?? "Unexpected empty response");
+    return response;
   },
 
   async create(name?: string): Promise<CreateApiKeyResponse> {
@@ -15,8 +15,8 @@ export const apiKeyService = {
       "POST",
       name ? { name } : {}
     );
-    if (error) throw new Error(error);
-    return response!;
+    if (error || !response) throw new Error(error ?? "Unexpected empty response");
+    return response;
   },
 
   async revoke(): Promise<void> {

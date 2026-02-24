@@ -11,7 +11,7 @@ export const apiKeyKeys = {
 
 export function useApiKey(address: string | undefined) {
   return useQuery({
-    queryKey: apiKeyKeys.user(address ?? ""),
+    queryKey: address ? apiKeyKeys.user(address) : apiKeyKeys.all,
     queryFn: () => apiKeyService.get(),
     enabled: !!address,
     staleTime: 1000 * 60 * 5,

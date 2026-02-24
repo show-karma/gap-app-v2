@@ -17,10 +17,10 @@ jest.mock("@/store/modals/apiKeyManagement", () => ({
   })),
 }));
 
-jest.mock("@/src/components/navbar/navbar-permissions-context", () => ({
-  useNavbarPermissions: jest.fn(() => ({
+jest.mock("@/hooks/useAuth", () => ({
+  useAuth: jest.fn(() => ({
     address: "0x1234567890123456789012345678901234567890",
-    isLoggedIn: true,
+    authenticated: true,
     ready: true,
   })),
 }));
@@ -30,15 +30,17 @@ const mockCreateKey = jest.fn();
 const mockRevokeKey = jest.fn();
 let mockApiKeyData: GetApiKeyResponse = { apiKey: null };
 let mockIsLoadingKey = false;
+let mockIsKeyError = false;
 let mockIsCreating = false;
 let mockIsRevoking = false;
+const mockRefetch = jest.fn();
 
 jest.mock("@/src/features/api-keys/hooks/use-api-key", () => ({
   useApiKey: jest.fn(() => ({
     data: mockApiKeyData,
     isLoading: mockIsLoadingKey,
-    isError: false,
-    refetch: jest.fn(),
+    isError: mockIsKeyError,
+    refetch: mockRefetch,
   })),
   useCreateApiKey: jest.fn((options?: any) => ({
     mutate: (name?: string) => {
@@ -106,6 +108,7 @@ describe("ApiKeyManagementModal", () => {
     mockIsModalOpen = true;
     mockApiKeyData = { apiKey: null };
     mockIsLoadingKey = false;
+    mockIsKeyError = false;
     mockIsCreating = false;
     mockIsRevoking = false;
   });
@@ -119,12 +122,29 @@ describe("ApiKeyManagementModal", () => {
     });
   });
 
+  describe("Error state", () => {
+    it("shows error UI and retry button when query fails", async () => {
+      const user = userEvent.setup();
+      mockIsKeyError = true;
+      renderModal();
+
+      expect(
+        screen.getByText("Failed to load API key data. Please try again.")
+      ).toBeInTheDocument();
+      expect(screen.getByText("Retry")).toBeInTheDocument();
+
+      await user.click(screen.getByText("Retry"));
+
+      expect(mockRefetch).toHaveBeenCalled();
+    });
+  });
+
   describe("No key state", () => {
     it("shows generate form when no key exists", () => {
       renderModal();
 
       expect(screen.getByText("Generate API Key")).toBeInTheDocument();
-      expect(screen.getByLabelText("Key name")).toBeInTheDocument();
+      expect(screen.getByLabelText(/Key name/)).toBeInTheDocument();
       expect(screen.getByText(/You don't have an API key yet/i)).toBeInTheDocument();
     });
 
@@ -132,7 +152,7 @@ describe("ApiKeyManagementModal", () => {
       const user = userEvent.setup();
       renderModal();
 
-      const input = screen.getByLabelText("Key name");
+      const input = screen.getByLabelText(/Key name/);
       await user.type(input, "My Agent");
 
       expect(input).toHaveValue("My Agent");
@@ -222,7 +242,7 @@ describe("ApiKeyManagementModal", () => {
       expect(screen.queryByText("Never")).not.toBeInTheDocument();
     });
 
-    it("calls regenerate on regenerate click", async () => {
+    it("shows confirmation dialog on regenerate click", async () => {
       const user = userEvent.setup();
       mockApiKeyData = {
         apiKey: {
@@ -237,7 +257,68 @@ describe("ApiKeyManagementModal", () => {
 
       await user.click(screen.getByText("Regenerate Key"));
 
-      expect(mockCreateKey).toHaveBeenCalled();
+      await waitFor(() => {
+        expect(screen.getByText("Regenerate API Key?")).toBeInTheDocument();
+        expect(
+          screen.getByText(/immediately invalidate your current API key/i)
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("cancels regenerate on cancel click", async () => {
+      const user = userEvent.setup();
+      mockApiKeyData = {
+        apiKey: {
+          keyHint: "...abcd",
+          name: "My Key",
+          isActive: true,
+          createdAt: "2026-02-22T00:00:00.000Z",
+          lastUsedAt: null,
+        },
+      };
+      renderModal();
+
+      await user.click(screen.getByText("Regenerate Key"));
+      await waitFor(() => {
+        expect(screen.getByText("Cancel")).toBeInTheDocument();
+      });
+      await user.click(screen.getByText("Cancel"));
+
+      await waitFor(() => {
+        expect(screen.getByText("Regenerate Key")).toBeInTheDocument();
+      });
+    });
+
+    it("regenerates key and shows new key after confirmation", async () => {
+      const user = userEvent.setup();
+      mockApiKeyData = {
+        apiKey: {
+          keyHint: "...abcd",
+          name: "My Key",
+          isActive: true,
+          createdAt: "2026-02-22T00:00:00.000Z",
+          lastUsedAt: null,
+        },
+      };
+      renderModal();
+
+      await user.click(screen.getByText("Regenerate Key"));
+      await waitFor(() => {
+        expect(screen.getByText("Regenerate API Key?")).toBeInTheDocument();
+      });
+
+      const regenerateButtons = screen.getAllByRole("button", { name: /regenerate/i });
+      const confirmButton = regenerateButtons.find((btn) => btn.textContent === "Regenerate");
+      if (confirmButton) {
+        await user.click(confirmButton);
+      }
+
+      expect(mockCreateKey).toHaveBeenCalledWith("My Key");
+
+      await waitFor(() => {
+        expect(screen.getByText("API Key Created")).toBeInTheDocument();
+        expect(screen.getByText("karma_testkey123456789012345678")).toBeInTheDocument();
+      });
     });
   });
 
