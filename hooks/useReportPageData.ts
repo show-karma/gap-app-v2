@@ -65,6 +65,18 @@ export type { Report, ReportAPIResponse, TabId };
 
 export const itemsPerPage = 50;
 
+const programIdsQueryOptions = {
+  defaultValue: [] as string[],
+  serialize: (value: string[] | null) => {
+    const normalized = value?.map(normalizeProgramId) ?? [];
+    return normalized.join(",");
+  },
+  parse: (value: string) => {
+    if (!value) return null;
+    return value.split(",").map(normalizeProgramId);
+  },
+};
+
 interface UseReportPageDataOptions {
   communityId: string;
   grantPrograms: GrantProgram[];
@@ -89,17 +101,10 @@ export function useReportPageData({
   const [pendingPage, setPendingPage] = useState(1);
   const [sortBy, setSortBy] = useState("totalMilestones");
   const [sortOrder, setSortOrder] = useState("desc");
-  const [selectedProgramIds, setSelectedProgramIds] = useQueryState("programIds", {
-    defaultValue: [] as string[],
-    serialize: (value) => {
-      const normalized = value?.map(normalizeProgramId) ?? [];
-      return normalized.join(",");
-    },
-    parse: (value) => {
-      if (!value) return null;
-      return value.split(",").map(normalizeProgramId);
-    },
-  });
+  const [selectedProgramIds, setSelectedProgramIds] = useQueryState(
+    "programIds",
+    programIdsQueryOptions
+  );
 
   const reviewerProgramIds = useMemo(() => {
     if (!reviewerPrograms || reviewerPrograms.length === 0) return new Set<string>();
@@ -172,7 +177,11 @@ export function useReportPageData({
     return normalizedProgramIds;
   }, [normalizedProgramIds, hasAccess, reviewerProgramIds]);
 
-  const { data, isLoading } = useQuery<ReportAPIResponse>({
+  const {
+    data,
+    isLoading,
+    error: statsError,
+  } = useQuery<ReportAPIResponse>({
     queryKey: ["reportMilestones", communityId, statsPage, sortBy, sortOrder, effectiveProgramIds],
     queryFn: () =>
       milestoneReportService.getReport(
@@ -265,6 +274,7 @@ export function useReportPageData({
     handleSort,
     stats: data?.stats,
     isStatsLoading: isLoading,
+    statsError,
     reports,
     totalItems,
     pendingMilestones,

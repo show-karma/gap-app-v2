@@ -192,6 +192,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
           <StatsTable
             reports={reportData.reports}
             isLoading={reportData.isStatsLoading}
+            error={reportData.statsError}
             communityId={communityId}
             sortBy={reportData.sortBy}
             sortOrder={reportData.sortOrder}
