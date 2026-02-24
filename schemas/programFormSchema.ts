@@ -29,6 +29,7 @@ const baseProgramFields = {
       }
     ),
   budget: z.coerce.number().min(0, { message: "Budget must be a positive number" }).optional(),
+  invoiceRequired: z.boolean({ required_error: "Please select whether invoices are required" }),
 };
 
 /**

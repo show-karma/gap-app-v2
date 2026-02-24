@@ -1,5 +1,5 @@
 import toast from "react-hot-toast";
-import { getGapClient } from "@/hooks/useGap";
+import { getGapClient } from "@/utilities/gapClient";
 
 interface EnsureCorrectChainParams {
   targetChainId: number;

@@ -270,7 +270,7 @@ export function CreateDisbursementModal({
     // Sum all tokens' totals, converting from raw units to human-readable
     return grant.totalsByToken.reduce((sum, tokenTotal) => {
       const rawAmount = BigInt(tokenTotal.totalAmount || "0");
-      const decimals = tokenTotal.tokenDecimals || 6;
+      const decimals = tokenTotal.tokenDecimals ?? 6;
       const humanReadable = parseFloat(formatUnits(rawAmount, decimals));
       return sum + humanReadable;
     }, 0);

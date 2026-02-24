@@ -85,6 +85,7 @@ describe("ProgramRegistryService", () => {
         tags: ["karma-gap", "grant-program-registry"],
         communityRef: [mockCommunity.uid],
         anyoneCanJoin: true,
+        invoiceRequired: false,
       });
     });
 

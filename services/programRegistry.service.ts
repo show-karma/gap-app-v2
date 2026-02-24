@@ -59,6 +59,7 @@ export class ProgramRegistryService {
       tags: ["karma-gap", "grant-program-registry"],
       communityRef: [community.uid], // Use community UID (hex address), not slug
       anyoneCanJoin: options?.anyoneCanJoin ?? true, // Default to open enrollment
+      invoiceRequired: formData.invoiceRequired ?? false,
     };
   }
 

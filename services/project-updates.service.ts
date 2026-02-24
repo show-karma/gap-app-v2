@@ -22,11 +22,16 @@ export const getProjectUpdates = async (projectIdOrSlug: string): Promise<Update
     grantUpdates: [],
   };
 
-  const [data, error] = await fetchData<UpdatesApiResponse>(
+  const [data, error, , status] = await fetchData<UpdatesApiResponse>(
     INDEXER.V2.PROJECTS.UPDATES(projectIdOrSlug)
   );
 
   if (error || !data) {
+    // Missing project routes are expected for unknown slugs and should not be sent to Sentry.
+    if (status === 404) {
+      return emptyResponse;
+    }
+
     errorManager(`Project Updates API Error: ${error}`, error, {
       context: "project-updates.service",
     });

@@ -41,6 +41,7 @@ export interface FundingProgramMetadata {
   amountDistributedToDate?: string;
   platformsUsed?: string[];
   anyoneCanJoin?: boolean;
+  invoiceRequired?: boolean;
   status: string;
   communityRef?: string[];
   adminEmails?: string[];

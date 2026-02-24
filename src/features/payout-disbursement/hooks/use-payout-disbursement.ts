@@ -5,6 +5,8 @@ import { getProjectGrants } from "@/services/project-grants.service";
 import type { Grant, GrantMilestone } from "@/types/v2/grant";
 import * as payoutService from "../services/payout-disbursement.service";
 import type {
+  CommunityPayoutAgreementInfo,
+  CommunityPayoutInvoiceInfo,
   CommunityPayoutsOptions,
   CommunityPayoutsResponse,
   CreateDisbursementsRequest,
@@ -460,5 +462,74 @@ export function useGrantMilestones(
     },
     enabled: options?.enabled ?? (!!projectUID && !!grantUID),
     staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+/**
+ * Hook for toggling grant agreement status
+ */
+export function useToggleAgreement(
+  communityUID: string,
+  options?: {
+    onSuccess?: (data: CommunityPayoutAgreementInfo) => void;
+    onError?: (error: Error) => void;
+  }
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    CommunityPayoutAgreementInfo,
+    Error,
+    { grantUID: string; signed: boolean; signedAt?: string }
+  >({
+    mutationFn: ({ grantUID, signed, signedAt }) =>
+      payoutService.toggleGrantAgreement(grantUID, signed, communityUID, signedAt),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: [...payoutDisbursementKeys.all, "communityPayouts", communityUID],
+      });
+      options?.onSuccess?.(data);
+    },
+    onError: (error) => {
+      options?.onError?.(error);
+    },
+  });
+}
+
+/**
+ * Hook for batch saving milestone invoices
+ */
+export function useSaveMilestoneInvoices(
+  communityUID: string,
+  options?: {
+    onSuccess?: (data: { invoices: CommunityPayoutInvoiceInfo[] }) => void;
+    onError?: (error: Error) => void;
+  }
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    { invoices: CommunityPayoutInvoiceInfo[] },
+    Error,
+    {
+      grantUID: string;
+      invoices: Array<{
+        milestoneLabel: string;
+        milestoneUID?: string | null;
+        invoiceReceivedAt?: string | null;
+      }>;
+    }
+  >({
+    mutationFn: ({ grantUID, invoices }) =>
+      payoutService.saveMilestoneInvoices(grantUID, communityUID, invoices),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: [...payoutDisbursementKeys.all, "communityPayouts", communityUID],
+      });
+      options?.onSuccess?.(data);
+    },
+    onError: (error) => {
+      options?.onError?.(error);
+    },
   });
 }
