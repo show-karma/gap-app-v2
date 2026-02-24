@@ -101,7 +101,15 @@ export default function CommunitiesToAdminPage() {
     const result = await getCommunities({ limit: 1000 });
     result.sort((a, b) => (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid));
 
-    const communityUids = result.map((community) => community.uid);
+    const userAdminCommunityUidSet = new Set(
+      userAdminCommunities.map((community) => community.uid)
+    );
+    const communityUids = isSuperAdminOrOwner
+      ? result.map((community) => community.uid)
+      : result
+          .filter((community) => userAdminCommunityUidSet.has(community.uid))
+          .map((community) => community.uid);
+
     if (communityUids.length === 0) {
       setAllCommunities([]);
       setCommunityAdmins([]);
@@ -113,7 +121,7 @@ export default function CommunitiesToAdminPage() {
     setAllCommunities(result || []);
     setCommunityAdmins(communityAdmins || []);
     return { communities: result, admins: communityAdmins };
-  }, []);
+  }, [isSuperAdminOrOwner, userAdminCommunities]);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["communities", "admins"],
