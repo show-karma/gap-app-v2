@@ -576,6 +576,8 @@ export const INDEXER = {
     },
     REPORT: {
       GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/report`,
+      PENDING_VERIFICATION: (communityIdOrSlug: string) =>
+        `/v2/communities/${communityIdOrSlug}/milestones/pending-verification`,
     },
     PROGRAMS: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/programs`,
     ALL_PROGRAMS_IMPACT_AGGREGATE: (communityIdOrSlug: string) =>
