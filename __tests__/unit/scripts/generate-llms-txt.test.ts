@@ -1,4 +1,5 @@
 import type {
+  DocsPage,
   KnowledgeArticle,
   LandingPageContent,
   SdkReadmeData,
@@ -7,12 +8,17 @@ import type {
 import {
   BOILERPLATE_LINE_PATTERNS,
   buildSnippet,
+  categorizeDocsPage,
+  cleanDocsMarkdown,
   cleanExtractedContent,
   cleanPageTitle,
+  DOCS_CATEGORY_ORDER,
+  DOCS_SITE_URL,
   decodeHtmlEntities,
   dedupeLines,
   deriveDescription,
   detectBlockSkip,
+  docsPageTitle,
   extractMainHtml,
   extractTitleFromHtml,
   findMetaContent,
@@ -21,6 +27,7 @@ import {
   generateSitemapSection,
   getPrimaryLandingMetadata,
   groupByCategory,
+  groupDocsByCategory,
   htmlToPlainText,
   isJobTitleLine,
   isMeaningfulTextCandidate,
@@ -40,6 +47,7 @@ import {
   sentenceOverlap,
   sitemapUrlToLabel,
   truncateAtWordBoundary,
+  validateDocsDescription,
 } from "../../../scripts/generate-llms-txt";
 
 // ---------------------------------------------------------------------------
@@ -81,6 +89,21 @@ function makeSitemapEntry(overrides: Partial<SitemapEntry> = {}): SitemapEntry {
     lastModified: "2024-01-01",
     changeFrequency: "weekly",
     priority: "1.0",
+    ...overrides,
+  };
+}
+
+function makeDocsPage(overrides: Partial<DocsPage> = {}): DocsPage {
+  return {
+    path: "/overview/how-does-it-work",
+    url: "https://docs.gap.karmahq.xyz/overview/how-does-it-work",
+    title: "How Does It Work",
+    description:
+      "Every team maintains a project profile on Karma containing comprehensive information.",
+    fullText:
+      "# How Does It Work\n\nEvery team maintains a project profile on Karma containing comprehensive information about their work.",
+    category: "Overview",
+    source: "firecrawl",
     ...overrides,
   };
 }
@@ -925,7 +948,7 @@ describe("generateLlmsTxt", () => {
   let output: string;
 
   beforeAll(() => {
-    output = generateLlmsTxt(articles, landingPages, sitemapEntries);
+    output = generateLlmsTxt(articles, landingPages, sitemapEntries, []);
   });
 
   it("starts with H1 using PROJECT_NAME only", () => {
@@ -1027,7 +1050,7 @@ describe("generateLlmsFullTxt", () => {
   let output: string;
 
   beforeAll(() => {
-    output = generateLlmsFullTxt(articles, sdkReadme, landingPages, sitemapEntries);
+    output = generateLlmsFullTxt(articles, sdkReadme, landingPages, sitemapEntries, []);
   });
 
   it("starts with H1 using PROJECT_NAME", () => {
@@ -1035,7 +1058,7 @@ describe("generateLlmsFullTxt", () => {
   });
 
   it("has matching H1 between llms.txt and llms-full.txt", () => {
-    const llmsTxt = generateLlmsTxt(articles, landingPages, sitemapEntries);
+    const llmsTxt = generateLlmsTxt(articles, landingPages, sitemapEntries, []);
     expect(output.split("\n")[0]).toBe(llmsTxt.split("\n")[0]);
   });
 
@@ -1068,7 +1091,7 @@ describe("generateLlmsFullTxt", () => {
   });
 
   it("omits SDK section when sdk is null", () => {
-    const noSdk = generateLlmsFullTxt(articles, null, landingPages, sitemapEntries);
+    const noSdk = generateLlmsFullTxt(articles, null, landingPages, sitemapEntries, []);
     expect(noSdk).not.toContain("## Karma GAP SDK Documentation");
   });
 
@@ -1083,6 +1106,299 @@ describe("generateLlmsFullTxt", () => {
   it("includes landing page full text (not just descriptions)", () => {
     // The full text should appear in the output under Landing Pages
     expect(output).toContain("Builders share progress");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// categorizeDocsPage
+// ---------------------------------------------------------------------------
+
+describe("categorizeDocsPage", () => {
+  it("categorizes root path as Overview", () => {
+    expect(categorizeDocsPage("/")).toBe("Overview");
+    expect(categorizeDocsPage("")).toBe("Overview");
+  });
+
+  it("categorizes /overview paths as Overview", () => {
+    expect(categorizeDocsPage("/overview/how-does-it-work")).toBe("Overview");
+    expect(categorizeDocsPage("/overview/supported-networks")).toBe("Overview");
+  });
+
+  it("categorizes builder paths", () => {
+    expect(categorizeDocsPage("/how-to-guides/for-builders")).toBe("For Builders");
+    expect(categorizeDocsPage("/how-to-guides/for-builders/create-project")).toBe("For Builders");
+  });
+
+  it("categorizes grant manager paths", () => {
+    expect(categorizeDocsPage("/how-to-guides/for-grant-managers/impact-measurement")).toBe(
+      "For Grant Managers"
+    );
+  });
+
+  it("categorizes reviewer paths", () => {
+    expect(categorizeDocsPage("/how-to-guides/for-reviewers/application-review-guide")).toBe(
+      "For Reviewers"
+    );
+  });
+
+  it("categorizes community member paths", () => {
+    expect(categorizeDocsPage("/how-to-guides/for-community-members/endorse-project")).toBe(
+      "For Community Members"
+    );
+  });
+
+  it("categorizes developers path", () => {
+    expect(categorizeDocsPage("/how-to-guides/developers")).toBe("Developers");
+  });
+
+  it("categorizes faqs path", () => {
+    expect(categorizeDocsPage("/how-to-guides/faqs")).toBe("FAQs");
+  });
+
+  it("categorizes partner paths", () => {
+    expect(categorizeDocsPage("/how-to-guides/partners")).toBe("Partners");
+    expect(categorizeDocsPage("/how-to-guides/partners/filecoin")).toBe("Partners");
+    expect(
+      categorizeDocsPage("/how-to-guides/partners/filecoin/propgf-batch-1-grantee-guide")
+    ).toBe("Partners");
+  });
+
+  it("returns Other for unknown paths", () => {
+    expect(categorizeDocsPage("/some/unknown/path")).toBe("Other");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// cleanDocsMarkdown
+// ---------------------------------------------------------------------------
+
+describe("cleanDocsMarkdown", () => {
+  it("converts hint markers to bold labels", () => {
+    const input = '{% hint style="info" %}\nImportant note\n{% endhint %}';
+    const result = cleanDocsMarkdown(input);
+    expect(result).toContain("**info:**");
+    expect(result).not.toContain("{% hint");
+    expect(result).not.toContain("{% endhint %}");
+  });
+
+  it("removes GitBook arrow-up-right artifacts", () => {
+    const input = "Optimismarrow-up-right, Arbitrumarrow-up-right";
+    const result = cleanDocsMarkdown(input);
+    expect(result).toBe("Optimism, Arbitrum");
+  });
+
+  it("removes empty markdown links", () => {
+    const input = "Some text [](https://example.com/anchor) more text";
+    const result = cleanDocsMarkdown(input);
+    expect(result).toBe("Some text  more text");
+    expect(result).not.toContain("[](");
+  });
+
+  it("removes GitBook icon names", () => {
+    expect(cleanDocsMarkdown("circle-info\nSome content")).toBe("Some content");
+    expect(cleanDocsMarkdown("circle-check\nSome content")).toBe("Some content");
+  });
+
+  it("removes GitBook navigation links", () => {
+    const input =
+      "Content\n[PreviousWhy Karma](https://docs.gap.karmahq.xyz/) [NextSupported Networks](https://docs.gap.karmahq.xyz/overview/supported-networks)\nMore";
+    const result = cleanDocsMarkdown(input);
+    expect(result).not.toContain("Previous");
+    expect(result).not.toContain("Next");
+  });
+
+  it("removes 'Last updated' timestamps", () => {
+    const input = "Content\nLast updated 2 months ago\nMore";
+    const result = cleanDocsMarkdown(input);
+    expect(result).not.toContain("Last updated");
+  });
+
+  it("removes hashtag prefix", () => {
+    const input = "hashtag Filecoin ProPGF Grantee Guide";
+    const result = cleanDocsMarkdown(input);
+    expect(result).toBe("Filecoin ProPGF Grantee Guide");
+  });
+
+  it("collapses excessive newlines", () => {
+    const input = "Line one\n\n\n\n\nLine two";
+    expect(cleanDocsMarkdown(input)).toBe("Line one\n\nLine two");
+  });
+
+  it("trims whitespace", () => {
+    expect(cleanDocsMarkdown("  content  ")).toBe("content");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// docsPageTitle
+// ---------------------------------------------------------------------------
+
+describe("docsPageTitle", () => {
+  it("strips '| Karma GAP' suffix", () => {
+    expect(docsPageTitle("/overview", "How It Works | Karma GAP")).toBe("How It Works");
+  });
+
+  it("strips '| Karma' suffix (without GAP)", () => {
+    expect(docsPageTitle("/overview", "How It Works | Karma")).toBe("How It Works");
+  });
+
+  it("strips '- Karma GAP' suffix", () => {
+    expect(docsPageTitle("/overview", "How It Works - Karma GAP")).toBe("How It Works");
+  });
+
+  it("returns extracted title when clean", () => {
+    expect(docsPageTitle("/overview", "How Does It Work")).toBe("How Does It Work");
+  });
+
+  it("falls back to slug-derived title when extracted is empty", () => {
+    expect(docsPageTitle("/how-to-guides/for-builders/create-project", "")).toBe("Create Project");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// validateDocsDescription
+// ---------------------------------------------------------------------------
+
+describe("validateDocsDescription", () => {
+  it("returns valid description unchanged", () => {
+    expect(
+      validateDocsDescription("Creating a project is the first big step.", "Create Project")
+    ).toBe("Creating a project is the first big step.");
+  });
+
+  it("falls back to title when description starts lowercase", () => {
+    expect(
+      validateDocsDescription("al issues: Limited Accessibility: Currently...", "Why Karma")
+    ).toBe("Why Karma");
+  });
+
+  it("falls back to title when description is too short", () => {
+    expect(validateDocsDescription("Short.", "Create Project")).toBe("Create Project");
+  });
+
+  it("falls back to title when description equals title", () => {
+    expect(validateDocsDescription("For Reviewers", "For Reviewers")).toBe("For Reviewers");
+  });
+
+  it("falls back to title when description is empty", () => {
+    expect(validateDocsDescription("", "Filecoin")).toBe("Filecoin");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// groupDocsByCategory
+// ---------------------------------------------------------------------------
+
+describe("groupDocsByCategory", () => {
+  it("groups docs pages by category", () => {
+    const pages = [
+      makeDocsPage({ category: "Overview" }),
+      makeDocsPage({ path: "/how-to-guides/for-builders", category: "For Builders" }),
+      makeDocsPage({ path: "/overview/supported-networks", category: "Overview" }),
+    ];
+    const grouped = groupDocsByCategory(pages);
+    expect(grouped["Overview"]).toHaveLength(2);
+    expect(grouped["For Builders"]).toHaveLength(1);
+  });
+
+  it("returns empty object for empty array", () => {
+    expect(groupDocsByCategory([])).toEqual({});
+  });
+});
+
+// ---------------------------------------------------------------------------
+// generateLlmsTxt with docs pages
+// ---------------------------------------------------------------------------
+
+describe("generateLlmsTxt with docs pages", () => {
+  const articles = [makeArticle()];
+  const landingPages = [makeLandingPage()];
+  const sitemapEntries = [makeSitemapEntry()];
+  const docsPages = [
+    makeDocsPage(),
+    makeDocsPage({
+      path: "/how-to-guides/for-builders/create-project",
+      url: "https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project",
+      title: "Create Project",
+      description: "Step-by-step guide to creating your project profile.",
+      category: "For Builders",
+    }),
+  ];
+
+  it("includes ## Documentation section when docs pages exist", () => {
+    const output = generateLlmsTxt(articles, landingPages, sitemapEntries, docsPages);
+    expect(output).toContain("## Documentation");
+  });
+
+  it("omits ## Documentation section when no docs pages", () => {
+    const output = generateLlmsTxt(articles, landingPages, sitemapEntries, []);
+    expect(output).not.toContain("## Documentation");
+  });
+
+  it("includes docs page titles and category prefixes", () => {
+    const output = generateLlmsTxt(articles, landingPages, sitemapEntries, docsPages);
+    expect(output).toContain("How Does It Work");
+    expect(output).toContain("Overview —");
+    expect(output).toContain("Create Project");
+    expect(output).toContain("For Builders —");
+  });
+
+  it("links to docs.gap.karmahq.xyz", () => {
+    const output = generateLlmsTxt(articles, landingPages, sitemapEntries, docsPages);
+    expect(output).toContain("https://docs.gap.karmahq.xyz/");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// generateLlmsFullTxt with docs pages
+// ---------------------------------------------------------------------------
+
+describe("generateLlmsFullTxt with docs pages", () => {
+  const articles = [makeArticle()];
+  const landingPages = [makeLandingPage()];
+  const sitemapEntries = [makeSitemapEntry()];
+  const docsPages = [
+    makeDocsPage(),
+    makeDocsPage({
+      path: "/how-to-guides/for-builders/create-project",
+      url: "https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project",
+      title: "Create Project",
+      description: "Step-by-step guide to creating your project profile.",
+      fullText: "# Create Project\n\nStep-by-step guide to creating your project profile.",
+      category: "For Builders",
+    }),
+  ];
+
+  it("includes ## Documentation section with full content", () => {
+    const output = generateLlmsFullTxt(articles, null, landingPages, sitemapEntries, docsPages);
+    expect(output).toContain("## Documentation");
+    expect(output).toContain("### Overview");
+    expect(output).toContain("### For Builders");
+    expect(output).toContain("#### How Does It Work");
+    expect(output).toContain("#### Create Project");
+  });
+
+  it("includes Documentation in Table of Contents", () => {
+    const output = generateLlmsFullTxt(articles, null, landingPages, sitemapEntries, docsPages);
+    const toc = output.split("## Table of Contents")[1].split("## ")[0];
+    expect(toc).toContain("- Documentation");
+  });
+
+  it("omits Documentation section when no docs pages", () => {
+    const output = generateLlmsFullTxt(articles, null, landingPages, sitemapEntries, []);
+    expect(output).not.toContain("## Documentation");
+  });
+
+  it("includes inline content from docs pages", () => {
+    const output = generateLlmsFullTxt(articles, null, landingPages, sitemapEntries, docsPages);
+    expect(output).toContain("comprehensive information about their work");
+  });
+
+  it("strips duplicate H1 from docs content", () => {
+    const output = generateLlmsFullTxt(articles, null, landingPages, sitemapEntries, docsPages);
+    // The H1 "# How Does It Work" should be stripped since the #### title already shows it
+    const docSection = output.split("## Documentation")[1].split("## ")[0];
+    expect(docSection).not.toMatch(/^# How Does It Work$/m);
   });
 });
 
@@ -1109,5 +1425,16 @@ describe("constants integrity", () => {
 
   it("SITE_URL is a valid HTTPS URL", () => {
     expect(SITE_URL).toMatch(/^https:\/\//);
+  });
+
+  it("DOCS_SITE_URL is a valid HTTPS URL", () => {
+    expect(DOCS_SITE_URL).toMatch(/^https:\/\//);
+  });
+
+  it("DOCS_CATEGORY_ORDER has expected categories", () => {
+    expect(DOCS_CATEGORY_ORDER).toContain("Overview");
+    expect(DOCS_CATEGORY_ORDER).toContain("For Builders");
+    expect(DOCS_CATEGORY_ORDER).toContain("Partners");
+    expect(DOCS_CATEGORY_ORDER.length).toBeGreaterThanOrEqual(8);
   });
 });

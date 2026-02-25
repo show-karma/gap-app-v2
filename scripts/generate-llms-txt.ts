@@ -49,6 +49,18 @@ const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY || "";
 const SDK_README_PATH = path.resolve(__dirname, "../../karma-gap-sdk/readme.md");
 const SDK_README_FALLBACK_URL =
   "https://raw.githubusercontent.com/show-karma/karma-gap-sdk/main/readme.md";
+const DOCS_SITE_URL = "https://docs.gap.karmahq.xyz";
+const DOCS_SITEMAP_URL = `${DOCS_SITE_URL}/sitemap-pages.xml`;
+const DOCS_CATEGORY_ORDER = [
+  "Overview",
+  "For Builders",
+  "For Grant Managers",
+  "For Reviewers",
+  "For Community Members",
+  "Developers",
+  "FAQs",
+  "Partners",
+];
 const KNOWLEDGE_DIR = path.resolve(__dirname, "../app/knowledge");
 const OUTPUT_DIR = path.resolve(__dirname, "../public");
 const BUILD_TIMESTAMP = new Date().toISOString();
@@ -351,6 +363,16 @@ interface SdkReadmeData {
   source: string;
   sourcePath: string;
   lastUpdated: string;
+}
+
+interface DocsPage {
+  path: string;
+  url: string;
+  title: string;
+  description: string;
+  fullText: string;
+  category: string;
+  source: string;
 }
 
 function normalizeWhitespace(value: string): string {
@@ -1325,6 +1347,194 @@ async function readSdkReadme(): Promise<SdkReadmeData | null> {
   }
 }
 
+function categorizeDocsPage(pagePath: string): string {
+  if (pagePath === "" || pagePath === "/") return "Overview";
+  if (pagePath.startsWith("/overview")) return "Overview";
+  if (pagePath.startsWith("/how-to-guides/for-builders")) return "For Builders";
+  if (pagePath.startsWith("/how-to-guides/for-grant-managers")) return "For Grant Managers";
+  if (pagePath.startsWith("/how-to-guides/for-reviewers")) return "For Reviewers";
+  if (pagePath.startsWith("/how-to-guides/for-community-members")) return "For Community Members";
+  if (pagePath === "/how-to-guides/developers") return "Developers";
+  if (pagePath === "/how-to-guides/faqs") return "FAQs";
+  if (pagePath.startsWith("/how-to-guides/partners")) return "Partners";
+  return "Other";
+}
+
+function cleanDocsMarkdown(markdown: string): string {
+  return markdown
+    .replace(/\{%\s*hint\s+style=["'](\w+)["']\s*%\}/g, "**$1:**")
+    .replace(/\{%\s*endhint\s*%\}/g, "")
+    .replace(/arrow-up-right/g, "")
+    .replace(/arrow-down-right/g, "")
+    .replace(/chevron-left/g, "")
+    .replace(/chevron-right/g, "")
+    .replace(/\bhashtag\s*/gi, "")
+    .replace(/\[]\([^)]*\)/g, "")
+    .replace(/^circle-(?:info|check|warning|exclamation)\s*$/gm, "")
+    .replace(/^\[Previous[^\]]*]\([^)]*\)\s*\[Next[^\]]*]\([^)]*\)\s*$/gm, "")
+    .replace(/^Last updated\s+\d+\s+\w+\s+ago\s*$/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function docsPageTitle(pagePath: string, extractedTitle: string): string {
+  const cleaned = extractedTitle
+    .replace(/\s*\|\s*Karma(\s*GAP)?\s*$/i, "")
+    .replace(/\s*[-–—]\s*Karma(\s*GAP)?\s*$/i, "")
+    .trim();
+  if (cleaned) return cleaned;
+  const slug = pagePath.split("/").pop() || "overview";
+  return slug
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+function validateDocsDescription(description: string, title: string): string {
+  if (!description || description.length < 20) return title;
+  if (description.toLowerCase() === title.toLowerCase()) return title;
+  if (!/^[A-Z]/.test(description)) return title;
+  return description;
+}
+
+async function fetchDocsSitemapUrls(): Promise<string[]> {
+  try {
+    const response = await fetch(DOCS_SITEMAP_URL, {
+      headers: { "User-Agent": "Karma-LLMS-Generator/1.0" },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!response.ok) throw new Error(`Docs sitemap fetch failed (${response.status})`);
+    const xml = await response.text();
+    const urls: string[] = [];
+    for (const match of xml.matchAll(/<loc>\s*(https?:\/\/[^<\s]+)\s*<\/loc>/g)) {
+      urls.push(match[1]);
+    }
+    return urls;
+  } catch (error) {
+    console.warn(`Docs sitemap fetch failed: ${(error as Error).message}`);
+    return [];
+  }
+}
+
+async function fetchSingleDocsPage(url: string): Promise<DocsPage | null> {
+  let pagePath: string;
+  try {
+    pagePath = new URL(url).pathname.replace(/\/$/, "") || "/";
+  } catch {
+    return null;
+  }
+
+  if (FIRECRAWL_API_KEY) {
+    try {
+      const response = await fetch(FIRECRAWL_SCRAPE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
+        },
+        body: JSON.stringify({
+          url,
+          formats: ["markdown"],
+          onlyMainContent: true,
+          excludeTags: ["nav", "footer", "aside", "img"],
+          removeBase64Images: true,
+        }),
+        signal: AbortSignal.timeout(20_000),
+      });
+
+      if (!response.ok) throw new Error(`Firecrawl request failed (${response.status})`);
+
+      const payload = (await response.json()) as FirecrawlResponse;
+      if (!payload.success || !payload.data?.markdown) {
+        throw new Error(payload.error || "Firecrawl returned no markdown");
+      }
+
+      const rawMarkdown = cleanDocsMarkdown(payload.data.markdown);
+      const title = docsPageTitle(
+        pagePath,
+        payload.data.metadata?.title || rawMarkdown.match(/^#\s+(.+)$/m)?.[1] || ""
+      );
+      const plainText = markdownToPlainText(rawMarkdown);
+      const description = validateDocsDescription(deriveDescription(plainText, title), title);
+
+      return {
+        path: pagePath,
+        url,
+        title,
+        description,
+        fullText: truncateAtWordBoundary(rawMarkdown, 8000),
+        category: categorizeDocsPage(pagePath),
+        source: "firecrawl",
+      };
+    } catch (error) {
+      console.warn(`Firecrawl docs scrape failed for ${url}: ${(error as Error).message}`);
+    }
+  }
+
+  try {
+    const response = await fetch(url, {
+      headers: { "User-Agent": "Karma-LLMS-Generator/1.0" },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!response.ok) throw new Error(`HTML fetch failed (${response.status})`);
+    const html = await response.text();
+    const main = extractMainHtml(html);
+    const text = truncateAtWordBoundary(cleanDocsMarkdown(htmlToPlainText(main)), 8000);
+    const title = docsPageTitle(pagePath, extractTitleFromHtml(html) || "");
+    const description = validateDocsDescription(deriveDescription(text, title), title);
+
+    return {
+      path: pagePath,
+      url,
+      title,
+      description,
+      fullText: text,
+      category: categorizeDocsPage(pagePath),
+      source: "html",
+    };
+  } catch (error) {
+    console.warn(`Docs page fetch failed for ${url}: ${(error as Error).message}`);
+    return null;
+  }
+}
+
+async function extractDocsPages(): Promise<DocsPage[]> {
+  const urls = await fetchDocsSitemapUrls();
+  if (urls.length === 0) return [];
+
+  const results: (DocsPage | null)[] = [];
+  const concurrency = 3;
+  let index = 0;
+
+  async function worker() {
+    while (index < urls.length) {
+      const currentIndex = index++;
+      results[currentIndex] = await fetchSingleDocsPage(urls[currentIndex]);
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, urls.length) }, () => worker()));
+
+  const categoryOrder = new Map(DOCS_CATEGORY_ORDER.map((c, i) => [c, i]));
+  return results
+    .filter((page): page is DocsPage => page !== null)
+    .sort((a, b) => {
+      const catA = categoryOrder.get(a.category) ?? 99;
+      const catB = categoryOrder.get(b.category) ?? 99;
+      if (catA !== catB) return catA - catB;
+      return a.path.localeCompare(b.path);
+    });
+}
+
+function groupDocsByCategory(docsPages: DocsPage[]): Record<string, DocsPage[]> {
+  const grouped: Record<string, DocsPage[]> = {};
+  for (const page of docsPages) {
+    if (!grouped[page.category]) grouped[page.category] = [];
+    grouped[page.category].push(page);
+  }
+  return grouped;
+}
+
 function groupByCategory(articles: KnowledgeArticle[]): Record<string, KnowledgeArticle[]> {
   const grouped: Record<string, KnowledgeArticle[]> = {};
   for (const article of articles) {
@@ -1414,7 +1624,8 @@ function generateSitemapSection(
 function generateLlmsTxt(
   articles: KnowledgeArticle[],
   landingPages: LandingPageContent[],
-  sitemapEntries: SitemapEntry[]
+  sitemapEntries: SitemapEntry[],
+  docsPages: DocsPage[]
 ): string {
   const lines: string[] = [];
   const primary = getPrimaryLandingMetadata(landingPages);
@@ -1466,6 +1677,15 @@ function generateLlmsTxt(
   );
   lines.push("");
 
+  // Documentation: product guides from docs.gap.karmahq.xyz
+  if (docsPages.length > 0) {
+    lines.push("## Documentation");
+    for (const page of docsPages) {
+      lines.push(`- [${page.title}](${page.url}): ${page.category} — ${page.description}`);
+    }
+    lines.push("");
+  }
+
   // Site URL Index: top-level pages only (exclude /knowledge/* articles)
   generateSitemapSection(lines, sitemapEntries, { excludeKnowledgeArticles: true });
 
@@ -1498,7 +1718,8 @@ function generateLlmsFullTxt(
   articles: KnowledgeArticle[],
   sdkReadme: SdkReadmeData | null,
   landingPages: LandingPageContent[],
-  sitemapEntries: SitemapEntry[]
+  sitemapEntries: SitemapEntry[],
+  docsPages: DocsPage[]
 ): string {
   const lines: string[] = [];
   const primary = getPrimaryLandingMetadata(landingPages);
@@ -1530,6 +1751,9 @@ function generateLlmsFullTxt(
   lines.push("- Developer Docs");
   if (sdkReadme?.content) {
     lines.push("- Karma GAP SDK Documentation");
+  }
+  if (docsPages.length > 0) {
+    lines.push("- Documentation");
   }
   lines.push("- Key Platform Pages");
   lines.push("- Site URL Index");
@@ -1591,6 +1815,41 @@ function generateLlmsFullTxt(
     lines.push("");
   }
 
+  // --- Documentation: full content from docs.gap.karmahq.xyz ---
+  if (docsPages.length > 0) {
+    lines.push("## Documentation");
+    lines.push("");
+
+    const docsGrouped = groupDocsByCategory(docsPages);
+    for (const category of DOCS_CATEGORY_ORDER) {
+      const pages = docsGrouped[category] || [];
+      if (pages.length === 0) continue;
+
+      lines.push(`### ${category}`);
+      lines.push("");
+
+      for (const page of pages) {
+        lines.push(`#### ${page.title}`);
+        lines.push("");
+        if (page.fullText) {
+          let body = page.fullText.trim();
+          // Strip leading H1 that duplicates the title
+          const h1Match = body.match(/^#\s+(.+)\n*/);
+          if (h1Match && sentenceOverlap(h1Match[1], page.title) >= 0.5) {
+            body = body.slice(h1Match[0].length).trim();
+          }
+          // Downshift headings: docs are at H4 level, so ## becomes #####
+          body = body.replace(
+            /^(#{1,4}) /gm,
+            (_, hashes: string) => "#".repeat(Math.min(hashes.length + 3, 6)) + " "
+          );
+          lines.push(body);
+          lines.push("");
+        }
+      }
+    }
+  }
+
   // --- Key Platform Pages ---
   lines.push("## Key Platform Pages");
   for (const page of STATIC_PAGES) {
@@ -1646,15 +1905,23 @@ async function main() {
   const landingPages = await extractLandingPages();
   const sitemapEntries = await fetchSitemapEntries();
   const sdkReadme = await readSdkReadme();
+  const docsPages = await extractDocsPages();
 
   console.info(`Found ${articles.length} knowledge articles`);
   console.info(`Landing pages extracted: ${landingPages.length}`);
   console.info(`Sitemap entries: ${sitemapEntries.length}`);
   console.info(`Landing extraction sources: ${landingPages.map((page) => page.source).join(", ")}`);
   console.info(`SDK README: ${sdkReadme?.content ? "loaded" : "skipped"}`);
+  console.info(`Docs pages extracted: ${docsPages.length}`);
 
-  const llmsTxt = generateLlmsTxt(articles, landingPages, sitemapEntries);
-  const llmsFullTxt = generateLlmsFullTxt(articles, sdkReadme, landingPages, sitemapEntries);
+  const llmsTxt = generateLlmsTxt(articles, landingPages, sitemapEntries, docsPages);
+  const llmsFullTxt = generateLlmsFullTxt(
+    articles,
+    sdkReadme,
+    landingPages,
+    sitemapEntries,
+    docsPages
+  );
 
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   fs.writeFileSync(path.join(OUTPUT_DIR, "llms.txt"), llmsTxt, "utf-8");
@@ -1758,9 +2025,16 @@ export {
   groupByCategory,
   getPrimaryLandingMetadata,
   mergeTextBlocks,
+  categorizeDocsPage,
+  cleanDocsMarkdown,
+  docsPageTitle,
+  groupDocsByCategory,
+  validateDocsDescription,
+  DOCS_SITE_URL,
+  DOCS_CATEGORY_ORDER,
 };
 
-export type { KnowledgeArticle, LandingPageContent, SitemapEntry, SdkReadmeData };
+export type { KnowledgeArticle, LandingPageContent, SitemapEntry, SdkReadmeData, DocsPage };
 
 if (require.main === module) {
   main().catch((error) => {
