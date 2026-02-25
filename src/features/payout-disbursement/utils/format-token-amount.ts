@@ -184,7 +184,8 @@ export function calculateRemainingBalance(
  * formatDisplayAmount("1234.5678", 4) // "1,234.5678"
  */
 export function formatDisplayAmount(amount: string, maxDecimals = 2): string {
-  const num = parseFloat(amount);
+  const sanitized = amount.replace(/[,\u00A0]/g, "");
+  const num = parseFloat(sanitized);
   if (Number.isNaN(num)) return "0";
   return num.toLocaleString(undefined, { maximumFractionDigits: maxDecimals });
 }
