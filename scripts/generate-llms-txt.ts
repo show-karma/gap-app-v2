@@ -1,6 +1,6 @@
+import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { execFileSync } from "node:child_process";
 
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 
@@ -43,10 +43,12 @@ const SITEMAP_URL = `${SITE_URL}/sitemap.xml`;
 const PROJECT_NAME = "Karma";
 const API_DOCS_URL = "https://gapapi.karmahq.xyz/v2/docs";
 const API_SPEC_URL = "https://gapapi.karmahq.xyz/v2/docs/json";
-const FIRECRAWL_SCRAPE_URL = process.env.FIRECRAWL_SCRAPE_URL || "https://api.firecrawl.dev/v1/scrape";
+const FIRECRAWL_SCRAPE_URL =
+  process.env.FIRECRAWL_SCRAPE_URL || "https://api.firecrawl.dev/v1/scrape";
 const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY || "";
 const SDK_README_PATH = path.resolve(__dirname, "../../karma-gap-sdk/readme.md");
-const SDK_README_FALLBACK_URL = "https://raw.githubusercontent.com/show-karma/karma-gap-sdk/main/readme.md";
+const SDK_README_FALLBACK_URL =
+  "https://raw.githubusercontent.com/show-karma/karma-gap-sdk/main/readme.md";
 const KNOWLEDGE_DIR = path.resolve(__dirname, "../app/knowledge");
 const OUTPUT_DIR = path.resolve(__dirname, "../public");
 const BUILD_TIMESTAMP = new Date().toISOString();
@@ -55,11 +57,33 @@ const DEFAULT_DESCRIPTION =
   "Karma is a platform for builders and ecosystems. Builders showcase their work and build reputation. " +
   "Ecosystems use Karma to allocate funding, track milestones, and measure impact.";
 
-const AI_INSTRUCTIONS = [
-  "If you are answering questions about Karma, prioritize the Landing Pages section for current product messaging.",
-  "Use the Knowledge Base section for conceptual explanations about funding, accountability, and reputation.",
-  "For implementation and integrations, use API docs and SDK links.",
-].join("\n");
+const SITEMAP_LABEL_MAP: Record<string, string> = {
+  "/": "Home",
+  "/communities": "Communities",
+  "/create-project-profile": "Create Project Profile",
+  "/funders": "For Funders",
+  "/funding-map": "Funding Map",
+  "/privacy-policy": "Privacy Policy",
+  "/projects": "Projects",
+  "/seeds": "Seeds",
+  "/terms-and-conditions": "Terms and Conditions",
+  "/knowledge": "Knowledge Base",
+};
+
+const SITEMAP_DESCRIPTION_MAP: Record<string, string> = {
+  "/": "Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered.",
+  "/communities": "Explore DAOs, protocols, and organizations running funding programs on Karma",
+  "/create-project-profile":
+    "Create a public project profile to track funding, milestones, and updates",
+  "/funders":
+    "Tools for funders to allocate grants, track milestones, measure outcomes, and grow ecosystems",
+  "/funding-map": "Browse open funding programs across ecosystems",
+  "/privacy-policy": "Privacy policy for the Karma platform",
+  "/projects": "Discover projects with verified milestones and onchain reputation",
+  "/seeds": "Seed funding and early-stage project support",
+  "/terms-and-conditions": "Terms and conditions for using the Karma platform",
+  "/knowledge": "Articles on grant accountability, reputation, and impact measurement",
+};
 
 const SUPPORTED_NETWORKS = [
   { name: "Optimism", chainId: 10 },
@@ -75,6 +99,7 @@ interface LandingPageTarget {
   label: string;
   fallbackTitle: string;
   fallbackDescription: string;
+  curatedDescription?: string;
   minContentChars?: number;
   maxContentChars?: number;
   preferSourceFallback?: boolean;
@@ -87,6 +112,8 @@ const LANDING_PAGE_TARGETS: LandingPageTarget[] = [
     label: "Home",
     fallbackTitle: "Karma - Where builders get funded and ecosystems grow",
     fallbackDescription: DEFAULT_DESCRIPTION,
+    curatedDescription:
+      "Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered.",
     minContentChars: 400,
     maxContentChars: 4200,
     sourceFallbackFiles: [
@@ -104,6 +131,8 @@ const LANDING_PAGE_TARGETS: LandingPageTarget[] = [
     fallbackTitle: "For Funders - Allocate funding and grow your ecosystem",
     fallbackDescription:
       "Discover how Karma helps funders allocate grants, track milestones, measure impact, and grow their ecosystems.",
+    curatedDescription:
+      "From intake to impact, Karma gives funders the tools to allocate grants, track milestones, measure outcomes, and grow their ecosystems.",
     minContentChars: 500,
     maxContentChars: 5200,
     sourceFallbackFiles: [
@@ -124,6 +153,8 @@ const LANDING_PAGE_TARGETS: LandingPageTarget[] = [
     fallbackTitle: "Explore Projects",
     fallbackDescription:
       "Browse projects that use Karma to track grants, share updates, and build public reputation.",
+    curatedDescription:
+      "Discover projects with verified milestones and onchain reputation. Evaluate track records and traction.",
     minContentChars: 260,
     maxContentChars: 2400,
     preferSourceFallback: true,
@@ -135,10 +166,15 @@ const LANDING_PAGE_TARGETS: LandingPageTarget[] = [
     fallbackTitle: "Explore Communities",
     fallbackDescription:
       "Browse communities using Karma to run funding programs and track outcomes.",
+    curatedDescription:
+      "Explore DAOs, protocols, and organizations running funding programs on Karma.",
     minContentChars: 260,
     maxContentChars: 2600,
     preferSourceFallback: true,
-    sourceFallbackFiles: ["app/communities/page.tsx", "components/Pages/Communities/CommunitiesPage.tsx"],
+    sourceFallbackFiles: [
+      "app/communities/page.tsx",
+      "components/Pages/Communities/CommunitiesPage.tsx",
+    ],
   },
 ];
 
@@ -196,6 +232,69 @@ const BOILERPLATE_LINE_PATTERNS = [
   /^terms privacy$/i,
   /^©\s*\d{4}/i,
   /^💖/i,
+  // CTA / UI chrome
+  /^ready to get started\??$/i,
+  /^ready to scale/i,
+  /^still have questions\??$/i,
+  /^can't find the answer/i,
+  /^read case study$/i,
+  /^run your program on karma$/i,
+  /^run a funding program$/i,
+  /^add your community$/i,
+  /^grow your ecosystem\b/i,
+  /^where builders grow$/i,
+  /^join over [\d,]+\+? /i,
+  /^join our community$/i,
+  /^get started$/i,
+  /^learn more$/i,
+  /^explore projects$/i,
+  // NOTE: "Choose your growth path" handled by cleanExtractedContent pricing block detector
+  /^connect with our team$/i,
+  /^configure your ecosystem$/i,
+  /^launch your program$/i,
+  /^celebrate your milestones/i,
+  /^accept fiat donations$/i,
+  // Orphan marketing section headers
+  /^our platform$/i,
+  // NOTE: "Our Offering" handled by cleanExtractedContent pricing block detector
+  /^the numbers$/i,
+  /^case studies$/i,
+  /^how it works$/i,
+  /^faqs?$/i,
+  // NOTE: "Live Funding Opportunities" is handled by cleanExtractedContent block detector
+  /^communities on karma$/i,
+  /^trusted by\b/i,
+  // Stat labels without values
+  /^ecosystems supported$/i,
+  /^projects tracked$/i,
+  /^onchain attestations$/i,
+  /^program launch time$/i,
+  // Pricing tier names as standalone
+  /^starter$/i,
+  /^enterprise$/i,
+  // Trust badges / logo names as standalone
+  /^celo public goods$/i,
+  // Broken date/stat renders from live data cards
+  /^ends[a-z]/i,
+  /^\d+funding/i,
+  /^direct grants$/i,
+  // How-it-works short step labels
+  /^create project$/i,
+  /^apply and get funded$/i,
+  /^build reputation$/i,
+  /^get retrofunding$/i,
+  /^get donations$/i,
+  /^apply for more funding$/i,
+  /^add milestones,? metrics/i,
+  // Design fragments / broken renders
+  /^step \d+$/i,
+  /^most popular$/i,
+  /^[A-Z]{1,2}$/,
+  // NOTE: orphan quote marks handled by cleanExtractedContent testimonial block detector
+  /^[\d.]+x\s*faster$/i,
+  // Short stat callouts (e.g. "4k+ projects active on Karma")
+  /^\d+[kKmM+]+\s+\w+/,
+  /^\d+\+?\s+hours?\s+saved/i,
 ];
 
 interface KnowledgeArticle {
@@ -255,7 +354,11 @@ interface SdkReadmeData {
 }
 
 function normalizeWhitespace(value: string): string {
-  return value.replace(/\r/g, "").replace(/\t/g, " ").replace(/[ ]{2,}/g, " ").trim();
+  return value
+    .replace(/\r/g, "")
+    .replace(/\t/g, " ")
+    .replace(/[ ]{2,}/g, " ")
+    .trim();
 }
 
 function normalizeMultilineText(value: string): string {
@@ -287,7 +390,10 @@ function normalizeMultilineText(value: string): string {
     previous = line;
   }
 
-  return filtered.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  return filtered
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 function truncateAtWordBoundary(value: string, maxChars: number): string {
@@ -368,10 +474,22 @@ function htmlToPlainText(fragment: string): string {
 }
 
 function deriveDescription(text: string, fallback: string): string {
-  const sentence = text
-    .replace(/\n/g, " ")
-    .match(/.{40,220}?[.!?](?=\s|$)/);
-  return sentence ? normalizeWhitespace(sentence[0]) : fallback;
+  const flat = text.replace(/\n/g, " ");
+  // Grab the first sentence (40-220 chars ending with punctuation)
+  const first = flat.match(/.{40,220}?[.!?](?=\s|$)/);
+  if (!first) return fallback;
+
+  const firstSentence = normalizeWhitespace(first[0]);
+  // If the first sentence is short, try to grab a second sentence for a richer description
+  if (firstSentence.length < 100) {
+    const rest = flat.slice(first.index! + first[0].length).trim();
+    const second = rest.match(/^.{20,120}?[.!?](?=\s|$)/);
+    if (second) {
+      const combined = `${firstSentence} ${normalizeWhitespace(second[0])}`;
+      if (combined.length <= 240) return combined;
+    }
+  }
+  return firstSentence;
 }
 
 function cleanPageTitle(value: string): string {
@@ -383,9 +501,7 @@ function buildSnippet(value: string): string {
     .split("\n")
     .filter((line) => line.length > 0)
     .filter((line) => line.length >= 28);
-  const snippet = (lines.length > 0 ? lines : value.split("\n"))
-    .slice(0, 8)
-    .join(" ");
+  const snippet = (lines.length > 0 ? lines : value.split("\n")).slice(0, 8).join(" ");
   return truncateAtWordBoundary(normalizeWhitespace(snippet), 700);
 }
 
@@ -395,7 +511,8 @@ function isMeaningfulTextCandidate(value: string): boolean {
   if (!/[A-Za-z]/.test(line)) return false;
   if ((line.match(/\s+/g) || []).length < 2) return false;
   if (BOILERPLATE_LINE_PATTERNS.some((re) => re.test(line))) return false;
-  if (line.includes("className") || line.includes("http://") || line.includes("https://")) return false;
+  if (line.includes("className") || line.includes("http://") || line.includes("https://"))
+    return false;
   if (line.includes("//")) return false;
   if (
     /\b(import|export|return|const|let|function|useState|map\(|className|onClick|target=)\b/.test(
@@ -422,7 +539,9 @@ function extractTextCandidatesFromSource(content: string): string[] {
     }
   }
 
-  for (const match of content.matchAll(/(?:title|description):\s*(?:\n\s*)?["'`]([^"'`\n]{20,220})["'`]/g)) {
+  for (const match of content.matchAll(
+    /(?:title|description):\s*(?:\n\s*)?["'`]([^"'`\n]{20,220})["'`]/g
+  )) {
     const candidate = normalizeWhitespace(match[1]);
     if (isMeaningfulTextCandidate(candidate)) {
       results.push(candidate);
@@ -442,12 +561,13 @@ function buildSourceFallbackText(target: LandingPageTarget): string {
     try {
       const content = fs.readFileSync(filePath, "utf-8");
       fallbackLines.push(...extractTextCandidatesFromSource(content));
-    } catch {
-      continue;
-    }
+    } catch {}
   }
 
-  return truncateAtWordBoundary(normalizeMultilineText(dedupeLines(fallbackLines).join("\n")), 3200);
+  return truncateAtWordBoundary(
+    normalizeMultilineText(dedupeLines(fallbackLines).join("\n")),
+    3200
+  );
 }
 
 function toProjectRelative(filePath: string): string {
@@ -529,6 +649,228 @@ function dedupeLines(lines: string[]): string[] {
   return deduped;
 }
 
+function isPersonNameLine(line: string): boolean {
+  const trimmed = line.trim();
+  return (
+    trimmed.length > 3 &&
+    trimmed.length < 30 &&
+    /^[A-Z][a-z]+ [A-Z]/.test(trimmed) &&
+    !/[.!?,;:]$/.test(trimmed) &&
+    trimmed.split(/\s+/).length <= 3
+  );
+}
+
+function isJobTitleLine(line: string): boolean {
+  return /\b(lead|head|director|manager|founder|co-?founder|ceo|cto|devrel|vp|president|partner|advisor)\b/i.test(
+    line.trim()
+  );
+}
+
+function isPricingLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (/^track up to \d/i.test(trimmed)) return true;
+  if (/^\d+\s+integrations?\b/i.test(trimmed)) return true;
+  if (/\bsupport\s*\(\d+hr/i.test(trimmed)) return true;
+  if (/\bSLA\b/.test(trimmed)) return true;
+  if (/^(email|dedicated|telegram)\s+support/i.test(trimmed)) return true;
+  if (/^milestone tracking with/i.test(trimmed)) return true;
+  if (/^full api access/i.test(trimmed)) return true;
+  if (/^all ai automation/i.test(trimmed)) return true;
+  if (/^multi-chain deployments/i.test(trimmed)) return true;
+  if (/^custom agentic/i.test(trimmed)) return true;
+  if (/^ai application review/i.test(trimmed)) return true;
+  if (/^(start|scale|continuous)\s+(your|to|grant)/i.test(trimmed)) return true;
+  if (/^track [\d,]+\+? projects/i.test(trimmed)) return true;
+  if (/^unlimited grants/i.test(trimmed)) return true;
+  return false;
+}
+
+function detectBlockSkip(lines: string[], i: number): number {
+  const trimmed = lines[i].trim();
+
+  // --- Live data card block ---
+  // Triggered by "Live Funding Opportunities" or a cluster of short program-name lines
+  if (/^live funding opportunities$/i.test(trimmed)) {
+    let j = i + 1;
+    while (j < lines.length) {
+      const next = lines[j].trim();
+      // Exit when we hit a substantive sentence (>60 chars or contains a verb phrase)
+      if (next.length > 60 && /[a-z]{3,}\s+[a-z]{3,}/i.test(next)) break;
+      j++;
+    }
+    return j - i;
+  }
+
+  // --- Testimonial block ---
+  // Pattern: orphan quote mark followed by quote text, then person name/title attribution
+  if (/^["\u201C\u201D]$/.test(trimmed)) {
+    let j = i + 1;
+    while (j < Math.min(i + 8, lines.length)) {
+      const next = lines[j].trim();
+      // Found person name — skip through name and optional title
+      if (isPersonNameLine(next)) {
+        j++;
+        if (j < lines.length && isJobTitleLine(lines[j])) j++;
+        return j - i;
+      }
+      // Found job title directly (name might be a single word we can't pattern-match)
+      if (isJobTitleLine(next)) {
+        j++;
+        return j - i;
+      }
+      j++;
+    }
+    // Standalone orphan quote mark — skip just this line
+    return 1;
+  }
+
+  // Pattern: person name followed by job title (standalone attribution)
+  if (isPersonNameLine(trimmed) && i + 1 < lines.length && isJobTitleLine(lines[i + 1])) {
+    return 2;
+  }
+
+  // Pattern: single-word name followed by job title (e.g. "Gonna" + "Optimism Grants Council Lead")
+  if (
+    trimmed.length < 20 &&
+    trimmed.split(/\s+/).length === 1 &&
+    /^[A-Z][a-z]+$/.test(trimmed) &&
+    i + 1 < lines.length &&
+    isJobTitleLine(lines[i + 1])
+  ) {
+    return 2;
+  }
+
+  // --- Pricing block ---
+  // Triggered by pricing-section taglines or "Our Offering" section header
+  if (/^(start where you are|choose your growth path|our offering)/i.test(trimmed)) {
+    let j = i + 1;
+    while (j < lines.length) {
+      const next = lines[j].trim();
+      if (isPricingLine(next) || /^(starter|pro|enterprise)$/i.test(next) || !next) {
+        j++;
+        continue;
+      }
+      break;
+    }
+    return j - i;
+  }
+
+  return 0;
+}
+
+function isStatLabelLine(line: string): boolean {
+  const trimmed = line.trim();
+  // A stat label line: 30-120 chars, doesn't end with sentence punctuation,
+  // not a real heading or content sentence
+  return (
+    trimmed.length >= 30 && trimmed.length <= 120 && !/[.!?]$/.test(trimmed) && !/^#/.test(trimmed)
+  );
+}
+
+function isStatLabelBlock(lines: string[], index: number): boolean {
+  const trimmed = lines[index].trim();
+  if (!isStatLabelLine(trimmed)) return false;
+
+  // Look for a run of 3+ consecutive stat-label-like lines around this position
+  let start = index;
+  while (start > 0 && isStatLabelLine(lines[start - 1].trim())) start--;
+  let end = index;
+  while (end < lines.length - 1 && isStatLabelLine(lines[end + 1].trim())) end++;
+
+  return end - start + 1 >= 3;
+}
+
+function cleanExtractedContent(text: string): string {
+  const lines = text.split("\n");
+  const result: string[] = [];
+
+  // Short standalone fragment patterns — lines that are noise when they appear
+  // without surrounding paragraph context
+  const shortFragmentPatterns = [
+    /^one profile\b/i,
+    /^launch and fund/i,
+    /^ecosystems trust/i,
+    /^support for multiple chains/i,
+    /^track and manage payouts$/i,
+    /^add project deliverables$/i,
+    /^add custom metrics/i,
+    /^accept fiat donations$/i,
+  ];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Strip trailing FAQ/CTA blocks
+    if (/^(frequently asked questions|faqs?)$/i.test(trimmed)) break;
+
+    // Detect and skip noise blocks (live data, testimonials, pricing)
+    const blockSkip = detectBlockSkip(lines, i);
+    if (blockSkip > 0) {
+      i += blockSkip - 1;
+      continue;
+    }
+
+    // Skip orphan single/double char lines (avatar initials, logo fragments, curly quotes)
+    if (trimmed.length <= 3 && /^[A-Z"'\u201C\u201D\u2018\u2019]{0,3}$/.test(trimmed)) continue;
+
+    // Skip stat callout lines (e.g. "100+ hours saved", "3,600+ Milestones completed")
+    if (
+      /^[\d,]+\+?\s+(hours?|milestones?|projects?|grants?)\b/i.test(trimmed) &&
+      trimmed.length < 80
+    ) {
+      continue;
+    }
+
+    // Skip consecutive stat label blocks (stat descriptions without their numeric values)
+    // These are groups of 3+ short lines (30-120 chars) that don't end with sentence punctuation
+    if (isStatLabelBlock(lines, i)) {
+      continue;
+    }
+
+    // Skip short standalone fragment lines
+    if (shortFragmentPatterns.some((re) => re.test(trimmed))) continue;
+
+    result.push(line);
+  }
+
+  // Deduplicate near-identical lines (>80% word overlap)
+  const deduped: string[] = [];
+  const seenWordSets: { words: Set<string>; line: string }[] = [];
+
+  for (const line of result) {
+    const words = line.toLowerCase().split(/\s+/).filter(Boolean);
+    if (words.length < 5) {
+      deduped.push(line);
+      continue;
+    }
+
+    const wordSet = new Set(words);
+    let isDuplicate = false;
+
+    for (const seen of seenWordSets) {
+      const intersection = [...wordSet].filter((w) => seen.words.has(w));
+      const overlapMax = intersection.length / Math.max(wordSet.size, seen.words.size);
+      const overlapMin = intersection.length / Math.min(wordSet.size, seen.words.size);
+      // Skip if >80% overlap by larger set, or if one line's words are mostly a subset of another
+      if (overlapMax > 0.8 || (overlapMin > 0.85 && Math.min(wordSet.size, seen.words.size) >= 5)) {
+        isDuplicate = true;
+        break;
+      }
+    }
+
+    if (!isDuplicate) {
+      deduped.push(line);
+      seenWordSets.push({ words: wordSet, line });
+    }
+  }
+
+  return deduped
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function mergeTextBlocks(primary: string, secondary: string, maxChars: number): string {
   const mergedLines = dedupeLines([...primary.split("\n"), ...secondary.split("\n")]);
   return truncateAtWordBoundary(normalizeMultilineText(mergedLines.join("\n")), maxChars);
@@ -550,11 +892,10 @@ function isNoisyLandingText(text: string): boolean {
   return matches >= 2 || lineCount > 120;
 }
 
-function escapeQuotedValue(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').trim();
-}
-
-async function fetchViaFirecrawl(url: string, fallbackDescription: string): Promise<LandingExtraction | null> {
+async function fetchViaFirecrawl(
+  url: string,
+  fallbackDescription: string
+): Promise<LandingExtraction | null> {
   if (!FIRECRAWL_API_KEY) return null;
 
   try {
@@ -568,6 +909,9 @@ async function fetchViaFirecrawl(url: string, fallbackDescription: string): Prom
         url,
         formats: ["markdown"],
         onlyMainContent: true,
+        excludeTags: ["button", "nav", "footer", "aside", "img", ".cta", ".faq"],
+        removeBase64Images: true,
+        blockAds: true,
       }),
       signal: AbortSignal.timeout(20_000),
     });
@@ -582,9 +926,7 @@ async function fetchViaFirecrawl(url: string, fallbackDescription: string): Prom
     }
 
     const text = truncateAtWordBoundary(markdownToPlainText(payload.data.markdown), 9000);
-    const titleFromMarkdown = payload.data.markdown
-      .match(/^#\s+(.+)$/m)?.[1]
-      ?.trim();
+    const titleFromMarkdown = payload.data.markdown.match(/^#\s+(.+)$/m)?.[1]?.trim();
     const title = cleanPageTitle(payload.data.metadata?.title || titleFromMarkdown || PROJECT_NAME);
     const rawDescription = normalizeWhitespace(payload.data.metadata?.description || "");
     const description =
@@ -623,9 +965,7 @@ async function fetchViaHtml(
     const main = extractMainHtml(html);
     const text = truncateAtWordBoundary(htmlToPlainText(main), 9000);
     const safeText =
-      text.length < 180
-        ? normalizeMultilineText(`${fallbackTitle}\n${fallbackDescription}`)
-        : text;
+      text.length < 180 ? normalizeMultilineText(`${fallbackTitle}\n${fallbackDescription}`) : text;
     const title = cleanPageTitle(extractTitleFromHtml(html) || fallbackTitle);
     const description =
       findMetaContent(html, "name", "description") ||
@@ -715,7 +1055,10 @@ async function extractLandingPages(): Promise<LandingPageContent[]> {
           label: target.label,
           url,
           title: target.fallbackTitle,
-          description: target.fallbackDescription,
+          description: deriveDescription(
+            fallbackText,
+            target.curatedDescription || target.fallbackDescription
+          ),
           snippet: buildSnippet(fallbackText),
           fullText: fallbackText,
           source: "fallback-source",
@@ -740,14 +1083,20 @@ async function extractLandingPages(): Promise<LandingPageContent[]> {
         sourceLabel = `${sourceLabel}+source-denoise`;
       }
 
+      fullText = cleanExtractedContent(fullText);
       fullText = truncateAtWordBoundary(fullText, maxContentChars);
+
+      // Use curatedDescription if available (clean, hand-written summaries).
+      // Fall back to auto-derived from fullText so new pages still get descriptions.
+      const description =
+        target.curatedDescription || deriveDescription(fullText, target.fallbackDescription);
 
       return {
         path: target.path,
         label: target.label,
         url,
         title: extracted.title || target.fallbackTitle,
-        description: extracted.description || target.fallbackDescription,
+        description,
         snippet: buildSnippet(fullText),
         fullText,
         source: sourceLabel,
@@ -868,7 +1217,11 @@ function jsxToMarkdown(jsx: string): string {
   return markdown;
 }
 
-function extractArticleBody(filePath: string, fallbackTitle: string, fallbackDescription: string): string {
+function extractArticleBody(
+  filePath: string,
+  fallbackTitle: string,
+  fallbackDescription: string
+): string {
   try {
     const content = fs.readFileSync(filePath, "utf-8");
     const returnMatch = content.match(/return\s*\(([\s\S]*?)\)\s*;[\s\n]*}/m);
@@ -998,199 +1351,46 @@ function getPrimaryLandingMetadata(landingPages: LandingPageContent[]): {
   };
 }
 
-function generateLandingSummarySection(lines: string[], landingPages: LandingPageContent[]) {
-  lines.push("## Landing Pages (Auto-generated)");
-  lines.push("");
-  lines.push(
-    `Source: ${SITE_URL}. Uses Firecrawl when \`FIRECRAWL_API_KEY\` is available and merges source-file extraction for stability.`
-  );
-  lines.push("");
-
-  for (const page of landingPages) {
-    lines.push(`### ${page.label}`);
-    lines.push(`- URL: ${page.url}`);
-    lines.push(`- Title: ${page.title}`);
-    lines.push(`- Description: ${page.description}`);
-    lines.push(`- Last updated: ${page.lastUpdated}`);
-    lines.push(`- Extraction source: ${page.source}`);
-    lines.push("");
-    lines.push(page.snippet);
-    lines.push("");
+function sitemapUrlToLabel(url: string): string {
+  try {
+    const pathname = new URL(url).pathname.replace(/\/$/, "") || "/";
+    if (SITEMAP_LABEL_MAP[pathname]) return SITEMAP_LABEL_MAP[pathname];
+    // For /knowledge/slug paths, derive label from slug
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments.length > 0) {
+      const slug = segments[segments.length - 1];
+      return slug
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+    }
+    return url;
+  } catch {
+    return url;
   }
 }
 
-function generateKnowledgeSummarySection(lines: string[], articles: KnowledgeArticle[]) {
-  const grouped = groupByCategory(articles);
-
-  for (const category of ["Core Concepts", "Capabilities", "Project Profiles"]) {
-    const categoryArticles = grouped[category] || [];
-    if (categoryArticles.length === 0) continue;
-    lines.push(`## Knowledge Base - ${category}`);
-    for (const article of categoryArticles) {
-      lines.push(`- [${article.title}](${article.url}): ${article.description}`);
-    }
-    lines.push("");
-  }
-
-  const uncategorized = grouped["Uncategorized"] || [];
-  if (uncategorized.length > 0) {
-    lines.push("## Knowledge Base - Other");
-    for (const article of uncategorized) {
-      lines.push(`- [${article.title}](${article.url}): ${article.description}`);
-    }
-    lines.push("");
-  }
-}
-
-function appendDelimitedSection(
+function generateSitemapSection(
   lines: string[],
-  metadata: Record<string, string>,
-  bodyContent: string
+  sitemapEntries: SitemapEntry[],
+  options?: { excludeKnowledgeArticles?: boolean }
 ): void {
-  const delimiter = "-".repeat(80);
-  lines.push(delimiter);
-  for (const [key, value] of Object.entries(metadata)) {
-    lines.push(`${key}: "${escapeQuotedValue(value)}"`);
-  }
-  lines.push(delimiter);
-  lines.push("");
-  lines.push(bodyContent.trim());
-  lines.push("");
-}
-
-function generateLandingFullSection(lines: string[], landingPages: LandingPageContent[]) {
-  lines.push("## Landing Pages (Full Content, Auto-generated)");
-  lines.push("");
-  lines.push(
-    `Primary source: live pages at ${SITE_URL}; fallback source: project TSX files listed in this generator.`
-  );
-  lines.push("");
-
-  for (const page of landingPages) {
-    const body = [`# ${page.title}`, "", page.description, "", page.fullText].join("\n");
-
-    appendDelimitedSection(
-      lines,
-      {
-        title: page.title,
-        description: page.description,
-        last_updated: page.lastUpdated,
-        source: page.url,
-        extraction_source: page.source,
-      },
-      body
-    );
-  }
-}
-
-function generateKnowledgeFullSection(lines: string[], articles: KnowledgeArticle[]) {
-  const grouped = groupByCategory(articles);
-  const orderedCategories = ["Core Concepts", "Capabilities", "Project Profiles", "Uncategorized"];
-
-  for (const category of orderedCategories) {
-    const categoryArticles = grouped[category] || [];
-    if (categoryArticles.length === 0) continue;
-
-    lines.push(`## Knowledge Base - ${category}`);
-    lines.push("");
-
-    for (const article of categoryArticles) {
-      const articleBody = article.body.startsWith("#")
-        ? article.body
-        : `# ${article.title}\n\n${article.body}`;
-
-      appendDelimitedSection(
-        lines,
-        {
-          title: article.title,
-          description: article.description,
-          last_updated: article.lastUpdated,
-          source: article.url,
-          source_path: article.sourcePath,
-        },
-        articleBody
-      );
-    }
-  }
-}
-
-function generateTableOfContents(
-  lines: string[],
-  articles: KnowledgeArticle[],
-  includeSdkSection: boolean
-): void {
-  const grouped = groupByCategory(articles);
-  lines.push("## Table of Contents");
-  lines.push("");
-  lines.push("- Landing Pages (Auto-generated)");
-  lines.push("- Platform Overview");
-  lines.push("- Supported Networks");
-
-  for (const category of ["Core Concepts", "Capabilities", "Project Profiles", "Uncategorized"]) {
-    const count = (grouped[category] || []).length;
-    if (count === 0) continue;
-    lines.push(`- Knowledge Base - ${category} (${count} articles)`);
-  }
-
-  if (includeSdkSection) {
-    lines.push("- Karma GAP SDK Documentation");
-  }
-  lines.push("- API Documentation");
-  lines.push("- Key Platform Pages");
-  lines.push("- Site URL Index");
-  lines.push("- Glossary");
-  lines.push("");
-}
-
-function generatePlatformOverview(lines: string[], landingPages: LandingPageContent[]): void {
-  const byPath = new Map(landingPages.map((page) => [page.path, page]));
-
-  lines.push("## Platform Overview");
-  lines.push("");
-  lines.push("### What is Karma?");
-  lines.push(byPath.get("/")?.description || DEFAULT_DESCRIPTION);
-  lines.push("");
-  lines.push("### Core Product Surfaces");
-  lines.push(
-    `- Funders: ${byPath.get("/funders")?.description || "Run and scale funding programs with accountability."}`
-  );
-  lines.push(
-    `- Projects: ${byPath.get("/projects")?.description || "Show project progress, milestones, and reputation."}`
-  );
-  lines.push(
-    `- Communities: ${byPath.get("/communities")?.description || "Discover ecosystems and grant programs."}`
-  );
-  lines.push("");
-  lines.push("### Data and Verification");
-  lines.push(
-    "- Karma uses Ethereum Attestation Service (EAS) to keep funding and milestone history verifiable and portable across ecosystems."
-  );
-  lines.push("- Public reads exist for discovery endpoints; authenticated operations use Privy JWT tokens.");
-  lines.push("");
-}
-
-function generateGlossary(lines: string[]): void {
-  lines.push("## Glossary");
-  lines.push("");
-  lines.push(
-    "- EAS: Ethereum Attestation Service, the protocol used to persist verifiable funding and milestone records."
-  );
-  lines.push("- Attestation: A signed onchain statement representing project, grant, or milestone data.");
-  lines.push("- Community: An ecosystem or organization running funding programs on Karma.");
-  lines.push("- Project Profile: A public page with funding history, updates, milestones, and impact context.");
-  lines.push("- Funding Program: A structured grant round with application and review flows.");
-  lines.push("- Milestone: A concrete deliverable tracked during grant execution.");
-  lines.push("- Privy JWT: Authentication token used for protected API actions.");
-  lines.push("");
-}
-
-function generateSitemapSection(lines: string[], sitemapEntries: SitemapEntry[]): void {
   lines.push("## Site URL Index");
-  lines.push("");
-  lines.push(`Source: ${SITEMAP_URL}`);
-  lines.push("");
 
-  const sortedEntries = [...sitemapEntries].sort((a, b) => {
+  let filteredEntries = [...sitemapEntries];
+  if (options?.excludeKnowledgeArticles) {
+    filteredEntries = filteredEntries.filter((entry) => {
+      try {
+        const pathname = new URL(entry.url).pathname;
+        // Keep /knowledge but exclude /knowledge/[slug]
+        return !/^\/knowledge\/.+/.test(pathname);
+      } catch {
+        return true;
+      }
+    });
+  }
+
+  const sortedEntries = filteredEntries.sort((a, b) => {
     const priorityA = Number.parseFloat(a.priority || "0");
     const priorityB = Number.parseFloat(b.priority || "0");
     if (priorityA !== priorityB) return priorityB - priorityA;
@@ -1198,13 +1398,15 @@ function generateSitemapSection(lines: string[], sitemapEntries: SitemapEntry[])
   });
 
   for (const entry of sortedEntries) {
-    const metadataBits = [];
-    if (entry.lastModified) metadataBits.push(`lastmod: ${entry.lastModified}`);
-    if (entry.changeFrequency) metadataBits.push(`changefreq: ${entry.changeFrequency}`);
-    if (entry.priority) metadataBits.push(`priority: ${entry.priority}`);
-    const metadataSuffix = metadataBits.length ? ` (${metadataBits.join(", ")})` : "";
-
-    lines.push(`- ${entry.url}${metadataSuffix}`);
+    const label = sitemapUrlToLabel(entry.url);
+    let pathname: string;
+    try {
+      pathname = new URL(entry.url).pathname;
+    } catch {
+      pathname = "";
+    }
+    const desc = SITEMAP_DESCRIPTION_MAP[pathname];
+    lines.push(desc ? `- [${label}](${entry.url}): ${desc}` : `- [${label}](${entry.url})`);
   }
   lines.push("");
 }
@@ -1216,27 +1418,40 @@ function generateLlmsTxt(
 ): string {
   const lines: string[] = [];
   const primary = getPrimaryLandingMetadata(landingPages);
+  const homeTarget = LANDING_PAGE_TARGETS.find((t) => t.path === "/");
 
-  lines.push(`# ${primary.title}`);
-  lines.push("");
-  lines.push(`> ${primary.description}`);
-  lines.push("");
-  lines.push(AI_INSTRUCTIONS);
-  lines.push("");
-  lines.push(`Generated: ${BUILD_TIMESTAMP}`);
+  const homePage = landingPages.find((page) => page.path === "/");
+
+  lines.push(`# ${PROJECT_NAME}`);
   lines.push("");
 
-  generateLandingSummarySection(lines, landingPages);
+  // Blockquote: auto-derived from home page content
+  const blockquote = homePage?.description || primary.description;
+  lines.push(`> ${blockquote}`);
+  lines.push("");
 
-  lines.push("## Product Pages");
-  for (const page of STATIC_PAGES) {
-    lines.push(`- [${page.title}](${SITE_URL}${page.path})`);
+  // Detail section: clean narrative paragraph
+  const networkNames = SUPPORTED_NETWORKS.filter((n) => !n.name.includes("testnet"))
+    .map((n) => n.name)
+    .join(", ");
+  lines.push(
+    `Karma is a platform where ecosystems allocate funding, track milestones, and measure impact, while builders share progress, earn reputation, and get discovered for more opportunities. Karma supports ${networkNames}.`
+  );
+  lines.push("");
+
+  // Landing Pages: includes Funding Map and Knowledge Base (no separate Product Pages section)
+  lines.push("## Landing Pages");
+  for (const page of landingPages) {
+    const desc = page.description ? `: ${page.description}` : "";
+    lines.push(`- [${page.label}](${page.url})${desc}`);
   }
+  lines.push(
+    `- [Funding Map](${SITE_URL}/funding-map): Browse open funding programs across ecosystems`
+  );
+  lines.push(
+    `- [Knowledge Base](${SITE_URL}/knowledge): Articles on grant accountability, reputation, and impact measurement`
+  );
   lines.push("");
-
-  generateKnowledgeSummarySection(lines, articles);
-
-  generateSitemapSection(lines, sitemapEntries);
 
   lines.push("## Developer Docs");
   lines.push(
@@ -1251,8 +1466,27 @@ function generateLlmsTxt(
   );
   lines.push("");
 
+  // Site URL Index: top-level pages only (exclude /knowledge/* articles)
+  generateSitemapSection(lines, sitemapEntries, { excludeKnowledgeArticles: true });
+
+  // Optional: flat list of KB articles (no nested categories)
   lines.push("## Optional");
-  lines.push(`- [Complete LLM Reference](${SITE_URL}/llms-full.txt)`);
+  lines.push(
+    `- [Complete LLM Reference](${SITE_URL}/llms-full.txt): Full inline content for all pages and articles`
+  );
+
+  const grouped = groupByCategory(articles);
+  for (const category of ["Core Concepts", "Capabilities", "Project Profiles"]) {
+    const categoryArticles = grouped[category] || [];
+    for (const article of categoryArticles) {
+      lines.push(`- [${article.title}](${article.url}): ${category} — ${article.description}`);
+    }
+  }
+  const uncategorized = grouped["Uncategorized"] || [];
+  for (const article of uncategorized) {
+    lines.push(`- [${article.title}](${article.url}): ${article.description}`);
+  }
+
   lines.push(`- [Ethereum Attestation Service](https://attest.org)`);
   lines.push(`- [Privacy Policy](${SITE_URL}/privacy-policy)`);
   lines.push(`- [Terms and Conditions](${SITE_URL}/terms-and-conditions)`);
@@ -1268,20 +1502,55 @@ function generateLlmsFullTxt(
 ): string {
   const lines: string[] = [];
   const primary = getPrimaryLandingMetadata(landingPages);
+  const grouped = groupByCategory(articles);
 
-  lines.push(`# ${PROJECT_NAME} - Complete LLM Reference`);
-  lines.push("");
-  lines.push(`> ${primary.description}`);
-  lines.push("");
-  lines.push(AI_INSTRUCTIONS);
-  lines.push("");
-  lines.push(`Generated: ${BUILD_TIMESTAMP}`);
-  lines.push("");
-  generateTableOfContents(lines, articles, Boolean(sdkReadme?.content));
-  generatePlatformOverview(lines, landingPages);
+  const homePage = landingPages.find((page) => page.path === "/");
 
-  generateLandingFullSection(lines, landingPages);
+  // --- H1 + blockquote (same as llms.txt) ---
+  lines.push(`# ${PROJECT_NAME}`);
+  lines.push("");
+  const blockquote = homePage?.description || primary.description;
+  lines.push(`> ${blockquote}`);
+  lines.push("");
 
+  // --- Detail section: clean narrative paragraph ---
+  const networkNames = SUPPORTED_NETWORKS.filter((n) => !n.name.includes("testnet"))
+    .map((n) => n.name)
+    .join(", ");
+  lines.push(
+    `Karma is a platform where ecosystems allocate funding, track milestones, and measure impact, while builders share progress, earn reputation, and get discovered for more opportunities. Karma supports ${networkNames}.`
+  );
+  lines.push("");
+
+  // --- Table of Contents ---
+  lines.push("## Table of Contents");
+  lines.push("");
+  lines.push("- Landing Pages");
+  lines.push("- Supported Networks");
+  lines.push("- Developer Docs");
+  if (sdkReadme?.content) {
+    lines.push("- Karma GAP SDK Documentation");
+  }
+  lines.push("- Key Platform Pages");
+  lines.push("- Site URL Index");
+  for (const category of ["Core Concepts", "Capabilities", "Project Profiles", "Uncategorized"]) {
+    const count = (grouped[category] || []).length;
+    if (count === 0) continue;
+    lines.push(`- Knowledge Base - ${category} (${count} articles)`);
+  }
+  lines.push("");
+
+  // --- Landing Pages: full content in standard markdown ---
+  lines.push("## Landing Pages");
+  lines.push("");
+  for (const page of landingPages) {
+    lines.push(`### ${page.label}`);
+    lines.push("");
+    lines.push(page.fullText.trim());
+    lines.push("");
+  }
+
+  // --- Supported Networks ---
   lines.push("## Supported Networks");
   lines.push("");
   for (const network of SUPPORTED_NETWORKS) {
@@ -1289,47 +1558,83 @@ function generateLlmsFullTxt(
   }
   lines.push("");
 
-  generateKnowledgeFullSection(lines, articles);
+  // --- Developer Docs ---
+  lines.push("## Developer Docs");
+  lines.push("");
+  lines.push(
+    `- [API Documentation](${API_DOCS_URL}): REST API docs for projects, communities, grants, and attestations`
+  );
+  lines.push(`- [OpenAPI JSON](${API_SPEC_URL})`);
+  lines.push(
+    "- Authentication: use Privy JWT in `Authorization: Bearer <token>` for protected endpoints"
+  );
+  lines.push(
+    "- Public reads are available for key listing endpoints (projects, communities, grants)"
+  );
+  lines.push(
+    `- [Karma GAP SDK (npm)](https://www.npmjs.com/package/@show-karma/karma-gap-sdk): TypeScript SDK`
+  );
+  lines.push(
+    `- [Karma GAP SDK (GitHub)](https://github.com/show-karma/karma-gap-sdk): source and examples`
+  );
+  lines.push("");
 
+  // --- SDK Documentation (full content) ---
   if (sdkReadme?.content) {
+    lines.push("## Karma GAP SDK Documentation");
+    lines.push("");
     const downshifted = sdkReadme.content.replace(
       /^(#{1,4}) /gm,
-      (_, hashes) => "#".repeat(hashes.length + 2) + " "
+      (_, hashes: string) => "#".repeat(hashes.length + 2) + " "
     );
-    appendDelimitedSection(
-      lines,
-      {
-        title: "Karma GAP SDK Documentation",
-        description: "TypeScript SDK docs for integrating with Karma GAP APIs and workflows.",
-        last_updated: sdkReadme.lastUpdated,
-        source: sdkReadme.source,
-        source_path: sdkReadme.sourcePath,
-      },
-      `## Karma GAP SDK Documentation\n\n${downshifted.trim()}`
-    );
+    lines.push(downshifted.trim());
+    lines.push("");
   }
 
-  lines.push("## API Documentation");
-  lines.push("");
-  lines.push(`- Interactive docs: ${API_DOCS_URL}`);
-  lines.push(`- OpenAPI spec: ${API_SPEC_URL}`);
-  lines.push("- Authentication: use Privy JWT in `Authorization: Bearer <token>` for protected endpoints");
-  lines.push("- Public reads are available for key listing endpoints (projects, communities, grants)");
-  lines.push("");
-
+  // --- Key Platform Pages ---
   lines.push("## Key Platform Pages");
-  lines.push("");
   for (const page of STATIC_PAGES) {
     lines.push(`- [${page.title}](${SITE_URL}${page.path})`);
   }
   lines.push("");
 
+  // --- Site URL Index ---
   generateSitemapSection(lines, sitemapEntries);
 
-  generateGlossary(lines);
+  // --- Knowledge Base: full articles (optional/secondary content) ---
+  const orderedCategories = ["Core Concepts", "Capabilities", "Project Profiles", "Uncategorized"];
+  for (const category of orderedCategories) {
+    const categoryArticles = grouped[category] || [];
+    if (categoryArticles.length === 0) continue;
 
-  lines.push("---");
-  lines.push(`Generated at build time. Source: ${SITE_URL}`);
+    lines.push(`## Knowledge Base - ${category}`);
+    lines.push("");
+
+    for (const article of categoryArticles) {
+      lines.push(`### ${article.title}`);
+      lines.push("");
+      if (article.description) {
+        lines.push(article.description);
+        lines.push("");
+      }
+      if (article.body) {
+        // Strip any leading H1 that duplicates the title we just wrote
+        let body = article.body.trim();
+        const h1Match = body.match(/^#\s+(.+)\n*/);
+        if (h1Match && h1Match[1].trim() === article.title.trim()) {
+          body = body.slice(h1Match[0].length).trim();
+        }
+        // Downshift headings: articles are at H3 level, so their internal
+        // ## headings become #### to maintain proper nesting
+        body = body.replace(
+          /^(#{1,4}) /gm,
+          (_, hashes: string) => "#".repeat(Math.min(hashes.length + 2, 6)) + " "
+        );
+        lines.push(body);
+        lines.push("");
+      }
+    }
+  }
 
   return lines.join("\n");
 }
@@ -1361,9 +1666,105 @@ async function main() {
   console.log(
     `Written public/llms-full.txt (${llmsFullTxt.length} chars, ~${Math.round(llmsFullTxt.length / 4)} tokens)`
   );
+
+  // Generate static .md files for landing pages and knowledge articles
+  generateMarkdownFiles(landingPages, articles);
 }
 
-main().catch((error) => {
-  console.error("Failed to generate llms documents:", error);
-  process.exit(1);
-});
+function sentenceOverlap(a: string, b: string): number {
+  const wa = new Set(a.toLowerCase().split(/\s+/).filter(Boolean));
+  const wb = new Set(b.toLowerCase().split(/\s+/).filter(Boolean));
+  if (wa.size === 0 || wb.size === 0) return 0;
+  const intersection = [...wa].filter((w) => wb.has(w));
+  return intersection.length / Math.min(wa.size, wb.size);
+}
+
+function generateMarkdownFiles(
+  landingPages: LandingPageContent[],
+  articles: KnowledgeArticle[]
+): void {
+  const knowledgeDir = path.join(OUTPUT_DIR, "knowledge");
+  fs.mkdirSync(knowledgeDir, { recursive: true });
+
+  let mdCount = 0;
+
+  // Landing page .md files
+  for (const page of landingPages) {
+    const filename = page.path === "/" ? "index.html.md" : `${page.path.replace(/^\//, "")}.md`;
+
+    // Strip leading lines of fullText that closely overlap with the description
+    // to avoid near-duplicate lead paragraphs
+    let body = page.fullText.trim();
+    let stripped = true;
+    while (stripped) {
+      stripped = false;
+      const firstLine = body.split("\n")[0];
+      if (firstLine && sentenceOverlap(page.description, firstLine) >= 0.5) {
+        body = body.slice(firstLine.length).trim();
+        stripped = true;
+      }
+    }
+
+    const content = `# ${page.title}\n\n${page.description}\n\n${body}\n`;
+    fs.writeFileSync(path.join(OUTPUT_DIR, filename), content, "utf-8");
+    mdCount++;
+  }
+
+  // Knowledge base article .md files
+  for (const article of articles) {
+    const content = `# ${article.title}\n\n${article.description}\n\n${article.body.trim()}\n`;
+    fs.writeFileSync(path.join(knowledgeDir, `${article.slug}.md`), content, "utf-8");
+    mdCount++;
+  }
+
+  console.log(`Written ${mdCount} .md files to public/`);
+}
+
+// --- Exports for testing ---
+export {
+  BOILERPLATE_LINE_PATTERNS,
+  SITEMAP_LABEL_MAP,
+  SITEMAP_DESCRIPTION_MAP,
+  PROJECT_NAME,
+  SITE_URL,
+  SUPPORTED_NETWORKS,
+  normalizeWhitespace,
+  normalizeMultilineText,
+  truncateAtWordBoundary,
+  decodeHtmlEntities,
+  markdownToPlainText,
+  findMetaContent,
+  extractTitleFromHtml,
+  extractMainHtml,
+  htmlToPlainText,
+  deriveDescription,
+  cleanPageTitle,
+  buildSnippet,
+  isMeaningfulTextCandidate,
+  dedupeLines,
+  isPersonNameLine,
+  isJobTitleLine,
+  isPricingLine,
+  detectBlockSkip,
+  isStatLabelLine,
+  isStatLabelBlock,
+  cleanExtractedContent,
+  isNoisyLandingText,
+  sentenceOverlap,
+  sitemapUrlToLabel,
+  generateSitemapSection,
+  generateLlmsTxt,
+  generateLlmsFullTxt,
+  groupByCategory,
+  getPrimaryLandingMetadata,
+  mergeTextBlocks,
+};
+
+export type { KnowledgeArticle, LandingPageContent, SitemapEntry, SdkReadmeData };
+
+if (require.main === module) {
+  main().catch((error) => {
+    console.error("Failed to generate llms documents:", error);
+    process.exit(1);
+  });
+}
