@@ -17,8 +17,11 @@ let mockSavePending = false;
 jest.mock("@/src/features/payout-disbursement", () => {
   const React = require("react");
   const actual = jest.requireActual("@/src/features/payout-disbursement/types/payout-disbursement");
+  const utils = jest.requireActual("@/src/features/payout-disbursement/utils/format-token-amount");
   return {
     ...actual,
+    formatDisplayAmount: utils.formatDisplayAmount,
+    fromSmallestUnit: utils.fromSmallestUnit,
     useToggleAgreement: jest.fn(() => ({
       mutate: mockToggleMutate,
       isPending: mockTogglePending,
@@ -330,23 +333,6 @@ describe("ProjectDetailsModal", () => {
     it("shows empty state when no invoices", () => {
       renderModal({ milestoneInvoices: [] });
       expect(screen.getByText(/no milestone invoices configured/i)).toBeInTheDocument();
-    });
-
-    it("shows invoice status badges", () => {
-      renderModal({
-        invoiceRequired: true,
-        milestoneInvoices: [
-          createMockInvoice({ invoiceStatus: "received" }),
-          createMockInvoice({
-            milestoneLabel: "Milestone 2",
-            milestoneUID: "ms-2",
-            invoiceStatus: "not_submitted",
-          }),
-        ],
-      });
-
-      expect(screen.getByText("Received")).toBeInTheDocument();
-      expect(screen.getByText("Not submitted")).toBeInTheDocument();
     });
   });
 
