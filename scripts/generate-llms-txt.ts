@@ -100,10 +100,15 @@ const SITEMAP_DESCRIPTION_MAP: Record<string, string> = {
 const SUPPORTED_NETWORKS = [
   { name: "Optimism", chainId: 10 },
   { name: "Arbitrum One", chainId: 42161 },
-  { name: "Celo", chainId: 42220 },
+  { name: "Polygon", chainId: 137 },
   { name: "Base", chainId: 8453 },
+  { name: "Celo", chainId: 42220 },
+  { name: "Scroll", chainId: 534352 },
+  { name: "Lisk", chainId: 1135 },
   { name: "Sei", chainId: 1329 },
   { name: "Optimism Sepolia (testnet)", chainId: 11155420 },
+  { name: "Base Sepolia (testnet)", chainId: 84532 },
+  { name: "Sepolia (testnet)", chainId: 11155111 },
 ];
 
 interface LandingPageTarget {
