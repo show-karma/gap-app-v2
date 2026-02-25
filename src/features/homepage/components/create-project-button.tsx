@@ -8,8 +8,7 @@ interface CreateProjectButtonProps {
   styleClass?: string;
 }
 
-const defaultStyleClass =
-  "px-4 py-2.5 text-sm font-medium w-max bg-primary text-primary-foreground hover:bg-primary/90 border-0 shadow";
+const defaultStyleClass = "px-4 py-[7.5px] text-sm font-medium w-max";
 
 export function CreateProjectButton({ styleClass = defaultStyleClass }: CreateProjectButtonProps) {
   const ProjectDialog = useMemo(

@@ -9,7 +9,7 @@ export function Navbar() {
     <NavbarPermissionsProvider>
       <nav
         className={cn(
-          "flex bg-background w-full items-center justify-center flex-row gap-8 max-w-full min-w-min border-b border-border z-10 fixed top-0 left-0 right-0"
+          "flex bg-background w-full items-center justify-center flex-row gap-8 max-w-full min-w-min border-b border-border z-50 fixed top-0 left-0 right-0"
         )}
       >
         <div
