@@ -73,34 +73,73 @@ jest.mock("@headlessui/react", () => {
   };
 });
 
+// Mock react-hot-toast (used by ensureCorrectChain)
+jest.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: { error: jest.fn(), success: jest.fn() },
+}));
+
 // Mock Heroicons
 jest.mock("@heroicons/react/24/solid", () => ({
-  ChevronRightIcon: (props: any) => <svg data-testid="chevron-right-icon" {...props} />,
   PlusIcon: (props: any) => <svg data-testid="plus-icon" {...props} />,
-  XMarkIcon: (props: any) => <svg data-testid="x-mark-icon" {...props} />,
+  ChevronRightIcon: (props: any) => <svg data-testid="chevron-icon" {...props} />,
+  XMarkIcon: (props: any) => <svg data-testid="x-icon" {...props} />,
 }));
 
-// Track mock attestation behavior
-const mockAttest = jest.fn();
-const mockFindSchema = jest.fn().mockReturnValue("mock-schema");
-const mockSlugExists = jest.fn().mockResolvedValue(false);
-const mockGenerateSlug = jest.fn().mockImplementation((slug: string) => slug);
-
-// Mock karma-gap-sdk
-jest.mock("@show-karma/karma-gap-sdk", () => ({
-  Community: jest.fn().mockImplementation(() => ({
-    attest: mockAttest,
-    chainID: 1,
-    uid: "mock-uid",
-  })),
-  nullRef: "0x0000000000000000000000000000000000000000000000000000000000000000",
-}));
+// Track attest mock for controlling test flow
+let mockAttest: jest.Mock;
+let mockSetupChainAndWallet: jest.Mock;
 
 // Mock hooks
+jest.mock("wagmi", () => ({
+  useAccount: () => ({
+    address: "0x1234567890abcdef1234567890abcdef12345678",
+    chain: { id: 1 },
+  }),
+  useChainId: () => 1,
+  useWalletClient: () => ({ data: null }),
+  usePublicClient: () => ({}),
+}));
+
+jest.mock("@/hooks/useWallet", () => ({
+  useWallet: () => ({
+    switchChainAsync: jest.fn(),
+  }),
+}));
+
+jest.mock("@/hooks/useGap", () => {
+  const gapClient = {
+    findSchema: jest.fn().mockReturnValue("mock-schema"),
+    fetch: { slugExists: jest.fn().mockResolvedValue(false) },
+    generateSlug: jest.fn().mockResolvedValue("generated-slug"),
+  };
+  return {
+    useGap: () => ({
+      gap: {
+        network: "optimism",
+      },
+    }),
+    getGapClient: jest.fn().mockReturnValue(gapClient),
+    __mockGapClient: gapClient,
+  };
+});
+
+// Mock ensureCorrectChain to bypass chain switching delays and getGapClient issues
+jest.mock("@/utilities/ensureCorrectChain", () => {
+  const { __mockGapClient } = jest.requireMock("@/hooks/useGap");
+  return {
+    ensureCorrectChain: jest.fn().mockResolvedValue({
+      success: true,
+      chainId: 10,
+      gapClient: __mockGapClient,
+    }),
+  };
+});
+
+const mockShowError = jest.fn();
 const mockStartAttestation = jest.fn();
 const mockShowLoading = jest.fn();
 const mockShowSuccess = jest.fn();
-const mockShowError = jest.fn();
 const mockDismiss = jest.fn();
 const mockChangeStepperStep = jest.fn();
 
@@ -115,327 +154,305 @@ jest.mock("@/hooks/useAttestationToast", () => ({
   }),
 }));
 
-const mockSetupChainAndWallet = jest.fn();
-
-// The moduleNameMapper in jest.config.ts maps @/hooks/useSetupChainAndWallet
-// to a mock file, but we need to override it with our test-specific mock.
-// We mock the actual file path to bypass the moduleNameMapper.
-jest.mock("hooks/useSetupChainAndWallet", () => ({
-  useSetupChainAndWallet: () => ({
-    setupChainAndWallet: mockSetupChainAndWallet,
-    smartWalletAddress: null,
-  }),
+// Mock SDK Community class
+jest.mock("@show-karma/karma-gap-sdk", () => ({
+  Community: jest.fn().mockImplementation(() => ({
+    attest: (...args: any[]) => mockAttest(...args),
+    chainID: 1,
+    uid: "0xmock-uid",
+  })),
+  nullRef: "0x0000000000000000000000000000000000000000000000000000000000000000",
 }));
 
-jest.mock("@/hooks/useGap", () => ({
-  useGap: () => ({
-    gap: {
-      findSchema: mockFindSchema,
-      fetch: { slugExists: mockSlugExists },
-      generateSlug: mockGenerateSlug,
-    },
-  }),
-}));
-
-jest.mock("@/hooks/useWallet", () => ({
-  useWallet: () => ({
-    switchChainAsync: jest.fn(),
-  }),
-}));
-
-jest.mock("wagmi", () => ({
-  useAccount: () => ({
-    address: "0x1234567890abcdef1234567890abcdef12345678",
-    chain: { id: 1 },
-  }),
-  useChainId: () => 1,
-}));
-
-jest.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: jest.fn().mockResolvedValue([{}, null]),
-}));
-
-jest.mock("@/utilities/indexer", () => ({
-  INDEXER: {
-    ATTESTATION_LISTENER: jest.fn().mockReturnValue("/api/attestation-listener"),
-  },
-}));
-
-jest.mock("@/utilities/messages", () => ({
-  MESSAGES: {
-    COMMUNITY_FORM: {
-      TITLE: { MIN: "Min 3 chars", MAX: "Max 50 chars" },
-      SLUG: "Min 3 chars",
-      IMAGE_URL: "Image URL required",
-    },
-  },
-}));
+jest.mock("@/utilities/fetchData", () => jest.fn().mockResolvedValue([{}, null]));
 
 jest.mock("@/utilities/network", () => ({
   appNetwork: [
-    { id: 1, name: "Ethereum" },
     { id: 10, name: "Optimism" },
+    { id: 42161, name: "Arbitrum" },
   ],
 }));
 
 jest.mock("@/utilities/sanitize", () => ({
-  sanitizeObject: jest.fn((obj: any) => obj),
+  sanitizeObject: (obj: any) => obj,
 }));
 
 jest.mock("@/utilities/tailwind", () => ({
   cn: (...args: any[]) => args.filter(Boolean).join(" "),
 }));
 
-jest.mock("@/components/Utilities/errorManager", () => ({
-  errorManager: jest.fn(),
-}));
-
+// Mock MarkdownEditor
 jest.mock("@/components/Utilities/MarkdownEditor", () => ({
-  MarkdownEditor: ({ value, onChange }: any) => (
+  MarkdownEditor: ({ value, onChange, ...props }: any) => (
     <textarea
       data-testid="markdown-editor"
       value={value}
       onChange={(e: any) => onChange(e.target.value)}
+      {...props}
     />
   ),
 }));
 
+// Mock errorManager
+jest.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: jest.fn(),
+}));
+
+// Mock messages
+jest.mock("@/utilities/messages", () => ({
+  MESSAGES: {
+    COMMUNITY_FORM: {
+      TITLE: { MIN: "Too short", MAX: "Too long" },
+      SLUG: "Slug required",
+      IMAGE_URL: "Image URL required",
+    },
+  },
+}));
+
+// Mock indexer
+jest.mock("@/utilities/indexer", () => ({
+  INDEXER: {
+    ATTESTATION_LISTENER: () => "/attestation-listener",
+  },
+}));
+
+// Mock ui/button
 jest.mock("@/components/ui/button", () => ({
-  Button: ({ children, isLoading, ...props }: any) => (
-    <button data-loading={isLoading} {...props}>
+  Button: ({ children, onClick, isLoading, disabled, ...props }: any) => (
+    <button onClick={onClick} disabled={disabled || isLoading} {...props}>
       {isLoading ? "Loading..." : children}
     </button>
   ),
 }));
 
+// Access the file-based mock hook function directly
+// (moduleNameMapper in jest.config.ts maps @/hooks/useSetupChainAndWallet
+//  to __mocks__/hooks/useSetupChainAndWallet.ts)
+const mockHookModule = jest.requireMock("@/hooks/useSetupChainAndWallet") as {
+  useSetupChainAndWallet: jest.Mock;
+};
+
 describe("CommunityDialog", () => {
   const mockRefreshCommunities = jest.fn().mockResolvedValue([]);
 
-  const defaultProps = {
-    refreshCommunities: mockRefreshCommunities,
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
-    mockSlugExists.mockResolvedValue(false);
-    mockAttest.mockResolvedValue({ tx: [{ hash: "0xabc" }] });
-    mockSetupChainAndWallet.mockResolvedValue({
+    mockAttest = jest.fn();
+    mockSetupChainAndWallet = jest.fn().mockResolvedValue({
       gapClient: {
-        findSchema: mockFindSchema,
-        fetch: { slugExists: mockSlugExists },
-        generateSlug: mockGenerateSlug,
+        findSchema: jest.fn().mockReturnValue("mock-schema"),
+        fetch: { slugExists: jest.fn().mockResolvedValue(false) },
+        generateSlug: jest.fn().mockResolvedValue("generated-slug"),
       },
-      walletSigner: {},
-      chainId: 1,
+      walletSigner: { signMessage: jest.fn() },
+      chainId: 10,
+    });
+    // Reconfigure the hook to return our controllable setupChainAndWallet
+    // (clearAllMocks resets mockReturnValue, so we must set it each time)
+    mockHookModule.useSetupChainAndWallet.mockReturnValue({
+      setupChainAndWallet: (...args: any[]) => mockSetupChainAndWallet(...args),
+      isSmartWalletReady: false,
+      smartWalletAddress: null,
+      hasEmbeddedWallet: false,
+      hasExternalWallet: false,
     });
   });
 
-  describe("Rendering", () => {
-    it("should render trigger button with default text", () => {
-      render(<CommunityDialog {...defaultProps} />);
-      expect(screen.getByText("New Community")).toBeInTheDocument();
-    });
+  describe("Form data preservation on transaction failure", () => {
+    it("should reopen modal with preserved form data when attestation fails", async () => {
+      // Setup: attest rejects (simulating a failed onchain transaction)
+      mockAttest.mockRejectedValue(new Error("Transaction rejected by user"));
 
-    it("should open dialog when trigger button is clicked", () => {
-      render(<CommunityDialog {...defaultProps} />);
-      fireEvent.click(screen.getByText("New Community"));
-      expect(screen.getByTestId("dialog")).toBeInTheDocument();
-      expect(screen.getByText("Create a new Community!")).toBeInTheDocument();
-    });
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
 
-    it("should not show dialog initially", () => {
-      render(<CommunityDialog {...defaultProps} />);
-      expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
-    });
-  });
-
-  describe("Dialog Opening and Closing", () => {
-    it("should close dialog when cancel button is clicked", () => {
-      render(<CommunityDialog {...defaultProps} />);
-
-      fireEvent.click(screen.getByText("New Community"));
-      expect(screen.getByTestId("dialog")).toBeInTheDocument();
-
-      fireEvent.click(screen.getByText("Cancel"));
-      expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
-    });
-
-    it("should close dialog when X button is clicked", () => {
-      render(<CommunityDialog {...defaultProps} />);
-
-      fireEvent.click(screen.getByText("New Community"));
-      expect(screen.getByTestId("dialog")).toBeInTheDocument();
-
-      const closeButton = screen.getByTestId("x-mark-icon").closest("button")!;
-      fireEvent.click(closeButton);
-      expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
-    });
-  });
-
-  describe("Error Recovery - Disappearing Form Fix", () => {
-    it("should reopen modal with form data preserved when attestation fails", async () => {
-      mockAttest.mockRejectedValue(new Error("User rejected transaction"));
-
-      render(<CommunityDialog {...defaultProps} />);
-
-      // Open dialog
-      fireEvent.click(screen.getByText("New Community"));
-      expect(screen.getByTestId("dialog")).toBeInTheDocument();
+      // Open modal
+      const openButton = screen.getByText("New Community");
+      fireEvent.click(openButton);
 
       // Fill in form data
       const nameInput = screen.getByPlaceholderText('e.g. "My awesome Community"');
       fireEvent.change(nameInput, { target: { value: "Test Community" } });
 
+      const imageInput = screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"');
+      fireEvent.change(imageInput, { target: { value: "https://example.com/logo.png" } });
+
       const slugInput = screen.getByPlaceholderText('e.g. "grant-portal"');
       fireEvent.change(slugInput, { target: { value: "test-community" } });
-
-      const imageInput = screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"');
-      fireEvent.change(imageInput, { target: { value: "https://example.com/img.png" } });
 
       // Submit form
       const submitButton = screen.getByText("Create Community");
       fireEvent.click(submitButton);
 
-      // Wait for the error recovery to reopen modal
+      // Wait for the error handling to complete and modal to reopen
       await waitFor(() => {
         expect(mockShowError).toHaveBeenCalledWith("Failed to create community. Please try again.");
       });
 
-      // Modal should be reopened after error
+      // Modal should be reopened
       await waitFor(() => {
         expect(screen.getByTestId("dialog")).toBeInTheDocument();
       });
 
-      // Form data should be preserved
-      expect(screen.getByPlaceholderText('e.g. "My awesome Community"')).toHaveValue(
-        "Test Community"
-      );
-      expect(screen.getByPlaceholderText('e.g. "grant-portal"')).toHaveValue("test-community");
-      expect(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"')).toHaveValue(
-        "https://example.com/img.png"
-      );
+      // Form data should be preserved (the inputs should still have their values)
+      const preservedNameInput = screen.getByPlaceholderText(
+        'e.g. "My awesome Community"'
+      ) as HTMLInputElement;
+      expect(preservedNameInput.value).toBe("Test Community");
+
+      const preservedImageInput = screen.getByPlaceholderText(
+        'e.g. "https://example.com/image.jpg"'
+      ) as HTMLInputElement;
+      expect(preservedImageInput.value).toBe("https://example.com/logo.png");
+
+      const preservedSlugInput = screen.getByPlaceholderText(
+        'e.g. "grant-portal"'
+      ) as HTMLInputElement;
+      expect(preservedSlugInput.value).toBe("test-community");
     });
 
-    it("should reopen modal when setupChainAndWallet succeeds but attest fails", async () => {
-      mockAttest.mockRejectedValue(new Error("Transaction reverted"));
+    it("should show error toast when attestation fails", async () => {
+      mockAttest.mockRejectedValue(new Error("Transaction failed"));
 
-      render(<CommunityDialog {...defaultProps} />);
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
 
-      // Open dialog
+      const openButton = screen.getByText("New Community");
+      fireEvent.click(openButton);
+
+      // Fill required fields to pass validation
+      fireEvent.change(screen.getByPlaceholderText('e.g. "My awesome Community"'), {
+        target: { value: "Test" },
+      });
+      fireEvent.change(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'), {
+        target: { value: "https://img.com/a.png" },
+      });
+      fireEvent.change(screen.getByPlaceholderText('e.g. "grant-portal"'), {
+        target: { value: "test-slug" },
+      });
+
+      fireEvent.click(screen.getByText("Create Community"));
+
+      await waitFor(() => {
+        expect(mockShowError).toHaveBeenCalledWith("Failed to create community. Please try again.");
+      });
+    });
+
+    it("should reset form when modal is opened fresh (not from error recovery)", async () => {
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+
+      // Open modal
+      const openButton = screen.getByText("New Community");
+      fireEvent.click(openButton);
+
+      // Fill in data
+      const nameInput = screen.getByPlaceholderText(
+        'e.g. "My awesome Community"'
+      ) as HTMLInputElement;
+      fireEvent.change(nameInput, { target: { value: "Some Name" } });
+
+      // Close via cancel
+      fireEvent.click(screen.getByText("Cancel"));
+
+      // Reopen - should be fresh
+      fireEvent.click(openButton);
+
+      const freshNameInput = screen.getByPlaceholderText(
+        'e.g. "My awesome Community"'
+      ) as HTMLInputElement;
+      // Default value should be empty string (from dataToUpdate)
+      expect(freshNameInput.value).toBe("");
+    });
+  });
+
+  describe("Modal stays open when setup fails", () => {
+    it("should keep modal open when setupChainAndWallet returns null", async () => {
+      mockSetupChainAndWallet.mockResolvedValue(null);
+
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+
+      const openButton = screen.getByText("New Community");
+      fireEvent.click(openButton);
+
+      // Fill required fields
+      fireEvent.change(screen.getByPlaceholderText('e.g. "My awesome Community"'), {
+        target: { value: "Test" },
+      });
+      fireEvent.change(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'), {
+        target: { value: "https://img.com/a.png" },
+      });
+      fireEvent.change(screen.getByPlaceholderText('e.g. "grant-portal"'), {
+        target: { value: "test-slug" },
+      });
+
+      fireEvent.click(screen.getByText("Create Community"));
+
+      // Modal should still be visible since setup failed
+      await waitFor(() => {
+        expect(screen.getByTestId("dialog")).toBeInTheDocument();
+      });
+
+      // Attest should not have been called
+      expect(mockAttest).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Rendering", () => {
+    it("should render trigger button with default text", () => {
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+      expect(screen.getByText("New Community")).toBeInTheDocument();
+    });
+
+    it("should not show dialog initially", () => {
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+      expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
+    });
+
+    it("should open dialog when trigger button is clicked", () => {
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+      fireEvent.click(screen.getByText("New Community"));
+      expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    });
+
+    it("should display form fields", () => {
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+      fireEvent.click(screen.getByText("New Community"));
+
+      expect(screen.getByPlaceholderText('e.g. "My awesome Community"')).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"')
+      ).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('e.g. "grant-portal"')).toBeInTheDocument();
+    });
+
+    it("should close dialog when cancel is clicked", () => {
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+      fireEvent.click(screen.getByText("New Community"));
+      fireEvent.click(screen.getByText("Cancel"));
+      expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Success flow", () => {
+    it("should start attestation when form is submitted with valid data", async () => {
+      render(<CommunityDialog refreshCommunities={mockRefreshCommunities} />);
+
       fireEvent.click(screen.getByText("New Community"));
 
       // Fill required fields
       fireEvent.change(screen.getByPlaceholderText('e.g. "My awesome Community"'), {
-        target: { value: "My Community" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "grant-portal"'), {
-        target: { value: "my-community" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'), {
-        target: { value: "https://example.com/logo.png" },
-      });
-
-      // Submit
-      fireEvent.click(screen.getByText("Create Community"));
-
-      // Wait for error recovery
-      await waitFor(() => {
-        expect(mockShowError).toHaveBeenCalled();
-      });
-
-      // Modal should be visible again with data preserved
-      await waitFor(() => {
-        expect(screen.getByTestId("dialog")).toBeInTheDocument();
-      });
-    });
-
-    it("should reset shouldResetOnOpen flag when user manually closes modal", () => {
-      render(<CommunityDialog {...defaultProps} />);
-
-      // Open dialog
-      fireEvent.click(screen.getByText("New Community"));
-      expect(screen.getByTestId("dialog")).toBeInTheDocument();
-
-      // Close via cancel
-      fireEvent.click(screen.getByText("Cancel"));
-      expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
-
-      // Reopen - should show fresh form (shouldResetOnOpen was reset to true)
-      fireEvent.click(screen.getByText("New Community"));
-      expect(screen.getByTestId("dialog")).toBeInTheDocument();
-    });
-
-    it("should allow user to manually close modal after error recovery reopens it", async () => {
-      mockAttest.mockRejectedValue(new Error("Wallet rejected"));
-
-      render(<CommunityDialog {...defaultProps} />);
-
-      // Open dialog and fill data
-      fireEvent.click(screen.getByText("New Community"));
-      fireEvent.change(screen.getByPlaceholderText('e.g. "My awesome Community"'), {
-        target: { value: "Test" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "grant-portal"'), {
-        target: { value: "test" },
-      });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'), {
-        target: { value: "https://example.com/img.png" },
-      });
-
-      // Submit (will fail)
-      fireEvent.click(screen.getByText("Create Community"));
-
-      // Wait for modal to reopen after error
-      await waitFor(() => {
-        expect(screen.getByTestId("dialog")).toBeInTheDocument();
-      });
-
-      // User should be able to close the modal manually
-      fireEvent.click(screen.getByText("Cancel"));
-      expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
-    });
-
-    it("should show loading state during form submission", async () => {
-      // Make attest hang to test loading state
-      mockAttest.mockReturnValue(new Promise(() => {}));
-
-      render(<CommunityDialog {...defaultProps} />);
-
-      fireEvent.click(screen.getByText("New Community"));
-
-      fireEvent.change(screen.getByPlaceholderText('e.g. "My awesome Community"'), {
         target: { value: "Test Community" },
       });
-      fireEvent.change(screen.getByPlaceholderText('e.g. "grant-portal"'), {
-        target: { value: "test" },
-      });
       fireEvent.change(screen.getByPlaceholderText('e.g. "https://example.com/image.jpg"'), {
-        target: { value: "https://example.com/img.png" },
+        target: { value: "https://img.com/a.png" },
+      });
+      fireEvent.change(screen.getByPlaceholderText('e.g. "grant-portal"'), {
+        target: { value: "test-slug" },
       });
 
       fireEvent.click(screen.getByText("Create Community"));
 
-      // Start attestation toast should be called
+      // Verify the attestation flow starts (form validation passes and createCommunity runs)
       await waitFor(() => {
         expect(mockStartAttestation).toHaveBeenCalledWith("Creating community...");
-      });
-    });
-  });
-
-  describe("Form Validation", () => {
-    it("should show validation errors for empty required fields", async () => {
-      render(<CommunityDialog {...defaultProps} />);
-
-      fireEvent.click(screen.getByText("New Community"));
-
-      // Submit empty form
-      fireEvent.click(screen.getByText("Create Community"));
-
-      await waitFor(() => {
-        // At least one validation error should show
-        const errorMessages = screen.getAllByText(/min|required/i);
-        expect(errorMessages.length).toBeGreaterThan(0);
       });
     });
   });

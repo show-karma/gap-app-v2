@@ -65,7 +65,8 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   };
 
   const [isOpen, setIsOpen] = useState(false);
-  // Flag to prevent form reset when reopening after an error
+  // When true, form data resets on open; when false, preserve existing form data
+  // (e.g., after a failed transaction so the user can retry without re-entering data)
   const [shouldResetOnOpen, setShouldResetOnOpen] = useState(true);
 
   function closeModal() {
@@ -88,12 +89,14 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     defaultValues: dataToUpdate,
   });
 
+  // Reset form when modal opens fresh (not after a failed transaction)
   useEffect(() => {
     if (isOpen && shouldResetOnOpen) {
       reset(dataToUpdate);
       setDescription(dataToUpdate?.description || "");
+      setSelectedChain(appNetwork[0].id);
     }
-  }, [isOpen]);
+  }, [isOpen, shouldResetOnOpen]);
 
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
@@ -146,8 +149,9 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         slug: data.slug as string,
       });
 
-      // Close modal before attestation (Privy popups will appear during attest)
-      closeModal();
+      // Close modal before attestation (Privy wallet popups will appear during attest
+      // and conflict with the modal overlay)
+      setIsOpen(false);
 
       await newCommunity
         .attest(walletSigner as any, sanitizedData, changeStepperStep)
@@ -202,7 +206,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
           error: "Failed to create community. Please try again.",
         }
       );
-      // Reopen modal with user's data preserved on error
+      // Reopen modal with preserved form data so user can retry
       setShouldResetOnOpen(false);
       openModal();
     } finally {
@@ -225,7 +229,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         {buttonElement.iconSide === "right" && buttonElement.icon}
       </Button>
       <Transition appear show={isOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={closeModal}>
+        <Dialog as="div" className="relative z-10" onClose={isLoading ? () => {} : closeModal}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"

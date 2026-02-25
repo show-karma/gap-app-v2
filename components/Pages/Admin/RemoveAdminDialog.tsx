@@ -64,7 +64,8 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({ UUID, chainid, Admin, 
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
-  const { changeStepperStep, setIsStepper, startAttestation, showSuccess } = useAttestationToast();
+  const { changeStepperStep, setIsStepper, startAttestation, showSuccess, showError } =
+    useAttestationToast();
 
   const onSubmit = async () => {
     setIsLoading(true); // Set loading state to true
@@ -127,6 +128,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({ UUID, chainid, Admin, 
         }
       });
     } catch (error: any) {
+      showError("Failed to remove admin. Please try again.");
       errorManager(`Error removing admin of ${UUID}`, error, {
         removingAdmin: Admin,
         community: UUID,
