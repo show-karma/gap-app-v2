@@ -1640,18 +1640,18 @@ function generateLlmsFullTxt(
 }
 
 async function main() {
-  console.log("Generating llms.txt and llms-full.txt...");
+  console.info("Generating llms.txt and llms-full.txt...");
 
   const articles = extractKnowledgeArticles();
   const landingPages = await extractLandingPages();
   const sitemapEntries = await fetchSitemapEntries();
   const sdkReadme = await readSdkReadme();
 
-  console.log(`Found ${articles.length} knowledge articles`);
-  console.log(`Landing pages extracted: ${landingPages.length}`);
-  console.log(`Sitemap entries: ${sitemapEntries.length}`);
-  console.log(`Landing extraction sources: ${landingPages.map((page) => page.source).join(", ")}`);
-  console.log(`SDK README: ${sdkReadme?.content ? "loaded" : "skipped"}`);
+  console.info(`Found ${articles.length} knowledge articles`);
+  console.info(`Landing pages extracted: ${landingPages.length}`);
+  console.info(`Sitemap entries: ${sitemapEntries.length}`);
+  console.info(`Landing extraction sources: ${landingPages.map((page) => page.source).join(", ")}`);
+  console.info(`SDK README: ${sdkReadme?.content ? "loaded" : "skipped"}`);
 
   const llmsTxt = generateLlmsTxt(articles, landingPages, sitemapEntries);
   const llmsFullTxt = generateLlmsFullTxt(articles, sdkReadme, landingPages, sitemapEntries);
@@ -1660,10 +1660,10 @@ async function main() {
   fs.writeFileSync(path.join(OUTPUT_DIR, "llms.txt"), llmsTxt, "utf-8");
   fs.writeFileSync(path.join(OUTPUT_DIR, "llms-full.txt"), llmsFullTxt, "utf-8");
 
-  console.log(
+  console.info(
     `Written public/llms.txt (${llmsTxt.length} chars, ~${Math.round(llmsTxt.length / 4)} tokens)`
   );
-  console.log(
+  console.info(
     `Written public/llms-full.txt (${llmsFullTxt.length} chars, ~${Math.round(llmsFullTxt.length / 4)} tokens)`
   );
 
@@ -1717,7 +1717,7 @@ function generateMarkdownFiles(
     mdCount++;
   }
 
-  console.log(`Written ${mdCount} .md files to public/`);
+  console.info(`Written ${mdCount} .md files to public/`);
 }
 
 // --- Exports for testing ---
