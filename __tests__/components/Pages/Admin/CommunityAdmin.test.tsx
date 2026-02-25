@@ -125,4 +125,35 @@ describe("CommunityAdmin", () => {
     expect(await screen.findByText("Optimism Builders")).toBeInTheDocument();
     expect(mockGetCommunities).not.toHaveBeenCalled();
   });
+
+  it("shows a clear message when admin batch data is rate limited", async () => {
+    const cachedCommunity = {
+      uid: "0x1111111111111111111111111111111111111111",
+      chainID: 10,
+      createdAt: "2025-01-01T00:00:00.000Z",
+      details: {
+        name: "Optimism Builders",
+        slug: "optimism-builders",
+        imageURL: "",
+      },
+    };
+
+    mockUseQuery.mockReturnValue({
+      data: {
+        communities: [cachedCommunity],
+        admins: [{ id: cachedCommunity.uid, admins: [], status: "rate_limited" }],
+      },
+      isLoading: false,
+      refetch: jest.fn(),
+    });
+
+    render(<CommunitiesToAdminPage />);
+
+    expect(await screen.findByText("Optimism Builders")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Admin data temporarily unavailable due to rate limiting. Please try again shortly."
+      )
+    ).toBeInTheDocument();
+  });
 });

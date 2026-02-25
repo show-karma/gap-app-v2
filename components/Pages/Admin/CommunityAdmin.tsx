@@ -60,6 +60,9 @@ const getAdminsBatchStatusMessage = (status: CommunityAdminsBatchStatus): string
   if (status === "subgraph_unavailable") {
     return "Admin data unavailable: subgraph is temporarily unavailable.";
   }
+  if (status === "rate_limited") {
+    return "Admin data temporarily unavailable due to rate limiting. Please try again shortly.";
+  }
   return "";
 };
 
