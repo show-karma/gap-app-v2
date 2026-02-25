@@ -58,3 +58,8 @@ cypress/videos
 # Generated LLM files
 public/llms.txt
 public/llms-full.txt
+public/index.html.md
+public/funders.md
+public/projects.md
+public/communities.md
+public/knowledge/*.md
