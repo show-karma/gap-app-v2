@@ -12,7 +12,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { formatUnits } from "viem";
 import { KycStatusBadge } from "@/components/KycStatusIcon";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,22 +23,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import type {
-  CommunityPayoutAgreementInfo,
-  CommunityPayoutInvoiceInfo,
-  InvoiceStatus,
-  MilestoneAllocation,
-  MilestonePaymentStatus,
-  PayoutDisbursement,
-  PayoutDisbursementStatus,
-  TokenTotal,
-} from "@/src/features/payout-disbursement";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import {
+  type CommunityPayoutAgreementInfo,
+  type CommunityPayoutInvoiceInfo,
+  formatDisplayAmount,
+  fromSmallestUnit,
+  type MilestoneAllocation,
+  type MilestonePaymentStatus,
+  type PayoutDisbursement,
+  PayoutDisbursementStatus,
   TokenBreakdown,
+  type TokenTotal,
   useSaveMilestoneInvoices,
   useToggleAgreement,
 } from "@/src/features/payout-disbursement";
 import type { KycStatusResponse } from "@/types/kyc";
+import { formatAddressForDisplay } from "@/utilities/donations/helpers";
+import { formatDate } from "@/utilities/formatDate";
 import { getChainNameById } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -80,27 +82,6 @@ interface ProjectDetailsModalProps {
   onCreateDisbursement?: () => void;
 }
 
-// ─── Status display configs ──────────────────────────────────────────────────
-
-const invoiceStatusConfig: Record<InvoiceStatus, { label: string; className: string }> = {
-  not_submitted: {
-    label: "Not submitted",
-    className: "bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400",
-  },
-  submitted: {
-    label: "Submitted",
-    className: "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  },
-  received: {
-    label: "Received",
-    className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  },
-  paid: {
-    label: "Paid",
-    className: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  },
-};
-
 // ─── Payment status display config ──────────────────────────────────────────
 
 const paymentStatusConfig: Record<
@@ -129,18 +110,96 @@ const paymentStatusConfig: Record<
   },
 };
 
-function formatShortDate(iso: string | null): string | null {
-  if (!iso) return null;
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  });
+// ─── Milestone lifecycle status display config ──────────────────────────────
+
+type MilestoneEffectiveStatus = "pending" | "completed" | "verified" | "past_due";
+
+const milestoneStatusConfig: Record<
+  MilestoneEffectiveStatus,
+  { label: string; dotColor: string; textColor: string }
+> = {
+  pending: {
+    label: "Pending",
+    dotColor: "bg-gray-300 dark:bg-zinc-600",
+    textColor: "text-gray-500 dark:text-zinc-500",
+  },
+  completed: {
+    label: "Completed",
+    dotColor: "bg-blue-400",
+    textColor: "text-blue-600 dark:text-blue-400",
+  },
+  verified: {
+    label: "Verified",
+    dotColor: "bg-green-500",
+    textColor: "text-green-600 dark:text-green-400",
+  },
+  past_due: {
+    label: "Past due",
+    dotColor: "bg-amber-500",
+    textColor: "text-amber-600 dark:text-amber-400",
+  },
+};
+
+// ─── Invoice status display config (2-state) ────────────────────────────────
+
+const invoiceStatusConfig: Record<string, { label: string; className: string }> = {
+  not_submitted: {
+    label: "Not submitted",
+    className: "bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-400",
+  },
+  received: {
+    label: "Received",
+    className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+  },
+};
+
+/**
+ * Compute effective milestone status: if pending and dueDate is in the past → past_due
+ */
+function getEffectiveMilestoneStatus(
+  milestoneStatus: string | null,
+  milestoneDueDate: string | null
+): string {
+  const status = milestoneStatus || "pending";
+  if (status === "pending" && milestoneDueDate) {
+    const due = new Date(milestoneDueDate);
+    if (due.getTime() < Date.now()) {
+      return "past_due";
+    }
+  }
+  return status;
 }
 
-function formatTokenAmount(amount: string, decimals = 6): string {
-  return parseFloat(amount).toLocaleString(undefined, { maximumFractionDigits: decimals });
+/**
+ * Collapse backend's 4-state invoice status into 2-state display:
+ * "received" or "paid" → "received"; everything else → "not_submitted"
+ */
+function getInvoiceStatusKey(invoiceStatus: string): string {
+  return invoiceStatus === "received" || invoiceStatus === "paid" ? "received" : "not_submitted";
+}
+
+function getMilestoneStatusTooltip(
+  effectiveStatus: string,
+  statusUpdatedAt: string | null,
+  dueDate: string | null
+): string {
+  const fmtDate = (iso: string) => formatDate(iso, "UTC");
+  switch (effectiveStatus) {
+    case "completed":
+      return statusUpdatedAt ? `Completed on ${fmtDate(statusUpdatedAt)}` : "Completed";
+    case "verified":
+      return statusUpdatedAt ? `Verified on ${fmtDate(statusUpdatedAt)}` : "Verified";
+    case "past_due":
+      return dueDate ? `Due ${fmtDate(dueDate)}` : "Past due";
+    case "pending": {
+      const parts: string[] = [];
+      if (statusUpdatedAt) parts.push(`Created ${fmtDate(statusUpdatedAt)}`);
+      if (dueDate) parts.push(`Due ${fmtDate(dueDate)}`);
+      return parts.length > 0 ? parts.join(" · ") : "Pending";
+    }
+    default:
+      return effectiveStatus;
+  }
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -167,6 +226,7 @@ export function ProjectDetailsModal({
   const [agreementDate, setAgreementDate] = useState<string>("");
   const [confirmingUnsign, setConfirmingUnsign] = useState(false);
 
+  const [, copyToClipboard] = useCopyToClipboard();
   const toggleAgreementMutation = useToggleAgreement(communityUID);
   const saveMilestoneInvoicesMutation = useSaveMilestoneInvoices(communityUID);
 
@@ -200,12 +260,8 @@ export function ProjectDetailsModal({
   const totalsByToken = disbursementInfo?.totalsByToken || [];
   const history = disbursementInfo?.history || [];
 
-  const { pendingTx, chainInfo } = useMemo(() => {
-    const pending = history.find(
-      (d) =>
-        d.status === ("AWAITING_SIGNATURES" as PayoutDisbursementStatus) ||
-        d.status === ("PENDING" as PayoutDisbursementStatus)
-    );
+  const { awaitingTx, chainInfo } = useMemo(() => {
+    const awaiting = history.find((d) => d.status === PayoutDisbursementStatus.AWAITING_SIGNATURES);
     const chain =
       history.length > 0
         ? {
@@ -214,7 +270,7 @@ export function ProjectDetailsModal({
             tokenDecimals: history[0].tokenDecimals,
           }
         : null;
-    return { pendingTx: pending ?? null, chainInfo: chain };
+    return { awaitingTx: awaiting ?? null, chainInfo: chain };
   }, [history]);
 
   // ─── Remaining balance ────────────────────────────────────────────────────
@@ -226,9 +282,7 @@ export function ProjectDetailsModal({
 
     let totalDisbursed = 0;
     for (const t of totalsByToken) {
-      const rawAmount = BigInt(t.totalAmount || "0");
-      const decimals = t.tokenDecimals ?? 6;
-      totalDisbursed += parseFloat(formatUnits(rawAmount, decimals));
+      totalDisbursed += fromSmallestUnit(t.totalAmount || "0", t.tokenDecimals ?? 6);
     }
     const remaining = approved - totalDisbursed;
     const pct = Math.min(100, Math.round((totalDisbursed / approved) * 100));
@@ -377,9 +431,8 @@ export function ProjectDetailsModal({
 
   const handleCopyAddress = useCallback(() => {
     if (!grant?.currentPayoutAddress) return;
-    navigator.clipboard.writeText(grant.currentPayoutAddress);
-    toast.success("Address copied");
-  }, [grant?.currentPayoutAddress]);
+    copyToClipboard(grant.currentPayoutAddress, "Address copied");
+  }, [grant?.currentPayoutAddress, copyToClipboard]);
 
   const confirmDiscardEdits = useCallback(() => {
     if (hasEdits) {
@@ -484,15 +537,14 @@ export function ProjectDetailsModal({
                   <div className="flex items-center gap-1.5">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
                     <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                      Signed{" "}
-                      {formatShortDate(agreementDate ? `${agreementDate}T00:00:00Z` : null) || ""}
+                      Signed {agreementDate ? formatDate(`${agreementDate}T00:00:00Z`, "UTC") : ""}
                     </span>
                     {agreement?.signedBy && (
                       <span
                         className="text-[10px] text-gray-400 dark:text-zinc-500"
                         title={agreement.signedBy}
                       >
-                        by {agreement.signedBy.slice(0, 6)}...{agreement.signedBy.slice(-4)}
+                        by {formatAddressForDisplay(agreement.signedBy)}
                       </span>
                     )}
                     <button
@@ -547,7 +599,7 @@ export function ProjectDetailsModal({
                     className="inline-flex items-center gap-1 font-mono hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
                     title={`Click to copy: ${grant.currentPayoutAddress}`}
                   >
-                    {`${grant.currentPayoutAddress.slice(0, 6)}...${grant.currentPayoutAddress.slice(-4)}`}
+                    {formatAddressForDisplay(grant.currentPayoutAddress)}
                     <ClipboardDocumentIcon className="h-3 w-3 opacity-50" />
                   </button>
                 ) : (
@@ -560,7 +612,7 @@ export function ProjectDetailsModal({
                 <span className="font-medium">Approved:</span>
                 <span className="tabular-nums text-sm text-gray-700 dark:text-zinc-300">
                   {grant.currentAmount && parseFloat(grant.currentAmount) > 0
-                    ? `${formatTokenAmount(grant.currentAmount)}${grant.currency ? ` ${grant.currency}` : ""}`
+                    ? `${formatDisplayAmount(grant.currentAmount)}${grant.currency ? ` ${grant.currency}` : ""}`
                     : "\u2014"}
                 </span>
               </div>
@@ -593,7 +645,7 @@ export function ProjectDetailsModal({
                 <span className="text-[10px] tabular-nums text-gray-400 dark:text-zinc-500 whitespace-nowrap">
                   {remainingBalance.pct}% disbursed
                   {remainingBalance.remaining > 0 && (
-                    <> · {formatTokenAmount(String(remainingBalance.remaining))} remaining</>
+                    <> · {formatDisplayAmount(String(remainingBalance.remaining))} remaining</>
                   )}
                 </span>
               </div>
@@ -603,26 +655,25 @@ export function ProjectDetailsModal({
 
         <div className="flex-1 overflow-auto -mx-6 px-6">
           <div className="py-4 space-y-4">
-            {/* Pending transaction banner */}
-            {pendingTx && (
+            {/* Awaiting signatures banner */}
+            {awaitingTx && (
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50">
                 <ExclamationTriangleIcon className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
                 <span className="text-xs text-amber-700 dark:text-amber-300">
-                  {pendingTx.status === ("AWAITING_SIGNATURES" as PayoutDisbursementStatus)
-                    ? "Awaiting Safe signatures"
-                    : "Pending disbursement"}
-                  {" — "}
-                  {formatTokenAmount(
-                    formatUnits(
-                      BigInt(pendingTx.disbursedAmount || "0"),
-                      pendingTx.tokenDecimals ?? 6
+                  Awaiting Safe signatures{" — "}
+                  {formatDisplayAmount(
+                    String(
+                      fromSmallestUnit(
+                        awaitingTx.disbursedAmount || "0",
+                        awaitingTx.tokenDecimals ?? 6
+                      )
                     )
                   )}{" "}
-                  {pendingTx.token}
-                  {pendingTx.createdAt && (
+                  {awaitingTx.token}
+                  {awaitingTx.createdAt && (
                     <span className="text-amber-500 dark:text-amber-400/70">
                       {" "}
-                      since {formatShortDate(pendingTx.createdAt)}
+                      since {formatDate(awaitingTx.createdAt, "UTC")}
                     </span>
                   )}
                 </span>
@@ -652,7 +703,7 @@ export function ProjectDetailsModal({
             {/* Milestones table — invoice columns only shown when program requires invoices */}
             <div>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1">
-                {invoiceRequired ? "Milestone Invoices" : "Milestones"} ({milestoneInvoices.length})
+                Milestones ({milestoneInvoices.length})
               </h3>
               {invoiceRequired && (
                 <p className="text-xs text-gray-400 dark:text-zinc-500 mb-3">
@@ -662,172 +713,210 @@ export function ProjectDetailsModal({
 
               {milestoneInvoices.length === 0 ? (
                 <p className="text-sm text-gray-500 dark:text-zinc-400 py-4 text-center">
-                  No milestone invoices configured yet.
+                  No milestones configured yet.
                 </p>
               ) : (
-                <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-zinc-700">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
-                        <th className="text-left py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[160px]">
-                          Milestone
-                        </th>
-                        <th className="text-right py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[80px]">
-                          Allocation
-                        </th>
-                        {invoiceRequired && (
+                <TooltipProvider delayDuration={150}>
+                  <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-zinc-700">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
+                          <th className="text-left py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[140px]">
+                            Milestone
+                          </th>
                           <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[100px]">
-                            Status
+                            Milestone Status
                           </th>
-                        )}
-                        {invoiceRequired && (
-                          <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[130px]">
-                            Invoice Received
+                          <th className="text-right py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[80px]">
+                            Allocation
                           </th>
-                        )}
-                        <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[110px]">
-                          Payment
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                      {milestoneInvoices.map((invoice, idx) => {
-                        const mKey = getMilestoneKey(invoice, idx);
-                        const receivedDateValue = getInvoiceReceivedDate(invoice, idx);
-                        const invoiceCfg =
-                          invoiceStatusConfig[invoice.invoiceStatus as InvoiceStatus] ||
-                          invoiceStatusConfig.not_submitted;
-                        const paymentCfg = paymentStatusConfig[invoice.paymentStatus ?? "unpaid"];
-                        const isEdited = milestoneEdits[mKey] !== undefined;
-                        const isCleared =
-                          isEdited &&
-                          milestoneEdits[mKey]?.invoiceReceivedAt === null &&
-                          invoice.invoiceReceivedAt !== null;
+                          {invoiceRequired && (
+                            <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[110px]">
+                              Invoice Status
+                            </th>
+                          )}
+                          {invoiceRequired && (
+                            <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[130px]">
+                              Received
+                            </th>
+                          )}
+                          <th className="text-center py-3 px-3 font-medium text-gray-600 dark:text-zinc-400 min-w-[110px]">
+                            Payment
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                        {milestoneInvoices.map((invoice, idx) => {
+                          const mKey = getMilestoneKey(invoice, idx);
+                          const receivedDateValue = getInvoiceReceivedDate(invoice, idx);
+                          const paymentCfg = paymentStatusConfig[invoice.paymentStatus ?? "unpaid"];
+                          const effectiveMsStatus = getEffectiveMilestoneStatus(
+                            invoice.milestoneStatus,
+                            invoice.milestoneDueDate
+                          );
+                          const msCfg =
+                            milestoneStatusConfig[effectiveMsStatus as MilestoneEffectiveStatus] ??
+                            milestoneStatusConfig.pending;
+                          const msTooltip = getMilestoneStatusTooltip(
+                            effectiveMsStatus,
+                            invoice.milestoneStatusUpdatedAt,
+                            invoice.milestoneDueDate
+                          );
+                          const invStatusKey = getInvoiceStatusKey(invoice.invoiceStatus);
+                          const invCfg = invoiceStatusConfig[invStatusKey];
+                          const isEdited = milestoneEdits[mKey] !== undefined;
+                          const isCleared =
+                            isEdited &&
+                            milestoneEdits[mKey]?.invoiceReceivedAt === null &&
+                            invoice.invoiceReceivedAt !== null;
 
-                        return (
-                          <tr
-                            key={invoice.milestoneUID || `${invoice.milestoneLabel}-${idx}`}
-                            className={cn(
-                              "transition-colors",
-                              isCleared
-                                ? "bg-amber-50/50 dark:bg-amber-900/10"
-                                : isEdited
-                                  ? "bg-blue-50/50 dark:bg-blue-900/10"
-                                  : "bg-white dark:bg-zinc-950"
-                            )}
-                          >
-                            <td className="py-3 px-3">
-                              <div className="flex items-center gap-1.5">
-                                {isEdited && (
-                                  <span
-                                    className={cn(
-                                      "h-1.5 w-1.5 rounded-full shrink-0",
-                                      isCleared ? "bg-amber-400" : "bg-blue-400"
-                                    )}
-                                  />
-                                )}
-                                <span className="font-medium text-gray-900 dark:text-zinc-100 line-clamp-2">
-                                  {invoice.milestoneLabel}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="py-3 px-3 text-right">
-                              {(() => {
-                                const amount =
-                                  invoice.allocatedAmount ??
-                                  (invoice.milestoneUID
-                                    ? allocationByUID.get(invoice.milestoneUID)
-                                    : undefined) ??
-                                  null;
-                                if (amount !== null) {
-                                  return (
-                                    <span className="text-xs tabular-nums text-gray-700 dark:text-zinc-300">
-                                      {formatTokenAmount(amount)}
-                                      {grant.currency && (
-                                        <span className="text-gray-400 dark:text-zinc-500 ml-0.5">
-                                          {grant.currency}
-                                        </span>
+                          return (
+                            <tr
+                              key={invoice.milestoneUID || `${invoice.milestoneLabel}-${idx}`}
+                              className={cn(
+                                "transition-colors",
+                                isCleared
+                                  ? "bg-amber-50/50 dark:bg-amber-900/10"
+                                  : isEdited
+                                    ? "bg-blue-50/50 dark:bg-blue-900/10"
+                                    : "bg-white dark:bg-zinc-950"
+                              )}
+                            >
+                              <td className="py-3 px-3">
+                                <div className="flex items-center gap-1.5">
+                                  {isEdited && (
+                                    <span
+                                      className={cn(
+                                        "h-1.5 w-1.5 rounded-full shrink-0",
+                                        isCleared ? "bg-amber-400" : "bg-blue-400"
                                       )}
+                                    />
+                                  )}
+                                  <span className="font-medium text-gray-900 dark:text-zinc-100 line-clamp-2">
+                                    {invoice.milestoneLabel}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="py-3 px-3 text-center">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span
+                                      className={cn(
+                                        "inline-flex items-center gap-1.5 text-xs font-medium cursor-default",
+                                        msCfg.textColor
+                                      )}
+                                    >
+                                      <span
+                                        className={cn(
+                                          "h-1.5 w-1.5 rounded-full shrink-0",
+                                          msCfg.dotColor
+                                        )}
+                                      />
+                                      {msCfg.label}
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{msTooltip}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </td>
+                              <td className="py-3 px-3 text-right">
+                                {(() => {
+                                  const amount =
+                                    invoice.allocatedAmount ??
+                                    (invoice.milestoneUID
+                                      ? allocationByUID.get(invoice.milestoneUID)
+                                      : undefined) ??
+                                    null;
+                                  if (amount !== null) {
+                                    return (
+                                      <span className="text-xs tabular-nums text-gray-700 dark:text-zinc-300">
+                                        {formatDisplayAmount(amount)}
+                                        {grant.currency && (
+                                          <span className="text-gray-400 dark:text-zinc-500 ml-0.5">
+                                            {grant.currency}
+                                          </span>
+                                        )}
+                                      </span>
+                                    );
+                                  }
+                                  return (
+                                    <span className="text-xs text-gray-300 dark:text-zinc-600">
+                                      &mdash;
                                     </span>
                                   );
-                                }
-                                return (
-                                  <span className="text-xs text-gray-300 dark:text-zinc-600">
-                                    &mdash;
-                                  </span>
-                                );
-                              })()}
-                            </td>
-                            {invoiceRequired && (
-                              <td className="py-3 px-3 text-center">
-                                <span
-                                  className={cn(
-                                    "inline-flex px-2 py-0.5 rounded-full text-xs font-medium",
-                                    invoiceCfg.className
-                                  )}
-                                >
-                                  {invoiceCfg.label}
-                                </span>
+                                })()}
                               </td>
-                            )}
-                            {invoiceRequired && (
+                              {invoiceRequired && (
+                                <td className="py-3 px-3 text-center">
+                                  <span
+                                    className={cn(
+                                      "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
+                                      invCfg.className
+                                    )}
+                                  >
+                                    {invCfg.label}
+                                  </span>
+                                </td>
+                              )}
+                              {invoiceRequired && (
+                                <td className="py-3 px-3 text-center">
+                                  <div className="flex flex-col items-center gap-0.5">
+                                    <Input
+                                      type="date"
+                                      max={todayLocal}
+                                      value={receivedDateValue ?? ""}
+                                      onChange={(e) =>
+                                        handleInvoiceReceivedDateChange(
+                                          mKey,
+                                          invoice.milestoneUID,
+                                          e.target.value
+                                        )
+                                      }
+                                      className="h-7 text-xs w-[140px] mx-auto bg-white dark:bg-zinc-900"
+                                      aria-label={`Invoice received date for ${invoice.milestoneLabel}`}
+                                    />
+                                    {invoice.invoiceReceivedBy && (
+                                      <span
+                                        className="text-[10px] text-gray-400 dark:text-zinc-500 font-mono"
+                                        title={invoice.invoiceReceivedBy}
+                                      >
+                                        by {formatAddressForDisplay(invoice.invoiceReceivedBy)}
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                              )}
                               <td className="py-3 px-3 text-center">
                                 <div className="flex flex-col items-center gap-0.5">
-                                  <Input
-                                    type="date"
-                                    max={todayLocal}
-                                    value={receivedDateValue ?? ""}
-                                    onChange={(e) =>
-                                      handleInvoiceReceivedDateChange(
-                                        mKey,
-                                        invoice.milestoneUID,
-                                        e.target.value
-                                      )
-                                    }
-                                    className="h-7 text-xs w-[140px] mx-auto bg-white dark:bg-zinc-900"
-                                    aria-label={`Invoice received date for ${invoice.milestoneLabel}`}
-                                  />
-                                  {invoice.invoiceReceivedBy && (
+                                  <span
+                                    className={cn(
+                                      "inline-flex items-center gap-1.5 text-xs font-medium",
+                                      paymentCfg.textColor
+                                    )}
+                                  >
                                     <span
-                                      className="text-[10px] text-gray-400 dark:text-zinc-500 font-mono"
-                                      title={invoice.invoiceReceivedBy}
-                                    >
-                                      by {invoice.invoiceReceivedBy.slice(0, 6)}...
-                                      {invoice.invoiceReceivedBy.slice(-4)}
+                                      className={cn(
+                                        "h-1.5 w-1.5 rounded-full shrink-0",
+                                        paymentCfg.dotColor
+                                      )}
+                                    />
+                                    {paymentCfg.label}
+                                  </span>
+                                  {invoice.paymentStatusDate && (
+                                    <span className="text-[10px] text-gray-400 dark:text-zinc-500 tabular-nums">
+                                      {formatDate(invoice.paymentStatusDate, "UTC")}
                                     </span>
                                   )}
                                 </div>
                               </td>
-                            )}
-                            <td className="py-3 px-3 text-center">
-                              <div className="flex flex-col items-center gap-0.5">
-                                <span
-                                  className={cn(
-                                    "inline-flex items-center gap-1.5 text-xs font-medium",
-                                    paymentCfg.textColor
-                                  )}
-                                >
-                                  <span
-                                    className={cn(
-                                      "h-1.5 w-1.5 rounded-full shrink-0",
-                                      paymentCfg.dotColor
-                                    )}
-                                  />
-                                  {paymentCfg.label}
-                                </span>
-                                {invoice.paymentStatusDate && (
-                                  <span className="text-[10px] text-gray-400 dark:text-zinc-500 tabular-nums">
-                                    {formatShortDate(invoice.paymentStatusDate)}
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </TooltipProvider>
               )}
             </div>
           </div>

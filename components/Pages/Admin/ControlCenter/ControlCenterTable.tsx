@@ -11,8 +11,9 @@ import type {
   CommunityPayoutsSorting,
   TokenTotal,
 } from "@/src/features/payout-disbursement";
-import { TokenBreakdown } from "@/src/features/payout-disbursement";
+import { formatDisplayAmount, TokenBreakdown } from "@/src/features/payout-disbursement";
 import type { KycStatusResponse } from "@/types/kyc";
+import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 import { cn } from "@/utilities/tailwind";
 import { SortIcon } from "./ControlCenterColumns";
 import { AgreementBadge, ProgressCell } from "./StatusBadges";
@@ -141,7 +142,7 @@ const ControlCenterTableRow = memo(function ControlCenterTableRow({
           title={item.currentPayoutAddress || "Not configured"}
         >
           {item.currentPayoutAddress ? (
-            `${item.currentPayoutAddress.slice(0, 6)}...${item.currentPayoutAddress.slice(-4)}`
+            formatAddressForDisplay(item.currentPayoutAddress)
           ) : (
             <span className="text-gray-400 dark:text-zinc-600">&mdash;</span>
           )}
@@ -160,9 +161,7 @@ const ControlCenterTableRow = memo(function ControlCenterTableRow({
       {/* Total Grant */}
       <td className="px-4 py-3 text-right tabular-nums text-sm font-medium text-gray-900 dark:text-zinc-100">
         {item.currentAmount && parseFloat(item.currentAmount) > 0 ? (
-          parseFloat(item.currentAmount).toLocaleString(undefined, {
-            maximumFractionDigits: 6,
-          })
+          formatDisplayAmount(item.currentAmount, 6)
         ) : (
           <span className="text-gray-400 dark:text-zinc-600">&mdash;</span>
         )}
