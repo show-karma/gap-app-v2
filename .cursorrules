@@ -4,7 +4,7 @@ This file provides specific guidance for working with the gap-app-v2 Next.js fro
 
 ## Project Overview
 
-gap-app-v2 is the main Next.js 15.3.3 frontend application for Karma GAP, built with:
+gap-app-v2 is the main Next.js 15.3.3 frontend application for Karma, built with:
 - React 19
 - TailwindCSS 3.x
 - shadcn/ui components

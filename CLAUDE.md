@@ -2,7 +2,7 @@
 
 **Purpose**: Route AI assistants to the correct code and patterns. Nothing else.
 
-**Project**: gap-app-v2 is the main frontend for the Grantee Accountability Protocol (GAP). It lets grant programs create projects, track milestones, and manage community reviews via EAS attestations on-chain. Part of a monorepo — see the parent repo's `CLAUDE.md` for cross-project guidance.
+**Project**: gap-app-v2 is the main frontend for Karma. It lets grant programs create projects, track milestones, and manage community reviews via EAS attestations on-chain. Part of a monorepo — see the parent repo's `CLAUDE.md` for cross-project guidance.
 
 ---
 

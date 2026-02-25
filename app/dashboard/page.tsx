@@ -3,7 +3,7 @@ import { defaultMetadata } from "@/utilities/meta";
 
 export const metadata = {
   ...defaultMetadata,
-  title: "Dashboard | Karma GAP",
+  title: "Dashboard | Karma",
 };
 
 export default function Page() {

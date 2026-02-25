@@ -4,7 +4,7 @@ import "@testing-library/jest-dom";
 
 // Mock child components
 jest.mock("@/src/components/shared/logo", () => ({
-  Logo: () => <div data-testid="logo">Karma GAP</div>,
+  Logo: () => <div data-testid="logo">Karma</div>,
 }));
 
 jest.mock("@/src/components/footer/newsletter", () => ({

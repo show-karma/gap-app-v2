@@ -7,7 +7,7 @@ import { SeedsHowItWorks } from "@/src/features/seeds/components/how-it-works";
 import { SeedsProjectsSection } from "@/src/features/seeds/components/projects-section";
 
 export const metadata: Metadata = {
-  title: "Fund Projects with Karma Seeds | Karma GAP",
+  title: "Fund Projects with Karma Seeds | Karma",
   description:
     "Support projects you believe in for just $1 per seed. Karma Seeds are ERC-20 tokens that give you on-chain proof of early backing.",
   keywords: [
