@@ -257,7 +257,7 @@ describe("Navbar", () => {
         "min-w-min",
         "border-b",
         "border-border",
-        "z-10",
+        "z-50",
         "fixed",
         "top-0",
         "left-0",

@@ -5,8 +5,10 @@ import { SOCIALS } from "@/utilities/socials";
 
 export function JoinDiscordButton() {
   return (
-    <a href={SOCIALS.DISCORD} target="_blank" rel="noopener noreferrer">
-      <Button variant="outline">Join Discord</Button>
-    </a>
+    <Button variant="outline" asChild>
+      <a href={SOCIALS.DISCORD} target="_blank" rel="noopener noreferrer">
+        Join Discord
+      </a>
+    </Button>
   );
 }

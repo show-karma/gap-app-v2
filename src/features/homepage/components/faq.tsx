@@ -101,18 +101,18 @@ export function FAQ() {
             </div>
 
             <div className="flex items-center md:flex-row flex-col gap-4">
-              <ExternalLink href={SOCIALS.TELEGRAM}>
-                <Button variant="outline">
+              <Button variant="outline" asChild>
+                <ExternalLink href={SOCIALS.TELEGRAM}>
                   <MessageCircleMore className="w-4 h-4" />
                   Ask in Telegram
-                </Button>
-              </ExternalLink>
-              <ExternalLink href={SOCIALS.DISCORD}>
-                <Button variant="outline">
+                </ExternalLink>
+              </Button>
+              <Button variant="outline" asChild>
+                <ExternalLink href={SOCIALS.DISCORD}>
                   <MessageCircleMore className="w-4 h-4" />
                   Ask in Discord
-                </Button>
-              </ExternalLink>
+                </ExternalLink>
+              </Button>
             </div>
           </div>
         </div>

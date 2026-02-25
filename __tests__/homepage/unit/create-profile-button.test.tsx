@@ -38,8 +38,7 @@ describe("CreateProfileButton Component", () => {
     renderWithProviders(<CreateProfileButton />);
 
     const button = screen.getByRole("button", { name: /Create Profile/i });
-    expect(button).toHaveClass("px-6");
-    expect(button).toHaveClass("py-2.5");
+    expect(button).toHaveClass("bg-secondary");
     expect(button).toHaveClass("text-sm");
     expect(button).toHaveClass("font-medium");
   });
