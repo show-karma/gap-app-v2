@@ -128,6 +128,9 @@ export function createMockInvoice(
   return {
     milestoneLabel: "Milestone 1",
     milestoneUID: "milestone-uid-1",
+    milestoneStatus: null,
+    milestoneDueDate: null,
+    milestoneStatusUpdatedAt: null,
     invoiceStatus: "received" as const,
     invoiceReceivedAt: "2024-06-10T00:00:00Z",
     invoiceReceivedBy: null,

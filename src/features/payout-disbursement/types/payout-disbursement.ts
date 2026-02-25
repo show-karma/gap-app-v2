@@ -210,6 +210,9 @@ export type MilestonePaymentStatus = "unpaid" | "pending" | "awaiting_signatures
 export interface CommunityPayoutInvoiceInfo {
   milestoneLabel: string;
   milestoneUID: string | null;
+  milestoneStatus: string | null;
+  milestoneDueDate: string | null;
+  milestoneStatusUpdatedAt: string | null;
   invoiceStatus: InvoiceStatus;
   invoiceReceivedAt: string | null;
   invoiceReceivedBy: string | null;
