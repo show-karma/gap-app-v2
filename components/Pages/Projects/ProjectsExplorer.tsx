@@ -4,7 +4,7 @@ import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import debounce from "lodash.debounce";
 import { useQueryState } from "nuqs";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -29,6 +29,9 @@ const sortOptions: Record<ExplorerSortByOptions, string> = {
 };
 
 export const ProjectsExplorer = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const hasScrolledRef = useRef(false);
+
   // URL state for search
   const [searchQuery, setSearchQuery] = useQueryState("q", {
     defaultValue: "",
@@ -48,6 +51,30 @@ export const ProjectsExplorer = () => {
     serialize: (value) => value,
     parse: (value) => (value as ExplorerSortOrder) || "desc",
   });
+
+  // URL state for hasPayoutAddress filter
+  const [hasPayoutAddress, setHasPayoutAddress] = useQueryState("hasPayoutAddress", {
+    defaultValue: "",
+    serialize: (value) => value || "",
+    parse: (value) => value || "",
+  });
+
+  const isPayoutAddressFilterActive = hasPayoutAddress === "true";
+
+  // Auto-scroll to project list when navigated with filter/sort params from navbar
+  useEffect(() => {
+    if (hasScrolledRef.current) return;
+
+    const hasFilterParams =
+      isPayoutAddressFilterActive || selectedSort !== "updatedAt" || selectedSortOrder !== "desc";
+
+    if (hasFilterParams) {
+      hasScrolledRef.current = true;
+      requestAnimationFrame(() => {
+        sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }, [isPayoutAddressFilterActive, selectedSort, selectedSortOrder]);
 
   // Internal search state for debouncing
   const [inputValue, setInputValue] = useState(searchQuery || "");
@@ -93,6 +120,7 @@ export const ProjectsExplorer = () => {
     search: searchQuery,
     sortBy: selectedSort as ExplorerSortByOptions,
     sortOrder: selectedSortOrder as ExplorerSortOrder,
+    hasPayoutAddress: isPayoutAddressFilterActive,
   });
 
   // Handle sort change
@@ -109,7 +137,11 @@ export const ProjectsExplorer = () => {
   };
 
   return (
-    <section id="browse-projects" className="w-full max-w-7xl mx-auto px-4 py-8 mt-8">
+    <section
+      ref={sectionRef}
+      id="browse-projects"
+      className="w-full max-w-7xl mx-auto px-4 py-8 mt-8"
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
@@ -122,7 +154,7 @@ export const ProjectsExplorer = () => {
         </div>
 
         {/* Controls */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-6">
           {/* Search Input */}
           <div className="relative">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -135,6 +167,30 @@ export const ProjectsExplorer = () => {
               className="w-full sm:w-64 pl-10 pr-4 py-2 rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             />
           </div>
+
+          {/* Raising Funds Filter */}
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={isPayoutAddressFilterActive}
+              onChange={() => setHasPayoutAddress(isPayoutAddressFilterActive ? null : "true")}
+              className="sr-only peer"
+            />
+            <span
+              className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors ${
+                isPayoutAddressFilterActive ? "bg-blue-600" : "bg-gray-300 dark:bg-zinc-600"
+              } peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-2`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${
+                  isPayoutAddressFilterActive ? "translate-x-4" : "translate-x-0"
+                }`}
+              />
+            </span>
+            <span className="text-sm font-medium text-gray-700 dark:text-zinc-300 whitespace-nowrap">
+              Raising Funds
+            </span>
+          </label>
 
           {/* Sort Dropdown */}
           <div className="flex items-center gap-x-2">
@@ -196,7 +252,11 @@ export const ProjectsExplorer = () => {
         </div>
       ) : projects.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
-          {searchQuery ? `No projects found for "${searchQuery}"` : "No projects available"}
+          {searchQuery
+            ? `No projects found for "${searchQuery}"`
+            : isPayoutAddressFilterActive
+              ? "No projects are currently raising funds"
+              : "No projects available"}
         </div>
       ) : (
         <>

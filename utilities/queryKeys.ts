@@ -190,6 +190,7 @@ export const QUERY_KEYS = {
       sortBy?: string;
       sortOrder?: string;
       limit?: number;
+      hasPayoutAddress?: boolean;
     }) =>
       [
         "projects-explorer-infinite",
@@ -197,6 +198,7 @@ export const QUERY_KEYS = {
         params.sortBy || "updatedAt",
         params.sortOrder || "desc",
         params.limit ?? 50,
+        params.hasPayoutAddress ?? false,
       ] as const,
   },
   INDICATORS: {
