@@ -53,7 +53,7 @@ export const ProjectsExplorer = () => {
   });
 
   // URL state for hasPayoutAddress filter
-  const [hasPayoutAddress] = useQueryState("hasPayoutAddress", {
+  const [hasPayoutAddress, setHasPayoutAddress] = useQueryState("hasPayoutAddress", {
     defaultValue: "",
     serialize: (value) => value || "",
     parse: (value) => value || "",
@@ -169,6 +169,25 @@ export const ProjectsExplorer = () => {
               className="w-full sm:w-64 pl-10 pr-4 py-2 rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             />
           </div>
+
+          {/* Raising Funds Filter */}
+          <button
+            type="button"
+            onClick={() => setHasPayoutAddress(isPayoutAddressFilterActive ? null : "true")}
+            aria-label={
+              isPayoutAddressFilterActive
+                ? "Remove Raising Funds filter"
+                : "Filter by Raising Funds"
+            }
+            aria-pressed={isPayoutAddressFilterActive}
+            className={`px-3 py-2 rounded-md border text-sm font-medium transition-colors whitespace-nowrap ${
+              isPayoutAddressFilterActive
+                ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
+                : "bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 border-gray-300 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700"
+            }`}
+          >
+            Raising Funds
+          </button>
 
           {/* Sort Dropdown */}
           <div className="flex items-center gap-x-2">
