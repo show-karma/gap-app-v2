@@ -46,7 +46,8 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
     setIsOpen(false);
   }
 
-  const { startAttestation, changeStepperStep, showSuccess, dismiss } = useAttestationToast();
+  const { startAttestation, changeStepperStep, showSuccess, showError, dismiss } =
+    useAttestationToast();
 
   const { openShareDialog } = useShareDialogStore();
 
@@ -151,7 +152,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
       });
       closeModal();
     } catch (error: unknown) {
-      dismiss();
+      showError("Failed to create endorsement. Please try again.");
       errorManager(`Error of user ${address} endorsing project ${project?.uid}`, error, {
         projectUID: project?.uid,
         address,
