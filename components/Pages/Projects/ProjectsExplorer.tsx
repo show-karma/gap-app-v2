@@ -145,9 +145,7 @@ export const ProjectsExplorer = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-black dark:text-white">
-            {isPayoutAddressFilterActive ? "Projects Raising Funds" : "Projects on Karma"}
-          </h2>
+          <h2 className="text-2xl font-bold text-black dark:text-white">Projects on Karma</h2>
           {!isLoading && totalCount > 0 && (
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               {totalCount.toLocaleString()} {totalCount === 1 ? "project" : "projects"} found
@@ -171,23 +169,28 @@ export const ProjectsExplorer = () => {
           </div>
 
           {/* Raising Funds Filter */}
-          <button
-            type="button"
-            onClick={() => setHasPayoutAddress(isPayoutAddressFilterActive ? null : "true")}
-            aria-label={
-              isPayoutAddressFilterActive
-                ? "Remove Raising Funds filter"
-                : "Filter by Raising Funds"
-            }
-            aria-pressed={isPayoutAddressFilterActive}
-            className={`px-3 py-2 rounded-md border text-sm font-medium transition-colors whitespace-nowrap ${
-              isPayoutAddressFilterActive
-                ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
-                : "bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 border-gray-300 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700"
-            }`}
-          >
-            Raising Funds
-          </button>
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={isPayoutAddressFilterActive}
+              onChange={() => setHasPayoutAddress(isPayoutAddressFilterActive ? null : "true")}
+              className="sr-only peer"
+            />
+            <span
+              className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors ${
+                isPayoutAddressFilterActive ? "bg-blue-600" : "bg-gray-300 dark:bg-zinc-600"
+              } peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-2`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${
+                  isPayoutAddressFilterActive ? "translate-x-4" : "translate-x-0"
+                }`}
+              />
+            </span>
+            <span className="text-sm font-medium text-gray-700 dark:text-zinc-300 whitespace-nowrap">
+              Raising Funds
+            </span>
+          </label>
 
           {/* Sort Dropdown */}
           <div className="flex items-center gap-x-2">
