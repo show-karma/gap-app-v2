@@ -1,7 +1,6 @@
 import {
   BanknoteArrowDown,
   BellDot,
-  Flame,
   GalleryThumbnails,
   GoalIcon,
   LayoutGrid,
@@ -85,9 +84,9 @@ export const exploreItems: ExploreItems = {
       title: "All projects",
     },
     {
-      href: `${PAGES.PROJECTS_EXPLORER}?sortBy=noOfGrants&sortOrder=desc`,
-      icon: Flame,
-      title: "Most Grants",
+      href: `${PAGES.PROJECTS_EXPLORER}?hasPayoutAddress=true`,
+      icon: BanknoteArrowDown,
+      title: "Raising Funds",
     },
     {
       href: `${PAGES.PROJECTS_EXPLORER}?sortBy=noOfGrantMilestones&sortOrder=desc`,

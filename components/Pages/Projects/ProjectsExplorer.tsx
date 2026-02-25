@@ -4,7 +4,7 @@ import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import debounce from "lodash.debounce";
 import { useQueryState } from "nuqs";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -29,6 +29,9 @@ const sortOptions: Record<ExplorerSortByOptions, string> = {
 };
 
 export const ProjectsExplorer = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const hasScrolledRef = useRef(false);
+
   // URL state for search
   const [searchQuery, setSearchQuery] = useQueryState("q", {
     defaultValue: "",
@@ -48,6 +51,30 @@ export const ProjectsExplorer = () => {
     serialize: (value) => value,
     parse: (value) => (value as ExplorerSortOrder) || "desc",
   });
+
+  // URL state for hasPayoutAddress filter
+  const [hasPayoutAddress] = useQueryState("hasPayoutAddress", {
+    defaultValue: "",
+    serialize: (value) => value || "",
+    parse: (value) => value || "",
+  });
+
+  const isPayoutAddressFilterActive = hasPayoutAddress === "true";
+
+  // Auto-scroll to project list when navigated with filter/sort params from navbar
+  useEffect(() => {
+    if (hasScrolledRef.current) return;
+
+    const hasFilterParams =
+      isPayoutAddressFilterActive || selectedSort !== "updatedAt" || selectedSortOrder !== "desc";
+
+    if (hasFilterParams) {
+      hasScrolledRef.current = true;
+      requestAnimationFrame(() => {
+        sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }, [isPayoutAddressFilterActive, selectedSort, selectedSortOrder]);
 
   // Internal search state for debouncing
   const [inputValue, setInputValue] = useState(searchQuery || "");
@@ -93,6 +120,7 @@ export const ProjectsExplorer = () => {
     search: searchQuery,
     sortBy: selectedSort as ExplorerSortByOptions,
     sortOrder: selectedSortOrder as ExplorerSortOrder,
+    hasPayoutAddress: isPayoutAddressFilterActive,
   });
 
   // Handle sort change
@@ -109,11 +137,17 @@ export const ProjectsExplorer = () => {
   };
 
   return (
-    <section id="browse-projects" className="w-full max-w-7xl mx-auto px-4 py-8 mt-8">
+    <section
+      ref={sectionRef}
+      id="browse-projects"
+      className="w-full max-w-7xl mx-auto px-4 py-8 mt-8"
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-black dark:text-white">Projects on Karma</h2>
+          <h2 className="text-2xl font-bold text-black dark:text-white">
+            {isPayoutAddressFilterActive ? "Projects Raising Funds" : "Projects on Karma"}
+          </h2>
           {!isLoading && totalCount > 0 && (
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               {totalCount.toLocaleString()} {totalCount === 1 ? "project" : "projects"} found
@@ -196,7 +230,11 @@ export const ProjectsExplorer = () => {
         </div>
       ) : projects.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
-          {searchQuery ? `No projects found for "${searchQuery}"` : "No projects available"}
+          {searchQuery
+            ? `No projects found for "${searchQuery}"`
+            : isPayoutAddressFilterActive
+              ? "No projects are currently raising funds"
+              : "No projects available"}
         </div>
       ) : (
         <>
