@@ -62,7 +62,7 @@ Design your funding program, set evaluation criteria, and go live. Start receivi
 ### Projects
 
 Browse projects that use Karma to track grants, share updates, and build public reputation.
-Thousands of projects utilize Karma GAP to track their grants, share project progress and build reputation. Explore projects making a difference.
+Thousands of projects utilize Karma to track their grants, share project progress and build reputation. Explore projects making a difference.
 Discover projects. Evaluate track records and traction. Fund with confidence
 Explore thousands of Web3 projects with verified milestones and onchain reputation. See
 who's shipping, who's funded, and who delivers.
@@ -192,8 +192,6 @@ Karma with Grantee Accountability Protocol is here to empower you as a grantee a
 
 #### Add Grant to Project
 
-Once you've created your project, you can now add a grant you've received. You can add all the grants you have received from various ecosystems. This will help build your reputation. All the grants will be linked to your project
-
 Follow the steps below to add your grant
 
 ###### Step 1: Add new grant
@@ -229,8 +227,6 @@ Select your grant where you want to add your milestone and click on "Add a new m
 **Milestone update**: If the milestone is already complete, offer details on the achievement and include verifiable proof of completion.
 
 #### Add Team members
-
-This page explains how project owners can add team members to their Karma project and grant admin privileges that allow those members to manage the profile and post updates.
 
 ###### Step 1: Generate an Invitation
 
@@ -270,8 +266,6 @@ _Note: Only the project owner and designated admins can manage team members and 
 
 #### Create Project
 
-Creating a project is the first big step and you have to do this only once. Follow the steps to create your project profile.
-
 Don't add your grant details here. This is to just tell the entire world how awesome your project is :)
 
 We have partnered with many grant platforms such as Gitcoin and Octant to automatically sync your project to Karma. If your project is on one of these platforms, it is highly likely that your project already exists in Karma and you won't have to create it again.
@@ -302,7 +296,7 @@ Fill in all the details and click "Create Project" button. Your project is store
 
 #### Login with Safe
 
-Karma supports logging in with Safe wallet. Follow the instructions in the video below to login with Safe.
+
 
 #### Merge projects
 
@@ -420,8 +414,6 @@ How can Karma benefit you?
 
 #### Categorize grants
 
-Grant managers can categorize various grants issued in their community. Categorizing grants has two benefits:
-
 **Benefit 1**
 
 In the community page, anyone can view grants filtered by categories. This is useful for any community members who are interested in only certain types of projects (DeFi, NFT etc.)
@@ -442,8 +434,6 @@ Grant managers can configure questions for reviews/ratings specific to each gran
 
 #### Grant review
 
-Karma has the review feature that can be utilized by grant managers to review grants. Reviewing a grant involves configuring a series of questions the grantee, community members and grant operators can answer to better understand the impact of the grant.
-
 Before reviewing a grant, managers can configure the questions they would like answered. Questions can be assigned to each category of grants. To assign a question
 
 1. Navigate to the "Assign questions" in the admin portal
@@ -453,8 +443,6 @@ Before reviewing a grant, managers can configure the questions they would like a
 3. Assign questions to each category and save.
 
 #### Impact Measurement
-
-Karma includes built-in impact measurement features that help **program operators** and **grantees** track, verify, and communicate the real-world impact of funded projects.
 
 The system is inspired by the **Common Impact Data Standard (** [**CIDS** ](https://www.commonapproach.org/common-impact-data-standard) **)**, a widely used framework for structuring impact around **outputs**, **outcomes**, and **indicators**.
 Karma adapts these ideas into a **practical, onchain-native workflow** suitable for web3 programs.
@@ -713,8 +701,6 @@ Karma funding platform supports two types of reviewers:
 - Milestone Reviewers
 
 #### Application Review Guide
-
-Application reviewers are responsible for evaluating incoming grant applications and making approve/reject decisions. This guide walks you through the review process step by step.
 
 ###### Getting Started
 
@@ -1180,8 +1166,6 @@ We're excited to support your work on Filecoin. Good luck with your milestones!
 
 #### Global Stablecoin Hackathon
 
-Global Stablecoin Hackathon is a 3-week virtual hackathon from April 11 to May 2 with $25K prize pool!
-
 ##### Follow the steps below to Submit your project for Global Stablecoin Hackathon
 
 ###### Step 1: Add your project profile
@@ -1247,8 +1231,6 @@ You should now be able to see your milestones in Octant application.
 **If you still don't see the milestones, contact us on** [**Telegram** ](https://t.me/karmahq) **or** [**Discord** ](https://discord.com/invite/X4fwgzPReJ) **and we will be glad to assist you.**
 
 #### UNICEF
-
-The UNICEF Venture Fund provides funding to projects on a biannual basis. Funded projects are required to create a Karma project profile, add funding details, define milestones, and share progress updates regularly. Below you'll find step-by-step instructions for completing each of these tasks.
 
 ##### Follow the step by step instructions
 

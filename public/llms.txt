@@ -18,40 +18,40 @@ Karma is a platform where ecosystems allocate funding, track milestones, and mea
 
 ## Documentation
 - [Why Karma](https://docs.gap.karmahq.xyz): Overview — Why Karma
-- [How does it work?](https://docs.gap.karmahq.xyz/overview/how-does-it-work): Overview — How does it work?
-- [Supported Networks](https://docs.gap.karmahq.xyz/overview/supported-networks): Overview — Supported Networks
-- [For Builders](https://docs.gap.karmahq.xyz/how-to-guides/for-builders): For Builders — For Builders
-- [Add Grant to Project](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/add-grant-to-project): For Builders — Add Grant to Project
-- [Add Milestone](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/add-milestone): For Builders — Add Milestone
-- [Add Team members](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/add-team-members): For Builders — Adding Team Members & Setting Admin Permissions This page explains how project owners can add team members to their Karma project and grant admin privileges that allow those members to manage the profile and post updates.
-- [Create Project](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project): For Builders — Create Project
-- [Login with Safe](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/login-with-safe): For Builders — Login with Safe
-- [Merge projects](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/merge-projects): For Builders — Merge projects
-- [Post grant update](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/post-grant-update): For Builders — Post grant update
-- [Post Milestone update](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/post-milestone-update): For Builders — Post Milestone update
-- [Transfer Ownership](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/transfer-ownership): For Builders — Transfer Ownership
-- [For Grant Managers](https://docs.gap.karmahq.xyz/how-to-guides/for-grant-managers): For Grant Managers — For Grant Managers
-- [Categorize grants](https://docs.gap.karmahq.xyz/how-to-guides/for-grant-managers/categorize-grants): For Grant Managers — Categorize grants
-- [Grant review](https://docs.gap.karmahq.xyz/how-to-guides/for-grant-managers/grant-review): For Grant Managers — Grant review
-- [Impact Measurement](https://docs.gap.karmahq.xyz/how-to-guides/for-grant-managers/impact-measurement): For Grant Managers — Impact Measurement
-- [Verify grant update](https://docs.gap.karmahq.xyz/how-to-guides/for-grant-managers/verify-grant-update): For Grant Managers — Verify grant update
+- [How does it work?](https://docs.gap.karmahq.xyz/overview/how-does-it-work): Overview — Structure of a project on Karma Project Every team (or individual) has a project profile in Karma. This profile contains everything about your project.
+- [Supported Networks](https://docs.gap.karmahq.xyz/overview/supported-networks): Overview — Karma is currently deployed on Optimism, Arbitrum, Celo, Scroll and Lisk networks. Any community can utilize one or more networks for their programs.
+- [For Builders](https://docs.gap.karmahq.xyz/how-to-guides/for-builders): For Builders — Karma with Grantee Accountability Protocol is here to empower you as a grantee and streamline the grant reporting process.
+- [Add Grant to Project](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/add-grant-to-project): For Builders — Once you've created your project, you can now add a grant you've received. You can add all the grants you have received from various ecosystems.
+- [Add Milestone](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/add-milestone): For Builders — This is where you create milestones explaining everything you plan to accomplish through this grant.
+- [Add Team members](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/add-team-members): For Builders — This page explains how project owners can add team members to their Karma project and grant admin privileges that allow those members to manage the profile and post updates.
+- [Create Project](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/create-project): For Builders — Creating a project is the first big step and you have to do this only once. Follow the steps to create your project profile.
+- [Login with Safe](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/login-with-safe): For Builders — Karma supports logging in with Safe wallet. Follow the instructions in the video below to login with Safe.
+- [Merge projects](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/merge-projects): For Builders — Overview When syncing projects from third-party grant systems, duplicate projects may be created due to slight variations in names, different wallet addresses, or other discrepancies.
+- [Post grant update](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/post-grant-update): For Builders — Occasionally, it's beneficial to keep the grant manager and community informed between milestones. There are also times when you don't have specific milestones but still wish to provide biweekly or monthly updates.
+- [Post Milestone update](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/post-milestone-update): For Builders — When you complete a milestone, you can post an update on that milestone! This is a great way to keep the community and program managers updated on your progress.
+- [Transfer Ownership](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/transfer-ownership): For Builders — How to Manage Project Ownership in Karma Projects in Karma are owned by an Ethereum wallet account.
+- [For Grant Managers](https://docs.gap.karmahq.xyz/how-to-guides/for-grant-managers): For Grant Managers — What is the Grant Manager's role in Karma?
+- [Categorize grants](https://docs.gap.karmahq.xyz/how-to-guides/for-grant-managers/categorize-grants): For Grant Managers — Grant managers can categorize various grants issued in their community. Categorizing grants has two benefits: Benefit 1 In the community page, anyone can view grants filtered by categories.
+- [Grant review](https://docs.gap.karmahq.xyz/how-to-guides/for-grant-managers/grant-review): For Grant Managers — Karma has the review feature that can be utilized by grant managers to review grants.
+- [Impact Measurement](https://docs.gap.karmahq.xyz/how-to-guides/for-grant-managers/impact-measurement): For Grant Managers — Karma includes built-in impact measurement features that help program operators and grantees track, verify, and communicate the real-world impact of funded projects.
+- [Verify grant update](https://docs.gap.karmahq.xyz/how-to-guides/for-grant-managers/verify-grant-update): For Grant Managers — Find the project and navigate to the grants tab.
 - [For Reviewers](https://docs.gap.karmahq.xyz/how-to-guides/for-reviewers): For Reviewers — For Reviewers
-- [Application Review Guide](https://docs.gap.karmahq.xyz/how-to-guides/for-reviewers/application-review-guide): For Reviewers — Application Review Guide
-- [For Community Members](https://docs.gap.karmahq.xyz/how-to-guides/for-community-members): For Community Members — For Community Members
-- [Endorse project](https://docs.gap.karmahq.xyz/how-to-guides/for-community-members/endorse-project): For Community Members — Endorse project
-- [Verify grant update](https://docs.gap.karmahq.xyz/how-to-guides/for-community-members/verify-grant-update): For Community Members — Verify grant update
-- [Developers](https://docs.gap.karmahq.xyz/how-to-guides/developers): Developers — Developers
-- [FAQs](https://docs.gap.karmahq.xyz/how-to-guides/faqs): FAQs — FAQs
-- [Partners](https://docs.gap.karmahq.xyz/how-to-guides/partners): Partners — Partners
-- [Celo - Proof of Ship](https://docs.gap.karmahq.xyz/how-to-guides/partners/celo-proof-of-ship): Partners — Celo - Proof of Ship
-- [CeloPG - Proof of Impact](https://docs.gap.karmahq.xyz/how-to-guides/partners/celopg-proof-of-impact): Partners — CeloPG - Proof of Impact
+- [Application Review Guide](https://docs.gap.karmahq.xyz/how-to-guides/for-reviewers/application-review-guide): For Reviewers — Application reviewers are responsible for evaluating incoming grant applications and making approve/reject decisions.
+- [For Community Members](https://docs.gap.karmahq.xyz/how-to-guides/for-community-members): For Community Members — How can you participate in Karma? Endorse projects: If you believe in a project and its potential impact, you can endorse it on Karma.
+- [Endorse project](https://docs.gap.karmahq.xyz/how-to-guides/for-community-members/endorse-project): For Community Members — Endorsing a project means publicly expressing your support for it. This is typically done because you believe the project is worthwhile and will have a positive impact.
+- [Verify grant update](https://docs.gap.karmahq.xyz/how-to-guides/for-community-members/verify-grant-update): For Community Members — Community members can verify grant updates too. Follow the steps here to verify grant update.
+- [Developers](https://docs.gap.karmahq.xyz/how-to-guides/developers): Developers — API DOCS (v2) Contact our tech team on Telegram if you have any questions.
+- [FAQs](https://docs.gap.karmahq.xyz/how-to-guides/faqs): FAQs — What is the difference between a Project and a Grant in Karma? Project: This is a profile for your overall work or initiative.
+- [Partners](https://docs.gap.karmahq.xyz/how-to-guides/partners): Partners — Karma has been integrated into following platforms: Octant \- Milestones and updates posted by Octant grantees in Karma are displayed in Octant's platform.
+- [Celo - Proof of Ship](https://docs.gap.karmahq.xyz/how-to-guides/partners/celo-proof-of-ship): Partners — Proof-of-Ship is a monthly contest that rewards builders for actively building on Celo.
+- [CeloPG - Proof of Impact](https://docs.gap.karmahq.xyz/how-to-guides/partners/celopg-proof-of-impact): Partners — The Proof of Impact campaign, powered by CeloPG, rewards builders based on the gas fees their users generate on the Celo network.
 - [Filecoin](https://docs.gap.karmahq.xyz/how-to-guides/partners/filecoin): Partners — Filecoin
-- [ProPGF Batch 1 Grantee Guide](https://docs.gap.karmahq.xyz/how-to-guides/partners/filecoin/propgf-batch-1-grantee-guide): Partners — ProPGF Batch 1 Grantee Guide
-- [ProPGF Batch 2 Grantee Guide](https://docs.gap.karmahq.xyz/how-to-guides/partners/filecoin/propgf-batch-2-grantee-guide): Partners — ProPGF Batch 2 Grantee Guide
-- [Gitcoin](https://docs.gap.karmahq.xyz/how-to-guides/partners/gitcoin): Partners — Gitcoin
-- [Global Stablecoin Hackathon](https://docs.gap.karmahq.xyz/how-to-guides/partners/global-stablecoin-hackathon): Partners — Global Stablecoin Hackathon
-- [Octant](https://docs.gap.karmahq.xyz/how-to-guides/partners/octant): Partners — Octant
-- [UNICEF](https://docs.gap.karmahq.xyz/how-to-guides/partners/unicef): Partners — UNICEF
+- [ProPGF Batch 1 Grantee Guide](https://docs.gap.karmahq.xyz/how-to-guides/partners/filecoin/propgf-batch-1-grantee-guide): Partners — Filecoin ProPGF Grantee Guide Welcome to Karma! Filecoin has partnered with Karma to manage ProPGF grants going forward.
+- [ProPGF Batch 2 Grantee Guide](https://docs.gap.karmahq.xyz/how-to-guides/partners/filecoin/propgf-batch-2-grantee-guide): Partners — Filecoin ProPGF Grantee Guide Welcome! As a grantee, this guide will walk you through everything you need to know to access your project, submit milestone updates, and stay on track with your grant.
+- [Gitcoin](https://docs.gap.karmahq.xyz/how-to-guides/partners/gitcoin): Partners — Gitcoin has integrated Karma into their application. Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Gitcoin.
+- [Global Stablecoin Hackathon](https://docs.gap.karmahq.xyz/how-to-guides/partners/global-stablecoin-hackathon): Partners — Global Stablecoin Hackathon is a 3-week virtual hackathon from April 11 to May 2 with $25K prize pool!
+- [Octant](https://docs.gap.karmahq.xyz/how-to-guides/partners/octant): Partners — Octant has integrated Karma into their application. Project milestones added in Karma will now be automatically displayed on the corresponding project pages in Octant.
+- [UNICEF](https://docs.gap.karmahq.xyz/how-to-guides/partners/unicef): Partners — The UNICEF Venture Fund provides funding to projects on a biannual basis.
 
 ## Site URL Index
 - [Create Project Profile](https://karmahq.xyz/create-project-profile): Create a public project profile to track funding, milestones, and updates
