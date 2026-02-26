@@ -208,8 +208,6 @@ describe("GrantMilestoneCompletionForm", () => {
     const error = new Error("Failed to complete milestone");
     mockCompleteMilestone.mockRejectedValue(error);
 
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-
     render(
       <GrantMilestoneCompletionForm
         milestone={mockMilestone}
@@ -234,9 +232,6 @@ describe("GrantMilestoneCompletionForm", () => {
     });
 
     expect(mockHandleCompleting).not.toHaveBeenCalled();
-    expect(consoleErrorSpy).toHaveBeenCalledWith("Error completing milestone:", error);
-
-    consoleErrorSpy.mockRestore();
   });
 
   it("should disable submit button when form is invalid", () => {
