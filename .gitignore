@@ -55,9 +55,7 @@ cypress/snapshots
 cypress/screenshots
 cypress/videos
 
-# Generated LLM files
-public/llms.txt
-public/llms-full.txt
+# Generated LLM files (llms.txt and llms-full.txt are committed, updated monthly by CI)
 public/index.html.md
 public/funders.md
 public/projects.md
