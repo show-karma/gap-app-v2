@@ -942,6 +942,7 @@ describe("generateLlmsTxt", () => {
   const sitemapEntries = [
     makeSitemapEntry({ url: "https://karmahq.xyz" }),
     makeSitemapEntry({ url: "https://karmahq.xyz/funders" }),
+    makeSitemapEntry({ url: "https://karmahq.xyz/privacy-policy", priority: "0.3" }),
   ];
 
   let output: string;

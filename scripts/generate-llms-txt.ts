@@ -1559,7 +1559,10 @@ function generateSitemapSection(
     });
   }
   if (options?.excludeUrls?.size) {
-    filteredEntries = filteredEntries.filter((entry) => !options.excludeUrls!.has(entry.url));
+    const normalizedExcludes = new Set([...options.excludeUrls].map((u) => u.replace(/\/+$/, "")));
+    filteredEntries = filteredEntries.filter(
+      (entry) => !normalizedExcludes.has(entry.url.replace(/\/+$/, ""))
+    );
   }
 
   const sortedEntries = filteredEntries.sort((a, b) => {
