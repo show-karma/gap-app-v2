@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 
-export default function ProgramIdPage({
+export default async function ProgramIdPage({
   params,
 }: {
-  params: { communityId: string; programId: string };
+  params: Promise<{ communityId: string; programId: string }>;
 }) {
-  redirect(PAGES.MANAGE.FUNDING_PLATFORM.QUESTION_BUILDER(params.communityId, params.programId));
+  const { communityId, programId } = await params;
+  redirect(PAGES.MANAGE.FUNDING_PLATFORM.QUESTION_BUILDER(communityId, programId));
 }
