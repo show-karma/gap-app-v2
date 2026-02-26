@@ -417,6 +417,7 @@ describe("createProgramSchema", () => {
         name: "Test Program",
         description: "Test description",
         shortDescription: "Short desc",
+        invoiceRequired: false,
         dates: {},
         adminEmails: [],
         financeEmails: ["finance@example.com"],
@@ -430,6 +431,7 @@ describe("createProgramSchema", () => {
         name: "Test Program",
         description: "Test description",
         shortDescription: "Short desc",
+        invoiceRequired: false,
         dates: {},
         financeEmails: ["finance@example.com"],
       });
@@ -517,6 +519,7 @@ describe("updateProgramSchema", () => {
       name: "Test Program",
       description: "Test description",
       shortDescription: "Short desc",
+      invoiceRequired: false,
       dates: {},
       adminEmails: [],
       financeEmails: ["finance@example.com"],
@@ -530,6 +533,7 @@ describe("updateProgramSchema", () => {
       name: "Test Program",
       description: "Test description",
       shortDescription: "Short desc",
+      invoiceRequired: false,
       dates: {},
       financeEmails: ["finance@example.com"],
     });
