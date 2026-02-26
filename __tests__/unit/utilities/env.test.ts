@@ -13,10 +13,13 @@ describe("env validation", () => {
       expect(result.success).toBe(true);
     });
 
-    it("rejects missing NEXT_PUBLIC_ENV", () => {
+    it("defaults NEXT_PUBLIC_ENV to development when missing", () => {
       const { NEXT_PUBLIC_ENV, ...rest } = validClientEnv;
       const result = clientSchema.safeParse(rest);
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.NEXT_PUBLIC_ENV).toBe("development");
+      }
     });
 
     it("rejects invalid NEXT_PUBLIC_ENV value", () => {
@@ -194,7 +197,6 @@ describe("env validation", () => {
         validateEnv(clientSchema, {}, "client");
       } catch (e) {
         const message = (e as Error).message;
-        expect(message).toContain("NEXT_PUBLIC_ENV");
         expect(message).toContain("NEXT_PUBLIC_GAP_INDEXER_URL");
         expect(message).toContain("NEXT_PUBLIC_PRIVY_APP_ID");
       }

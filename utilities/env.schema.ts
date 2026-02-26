@@ -11,7 +11,7 @@ const booleanEnvVar = z
 // --- Client env schema (NEXT_PUBLIC_* vars, inlined at build time) ---
 
 export const clientSchema = z.object({
-  NEXT_PUBLIC_ENV: z.enum(["production", "staging", "development", "dev"]),
+  NEXT_PUBLIC_ENV: z.enum(["production", "staging", "development", "dev"]).default("development"),
   NEXT_PUBLIC_GAP_INDEXER_URL: z.string().url(),
   NEXT_PUBLIC_PRIVY_APP_ID: z.string().min(1),
 
