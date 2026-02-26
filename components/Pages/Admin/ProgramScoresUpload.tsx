@@ -10,6 +10,10 @@ import Papa from "papaparse";
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import {
+  buildCompositeProgramId,
+  parseCompositeProgramKey,
+} from "@/components/Pages/ProgramRegistry/programUtils";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { FileUpload } from "@/components/Utilities/FileUpload";
 import { Button } from "@/components/ui/button";
@@ -177,12 +181,18 @@ export function ProgramScoresUpload({
           </label>
           <select
             id="program-scores-program"
-            value={selectedProgram ? `${selectedProgram.programId}_${selectedProgram.chainID}` : ""}
+            value={
+              selectedProgram
+                ? buildCompositeProgramId(selectedProgram.programId, selectedProgram.chainID)
+                : ""
+            }
             onChange={(e) => {
               if (e.target.value) {
-                const [progId, chain] = e.target.value.split("_");
+                const { programId: progId, chainID: chain } = parseCompositeProgramKey(
+                  e.target.value
+                );
                 const program = programs.find(
-                  (p) => p.programId === progId && p.chainID === parseInt(chain, 10)
+                  (p) => p.programId === progId && (p.chainID ?? null) === chain
                 );
                 setSelectedProgram(program || null);
                 if (program?.chainID) {
@@ -198,10 +208,11 @@ export function ProgramScoresUpload({
             <option value="">Choose a program...</option>
             {programs.map((program) => (
               <option
-                key={`${program.programId}_${program.chainID}`}
-                value={`${program.programId}_${program.chainID}`}
+                key={buildCompositeProgramId(program.programId, program.chainID)}
+                value={buildCompositeProgramId(program.programId, program.chainID)}
               >
-                {program.metadata?.title || program.programId} (Chain: {program.chainID})
+                {program.metadata?.title || program.programId}
+                {program.chainID != null ? ` (Chain: ${program.chainID})` : " (Off-chain)"}
               </option>
             ))}
           </select>

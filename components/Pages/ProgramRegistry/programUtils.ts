@@ -50,6 +50,35 @@ export const parseProgramIdAndChainId = (
 };
 
 /**
+ * Build a composite key from programId and chainID for use in dropdowns/selectors.
+ * Returns "programId_chainID" for on-chain programs or just "programId" for off-chain (null chainID).
+ */
+export const buildCompositeProgramId = (
+  programId: string | undefined,
+  chainID: number | null | undefined
+): string => {
+  const id = programId ?? "";
+  return chainID != null ? `${id}_${chainID}` : id;
+};
+
+/**
+ * Parse a composite key back into programId and chainID.
+ * Inverse of buildCompositeProgramId — returns null chainID for off-chain programs.
+ */
+export const parseCompositeProgramKey = (
+  value: string
+): { programId: string; chainID: number | null } => {
+  const lastUnderscore = value.lastIndexOf("_");
+  if (lastUnderscore > 0) {
+    const chainID = parseInt(value.substring(lastUnderscore + 1), 10);
+    if (!Number.isNaN(chainID)) {
+      return { programId: value.substring(0, lastUnderscore), chainID };
+    }
+  }
+  return { programId: value, chainID: null };
+};
+
+/**
  * Get the URL-friendly program ID for a GrantProgram
  * Priority: refToGrant > programId > _id.$oid
  * Note: No longer appends chainId - URLs should use just programId
