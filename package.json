@@ -9,6 +9,7 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
+    "generate-llms": "ts-node -P tsconfig.scripts.json scripts/generate-llms-txt.ts",
     "postbuild": "next-sitemap",
     "build-stats": "cross-env ANALYZE=true yarn build",
     "test": "cross-env NODE_OPTIONS=--max-old-space-size=4096 jest --maxWorkers=50%",
