@@ -15,9 +15,9 @@ export function WhatIsSolving() {
           funding is crucial for ecosystem growth, it has also introduced a range of issues.
           <br />
           <br />
-          The Grantee Accountability Protocol (GAP) is designed to address these challenges by
-          aiding grantees in building their reputation, assisting communities in maintaining grantee
-          accountability, and enabling third parties to develop applications using this protocol.
+          Karma is designed to address these challenges by aiding grantees in building their
+          reputation, assisting communities in maintaining grantee accountability, and enabling
+          third parties to develop applications using this protocol.
         </p>
       </div>
       <div className="flex flex-1 flex-col gap-6">

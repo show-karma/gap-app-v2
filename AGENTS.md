@@ -9,7 +9,7 @@ Purpose: give coding agents a concise, reliable operating guide for this reposit
 
 ## Project Context
 
-- `gap-app-v2` is the main frontend for GAP (Grantee Accountability Protocol).
+- `gap-app-v2` is the main frontend for Karma.
 - Core flows: programs create projects, manage milestones, and review community progress.
 - Web3 domain: EAS attestations, wallet interactions, and Privy-based authentication.
 

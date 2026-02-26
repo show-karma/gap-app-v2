@@ -7,10 +7,7 @@ export function CreateProfileButton() {
   const { openModal: openProfileModal } = useContributorProfileModalStore();
 
   return (
-    <Button
-      onClick={() => openProfileModal({ isGlobal: true })}
-      className="px-6 py-2.5 text-sm font-medium w-max bg-primary text-primary-foreground hover:bg-primary/90 border-0 shadow"
-    >
+    <Button variant="secondary" onClick={() => openProfileModal({ isGlobal: true })}>
       Create Profile
     </Button>
   );

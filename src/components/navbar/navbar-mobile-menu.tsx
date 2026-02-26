@@ -1,7 +1,7 @@
 "use client";
 
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/solid";
-import { CircleHelp, LogOutIcon, ToggleLeft, ToggleRight } from "lucide-react";
+import { CircleHelp, KeyRound, LogOutIcon, ToggleLeft, ToggleRight } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useState } from "react";
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/drawer";
 import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
+import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
@@ -76,6 +77,7 @@ export function NavbarMobileMenu() {
   };
 
   const { openModal: openProfileModal } = useContributorProfileModalStore();
+  const { openModal: openApiKeyModal } = useApiKeyManagementModalStore();
 
   // Get permissions from centralized context (prevents duplicate hook calls)
   const { isLoggedIn, address, isRegistryAllowed } = useNavbarPermissions();
@@ -244,6 +246,17 @@ export function NavbarMobileMenu() {
                     <CircleHelp className={menuStyles.itemIcon} />
                     <span className={menuStyles.itemText}>Docs</span>
                   </ExternalLink>
+                  <button
+                    type="button"
+                    className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
+                    onClick={() => {
+                      openApiKeyModal();
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <KeyRound className={menuStyles.itemIcon} />
+                    <span className={menuStyles.itemText}>API Keys</span>
+                  </button>
                   <hr className="h-[1px] w-full border-border" />
                   <button
                     type="button"

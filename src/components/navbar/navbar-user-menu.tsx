@@ -6,6 +6,7 @@ import {
   Copy,
   FolderKanban,
   Heart,
+  KeyRound,
   LogOutIcon,
   Settings,
   ToggleLeft,
@@ -28,6 +29,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { useApiKeyManagementModalStore } from "@/store/modals/apiKeyManagement";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
@@ -87,6 +89,7 @@ export function NavbarUserMenu() {
   const { profile } = useContributorProfile(address);
 
   const { openModal: openProfileModal } = useContributorProfileModalStore();
+  const { openModal: openApiKeyModal } = useApiKeyManagementModalStore();
   const [, copyToClipboard] = useCopyToClipboard();
 
   if (!ready) {
@@ -194,6 +197,12 @@ export function NavbarUserMenu() {
                     <Heart className={menuStyles.itemIcon} />
                     <span className={menuStyles.itemText}>My donations</span>
                   </Link>
+                </MenubarItem>
+                <MenubarItem className="w-full cursor-pointer" onClick={openApiKeyModal}>
+                  <div className="flex items-center w-full flex-row gap-2">
+                    <KeyRound className={menuStyles.itemIcon} />
+                    <span className={menuStyles.itemText}>API Keys</span>
+                  </div>
                 </MenubarItem>
                 {isRegistryAllowed && (
                   <MenubarItem asChild className="w-full cursor-pointer">

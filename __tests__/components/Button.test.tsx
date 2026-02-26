@@ -41,7 +41,7 @@ describe("Button", () => {
       render(<Button>Button</Button>);
 
       const button = screen.getByRole("button");
-      expect(button).toHaveClass("bg-primary");
+      expect(button).toHaveClass("bg-brand-500");
     });
 
     it("should apply destructive variant", () => {
@@ -85,21 +85,21 @@ describe("Button", () => {
       render(<Button>Button</Button>);
 
       const button = screen.getByRole("button");
-      expect(button).toHaveClass("h-9", "px-4", "py-2");
+      expect(button).toHaveClass("h-9", "px-3");
     });
 
     it("should apply sm size", () => {
       render(<Button size="sm">Button</Button>);
 
       const button = screen.getByRole("button");
-      expect(button).toHaveClass("h-8", "px-3", "text-xs");
+      expect(button).toHaveClass("h-8", "px-2");
     });
 
     it("should apply lg size", () => {
       render(<Button size="lg">Button</Button>);
 
       const button = screen.getByRole("button");
-      expect(button).toHaveClass("h-10", "px-8");
+      expect(button).toHaveClass("h-10", "px-4");
     });
 
     it("should apply icon size", () => {
@@ -272,7 +272,7 @@ describe("Button", () => {
       );
 
       const button = screen.getByRole("button");
-      expect(button).toHaveClass("border", "h-10", "px-8");
+      expect(button).toHaveClass("border", "h-10", "px-4");
     });
 
     it("should combine all props", () => {
@@ -283,7 +283,7 @@ describe("Button", () => {
       );
 
       const button = screen.getByRole("button");
-      expect(button).toHaveClass("bg-secondary", "h-8", "px-3", "custom");
+      expect(button).toHaveClass("bg-secondary", "h-8", "px-2", "custom");
       expect(button).toBeDisabled();
     });
   });

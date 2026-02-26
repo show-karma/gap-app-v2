@@ -94,6 +94,7 @@ export const INDEXER = {
         sortOrder?: "asc" | "desc";
         includeStats?: boolean;
         excludeTestProjects?: boolean;
+        hasPayoutAddress?: boolean;
       }) => {
         const queryParams = new URLSearchParams();
         if (params?.q) queryParams.set("q", params.q);
@@ -103,6 +104,7 @@ export const INDEXER = {
         if (params?.sortOrder) queryParams.set("sortOrder", params.sortOrder);
         if (params?.includeStats) queryParams.set("includeStats", "true");
         if (params?.excludeTestProjects) queryParams.set("excludeTestProjects", "true");
+        if (params?.hasPayoutAddress) queryParams.set("hasPayoutAddress", "true");
         const query = queryParams.toString();
         return `/v2/projects${query ? `?${query}` : ""}`;
       },
@@ -576,6 +578,8 @@ export const INDEXER = {
     },
     REPORT: {
       GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/report`,
+      PENDING_VERIFICATION: (communityIdOrSlug: string) =>
+        `/v2/communities/${communityIdOrSlug}/milestones/pending-verification`,
     },
     PROGRAMS: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/programs`,
     ALL_PROGRAMS_IMPACT_AGGREGATE: (communityIdOrSlug: string) =>
@@ -617,6 +621,7 @@ export const INDEXER = {
     PAGE_HEADER_STATS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/page-header-stats`,
     GLOBAL_STATS: () => `/v2/communities/stats`,
+    ADMINS_BATCH: () => `/communities/admins/batch`,
     ADMINS: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}/admins`,
     BATCH_UPDATE: (idOrSlug: string) => `/communities/${idOrSlug}/batch-update`,
     PROJECT_UPDATES: (communityIdOrSlug: string) =>
@@ -642,6 +647,11 @@ export const INDEXER = {
     UPDATE: (idOrSlug: string, contactId: string) =>
       `/projects/${idOrSlug}/update/contact/${contactId}`,
     DELETE: (idOrSlug: string) => `/projects/${idOrSlug}/delete/contact`,
+  },
+  API_KEYS: {
+    GET: "/v2/user/api-keys",
+    CREATE: "/v2/user/api-keys",
+    REVOKE: "/v2/user/api-keys",
   },
   KYC: {
     GET_STATUS: (projectUID: string, communityUID: string) =>

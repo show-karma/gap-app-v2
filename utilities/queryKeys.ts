@@ -112,6 +112,15 @@ export const QUERY_KEYS = {
     IS_ADMIN: (communityUid?: string, chainId?: number, address?: string, signer?: unknown) =>
       ["isCommunityAdmin", communityUid, chainId, address, signer] as const,
     IS_ADMIN_BASE: ["isCommunityAdmin"] as const,
+    REPORT_MILESTONES: (
+      communityId: string,
+      page: number,
+      sortBy: string,
+      sortOrder: string,
+      programIds: string[]
+    ) => ["reportMilestones", communityId, page, sortBy, sortOrder, programIds] as const,
+    PENDING_VERIFICATION: (communityId: string, page: number, programIds: string[]) =>
+      ["pendingVerificationMilestones", communityId, page, programIds] as const,
     PROJECT_UPDATES: (
       communityId: string,
       filter: string,
@@ -181,6 +190,7 @@ export const QUERY_KEYS = {
       sortBy?: string;
       sortOrder?: string;
       limit?: number;
+      hasPayoutAddress?: boolean;
     }) =>
       [
         "projects-explorer-infinite",
@@ -188,6 +198,7 @@ export const QUERY_KEYS = {
         params.sortBy || "updatedAt",
         params.sortOrder || "desc",
         params.limit ?? 50,
+        params.hasPayoutAddress ?? false,
       ] as const,
   },
   INDICATORS: {

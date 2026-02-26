@@ -1,6 +1,6 @@
 # E2E Tests - gap-app-v2
 
-End-to-end tests using Cypress for the GAP frontend application.
+End-to-end tests using Cypress for the Karma frontend application.
 
 ## Quick Start
 

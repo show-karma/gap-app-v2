@@ -346,18 +346,14 @@ export function DashboardOverview({ community }: { community: Community }) {
       {(!programs || programs.length === 0) && (
         <div className="text-center py-12 bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-700">
           <FolderOpenIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            No programs yet
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+            Create your first program
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-            Create your first funding program to get started.
-          </p>
           <Link
-            href={PAGES.ADMIN.FUNDING_PLATFORM(slug)}
+            href={`${PAGES.ADMIN.FUNDING_PLATFORM(slug)}?create=true`}
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
           >
-            Go to Funding Platform
-            <ArrowRightIcon className="w-4 h-4" />
+            Create your first program
           </Link>
         </div>
       )}

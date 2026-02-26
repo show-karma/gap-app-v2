@@ -13,6 +13,7 @@ interface UseProjectsExplorerInfiniteOptions {
   sortOrder?: ExplorerSortOrder;
   limit?: number;
   enabled?: boolean;
+  hasPayoutAddress?: boolean;
 }
 
 /**
@@ -44,10 +45,17 @@ export const useProjectsExplorerInfinite = (options: UseProjectsExplorerInfinite
     sortOrder = "desc",
     limit = PROJECTS_EXPLORER_CONSTANTS.RESULT_LIMIT,
     enabled = true,
+    hasPayoutAddress = false,
   } = options;
 
   const query = useInfiniteQuery<PaginatedProjectsResponse, Error>({
-    queryKey: QUERY_KEYS.PROJECT.EXPLORER_INFINITE({ search, sortBy, sortOrder, limit }),
+    queryKey: QUERY_KEYS.PROJECT.EXPLORER_INFINITE({
+      search,
+      sortBy,
+      sortOrder,
+      limit,
+      hasPayoutAddress,
+    }),
     queryFn: async ({ pageParam = 1 }) => {
       return getExplorerProjectsPaginated({
         search,
@@ -56,6 +64,7 @@ export const useProjectsExplorerInfinite = (options: UseProjectsExplorerInfinite
         sortBy,
         sortOrder,
         includeStats: true, // Always include stats for explorer cards
+        hasPayoutAddress,
       });
     },
     getNextPageParam: (lastPage) => {
