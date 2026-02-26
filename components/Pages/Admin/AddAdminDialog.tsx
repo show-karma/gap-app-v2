@@ -90,9 +90,11 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
   const { switchChainAsync } = useWallet();
   const { setupChainAndWallet } = useSetupChainAndWallet();
 
-  const { changeStepperStep, setIsStepper, startAttestation, showSuccess } = useAttestationToast();
+  const { changeStepperStep, setIsStepper, startAttestation, showSuccess, showError } =
+    useAttestationToast();
 
   const onSubmit = async (data: SchemaType) => {
+    setIsLoading(true);
     const setup = await setupChainAndWallet({
       targetChainId: chainid,
       currentChainId: chain?.id,
@@ -100,7 +102,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
     });
 
     if (!setup) {
-      setIsOpen(false);
+      setIsLoading(false);
       return;
     }
 
@@ -152,6 +154,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
         }
       });
     } catch (error: any) {
+      showError("Failed to add admin. Please try again.");
       errorManager(`Error adding admin ${data.address} to community ${UUID}`, error, {
         community: UUID,
         address: data.address,

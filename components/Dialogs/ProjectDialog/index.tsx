@@ -691,9 +691,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
 
       // Use the gasless signer from setupChainAndWallet
-      closeModal();
-
-      // Attest first (Privy popups appear here), then show progress modal
+      // Keep modal open while submitting so users don't lose context/data.
       await project.attest(signer as any, changeStepperStep).then(async (res) => {
         showLoading("Indexing project...");
         let retries = 1000;
@@ -803,9 +801,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const fetchedProject = await getProjectById(projectToUpdate.uid);
       if (!fetchedProject) return;
 
-      // Close modal before update (Privy popups will appear during updateProject)
-      closeModal();
-
       // Promote temporary logo to permanent before project update
       let finalImageURL = data.profilePicture || "";
       if (tempLogoKey) {
@@ -862,7 +857,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         walletSigner,
         gapClient,
         changeStepperStep,
-        () => {}, // No-op since modal is already closed
+        closeModal,
         () => {}, // setIsStepper - no-op, managed by toast hook
         startAttestation,
         showSuccess
@@ -1562,7 +1557,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
       {isOpen && (
         <Transition appear show={true} as={Fragment}>
-          <Dialog as="div" className="relative z-[100]" onClose={closeModal}>
+          <Dialog as="div" className="relative z-[100]" onClose={isLoading ? () => {} : closeModal}>
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -1597,6 +1592,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                       type="button"
                       className="top-6 absolute right-6 hover:opacity-75 transition-all ease-in-out duration-200 dark:text-zinc-100"
                       onClick={closeModal}
+                      disabled={isLoading}
                     >
                       <XMarkIcon className="w-5 h-5" />
                     </button>

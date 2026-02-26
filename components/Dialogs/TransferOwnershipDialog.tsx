@@ -106,6 +106,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
         });
       closeModal();
     } catch (error: any) {
+      showError("Failed to transfer ownership. Please try again.");
       errorManager(
         `Error transferring ownership from ${project.owner} to ${newOwner}`,
         error,
@@ -119,7 +120,6 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
           error: "Failed to transfer ownership.",
         }
       );
-      console.error(error);
     } finally {
       setIsLoading(false);
       setIsStepper(false);
