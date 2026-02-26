@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 // Mock Headless UI Dialog components
 jest.mock("@headlessui/react", () => {
@@ -264,7 +265,6 @@ describe("DeleteDialog", () => {
     });
 
     it("should handle deleteFunction errors gracefully", async () => {
-      const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
       const errorDeleteFunction = jest.fn().mockRejectedValue(new Error("Delete failed"));
 
       render(<DeleteDialog {...defaultProps} deleteFunction={errorDeleteFunction} />);
@@ -281,8 +281,20 @@ describe("DeleteDialog", () => {
 
       // Dialog should still be open after error
       expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    });
 
-      consoleLogSpy.mockRestore();
+    it("should report delete errors through errorManager", async () => {
+      const error = new Error("Delete failed");
+      const errorDeleteFunction = jest.fn().mockRejectedValue(error);
+
+      render(<DeleteDialog {...defaultProps} deleteFunction={errorDeleteFunction} />);
+
+      fireEvent.click(screen.getByText("Delete Project"));
+      fireEvent.click(screen.getByText("Continue"));
+
+      await waitFor(() => {
+        expect(errorManager).toHaveBeenCalledWith("Delete operation failed", error);
+      });
     });
 
     it("should not call afterFunction when deletion fails", async () => {

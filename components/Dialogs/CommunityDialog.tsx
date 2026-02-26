@@ -156,7 +156,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
 
       // Close modal before attestation (Privy wallet popups will appear during attest
       // and conflict with the modal overlay)
-      setIsOpen(false);
+      closeModal();
 
       await newCommunity
         .attest(walletSigner as any, sanitizedData, changeStepperStep)
@@ -184,6 +184,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                   showSuccess("Community created!");
                   // Brief delay to show success, then close
                   setTimeout(() => {
+                    setShouldResetOnOpen(true);
                     dismiss();
                   }, 1500);
                 }
@@ -265,7 +266,8 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                   <button
                     type="button"
                     className="top-6 absolute right-6 hover:opacity-75 transition-all ease-in-out duration-200 dark:text-zinc-100"
-                    onClick={closeModal}
+                    onClick={isLoading ? () => {} : closeModal}
+                    disabled={isLoading}
                   >
                     <XMarkIcon className="w-5 h-5" />
                   </button>

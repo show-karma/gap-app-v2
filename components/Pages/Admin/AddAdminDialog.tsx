@@ -94,6 +94,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
     useAttestationToast();
 
   const onSubmit = async (data: SchemaType) => {
+    setIsLoading(true);
     const setup = await setupChainAndWallet({
       targetChainId: chainid,
       currentChainId: chain?.id,
