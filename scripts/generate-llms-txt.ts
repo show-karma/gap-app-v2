@@ -1849,9 +1849,11 @@ async function main() {
   console.info("Generating llms.txt and llms-full.txt...");
 
   const articles = extractKnowledgeArticles();
-  const landingPages = await extractLandingPages();
-  const sitemapEntries = await fetchSitemapEntries();
-  const docsPages = await extractDocsPages();
+  const [landingPages, sitemapEntries, docsPages] = await Promise.all([
+    extractLandingPages(),
+    fetchSitemapEntries(),
+    extractDocsPages(),
+  ]);
 
   console.info(`Found ${articles.length} knowledge articles`);
   console.info(`Landing pages extracted: ${landingPages.length}`);
