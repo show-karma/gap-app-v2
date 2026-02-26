@@ -1344,6 +1344,13 @@ function cleanDocsMarkdown(markdown: string): string {
         /^-\s+(?:How to guides|Overview|For Builders|For Grant Managers|For Reviewers|For Community Members|Partners|Filecoin)\s*$/gm,
         ""
       )
+      // Embedded video player UI artifacts from Firecrawl scraping
+      .replace(/^spaces%2F[^\s]+\.mp4\s*$/gm, "")
+      .replace(/^PausePlay\s*$/gm, "")
+      .replace(/^% buffered\d{2}:\d{2}\s*$/gm, "")
+      .replace(/^\d{2}:\d{2}\s*$/gm, "")
+      .replace(/^(?:Exit fullscreen|Enter fullscreen|Go to original URL)+\s*$/gm, "")
+      .replace(/^Your browser does not support HTML5 videos?\.\s*$/gm, "")
       // Deprecated v1 API reference (plain text or markdown link form)
       .replace(/^(?:\[)?API DOCS \(v1\).*deprecated.*$/gim, "")
       .replace(/^Last updated\s+\d+\s+\w+\s+ago\s*$/gm, "")

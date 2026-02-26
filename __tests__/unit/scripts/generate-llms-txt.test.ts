@@ -1265,6 +1265,34 @@ describe("cleanDocsMarkdown", () => {
     }
   });
 
+  it("removes embedded video player artifacts from Firecrawl scraping", () => {
+    const input = [
+      "Follow the instructions in the video below to login with Safe.",
+      "",
+      "spaces%2FYgbP24tpFK3mCnbIq4rF%2Fuploads%2FtaiRPgphCUHQyJJMcp4H%2F20240812-1932-33.0656792.mp4",
+      "",
+      "PausePlay",
+      "",
+      "% buffered00:00",
+      "",
+      "00:37",
+      "",
+      "Exit fullscreenEnter fullscreenGo to original URL",
+      "",
+      "Your browser does not support HTML5 videos.",
+      "",
+      "#### Merge projects",
+    ].join("\n");
+    const result = cleanDocsMarkdown(input);
+    expect(result).not.toContain("mp4");
+    expect(result).not.toContain("PausePlay");
+    expect(result).not.toContain("buffered");
+    expect(result).not.toContain("fullscreen");
+    expect(result).not.toContain("HTML5 video");
+    expect(result).toContain("Follow the instructions");
+    expect(result).toContain("#### Merge projects");
+  });
+
   it("removes deprecated v1 API references", () => {
     const input =
       "API DOCS (v2) \nAPI DOCS (v1)  - The v1 APIs are deprecated. We recommend using v2 APIs where possible.\nContact us";
