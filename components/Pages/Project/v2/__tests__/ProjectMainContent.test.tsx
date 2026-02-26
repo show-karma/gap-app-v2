@@ -128,8 +128,6 @@ describe("ContentTabs", () => {
 
 describe("ActivityFilters", () => {
   const defaultProps = {
-    sortBy: "newest" as const,
-    onSortChange: jest.fn(),
     activeFilters: [] as ("funding" | "updates" | "blog" | "socials" | "other")[],
     onFilterToggle: jest.fn(),
   };
@@ -145,10 +143,10 @@ describe("ActivityFilters", () => {
       expect(screen.getByTestId("activity-filters")).toBeInTheDocument();
     });
 
-    it("should render sort select", () => {
+    it("should not render sort select", () => {
       render(<ActivityFilters {...defaultProps} />);
 
-      expect(screen.getByTestId("sort-select")).toBeInTheDocument();
+      expect(screen.queryByTestId("sort-select")).not.toBeInTheDocument();
     });
 
     it("should render filter badges", () => {
