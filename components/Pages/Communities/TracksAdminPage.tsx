@@ -300,8 +300,16 @@ export const TracksAdminPage = ({
                   .filter((program) => program.programId)
                   .map((program) => (
                     <option
-                      key={`${program.programId}_${program.chainID}`}
-                      value={`${program.programId}_${program.chainID}`}
+                      key={
+                        program.chainID != null
+                          ? `${program.programId}_${program.chainID}`
+                          : program.programId
+                      }
+                      value={
+                        program.chainID != null
+                          ? `${program.programId}_${program.chainID}`
+                          : program.programId
+                      }
                     >
                       {program.metadata?.title}
                     </option>

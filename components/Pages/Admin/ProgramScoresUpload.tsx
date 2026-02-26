@@ -177,12 +177,22 @@ export function ProgramScoresUpload({
           </label>
           <select
             id="program-scores-program"
-            value={selectedProgram ? `${selectedProgram.programId}_${selectedProgram.chainID}` : ""}
+            value={
+              selectedProgram
+                ? selectedProgram.chainID != null
+                  ? `${selectedProgram.programId}_${selectedProgram.chainID}`
+                  : selectedProgram.programId
+                : ""
+            }
             onChange={(e) => {
               if (e.target.value) {
-                const [progId, chain] = e.target.value.split("_");
+                const parts = e.target.value.split("_");
+                const progId = parts[0];
+                const chain = parts.length > 1 ? parseInt(parts[1], 10) : NaN;
                 const program = programs.find(
-                  (p) => p.programId === progId && p.chainID === parseInt(chain, 10)
+                  (p) =>
+                    p.programId === progId &&
+                    (isNaN(chain) ? p.chainID == null : p.chainID === chain)
                 );
                 setSelectedProgram(program || null);
                 if (program?.chainID) {
@@ -198,8 +208,16 @@ export function ProgramScoresUpload({
             <option value="">Choose a program...</option>
             {programs.map((program) => (
               <option
-                key={`${program.programId}_${program.chainID}`}
-                value={`${program.programId}_${program.chainID}`}
+                key={
+                  program.chainID != null
+                    ? `${program.programId}_${program.chainID}`
+                    : program.programId
+                }
+                value={
+                  program.chainID != null
+                    ? `${program.programId}_${program.chainID}`
+                    : program.programId
+                }
               >
                 {program.metadata?.title || program.programId} (Chain: {program.chainID})
               </option>
