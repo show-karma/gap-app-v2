@@ -10,6 +10,7 @@ const booleanEnvVar = z
 
 // --- Client env schema (NEXT_PUBLIC_* vars, inlined at build time) ---
 
+/** Zod schema for validating NEXT_PUBLIC_* client-side environment variables. */
 export const clientSchema = z.object({
   NEXT_PUBLIC_ENV: z.enum(["production", "staging", "development", "dev"]).default("development"),
   NEXT_PUBLIC_GAP_INDEXER_URL: z.string().url(),
@@ -54,6 +55,7 @@ export const clientSchema = z.object({
 
 // --- Server env schema (only available server-side) ---
 
+/** Zod schema for validating server-only environment variables. */
 export const serverSchema = z.object({
   SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
   ANALYZE: booleanEnvVar,
@@ -67,6 +69,14 @@ function stripEmptyStrings(obj: Record<string, unknown>): Record<string, unknown
   return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, v === "" ? undefined : v]));
 }
 
+/**
+ * Validates environment variables against a Zod schema.
+ * @param schema - Zod schema to validate against.
+ * @param data - Raw environment variables object.
+ * @param label - Human-readable label used in error messages (e.g. "client").
+ * @returns Parsed and validated environment variables.
+ * @throws {Error} If validation fails, listing each invalid variable.
+ */
 export function validateEnv<T extends z.ZodTypeAny>(
   schema: T,
   data: Record<string, unknown>,

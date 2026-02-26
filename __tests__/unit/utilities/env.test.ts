@@ -193,6 +193,7 @@ describe("env validation", () => {
     });
 
     it("lists all invalid vars in error message", () => {
+      expect.assertions(2);
       try {
         validateEnv(clientSchema, {}, "client");
       } catch (e) {
