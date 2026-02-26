@@ -52,10 +52,11 @@ import {
   ProjectDetailsModal,
   type ProjectDetailsModalGrant,
 } from "@/components/Pages/Admin/ControlCenter/ProjectDetailsModal";
-import type {
-  CommunityPayoutAgreementInfo,
-  CommunityPayoutInvoiceInfo,
-  TokenTotal,
+import {
+  type CommunityPayoutAgreementInfo,
+  type CommunityPayoutInvoiceInfo,
+  MilestoneLifecycleStatus,
+  type TokenTotal,
 } from "@/src/features/payout-disbursement/types/payout-disbursement";
 import { createMockAgreement, createMockInvoice } from "../fixtures";
 
@@ -343,12 +344,12 @@ describe("ProjectDetailsModal", () => {
           createMockInvoice({
             milestoneLabel: "MS Completed",
             milestoneUID: "ms-c",
-            milestoneStatus: "completed",
+            milestoneStatus: MilestoneLifecycleStatus.COMPLETED,
           }),
           createMockInvoice({
             milestoneLabel: "MS Verified",
             milestoneUID: "ms-v",
-            milestoneStatus: "verified",
+            milestoneStatus: MilestoneLifecycleStatus.VERIFIED,
           }),
         ],
       });
@@ -378,7 +379,7 @@ describe("ProjectDetailsModal", () => {
           createMockInvoice({
             milestoneLabel: "MS Overdue",
             milestoneUID: "ms-overdue",
-            milestoneStatus: "pending",
+            milestoneStatus: MilestoneLifecycleStatus.PENDING,
             milestoneDueDate: "2020-01-01T00:00:00Z",
           }),
         ],
@@ -393,7 +394,7 @@ describe("ProjectDetailsModal", () => {
           createMockInvoice({
             milestoneLabel: "MS Done",
             milestoneUID: "ms-done",
-            milestoneStatus: "completed",
+            milestoneStatus: MilestoneLifecycleStatus.COMPLETED,
             milestoneDueDate: "2020-01-01T00:00:00Z",
           }),
         ],
@@ -403,18 +404,18 @@ describe("ProjectDetailsModal", () => {
       expect(screen.queryByText("Past due")).not.toBeInTheDocument();
     });
 
-    it("falls back to 'Pending' config for unknown milestone status", () => {
+    it("falls back to 'Pending' config when milestoneStatus is null", () => {
       renderModal({
         milestoneInvoices: [
           createMockInvoice({
-            milestoneLabel: "MS Unknown",
-            milestoneUID: "ms-unknown",
-            milestoneStatus: "some_unknown_status",
+            milestoneLabel: "MS Null Status",
+            milestoneUID: "ms-null-status",
+            milestoneStatus: null,
           }),
         ],
       });
 
-      // Unknown status falls back to pending config
+      // Null status falls back to pending config
       expect(screen.getByText("Pending")).toBeInTheDocument();
     });
 
@@ -425,7 +426,7 @@ describe("ProjectDetailsModal", () => {
           createMockInvoice({
             milestoneLabel: "MS Comp",
             milestoneUID: "ms-comp",
-            milestoneStatus: "completed",
+            milestoneStatus: MilestoneLifecycleStatus.COMPLETED,
             milestoneStatusUpdatedAt: "2024-07-10T00:00:00Z",
           }),
         ],
@@ -443,7 +444,7 @@ describe("ProjectDetailsModal", () => {
           createMockInvoice({
             milestoneLabel: "MS Ver",
             milestoneUID: "ms-ver",
-            milestoneStatus: "verified",
+            milestoneStatus: MilestoneLifecycleStatus.VERIFIED,
             milestoneStatusUpdatedAt: "2024-08-15T00:00:00Z",
           }),
         ],
@@ -461,7 +462,7 @@ describe("ProjectDetailsModal", () => {
           createMockInvoice({
             milestoneLabel: "MS Late",
             milestoneUID: "ms-late",
-            milestoneStatus: "pending",
+            milestoneStatus: MilestoneLifecycleStatus.PENDING,
             milestoneDueDate: "2020-06-01T00:00:00Z",
           }),
         ],
@@ -479,7 +480,7 @@ describe("ProjectDetailsModal", () => {
           createMockInvoice({
             milestoneLabel: "MS Pend",
             milestoneUID: "ms-pend",
-            milestoneStatus: "pending",
+            milestoneStatus: MilestoneLifecycleStatus.PENDING,
             milestoneStatusUpdatedAt: "2024-01-15T00:00:00Z",
             milestoneDueDate: "2030-12-31T00:00:00Z",
           }),
@@ -491,10 +492,63 @@ describe("ProjectDetailsModal", () => {
       expect(tooltip).toHaveTextContent(/Created.*Jan 15, 2024/);
       expect(tooltip).toHaveTextContent(/Due.*Dec 31, 2030/);
     });
+
+    it("shows alert icon with 'not verified yet' tooltip for completed milestone", async () => {
+      const user = userEvent.setup();
+      renderModal({
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS Comp Alert",
+            milestoneUID: "ms-comp-alert",
+            milestoneStatus: MilestoneLifecycleStatus.COMPLETED,
+          }),
+        ],
+      });
+
+      // The alert icon should be present next to the completed badge
+      const alertIcon = document.querySelector("svg.text-amber-500");
+      expect(alertIcon).toBeInTheDocument();
+
+      // Hover on the alert icon to see the tooltip
+      await user.hover(alertIcon as Element);
+      const tooltip = await screen.findByRole("tooltip", {}, { timeout: 3000 });
+      expect(tooltip).toHaveTextContent("The milestone has not been verified yet");
+    });
+
+    it("does not show alert icon for verified milestone", () => {
+      renderModal({
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS Ver No Alert",
+            milestoneUID: "ms-ver-no-alert",
+            milestoneStatus: MilestoneLifecycleStatus.VERIFIED,
+          }),
+        ],
+      });
+
+      // No amber alert icon should be present for verified milestones
+      const alertIcon = document.querySelector("svg.text-amber-500");
+      expect(alertIcon).not.toBeInTheDocument();
+    });
+
+    it("does not show alert icon for pending milestone", () => {
+      renderModal({
+        milestoneInvoices: [
+          createMockInvoice({
+            milestoneLabel: "MS Pend No Alert",
+            milestoneUID: "ms-pend-no-alert",
+            milestoneStatus: MilestoneLifecycleStatus.PENDING,
+          }),
+        ],
+      });
+
+      const alertIcon = document.querySelector("svg.text-amber-500");
+      expect(alertIcon).not.toBeInTheDocument();
+    });
   });
 
   describe("Invoice status column", () => {
-    it("shows 'Received' badge when invoice status is 'received'", () => {
+    it("shows 'Invoice received' badge when invoice status is 'received'", () => {
       renderModal({
         invoiceRequired: true,
         milestoneInvoices: [
@@ -506,12 +560,12 @@ describe("ProjectDetailsModal", () => {
         ],
       });
 
-      // "Received" appears both as column header and badge text
-      const receivedElements = screen.getAllByText("Received");
-      expect(receivedElements.length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByText("Invoice received")).toBeInTheDocument();
+      // "Received" column header is still present
+      expect(screen.getByText("Received")).toBeInTheDocument();
     });
 
-    it("shows 'Received' badge when invoice status is 'paid'", () => {
+    it("shows 'Invoice received' badge when invoice status is 'paid'", () => {
       renderModal({
         invoiceRequired: true,
         milestoneInvoices: [
@@ -523,9 +577,7 @@ describe("ProjectDetailsModal", () => {
         ],
       });
 
-      // "Received" appears both as column header and badge text
-      const receivedElements = screen.getAllByText("Received");
-      expect(receivedElements.length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByText("Invoice received")).toBeInTheDocument();
     });
 
     it("shows 'Not submitted' badge when invoice status is 'not_submitted'", () => {
