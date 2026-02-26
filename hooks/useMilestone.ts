@@ -17,7 +17,6 @@ import { PAGES } from "@/utilities/pages";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
-import { useGap } from "./useGap";
 import { useOffChainRevoke } from "./useOffChainRevoke";
 import { useSetupChainAndWallet } from "./useSetupChainAndWallet";
 import { useWallet } from "./useWallet";
@@ -72,7 +71,6 @@ export const useMilestone = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { gap } = useGap();
   const {
     startAttestation,
     showLoading,
@@ -360,17 +358,6 @@ export const useMilestone = () => {
             itemCount
           );
 
-          // Switch chain if needed
-          const setup = await setupChainAndWallet({
-            targetChainId: chainId,
-            currentChainId: chain?.id,
-            switchChainAsync,
-          });
-
-          if (!setup) {
-            throw new Error("Failed to switch chain or connect wallet");
-          }
-
           const fetchedProject = await getProjectById(project!.details?.slug || "");
           if (!fetchedProject) {
             throw new Error("Failed to fetch project data");
@@ -432,22 +419,75 @@ export const useMilestone = () => {
       } else {
         // Handle single milestone completion revocation
         showLoading("Undoing milestone completion...");
-
-        const setup = await setupChainAndWallet({
-          targetChainId: milestone.chainID,
-          currentChainId: chain?.id,
-          switchChainAsync,
-        });
-
-        if (!setup) {
-          throw new Error("Failed to switch chain or connect wallet");
-        }
-
-        const { gapClient } = setup;
-        const fetchedProject = await gapClient.fetch.projectById(project?.uid);
+        const fetchedProject = await getProjectById(project?.uid || "");
 
         if (!fetchedProject) {
           throw new Error("Failed to fetch project data");
+        }
+
+        const isProjectMilestone = milestone.type === "milestone" || milestone.type === "project";
+
+        if (isProjectMilestone) {
+          const projectIdOrSlug = project?.details?.slug || project?.uid;
+          if (!projectIdOrSlug) {
+            throw new Error("Project identifier not found");
+          }
+
+          const projectRecipient = fetchedProject.recipient;
+          const fetchedObjectives = await getProjectObjectives(
+            projectIdOrSlug,
+            fetchedProject.uid,
+            projectRecipient,
+            fetchedProject.chainID
+          );
+
+          const objective = fetchedObjectives.find(
+            (item) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
+          );
+
+          if (!objective) {
+            throw new Error("Project milestone not found");
+          }
+
+          if (!objective.completed?.uid) {
+            throw new Error("Milestone is not completed");
+          }
+
+          const checkIfProjectCompletionExists = async (callbackFn?: () => void) => {
+            await retryUntilConditionMet(
+              async () => {
+                const refreshedObjectives = await getProjectObjectives(
+                  projectIdOrSlug,
+                  fetchedProject.uid,
+                  projectRecipient,
+                  fetchedProject.chainID
+                );
+
+                const refreshedObjective = refreshedObjectives.find(
+                  (item) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
+                );
+
+                return !refreshedObjective?.completed;
+              },
+              async () => {
+                callbackFn?.();
+              }
+            );
+          };
+
+          await performOffChainRevoke({
+            uid: objective.completed.uid as `0x${string}`,
+            chainID: objective.chainID || fetchedProject.chainID,
+          });
+
+          await checkIfProjectCompletionExists(() => {
+            changeStepperStep("indexed");
+          }).then(() => {
+            showSuccess(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
+            refetch();
+          });
+
+          return;
         }
 
         const grantInstance = fetchedProject.grants.find(
