@@ -1,14 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import type { ActivityFilterType, SortOption } from "@/types/v2/project-profile.types";
+import type { ActivityFilterType } from "@/types/v2/project-profile.types";
 import { ACTIVITY_FILTER_OPTIONS } from "@/types/v2/project-profile.types";
 import { cn } from "@/utilities/tailwind";
 
@@ -16,8 +9,6 @@ import { cn } from "@/utilities/tailwind";
 export type { ActivityFilterType, SortOption } from "@/types/v2/project-profile.types";
 
 interface ActivityFiltersProps {
-  sortBy: SortOption;
-  onSortChange: (sort: SortOption) => void;
   activeFilters: ActivityFilterType[];
   onFilterToggle: (filter: ActivityFilterType) => void;
   milestonesCount?: number;
@@ -31,15 +22,12 @@ const filterOptions = ACTIVITY_FILTER_OPTIONS.filter(
 );
 
 /**
- * ActivityFilters provides sorting and filtering controls for the activity feed.
+ * ActivityFilters provides filtering controls for the activity feed.
  * Includes:
- * - Sort dropdown (Newest/Oldest)
  * - Milestone count display
  * - Filter badges (toggleable)
  */
 export function ActivityFilters({
-  sortBy,
-  onSortChange,
   activeFilters,
   onFilterToggle,
   milestonesCount = 0,
@@ -48,34 +36,16 @@ export function ActivityFilters({
 }: ActivityFiltersProps) {
   return (
     <div className={cn("flex flex-col gap-4", className)} data-testid="activity-filters">
-      {/* Top row: Sort and milestone count */}
-      <div className="flex flex-row items-center justify-between flex-wrap gap-4">
-        {/* Sort Dropdown */}
-        <Select value={sortBy} onValueChange={(value) => onSortChange(value as SortOption)}>
-          <SelectTrigger className="w-[140px]" data-testid="sort-select">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="newest" data-testid="sort-newest">
-              Newest first
-            </SelectItem>
-            <SelectItem value="oldest" data-testid="sort-oldest">
-              Oldest first
-            </SelectItem>
-          </SelectContent>
-        </Select>
-
-        {/* Milestone Count */}
-        {milestonesCount > 0 && (
-          <span
-            className="text-xl font-semibold leading-tight tracking-tight text-foreground"
-            data-testid="milestones-count"
-          >
-            {milestonesCount} {milestonesCount === 1 ? "Milestone" : "Milestones"}, {completedCount}{" "}
-            Completed
-          </span>
-        )}
-      </div>
+      {/* Milestone Count */}
+      {milestonesCount > 0 && (
+        <span
+          className="text-xl font-semibold leading-tight tracking-tight text-foreground"
+          data-testid="milestones-count"
+        >
+          {milestonesCount} {milestonesCount === 1 ? "Milestone" : "Milestones"}, {completedCount}{" "}
+          Completed
+        </span>
+      )}
 
       {/* Filter Badges */}
       <div className="flex flex-row flex-wrap gap-2" data-testid="filter-badges">
